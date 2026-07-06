@@ -1574,7 +1574,7 @@ function renderSignalBadges(signals,trigger){
   if(!signals||!signals.length){row.innerHTML='<span style="font-size:10px;color:var(--text2)">No patterns on this timeframe</span>';return;}
   signals.forEach(s=>{
     const cls=s.type==='star'?'sig-star':s.type==='engulf'?(s.dir==='buy'?'sig-buy':'sig-sell'):s.type==='msb'?'sig-msb':s.type==='aoi'?'sig-aoi':s.type==='wick'?(s.dir==='buy'?'sig-buy':'sig-sell'):'sig-doji';
-    const warn=!s.biasMatch&&s.dir!=='neutral'?' ⚠':'';
+    const warn=!s.biasMatch&&s.dir!=='neutral'?' !':'';
     row.innerHTML+=`<span class="sig-badge ${cls}">${s.label}${warn}</span>`;
   });
 }
@@ -1582,15 +1582,12 @@ function renderSignalBadges(signals,trigger){
 function renderConfluencePanel(conf){
   const dirEl=document.getElementById('confDir');
   const itemsEl=document.getElementById('confItems');
-  if(!conf||!conf.total){dirEl.textContent='—';itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">No data</div>';return;}
+  if(!conf||!conf.total){dirEl.textContent='--';itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">No data</div>';return;}
   const col=conf.direction==='long'?'var(--green)':'var(--red)';
-  dirEl.innerHTML=`<span style="color:${col};font-weight:700">${conf.direction==='long'?'▲ LONG':'▼ SHORT'} ${conf.total}%</span>`;
-  itemsEl.innerHTML=(conf.items||[]).map(item=>`
-    <div class="conf-item ci-${item.state}">
-      <div class="ci-dot ci-dot-${item.state}"></div>
-      <div class="ci-label">${item.label}</div>
-      <div class="ci-pts">${item.pts?'+'+item.pts:''}</div>
-    </div>`).join('');
+  dirEl.innerHTML='<span style="color:'+col+';font-weight:700">'+(conf.direction==='long'?'LONG':'SHORT')+' '+conf.total+'%</span>';
+  itemsEl.innerHTML=(conf.items||[]).map(function(item){
+    return '<div class="conf-item ci-'+item.state+'"><div class="ci-dot ci-dot-'+item.state+'"></div><div class="ci-label">'+item.label+'</div><div class="ci-pts">'+(item.pts?'+'+item.pts:'')+'</div></div>';
+  }).join('');
 }
 
 function zoomChart(dir){
