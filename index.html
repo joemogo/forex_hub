@@ -1779,7 +1779,7 @@ function sendAIMessage(){
     return;
   }
   aiHistory.push({role:'user',content:msg});
-  var STRATEGY_CTX='You are an AI trading assistant for the JVM Forex Hub. The strategy is called The Idiot Strategy: PAIRS: GBP/USD EUR/USD GBP/JPY AUD/USD USD/JPY GBP/CHF GBP/CAD NZD/USD AUD/JPY EUR/JPY USD/CAD USD/CHF. SESSIONS: London and NY only. Mon-Wed preferred. BIAS: Weekly/Daily/4H - need 2/3 aligned minimum. 3/3 = A-grade. Less than 2 = skip. AOI: Weekly/Daily structure only. Min 3 reactions to be valid. Invalidated when candle body closes through it. TRIGGER: 15M bullish or bearish engulfing candle that fully covers prior candle body. Must be closed. Highest quality = doji/wick at AOI then engulf (morning/evening star). NEWS: No red folder event within 60 mins. RR: Min 1:2. RISK: 1% per trade. Be direct and reference exact rules.';
+  var STRATEGY_CTX="You are an AI trading assistant for the JVM Forex Hub. The strategy is called The Idiot Strategy. PAIRS: GBP/USD EUR/USD GBP/JPY AUD/USD USD/JPY GBP/CHF GBP/CAD NZD/USD AUD/JPY EUR/JPY USD/CAD USD/CHF. SESSIONS: London and NY only. Mon-Wed preferred. BIAS: Weekly/Daily/4H - need 2/3 aligned minimum. 3/3 = A-grade. Less than 2 = skip. AOI: Weekly/Daily structure only. Min 3 reactions to be valid. Invalidated when candle body closes through it. TRIGGER: 15M bullish or bearish engulfing candle that fully covers prior candle body. Must be closed. Highest quality = doji/wick at AOI then engulf. NEWS: No red folder event within 60 mins. RR: Min 1:2. RISK: 1% per trade. Be direct and reference exact rules.";
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':cfg.anthropicKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -1841,7 +1841,7 @@ var SEED={
 };
 
 function initScan(){
-  SCAN_PAIRS.forEach(function(p){if(!scanData[p]){scanData[p]=SEED[p]||{weekly:"none",daily:"none",fh:"none",bucket:"none",grade:"none",notes:'';};}});
+  SCAN_PAIRS.forEach(function(p){if(!scanData[p]){scanData[p]=SEED[p]||{weekly:"none",daily:"none",fh:"none",bucket:"none",grade:"none",notes:"";};}});
   renderScan();
 }
 
@@ -1910,7 +1910,7 @@ function updateScan(pair,field,val){
 
 function resetScan(){
   if(!confirm('Reset all scan data?')){return;}
-  SCAN_PAIRS.forEach(function(p){scanData[p]={weekly:"none",daily:"none",fh:"none",bucket:"none",grade:"none",notes:''};});
+  SCAN_PAIRS.forEach(function(p){scanData[p]={weekly:"none",daily:"none",fh:"none",bucket:"none",grade:"none",notes:""};});
   renderScan();renderWatchlist();save();
 }
 
