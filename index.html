@@ -657,9 +657,9 @@ button.danger{color:var(--red);border-color:rgba(255,77,77,.3)}
 <script>
 var ALL_PAIRS=['EUR_USD','GBP_USD','USD_JPY','USD_CHF','AUD_USD','USD_CAD','NZD_USD','EUR_GBP','EUR_JPY','EUR_CHF','EUR_AUD','EUR_CAD','EUR_NZD','GBP_JPY','GBP_CHF','GBP_AUD','GBP_CAD','GBP_NZD','AUD_JPY','AUD_CHF','AUD_CAD','AUD_NZD','NZD_JPY','NZD_CHF','NZD_CAD','CAD_JPY','CAD_CHF','CHF_JPY','USD_SGD','USD_NOK','USD_SEK','USD_DKK','USD_MXN','USD_ZAR','USD_TRY'];
 var SCAN_PAIRS=['GBP/USD','EUR/USD','GBP/JPY','AUD/USD','USD/JPY','GBP/CHF','GBP/CAD','NZD/USD','AUD/JPY','EUR/JPY','USD/CAD','USD/CHF'];
-var TF_OPTS=['--','Bullish','Bearish','Ranging'];
-var BUCKET_OPTS=['--','Ranging / no break','Active watch','Triggered / missed'];
-var GRADE_OPTS=['--','A','B','C'];
+var TF_OPTS=["none",'Bullish','Bearish','Ranging'];
+var BUCKET_OPTS=["none",'Ranging / no break','Active watch','Triggered / missed'];
+var GRADE_OPTS=["none",'A','B','C'];
 var ALERT_THRESHOLD=65;
 var AUTO_THRESHOLD=80;
 var BUILD_THRESHOLD=40;
@@ -920,7 +920,7 @@ function scoreConfluence(candles,pairKey,direction){
   var sk=pairKey.replace('_','/');
   var sd=scanData[sk];
   var score=sd?getScore(sd):0;
-  var bias=sd?getBias(sd):'--';
+  var bias=sd?getBias(sd):"none";
   var sess=getSession();
   var body=Math.abs(last.c-last.o);
   var rng=last.h-last.l;
@@ -975,7 +975,7 @@ function checkFullTrigger(candles,pairKey){
   if(!sd){return null;}
   var score=getScore(sd);
   var bias=getBias(sd);
-  if(score<2||bias==='Split'||bias==='--'){return null;}
+  if(score<2||bias==='Split'||bias==="none"){return null;}
   var pipD=last.c<10?0.0001:0.01;
   var slice=candles.slice(-25);
   var rH=Math.max.apply(null,slice.slice(0,-1).map(function(c){return c.h;}));
@@ -1002,7 +1002,7 @@ function isSetupBuilding(candles,pairKey){
   if(!sd){return false;}
   var score=getScore(sd);
   var bias=getBias(sd);
-  if(score<2||bias==='Split'||bias==='--'){return false;}
+  if(score<2||bias==='Split'||bias==="none"){return false;}
   var pipD=last.c<10?0.0001:0.01;
   var slice=candles.slice(-25);
   var rH=Math.max.apply(null,slice.slice(0,-1).map(function(c){return c.h;}));
@@ -1019,7 +1019,7 @@ function detectSignals(candles,pairKey){
   var pipD=last.c<10?0.0001:0.01;
   var sk=pairKey.replace('_','/');
   var sd=scanData[sk];
-  var bias=sd?getBias(sd):'--';
+  var bias=sd?getBias(sd):"none";
   var body=Math.abs(last.c-last.o);
   var rng=last.h-last.l;
   var sigs=[];
@@ -1203,7 +1203,7 @@ function renderRecBanner(conf,sess,trigger,building){
   var label=document.getElementById('recLabel');
   var detail=document.getElementById('recDetail');
   var score=document.getElementById('recScore');
-  score.textContent=conf?conf.total+'%':'--';
+  score.textContent=conf?conf.total+'%':"none";
   if(trigger){
     var isLong=trigger.dir==='buy';
     banner.className='rec-banner '+(isLong?'rec-buy':'rec-sell');
@@ -1250,7 +1250,7 @@ function renderConfluencePanel(conf){
   var dirEl=document.getElementById('confDir');
   var itemsEl=document.getElementById('confItems');
   if(!conf||!conf.total){
-    dirEl.textContent='--';
+    dirEl.textContent="none";
     itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">No data</div>';
     return;
   }
@@ -1284,19 +1284,19 @@ function renderPairList(){
     var sk=p.replace('_','/');
     var sd=scanData[sk];
     var dec=p.indexOf('JPY')>=0?3:5;
-    var price=d.price?d.price.toFixed(dec):'--';
-    var conf=d.conf||{total:0,direction:'--'};
+    var price=d.price?d.price.toFixed(dec):"none";
+    var conf=d.conf||{total:0,direction:"none"};
     var pct=conf.total||0;
     var el=document.createElement('div');
     var rowClass='pair-row'+(p===activePair?' active':'');
     if(d.building&&!d.trigger){rowClass+=' building';}
     el.className=rowClass;
-    var gradeHtml=sd&&sd.grade&&sd.grade!=='--'?'<span class="badge grade-'+sd.grade+'" style="font-size:9px;padding:1px 4px">'+sd.grade+'</span>':'';
+    var gradeHtml=sd&&sd.grade&&sd.grade!=="none"?'<span class="badge grade-'+sd.grade+'" style="font-size:9px;padding:1px 4px">'+sd.grade+'</span>':'';
     var dirTag='';
     if(d.trigger){dirTag='<span class="dir-tag '+(d.trigger.dir==='buy'?'tag-long':'tag-short')+'">'+(d.trigger.dir==='buy'?'BUY':'SELL')+'</span>';}
     else if(d.building){dirTag='<span class="dir-tag tag-build">SETUP</span>';}
     else{dirTag='<span class="dir-tag tag-none">--</span>';}
-    el.innerHTML='<div class="pair-row-left"><div class="pair-row-name">'+sk+' '+gradeHtml+'</div><div class="pair-row-sub">'+dirTag+'<span>'+price+'</span></div></div><div class="pair-row-right"><span class="conf-pct" style="color:'+cColor(pct)+'">'+(pct?pct+'%':'--')+'</span><div class="conf-bar-wrap"><div class="conf-bar" style="width:'+pct+'%;background:'+cColor(pct)+'"></div></div></div>';
+    el.innerHTML='<div class="pair-row-left"><div class="pair-row-name">'+sk+' '+gradeHtml+'</div><div class="pair-row-sub">'+dirTag+'<span>'+price+'</span></div></div><div class="pair-row-right"><span class="conf-pct" style="color:'+cColor(pct)+'">'+(pct?pct+'%':"none")+'</span><div class="conf-bar-wrap"><div class="conf-bar" style="width:'+pct+'%;background:'+cColor(pct)+'"></div></div></div>';
     el.onclick=function(){activePair=p;renderPairList();loadChart();};
     list.appendChild(el);
   });
@@ -1313,7 +1313,7 @@ function loadChart(){
   var sd=scanData[name];
   var gradeEl=document.getElementById('chartGrade');
   var biasEl=document.getElementById('chartBias');
-  if(sd&&sd.grade&&sd.grade!=='--'){gradeEl.textContent=sd.grade+'-grade';gradeEl.className='badge grade-'+sd.grade;}
+  if(sd&&sd.grade&&sd.grade!=="none"){gradeEl.textContent=sd.grade+'-grade';gradeEl.className='badge grade-'+sd.grade;}
   else{gradeEl.textContent='';gradeEl.className='badge';}
   if(sd){
     var b=getBias(sd);
@@ -1493,9 +1493,9 @@ function addAlert(pair,conf,price,sess,trigger,type){
     time:new Date().toLocaleTimeString(),
     pair:pair.replace('_','/'),
     pct:conf?conf.total:0,
-    direction:conf?conf.direction:'--',
+    direction:conf?conf.direction:"none",
     sigs:sigs,
-    price:price?price.toFixed(dec):'--',
+    price:price?price.toFixed(dec):"none",
     session:sess.name,
     inSession:sess.active,
     type:type
@@ -1749,7 +1749,7 @@ function calcRR(){
   var e=parseFloat(document.getElementById('rrEntry').value);
   var s=parseFloat(document.getElementById('rrStop').value);
   var t=parseFloat(document.getElementById('rrTarget').value);
-  if(!e||!s||!t){document.getElementById('rrRatio').textContent='--';return;}
+  if(!e||!s||!t){document.getElementById('rrRatio').textContent="none";return;}
   var pip=activePair.indexOf('JPY')>=0?0.01:0.0001;
   var risk=Math.abs(e-s)/pip;
   var reward=Math.abs(t-e)/pip;
@@ -1829,7 +1829,7 @@ var SEED={
   'GBP/USD':{weekly:'Bearish',daily:'Bearish',fh:'Bearish',bucket:'Active watch',grade:'B',notes:'3/3 bear. AOI: 1.3392-1.3440.'},
   'AUD/USD':{weekly:'Bearish',daily:'Bearish',fh:'Bearish',bucket:'Active watch',grade:'B',notes:'3/3 bear. AOI: 0.6935-0.6950.'},
   'EUR/USD':{weekly:'Bearish',daily:'Bearish',fh:'Bearish',bucket:'Active watch',grade:'B',notes:'3/3 bear. AOI: 1.1390-1.1400.'},
-  'GBP/JPY':{weekly:'Bullish',daily:'--',fh:'Ranging',bucket:'Ranging / no break',grade:'C',notes:'Conflict. No trade.'},
+  'GBP/JPY':{weekly:'Bullish',daily:"none",fh:'Ranging',bucket:'Ranging / no break',grade:'C',notes:'Conflict. No trade.'},
   'USD/CHF':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'3/3 bull. AOI: 0.8002-0.8020.'},
   'USD/JPY':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'A',notes:'TOP PRIORITY. AOI: 160.604-160.749.'},
   'GBP/CAD':{weekly:'Ranging',daily:'Ranging',fh:'Ranging',bucket:'Ranging / no break',grade:'C',notes:'Ranging. No trade.'},
@@ -1841,7 +1841,7 @@ var SEED={
 };
 
 function initScan(){
-  SCAN_PAIRS.forEach(function(p){if(!scanData[p]){scanData[p]=SEED[p]||{weekly:'--',daily:'--',fh:'--',bucket:'--',grade:'--',notes:'';};}});
+  SCAN_PAIRS.forEach(function(p){if(!scanData[p]){scanData[p]=SEED[p]||{weekly:"none",daily:"none",fh:"none",bucket:"none",grade:"none",notes:'';};}});
   renderScan();
 }
 
@@ -1858,7 +1858,7 @@ function getScore(d){
 
 function getBias(d){
   var dirs=[d.weekly,d.daily,d.fh].filter(function(x){return x==='Bullish'||x==='Bearish';});
-  if(!dirs.length){return '--';}
+  if(!dirs.length){return "none";}
   var b=dirs.filter(function(x){return x==='Bullish';}).length;
   var br=dirs.filter(function(x){return x==='Bearish';}).length;
   return b>br?'Bullish':br>b?'Bearish':'Split';
@@ -1866,7 +1866,7 @@ function getBias(d){
 
 function scoreBadge(s){
   var cls=s>=3?'score-3':s>=2?'score-2':s>=1?'score-1':'score-0';
-  return '<span class="badge '+cls+'">'+(s>0?s+'/3':'--')+'</span>';
+  return '<span class="badge '+cls+'">'+(s>0?s+'/3':"none")+'</span>';
 }
 
 function biasHtml(b){
@@ -1893,7 +1893,7 @@ function renderScan(){
     var gOpts='';
     GRADE_OPTS.forEach(function(o){gOpts+='<option'+(o===d.grade?' selected':'')+'>'+o+'</option>';});
     var ld=pairData[p.replace('/','_')];
-    var lp=ld&&ld.price?ld.price.toFixed(p.indexOf('JPY')>=0?3:5):'--';
+    var lp=ld&&ld.price?ld.price.toFixed(p.indexOf('JPY')>=0?3:5):"none";
     var lt=ld&&ld.trigger?'<span style="color:'+(ld.trigger.dir==='buy'?'var(--green)':'var(--red)')+';font-weight:700">'+(ld.trigger.dir==='buy'?'BUY':'SELL')+'</span>':'';
     var lb=ld&&ld.building&&!ld.trigger?'<span style="color:var(--gold)">SETUP</span>':'';
     html+='<tr><td><span class="pair-link" onclick="jumpToScanner(\''+p+'\')">'+p+'</span></td><td>'+tfSel(p,'weekly',d.weekly)+'</td><td>'+tfSel(p,'daily',d.daily)+'</td><td>'+tfSel(p,'fh',d.fh)+'</td><td>'+scoreBadge(score)+'</td><td>'+biasHtml(bias)+'</td><td><select onchange="updateScan(\''+p+'\',\'bucket\',this.value)">'+bOpts+'</select></td><td><select onchange="updateScan(\''+p+'\',\'grade\',this.value)">'+gOpts+'</select></td><td><input type="text" value="'+d.notes+'" onchange="updateScan(\''+p+'\',\'notes\',this.value)" style="min-width:80px"></td><td style="font-size:11px;white-space:nowrap">'+lp+' '+lt+lb+'</td></tr>';
@@ -1910,7 +1910,7 @@ function updateScan(pair,field,val){
 
 function resetScan(){
   if(!confirm('Reset all scan data?')){return;}
-  SCAN_PAIRS.forEach(function(p){scanData[p]={weekly:'--',daily:'--',fh:'--',bucket:'--',grade:'--',notes:''};});
+  SCAN_PAIRS.forEach(function(p){scanData[p]={weekly:"none",daily:"none",fh:"none",bucket:"none",grade:"none",notes:''};});
   renderScan();renderWatchlist();save();
 }
 
@@ -1935,7 +1935,7 @@ function renderWatchlist(){
     var bias=getBias(d);
     var ld=pairData[p.replace('/','_')];
     var lc=ld&&ld.conf;
-    html+='<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:700;min-width:72px;cursor:pointer;color:var(--green)" onclick="jumpToScanner(\''+p+'\')">'+p+'</span>'+scoreBadge(score)+biasHtml(bias)+(d.grade&&d.grade!=='--'?'<span class="badge grade-'+d.grade+'">'+d.grade+'-grade</span>':'')+(lc&&lc.total>=40?'<span class="wl-conf '+(lc.total>=ALERT_THRESHOLD?'wl-high':'wl-med')+'">'+(lc.direction==='long'?'LONG':'SHORT')+' '+lc.total+'%</span>':'')+(d.notes?'<span style="font-size:11px;color:var(--text2);flex:1">'+d.notes+'</span>':'')+'</div>';
+    html+='<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:700;min-width:72px;cursor:pointer;color:var(--green)" onclick="jumpToScanner(\''+p+'\')">'+p+'</span>'+scoreBadge(score)+biasHtml(bias)+(d.grade&&d.grade!=="none"?'<span class="badge grade-'+d.grade+'">'+d.grade+'-grade</span>':'')+(lc&&lc.total>=40?'<span class="wl-conf '+(lc.total>=ALERT_THRESHOLD?'wl-high':'wl-med')+'">'+(lc.direction==='long'?'LONG':'SHORT')+' '+lc.total+'%</span>':'')+(d.notes?'<span style="font-size:11px;color:var(--text2);flex:1">'+d.notes+'</span>':'')+'</div>';
   });
   el.innerHTML=html;
 }
@@ -1977,7 +1977,7 @@ function renderJournal(){
   var html='';
   journalEntries.forEach(function(e){
     var rc=e.result==='Win'?'var(--green)':e.result==='Loss'?'var(--red)':'var(--text2)';
-    html+='<div class="journal-entry"><div class="j-meta"><strong style="color:var(--text1)">'+e.pair+'</strong><span>'+e.dir+'</span><span style="color:'+rc+';font-weight:700">'+e.result+'</span>'+(e.rr?'<span>'+e.rr+'</span>':'')+(e.grade&&e.grade!=='--'?'<span class="badge grade-'+(e.grade==='AUTO'?'B':e.grade)+'">'+e.grade+'</span>':'')+(e.session?'<span>'+e.session+'</span>':'')+'<span style="margin-left:auto">'+e.date+'</span><button class="danger" style="padding:2px 6px;font-size:10px" onclick="deleteEntry('+e.id+')">x</button></div>'+(e.notes?'<div class="j-notes">'+e.notes+'</div>':'')+'</div>';
+    html+='<div class="journal-entry"><div class="j-meta"><strong style="color:var(--text1)">'+e.pair+'</strong><span>'+e.dir+'</span><span style="color:'+rc+';font-weight:700">'+e.result+'</span>'+(e.rr?'<span>'+e.rr+'</span>':'')+(e.grade&&e.grade!=="none"?'<span class="badge grade-'+(e.grade==='AUTO'?'B':e.grade)+'">'+e.grade+'</span>':'')+(e.session?'<span>'+e.session+'</span>':'')+'<span style="margin-left:auto">'+e.date+'</span><button class="danger" style="padding:2px 6px;font-size:10px" onclick="deleteEntry('+e.id+')">x</button></div>'+(e.notes?'<div class="j-notes">'+e.notes+'</div>':'')+'</div>';
   });
   list.innerHTML=html;
 }
