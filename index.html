@@ -2061,10 +2061,10 @@ function renderRules(){
 }
 
 var CHECKLIST=[
-  {id:'c1',text:'Red folder events checked on Forex Factory',sub:'No red event within 60 mins of entry'},
-  {id:'c2',text:'Weekly and daily bias assessed for all pairs',sub:'2/3 minimum aligned'},
+  {id:'c1',text:'Red folder events checked on Forex Factory',sub:'Avoid entering within 30 mins of high-impact news'},
+  {id:'c2',text:'Weekly and daily bias assessed for all pairs',sub:'At least 2/3 timeframes must agree'},
   {id:'c3',text:'4H market structure confirmed for active watch pairs',sub:'HH/HL for bullish, LL/LH for bearish'},
-  {id:'c4',text:'All pairs bucketed',sub:'Ranging / Active watch / Triggered+missed'},
+  {id:'c4',text:'All pairs bucketed',sub:'Ranging / Active watch / Triggered and missed'},
   {id:'c5',text:'AOI touch count verified - minimum 3 reactions on every zone',sub:'Fewer than 3 = invalid, delete the zone'},
   {id:'c6',text:'Broken AOIs deleted from charts',sub:'Full candle body close through zone = zone is dead'},
   {id:'c7',text:'Minimum 1:2 R:R verified on active watch pairs',sub:'Cannot map clean target = skip the pair'},
@@ -2074,7 +2074,7 @@ var CHECKLIST=[
 function renderChecklist(){
   var html='';
   CHECKLIST.forEach(function(c){
-    html+='<div class="checklist-item"><input type="checkbox" id="'+c.id+'" '+(checklistState[c.id]?'checked':'')+' onchange="checklistState[\''+c.id+'\']=this.checked;save()"><div><div class="cl-text">'+c.text+'</div><div class="cl-sub">'+c.sub+'</div></div></div>';
+    html+='<div class="checklist-item"><input type="checkbox" id="'+c.id+'" '+(checklistState[c.id]?'checked':'')+' onchange="checklistState[&quot;'+c.id+'&quot;]=this.checked;save()"><div><div class="cl-text">'+c.text+'</div><div class="cl-sub">'+c.sub+'</div></div></div>';
   });
   document.getElementById('checklist-items').innerHTML=html;
 }
