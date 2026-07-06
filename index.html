@@ -1539,30 +1539,30 @@ function renderRecBanner(conf,sess,trigger,building){
   const label=document.getElementById('recLabel');
   const detail=document.getElementById('recDetail');
   const score=document.getElementById('recScore');
-  score.textContent=conf?conf.total+'%':'—';
+  score.textContent=conf?conf.total+'%':'--';
   if(trigger){
     const isLong=trigger.dir==='buy';
     banner.className='rec-banner '+(isLong?'rec-buy':'rec-sell');
     label.className='rec-label '+(isLong?'rec-label-buy':'rec-label-sell');
-    label.textContent=isLong?'▲ STRATEGY SAYS: BUY — ALL RULES MET':'▼ STRATEGY SAYS: SELL — ALL RULES MET';
+    label.textContent=isLong?'BUY - ALL RULES MET':'SELL - ALL RULES MET';
     score.style.color=isLong?'var(--green)':'var(--red)';
-    detail.textContent=`Bias ${trigger.score}/3 aligned · Engulf trigger confirmed · At AOI · Check news before entry`;
+    detail.textContent='Bias '+trigger.score+'/3 aligned. Engulf trigger confirmed. At AOI. Check news before entry.';
   }else if(building){
     banner.className='rec-banner rec-build';
     label.className='rec-label rec-label-build';
-    label.textContent='⚡ SETUP BUILDING — WATCH FOR ENGULF TRIGGER';
+    label.textContent='SETUP BUILDING - WATCH FOR ENGULF TRIGGER';
     score.style.color='var(--gold)';
     detail.textContent='Bias aligned and price at AOI. Waiting for engulfing candle to close. Stay alert.';
   }else if(conf&&conf.total>=BUILD_THRESHOLD){
     banner.className='rec-banner rec-wait';
     label.className='rec-label rec-label-wait';
-    label.textContent='SETUP DEVELOPING — NOT READY YET';
+    label.textContent='SETUP DEVELOPING - NOT READY YET';
     score.style.color='var(--gold)';
-    detail.textContent=`${conf.total}% confluence. Bias or AOI not fully aligned. Keep watching.`;
+    detail.textContent=conf.total+'% confluence. Bias or AOI not fully aligned. Keep watching.';
   }else{
     banner.className='rec-banner rec-wait';
     label.className='rec-label rec-label-wait';
-    label.textContent='NO SETUP — STAND ASIDE';
+    label.textContent='NO SETUP - STAND ASIDE';
     score.style.color='var(--text2)';
     detail.textContent='Confluence too low. Wait for bias alignment + price at AOI + engulf trigger.';
   }
