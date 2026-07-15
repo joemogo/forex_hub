@@ -33,8 +33,8 @@ hash-checked by the regression tooling, never executed or modified.
 │               │ calls via SDK     │ calls via SDK     │ calls via SDK   │
 │    ┌──────────┴────────┐ ┌────────┴──────────┐ ┌──────┴─────────────┐  │
 │    │ STRATEGY MODULE     │ │ STRATEGY MODULE    │ │ STRATEGY MODULE     │  │
-│    │ JVM (not yet         │ │ Alex G S&R v1       │ │ (future: TJR/ICT/   │  │
-│    │  registered)         │ │ (registered, v12.0.0)│ │  Silver Bullet/...)  │  │
+│    │ JVM                  │ │ Alex G S&R v1       │ │ (future: TJR/ICT/   │  │
+│    │ (registered, v12.1.0)│ │ (registered, v12.0.0)│ │  Silver Bullet/...)  │  │
 │    │ own state + keys     │ │ own state + keys    │ │ own state + keys     │  │
 │    └──────────────────────┘ └──────────────────────┘ └──────────────────────┘  │
 └───────────────────────────────────────────────────────────────────────┘
@@ -79,10 +79,15 @@ the surrounding app hardcoded both strategies by name:
 - Strategy Center's per-strategy tab content
 
 v12.0.0 (Release 1) generalized these seams for ALEX specifically, wrapping its existing engine
-through Manifest/Services references rather than rewriting it (see
-[STRATEGY_REGISTRY.md](STRATEGY_REGISTRY.md) and
-[../docs/adr/ADR-005-strategy-framework.md](../docs/adr/ADR-005-strategy-framework.md)). JVM has
-not yet been registered — that is Release 2, not started.
+through Manifest/Services references rather than rewriting it. v12.1.0 (Release 2) registered
+JVM the same way — a real validation of the contract, not a repeat, since it required checking
+JVM's actual needs against the existing SDK field by field (it turned out to need zero
+extensions). Two of the seams above (`runDiagnostics()`'s isolation check, `renderMiniJournal()`)
+remain ALEX-only, disclosed as deliberate: no genuine JVM-specific behavior exists to wrap for
+either. Strategy Center's per-strategy tab content still hardcodes exactly two strategies —
+correctly, for a two-strategy world — and generalizing it for N strategies is the explicit,
+optional, deferred Release 3 scope (see [STRATEGY_REGISTRY.md](STRATEGY_REGISTRY.md) and
+[../docs/adr/ADR-005-strategy-framework.md](../docs/adr/ADR-005-strategy-framework.md)).
 
 ## Testing as an architectural control, not an afterthought
 

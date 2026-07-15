@@ -18,11 +18,15 @@ function runV120Fixtures(g){
     });
   }
 
-  // ═══ Fixture 1: STRATEGY_REGISTRY contains exactly one entry (ALEX) this release ═══
+  // ═══ Fixture 1: STRATEGY_REGISTRY contains ALEX's registered entry (v12.1.0: JVM was
+  // added as a second entry in Release 2 -- this fixture only asserts ALEX is present and
+  // correctly registered, not the total registry size, since that's no longer a v120-only
+  // concern) ═══
   {
     const reg=g.getRegistry();
-    assert('Fixture 1: STRATEGY_REGISTRY contains exactly one entry (ALEX) this release',
-      Array.isArray(reg)&&reg.length===1&&reg[0].manifest.id==='alex_g_sr_v1',
+    const alexEntry=reg.find(e=>e.manifest.id==='alex_g_sr_v1');
+    assert('Fixture 1: STRATEGY_REGISTRY contains ALEX\'s registered entry',
+      Array.isArray(reg)&&!!alexEntry,
       'reg='+JSON.stringify(reg.map(e=>e.manifest.id)));
   }
 

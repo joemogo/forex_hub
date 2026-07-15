@@ -11,10 +11,13 @@ generically:
 
 ```
 STRATEGY_REGISTRY = [
+  { manifest: JVM_MANIFEST, services: JVM_SERVICES },
   { manifest: ALEX_MANIFEST, services: ALEX_SERVICES }
-  // JVM is intentionally not registered yet — Release 1 scope was ALEX only.
 ]
 ```
+
+Both strategies are registered as of v12.1.0 (Release 2). Order in the array carries no
+semantic meaning — lookups are always by `manifest.id`, never by position.
 
 Each entry is a `{ manifest, services }` pair — the Registry itself holds no logic, no computed
 values, and no strategy-specific branching.
@@ -48,35 +51,50 @@ This split exists so the Registry stays small and boring even as more strategies
 is read on every render of every seam below, and must never become a second, driftable copy of
 strategy state.
 
-## Where the Registry is consulted today (v12.0.0)
+## Where the Registry is consulted today (v12.1.0)
 
-Exactly the seams identified by the architecture audit as hardcoding ALEX by name, each with a
-fallback to its pre-framework literal if the lookup returns `null`:
+Every seam identified by the original architecture audit as hardcoding a strategy by name, with
+what each strategy actually wired and a fallback to the pre-framework literal if the lookup
+returns `null`:
 
-| Function | What it looks up |
-|---|---|
-| `getUnifiedJournalRecords()` | `Services.getJournal()` / `Services.normalize()` |
-| `renderDashboard()` | `Services.getAccount()` (P&L/win-rate tile, running-trades table) |
-| `showPanel()` | `Services.onOpen()` |
-| `applyDeveloperModeVisibility()` | `Manifest.devToolsCardId` |
-| `runDiagnostics()` | `Services.isolationCheck()` |
-| `renderMiniJournal()` | `Manifest.inspectorCardId` |
+| Function | What it looks up | ALEX | JVM |
+|---|---|---|---|
+| `getUnifiedJournalRecords()` | `Services.getJournal()` / `Services.normalize()` | ✓ (Release 1) | ✓ (Release 2) |
+| `renderDashboard()` | `Services.getAccount()` (P&L/win-rate tile, running-trades table) | ✓ | ✓ |
+| `showPanel()` | `Services.onOpen()` | ✓ | ✓ |
+| `applyDeveloperModeVisibility()` | `Manifest.devToolsCardId` | ✓ | ✓ |
+| `runDiagnostics()` | `Services.isolationCheck()` | ✓ | not wired — no genuine JVM-specific isolation check exists to extract |
+| `renderMiniJournal()` | `Manifest.inspectorCardId` | ✓ | not wired — JVM's branch is confirmed dead code (see below) |
 
-`toggleDeveloperMode()` and `getFilteredJournalRecords()` needed no change — the former contains
-no strategy-specific logic at all, and the latter already filtered purely on the already-normalized
-`strategyLabel` field rather than a hardcoded literal.
+`toggleDeveloperMode()` and `getFilteredJournalRecords()` needed no change for either strategy —
+the former contains no strategy-specific logic at all, and the latter already filtered purely on
+the already-normalized `strategyLabel` field rather than a hardcoded literal.
+
+**Two seams were deliberately left untouched for JVM, with why disclosed** (Release 2's
+pre-implementation audit found these, but judged them out of scope):
+- `renderMiniJournal()`'s JVM branch (`'paperTradeInspectorCard'`) is unreachable — the function
+  is only ever called in the real app with `strategyLabel='ALEX'`; JVM's mini-journal uses its
+  own dedicated `renderPaperMiniJournal()` (v9.0), deliberately not built on this shared function.
+  Generalizing dead code isn't a genuine seam fix.
+- Strategy Center (`renderRules()`/`setStrategyCenterTab()`) and `journalStrategyBadge()`'s
+  2-color ternary hardcode a 2-strategy-count assumption, but not a JVM-specific
+  misrepresentation — both already render JVM correctly today. Generalizing them for N strategies
+  is the optional, deferred Release 3 scope named in
+  [ADR-005](../docs/adr/ADR-005-strategy-framework.md), not required for JVM's own registration.
 
 ## Adding a new strategy
 
 Per the approved design, adding a future strategy (TJR, ICT, Silver Bullet, or otherwise) should
 require only:
 
-1. Its own state/storage/save-load pair, following the existing Alex pattern.
+1. Its own state/storage/save-load pair, following the existing Alex/JVM pattern.
 2. Its own engine functions, added to `PROTECTED_FUNCTIONS` once frozen.
 3. One new `STRATEGY_REGISTRY` entry.
 
 No further edits to Dashboard, the Journal, the panel router, Developer Mode, or Diagnostics
 should be necessary — that is the entire point of having generalized the seams above instead of
-adding a third hardcoded branch to each. This has not yet been exercised with a real second
-strategy; JVM's own registration (Release 2) is the next, harder proof of this claim (see
-[../docs/adr/ADR-005-strategy-framework.md](../docs/adr/ADR-005-strategy-framework.md)).
+adding a third hardcoded branch to each. **This claim has now been exercised twice** (ALEX in
+Release 1, JVM in Release 2) with zero SDK extensions required for either — a meaningful
+validation of the original design, not just a repeat. A genuine third strategy remains the next,
+harder proof (it would also be the point where the "N-strategy" seams named above, if still
+hardcoded to 2, would need Release 3's generalization).

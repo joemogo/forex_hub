@@ -13,6 +13,26 @@ its change actually affects.
 
 ---
 
+## v12.1.0 — Strategy Framework, Release 2: JVM registration
+Registered JVM as the framework's second strategy, following the exact Manifest/Services
+pattern ALEX used in v12.0.0. This was treated as the real validation of the SDK contract
+(not a mechanical copy): a deliberate pre-implementation audit checked every Manifest field
+and Service method JVM needs against the existing Release-1 contract, field by field. Verdict —
+zero SDK extensions required. `computePerformance()`, reserved in the original design but never
+exercised (ALEX has no live-performance function), is JVM's first real use of that slot, since
+JVM has `computeMogoStrategyPerformance()`. `JVM_MANIFEST` reads `version`/`fullName`/`status`
+directly from the existing `MOGO_STRATEGY_META` constant rather than restating them, and
+`academySchoolId:'mogo'` is a real, verified link (`ACADEMY_SCHOOLS` already has that id).
+4 of 8 previously-hardcoded seams needed a JVM-specific change (`getUnifiedJournalRecords`,
+`renderDashboard`, `showPanel`, `applyDeveloperModeVisibility`); 3 more were reviewed and
+deliberately left untouched with the reason disclosed — most notably, `renderMiniJournal()`'s
+JVM branch is confirmed dead code, and Strategy Center's 2-strategy hardcoding is the optional
+Release 3 scope named in [ADR-005](adr/ADR-005-strategy-framework.md), not required for this
+release. Zero behavior drift: all 63 protected functions and 4 protected constants remain
+byte-identical, all 28 pre-existing ALEX fixtures still pass, no `localStorage` key changed.
+28 new fixtures ship in `tests/v121_jvm_registration_tests.js`, auto-discovered by
+`tests/run_all.sh` with no runner changes needed.
+
 ## v12.0.0 — Strategy Framework Foundation, Release 1: ALEX registration
 The first step of a multi-strategy architecture migration, approved via a two-pass architecture
 design exercise before any code was written (see [ADR-005](adr/ADR-005-strategy-framework.md)).

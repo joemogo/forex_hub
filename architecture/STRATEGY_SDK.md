@@ -71,8 +71,11 @@ anything or require special-case core-app code.
 
 ## Known limitations of the SDK as implemented today
 
-- Only ALEX is registered (`STRATEGY_REGISTRY` has one entry). JVM registration is Release 2,
-  not started.
+- Both ALEX and JVM are registered as of v12.1.0 (Release 2). JVM's registration required zero
+  SDK extensions — every field/method it needed already existed from Release 1, confirmed by a
+  field-by-field pre-implementation audit, not assumed. `computePerformance()` is JVM's first
+  real use of a slot the SDK reserved but ALEX couldn't exercise (ALEX has no live-performance
+  function). A genuine third strategy remains the next test of the contract.
 - `trustLevel`/`ownership` fields exist but are not enforced anywhere — there is no sandboxing or
   validation of strategy code today. This matters only if/when third-party strategies are ever
   allowed to execute in the same page; explicitly out of scope until that's a concrete plan (see
