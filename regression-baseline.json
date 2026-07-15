@@ -1,0 +1,305 @@
+{
+  "generatedFromAppVersion": "12.0.0",
+  "knownGoodHtmlSha1": "31baa279ddc64fdfa90f052da195239bff9a0569",
+  "protectedFunctionCount": 63,
+  "protectedFunctions": {
+    "openPaperPosition": {
+      "sha1": "dbfe2b4e4beacb8840e0339f7abe73dd1953a952",
+      "length": 2406
+    },
+    "closePaperPosition": {
+      "sha1": "1295772ab652a030547c8fa4199fe815fd4d5cac",
+      "length": 4273
+    },
+    "checkPaperPositions": {
+      "sha1": "91e737eb6a75f7477a5633bc629c6ccae568524a",
+      "length": 476
+    },
+    "checkAutoTrades": {
+      "sha1": "b756871846649a9d1d3bcfff2f77fb7d36b909ed",
+      "length": 1873
+    },
+    "evaluateLiveTrigger": {
+      "sha1": "d3ca23edf56be0f5aac6870885a360b5120ba919",
+      "length": 1768
+    },
+    "scoreConfluence": {
+      "sha1": "fa92acdc3cc703fd538c4f3e50bb010a7c0db1bf",
+      "length": 4034
+    },
+    "bestConfluence": {
+      "sha1": "a9b5f4ed36df53e91e391d357b7e82897e67112b",
+      "length": 207
+    },
+    "computeAOI": {
+      "sha1": "5ac506b6bacc726aae9c28b11c4c8bb5296f743e",
+      "length": 2446
+    },
+    "computeAOIWithTouches": {
+      "sha1": "9c3e9762f64cd278f36ebfd313a466a0bb843f8d",
+      "length": 904
+    },
+    "findSwingPoints": {
+      "sha1": "9b356f9ce061d067cf5f6994cfd683db19160efa",
+      "length": 463
+    },
+    "detectSignals": {
+      "sha1": "9c7c93c87c7abd2c0c9c6bf729bb095c585e15c0",
+      "length": 2167
+    },
+    "getBias": {
+      "sha1": "14ca1168a72b3a8d5138244a0fb8adfc19088bd5",
+      "length": 267
+    },
+    "getSession": {
+      "sha1": "1723116a716c3d803bb74abbeef9459eac92e0ed",
+      "length": 406
+    },
+    "pipSize": {
+      "sha1": "6f7cdfebe99bd9ed9f09720eebf35641230bc229",
+      "length": 64
+    },
+    "pipValuePerLot": {
+      "sha1": "46d760446e6cbcde536ca4b3ada8ead12cfda553",
+      "length": 626
+    },
+    "alexGAcceptReaction": {
+      "sha1": "9974c09ea7e226f3bb894ee9421aabce68337f6f",
+      "length": 3419
+    },
+    "alexGAssignCluster": {
+      "sha1": "bee9236624220f0b32301be0e0884432f4d4f848",
+      "length": 641
+    },
+    "alexGBreakCycleId": {
+      "sha1": "c48329a90ba5dcdfcc8a77ff7d0a0accfeb50be9",
+      "length": 141
+    },
+    "alexGCheckSwingAt": {
+      "sha1": "13167283803a892b76fb4ada17ffffa1af8613f1",
+      "length": 453
+    },
+    "alexGClassifyTouch": {
+      "sha1": "aafe7977c9988d13bb882a2add1970cd20df373d",
+      "length": 958
+    },
+    "alexGCloseLivePosition": {
+      "sha1": "ea1eecadcba3510ea97f30332106cf4b5a9332a9",
+      "length": 1927
+    },
+    "alexGClusterId": {
+      "sha1": "eb20689098b4da03d268cb80d9975bc0866c3884",
+      "length": 155
+    },
+    "alexGComputeATRAtEntry": {
+      "sha1": "0b828df82759936c45da007677f2e3a82b10ea04",
+      "length": 145
+    },
+    "alexGComputeMAEMFE": {
+      "sha1": "2cf44474bef66fbcff18fdc95bf4d232bf70a0ba",
+      "length": 440
+    },
+    "alexGComputePsychLevels": {
+      "sha1": "650245587bae868ee1195e2b2072c464bdbadfbd",
+      "length": 508
+    },
+    "alexGComputeReplayStats": {
+      "sha1": "f3e8280ddcac2821c361fbcbcb88283d68d8ca91",
+      "length": 3205
+    },
+    "alexGComputeSessionMetadata": {
+      "sha1": "b50f57c0b55a73d79c0abf571757aa09c630ad3b",
+      "length": 399
+    },
+    "alexGComputeTrendContext": {
+      "sha1": "b8c11f7c614ce2aacc546f2d41a3ef9abdebf294",
+      "length": 1022
+    },
+    "alexGConstructLivePosition": {
+      "sha1": "15984084940468e4eb9e2b3e4b982c3932cda8ff",
+      "length": 6050
+    },
+    "alexGConstructTrade": {
+      "sha1": "6b0950125e6daf0f18da9203d05cf071e2e56d42",
+      "length": 5648
+    },
+    "alexGCorrectedQuality": {
+      "sha1": "12a78fcb5556893f02a782a48ebec62986daa1c2",
+      "length": 295
+    },
+    "alexGCreateSetupRecord": {
+      "sha1": "9b2126564072dbd2bb1d32aed9adedbc2fd24de8",
+      "length": 2295
+    },
+    "alexGDetermineFromSide": {
+      "sha1": "846a2c60a2bbc594c8902c5d221eec7458e42b42",
+      "length": 310
+    },
+    "alexGDetermineTradeDirection": {
+      "sha1": "0679452b20c295c82fb5d03a02ecfb33f0891bab",
+      "length": 663
+    },
+    "alexGEnrichPenetrationEvents": {
+      "sha1": "a1931c4145b76f6c3b67262c9632ff10ad6e833a",
+      "length": 387
+    },
+    "alexGEnsureZoneState": {
+      "sha1": "cf90323514a93ed318b2739136acec1a8112879e",
+      "length": 285
+    },
+    "alexGEvaluateBreakRetest": {
+      "sha1": "a1f65676ad70f771a3fe7d67d6e232ff23e1dae1",
+      "length": 1133
+    },
+    "alexGEvaluateRepeatedReaction": {
+      "sha1": "a99bc7acd07a63e854f9b4d7b6ba966a3cbcfaf9",
+      "length": 421
+    },
+    "alexGFindSwingPoints": {
+      "sha1": "65e855d70047e8c21bf536b39f9f915f4bdbbe3f",
+      "length": 506
+    },
+    "alexGInferPriorZoneRole": {
+      "sha1": "d8edf2556a01684d7d224c7ea1e2557ffa57b18b",
+      "length": 288
+    },
+    "alexGIsSameInteraction": {
+      "sha1": "c27ce176d88114ece4ea708d6ef6a203e4dce2a3",
+      "length": 201
+    },
+    "alexGIsSetupEligibleForLiveTrading": {
+      "sha1": "51839e29b80cfae90333643eda3ecc12153de25d",
+      "length": 154
+    },
+    "alexGIsSetupSignalStale": {
+      "sha1": "233885fb7c4373fb7ae12cbf2e6fa57540973541",
+      "length": 234
+    },
+    "alexGLivePollingShouldRun": {
+      "sha1": "908b43f6bbb5738283e7185877af83ce1b512b52",
+      "length": 111
+    },
+    "alexGLiveSignalId": {
+      "sha1": "4cd0ad9b3fa12cb6d63e79e6d6508cd985c165b2",
+      "length": 152
+    },
+    "alexGPenetrationId": {
+      "sha1": "1c7462b7807a525a004289923088cc41f021818e",
+      "length": 95
+    },
+    "alexGProcessTimeframeCandle": {
+      "sha1": "8d3ac7492a8275f7da629823272a8acf39c45fbc",
+      "length": 6027
+    },
+    "alexGProcessTimeframeCandleWithSetups": {
+      "sha1": "e5f7d597514938bea609f172869f63a3697a3a4b",
+      "length": 948
+    },
+    "alexGReactionId": {
+      "sha1": "5036ae3653679d1b3791e00ee0fade4b80993d4b",
+      "length": 142
+    },
+    "alexGReconstructExitFromCandles": {
+      "sha1": "1212b0ff3cf0feb537f5de9fb663e2b72798dd5b",
+      "length": 1694
+    },
+    "alexGRecordLiveSetupStatus": {
+      "sha1": "927b5cd56bde1f5577697ad0e1dd1b6109829a15",
+      "length": 235
+    },
+    "alexGResolvePenetrationForTouch": {
+      "sha1": "d5d567636ffecdf2a45e28003270d93461a191d1",
+      "length": 705
+    },
+    "alexGRunSetupEngine": {
+      "sha1": "66d6b4485afcc0e8fb045b07ca5557481b497e79",
+      "length": 926
+    },
+    "alexGRunSetupReplay": {
+      "sha1": "58a86edeb27c38b641a7166691093afc8f5fb8a0",
+      "length": 2216
+    },
+    "alexGRunZoneEngine": {
+      "sha1": "7507fc00bcc62dbdea9d93e79cb3e111b5bc87a9",
+      "length": 850
+    },
+    "alexGSetupId": {
+      "sha1": "79da9e0c01b1fcc49b93cd6a0b1f64aa06b18bd5",
+      "length": 163
+    },
+    "alexGSetupSortComparator": {
+      "sha1": "badefcd2f32788e353a3acfc6f9b30b4aba3a8cd",
+      "length": 392
+    },
+    "alexGTradeId": {
+      "sha1": "7df02009205a869bfdda2da71cc8088a106b52c0",
+      "length": 60
+    },
+    "alexGUpdatePositionExcursionAndCheckExit": {
+      "sha1": "c2a514773675cd898061667ff119f8e54a8474b3",
+      "length": 909
+    },
+    "alexGValidateTradeNoLookahead": {
+      "sha1": "61acaf3ddbc0ee116127238ea69bf8693ee25ee9",
+      "length": 901
+    },
+    "alexGWalkOutcome": {
+      "sha1": "9b1db40aa1a82d62b227f02f1c3eda743c8e58f8",
+      "length": 1073
+    },
+    "alexGZoneId": {
+      "sha1": "06b084adb28b23be5aee595068c025176df082c9",
+      "length": 113
+    },
+    "alexGZoneRole": {
+      "sha1": "db10630b3d13856b751b7d6f0c30094ffe60f869",
+      "length": 138
+    }
+  },
+  "missingFunctions": [],
+  "protectedConstants": {
+    "WEIGHTS": {
+      "sha1": "b0190a3079a177419af9ea813d0c8cb57ddbe143",
+      "source": "const WEIGHTS={bias3:25,bias2:15,aoi:20,wick:15,engulf:20,session:10,msb:10};"
+    },
+    "ALERT_THRESHOLD": {
+      "sha1": "cb85105d1c4ae481dc1a1c10a2b99bef6686bfff",
+      "source": "const ALERT_THRESHOLD=55;"
+    },
+    "RULES": {
+      "sha1": "30391c098de93607c81bee892544b2239a5eae5c",
+      "source": "const RULES={\n  topdown:['Assess weekly, daily, and 4H every Sunday \u2014 set bias before the week opens','Check Forex Factory every Sunday scan and every session for red folder events','2 out of 3 timeframes must agree on direction \u2014 3/3 = A-grade priority pair','1/3 or split = skip entirely \u2014 do not trade','Do not change weekly bias mid-week unless a major structural break occurs','AOIs drawn from weekly and daily structure only \u2014 4H confirms trend and times entry','When weekly AOI and daily AOI overlap at same price, combine into one tight zone \u2014 highest-probability entry'],\n  entry:['Confirm 4H bias via market structure: HH/HL for buys, LL/LH for sells','Wait for a structural level to be broken and retested \u2014 no break, no trade','AOI validation: minimum 3 touches/reactions \u2014 fewer than 3 = no AOI, move on','Broken AOI rule: full candle body close through zone = zone is dead, drop to next level','Entry signal: engulfing candle swallowing 5+ prior candles at AOI retest','Wick filter: large rejection wick at AOI = pre-signal \u2014 wick + engulf = highest quality entry','Wait for candle to fully close \u2014 forming candle is not a signal','Never enter against confirmed top-down bias \u2014 no counter-trend trades','Check Forex Factory for red folder news in next 60 mins before every entry'],\n  risk:['1% risk per trade \u2014 no exceptions','Take profit at nearest structure point where price visibly reacted','Minimum 1:2 R:R must be mappable before entering \u2014 if not, skip the trade','Stop loss below AOI (buys) or above AOI (sells) \u2014 5\u201310 pips beyond zone edge','Pre-accept full risk amount before entry \u2014 it is the cost of the trade','Do not close early to lock in profit before hitting planned target','Do not move stop to break even unless trade is significantly in profit'],\n  session:['London session is primary \u2014 highest priority window','NY overlap with London is highest priority for all pairs','If signal fires outside session hours, wait \u2014 do not enter','Monday to Wednesday entries preferred \u2014 Thursday/Friday skip unless short target','No trading within 30 mins of red folder news \u2014 check Forex Factory before every entry','No trading on Friday close'],\n};"
+    },
+    "RULES_ALEXG": {
+      "sha1": "611144478707edd8d16222f35fba6d12f3ee5e52",
+      "source": "const RULES_ALEXG={\n  ruleVersion:'alex_g_sr_v1',\n  originalAlexConcepts:[\n    'Support is where buyers hold price up; resistance is where sellers push price down.',\n    'Support and resistance are collectively \"area of interest\" (AOI) -- support is your AOI when buying, resistance when selling.',\n    'A zone can never be traded against its current role -- no buying resistance, no selling support.',\n    'A single zone is bidirectional: reactions from above AND below the same price area both count toward one shared touch tally.',\n    'Three confirmed reactions validate a zone; the fourth (or later) return that produces its own confirmed rejection is the first trade opportunity.',\n    'Three named strength tiers: weak (<3 touches), valid (3 touches), strong (4+ touches).',\n    'More touches are always better, with no stated ceiling on strength.',\n    'Zones must be tight, fitted to where reactions actually clustered -- demonstrated visually, no formula given.',\n    'Zones exist on H1, H4, Daily, and Weekly timeframes -- exactly these four, explicitly named.',\n    'Higher timeframe zones are more respected than lower timeframe zones.',\n    'Break and retest: a failed rejection, then a confirmed break, then price returns and retests from the new side, then the zone role flips.',\n    'Psychological round-number levels are additional, non-mandatory confluence, demonstrated at both 500-level and 100-level granularity.',\n    'A single soft mention that trend direction increases the odds of a trade working -- never stated as a requirement.'\n  ],\n  hubTestStandardizations:[\n    'Zone-cluster grouping tolerance mechanics and its ATR basis (zoneClusterATRMultiplier) -- EXPERIMENTAL, not tuned against outcomes.',\n    'Rejection confirmation window and minimum ATR-normalized displacement thresholds.',\n    'Wick strength is recorded but never required (requireWick defaults false) -- the source never mentions wicks.',\n    'Break-confirmation close count and choppy-zone penetration/lookback thresholds.',\n    'Zone aging is OFF by default (unlimited) -- the source favors older, more-touched zones, contradicting a default that would penalize zone age.',\n    'Maximum bars allowed between a Type B break and its retest.',\n    'Psychological-level pip-scaling via pipSize() and the dual 500/100 interval choice -- the source uses both granularities inconsistently.',\n    'Same-timeframe rejection confirmation (a Weekly zone confirms on a Weekly candle, etc.) -- the best- and only-evidenced approach, never stated as an explicit rule.',\n    'Structural trend context computed from confirmed swing structure (not an indicator) -- metadata only, never gates, scores, or alters a trade.',\n    'The entire stop-loss/take-profit/risk/R:R mechanism -- 100% unaddressed by the source.',\n    'Zero session/day/news filtering in v1.0 -- a deliberate design choice, not a source gap; metadata is still recorded for later analysis.',\n    'Structural-conflict recording -- record-only, never blocks entry or alters stop/target/size/qualification.',\n    '\"Repeated Zone Reaction\" and \"Break & Retest\" are Hub research labels for record-keeping, not Alex\\'s own terminology.',\n    'v4.2: maxLiveEntryDelayPips (live paper trading only) -- maximum allowed distance between a setup\\'s historical qualificationClose and the actual live bid/ask fill before the trade is rejected rather than chased; the source never addresses live execution latency at all.',\n    'v4.2.1: maxLiveSignalAgeMinutes (live paper trading only, per-timeframe) -- the deterministic \"first polling opportunity\" rule: a live setup is evaluated for entry exactly once, the first time it is seen, and is marked IGNORED \u2014 STALE SIGNAL rather than attempted if its qualification candle is already older than one bar-period of its own timeframe by that first evaluation (e.g. an H1 setup first seen 90 minutes after it qualified is stale). This is a time-based staleness gate, distinct from and in addition to maxLiveEntryDelayPips\\' price-based gate -- the source never addresses signal age either.'\n  ],\n  config:{\n    zoneTimeframes:['H1','H4','D','W'],\n    htfPriority:{W:4,D:3,H4:2,H1:1},\n    zoneClusterATRMultiplier:0.5,\n    atrPeriod:14,\n    rejectionConfirmWithinBars:1,\n    rejectionDisplacementATRMultiplier:0.25,\n    requireWick:false,\n    minWickRatio:0.0,\n    breakConfirmationCloses:1,\n    maxPenetrationsBeforeChoppyFlag:3,\n    choppyLookbackBars:50,\n    maxZoneAgeBars:null,\n    maxBarsBetweenBreakAndRetest:50,\n    psychLevelIntervalPips500:500,\n    psychLevelIntervalPips100:100,\n    trendSwingLookback:3,\n    trendSwingScanBars:200,\n    stopATRBuffer:0.25,\n    riskPercent:1.0,\n    minRR:2.0,\n    maxLiveEntryDelayPips:5, // v4.2 Hub Test Standardization -- max allowed distance between qualificationClose and the live bid/ask fill before the trade is rejected as ENTRY_MOVED_TOO_FAR_FROM_SIGNAL\n    maxLiveSignalAgeMinutes:{H1:60,H4:240,D:1440,W:10080} // v4.2.1 Hub Test Standardization -- one bar-period per timeframe; a setup first evaluated later than this after its own qualificationTimestamp is IGNORED \u2014 STALE SIGNAL, never opened\n  },\n  experimentalParams:{\n    zoneClusterATRMultiplier:{\n      status:'EXPERIMENTAL',\n      sensitivityRange:[0.25,0.5,0.75,1.0],\n      note:'Hub Test Standardization -- arbitrary starting point pending controlled sensitivity testing, not tuned against historical outcomes.'\n    }\n  }\n};"
+    }
+  },
+  "missingConstants": [],
+  "fixtureCounts": {
+    "run_tests.js (Phase 1 unit tests)": 24,
+    "run_phase2_tests.js": 15,
+    "run_phase3_tests.js": 26,
+    "run_correction_tests.js (v3.6.1)": 17,
+    "run_phase4_tests.js": 32,
+    "run_role_correction_tests.js (v4.0.1)": 18,
+    "run_live_paper_tests.js (v4.2)": 32,
+    "run_v421_tests.js": 24,
+    "run_v422_tests.js": 4,
+    "run_v43_tests.js": 19,
+    "run_v50_tests.js": 16,
+    "run_v60_tests.js": 20,
+    "run_v61_tests.js": 31,
+    "run_v80_tests.js (Academy/Strategy Center isolation)": 15,
+    "run_v90_tests.js (JVM journal classification / reset audit)": 20,
+    "run_v100_tests.js (Trade Inspector foundation)": 22,
+    "run_v110_tests.js (Paper Ledger Integrity / stale-save guard)": 17,
+    "run_v111_tests.js (paper-ledger transaction commit/rollback)": 15,
+    "run_v112_tests.js (chart saved-view self-heal)": 17,
+    "run_v113_tests.js (timeframe-aware chart display history)": 18,
+    "run_v114_tests.js (Pre-Trade Checklist badge text + future-state prep)": 19,
+    "run_v115_tests.js (MOGO Academy lesson engine foundation)": 55,
+    "run_v120_tests.js (Strategy Framework foundation, Release 1 -- ALEX registration)": 28
+  },
+  "totalFixtureCount": 504
+}

@@ -1,0 +1,42 @@
+# MOGO Trading OS is a static, single-file application with no build step and no
+# package manager -- this .gitignore is intentionally short and specific to what
+# can actually appear in this project, not a generic bloated template.
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editor/IDE swap and backup files
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# Python (regression-baseline-tools.py is run locally, never packaged)
+__pycache__/
+*.pyc
+*.pyo
+
+# Local environment / secrets -- MOGO never stores API keys server-side (they live
+# only in the browser's own localStorage, per docs/STORAGE_KEYS.md), but this is
+# excluded defensively in case any local tooling ever introduces one.
+.env
+.env.local
+
+# Claude Code / agent scratch and session artifacts -- these must never be committed.
+# .claude/settings.local.json is a personal, machine-local permission allowlist (it
+# accumulates references to this machine's own temp paths); .claude/launch.json is
+# kept and tracked -- it's real, portable dev-server config. The project's actual
+# test suites live under tests/ (see docs/TESTING.md); anything matching the
+# patterns below is ephemeral working state from an AI coding session, never
+# project content.
+.claude/settings.local.json
+*.scratchpad/
+scratchpad/

@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Desk — FX Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0D13;
+  --panel:#12161F;
+  --panel-raised:#1A2029;
+  --line:#262D3A;
+  --line-bright:#3A4356;
+  --text-primary:#E7ECF3;
+  --text-secondary:#8891A3;
+  --amber:#F0A93C;
+  --amber-dim:rgba(240,169,60,0.12);
+  --green:#33D17E;
+  --green-dim:rgba(51,209,126,0.12);
+  --red:#FF5C5C;
+  --red-dim:rgba(255,92,92,0.12);
+
+  --color-background-primary:var(--panel);
+  --color-background-secondary:var(--panel-raised);
+  --color-border-secondary:var(--line);
+  --color-border-tertiary:var(--line);
+  --color-border-danger:var(--red);
+  --color-text-primary:var(--text-primary);
+  --color-text-secondary:var(--text-secondary);
+  --color-text-danger:var(--red);
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+  --border-radius-md:4px;
+  --border-radius-lg:6px;
+}
+html,body{
+  background:
+    linear-gradient(var(--ink),var(--ink)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 40px);
+  min-height:100%;
+}
+::selection{background:var(--amber-dim);color:var(--amber)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.35}}
+</style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);font-size:14px;color:var(--color-text-primary);background:transparent}
+.hub{padding:1rem 0;max-width:1240px;margin:0 auto}
+.desk-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:14px;background:var(--panel);border:0.5px solid var(--line);border-radius:var(--border-radius-lg);font-family:var(--font-mono)}
+.desk-title{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:0.08em;color:var(--amber);font-weight:600}
+.desk-live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);letter-spacing:0.06em}
+.desk-live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse-dot 1.6s ease-in-out infinite}
+.desk-clock{font-size:11px;color:var(--text-secondary)}
+.tabs{display:flex;gap:4px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.5rem;font-family:var(--font-mono)}
+.tab{padding:8px 14px;font-size:12px;letter-spacing:0.04em;cursor:pointer;border:none;background:none;color:var(--color-text-secondary);border-bottom:2px solid transparent;transition:all 0.15s;text-transform:uppercase}
+.tab.active{color:var(--amber);font-weight:600;border-bottom:2px solid var(--amber)}
+.tab:hover:not(.active){color:var(--color-text-primary)}
+.panel{display:none}.panel.active{display:block}
+.section-label{font-size:11px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:var(--font-mono)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+select,input[type=text],textarea{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 10px;font-size:13px;color:var(--color-text-primary);font-family:var(--font-sans);width:100%}
+select{cursor:pointer;font-family:var(--font-mono)}
+textarea{resize:vertical;min-height:60px;line-height:1.5}
+button{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 14px;font-size:12px;letter-spacing:0.03em;cursor:pointer;color:var(--color-text-primary);font-family:var(--font-mono);transition:all 0.15s;text-transform:uppercase}
+button:hover{background:var(--color-background-secondary);border-color:var(--line-bright)}
+button.primary{background:var(--amber);color:var(--ink);border-color:var(--amber);font-weight:600}
+button.primary:hover{opacity:0.85;background:var(--amber)}
+button.danger{color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.scan-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono)}
+.scan-table th{font-size:10px;font-weight:600;color:var(--color-text-secondary);text-align:left;padding:6px 8px;border-bottom:0.5px solid var(--color-border-tertiary);white-space:nowrap;text-transform:uppercase;letter-spacing:0.05em}
+.scan-table td{padding:5px 6px;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle}
+.scan-table tr:hover td{background:rgba(255,255,255,0.015)}
+.scan-table select{padding:4px 6px;font-size:12px;min-width:72px}
+.score-badge{display:inline-block;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:600;min-width:28px;text-align:center;font-family:var(--font-mono)}
+.score-3{background:var(--green-dim);color:var(--green);border:1px solid rgba(51,209,126,0.4)}
+.score-2{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,169,60,0.4)}
+.score-1{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,0.4)}
+.score-0{background:var(--color-background-secondary);color:var(--color-text-secondary);border:1px solid var(--line)}
+.bucket-badge{display:inline-block;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:600;font-family:var(--font-mono);letter-spacing:0.03em}
+.bucket-watch{background:var(--green-dim);color:var(--green);border:1px solid rgba(51,209,126,0.4)}
+.bucket-ranging{background:var(--color-background-secondary);color:var(--color-text-secondary);border:1px solid var(--line)}
+.bucket-missed{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,0.4)}
+.bucket-intrade{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,169,60,0.5);box-shadow:0 0 8px rgba(240,169,60,0.15)}
+.grade-A{background:var(--green-dim);color:var(--green);border:1px solid rgba(51,209,126,0.4);display:inline-block;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.grade-B{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,169,60,0.4);display:inline-block;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.grade-C{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,0.4);display:inline-block;padding:2px 8px;border-radius:var(--border-radius-md);font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.rule-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.rule-item:last-child{border-bottom:none}
+.rule-num{font-size:11px;font-weight:600;color:var(--amber);min-width:20px;padding-top:2px;font-family:var(--font-mono)}
+.rule-text{font-size:13px;line-height:1.5;color:var(--color-text-primary)}
+.journal-entry{padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.journal-entry:last-child{border-bottom:none}
+.journal-meta{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;font-family:var(--font-mono)}
+.journal-notes{font-size:13px;color:var(--color-text-primary);line-height:1.5}
+.empty-state{text-align:center;padding:2rem 0;color:var(--color-text-secondary);font-size:13px}
+.row-gap{display:flex;gap:8px;align-items:flex-start}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;font-weight:600;color:var(--text-secondary);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.03em}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.stat-card{background:var(--color-background-secondary);border:0.5px solid var(--line);border-radius:var(--border-radius-md);padding:12px;text-align:center}
+.stat-val{font-size:24px;font-weight:700;line-height:1.2;font-family:var(--font-mono);color:var(--amber)}
+.stat-lbl{font-size:10px;color:var(--color-text-secondary);margin-top:2px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em}
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.checklist-item:last-child{border-bottom:none}
+.checklist-item input[type=checkbox]{margin-top:2px;cursor:pointer;width:15px;height:15px;flex-shrink:0;accent-color:var(--amber)}
+.checklist-text{font-size:13px;line-height:1.5}
+.sub-text{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.align-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.dot-bull{background:var(--green);box-shadow:0 0 4px rgba(51,209,126,0.6)}
+.dot-bear{background:var(--red);box-shadow:0 0 4px rgba(255,92,92,0.6)}
+.dot-neut{background:var(--text-secondary)}
+</style>
+</head>
+<body>
+
+<div class="hub">
+<h2 class="sr-only">Weekly trading hub with Sunday scan, watchlist, journal, and rules tabs</h2>
+<div class="desk-header">
+  <div class="desk-title">◆ JOE'S FX DESK</div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="desk-live"><span class="desk-live-dot"></span>LIVE</div>
+    <div class="desk-clock" id="desk-clock"></div>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('scan')">Sunday scan</button>
+  <button class="tab" onclick="switchTab('watchlist')">Watchlist</button>
+  <button class="tab" onclick="switchTab('journal')">Trade journal</button>
+  <button class="tab" onclick="switchTab('stats')">Stats</button>
+  <button class="tab" onclick="switchTab('rules')">Hard rules</button>
+  <button class="tab" onclick="switchTab('lessons')">Lessons</button>
+</div>
+
+<div id="panel-scan" class="panel active">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:14px">Pre-scan checklist</div>
+    <div id="checklist-items"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:0">Pair scan — top-down analysis</div>
+      <button onclick="resetScan()" style="font-size:11px;padding:4px 10px">Reset all</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="scan-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pair</th>
+          <th>Weekly</th>
+          <th>Daily</th>
+          <th>4H</th>
+          <th>Score</th>
+          <th>Bias</th>
+          <th>Bucket</th>
+          <th>Grade</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="scan-tbody"></tbody>
+    </table>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:0.5px solid var(--color-border-tertiary)">
+      <div class="section-label">Score key</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
+        <span><span class="score-badge score-3">3/3</span> <span style="font-size:12px;color:var(--color-text-secondary)">Strong bias — prioritise</span></span>
+        <span><span class="score-badge score-2">2/3</span> <span style="font-size:12px;color:var(--color-text-secondary)">Valid bias — watch</span></span>
+        <span><span class="score-badge score-1">1/3</span> <span style="font-size:12px;color:var(--color-text-secondary)">Split — skip</span></span>
+        <span><span class="score-badge score-0">0</span> <span style="font-size:12px;color:var(--color-text-secondary)">Ranging — no setup</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="panel-watchlist" class="panel">
+  <div class="stats-row" id="wl-stats"></div>
+  <div class="card" id="watchlist-cards"></div>
+</div>
+
+<div id="panel-journal" class="panel">
+  <div class="card">
+    <div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:0.5px solid var(--color-border-tertiary)">
+      <button class="tab active" id="jt-trade" onclick="switchJournalType('trade')" style="border-bottom:2px solid var(--color-text-primary)">Log a trade</button>
+      <button class="tab" id="jt-skip" onclick="switchJournalType('skip')">Log a skip</button>
+    </div>
+
+    <div id="form-trade">
+      <div class="form-grid">
+        <div class="form-group"><span class="form-label">Pair</span>
+          <select id="j-pair"><option value="">Select pair</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Direction</span>
+          <select id="j-dir"><option value="">—</option><option>Buy</option><option>Sell</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Result</span>
+          <select id="j-result"><option value="">—</option><option>Open</option><option>Win</option><option>Loss</option><option>Break even</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">R multiple (e.g. 2.4 or -1)</span>
+          <input type="text" id="j-rmult" placeholder="e.g. 2.4">
+        </div>
+        <div class="form-group"><span class="form-label">Planned R:R</span>
+          <input type="text" id="j-rr" placeholder="e.g. 1:2.4">
+        </div>
+        <div class="form-group"><span class="form-label">Grade</span>
+          <select id="j-grade"><option value="">—</option><option>A</option><option>B</option><option>C</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Session</span>
+          <select id="j-session"><option value="">—</option><option>London</option><option>New York</option><option>Overlap</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Engulf candle count</span>
+          <select id="j-engulf"><option value="">—</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">AOI touch count</span>
+          <select id="j-touches"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Rule variant</span>
+          <select id="j-variant"><option value="Standard">Standard (2-candle engulf, current rule)</option><option value="Legacy-5candle">Legacy: 5+ candle swallow (old rule)</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Signal timeframe</span>
+          <select id="j-signaltf"><option value="15M-engulf">15M-engulf (original)</option><option value="1H-engulf">1H-engulf (test variant)</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">H&amp;S / Inverse H&amp;S present? (log-only)</span>
+          <select id="j-hs"><option value="No">No</option><option value="Yes">Yes — neckline closed through</option></select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px"><span class="form-label">Notes</span>
+        <textarea id="j-notes" placeholder="What did you see? Did you follow the rules? What would you do differently?"></textarea>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="primary" onclick="logTrade()">Log trade</button>
+        <button onclick="clearJournalForm()">Clear</button>
+      </div>
+    </div>
+
+    <div id="form-skip" style="display:none">
+      <div class="form-grid">
+        <div class="form-group"><span class="form-label">Pair</span>
+          <select id="s-pair"><option value="">Select pair</option></select>
+        </div>
+        <div class="form-group"><span class="form-label">Skip reason</span>
+          <select id="s-reason">
+            <option value="">—</option>
+            <option>Engulf candle count too low (under 5)</option>
+            <option>AOI touch count under 3</option>
+            <option>Grade C</option>
+            <option>No 1:2 R:R mappable</option>
+            <option>Counter-trend / bias not aligned</option>
+            <option>News event / Forex Factory red folder</option>
+            <option>Outside session hours</option>
+            <option>Price never reached AOI</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px"><span class="form-label">Notes</span>
+        <textarea id="s-notes" placeholder="What did the setup look like? Would you have taken it under looser rules?"></textarea>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="primary" onclick="logSkip()">Log skip</button>
+        <button onclick="clearSkipForm()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:0">Trade log</div>
+      <div id="journal-summary" style="font-size:12px;color:var(--color-text-secondary)"></div>
+    </div>
+    <div id="journal-list"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:0">Skip log</div>
+      <div id="skip-summary" style="font-size:12px;color:var(--color-text-secondary)"></div>
+    </div>
+    <div id="skip-list"></div>
+  </div>
+</div>
+
+<div id="panel-stats" class="panel">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">Overall performance</div>
+    <div class="stats-row" id="stats-overall"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">By rule variant — current 2-candle standard vs legacy 5-candle rule</div>
+    <div id="stats-variant"></div>
+    <div class="sub-text" style="margin-top:8px">Compares trades logged under the new standard 2-candle engulf rule (adopted 30 Jun) against historical trades logged under the old 5+ candle swallow rule. The 5-candle threshold had no basis in published price-action practice and was likely costing trade frequency without a proven accuracy benefit — this comparison will show whether that holds true going forward. Needs roughly 20-30 trades per group before the comparison is meaningful.</div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">By signal timeframe — 15M-engulf (original) vs 1H-engulf (test)</div>
+    <div id="stats-signaltf"></div>
+    <div class="sub-text" style="margin-top:8px">One-variable-at-a-time test: watching the entry signal on 1H against the same Weekly/Daily AOI/bias, instead of waiting for the 15M engulf. Not yet decided which is standard — needs enough trades in both groups before drawing conclusions.</div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">H&amp;S / Inverse H&amp;S confluence — log-only, not yet a grading factor</div>
+    <div id="stats-hs"></div>
+    <div class="sub-text" style="margin-top:8px">Tracks whether a Head &amp; Shoulders or Inverse H&amp;S pattern (confirmed only once the neckline closes through) was present at the AOI. This does NOT affect grade, position sizing, or trade selection — logged only to check later whether H&amp;S-confirmed AOIs show better expectancy than AOIs without it, once enough trades accumulate.</div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">By grade</div>
+    <div id="stats-grade"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">By pair</div>
+    <div id="stats-pair"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:12px">Why setups are getting skipped</div>
+    <div id="stats-skip"></div>
+    <div class="sub-text" style="margin-top:8px">This tells you which single rule is most often the reason a scanned pair never becomes a trade — the bottleneck question.</div>
+  </div>
+</div>
+
+<div id="panel-rules" class="panel">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:4px">Top-down bias rules</div>
+    <div id="rules-topdown"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:4px">Entry rules</div>
+    <div id="rules-entry"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:4px">Risk rules</div>
+    <div id="rules-risk"></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:4px">Session & timing rules</div>
+    <div id="rules-session"></div>
+  </div>
+</div>
+
+<div id="panel-lessons" class="panel">
+  <div class="card">
+    <div class="section-label" style="margin-bottom:4px">Log a lesson / hypothesis</div>
+    <div class="form-grid">
+      <div class="form-group"><span class="form-label">Pair (optional)</span>
+        <select id="l-pair"></select>
+      </div>
+      <div class="form-group"><span class="form-label">Category</span>
+        <select id="l-category">
+          <option>AOI quality</option>
+          <option>Entry signal</option>
+          <option>Stop placement</option>
+          <option>Session / timing</option>
+          <option>News filter</option>
+          <option>Trade management</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px"><span class="form-label">Hypothesis / lesson</span>
+      <textarea id="l-text" placeholder="e.g. AOIs that already produced a violent wick earlier the same session may need a wider stop or should be skipped..."></textarea>
+    </div>
+    <div style="margin-top:10px"><button class="primary" onclick="logLesson()">Add to log</button></div>
+  </div>
+  <div class="card">
+    <div class="section-label" style="margin-bottom:8px">Lessons & hypotheses to backtest</div>
+    <div id="lessons-list"></div>
+  </div>
+</div>
+</div>
+
+<script>
+const PAIRS = ['GBP/USD','EUR/USD','GBP/JPY','AUD/USD','USD/JPY','GBP/CHF','GBP/CAD','NZD/USD','AUD/JPY','EUR/JPY','USD/CAD','USD/CHF'];
+const TF_OPTS = ['—','Bullish','Bearish','Ranging'];
+const BUCKET_OPTS = ['—','Ranging / no break','Active watch','Triggered / missed','In Trade'];
+const GRADE_OPTS = ['—','A','B','C'];
+
+let scanData = {};
+let journalEntries = [];
+const JOURNAL_SEED = [
+  {id:1719843300000,pair:'EUR/USD',dir:'Sell',result:'Loss',rmult:'-1.06',rr:'1:7.2',grade:'A',session:'New York',engulf:'2',touches:'4+',variant:'Standard',signaltf:'15M-engulf',hs:'No',notes:'Paper trade. Entry 1.13875 at 14:55 UTC (1 Jul) on closed bearish engulf breaking below AOI floor 1.13901. SL 1.14010, TP 1.12900. VERIFIED via broker order history: Buy Stop @ 1.14010 FILLED at 1.14018 (2 Jul, price broke decisively above 1.14000 overnight and continued to 1.14136+). Exit 1.14018. Loss: 14.3 pips / -$1.43 / -1.06R. This was a genuine trend failure, not a wick stop-hunt — price broke the AOI for real and kept climbing well beyond it. Two earlier notes in this log incorrectly called this first a stop-hunt-loss then an open-and-profitable trade based on chart misreads; broker order history is the correct source of truth. AOI 1.13901-1.14000 now broken to the upside — EUR/USD bearish bias needs a fresh full-timeframe rescan before any new setup is trusted.',date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+];
+let skipEntries = [];
+let checklistState = {};
+let lessonEntries = [];
+const LESSON_SEED = [
+  {id:1719843400000,pair:'EUR/USD',category:'AOI quality',text:'A zone that already produced a violent wick/reversal earlier in the same session may be under more stress than usual. Consider whether it needs a wider stop, or should be skipped, versus a zone that has been quiet before the signal fires.',date:'1 Jul 2026'},
+  {id:1719843400001,pair:'EUR/USD',category:'Entry signal',text:'Track "clean single rejection candle" entries separately from "choppy consolidation into trigger" entries in the journal. Hypothesis: clean rejections may outperform choppy ones, but this needs data across multiple trades to confirm.',date:'1 Jul 2026'},
+  {id:1719843400002,pair:'',category:'Session / timing',text:'Current rules govern entry timing (session, news blackout) but say nothing about holding a position through a session boundary (e.g. NY entry held into Asia/London open). Liquidity and character shift session to session — worth tracking whether trades that ride through a session change underperform same-session trades.',date:'1 Jul 2026'},
+  {id:1719843400003,pair:'EUR/USD',category:'News filter',text:'Entered ~50 minutes after a red/orange news event, just inside the 60-minute rule. Did not cause this loss, but log any future near-miss timing like this — small rule shortcuts compound if repeated.',date:'1 Jul 2026'},
+  {id:1719843400004,pair:'',category:'Entry signal',text:'From Alex G video review: testing a 1H-engulf entry signal variant alongside the original 15M-engulf, watched against the same Weekly/Daily AOI/bias. Formalized as a tagged variant rather than a discretionary in-the-moment choice, since discretion reintroduces the guesswork the strategy is designed to eliminate. Tracked separately in the journal — one variable at a time, same treatment as the 5-candle vs 2-candle engulf comparison. Not yet decided which becomes standard.',date:'2 Jul 2026'},
+  {id:1719843400005,pair:'',category:'AOI quality',text:'From Alex G video review: added Head & Shoulders / Inverse H&S pattern as a log-only boolean flag (confirmed only once neckline closes through). Explicitly does NOT affect grade, position sizing, or trade selection yet — one anecdotal example from a video is not an edge. Revisit for promotion to an actual confluence factor once enough trades accumulate to check whether H&S-confirmed AOIs show better expectancy.',date:'2 Jul 2026'},
+  {id:1719843400006,pair:'',category:'Other',text:'Session of 2 Jul: EUR/USD, GBP/JPY, USD/JPY, and USD/CAD all had key AOIs violently tested or broken within the same session, several with the identical pattern (rally into resistance from below, hard rejection, break). This looks like a broad volatility/news-driven session rather than four independent pair-specific signals. Hypothesis: when multiple pairs show this correlated stress pattern on the same day, treat all setups that day with extra caution (wider stops or reduced sizing) rather than trusting each pair-specific signal in isolation — worth checking if a market-wide volatility flag should become part of the routine.',date:'2 Jul 2026'}
+];
+
+// Persistent storage helpers
+async function saveState(){
+  try{
+    await window.storage.set('scanData', JSON.stringify(scanData));
+    await window.storage.set('journalEntries', JSON.stringify(journalEntries));
+    await window.storage.set('skipEntries', JSON.stringify(skipEntries));
+    await window.storage.set('checklistState', JSON.stringify(checklistState));
+    await window.storage.set('lessonEntries', JSON.stringify(lessonEntries));
+  }catch(e){}
+}
+
+async function loadState(){
+  try{ const sd = await window.storage.get('scanData'); if(sd) scanData = JSON.parse(sd.value); }catch(e){}
+  try{
+    const je = await window.storage.get('journalEntries');
+    journalEntries = je ? JSON.parse(je.value) : JOURNAL_SEED.slice();
+  }catch(e){ journalEntries = JOURNAL_SEED.slice(); }
+  try{ const se = await window.storage.get('skipEntries'); if(se) skipEntries = JSON.parse(se.value); }catch(e){}
+  try{ const cs = await window.storage.get('checklistState'); if(cs) checklistState = JSON.parse(cs.value); }catch(e){}
+  try{
+    const le = await window.storage.get('lessonEntries');
+    lessonEntries = le ? JSON.parse(le.value) : LESSON_SEED.slice();
+  }catch(e){ lessonEntries = LESSON_SEED.slice(); }
+}
+
+const CHECKLIST = [
+  {id:'c1', text:'Red folder events checked on Forex Factory', sub:'Avoid entering within 30 mins of high-impact news'},
+  {id:'c2', text:'Weekly and daily bias assessed for all 12 pairs', sub:'At least 2/3 timeframes must agree for a valid setup'},
+  {id:'c3', text:'4H market structure confirmed for active watch pairs', sub:'HH/HL for bullish, LL/LH for bearish'},
+  {id:'c4', text:'All pairs bucketed — ranging, active watch, or triggered/missed', sub:'Triggered/missed = log and skip'},
+  {id:'c5', text:'AOI touch count verified — minimum 3 touches on every zone', sub:'Any combination of support/resistance touches counts — fewer than 3 = invalid, remove the box'},
+  {id:'c7', text:'Broken AOIs removed from all active watch pairs', sub:'If price closed a full candle body through a zone without bouncing, delete it — drop to the next valid level'},
+  {id:'c8', text:'Minimum 1:2 R:R verified on active watch pairs', sub:'If you cannot map a clean target, skip the pair'},
+  {id:'c6', text:'Session plan set — London primary, overlap window priority', sub:'Monday to Wednesday entries only unless exceptional setup'},
+];
+
+const RULES = {
+  topdown:[
+    'Assess weekly, daily, and 4H every Sunday — set bias before the week opens',
+    'Check Forex Factory (forexfactory.com) every Sunday scan and every trading session for red folder events',
+    '2 out of 3 timeframes must agree on direction for a valid setup',
+    '3/3 aligned = A-grade priority pair for the week',
+    '1/3 or split = skip entirely, do not trade regardless of 4H signal',
+    'Do not change your weekly bias mid-week unless a major structural break occurs',
+    'A pullback on a lower timeframe is not a reversal — do not flip bias',
+  ],
+  entry:[
+    'Confirm 4H bias via market structure: HH/HL for buys, LL/LH for sells',
+    'Wait for a structural level to be broken and retested — no break, no trade',
+    'AOI validation: a zone is only valid if price has touched/reacted from it a minimum of 3 times — any mix of support and resistance touches counts — fewer than 3 = no AOI = move on',
+    'Broken AOI rule: if price closes a full candle body through an AOI without bouncing, that zone is dead — delete it, drop to the next level, and treat it as a completely fresh trade',
+    'Entry signal: standard 2-candle engulfing pattern at the retest — second candle body fully swallows the prior candle body. (Updated 30 Jun: dropped the old 5+ candle swallow requirement — that was a self-imposed, untested filter not used in standard price-action practice. Reliability comes from context — location at a validated AOI, trend alignment, prior candle count near a high/low — not from how many candles the engulf body covers.)',
+    'Wick strength filter: a large rejection wick forming at the AOI is a pre-signal that the level is being respected — the bigger the wick, the stronger the upcoming engulf is likely to be — a doji or rejection wick followed by a full 2-candle engulf (morning/evening star) is the highest quality entry signal and should be weighted above a plain engulf with no prior wick',
+    'Test-3candle journal tag retained for any trades still logged under the old 3+ candle filter during the transition period, to compare against the new standard 2-candle baseline',
+    'Wait for the candle to fully close — a forming candle is not a signal',
+    'Never enter against the confirmed top-down bias — no counter-trend trades',
+    'Before entering ANY trade: check Forex Factory for red folder news in the next 60 minutes — if yes, wait',
+  ],
+  risk:[
+    '1% risk per trade — no exceptions',
+    'Take profit placed at the nearest structure point — the last level where price visibly reacted — this is your checkpoint, not a guess',
+    'Minimum 1:2 R:R must be mappable before entering — if the nearest structure point does not give you 1:2, skip the trade',
+    'Stop loss placed below the AOI (buys) or above the AOI (sells) — 5 to 10 pips beyond the zone edge — if price closes a candle body through your AOI, you are wrong',
+    'Pre-accept the full risk amount before entry — it is the cost of the trade',
+    'Do not close early to lock in profit before hitting your planned target',
+    'Do not move stop loss to break even unless trade is significantly in profit',
+  ],
+  session:[
+    'London session is primary — highest priority window',
+    'New York valid for GBP/USD; overlap window is highest priority',
+    'If signal fires outside session hours, wait — do not enter',
+    'Monday to Wednesday entries preferred — Thursday/Friday skip unless short target',
+    'No trading within 30 minutes of red folder news events — check Forex Factory before every entry',
+    'No trading on Friday close',
+  ],
+};
+
+const SEED = {
+  'GBP/USD':{weekly:'Ranging',daily:'Ranging',fh:'Ranging',bucket:'Ranging / no break',grade:'C',notes:'Wed 1 Jul. Still ranging — no change to classification. Weekly range 1.315-1.366 intact. Bottomed 1.31501 in mid-June, now recovering to 1.32473. AOI (1.33917-1.34400) well-validated but ~145-200 pips above. Recovery underway but 4H structure is corrective not trending. NEWS: BOE Gov Bailey speaks 9:00am ET (GBP, red) — direct GBP event. Skip until either: (1) price reaches 1.33917 AOI with clean bearish engulf, or (2) weekly structure breaks decisively one direction. Alert at 1.33917.'},
+  'AUD/USD':{weekly:'Bearish',daily:'Bearish',fh:'Bearish',bucket:'Active watch',grade:'B',notes:'Wed 1 Jul. 3/3 bearish confirmed, strong clean trend. PRIMARY BEARISH AOI: 0.70246-0.70500 now fully validated — 3+ confirmed 4H/daily rejections on the way down, acts as resistance on pullbacks. Current price 0.68952, ~130 pips below this AOI — no entry now. Lower daily support at 0.68441 approaching — could act as a brief base but counter-trend, do not buy. PLAN: wait for pullback to 0.70246-0.70500 with 2-candle bearish engulf on 15M = valid short entry. Stop above 0.70550, target 0.68441 (daily support), R:R approx 1:3+. Alert at 0.70246.'},
+  'EUR/USD':{weekly:'Bearish',daily:'Bearish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'Thu 2 Jul 11:56 UTC FRESH RESCAN COMPLETE. Weekly: still lower-highs downtrend from Mar 2026 high (~1.209), but this week printed a real bounce off 1.13618 low back up to close 1.14020 — genuine defense, not just noise. Daily: lower highs/lows still intact, Bearish. 4H: CHANGED — broke above recent local highs, built a higher-low sequence off 1.1335 low. Bullish, genuinely diverging from Weekly/Daily now. BIAS: 2/3 Bearish, downgraded from prior 3/3 — 4H disagreement is real. AOI 1.13901-1.14000 has been tested repeatedly this week including a clear bounce reaction, may be flipping to support. Grade downgraded A to B — conviction has dropped, this is no longer a clean trend-following short. If 1.13901 breaks again with real conviction, bearish case still has room below; if bounce holds and 4H keeps building higher lows, may be setting up for a full bias flip on next scan. Watch closely, do not assume either direction.'},
+  'GBP/JPY':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Triggered / missed',grade:'B',notes:'Thu 2 Jul 11:59 UTC RESCAN. Price rallied up INTO 215.799-216.143 from below (not a pullback from above as originally assumed), touched high 216.076, then rejected hard — sharp breakdown through 215.799 down to 215.100, full candle closed below zone floor. Per strict broken-AOI rule this zone is now INVALIDATED. CONFLICT FLAGGED: original notes described the trigger here as a bearish engulf while bias was logged 3/3 Bullish — contradicts the never-counter-trend rule. The rejection signal that fired was counter-trend and correctly NOT tradeable. Next valid AOI down: 212.700-213.100 (Daily, multiple touches Mar-Apr 2026), untested since. Weekly/Daily structure still technically bullish but this resistance-style rejection within an uptrend is a crack worth watching — flag for bias reassessment on next full scan rather than assuming clean bullish continuation. Alert moved to 212.700-213.100.'},
+  'USD/CHF':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'Wed 1 Jul 12:45 UTC RESCAN. Full 4-timeframe scan (previous entry was based on unconfirmed charts). Weekly: strong recovery off Mar 2026 low 0.76300, clean higher highs, fresh high 0.81151. Daily: broke decisively through both 0.79201-0.79401 and 0.80002-0.80201 zones, now at highs. 4H: built base at 0.79201-0.79401, consolidated at 0.80002-0.80201 for several sessions (validated multi-touch), broke through and pushing new highs. 15M: extended — ran hard from ~0.80900 to 0.81146, last candle still developing. 3/3 BULLISH. AOI 0.80002-0.80201 was validated but price has now closed fully through it — per strict broken-AOI rule (no exception for broken-resistance-becomes-support) this zone is INVALIDATED. Next valid level: 0.79201-0.79401 (also multi-touch validated, ~175 pips below current price). 0.81000 round-number level is a watch level only — single touch so far, not yet 3-touch validated, do not treat as AOI. SKIP — no entry now, price extended with no validated zone nearby. Alert set at 0.79401 (approach to next valid AOI) and 0.81000 (watch level only, informational).'},
+  'USD/JPY':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'Thu 2 Jul 12:55 UTC RESCAN. Price rallied UP INTO 161.500-162.000 from below (not a pullback from above as originally assumed), touched high 162.840, then rejected hard — sharp breakdown through 161.500 straight to a low of 160.604 (exactly the old, previously "retired" AOI from initial scan). Full candle closed below the zone floor. Per strict broken-AOI rule this zone is now INVALIDATED — same treatment as GBP/JPY. CHART ACTION NEEDED: delete/redraw the 161.500-162.000 box. CORRELATION FLAG: GBP/JPY produced the identical pattern (rally into resistance, hard rejection) around the same time — this looks like broad JPY strength today, not two independent pair-specific signals. Treat as one correlated bet if considering both. Price now testing old 160.604-160.749 zone, bounced off the exact low to 160.926, but last candle still developing — no confirmed signal yet. Need to verify touch count on this old zone before trusting at A-grade. Alert moved to 160.604-160.749.'},
+  'GBP/CAD':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'Wed 1 Jul. Daily chart confirms 1.87990 NOW FULLY VALIDATED as support — 3+ daily candle touches visible (breakout candle + 2-3 subsequent tests before launching to fresh highs). This upgrades the next retest to a proper AOI entry, not just a "watch and see" level. Currently price at 1.88320, pushing fresh multi-month highs with no visible resistance structure above. Mid-range, no entry now. NEWS: BOC Gov Macklem 9:00am ET (orange, CAD) — avoid until clear. NEXT OPPORTUNITY: pullback to 1.87990 with a clean 2-candle bullish engulf = valid B-grade long. Alert set at 1.87990.'},
+  'GBP/CHF':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'Wed 1 Jul 14:39 UTC UPDATE. 1.07040 INVALIDATED — price dipped down through it during 13:00-15:00 window, multiple candles closed below with a low of ~1.06920, before reversing hard. Per strict broken-AOI rule (no exception for dips-in-uptrend), this zone is dead. Next valid level per rule: 1.06600 — but price never actually reached it before rallying. Since the invalidation, price has rallied hard to 1.07460 highs, currently 1.07367-1.07408 — now ~330-370 pips above the dead 1.07040 level and 760+ pips above the untested 1.06600 zone. NO VALID AOI NEAR PRICE. 3/3 bias still bullish. NO TRADE — strong move but no rules-valid setup existed here; nothing to chase now. Watch for a fresh pullback that actually reaches and holds 1.06600, or a new zone to form closer to current price. Alert moved to 1.06600.'},
+  'NZD/USD':{weekly:'Bearish',daily:'Bearish',fh:'Ranging',bucket:'Active watch',grade:'B',notes:'Wed 1 Jul. Weekly/daily bearish, 4H now short-term recovery within larger downtrend. Bottomed 0.56300-0.56400, bouncing. Current price 0.56747 mid-range — no valid AOI here. RESISTANCE ABOVE (potential short re-entry zones): 0.57000 broken level (~25 pips up), 0.57800-0.57900 old deleted AOI now acting as resistance (~110 pips up). SUPPORT BELOW: 0.56000 weekly level. 15M: choppy 0.56620-0.56825, no directional signal. Skip until price reaches either 0.57000 or 0.57800 resistance with a clean engulf, or until 0.56000 support produces a bounce worth monitoring. Alert at 0.57000.'},
+  'AUD/JPY':{weekly:'Bullish',daily:'Bearish',fh:'Ranging',bucket:'Active watch',grade:'B',notes:'Wed 1 Jul. Weekly bullish (larger uptrend), daily/4H corrective bearish. AOI at 113.000-113.185 remains the most touch-validated zone in entire scan — enormous number of 4H reactions, now acting as strong resistance after breakdown. Current price 112.197, ~70-100 pips below the AOI. SETUP A (bearish): if price recovers to 113.000-113.185 with clean 2-candle engulf = high-conviction short within correction. Stop above 113.250, target 111.000, R:R approx 1:4. SETUP B (bullish): if price pulls back to 111.000 support and bounces with bullish engulf = trend-continuation long. Alert at 112.470 (immediate watch level) and 113.000 (bearish entry zone).'},
+  'EUR/JPY':{weekly:'Ranging',daily:'Ranging',fh:'Ranging',bucket:'Ranging / no break',grade:'C',notes:'Wed 1 Jul. Still ranging — confirmed. Weekly consolidation 183.452-187.603, no directional breakout. 184.651 level flips direction constantly — too reactive from both sides to use as a reliable one-directional AOI. Price mid-range at 185.200, sharp selloff this morning from 185.868 to 185.170, stabilizing. NEWS: Lagarde speaks 9:00am AND 10:00am ET (EUR, orange) — adds unpredictability. TRADEABLE LEVELS: 183.452 (lower range boundary, validated) and 187.603 (upper resistance). Only trade from these edges with clean engulf, not from mid-range. Skip today.'},
+  'USD/CAD':{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'B',notes:'Thu 2 Jul 12:59 UTC RESCAN. Weekly/4H structure still bullish, rallied to 1.42480 resistance. But AOI 1.41850-1.42000 has now been tested repeatedly through today\'s session — bounce, rally, pullback into zone, bounce, rally, and now a sharp acceleration straight through it to 1.41742-1.41752, with no real pause. NOT YET CONFIRMED BROKEN — the candle currently pushing below 1.41850 is still developing, last closed candle printed around 1.41940, still technically inside the zone. Per developing-candle rule, no trade either direction until this closes. IF it closes below 1.41850 with a full body: per strict rule, zone invalidated, next level down is Weekly support at 1.38884 (300+ pips away) — same big-gap pattern as GBP/CHF and USD/CHF. SESSION-WIDE PATTERN FLAGGED: EUR/USD, GBP/JPY, USD/JPY, and now USD/CAD have all had key AOIs violently tested/broken in this same session — treat as elevated-volatility/news-driven session, not four independent pair-specific signals. Re-check after this candle closes.'},
+};
+
+function initScan(){
+  PAIRS.forEach(p=>{
+    if(!scanData[p]){
+      scanData[p] = SEED[p] || {weekly:'—',daily:'—',fh:'—',bucket:'—',grade:'—',notes:''};
+    }
+  });
+  renderScan();
+}
+
+function getScore(d){
+  const dirs = [d.weekly,d.daily,d.fh].filter(x=>x==='Bullish'||x==='Bearish');
+  if(dirs.length===0) return 0;
+  const bulls = dirs.filter(x=>x==='Bullish').length;
+  const bears = dirs.filter(x=>x==='Bearish').length;
+  const majority = Math.max(bulls,bears);
+  if(dirs.length===3) return majority>=2?majority:1;
+  if(dirs.length===2) return bulls===2||bears===2?2:1;
+  return 1;
+}
+
+function getBias(d){
+  const dirs=[d.weekly,d.daily,d.fh].filter(x=>x==='Bullish'||x==='Bearish');
+  if(!dirs.length) return '—';
+  const b=dirs.filter(x=>x==='Bullish').length;
+  const br=dirs.filter(x=>x==='Bearish').length;
+  return b>br?'Bullish':br>b?'Bearish':'Split';
+}
+
+function scoreBadge(s){
+  if(s===3) return `<span class="score-badge score-3">3/3</span>`;
+  if(s===2) return `<span class="score-badge score-2">2/3</span>`;
+  if(s===1) return `<span class="score-badge score-1">1/3</span>`;
+  return `<span class="score-badge score-0">—</span>`;
+}
+
+function biasHtml(b){
+  if(b==='Bullish') return `<span style="font-size:12px;color:var(--green);font-weight:500"><span class="align-dot dot-bull"></span>Bullish</span>`;
+  if(b==='Bearish') return `<span style="font-size:12px;color:var(--red);font-weight:500"><span class="align-dot dot-bear"></span>Bearish</span>`;
+  if(b==='Split') return `<span style="font-size:12px;color:var(--color-text-secondary)">Split</span>`;
+  return `<span style="font-size:12px;color:var(--color-text-secondary)">—</span>`;
+}
+
+// Composite rank: timeframe score (0-3) is primary, grade (A>B>C>none) is tiebreaker.
+// Used to sort pairs from best to worst possible trade across Scan and Watchlist tabs.
+function getRank(d){
+  const score=getScore(d);
+  const gradeVal=d.grade==='A'?3:d.grade==='B'?2:d.grade==='C'?1:0;
+  return score*10+gradeVal;
+}
+
+function sortedPairs(pairList){
+  return [...pairList].sort((a,b)=>getRank(scanData[b])-getRank(scanData[a]));
+}
+
+function tfSelect(pair,field,val){
+  const s=`<select onchange="updateScan('${pair}','${field}',this.value)">`;
+  return s+TF_OPTS.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')+'</select>';
+}
+
+function renderScan(){
+  const tbody=document.getElementById('scan-tbody');
+  const ordered=sortedPairs(PAIRS);
+  tbody.innerHTML=ordered.map((p,i)=>{
+    const d=scanData[p];
+    const score=getScore(d);
+    const bias=getBias(d);
+    const bOpts=BUCKET_OPTS.map(o=>`<option${o===d.bucket?' selected':''}>${o}</option>`).join('');
+    const gOpts=GRADE_OPTS.map(o=>`<option${o===d.grade?' selected':''}>${o}</option>`).join('');
+    return `<tr>
+      <td style="color:var(--color-text-secondary);font-size:11px">#${i+1}</td>
+      <td style="font-weight:500;white-space:nowrap">${p}</td>
+      <td>${tfSelect(p,'weekly',d.weekly)}</td>
+      <td>${tfSelect(p,'daily',d.daily)}</td>
+      <td>${tfSelect(p,'fh',d.fh)}</td>
+      <td>${scoreBadge(score)}</td>
+      <td>${biasHtml(bias)}</td>
+      <td><select onchange="updateScan('${p}','bucket',this.value)">${bOpts}</select></td>
+      <td><select onchange="updateScan('${p}','grade',this.value)">${gOpts}</select></td>
+      <td><input type="text" value="${d.notes}" onchange="updateScan('${p}','notes',this.value)" placeholder="Notes" style="min-width:80px"></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateScan(pair,field,val){
+  scanData[pair][field]=val;
+  renderScan();
+  renderWatchlist();
+  saveState();
+}
+
+function resetScan(){
+  PAIRS.forEach(p=>{scanData[p]={weekly:'—',daily:'—',fh:'—',bucket:'—',grade:'—',notes:''};});
+  renderScan();
+  renderWatchlist();
+  saveState();
+}
+
+function renderWatchlist(){
+  const active=sortedPairs(PAIRS.filter(p=>scanData[p].bucket==='Active watch'||scanData[p].bucket==='In Trade'));
+  const statsEl=document.getElementById('wl-stats');
+  const total=PAIRS.length;
+  const watching=PAIRS.filter(p=>scanData[p].bucket==='Active watch').length;
+  const inTrade=PAIRS.filter(p=>scanData[p].bucket==='In Trade').length;
+  const ranging=PAIRS.filter(p=>scanData[p].bucket==='Ranging / no break').length;
+  const missed=PAIRS.filter(p=>scanData[p].bucket==='Triggered / missed').length;
+  statsEl.innerHTML=`
+    <div class="stat-card"><div class="stat-val">${inTrade}</div><div class="stat-lbl">In Trade</div></div>
+    <div class="stat-card"><div class="stat-val">${watching}</div><div class="stat-lbl">Active watch</div></div>
+    <div class="stat-card"><div class="stat-val">${ranging}</div><div class="stat-lbl">Ranging</div></div>
+    <div class="stat-card"><div class="stat-val">${missed}</div><div class="stat-lbl">Triggered / missed</div></div>
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total pairs</div></div>`;
+  const wlEl=document.getElementById('watchlist-cards');
+  if(!active.length){wlEl.innerHTML='<div class="empty-state">No pairs on active watch yet — complete the Sunday scan first.</div>';return;}
+  wlEl.innerHTML=active.map((p,i)=>{
+    const d=scanData[p];
+    const score=getScore(d);
+    const bias=getBias(d);
+    const gClass=d.grade==='A'?'grade-A':d.grade==='B'?'grade-B':d.grade==='C'?'grade-C':'';
+    const bucketBadge=d.bucket==='In Trade'?'<span class="bucket-badge bucket-intrade">IN TRADE</span>':'';
+    return `<div style="padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--color-text-secondary);min-width:18px">#${i+1}</span>
+      <span style="font-weight:500;min-width:70px">${p}</span>
+      ${bucketBadge}
+      ${scoreBadge(score)}
+      ${biasHtml(bias)}
+      ${d.grade&&d.grade!=='—'?`<span class="${gClass}">${d.grade}-grade</span>`:''}
+      ${d.notes?`<span style="font-size:12px;color:var(--color-text-secondary);flex:1">${d.notes}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function initJournalPairs(){
+  const opts='<option value="">Select pair</option>'+PAIRS.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('j-pair').innerHTML=opts;
+  document.getElementById('s-pair').innerHTML=opts;
+  document.getElementById('l-pair').innerHTML='<option value="">All / general</option>'+PAIRS.map(p=>`<option>${p}</option>`).join('');
+}
+
+function switchJournalType(type){
+  document.getElementById('jt-trade').classList.toggle('active',type==='trade');
+  document.getElementById('jt-skip').classList.toggle('active',type==='skip');
+  document.getElementById('jt-trade').style.borderBottom=type==='trade'?'2px solid var(--color-text-primary)':'2px solid transparent';
+  document.getElementById('jt-skip').style.borderBottom=type==='skip'?'2px solid var(--color-text-primary)':'2px solid transparent';
+  document.getElementById('form-trade').style.display=type==='trade'?'block':'none';
+  document.getElementById('form-skip').style.display=type==='skip'?'block':'none';
+}
+
+function logTrade(){
+  const pair=document.getElementById('j-pair').value;
+  const dir=document.getElementById('j-dir').value;
+  const result=document.getElementById('j-result').value;
+  const rmult=document.getElementById('j-rmult').value;
+  const rr=document.getElementById('j-rr').value;
+  const grade=document.getElementById('j-grade').value;
+  const session=document.getElementById('j-session').value;
+  const engulf=document.getElementById('j-engulf').value;
+  const touches=document.getElementById('j-touches').value;
+  const variant=document.getElementById('j-variant').value;
+  const signaltf=document.getElementById('j-signaltf').value;
+  const hs=document.getElementById('j-hs').value;
+  const notes=document.getElementById('j-notes').value;
+  if(!pair||!dir||!result){alert('Please fill in pair, direction, and result.');return;}
+  const entry={id:Date.now(),pair,dir,result,rmult,rr,grade,session,engulf,touches,variant,signaltf,hs,notes,date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})};
+  journalEntries.unshift(entry);
+  renderJournal();
+  clearJournalForm();
+  saveState();
+}
+
+function clearJournalForm(){
+  ['j-pair','j-dir','j-result','j-grade','j-session','j-engulf','j-touches'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('j-rmult').value='';
+  document.getElementById('j-rr').value='';
+  document.getElementById('j-variant').value='Standard';
+  document.getElementById('j-signaltf').value='15M-engulf';
+  document.getElementById('j-hs').value='No';
+  document.getElementById('j-notes').value='';
+}
+
+function logSkip(){
+  const pair=document.getElementById('s-pair').value;
+  const reason=document.getElementById('s-reason').value;
+  const notes=document.getElementById('s-notes').value;
+  if(!pair||!reason){alert('Please fill in pair and skip reason.');return;}
+  const entry={id:Date.now(),pair,reason,notes,date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})};
+  skipEntries.unshift(entry);
+  renderSkips();
+  clearSkipForm();
+  saveState();
+}
+
+function clearSkipForm(){
+  document.getElementById('s-pair').value='';
+  document.getElementById('s-reason').value='';
+  document.getElementById('s-notes').value='';
+}
+
+function deleteSkip(id){
+  skipEntries=skipEntries.filter(e=>e.id!==id);
+  renderSkips();
+  saveState();
+}
+
+function renderSkips(){
+  const list=document.getElementById('skip-list');
+  const sumEl=document.getElementById('skip-summary');
+  if(!skipEntries.length){list.innerHTML='<div class="empty-state">No skips logged yet.</div>';sumEl.textContent='';return;}
+  sumEl.textContent=`${skipEntries.length} skip${skipEntries.length!==1?'s':''} logged`;
+  list.innerHTML=skipEntries.map(e=>`<div class="journal-entry">
+      <div class="journal-meta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="font-weight:500;color:var(--color-text-primary)">${e.pair}</span>
+        <span style="color:var(--color-text-secondary)">${e.reason}</span>
+        <span style="margin-left:auto">${e.date}</span>
+        <button class="danger" style="padding:2px 8px;font-size:11px" onclick="deleteSkip(${e.id})">Remove</button>
+      </div>
+      ${e.notes?`<div class="journal-notes" style="margin-top:4px">${e.notes}</div>`:''}
+    </div>`).join('');
+}
+
+function deleteEntry(id){
+  journalEntries=journalEntries.filter(e=>e.id!==id);
+  renderJournal();
+  saveState();
+}
+
+function renderJournal(){
+  const list=document.getElementById('journal-list');
+  const sumEl=document.getElementById('journal-summary');
+  if(!journalEntries.length){list.innerHTML='<div class="empty-state">No trades logged yet.</div>';sumEl.textContent='';return;}
+  const wins=journalEntries.filter(e=>e.result==='Win').length;
+  const losses=journalEntries.filter(e=>e.result==='Loss').length;
+  const open=journalEntries.filter(e=>e.result==='Open').length;
+  const total=journalEntries.length;
+  sumEl.textContent=`${total} trade${total!==1?'s':''} · ${wins}W / ${losses}L${open?` · ${open} open`:''}`;
+  list.innerHTML=journalEntries.map(e=>{
+    const resColor=e.result==='Win'?'var(--green)':e.result==='Loss'?'var(--red)':e.result==='Open'?'var(--amber)':'var(--color-text-secondary)';
+    const gClass=e.grade==='A'?'grade-A':e.grade==='B'?'grade-B':e.grade==='C'?'grade-C':'';
+    return `<div class="journal-entry">
+      <div class="journal-meta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="font-weight:500;color:var(--color-text-primary)">${e.pair}</span>
+        <span>${e.dir}</span>
+        <span style="color:${resColor};font-weight:500">${e.result}</span>
+        ${e.rmult?`<span>${e.rmult}R</span>`:''}
+        ${e.rr?`<span>${e.rr}</span>`:''}
+        ${e.grade&&e.grade!=='—'?`<span class="${gClass}">${e.grade}-grade</span>`:''}
+        ${e.session?`<span>${e.session}</span>`:''}
+        ${e.engulf?`<span style="color:var(--color-text-secondary)">${e.engulf}-candle engulf</span>`:''}
+        ${e.variant&&e.variant!=='Standard'?`<span style="color:var(--color-text-secondary)">[${e.variant}]</span>`:''}
+        ${e.signaltf?`<span class="bucket-badge" style="background:rgba(240,169,60,0.08);color:var(--color-text-secondary);border:1px solid var(--line)">${e.signaltf}</span>`:''}
+        ${e.hs==='Yes'?`<span class="bucket-badge" style="background:rgba(51,209,126,0.08);color:var(--green);border:1px solid rgba(51,209,126,0.3)">H&amp;S confirmed</span>`:''}
+        <span style="margin-left:auto">${e.date}</span>
+        <button class="danger" style="padding:2px 8px;font-size:11px" onclick="deleteEntry(${e.id})">Remove</button>
+      </div>
+      ${e.notes?`<div class="journal-notes" style="margin-top:4px">${e.notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ---- Stats ----
+function computeExpectancy(entries){
+  const valid=entries.filter(e=>e.rmult!==undefined && e.rmult!=='' && !isNaN(parseFloat(e.rmult)));
+  if(!valid.length) return null;
+  const rs=valid.map(e=>parseFloat(e.rmult));
+  const avgR=rs.reduce((a,b)=>a+b,0)/rs.length;
+  const wins=entries.filter(e=>e.result==='Win').length;
+  const losses=entries.filter(e=>e.result==='Loss').length;
+  const decided=wins+losses;
+  const winRate=decided?(wins/decided*100):null;
+  return {avgR,winRate,n:valid.length,wins,losses,decided};
+}
+
+function statCardsHtml(entries,label){
+  const stats=computeExpectancy(entries);
+  if(!stats||!entries.length){
+    return `<div class="empty-state">No trades logged${label?' for '+label:''} yet.</div>`;
+  }
+  const wrTxt=stats.winRate!==null?stats.winRate.toFixed(0)+'%':'—';
+  const avgRTxt=(stats.avgR>=0?'+':'')+stats.avgR.toFixed(2)+'R';
+  const avgRColor=stats.avgR>0?'var(--green)':stats.avgR<0?'var(--red)':'var(--color-text-primary)';
+  return `<div class="stats-row" style="margin-bottom:0">
+    <div class="stat-card"><div class="stat-val">${entries.length}</div><div class="stat-lbl">Trades</div></div>
+    <div class="stat-card"><div class="stat-val">${wrTxt}</div><div class="stat-lbl">Win rate (${stats.wins}W/${stats.losses}L)</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${avgRColor}">${avgRTxt}</div><div class="stat-lbl">Avg R / expectancy</div></div>
+    <div class="stat-card"><div class="stat-val">${stats.n}</div><div class="stat-lbl">With R logged</div></div>
+  </div>`;
+}
+
+function renderStats(){
+  document.getElementById('stats-overall').innerHTML = journalEntries.length ? statCardsHtmlInner(journalEntries) : '<div class="empty-state" style="grid-column:1/-1">No trades logged yet — your stats will appear here once you start journaling.</div>';
+
+  // By variant
+  const standard=journalEntries.filter(e=>!e.variant||e.variant==='Standard');
+  const legacyVariant=journalEntries.filter(e=>e.variant==='Legacy-5candle');
+  document.getElementById('stats-variant').innerHTML=`
+    <div style="margin-bottom:10px"><div class="sub-text" style="margin-bottom:6px;font-weight:500">Standard (2-candle engulf, current rule)</div>${statCardsHtml(standard)}</div>
+    <div><div class="sub-text" style="margin-bottom:6px;font-weight:500">Legacy (5+ candle swallow, old rule)</div>${statCardsHtml(legacyVariant)}</div>`;
+
+  // By signal timeframe
+  const sig15m=journalEntries.filter(e=>!e.signaltf||e.signaltf==='15M-engulf');
+  const sig1h=journalEntries.filter(e=>e.signaltf==='1H-engulf');
+  document.getElementById('stats-signaltf').innerHTML=`
+    <div style="margin-bottom:10px"><div class="sub-text" style="margin-bottom:6px;font-weight:500">15M-engulf (original)</div>${statCardsHtml(sig15m)}</div>
+    <div><div class="sub-text" style="margin-bottom:6px;font-weight:500">1H-engulf (test variant)</div>${statCardsHtml(sig1h)}</div>`;
+
+  // By H&S presence
+  const hsYes=journalEntries.filter(e=>e.hs==='Yes');
+  const hsNo=journalEntries.filter(e=>!e.hs||e.hs==='No');
+  document.getElementById('stats-hs').innerHTML=`
+    <div style="margin-bottom:10px"><div class="sub-text" style="margin-bottom:6px;font-weight:500">H&amp;S / Inverse H&amp;S confirmed</div>${statCardsHtml(hsYes)}</div>
+    <div><div class="sub-text" style="margin-bottom:6px;font-weight:500">No H&amp;S pattern</div>${statCardsHtml(hsNo)}</div>`;
+
+  // By grade
+  const grades=['A','B','C'];
+  document.getElementById('stats-grade').innerHTML=grades.map(g=>{
+    const entries=journalEntries.filter(e=>e.grade===g);
+    return `<div style="margin-bottom:10px"><div class="sub-text" style="margin-bottom:6px;font-weight:500">${g}-grade</div>${statCardsHtml(entries)}</div>`;
+  }).join('');
+
+  // By pair
+  const pairsWithTrades=PAIRS.filter(p=>journalEntries.some(e=>e.pair===p));
+  if(!pairsWithTrades.length){
+    document.getElementById('stats-pair').innerHTML='<div class="empty-state">No trades logged yet.</div>';
+  } else {
+    document.getElementById('stats-pair').innerHTML=pairsWithTrades.map(p=>{
+      const entries=journalEntries.filter(e=>e.pair===p);
+      const stats=computeExpectancy(entries);
+      const wrTxt=stats&&stats.winRate!==null?stats.winRate.toFixed(0)+'%':'—';
+      const avgRTxt=stats?(stats.avgR>=0?'+':'')+stats.avgR.toFixed(2)+'R':'—';
+      const avgRColor=stats&&stats.avgR>0?'var(--green)':stats&&stats.avgR<0?'var(--red)':'var(--color-text-primary)';
+      return `<div style="display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);flex-wrap:wrap">
+        <span style="font-weight:500;min-width:70px">${p}</span>
+        <span style="font-size:12px;color:var(--color-text-secondary)">${entries.length} trade${entries.length!==1?'s':''}</span>
+        <span style="font-size:12px;color:var(--color-text-secondary)">Win rate ${wrTxt}</span>
+        <span style="font-size:12px;font-weight:500;color:${avgRColor}">${avgRTxt} avg</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Skip reasons breakdown
+  if(!skipEntries.length){
+    document.getElementById('stats-skip').innerHTML='<div class="empty-state">No skips logged yet — use "Log a skip" in the journal tab whenever a scanned pair doesn\'t become a trade.</div>';
+  } else {
+    const counts={};
+    skipEntries.forEach(e=>{counts[e.reason]=(counts[e.reason]||0)+1;});
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const max=sorted[0][1];
+    document.getElementById('stats-skip').innerHTML=sorted.map(([reason,count])=>{
+      const pct=(count/max*100).toFixed(0);
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span>${reason}</span><span style="color:var(--color-text-secondary)">${count}</span>
+        </div>
+        <div style="background:var(--color-background-secondary);border-radius:4px;height:8px;overflow:hidden">
+          <div style="background:var(--color-text-primary);height:100%;width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function statCardsHtmlInner(entries){
+  const stats=computeExpectancy(entries);
+  if(!stats) return '<div class="empty-state" style="grid-column:1/-1">No R-multiples logged yet.</div>';
+  const wrTxt=stats.winRate!==null?stats.winRate.toFixed(0)+'%':'—';
+  const avgRTxt=(stats.avgR>=0?'+':'')+stats.avgR.toFixed(2)+'R';
+  const avgRColor=stats.avgR>0?'var(--green)':stats.avgR<0?'var(--red)':'var(--color-text-primary)';
+  return `<div class="stat-card"><div class="stat-val">${entries.length}</div><div class="stat-lbl">Trades</div></div>
+    <div class="stat-card"><div class="stat-val">${wrTxt}</div><div class="stat-lbl">Win rate (${stats.wins}W/${stats.losses}L)</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:${avgRColor}">${avgRTxt}</div><div class="stat-lbl">Avg R / expectancy</div></div>
+    <div class="stat-card"><div class="stat-val">${stats.n}</div><div class="stat-lbl">With R logged</div></div>`;
+}
+
+function renderRules(){
+  function makeList(id,arr){
+    document.getElementById(id).innerHTML=arr.map((r,i)=>`<div class="rule-item"><span class="rule-num">${i+1}</span><span class="rule-text">${r}</span></div>`).join('');
+  }
+  makeList('rules-topdown',RULES.topdown);
+  makeList('rules-entry',RULES.entry);
+  makeList('rules-risk',RULES.risk);
+  makeList('rules-session',RULES.session);
+}
+
+function renderChecklist(){
+  const el=document.getElementById('checklist-items');
+  el.innerHTML=CHECKLIST.map(c=>`
+    <div class="checklist-item">
+      <input type="checkbox" id="${c.id}" ${checklistState[c.id]?'checked':''} onchange="checklistState['${c.id}']=this.checked;saveState()">
+      <div><div class="checklist-text">${c.text}</div><div class="sub-text">${c.sub}</div></div>
+    </div>`).join('');
+}
+
+function logLesson(){
+  const pair=document.getElementById('l-pair').value;
+  const category=document.getElementById('l-category').value;
+  const text=document.getElementById('l-text').value.trim();
+  if(!text){ alert('Add some text describing the lesson or hypothesis.'); return; }
+  lessonEntries.unshift({
+    id:Date.now(), pair, category, text,
+    date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+  });
+  document.getElementById('l-text').value='';
+  saveState();
+  renderLessons();
+}
+
+function deleteLesson(id){
+  lessonEntries=lessonEntries.filter(e=>e.id!==id);
+  saveState();
+  renderLessons();
+}
+
+function renderLessons(){
+  const list=document.getElementById('lessons-list');
+  if(!lessonEntries.length){ list.innerHTML='<div class="empty-state">No lessons logged yet.</div>'; return; }
+  list.innerHTML=lessonEntries.map(e=>`
+    <div class="journal-entry">
+      <div class="journal-meta" style="display:flex;justify-content:space-between;align-items:center">
+        <span>${e.date}${e.pair?' · '+e.pair:' · General'} · <span style="color:var(--amber)">${e.category}</span></span>
+        <button class="danger" style="padding:3px 8px;font-size:10px" onclick="deleteLesson(${e.id})">Remove</button>
+      </div>
+      <div class="journal-notes">${e.text}</div>
+    </div>`).join('');
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tabs')[0].querySelectorAll('.tab').forEach((t,i)=>{
+    const names=['scan','watchlist','journal','stats','rules','lessons'];
+    t.classList.toggle('active',names[i]===name);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='watchlist') renderWatchlist();
+  if(name==='stats') renderStats();
+  if(name==='lessons') renderLessons();
+}
+
+loadState().then(()=>{
+  initScan();
+  initJournalPairs();
+  renderRules();
+  renderChecklist();
+  renderJournal();
+  renderSkips();
+});
+
+function updateDeskClock(){
+  const el=document.getElementById('desk-clock');
+  if(!el)return;
+  const now=new Date();
+  const opts={hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'America/New_York'};
+  el.textContent=now.toLocaleTimeString('en-US',opts)+' ET';
+}
+updateDeskClock();
+setInterval(updateDeskClock,1000);
+</script>
+</body>
+</html>
