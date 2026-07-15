@@ -24,12 +24,42 @@ runner (`run_v90_tests.js`, ...) that:
   `new Function(...)` and executes it.
 - Prints `PASS`/`FAIL` per fixture and a final summary line.
 
-These files live in the working scratchpad used during development, not in this repository —
-they are regenerated fresh each session from `index.html`'s current `<script>` contents. As of
-v12.0.0 there are 23 suites totaling **504 fixtures**. Current per-suite counts are tracked in
+**Two categories exist, and it matters which one a suite is in:**
+
+- **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.0.1
+  there is exactly **one**: `tests/v120_strategy_framework_tests.js` (28 fixtures), with its
+  self-contained runner `tests/run_v120_tests.js` (it extracts `index.html`'s `<script>` body
+  itself — no separate preprocessing step required).
+- **Historical scratch-only suites** — the remaining 22 suites referenced in
+  `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (476 fixtures) live only in the
+  ephemeral Claude Code scratchpad used during development, not in this repository, and are
+  regenerated fresh each session from `index.html`'s current `<script>` contents when present.
+  **This is a real, disclosed gap, not a design choice worth defending**: a fresh clone of this
+  repository cannot reproduce any of these 22 suites. See
+  [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for the current state of that gap (3 of the 22 currently
+  can't even execute in scratch due to missing companion source files, and 2 have proven
+  fixture-count discrepancies against the committed baseline). New suites should be added under
+  `tests/` going forward, following the `v120` pattern, rather than added to the scratch-only set.
+
+### Canonical test command
+
+```
+tests/run_all.sh
+```
+
+Runs every repository-owned permanent suite (every `tests/run_*_tests.js`) plus the
+protected-function/constant drift check, and prints a summary: suites run, fixtures run,
+passed, failed, execution errors. Exits nonzero if any permanent suite fails, errors, or if
+protected-function/constant drift is detected. Uses only files inside this repository — no
+scratchpad path is ever read. Its output explicitly states that only repository-owned permanent
+suites are being run, and that the historical scratch-only suites are not included. Run it from
+anywhere; it resolves the repository root relative to its own location.
+
+Current per-suite counts (including the 22 historical, scratch-only ones) are tracked in
 `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (also mirrored into the committed
-`regression-baseline.json` — see below) rather than restated here, so there is exactly one place
-to keep them in sync.
+`regression-baseline.json`) rather than restated here, so there is exactly one place to keep them
+in sync.
 
 ### A known, permanent limitation of this harness
 
@@ -147,8 +177,11 @@ corresponding entry (or add a new one) **before** running `--update`, so the com
 
 ## What a release should run before shipping
 
-1. All existing fixture suites (regenerate the extracted script from the current `index.html`
-   first) — zero failures.
+0. `tests/run_all.sh` — the canonical command for every repository-owned permanent suite plus the
+   protected-function/constant drift check, in one step. Zero failures, zero execution errors,
+   zero drift.
+1. All existing fixture suites, including any historical scratch-only ones present this session
+   (regenerate the extracted script from the current `index.html` first) — zero failures.
 2. Any new fixture suite the release added — zero failures.
 3. `python3 regression-baseline-tools.py` (no flag) — review the reported drift, if any, and
    confirm it's limited to what the release actually disclosed changing.

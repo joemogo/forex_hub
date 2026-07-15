@@ -64,23 +64,32 @@ stop/target placement, position sizing, polling cadence, or journaling.
 
 Full model: [docs/TESTING.md](docs/TESTING.md). In short, before any release:
 
-1. Regenerate/extract the app's script body from `index.html` and run a syntax check (must not
-   throw when wrapped in `new Function(...)`).
-2. Run every fixture suite you can (see below on scratch vs. `tests/`) — zero failures.
+1. Run the canonical repository test command:
+   ```
+   tests/run_all.sh
+   ```
+   This runs every repository-owned permanent suite under `tests/` plus the protected-function/
+   constant drift check, reports suites/fixtures/passed/failed/execution-errors, and exits
+   nonzero on any failure, error, or drift. It uses only files inside this repository — no
+   scratchpad path is ever read. **It does not run, and does not claim to run, the ~22 historical
+   suites that still exist only in an ephemeral scratchpad** — see below.
+2. Run any additional historical scratch-only fixture suites available in your current session,
+   if any (see below on scratch vs. `tests/`) — zero failures.
 3. Add focused fixtures for whatever you changed, following the existing per-release-suite naming
-   convention (`vNNN_<topic>_tests.js` + `run_vNNN_tests.js`).
-4. Run `regression-baseline-tools.py` (no flag) and review any drift.
-5. For anything the offline JXA harness can't reach (real `await` chains — the harness cannot
+   convention (`vNNN_<topic>_tests.js` + `run_vNNN_tests.js`), placed under `tests/` (not scratch)
+   so `tests/run_all.sh` picks them up automatically.
+4. For anything the offline JXA harness can't reach (real `await` chains — the harness cannot
    resolve a genuine asynchronous promise), verify live in a real browser instead, governed by the
    Browser Testing Policy below.
-6. Only then: `regression-baseline-tools.py --update`, version bump, changelog entry.
+5. Only then: `regression-baseline-tools.py --update`, version bump, changelog entry.
 
 **Where test files live.** Historically, every fixture suite lived only in the ephemeral Claude
 Code scratchpad, not in this repository — a real, disclosed gap (see
 [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)). Starting with `tests/v120_strategy_framework_tests.js`,
-new suites should be added directly under `tests/` in the repository, with a self-contained runner
-that reads `index.html` directly (no separate preprocessing step) and depends on nothing outside
-the repo. Prefer this pattern for any new suite going forward.
+new suites are added directly under `tests/` in the repository, with a self-contained runner that
+reads `index.html` directly (no separate preprocessing step) and depends on nothing outside the
+repo. **Always use this pattern for any new suite** — never add a new suite to the scratch-only
+set, since `tests/run_all.sh` can only discover and run what's actually in the repository.
 
 **Browser Testing Policy** (permanent rule): developer browser testing must never contaminate real
 paper-trading data.
