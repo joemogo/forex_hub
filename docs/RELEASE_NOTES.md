@@ -13,6 +13,43 @@ its change actually affects.
 
 ---
 
+## v12.1.2 — TRUE MTF Replay Diagnostics + Manual Review Eligible
+A platform-tooling release (not Phase 2/Strategy Expansion — no new strategy added). Two
+features built on top of the existing JVM engine, neither loosening automatic-trading rules,
+bypassing any existing protection, or allowing live-money execution. The pre-implementation audit
+found the shared root cause behind both: `evaluateLiveTrigger()` (live auto-trading) and
+`simulateTrueMTFReplay()` (Replay) both check the Monday–Wednesday weekday rule *first* and
+short-circuit immediately on failure — a Thursday/Friday setup is never even scored for
+confluence/AOI/confirmation/R:R today. **Part 1 — Replay Diagnostics**: a new shared,
+non-short-circuiting evaluator (`evaluateSetupFullBreakdownCore()`) built entirely from calls to
+existing protected primitives adds a permanent "Replay Diagnostics" section — coverage, a
+labeled candidate funnel (hard gate / soft factor / informational / preference), rejection
+totals (exactly one primary reason per candidate), a Rejected Candidates table with full
+per-candidate detail, a Near Misses section, evaluator-parity display, five distinct empty-state
+messages, and read-only CSV/JSON export. **Part 2 — Manual Review Eligible**: every setup now
+classifies as INELIGIBLE / DEVELOPING / MANUAL REVIEW ELIGIBLE / AUTO ENTRY ELIGIBLE; a setup
+qualifies for manual review only when every other gate passes and weekday is the sole failure —
+high confluence alone can never substitute for a missing AOI/confirmation/R:R/session pass.
+Gates with no enforced code today (news, spread, exposure, daily-loss) are explicitly disclosed
+as not-yet-enforced rather than silently treated as passing. An amber banner and a Review Trade
+modal (required acknowledgment checkbox, no one-click execution) gate approval, which commits
+through the existing, unmodified `openPaperPosition()`/`commitPaperLedger()` path with full
+rollback on failure and rich attribution stored on the journal record. Four separate performance
+groups (Standard / Outside-Window / Thursday / Friday) keep manual-review trades visibly
+separate from standard results. **Part 3 — documentation**: Strategy Center's momentum-loss
+language was made explicitly symmetric for bullish/bearish setups (the underlying code was
+already symmetric), plus a new Research Diagnostics panel disclosing which loss-of-momentum
+conditions are executable today and what each remaining one would require. 53 new fixtures
+(`tests/v1212_manual_review_and_replay_diagnostics_tests.js`) caught two real bugs before
+shipping: a Friday-cutoff check that used wall-clock time instead of the setup's own decision
+timestamp, and a test-state leak between fixtures — both fixed. Live browser verification covered
+all 19 required scenarios and caught one more real bug: the Manual Review banner was initially
+wired to the wrong panel (`panel-scan`, "Sunday Scan," instead of `panel-scanner`, the real
+Scanner) — found and corrected. Zero protected-function drift; the one intentional, disclosed
+constant change is `RULES`'s own display text (Part 3). See
+[INCIDENTS.md](INCIDENTS.md) and the full `APP_VERSION_LOG` entry in `index.html` for complete
+detail.
+
 ## v12.1.1 — Diagnostics data integrity
 A focused data-integrity patch to the Diagnostics subsystem only — no new features, no Strategy
 SDK/Registry work, no UI redesign. Fixed a silent journal-only-orphan leak in the "Paper trading

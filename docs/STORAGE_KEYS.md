@@ -21,7 +21,7 @@ data — see [ADR-002](adr/ADR-002-isolated-strategy-and-feature-storage.md).
 |---|---|---|---|
 | `fxhub_paper` | `paperAccount` | `savePaperAccountGuarded()` only, called only from `commitPaperLedger()` | Balance, open positions, closed positions. **Never written by general `save()`** — see [ARCHITECTURE.md](ARCHITECTURE.md#the-paper-ledger-transaction-model-v1101). |
 | `fxhub_paper_version` | `paperAccountKnownVersion` | `savePaperAccountGuarded()` | Monotonic counter guarding `fxhub_paper` against a stale/concurrent-tab overwrite. |
-| `fxhub_journal` | `journalEntries` | `save()` | Every JVM journal record (auto, manual, developer-test, legacy). |
+| `fxhub_journal` | `journalEntries` | `save()` | Every JVM journal record (auto, manual, developer-test, legacy, and — as of v12.1.2 — manual-review). Manual-review records carry additional attribution fields (`entrySource`, `windowStatus`, `userApproved`, `automaticEntry`, `approvalTimestamp`, `decisionCandleTimestamp`, `evaluatorVersionAtApproval`, `confluenceSnapshotAtApproval`, `ruleSnapshotAtApproval`, `weekdayAtApproval`, `sessionAtApproval`, `thuFriClassification`, and more) — additive fields on the existing record shape, not a new store. |
 | `fxhub_auto` | `autoTrading` | `save()` | Auto Trading on/off, `tradedToday`, the auto-trade log. |
 | `fxhub_autoscan` | `autoScan` | `save()` | Automatic Sunday-Scan scheduling state. |
 | `fxhub_scan` | `scanData` | `save()` | Per-pair scanner/confluence data. |

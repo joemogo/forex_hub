@@ -787,6 +787,7 @@ button.danger:hover{background:var(--red-dim)}
           <div class="dash-card">
             <div class="dash-card-title">High-Confidence Setups</div>
             <div id="dashHighConfidence"></div>
+            <div id="dashManualReviewBadges" style="margin-top:8px"></div>
           </div>
           <div class="dash-card">
             <div class="dash-card-title">Today's Opportunities</div>
@@ -813,6 +814,11 @@ button.danger:hover{background:var(--red-dim)}
 
       <!-- LIVE SCANNER -->
       <div id="panel-scanner" class="panel active" style="padding:10px">
+        <!-- v12.1.2: MANUAL REVIEW ELIGIBLE banners -- corrected placement (found via live
+             verification): this is the real "Scanner" nav destination (panel-scan is the
+             separate "Sunday Scan" page), and jumpToScanner()/the Dashboard badge click-through
+             both land here. -->
+        <div id="manualReviewBanners"></div>
         <div class="scanner-layout">
 
           <!-- Sidebar -->
@@ -1101,6 +1107,12 @@ button.danger:hover{background:var(--red-dim)}
             </div>
           </div>
           <div style="font-size:11px;color:var(--text2);margin-top:8px">Use the R:R Calculator on the Scanner tab (Entry / Stop / Target) then click <strong>Place Paper Trade</strong> — position size is auto-calculated from 1% risk of your current balance. Open positions auto-close when live price hits your Stop or Target.</div>
+        </div>
+        <!-- v12.1.2: MANUAL REVIEW performance -- kept visibly separate from standard
+             Mon-Wed performance, never mixed invisibly into the same numbers. -->
+        <div class="card" id="mrPerformanceCard">
+          <div class="section-label">Manual Review performance</div>
+          <div id="mrPerformanceBody"></div>
         </div>
         <!-- 2. Trading-engine status -->
         <div class="card">
@@ -1485,6 +1497,38 @@ button.danger:hover{background:var(--red-dim)}
           <div id="mtfLookaheadNote" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
         </div>
 
+        <!-- v12.1.2: REPLAY DIAGNOSTICS -- permanent, generated from the same replay run, fully
+             no-lookahead (identical decision data the Strategy Health Dashboard above uses).
+             Read-only: exports never modify any MOGO state. -->
+        <div class="card" id="mtfDiagCard" style="display:none">
+          <div class="section-label">Replay diagnostics</div>
+          <div id="mtfDiagEmptyState" style="font-size:13px;margin-bottom:10px"></div>
+          <div id="mtfDiagEvaluatorParity" style="font-size:12px;margin-bottom:12px"></div>
+
+          <div class="section-label" style="margin-top:6px">Coverage</div>
+          <div id="mtfDiagCoverage" style="font-size:12px;color:var(--text2);margin-bottom:12px"></div>
+
+          <div class="section-label" style="margin-top:6px">Candidate funnel</div>
+          <div id="mtfDiagFunnel" style="margin-bottom:12px"></div>
+
+          <div class="section-label" style="margin-top:6px">Rejection totals</div>
+          <div id="mtfDiagRejectionTotals" style="margin-bottom:12px"></div>
+
+          <div class="section-label" style="margin-top:6px">Near misses</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Diagnostic only -- a near miss is never a valid historical signal. Margin: <input type="number" id="mtfNearMissMargin" value="8" min="1" max="30" style="width:50px" onchange="renderReplayDiagnosticsCached()"> confluence points.</div>
+          <div id="mtfDiagNearMisses" style="margin-bottom:12px"></div>
+
+          <div class="section-label" style="margin-top:6px">Rejected candidates <span id="mtfDiagRejectedCount" style="font-weight:400;color:var(--text2)"></span></div>
+          <div id="mtfDiagRejectedTable" style="margin-bottom:8px"></div>
+          <button id="mtfDiagShowMoreBtn" onclick="mtfDiagExpandRejected()" style="display:none">Show 50 more</button>
+
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="exportReplayDiagnosticsCSV()">Export CSV</button>
+            <button onclick="exportReplayDiagnosticsJSON()">Export JSON</button>
+          </div>
+          <div id="mtfDiagInspector" style="margin-top:12px"></div>
+        </div>
+
         <div class="card" id="mtfComparisonCard" style="display:none">
           <div class="section-label">Legacy Approximation vs. TRUE MTF Replay</div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Same pair, same lookback, same ambiguous-candle setting — run both ways so you can see exactly how much the legacy rolling-bias approximation differed from genuine as-of-timestamp Weekly/Daily/H4 structure.</div>
@@ -1746,6 +1790,27 @@ button.danger:hover{background:var(--red-dim)}
   </div>
 </div>
 
+<!-- v12.1.2: MANUAL REVIEW ELIGIBLE -- Review Trade modal. Approval creates a Paper Trading
+     trade only, through the same guarded commitPaperLedger() path every other trade uses --
+     no live-money execution, no direct one-click button anywhere outside this modal. -->
+<div class="reset-modal-overlay" id="manualReviewModalOverlay" onclick="if(event.target===this)closeManualReviewModal()">
+  <div class="reset-modal" style="max-width:560px">
+    <div class="reset-modal-title">MANUAL REVIEW ELIGIBLE</div>
+    <div class="reset-modal-sub" id="mrModalOutsideWindowReason"></div>
+    <div id="mrModalBody" style="font-size:13px;line-height:1.9"></div>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin:14px 0;font-size:12px;cursor:pointer">
+      <input type="checkbox" id="mrModalAckCheckbox" onchange="mrModalUpdateApproveEnabled()" style="margin-top:2px">
+      <span>I understand this trade is outside the strategy's preferred Monday–Wednesday entry window and will be tracked separately.</span>
+    </label>
+    <div id="mrModalDisabledReason" style="font-size:11px;color:var(--red);margin-bottom:8px"></div>
+    <div class="reset-modal-actions">
+      <button class="primary" id="mrModalApproveBtn" onclick="mrModalApprove()" disabled>Approve Paper Trade</button>
+      <button onclick="mrModalPass()">Pass</button>
+      <button onclick="closeManualReviewModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── CONSTANTS ──
 const ALL_PAIRS=[
@@ -1759,9 +1824,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.1.1';
-const APP_VERSION_DATE='15 Jul 2026';
+const APP_VERSION='12.1.2';
+const APP_VERSION_DATE='16 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.1.2 — TRUE MTF REPLAY DIAGNOSTICS + MANUAL REVIEW ELIGIBLE (platform-tooling release, not Phase 2/Strategy Expansion -- no new strategy added; Phase 2 remains reserved for that at v12.2.0+). SCOPE: two features on top of the existing JVM engine. Neither loosens automatic-trading rules, bypasses any existing protection, nor allows live-money execution. PRE-IMPLEMENTATION AUDIT found the root architectural fact driving both features: evaluateLiveTrigger() (live auto-trading, protected) checks isPreferredTradingDay() FIRST and returns immediately on failure -- a Thursday/Friday setup is never even scored for confluence/AOI/confirmation/R:R today, which is the literal root cause of both "Replay can\'t explain why it found nothing" and "Thu/Fri setups get reduced to a generic rejection." simulateTrueMTFReplay() has the identical short-circuit pattern. Both evaluateLiveTrigger()/checkAutoTrades() and simulateTrueMTFReplay()\'s own trade-selection loop remain completely untouched and byte-identical -- confirmed by zero drift across all 63 protected functions. PART 1 -- REPLAY DIAGNOSTICS: a new shared evaluator, evaluateSetupFullBreakdownCore() (SETUP_EVALUATOR_VERSION), calls the exact same protected primitives (detectSignals, bestConfluence/scoreConfluence, getSession, getScore, getBias, isPreferredTradingDay) without stopping at the first failed gate, so a full breakdown can be reported instead of one early rejection reason -- it duplicates no scoring logic and never decides whether to trade. simulateTrueMTFReplay() gained purely additive coverage/funnel/rejection instrumentation (a new `diag` object, extended through every existing `continue`) -- every counter increment sits alongside an unchanged gate, confirmed by the fact `trades[]` output is provably unaffected (Fixture 18). A "Replay Diagnostics" section now renders permanently beneath the Strategy Health Dashboard: coverage (requested/actual window, candles loaded per timeframe, processed/missing/invalid/session-filtered/weekday-filtered counts), a candidate funnel with each item labeled hard eligibility gate / soft confluence factor / informational observation / preference, rejection totals (exactly one primary reason per candidate, secondary reasons tracked separately, proven never to double-count), a Rejected Candidates table (paginated, full frozen-decision-snapshot detail view per row), a Near Misses section (diagnostic only, configurable margin, never converted into a valid signal), an evaluator-parity line (Live vs Replay identifier, MATCH/MISMATCH, with a developer-only demo toggle to prove the MISMATCH warning actually renders), five distinct empty-state messages (zero candidates / candidates-found-but-zero-qualified / incomplete data / replay execution failure), and read-only CSV/JSON export (verified never to mutate any MOGO state). PART 2 -- MANUAL REVIEW ELIGIBLE: every scanned setup now classifies into INELIGIBLE / DEVELOPING / MANUAL REVIEW ELIGIBLE / AUTO ENTRY ELIGIBLE via classifySetupEligibility(), built on the same shared evaluator, run from a new runManualReviewScan() ALONGSIDE (never inside) checkAutoTrades() -- AUTO ENTRY ELIGIBLE is structurally impossible outside Mon-Wed (the classifier has no ability to call openPaperPosition() at all) and only runs off Mon-Wed to avoid redundant network cost on days checkAutoTrades() already handles. A setup becomes MANUAL REVIEW ELIGIBLE only when every gate this evaluator checks passes except weekday (onlyWeekdayFailed) -- high confluence alone can never substitute for a missing AOI/confirmation/R:R/session pass, proven by 12 dedicated "high confluence cannot bypass X" fixtures. Gates this project does not yet enforce in code anywhere (news blackout, spread protection, correlated-exposure limits, daily-loss/account-risk circuit breaker) are explicitly disclosed as not-yet-enforced (gatesNotYetEnforced, shown in the Review Trade modal) rather than silently treated as passing -- a deliberate scope decision confirmed with the user before implementation. An amber "MANUAL REVIEW ELIGIBLE" banner (never called "Manual Override" anywhere in the UI) shows on the Scanner (panel-scanner -- the real Scanner nav destination; an initial placement in panel-scan, "Sunday Scan," was caught and corrected during live verification) with every required field and three actions -- Review Trade, Pass, Dismiss Until Next Candle -- no direct one-click execution. Review Trade opens a confirmation modal (full trade detail, passed-rules list, Thu/Fri-specific warnings, Friday cutoff/weekend-hold info, the not-yet-enforced-gates disclosure, and a required acknowledgment checkbox that gates the Approve button). Approval calls the existing, unmodified openPaperPosition()/commitPaperLedger() guarded path with a new, additive source value (\'manual_review\') -- the one previously-async wrapper, approveManualReviewTrade(), was found during fixture-writing to have no genuine await inside it (openPaperPosition/commitPaperLedger are both synchronous) and was simplified to a plain function, a real simplification rather than a workaround. Attribution (Entry Source, Window Status, User Approved, Automatic Entry, approval/decision timestamps, evaluator version, confluence + full rule snapshot, weekday, Thu/Fri classification, and more) is attached to the just-created journal record as a disclosed, non-protected, additive follow-up patch (buildJVMJournalOpenRecord() is not itself protected), then re-committed through the same guarded path; if that second commit fails, the position and journal record are both rolled back and re-committed as removed, so no partial state can remain -- verified directly by rigging a stale paper-account version guard (Fixture 42). Duplicate approval of the same decision candidate is blocked; a pair with an existing open position is excluded from classification entirely, matching checkAutoTrades()\'s own no-duplicate-position rule. Four separate, always-visible performance groups (Standard Monday-Wednesday / Outside-Window Manual Review / Thursday Manual Review / Friday Manual Review) read journalEntries\' new attribution fields, with the existing "insufficient sample" language at <30 resolved trades and a "preliminary comparison" note at 30-100 -- no rule ever changes automatically at either threshold. A distinct alert (deliberately different wording and a different two-tone sound from an auto-qualified-trade alert) and a Dashboard badge (click-through via the existing jumpToScanner()) round out the workflow. PART 3 -- MOMENTUM-LOSS DOCUMENTATION: Strategy Center\'s "Rejection wick pre-signal" card and the strategy-thesis narrative were expanded with explicit bullish/bearish-symmetric wording (the underlying wick formula in scoreConfluence()/detectSignals() was already symmetric in code -- dnW/range for bullish, upW/range for bearish, identical thresholds -- this was a documentation gap, not a logic gap). A new Research Diagnostics panel lists five candidate loss-of-momentum conditions (doji, spinning top, long wick, small-bodied hesitation candle, repeated failure to continue) with an honest current-vs-proposed table: which are executable today, and precisely what each non-executable one would require to become so -- informational only, changes nothing about live/replay scoring or gating. Production candle logic is unchanged except the RULES constant\'s own display text (a disclosed, intentional protected-constant change -- confirmed via regression-baseline-tools.py to be the ONLY drift this release produced, and only that one item). TESTING: 53 new fixtures in tests/v1212_manual_review_and_replay_diagnostics_tests.js. The offline JXA harness cannot resolve a genuine await (the same documented, permanent limitation recorded for runDiagnostics() in v12.1.1 -- confirmed again empirically here, including a failed NSRunLoop spin-wait attempt) -- simulateTrueMTFReplay() remains async (real progress-reporting awaits for long replays) and is not offline-testable end-to-end, so Replay-side fixtures exercise the fully-synchronous, separable pieces directly (mergeReplayDiag, renderReplayDiagnostics\'s empty-state selection, replayDiagBuildExportPayload) against hand-built diag objects satisfying the real function\'s own invariants, with the full walk-forward proof covered by live verification instead. Manual Review fixtures exercise the real, unmodified evaluateSetupFullBreakdownCore/classifySetupEligibility/approveManualReviewTrade end to end. Two real bugs were found BY the new fixtures, not by code review, and fixed before release: (1) a synthetic-candle test-data generator bug that also exposed nothing app-side, and (2) two genuine app bugs -- classifySetupEligibility()\'s Friday-cutoff check used wall-clock new Date() instead of the setup\'s own decision timestamp (correct by coincidence on the live path, wrong for any other caller; now keyed off decisionTs), and a test-only state-leak from a deliberately-rigged stale paper-version guard bled into a later fixture (fixed with an explicit reset helper, not a production code change). Full regression: 122/122 fixtures pass (28 v120 + 28 v121 + 13 v1211 + 53 v1212), zero unintended drift. LIVE VERIFICATION covered all 19 required scenarios against a scratch preview copy, never the user\'s real data: a fully-qualified Thursday setup rendered the real banner with every required field and classified MANUAL REVIEW ELIGIBLE end to end; the SAME live bug (wrong panel) that the fixtures could not catch was found here and fixed; Review Trade opened the real modal, the acknowledgment checkbox correctly gated Approve, Approve created exactly one paper trade and one journal record with fully correct attribution (confirmed by direct inspection), a second approval attempt on the same candidate was correctly blocked, Pass and Cancel were both confirmed to create no trade with the correct present/absent candidate-removal distinction; a Friday setup rendered the extra weekend/cutoff warnings; a past-cutoff Friday setup correctly classified INELIGIBLE; Replay Diagnostics rendered a complete, real funnel/rejection/near-miss/rejected-candidates view including the correctly-labeled category badges, evaluator parity showed MATCH by default and a forced MISMATCH warning via the developer-only toggle, and both CSV and JSON export ran without error or any state change; zero/qualified/missing-data empty states were each confirmed distinct. Storage cleanup: only standard fxhub_* keys present afterward, no orphaned test keys, no new localStorage keys added by this release at all (attribution lives as additive fields on existing journal records, not a new store). Syntax clean, known-good hash unchanged.',
   '12.1.1 — DIAGNOSTICS DATA INTEGRITY (focused data-integrity patch, Diagnostics subsystem only -- no new features, no Strategy SDK/Registry work, no UI redesign, no TJR, no JVM/ALEX methodology touched, zero drift across all 63 protected functions and 4 protected constants). ROOT CAUSE (discovered during v12.1.0 live verification, disclosed then, fixed now): the "Paper trading engine (sizing + auto-close)" self-test snapshotted and restored pairData/paperAccount/activePair/fetchBidAsk/the R:R Calculator\'s DOM fields, but never journalEntries -- so a successful self-test run left the simulation\'s own leftover journal record behind. commitPaperLedger()\'s restoring call (needed to re-persist the restored paperAccount) calls save() internally, which unconditionally re-writes fxhub_journal from whatever journalEntries currently holds -- meaning a successful, green self-test could silently persist a fake trade into the real journal as a JOURNAL_ONLY orphan with no matching paper-account position, exactly matching the historical INC-001 failure pattern. MUTATION-TABLE AUDIT (performed before any edit, all 8 self-tests): App version and Saved data integrity/Alex G isolation/OANDA connection/Anthropic API checks are read-only, no change needed. Browser storage read/write and Pip-value/cross-rate math both mutated real state (a scratch localStorage key; pairData) without their restoration living inside a try/finally, so an exception mid-check would have skipped cleanup -- both fixed. Paper trading engine was the confirmed root cause -- fixed. FIX: added a small, Diagnostics-only, unexported helper pair, diagSnapshot(getters)/diagRestore(snap,setters) (plain {key:fn} getter/setter maps -- generalizes, not invents, the same "read a var, do work, write it back" restoration pattern already used by alexGIsolationCheck() and openPaperPosition()\'s own existing paperAccountSnapshot/journalEntriesSnapshot rollback fields), and applied it consistently: Browser storage now wraps its localStorage.getItem in try/finally so the scratch key is always removed even if the read throws; Pip-value math now snapshots/restores pairData through the helper inside try/finally; Paper trading engine now snapshots pairData/paperAccount/activePair/journalEntries/fetchBidAsk/the three R:R DOM fields together via the helper, restores all of them in the existing finally block BEFORE the block\'s pre-existing commitPaperLedger() re-persist call, so that call now commits the correctly-restored journalEntries rather than the simulation\'s leftover value. A SECOND, SUBTLER DEFECT was caught by the new fixtures below (not by code review) and fixed before this release: paperAccount is isolated by reassigning it to a brand-new synthetic object before the simulation runs, so the real object is never touched at all -- but journalEntries was left pointing at the real, live array, and openPaperPosition()/closePaperPosition() mutate that array IN PLACE (journalEntries.unshift(...) via upsertJournalOpenRecord, then a find()+mutate on close) rather than reassigning it, so merely snapshotting/restoring the reference afterward was provably a no-op (restoring a pointer to the same, already-mutated array). Fixed by isolating journalEntries the same way paperAccount already is -- reassigning it to a fresh empty array immediately before the simulated trade runs -- so the simulated record is unshifted into a throwaway array and the real journalEntries array is never mutated in the first place. TESTING: a new permanent suite, tests/v1211_diagnostics_integrity_tests.js (13 fixtures), covers what the offline JXA harness can reach synchronously (runDiagnostics() itself awaits a real closePaperPosition() call and so cannot be driven to completion offline, the same documented, permanent limitation noted since v4.2\'s live_paper_tests.js) -- diagSnapshot/diagRestore correctness in isolation (capture-at-call-time, not a live reference; safe no-op when a setter is missing); faithful replication of the fixed Check 2/Check 3 patterns against real pairData, including an exception-path proof; and, using the real, unmodified openPaperPosition()/placePaperTrade()/commitPaperLedger(), a direct reproduction proving journalEntries and fxhub_journal are both back to their exact real pre-simulation value after the pattern runs (the core fix), an exception-path proof that restoration still happens even when the check throws mid-simulation, a zero-new-localStorage-key proof, and a full-pass proof that journalEntries/alexGJournalEntries/paperAccount/alexGAccount/scanData are all byte-identical before and after. tests/run_all.sh required no changes -- its tests/run_*_tests.js glob discovered the new suite automatically. Full regression: 69/69 fixtures pass (28 v120 + 28 v121 + 13 new v1211), zero drift across all 63 protected functions and 4 protected constants (none of runDiagnostics/diagSnapshot/diagRestore are on the protected list, confirming the fix stayed correctly scoped to Diagnostics-only code), zero localStorage schema change. LIVE VERIFICATION: seeded realistic synthetic JVM and ALEX journal/account data directly in memory and persisted it (per the standing Browser Testing Policy -- no real trades placed), then clicked the real "Run Diagnostics" button in the actual UI. Paper trading engine reported green ("$100 risk sized correctly, auto-closed at target for +$200. Your real paper account was untouched.") and Saved data integrity correctly reported the seeded "2 journal entries, 0 open / 1 closed paper trades" both before and after. A byte-for-byte before/after comparison of every localStorage key (with the app\'s own background scan-polling loop stopped, to isolate Diagnostics\' own effect from ordinary ambient scanner activity) found fxhub_journal, fxhub_paper\'s content, fxhub_alexg_account, and fxhub_alexg_journal all exactly byte-identical; the one key that did change, fxhub_paper_version, is the pre-existing, correct-by-design v11.0.1 monotonic version counter, which legitimately increments on every real commitPaperLedger() call regardless of whether the account\'s content changed (it advanced by exactly 3, matching the check\'s open/close/restoring-commit call sequence) -- not a v12.1.1 regression. DISCLOSED, NOT FIXED (out of scope for this release, spun off separately): live verification also surfaced that computePaperLedgerIntegrity() (the read-only "Paper Ledger Integrity" Diagnostics card) does not filter by strategy, so an ALEX-strategy record living in the shared journalEntries store can be flagged as a "JVM journal trade with no matching paper account position" -- a real, pre-existing, unrelated finding, not touched here per this release\'s Diagnostics-self-test-only scope. Syntax clean, known-good hash unchanged.',
   '12.1.0 — STRATEGY FRAMEWORK, RELEASE 2: JVM REGISTRATION (autonomous architecture release, zero behavior change -- JVM\'s scanning, top-down analysis, confluence scoring, signal qualification, Active Watch logic, auto-trading eligibility, entry timing, stop/target placement, risk sizing, spread handling, position management, closing logic, alerts, journaling, statistics, polling intervals, session gates, and preferred-trading-day gates are byte-identical to v12.0.2, confirmed by zero drift across all 63 protected functions and 4 protected constants, run before and after every edit. ALEX is completely unaffected -- all 28 pre-existing v120 fixtures pass unchanged.) Registered JVM as the Strategy Framework\'s second strategy, following the exact Manifest/Services pattern ALEX used in v12.0.0/Release 1, per a deliberate pre-implementation audit (not a mechanical copy) that checked JVM\'s actual needs field-by-field and method-by-method against the existing SDK contract. VERDICT: zero SDK extensions required -- every Manifest field and Service method JVM needs (id/family/version/label/fullName/description/author/ownership/status/trustLevel/capabilities/dependencies/dna/panelId/devToolsCardId/inspectorCardId/academySchoolId/release, and getAccount/getJournal/normalize/onOpen/health) already existed from Release 1. computePerformance() -- reserved in the original SDK design but never wired for ALEX (which has no live-performance function) -- is JVM\'s first real use of that already-designed slot, not a new extension, since JVM genuinely has computeMogoStrategyPerformance(). JVM_MANIFEST reads version/fullName/status/primaryMarket directly from the existing MOGO_STRATEGY_META constant (never restated, same "derive from the existing source of truth" pattern ALEX_MANIFEST.id already used for RULES_ALEXG.ruleVersion) and academySchoolId:\'mogo\' is a real, verified link (ACADEMY_SCHOOLS already has id:\'mogo\', name:\'MOGO Strategy\'). capabilities honestly report statistics:true/backtesting:true/replay:true/academyContent:true (all real, already-working JVM capabilities ALEX lacks) alongside diagnostics:false/settings:false (no genuine JVM-specific isolation-proof check exists to extract -- not invented for symmetry -- and RULES is not exposed through Services this release). JVM_SERVICES exposes getAccount()/getJournal() (thin references to the live paperAccount/journalEntries objects, not copies), normalize() (calls the existing, unmodified normalizeJournalRecord() with the literal \'current_strategy\' string already used everywhere), computePerformance() (calls the existing, unmodified computeMogoStrategyPerformance()), onOpen() (calls a new function, initJvmPaperPanel(), which is showPanel()\'s previous inline \'paper\' branch sequence -- renderPaper/renderAutoLog/updateAutoTradeStatus/unseenCount reset/save/updatePaperNavBadge -- extracted verbatim with zero logic change, the same extraction pattern used for alexGIsolationCheck() in Release 1), and health() (\'ready\', reserved, not yet dynamic). No isolationCheck/start/stop/settings/playbook/AI hooks are wired for JVM, matching ALEX\'s Release-1 disclosure exactly: no genuine existing JVM behavior to wrap for any of them (JVM\'s scan loop has no independent on/off toggle the way ALEX\'s toggleAlexGLiveTrading() does, so no start/stop was invented). STRATEGY_REGISTRY, findStrategyEntry(), getStrategyManifest(), and getStrategyServices() were relocated (unchanged in logic) from immediately after ALEX\'s own code block to immediately after MOGO_STRATEGY_META\'s declaration, since JVM_MANIFEST needs to read that constant and it\'s declared later in the script; all four were confirmed to be referenced only from inside other functions\' bodies (never at top-level script-execution time), so the relocation changes nothing about runtime availability -- verified by a syntax check and the complete regression suite passing identically before and after. Exactly 4 of the 8 previously-listed target seams needed a change for JVM, each a small, scoped edit with a safe fallback to the pre-v12.1.0 hardcoded behavior: getUnifiedJournalRecords() (JVM\'s branch now reads through Services.getJournal()/normalize(), symmetric with ALEX\'s branch), renderDashboard() (both the P&L/Win Rate tile and the running-trades table now read JVM\'s account through Services.getAccount() instead of the raw paperAccount global; ALEX\'s reads are untouched, the 4-tile layout/labels/table shape are unchanged), showPanel() (the \'paper\' branch now calls Services.onOpen() instead of running its 6-statement sequence inline; the other ~11 branches are untouched), applyDeveloperModeVisibility() (JVM\'s dev-tools card id now resolves from Manifest.devToolsCardId instead of the literal \'devToolsPaperCard\'; ALEX\'s card id resolution is untouched). Three seams were reviewed and deliberately left untouched, with why disclosed: runDiagnostics() -- no JVM-specific hardcoding exists to generalize, since the only per-strategy isolation check has only ever existed for ALEX; renderMiniJournal() -- its JVM branch (\'paperTradeInspectorCard\') is confirmed DEAD CODE (the function is only ever called in the real app with strategyLabel=\'ALEX\'; JVM\'s mini-journal uses a separate, dedicated renderPaperMiniJournal() per its own v9.0 design comment), so generalizing it would be stylistic tidying of unreachable code, not a genuine seam fix; Strategy Center (renderRules()/setStrategyCenterTab()) and journalStrategyBadge()\'s 2-color ternary hardcode a 2-strategy-count assumption, but not a JVM-specific misrepresentation -- JVM already renders correctly through both today -- and generalizing them for N strategies is explicitly the optional, deferred Release 3 scope named in ADR-005, not required for JVM\'s own registration. getFilteredJournalRecords() and toggleDeveloperMode() again needed no change (confirmed still fully strategy-agnostic, same finding as Release 1). No localStorage key was added, removed, or renamed -- confirmed by both a dedicated fixture and a full storage-key inventory diff against docs/STORAGE_KEYS.md (24 keys, identical set, before and after). 28 new fixtures pass in a new permanent suite, tests/v121_jvm_registration_tests.js (registry contains both current_strategy and alex_g_sr_v1; Services.getAccount()/getJournal() return the exact live paperAccount/journalEntries references; Manifest values are correct and truthfully sourced from MOGO_STRATEGY_META; Services.normalize()/computePerformance() are byte-identical to calling normalizeJournalRecord()/computeMogoStrategyPerformance() directly, proving reference-not-duplication; getUnifiedJournalRecords() output for a MIXED journal -- both strategies\' records together -- is byte-identical via the registry path vs. a manually-reconstructed pre-v12.1.0 direct-call path; getFilteredJournalRecords() still isolates JVM records correctly from a mixed journal; Dashboard\'s JVM AND ALEX P&L/Win Rate tiles are simultaneously correct, proving JVM\'s registration didn\'t disturb ALEX\'s; Dashboard\'s running-trades table shows both strategies\' open positions correctly at once; showPanel(\'paper\') still fires initJvmPaperPanel() via Services.onOpen(), proven by a real observable side effect -- autoTrading.unseenCount reset to 0; Developer Mode visibility toggles BOTH cards correctly with both strategies registered together, and JVM\'s card id is proven to genuinely resolve from the Manifest rather than a hardcoded literal; journalStrategyBadge() correctly colors JVM blue and ALEX purple simultaneously from one mixed unified journal; four separate "JVM specifically unregistered, ALEX still registered" fixtures prove getUnifiedJournalRecords()/renderDashboard()/showPanel()/applyDeveloperModeVisibility() all degrade gracefully to their pre-v12.1.0 fallback with zero exceptions and zero effect on ALEX\'s own behavior; zero new localStorage keys; the deliberately-absent JVM Service hooks are confirmed absent, matching capabilities:false; capabilities.statistics/academyContent are confirmed true and genuinely backed by a wired Service/real Academy School id; renderMiniJournal\'s untouched JVM dead-code path is confirmed to still run without throwing; and a full pass through every touched seam, with BOTH strategies holding real, simultaneous data, confirms zero mutation and zero cross-contamination between journalEntries/alexGJournalEntries/paperAccount/alexGAccount/scanData). One pre-existing fixture in tests/v120_strategy_framework_tests.js (Fixture 1) was updated -- not weakened -- to assert ALEX\'s entry is present in the registry rather than asserting the registry\'s total size is exactly one, since that specific count was only ever true for Release 1\'s own scope and is now, correctly and by design, obsolete; every other v120 fixture, and therefore all of ALEX\'s proven behavior, is unchanged and still passes (28/28). tests/run_all.sh required no changes -- its tests/run_*_tests.js glob discovered the new suite automatically, confirmed by running it before and after adding the suite. Live browser verification confirmed Dashboard (both tiles and the running-trades table), the unified Journal tab (both strategies\' badges and the strategy filter dropdown), the JVM Paper Trading panel, the ALEX panel, Strategy Center, Developer Tools (both cards), Diagnostics (unchanged output for the pre-existing checks, including the still-disclosed-and-untouched pre-existing "Paper trading engine" failure and the still-passing Alex isolation check), and chart trade overlays all render identically to v12.0.2, using only synthetic in-memory data per the Browser Testing Policy -- zero real paper trades created or contaminated, confirmed by a byte-identical fxhub_paper/fxhub_journal/fxhub_alexg_account/fxhub_alexg_journal snapshot before and after the entire verification session. Known limitations intentionally left untouched this release, disclosed rather than silently deferred: Strategy Center\'s 2-tab hardcoding, journalStrategyBadge()\'s 2-color ternary, and renderMiniJournal()\'s dead JVM branch are all still hardcoded to a 2-strategy world -- correctly so for today, and explicitly optional/deferred future work (ADR-005\'s Release 3) rather than a defect; JVM has no isolationCheck/start/stop/settings/playbook/AI Service hooks, matching ALEX\'s own disclosed gaps; the pre-existing, unrelated Diagnostics "Paper trading engine (sizing + auto-close)" failure and the historical scratch-only test suites remain untouched, exactly as instructed. Syntax clean, known-good hash unchanged.',
   '12.0.0 — STRATEGY FRAMEWORK FOUNDATION, RELEASE 1: ALEX REGISTRATION (autonomous architecture release, zero behavior change -- ALEX\'s scanning, qualification, setup detection, entry timing, stop/target placement, position sizing, polling, alerts, paper trades, position management, journal records, and all 48 alexG*-prefixed protected functions plus RULES_ALEXG/WEIGHTS/ALERT_THRESHOLD/RULES are byte-identical to v11.4.0, confirmed by zero drift in the regression baseline. JVM is NOT touched or registered this release.) Introduced a minimal Strategy Registry/Manifest/Services boundary (approved in a prior architecture design pass) and migrated ALEX into it as the first strategy, without rewriting a single line of ALEX\'s existing engine. STRATEGY_REGISTRY is a one-entry array this release (ALEX_MANIFEST + ALEX_SERVICES); JVM is deliberately left unregistered and every JVM-specific code path in every touched function is completely untouched. ALEX_MANIFEST is static, lightweight, computed-performance-free metadata (id -- read directly from RULES_ALEXG.ruleVersion so it can never drift out of sync with what\'s already stamped on every ALEX trade -- family, version, label, fullName, description, author, ownership, status, trustLevel, capabilities, dependencies, declared DNA, panelId, devToolsCardId, inspectorCardId, academySchoolId, release metadata); capabilities honestly describe what ALEX\'s existing engine already does (scanning/paperTrading/automation/journal/alerts/replay/diagnostics: true) versus real, disclosed gaps this release does not fix (statistics: false -- no dedicated live-performance function exists for ALEX yet, pre-existing and out of scope; settings: false -- RULES_ALEXG.config exists internally but is not exposed through Services this release; backtesting/aiReview/aiCoaching/reports/academyContent: false, honestly). ALEX_SERVICES exposes only what this release\'s target seams actually need -- getAccount()/getJournal() (thin references to the live alexGAccount/alexGJournalEntries objects, not copies), normalize() (calls the existing, unmodified normalizeJournalRecord() with the same literal \'alex_g_sr_v1\' string already used before this release), onOpen() (calls the existing, unmodified initAlexGPair()), isolationCheck() (calls a new function, alexGIsolationCheck(), which is the exact prior inline Diagnostics check extracted verbatim with zero logic change so it can be exposed through the Services boundary instead of living only inline), and health() (returns the static string \'ready\' -- reserved per the approved SDK, not yet dynamic, not yet surfaced in any UI). buildOpenRecord/buildCloseRecord/start/stop/settings access/playbook access/AI hooks are deliberately NOT wired this release -- no target seam needs them, and wiring them now would be speculative, ahead-of-need work. Exactly 6 of the 8 listed target seams were edited, each with a one-line-scoped change and a safe fallback to the pre-v12.0.0 hardcoded behavior if the registry is ever unavailable: getUnifiedJournalRecords() (ALEX\'s journal branch now reads through Services.getJournal()/normalize() instead of the raw alexGJournalEntries/normalizeJournalRecord() call; JVM\'s branch is untouched), renderDashboard() (both ALEX-specific reads -- the P&L/Win Rate tile and the running-trades table -- now go through Services.getAccount() instead of the raw alexGAccount global; JVM\'s paperAccount reads are untouched, the 4-tile layout/labels/running-trades table shape are unchanged), showPanel() (the \'alexg\' branch now calls Services.onOpen() instead of initAlexGPair() directly; the other ~11 branches for every other page are untouched), applyDeveloperModeVisibility() (the ALEX dev-tools card id now resolves from Manifest.devToolsCardId instead of the literal \'devToolsAlexCard\'; the JVM card id is untouched), runDiagnostics() (the "5. Alex G module isolation" check now calls Services.isolationCheck() instead of running its logic inline; same check name, same pass/fail logic, same detail text, same position in the diagnostics sequence), renderMiniJournal() (the ALEX branch\'s inspectorCardId now resolves from the Manifest instead of a literal \'ALEX\'===strategyLabel ternary; the JVM branch is untouched). The other 2 listed targets required NO change, and why is disclosed rather than silently skipped: toggleDeveloperMode() contains no ALEX-specific logic at all -- it only flips a boolean and delegates entirely to applyDeveloperModeVisibility(), which is the one actually touched; getFilteredJournalRecords() was already fully strategy-agnostic -- it filters purely on the already-normalized r.strategyLabel field passed in as a parameter, with no hardcoded \'ALEX\' string anywhere in its body, so it required no change to work correctly against the new registry-driven getUnifiedJournalRecords(). No localStorage key was added, removed, or renamed -- the Registry/Manifest/Services objects are pure in-memory JS, never persisted, confirmed by a dedicated fixture proving zero new keys after exercising every Services accessor. Existing saved data loads with zero migration, confirmed live. 28 new fixtures pass (registry contains exactly the ALEX entry; Manifest.id is read from RULES_ALEXG.ruleVersion and cannot drift; Manifest carries no computed performance fields; Services.getAccount()/getJournal() return the exact live object references, not copies; getUnifiedJournalRecords() output is byte-identical via the registry path vs. a manually-reconstructed pre-v12.0.0 direct-call path; getFilteredJournalRecords() still correctly isolates ALEX records; Dashboard\'s ALEX P&L/Win Rate tile and running-trades table show correct values computed via Services.getAccount(); showPanel(\'alexg\') still fires initAlexGPair() via Services.onOpen(); Developer Mode visibility still toggles the ALEX card, proven to genuinely read devToolsCardId from the Manifest at call time rather than a hardcoded literal; Services.isolationCheck() reports pass:true under normal conditions and never mutates trading state itself; alexGIsolationCheck() correctly reports pass:false when deliberately tampered with, proving the check still actually checks something; six separate "missing/unregistered strategy fails safely" fixtures prove getUnifiedJournalRecords()/renderDashboard()/showPanel()/the Diagnostics isolation-check step/applyDeveloperModeVisibility()/renderMiniJournal() all degrade gracefully to their pre-v12.0.0 hardcoded behavior with zero exceptions thrown when the registry is emptied; Services.health() defaults to \'ready\'; capabilities honestly report statistics:false/diagnostics:true matching what is and isn\'t actually wired; zero new localStorage keys; the deliberately-absent Service hooks are confirmed absent; and a full pass through every touched function confirms zero mutation of journalEntries/alexGJournalEntries/paperAccount/alexGAccount/scanData), plus the complete pre-existing suite unchanged and zero drift across all 63 protected functions and 4 protected constants (regression-baseline-tools.py, no flag, run both before and after every edit in this release). Live browser verification confirmed Dashboard, the unified Journal tab, the ALEX panel, Strategy Center, Developer Tools, and Diagnostics all render identically to v11.4.0. Known limitations intentionally left untouched this release, disclosed rather than silently deferred: JVM is not registered (Release 2, not started); ALEX has no dedicated live computePerformance() (pre-existing gap, capabilities.statistics honestly reports false rather than fabricating a function); buildOpenRecord/buildCloseRecord/start/stop/settings/playbook/AI hooks are reserved in the approved SDK design but not wired into Services (no target seam needs them yet); health() is static (\'ready\' always) and not surfaced in any UI; showPanel()\'s other ~11 branches, the Strategy Center\'s ALEX "Coming Soon" stub, and the two independent 60s/60min polling loops are completely unchanged and out of scope. Syntax clean, known-good hash unchanged.',
@@ -4978,6 +5044,250 @@ async function evaluateLiveTrigger(oPair){
   return{fires:true,dir,entry:price,stop,target,ratio,confluence:conf.total};
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════════
+// v12.1.2: SHARED FULL-BREAKDOWN EVALUATOR (Replay Diagnostics + Manual Review Eligible)
+//
+// evaluateLiveTrigger() above (live auto-trading) and simulateTrueMTFReplay() (Replay) both
+// SHORT-CIRCUIT on their first failed gate -- evaluateLiveTrigger() checks isPreferredTradingDay()
+// FIRST and returns immediately if it fails, meaning a Thursday/Friday setup is never even
+// scored for confluence/AOI/confirmation/R:R today. That is the literal root cause of both
+// "TRUE MTF Replay can't explain why it found nothing" and "Thu/Fri setups get reduced to a
+// generic rejection" -- there was no existing function that evaluates every gate and reports
+// a full breakdown instead of stopping at the first miss.
+//
+// evaluateSetupFullBreakdownCore() below is that missing function. It is READ-ONLY and
+// ADDITIVE: it calls the exact same protected primitives production trading already uses
+// (detectSignals, bestConfluence -> scoreConfluence, getSession, getScore, getBias,
+// isPreferredTradingDay, the same stop/target/R:R formulas evaluateLiveTrigger uses) -- it
+// duplicates NO scoring/qualification logic of its own. It NEVER decides whether to place a
+// trade. evaluateLiveTrigger()/checkAutoTrades() remain the sole live auto-entry decision path,
+// byte-identical and untouched; simulateTrueMTFReplay()'s own trade-selection loop and its
+// existing `continue` gate sequence are likewise completely untouched -- this function is only
+// ever called ALONGSIDE them, for diagnostics/classification, never in place of them.
+//
+// Gate evaluation order below is this evaluator's own CANONICAL diagnostic order (HTF
+// alignment -> structural AOI -> confluence -> confirmation -> R:R -> session -> weekday) --
+// disclosed as intentionally different from evaluateLiveTrigger()'s own order (weekday first,
+// then data/confluence/confirmation/AOI/R:R) and simulateTrueMTFReplay()'s own order (HTF ->
+// AOI -> weekday -> confluence -> confirmation -> session -> R:R). Both production paths keep
+// their own real order for the real decision; this evaluator's order only affects which single
+// reason is reported as "primary" in the diagnostics/classification UI, never any actual
+// trading outcome.
+const SETUP_EVALUATOR_VERSION='full-breakdown-v1';
+const SETUP_EVALUATOR_CANONICAL_GATE_ORDER=['htf_alignment','structural_aoi','min_confluence','confirmation','min_rr','session','weekday'];
+const NEAR_MISS_CONFLUENCE_MARGIN=8; // configurable diagnostic-only margin (percentage points); never gates trading, only labels DEVELOPING/near-miss
+
+function evaluateSetupFullBreakdownCore(input){
+  const{oPair,candles,decisionCandle,decisionTs,weeklyBias,dailyBias,h4Bias,
+        structSupport,structResistance,structSupportSrc,structResistanceSrc,sessionAt,weekdayDate}=input;
+  const pip=pipSize(oPair);
+  const gates=[]; // {id,label,category,pass,observed,required} -- category is one of:
+                   // 'hard' (hard eligibility gate), 'soft' (soft confluence factor),
+                   // 'informational' (observation only, never gates), 'preference' (the
+                   // Mon-Wed rule -- mechanical but explicitly discretionary, see the
+                   // getStructuralAOI()-adjacent comment above about Thu/Fri being left to
+                   // manual judgment rather than automated).
+  const weekdayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const wd=(weekdayDate||new Date()).getUTCDay();
+
+  // 1. Higher-timeframe alignment -- hard eligibility gate. Same getScore()/getBias() the
+  // live scanner and Replay both already use, fed the same {weekly,daily,fh} shape.
+  const scanLike={weekly:weeklyBias,daily:dailyBias,fh:h4Bias};
+  const score=getScore(scanLike);
+  const overallBias=getBias(scanLike);
+  gates.push({id:'htf_alignment',label:'Higher-timeframe alignment',category:'hard',
+    pass:score>=2,observed:score+'/3 aligned ('+overallBias+')',required:'>=2/3 aligned'});
+
+  // 2. Structural AOI -- hard eligibility gate.
+  const hasStructAOI=structSupport!=null||structResistance!=null;
+  gates.push({id:'structural_aoi',label:'Valid structural AOI relationship',category:'hard',
+    pass:hasStructAOI,observed:hasStructAOI?'AOI present':'no AOI',required:'3+ touch structural AOI present'});
+
+  // 3. Confluence + signal detection -- production functions, unmodified, called exactly as
+  // evaluateLiveTrigger()/simulateTrueMTFReplay() already call them.
+  const signals=detectSignals(candles,oPair,overallBias);
+  const conf=bestConfluence(candles,oPair,{bias:overallBias,score,sessionAt});
+  const dir=conf.direction==='long'?'buy':'sell';
+  gates.push({id:'min_confluence',label:'Minimum confluence',category:'hard',
+    pass:conf.total>=ALERT_THRESHOLD,observed:conf.total+'%',required:ALERT_THRESHOLD+'%+'});
+
+  // 4. Momentum-loss / rejection-wick observation -- SOFT confluence factor (part of
+  // scoreConfluence's own weighted total already folded into item 3 above), never a
+  // standalone hard gate on its own. detectSignals() already computes this symmetrically for
+  // both directions (upper wick for sells, lower wick for buys) -- see WEIGHTS.wick / the
+  // "Rejection wick" scoring block in scoreConfluence().
+  const wickSig=signals.find(s=>s.type==='wick'&&s.dir===dir);
+  gates.push({id:'momentum_loss_wick',label:'Momentum-loss / rejection wick',category:'soft',
+    pass:!!wickSig,observed:wickSig?wickSig.label:'not observed',required:'soft factor, not required alone'});
+
+  // 5. Directional confirmation (engulf) -- hard eligibility gate.
+  const entrySig=signals.find(s=>s.type==='engulf'&&s.dir===dir&&s.biasMatch);
+  gates.push({id:'confirmation',label:'Acceptable directional confirmation',category:'hard',
+    pass:!!entrySig,observed:entrySig?entrySig.label:'no qualifying engulf',required:'fresh engulf matching bias'});
+
+  // 6. MSB -- informational observation only. Not a scored or gated component of the frozen
+  // strategy today (detectSignals() reports it, nothing currently reads it for scoring/gating).
+  const msbSig=signals.find(s=>s.type==='msb'&&s.dir===dir);
+  gates.push({id:'msb_observation',label:'Market structure break (MSB)',category:'informational',
+    pass:!!msbSig,observed:msbSig?msbSig.label:'not observed',required:'informational only -- not scored or gated'});
+
+  // 7. R:R -- hard eligibility gate. Identical stop/target formula to evaluateLiveTrigger().
+  let stop=null,target=null,ratio=null,riskPips=null,rewardPips=null;
+  const price=decisionCandle.c;
+  if(dir==='buy'){
+    if(structSupport!=null){ stop=structSupport-pip*7; target=structResistance!=null?structResistance:(price+(price-stop)*2); }
+  } else {
+    if(structResistance!=null){ stop=structResistance+pip*7; target=structSupport!=null?structSupport:(price-(stop-price)*2); }
+  }
+  if(stop!=null){
+    riskPips=Math.abs(price-stop)/pip; rewardPips=Math.abs(target-price)/pip;
+    ratio=riskPips>0?rewardPips/riskPips:null;
+  }
+  gates.push({id:'min_rr',label:'Minimum R:R',category:'hard',
+    pass:ratio!=null&&ratio>=1.99,observed:ratio!=null?ratio.toFixed(2)+':1':'n/a (no stop distance)',required:'>=1.99:1'});
+
+  // 8. Session -- hard eligibility gate. Same getSession() used everywhere else.
+  const sess=getSession(sessionAt);
+  gates.push({id:'session',label:'Approved trading session',category:'hard',
+    pass:!!sess.active,observed:sess.name,required:'London or London/NY Overlap active'});
+
+  // 9. Weekday -- the ONE gate this evaluator treats as overridable by Manual Review. Same
+  // isPreferredTradingDay() used by both production paths.
+  const isMonWed=isPreferredTradingDay(weekdayDate);
+  gates.push({id:'weekday',label:'Monday-Wednesday preferred window',category:'preference',
+    pass:isMonWed,observed:weekdayNames[wd],required:'Monday, Tuesday, or Wednesday'});
+
+  const orderedFailures=SETUP_EVALUATOR_CANONICAL_GATE_ORDER
+    .map(id=>gates.find(g=>g.id===id)).filter(g=>g&&!g.pass);
+  const primaryFailure=orderedFailures.length?orderedFailures[0]:null;
+  const secondaryFailures=orderedFailures.length>1?orderedFailures.slice(1):[];
+  const hardAndPreferenceFailures=orderedFailures; // 'soft'/'informational' never appear here by construction
+
+  return{
+    evaluatorVersion:SETUP_EVALUATOR_VERSION,
+    oPair,pair:oPair.replace('_','/'),direction:dir,decisionTs,
+    confluence:conf.total,confluenceItems:conf.items,
+    gates,
+    passedGates:gates.filter(g=>g.pass),
+    failedGates:hardAndPreferenceFailures,
+    primaryFailure,secondaryFailures,
+    onlyWeekdayFailed:orderedFailures.length===1&&orderedFailures[0].id==='weekday',
+    allNonWeekdayGatesPass:orderedFailures.filter(g=>g.id!=='weekday').length===0,
+    entry:price,stop,target,ratio,riskPips,rewardPips,
+    weeklyBias,dailyBias,h4Bias,overallBias,score,
+    structSupport,structResistance,structSupportSrc,structResistanceSrc,
+    session:sess,weekday:weekdayNames[wd],weekdayIndex:wd,
+    signals
+  };
+}
+
+// Live-scanner wrapper: fetches the same live data evaluateLiveTrigger() fetches (M15 candles,
+// structural AOI, current session), builds the same {weekly,daily,fh} shape from the live
+// scanData/pairData the scanner already maintains for this pair, then runs it through the
+// shared core above. Read-only -- does not open positions, does not touch checkAutoTrades().
+async function evaluateLiveSetupFullBreakdown(oPair){
+  const candles=await fetchCandles(oPair,'M15',60);
+  if(!candles||candles.length<25){
+    return{error:'insufficient_data',reason:'Fewer than 25 M15 candles available',oPair,pair:oPair.replace('_','/')};
+  }
+  const sk=oPair.replace('_','/');
+  const sd=scanData[sk];
+  if(!sd||sd.weekly==='—'||sd.weekly===undefined){
+    return{error:'insufficient_data',reason:'No scan data yet for this pair',oPair,pair:oPair.replace('_','/')};
+  }
+  const aoi=await getStructuralAOI(oPair);
+  const decisionCandle=candles[candles.length-1];
+  return evaluateSetupFullBreakdownCore({
+    oPair,candles,decisionCandle,decisionTs:Date.now(),
+    weeklyBias:sd.weekly,dailyBias:sd.daily,h4Bias:sd.fh,
+    structSupport:aoi.support,structResistance:aoi.resistance,
+    structSupportSrc:aoi.support!=null?'Structural':null,
+    structResistanceSrc:aoi.resistance!=null?'Structural':null,
+    sessionAt:undefined,weekdayDate:undefined
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// v12.1.2: MANUAL REVIEW ELIGIBLE classification. Four states -- INELIGIBLE, DEVELOPING,
+// MANUAL REVIEW ELIGIBLE, AUTO ENTRY ELIGIBLE. Outside Mon-Wed, AUTO ENTRY ELIGIBLE is
+// structurally impossible (the classifier itself won't return it), matching "Auto Paper
+// Trading must not place the trade" -- checkAutoTrades()/evaluateLiveTrigger() were never
+// touched and remain the only code path that can actually open an automatic position, so this
+// is enforced by construction (this classifier has no ability to call openPaperPosition),
+// not merely by a UI label.
+//
+// A setup becomes MANUAL REVIEW ELIGIBLE only when EVERY gate this evaluator checks passes
+// EXCEPT weekday (i.e. onlyWeekdayFailed). High confluence alone can never substitute for a
+// missing AOI/confirmation/R:R/session pass -- those are still hard gates here, identical to
+// production. Gates this project does not yet enforce anywhere in code today (news blackout,
+// spread protection, correlated-exposure limits, daily-loss/account-risk circuit breaker) are
+// NOT silently treated as passing -- they are explicitly reported as "not yet implemented" in
+// gatesNotYetEnforced, disclosed to the user in the Review Trade modal, following this
+// project's standing disclosure practice (see docs/KNOWN_ISSUES.md) rather than fabricating a
+// pass for a check that doesn't exist.
+const MANUAL_REVIEW_GATES_NOT_YET_ENFORCED=[
+  {id:'news_blackout',label:'News blackout protection',note:'Documented in RULES.session/Strategy Center checklist text; not checked by any code path today.'},
+  {id:'spread_protection',label:'Spread protection',note:'Spread is used in fill-price math (bid/ask) but is not checked as a reject condition anywhere.'},
+  {id:'correlated_exposure',label:'Pair / correlated-exposure limits',note:'No maximum-open-trades or correlated-pair exposure limit exists in code today.'},
+  {id:'daily_loss_risk',label:'Daily loss / account risk circuit breaker',note:'No daily-loss or account-risk circuit breaker exists in code today.'},
+  {id:'friday_cutoff_enforced',label:'Friday cutoff (as a hard block)',note:'Documented in RULES.session text only; not enforced as a code gate. This release computes and displays a Friday-cutoff WARNING (see friEval below) but does not block approval on it beyond the existing session-active check.'}
+];
+
+function classifySetupEligibility(oPair,breakdown){
+  // breakdown: result of evaluateLiveSetupFullBreakdown(oPair) (or an equivalent shape).
+  if(breakdown.error){
+    return{state:'INELIGIBLE',oPair,pair:oPair.replace('_','/'),reason:breakdown.reason,breakdown};
+  }
+  const isMonWed=breakdown.weekdayIndex>=1&&breakdown.weekdayIndex<=3;
+  let state;
+  if(breakdown.failedGates.length===0){
+    state=isMonWed?'AUTO ENTRY ELIGIBLE':'MANUAL REVIEW ELIGIBLE'; // structurally unreachable when !isMonWed in practice, since 'weekday' would be a failedGate -- kept as an explicit safety net, never relied on alone
+  } else if(breakdown.onlyWeekdayFailed){
+    state='MANUAL REVIEW ELIGIBLE';
+  } else {
+    // Distinguish DEVELOPING (close/plausible) from INELIGIBLE (clearly not there yet) using
+    // the same near-miss margin Replay Diagnostics uses, so the two features report
+    // consistent language for "close but not qualified."
+    const confGap=ALERT_THRESHOLD-breakdown.confluence;
+    const failedNonWeekday=breakdown.failedGates.filter(g=>g.id!=='weekday');
+    const onlyOneHardGateFailed=failedNonWeekday.length===1&&failedNonWeekday[0].category==='hard';
+    state=(onlyOneHardGateFailed||(confGap>0&&confGap<=NEAR_MISS_CONFLUENCE_MARGIN))?'DEVELOPING':'INELIGIBLE';
+  }
+  const weekday=breakdown.weekday;
+  const isThursday=weekday==='Thu',isFriday=weekday==='Fri';
+  let weekdayWarning=null;
+  if(state==='MANUAL REVIEW ELIGIBLE'&&isThursday){
+    weekdayWarning='Outside preferred Monday–Wednesday entry window.';
+  } else if(state==='MANUAL REVIEW ELIGIBLE'&&isFriday){
+    weekdayWarning='Outside preferred Monday–Wednesday entry window. Elevated late-week and weekend exposure risk.';
+  }
+  let fridayInfo=null;
+  if(isFriday){
+    // Uses the setup's own decision timestamp, not wall-clock "now" -- for the live path these
+    // coincide (evaluateLiveSetupFullBreakdown() stamps decisionTs as Date.now()), but keying
+    // off decisionTs keeps this deterministic and correct for any non-live caller too.
+    const now=new Date(breakdown.decisionTs||Date.now());
+    const cutoffUtcMinutes=20*60; // matches RULES.session "No trading on Friday close" -- New York close / end of the NY session, 20:00 UTC, same boundary getSession() uses for the NY window's end
+    const nowUtcMinutes=now.getUTCHours()*60+now.getUTCMinutes();
+    const minutesRemaining=Math.max(0,cutoffUtcMinutes-nowUtcMinutes);
+    fridayInfo={
+      minutesRemainingBeforeCutoff:minutesRemaining,
+      pastCutoff:nowUtcMinutes>=cutoffUtcMinutes,
+      couldRemainOpenIntoWeekend:true,
+      liquidityWarning:'Friday late-session liquidity thins ahead of the weekend close -- fills and stop execution may be less reliable than mid-week.'
+    };
+    if(fridayInfo.pastCutoff&&state==='MANUAL REVIEW ELIGIBLE') state='INELIGIBLE';
+  }
+  return{
+    state,oPair,pair:oPair.replace('_','/'),direction:breakdown.direction,
+    confluence:breakdown.confluence,grade:breakdown.score===3?'A':(breakdown.score===2?'B':'C'),
+    weekday,isThursday,isFriday,weekdayWarning,fridayInfo,
+    breakdown,
+    gatesNotYetEnforced:state==='MANUAL REVIEW ELIGIBLE'?MANUAL_REVIEW_GATES_NOT_YET_ENFORCED:[],
+    automaticEntryBlockReason:state==='MANUAL REVIEW ELIGIBLE'?'Outside Monday–Wednesday preferred entry window':null
+  };
+}
+
 // ── BACKTEST ──
 // Replays your exact rule set bar-by-bar through real historical M15 candles: at each bar,
 // checks confluence >= threshold, a fresh engulfing candle matching bias, a valid AOI, and
@@ -5601,6 +5911,35 @@ function validateNoLookahead(t){
 // progression -- no refetching, no per-bar rescanning of the full arrays.
 // `onProgress` + `shouldCancel` let the caller keep the UI responsive and
 // cancellable on long runs without this function knowing about the DOM.
+// Extracted verbatim from simulateTrueMTFReplay's own inline AOI-correction block (zero logic
+// change -- same "extract verbatim" pattern used for alexGIsolationCheck()/initJvmPaperPanel()
+// in earlier releases) so v12.1.2's diagnostic capture for weekday-rejected candidates can
+// apply the exact same structural-AOI confluence correction real qualifying candidates get,
+// rather than reporting a confluence number computed a different way for Thu/Fri bars.
+function applyReplayStructuralAoiCorrection(conf,structSupport,structResistance,structSupportSrc,structResistanceSrc,dAOI,wAOI,decisionCandleClose){
+  const mtfDir=conf.direction; // 'long' or 'short' -- same convention scoreConfluence uses
+  const pipD=decisionCandleClose<10?0.0001:0.01; // identical formula to scoreConfluence's own pipD
+  const structBand=mtfDir==='long'
+    ?(structSupportSrc==='Daily'?dAOI.band:wAOI.band)
+    :(structResistanceSrc==='Daily'?dAOI.band:wAOI.band);
+  const structAoiTol=Math.max(structBand||0,pipD*12); // identical tolerance formula to scoreConfluence
+  const nearStructSup=structSupport!=null&&Math.abs(decisionCandleClose-structSupport)<structAoiTol;
+  const nearStructRes=structResistance!=null&&Math.abs(decisionCandleClose-structResistance)<structAoiTol;
+  const structAoiHit=(mtfDir==='long'&&nearStructSup)||(mtfDir==='short'&&nearStructRes);
+  const aoiItemIdx=conf.items.findIndex(it=>it.label==='AOI zone touch');
+  if(aoiItemIdx!==-1){
+    const oldPts=conf.items[aoiItemIdx].pts;
+    const newPts=structAoiHit?WEIGHTS.aoi:0;
+    conf.items[aoiItemIdx]={
+      label:structAoiHit?`AOI zone touch (${mtfDir==='long'?structSupportSrc:structResistanceSrc} structural)`:'AOI zone touch (structural — no touch)',
+      pts:newPts,
+      state:structAoiHit?'hit':'miss'
+    };
+    conf.total=Math.max(0,Math.min(100,conf.total-oldPts+newPts));
+  }
+  return conf;
+}
+
 async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCancel){
   params=params||{};
   const ambiguousMode=params.ambiguousMode||'conservative';
@@ -5623,16 +5962,55 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
   const pairSlash=oPair.replace('_','/');
   let i=200; // needs enough M15 bars for the confluence/AOI engine -- same floor as the legacy backtest
   const total=m15.length;
+  // v12.1.2: REPLAY DIAGNOSTICS. Purely additive read-only counters/capture built around the
+  // existing gate sequence below -- none of the existing `continue` statements, their order,
+  // or what ends up in `trades[]` is changed by any of this. Every `diag.*` write is either a
+  // counter increment or a push into `diag.rejectedCandidates` for candidates that reach a
+  // real gate (score>=2 && a structural AOI exists) -- data-only continues (no closed HTF
+  // candle yet) are counted as coverage gaps, not "rejected candidates," since there is no
+  // real setup to evaluate yet at that point.
+  const diag={
+    requestedStartTs:m15.length?getCandleCloseTime(m15,0,'M15').getTime():null,
+    requestedEndTs:m15.length?getCandleCloseTime(m15,m15.length-1,'M15').getTime():null,
+    actualFirstEvaluatedTs:null,actualLastEvaluatedTs:null,
+    weeklyLoaded:weekly?weekly.length:0,dailyLoaded:daily?daily.length:0,
+    h4Loaded:h4?h4.length:0,m15Loaded:m15?m15.length:0,
+    m15DecisionCandlesProcessed:0,missingCandles:0,invalidCandles:0,
+    sessionFilteredCandles:0,weekdayFilteredCandles:0,
+    funnel:{
+      rawDecisionPointsEvaluated:0,directionalBiasCandidates:0,structuralAoisIdentified:0,
+      aoiTouchObservations:0,rejectionWickObservations:0,engulfingPatternObservations:0,
+      msbObservations:0,candidatesReachingMinConfluence:0,candidatesPassingMinRR:0,
+      candidatesPassingSession:0,candidatesPassingWeekday:0,finalValidSignals:0
+    },
+    rejectionTotals:{}, // ruleId -> count, primary reasons only (never double-counted)
+    rejectedCandidates:[], // capped display list is applied by the caller; this holds everything
+    nearMisses:[],
+    evaluatorVersion:SETUP_EVALUATOR_VERSION
+  };
+  function diagBumpRejection(ruleId){
+    diag.rejectionTotals[ruleId]=(diag.rejectionTotals[ruleId]||0)+1;
+  }
   while(i<m15.length){
-    if(shouldCancel&&shouldCancel()) return{cancelled:true,trades,pair:pairSlash,oPair};
+    if(shouldCancel&&shouldCancel()) return{cancelled:true,trades,pair:pairSlash,oPair,diag};
     if(onProgress&&i%1000===0){onProgress(`Replaying ${pairSlash} — bar ${i.toLocaleString()}/${total.toLocaleString()}...`);await new Promise(r=>setTimeout(r,0));}
     const decisionCandle=m15[i];
     const decisionTs=getCandleCloseTime(m15,i,'M15').getTime();
 
+    // v12.1.2 diagnostics: every bar the loop reaches counts as a processed M15 decision
+    // candle and a raw decision point, regardless of what gate it fails afterward.
+    diag.m15DecisionCandlesProcessed++;
+    diag.funnel.rawDecisionPointsEvaluated++;
+    if(diag.actualFirstEvaluatedTs==null) diag.actualFirstEvaluatedTs=decisionTs;
+    diag.actualLastEvaluatedTs=decisionTs;
+    if(!decisionCandle||decisionCandle.c==null||decisionCandle.o==null||decisionCandle.h==null||decisionCandle.l==null){
+      diag.invalidCandles++;
+    }
+
     wPtr=advancePointer(wClose,wPtr,decisionTs);
     dPtr=advancePointer(dClose,dPtr,decisionTs);
     hPtr=advancePointer(hClose,hPtr,decisionTs);
-    if(wPtr<0||dPtr<0||hPtr<0){i++;continue;} // no closed higher-TF candle yet at all -- can't fabricate bias
+    if(wPtr<0||dPtr<0||hPtr<0){diag.missingCandles++;diagBumpRejection('missing_or_invalid_market_data');i++;continue;} // no closed higher-TF candle yet at all -- can't fabricate bias
 
     const wSlice=weekly.slice(0,wPtr+1),dSlice=daily.slice(0,dPtr+1),hSlice=h4.slice(0,hPtr+1);
     const weeklyBias=calcBiasFromCandles(wSlice);
@@ -5641,7 +6019,18 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
     const scanLike={weekly:weeklyBias,daily:dailyBias,fh:h4Bias};
     const score=getScore(scanLike);
     const overallBias=getBias(scanLike);
-    if(score<2){i++;continue;} // frozen rule: at least 2 of 3 higher timeframes must align
+    if(score>=2) diag.funnel.directionalBiasCandidates++;
+    if(score<2){
+      diagBumpRejection('insufficient_htf_alignment');
+      diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:null,strategy:'JVM',
+        confluence:null,htfAlignment:score+'/3',aoiStatus:'not evaluated',rejectionWick:'not evaluated',
+        engulfing:'not evaluated',msb:'not evaluated',rr:null,session:'not evaluated',
+        weekday:isPreferredTradingDay(decisionCandle.t)?'Mon-Wed':'Thu/Fri',
+        primaryRejection:'Insufficient higher-timeframe alignment',primaryRejectionId:'insufficient_htf_alignment',
+        secondaryRejections:[],ruleId:'insufficient_htf_alignment',observedValue:score+'/3',requiredValue:'>=2/3',
+        evaluatorVersion:SETUP_EVALUATOR_VERSION});
+      i++;continue;
+    } // frozen rule: at least 2 of 3 higher timeframes must align
 
     const dAOI=computeAOIWithTouches(dSlice,100,3);
     const wAOI=computeAOIWithTouches(wSlice,100,3);
@@ -5649,18 +6038,103 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
     const structResistance=dAOI.resistance!=null?dAOI.resistance:wAOI.resistance;
     const structSupportSrc=dAOI.support!=null?'Daily':(wAOI.support!=null?'Weekly':null);
     const structResistanceSrc=dAOI.resistance!=null?'Daily':(wAOI.resistance!=null?'Weekly':null);
-    if(structSupport==null&&structResistance==null){i++;continue;} // frozen rule: 3-touch structural AOI required
+    if(structSupport!=null||structResistance!=null) diag.funnel.structuralAoisIdentified++;
+    if(structSupport==null&&structResistance==null){
+      diagBumpRejection('no_valid_structural_aoi');
+      diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:null,strategy:'JVM',
+        confluence:null,htfAlignment:score+'/3',aoiStatus:'no valid AOI',rejectionWick:'not evaluated',
+        engulfing:'not evaluated',msb:'not evaluated',rr:null,session:'not evaluated',
+        weekday:isPreferredTradingDay(decisionCandle.t)?'Mon-Wed':'Thu/Fri',
+        primaryRejection:'No valid structural AOI',primaryRejectionId:'no_valid_structural_aoi',
+        secondaryRejections:[],ruleId:'no_valid_structural_aoi',observedValue:'none',requiredValue:'3+ touch AOI',
+        evaluatorVersion:SETUP_EVALUATOR_VERSION});
+      i++;continue;
+    } // frozen rule: 3-touch structural AOI required
 
-    if(!isPreferredTradingDay(decisionCandle.t)){i++;continue;} // frozen rule: Mon-Wed entry window
+    // v12.1.2: candidate reached a real structural AOI -- this is where "Continue analyzing
+    // strong Thursday and Friday setups" actually happens. Weekday is checked AFTER, not
+    // before, confluence/signals/R:R are computed for DIAGNOSTIC purposes only -- the
+    // production `trades[]` selection below is byte-identical to before: a weekday-failed bar
+    // still always `continue`s before ever reaching `trades.push(...)`, so final replay
+    // results are unaffected. This block never mutates trades[], never affects the ambiguity/
+    // retest params, and only reads the same candles/functions the rest of the loop already
+    // computes just below -- it is not a second, independent strategy engine.
+    if(!isPreferredTradingDay(decisionCandle.t)){
+      diag.weekdayFilteredCandles++;
+      try{
+        const diagM15Slice=m15.slice(Math.max(0,i-149),i+1);
+        const diagSignals=detectSignals(diagM15Slice,oPair,overallBias);
+        const diagConf=applyReplayStructuralAoiCorrection(
+          bestConfluence(diagM15Slice,oPair,{bias:overallBias,score,sessionAt:decisionCandle.t}),
+          structSupport,structResistance,structSupportSrc,structResistanceSrc,dAOI,wAOI,decisionCandle.c);
+        const diagDir=diagConf.direction==='long'?'buy':'sell';
+        const diagWick=diagSignals.find(s=>s.type==='wick'&&s.dir===diagDir);
+        const diagEngulf=diagSignals.find(s=>s.type==='engulf'&&s.dir===diagDir&&s.biasMatch);
+        const diagMsb=diagSignals.find(s=>s.type==='msb'&&s.dir===diagDir);
+        const diagSess=getSession(decisionCandle.t);
+        let diagStop=null,diagTarget=null,diagRatio=null;
+        const diagPrice=decisionCandle.c;
+        if(diagDir==='buy'&&structSupport!=null){diagStop=structSupport-pip*7;diagTarget=structResistance!=null?structResistance:(diagPrice+(diagPrice-diagStop)*2);}
+        else if(diagDir==='sell'&&structResistance!=null){diagStop=structResistance+pip*7;diagTarget=structSupport!=null?structSupport:(diagPrice-(diagStop-diagPrice)*2);}
+        if(diagStop!=null){
+          const diagRiskPips=Math.abs(diagPrice-diagStop)/pip,diagRewardPips=Math.abs(diagTarget-diagPrice)/pip;
+          diagRatio=diagRiskPips>0?diagRewardPips/diagRiskPips:null;
+        }
+        if(diagWick) diag.funnel.rejectionWickObservations++;
+        if(diagEngulf) diag.funnel.engulfingPatternObservations++;
+        if(diagMsb) diag.funnel.msbObservations++;
+        const failGates=[];
+        if(diagConf.total<ALERT_THRESHOLD) failGates.push({id:'insufficient_confluence',label:'Insufficient confluence',observed:diagConf.total+'%',required:ALERT_THRESHOLD+'%+'});
+        if(!diagEngulf) failGates.push({id:'no_acceptable_confirmation',label:'No acceptable confirmation',observed:'no qualifying engulf',required:'fresh engulf matching bias'});
+        if(!diagSess.active) failGates.push({id:'outside_approved_session',label:'Outside approved session',observed:diagSess.name,required:'London or London/NY Overlap'});
+        if(diagRatio==null||diagRatio<1.99) failGates.push({id:'minimum_rr_not_met',label:'Minimum R:R not met',observed:diagRatio!=null?diagRatio.toFixed(2)+':1':'n/a',required:'>=1.99:1'});
+        failGates.push({id:'outside_preferred_weekday_window',label:'Outside preferred weekday window',observed:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(decisionCandle.t).getUTCDay()],required:'Mon, Tue, or Wed'});
+        const primary=failGates[0],secondary=failGates.slice(1);
+        diagBumpRejection(primary.id);
+        diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:diagDir,strategy:'JVM',
+          confluence:diagConf.total,htfAlignment:score+'/3',aoiStatus:'present',
+          rejectionWick:diagWick?diagWick.label:'none',engulfing:diagEngulf?diagEngulf.label:'none',
+          msb:diagMsb?diagMsb.label:'none',rr:diagRatio!=null?diagRatio.toFixed(2)+':1':'n/a',
+          session:diagSess.name,weekday:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(decisionCandle.t).getUTCDay()],
+          primaryRejection:primary.label,primaryRejectionId:primary.id,
+          secondaryRejections:secondary.map(g=>g.label),ruleId:primary.id,
+          observedValue:primary.observed,requiredValue:primary.required,
+          evaluatorVersion:SETUP_EVALUATOR_VERSION,
+          onlyFailedWeekday:failGates.length===1,
+          snapshot:{weeklyBias,dailyBias,h4Bias,structSupport,structResistance,structSupportSrc,structResistanceSrc,
+            confluenceItems:diagConf.items,entry:diagPrice,stop:diagStop,target:diagTarget,ratio:diagRatio}});
+        // Near miss: failed exactly one hard gate other than weekday, OR failed only weekday
+        // while everything else passed, OR within NEAR_MISS_CONFLUENCE_MARGIN of threshold.
+        const nonWeekdayFail=failGates.filter(g=>g.id!=='outside_preferred_weekday_window');
+        const confGap=ALERT_THRESHOLD-diagConf.total;
+        if(nonWeekdayFail.length===0||nonWeekdayFail.length===1||(confGap>0&&confGap<=NEAR_MISS_CONFLUENCE_MARGIN)){
+          diag.nearMisses.push({timestamp:decisionTs,pair:pairSlash,direction:diagDir,strategy:'JVM',
+            observedConfluence:diagConf.total,requiredConfluence:ALERT_THRESHOLD,
+            failedGate:nonWeekdayFail.length?nonWeekdayFail[0].label:'Outside preferred weekday window (only)',
+            whatWasRequired:nonWeekdayFail.length?nonWeekdayFail[0].required:'Entry on Monday, Tuesday, or Wednesday'});
+        }
+      }catch(e){ /* diagnostic-only capture must never break the real replay loop */ }
+      i++;continue;
+    } // frozen rule: Mon-Wed entry window
 
     // Bounded to the last 150 bars, not the full 0..i history: detectSignals/bestConfluence/
     // findAOIs never look back more than 100 candles (their own internal window), and
     // tagMarketRegime's ATR calls cap at 100 too -- so slicing the full growing array on every
     // bar (an O(n^2) cost across a whole replay) is unnecessary. This still NEVER includes
     // candle i+1 or later -- the hard no-lookahead boundary is the `i+1` end index, unchanged.
+    diag.funnel.candidatesPassingWeekday++;
     const m15SliceAsOf=m15.slice(Math.max(0,i-149),i+1);
     const signals=detectSignals(m15SliceAsOf,oPair,overallBias);
     const conf=bestConfluence(m15SliceAsOf,oPair,{bias:overallBias,score,sessionAt:decisionCandle.t});
+    // v12.1.2: observation counters -- these are informational/soft (never gates on their
+    // own), counted for whichever direction bestConfluence ultimately picked.
+    {
+      const obsDir=conf.direction==='long'?'buy':'sell';
+      if(signals.some(s=>s.type==='aoi')) diag.funnel.aoiTouchObservations++;
+      if(signals.some(s=>s.type==='wick'&&s.dir===obsDir)) diag.funnel.rejectionWickObservations++;
+      if(signals.some(s=>s.type==='engulf'&&s.dir===obsDir)) diag.funnel.engulfingPatternObservations++;
+      if(signals.some(s=>s.type==='msb'&&s.dir===obsDir)) diag.funnel.msbObservations++;
+    }
     // TRUE MTF Replay-only correction (does not touch scoreConfluence/bestConfluence/
     // evaluateLiveTrigger, WEIGHTS, ALERT_THRESHOLD, or any live behavior): bestConfluence is
     // reused completely unmodified, but its own internal AOI check independently re-derives an
@@ -5674,29 +6148,27 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
     // touch" item is recalculated against the structural AOI instead, using the exact same
     // proximity-tolerance pattern and the exact same WEIGHTS.aoi point value scoreConfluence
     // itself uses; only that one item and conf.total's delta are adjusted, nothing else.
-    {
-      const mtfDir=conf.direction; // 'long' or 'short' -- same convention scoreConfluence uses
-      const pipD=decisionCandle.c<10?0.0001:0.01; // identical formula to scoreConfluence's own pipD
-      const structBand=mtfDir==='long'
-        ?(structSupportSrc==='Daily'?dAOI.band:wAOI.band)
-        :(structResistanceSrc==='Daily'?dAOI.band:wAOI.band);
-      const structAoiTol=Math.max(structBand||0,pipD*12); // identical tolerance formula to scoreConfluence
-      const nearStructSup=structSupport!=null&&Math.abs(decisionCandle.c-structSupport)<structAoiTol;
-      const nearStructRes=structResistance!=null&&Math.abs(decisionCandle.c-structResistance)<structAoiTol;
-      const structAoiHit=(mtfDir==='long'&&nearStructSup)||(mtfDir==='short'&&nearStructRes);
-      const aoiItemIdx=conf.items.findIndex(it=>it.label==='AOI zone touch');
-      if(aoiItemIdx!==-1){
-        const oldPts=conf.items[aoiItemIdx].pts;
-        const newPts=structAoiHit?WEIGHTS.aoi:0;
-        conf.items[aoiItemIdx]={
-          label:structAoiHit?`AOI zone touch (${mtfDir==='long'?structSupportSrc:structResistanceSrc} structural)`:'AOI zone touch (structural — no touch)',
-          pts:newPts,
-          state:structAoiHit?'hit':'miss'
-        };
-        conf.total=Math.max(0,Math.min(100,conf.total-oldPts+newPts));
+    // v12.1.2: this block is now applyReplayStructuralAoiCorrection() (extracted verbatim,
+    // zero logic change) so the v12.1.2 diagnostic capture for weekday-rejected candidates can
+    // apply the identical correction -- see that function's own comment above.
+    applyReplayStructuralAoiCorrection(conf,structSupport,structResistance,structSupportSrc,structResistanceSrc,dAOI,wAOI,decisionCandle.c);
+    if(conf.total>=ALERT_THRESHOLD) diag.funnel.candidatesReachingMinConfluence++;
+    if(conf.total<ALERT_THRESHOLD){
+      diagBumpRejection('insufficient_confluence');
+      const cGap=ALERT_THRESHOLD-conf.total;
+      diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:conf.direction==='long'?'buy':'sell',strategy:'JVM',
+        confluence:conf.total,htfAlignment:score+'/3',aoiStatus:'present',rejectionWick:'n/a',engulfing:'n/a',msb:'n/a',
+        rr:null,session:'not evaluated',weekday:'Mon-Wed',
+        primaryRejection:'Insufficient confluence',primaryRejectionId:'insufficient_confluence',
+        secondaryRejections:[],ruleId:'insufficient_confluence',observedValue:conf.total+'%',requiredValue:ALERT_THRESHOLD+'%+',
+        evaluatorVersion:SETUP_EVALUATOR_VERSION});
+      if(cGap>0&&cGap<=NEAR_MISS_CONFLUENCE_MARGIN){
+        diag.nearMisses.push({timestamp:decisionTs,pair:pairSlash,direction:conf.direction==='long'?'buy':'sell',strategy:'JVM',
+          observedConfluence:conf.total,requiredConfluence:ALERT_THRESHOLD,
+          failedGate:'Insufficient confluence',whatWasRequired:`${cGap} more confluence point(s)`});
       }
-    }
-    if(conf.total<ALERT_THRESHOLD){i++;continue;} // frozen rule: confluence >= 55%
+      i++;continue;
+    } // frozen rule: confluence >= 55%
 
     const dir=conf.direction==='long'?'buy':'sell';
 
@@ -5733,10 +6205,34 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
     }
 
     const entrySig=signals.find(s=>s.type==='engulf'&&s.dir===dir&&s.biasMatch);
-    if(!entrySig){i++;continue;} // frozen rule: fresh M15 engulfing candle required
+    if(!entrySig){
+      diagBumpRejection('no_acceptable_confirmation');
+      diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:dir,strategy:'JVM',
+        confluence:conf.total,htfAlignment:score+'/3',aoiStatus:'present',
+        rejectionWick:signals.find(s=>s.type==='wick'&&s.dir===dir)?signals.find(s=>s.type==='wick'&&s.dir===dir).label:'none',
+        engulfing:'none',msb:signals.find(s=>s.type==='msb'&&s.dir===dir)?signals.find(s=>s.type==='msb'&&s.dir===dir).label:'none',
+        rr:null,session:'not evaluated',weekday:'Mon-Wed',
+        primaryRejection:'No acceptable confirmation',primaryRejectionId:'no_acceptable_confirmation',
+        secondaryRejections:[],ruleId:'no_acceptable_confirmation',observedValue:'no qualifying engulf',requiredValue:'fresh engulf matching bias',
+        evaluatorVersion:SETUP_EVALUATOR_VERSION});
+      i++;continue;
+    } // frozen rule: fresh M15 engulfing candle required
 
     const sess=getSession(decisionCandle.t);
-    if(!sess.active){i++;continue;} // frozen rule: session logic (London/NY)
+    if(sess.active) diag.funnel.candidatesPassingSession++;
+    if(!sess.active){
+      diag.sessionFilteredCandles++;
+      diagBumpRejection('outside_approved_session');
+      diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:dir,strategy:'JVM',
+        confluence:conf.total,htfAlignment:score+'/3',aoiStatus:'present',
+        rejectionWick:signals.find(s=>s.type==='wick'&&s.dir===dir)?signals.find(s=>s.type==='wick'&&s.dir===dir).label:'none',
+        engulfing:entrySig.label,msb:signals.find(s=>s.type==='msb'&&s.dir===dir)?signals.find(s=>s.type==='msb'&&s.dir===dir).label:'none',
+        rr:null,session:sess.name,weekday:'Mon-Wed',
+        primaryRejection:'Outside approved session',primaryRejectionId:'outside_approved_session',
+        secondaryRejections:[],ruleId:'outside_approved_session',observedValue:sess.name,requiredValue:'London or London/NY Overlap active',
+        evaluatorVersion:SETUP_EVALUATOR_VERSION});
+      i++;continue;
+    } // frozen rule: session logic (London/NY)
 
     // Historical mid-price close -- OANDA's practice API has no historical bid/ask, so unlike
     // the live engine this fill can't be ask/bid-aware; disclosed as an approximation on this
@@ -5744,20 +6240,33 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
     const price=decisionCandle.c;
     let stop,target,aoiType,aoiSrc,aoiTouches;
     if(dir==='buy'){
-      if(structSupport==null){i++;continue;}
+      if(structSupport==null){diagBumpRejection('no_valid_structural_aoi');i++;continue;}
       stop=structSupport-pip*7;
       target=structResistance!=null?structResistance:(price+(price-stop)*2);
       aoiType='Support';aoiSrc=structSupportSrc;aoiTouches=dAOI.support!=null?dAOI.supportTouches:wAOI.supportTouches;
     } else {
-      if(structResistance==null){i++;continue;}
+      if(structResistance==null){diagBumpRejection('no_valid_structural_aoi');i++;continue;}
       stop=structResistance+pip*7;
       target=structSupport!=null?structSupport:(price-(stop-price)*2);
       aoiType='Resistance';aoiSrc=structResistanceSrc;aoiTouches=dAOI.resistance!=null?dAOI.resistanceTouches:wAOI.resistanceTouches;
     }
     const riskPips=Math.abs(price-stop)/pip,rewardPips=Math.abs(target-price)/pip;
-    if(riskPips<=0){i++;continue;}
+    if(riskPips<=0){diagBumpRejection('strategy_specific_rule');i++;continue;}
     const ratio=rewardPips/riskPips;
-    if(ratio<1.99){i++;continue;} // frozen rule: minimum 1:2 R:R
+    if(ratio>=1.99) diag.funnel.candidatesPassingMinRR++;
+    if(ratio<1.99){
+      diagBumpRejection('minimum_rr_not_met');
+      diag.rejectedCandidates.push({timestamp:decisionTs,pair:pairSlash,direction:dir,strategy:'JVM',
+        confluence:conf.total,htfAlignment:score+'/3',aoiStatus:'present',
+        rejectionWick:signals.find(s=>s.type==='wick'&&s.dir===dir)?signals.find(s=>s.type==='wick'&&s.dir===dir).label:'none',
+        engulfing:entrySig.label,msb:signals.find(s=>s.type==='msb'&&s.dir===dir)?signals.find(s=>s.type==='msb'&&s.dir===dir).label:'none',
+        rr:ratio.toFixed(2)+':1',session:sess.name,weekday:'Mon-Wed',
+        primaryRejection:'Minimum R:R not met',primaryRejectionId:'minimum_rr_not_met',
+        secondaryRejections:[],ruleId:'minimum_rr_not_met',observedValue:ratio.toFixed(2)+':1',requiredValue:'>=1.99:1',
+        evaluatorVersion:SETUP_EVALUATOR_VERSION});
+      i++;continue;
+    } // frozen rule: minimum 1:2 R:R
+    diag.funnel.finalValidSignals++;
 
     // ── Outcome replay: walk forward bar-by-bar, tracking MAE/MFE, never inspecting
     // price to decide the entry above -- only to determine what happened afterward. ──
@@ -5791,7 +6300,7 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
       if(hitTarget){result='Win';exitIdx=j;break;}
       if(hitStop){result='Loss';exitIdx=j;break;}
     }
-    if(cancelledMidTrade) return{cancelled:true,trades,pair:pairSlash,oPair}; // drop this incomplete trade -- its outcome was never resolved
+    if(cancelledMidTrade) return{cancelled:true,trades,pair:pairSlash,oPair,diag}; // drop this incomplete trade -- its outcome was never resolved
     const rResult=result==='Win'?ratio:(result==='Loss'?-1:null);
 
     const trade={
@@ -5824,9 +6333,11 @@ async function simulateTrueMTFReplay(oPair,datasets,params,onProgress,shouldCanc
     trades.push(trade);
     i=Math.max(exitIdx,i)+1;
   }
+  diag.rejectedCandidatesTotal=diag.rejectedCandidates.length;
+  diag.rejectedCandidatesDisplayed=diag.rejectedCandidates.slice(0,50);
   return{pair:pairSlash,oPair,trades,candleCount:m15.length,
     firstBar:m15[0]?m15[0].t:null,lastBar:m15[m15.length-1]?m15[m15.length-1].t:null,
-    requireStructAOIRetest,structRetestTolerance,structRetestFixedPips};
+    requireStructAOIRetest,structRetestTolerance,structRetestFixedPips,diag};
 }
 
 // Runs TRUE MTF Replay for one pair end-to-end: fetch (once per timeframe) + simulate.
@@ -5859,7 +6370,37 @@ async function runTrueMTFReplayAllPairs(days,onProgress,params,shouldCancel){
   return{days,perPair,allTrades,
     requireStructAOIRetest:!!(params&&params.requireStructAOIRetest),
     structRetestTolerance:(params&&params.structRetestTolerance)||'band',
-    structRetestFixedPips:(params&&params.structRetestFixedPips!=null)?params.structRetestFixedPips:20};
+    structRetestFixedPips:(params&&params.structRetestFixedPips!=null)?params.structRetestFixedPips:20,
+    diag:mergeReplayDiag(perPair.map(r=>r.diag).filter(Boolean))};
+}
+
+// v12.1.2: pools each pair's independently-computed diag object into one aggregate for the
+// "All Pairs" view -- purely additive summation/concatenation, no new counting logic (every
+// number here was already computed per-pair by simulateTrueMTFReplay's own diagnostics).
+function mergeReplayDiag(diags){
+  if(!diags.length) return null;
+  const merged={
+    requestedStartTs:Math.min(...diags.map(d=>d.requestedStartTs).filter(v=>v!=null)),
+    requestedEndTs:Math.max(...diags.map(d=>d.requestedEndTs).filter(v=>v!=null)),
+    actualFirstEvaluatedTs:Math.min(...diags.map(d=>d.actualFirstEvaluatedTs).filter(v=>v!=null)),
+    actualLastEvaluatedTs:Math.max(...diags.map(d=>d.actualLastEvaluatedTs).filter(v=>v!=null)),
+    weeklyLoaded:diags.reduce((s,d)=>s+d.weeklyLoaded,0),dailyLoaded:diags.reduce((s,d)=>s+d.dailyLoaded,0),
+    h4Loaded:diags.reduce((s,d)=>s+d.h4Loaded,0),m15Loaded:diags.reduce((s,d)=>s+d.m15Loaded,0),
+    m15DecisionCandlesProcessed:diags.reduce((s,d)=>s+d.m15DecisionCandlesProcessed,0),
+    missingCandles:diags.reduce((s,d)=>s+d.missingCandles,0),invalidCandles:diags.reduce((s,d)=>s+d.invalidCandles,0),
+    sessionFilteredCandles:diags.reduce((s,d)=>s+d.sessionFilteredCandles,0),
+    weekdayFilteredCandles:diags.reduce((s,d)=>s+d.weekdayFilteredCandles,0),
+    funnel:{},rejectionTotals:{},rejectedCandidates:[],nearMisses:[],evaluatorVersion:SETUP_EVALUATOR_VERSION
+  };
+  Object.keys(diags[0].funnel).forEach(k=>{merged.funnel[k]=diags.reduce((s,d)=>s+(d.funnel[k]||0),0);});
+  diags.forEach(d=>{
+    Object.keys(d.rejectionTotals).forEach(k=>{merged.rejectionTotals[k]=(merged.rejectionTotals[k]||0)+d.rejectionTotals[k];});
+    merged.rejectedCandidates=merged.rejectedCandidates.concat(d.rejectedCandidates);
+    merged.nearMisses=merged.nearMisses.concat(d.nearMisses);
+  });
+  merged.rejectedCandidatesTotal=merged.rejectedCandidates.length;
+  merged.rejectedCandidatesDisplayed=merged.rejectedCandidates.slice(0,50);
+  return merged;
 }
 
 // ── STATISTICS -- shared by single-pair and all-pairs TRUE MTF results ──
@@ -6003,7 +6544,7 @@ async function runTrueMTFReplayUI(){
   replayState.running=true;replayState.cancelRequested=false;
   btn.disabled=true;btn.textContent='Running...';cancelBtn.style.display='inline-block';
   progressWrap.style.display='block';mtfSetProgress(2);
-  ['mtfDashboardCard','mtfComparisonCard','mtfSetupCard','mtfRegimeCard','mtfTradesCard','mtfInspectorCard'].forEach(id=>document.getElementById(id).style.display='none');
+  ['mtfDashboardCard','mtfDiagCard','mtfComparisonCard','mtfSetupCard','mtfRegimeCard','mtfTradesCard','mtfInspectorCard'].forEach(id=>document.getElementById(id).style.display='none');
   const shouldCancel=()=>replayState.cancelRequested;
   const onProgress=msg=>{status.textContent=msg;};
   try{
@@ -6027,9 +6568,15 @@ async function runTrueMTFReplayUI(){
       replayState.lastResult=allTrades;replayState.lastStats=stats;replayState.lastLegacyStats=legacyStats;
       renderMTFDashboard(stats,trueResult);renderMTFComparison(stats,legacyStats,days,ambiguousMode);
       renderMTFSetupAnalysis(stats);renderMTFRegimeBreakdown(stats);renderMTFTradeList(allTrades);
+      renderReplayDiagnostics(trueResult.diag,trueResult);
     } else {
       trueResult=await runTrueMTFReplay(pairSel,days,onProgress,replayParams,shouldCancel);
-      if(trueResult.error){status.textContent=trueResult.error;btn.disabled=false;btn.textContent='Run TRUE MTF Replay';cancelBtn.style.display='none';progressWrap.style.display='none';replayState.running=false;return;}
+      if(trueResult.error){
+        status.textContent=trueResult.error;
+        document.getElementById('mtfDiagCard').style.display='block';
+        renderReplayDiagnostics(null,null);
+        btn.disabled=false;btn.textContent='Run TRUE MTF Replay';cancelBtn.style.display='none';progressWrap.style.display='none';replayState.running=false;return;
+      }
       if(trueResult.cancelled){status.textContent='Replay cancelled — partial results below (not counted as final).';}
       else status.textContent=`Replayed ${trueResult.candleCount.toLocaleString()} M15 candles from ${trueResult.firstBar?new Date(trueResult.firstBar).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'?'} to ${trueResult.lastBar?new Date(trueResult.lastBar).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'?'} — ${trueResult.trades.length} trades found.`;
       const stats=computeReplayStats(trueResult.trades);
@@ -6039,6 +6586,7 @@ async function runTrueMTFReplayUI(){
       replayState.lastResult=trueResult.trades;replayState.lastStats=stats;replayState.lastLegacyStats=legacyStats;
       renderMTFDashboard(stats,trueResult);if(legacyStats) renderMTFComparison(stats,legacyStats,days,ambiguousMode);
       renderMTFSetupAnalysis(stats);renderMTFRegimeBreakdown(stats);renderMTFTradeList(trueResult.trades);
+      renderReplayDiagnostics(trueResult.diag,trueResult);
     }
     mtfSetProgress(100);
   }catch(e){
@@ -6100,6 +6648,247 @@ function renderMTFDashboard(stats,runInfo){
     :`✓ All ${stats.totalTrades} candidate trade(s) passed the independent no-lookahead check.`;
   document.getElementById('mtfLookaheadNote').textContent=invalidNote;
   renderMTFLookaheadDiagnostics(stats);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// v12.1.2: REPLAY DIAGNOSTICS. Generated from the same replay run renderMTFDashboard() just
+// rendered (same `diag` object simulateTrueMTFReplay() returned) -- fully no-lookahead,
+// since every number in `diag` was captured by the same as-of-timestamp loop that already
+// enforces the no-lookahead boundary for real trades. Read-only: never mutates any MOGO
+// state, never affects `trades[]`.
+const FUNNEL_LABELS={
+  rawDecisionPointsEvaluated:{label:'Raw decision points evaluated',category:'informational'},
+  directionalBiasCandidates:{label:'Directional-bias candidates (HTF alignment)',category:'hard'},
+  structuralAoisIdentified:{label:'Structural AOIs identified',category:'hard'},
+  aoiTouchObservations:{label:'AOI-touch observations',category:'soft'},
+  rejectionWickObservations:{label:'Rejection-wick observations',category:'soft'},
+  engulfingPatternObservations:{label:'Engulfing-pattern observations',category:'soft'},
+  msbObservations:{label:'MSB observations',category:'informational'},
+  candidatesReachingMinConfluence:{label:'Candidates reaching minimum confluence',category:'hard'},
+  candidatesPassingMinRR:{label:'Candidates passing minimum R:R',category:'hard'},
+  candidatesPassingSession:{label:'Candidates passing session rules',category:'hard'},
+  candidatesPassingWeekday:{label:'Candidates passing weekday rules',category:'preference'},
+  finalValidSignals:{label:'Final valid signals',category:'hard'}
+};
+const REJECTION_CATEGORY_LABELS={
+  insufficient_htf_alignment:'Insufficient higher-timeframe alignment',
+  no_valid_structural_aoi:'No valid structural AOI',
+  no_acceptable_confirmation:'No acceptable confirmation',
+  insufficient_confluence:'Insufficient confluence',
+  minimum_rr_not_met:'Minimum R:R not met',
+  outside_approved_session:'Outside approved session',
+  outside_preferred_weekday_window:'Outside preferred weekday window',
+  ambiguous_candle_handling:'Ambiguous candle handling',
+  duplicate_or_cooldown:'Duplicate or cooldown restriction',
+  missing_or_invalid_market_data:'Missing or invalid market data',
+  strategy_specific_rule:'Strategy-specific rule',
+  safety_rule_failure:'Safety-rule failure'
+};
+let replayDiagLastRunInfo=null,replayDiagShownCount=50;
+
+function renderReplayDiagnostics(diag,runInfo){
+  const card=document.getElementById('mtfDiagCard');
+  card.style.display='block';
+  replayDiagLastRunInfo=runInfo;
+  replayDiagShownCount=50;
+  const emptyEl=document.getElementById('mtfDiagEmptyState');
+  const decisionCandles=diag?diag.m15DecisionCandlesProcessed:0;
+  const candidatesEvaluated=diag?diag.funnel.directionalBiasCandidates:0;
+  const validSignals=diag?diag.funnel.finalValidSignals:0;
+  const nearMissCount=diag?diag.nearMisses.length:0;
+  if(!diag){
+    emptyEl.innerHTML=`<div class="badge" style="background:var(--red);color:#fff">REPLAY EXECUTION FAILURE</div> <span style="color:var(--text2)">No diagnostics were returned for this run -- the replay likely failed before it could process any candles.</span>`;
+  } else if(decisionCandles===0){
+    emptyEl.innerHTML=`<div class="badge" style="background:var(--red);color:#fff">INCOMPLETE DATA</div> <span style="color:var(--text2)">Zero M15 decision candles were processed. This is a data problem, not a strategy result -- check the pair/date range and your OANDA connection.</span>`;
+  } else if(candidatesEvaluated===0){
+    emptyEl.innerHTML=`<div class="badge" style="background:var(--text2);color:#fff">ZERO CANDIDATES</div> <span style="color:var(--text2)">${decisionCandles.toLocaleString()} M15 decision candles were processed, but none reached even the first hard gate (higher-timeframe alignment). No directional bias ever formed in this window.</span>`;
+  } else if(validSignals===0){
+    const topReason=Object.entries(diag.rejectionTotals).sort((a,b)=>b[1]-a[1])[0];
+    const topLabel=topReason?(REJECTION_CATEGORY_LABELS[topReason[0]]||topReason[0]):'none recorded';
+    const topCount=topReason?topReason[1]:0;
+    emptyEl.innerHTML=`<div style="font-weight:700;margin-bottom:4px">No valid signals qualified.</div>
+      <div style="color:var(--text2);font-size:12px;line-height:1.6">
+      M15 decision candles processed: ${decisionCandles.toLocaleString()}<br>
+      Candidates evaluated: ${candidatesEvaluated.toLocaleString()}<br>
+      Near misses: ${nearMissCount.toLocaleString()}<br>
+      Most common rejection: ${topLabel} — ${topCount.toLocaleString()}<br>
+      </div>
+      <div style="color:var(--text2);font-size:11px;margin-top:6px">Candidates found but zero qualified — see the funnel and rejected-candidates table below for exactly where.</div>`;
+  } else {
+    emptyEl.innerHTML=`<span style="color:var(--green)">${validSignals.toLocaleString()} valid signal${validSignals!==1?'s':''} qualified</span> <span style="color:var(--text2)">out of ${candidatesEvaluated.toLocaleString()} candidates evaluated across ${decisionCandles.toLocaleString()} M15 decision candles.</span>`;
+  }
+  if(!diag){
+    ['mtfDiagEvaluatorParity','mtfDiagCoverage','mtfDiagFunnel','mtfDiagRejectionTotals','mtfDiagNearMisses','mtfDiagRejectedTable'].forEach(id=>{document.getElementById(id).innerHTML='';});
+    document.getElementById('mtfDiagRejectedCount').textContent='';
+    return;
+  }
+
+  // Evaluator parity -- Live and Replay call the exact same shared evaluator
+  // (evaluateSetupFullBreakdownCore / SETUP_EVALUATOR_VERSION), so this will always read MATCH
+  // unless a developer-only demo override is active (see toggleReplayParityDemoMismatch()).
+  const liveVer=window.__replayParityDemoMismatch?SETUP_EVALUATOR_VERSION+'-DEMO-MISMATCH':SETUP_EVALUATOR_VERSION;
+  const replayVer=diag.evaluatorVersion||SETUP_EVALUATOR_VERSION;
+  const parityMatch=liveVer===replayVer;
+  document.getElementById('mtfDiagEvaluatorParity').innerHTML=
+    `Live evaluator: <code>${liveVer}</code> &nbsp; Replay evaluator: <code>${replayVer}</code> &nbsp; `+
+    (parityMatch
+      ?`<span class="badge" style="background:var(--green);color:#fff">PARITY: MATCH</span>`
+      :`<span class="badge" style="background:var(--red);color:#fff">⚠ PARITY: MISMATCH — Live and Replay may be evaluating setups differently. Do not trust a comparison between them until this is resolved.</span>`);
+
+  const fmtTs=ts=>ts?new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'—';
+  document.getElementById('mtfDiagCoverage').innerHTML=`
+    Requested window: ${fmtTs(diag.requestedStartTs)} → ${fmtTs(diag.requestedEndTs)}<br>
+    Actually evaluated: ${fmtTs(diag.actualFirstEvaluatedTs)} → ${fmtTs(diag.actualLastEvaluatedTs)}<br>
+    Candles loaded — Weekly: ${diag.weeklyLoaded} · Daily: ${diag.dailyLoaded} · H4: ${diag.h4Loaded} · M15: ${diag.m15Loaded}<br>
+    M15 decision candles processed: ${diag.m15DecisionCandlesProcessed.toLocaleString()}<br>
+    Missing candles: ${diag.missingCandles.toLocaleString()} · Invalid candles: ${diag.invalidCandles.toLocaleString()}<br>
+    Session-filtered: ${diag.sessionFilteredCandles.toLocaleString()} · Weekday-filtered: ${diag.weekdayFilteredCandles.toLocaleString()}`;
+
+  const catBadge=cat=>{
+    const m={hard:['Hard eligibility gate','var(--red)'],soft:['Soft confluence factor','var(--purple)'],
+      informational:['Informational observation','var(--text2)'],preference:['Preference (overridable)','#e8a33d']};
+    const[label,color]=m[cat]||['',''];
+    return `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:${color};color:#fff;margin-left:6px">${label}</span>`;
+  };
+  document.getElementById('mtfDiagFunnel').innerHTML=`<table style="width:100%;font-size:12px;border-collapse:collapse">`+
+    Object.entries(diag.funnel).map(([k,v])=>{
+      const meta=FUNNEL_LABELS[k]||{label:k,category:'informational'};
+      return `<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0">${meta.label}${catBadge(meta.category)}</td><td style="text-align:right;padding:4px 0;font-weight:700">${v.toLocaleString()}</td></tr>`;
+    }).join('')+`</table>`;
+
+  const totalRejections=Object.values(diag.rejectionTotals).reduce((s,v)=>s+v,0);
+  document.getElementById('mtfDiagRejectionTotals').innerHTML=totalRejections===0?`<span style="color:var(--text2)">No rejections recorded.</span>`:
+    `<table style="width:100%;font-size:12px;border-collapse:collapse">`+
+    Object.entries(diag.rejectionTotals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+      `<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 0">${REJECTION_CATEGORY_LABELS[k]||k}</td><td style="text-align:right;padding:4px 0;font-weight:700">${v.toLocaleString()}</td></tr>`
+    ).join('')+`</table><div style="font-size:10px;color:var(--text2);margin-top:4px">Each candidate contributes exactly one primary rejection reason -- totals above never double-count a candidate.</div>`;
+
+  const marginInput=document.getElementById('mtfNearMissMargin');
+  const margin=marginInput?(parseFloat(marginInput.value)||NEAR_MISS_CONFLUENCE_MARGIN):NEAR_MISS_CONFLUENCE_MARGIN;
+  const nearMisses=diag.nearMisses.filter(nm=>{
+    const gap=nm.requiredConfluence-nm.observedConfluence;
+    return gap<=0||gap<=margin;
+  });
+  document.getElementById('mtfDiagNearMisses').innerHTML=nearMisses.length===0?`<span style="color:var(--text2)">None within the current margin.</span>`:
+    `<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="text-align:left;color:var(--text2)">
+      <th>Timestamp</th><th>Pair</th><th>Dir</th><th>Strategy</th><th>Confluence</th><th>Required</th><th>Failed gate</th><th>What was required</th></tr></thead><tbody>`+
+    nearMisses.slice(0,50).map(nm=>`<tr style="border-bottom:1px solid var(--border)">
+      <td>${fmtTs(nm.timestamp)}</td><td>${nm.pair}</td><td>${nm.direction||'—'}</td><td>${nm.strategy}</td>
+      <td>${nm.observedConfluence}%</td><td>${nm.requiredConfluence}%</td><td>${nm.failedGate}</td><td>${nm.whatWasRequired}</td></tr>`).join('')+
+    `</tbody></table>`;
+
+  const rejList=diag.rejectedCandidates||[];
+  document.getElementById('mtfDiagRejectedCount').textContent=`(${rejList.length.toLocaleString()} total)`;
+  renderMtfDiagRejectedTable(rejList);
+}
+
+function renderMtfDiagRejectedTable(rejList){
+  const shown=rejList.slice(0,replayDiagShownCount);
+  const fmtTs=ts=>ts?new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'—';
+  document.getElementById('mtfDiagRejectedTable').innerHTML=shown.length===0?`<span style="color:var(--text2)">No rejected candidates recorded.</span>`:
+    `<div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse;white-space:nowrap"><thead><tr style="text-align:left;color:var(--text2)">
+      <th>Timestamp</th><th>Pair</th><th>Dir</th><th>Strategy</th><th>Confl.</th><th>HTF</th><th>AOI</th><th>Wick</th><th>Engulf</th><th>MSB</th><th>R:R</th><th>Session</th><th>Weekday</th><th>Primary Rejection</th><th>Secondary</th><th></th></tr></thead><tbody>`+
+    shown.map((c,idx)=>`<tr style="border-bottom:1px solid var(--border)">
+      <td>${fmtTs(c.timestamp)}</td><td>${c.pair}</td><td>${c.direction||'—'}</td><td>${c.strategy}</td>
+      <td>${c.confluence!=null?c.confluence+'%':'—'}</td><td>${c.htfAlignment||'—'}</td><td>${c.aoiStatus||'—'}</td>
+      <td>${c.rejectionWick||'—'}</td><td>${c.engulfing||'—'}</td><td>${c.msb||'—'}</td><td>${c.rr||'—'}</td>
+      <td>${c.session||'—'}</td><td>${c.weekday||'—'}</td><td style="color:var(--red)">${c.primaryRejection}</td>
+      <td>${(c.secondaryRejections||[]).join(', ')||'—'}</td>
+      <td><button onclick="mtfDiagShowRejectedDetail(${idx})" style="padding:2px 6px">View</button></td></tr>`).join('')+
+    `</tbody></table></div>`;
+  document.getElementById('mtfDiagShowMoreBtn').style.display=rejList.length>shown.length?'inline-block':'none';
+}
+function mtfDiagExpandRejected(){
+  replayDiagShownCount+=50;
+  const diag=replayDiagLastRunInfo&&replayDiagLastRunInfo.diag;
+  if(diag) renderMtfDiagRejectedTable(diag.rejectedCandidates||[]);
+}
+function mtfDiagShowRejectedDetail(idx){
+  const diag=replayDiagLastRunInfo&&replayDiagLastRunInfo.diag;
+  if(!diag) return;
+  const c=(diag.rejectedCandidates||[])[idx];
+  if(!c) return;
+  const el=document.getElementById('mtfDiagInspector');
+  const s=c.snapshot||{};
+  el.innerHTML=`<div class="card" style="background:var(--bg3)">
+    <div class="section-label">Frozen decision snapshot — ${c.pair} ${c.direction||''} @ ${c.timestamp?new Date(c.timestamp).toLocaleString():'—'}</div>
+    <div style="font-size:12px;line-height:1.8">
+    Weekly bias: ${s.weeklyBias||'—'} · Daily bias: ${s.dailyBias||'—'} · H4 bias: ${s.h4Bias||'—'}<br>
+    Support: ${s.structSupport!=null?s.structSupport.toFixed(5):'—'} (${s.structSupportSrc||'—'}) · Resistance: ${s.structResistance!=null?s.structResistance.toFixed(5):'—'} (${s.structResistanceSrc||'—'}) · AOI status: ${c.aoiStatus||'—'}<br>
+    Rejection wick: ${c.rejectionWick||'—'} · Engulfing: ${c.engulfing||'—'} · MSB: ${c.msb||'—'}<br>
+    Confluence: ${c.confluence!=null?c.confluence+'%':'—'} — items: ${(s.confluenceItems||[]).map(it=>`${it.label} (${it.pts}pt, ${it.state})`).join(', ')||'—'}<br>
+    Entry: ${s.entry!=null?s.entry.toFixed(5):'—'} · Stop: ${s.stop!=null?s.stop.toFixed(5):'—'} · Target: ${s.target!=null?s.target.toFixed(5):'—'} · R:R: ${c.rr||'—'}<br>
+    Session: ${c.session||'—'} · Weekday: ${c.weekday||'—'}<br>
+    Passed rules: everything except — <span style="color:var(--red)">${c.primaryRejection}</span>${c.secondaryRejections&&c.secondaryRejections.length?', '+c.secondaryRejections.join(', '):''}<br>
+    Evaluator version: <code>${c.evaluatorVersion||SETUP_EVALUATOR_VERSION}</code>
+    </div></div>`;
+}
+
+// Developer-only demo toggle -- deliberately makes the displayed live-evaluator identifier
+// diverge from the replay one, purely to prove the MISMATCH warning actually renders. Gated
+// behind the existing Developer Mode flag, matches this project's established Developer Test
+// Mode precedent (synthetic, clearly tagged, never changes real evaluation results).
+function toggleReplayParityDemoMismatch(){
+  if(!developerModeEnabled) return;
+  window.__replayParityDemoMismatch=!window.__replayParityDemoMismatch;
+  if(replayDiagLastRunInfo) renderReplayDiagnostics(replayDiagLastRunInfo.diag,replayDiagLastRunInfo);
+}
+function renderReplayDiagnosticsCached(){
+  if(replayDiagLastRunInfo) renderReplayDiagnostics(replayDiagLastRunInfo.diag,replayDiagLastRunInfo);
+}
+
+// ── Read-only CSV/JSON export. Builds a string in memory and triggers a browser download --
+// never writes to localStorage, never touches paperAccount/journalEntries/scanData/alertLog,
+// never calls save(). ──
+function replayDiagCsvEscape(v){
+  if(v==null) return '';
+  const s=String(v);
+  return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function replayDiagBuildExportPayload(){
+  const diag=replayDiagLastRunInfo&&replayDiagLastRunInfo.diag;
+  if(!diag) return null;
+  return{
+    evaluatorMetadata:{liveEvaluatorVersion:SETUP_EVALUATOR_VERSION,replayEvaluatorVersion:diag.evaluatorVersion,
+      parity:(SETUP_EVALUATOR_VERSION===diag.evaluatorVersion)?'MATCH':'MISMATCH'},
+    coverage:{requestedStartTs:diag.requestedStartTs,requestedEndTs:diag.requestedEndTs,
+      actualFirstEvaluatedTs:diag.actualFirstEvaluatedTs,actualLastEvaluatedTs:diag.actualLastEvaluatedTs,
+      weeklyLoaded:diag.weeklyLoaded,dailyLoaded:diag.dailyLoaded,h4Loaded:diag.h4Loaded,m15Loaded:diag.m15Loaded,
+      m15DecisionCandlesProcessed:diag.m15DecisionCandlesProcessed,missingCandles:diag.missingCandles,
+      invalidCandles:diag.invalidCandles,sessionFilteredCandles:diag.sessionFilteredCandles,
+      weekdayFilteredCandles:diag.weekdayFilteredCandles},
+    funnel:diag.funnel,
+    rejectionTotals:diag.rejectionTotals,
+    rejectedCandidates:diag.rejectedCandidates,
+    nearMisses:diag.nearMisses
+  };
+}
+function downloadTextFile(filename,mime,text){
+  const blob=new Blob([text],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function exportReplayDiagnosticsJSON(){
+  const payload=replayDiagBuildExportPayload();
+  if(!payload){alert('Run a replay first.');return;}
+  downloadTextFile(`replay-diagnostics-${Date.now()}.json`,'application/json',JSON.stringify(payload,null,2));
+}
+function exportReplayDiagnosticsCSV(){
+  const payload=replayDiagBuildExportPayload();
+  if(!payload){alert('Run a replay first.');return;}
+  const rows=[['section','field','value']];
+  Object.entries(payload.evaluatorMetadata).forEach(([k,v])=>rows.push(['evaluator',k,v]));
+  Object.entries(payload.coverage).forEach(([k,v])=>rows.push(['coverage',k,v]));
+  Object.entries(payload.funnel).forEach(([k,v])=>rows.push(['funnel',k,v]));
+  Object.entries(payload.rejectionTotals).forEach(([k,v])=>rows.push(['rejectionTotal',k,v]));
+  let csv=rows.map(r=>r.map(replayDiagCsvEscape).join(',')).join('\n');
+  csv+='\n\ntimestamp,pair,direction,strategy,confluence,primaryRejection,secondaryRejections\n';
+  csv+=payload.rejectedCandidates.map(c=>[c.timestamp,c.pair,c.direction,c.strategy,c.confluence,c.primaryRejection,(c.secondaryRejections||[]).join('; ')].map(replayDiagCsvEscape).join(',')).join('\n');
+  csv+='\n\ntimestamp,pair,direction,strategy,observedConfluence,requiredConfluence,failedGate\n';
+  csv+=payload.nearMisses.map(n=>[n.timestamp,n.pair,n.direction,n.strategy,n.observedConfluence,n.requiredConfluence,n.failedGate].map(replayDiagCsvEscape).join(',')).join('\n');
+  downloadTextFile(`replay-diagnostics-${Date.now()}.csv`,'text/csv',csv);
 }
 
 // Surfaces every TRUE MTF Replay trade that failed the independent no-lookahead check --
@@ -6519,7 +7308,247 @@ async function scanAll(){
   renderScan();
   checkPaperPositions();
   await checkAutoTrades();
+  await runManualReviewScan();
   if(document.getElementById('panel-paper')&&document.getElementById('panel-paper').classList.contains('active')) renderPaper();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// v12.1.2: MANUAL REVIEW ELIGIBLE live scan. Runs ALONGSIDE checkAutoTrades() -- never
+// inside it, never calls openPaperPosition() itself -- so the real auto-entry decision path
+// is completely unaffected. Only runs outside Mon-Wed (isPreferredTradingDay()==false): on
+// Mon-Wed, checkAutoTrades() already handles genuinely qualified setups automatically, so
+// running the classifier there would be redundant network cost for no new information.
+// Scoped to the same 'Active watch' pairs checkAutoTrades() itself considers, and skips any
+// pair that already has an open JVM position (the same no-duplicate-position guard
+// checkAutoTrades() uses) so an approved trade can never be duplicated by re-classification.
+let manualReviewCandidates={}; // oPair -> classification result (in-memory only, not persisted -- rebuilt every scan tick)
+let manualReviewDismissedUntilTs={}; // oPair -> decisionTs the user dismissed "until next candle"
+let manualReviewAlertedKey={}; // oPair -> last alerted state+decisionTs, for dedup
+let manualReviewApprovedDecisionTs={}; // oPair -> decisionTs already approved (duplicate-approval guard)
+
+async function runManualReviewScan(){
+  if(isPreferredTradingDay()) { manualReviewCandidates={}; renderManualReviewBanners(); return; }
+  const eligiblePairs=ALL_PAIRS.filter(oPair=>{
+    const sk=oPair.replace('_','/');
+    const sd=scanData[sk];
+    const hasOpenPos=paperAccount.openPositions.some(p=>p.oPair===oPair);
+    return sd&&sd.bucket==='Active watch'&&!hasOpenPos;
+  });
+  for(const oPair of eligiblePairs){
+    try{
+      const breakdown=await evaluateLiveSetupFullBreakdown(oPair);
+      const classification=classifySetupEligibility(oPair,breakdown);
+      const prev=manualReviewCandidates[oPair];
+      manualReviewCandidates[oPair]=classification;
+      if(classification.state==='MANUAL REVIEW ELIGIBLE'){
+        const decisionTs=breakdown.decisionTs;
+        const alertKey=classification.state+'|'+Math.floor(decisionTs/300000); // 5-min bucket, same dedup granularity as addAlert()
+        const materiallyChanged=prev==null||prev.state!==classification.state||manualReviewAlertedKey[oPair]!==alertKey;
+        if(materiallyChanged&&manualReviewAlertedKey[oPair]!==alertKey){
+          manualReviewAlertedKey[oPair]=alertKey;
+          playManualReviewAlert();
+          addManualReviewAlertLogEntry(classification);
+        }
+      }
+    }catch(e){ /* a single pair's classification failing must never break the scan loop */ }
+  }
+  // Clear stale candidates for pairs no longer eligible (left Active watch, got an open position, etc.)
+  Object.keys(manualReviewCandidates).forEach(oPair=>{
+    if(!eligiblePairs.includes(oPair)) delete manualReviewCandidates[oPair];
+  });
+  renderManualReviewBanners();
+  updateManualReviewDashboardBadges();
+}
+
+function fmtMrTime(ts){return ts?new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'—';}
+
+// Amber banner per MANUAL REVIEW ELIGIBLE candidate -- no direct one-click execution button
+// here, only Review Trade (opens the confirmation modal), Pass, and Dismiss Until Next Candle.
+function renderManualReviewBanners(){
+  const container=document.getElementById('manualReviewBanners');
+  if(!container) return;
+  const entries=Object.entries(manualReviewCandidates).filter(([oPair,c])=>{
+    if(c.state!=='MANUAL REVIEW ELIGIBLE') return false;
+    const dismissedTs=manualReviewDismissedUntilTs[oPair];
+    return !(dismissedTs!=null&&c.breakdown&&c.breakdown.decisionTs===dismissedTs);
+  });
+  if(!entries.length){container.innerHTML='';return;}
+  container.innerHTML=entries.map(([oPair,c])=>{
+    const b=c.breakdown;
+    return `<div class="card" style="border:1px solid #e8a33d;background:rgba(232,163,61,.08);margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-weight:700;color:#e8a33d;font-size:13px;margin-bottom:4px">MANUAL REVIEW ELIGIBLE</div>
+          <div style="font-size:12px;color:var(--text2);max-width:640px">This setup meets the strategy's technical requirements but occurs outside the preferred Monday–Wednesday entry window. MOGO will not enter this trade automatically.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:12px 0;font-size:12px">
+        <div>Strategy<br><strong>JVM</strong></div>
+        <div>Pair<br><strong>${c.pair}</strong></div>
+        <div>Direction<br><strong>${b.direction==='buy'?'▲ BUY':'▼ SELL'}</strong></div>
+        <div>Confluence<br><strong style="color:${cColor(c.confluence)}">${c.confluence}%</strong></div>
+        <div>Grade<br><strong>${c.grade}</strong></div>
+        <div>Weekday<br><strong>${c.weekday}</strong></div>
+        <div>Session<br><strong>${b.session?b.session.name:'—'}</strong></div>
+        <div>HTF alignment<br><strong>${b.score}/3</strong></div>
+        <div>AOI status<br><strong>present</strong></div>
+        <div>Momentum-loss/rejection<br><strong>${(b.gates.find(g=>g.id==='momentum_loss_wick')||{}).observed||'—'}</strong></div>
+        <div>Confirmation<br><strong>${(b.gates.find(g=>g.id==='confirmation')||{}).observed||'—'}</strong></div>
+        <div>Entry<br><strong>${b.entry!=null?b.entry.toFixed(5):'—'}</strong></div>
+        <div>Stop<br><strong>${b.stop!=null?b.stop.toFixed(5):'—'}</strong></div>
+        <div>Target<br><strong>${b.target!=null?b.target.toFixed(5):'—'}</strong></div>
+        <div>R:R<br><strong>${b.ratio!=null?b.ratio.toFixed(2)+':1':'—'}</strong></div>
+        <div>News status<br><strong style="color:var(--text2)">not enforced</strong></div>
+        <div>Spread status<br><strong style="color:var(--text2)">not enforced</strong></div>
+        <div>Data freshness<br><strong>live</strong></div>
+        <div>Auto-entry block reason<br><strong>${c.automaticEntryBlockReason}</strong></div>
+      </div>
+      ${c.weekdayWarning?`<div style="font-size:11px;color:#e8a33d;margin-bottom:8px">⚠ ${c.weekdayWarning}</div>`:''}
+      ${c.isFriday&&c.fridayInfo?`<div style="font-size:11px;color:#e8a33d;margin-bottom:8px">Friday cutoff in ${c.fridayInfo.minutesRemainingBeforeCutoff} min · ${c.fridayInfo.liquidityWarning}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="primary" onclick="openManualReviewModal('${oPair}')">Review Trade</button>
+        <button onclick="passManualReviewSetup('${oPair}')">Pass</button>
+        <button onclick="dismissManualReviewUntilNextCandle('${oPair}')">Dismiss Until Next Candle</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function passManualReviewSetup(oPair){
+  // "Passed setup creates no trade" -- purely a UI acknowledgment, no state mutation beyond
+  // removing this candidate from view until it's freshly reclassified next scan tick.
+  delete manualReviewCandidates[oPair];
+  renderManualReviewBanners();
+}
+function dismissManualReviewUntilNextCandle(oPair){
+  const c=manualReviewCandidates[oPair];
+  if(c&&c.breakdown) manualReviewDismissedUntilTs[oPair]=c.breakdown.decisionTs;
+  renderManualReviewBanners();
+}
+
+let mrModalOpenPair=null;
+function openManualReviewModal(oPair){
+  const c=manualReviewCandidates[oPair];
+  if(!c||c.state!=='MANUAL REVIEW ELIGIBLE') return;
+  mrModalOpenPair=oPair;
+  const b=c.breakdown;
+  document.getElementById('mrModalOutsideWindowReason').textContent=c.weekdayWarning||'Outside preferred Monday–Wednesday entry window.';
+  const riskAmount=paperAccount.balance*0.01;
+  const gatesNotEnforcedHtml=c.gatesNotYetEnforced.length
+    ?`<div style="font-size:11px;color:var(--text2);margin-top:8px">Not yet enforced by this workflow (no code gate exists today): ${c.gatesNotYetEnforced.map(g=>g.label).join(', ')}.</div>`:'';
+  document.getElementById('mrModalBody').innerHTML=`
+    Pair: <strong>${c.pair}</strong> &nbsp; Strategy: <strong>JVM</strong> &nbsp; Direction: <strong>${b.direction==='buy'?'BUY':'SELL'}</strong><br>
+    Entry: <strong>${b.entry.toFixed(5)}</strong> &nbsp; Stop: <strong>${b.stop.toFixed(5)}</strong> &nbsp; Target: <strong>${b.target.toFixed(5)}</strong><br>
+    Position size: <strong>${(riskAmount/(Math.abs(b.entry-b.stop)/pipSize(oPair))/100000).toFixed(2)} lots (est.)</strong><br>
+    Dollar risk: <strong>$${riskAmount.toFixed(2)}</strong> &nbsp; Account risk: <strong>1.00%</strong> &nbsp; R:R: <strong>${b.ratio.toFixed(2)}:1</strong><br>
+    Confluence score: <strong style="color:${cColor(c.confluence)}">${c.confluence}%</strong> &nbsp; Grade: <strong>${c.grade}</strong><br>
+    Passed rules: <strong>${b.passedGates.map(g=>g.label).join(', ')}</strong><br>
+    Outside-window reason: <strong>${c.automaticEntryBlockReason}</strong><br>
+    News status: <span style="color:var(--text2)">not enforced by this workflow</span> &nbsp; Spread status: <span style="color:var(--text2)">not enforced by this workflow</span><br>
+    Data age: <strong>live</strong><br>
+    ${c.isThursday?'<div style="color:#e8a33d;margin-top:6px">Thursday: outside preferred Monday–Wednesday entry window.</div>':''}
+    ${c.isFriday?`<div style="color:#e8a33d;margin-top:6px">Friday: outside preferred Monday–Wednesday entry window. Elevated late-week and weekend exposure risk.<br>Cutoff in ${c.fridayInfo?c.fridayInfo.minutesRemainingBeforeCutoff:'?'} min. Could remain open into the weekend. ${c.fridayInfo?c.fridayInfo.liquidityWarning:''}</div>`:''}
+    ${gatesNotEnforcedHtml}
+  `;
+  document.getElementById('mrModalAckCheckbox').checked=false;
+  mrModalUpdateApproveEnabled();
+  document.getElementById('manualReviewModalOverlay').classList.add('open');
+}
+function closeManualReviewModal(){
+  document.getElementById('manualReviewModalOverlay').classList.remove('open');
+  mrModalOpenPair=null;
+}
+function mrModalUpdateApproveEnabled(){
+  const btn=document.getElementById('mrModalApproveBtn');
+  const reasonEl=document.getElementById('mrModalDisabledReason');
+  const ack=document.getElementById('mrModalAckCheckbox').checked;
+  const oPair=mrModalOpenPair;
+  const c=oPair&&manualReviewCandidates[oPair];
+  let reason='';
+  if(!c||c.state!=='MANUAL REVIEW ELIGIBLE') reason='This setup is no longer Manual Review Eligible — it may have changed or resolved.';
+  else if(c.isFriday&&c.fridayInfo&&c.fridayInfo.pastCutoff) reason='Past the Friday cutoff — approval is disabled.';
+  else if(!ack) reason='Check the acknowledgment box to enable approval.';
+  reasonEl.textContent=reason&&!ack?'':reason;
+  btn.disabled=!!reason||!ack;
+}
+async function mrModalApprove(){
+  if(!mrModalOpenPair) return;
+  const result=await approveManualReviewTrade(mrModalOpenPair);
+  if(!result.ok){
+    document.getElementById('mrModalDisabledReason').textContent=result.reason||'Approval failed.';
+    return;
+  }
+  closeManualReviewModal();
+  renderManualReviewBanners();
+}
+function mrModalPass(){
+  if(mrModalOpenPair) passManualReviewSetup(mrModalOpenPair);
+  closeManualReviewModal();
+}
+
+// v12.1.2: THE GUARDED COMMIT. Uses the existing openPaperPosition()/commitPaperLedger() path
+// unmodified -- no direct localStorage write, no new save/commit architecture. Attribution
+// fields are attached to the journal record AFTER openPaperPosition() succeeds (that function
+// is frozen/protected and does not accept extra metadata), then re-committed through the same
+// guarded path. If that second commit fails, the newly-created position/journal record are
+// both rolled back and re-committed as removed, so no partial trade or journal record remains.
+// Not async: openPaperPosition()/commitPaperLedger() are both synchronous, so this has no
+// genuine await inside it -- kept as a plain function rather than an unnecessary async
+// wrapper. Its one real caller (mrModalApprove()) still works unchanged, since awaiting a
+// plain return value is always valid in JS.
+function approveManualReviewTrade(oPair){
+  const c=manualReviewCandidates[oPair];
+  if(!c||c.state!=='MANUAL REVIEW ELIGIBLE') return{ok:false,reason:'Setup is no longer Manual Review Eligible.'};
+  const b=c.breakdown;
+  if(c.isFriday&&c.fridayInfo&&c.fridayInfo.pastCutoff) return{ok:false,reason:'Past the Friday cutoff.'};
+  if(!getSession().active) return{ok:false,reason:'Outside approved session.'};
+  if(manualReviewApprovedDecisionTs[oPair]===b.decisionTs) return{ok:false,reason:'This candidate has already been approved.'};
+  if(paperAccount.openPositions.some(p=>p.oPair===oPair)) return{ok:false,reason:'A position is already open for this pair.'};
+
+  const pos=openPaperPosition(oPair,b.direction,b.entry,b.stop,b.target,'manual_review');
+  if(pos.error) return{ok:false,reason:pos.error};
+
+  const entry=journalEntries.find(e=>e.tradeId===pos.id);
+  if(entry){
+    entry.entrySource='MANUAL_REVIEW';
+    entry.windowStatus='OUTSIDE_PREFERRED_WEEKDAY';
+    entry.userApproved=true;
+    entry.automaticEntry=false;
+    entry.approvalTimestamp=new Date().toISOString();
+    entry.decisionCandleTimestamp=b.decisionTs?new Date(b.decisionTs).toISOString():null;
+    entry.evaluatorVersionAtApproval=b.evaluatorVersion;
+    entry.confluenceSnapshotAtApproval=b.confluence;
+    entry.ruleSnapshotAtApproval=b.gates;
+    entry.warningAcknowledgments=['outside_mon_wed_window'];
+    entry.weekdayAtApproval=c.weekday;
+    entry.sessionAtApproval=b.session?b.session.name:null;
+    entry.automaticEntryBlockReasonAtApproval=c.automaticEntryBlockReason;
+    entry.userDecision='approved';
+    entry.thuFriClassification=c.isThursday?'Thursday':(c.isFriday?'Friday':null);
+  }
+  const committed=commitPaperLedger();
+  if(!committed.ok){
+    // Roll back: this candidate's position/journal record must not partially persist.
+    paperAccount.openPositions=paperAccount.openPositions.filter(p=>p.id!==pos.id);
+    const idx=journalEntries.findIndex(e=>e.tradeId===pos.id);
+    if(idx!==-1) journalEntries.splice(idx,1);
+    commitPaperLedger();
+    return{ok:false,reason:committed.reason};
+  }
+  manualReviewApprovedDecisionTs[oPair]=b.decisionTs;
+  delete manualReviewCandidates[oPair];
+  renderPaper();
+  return{ok:true,pos};
+}
+
+function updateManualReviewDashboardBadges(){
+  const el=document.getElementById('dashManualReviewBadges');
+  if(!el) return;
+  const entries=Object.entries(manualReviewCandidates).filter(([,c])=>c.state==='MANUAL REVIEW ELIGIBLE');
+  if(!entries.length){el.innerHTML='';return;}
+  el.innerHTML=entries.map(([oPair,c])=>
+    `<div class="badge" style="background:#e8a33d;color:#fff;cursor:pointer;margin:2px" onclick="jumpToScanner('${c.pair}')">${c.pair} — ${c.confluence}% — MANUAL REVIEW</div>`
+  ).join('');
 }
 
 // ── CONF COLOR ──
@@ -7867,7 +8896,19 @@ function addAlert(pair,conf,price,sess){
 function renderAlertLog(){
   const el=document.getElementById('alertLog');
   if(!alertLog.length){el.innerHTML='<div class="empty-state" style="padding:.5rem 0;font-size:11px">No alerts yet</div>';return;}
-  el.innerHTML=alertLog.map(a=>`
+  el.innerHTML=alertLog.map(a=>{
+    if(a.type==='manual_review'){
+      // v12.1.2: deliberately distinct wording/styling from an auto-qualified alert below.
+      return `<div class="alert-entry" style="border-left:3px solid #e8a33d">
+        <div class="alert-top">
+          <span class="alert-pair">${a.pair} <span style="color:#e8a33d;font-weight:700">MANUAL REVIEW</span></span>
+          <span style="color:${cColor(a.pct)};font-size:12px;font-weight:600">${a.pct}%</span>
+          <span class="alert-time">${a.time}</span>
+        </div>
+        <div class="alert-sigs">${(a.sigs||[]).join(' ')}</div>
+      </div>`;
+    }
+    return `
     <div class="alert-entry">
       <div class="alert-top">
         <span class="alert-pair">${a.pair} <span style="color:${a.direction==='long'?'var(--green)':'var(--red)'};font-weight:700">${a.direction==='long'?'▲ LONG':'▼ SHORT'}</span></span>
@@ -7875,7 +8916,8 @@ function renderAlertLog(){
         <span class="alert-time">${a.time}</span>
       </div>
               <div class="alert-sigs">${(a.sigs||[]).slice(0,3).join(' · ')}${!a.inSession?' ⚠ off-hours':''}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function showToast(entry,sess){
   document.getElementById('toastPair').textContent=entry.pair;
@@ -7924,6 +8966,40 @@ function notifyAutoTrade(pos,confluence){
     }
   }catch(e){}
 }
+// v12.1.2: MANUAL REVIEW ELIGIBLE alert -- deliberately distinct wording AND sound from an
+// automatically qualified trade alert (addAlert()/playAlert() above), per spec: "Do not use
+// the same sound or wording as an automatically qualified trade." Reuses the existing
+// alertLog/renderAlertLog() UI (one alert feed) rather than inventing a parallel store --
+// tagged type:'manual_review' so renderAlertLog() can render it with distinct copy.
+function addManualReviewAlertLogEntry(classification){
+  const entry={time:new Date().toLocaleTimeString(),pair:classification.pair,
+    pct:classification.confluence,direction:classification.direction==='buy'?'long':'short',
+    sigs:['High-confluence setup outside preferred weekday window.','Manual review required.','No automatic trade will be placed.'],
+    price:'—',session:(classification.breakdown&&classification.breakdown.session)?classification.breakdown.session.name:'—',
+    inSession:true,type:'manual_review'};
+  alertLog.unshift(entry);
+  if(alertLog.length>50) alertLog.pop();
+  renderAlertLog();
+  save();
+}
+function playManualReviewAlert(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    // Deliberately distinct from playAlert(): two low triangle-wave beeps, not the three-tone
+    // ascending sine sweep used for an automatically qualified trade.
+    [[440,.7],[440,.7]].forEach(([freq,vol],i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=freq;o.type='triangle';
+      const t=ctx.currentTime+i*.35;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(vol*.3,t+.05);
+      g.gain.linearRampToValueAtTime(0,t+.25);
+      o.start(t);o.stop(t+.25);
+    });
+  }catch(e){}
+}
+
 function playAlert(){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
@@ -9302,6 +10378,7 @@ function renderPaper(){
       }).join('')+`</tbody></table>`;
   }
   renderPaperMiniJournal(); // v9.0: JVM-specific renderer with account-relationship classification, source, and trade ID
+  renderManualReviewPerformance(); // v12.1.2: separate Standard/Outside-Window/Thu/Fri performance groups
 }
 
 // ── AUTO PAPER TRADING ──
@@ -9772,7 +10849,7 @@ async function runDiagnostics(){
 // ── RULES ──
 const RULES={
   topdown:['Assess weekly, daily, and 4H every Sunday — set bias before the week opens','Check Forex Factory every Sunday scan and every session for red folder events','2 out of 3 timeframes must agree on direction — 3/3 = A-grade priority pair','1/3 or split = skip entirely — do not trade','Do not change weekly bias mid-week unless a major structural break occurs','AOIs drawn from weekly and daily structure only — 4H confirms trend and times entry','When weekly AOI and daily AOI overlap at same price, combine into one tight zone — highest-probability entry'],
-  entry:['Confirm 4H bias via market structure: HH/HL for buys, LL/LH for sells','Wait for a structural level to be broken and retested — no break, no trade','AOI validation: minimum 3 touches/reactions — fewer than 3 = no AOI, move on','Broken AOI rule: full candle body close through zone = zone is dead, drop to next level','Entry signal: engulfing candle swallowing 5+ prior candles at AOI retest','Wick filter: large rejection wick at AOI = pre-signal — wick + engulf = highest quality entry','Wait for candle to fully close — forming candle is not a signal','Never enter against confirmed top-down bias — no counter-trend trades','Check Forex Factory for red folder news in next 60 mins before every entry'],
+  entry:['Confirm 4H bias via market structure: HH/HL for buys, LL/LH for sells','Wait for a structural level to be broken and retested — no break, no trade','AOI validation: minimum 3 touches/reactions — fewer than 3 = no AOI, move on','Broken AOI rule: full candle body close through zone = zone is dead, drop to next level','Entry signal: engulfing candle swallowing 5+ prior candles at AOI retest','Momentum-loss confirmation: a large rejection wick at AOI (a loss-of-momentum signal — applies symmetrically to both bullish and bearish setups) = pre-signal — momentum-loss + engulf = highest quality entry','Wait for candle to fully close — forming candle is not a signal','Never enter against confirmed top-down bias — no counter-trend trades','Check Forex Factory for red folder news in next 60 mins before every entry'],
   risk:['1% risk per trade — no exceptions','Take profit at nearest structure point where price visibly reacted','Minimum 1:2 R:R must be mappable before entering — if not, skip the trade','Stop loss below AOI (buys) or above AOI (sells) — 5–10 pips beyond zone edge','Pre-accept full risk amount before entry — it is the cost of the trade','Do not close early to lock in profit before hitting planned target','Do not move stop to break even unless trade is significantly in profit'],
   session:['London session is primary — highest priority window','NY overlap with London is highest priority for all pairs','If signal fires outside session hours, wait — do not enter','Monday to Wednesday entries preferred — Thursday/Friday skip unless short target','No trading within 30 mins of red folder news — check Forex Factory before every entry','No trading on Friday close'],
 };
@@ -9901,7 +10978,7 @@ const SC_ENTRY_MODEL=[
   ]},
   {group:'Confirmation',cards:[
     {title:'Engulfing entry trigger',qualifies:'An engulfing candle swallows 5+ prior candles at the AOI retest.',invalidates:'No qualifying engulf forms — no trade.',why:'Direct evidence real order flow reversed at the level, not an assumption that it will.'},
-    {title:'Rejection wick pre-signal',qualifies:'A large rejection wick forms at the AOI, ideally followed by the engulf.',invalidates:'Not sufficient alone — a wick without a confirming engulf is a pre-signal only.',why:'Wick + engulf together is the highest-quality entry combination the strategy recognizes.'},
+    {title:'Momentum-loss confirmation (symmetric)',qualifies:'Bullish setups: price enters or interacts with a valid support AOI and shows evidence bearish momentum is weakening (currently executable: a large lower rejection wick, scored identically to a bearish setup\'s upper wick — see WEIGHTS.wick in scoreConfluence()). Bearish setups: price enters or interacts with a valid resistance AOI and shows evidence bullish momentum is weakening (a large upper rejection wick, same formula, mirrored). A bullish (or bearish) engulfing candle then demonstrates the opposite side has taken control.',invalidates:'Not sufficient alone — momentum-loss evidence without a confirming engulf is a pre-signal only.',why:'Momentum-loss + engulf together is the highest-quality entry combination the strategy recognizes, for either direction — see the Research Diagnostics panel below for additional loss-of-momentum conditions under evaluation and what each would require to become executable.'},
     {title:'Candle must fully close',qualifies:'The signal candle has completed and closed.',invalidates:'A forming/live candle — not yet a signal.',why:'A candle can reverse before it closes; only a closed candle is evidence.'}
   ]},
   {group:'Timing',cards:[
@@ -9951,6 +11028,87 @@ function computeMogoStrategyPerformance(){
   return{sufficientSample:true,count,wins,losses,winRate,
     netR:Number(netR.toFixed(2)),avgR:avgR!=null?Number(avgR.toFixed(2)):null,bestPair,bestSession};
 }
+
+// v12.1.2: MANUAL REVIEW ELIGIBLE performance groups. Reads journalEntries (not
+// paperAccount.closedPositions -- the attribution fields live on the journal record) for
+// current-strategy (JVM) records only. Never mixes outside-window manual-review trades
+// invisibly into the standard population -- four separate, always-visible groups.
+function computeGroupTradeStats(records){
+  const total=records.length;
+  const resolved=records.filter(r=>r.status==='CLOSED');
+  const open=records.filter(r=>r.status==='OPEN');
+  const wins=resolved.filter(r=>r.result==='Win').length;
+  const losses=resolved.filter(r=>r.result==='Loss').length;
+  const winRate=resolved.length?Math.round(wins/resolved.length*100):null;
+  const rMults=resolved.filter(r=>r.riskAmount&&r.pnl!=null).map(r=>r.pnl/r.riskAmount);
+  const netR=rMults.reduce((a,b)=>a+b,0);
+  const avgR=rMults.length?netR/rMults.length:null;
+  const grossWin=resolved.filter(r=>r.pnl>0).reduce((s,r)=>s+r.pnl,0);
+  const grossLoss=Math.abs(resolved.filter(r=>r.pnl<0).reduce((s,r)=>s+r.pnl,0));
+  const profitFactor=grossLoss>0?grossWin/grossLoss:(grossWin>0?Infinity:null);
+  let maxDD=0,peak=0,running=0;
+  rMults.forEach(r=>{running+=r;if(running>peak)peak=running;const dd=peak-running;if(dd>maxDD)maxDD=dd;});
+  const maePips=resolved.filter(r=>r.maePips!=null).map(r=>r.maePips);
+  const mfePips=resolved.filter(r=>r.mfePips!=null).map(r=>r.mfePips);
+  const avgMAE=maePips.length?maePips.reduce((a,b)=>a+b,0)/maePips.length:null;
+  const avgMFE=mfePips.length?mfePips.reduce((a,b)=>a+b,0)/mfePips.length:null;
+  const confVals=records.filter(r=>r.confluenceSnapshotAtApproval!=null).map(r=>r.confluenceSnapshotAtApproval);
+  const avgConfluence=confVals.length?Math.round(confVals.reduce((a,b)=>a+b,0)/confVals.length):null;
+  const holdTimes=resolved.filter(r=>r.openedAt&&r.closedAt).map(r=>new Date(r.closedAt)-new Date(r.openedAt));
+  const avgHoldingMs=holdTimes.length?holdTimes.reduce((a,b)=>a+b,0)/holdTimes.length:null;
+  return{total,resolvedCount:resolved.length,openCount:open.length,winRate,
+    expectancyR:rMults.length?Number(avgR.toFixed(2)):null,avgR:avgR!=null?Number(avgR.toFixed(2)):null,
+    profitFactor,maxDrawdownR:Number(maxDD.toFixed(2)),avgMAE,avgMFE,avgConfluence,avgHoldingMs};
+}
+function computeManualReviewGroupedPerformance(){
+  const jvm=journalEntries.filter(e=>e.strategy==='current_strategy'&&!e.isDeveloperTrade);
+  const standard=jvm.filter(e=>e.entrySource!=='MANUAL_REVIEW');
+  const outsideWindow=jvm.filter(e=>e.entrySource==='MANUAL_REVIEW');
+  const thursday=outsideWindow.filter(e=>e.thuFriClassification==='Thursday');
+  const friday=outsideWindow.filter(e=>e.thuFriClassification==='Friday');
+  return{
+    standard:computeGroupTradeStats(standard),
+    outsideWindow:computeGroupTradeStats(outsideWindow),
+    thursday:computeGroupTradeStats(thursday),
+    friday:computeGroupTradeStats(friday)
+  };
+}
+function fmtMrHold(ms){if(ms==null)return'—';const h=ms/3600000;return h<1?Math.round(ms/60000)+'m':h.toFixed(1)+'h';}
+function renderMrGroupCard(title,stats){
+  const sampleWarning=stats.resolvedCount<30
+    ?`<div style="font-size:10px;color:var(--text2);margin-top:4px">Insufficient sample. Results are exploratory and should not be used to change production strategy rules.</div>`
+    :stats.resolvedCount<100
+    ?`<div style="font-size:10px;color:var(--text2);margin-top:4px">Preliminary comparison (30+ resolved trades). Not yet enough for a weekday-policy review.</div>`
+    :`<div style="font-size:10px;color:var(--green)">100+ resolved trades — a more meaningful weekday-policy review is possible. No rule changes are applied automatically.</div>`;
+  return `<div style="margin-bottom:14px">
+    <div style="font-weight:700;font-size:12px;margin-bottom:6px">${title}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;font-size:11px">
+      <div>Total<br><strong>${stats.total}</strong></div>
+      <div>Resolved<br><strong>${stats.resolvedCount}</strong></div>
+      <div>Open<br><strong>${stats.openCount}</strong></div>
+      <div>Win rate<br><strong>${stats.winRate!=null?stats.winRate+'%':'—'}</strong></div>
+      <div>Expectancy<br><strong>${fmtR(stats.expectancyR)}</strong></div>
+      <div>Avg R<br><strong>${fmtR(stats.avgR)}</strong></div>
+      <div>Profit factor<br><strong>${stats.profitFactor==null?'—':(stats.profitFactor===Infinity?'∞':stats.profitFactor.toFixed(2))}</strong></div>
+      <div>Max DD<br><strong>${stats.maxDrawdownR.toFixed(2)}R</strong></div>
+      <div>Avg MAE<br><strong>${fmtPips(stats.avgMAE)}</strong></div>
+      <div>Avg MFE<br><strong>${fmtPips(stats.avgMFE)}</strong></div>
+      <div>Avg confluence<br><strong>${stats.avgConfluence!=null?stats.avgConfluence+'%':'—'}</strong></div>
+      <div>Avg hold time<br><strong>${fmtMrHold(stats.avgHoldingMs)}</strong></div>
+    </div>
+    ${stats.resolvedCount>0?sampleWarning:''}
+  </div>`;
+}
+function renderManualReviewPerformance(){
+  const el=document.getElementById('mrPerformanceBody');
+  if(!el) return;
+  const g=computeManualReviewGroupedPerformance();
+  el.innerHTML=
+    renderMrGroupCard('Standard Monday–Wednesday Entries',g.standard)+
+    renderMrGroupCard('Outside-Window Manual Review Entries',g.outsideWindow)+
+    renderMrGroupCard('Thursday Manual Review Entries',g.thursday)+
+    renderMrGroupCard('Friday Manual Review Entries',g.friday);
+}
 function renderScHero(){
   const m=MOGO_STRATEGY_META;
   const tile=(lbl,val)=>`<div class="sc-tile"><div class="sc-tile-lbl">${escapeHtml(lbl)}</div><div class="sc-tile-val">${escapeHtml(val)}</div></div>`;
@@ -9973,9 +11131,40 @@ function renderScThesis(){
       <p>MOGO is built to capture the retracement-and-continuation behavior that occurs when price returns to a structurally significant area after establishing directional bias — not to predict tops and bottoms, and not to chase momentum after it has already moved. The edge comes from waiting for price to come to a pre-identified level rather than reacting to it in real time.</p>
       <p>Top-down alignment across the Weekly, Daily, and 4-Hour timeframes exists because a level that only matters on one timeframe is noise; a level that multiple timeframes independently respect is structure. Requiring 2 of 3 timeframes to agree — and treating 3-of-3 agreement as the highest-priority setup — filters out low-quality, single-timeframe signals before a chart is ever opened.</p>
       <p>Areas of interest (AOIs) matter because price is far more likely to react at a level the market has already proven it respects. The 3-touch minimum exists specifically to separate a genuine structural zone from a level that simply hasn't been tested yet — an untested level is a guess, not a validated AOI.</p>
-      <p>Candle confirmation exists because a level being touched is not the same as a level being defended. An engulfing candle swallowing 5+ prior candles, especially preceded by a rejection wick, is direct evidence that real order flow reversed at that price — not an assumption that it will.</p>
+      <p>Candle confirmation exists because a level being touched is not the same as a level being defended. This applies symmetrically to both directions. For a bullish setup: price enters or interacts with a valid support AOI and shows evidence that bearish momentum is weakening, then a bullish engulfing candle (or equivalent bullish momentum confirmation) demonstrates that buyers have taken control. For a bearish setup: price enters or interacts with a valid resistance AOI and shows evidence that bullish momentum is weakening, then a bearish engulfing candle (or equivalent bearish momentum confirmation) demonstrates that sellers have taken control. Today's one executable loss-of-momentum condition is a large rejection wick — scored by the same formula for both directions (a long lower wick for a bullish setup, a long upper wick for a bearish one). An engulfing candle swallowing 5+ prior candles, especially preceded by that momentum-loss signal, is direct evidence that real order flow reversed at that price — not an assumption that it will. See Research Diagnostics below for other loss-of-momentum conditions under evaluation (doji, spinning top, small-bodied hesitation candle, repeated failure to continue) and what each would require to become executable — none of them currently gate or score a live trade.</p>
       <p>Risk control is central, not incidental: a fixed 1% risk per trade and a hard 1:2 minimum reward-to-risk mean the strategy can be wrong on the majority of individual trades and still be structurally profitable over a large enough sample. No single trade is allowed to threaten the account, and no single win is banked early out of impatience.</p>
     </div>
+    ${renderScMomentumLossResearchDiagnostics()}
+  </div>`;
+}
+
+// v12.1.2: RESEARCH DIAGNOSTICS -- current vs. proposed momentum-loss confirmation logic.
+// Purely informational: shows what IS executable today (the rejection-wick formula in
+// scoreConfluence()/detectSignals(), symmetric for both directions already) vs. what is NOT
+// (doji/spinning-top/hesitation-candle/repeated-failure), and precisely what implementation
+// each proposed condition would need. Does not change, gate, or score any live trade --
+// production candle logic (WEIGHTS.wick, the wick/body ratio formula) is completely untouched.
+function renderScMomentumLossResearchDiagnostics(){
+  const rows=[
+    {condition:'Doji',executable:true,detail:'Already detected as a signal (detectSignals(): body/range<0.12) -- informational only today, not scored or gated by scoreConfluence().',implementationNeeded:'Would need a WEIGHTS.doji point value and a scoreConfluence() branch to become an executable confluence factor, or a hard-gate decision if intended as a required condition rather than a soft factor.'},
+    {condition:'Spinning top',executable:false,detail:'Not currently detected anywhere in the codebase.',implementationNeeded:'A precise, testable definition (e.g. small body relative to range, roughly balanced upper/lower wicks, within specific ratio thresholds) added to detectSignals(), then a scoring/gating decision in scoreConfluence() -- same shape as the doji or wick checks above.'},
+    {condition:'Long lower/upper wick',executable:true,detail:'Executable today via the existing "Rejection wick" item (WEIGHTS.wick=15) -- already symmetric: dnW/range>0.55 for a bullish (lower-wick) setup, upW/range>0.55 for a bearish (upper-wick) setup, identical formula mirrored.',implementationNeeded:'None -- already implemented and already symmetric.'},
+    {condition:'Small-bodied hesitation candle',executable:false,detail:'Not currently detected as its own condition (distinct from doji\'s stricter body/range<0.12 threshold).',implementationNeeded:'A separate, looser body/range threshold than doji\'s, added to detectSignals() as its own signal type, plus a scoring/gating decision.'},
+    {condition:'Repeated failure to continue (lower/higher)',executable:false,detail:'Not currently detected -- would require comparing multiple consecutive candles\' highs/lows, not a single-candle check like the conditions above.',implementationNeeded:'A new multi-candle pattern check (e.g. N consecutive failed attempts to make a new high/low) added to detectSignals(), plus a scoring/gating decision. Higher implementation cost than the single-candle conditions above since it requires a lookback window and a precise "failure" definition.'}
+  ];
+  return `<div class="sc-section" style="margin-top:18px">
+    <div class="sc-section-kicker">Research Diagnostics</div>
+    <div class="sc-section-title" style="margin-bottom:8px;font-size:14px">Momentum-loss confirmation: current vs. proposed</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Informational only. Nothing below changes what gates or scores a live or replayed trade -- production candle logic is unchanged unless separately approved and implemented.</div>
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead><tr style="text-align:left;color:var(--text2)"><th>Condition</th><th>Executable today?</th><th>Detail</th><th>Implementation needed</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 8px 6px 0;font-weight:600">${r.condition}</td>
+        <td style="padding:6px 8px">${r.executable?'<span style="color:var(--green)">Yes</span>':'<span style="color:var(--text2)">No</span>'}</td>
+        <td style="padding:6px 8px;color:var(--text2)">${r.detail}</td>
+        <td style="padding:6px 8px;color:var(--text2)">${r.implementationNeeded}</td>
+      </tr>`).join('')}</tbody>
+    </table>
   </div>`;
 }
 function renderScArchitecture(){

@@ -27,15 +27,17 @@ runner (`run_v90_tests.js`, ...) that:
 **Two categories exist, and it matters which one a suite is in:**
 
 - **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
-  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.1
-  there are **three**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.2
+  there are **four**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
   Release 1), `tests/v121_jvm_registration_tests.js` (28 fixtures, JVM registration, Release 2),
-  and `tests/v1211_diagnostics_integrity_tests.js` (13 fixtures, Diagnostics data integrity) — 69
-  fixtures total. Each has its own self-contained runner (`tests/run_v120_tests.js`,
-  `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`) that extracts `index.html`'s `<script>`
-  body itself — no separate preprocessing step required. `tests/run_all.sh` discovers and runs
-  all three automatically via its `tests/run_*_tests.js` glob — adding a new suite under `tests/`
-  never requires editing the runner.
+  `tests/v1211_diagnostics_integrity_tests.js` (13 fixtures, Diagnostics data integrity), and
+  `tests/v1212_manual_review_and_replay_diagnostics_tests.js` (53 fixtures, TRUE MTF Replay
+  Diagnostics + Manual Review Eligible) — 122 fixtures total. Each has its own self-contained
+  runner (`tests/run_v120_tests.js`, `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`,
+  `tests/run_v1212_tests.js`) that extracts `index.html`'s `<script>` body itself — no separate
+  preprocessing step required. `tests/run_all.sh` discovers and runs all four automatically via
+  its `tests/run_*_tests.js` glob — adding a new suite under `tests/` never requires editing the
+  runner.
 - **Historical scratch-only suites** — the remaining 22 suites referenced in
   `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (476 fixtures) live only in the
   ephemeral Claude Code scratchpad used during development, not in this repository, and are
@@ -71,10 +73,13 @@ in sync.
 `osascript -l JavaScript` (JXA) runs JavaScriptCore without a real event loop. **It cannot
 resolve a genuine `await` on a promise that settles asynchronously** (confirmed empirically: a
 2-second `NSRunLoop` spin-wait around an immediately-rejecting `fetch()` never observed the
-promise settle). This means any function with a real `await` inside it —
-`closePaperPosition()` (`await fetchBidAsk(...)`), `checkAutoTrades()` (`await
-evaluateLiveTrigger(...)`), and similar ALEX live-polling functions — cannot be driven to
-completion inside an offline fixture.
+promise settle — and re-confirmed in v12.1.2, where the same `NSRunLoop` spin-wait technique was
+tried again around `simulateTrueMTFReplay()`/an (at-the-time) `async approveManualReviewTrade()`
+and again never observed the promise settle within a 5-second deadline). This means any function
+with a real `await` inside it — `closePaperPosition()` (`await fetchBidAsk(...)`),
+`checkAutoTrades()` (`await evaluateLiveTrigger(...)`), `simulateTrueMTFReplay()` (real
+progress-reporting awaits for long replays), and similar ALEX live-polling functions — cannot be
+driven to completion inside an offline fixture.
 
 **The established pattern**: offline fixtures cover everything synchronously reachable (which is
 most of the codebase, including `openPaperPosition`, all pure computation functions, and the
@@ -82,6 +87,15 @@ transaction/rollback contract of `commitPaperLedger()`). Anything that genuinely
 completing a real async call is instead verified **live, in an actual browser**, against the
 real function — never simulated by hand-reconstructing what the async function "would" do,
 which would prove nothing about the real code path.
+
+**A useful corollary, found in v12.1.2**: if a function is declared `async` but contains no
+*genuine* `await` (no real pending I/O — every call inside it is already synchronous), the
+`async` keyword itself is doing nothing except making the function untestable in this harness.
+`approveManualReviewTrade()` was exactly this case (`openPaperPosition()`/`commitPaperLedger()`
+are both synchronous) and was changed to a plain function — a real simplification, not a
+workaround, since real callers awaiting a non-Promise value works unchanged in an actual browser.
+Before writing offline fixtures for a new async-looking function, check whether it actually
+awaits anything real; if not, removing `async` is often the correct fix, not a harness workaround.
 
 ## 2. Live browser verification
 

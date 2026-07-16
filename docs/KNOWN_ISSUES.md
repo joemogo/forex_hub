@@ -27,6 +27,23 @@ the simulation's outcome, so this failure does not put real paper-trading data a
 live by a byte-identical `fxhub_paper` before/after. Root cause not yet investigated (a follow-up
 investigation task has been queued). See [RELEASE_NOTES.md](RELEASE_NOTES.md#v1200) for context.
 
+## Manual Review Eligible: several gates are disclosed, not enforced
+
+As of v12.1.2, the MANUAL REVIEW ELIGIBLE workflow's eligibility checklist includes 17 items, but
+only the ones already enforced somewhere in this codebase are actually gated:
+higher-timeframe alignment, structural AOI, confluence, directional confirmation, minimum R:R,
+approved session, duplicate-position exclusion, and the weekday preference itself (the one gate
+this workflow deliberately overrides). Five items have **no enforced code path anywhere in the
+app today** — not in `checkAutoTrades()`, not here: news blackout protection, spread protection,
+correlated/pair-exposure limits, a daily-loss or account-risk circuit breaker, and the Friday
+cutoff as a hard block (a cutoff *warning* is shown and does gate approval, but there is no
+general-purpose hard-block mechanism reused from elsewhere, since none exists). Rather than
+silently treating these as passing, `classifySetupEligibility()` populates a
+`gatesNotYetEnforced` list that the Review Trade modal displays explicitly. This scope was a
+deliberate decision, confirmed with the user before implementation (see the release's scope
+assessment) — building real enforcement for these was assessed as materially larger and riskier
+scope than this release. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for v12.1.2 context.
+
 ## Navigation items with no dedicated page yet
 
 Six top-nav items open a shared, honest "Coming Soon" panel (`comingSoonOpen()`) rather than a
