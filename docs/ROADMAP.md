@@ -5,6 +5,25 @@ readable per-release summary, see [RELEASE_NOTES.md](RELEASE_NOTES.md). For the 
 unabridged text of every release, see `APP_VERSION_LOG` in `index.html` — that in-code log is the
 verbatim source of record and is never rewritten by this documentation.
 
+## Release phases
+
+- **Phase 1 — Platform Foundation: COMPLETE (v12.0.0 – v12.1.1).** Established the repository
+  itself (git init, `.gitignore`, `architecture/` docs, `CONTRIBUTING.md`, the canonical
+  repository-owned test runner `tests/run_all.sh`) and the Strategy Registry/Manifest/Services
+  framework the platform is built on (see [ADR-005](adr/ADR-005-strategy-framework.md)), then
+  proved that framework by migrating both existing strategies into it — ALEX (v12.0.0) and JVM
+  (v12.1.0) — with zero behavior drift confirmed at every step. v12.1.1 closed out the phase with
+  a focused Diagnostics data-integrity fix (see [INC-003](INCIDENTS.md#inc-003--diagnostics-self-test-could-silently-persist-a-fake-trade-into-the-real-journal)),
+  leaving the platform's foundation — versioning, testing, documentation, and the strategy
+  boundary itself — reproducible from a fresh clone and sealed at tag `v12.1.1`.
+- **Phase 2 — Strategy Expansion: begins with v12.2.0.** With the Strategy SDK contract now
+  validated twice (once per strategy, with zero extensions needed for JVM's harder integration
+  surface), this phase adds genuinely new strategies on top of the now-proven framework — TJR,
+  ICT, Silver Bullet, and others named in [PRODUCT_VISION.md](PRODUCT_VISION.md) — each expected
+  to require only its own state/storage/save-load pair and one new `STRATEGY_REGISTRY` entry, per
+  ADR-005's stated consequence of the framework work. No Phase 2 release has started; this
+  roadmap entry will be updated with real scope, not aspiration, once one does.
+
 ## Where the project has been
 
 Grouped by era rather than every point release (there are 50+ entries in the full log):
@@ -22,6 +41,7 @@ Grouped by era rather than every point release (there are 50+ entries in the ful
 | Strategy Center, Academy, nav audit | v8.0 | Rebuilt Rules page into a real Strategy Center, added the Training Academy, honest "Coming Soon" pages for unbuilt nav items |
 | Paper ledger integrity | v9.0 – v11.0.1 | A data-integrity audit and 3-option reset modal (v9.0), a dedicated Trade Inspector page (v10.0), and two releases root-causing and correctly fixing a real paper-account/journal desync defect (v11.0, v11.0.1 — see [INCIDENTS.md](INCIDENTS.md)) |
 | Documentation | v11.0.1 follow-on | This documentation structure (README, docs/, ADRs, prompt archive) |
+| Platform Foundation (Phase 1) | v12.0.0 – v12.1.1 | Git repository initialization, the Strategy Registry/Manifest/Services framework ([ADR-005](adr/ADR-005-strategy-framework.md)), migrating ALEX (v12.0.0) then JVM (v12.1.0) into it with zero behavior drift, the canonical repository-owned test runner, and a Diagnostics data-integrity fix (v12.1.1 — see [INC-003](INCIDENTS.md#inc-003--diagnostics-self-test-could-silently-persist-a-fake-trade-into-the-real-journal)) |
 
 ## What's explicitly planned but not yet built
 
