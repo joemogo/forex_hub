@@ -13,6 +13,30 @@ its change actually affects.
 
 ---
 
+## v12.1.1 — Diagnostics data integrity
+A focused data-integrity patch to the Diagnostics subsystem only — no new features, no Strategy
+SDK/Registry work, no UI redesign. Fixed a silent journal-only-orphan leak in the "Paper trading
+engine" self-test: it restored `pairData`/`paperAccount`/`activePair`/`fetchBidAsk`/the R:R
+Calculator's fields, but never `journalEntries` — so a successful, green self-test run could
+silently persist the simulation's own leftover journal record into the real `fxhub_journal` as an
+untagged orphan, discovered during v12.1.0's live verification and disclosed but not fixed then.
+Added a small, Diagnostics-only, unexported helper pair, `diagSnapshot()`/`diagRestore()`
+(generalizing the existing save/restore pattern already used by `alexGIsolationCheck()` and
+`openPaperPosition()`'s own snapshot fields — not a new architecture), and applied it to all three
+self-tests that mutate real state, including `journalEntries`. A second, subtler defect was caught
+by the new fixtures (not by code review) before shipping: `paperAccount` is isolated by reassigning
+it to a fresh synthetic object before the simulation runs, so the real object is never touched —
+but `journalEntries` was left pointing at the real, live array, and `openPaperPosition()` mutates
+that array **in place** (`.unshift()`) rather than reassigning it, so merely restoring the
+reference afterward was a no-op. Fixed by isolating `journalEntries` the same way `paperAccount`
+already is. 13 new fixtures ship in `tests/v1211_diagnostics_integrity_tests.js`; zero drift across
+all 63 protected functions and 4 protected constants; live verification confirmed `fxhub_journal`,
+`fxhub_paper`'s content, and both ALEX storage keys are byte-identical before and after running the
+real "Run Diagnostics" button (the one key that legitimately changes, `fxhub_paper_version`, is the
+pre-existing v11.0.1 monotonic save counter, unrelated to this fix). See
+[INCIDENTS.md](INCIDENTS.md) and the full `APP_VERSION_LOG` entry in `index.html` for complete
+detail.
+
 ## v12.1.0 — Strategy Framework, Release 2: JVM registration
 Registered JVM as the framework's second strategy, following the exact Manifest/Services
 pattern ALEX used in v12.0.0. This was treated as the real validation of the SDK contract

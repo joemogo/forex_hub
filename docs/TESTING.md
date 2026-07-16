@@ -27,13 +27,14 @@ runner (`run_v90_tests.js`, ...) that:
 **Two categories exist, and it matters which one a suite is in:**
 
 - **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
-  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.0
-  there are **two**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
-  Release 1) and `tests/v121_jvm_registration_tests.js` (28 fixtures, JVM registration,
-  Release 2) — 56 fixtures total. Each has its own self-contained runner
-  (`tests/run_v120_tests.js`, `tests/run_v121_tests.js`) that extracts `index.html`'s `<script>`
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.1
+  there are **three**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
+  Release 1), `tests/v121_jvm_registration_tests.js` (28 fixtures, JVM registration, Release 2),
+  and `tests/v1211_diagnostics_integrity_tests.js` (13 fixtures, Diagnostics data integrity) — 69
+  fixtures total. Each has its own self-contained runner (`tests/run_v120_tests.js`,
+  `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`) that extracts `index.html`'s `<script>`
   body itself — no separate preprocessing step required. `tests/run_all.sh` discovers and runs
-  both automatically via its `tests/run_*_tests.js` glob — adding a new suite under `tests/`
+  all three automatically via its `tests/run_*_tests.js` glob — adding a new suite under `tests/`
   never requires editing the runner.
 - **Historical scratch-only suites** — the remaining 22 suites referenced in
   `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (476 fixtures) live only in the

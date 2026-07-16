@@ -162,3 +162,82 @@ persisted. Separately confirmed the valid-view path (unchanged candle count) res
 before, and the manual Reset Saved View button's behavior is unchanged. `regression-baseline-tools.py`
 showed zero drift — no chart-viewport function has ever been on the protected list, and none of
 this touched any JVM/ALEX/paper-ledger function or state.
+
+---
+
+## INC-003 — Diagnostics self-test could silently persist a fake trade into the real journal
+
+**Status:** Resolved (v12.1.1).
+
+### Symptom
+
+Running the "Paper trading engine (sizing + auto-close)" Diagnostics self-test could leave a new,
+untagged, real-looking journal record (`tradeSource:"MANUAL"`, no developer-trade flag, a genuine
+same-day timestamp) in `fxhub_journal` — even though the self-test's own `paperAccount` was
+correctly restored afterward (`{balance:10000,openPositions:[],closedPositions:[]}`) and the
+self-test itself reported success (green). This is the same class of defect as
+[INC-001](#inc-001--completed-paper-trades-appearing-as-journal-only-after-a-reset) (a
+`JOURNAL_ONLY` orphan — a journal record with no matching account position) but produced by the
+diagnostic tool meant to verify data integrity, not by a real trading action.
+
+### User impact
+
+Discovered during v12.1.0's live verification (disclosed then, not fixed — out of scope for that
+release), before it could reach a real user session. Directly contradicted the app's own stated
+claim that Diagnostics is "safe to run any time" and "restores your real data afterward."
+
+### Root cause
+
+`runDiagnostics()`'s "Paper trading engine" check snapshotted and restored `pairData`,
+`paperAccount`, `activePair`, `fetchBidAsk`, and the R:R Calculator's DOM fields — but never
+`journalEntries`. The check's own `openPaperPosition()`/`closePaperPosition()` calls mutate
+`journalEntries` directly as a side effect (via `journalNoteOpenJVM`/`journalNoteCloseJVM`), and
+the check's restoring `commitPaperLedger()` call internally calls `save()`, which unconditionally
+re-writes `fxhub_journal` from whatever `journalEntries` currently holds — so a successful
+self-test run persisted the simulation's own leftover journal record as if it were real.
+
+A second, subtler variant of the same root cause was caught only by writing new fixtures for this
+fix (not by code review): the check isolates `paperAccount` by reassigning it to a brand-new
+synthetic object before the simulation runs, so the real object is never touched at all — but
+naively snapshotting/restoring `journalEntries` by *reference* does not give the same protection,
+because `openPaperPosition()` mutates that array **in place** (`.unshift()` via
+`upsertJournalOpenRecord`) rather than reassigning it. A snapshot taken before the mutation still
+points at the same, now-mutated array by the time it's "restored."
+
+### Fix
+
+Added a small, Diagnostics-only, unexported helper pair — `diagSnapshot(getters)` /
+`diagRestore(snap, setters)` — generalizing the existing "capture a variable, do work, write it
+back" pattern already used by `alexGIsolationCheck()` and `openPaperPosition()`'s own
+`paperAccountSnapshot`/`journalEntriesSnapshot` rollback fields (not a new restoration
+architecture). Applied it to include `journalEntries` in the Paper trading engine check's
+snapshot/restore, and — matching the in-place-mutation finding above — isolated `journalEntries`
+the same way `paperAccount` already is, by reassigning it to a fresh empty array immediately
+before the simulated trade runs, so the simulated record is written into a throwaway array and the
+real `journalEntries` array is never mutated in the first place. Also hardened two other
+self-tests (Browser storage, Pip-value/cross-rate math) whose restoration code ran outside a
+`try/finally`, so an exception mid-check would have skipped cleanup.
+
+### Verification
+
+13 new fixtures in `tests/v1211_diagnostics_integrity_tests.js` — `diagSnapshot`/`diagRestore`
+correctness in isolation; a direct reproduction, using the real, unmodified
+`openPaperPosition()`/`placePaperTrade()`/`commitPaperLedger()`, proving `journalEntries` and
+`fxhub_journal` are both back to their exact real pre-simulation value after the fixed pattern
+runs; an exception-path proof that restoration still happens even when the check throws
+mid-simulation; a zero-new-localStorage-key proof; and a full-pass proof that
+`journalEntries`/`alexGJournalEntries`/`paperAccount`/`alexGAccount`/`scanData` are all
+byte-identical before and after. Plus the complete pre-existing 56-fixture suite unchanged (69
+total). `regression-baseline-tools.py` showed zero drift across all 63 protected functions and 4
+protected constants. Live verification: seeded realistic synthetic JVM/ALEX journal and account
+data (per the Browser Testing Policy — no real trades placed), clicked the real "Run Diagnostics"
+button in the actual UI, and confirmed a byte-for-byte comparison of every `localStorage` key
+(with the app's own background scan-polling loop stopped, to isolate Diagnostics' own effect) —
+`fxhub_journal`, `fxhub_paper`'s content, `fxhub_alexg_account`, and `fxhub_alexg_journal` were all
+exactly byte-identical before and after; the one key that did change, `fxhub_paper_version`, is the
+pre-existing, correct-by-design v11.0.1 monotonic version counter (see
+[INC-001](#inc-001--completed-paper-trades-appearing-as-journal-only-after-a-reset)), which
+legitimately advances by exactly 3 on every real `commitPaperLedger()` call sequence regardless of
+whether the account's content changed — not a regression introduced by this fix.
+
+No JVM/ALEX trading methodology was touched by this release.
