@@ -51,12 +51,13 @@ Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-s
 | `fxhub_chart_views` | (per pair/timeframe, in-function) | `saveChartView()`/`resetChartView()` | Saved chart viewport/zoom per pair+timeframe (v6.0). Isolated from trading state. |
 | `fxhub_chart_drawings` | `chartDrawings` | dedicated drawing save path | Manual chart drawings (v6.1). Isolated from trading state. |
 | `mogo_academy_progress` | `academyProgress` | `saveAcademyProgress()` | MOGO Academy lesson/quiz progress (v8.0; schema extended additively in v11.4.0). Never reads or writes any trading state. Shape (`academyProgressDefaultShape()`): `completedLessonIds`, `currentLessonId`, `lastOpenedAt`, `trackProgress` (v8.0 original fields) plus `quizAttempts`, `quizScores` (`{latest,best}` per lesson), `homeworkAcknowledged`, `homeworkNotes`, `lessonNotes`, `recentLessonIds` (v11.4.0 additions). `loadAcademyProgressSaved()` merges saved data onto this default shape via `Object.assign`, so existing saved progress from before v11.4.0 gains the new fields automatically with no lost `completedLessonIds` and no separate migration step. |
+| `fxhub_lock` | `mogoLock.locked` | `mogoLockNow()`/`mogoUnlock()` | Manual Lock (v12.1.3) UI-state flag only — `'1'` when locked, absent when unlocked. Not sensitive: it is a boolean, never contains account/credential/balance data. Persisted (rather than session-only) so a page reload doesn't silently unlock the app. See [SECURITY.md](SECURITY.md#manual-lock-v1213). |
 
 ## AI Assistant — sensitive
 
 | Key | Variable | Notes |
 |---|---|---|
-| `fxhub_ai_key` | `aiChat.key` | **Sensitive.** Your Anthropic API key. Stored client-side in `localStorage` *by explicit user action* (the "Save Key" button) — the app's own UI discloses this ("stored only in this browser's local storage — never sent anywhere except directly to api.anthropic.com"). Cleared by "Clear Key". |
+| `fxhub_ai_key` | `aiChat.key` | **Sensitive.** Your Anthropic API key. Stored client-side in `localStorage` *by explicit user action* (the "Save Key" button) — the app's own UI discloses this ("stored only in this browser's local storage — never sent anywhere except directly to api.anthropic.com"). Cleared by "Clear Key". This direct-browser design is documented as temporary — see [SECURITY.md](SECURITY.md#anthropic-api-key--temporary-design-disclosed) for the Future AI Security Boundary rule governing any expansion of AI features. |
 | `fxhub_ai_model` | `aiChat.model` | Selected AI model name — not sensitive on its own. |
 | `fxhub_ai_messages` | `aiChat.messages` | Last 40 chat messages, for continuity across reloads. May contain whatever the user has discussed with the assistant, including trade data it was shown — treat as personal data, not public. |
 

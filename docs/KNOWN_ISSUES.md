@@ -117,6 +117,29 @@ and pattern.
 
 Neither has been started as of v11.0.1. See [ROADMAP.md](ROADMAP.md).
 
+## No Content Security Policy in production (v12.1.3)
+
+A CSP was built and verified in a scratch/dev copy during the v12.1.3 Security Baseline release
+(see [SECURITY.md](SECURITY.md#content-security-policy--built-tested-not-yet-in-production)) but
+was deliberately **not** added to production `index.html` — it requires explicit approval and
+a live-browser verification pass against the real file first (Charts, Scanner, Replay, exports,
+Anthropic connectivity), per the release's own stop-and-approve discipline. Not a silent gap: the
+policy, its allow-list rationale, and its `'unsafe-inline'` limitation are fully documented and
+ready to ship in a follow-up once approved.
+
+## Anthropic AI key uses a temporary, provider-discouraged direct-browser design
+
+As of v12.1.3's security inspection, the AI Assistant's Anthropic API key is a real, persisted
+(client-side, explicit-user-action) provider credential sent directly from the browser using
+Anthropic's own `anthropic-dangerous-direct-browser-access` opt-in header — a pattern the provider's
+own naming signals is discouraged outside personal/local use, and one MOGO's own error handling
+already anticipates being CORS-fragile depending on hosting context. This is disclosed, not a
+silent defect: no leakage was found (the key never reaches `innerHTML`, logs, diagnostics, or
+exports), but a formal Future AI Security Boundary rule now governs any expansion — see
+[SECURITY.md](SECURITY.md#anthropic-api-key--temporary-design-disclosed). The existing AI
+Assistant chat feature is frozen as-is; new AI features require a real backend/serverless
+endpoint first.
+
 ## No real order execution
 
 MOGO never places a real order against any brokerage account — every trade it opens or closes is

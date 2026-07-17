@@ -103,6 +103,17 @@ against the committed [`regression-baseline.json`](../regression-baseline.json).
 specifically so an accidental change to trading logic is caught mechanically, even if it's
 buried inside an otherwise-unrelated release. See [TESTING.md](TESTING.md) for usage.
 
+## Security baseline (v12.1.3)
+
+Credential handling, XSS/escaping policy, the Manual Lock privacy barrier, CSP status, and the
+external-dependency inventory are all documented in [SECURITY.md](SECURITY.md) rather than
+duplicated here. In brief: the OANDA token is memory-only (never persisted); the Anthropic key is
+persisted client-side by explicit user action and documented as a temporary design pending a
+future backend boundary; Manual Lock is a client-side visibility/interaction gate (`mogoLock`,
+`fxhub_lock`), not authentication, that conceals the app and blocks sensitive actions while
+leaving Scanner polling, chart updates, paper-position monitoring, and already-running automation
+untouched.
+
 ## Supporting subsystems (brief)
 
 - **Chart**: TradingView Lightweight Charts (v4.1.3, via CDN). `loadChart()`/`destroyChart()`

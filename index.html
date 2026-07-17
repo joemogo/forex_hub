@@ -6,7 +6,6 @@
 <title>MOGO</title>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
 :root{
   --bg0:#0f1117;--bg1:#161b27;--bg2:#1e2636;--bg3:#252d3d;
   --border:#2a3348;--border2:#3a4560;
@@ -47,8 +46,6 @@ button.danger:hover{background:var(--red-dim)}
   display:flex;align-items:center;padding:0 14px;gap:2px;flex-shrink:0}
 .logo{font-size:13px;font-weight:600;color:var(--green);margin-right:14px;
   letter-spacing:.5px;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.jvm-signature{font-family:'Dancing Script',cursive;font-weight:700;font-size:22px;
-  color:var(--gold);letter-spacing:.5px;margin-right:2px;line-height:1}
 .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
   box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.9)}}
@@ -66,8 +63,11 @@ button.danger:hover{background:var(--red-dim)}
 .sess-priority{background:var(--gold-dim);color:var(--gold);border-color:var(--gold)}
 .sess-off{background:var(--bg2);color:var(--text3);border-color:var(--border)}
 
-/* v7.0: MOGO wordmark -- additive class, .jvm-signature/.logo-dot left intact and unused
-   rather than removed, since neither is referenced anywhere else. */
+/* v7.0: MOGO wordmark -- additive class, .logo-dot left intact and unused
+   rather than removed, since it isn't referenced anywhere else.
+   (v12.1.3: the sibling .jvm-signature class and its Google Fonts @import were
+   removed -- both were confirmed dead, and the @import was the app's only
+   non-essential external CDN dependency. See docs/SECURITY.md.) */
 .brand-wordmark{font-family:system-ui,-apple-system,'SF Pro Display',sans-serif;font-weight:800;
   font-size:17px;letter-spacing:.5px;color:var(--text1);display:flex;align-items:baseline}
 .brand-wordmark .brand-accent{color:var(--green)}
@@ -699,6 +699,23 @@ button.danger:hover{background:var(--red-dim)}
 
 <!-- MAIN APP -->
 <div id="mainApp" style="display:none">
+  <!-- v12.1.3: Manual Lock overlay. A local, client-side privacy barrier ONLY -- not
+       authentication. Conceals the app content beneath it; Scanner polling, chart
+       updates, paper-position monitoring, and already-running automation keep running
+       underneath, untouched. Toast alerts (z-index 9999) render above this overlay
+       (z-index 9000) using their existing non-sensitive text, so alerts stay visible
+       while locked. Unlocking is a single deliberate click -- no password. -->
+  <div id="mogoLockOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(10,12,18,.97);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px">
+    <div style="font-size:22px">🔒</div>
+    <div style="font-size:16px;font-weight:700;color:var(--text1)">MOGO is locked</div>
+    <div style="font-size:12px;color:var(--text2);max-width:380px;line-height:1.6">
+      Account ID, credentials, and balances are hidden, and sensitive actions are blocked.
+      Scanning, charts, and alerts keep running in the background.<br><br>
+      This is a local privacy barrier for this browser tab, not account authentication --
+      anyone with access to this device and browser can click Unlock.
+    </div>
+    <button class="primary" onclick="mogoUnlock()">Unlock</button>
+  </div>
   <div class="app-shell">
     <div class="topnav">
       <div class="logo"><div class="logo-dot"></div><span class="brand-wordmark">MO<span class="brand-accent">GO</span></span><span class="brand-tagline">Trading OS</span><span id="versionBadge" style="font-size:10px;font-weight:600;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;margin-left:8px;vertical-align:middle"></span><span id="liveModeBadge" style="display:none;font-size:10px;font-weight:700;color:#fff;background:var(--red);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle" title="Connected to your real OANDA account -- price data and balance are real, but this app never places real orders">LIVE ACCOUNT</span></div>
@@ -764,6 +781,7 @@ button.danger:hover{background:var(--red-dim)}
           <div class="live-dot off" id="liveDot"></div>
           <span id="scanStatus">Connecting...</span>
         </div>
+        <button style="font-size:11px;padding:3px 8px" onclick="mogoLockNow()" title="Conceal account ID, credentials, and balances; block sensitive actions. Local privacy barrier only, not authentication.">🔒 Lock</button>
         <button style="font-size:11px;padding:3px 8px" onclick="disconnect()">Disconnect</button>
       </div>
     </div>
@@ -1824,9 +1842,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.1.2';
-const APP_VERSION_DATE='16 Jul 2026';
+const APP_VERSION='12.1.3';
+const APP_VERSION_DATE='17 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.1.3 — SECURITY BASELINE (platform-hardening release, not Phase 2/Strategy Expansion -- no strategy logic touched; zero drift across all 63 protected functions and 4 protected constants, confirmed by regression-baseline-tools.py before and after). SCOPE, per a mandatory pre-implementation inspection report the user reviewed and approved before any code changed: a security-risk inventory covering OANDA/Anthropic credential handling, XSS/escaping coverage, sensitive-action confirmation gaps, a Manual Lock privacy feature, and a Content Security Policy. INSPECTION FINDINGS: the OANDA token (cfg.key/cfg.accountId) was confirmed, by direct code inspection, to already be memory-only -- never written to localStorage anywhere in the codebase -- so no credential-persistence fix was needed there; the one real gap was disconnect() clearing the #apiKey input field\'s DOM value but not #accountId\'s (fixed). ESCAPING: renderAlertLog() and inspectorRows() previously interpolated values into innerHTML with no escapeHtml() call (no live free-text path was found feeding either -- pair/sigs/direction come from a fixed pair list and hardcoded label strings -- but the render functions themselves provided no defense-in-depth escaping). Fixing inspectorRows() generically required pulling its two HTML-badge rows (Strategy, Direction) out of the escaping path so journalStrategyBadge()/journalDirBadge()\'s real markup isn\'t double-escaped into visible tag text. Writing the fixture suite for this fix caught a related, previously-undetected gap live: renderTradeInspectorContent()\'s own header line rendered fmtDash(r.pair) unescaped even after the adjacent overview section (a few lines above, same function) was fixed -- five more identical fmtDash(r.pair) sinks were found and closed the same way (two mini-journal row renders, that header, the Strategy Center hero name, one more mini-journal-style row). SENSITIVE-ACTION CONFIRMATIONS: toggleAutoTrading() and toggleAlexGLiveTrading() previously flipped automated paper trading on/off with no confirmation dialog at all -- both now confirm before proceeding, following the existing live-environment-switch confirm() precedent (line ~4522). deleteEntry()\'s confirmation text was strengthened from a bare "Remove?" to state what\'s being deleted and that it\'s permanent. MANUAL LOCK (new): a local, client-side privacy barrier (mogoLock, persisted only as a non-sensitive fxhub_lock boolean flag so a reload doesn\'t silently unlock) -- explicitly disclosed in its own UI as NOT authentication. A full-screen overlay conceals the entire app while locked; credential changes (connect/disconnect/AI key save-clear), automation toggles, destructive actions (journal delete, paper/ALEX resets, test-trade clearing, reconciliation, balance override, chat-history clear), and Manual Review approval are all blocked with a message to unlock first, via a single mogoLockBlocked() guard reused at all 14 call sites. Locking never pauses Scanner polling, chart updates, paper-position monitoring, or already-running automation -- none of those are touched by lock state, since locking is a pure presentation/interaction gate, not a pause on the app\'s own background operation; toast alerts (already non-sensitive: pair/direction/confidence%/time) render above the lock overlay and were confirmed live to keep appearing while locked. Unlocking is a single deliberate click with no further verification, consistent with the "privacy barrier, not authentication" disclosure. DEPENDENCY CLEANUP: removed a fully dead external dependency -- a Google Fonts @import loading \'Dancing Script\' for .jvm-signature, a CSS class confirmed applied to zero elements anywhere in the app (a leftover from the v7.0 MOGO rebrand that had deliberately left it "intact and unused rather than deleted"). CSP: a Content-Security-Policy allow-list was built and verified in a scratch/dev copy only (default-src \'self\'; script-src/style-src \'unsafe-inline\' plus unpkg.com for the chart library -- required because this is a single inline-script, inline-style file with no build step; connect-src limited to both OANDA hosts and the Anthropic API) -- confirmed via a real securitypolicyviolation event that it actively blocks a non-allow-listed host while permitting all three required connect-src hosts, with no console errors and the chart library still loading. Per explicit instruction, an enforcing CSP is NOT in this production file -- Content-Security-Policy-Report-Only cannot be set via <meta> at all (HTTP-header-only, and GitHub Pages does not give this repository header control) -- documented as a pending limitation in docs/SECURITY.md and docs/KNOWN_ISSUES.md pending separate approval and a live-browser verification pass against the real file. ANTHROPIC KEY: confirmed clean of the leakage patterns checked (never in innerHTML/logs/diagnostics/exports; type=password field cleared after save; sent only via the x-api-key header) but its persisted, direct-browser-credential design is now formally documented as temporary, with a Future AI Security Boundary rule recorded in docs/SECURITY.md: future AI features require a real backend/serverless endpoint; no paid AI-provider key may be embedded in source, committed to Git, or stored in localStorage; the current AI Assistant chat implementation is frozen as-is and must not be expanded until that boundary exists. RECONCILIATION: a pre-push review flagged that an earlier verification summary line risked reading as "no key anywhere in storage" -- inaccurate for the Anthropic key, which is persisted to fxhub_ai_key by design. Direct audit confirmed no committed doc or fixture actually made that false claim (docs/SECURITY.md, STORAGE_KEYS.md, KNOWN_ISSUES.md, and RELEASE_NOTES.md already stated the Anthropic key\'s persistence accurately, and no v1213 fixture asserted its absence from localStorage) -- the inaccuracy was confined to chat-report wording, not any committed artifact. Two fixtures were added anyway to make both behaviors explicit and directly tested rather than merely inspected: the OANDA token/account ID proven to never appear in any localStorage value after being set, and the Anthropic key proven to be persisted to fxhub_ai_key on Save (both in localStorage and in memory) and removed from both on Clear. docs/SECURITY.md gained an explicit, unmissable side-by-side summary of the two credentials\' deliberately different persistence behavior at the top of its Credential Handling section. TESTING: 50 fixtures total in tests/v1213_security_baseline_tests.js (escaping correctness for both fixed sinks plus the six fmtDash(r.pair) sites, badge-row non-double-escaping, the full Manual Lock state machine, all 14 guarded actions verified as a true no-op while locked with state unchanged, several proceeding correctly once unlocked and confirmed, confirmation-text content for the two strengthened dialogs, and the OANDA-vs-Anthropic persistence reconciliation pair). Full regression: 172/172 fixtures pass (28 v120 + 28 v121 + 13 v1211 + 53 v1212 + 50 v1213), zero protected-function/constant drift. Live browser verification (scratch local-server copy, zero real trade data throughout -- paperAccount.balance stayed at its default $10,000 and journalEntries stayed empty for the whole session): Dashboard and Paper Trading panels rendered with zero console errors after every change in this release, including the dead-dependency removal; the Lock button, overlay (icon/title/disclosure text/Unlock button), and Unlock flow all rendered and behaved exactly as designed, correctly clearing the fxhub_lock key and restoring the app; a toast alert fired and rendered visibly above the lock overlay while locked, confirming continuous, non-sensitive alert operation in a real browser, not just in fixtures. Not exercised live (same disclosed, permanent limitation as every prior release requiring real broker credentials): an authenticated OANDA connect() call end to end.',
   '12.1.2 — TRUE MTF REPLAY DIAGNOSTICS + MANUAL REVIEW ELIGIBLE (platform-tooling release, not Phase 2/Strategy Expansion -- no new strategy added; Phase 2 remains reserved for that at v12.2.0+). SCOPE: two features on top of the existing JVM engine. Neither loosens automatic-trading rules, bypasses any existing protection, nor allows live-money execution. PRE-IMPLEMENTATION AUDIT found the root architectural fact driving both features: evaluateLiveTrigger() (live auto-trading, protected) checks isPreferredTradingDay() FIRST and returns immediately on failure -- a Thursday/Friday setup is never even scored for confluence/AOI/confirmation/R:R today, which is the literal root cause of both "Replay can\'t explain why it found nothing" and "Thu/Fri setups get reduced to a generic rejection." simulateTrueMTFReplay() has the identical short-circuit pattern. Both evaluateLiveTrigger()/checkAutoTrades() and simulateTrueMTFReplay()\'s own trade-selection loop remain completely untouched and byte-identical -- confirmed by zero drift across all 63 protected functions. PART 1 -- REPLAY DIAGNOSTICS: a new shared evaluator, evaluateSetupFullBreakdownCore() (SETUP_EVALUATOR_VERSION), calls the exact same protected primitives (detectSignals, bestConfluence/scoreConfluence, getSession, getScore, getBias, isPreferredTradingDay) without stopping at the first failed gate, so a full breakdown can be reported instead of one early rejection reason -- it duplicates no scoring logic and never decides whether to trade. simulateTrueMTFReplay() gained purely additive coverage/funnel/rejection instrumentation (a new `diag` object, extended through every existing `continue`) -- every counter increment sits alongside an unchanged gate, confirmed by the fact `trades[]` output is provably unaffected (Fixture 18). A "Replay Diagnostics" section now renders permanently beneath the Strategy Health Dashboard: coverage (requested/actual window, candles loaded per timeframe, processed/missing/invalid/session-filtered/weekday-filtered counts), a candidate funnel with each item labeled hard eligibility gate / soft confluence factor / informational observation / preference, rejection totals (exactly one primary reason per candidate, secondary reasons tracked separately, proven never to double-count), a Rejected Candidates table (paginated, full frozen-decision-snapshot detail view per row), a Near Misses section (diagnostic only, configurable margin, never converted into a valid signal), an evaluator-parity line (Live vs Replay identifier, MATCH/MISMATCH, with a developer-only demo toggle to prove the MISMATCH warning actually renders), five distinct empty-state messages (zero candidates / candidates-found-but-zero-qualified / incomplete data / replay execution failure), and read-only CSV/JSON export (verified never to mutate any MOGO state). PART 2 -- MANUAL REVIEW ELIGIBLE: every scanned setup now classifies into INELIGIBLE / DEVELOPING / MANUAL REVIEW ELIGIBLE / AUTO ENTRY ELIGIBLE via classifySetupEligibility(), built on the same shared evaluator, run from a new runManualReviewScan() ALONGSIDE (never inside) checkAutoTrades() -- AUTO ENTRY ELIGIBLE is structurally impossible outside Mon-Wed (the classifier has no ability to call openPaperPosition() at all) and only runs off Mon-Wed to avoid redundant network cost on days checkAutoTrades() already handles. A setup becomes MANUAL REVIEW ELIGIBLE only when every gate this evaluator checks passes except weekday (onlyWeekdayFailed) -- high confluence alone can never substitute for a missing AOI/confirmation/R:R/session pass, proven by 12 dedicated "high confluence cannot bypass X" fixtures. Gates this project does not yet enforce in code anywhere (news blackout, spread protection, correlated-exposure limits, daily-loss/account-risk circuit breaker) are explicitly disclosed as not-yet-enforced (gatesNotYetEnforced, shown in the Review Trade modal) rather than silently treated as passing -- a deliberate scope decision confirmed with the user before implementation. An amber "MANUAL REVIEW ELIGIBLE" banner (never called "Manual Override" anywhere in the UI) shows on the Scanner (panel-scanner -- the real Scanner nav destination; an initial placement in panel-scan, "Sunday Scan," was caught and corrected during live verification) with every required field and three actions -- Review Trade, Pass, Dismiss Until Next Candle -- no direct one-click execution. Review Trade opens a confirmation modal (full trade detail, passed-rules list, Thu/Fri-specific warnings, Friday cutoff/weekend-hold info, the not-yet-enforced-gates disclosure, and a required acknowledgment checkbox that gates the Approve button). Approval calls the existing, unmodified openPaperPosition()/commitPaperLedger() guarded path with a new, additive source value (\'manual_review\') -- the one previously-async wrapper, approveManualReviewTrade(), was found during fixture-writing to have no genuine await inside it (openPaperPosition/commitPaperLedger are both synchronous) and was simplified to a plain function, a real simplification rather than a workaround. Attribution (Entry Source, Window Status, User Approved, Automatic Entry, approval/decision timestamps, evaluator version, confluence + full rule snapshot, weekday, Thu/Fri classification, and more) is attached to the just-created journal record as a disclosed, non-protected, additive follow-up patch (buildJVMJournalOpenRecord() is not itself protected), then re-committed through the same guarded path; if that second commit fails, the position and journal record are both rolled back and re-committed as removed, so no partial state can remain -- verified directly by rigging a stale paper-account version guard (Fixture 42). Duplicate approval of the same decision candidate is blocked; a pair with an existing open position is excluded from classification entirely, matching checkAutoTrades()\'s own no-duplicate-position rule. Four separate, always-visible performance groups (Standard Monday-Wednesday / Outside-Window Manual Review / Thursday Manual Review / Friday Manual Review) read journalEntries\' new attribution fields, with the existing "insufficient sample" language at <30 resolved trades and a "preliminary comparison" note at 30-100 -- no rule ever changes automatically at either threshold. A distinct alert (deliberately different wording and a different two-tone sound from an auto-qualified-trade alert) and a Dashboard badge (click-through via the existing jumpToScanner()) round out the workflow. PART 3 -- MOMENTUM-LOSS DOCUMENTATION: Strategy Center\'s "Rejection wick pre-signal" card and the strategy-thesis narrative were expanded with explicit bullish/bearish-symmetric wording (the underlying wick formula in scoreConfluence()/detectSignals() was already symmetric in code -- dnW/range for bullish, upW/range for bearish, identical thresholds -- this was a documentation gap, not a logic gap). A new Research Diagnostics panel lists five candidate loss-of-momentum conditions (doji, spinning top, long wick, small-bodied hesitation candle, repeated failure to continue) with an honest current-vs-proposed table: which are executable today, and precisely what each non-executable one would require to become so -- informational only, changes nothing about live/replay scoring or gating. Production candle logic is unchanged except the RULES constant\'s own display text (a disclosed, intentional protected-constant change -- confirmed via regression-baseline-tools.py to be the ONLY drift this release produced, and only that one item). TESTING: 53 new fixtures in tests/v1212_manual_review_and_replay_diagnostics_tests.js. The offline JXA harness cannot resolve a genuine await (the same documented, permanent limitation recorded for runDiagnostics() in v12.1.1 -- confirmed again empirically here, including a failed NSRunLoop spin-wait attempt) -- simulateTrueMTFReplay() remains async (real progress-reporting awaits for long replays) and is not offline-testable end-to-end, so Replay-side fixtures exercise the fully-synchronous, separable pieces directly (mergeReplayDiag, renderReplayDiagnostics\'s empty-state selection, replayDiagBuildExportPayload) against hand-built diag objects satisfying the real function\'s own invariants, with the full walk-forward proof covered by live verification instead. Manual Review fixtures exercise the real, unmodified evaluateSetupFullBreakdownCore/classifySetupEligibility/approveManualReviewTrade end to end. Two real bugs were found BY the new fixtures, not by code review, and fixed before release: (1) a synthetic-candle test-data generator bug that also exposed nothing app-side, and (2) two genuine app bugs -- classifySetupEligibility()\'s Friday-cutoff check used wall-clock new Date() instead of the setup\'s own decision timestamp (correct by coincidence on the live path, wrong for any other caller; now keyed off decisionTs), and a test-only state-leak from a deliberately-rigged stale paper-version guard bled into a later fixture (fixed with an explicit reset helper, not a production code change). Full regression: 122/122 fixtures pass (28 v120 + 28 v121 + 13 v1211 + 53 v1212), zero unintended drift. LIVE VERIFICATION covered all 19 required scenarios against a scratch preview copy, never the user\'s real data: a fully-qualified Thursday setup rendered the real banner with every required field and classified MANUAL REVIEW ELIGIBLE end to end; the SAME live bug (wrong panel) that the fixtures could not catch was found here and fixed; Review Trade opened the real modal, the acknowledgment checkbox correctly gated Approve, Approve created exactly one paper trade and one journal record with fully correct attribution (confirmed by direct inspection), a second approval attempt on the same candidate was correctly blocked, Pass and Cancel were both confirmed to create no trade with the correct present/absent candidate-removal distinction; a Friday setup rendered the extra weekend/cutoff warnings; a past-cutoff Friday setup correctly classified INELIGIBLE; Replay Diagnostics rendered a complete, real funnel/rejection/near-miss/rejected-candidates view including the correctly-labeled category badges, evaluator parity showed MATCH by default and a forced MISMATCH warning via the developer-only toggle, and both CSV and JSON export ran without error or any state change; zero/qualified/missing-data empty states were each confirmed distinct. Storage cleanup: only standard fxhub_* keys present afterward, no orphaned test keys, no new localStorage keys added by this release at all (attribution lives as additive fields on existing journal records, not a new store). Syntax clean, known-good hash unchanged.',
   '12.1.1 — DIAGNOSTICS DATA INTEGRITY (focused data-integrity patch, Diagnostics subsystem only -- no new features, no Strategy SDK/Registry work, no UI redesign, no TJR, no JVM/ALEX methodology touched, zero drift across all 63 protected functions and 4 protected constants). ROOT CAUSE (discovered during v12.1.0 live verification, disclosed then, fixed now): the "Paper trading engine (sizing + auto-close)" self-test snapshotted and restored pairData/paperAccount/activePair/fetchBidAsk/the R:R Calculator\'s DOM fields, but never journalEntries -- so a successful self-test run left the simulation\'s own leftover journal record behind. commitPaperLedger()\'s restoring call (needed to re-persist the restored paperAccount) calls save() internally, which unconditionally re-writes fxhub_journal from whatever journalEntries currently holds -- meaning a successful, green self-test could silently persist a fake trade into the real journal as a JOURNAL_ONLY orphan with no matching paper-account position, exactly matching the historical INC-001 failure pattern. MUTATION-TABLE AUDIT (performed before any edit, all 8 self-tests): App version and Saved data integrity/Alex G isolation/OANDA connection/Anthropic API checks are read-only, no change needed. Browser storage read/write and Pip-value/cross-rate math both mutated real state (a scratch localStorage key; pairData) without their restoration living inside a try/finally, so an exception mid-check would have skipped cleanup -- both fixed. Paper trading engine was the confirmed root cause -- fixed. FIX: added a small, Diagnostics-only, unexported helper pair, diagSnapshot(getters)/diagRestore(snap,setters) (plain {key:fn} getter/setter maps -- generalizes, not invents, the same "read a var, do work, write it back" restoration pattern already used by alexGIsolationCheck() and openPaperPosition()\'s own existing paperAccountSnapshot/journalEntriesSnapshot rollback fields), and applied it consistently: Browser storage now wraps its localStorage.getItem in try/finally so the scratch key is always removed even if the read throws; Pip-value math now snapshots/restores pairData through the helper inside try/finally; Paper trading engine now snapshots pairData/paperAccount/activePair/journalEntries/fetchBidAsk/the three R:R DOM fields together via the helper, restores all of them in the existing finally block BEFORE the block\'s pre-existing commitPaperLedger() re-persist call, so that call now commits the correctly-restored journalEntries rather than the simulation\'s leftover value. A SECOND, SUBTLER DEFECT was caught by the new fixtures below (not by code review) and fixed before this release: paperAccount is isolated by reassigning it to a brand-new synthetic object before the simulation runs, so the real object is never touched at all -- but journalEntries was left pointing at the real, live array, and openPaperPosition()/closePaperPosition() mutate that array IN PLACE (journalEntries.unshift(...) via upsertJournalOpenRecord, then a find()+mutate on close) rather than reassigning it, so merely snapshotting/restoring the reference afterward was provably a no-op (restoring a pointer to the same, already-mutated array). Fixed by isolating journalEntries the same way paperAccount already is -- reassigning it to a fresh empty array immediately before the simulated trade runs -- so the simulated record is unshifted into a throwaway array and the real journalEntries array is never mutated in the first place. TESTING: a new permanent suite, tests/v1211_diagnostics_integrity_tests.js (13 fixtures), covers what the offline JXA harness can reach synchronously (runDiagnostics() itself awaits a real closePaperPosition() call and so cannot be driven to completion offline, the same documented, permanent limitation noted since v4.2\'s live_paper_tests.js) -- diagSnapshot/diagRestore correctness in isolation (capture-at-call-time, not a live reference; safe no-op when a setter is missing); faithful replication of the fixed Check 2/Check 3 patterns against real pairData, including an exception-path proof; and, using the real, unmodified openPaperPosition()/placePaperTrade()/commitPaperLedger(), a direct reproduction proving journalEntries and fxhub_journal are both back to their exact real pre-simulation value after the pattern runs (the core fix), an exception-path proof that restoration still happens even when the check throws mid-simulation, a zero-new-localStorage-key proof, and a full-pass proof that journalEntries/alexGJournalEntries/paperAccount/alexGAccount/scanData are all byte-identical before and after. tests/run_all.sh required no changes -- its tests/run_*_tests.js glob discovered the new suite automatically. Full regression: 69/69 fixtures pass (28 v120 + 28 v121 + 13 new v1211), zero drift across all 63 protected functions and 4 protected constants (none of runDiagnostics/diagSnapshot/diagRestore are on the protected list, confirming the fix stayed correctly scoped to Diagnostics-only code), zero localStorage schema change. LIVE VERIFICATION: seeded realistic synthetic JVM and ALEX journal/account data directly in memory and persisted it (per the standing Browser Testing Policy -- no real trades placed), then clicked the real "Run Diagnostics" button in the actual UI. Paper trading engine reported green ("$100 risk sized correctly, auto-closed at target for +$200. Your real paper account was untouched.") and Saved data integrity correctly reported the seeded "2 journal entries, 0 open / 1 closed paper trades" both before and after. A byte-for-byte before/after comparison of every localStorage key (with the app\'s own background scan-polling loop stopped, to isolate Diagnostics\' own effect from ordinary ambient scanner activity) found fxhub_journal, fxhub_paper\'s content, fxhub_alexg_account, and fxhub_alexg_journal all exactly byte-identical; the one key that did change, fxhub_paper_version, is the pre-existing, correct-by-design v11.0.1 monotonic version counter, which legitimately increments on every real commitPaperLedger() call regardless of whether the account\'s content changed (it advanced by exactly 3, matching the check\'s open/close/restoring-commit call sequence) -- not a v12.1.1 regression. DISCLOSED, NOT FIXED (out of scope for this release, spun off separately): live verification also surfaced that computePaperLedgerIntegrity() (the read-only "Paper Ledger Integrity" Diagnostics card) does not filter by strategy, so an ALEX-strategy record living in the shared journalEntries store can be flagged as a "JVM journal trade with no matching paper account position" -- a real, pre-existing, unrelated finding, not touched here per this release\'s Diagnostics-self-test-only scope. Syntax clean, known-good hash unchanged.',
   '12.1.0 — STRATEGY FRAMEWORK, RELEASE 2: JVM REGISTRATION (autonomous architecture release, zero behavior change -- JVM\'s scanning, top-down analysis, confluence scoring, signal qualification, Active Watch logic, auto-trading eligibility, entry timing, stop/target placement, risk sizing, spread handling, position management, closing logic, alerts, journaling, statistics, polling intervals, session gates, and preferred-trading-day gates are byte-identical to v12.0.2, confirmed by zero drift across all 63 protected functions and 4 protected constants, run before and after every edit. ALEX is completely unaffected -- all 28 pre-existing v120 fixtures pass unchanged.) Registered JVM as the Strategy Framework\'s second strategy, following the exact Manifest/Services pattern ALEX used in v12.0.0/Release 1, per a deliberate pre-implementation audit (not a mechanical copy) that checked JVM\'s actual needs field-by-field and method-by-method against the existing SDK contract. VERDICT: zero SDK extensions required -- every Manifest field and Service method JVM needs (id/family/version/label/fullName/description/author/ownership/status/trustLevel/capabilities/dependencies/dna/panelId/devToolsCardId/inspectorCardId/academySchoolId/release, and getAccount/getJournal/normalize/onOpen/health) already existed from Release 1. computePerformance() -- reserved in the original SDK design but never wired for ALEX (which has no live-performance function) -- is JVM\'s first real use of that already-designed slot, not a new extension, since JVM genuinely has computeMogoStrategyPerformance(). JVM_MANIFEST reads version/fullName/status/primaryMarket directly from the existing MOGO_STRATEGY_META constant (never restated, same "derive from the existing source of truth" pattern ALEX_MANIFEST.id already used for RULES_ALEXG.ruleVersion) and academySchoolId:\'mogo\' is a real, verified link (ACADEMY_SCHOOLS already has id:\'mogo\', name:\'MOGO Strategy\'). capabilities honestly report statistics:true/backtesting:true/replay:true/academyContent:true (all real, already-working JVM capabilities ALEX lacks) alongside diagnostics:false/settings:false (no genuine JVM-specific isolation-proof check exists to extract -- not invented for symmetry -- and RULES is not exposed through Services this release). JVM_SERVICES exposes getAccount()/getJournal() (thin references to the live paperAccount/journalEntries objects, not copies), normalize() (calls the existing, unmodified normalizeJournalRecord() with the literal \'current_strategy\' string already used everywhere), computePerformance() (calls the existing, unmodified computeMogoStrategyPerformance()), onOpen() (calls a new function, initJvmPaperPanel(), which is showPanel()\'s previous inline \'paper\' branch sequence -- renderPaper/renderAutoLog/updateAutoTradeStatus/unseenCount reset/save/updatePaperNavBadge -- extracted verbatim with zero logic change, the same extraction pattern used for alexGIsolationCheck() in Release 1), and health() (\'ready\', reserved, not yet dynamic). No isolationCheck/start/stop/settings/playbook/AI hooks are wired for JVM, matching ALEX\'s Release-1 disclosure exactly: no genuine existing JVM behavior to wrap for any of them (JVM\'s scan loop has no independent on/off toggle the way ALEX\'s toggleAlexGLiveTrading() does, so no start/stop was invented). STRATEGY_REGISTRY, findStrategyEntry(), getStrategyManifest(), and getStrategyServices() were relocated (unchanged in logic) from immediately after ALEX\'s own code block to immediately after MOGO_STRATEGY_META\'s declaration, since JVM_MANIFEST needs to read that constant and it\'s declared later in the script; all four were confirmed to be referenced only from inside other functions\' bodies (never at top-level script-execution time), so the relocation changes nothing about runtime availability -- verified by a syntax check and the complete regression suite passing identically before and after. Exactly 4 of the 8 previously-listed target seams needed a change for JVM, each a small, scoped edit with a safe fallback to the pre-v12.1.0 hardcoded behavior: getUnifiedJournalRecords() (JVM\'s branch now reads through Services.getJournal()/normalize(), symmetric with ALEX\'s branch), renderDashboard() (both the P&L/Win Rate tile and the running-trades table now read JVM\'s account through Services.getAccount() instead of the raw paperAccount global; ALEX\'s reads are untouched, the 4-tile layout/labels/table shape are unchanged), showPanel() (the \'paper\' branch now calls Services.onOpen() instead of running its 6-statement sequence inline; the other ~11 branches are untouched), applyDeveloperModeVisibility() (JVM\'s dev-tools card id now resolves from Manifest.devToolsCardId instead of the literal \'devToolsPaperCard\'; ALEX\'s card id resolution is untouched). Three seams were reviewed and deliberately left untouched, with why disclosed: runDiagnostics() -- no JVM-specific hardcoding exists to generalize, since the only per-strategy isolation check has only ever existed for ALEX; renderMiniJournal() -- its JVM branch (\'paperTradeInspectorCard\') is confirmed DEAD CODE (the function is only ever called in the real app with strategyLabel=\'ALEX\'; JVM\'s mini-journal uses a separate, dedicated renderPaperMiniJournal() per its own v9.0 design comment), so generalizing it would be stylistic tidying of unreachable code, not a genuine seam fix; Strategy Center (renderRules()/setStrategyCenterTab()) and journalStrategyBadge()\'s 2-color ternary hardcode a 2-strategy-count assumption, but not a JVM-specific misrepresentation -- JVM already renders correctly through both today -- and generalizing them for N strategies is explicitly the optional, deferred Release 3 scope named in ADR-005, not required for JVM\'s own registration. getFilteredJournalRecords() and toggleDeveloperMode() again needed no change (confirmed still fully strategy-agnostic, same finding as Release 1). No localStorage key was added, removed, or renamed -- confirmed by both a dedicated fixture and a full storage-key inventory diff against docs/STORAGE_KEYS.md (24 keys, identical set, before and after). 28 new fixtures pass in a new permanent suite, tests/v121_jvm_registration_tests.js (registry contains both current_strategy and alex_g_sr_v1; Services.getAccount()/getJournal() return the exact live paperAccount/journalEntries references; Manifest values are correct and truthfully sourced from MOGO_STRATEGY_META; Services.normalize()/computePerformance() are byte-identical to calling normalizeJournalRecord()/computeMogoStrategyPerformance() directly, proving reference-not-duplication; getUnifiedJournalRecords() output for a MIXED journal -- both strategies\' records together -- is byte-identical via the registry path vs. a manually-reconstructed pre-v12.1.0 direct-call path; getFilteredJournalRecords() still isolates JVM records correctly from a mixed journal; Dashboard\'s JVM AND ALEX P&L/Win Rate tiles are simultaneously correct, proving JVM\'s registration didn\'t disturb ALEX\'s; Dashboard\'s running-trades table shows both strategies\' open positions correctly at once; showPanel(\'paper\') still fires initJvmPaperPanel() via Services.onOpen(), proven by a real observable side effect -- autoTrading.unseenCount reset to 0; Developer Mode visibility toggles BOTH cards correctly with both strategies registered together, and JVM\'s card id is proven to genuinely resolve from the Manifest rather than a hardcoded literal; journalStrategyBadge() correctly colors JVM blue and ALEX purple simultaneously from one mixed unified journal; four separate "JVM specifically unregistered, ALEX still registered" fixtures prove getUnifiedJournalRecords()/renderDashboard()/showPanel()/applyDeveloperModeVisibility() all degrade gracefully to their pre-v12.1.0 fallback with zero exceptions and zero effect on ALEX\'s own behavior; zero new localStorage keys; the deliberately-absent JVM Service hooks are confirmed absent, matching capabilities:false; capabilities.statistics/academyContent are confirmed true and genuinely backed by a wired Service/real Academy School id; renderMiniJournal\'s untouched JVM dead-code path is confirmed to still run without throwing; and a full pass through every touched seam, with BOTH strategies holding real, simultaneous data, confirms zero mutation and zero cross-contamination between journalEntries/alexGJournalEntries/paperAccount/alexGAccount/scanData). One pre-existing fixture in tests/v120_strategy_framework_tests.js (Fixture 1) was updated -- not weakened -- to assert ALEX\'s entry is present in the registry rather than asserting the registry\'s total size is exactly one, since that specific count was only ever true for Release 1\'s own scope and is now, correctly and by design, obsolete; every other v120 fixture, and therefore all of ALEX\'s proven behavior, is unchanged and still passes (28/28). tests/run_all.sh required no changes -- its tests/run_*_tests.js glob discovered the new suite automatically, confirmed by running it before and after adding the suite. Live browser verification confirmed Dashboard (both tiles and the running-trades table), the unified Journal tab (both strategies\' badges and the strategy filter dropdown), the JVM Paper Trading panel, the ALEX panel, Strategy Center, Developer Tools (both cards), Diagnostics (unchanged output for the pre-existing checks, including the still-disclosed-and-untouched pre-existing "Paper trading engine" failure and the still-passing Alex isolation check), and chart trade overlays all render identically to v12.0.2, using only synthetic in-memory data per the Browser Testing Policy -- zero real paper trades created or contaminated, confirmed by a byte-identical fxhub_paper/fxhub_journal/fxhub_alexg_account/fxhub_alexg_journal snapshot before and after the entire verification session. Known limitations intentionally left untouched this release, disclosed rather than silently deferred: Strategy Center\'s 2-tab hardcoding, journalStrategyBadge()\'s 2-color ternary, and renderMiniJournal()\'s dead JVM branch are all still hardcoded to a 2-strategy world -- correctly so for today, and explicitly optional/deferred future work (ADR-005\'s Release 3) rather than a defect; JVM has no isolationCheck/start/stop/settings/playbook/AI Service hooks, matching ALEX\'s own disclosed gaps; the pre-existing, unrelated Diagnostics "Paper trading engine (sizing + auto-close)" failure and the historical scratch-only test suites remain untouched, exactly as instructed. Syntax clean, known-good hash unchanged.',
@@ -1906,6 +1925,13 @@ const EMA_PERIODS=[20,50,200];
 
 // ── STATE ──
 let cfg={key:'',accountId:'',env:'practice'};
+// v12.1.3: Manual Lock is a local, client-side privacy barrier only -- it conceals
+// on-screen account/credential/balance details and blocks sensitive actions from this
+// browser tab. It is NOT authentication: it has no password, does not protect
+// localStorage contents from anyone with device access, and does not stop Scanner
+// polling, chart updates, paper-position monitoring, or already-running automation --
+// those keep operating exactly as before while locked. See docs/SECURITY.md.
+let mogoLock={locked:false};
 let activePair='GBP_USD',activeTf='M15';
 let pairData={},scanData={},journalEntries=[],checklistState={},alertLog=[];
 let paperAccount={balance:10000,openPositions:[],closedPositions:[]};
@@ -3992,7 +4018,9 @@ async function alexGLivePollTick(){
 }
 
 function toggleAlexGLiveTrading(){
+  if(mogoLockBlocked())return;
   const turningOn=!alexGAutoTrading.enabled;
+  if(!confirm(turningOn?'Turn ON Live Alex Paper Trading? The app will begin automatically opening and closing simulated ALEX positions.':'Turn OFF Live Alex Paper Trading? Automated ALEX paper trading will stop until you turn it back on.')) return;
   alexGAutoTrading.enabled=turningOn;
   if(turningOn){
     // Fresh cutoff every time OFF->ON, so a setup that qualified while paused
@@ -4005,6 +4033,7 @@ function toggleAlexGLiveTrading(){
 }
 
 function resetAlexGLiveAccount(){
+  if(mogoLockBlocked())return;
   if(!confirm('Reset the Alex G live paper account? This clears Alex open/closed positions, the Alex journal, and resets the Alex balance to $10,000. Your current-strategy paper account is never touched.')) return;
   alexGAccount={balance:10000,openPositions:[],closedPositions:[]};
   alexGJournalEntries=[];
@@ -4504,6 +4533,7 @@ function loadSaved(){
     const prh=localStorage.getItem('fxhub_paper_reset_history');if(prh) paperResetHistory=JSON.parse(prh); // v9.0
     const tn=localStorage.getItem('fxhub_trade_notes');if(tn) tradeNotes=JSON.parse(tn); // v10.0
     const pra=localStorage.getItem('fxhub_paper_reconciliation_audit');if(pra) paperReconciliationAudit=JSON.parse(pra); // v11.0
+    const lk=localStorage.getItem('fxhub_lock');mogoLock.locked=lk==='1'; // v12.1.3: non-sensitive UI-state flag only
   }catch(e){}
 }
 function saveAiChatHistory(){
@@ -4518,6 +4548,32 @@ function loadAiSaved(){
 }
 
 // ── AUTH ──
+// v12.1.3: Manual Lock. Purely a client-side visibility/interaction gate -- see the
+// mogoLock declaration above for the full disclosure. Locking/unlocking never touches
+// paperAccount, journalEntries, alexGAccount, or any trade; Scanner polling, chart
+// rendering, checkPaperPositions/checkAutoTrades, and alerts are untouched by lock
+// state and keep running underneath the overlay.
+function mogoLockNow(){
+  mogoLock.locked=true;
+  try{localStorage.setItem('fxhub_lock','1');}catch(e){}
+  applyMogoLockUI();
+}
+function mogoUnlock(){
+  mogoLock.locked=false;
+  try{localStorage.removeItem('fxhub_lock');}catch(e){}
+  applyMogoLockUI();
+}
+function applyMogoLockUI(){
+  const ov=document.getElementById('mogoLockOverlay');
+  if(ov) ov.style.display=mogoLock.locked?'flex':'none';
+}
+// Call at the top of any credential-change / automation-toggle / destructive /
+// Manual-Review-approval action. Returns true (and alerts) if the action was blocked.
+function mogoLockBlocked(){
+  if(!mogoLock.locked) return false;
+  alert('MOGO is locked. Click Unlock (top right) first.');
+  return true;
+}
 function confirmLiveEnv(){
   if(confirm('Switch to your LIVE OANDA account?\n\nThis hub never places real orders — it only ever simulates paper trades locally, in both modes. But Live pulls real price data and your real account balance instead of the practice sandbox. Only proceed if you meant to do this.'))
     setEnv('live');
@@ -4574,11 +4630,13 @@ async function connect(){
   }
 }
 function disconnect(){
+  if(mogoLockBlocked())return;
   clearInterval(scanInterval);clearInterval(countdownInterval);
   cfg={key:'',accountId:'',env:'practice'};
   document.getElementById('mainApp').style.display='none';
   document.getElementById('setupScreen').style.display='flex';
   document.getElementById('apiKey').value='';
+  document.getElementById('accountId').value='';
 }
 function apiBase(){return cfg.env==='live'?'https://api-fxtrade.oanda.com':'https://api-fxpractice.oanda.com';}
 
@@ -7497,6 +7555,7 @@ function mrModalPass(){
 // wrapper. Its one real caller (mrModalApprove()) still works unchanged, since awaiting a
 // plain return value is always valid in JS.
 function approveManualReviewTrade(oPair){
+  if(mogoLock.locked) return{ok:false,reason:'MOGO is locked. Unlock it first to approve a Manual Review trade.'};
   const c=manualReviewCandidates[oPair];
   if(!c||c.state!=='MANUAL REVIEW ELIGIBLE') return{ok:false,reason:'Setup is no longer Manual Review Eligible.'};
   const b=c.breakdown;
@@ -8901,21 +8960,21 @@ function renderAlertLog(){
       // v12.1.2: deliberately distinct wording/styling from an auto-qualified alert below.
       return `<div class="alert-entry" style="border-left:3px solid #e8a33d">
         <div class="alert-top">
-          <span class="alert-pair">${a.pair} <span style="color:#e8a33d;font-weight:700">MANUAL REVIEW</span></span>
-          <span style="color:${cColor(a.pct)};font-size:12px;font-weight:600">${a.pct}%</span>
-          <span class="alert-time">${a.time}</span>
+          <span class="alert-pair">${escapeHtml(a.pair)} <span style="color:#e8a33d;font-weight:700">MANUAL REVIEW</span></span>
+          <span style="color:${cColor(a.pct)};font-size:12px;font-weight:600">${escapeHtml(a.pct)}%</span>
+          <span class="alert-time">${escapeHtml(a.time)}</span>
         </div>
-        <div class="alert-sigs">${(a.sigs||[]).join(' ')}</div>
+        <div class="alert-sigs">${(a.sigs||[]).map(escapeHtml).join(' ')}</div>
       </div>`;
     }
     return `
     <div class="alert-entry">
       <div class="alert-top">
-        <span class="alert-pair">${a.pair} <span style="color:${a.direction==='long'?'var(--green)':'var(--red)'};font-weight:700">${a.direction==='long'?'▲ LONG':'▼ SHORT'}</span></span>
-        <span style="color:${cColor(a.pct)};font-size:12px;font-weight:600">${a.pct}%</span>
-        <span class="alert-time">${a.time}</span>
+        <span class="alert-pair">${escapeHtml(a.pair)} <span style="color:${a.direction==='long'?'var(--green)':'var(--red)'};font-weight:700">${a.direction==='long'?'▲ LONG':'▼ SHORT'}</span></span>
+        <span style="color:${cColor(a.pct)};font-size:12px;font-weight:600">${escapeHtml(a.pct)}%</span>
+        <span class="alert-time">${escapeHtml(a.time)}</span>
       </div>
-              <div class="alert-sigs">${(a.sigs||[]).slice(0,3).join(' · ')}${!a.inSession?' ⚠ off-hours':''}</div>
+              <div class="alert-sigs">${(a.sigs||[]).slice(0,3).map(escapeHtml).join(' · ')}${!a.inSession?' ⚠ off-hours':''}</div>
     </div>`;
   }).join('');
 }
@@ -9149,7 +9208,8 @@ function clearJForm(){
   document.getElementById('j-rr').value='';document.getElementById('j-notes').value='';
 }
 function deleteEntry(id){
-  if(!confirm('Remove?')) return;
+  if(mogoLockBlocked())return;
+  if(!confirm('Permanently delete this journal entry? This cannot be undone.')) return;
   journalEntries=journalEntries.filter(e=>e.id!==id);renderJournal();save();
 }
 // ══════════════════════════════════════════════════════════════════════════
@@ -9472,6 +9532,7 @@ function cancelPaperReconciliationUI(){
   renderPaperLedgerIntegrity();
 }
 function confirmPaperReconciliationUI(tradeId){
+  if(mogoLockBlocked())return;
   if(!confirm('Restore trade '+tradeId+' into your paper account? This will add it to Closed Positions and adjust your balance by its already-recorded P&L. This cannot be undone from this screen (it will be recorded in the audit trail).')) return;
   const result=applyPaperReconciliation([tradeId]);
   if(result.blocked){ alert(result.reason); }
@@ -9602,7 +9663,7 @@ function renderJournalRecordRows(records,inspectorContainerId){
     return `<div class="journal-entry" style="cursor:pointer" onclick="openTradeInspector('${r.journalEntryId}','${inspectorContainerId}')">
       <div class="j-meta">
         ${journalStrategyBadge(r)}${journalTestBadge(r)}
-        <strong style="color:var(--text1)">${fmtDash(r.pair)}</strong>
+        <strong style="color:var(--text1)">${escapeHtml(fmtDash(r.pair))}</strong>
         ${journalDirBadge(r)}
         <span style="color:${rc};font-weight:600">${r.result||r.status}</span>
         ${r.resultR!=null?`<span>${fmtRMult(r.resultR)}</span>`:''}
@@ -9704,7 +9765,7 @@ function renderPaperMiniJournal(){
       <div class="j-meta">
         <span class="jvm-class-badge ${jvmClassBadgeClass(cls)}" title="Account relationship">${escapeHtml(cls)}</span>
         ${journalTestBadge(r)}
-        <strong style="color:var(--text1)">${fmtDash(r.pair)}</strong>
+        <strong style="color:var(--text1)">${escapeHtml(fmtDash(r.pair))}</strong>
         ${journalDirBadge(r)}
         <span style="color:${rc};font-weight:600">${r.result||r.status}</span>
         ${r.resultR!=null?`<span>${fmtRMult(r.resultR)}</span>`:''}
@@ -9758,15 +9819,15 @@ function findJournalRecordById(journalEntryId){
   return getUnifiedJournalRecords().find(r=>r.journalEntryId===journalEntryId)||null;
 }
 function inspectorRows(pairs){
-  return pairs.map(([label,val])=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2);font-size:12px">${label}</span><span style="font-size:12px;text-align:right">${val}</span></div>`).join('');
+  return pairs.map(([label,val])=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2);font-size:12px">${escapeHtml(label)}</span><span style="font-size:12px;text-align:right">${escapeHtml(val)}</span></div>`).join('');
 }
 function renderTradeInspectorContent(r,containerId){
   containerId=containerId||'tradeInspectorCard';
-  const overview=inspectorRows([
-    ['Strategy',journalStrategyBadge(r)+journalTestBadge(r)],
-    ['Pair',fmtDash(r.pair)],['Timeframe',fmtDash(r.timeframe)],['Setup',fmtDash(r.setupLabel||r.setupType)],
-    ['Direction',journalDirBadge(r)],['Status',fmtDash(r.status)],['Trade source',fmtDash(r.tradeSource)],['Trade ID',fmtDash(r.tradeId)]
-  ]);
+  const inspectorRow=(label,html)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2);font-size:12px">${escapeHtml(label)}</span><span style="font-size:12px;text-align:right">${html}</span></div>`;
+  const overview=inspectorRow('Strategy',journalStrategyBadge(r)+journalTestBadge(r))
+    +inspectorRows([['Pair',fmtDash(r.pair)],['Timeframe',fmtDash(r.timeframe)],['Setup',fmtDash(r.setupLabel||r.setupType)]])
+    +inspectorRow('Direction',journalDirBadge(r))
+    +inspectorRows([['Status',fmtDash(r.status)],['Trade source',fmtDash(r.tradeSource)],['Trade ID',fmtDash(r.tradeId)]]);
   const entrySec=inspectorRows([['Entry',fmtNum(r.entry)],['Opened',fmtJournalDate(r.openedAt)]]);
   const riskSec=inspectorRows([
     ['Risk %',r.riskPercent!=null?r.riskPercent+'%':'—'],['Risk amount',fmtCurrency(r.riskAmount)],
@@ -9812,7 +9873,7 @@ function renderTradeInspectorContent(r,containerId){
   const rawJson=escapeHtml(JSON.stringify(r._raw,null,2));
   return `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div class="section-label" style="margin-bottom:0">Trade Inspector — ${journalStrategyBadge(r)} ${fmtDash(r.pair)}</div>
+      <div class="section-label" style="margin-bottom:0">Trade Inspector — ${journalStrategyBadge(r)} ${escapeHtml(fmtDash(r.pair))}</div>
       <div style="display:flex;gap:8px">
         <button style="font-size:11px;padding:4px 10px" onclick="focusTradeOnChart('${r.journalEntryId}')" title="Open this trade on the Scanner chart">View on Chart</button>
         <button style="font-size:11px;padding:4px 10px" onclick="openTradeInspectorPanel('${r.journalEntryId}')" title="Open the dedicated Trade Inspector page (compliance, timeline, metrics, replay, notes)">Full Inspector</button>
@@ -9909,7 +9970,7 @@ function renderTiSummaryHero(r){
   const resultColor=r.result==='Win'?'var(--green)':r.result==='Loss'?'var(--red)':'var(--text2)';
   return `<div class="sc-hero">
     <div class="sc-hero-top"><div>
-      <div class="sc-hero-name">${fmtDash(r.pair)} ${journalDirBadge(r)}</div>
+      <div class="sc-hero-name">${escapeHtml(fmtDash(r.pair))} ${journalDirBadge(r)}</div>
       <div class="sc-hero-sub">${journalStrategyBadge(r)}${journalTestBadge(r)} · ${escapeHtml(r.status||'—')}${r.result?(' · <span style="color:'+resultColor+';font-weight:700">'+escapeHtml(r.result)+'</span>'):''}</div>
     </div></div>
     <div class="sc-hero-tiles">
@@ -10014,7 +10075,7 @@ function renderTiBrowseList(){
       <div class="journal-entry" style="cursor:pointer" onclick="openTradeInspectorPanel('${r.journalEntryId}')">
         <div class="j-meta">
           ${journalStrategyBadge(r)}${journalTestBadge(r)}
-          <strong style="color:var(--text1)">${fmtDash(r.pair)}</strong>
+          <strong style="color:var(--text1)">${escapeHtml(fmtDash(r.pair))}</strong>
           ${journalDirBadge(r)}
           <span style="color:${r.result==='Win'?'var(--green)':r.result==='Loss'?'var(--red)':'var(--text2)'};font-weight:600">${r.result||r.status}</span>
           <span style="margin-left:auto;font-size:11px;color:var(--text2)">${r.legacyDateText||fmtJournalDate(r.closedAt||r.openedAt)}</span>
@@ -10214,8 +10275,10 @@ function checkPaperPositions(){
   });
 }
 function setPaperBalance(){
+  if(mogoLockBlocked())return;
   const v=parseFloat(document.getElementById('paperBalanceInput').value);
   if(!v||v<=0){alert('Enter a valid balance.');return;}
+  if(!confirm('Set the paper account balance to $'+v.toFixed(2)+'? This directly overwrites the current balance.')) return;
   const paperAccountSnapshot=JSON.parse(JSON.stringify(paperAccount));
   paperAccount.balance=v;
   const committed=commitPaperLedger();
@@ -10243,6 +10306,7 @@ function recordPaperReset(resetType){
 // paperResetHistory (see classifyJvmJournalRecord) as "Account reset history"
 // rather than an unexplained "Journal only" orphan.
 function confirmPaperResetAccountOnly(){
+  if(mogoLockBlocked())return;
   if(!confirm('Reset the active paper account?\n\nThis clears open positions, closed positions, the auto-trade log, and restores the starting balance. Your Strategy Journal history is preserved.'))return;
   const paperAccountSnapshot=JSON.parse(JSON.stringify(paperAccount));
   const autoTradingLogSnapshot=autoTrading.log.slice();
@@ -10268,6 +10332,7 @@ function confirmPaperResetAccountOnly(){
 // any other function -- they are the one category this reset is explicitly
 // forbidden from silently deleting.
 function confirmPaperResetFull(){
+  if(mogoLockBlocked())return;
   if(!confirm('Full JVM paper reset?\n\nThis clears open positions, closed positions, the auto-trade log, restores the starting balance, AND removes every JVM journal record tied to a paper position (including developer test records). Manual "Log a trade" entries are preserved.\n\nThis cannot be undone.'))return;
   const paperAccountSnapshot=JSON.parse(JSON.stringify(paperAccount));
   const autoTradingLogSnapshot=autoTrading.log.slice();
@@ -10383,7 +10448,14 @@ function renderPaper(){
 
 // ── AUTO PAPER TRADING ──
 function toggleAutoTrading(){
-  autoTrading.enabled=document.getElementById('autoTradeToggle').checked;
+  const cb=document.getElementById('autoTradeToggle');
+  const turningOn=cb.checked;
+  if(mogoLockBlocked()){ cb.checked=!turningOn; return; }
+  if(!confirm(turningOn?'Turn ON Auto Paper Trading? The app will begin automatically opening and closing simulated JVM positions.':'Turn OFF Auto Paper Trading? Automated JVM paper trading will stop until you turn it back on.')){
+    cb.checked=!turningOn;
+    return;
+  }
+  autoTrading.enabled=turningOn;
   save();updateAutoTradeStatus();
   if(autoTrading.enabled&&typeof Notification!=='undefined'&&Notification.permission==='default'){
     Notification.requestPermission();
@@ -10518,6 +10590,7 @@ function toggleHideTestTradesPaper(){
   if(btn) btn.textContent=hideTestTradesPaper?'Show Test Trades':'Hide Test Trades';
 }
 function clearTestTradesPaper(){
+  if(mogoLockBlocked())return;
   if(!confirm('Clear all TEST trades from the current-strategy paper account? Any realized P&L those specific test trades produced is reversed out of your balance first. Real paper trades — and manual journal entries — are never touched.'))return;
   const paperAccountSnapshot=JSON.parse(JSON.stringify(paperAccount));
   const journalEntriesSnapshot=JSON.parse(JSON.stringify(journalEntries));
@@ -10544,6 +10617,7 @@ function clearTestTradesPaper(){
 
 // ── AI ASSISTANT ──
 function saveAiKey(){
+  if(mogoLockBlocked())return;
   const key=document.getElementById('aiKeyInput').value.trim();
   const model=document.getElementById('aiModelSelect').value;
   if(!key){alert('Paste your Anthropic API key first.');return;}
@@ -10553,11 +10627,13 @@ function saveAiKey(){
   document.getElementById('aiKeyInput').value='';
 }
 function clearAiKey(){
+  if(mogoLockBlocked())return;
   aiChat.key='';
   try{localStorage.removeItem('fxhub_ai_key');}catch(e){}
   document.getElementById('aiKeyStatus').innerHTML='Key cleared.';
 }
 function clearAiChat(){
+  if(mogoLockBlocked())return;
   if(!confirm('Clear chat history?'))return;
   aiChat.messages=[];saveAiChatHistory();renderAiMessages();
 }
@@ -12332,6 +12408,7 @@ function renderDashboard(){
 
 // ── INIT ──
 function initAll(){
+  applyMogoLockUI(); // v12.1.3: reflect any persisted lock state before anything else renders
   const vb=document.getElementById('versionBadge');
   if(vb){vb.textContent='v'+APP_VERSION;vb.title='Version '+APP_VERSION+' — '+APP_VERSION_DATE;}
   initScan();initJournalPairs();renderRules();renderChecklist();

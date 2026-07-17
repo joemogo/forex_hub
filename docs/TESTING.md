@@ -27,15 +27,18 @@ runner (`run_v90_tests.js`, ...) that:
 **Two categories exist, and it matters which one a suite is in:**
 
 - **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
-  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.2
-  there are **four**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.3
+  there are **five**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
   Release 1), `tests/v121_jvm_registration_tests.js` (28 fixtures, JVM registration, Release 2),
-  `tests/v1211_diagnostics_integrity_tests.js` (13 fixtures, Diagnostics data integrity), and
+  `tests/v1211_diagnostics_integrity_tests.js` (13 fixtures, Diagnostics data integrity),
   `tests/v1212_manual_review_and_replay_diagnostics_tests.js` (53 fixtures, TRUE MTF Replay
-  Diagnostics + Manual Review Eligible) — 122 fixtures total. Each has its own self-contained
-  runner (`tests/run_v120_tests.js`, `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`,
-  `tests/run_v1212_tests.js`) that extracts `index.html`'s `<script>` body itself — no separate
-  preprocessing step required. `tests/run_all.sh` discovers and runs all four automatically via
+  Diagnostics + Manual Review Eligible), and `tests/v1213_security_baseline_tests.js` (50
+  fixtures, Security Baseline — escaping fixes, Manual Lock, sensitive-action confirmation
+  guards, and an explicit OANDA-never-persisted vs. Anthropic-persisted-by-design reconciliation
+  pair) — 172 fixtures total. Each has its own self-contained runner (`tests/run_v120_tests.js`,
+  `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`, `tests/run_v1212_tests.js`,
+  `tests/run_v1213_tests.js`) that extracts `index.html`'s `<script>` body itself — no separate
+  preprocessing step required. `tests/run_all.sh` discovers and runs all five automatically via
   its `tests/run_*_tests.js` glob — adding a new suite under `tests/` never requires editing the
   runner.
 - **Historical scratch-only suites** — the remaining 22 suites referenced in

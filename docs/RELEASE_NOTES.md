@@ -13,6 +13,46 @@ its change actually affects.
 
 ---
 
+## v12.1.3 — Security Baseline
+A platform-hardening release (not Phase 2/Strategy Expansion — no strategy logic touched; zero
+drift across all 63 protected functions and 4 protected constants). Preceded by a mandatory
+inspection report the user reviewed and approved before any code changed. **Findings**: the OANDA
+token was already memory-only (never persisted) — the one real credential gap was `disconnect()`
+clearing the API key input field but not the account ID field (fixed). **Escaping**:
+`renderAlertLog()` and `inspectorRows()` previously rendered values into `innerHTML` without
+`escapeHtml()` (no live free-text path was found feeding either, but the render functions
+provided no defense-in-depth escaping); fixing `inspectorRows()` required pulling its two
+HTML-badge rows out of the generic escaping path so real badge markup isn't double-escaped into
+visible tag text. Writing the fixture suite for this fix caught a related, previously-undetected
+gap live: six `fmtDash(r.pair)` sinks across the Trade Inspector header, Strategy Center hero
+name, and mini-journal rows were also unescaped — all closed the same way. **Confirmations**:
+`toggleAutoTrading()`/`toggleAlexGLiveTrading()` previously flipped automated trading with zero
+confirmation; both now confirm first. `deleteEntry()`'s confirm text was strengthened. **Manual
+Lock (new)**: a client-side privacy barrier — explicitly disclosed as *not* authentication — that
+conceals the whole app behind a full-screen overlay and blocks credential changes, automation
+toggles, destructive actions, and Manual Review approval while locked, via one reused guard at 14
+call sites. Locking never pauses Scanner polling, chart updates, position monitoring, or
+already-running automation; toast alerts (already non-sensitive) render above the overlay and
+were confirmed live to keep appearing while locked. **Dependency cleanup**: removed a fully dead
+external Google Fonts import (a leftover `.jvm-signature` class applied to zero elements). **CSP**:
+an allow-list was built and verified in a scratch copy only (confirmed to actively block a
+non-allow-listed host while permitting OANDA and Anthropic); per explicit instruction it is *not*
+in production yet — `Content-Security-Policy-Report-Only` cannot be set via `<meta>` at all, and
+GitHub Pages doesn't give this repo HTTP header control — documented as a pending limitation.
+**Anthropic key**: confirmed clean of the leakage patterns checked, but its persisted,
+direct-browser-credential design is now formally documented as temporary, with a Future AI
+Security Boundary rule governing any expansion. A pre-push reconciliation review flagged that an
+earlier verification summary line risked reading as "no key anywhere in storage" — inaccurate for
+the Anthropic key, which is persisted by design. No committed doc or fixture actually made that
+claim, but two fixtures were added to make both behaviors explicit and directly tested: the OANDA
+token proven to never appear in any localStorage value, and the Anthropic key proven to be
+persisted to `fxhub_ai_key` on Save and removed from both memory and storage on Clear. 50 new
+fixtures total (`tests/v1213_security_baseline_tests.js`); full regression 172/172 passing, zero
+drift. Live
+browser verification confirmed the Lock/Unlock flow, the overlay's concealment, and a toast
+alert rendering above it while locked, with zero real trade data touched throughout and zero
+console errors after every change. See [SECURITY.md](SECURITY.md) for full detail.
+
 ## v12.1.2 — TRUE MTF Replay Diagnostics + Manual Review Eligible
 A platform-tooling release (not Phase 2/Strategy Expansion — no new strategy added). Two
 features built on top of the existing JVM engine, neither loosening automatic-trading rules,
