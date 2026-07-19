@@ -188,14 +188,36 @@ function runV121Fixtures(g){
       'jvmBadge='+jvmBadge+' alexBadge='+alexBadge);
   }
 
-  // ═══ Fixture 15: removing JVM specifically (leaving ALEX registered) fails safely -- getUnifiedJournalRecords() never throws, ALEX unaffected ═══
+  // ═══ Fixture 15: removing JVM specifically (leaving ALEX registered) fails safely --
+  // getUnifiedJournalRecords() never throws, ALEX unaffected. UPDATED (not weakened) for
+  // v12.2.0/ADR-006: the per-id hardcoded fallback this fixture originally asserted
+  // ("JVM still shows via a direct-call fallback even though only its own entry was removed")
+  // was a genuine per-id special case that cannot generalize to a third/future strategy --
+  // ADR-006 replaces it with "iterate whatever IS in the registry, skip what isn't, and only
+  // fall back to the pre-registry direct calls if the registry is completely empty." So the
+  // now-correct, by-design behavior is: JVM's records are safely skipped (not fabricated via
+  // fallback), ALEX's are unaffected, and nothing throws. See Fixture 15b below for the
+  // separate, still-covered "whole registry empty" fallback case. ═══
   {
     const savedRegistry=g.getRegistry().slice();
     g.setRegistry(savedRegistry.filter(e=>e.manifest.id!=='current_strategy'));
     let threw=false, records=null;
     try{ records=g.getUnifiedJournalRecords(); }catch(e){ threw=true; }
     g.setRegistry(savedRegistry);
-    assert('Fixture 15: getUnifiedJournalRecords() does not throw and still returns both JVM (fallback) and ALEX records when only JVM\'s registry entry is removed',
+    assert('Fixture 15: getUnifiedJournalRecords() does not throw, safely skips JVM, and ALEX records are unaffected when only JVM\'s registry entry is removed',
+      !threw&&!records.some(r=>r.strategyLabel==='JVM')&&records.some(r=>r.strategyLabel==='ALEX'),
+      'threw='+threw+' count='+(records&&records.length));
+  }
+
+  // ═══ Fixture 15b (v12.2.0/ADR-006, new): whole-registry-empty still falls back to the direct
+  // pre-registry calls for both JVM and ALEX, so history is never silently lost outright ═══
+  {
+    const savedRegistry=g.getRegistry().slice();
+    g.setRegistry([]);
+    let threw=false, records=null;
+    try{ records=g.getUnifiedJournalRecords(); }catch(e){ threw=true; }
+    g.setRegistry(savedRegistry);
+    assert('Fixture 15b: getUnifiedJournalRecords() falls back to direct JVM+ALEX calls when the whole registry is empty',
       !threw&&records.some(r=>r.strategyLabel==='JVM')&&records.some(r=>r.strategyLabel==='ALEX'),
       'threw='+threw+' count='+(records&&records.length));
   }
@@ -224,7 +246,14 @@ function runV121Fixtures(g){
       !threw&&g.getAutoTradingUnseenCount()===0, 'threw='+threw);
   }
 
-  // ═══ Fixture 18: removing JVM specifically fails safely -- applyDeveloperModeVisibility() never throws, still falls back to the literal id ═══
+  // ═══ Fixture 18: removing JVM specifically fails safely -- applyDeveloperModeVisibility()
+  // never throws. UPDATED (not weakened) for v12.2.0/ADR-006: the per-id literal-id fallback
+  // this fixture originally asserted cannot generalize to a third/future strategy (there is no
+  // generic way to know an unregistered strategy's dev-tools card id) -- ADR-006 replaces it
+  // with "loop over whatever IS in the registry; an entry that's missing is simply not toggled."
+  // So the now-correct, by-design behavior is: JVM's card is left exactly as it was (not
+  // touched, not force-hidden) when JVM is unregistered, and nothing throws. See Fixture 18b
+  // below for the separate, still-covered "whole registry empty" fallback case. ═══
   {
     const savedRegistry=g.getRegistry().slice();
     g.setRegistry(savedRegistry.filter(e=>e.manifest.id!=='current_strategy'));
@@ -235,7 +264,23 @@ function runV121Fixtures(g){
     const display=g.getElementStyleDisplay('devToolsPaperCard');
     g.setRegistry(savedRegistry);
     g.setDeveloperMode(false);
-    assert('Fixture 18: applyDeveloperModeVisibility() does not throw and falls back to the literal devToolsPaperCard id when JVM is unregistered',
+    assert('Fixture 18: applyDeveloperModeVisibility() does not throw and leaves JVM\'s card untouched (not force-shown) when JVM is unregistered',
+      !threw&&display==='none', 'threw='+threw+' display='+display);
+  }
+
+  // ═══ Fixture 18b (v12.2.0/ADR-006, new): whole-registry-empty still falls back to the direct
+  // literal devToolsPaperCard/devToolsAlexCard ids for both strategies ═══
+  {
+    const savedRegistry=g.getRegistry().slice();
+    g.setRegistry([]);
+    g.setElementDisplay('devToolsPaperCard','none');
+    g.setDeveloperMode(true);
+    let threw=false;
+    try{ g.applyDeveloperModeVisibility(); }catch(e){ threw=true; }
+    const display=g.getElementStyleDisplay('devToolsPaperCard');
+    g.setRegistry(savedRegistry);
+    g.setDeveloperMode(false);
+    assert('Fixture 18b: applyDeveloperModeVisibility() falls back to the literal devToolsPaperCard id when the whole registry is empty',
       !threw&&display==='block', 'threw='+threw+' display='+display);
   }
 
@@ -270,13 +315,17 @@ function runV121Fixtures(g){
       c.academyContent===true, 'c.academyContent='+c.academyContent);
   }
 
-  // ═══ Fixture 22: renderMiniJournal's JVM branch is confirmed untouched (still the pre-existing literal) -- this release deliberately did not
-  // generalize it, since it is unreachable dead code (renderMiniJournal is only ever called with strategyLabel='ALEX' in the real app;
-  // JVM uses its own separate renderPaperMiniJournal(), per the v9.0 design comment) ═══
+  // ═══ Fixture 22: renderMiniJournal(...,'JVM') still runs without throwing. UPDATED comment
+  // (not weakened assertion) for v12.2.0/ADR-006: this path was previously described as
+  // unreachable dead code with an untouched literal inspector id -- as of v12.2.0 its inspector
+  // id now resolves generically via resolveStrategyEntryForRecord()/STRATEGY_REGISTRY instead of
+  // a hardcoded literal (see ADR-006 seam 5), so this fixture now also proves the generalized
+  // lookup path doesn't throw for the 'JVM' label, whether or not the call site is ever
+  // exercised live. ═══
   {
     let threw=false;
     try{ g.renderMiniJournal('someContainer',null,'JVM'); }catch(e){ threw=true; }
-    assert('Fixture 22: renderMiniJournal(...,"JVM") still runs without throwing using its pre-existing, untouched literal inspector id (dead-code path, deliberately not generalized)',
+    assert('Fixture 22: renderMiniJournal(...,"JVM") does not throw and resolves its inspector id via the generic v12.2.0 lookup',
       !threw, 'threw='+threw);
   }
 

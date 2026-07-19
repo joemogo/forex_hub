@@ -13,6 +13,44 @@ its change actually affects.
 
 ---
 
+## v12.2.0 — Multi-Strategy Foundation
+A framework-generalization release under [ADR-006](adr/ADR-006-multi-strategy-foundation.md) —
+not Phase 2/Strategy Expansion itself (no TJR/ICT/Silver Bullet trading logic added; zero drift
+across all 63 protected functions and 4 protected constants). ADR-005 (v12.0.0/v12.1.0) built
+`STRATEGY_REGISTRY`/Manifest/Services and proved the contract twice, but every consuming seam was
+still hardcoded "JVM and ALEX by id," not "iterate whatever is registered" — explicitly disclosed
+as deferred scope at the time. This release closes that gap. **Approved with one required
+revision before implementation**: strategy-owned records must carry a stable `strategyId`
+(registry id), never treating the display `strategyLabel` as permanent identity. Both journal
+builders were found to already write an id-shaped `strategy` field — `strategyId` was added
+alongside it on new records only, with existing persisted records never rewritten; a new 3-tier
+resolver (`resolveStrategyEntryForRecord()`: `strategyId` → legacy `strategyLabel` via
+`findStrategyEntryByLabel()`, explicitly documented as legacy-only → safe null) replaces every
+"is this ALEX?" ternary. **Seven seams generalized** to iterate the registry instead of
+hardcoding a third id: the unified journal build, Dashboard's P&L/win-rate tiles *and* its
+running-trades table (a second, previously undocumented hardcoded badge color was found and
+fixed in the same pass), the panel-open hook, Developer Mode card visibility, the mini-journal
+inspector lookup, the journal strategy badge color, and Strategy Center's tabs (the static
+two-DOM-id scheme replaced with tabs generated per registry entry, in array order). Two new,
+additive Manifest fields (`badgeColor`, `capabilities.strategyCenterContent`) round out the
+contract; an unresolved/unregistered record now renders a dedicated neutral color and a shared
+generic inspector card — never silently defaulting to JVM's own styling. A fixture-only,
+never-shipped synthetic third strategy proves genuine N-strategy support (not just N=2 with
+nicer code) at all seven seams, both offline and in a real live-browser session, with zero
+change to JVM's or ALEX's own output. Two pre-existing v12.1.0 fixtures were updated — not
+weakened — since they asserted a per-id fallback behavior that cannot generalize to a third
+strategy; two new fixtures cover the still-supported "whole registry empty" case, and one
+fixture's stale comment was corrected. 30 new fixtures
+(`tests/v122_multi_strategy_foundation_tests.js`); regression-relevant total 200/200 passing.
+Four unrelated, pre-existing fixtures in a different suite (real-wall-clock session dependency,
+tracked as a documented follow-up, not fixed this release) fail only during the documented
+00:00–08:00 UTC off-hours window and were confirmed to fail identically on the unmodified prior
+release. Zero protected-function/constant drift. Live browser verification confirmed a live-injected
+synthetic third strategy rendering correctly across Dashboard, Strategy Center, Developer Mode,
+and the unified journal, and a live-injected unresolvable record rendering its own neutral,
+non-JVM badge color. See ADR-006 for the full design, the seam-by-seam table, and the new-strategy
+onboarding checklist.
+
 ## v12.1.3 — Security Baseline
 A platform-hardening release (not Phase 2/Strategy Expansion — no strategy logic touched; zero
 drift across all 63 protected functions and 4 protected constants). Preceded by a mandatory

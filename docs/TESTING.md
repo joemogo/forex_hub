@@ -27,20 +27,29 @@ runner (`run_v90_tests.js`, ...) that:
 **Two categories exist, and it matters which one a suite is in:**
 
 - **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
-  committed to git, reproducible from a fresh clone with no external dependency. As of v12.1.3
-  there are **five**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
-  Release 1), `tests/v121_jvm_registration_tests.js` (28 fixtures, JVM registration, Release 2),
-  `tests/v1211_diagnostics_integrity_tests.js` (13 fixtures, Diagnostics data integrity),
-  `tests/v1212_manual_review_and_replay_diagnostics_tests.js` (53 fixtures, TRUE MTF Replay
-  Diagnostics + Manual Review Eligible), and `tests/v1213_security_baseline_tests.js` (50
-  fixtures, Security Baseline — escaping fixes, Manual Lock, sensitive-action confirmation
-  guards, and an explicit OANDA-never-persisted vs. Anthropic-persisted-by-design reconciliation
-  pair) — 172 fixtures total. Each has its own self-contained runner (`tests/run_v120_tests.js`,
-  `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`, `tests/run_v1212_tests.js`,
-  `tests/run_v1213_tests.js`) that extracts `index.html`'s `<script>` body itself — no separate
-  preprocessing step required. `tests/run_all.sh` discovers and runs all five automatically via
-  its `tests/run_*_tests.js` glob — adding a new suite under `tests/` never requires editing the
-  runner.
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.2.0
+  there are **six**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
+  Release 1), `tests/v121_jvm_registration_tests.js` (30 fixtures, JVM registration, Release 2 —
+  grew from 28 in v12.2.0, see below), `tests/v1211_diagnostics_integrity_tests.js` (13
+  fixtures, Diagnostics data integrity), `tests/v1212_manual_review_and_replay_diagnostics_tests.js`
+  (53 fixtures, TRUE MTF Replay Diagnostics + Manual Review Eligible),
+  `tests/v1213_security_baseline_tests.js` (50 fixtures, Security Baseline — escaping fixes,
+  Manual Lock, sensitive-action confirmation guards, and an explicit OANDA-never-persisted vs.
+  Anthropic-persisted-by-design reconciliation pair), and `tests/v122_multi_strategy_foundation_tests.js`
+  (30 fixtures, Multi-Strategy Foundation / ADR-006 — strategyId identity, the 3-tier resolver,
+  legacy-label and rename-resilience coverage, unknown/unregistered-record safe fallback, and a
+  fixture-only synthetic third strategy proving genuine N-strategy support at all seven
+  generalized seams) — 204 fixtures total. Each has its own self-contained runner
+  (`tests/run_v120_tests.js`, `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`,
+  `tests/run_v1212_tests.js`, `tests/run_v1213_tests.js`, `tests/run_v122_tests.js`) that
+  extracts `index.html`'s `<script>` body itself — no separate preprocessing step required.
+  `tests/run_all.sh` discovers and runs all six automatically via its `tests/run_*_tests.js`
+  glob — adding a new suite under `tests/` never requires editing the runner.
+  **v12.2.0 note:** two pre-existing `v121` fixtures (15, 18) asserted a per-id hardcoded
+  fallback behavior that v12.2.0 deliberately replaced (see ADR-006) — updated, not weakened,
+  to assert the new, correct, generalizable behavior; two new fixtures (15b, 18b) cover the
+  still-supported "whole registry empty" fallback case, and one fixture's stale comment (22)
+  was corrected.
 - **Historical scratch-only suites** — the remaining 22 suites referenced in
   `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (476 fixtures) live only in the
   ephemeral Claude Code scratchpad used during development, not in this repository, and are
@@ -99,6 +108,28 @@ are both synchronous) and was changed to a plain function — a real simplificat
 workaround, since real callers awaiting a non-Promise value works unchanged in an actual browser.
 Before writing offline fixtures for a new async-looking function, check whether it actually
 awaits anything real; if not, removing `async` is often the correct fix, not a harness workaround.
+
+### A second known limitation, found during v12.2.0: real-wall-clock-dependent fixtures
+
+Some fixtures in `tests/v1212_manual_review_and_replay_diagnostics_tests.js` (Fixtures 39, 40,
+47, 48) call the real, unmodified `getSession()`/session-gated code paths without controlling
+for time of day. Because `getSession()` reads the actual system clock, these specific fixtures
+fail with `"Outside approved session."` whenever `tests/run_all.sh` happens to run during the
+real, documented 00:00–08:00 UTC off-hours window — reproducible on any commit, not just this
+one (confirmed during v12.2.0 by running the identical suite against unmodified `v12.1.3` via
+`git stash`, which failed identically). This is a pre-existing fragility in that one suite's
+fixture design, not a defect in the functions under test, and not something a suite added by any
+later release should repeat.
+
+**Tracked follow-up (documentation only, not implemented in v12.2.0):** *"Make session-dependent
+regression fixtures deterministic by injecting a controllable clock/session provider instead of
+depending on real UTC time."* A future release should give the affected fixtures a way to inject
+a fixed `now`/session value (mirroring how other fixtures already override `isPreferredTradingDay`-style
+functions for determinism) so `tests/run_all.sh` produces the same pass/fail result regardless of
+when it's run. Until that lands, treat a `run_all.sh` result as suspect if it shows exactly these
+four fixtures failing and the real time is within 00:00–08:00 UTC — re-run outside that window,
+or use `git stash` against the previous tag to confirm the failure is pre-existing before treating
+it as a regression.
 
 ## 2. Live browser verification
 
