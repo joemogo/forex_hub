@@ -13,6 +13,51 @@ its change actually affects.
 
 ---
 
+## v12.3.0 — TJR_SLR Phase 1: Session and Zone Engine
+The first real strategy built on the [ADR-006](adr/ADR-006-multi-strategy-foundation.md)
+Multi-Strategy Foundation — deliberately narrow scope: deterministic, timezone-aware
+previous-session (Asian/London/New York) high/low zone construction only. No zone-interaction
+engine, no break-of-structure/fair-value-gap/entry logic, no candidates, no paper trading, no
+live execution — see [ADR-007](adr/ADR-007-tjr-strategy-definition.md), whose per-component
+status records the Session/Zone Engine as **implemented in v12.3.0**; the Zone Interaction/
+Reaction Engine and five-minute BOS confirmation as **approved for implementation** (via the
+owner's authoritative architecture process, not yet built — no Phase 2 code exists in this
+release); candidate analytics/grading as **specified, not yet built**; and paper/live execution
+as **not approved**. `TJR_SLR` ("TJR Session Level Reaction")
+registered as `STRATEGY_REGISTRY`'s third entry (`status:'development'`, scanning/paperTrading/
+automation all `false`) using the existing Manifest/Services schema exactly, no parallel fields.
+Session boundaries resolve via native `Intl.DateTimeFormat` (no timezone library added) against
+real Europe/London GMT/BST offsets, computed independently per boundary — proven correct on the
+UK's own spring-forward and autumn-back transition days, where a single session's start and end
+fall on opposite sides of the DST change. Nine pure, fully synchronous core functions
+(`resolveTjrSessionBoundaries`, `getTjrSessionForTimestamp`, `getPreviousCompletedTjrSession`,
+`isTjrSessionComplete`, `getCandlesForResolvedSession`, `findTjrSessionExtremes`,
+`buildTjrHighZone`, `buildTjrLowZone`, `buildTjrSessionZones`) aggregate completed M30 candles
+with strict no-lookahead, reject (never silently repair) malformed/duplicate candles, select the
+true session high/low with an isolated, swappable tie-break rule, and construct immutable
+(`Object.freeze()`), deterministically-`zoneId`'d body-to-wick zones matching all four mandatory
+spec formulas exactly. Zone status is ACTIVE/DATA_INCOMPLETE/INVALID_SOURCE only — assigned once
+at build time from data quality alone; no interaction/expiration engine exists yet. Zones render
+on the chart as a new, fully separate dashed-price-line overlay (own toggle, own legend), fetched
+via a fire-and-forget async wrapper around the existing `fetchCandles()` so a slow/failing fetch
+can never delay or break the primary chart. Strategy Center gained a registry-driven TJR tab
+(session/zone diagnostics only — no win rate/PnL, since none exist), and Developer Mode gained a
+matching diagnostics card. 48 new fixtures in `tests/v123_tjr_phase1_session_zone_tests.js`; one
+pre-existing `v121` fixture updated (not weakened) for the now-3-strategy registry. **Pre-commit
+release-readiness correction:** 4 fixtures in `tests/v1212_manual_review_and_replay_diagnostics_tests.js`
+were found to be nondeterministic — real, unmodified, pre-existing production code
+(`approveManualReviewTrade()`) gates on `getSession().active` using the actual wall clock, so
+those fixtures failed only when the suite happened to run during the real 00:00–08:00 UTC
+off-hours window (confirmed pre-existing and unrelated to TJR via `git stash` against unmodified
+v12.2.0). Fixed in the **test harness only** — `tests/run_v1212_tests.js` now injects a
+deterministic session override for the affected fixtures and restores it immediately after;
+`getSession()` itself (protected, production) was never edited. Full regression is now genuinely
+deterministic: **252/252 discovered fixtures pass, zero skipped/excluded, zero
+protected-function/constant drift**, reproducible via one canonical command
+(`tests/run_all.sh`) regardless of time of day. JVM and ALEX trading logic completely untouched.
+
+---
+
 ## v12.2.0 — Multi-Strategy Foundation
 A framework-generalization release under [ADR-006](adr/ADR-006-multi-strategy-foundation.md) —
 not Phase 2/Strategy Expansion itself (no TJR/ICT/Silver Bullet trading logic added; zero drift

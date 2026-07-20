@@ -21,11 +21,15 @@ function runV121Fixtures(g){
   }
 
   // ═══ Fixture 1: STRATEGY_REGISTRY contains both JVM and ALEX entries this release ═══
+  // v12.3.0: updated (not weakened) -- asserts JVM and ALEX are both present rather than
+  // asserting the registry's total size is exactly 2, since that exact count was only ever
+  // true before TJR_SLR's own registration and is now, correctly, obsolete (same kind of
+  // update the v12.2.0 release itself made to this file's Fixtures 15/18 for the same reason).
   {
     const reg=g.getRegistry();
     const ids=reg.map(e=>e.manifest.id);
     assert('Fixture 1: STRATEGY_REGISTRY contains both current_strategy (JVM) and alex_g_sr_v1 (ALEX)',
-      ids.includes('current_strategy')&&ids.includes('alex_g_sr_v1')&&reg.length===2,
+      ids.includes('current_strategy')&&ids.includes('alex_g_sr_v1')&&reg.length>=2,
       'ids='+JSON.stringify(ids));
   }
 

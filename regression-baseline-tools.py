@@ -93,6 +93,12 @@ FIXTURE_COUNTS = {
     "run_v114_tests.js (Pre-Trade Checklist badge text + future-state prep)": 19,
     "run_v115_tests.js (MOGO Academy lesson engine foundation)": 55,
     "run_v120_tests.js (Strategy Framework foundation, Release 1 -- ALEX registration)": 28,
+    "run_v1211_tests.js": 13,
+    "run_v1212_tests.js (Manual Review Eligible + TRUE MTF Replay Diagnostics)": 53,
+    "run_v1213_tests.js (Security Baseline)": 50,
+    "run_v121_tests.js (Strategy Framework, Release 2 -- JVM registration)": 30,
+    "run_v122_tests.js (Multi-Strategy Foundation, ADR-006)": 30,
+    "run_v123_tests.js (TJR_SLR Phase 1 -- Session and Zone Engine)": 48,
 }
 
 

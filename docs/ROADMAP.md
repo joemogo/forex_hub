@@ -21,8 +21,16 @@ verbatim source of record and is never rewritten by this documentation.
   surface), this phase adds genuinely new strategies on top of the now-proven framework — TJR,
   ICT, Silver Bullet, and others named in [PRODUCT_VISION.md](PRODUCT_VISION.md) — each expected
   to require only its own state/storage/save-load pair and one new `STRATEGY_REGISTRY` entry, per
-  ADR-005's stated consequence of the framework work. No Phase 2 release has started; this
-  roadmap entry will be updated with real scope, not aspiration, once one does.
+  ADR-005's stated consequence of the framework work. **Started at v12.3.0**: `TJR_SLR` is
+  registered (`status:'development'`, scanning/paperTrading/automation all disabled) with a
+  deterministic session/zone engine only — see
+  [ADR-006](adr/ADR-006-multi-strategy-foundation.md) for the framework and
+  [ADR-007](adr/ADR-007-tjr-strategy-definition.md) for TJR's own rule specification and current
+  per-component status: the Zone Interaction/Reaction Engine and five-minute BOS confirmation are
+  **approved for implementation** (not yet built — no Phase 2 code exists yet), candidate
+  analytics/grading is **specified** (not yet built), and paper/live execution remain **not
+  approved**. The document's 14 open research questions are unresolved and preserved for
+  reference. ICT, Silver Bullet, and TJR's own later implementation phases have not started.
 
 ## Where the project has been
 

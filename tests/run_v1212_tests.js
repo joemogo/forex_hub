@@ -102,6 +102,19 @@ const wrapped = new Function('g',
   'g.commitPaperLedger=commitPaperLedger;' +
   'g.rigStalePaperVersion=function(){localStorage.setItem("fxhub_paper_version",String(paperAccountKnownVersion+10));};' +
   'g.resetPaperVersionGuard=function(){paperAccountKnownVersion=0;localStorage.removeItem("fxhub_paper_version");};' +
+  // -- deterministic session override (test-harness-only; does NOT touch index.html's
+  // protected getSession(), only reassigns this offline realm's in-memory copy of it for
+  // the duration of the fixtures that call approveManualReviewTrade(), which gates on
+  // getSession().active using the REAL wall clock, not the setup's own decisionTs -- a
+  // genuine, pre-existing, real-clock dependency that made these fixtures nondeterministic
+  // around 00:00-08:00 UTC. Restored immediately after use so no other fixture's behavior
+  // is affected. Production behavior is completely unchanged -- this never runs outside
+  // this offline test process. --' +
+  '(function(){' +
+    'const __originalGetSession=getSession;' +
+    'g.forceActiveSession=function(){getSession=function(){return{name:"London",active:true,priority:true};};};' +
+    'g.restoreSession=function(){getSession=__originalGetSession;};' +
+  '})();' +
   // -- localStorage helpers --
   'g.getAllLocalStorageKeys=function(){return localStorage.__keys();};' +
   'return runV1212Fixtures(g);'

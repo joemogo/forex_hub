@@ -27,29 +27,39 @@ runner (`run_v90_tests.js`, ...) that:
 **Two categories exist, and it matters which one a suite is in:**
 
 - **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
-  committed to git, reproducible from a fresh clone with no external dependency. As of v12.2.0
-  there are **six**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.3.0
+  there are **seven**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
   Release 1), `tests/v121_jvm_registration_tests.js` (30 fixtures, JVM registration, Release 2 —
   grew from 28 in v12.2.0, see below), `tests/v1211_diagnostics_integrity_tests.js` (13
   fixtures, Diagnostics data integrity), `tests/v1212_manual_review_and_replay_diagnostics_tests.js`
   (53 fixtures, TRUE MTF Replay Diagnostics + Manual Review Eligible),
   `tests/v1213_security_baseline_tests.js` (50 fixtures, Security Baseline — escaping fixes,
   Manual Lock, sensitive-action confirmation guards, and an explicit OANDA-never-persisted vs.
-  Anthropic-persisted-by-design reconciliation pair), and `tests/v122_multi_strategy_foundation_tests.js`
+  Anthropic-persisted-by-design reconciliation pair), `tests/v122_multi_strategy_foundation_tests.js`
   (30 fixtures, Multi-Strategy Foundation / ADR-006 — strategyId identity, the 3-tier resolver,
   legacy-label and rename-resilience coverage, unknown/unregistered-record safe fallback, and a
   fixture-only synthetic third strategy proving genuine N-strategy support at all seven
-  generalized seams) — 204 fixtures total. Each has its own self-contained runner
-  (`tests/run_v120_tests.js`, `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`,
-  `tests/run_v1212_tests.js`, `tests/run_v1213_tests.js`, `tests/run_v122_tests.js`) that
+  generalized seams), and `tests/v123_tjr_phase1_session_zone_tests.js` (48 fixtures, TJR_SLR
+  Phase 1 — Session and Zone Engine: registration, DST-aware session boundary resolution
+  including the exact spring/autumn transition days, previous-completed-session predecessor
+  cycling, no-lookahead M30 candle aggregation, malformed/duplicate-candle rejection, tied/unique
+  extreme selection, all four mandatory zone-formula examples, deterministic/immutable zone
+  objects, all three Phase 1 zone statuses, and a zero-mutation proof against JVM/ALEX state) —
+  252 fixtures total. Each has its own self-contained runner (`tests/run_v120_tests.js`,
+  `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`, `tests/run_v1212_tests.js`,
+  `tests/run_v1213_tests.js`, `tests/run_v122_tests.js`, `tests/run_v123_tests.js`) that
   extracts `index.html`'s `<script>` body itself — no separate preprocessing step required.
-  `tests/run_all.sh` discovers and runs all six automatically via its `tests/run_*_tests.js`
+  `tests/run_all.sh` discovers and runs all seven automatically via its `tests/run_*_tests.js`
   glob — adding a new suite under `tests/` never requires editing the runner.
   **v12.2.0 note:** two pre-existing `v121` fixtures (15, 18) asserted a per-id hardcoded
   fallback behavior that v12.2.0 deliberately replaced (see ADR-006) — updated, not weakened,
   to assert the new, correct, generalizable behavior; two new fixtures (15b, 18b) cover the
   still-supported "whole registry empty" fallback case, and one fixture's stale comment (22)
   was corrected.
+  **v12.3.0 note:** one pre-existing `v121` fixture (1) asserted the registry's total size was
+  exactly 2 — updated, not weakened, to assert JVM and ALEX are both present (`reg.length>=2`),
+  since the exact count was only ever true before TJR_SLR's own registration and is now,
+  correctly, obsolete.
 - **Historical scratch-only suites** — the remaining 22 suites referenced in
   `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (476 fixtures) live only in the
   ephemeral Claude Code scratchpad used during development, not in this repository, and are
@@ -109,27 +119,27 @@ workaround, since real callers awaiting a non-Promise value works unchanged in a
 Before writing offline fixtures for a new async-looking function, check whether it actually
 awaits anything real; if not, removing `async` is often the correct fix, not a harness workaround.
 
-### A second known limitation, found during v12.2.0: real-wall-clock-dependent fixtures
+### A second known limitation, found during v12.2.0, resolved in v12.3.0: real-wall-clock-dependent fixtures
 
 Some fixtures in `tests/v1212_manual_review_and_replay_diagnostics_tests.js` (Fixtures 39, 40,
-47, 48) call the real, unmodified `getSession()`/session-gated code paths without controlling
-for time of day. Because `getSession()` reads the actual system clock, these specific fixtures
-fail with `"Outside approved session."` whenever `tests/run_all.sh` happens to run during the
-real, documented 00:00–08:00 UTC off-hours window — reproducible on any commit, not just this
-one (confirmed during v12.2.0 by running the identical suite against unmodified `v12.1.3` via
-`git stash`, which failed identically). This is a pre-existing fragility in that one suite's
-fixture design, not a defect in the functions under test, and not something a suite added by any
-later release should repeat.
+47, 48) call `approveManualReviewTrade()`, which gates on `getSession().active` using the real
+system clock rather than the setup's own `decisionTs` — a genuine, pre-existing production
+behavior (confirmed identical on unmodified `v12.1.3` via `git stash`), not a bug in the function
+under test. Because of it, these specific fixtures failed with `"Outside approved session."`
+whenever `tests/run_all.sh` happened to run during the real, documented 00:00–08:00 UTC
+off-hours window — first disclosed as a tracked, unfixed follow-up in v12.2.0.
 
-**Tracked follow-up (documentation only, not implemented in v12.2.0):** *"Make session-dependent
-regression fixtures deterministic by injecting a controllable clock/session provider instead of
-depending on real UTC time."* A future release should give the affected fixtures a way to inject
-a fixed `now`/session value (mirroring how other fixtures already override `isPreferredTradingDay`-style
-functions for determinism) so `tests/run_all.sh` produces the same pass/fail result regardless of
-when it's run. Until that lands, treat a `run_all.sh` result as suspect if it shows exactly these
-four fixtures failing and the real time is within 00:00–08:00 UTC — re-run outside that window,
-or use `git stash` against the previous tag to confirm the failure is pre-existing before treating
-it as a regression.
+**Resolved in v12.3.0, in the test harness only, per explicit instruction not to alter protected
+production behavior merely to make fixtures pass:** `tests/run_v1212_tests.js` now exposes
+`g.forceActiveSession()` / `g.restoreSession()`, which reassign that offline test realm's
+in-memory `getSession` reference (never `index.html`'s actual, protected `getSession()`) to a
+fixed, always-active session for exactly the fixtures that call `approveManualReviewTrade()`
+(39–49), restoring the real reference immediately after. `tests/run_all.sh` now produces the
+identical 252/252-passing result regardless of what time it's run — confirmed by re-running it
+repeatedly, including inside the previously-failing 00:00–08:00 UTC window. If a *future* release
+adds a new fixture that calls `approveManualReviewTrade()` (or any other function gating on the
+real `getSession()`), bracket it with the same `g.forceActiveSession()`/`g.restoreSession()` pair
+rather than reintroducing a real-clock dependency.
 
 ## 2. Live browser verification
 

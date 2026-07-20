@@ -947,6 +947,9 @@ button.danger:hover{background:var(--red-dim)}
                      #chartContainer (capture phase) instead of on this canvas. -->
                 <canvas id="chartDrawingCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2"></canvas>
                 <div id="chartTradeOverlayLegend" style="display:none;position:absolute;top:8px;left:8px;background:rgba(22,27,39,.92);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:11px;min-width:190px;z-index:5;pointer-events:auto"></div>
+                <!-- v12.3.0: TJR Phase 1 previous-session zone legend -- own element, own
+                     top-right position, never overlaps or is cleared by clearTradeOverlay(). -->
+                <div id="tjrZoneOverlayLegend" style="display:none;position:absolute;top:8px;right:8px;background:rgba(22,27,39,.92);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:11px;min-width:190px;z-index:5;pointer-events:auto"></div>
                 <!-- v11.2.0: shown only while loadChart()'s primary candle fetch is in flight --
                      see showChartLoadingState(). Purely cosmetic, chart-display-only. -->
                 <div id="chartLoadingIndicator" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;background:rgba(15,17,23,.55);z-index:6;font-size:12px;color:var(--text2)"></div>
@@ -1719,6 +1722,16 @@ button.danger:hover{background:var(--red-dim)}
       <div id="panel-rules" class="panel">
         <div class="sc-tabs" id="scTabsContainer"></div>
         <div id="scContentContainer"></div>
+        <!-- v12.3.0: TJR Phase 1 has no dedicated trading panel yet (panelId:null -- no
+             scanning/paper trading exists this phase), so its Developer Mode diagnostics
+             card lives here in Strategy Center (TJR's one real "home" page this release)
+             as always-present static markup -- same convention as devToolsPaperCard/
+             devToolsAlexCard living in their own strategy's panel, just hidden unless
+             Developer Mode is ON. Populated by renderTjrDevDiagnostics(). -->
+        <div class="card" id="devToolsTjrCard" style="display:none;border:2px dashed var(--gold)">
+          <div class="section-label" style="color:var(--gold)">Developer Diagnostics — TJR (Phase 1)</div>
+          <div id="devToolsTjrContent" style="font-size:11px;color:var(--text2)">No data yet — open a chart pair to compute TJR session zones.</div>
+        </div>
       </div>
 
       <!-- v8.0: shared "Coming Soon" feature-preview panel -- used by every nav
@@ -1859,9 +1872,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.2.0';
-const APP_VERSION_DATE='19 Jul 2026';
+const APP_VERSION='12.3.0';
+const APP_VERSION_DATE='20 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.3.0 — TJR_SLR PHASE 1: SESSION AND ZONE ENGINE (strategy-expansion release -- the first real strategy built on the ADR-006 Multi-Strategy Foundation framework, not a framework change itself; zero drift across all 63 protected functions and 4 protected constants; JVM and ALEX trading logic completely untouched). SCOPE, deliberately narrow per explicit instruction: deterministic, timezone-aware previous-session (Asian/London/New York) high/low zone construction ONLY. No zone-interaction/failure-transition engine, no break-of-structure/fair-value-gap/entry logic, no candidate detection, no paper trading, and no live execution exist yet -- see ADR-007 (TJR Strategy Definition), whose per-component status records the Session/Zone Engine as implemented in v12.3.0; the Zone Interaction/Reaction Engine and five-minute BOS confirmation as approved for implementation via the owner\'s authoritative architecture process (not yet built -- no Phase 2 code exists in this release); candidate analytics/grading as specified, not yet built; and paper/live execution as not approved. REGISTRATION: TJR_SLR ("TJR Session Level Reaction") registered as STRATEGY_REGISTRY\'s third entry using the exact existing Manifest/Services schema (no parallel fields introduced) -- status:\'development\', capabilities.scanning/paperTrading/automation all false (MOGO has no separate "live execution" schema field since no strategy ever places real broker orders per ADR-004, so automation:false covers it), capabilities.replay:true is a disclosed forward-declared value only -- no replay engine is actually wired this phase, matching JVM/ALEX\'s own established convention for not-yet-wired capabilities. TIMEZONE ENGINE: no third-party timezone library was added (native Intl.DateTimeFormat only, already implicitly relied on elsewhere in this file, e.g. fmtJournalDate()\'s toLocaleString()) -- tjrGetLondonOffsetMinutesAt()/tjrLondonLocalToUtcMs() compute Europe/London\'s real GMT/BST offset for the SPECIFIC instant being converted (never a hardcoded permanent UTC offset), resolved independently per session boundary rather than per calendar day -- proven necessary and correct on the exact UK DST transition days themselves, where a single session\'s local start and end fall on opposite sides of the transition (e.g. 2026-03-29: Asian session\'s 00:00 local start is still GMT while its 08:00 local end is already BST). NINE CORE PURE FUNCTIONS (resolveTjrSessionBoundaries, getTjrSessionForTimestamp, getPreviousCompletedTjrSession, isTjrSessionComplete, getCandlesForResolvedSession, findTjrSessionExtremes, buildTjrHighZone, buildTjrLowZone, buildTjrSessionZones), all fully synchronous/deterministic given an explicit candle array and evaluation timestamp -- no network call, no localStorage access, no hidden clock read -- so every one is directly unit-testable without mocking an await (matching this project\'s own documented, permanent JXA-offline-harness limitation). CANDLE AGGREGATION: strictly no-lookahead (excludes any candle at or after the evaluation timestamp even if inside the session window); malformed OHLC candles (h<l, or high/low not bounding open/close) and duplicate-timestamp candles are both REJECTED AND REPORTED, never silently repaired or merged (first-seen wins for duplicates); full diagnostics returned (expected/actual M30 count, missing intervals, duplicates, invalid candles, datasetComplete). EXTREME SELECTION: true session high/low with a tick-tolerance tie check; all tied candidates are stored, and an isolated, independently swappable tie-break function (tjrSelectCanonicalTiedCandle) selects the latest qualifying candle as canonical, with the selection reason recorded. ZONE FORMULAS (verified against all four mandatory spec examples): high zone upper=source candle high, lower=max(open,close); low zone lower=source candle low, upper=min(open,close); both rounded to instrument precision and wrapped in Object.freeze() so zone bounds/status are runtime-immutable, not just conventionally so. Zone ids are fully deterministic (TJR_SLR:{instrument}:{sourceSession}:{sourceTradingDate}:{zoneType}) -- repeat calls with identical inputs produce byte-identical frozen zone objects. STATUS: Phase 1 supports exactly ACTIVE/DATA_INCOMPLETE/INVALID_SOURCE, assigned once at build time purely from source-session data quality (a zero-candle session yields INVALID_SOURCE with null bounds, never a fabricated value) -- no interaction/failure transition engine exists yet, per explicit instruction; an EXPIRED concept was deliberately NOT implemented as a fourth build-time status this phase (see Known Limitations). CHART: a new, fully separate overlay (tjrChartZoneLines/clearTjrZoneOverlay()/drawTjrZoneOverlay(), its own legend div and chartOverlayToggles.tjrZones toggle) renders both zones as dashed price lines using the existing createPriceLine() pattern (never a new rendering primitive) -- fetched via a single new async wrapper, loadAndRenderTjrZones(), that calls the existing, unmodified fetchCandles() for M30 candles and is invoked fire-and-forget (never awaited) from loadChart() specifically so a slow or failing TJR fetch can never delay or break the primary candle chart, matching this project\'s own prior flat-line/outlier incident. STRATEGY CENTER: a new registry-driven TJR tab (capabilities.strategyCenterContent:true) shows development status, execution-disabled notice, current session, previous completed session (UTC + Europe/London-local boundaries), high/low zone bounds, dataset completeness, and calculation timestamp -- deliberately no win rate, profitability, or trade statistics (none exist). DEVELOPER MODE: a new devToolsTjrCard (registry-driven via the existing, unmodified applyDeveloperModeVisibility() loop -- no change to that function was needed) shows config/current session/previous session/source-candle diagnostics/high zone/low zone/warnings/errors -- no credentials, tokens, or account data of any kind are exposed (none of this data touches OANDA credentials). TESTING: 48 new fixtures in tests/v123_tjr_phase1_session_zone_tests.js covering session mapping, exact inclusive-start/exclusive-end boundaries, winter GMT / summer BST / spring-forward / autumn-back DST conversion (including the transition day\'s own per-boundary offset split), previous-session predecessor resolution in all three directions, candle aggregation (clean/missing/duplicate/invalid/boundary/no-lookahead), unique and tied high/low selection, all four mandatory zone-formula examples, deterministic zone ids, runtime immutability, all three zone statuses, and a zero-mutation proof against paperAccount/alexGAccount/journalEntries/alexGJournalEntries. One pre-existing fixture (tests/v121_jvm_registration_tests.js Fixture 1) was updated -- not weakened -- from asserting the registry\'s total size is exactly 2 to asserting JVM and ALEX are both present (reg.length>=2), since the exact-2 count was only ever true before TJR_SLR\'s own registration, the same kind of disclosed update v12.2.0 itself made to this same file for the same reason. Full regression: 252/252 discovered fixtures pass (204 pre-existing + 48 new), zero skipped/excluded, zero protected-function/constant drift. RELEASE-READINESS CORRECTION (pre-commit, same v12.3.0 pass): a pre-commit review caught that 4 fixtures in tests/v1212_manual_review_and_replay_diagnostics_tests.js (39/40/47/48) were nondeterministic -- approveManualReviewTrade() (real, unmodified, pre-existing production code) gates on getSession().active using the REAL wall clock rather than the setup\'s own decisionTs, so those fixtures failed whenever the suite happened to run during the real 00:00-08:00 UTC off-hours window (reproduced identically via git stash against unmodified v12.2.0 HEAD, confirming the behavior predates and is unrelated to TJR). Fixed in the TEST HARNESS ONLY, per explicit instruction not to alter protected production behavior merely to make fixtures pass: tests/run_v1212_tests.js now exposes g.forceActiveSession()/g.restoreSession(), which reassign that offline realm\'s in-memory getSession reference for the duration of Fixtures 39-49 (the only ones exercising approveManualReviewTrade()) and restore it immediately after -- index.html\'s real getSession() (PROTECTED) was never edited, confirmed by zero drift before and after. The full suite is now genuinely deterministic: re-run repeatedly, including inside the same 00:00-08:00 UTC window that previously caused failures, with all 252/252 fixtures passing every time via one canonical command (tests/run_all.sh). A duplicate-fixture-name scan across all 7 canonical suites found zero real duplicates (one coincidental same-numbered "Fixture 18" label across two independently-numbered release suites, v120 and v121, testing different functions\' fallback behavior -- not a collision). KNOWN LIMITATIONS, disclosed rather than silently deferred: no zone-interaction/invalidation/expiration engine exists yet (a zone\'s status is fixed at build time; an EXPIRED status was intentionally left unimplemented rather than guessed at, since the spec left its exact trigger condition ambiguous and fabricating one would contradict the "do not invent" constraint governing this whole strategy); no entry/confirmation/BOS/FVG logic, no candidate detection, no paper trading, no live execution -- all explicitly out of scope until ADR-007\'s open questions are answered by the strategy owner. Syntax clean, known-good hash unchanged.',
   '12.2.0 — MULTI-STRATEGY FOUNDATION (ADR-006; framework-generalization release, not Phase 2/Strategy Expansion itself -- no TJR/ICT/Silver Bullet trading logic added; zero drift across all 63 protected functions and 4 protected constants). SCOPE: ADR-005 (v12.0.0/v12.1.0) built STRATEGY_REGISTRY/Manifest/Services and proved the contract twice, but a direct seam-by-seam audit found every consuming seam still hardcoded "JVM and ALEX by id," not "iterate whatever is registered" -- explicitly disclosed as deferred scope in the v12.1.0 changelog. This release closes that gap. REVISION BEFORE IMPLEMENTATION: the approved design was revised once, before any code changed, to require that strategy-owned records carry a stable strategyId (registry id) rather than treating strategyLabel (a display string) as identity. IDENTITY: buildJVMJournalOpenRecord()/buildAlexJournalOpenRecord() were both found to already write an id-shaped `strategy` field (\'current_strategy\'/\'alex_g_sr_v1\') -- strategyId was added alongside it on new records only (existing persisted records are never rewritten). normalizeJournalRecord() gained one additive output field: strategyId:raw.strategyId||raw.strategy||storeStrategy. Two new functions: findStrategyEntryByLabel() (explicitly documented as legacy-compatibility-only, not the primary lookup) and resolveStrategyEntryForRecord() (the 3-tier resolver: strategyId first, legacy strategyLabel second, safe null/unknown third -- every caller receiving null must render a neutral, non-strategy-specific fallback, never default to JVM\'s styling). SEVEN SEAMS GENERALIZED, each rewritten to iterate STRATEGY_REGISTRY instead of a per-id hardcoded branch: getUnifiedJournalRecords() (loops the registry, skips a strategy with no wired getJournal/normalize Service, falls back to direct JVM+ALEX calls only if the whole registry is empty); renderDashboard() tiles (one P&L/win-rate tile pair per registered strategy with capabilities.paperTrading) AND its running-trades table (a second, previously-undocumented hardcoded badge ternary found and fixed in the same pass); showPanel() (one generic manifest.panelId lookup replaces two if(name===...) blocks); applyDeveloperModeVisibility() (loops registry entries, a missing entry is left untouched rather than force-defaulted); renderMiniJournal() (inspector id via the resolver, falling back to the existing shared, strategy-neutral tradeInspectorCard id -- never JVM\'s or ALEX\'s own card); journalStrategyBadge() (color via the resolver; an unresolved record renders a new, dedicated neutral badge color, never JVM\'s blue); Strategy Center (the static two-DOM-id tab/content scheme replaced with tabs+content generated per registry entry, in array order, disabled/"Coming Soon" for any entry without the new capabilities.strategyCenterContent flag -- collapses the previous ALEX-specific renderStrategyCenterAlexComingSoon() into one generic renderStrategyCenterComingSoon(manifest)). TWO NEW ADDITIVE MANIFEST FIELDS, required for every future registry entry: badgeColor and capabilities.strategyCenterContent; JVM_MANIFEST/ALEX_MANIFEST both gained real, honest values for both (JVM: unchanged blue, strategyCenterContent:true; ALEX: real purple, strategyCenterContent:false, matching its existing Coming Soon state). ORDERING: every generalized seam renders STRATEGY_REGISTRY in array order -- no separate priority field, matching the project\'s stated bias against speculative configurability. TEST-FIXTURE CORRECTION (disclosed, not silent): 2 pre-existing v12.1.0 fixtures (15, 18) asserted the OLD per-id hardcoded fallback ("JVM still shows via a direct-call fallback even though only its own registry entry was removed") -- a behavior that cannot generalize to a third strategy (there is no generic way to fall back to an unregistered strategy\'s specific global variable). Updated, not weakened, to assert the correct new behavior (a missing entry is safely skipped, not fabricated via fallback); two new fixtures (15b, 18b) cover the separate, still-supported "whole registry is empty" fallback case. A third fixture\'s comment (22) was corrected from describing renderMiniJournal\'s JVM path as untouched dead code to reflecting that it now resolves via the generic v12.2.0 lookup. SYNTHETIC THIRD STRATEGY: since no third real strategy exists yet, a fixture-only, never-shipped synthetic manifest/services pair (id \'test_strategy_zzz\') proves genuine N-strategy support -- not just N=2 with nicer code -- rendering correctly at all seven seams simultaneously with JVM and ALEX, with zero change to either\'s own output, both offline and in a real live-browser session. TESTING: 30 new fixtures in tests/v122_multi_strategy_foundation_tests.js (strategyId on new JVM/ALEX records, legacy label-only resolution for both, strategyId rename-resilience vs. a label-only record correctly becoming unresolvable after a simulated rename, unknown/unregistered-record safe fallback at the badge and inspector seams, registry-order rendering, and the full synthetic-third-strategy sweep across all seven seams plus a zero-mutation check on JVM/ALEX state). Full regression: 204/204 fixtures pass (28 v120 + 30 v121 + 13 v1211 + 53 v1212 + 50 v1213 + 30 v122), zero protected-function/constant drift -- none of the seven touched seams is on PROTECTED_FUNCTIONS. Live browser verification (zero real trade data throughout, zero console errors at every step): Dashboard and Strategy Center render identically to before with only JVM+ALEX registered; a synthetic third strategy injected live produced a third Dashboard tile pair, a gold running-trades badge, a third disabled Strategy Center tab in registry order, and a toggling Developer Mode card, while JVM\'s and ALEX\'s own data stayed untouched; an injected unresolvable ("ghost") journal record rendered its own label in the dedicated neutral badge color, confirmed visually distinct from JVM\'s blue, ALEX\'s purple, and the synthetic strategy\'s gold. NOT in this release: TJR/ICT/Silver Bullet\'s actual trading logic (a separate, later release implements one using this now-generalized framework, per ADR-006 §4\'s fixed onboarding checklist); dynamic/pluggable code loading (MOGO remains one static file, every strategy still ships compiled in and registered at top level); a standardized internal engine pipeline (JVM\'s and ALEX\'s genuinely different internal models are untouched, matching ADR-005). See ADR-006 for the full design and rationale. Syntax clean, known-good hash unchanged.',
   '12.1.3 — SECURITY BASELINE (platform-hardening release, not Phase 2/Strategy Expansion -- no strategy logic touched; zero drift across all 63 protected functions and 4 protected constants, confirmed by regression-baseline-tools.py before and after). SCOPE, per a mandatory pre-implementation inspection report the user reviewed and approved before any code changed: a security-risk inventory covering OANDA/Anthropic credential handling, XSS/escaping coverage, sensitive-action confirmation gaps, a Manual Lock privacy feature, and a Content Security Policy. INSPECTION FINDINGS: the OANDA token (cfg.key/cfg.accountId) was confirmed, by direct code inspection, to already be memory-only -- never written to localStorage anywhere in the codebase -- so no credential-persistence fix was needed there; the one real gap was disconnect() clearing the #apiKey input field\'s DOM value but not #accountId\'s (fixed). ESCAPING: renderAlertLog() and inspectorRows() previously interpolated values into innerHTML with no escapeHtml() call (no live free-text path was found feeding either -- pair/sigs/direction come from a fixed pair list and hardcoded label strings -- but the render functions themselves provided no defense-in-depth escaping). Fixing inspectorRows() generically required pulling its two HTML-badge rows (Strategy, Direction) out of the escaping path so journalStrategyBadge()/journalDirBadge()\'s real markup isn\'t double-escaped into visible tag text. Writing the fixture suite for this fix caught a related, previously-undetected gap live: renderTradeInspectorContent()\'s own header line rendered fmtDash(r.pair) unescaped even after the adjacent overview section (a few lines above, same function) was fixed -- five more identical fmtDash(r.pair) sinks were found and closed the same way (two mini-journal row renders, that header, the Strategy Center hero name, one more mini-journal-style row). SENSITIVE-ACTION CONFIRMATIONS: toggleAutoTrading() and toggleAlexGLiveTrading() previously flipped automated paper trading on/off with no confirmation dialog at all -- both now confirm before proceeding, following the existing live-environment-switch confirm() precedent (line ~4522). deleteEntry()\'s confirmation text was strengthened from a bare "Remove?" to state what\'s being deleted and that it\'s permanent. MANUAL LOCK (new): a local, client-side privacy barrier (mogoLock, persisted only as a non-sensitive fxhub_lock boolean flag so a reload doesn\'t silently unlock) -- explicitly disclosed in its own UI as NOT authentication. A full-screen overlay conceals the entire app while locked; credential changes (connect/disconnect/AI key save-clear), automation toggles, destructive actions (journal delete, paper/ALEX resets, test-trade clearing, reconciliation, balance override, chat-history clear), and Manual Review approval are all blocked with a message to unlock first, via a single mogoLockBlocked() guard reused at all 14 call sites. Locking never pauses Scanner polling, chart updates, paper-position monitoring, or already-running automation -- none of those are touched by lock state, since locking is a pure presentation/interaction gate, not a pause on the app\'s own background operation; toast alerts (already non-sensitive: pair/direction/confidence%/time) render above the lock overlay and were confirmed live to keep appearing while locked. Unlocking is a single deliberate click with no further verification, consistent with the "privacy barrier, not authentication" disclosure. DEPENDENCY CLEANUP: removed a fully dead external dependency -- a Google Fonts @import loading \'Dancing Script\' for .jvm-signature, a CSS class confirmed applied to zero elements anywhere in the app (a leftover from the v7.0 MOGO rebrand that had deliberately left it "intact and unused rather than deleted"). CSP: a Content-Security-Policy allow-list was built and verified in a scratch/dev copy only (default-src \'self\'; script-src/style-src \'unsafe-inline\' plus unpkg.com for the chart library -- required because this is a single inline-script, inline-style file with no build step; connect-src limited to both OANDA hosts and the Anthropic API) -- confirmed via a real securitypolicyviolation event that it actively blocks a non-allow-listed host while permitting all three required connect-src hosts, with no console errors and the chart library still loading. Per explicit instruction, an enforcing CSP is NOT in this production file -- Content-Security-Policy-Report-Only cannot be set via <meta> at all (HTTP-header-only, and GitHub Pages does not give this repository header control) -- documented as a pending limitation in docs/SECURITY.md and docs/KNOWN_ISSUES.md pending separate approval and a live-browser verification pass against the real file. ANTHROPIC KEY: confirmed clean of the leakage patterns checked (never in innerHTML/logs/diagnostics/exports; type=password field cleared after save; sent only via the x-api-key header) but its persisted, direct-browser-credential design is now formally documented as temporary, with a Future AI Security Boundary rule recorded in docs/SECURITY.md: future AI features require a real backend/serverless endpoint; no paid AI-provider key may be embedded in source, committed to Git, or stored in localStorage; the current AI Assistant chat implementation is frozen as-is and must not be expanded until that boundary exists. RECONCILIATION: a pre-push review flagged that an earlier verification summary line risked reading as "no key anywhere in storage" -- inaccurate for the Anthropic key, which is persisted to fxhub_ai_key by design. Direct audit confirmed no committed doc or fixture actually made that false claim (docs/SECURITY.md, STORAGE_KEYS.md, KNOWN_ISSUES.md, and RELEASE_NOTES.md already stated the Anthropic key\'s persistence accurately, and no v1213 fixture asserted its absence from localStorage) -- the inaccuracy was confined to chat-report wording, not any committed artifact. Two fixtures were added anyway to make both behaviors explicit and directly tested rather than merely inspected: the OANDA token/account ID proven to never appear in any localStorage value after being set, and the Anthropic key proven to be persisted to fxhub_ai_key on Save (both in localStorage and in memory) and removed from both on Clear. docs/SECURITY.md gained an explicit, unmissable side-by-side summary of the two credentials\' deliberately different persistence behavior at the top of its Credential Handling section. TESTING: 50 fixtures total in tests/v1213_security_baseline_tests.js (escaping correctness for both fixed sinks plus the six fmtDash(r.pair) sites, badge-row non-double-escaping, the full Manual Lock state machine, all 14 guarded actions verified as a true no-op while locked with state unchanged, several proceeding correctly once unlocked and confirmed, confirmation-text content for the two strengthened dialogs, and the OANDA-vs-Anthropic persistence reconciliation pair). Full regression: 172/172 fixtures pass (28 v120 + 28 v121 + 13 v1211 + 53 v1212 + 50 v1213), zero protected-function/constant drift. Live browser verification (scratch local-server copy, zero real trade data throughout -- paperAccount.balance stayed at its default $10,000 and journalEntries stayed empty for the whole session): Dashboard and Paper Trading panels rendered with zero console errors after every change in this release, including the dead-dependency removal; the Lock button, overlay (icon/title/disclosure text/Unlock button), and Unlock flow all rendered and behaved exactly as designed, correctly clearing the fxhub_lock key and restoring the app; a toast alert fired and rendered visibly above the lock overlay while locked, confirming continuous, non-sensitive alert operation in a real browser, not just in fixtures. Not exercised live (same disclosed, permanent limitation as every prior release requiring real broker credentials): an authenticated OANDA connect() call end to end.',
   '12.1.2 — TRUE MTF REPLAY DIAGNOSTICS + MANUAL REVIEW ELIGIBLE (platform-tooling release, not Phase 2/Strategy Expansion -- no new strategy added; Phase 2 remains reserved for that at v12.2.0+). SCOPE: two features on top of the existing JVM engine. Neither loosens automatic-trading rules, bypasses any existing protection, nor allows live-money execution. PRE-IMPLEMENTATION AUDIT found the root architectural fact driving both features: evaluateLiveTrigger() (live auto-trading, protected) checks isPreferredTradingDay() FIRST and returns immediately on failure -- a Thursday/Friday setup is never even scored for confluence/AOI/confirmation/R:R today, which is the literal root cause of both "Replay can\'t explain why it found nothing" and "Thu/Fri setups get reduced to a generic rejection." simulateTrueMTFReplay() has the identical short-circuit pattern. Both evaluateLiveTrigger()/checkAutoTrades() and simulateTrueMTFReplay()\'s own trade-selection loop remain completely untouched and byte-identical -- confirmed by zero drift across all 63 protected functions. PART 1 -- REPLAY DIAGNOSTICS: a new shared evaluator, evaluateSetupFullBreakdownCore() (SETUP_EVALUATOR_VERSION), calls the exact same protected primitives (detectSignals, bestConfluence/scoreConfluence, getSession, getScore, getBias, isPreferredTradingDay) without stopping at the first failed gate, so a full breakdown can be reported instead of one early rejection reason -- it duplicates no scoring logic and never decides whether to trade. simulateTrueMTFReplay() gained purely additive coverage/funnel/rejection instrumentation (a new `diag` object, extended through every existing `continue`) -- every counter increment sits alongside an unchanged gate, confirmed by the fact `trades[]` output is provably unaffected (Fixture 18). A "Replay Diagnostics" section now renders permanently beneath the Strategy Health Dashboard: coverage (requested/actual window, candles loaded per timeframe, processed/missing/invalid/session-filtered/weekday-filtered counts), a candidate funnel with each item labeled hard eligibility gate / soft confluence factor / informational observation / preference, rejection totals (exactly one primary reason per candidate, secondary reasons tracked separately, proven never to double-count), a Rejected Candidates table (paginated, full frozen-decision-snapshot detail view per row), a Near Misses section (diagnostic only, configurable margin, never converted into a valid signal), an evaluator-parity line (Live vs Replay identifier, MATCH/MISMATCH, with a developer-only demo toggle to prove the MISMATCH warning actually renders), five distinct empty-state messages (zero candidates / candidates-found-but-zero-qualified / incomplete data / replay execution failure), and read-only CSV/JSON export (verified never to mutate any MOGO state). PART 2 -- MANUAL REVIEW ELIGIBLE: every scanned setup now classifies into INELIGIBLE / DEVELOPING / MANUAL REVIEW ELIGIBLE / AUTO ENTRY ELIGIBLE via classifySetupEligibility(), built on the same shared evaluator, run from a new runManualReviewScan() ALONGSIDE (never inside) checkAutoTrades() -- AUTO ENTRY ELIGIBLE is structurally impossible outside Mon-Wed (the classifier has no ability to call openPaperPosition() at all) and only runs off Mon-Wed to avoid redundant network cost on days checkAutoTrades() already handles. A setup becomes MANUAL REVIEW ELIGIBLE only when every gate this evaluator checks passes except weekday (onlyWeekdayFailed) -- high confluence alone can never substitute for a missing AOI/confirmation/R:R/session pass, proven by 12 dedicated "high confluence cannot bypass X" fixtures. Gates this project does not yet enforce in code anywhere (news blackout, spread protection, correlated-exposure limits, daily-loss/account-risk circuit breaker) are explicitly disclosed as not-yet-enforced (gatesNotYetEnforced, shown in the Review Trade modal) rather than silently treated as passing -- a deliberate scope decision confirmed with the user before implementation. An amber "MANUAL REVIEW ELIGIBLE" banner (never called "Manual Override" anywhere in the UI) shows on the Scanner (panel-scanner -- the real Scanner nav destination; an initial placement in panel-scan, "Sunday Scan," was caught and corrected during live verification) with every required field and three actions -- Review Trade, Pass, Dismiss Until Next Candle -- no direct one-click execution. Review Trade opens a confirmation modal (full trade detail, passed-rules list, Thu/Fri-specific warnings, Friday cutoff/weekend-hold info, the not-yet-enforced-gates disclosure, and a required acknowledgment checkbox that gates the Approve button). Approval calls the existing, unmodified openPaperPosition()/commitPaperLedger() guarded path with a new, additive source value (\'manual_review\') -- the one previously-async wrapper, approveManualReviewTrade(), was found during fixture-writing to have no genuine await inside it (openPaperPosition/commitPaperLedger are both synchronous) and was simplified to a plain function, a real simplification rather than a workaround. Attribution (Entry Source, Window Status, User Approved, Automatic Entry, approval/decision timestamps, evaluator version, confluence + full rule snapshot, weekday, Thu/Fri classification, and more) is attached to the just-created journal record as a disclosed, non-protected, additive follow-up patch (buildJVMJournalOpenRecord() is not itself protected), then re-committed through the same guarded path; if that second commit fails, the position and journal record are both rolled back and re-committed as removed, so no partial state can remain -- verified directly by rigging a stale paper-account version guard (Fixture 42). Duplicate approval of the same decision candidate is blocked; a pair with an existing open position is excluded from classification entirely, matching checkAutoTrades()\'s own no-duplicate-position rule. Four separate, always-visible performance groups (Standard Monday-Wednesday / Outside-Window Manual Review / Thursday Manual Review / Friday Manual Review) read journalEntries\' new attribution fields, with the existing "insufficient sample" language at <30 resolved trades and a "preliminary comparison" note at 30-100 -- no rule ever changes automatically at either threshold. A distinct alert (deliberately different wording and a different two-tone sound from an auto-qualified-trade alert) and a Dashboard badge (click-through via the existing jumpToScanner()) round out the workflow. PART 3 -- MOMENTUM-LOSS DOCUMENTATION: Strategy Center\'s "Rejection wick pre-signal" card and the strategy-thesis narrative were expanded with explicit bullish/bearish-symmetric wording (the underlying wick formula in scoreConfluence()/detectSignals() was already symmetric in code -- dnW/range for bullish, upW/range for bearish, identical thresholds -- this was a documentation gap, not a logic gap). A new Research Diagnostics panel lists five candidate loss-of-momentum conditions (doji, spinning top, long wick, small-bodied hesitation candle, repeated failure to continue) with an honest current-vs-proposed table: which are executable today, and precisely what each non-executable one would require to become so -- informational only, changes nothing about live/replay scoring or gating. Production candle logic is unchanged except the RULES constant\'s own display text (a disclosed, intentional protected-constant change -- confirmed via regression-baseline-tools.py to be the ONLY drift this release produced, and only that one item). TESTING: 53 new fixtures in tests/v1212_manual_review_and_replay_diagnostics_tests.js. The offline JXA harness cannot resolve a genuine await (the same documented, permanent limitation recorded for runDiagnostics() in v12.1.1 -- confirmed again empirically here, including a failed NSRunLoop spin-wait attempt) -- simulateTrueMTFReplay() remains async (real progress-reporting awaits for long replays) and is not offline-testable end-to-end, so Replay-side fixtures exercise the fully-synchronous, separable pieces directly (mergeReplayDiag, renderReplayDiagnostics\'s empty-state selection, replayDiagBuildExportPayload) against hand-built diag objects satisfying the real function\'s own invariants, with the full walk-forward proof covered by live verification instead. Manual Review fixtures exercise the real, unmodified evaluateSetupFullBreakdownCore/classifySetupEligibility/approveManualReviewTrade end to end. Two real bugs were found BY the new fixtures, not by code review, and fixed before release: (1) a synthetic-candle test-data generator bug that also exposed nothing app-side, and (2) two genuine app bugs -- classifySetupEligibility()\'s Friday-cutoff check used wall-clock new Date() instead of the setup\'s own decision timestamp (correct by coincidence on the live path, wrong for any other caller; now keyed off decisionTs), and a test-only state-leak from a deliberately-rigged stale paper-version guard bled into a later fixture (fixed with an explicit reset helper, not a production code change). Full regression: 122/122 fixtures pass (28 v120 + 28 v121 + 13 v1211 + 53 v1212), zero unintended drift. LIVE VERIFICATION covered all 19 required scenarios against a scratch preview copy, never the user\'s real data: a fully-qualified Thursday setup rendered the real banner with every required field and classified MANUAL REVIEW ELIGIBLE end to end; the SAME live bug (wrong panel) that the fixtures could not catch was found here and fixed; Review Trade opened the real modal, the acknowledgment checkbox correctly gated Approve, Approve created exactly one paper trade and one journal record with fully correct attribution (confirmed by direct inspection), a second approval attempt on the same candidate was correctly blocked, Pass and Cancel were both confirmed to create no trade with the correct present/absent candidate-removal distinction; a Friday setup rendered the extra weekend/cutoff warnings; a past-cutoff Friday setup correctly classified INELIGIBLE; Replay Diagnostics rendered a complete, real funnel/rejection/near-miss/rejected-candidates view including the correctly-labeled category badges, evaluator parity showed MATCH by default and a forced MISMATCH warning via the developer-only toggle, and both CSV and JSON export ran without error or any state change; zero/qualified/missing-data empty states were each confirmed distinct. Storage cleanup: only standard fxhub_* keys present afterward, no orphaned test keys, no new localStorage keys added by this release at all (attribution lives as additive fields on existing journal records, not a new store). Syntax clean, known-good hash unchanged.',
@@ -7686,10 +7700,17 @@ let supportZoneLines=[],resistanceZoneLines=[];
 // key (fxhub_chart_views), never touching fxhub_paper/fxhub_journal/alexG*.
 // ══════════════════════════════════════════════════════════════════════════
 let currentChartCandles=[];
-let chartOverlayToggles={overlay:true,zone:true,markers:true,shading:true,maeMfe:true,drawings:true};
+let chartOverlayToggles={overlay:true,zone:true,markers:true,shading:true,maeMfe:true,drawings:true,tjrZones:true};
 let chartSavedViews={};
 let chartTradePriceLines=[]; // [{series,line}] -- entry/stop/target/zone/MAE/MFE reference lines
 let chartTradeBaselineSeries=[]; // risk/reward shading series
+// v12.3.0: TJR Phase 1 chart zone overlay -- tracked separately from chartTradePriceLines
+// (never mixed) since these represent computed session structure, not a specific journal
+// trade. tjrZoneState is a pure in-memory cache of the last buildTjrSessionZones() result
+// for the currently loaded pair -- never persisted (no localStorage key), read by both the
+// chart legend and the Strategy Center / Developer Mode diagnostics renders.
+let tjrChartZoneLines=[]; // [{series,line}]
+let tjrZoneState=null; // {instrument, result, fetchedAt, error} or null
 let focusedTradeRecord=null; // the normalized journal record currently overlaid, or null
 let chartViewSaveTimer=null;
 let chartContainerListenersAttached=false; // guards against duplicate dblclick handlers across repeated loadChart() calls
@@ -7737,8 +7758,11 @@ function destroyChart(){
   candleSeries=null;ema20Series=null;ema50Series=null;ema200Series=null;
   supportZoneLines=[];resistanceZoneLines=[];
   chartTradePriceLines=[];chartTradeBaselineSeries=[];focusedTradeRecord=null;
+  tjrChartZoneLines=[]; // v12.3.0: the whole chart (and every series' price lines) was just removed above
   const legend=document.getElementById('chartTradeOverlayLegend');
   if(legend){legend.style.display='none';legend.innerHTML='';}
+  const tjrLegend=document.getElementById('tjrZoneOverlayLegend');
+  if(tjrLegend){tjrLegend.style.display='none';tjrLegend.innerHTML='';}
   // v6.1: clear the rendered manual-drawing primitives (canvas pixels only -- the
   // underlying chartDrawings data for this pair/timeframe is untouched) and any
   // in-progress tool state, since the pair/timeframe is about to change.
@@ -8029,6 +8053,80 @@ function drawTradeOverlay(rec){
   }
   focusedTradeRecord=rec;
   renderTradeOverlayLegend(rec);
+}
+
+// ── v12.3.0: TJR Phase 1 previous-session zone overlay -- draws ONLY already-computed
+// zone objects from buildTjrSessionZones(); never calculates a zone itself (that logic
+// lives entirely in the pure engine functions above the STRATEGY_REGISTRY). Completely
+// separate from the trade overlay above -- its own price-line array, own legend element,
+// own toggle (chartOverlayToggles.tjrZones) -- so neither can ever clear or overwrite
+// the other. ──
+function clearTjrZoneOverlay(){
+  tjrChartZoneLines.forEach(pl=>{try{pl.series.removePriceLine(pl.line);}catch(e){}});
+  tjrChartZoneLines=[];
+  const legend=document.getElementById('tjrZoneOverlayLegend');
+  if(legend){legend.style.display='none';legend.innerHTML='';}
+}
+function renderTjrZoneLegendZoneRow(zone,dec){
+  if(!zone||zone.status==='INVALID_SOURCE') return `<div>${zone?escapeHtml(zone.zoneType):'—'}: no valid source data</div>`;
+  const bounds=zone.lower!=null&&zone.upper!=null?`${zone.lower.toFixed(dec)}–${zone.upper.toFixed(dec)}`:'—';
+  const flag=zone.status==='DATA_INCOMPLETE'?' <span style="color:var(--gold)">(incomplete)</span>':'';
+  return `<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">${escapeHtml(zone.zoneType)} zone</span><span>${bounds}${flag}</span></div>`;
+}
+function renderTjrZoneLegend(result){
+  const legend=document.getElementById('tjrZoneOverlayLegend');
+  if(!legend) return;
+  const dec=tjrPricePrecision(result.instrument);
+  legend.innerHTML=`<div style="font-weight:700;margin-bottom:4px">TJR — Previous Session</div>`+
+    `<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Source session</span><span>${escapeHtml(result.sourceSession.sessionId)}</span></div>`+
+    `<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Source date</span><span>${escapeHtml(result.sourceSession.tradingDate)}</span></div>`+
+    renderTjrZoneLegendZoneRow(result.highZone,dec)+renderTjrZoneLegendZoneRow(result.lowZone,dec)+
+    `<button style="margin-top:6px;font-size:10px;padding:2px 6px" onclick="chartOverlayToggles.tjrZones=false;clearTjrZoneOverlay();">Hide</button>`;
+  legend.style.display='block';
+}
+function drawTjrZoneOverlay(result){
+  clearTjrZoneOverlay();
+  if(!lwChart||!candleSeries||!chartOverlayToggles.tjrZones||!result) return;
+  const dec=tjrPricePrecision(result.instrument);
+  [result.highZone,result.lowZone].forEach(zone=>{
+    if(!zone||zone.upper==null||zone.lower==null) return; // INVALID_SOURCE -- nothing to draw
+    const color=zone.zoneType==='HIGH'?'rgba(38,166,154,.85)':'rgba(239,83,80,.85)';
+    tjrChartZoneLines.push({series:candleSeries,line:candleSeries.createPriceLine(
+      {price:zone.upper,color,lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,
+       title:`TJR ${zone.zoneType} upper (${zone.sourceSessionId} ${zone.sourceTradingDate})`})});
+    tjrChartZoneLines.push({series:candleSeries,line:candleSeries.createPriceLine(
+      {price:zone.lower,color,lineWidth:1,lineStyle:LightweightCharts.LineStyle.Dashed,axisLabelVisible:true,
+       title:`TJR ${zone.zoneType} lower`})});
+  });
+  renderTjrZoneLegend(result);
+}
+// Async fetch wrapper -- the ONLY non-pure/non-synchronous TJR function. Fetches M30
+// candles through the existing, unmodified fetchCandles() (same OANDA path every other
+// chart data request uses) then hands them to the pure buildTjrSessionZones() pipeline.
+// Always wrapped so a network failure can never throw into loadChart() or leave a stale
+// overlay on screen -- it just clears the overlay and records the error for diagnostics.
+// 200 M30 candles comfortably covers the longest possible previous session (New York,
+// 22 candles) plus several days of buffer for weekend/holiday gaps.
+const TJR_ZONE_CANDLE_COUNT=200;
+async function loadAndRenderTjrZones(oPair){
+  try{
+    const candles=await fetchCandles(oPair,TJR_CANDLE_GRANULARITY,TJR_ZONE_CANDLE_COUNT);
+    if(oPair!==activePair) return; // pair changed while this was in flight
+    if(!candles||!candles.length){
+      tjrZoneState={instrument:oPair,result:null,fetchedAt:Date.now(),error:'No M30 candle data returned'};
+      clearTjrZoneOverlay();
+    } else {
+      const result=buildTjrSessionZones(oPair,candles,Date.now());
+      tjrZoneState={instrument:oPair,result,fetchedAt:Date.now(),error:null};
+      drawTjrZoneOverlay(result);
+    }
+  }catch(e){
+    if(oPair!==activePair) return;
+    tjrZoneState={instrument:oPair,result:null,fetchedAt:Date.now(),error:(e&&e.message)?e.message:String(e)};
+    clearTjrZoneOverlay();
+  }
+  renderTjrDevDiagnostics();
+  renderTjrStrategyCenterPanelIfOpen();
 }
 
 // ── Focus Trade / "View on Chart" ──
@@ -8817,6 +8915,12 @@ async function loadChart(){
   }));
   candleSeries.setData(lwCandles);
 
+  // v12.3.0: TJR Phase 1 previous-session zones -- fire-and-forget, deliberately NOT
+  // awaited. A slow or failing M30 fetch must never delay or break the primary chart
+  // load (the exact flat-line/outlier-chart failure mode this file has hit before);
+  // its own try/catch inside loadAndRenderTjrZones() clears any stale overlay on error.
+  loadAndRenderTjrZones(activePair);
+
   const setOHLC=(o,h,l,c)=>{
     document.getElementById('chartOHLC').innerHTML=
       `O <span style="color:var(--text1)">${o.toFixed(dec)}</span>  `+
@@ -8882,7 +8986,7 @@ async function loadChart(){
   // (applyFitVisible() itself calls saveChartViewDebounced()) -- so the user never has to find
   // or click Reset Saved View themselves.
   const savedView=getSavedChartView();
-  if(savedView&&savedView.overlays) chartOverlayToggles=Object.assign({overlay:true,zone:true,markers:true,shading:true,maeMfe:true,drawings:true},savedView.overlays);
+  if(savedView&&savedView.overlays) chartOverlayToggles=Object.assign({overlay:true,zone:true,markers:true,shading:true,maeMfe:true,drawings:true,tjrZones:true},savedView.overlays);
   if(savedView&&savedView.visibleLogicalRange&&isSavedChartViewValid(savedView,currentChartCandles.length)){
     lwChart.timeScale().setVisibleLogicalRange(savedView.visibleLogicalRange);
     if(savedView.barSpacing) lwChart.timeScale().applyOptions({barSpacing:savedView.barSpacing});
@@ -11068,9 +11172,362 @@ const JVM_SERVICES={
   health:()=>'ready'   // reserved per the approved SDK; not dynamic yet -- see limitations
 };
 
+// ══════════════════════════════════════════════════════════════════════════
+// ── v12.3.0: TJR_SLR STRATEGY -- PHASE 1: SESSION AND ZONE ENGINE ──
+// Registers TJR_SLR ("TJR Session Level Reaction") as a new, independent entry in the
+// same STRATEGY_REGISTRY Manifest/Services framework ALEX and JVM already use (ADR-005/
+// ADR-006). Phase 1 scope ONLY: deterministic, timezone-aware previous-session (Asian/
+// London/New York) high/low zone construction. There is NO entry model, confirmation
+// logic, candidate detection, paper trading, or live execution yet -- see ADR-007 (the
+// TJR rule-definition gate), which remains at a NOT READY verdict. Every function below
+// is a pure, synchronous computation over an explicit candle array and evaluation
+// timestamp -- no network call, no localStorage read/write, no mutation of any existing
+// strategy's state. This mirrors the project's own established constraint that the JXA
+// offline test harness cannot resolve real await/Promise settlement, so every fixture-
+// testable unit here must be callable synchronously with synthetic input.
+// ══════════════════════════════════════════════════════════════════════════
+const TJR_STRATEGY_ID='tjr_slr';
+const TJR_STRATEGY_VERSION='1.0.0';
+const TJR_SESSION_TIMEZONE='Europe/London';
+const TJR_CANDLE_GRANULARITY='M30';
+const TJR_CANDLE_INTERVAL_MS=30*60*1000;
+// Tie tolerance for "true high/low" comparison, expressed in instrument ticks (see
+// tjrTickSize()). Kept as its own named constant so the tolerance is independently
+// configurable without touching findTjrSessionExtremes()'s own logic.
+const TJR_TIE_TOLERANCE_TICKS=1;
+// Session ids/local windows exactly as specified: start inclusive, end exclusive, all
+// resolved against Europe/London LOCAL wall-clock time (never a hardcoded permanent UTC
+// offset) so GMT/BST both resolve correctly for the applicable calendar date.
+const TJR_SESSION_CONFIG={
+  ASIAN:{id:'ASIAN',startLocal:{h:0,m:0},endLocal:{h:8,m:0},endNextDay:false},
+  LONDON:{id:'LONDON',startLocal:{h:8,m:0},endLocal:{h:13,m:0},endNextDay:false},
+  NEW_YORK:{id:'NEW_YORK',startLocal:{h:13,m:0},endLocal:{h:0,m:0},endNextDay:true}
+};
+// Cyclical predecessor map: Asian's previous completed session is the PRIOR calendar
+// date's New York session (handled by date-shifting the trading date, not the session id).
+const TJR_SESSION_PREV={ASIAN:'NEW_YORK',LONDON:'ASIAN',NEW_YORK:'LONDON'};
+
+// ── Timezone primitives (native Intl only -- no third-party timezone library added;
+// Intl.DateTimeFormat is already implicitly relied on elsewhere in this file, e.g.
+// fmtJournalDate()'s toLocaleString(), so this introduces no new dependency). ──
+// Given a real instant (ms since epoch), returns Europe/London's UTC offset IN MINUTES
+// in effect at that instant (0 for GMT, 60 for BST), correctly reflecting whichever side
+// of a DST transition that instant actually falls on.
+function tjrGetLondonOffsetMinutesAt(ms){
+  const dtf=new Intl.DateTimeFormat('en-US',{timeZone:TJR_SESSION_TIMEZONE,hour12:false,
+    year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const parts=dtf.formatToParts(new Date(ms));
+  const map={};
+  parts.forEach(p=>{if(p.type!=='literal') map[p.type]=p.value;});
+  let hh=parseInt(map.hour,10); if(hh===24) hh=0; // some engines format midnight as "24" with hour12:false
+  const asUTC=Date.UTC(parseInt(map.year,10),parseInt(map.month,10)-1,parseInt(map.day,10),hh,parseInt(map.minute,10),parseInt(map.second,10));
+  return Math.round((asUTC-ms)/60000);
+}
+// Converts a Europe/London LOCAL wall-clock date+time into the correct UTC instant (ms),
+// resolving the correct GMT/BST offset for that specific date -- never a fixed offset.
+// Two-pass correction: guess with offset 0, find the real offset at that guess, correct,
+// then re-check once more in case the correction itself crossed a DST boundary.
+function tjrLondonLocalToUtcMs(y,mo,d,h,mi){
+  const guessUtc=Date.UTC(y,mo-1,d,h,mi,0);
+  const offset1=tjrGetLondonOffsetMinutesAt(guessUtc);
+  let correctedUtc=guessUtc-offset1*60000;
+  const offset2=tjrGetLondonOffsetMinutesAt(correctedUtc);
+  if(offset2!==offset1) correctedUtc=guessUtc-offset2*60000;
+  return correctedUtc;
+}
+function tjrUtcMsToLondonLocalParts(ms){
+  const dtf=new Intl.DateTimeFormat('en-US',{timeZone:TJR_SESSION_TIMEZONE,hour12:false,
+    year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const parts=dtf.formatToParts(new Date(ms));
+  const map={};
+  parts.forEach(p=>{if(p.type!=='literal') map[p.type]=p.value;});
+  let hh=parseInt(map.hour,10); if(hh===24) hh=0;
+  return {year:parseInt(map.year,10),month:parseInt(map.month,10),day:parseInt(map.day,10),hour:hh,minute:parseInt(map.minute,10)};
+}
+function tjrDateStrFromParts(p){return `${p.year}-${String(p.month).padStart(2,'0')}-${String(p.day).padStart(2,'0')}`;}
+// Pure calendar-date arithmetic (never touches an actual instant/offset) -- treats the
+// 'YYYY-MM-DD' string purely as a label and shifts it by whole days using a UTC-anchored
+// Date so no local-timezone-of-the-machine ambiguity can leak in.
+function tjrAddDaysToDateStr(dateStr,days){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(Date.UTC(y,m-1,d));
+  dt.setUTCDate(dt.getUTCDate()+days);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}`;
+}
+
+// ── Core function 1/9: resolveTjrSessionBoundaries ──
+// Given a session id and the Europe/London LOCAL calendar date the session STARTS on,
+// returns that session's exact UTC start/end instants for that specific occurrence.
+function resolveTjrSessionBoundaries(sessionId,tradingDateStr){
+  const cfg=TJR_SESSION_CONFIG[sessionId];
+  if(!cfg) throw new Error('Unknown TJR session id: '+sessionId);
+  const [y,m,d]=tradingDateStr.split('-').map(Number);
+  const utcStart=tjrLondonLocalToUtcMs(y,m,d,cfg.startLocal.h,cfg.startLocal.m);
+  const endDateStr=cfg.endNextDay?tjrAddDaysToDateStr(tradingDateStr,1):tradingDateStr;
+  const [ey,em,ed]=endDateStr.split('-').map(Number);
+  const utcEnd=tjrLondonLocalToUtcMs(ey,em,ed,cfg.endLocal.h,cfg.endLocal.m);
+  return {
+    sessionId,tradingDate:tradingDateStr,timezone:TJR_SESSION_TIMEZONE,
+    localStart:{h:cfg.startLocal.h,m:cfg.startLocal.m},localEnd:{h:cfg.endLocal.h,m:cfg.endLocal.m},
+    utcStart,utcEnd
+  };
+}
+// ── Core function 2/9: getTjrSessionForTimestamp ──
+// Resolves which of ASIAN/LONDON/NEW_YORK session-window a given real instant falls
+// inside, per Europe/London local time, and returns its full boundary object.
+function getTjrSessionForTimestamp(ms){
+  const parts=tjrUtcMsToLondonLocalParts(ms);
+  const minutesOfDay=parts.hour*60+parts.minute;
+  const dateStr=tjrDateStrFromParts(parts);
+  let sessionId;
+  if(minutesOfDay<480) sessionId='ASIAN';
+  else if(minutesOfDay<780) sessionId='LONDON';
+  else sessionId='NEW_YORK';
+  return resolveTjrSessionBoundaries(sessionId,dateStr);
+}
+// ── Core function 3/9: getPreviousCompletedTjrSession ──
+// The immediately preceding COMPLETED session relative to an evaluation instant --
+// during London, use the completed Asian session (same date); during New York, use the
+// completed London session (same date); during Asian, use the PRIOR trading date's
+// completed New York session.
+function getPreviousCompletedTjrSession(ms){
+  const current=getTjrSessionForTimestamp(ms);
+  const prevId=TJR_SESSION_PREV[current.sessionId];
+  const prevDateStr=(current.sessionId==='ASIAN')?tjrAddDaysToDateStr(current.tradingDate,-1):current.tradingDate;
+  return resolveTjrSessionBoundaries(prevId,prevDateStr);
+}
+// ── Core function 4/9: isTjrSessionComplete ──
+function isTjrSessionComplete(sessionBoundaries,ms){
+  return ms>=sessionBoundaries.utcEnd;
+}
+
+// ── OHLC validity guard -- rejects, never repairs. ──
+function tjrIsValidOhlcCandle(c){
+  if(!c||typeof c.o!=='number'||typeof c.h!=='number'||typeof c.l!=='number'||typeof c.c!=='number') return false;
+  if(!isFinite(c.o)||!isFinite(c.h)||!isFinite(c.l)||!isFinite(c.c)) return false;
+  if(c.h<c.l) return false;
+  if(c.h<c.o||c.h<c.c) return false;
+  if(c.l>c.o||c.l>c.c) return false;
+  return true;
+}
+// ── Core function 5/9: getCandlesForResolvedSession ──
+// Input candles use {t:Date|ms, o,h,l,c} (the same shape fetchCandles()/fetchCandlesRange()
+// already return). Selects only completed M30 candles whose time falls in
+// [utcStart, utcEnd) AND strictly before evaluationTimestampMs (no lookahead, even if a
+// caller mistakenly passes a candle dated after "now"). Malformed OHLC candles and
+// duplicate-timestamp candles are excluded from the returned set and reported separately
+// -- never silently merged, averaged, or otherwise "repaired".
+function getCandlesForResolvedSession(candles,sessionBoundaries,evaluationTimestampMs){
+  const byTime={};
+  const order=[];
+  const invalidCandles=[];
+  const duplicates=[];
+  (candles||[]).forEach(raw=>{
+    if(!raw||raw.t==null) return;
+    const t=(raw.t instanceof Date)?raw.t.getTime():raw.t;
+    if(t>=evaluationTimestampMs) return;
+    if(t<sessionBoundaries.utcStart||t>=sessionBoundaries.utcEnd) return;
+    if(!tjrIsValidOhlcCandle(raw)){ invalidCandles.push({time:t,raw:{o:raw.o,h:raw.h,l:raw.l,c:raw.c}}); return; }
+    if(byTime[t]!=null){ duplicates.push(t); return; } // first-seen wins; extra copies reported, not merged
+    byTime[t]={time:t,o:raw.o,h:raw.h,l:raw.l,c:raw.c};
+    order.push(t);
+  });
+  order.sort((a,b)=>a-b);
+  const sessionCandles=order.map(t=>byTime[t]);
+  const durationMs=sessionBoundaries.utcEnd-sessionBoundaries.utcStart;
+  const expectedCandleCount=Math.round(durationMs/TJR_CANDLE_INTERVAL_MS);
+  const missingIntervals=[];
+  for(let t=sessionBoundaries.utcStart;t<sessionBoundaries.utcEnd;t+=TJR_CANDLE_INTERVAL_MS){
+    if(byTime[t]==null) missingIntervals.push(t);
+  }
+  const datasetComplete=sessionCandles.length===expectedCandleCount&&missingIntervals.length===0&&
+    invalidCandles.length===0&&duplicates.length===0;
+  return {
+    candles:sessionCandles,
+    expectedCandleCount,actualCandleCount:sessionCandles.length,
+    missingIntervals,duplicates:[...new Set(duplicates)],invalidCandles,
+    datasetComplete
+  };
+}
+
+// ── Instrument precision helpers (same convention already used inline throughout the
+// file, e.g. loadChart()'s `activePair.includes('JPY')?3:5` -- reused here as named
+// functions rather than restating the ternary, and pipSize() below is the existing,
+// unmodified PROTECTED function, called by reference, never reimplemented). ──
+function tjrPricePrecision(instrument){ return (instrument||'').includes('JPY')?3:5; }
+function tjrTickSize(instrument){ return (instrument||'').includes('JPY')?0.001:0.00001; }
+function tjrRoundToPrecision(price,instrument){
+  const d=tjrPricePrecision(instrument);
+  return Math.round(price*Math.pow(10,d))/Math.pow(10,d);
+}
+// ── Isolated, swappable tie-break rule (kept as its own named function so a future
+// release can change the rule -- e.g. earliest candle, narrowest body -- without
+// touching findTjrSessionExtremes() itself). Phase 1 rule: the LATEST qualifying
+// candle among the tied group is the canonical source.
+function tjrSelectCanonicalTiedCandle(tiedCandidates){
+  return tiedCandidates.reduce((latest,c)=>c.time>latest.time?c:latest,tiedCandidates[0]);
+}
+// ── Core function 6/9: findTjrSessionExtremes ──
+function findTjrSessionExtremes(sessionCandles,instrument){
+  if(!sessionCandles||!sessionCandles.length){
+    return {high:null,low:null,highSource:null,lowSource:null,
+      tiedHighCandidates:[],tiedLowCandidates:[],
+      highSelectionReason:'no_candles',lowSelectionReason:'no_candles'};
+  }
+  const tol=tjrTickSize(instrument)*TJR_TIE_TOLERANCE_TICKS;
+  const trueHigh=Math.max(...sessionCandles.map(c=>c.h));
+  const trueLow=Math.min(...sessionCandles.map(c=>c.l));
+  const tiedHigh=sessionCandles.filter(c=>Math.abs(c.h-trueHigh)<=tol);
+  const tiedLow=sessionCandles.filter(c=>Math.abs(c.l-trueLow)<=tol);
+  return {
+    high:trueHigh,low:trueLow,
+    highSource:tjrSelectCanonicalTiedCandle(tiedHigh),
+    lowSource:tjrSelectCanonicalTiedCandle(tiedLow),
+    tiedHighCandidates:tiedHigh,tiedLowCandidates:tiedLow,
+    highSelectionReason:tiedHigh.length>1?'tie_latest_candle_selected':'unique_extreme',
+    lowSelectionReason:tiedLow.length>1?'tie_latest_candle_selected':'unique_extreme'
+  };
+}
+
+// Deterministic zone id -- identical inputs always produce the identical string, and a
+// caller can recompute it independently without holding a reference to the zone object.
+function tjrZoneId(instrument,sessionId,tradingDate,zoneType){
+  return `TJR_SLR:${instrument}:${sessionId}:${tradingDate}:${zoneType}`;
+}
+// Shared internal builder -- buildTjrHighZone/buildTjrLowZone each compute their own
+// `bounds` (or null, if no valid source candle exists) and delegate here so both zone
+// types share one, single source of truth for the object's shape/immutability/status
+// logic. Object.freeze() enforces "do not alter zone bounds after creation" at runtime,
+// not just by convention.
+function tjrBuildZoneObject(zoneType,sessionBoundaries,sourceCandle,instrument,evaluationTimestampMs,sessionDiagnostics,bounds,tiedTimes){
+  const zoneId=tjrZoneId(instrument,sessionBoundaries.sessionId,sessionBoundaries.tradingDate,zoneType);
+  const base={
+    zoneId,strategyId:TJR_STRATEGY_ID,strategyVersion:TJR_STRATEGY_VERSION,instrument,
+    sourceSessionId:sessionBoundaries.sessionId,sourceTradingDate:sessionBoundaries.tradingDate,
+    sourceSessionStart:sessionBoundaries.utcStart,sourceSessionEnd:sessionBoundaries.utcEnd,
+    zoneType,
+    lower:null,upper:null,widthPrice:null,widthPips:null,
+    sourceCandleTime:null,sourceCandleIndex:null,
+    sourceCandleOpen:null,sourceCandleHigh:null,sourceCandleLow:null,sourceCandleClose:null,
+    tiedSourceCandleTimes:tiedTimes||[],
+    createdAtEvaluationTime:evaluationTimestampMs,
+    status:'INVALID_SOURCE',
+    interactionCount:0,firstInteractionTime:null,lastInteractionTime:null,
+    invalidationTime:null,invalidationReason:null,
+    immutableSource:true
+  };
+  if(!sourceCandle||!bounds){
+    Object.freeze(base.tiedSourceCandleTimes);
+    return Object.freeze(base);
+  }
+  const upper=tjrRoundToPrecision(bounds.upper,instrument);
+  const lower=tjrRoundToPrecision(bounds.lower,instrument);
+  const widthPrice=tjrRoundToPrecision(upper-lower,instrument);
+  const pip=pipSize(instrument); // frozen, unmodified PROTECTED function
+  base.lower=lower;base.upper=upper;base.widthPrice=widthPrice;
+  base.widthPips=pip?Number((widthPrice/pip).toFixed(2)):null;
+  base.sourceCandleTime=sourceCandle.time;
+  base.sourceCandleIndex=sourceCandle.index!=null?sourceCandle.index:null;
+  base.sourceCandleOpen=sourceCandle.o;base.sourceCandleHigh=sourceCandle.h;
+  base.sourceCandleLow=sourceCandle.l;base.sourceCandleClose=sourceCandle.c;
+  base.status=(sessionDiagnostics&&sessionDiagnostics.datasetComplete===false)?'DATA_INCOMPLETE':'ACTIVE';
+  Object.freeze(base.tiedSourceCandleTimes);
+  return Object.freeze(base);
+}
+// ── Core function 7/9: buildTjrHighZone ──
+// High zone: upper = source candle high; lower = max(source candle open, source candle close).
+function buildTjrHighZone(sessionBoundaries,sourceCandle,instrument,evaluationTimestampMs,sessionDiagnostics){
+  const bounds=sourceCandle?{upper:sourceCandle.h,lower:Math.max(sourceCandle.o,sourceCandle.c)}:null;
+  const tiedTimes=(sessionDiagnostics&&sessionDiagnostics.tiedHighCandidates)?sessionDiagnostics.tiedHighCandidates.map(c=>c.time):[];
+  return tjrBuildZoneObject('HIGH',sessionBoundaries,sourceCandle,instrument,evaluationTimestampMs,sessionDiagnostics,bounds,tiedTimes);
+}
+// ── Core function 8/9: buildTjrLowZone ──
+// Low zone: lower = source candle low; upper = min(source candle open, source candle close).
+function buildTjrLowZone(sessionBoundaries,sourceCandle,instrument,evaluationTimestampMs,sessionDiagnostics){
+  const bounds=sourceCandle?{upper:Math.min(sourceCandle.o,sourceCandle.c),lower:sourceCandle.l}:null;
+  const tiedTimes=(sessionDiagnostics&&sessionDiagnostics.tiedLowCandidates)?sessionDiagnostics.tiedLowCandidates.map(c=>c.time):[];
+  return tjrBuildZoneObject('LOW',sessionBoundaries,sourceCandle,instrument,evaluationTimestampMs,sessionDiagnostics,bounds,tiedTimes);
+}
+// ── Core function 9/9: buildTjrSessionZones ──
+// Full Phase 1 orchestration, still 100% pure/synchronous: given an instrument, a raw
+// candle array (M30, any span -- typically the last ~200 candles), and an evaluation
+// timestamp, resolves the previous completed session, aggregates its candles, finds its
+// extremes, and builds both zone objects. Calling this repeatedly with the SAME inputs
+// always returns identical zoneIds and identical (frozen) zone definitions -- no hidden
+// clock read, no Math.random, no state.
+function buildTjrSessionZones(instrument,candles,evaluationTimestampMs){
+  const evalMs=evaluationTimestampMs!=null?evaluationTimestampMs:Date.now();
+  const currentSession=getTjrSessionForTimestamp(evalMs);
+  const sourceSession=getPreviousCompletedTjrSession(evalMs);
+  const sessionComplete=isTjrSessionComplete(sourceSession,evalMs);
+  const sessionData=getCandlesForResolvedSession(candles,sourceSession,evalMs);
+  let extremes=null,highZone,lowZone;
+  if(!sessionComplete||!sessionData.candles.length){
+    highZone=buildTjrHighZone(sourceSession,null,instrument,evalMs,sessionData);
+    lowZone=buildTjrLowZone(sourceSession,null,instrument,evalMs,sessionData);
+  } else {
+    extremes=findTjrSessionExtremes(sessionData.candles,instrument);
+    highZone=buildTjrHighZone(sourceSession,extremes.highSource,instrument,evalMs,{...sessionData,tiedHighCandidates:extremes.tiedHighCandidates});
+    lowZone=buildTjrLowZone(sourceSession,extremes.lowSource,instrument,evalMs,{...sessionData,tiedLowCandidates:extremes.tiedLowCandidates});
+  }
+  return {instrument,evaluationTimestamp:evalMs,currentSession,sourceSession,sessionData,extremes,highZone,lowZone};
+}
+
+// ── TJR_SLR Manifest/Services -- same shape as JVM_MANIFEST/ALEX_MANIFEST, no parallel
+// registry fields introduced. Every capability below is stated honestly for Phase 1:
+// scanning/paperTrading/automation ("live execution" has no separate schema field --
+// MOGO has no real-broker-execution concept anywhere per ADR-004, so "Live execution
+// enabled: false" is covered by automation:false) are all false; replay:true reflects
+// the requested forward-declared intent ("Replay supported: true") -- no replay engine
+// is actually wired yet, exactly like JVM/ALEX's own disclosed-gap convention for
+// not-yet-wired capabilities. diagnostics:false because no isolationCheck Service is
+// wired this phase (the Developer Mode card below is a dedicated render, not the
+// Services.isolationCheck() pattern ALEX uses).
+const TJR_MANIFEST={
+  id:TJR_STRATEGY_ID,
+  family:'tjr_slr',
+  version:TJR_STRATEGY_VERSION,
+  label:'TJR',
+  fullName:'TJR Session Level Reaction',
+  description:'Phase 1 only: deterministic, timezone-aware previous-session (Asian/London/New York) high and low zone construction. No entry, confirmation, candidate, or execution logic exists yet -- see ADR-007.',
+  author:'MOGO',
+  ownership:'internal',
+  status:'development',
+  trustLevel:'unverified',
+  badgeColor:'var(--gold)',
+  capabilities:{
+    scanning:false,paperTrading:false,automation:false,journal:false,
+    statistics:false,alerts:false,replay:true,backtesting:false,
+    aiReview:false,aiCoaching:false,reports:false,academyContent:false,
+    diagnostics:false,settings:false,
+    strategyCenterContent:true
+  },
+  dependencies:['oandaPricing','candleData'],
+  dna:{
+    style:'Previous-session (Asian/London/New York) liquidity zone reaction -- Phase 1 builds zones only, no entry model defined yet',
+    difficulty:'Not yet applicable',
+    marketType:'Forex (instrument scope not yet finalized -- see ADR-007)',
+    preferredSessions:['Asian','London','New York'],
+    idealConditions:[],avoidConditions:[],strengths:[],weaknesses:[]
+  },
+  panelId:null,
+  devToolsCardId:'devToolsTjrCard',
+  inspectorCardId:null,
+  academySchoolId:null,
+  release:{registeredInVersion:'12.3.0'}
+};
+const TJR_SERVICES={
+  getAccount:()=>null,
+  getJournal:()=>[],
+  normalize:(raw)=>raw,
+  onOpen:()=>{},
+  health:()=>'development'
+};
+
 const STRATEGY_REGISTRY=[
   {manifest:JVM_MANIFEST,services:JVM_SERVICES},
-  {manifest:ALEX_MANIFEST,services:ALEX_SERVICES}
+  {manifest:ALEX_MANIFEST,services:ALEX_SERVICES},
+  {manifest:TJR_MANIFEST,services:TJR_SERVICES}
 ];
 function findStrategyEntry(id){
   return STRATEGY_REGISTRY.find(e=>e.manifest.id===id)||null;
@@ -11440,6 +11897,76 @@ function renderScVersionHistory(){
 }
 // v12.2.0 (ADR-006): generic "Coming Soon" card for any registered strategy with no
 // strategyCenterContent capability -- replaces the ALEX-specific renderStrategyCenterAlexComingSoon().
+// ── v12.3.0: TJR Phase 1 Strategy Center content + Developer Mode diagnostics. Both
+// render straight from tjrZoneState (the pure in-memory cache populated by
+// loadAndRenderTjrZones() when a chart pair is loaded) -- neither computes anything
+// itself, and neither shows win rate/profitability/trade statistics (none exist yet;
+// Phase 1 has no entries, candidates, or paper trades). ──
+function tjrFormatLocalTime(h,m){ return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+function tjrFormatSessionBoundaries(sb){
+  if(!sb) return '—';
+  return `${sb.sessionId} ${sb.tradingDate} — ${tjrFormatLocalTime(sb.localStart.h,sb.localStart.m)}–${tjrFormatLocalTime(sb.localEnd.h,sb.localEnd.m)} ${sb.timezone} local `+
+    `(${new Date(sb.utcStart).toISOString()} – ${new Date(sb.utcEnd).toISOString()} UTC)`;
+}
+function tjrFormatZoneBounds(zone){
+  if(!zone||zone.lower==null||zone.upper==null) return 'no valid source data ('+((zone&&zone.status)||'—')+')';
+  return `${zone.lower.toFixed(tjrPricePrecision(zone.instrument))} – ${zone.upper.toFixed(tjrPricePrecision(zone.instrument))} (status: ${zone.status}, source candle: ${zone.sourceCandleTime!=null?new Date(zone.sourceCandleTime).toISOString():'—'})`;
+}
+function renderTjrStrategyCenterPanel(){
+  const state=tjrZoneState;
+  const disabledRow=`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Execution</span><span>Scanning, paper trading, and live execution are all disabled (Phase 1: session/zone engine only)</span></div>`;
+  const statusRow=`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Development status</span><span>${escapeHtml(TJR_MANIFEST.status)}</span></div>`;
+  if(!state){
+    return `<div class="card"><div class="section-label">TJR — Session Level Reaction (Phase 1)</div>${statusRow}${disabledRow}`+
+      `<div style="margin-top:8px;color:var(--text2)">No session/zone data yet — open a chart pair (Scanner tab) to compute TJR's previous-session zones for that instrument.</div></div>`;
+  }
+  if(state.error){
+    return `<div class="card"><div class="section-label">TJR — Session Level Reaction (Phase 1)</div>${statusRow}${disabledRow}`+
+      `<div style="margin-top:8px;color:var(--red)">Could not compute zones for ${escapeHtml(state.instrument)}: ${escapeHtml(state.error)}</div></div>`;
+  }
+  const r=state.result;
+  return `<div class="card"><div class="section-label">TJR — Session Level Reaction (Phase 1)</div>${statusRow}${disabledRow}
+    <div style="margin-top:8px;display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Instrument</span><span>${escapeHtml(r.instrument)}</span></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Current session</span><span>${escapeHtml(tjrFormatSessionBoundaries(r.currentSession))}</span></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Previous completed session</span><span>${escapeHtml(tjrFormatSessionBoundaries(r.sourceSession))}</span></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">High zone</span><span>${escapeHtml(tjrFormatZoneBounds(r.highZone))}</span></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Low zone</span><span>${escapeHtml(tjrFormatZoneBounds(r.lowZone))}</span></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Dataset complete</span><span>${r.sessionData?r.sessionData.datasetComplete:'—'} (${r.sessionData?r.sessionData.actualCandleCount:'—'}/${r.sessionData?r.sessionData.expectedCandleCount:'—'} M30 candles)</span></div>
+    <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--text2)">Calculated at</span><span>${escapeHtml(new Date(state.fetchedAt).toISOString())}</span></div>
+  </div>`;
+}
+// Called after every async zone recompute (loadAndRenderTjrZones) -- cheap innerHTML
+// refresh of the TJR Strategy Center tab's content div if it currently exists in the
+// DOM (renderRules() has run at least once via initAll()), regardless of which tab is
+// presently visible; matches the existing pattern of other panels re-rendering into an
+// always-present container rather than checking visibility first.
+function renderTjrStrategyCenterPanelIfOpen(){
+  const el=document.getElementById('scContent_'+TJR_STRATEGY_ID);
+  if(el) el.innerHTML=renderTjrStrategyCenterPanel();
+}
+function renderTjrDevDiagnostics(){
+  const el=document.getElementById('devToolsTjrContent');
+  if(!el) return;
+  const state=tjrZoneState;
+  const configRows=`<div>Timezone: ${escapeHtml(TJR_SESSION_TIMEZONE)}</div><div>Granularity: ${escapeHtml(TJR_CANDLE_GRANULARITY)}</div><div>Tie tolerance: ${TJR_TIE_TOLERANCE_TICKS} tick(s)</div>`;
+  if(!state){ el.innerHTML=`<div>${configRows}</div><div style="margin-top:6px">No data yet — open a chart pair to compute TJR session zones.</div>`; return; }
+  if(state.error){ el.innerHTML=`<div>${configRows}</div><div style="margin-top:6px;color:var(--red)">Error for ${escapeHtml(state.instrument)}: ${escapeHtml(state.error)}</div>`; return; }
+  const r=state.result;
+  const sd=r.sessionData;
+  const warnings=[];
+  if(sd&&sd.invalidCandles&&sd.invalidCandles.length) warnings.push(sd.invalidCandles.length+' invalid OHLC candle(s) excluded');
+  if(sd&&sd.duplicates&&sd.duplicates.length) warnings.push(sd.duplicates.length+' duplicate timestamp(s) excluded');
+  if(sd&&sd.missingIntervals&&sd.missingIntervals.length) warnings.push(sd.missingIntervals.length+' missing M30 interval(s)');
+  el.innerHTML=`<div>${configRows}</div>`+
+    `<div style="margin-top:6px">Instrument: ${escapeHtml(r.instrument)}</div>`+
+    `<div>Current session: ${escapeHtml(tjrFormatSessionBoundaries(r.currentSession))}</div>`+
+    `<div>Previous session: ${escapeHtml(tjrFormatSessionBoundaries(r.sourceSession))}</div>`+
+    `<div>Source candles: expected ${sd?sd.expectedCandleCount:'—'}, actual ${sd?sd.actualCandleCount:'—'}, complete ${sd?sd.datasetComplete:'—'}</div>`+
+    `<div>High zone: ${escapeHtml(tjrFormatZoneBounds(r.highZone))}</div>`+
+    `<div>Low zone: ${escapeHtml(tjrFormatZoneBounds(r.lowZone))}</div>`+
+    `<div style="margin-top:6px;color:${warnings.length?'var(--gold)':'var(--text2)'}">Warnings: ${warnings.length?escapeHtml(warnings.join('; ')):'none'}</div>`+
+    `<div style="color:var(--text2)">Errors: none</div>`;
+}
 function renderStrategyCenterComingSoon(manifest){
   return `<div class="coming-soon-panel">
     <div class="coming-soon-badge">Coming Soon</div>
@@ -11484,6 +12011,8 @@ function renderRules(){
       el.innerHTML=renderScHero()+renderScThesis()+renderScArchitecture()+renderScDecisionGate()+
         renderScEntryModel()+renderScRiskFramework()+renderScDisqualifiers()+
         renderScChecklist()+renderScTradeManagement()+renderScPerformance()+renderScVersionHistory();
+    } else if(m.id===TJR_STRATEGY_ID){
+      el.innerHTML=renderTjrStrategyCenterPanel();
     } else if(!(m.capabilities&&m.capabilities.strategyCenterContent)){
       el.innerHTML=renderStrategyCenterComingSoon(m);
     }

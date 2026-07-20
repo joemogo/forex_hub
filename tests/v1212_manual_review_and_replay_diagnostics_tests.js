@@ -353,6 +353,18 @@ function runV1212Fixtures(g){
 
   // 39-51: guarded commit path -- exercised against real global state, using the real,
   // unmodified (now-synchronous) approveManualReviewTrade().
+  //
+  // v12.3.0 correction: approveManualReviewTrade() gates on getSession().active using the
+  // REAL wall clock (not the setup's own decisionTs) -- a genuine, pre-existing production
+  // behavior, not a bug. That makes any fixture calling it nondeterministic depending on
+  // when the suite happens to run (fails during the real 00:00-08:00 UTC off-hours window).
+  // g.forceActiveSession() stubs ONLY this offline test realm's in-memory getSession
+  // reference so every fixture below exercises its OWN intended logic (duplicate-approval
+  // blocking, staleness rollback, attribution, Thu/Fri grouping) deterministically, every
+  // time, regardless of real time-of-day. index.html's actual getSession() is never edited
+  // -- this reassignment lives only inside this test process and is restored immediately
+  // after the affected block.
+  g.forceActiveSession();
   function seedCleanState(){
     g.setJournalEntries([]);
     g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
@@ -463,6 +475,10 @@ function runV1212Fixtures(g){
     assert('Fixture 49: manual-review trades are excluded from the Standard Monday-Wednesday group',
       grouped.standard.total===0, 'standard.total='+grouped.standard.total);
   }
+  // Restore the real getSession() immediately -- nothing after this point calls
+  // approveManualReviewTrade(), and no other fixture in this suite should ever observe the
+  // stubbed session.
+  g.restoreSession();
 
   // 50/51: existing paper-account version guards / reconciliation tests still pass -- proven
   // by Fixture 42's rigged-staleness rejection above, plus the full pre-existing suite (v120/
