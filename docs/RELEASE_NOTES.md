@@ -13,6 +13,44 @@ its change actually affects.
 
 ---
 
+## v12.3.1 — Strategy Workspace Framework & Dedicated TJR Workspace
+An architecture/navigation release — transforms MOGO from strategy overlays into a modular
+multi-strategy Trading Operating System. **No new trading intelligence**: no Zone Interaction
+Engine, Reaction Engine, BOS Confirmation, Candidate Generation, Risk Engine, Entry/Target Logic,
+Paper Trading, Replay Logic, or Live Trading. JVM/ALEX logic, all protected functions/constants,
+OANDA integration, paper-account logic, unified journal ownership, and the existing replay engine
+are completely untouched. The v12.3.0 TJR Session & Zone Engine is unchanged and remains fully
+functional; **v12.3.0's commit and tag are untouched**. TJR becomes a first-class strategy
+alongside ALEX and JVM via a reusable Strategy Workspace pattern. **Registry**: four new,
+additive Manifest fields (`navLabel`, `workspaceTitle`, `currentPhase`, and for TJR a real
+`panelId:'tjrworkspace'`) added to all three manifests; JVM/ALEX keep their exact existing
+`panelId`s and are otherwise untouched. **Navigation**: a new registry-driven "Strategies" nav
+group generates one button per `STRATEGY_REGISTRY` entry (proven not hardcoded — injecting a 4th
+synthetic strategy produces a 4th button automatically); "Paper Trading"/"ALEX" moved out of the
+Trading dropdown into it. **Dedicated TJR workspace**: a new panel with an always-visible
+Strategy Header (name/version/phase/detection/candidate/paper/live/profitability status/current
+pair/timeframe/session/previous session) and seven tabs — Chart (a fully separate, isolated chart
+instance with its own instrument/timeframe selectors and Show/Hide Zones toggle — never touches
+the shared chart's state), Rules (Implemented vs. Approved-for-Implementation vs. Future, per
+[ADR-007](adr/ADR-007-tjr-strategy-definition.md)'s per-component status), Diagnostics (full
+session/zone/candle field list, never hiding incomplete data), Paper Trading (every control
+disabled, exact required message), Replay and Journal (exact required placeholders, no logic
+created), and Developer (raw session/zone objects, no credentials). The pure Phase 1 engine
+(`buildTjrSessionZones` and its nine core functions) is reused completely unmodified. **Shared
+chart cleanup**: the shared Scanner chart no longer auto-renders TJR zones/legend — the single
+call site was removed while every Phase 1 function/state variable it used is retained, unmodified,
+and still directly testable. **Strategy Center**: TJR's tab is now a thin overview card with an
+"Open TJR Workspace" button, avoiding duplicating the workspace's own detailed diagnostics. 31 new
+fixtures in `tests/v1231_strategy_workspace_framework_tests.js`. Full regression: 283/283
+discovered fixtures pass, zero skipped/excluded, zero protected-function/constant drift. Live
+browser verification: zero console errors, zero real trade data, zero new `localStorage` keys
+throughout. **Known limitation, disclosed**: the architecture diagram's top-level placement of
+Journal/Replay/Developer as standalone nav items was intentionally not implemented this release —
+Phase 3's own literal scope only covered the Trading/Strategies split; the larger nav flattening
+is treated as a longer-term target, not silently decided.
+
+---
+
 ## v12.3.0 — TJR_SLR Phase 1: Session and Zone Engine
 The first real strategy built on the [ADR-006](adr/ADR-006-multi-strategy-foundation.md)
 Multi-Strategy Foundation — deliberately narrow scope: deterministic, timezone-aware

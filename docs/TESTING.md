@@ -27,8 +27,8 @@ runner (`run_v90_tests.js`, ...) that:
 **Two categories exist, and it matters which one a suite is in:**
 
 - **Repository-owned permanent suites** — live under [`tests/`](../tests/) in this repository,
-  committed to git, reproducible from a fresh clone with no external dependency. As of v12.3.0
-  there are **seven**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
+  committed to git, reproducible from a fresh clone with no external dependency. As of v12.3.1
+  there are **eight**: `tests/v120_strategy_framework_tests.js` (28 fixtures, ALEX registration,
   Release 1), `tests/v121_jvm_registration_tests.js` (30 fixtures, JVM registration, Release 2 —
   grew from 28 in v12.2.0, see below), `tests/v1211_diagnostics_integrity_tests.js` (13
   fixtures, Diagnostics data integrity), `tests/v1212_manual_review_and_replay_diagnostics_tests.js`
@@ -39,17 +39,27 @@ runner (`run_v90_tests.js`, ...) that:
   (30 fixtures, Multi-Strategy Foundation / ADR-006 — strategyId identity, the 3-tier resolver,
   legacy-label and rename-resilience coverage, unknown/unregistered-record safe fallback, and a
   fixture-only synthetic third strategy proving genuine N-strategy support at all seven
-  generalized seams), and `tests/v123_tjr_phase1_session_zone_tests.js` (48 fixtures, TJR_SLR
+  generalized seams), `tests/v123_tjr_phase1_session_zone_tests.js` (48 fixtures, TJR_SLR
   Phase 1 — Session and Zone Engine: registration, DST-aware session boundary resolution
   including the exact spring/autumn transition days, previous-completed-session predecessor
   cycling, no-lookahead M30 candle aggregation, malformed/duplicate-candle rejection, tied/unique
   extreme selection, all four mandatory zone-formula examples, deterministic/immutable zone
-  objects, all three Phase 1 zone statuses, and a zero-mutation proof against JVM/ALEX state) —
-  252 fixtures total. Each has its own self-contained runner (`tests/run_v120_tests.js`,
-  `tests/run_v121_tests.js`, `tests/run_v1211_tests.js`, `tests/run_v1212_tests.js`,
-  `tests/run_v1213_tests.js`, `tests/run_v122_tests.js`, `tests/run_v123_tests.js`) that
+  objects, all three Phase 1 zone statuses, and a zero-mutation proof against JVM/ALEX state),
+  and `tests/v1231_strategy_workspace_framework_tests.js` (31 fixtures, Strategy Workspace
+  Framework & dedicated TJR workspace: registry metadata, registry-driven nav generation
+  including a synthetic-4th-strategy proof that it isn't hardcoded, workspace routing via the
+  existing showPanel() mechanism, all 12 header fields, all 7 tabs, Rules' three-category
+  separation, Diagnostics against an intentionally incomplete dataset, Paper Trading's
+  fully-disabled controls, Replay/Journal's exact placeholder text, Developer's no-credentials
+  check, dedicated-chart isolation from the shared chart's own zone state, chart lifecycle
+  cleanup, a Phase 5 source-inspection proof that the shared chart's auto-render call site was
+  removed while the underlying function remains, ALEX/JVM registry compatibility, and a
+  zero-mutation/zero-new-localStorage-key proof) — 283 fixtures total. Each has its own
+  self-contained runner (`tests/run_v120_tests.js`, `tests/run_v121_tests.js`,
+  `tests/run_v1211_tests.js`, `tests/run_v1212_tests.js`, `tests/run_v1213_tests.js`,
+  `tests/run_v122_tests.js`, `tests/run_v123_tests.js`, `tests/run_v1231_tests.js`) that
   extracts `index.html`'s `<script>` body itself — no separate preprocessing step required.
-  `tests/run_all.sh` discovers and runs all seven automatically via its `tests/run_*_tests.js`
+  `tests/run_all.sh` discovers and runs all eight automatically via its `tests/run_*_tests.js`
   glob — adding a new suite under `tests/` never requires editing the runner.
   **v12.2.0 note:** two pre-existing `v121` fixtures (15, 18) asserted a per-id hardcoded
   fallback behavior that v12.2.0 deliberately replaced (see ADR-006) — updated, not weakened,

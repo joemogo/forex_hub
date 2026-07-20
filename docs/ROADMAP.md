@@ -30,7 +30,12 @@ verbatim source of record and is never rewritten by this documentation.
   **approved for implementation** (not yet built — no Phase 2 code exists yet), candidate
   analytics/grading is **specified** (not yet built), and paper/live execution remain **not
   approved**. The document's 14 open research questions are unresolved and preserved for
-  reference. ICT, Silver Bullet, and TJR's own later implementation phases have not started.
+  reference. **v12.3.1** added the Strategy Workspace Framework and TJR's own dedicated
+  workspace panel (registry-driven "Strategies" nav, isolated chart, Rules/Diagnostics/Paper
+  Trading/Replay/Journal/Developer tabs) — architecture and navigation only, no new trading
+  intelligence; the v12.3.0 engine underneath is unchanged. ICT, Silver Bullet, and TJR's own
+  later implementation phases (Zone Interaction/Reaction Engine, BOS confirmation, candidate
+  generation, paper trading, replay validation) have not started.
 
 ## Where the project has been
 

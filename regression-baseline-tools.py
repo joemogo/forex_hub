@@ -99,6 +99,7 @@ FIXTURE_COUNTS = {
     "run_v121_tests.js (Strategy Framework, Release 2 -- JVM registration)": 30,
     "run_v122_tests.js (Multi-Strategy Foundation, ADR-006)": 30,
     "run_v123_tests.js (TJR_SLR Phase 1 -- Session and Zone Engine)": 48,
+    "run_v1231_tests.js (Strategy Workspace Framework + dedicated TJR workspace)": 31,
 }
 
 
