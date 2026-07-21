@@ -13,6 +13,78 @@ its change actually affects.
 
 ---
 
+## v12.3.2 — Paper Trading Integrity & Analytics Consistency
+A corrective engineering milestone in two phases: a Paper Trading Operational Audit
+(investigation/verification) followed, in the same version, by a reviewed corrective pass. No
+new strategy intelligence; TJR Phase 2 not started; JVM/ALEX entry rules, stop/target logic, and
+ALEX's fixed-R policy untouched. **Phase 1 (audit)** fixed two narrow defects: the unified
+Journal tab didn't refresh on navigation (`showPanel()` had no dispatch branch for it); and
+`openPaperPosition()` didn't itself reject a zero-risk trade (the guard existed only in the UI
+wrapper). It also surfaced three findings requiring a decision — all three were approved and
+implemented in **Phase 2**: (1) **ALEX version-guard** — a new `commitAlexGLedger()`/
+`fxhub_alexg_account_version` pair (scoped to the account only, exactly mirroring why JVM's own
+guard excludes its journal, to avoid reproducing JVM's own historical false-stale-rejection bug)
+gives ALEX the same stale-write/rollback protection JVM already had. (2) **Canonical analytics**
+— one `computeCanonicalPerformance()` (Win Rate = Wins/(Wins+Losses), break-even reported
+separately and never in the denominator, null instead of a fabricated 0% at zero decisive trades)
+now backs both Dashboard's tile and Strategy Center's `computeMogoStrategyPerformance()`, which
+could previously disagree on identical data. (3) **Normalized close reason**
+(TAKE_PROFIT/STOP_LOSS/MANUAL_CLOSE/BREAK_EVEN/SYSTEM_CLOSE) on new JVM closes, shown in Trade
+Inspector; legacy records stay `null`, never backfilled. (4) A documented
+`BREAK_EVEN_R_EPSILON=1e-9` replaces the exact `pnl===0` break-even check — a numerical-precision
+floor only, not a trading tolerance. (5) The unified Journal's strategy filter now matches
+`strategyId`, not the display label. (6) A new, strictly read-only Developer Mode **Paper
+Trading Health Check** (Diagnostics page) reports JVM/ALEX counts/balances/versions and
+duplicate/orphan/mismatch detection, with a Copy Health Report button proven never to include
+OANDA/Anthropic credentials — run it in your own MOGO browser tab to check your own real data.
+Protected-function drift vs. the v12.3.1 baseline: exactly three, all disclosed above
+(`openPaperPosition`, `closePaperPosition`, `alexGCloseLivePosition`).
+
+**A Final Ledger Atomicity Review, same version, corrected a real defect in item (1) above.**
+The initial ALEX version-guard split the account (guarded) from the journal (written separately,
+unguarded) the same way JVM's own architecture used to — but a successful account/version write
+followed by a failed journal write left storage genuinely divergent after reload, exactly the
+class of defect [INC-001](PAPER_TRADING_AUDIT.md) already proved this codebase is vulnerable to.
+Both `savePaperAccountGuarded()` (JVM) and `saveAlexGAccountGuarded()` (ALEX) now persist their
+account, version, and journal as one atomic, all-or-nothing unit: every write is prepared before
+anything is written, and any single write failing rolls every already-written key in the unit
+back to its exact prior value. Proven with real injected write failures on each key individually,
+each followed by a real simulated reload confirming complete restoration — not just an in-memory
+check. This added zero further protected-function drift (the corrected functions are not on the
+protected list). 93 fixtures in `tests/v_paper_trading_audit_tests.js` (up from 32, then 73, then
+93); full regression 376/376. See [PAPER_TRADING_AUDIT.md](PAPER_TRADING_AUDIT.md) for the
+complete architecture map, the real persistence contract, and remaining limitations.
+
+**A Final Pre-Commit Integrity Gate, same version, closed the last gap in the atomicity work
+above: what happens when the compensating ROLLBACK write itself also fails.** `localStorage` has
+no native transaction, so a third outcome exists beyond success/ordinary-rejection: a commit write
+fails, and at least one of its own rollback writes also fails, leaving storage partially,
+indeterminately written. `savePaperAccountGuarded()`/`saveAlexGAccountGuarded()` now detect this
+directly and return a categorically distinct fatal result
+(`{ok:false,integrityCompromised:true,reason,reasonCode:'ROLLBACK_FAILED',failedCommitStep,
+failedRollbackKeys}`) — never conflated with an ordinary rejection. `commitPaperLedger()`/
+`commitAlexGLedger()` now set a new, separate runtime warning (its own red banner on Paper Trading
+and Alex G Live, distinct from the existing "reload and retry" banner) directing to Developer
+Mode > Paper Trading Health Check — a plain in-memory assignment that never itself writes to
+`localStorage`. `approveManualReviewTrade()`'s own reconciling second commit (used to persist an
+in-memory undo after an *ordinary* rejection) is now explicitly skipped when the first commit
+came back `integrityCompromised`, so a fatal result is never followed by an automatic second write
+against possibly-corrupted storage — the one caller-side gap this review found. No automatic
+retry, repair, reset, or migration is attempted anywhere in this path; Health Check remains
+strictly read-only. MOGO's honest guarantee is **logical atomicity under normal `localStorage`
+operation, with explicit detection of unrecoverable compensating-write failure** — not absolute
+atomicity under storage-engine failure, which no `localStorage`-based design can promise. 22 new
+`RollbackFailure.*` fixtures (115 total, up from 93) cover both engines' fatal-result detection,
+in-memory snapshot preservation, the no-localStorage-write guarantee on the warning itself, Health
+Check's continued read-only behavior, no-automatic-retry, credential-free diagnostic logging, and
+confirmation that ordinary rollback-success behavior is unchanged; full regression 398/398, zero
+skipped. Protected drift reconfirmed unchanged at the same three items, verified directly against
+both the regenerated baseline and the original committed v12.3.1 baseline. See
+[PAPER_TRADING_AUDIT.md §0.1](PAPER_TRADING_AUDIT.md#01-when-the-compensating-rollback-write-itself-fails-final-pre-commit-integrity-gate)
+for the complete rollback-failure contract.
+
+---
+
 ## v12.3.1 — Strategy Workspace Framework & Dedicated TJR Workspace
 An architecture/navigation release — transforms MOGO from strategy overlays into a modular
 multi-strategy Trading Operating System. **No new trading intelligence**: no Zone Interaction

@@ -1086,8 +1086,11 @@ button.danger:hover{background:var(--red-dim)}
         <div class="card">
           <div class="section-label">Filters</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <!-- v12.3.2: option VALUES are strategyId (the stable ownership key per ADR-006 §0),
+                 not the display label -- getFilteredJournalRecords() below matches on strategyId.
+                 Text shown to the user is unchanged ("JVM"/"ALEX"). -->
             <select id="jf-strategy" onchange="applyJournalFilterControls()" style="width:110px">
-              <option value="All">All</option><option value="JVM">JVM</option><option value="ALEX">ALEX</option>
+              <option value="All">All</option><option value="current_strategy">JVM</option><option value="alex_g_sr_v1">ALEX</option>
             </select>
             <select id="jf-source" onchange="applyJournalFilterControls()" style="width:110px">
               <option value="All">Any source</option><option value="MANUAL">Manual</option><option value="AUTO">Auto</option><option value="TEST">Test</option>
@@ -1127,6 +1130,11 @@ button.danger:hover{background:var(--red-dim)}
              Developer Mode -- since a blocked trade/reset/reconciliation is a real, actionable
              problem for any user, not a debugging concern. -->
         <div id="paperLedgerBlockingBanner"></div>
+        <!-- v12.3.2 Final Pre-Commit Integrity Gate: a categorically more severe warning than
+             the blocking banner above -- a compensating rollback write itself failed, so
+             persisted state may actually be inconsistent (not merely "rejected, unchanged").
+             Runtime-only; never written to localStorage by this render itself. -->
+        <div id="paperLedgerIntegrityWarningBanner"></div>
         <!-- 1. Account summary -->
         <div class="stats-row" id="paper-stats"></div>
         <div class="card">
@@ -1282,6 +1290,26 @@ button.danger:hover{background:var(--red-dim)}
             <button onclick="renderPaperLedgerIntegrity()">Refresh</button>
           </div>
           <div id="paperLedgerIntegrityCard"></div>
+        </div>
+
+        <!-- v12.3.2: Developer-Mode-gated, strictly read-only. Analyzes whatever JVM/ALEX
+             state is already loaded in this browser -- never saves, repairs, deletes, resets,
+             migrates, normalizes, reconciles by mutation, increments a version, or creates a
+             localStorage key. Run this in your OWN normal MOGO browser tab to evaluate your
+             own actual stored records; this automation environment has no access to that
+             data and cannot run it against anything but its own empty/synthetic state. -->
+        <div class="card" id="paperTradingHealthCheckCardWrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+            <div>
+              <div class="section-label" style="margin-bottom:2px">Paper Trading Health Check</div>
+              <div style="font-size:11px;color:var(--text2);max-width:640px">Read-only analysis of the JVM and ALEX paper accounts and journals already loaded in this browser. Never saves, repairs, resets, or migrates anything. Run this in your own MOGO browser tab to check your own real data.</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button onclick="renderPaperTradingHealthCheck()">Refresh</button>
+              <button class="primary" onclick="copyPaperTradingHealthReport()">Copy Health Report</button>
+            </div>
+          </div>
+          <div id="paperTradingHealthCheckCard"></div>
         </div>
 
         <div class="card">
@@ -1592,6 +1620,9 @@ button.danger:hover{background:var(--red-dim)}
       <!-- ALEX -- renamed in v5.0 from "ALEX G S&R (RESEARCH)"; user-facing label only,
            the frozen strategy identifier alex_g_sr_v1 is unchanged. -->
       <div id="panel-alexg" class="panel">
+        <!-- v12.3.2 Final Pre-Commit Integrity Gate: mirrors paperLedgerIntegrityWarningBanner --
+             set only when a compensating rollback write itself failed for ALEX. Runtime-only. -->
+        <div id="alexGLedgerIntegrityWarningBanner"></div>
         <div class="card" style="border-color:var(--purple)">
           <div class="section-label" style="color:var(--purple);margin-bottom:2px">ALEX</div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Support &amp; Resistance Strategy — <span style="font-family:monospace">alex_g_sr_v1</span> — Hub v<span id="alexgHubVersion"></span></div>
@@ -1886,9 +1917,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.3.1';
-const APP_VERSION_DATE='20 Jul 2026';
+const APP_VERSION='12.3.2';
+const APP_VERSION_DATE='21 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.3.2 — PAPER TRADING INTEGRITY & ANALYTICS CONSISTENCY (corrective engineering milestone, two phases -- an investigation/verification audit followed, in the same version, by a reviewed corrective pass; no new strategy intelligence; TJR Phase 2 explicitly NOT started; JVM/ALEX entry rules, stop/target logic, and ALEX\'s fixed-R policy completely untouched). PHASE 1 (audit) found and corrected two narrow defects, both meeting all 9 of the audit\'s own correction criteria: showPanel() had no dispatch branch for the unified Journal tab (fixed with one additive `if(name===\'journal\') renderJournal();` line); openPaperPosition() did not itself reject a zero-risk trade (fixed with an early riskPips>0 guard). PHASE 1 also surfaced three findings requiring a decision rather than a silent fix -- all three were reviewed and approved for correction in Phase 2 below. TEST HARNESS LIMITATION (both phases): closePaperPosition()\'s and alexGCloseLivePosition()\'s (the latter now genuinely synchronous, confirmed by direct reading) async paths were verified live in-browser wherever the offline JXA harness\'s permanent inability to resolve a real `await` (reconfirmed via three independent techniques) made offline verification impossible. PHASE 2 (this pass) implements all three previously-deferred decisions plus four further requested corrections: (1) ALEX VERSION-GUARD -- alexGConstructLivePosition\'s real mutation site (the async alexGAttemptOpenLivePosition, NOT the pure, protected alexGConstructLivePosition itself, which needed no change) and alexGCloseLivePosition now snapshot alexGAccount/alexGJournalEntries and commit through a new commitAlexGLedger()/saveAlexGAccountGuarded() pair, deliberately NOT a blind copy of JVM\'s architecture: the version counter (new fxhub_alexg_account_version key, new alexGAccountKnownVersion session state) is scoped to the account only, exactly mirroring why JVM\'s own fxhub_paper_version excludes journalEntries -- bundling alexGAutoTrading/alexGZoneState/alexGSetupState into the same gate would reproduce the exact false-stale-rejection bug JVM\'s v11.0.1 fix was built to prevent. saveAlexG() is now a thin alias for the new, unguarded saveAlexGRest() (auto+zones+setups only), used only by its one remaining non-account-mutating call site (toggleAlexGLiveTrading; the journalEntryId backfill migration\'s ALEX branch now goes through commitAlexGLedger() directly, since it mutates the journal); resetAlexGLiveAccount() and clearTestTradesAlex() were updated to the same guarded-commit-plus-rollback pattern. A stale rejection leaves balance/openPositions/closedPositions/journal/version completely untouched, proven directly. **CORRECTED by a subsequent Final Ledger Atomicity Review, same version:** an initial draft of this decision persisted the journal via the unguarded saveAlexGRest() (mirroring where JVM\'s own journalEntries write used to live relative to its guard) -- but that reintroduced, for ALEX, the exact account/journal divergence-after-reload gap JVM\'s own v11.0.1 fix was built to close. saveAlexGAccountGuarded() now persists fxhub_alexg_account+fxhub_alexg_account_version+fxhub_alexg_journal as ONE atomic, all-or-nothing unit: every pre-op serialized value is read first, both new values are serialized before anything is written, the three writes happen in order while tracking exactly which keys this attempt touched, and ANY of the three throwing rolls every already-written key back to its exact prior value (or removes it, if it did not exist before) and reports failure -- proven directly against real injected failures on the account, version, and journal keys individually, each fully rolled back, plus a real simulated reload after each failure confirming complete pre-operation restoration, not just an in-memory check (AlexAtomic.1-13). commitPaperLedger()/savePaperAccountGuarded() received the identical correction for JVM (see JVM PERSISTENCE ATOMICITY below) -- the same gap existed there too, via journalEntries\' write living inside the separate, unguarded save(). (2) CANONICAL ANALYTICS -- a new computeCanonicalPerformance(records) is the one place wins/losses/breakEven/decisiveTrades/winRate/netPnl/netR/averageR/grossProfit/grossLoss/profitFactor are ever computed; winRate = wins/(wins+losses), break-even trades reported separately and never in the denominator, null (never NaN/Infinity/a fabricated 0%) when decisiveTrades is 0, malformed/unrecognized-result records excluded entirely, an existing resultR field preferred over recomputing pnl/riskAmount (preserving ALEX\'s fixed-R policy exactly). Dashboard\'s tile and computeMogoStrategyPerformance() (Strategy Center) both now build on it -- the two surfaces can no longer silently disagree on identical data; Strategy Center\'s own separate n>=50 minimum-sample gate is unchanged by design (a distinct, pre-existing display policy, not part of the formula unification). (3) CLOSE REASON -- closePaperPosition() now derives a normalized closeReason (TAKE_PROFIT/STOP_LOSS/MANUAL_CLOSE/BREAK_EVEN/SYSTEM_CLOSE) from data already deterministically known at close time (isDeveloperTrade forces SYSTEM_CLOSE regardless of Win/Loss; otherwise automated Win/Loss maps to TAKE_PROFIT/STOP_LOSS; manual maps to BREAK_EVEN/MANUAL_CLOSE), propagated additively through applyJournalCloseUpdate()/normalizeJournalRecord() (null, never fabricated, for any record closed before this release) and displayed in Trade Inspector. (4) BREAK-EVEN EPSILON -- replaces the exact pnl===0 check with a documented BREAK_EVEN_R_EPSILON=1e-9 realized-R threshold, a numerical-precision floor absorbing only floating-point noise from the exitPrice/pip/pipVal arithmetic (astronomically smaller than any realistic 1-pip move) -- NOT a discretionary trading tolerance; a genuinely small profit/loss is still classified Win/Loss exactly as before. (5) STRATEGY-ID FILTERING -- getFilteredJournalRecords() now matches r.strategyId (the option values in the real Journal filter dropdown changed from the display labels "JVM"/"ALEX" to the registry ids "current_strategy"/"alex_g_sr_v1"; visible text unchanged) instead of r.strategyLabel, since normalizeJournalRecord() already guarantees every record -- including legacy ones -- has strategyId populated via its existing store-fallback; proven against a deliberately mislabeled record (strategyLabel:"ALEX", strategyId:"current_strategy") that now correctly filters under JVM. (6) PAPER TRADING HEALTH CHECK -- a new, strictly read-only Developer Mode utility (computePaperTradingHealthReport(), a Diagnostics-page card, gated by developerModeEnabled exactly like the existing Developer Test Tools) reporting JVM/ALEX open/closed/journal counts, balance, realized P&L, and ledger/account version, plus combined duplicate-ID/orphan/strategy-ID-mismatch/result-mismatch/P&L-mismatch/R-mismatch/invalid-timestamp/invalid-price/missing-strategyId/legacy-record/test-artifact detection (JVM\'s half reuses the existing computePaperLedgerIntegrity() rather than duplicating it; ALEX\'s equivalent basic reconciliation is new, since no ALEX reconciliation tooling existed before this release) and an overall reconciliation-status line; a Copy Health Report button copies a plain-text report built field-by-field from the computed report object only (never a raw dump of any live account/config object), proven live to contain no OANDA token/account ID/Anthropic key even when both were actually set. This utility analyzes only whatever JVM/ALEX state is already loaded in the browser it runs in -- it must be run in the user\'s own normal MOGO browser tab to evaluate their own actual stored records; this development environment has no access to that data and never claims to have inspected it. JVM PERSISTENCE ATOMICITY (Final Ledger Atomicity Review): savePaperAccountGuarded() previously wrote only paperAccount+fxhub_paper_version, with journalEntries persisted separately and unconditionally inside the general save() -- meaning a successful account/version write followed by a failed journal write (save() wraps all its setItem calls in one try/catch, silently swallowing any exception) left storage genuinely divergent after reload, with commitPaperLedger() still reporting success. This is the exact class of defect INC-001 (the historical JOURNAL_ONLY-orphan incident) already proved this codebase is vulnerable to. savePaperAccountGuarded() now persists paperAccount+fxhub_paper_version+journalEntries as the same kind of atomic, all-or-nothing unit described above for ALEX -- fxhub_journal moved out of save() entirely; save() now covers only genuinely unrelated state (scan/checklist/alerts/env/auto/autoscan/resetHistory/tradeNotes/reconciliationAudit) and keeps its pre-existing best-effort semantics, since that was never part of this correction\'s scope. Two additional call sites that previously relied on a bare save() to persist a journal-only change -- logTrade() (the manual "Log a Trade" form) and deleteEntry() -- now call commitPaperLedger() instead, since save() no longer touches fxhub_journal at all; migrateJournalEntryIds()\'s JVM branch was corrected the same way. PROTECTED-FUNCTION DRIFT vs. the original committed v12.3.1 baseline, reconfirmed after this correction: still exactly three items -- openPaperPosition (zero-risk guard), closePaperPosition (close-reason + break-even epsilon), alexGCloseLivePosition (version-guard atomicity); savePaperAccountGuarded/save/commitPaperLedger/saveAlexGAccountGuarded/saveAlexGRest/saveAlexG/commitAlexGLedger/migrateJournalEntryIds/logTrade/deleteEntry are NOT on the protected list, so this atomicity correction added zero additional protected drift. All other 60 protected functions and all 4 protected constants remain byte-identical; the v12.3.2 baseline was regenerated and accepted only after every correction, including this one, was complete and verified. TESTING: tests/v_paper_trading_audit_tests.js grew from 32 to 73 fixtures after Phase 2, then to 93 after this atomicity review (14 ALEX version-safety fixtures; 6 canonical-analytics fixtures; 5 strategy-ownership fixtures; 15 Health Check fixtures; then 13 new ALEX PERSISTENCE ATOMICITY fixtures and 3 new JVM PERSISTENCE ATOMICITY fixtures verifying, for both engines, that account/journal/version write failures on any one key roll back all three, that a real simulated reload after a failure restores the exact pre-operation state -- not just an in-memory check -- and that a retry after removing the injected failure succeeds cleanly with no duplicate close and no duplicate journal record). Full regression: 376/376 fixtures pass across all 9 canonical suites, zero failures. LIVE VERIFICATION (browser session\'s localStorage started and ended completely empty, verified by key-listing before and after) confirmed, in addition to everything verified for Phase 2: a real ALEX open persisting account+journal+version together, a real reload restoring it, a real injected journal-write failure during close correctly reporting failure while the position stayed open with balance/journal/version all unchanged (both in memory and in the exact persisted serialized values), a real reload after that failure still showing the same pre-close state, and -- after removing the injection -- a real successful close followed by a reload confirming exactly one closed position, one journal record, and one balance update; the identical 12-step sequence was repeated for JVM. Zero console errors at every step, including throughout the deliberately-injected-and-handled failure paths. FINAL PRE-COMMIT INTEGRITY GATE (same version, third and final corrective pass): the two atomicity fixes above still could not honestly guarantee full restoration if the COMPENSATING ROLLBACK WRITE itself also fails -- localStorage has no native transaction, so a third outcome exists alongside success/ordinary-rejection: a commit write fails AND at least one of its own rollback writes also fails, leaving storage in a partial, indeterminate state. savePaperAccountGuarded()/saveAlexGAccountGuarded() now detect this directly (a new injectNthCallFailure() harness helper independently targets "the Nth call to setItem/removeItem for key X," letting a fixture make the ORIGINAL write for one key succeed while only its LATER rollback-restore fails) and return a categorically distinct {ok:false,integrityCompromised:true,reason:<human-readable>,reasonCode:\'ROLLBACK_FAILED\',failedCommitStep,failedRollbackKeys} -- never conflated with an ordinary {ok:false,integrityCompromised:false,reason:...} rejection. commitPaperLedger()/commitAlexGLedger() propagate this and set a new, categorically separate paperLedgerIntegrityWarning/alexGLedgerIntegrityWarning (own dedicated red banner on Paper Trading/Alex G Live, distinct from the existing ordinary-rejection banner) directing to Diagnostics > Developer Mode > Paper Trading Health Check -- a plain in-memory assignment that never itself touches localStorage (proven directly). openPaperPosition/closePaperPosition/alexGCloseLivePosition/approveManualReviewTrade now propagate integrityCompromised on their return objects; approveManualReviewTrade()\'s own reconciling second commit (which persists an in-memory undo after an ORDINARY rejection) is now explicitly skipped when the first commit came back integrityCompromised, so a fatal result is never followed by an automatic second write attempt against possibly-corrupted storage -- the one caller-side gap this review found. Of the four required rollback-failure sequences, one (the journal write failing AND the journal\'s own restoration also failing) is structurally impossible under the fixed account->version->journal write order, since journal, written last, can never have been successfully written earlier in the same attempt and so can never itself be a rollback target -- disclosed directly in PAPER_TRADING_AUDIT.md §0.1 rather than faked with an artificial test; the other three (version-restoration failure, account-restoration failure, and a never-existed-before key\'s removeItem() failing) are all covered directly, for both engines. Health Check remains strictly read-only against a rollback-failure-shaped inconsistency; no automatic retry, repair, reset, or migration is attempted anywhere in this path. TESTING: tests/v_paper_trading_audit_tests.js grew from 93 to 115 fixtures (22 new RollbackFailure.* fixtures covering both engines\' fatal-result detection, in-memory snapshot preservation, the runtime warning\'s own no-localStorage-write guarantee, Health Check\'s continued read-only detection of a rollback-failure-shaped inconsistency, no-automatic-retry, credential-free diagnostic logging, and confirmation that ordinary rollback-success behavior is unchanged). Full regression: 398/398 fixtures pass across all 9 canonical suites, zero skipped. Protected drift reconfirmed unchanged at exactly the same three items (openPaperPosition, closePaperPosition, alexGCloseLivePosition), verified directly against both the regenerated v12.3.2 baseline and the original committed v12.3.1 baseline. LIVE VERIFICATION (fresh local server, browser origin started and ended completely empty, an external pre-test snapshot captured and used to restore the intermediate state before the final full clear): confirmed real JVM and ALEX open+close still succeed and persist atomically; confirmed a real injected ORDINARY commit failure (rollback succeeds) is safely rejected with the ordinary banner, storage fully restored, and a real page reload showing the exact pre-attempt state; confirmed a real injected ROLLBACK-FAILURE (journal write fails, then the version-key rollback restore also fails) returns the fatal result with no thrown exception, sets only the new fatal warning (never the ordinary banner), renders correctly on the Alex G Live panel identifying ALEX by name with no credentials present anywhere, does not itself touch localStorage, and leaves Health Check fully functional and still read-only even with a live secret token/account ID set in cfg; zero console errors, including an explicit check for any uncaught exception, at every step. See docs/PAPER_TRADING_AUDIT.md §0.1 for the complete rollback-failure contract.',
   '12.3.1 — STRATEGY WORKSPACE FRAMEWORK & DEDICATED TJR WORKSPACE (architecture/navigation release -- transforms MOGO from strategy overlays into a modular multi-strategy Trading Operating System; NO new trading intelligence added: no Zone Interaction Engine, Reaction Engine, BOS Confirmation, Candidate Generation, Risk Engine, Entry/Target Logic, Paper Trading, Replay Logic, or Live Trading. JVM and ALEX strategy logic, all 63 protected functions, all 4 protected constants, OANDA integration, paper-account logic, unified journal ownership, and the existing replay engine are completely untouched -- zero drift confirmed. The v12.3.0 TJR Session & Zone Engine is unchanged and remains fully functional; v12.3.0\'s commit and tag are untouched). SCOPE: TJR becomes a first-class strategy alongside ALEX and JVM via a reusable Strategy Workspace pattern, and a dedicated TJR workspace replaces TJR\'s prior residency inside the shared Scanner chart and Strategy Center. REGISTRY (Phase 7): four new, additive Manifest fields -- navLabel, workspaceTitle, currentPhase, and (for TJR) a real panelId (\'tjrworkspace\', previously null) -- added to JVM_MANIFEST/ALEX_MANIFEST/TJR_MANIFEST; JVM and ALEX keep their exact pre-existing panelId values (\'paper\'/\'alexg\') and are otherwise untouched. TJR_SERVICES.onOpen now calls the new initTjrWorkspace() instead of a no-op. TJR\'s standalone devToolsTjrCard (Strategy Center) is retired -- superseded by the workspace\'s own Developer tab, avoiding duplicate TJR diagnostics surfaces. NAVIGATION (Phase 3): a new registry-driven "Strategies" nav group (renderStrategyNavGroup(), called once from initAll()) generates one button per STRATEGY_REGISTRY entry in registry order, routing through the existing, unmodified showPanel(manifest.panelId) mechanism -- proven genuinely registry-driven (not hardcoded) by a fixture that injects a 4th synthetic strategy and confirms a 4th nav button appears automatically. The "Paper Trading" and "ALEX" leaf buttons are removed from the Trading dropdown (moved into Strategies); Trading keeps Scanner/Charts/Watchlist -- Scanner is the "Shared Trading Chart" from the architecture diagram, kept under its existing, well-established label rather than cosmetically renamed. The JVM-specific "unseen auto-trade count" nav badge (a real, existing JVM-only feature with no generic equivalent) moved from the removed hardcoded button to the registry-driven one, keyed by manifest.id -- updatePaperNavBadge() updated accordingly, still JVM-only, honestly disclosed as an exception rather than fabricated for strategies that don\'t have the concept. DEDICATED TJR WORKSPACE (Phase 4): a new panel-tjrworkspace with an always-visible Strategy Header (Strategy Name/Version/Current Phase/Detection/Candidate/Paper/Live/Profitability Status/Current Pair/Timeframe/Session/Previous Session -- session values computed live via the unchanged Phase 1 getTjrSessionForTimestamp()/getPreviousCompletedTjrSession()) and seven tabs mirroring Strategy Center\'s own tab-rendering pattern: (1) Chart -- a fully separate, isolated Lightweight Charts instance (own tjrWsChart/tjrWsCandleSeries/tjrWsZoneLines globals, own instrument selector spanning all 34 ALL_PAIRS, own M15/H1/H4/Daily/Weekly timeframe selector, own Show/Hide Zones toggle, own legend) that never reads or writes activePair/activeTf/lwChart/candleSeries/chartOverlayToggles/tjrChartZoneLines/tjrZoneState -- "this chart belongs only to TJR"; (2) Rules -- IMPLEMENTED (Previous Completed Session, M30 Session Source, Session High/Low Zone, Immutable Zones, Deterministic IDs, DST-aware Sessions) vs. APPROVED FOR IMPLEMENTATION (Zone Interaction, Reaction Detection, Five-minute BOS) vs. FUTURE (Candidate Generation, Trade Grading, Paper Trading, Replay Validation, Live Trading), clearly separated, matching ADR-007\'s per-component status; (3) Diagnostics -- the full required field list (Source Session, Session Date, Session Start/End, DST Result, Candle/Missing/Duplicate/Invalid Candle counts, Selected High/Low Candle, Zone Bounds, Zone IDs, Lifecycle, Warnings, Errors), never hiding incomplete data; (4) Paper Trading -- every control (Risk %, Entry/Stop/Target Model, Minimum Grade, Manual Approval, Automatic Paper Trading) rendered `disabled`, with the exact required not-yet-available message, zero execution logic, zero paper-account mutation; (5) Replay -- the exact required "future milestone" placeholder, no replay logic; (6) Journal -- the exact required "No TJR trades exist" placeholder, zero journal records created; (7) Developer -- raw session/zone objects, zone ids, and DST-calculation detail (no credentials/tokens/account identifiers of any kind, confirmed by a dedicated fixture). The pure Phase 1 engine (buildTjrSessionZones and all nine core functions) is reused completely unmodified; only the DOM-drawing glue (drawTjrWorkspaceZoneOverlay/clearTjrWorkspaceZoneOverlay) is a small, deliberate, isolated parallel to the shared chart\'s own drawTjrZoneOverlay/clearTjrZoneOverlay -- required for genuine chart-instance isolation, not a violation of "don\'t duplicate architecture" (the valuable logic -- session/zone computation -- has zero duplication). SHARED CHART CLEANUP (Phase 5): the single loadAndRenderTjrZones(activePair) call inside loadChart() was removed -- the shared Scanner/Trading chart no longer auto-renders TJR zones, labels, legend, or diagnostics. Every v12.3.0 Phase 1 function/state variable this call used to invoke (loadAndRenderTjrZones, drawTjrZoneOverlay, clearTjrZoneOverlay, renderTjrZoneLegend, tjrZoneState, tjrChartZoneLines, chartOverlayToggles.tjrZones, the tjrZoneOverlayLegend DOM element) is retained, completely unmodified, and still directly callable/testable -- proven by a source-inspection fixture confirming the call site is gone while the function definitions remain. STRATEGY CENTER (Phase 6): renderTjrStrategyCenterPanel() is now a thin "Strategy Overview + Launch Workspace" card (name, description, current phase, execution-disabled notice, and an "Open TJR Workspace" button routing via showPanel(TJR_MANIFEST.panelId,null)) -- the detailed session/zone/candle breakdown this function used to render directly now lives only in the workspace\'s own Diagnostics/Developer tabs, avoiding duplication. TESTING: 31 new fixtures in tests/v1231_strategy_workspace_framework_tests.js covering registry metadata, registry-driven nav generation (including the synthetic-4th-strategy proof), workspace routing via the existing showPanel() mechanism, all 12 header fields and their exact required values, all 7 tabs rendering, Rules\' three-category separation, Diagnostics\' full field list against an intentionally incomplete dataset, Paper Trading\'s fully-disabled controls, Replay/Journal\'s exact placeholder text, Developer\'s raw-object exposure with a dedicated no-credentials-leaked check, dedicated-chart isolation (drawing/clearing the workspace overlay never touches the shared chart\'s tjrChartZoneLines), the Show/Hide Zones toggle suppressing the overlay, chart lifecycle/cleanup (destroyTjrWorkspaceChart leaves no leaked instance or price lines), the Phase 5 source-inspection proof, ALEX/JVM registry compatibency (their onOpen still fires their real, unmodified initAlexGPair()/initJvmPaperPanel()), and a zero-mutation/zero-new-localStorage-key proof across opening the workspace and visiting every tab. Full regression: 283/283 discovered fixtures pass (252 pre-existing + 31 new), zero skipped/excluded, zero protected-function/constant drift. Live browser verification (zero real trade data throughout -- paperAccount.balance stayed at $10,000, journalEntries/alexGJournalEntries stayed empty, localStorage stayed empty for the whole session): the new Strategies nav group rendered JVM/ALEX/TJR Session Level Reaction in order; opening the TJR workspace rendered the header with correct live session values, all 7 tabs, and a real (empty, since no OANDA connection in this environment) chart canvas; Strategy Center\'s TJR tab rendered its overview card and Open TJR Workspace button; the shared Scanner chart\'s tjrZoneState/legend stayed empty/hidden after a normal chart load; zero console errors at every step. KNOWN LIMITATIONS, disclosed rather than silently deferred: the architecture diagram\'s top-level placement of Journal/Replay/Developer as standalone nav items (siblings of Dashboard/Trading/Strategies) was intentionally NOT implemented this release -- Phase 3\'s own literal instructions only specified the Trading/Strategies split, and moving Journal out of Performance, Replay out of Strategy, and carving a standalone Developer page out of Diagnostics would each be a larger, unrequested structural change with real regression risk; treated as a longer-term aspirational target, not this release\'s literal scope, and disclosed here rather than silently decided. Syntax clean, known-good hash unchanged.',
   '12.3.0 — TJR_SLR PHASE 1: SESSION AND ZONE ENGINE (strategy-expansion release -- the first real strategy built on the ADR-006 Multi-Strategy Foundation framework, not a framework change itself; zero drift across all 63 protected functions and 4 protected constants; JVM and ALEX trading logic completely untouched). SCOPE, deliberately narrow per explicit instruction: deterministic, timezone-aware previous-session (Asian/London/New York) high/low zone construction ONLY. No zone-interaction/failure-transition engine, no break-of-structure/fair-value-gap/entry logic, no candidate detection, no paper trading, and no live execution exist yet -- see ADR-007 (TJR Strategy Definition), whose per-component status records the Session/Zone Engine as implemented in v12.3.0; the Zone Interaction/Reaction Engine and five-minute BOS confirmation as approved for implementation via the owner\'s authoritative architecture process (not yet built -- no Phase 2 code exists in this release); candidate analytics/grading as specified, not yet built; and paper/live execution as not approved. REGISTRATION: TJR_SLR ("TJR Session Level Reaction") registered as STRATEGY_REGISTRY\'s third entry using the exact existing Manifest/Services schema (no parallel fields introduced) -- status:\'development\', capabilities.scanning/paperTrading/automation all false (MOGO has no separate "live execution" schema field since no strategy ever places real broker orders per ADR-004, so automation:false covers it), capabilities.replay:true is a disclosed forward-declared value only -- no replay engine is actually wired this phase, matching JVM/ALEX\'s own established convention for not-yet-wired capabilities. TIMEZONE ENGINE: no third-party timezone library was added (native Intl.DateTimeFormat only, already implicitly relied on elsewhere in this file, e.g. fmtJournalDate()\'s toLocaleString()) -- tjrGetLondonOffsetMinutesAt()/tjrLondonLocalToUtcMs() compute Europe/London\'s real GMT/BST offset for the SPECIFIC instant being converted (never a hardcoded permanent UTC offset), resolved independently per session boundary rather than per calendar day -- proven necessary and correct on the exact UK DST transition days themselves, where a single session\'s local start and end fall on opposite sides of the transition (e.g. 2026-03-29: Asian session\'s 00:00 local start is still GMT while its 08:00 local end is already BST). NINE CORE PURE FUNCTIONS (resolveTjrSessionBoundaries, getTjrSessionForTimestamp, getPreviousCompletedTjrSession, isTjrSessionComplete, getCandlesForResolvedSession, findTjrSessionExtremes, buildTjrHighZone, buildTjrLowZone, buildTjrSessionZones), all fully synchronous/deterministic given an explicit candle array and evaluation timestamp -- no network call, no localStorage access, no hidden clock read -- so every one is directly unit-testable without mocking an await (matching this project\'s own documented, permanent JXA-offline-harness limitation). CANDLE AGGREGATION: strictly no-lookahead (excludes any candle at or after the evaluation timestamp even if inside the session window); malformed OHLC candles (h<l, or high/low not bounding open/close) and duplicate-timestamp candles are both REJECTED AND REPORTED, never silently repaired or merged (first-seen wins for duplicates); full diagnostics returned (expected/actual M30 count, missing intervals, duplicates, invalid candles, datasetComplete). EXTREME SELECTION: true session high/low with a tick-tolerance tie check; all tied candidates are stored, and an isolated, independently swappable tie-break function (tjrSelectCanonicalTiedCandle) selects the latest qualifying candle as canonical, with the selection reason recorded. ZONE FORMULAS (verified against all four mandatory spec examples): high zone upper=source candle high, lower=max(open,close); low zone lower=source candle low, upper=min(open,close); both rounded to instrument precision and wrapped in Object.freeze() so zone bounds/status are runtime-immutable, not just conventionally so. Zone ids are fully deterministic (TJR_SLR:{instrument}:{sourceSession}:{sourceTradingDate}:{zoneType}) -- repeat calls with identical inputs produce byte-identical frozen zone objects. STATUS: Phase 1 supports exactly ACTIVE/DATA_INCOMPLETE/INVALID_SOURCE, assigned once at build time purely from source-session data quality (a zero-candle session yields INVALID_SOURCE with null bounds, never a fabricated value) -- no interaction/failure transition engine exists yet, per explicit instruction; an EXPIRED concept was deliberately NOT implemented as a fourth build-time status this phase (see Known Limitations). CHART: a new, fully separate overlay (tjrChartZoneLines/clearTjrZoneOverlay()/drawTjrZoneOverlay(), its own legend div and chartOverlayToggles.tjrZones toggle) renders both zones as dashed price lines using the existing createPriceLine() pattern (never a new rendering primitive) -- fetched via a single new async wrapper, loadAndRenderTjrZones(), that calls the existing, unmodified fetchCandles() for M30 candles and is invoked fire-and-forget (never awaited) from loadChart() specifically so a slow or failing TJR fetch can never delay or break the primary candle chart, matching this project\'s own prior flat-line/outlier incident. STRATEGY CENTER: a new registry-driven TJR tab (capabilities.strategyCenterContent:true) shows development status, execution-disabled notice, current session, previous completed session (UTC + Europe/London-local boundaries), high/low zone bounds, dataset completeness, and calculation timestamp -- deliberately no win rate, profitability, or trade statistics (none exist). DEVELOPER MODE: a new devToolsTjrCard (registry-driven via the existing, unmodified applyDeveloperModeVisibility() loop -- no change to that function was needed) shows config/current session/previous session/source-candle diagnostics/high zone/low zone/warnings/errors -- no credentials, tokens, or account data of any kind are exposed (none of this data touches OANDA credentials). TESTING: 48 new fixtures in tests/v123_tjr_phase1_session_zone_tests.js covering session mapping, exact inclusive-start/exclusive-end boundaries, winter GMT / summer BST / spring-forward / autumn-back DST conversion (including the transition day\'s own per-boundary offset split), previous-session predecessor resolution in all three directions, candle aggregation (clean/missing/duplicate/invalid/boundary/no-lookahead), unique and tied high/low selection, all four mandatory zone-formula examples, deterministic zone ids, runtime immutability, all three zone statuses, and a zero-mutation proof against paperAccount/alexGAccount/journalEntries/alexGJournalEntries. One pre-existing fixture (tests/v121_jvm_registration_tests.js Fixture 1) was updated -- not weakened -- from asserting the registry\'s total size is exactly 2 to asserting JVM and ALEX are both present (reg.length>=2), since the exact-2 count was only ever true before TJR_SLR\'s own registration, the same kind of disclosed update v12.2.0 itself made to this same file for the same reason. Full regression: 252/252 discovered fixtures pass (204 pre-existing + 48 new), zero skipped/excluded, zero protected-function/constant drift. RELEASE-READINESS CORRECTION (pre-commit, same v12.3.0 pass): a pre-commit review caught that 4 fixtures in tests/v1212_manual_review_and_replay_diagnostics_tests.js (39/40/47/48) were nondeterministic -- approveManualReviewTrade() (real, unmodified, pre-existing production code) gates on getSession().active using the REAL wall clock rather than the setup\'s own decisionTs, so those fixtures failed whenever the suite happened to run during the real 00:00-08:00 UTC off-hours window (reproduced identically via git stash against unmodified v12.2.0 HEAD, confirming the behavior predates and is unrelated to TJR). Fixed in the TEST HARNESS ONLY, per explicit instruction not to alter protected production behavior merely to make fixtures pass: tests/run_v1212_tests.js now exposes g.forceActiveSession()/g.restoreSession(), which reassign that offline realm\'s in-memory getSession reference for the duration of Fixtures 39-49 (the only ones exercising approveManualReviewTrade()) and restore it immediately after -- index.html\'s real getSession() (PROTECTED) was never edited, confirmed by zero drift before and after. The full suite is now genuinely deterministic: re-run repeatedly, including inside the same 00:00-08:00 UTC window that previously caused failures, with all 252/252 fixtures passing every time via one canonical command (tests/run_all.sh). A duplicate-fixture-name scan across all 7 canonical suites found zero real duplicates (one coincidental same-numbered "Fixture 18" label across two independently-numbered release suites, v120 and v121, testing different functions\' fallback behavior -- not a collision). KNOWN LIMITATIONS, disclosed rather than silently deferred: no zone-interaction/invalidation/expiration engine exists yet (a zone\'s status is fixed at build time; an EXPIRED status was intentionally left unimplemented rather than guessed at, since the spec left its exact trigger condition ambiguous and fabricating one would contradict the "do not invent" constraint governing this whole strategy); no entry/confirmation/BOS/FVG logic, no candidate detection, no paper trading, no live execution -- all explicitly out of scope until ADR-007\'s open questions are answered by the strategy owner. Syntax clean, known-good hash unchanged.',
   '12.2.0 — MULTI-STRATEGY FOUNDATION (ADR-006; framework-generalization release, not Phase 2/Strategy Expansion itself -- no TJR/ICT/Silver Bullet trading logic added; zero drift across all 63 protected functions and 4 protected constants). SCOPE: ADR-005 (v12.0.0/v12.1.0) built STRATEGY_REGISTRY/Manifest/Services and proved the contract twice, but a direct seam-by-seam audit found every consuming seam still hardcoded "JVM and ALEX by id," not "iterate whatever is registered" -- explicitly disclosed as deferred scope in the v12.1.0 changelog. This release closes that gap. REVISION BEFORE IMPLEMENTATION: the approved design was revised once, before any code changed, to require that strategy-owned records carry a stable strategyId (registry id) rather than treating strategyLabel (a display string) as identity. IDENTITY: buildJVMJournalOpenRecord()/buildAlexJournalOpenRecord() were both found to already write an id-shaped `strategy` field (\'current_strategy\'/\'alex_g_sr_v1\') -- strategyId was added alongside it on new records only (existing persisted records are never rewritten). normalizeJournalRecord() gained one additive output field: strategyId:raw.strategyId||raw.strategy||storeStrategy. Two new functions: findStrategyEntryByLabel() (explicitly documented as legacy-compatibility-only, not the primary lookup) and resolveStrategyEntryForRecord() (the 3-tier resolver: strategyId first, legacy strategyLabel second, safe null/unknown third -- every caller receiving null must render a neutral, non-strategy-specific fallback, never default to JVM\'s styling). SEVEN SEAMS GENERALIZED, each rewritten to iterate STRATEGY_REGISTRY instead of a per-id hardcoded branch: getUnifiedJournalRecords() (loops the registry, skips a strategy with no wired getJournal/normalize Service, falls back to direct JVM+ALEX calls only if the whole registry is empty); renderDashboard() tiles (one P&L/win-rate tile pair per registered strategy with capabilities.paperTrading) AND its running-trades table (a second, previously-undocumented hardcoded badge ternary found and fixed in the same pass); showPanel() (one generic manifest.panelId lookup replaces two if(name===...) blocks); applyDeveloperModeVisibility() (loops registry entries, a missing entry is left untouched rather than force-defaulted); renderMiniJournal() (inspector id via the resolver, falling back to the existing shared, strategy-neutral tradeInspectorCard id -- never JVM\'s or ALEX\'s own card); journalStrategyBadge() (color via the resolver; an unresolved record renders a new, dedicated neutral badge color, never JVM\'s blue); Strategy Center (the static two-DOM-id tab/content scheme replaced with tabs+content generated per registry entry, in array order, disabled/"Coming Soon" for any entry without the new capabilities.strategyCenterContent flag -- collapses the previous ALEX-specific renderStrategyCenterAlexComingSoon() into one generic renderStrategyCenterComingSoon(manifest)). TWO NEW ADDITIVE MANIFEST FIELDS, required for every future registry entry: badgeColor and capabilities.strategyCenterContent; JVM_MANIFEST/ALEX_MANIFEST both gained real, honest values for both (JVM: unchanged blue, strategyCenterContent:true; ALEX: real purple, strategyCenterContent:false, matching its existing Coming Soon state). ORDERING: every generalized seam renders STRATEGY_REGISTRY in array order -- no separate priority field, matching the project\'s stated bias against speculative configurability. TEST-FIXTURE CORRECTION (disclosed, not silent): 2 pre-existing v12.1.0 fixtures (15, 18) asserted the OLD per-id hardcoded fallback ("JVM still shows via a direct-call fallback even though only its own registry entry was removed") -- a behavior that cannot generalize to a third strategy (there is no generic way to fall back to an unregistered strategy\'s specific global variable). Updated, not weakened, to assert the correct new behavior (a missing entry is safely skipped, not fabricated via fallback); two new fixtures (15b, 18b) cover the separate, still-supported "whole registry is empty" fallback case. A third fixture\'s comment (22) was corrected from describing renderMiniJournal\'s JVM path as untouched dead code to reflecting that it now resolves via the generic v12.2.0 lookup. SYNTHETIC THIRD STRATEGY: since no third real strategy exists yet, a fixture-only, never-shipped synthetic manifest/services pair (id \'test_strategy_zzz\') proves genuine N-strategy support -- not just N=2 with nicer code -- rendering correctly at all seven seams simultaneously with JVM and ALEX, with zero change to either\'s own output, both offline and in a real live-browser session. TESTING: 30 new fixtures in tests/v122_multi_strategy_foundation_tests.js (strategyId on new JVM/ALEX records, legacy label-only resolution for both, strategyId rename-resilience vs. a label-only record correctly becoming unresolvable after a simulated rename, unknown/unregistered-record safe fallback at the badge and inspector seams, registry-order rendering, and the full synthetic-third-strategy sweep across all seven seams plus a zero-mutation check on JVM/ALEX state). Full regression: 204/204 fixtures pass (28 v120 + 30 v121 + 13 v1211 + 53 v1212 + 50 v1213 + 30 v122), zero protected-function/constant drift -- none of the seven touched seams is on PROTECTED_FUNCTIONS. Live browser verification (zero real trade data throughout, zero console errors at every step): Dashboard and Strategy Center render identically to before with only JVM+ALEX registered; a synthetic third strategy injected live produced a third Dashboard tile pair, a gold running-trades badge, a third disabled Strategy Center tab in registry order, and a toggling Developer Mode card, while JVM\'s and ALEX\'s own data stayed untouched; an injected unresolvable ("ghost") journal record rendered its own label in the dedicated neutral badge color, confirmed visually distinct from JVM\'s blue, ALEX\'s purple, and the synthetic strategy\'s gold. NOT in this release: TJR/ICT/Silver Bullet\'s actual trading logic (a separate, later release implements one using this now-generalized framework, per ADR-006 §4\'s fixed onboarding checklist); dynamic/pluggable code loading (MOGO remains one static file, every strategy still ships compiled in and registered at top level); a standardized internal engine pipeline (JVM\'s and ALEX\'s genuinely different internal models are untouched, matching ADR-005). See ADR-006 for the full design and rationale. Syntax clean, known-good hash unchanged.',
@@ -2007,6 +2039,12 @@ let paperLifecycleLog=[]; // developer-only, in-memory only, never persisted -- 
 let paperEngineErrors=[]; // surfaced in Diagnostics instead of being silently swallowed
 let paperReconciliationAudit=[]; // own fxhub_paper_reconciliation_audit key -- records every explicit, user-confirmed reconciliation action
 let paperLedgerBlockingError=null; // v11.0.1: current commitPaperLedger() rejection message, or null -- rendered prominently on Paper Trading regardless of Developer Mode; see commitPaperLedger()
+// v12.3.2 Final Pre-Commit Integrity Gate: distinct from paperLedgerBlockingError above -- that
+// one means "a normal commit was rejected and storage is provably unchanged." This one means a
+// compensating rollback write ITSELF failed after a partial commit, so storage may now be
+// genuinely inconsistent. Runtime-only (never persisted); cleared only by a subsequent
+// successful commit or an explicit reload. See commitPaperLedger()/computePaperTradingHealthReport().
+let paperLedgerIntegrityWarning=null;
 let autoScan={enabled:false,lastRunAt:null};
 let autoScanTimer=null;
 let aiChat={key:'',model:'claude-sonnet-5',messages:[]};
@@ -2038,6 +2076,14 @@ const STRATEGY_ALEXG='alex_g_sr_v1';
 // ── ALEX G STATE (fully separate from every current-strategy state object above) ──
 let alexGAccount={balance:10000,openPositions:[],closedPositions:[]};
 let alexGJournalEntries=[];
+// v12.3.2: ALEX version-guard state, mirroring JVM's paperAccountKnownVersion -- this
+// session's last-known fxhub_alexg_account_version. See saveAlexGAccountGuarded()/
+// commitAlexGLedger() below for why this is scoped to the account only, not the journal
+// or alexGAutoTrading/alexGZoneState/alexGSetupState.
+let alexGAccountKnownVersion=0;
+let alexGEngineErrors=[]; // surfaced in Diagnostics, mirrors paperEngineErrors -- kept separate so ALEX and JVM engine errors are never blended into one strategy's log
+let alexGLedgerBlockingError=null; // current commitAlexGLedger() rejection message, or null -- mirrors paperLedgerBlockingError
+let alexGLedgerIntegrityWarning=null; // mirrors paperLedgerIntegrityWarning -- set only when a compensating rollback write itself fails
 // v4.2: activatedAt (ms) is the live-trading activation cutoff -- only setups
 // with qualificationTimestamp>=activatedAt may open a live paper trade (set
 // fresh every time `enabled` transitions false->true, so a period spent
@@ -2085,6 +2131,7 @@ let alexGLiveInterval=null;    // the 60s polling timer handle, session-only
 // the frozen alexGCloseLivePosition for Alex G) -- they are distinguished only by an
 // additive isDeveloperTrade/tradeSource tag, never by special-cased trading logic.
 let developerModeEnabled=false;
+let paperTradingHealthReportCache=null; // v12.3.2: last-computed Health Check report, held only in memory for Copy Health Report -- never persisted to localStorage
 let hideTestTradesPaper=false;
 let hideTestTradesAlex=false;
 
@@ -2221,6 +2268,10 @@ function applyJournalCloseUpdate(store,tradeId,closeFields,whyClosedText){
   if(closeFields.maeR!=null) entry.maeR=closeFields.maeR;
   if(closeFields.mfeR!=null) entry.mfeR=closeFields.mfeR;
   entry.exitDetectionSource=closeFields.exitDetectionSource||entry.exitDetectionSource||null;
+  // v12.3.2: normalized close-reason, additive -- a record whose closer didn't supply one
+  // (any close before this release) simply keeps whatever it already had (null for a legacy
+  // record), never backfilled or guessed at.
+  entry.closeReason=closeFields.closeReason!=null?closeFields.closeReason:(entry.closeReason||null);
   entry.durationMs=(entry.openedAt&&entry.closedAt)?(new Date(entry.closedAt).getTime()-new Date(entry.openedAt).getTime()):null;
   if(whyClosedText!=null) entry.whyClosed=whyClosedText;
   return entry;
@@ -2236,7 +2287,7 @@ function journalNoteCloseJVM(pos,closed){
     const resultR=(pos.riskAmount&&closed.pnl!=null)?parseFloat((closed.pnl/pos.riskAmount).toFixed(2)):null;
     const whyClosed=computeJVMCloseExplanation(pos,closed);
     applyJournalCloseUpdate(journalEntries,pos.id,
-      {closedAt:closed.closedAt,exitPrice:closed.exitPrice,result:closed.result,resultR,pnl:closed.pnl,exitDetectionSource:null},whyClosed);
+      {closedAt:closed.closedAt,exitPrice:closed.exitPrice,result:closed.result,resultR,pnl:closed.pnl,exitDetectionSource:null,closeReason:closed.closeReason},whyClosed);
   }catch(e){}
 }
 function journalNoteOpenAlex(pos){
@@ -2344,18 +2395,152 @@ function snapshotAlexGConfig(){
 
 // ── ALEX G SAVE/LOAD (fully separate from save()/loadSaved() below; uses only
 // fxhub_alexg_* keys; never reads or writes any existing current-strategy key) ──
-function saveAlexG(){
+//
+// v12.3.2 Paper Trading Operational Audit, Decision 1, corrected in the Final Ledger Atomicity
+// Review: ALEX previously persisted through a single unguarded saveAlexG() with no staleness
+// check at all -- a stale in-memory session (an old tab, or a session that hasn't reloaded
+// since another tab traded) could silently overwrite newer persisted account/journal data with
+// no warning, unlike JVM's savePaperAccountGuarded()/commitPaperLedger(). This is NOT a blind
+// copy of JVM's architecture: alexGAutoTrading/alexGZoneState/alexGSetupState (toggle state,
+// zone-engine research state -- never trade-mutating) are deliberately left OUTSIDE the guarded
+// unit so toggling Live Trading in one tab can never make another tab's real trade commit look
+// stale -- bundling unrelated saves under one version gate was JVM's own real historical bug
+// (v11.0.1). What IS bundled together, as of this correction, is the account AND the journal:
+// an initial draft of this correction split them the same way JVM used to (account guarded,
+// journal written separately via saveAlexGRest()) -- but that reintroduced the exact
+// split-transaction gap v11.0.1 fixed for JVM, just for ALEX: a successful account/version write
+// followed by a failed journal write left persisted account and journal genuinely divergent
+// after reload, with commitAlexGLedger() still reporting success. fxhub_alexg_account_version
+// tracks ONLY the account+journal unit's own generation.
+//
+// saveAlexGAccountGuarded() -- the ONLY function allowed to persist alexGAccount/
+// fxhub_alexg_account_version/alexGJournalEntries, written together as one logical,
+// all-or-nothing unit exactly like savePaperAccountGuarded() does for JVM: read every pre-op
+// serialized value -> verify the version guard -> serialize both new values before writing
+// anything -> write account, version, journal in order, tracking which keys this attempt
+// actually wrote -> on any write exception, restore every already-written key to its exact
+// pre-op value (or remove it if it did not exist before) and report failure.
+// v12.3.2 Final Pre-Commit Integrity Gate: same correction as savePaperAccountGuarded() above,
+// applied to ALEX -- returns a richer result object in every path instead of a bare boolean, so
+// a rollback write that itself fails ({ok:false,integrityCompromised:true,reason:
+// 'ROLLBACK_FAILED',failedCommitStep,failedRollbackKeys}) is never confused with an ordinary,
+// fully-recovered rejection ({ok:false,integrityCompromised:false,reason}).
+function saveAlexGAccountGuarded(){
+  let persistedAccountBefore,persistedVersionBefore,persistedJournalBefore;
   try{
-    localStorage.setItem('fxhub_alexg_account',JSON.stringify(alexGAccount));
-    localStorage.setItem('fxhub_alexg_journal',JSON.stringify(alexGJournalEntries));
+    persistedAccountBefore=localStorage.getItem('fxhub_alexg_account');
+    persistedVersionBefore=localStorage.getItem('fxhub_alexg_account_version');
+    persistedJournalBefore=localStorage.getItem('fxhub_alexg_journal');
+  }catch(e){
+    recordAlexGEngineError('Alex G ledger commit blocked: could not read current storage before saving: '+(e&&e.message?e.message:String(e)));
+    return{ok:false,integrityCompromised:false,reason:'READ_FAILED'};
+  }
+  const persistedVersion=persistedVersionBefore?parseInt(persistedVersionBefore,10):0;
+  if(persistedVersion>alexGAccountKnownVersion){
+    // Storage already holds a version newer than what this session last loaded or saved --
+    // some other tab/session wrote it. Refuse to clobber it rather than silently
+    // overwriting newer data with this session's stale copy.
+    recordAlexGEngineError('Alex G account save blocked: strategy=ALEX, expectedVersion='+alexGAccountKnownVersion+', persistedVersion='+persistedVersion+'. Storage has a newer version than this session last knew. Reload to pick up the latest state before making further changes.');
+    return{ok:false,integrityCompromised:false,reason:'STALE_VERSION'};
+  }
+  const nextVersion=persistedVersion+1;
+  let newAccountStr,newJournalStr;
+  try{
+    newAccountStr=JSON.stringify(alexGAccount);
+    newJournalStr=JSON.stringify(alexGJournalEntries);
+  }catch(e){
+    recordAlexGEngineError('Alex G ledger commit blocked: could not serialize account/journal for saving: '+(e&&e.message?e.message:String(e)));
+    return{ok:false,integrityCompromised:false,reason:'SERIALIZE_FAILED'};
+  }
+  const newVersionStr=String(nextVersion);
+  const beforeByKey={fxhub_alexg_account:persistedAccountBefore,fxhub_alexg_account_version:persistedVersionBefore,fxhub_alexg_journal:persistedJournalBefore};
+  const written=[];
+  function rollbackWritten(){
+    const failedRollbackKeys=[];
+    written.forEach(key=>{
+      try{
+        const before=beforeByKey[key];
+        if(before==null) localStorage.removeItem(key); else localStorage.setItem(key,before);
+      }catch(e){ failedRollbackKeys.push(key); }
+    });
+    return failedRollbackKeys;
+  }
+  let currentStep=null;
+  try{
+    currentStep='fxhub_alexg_account'; localStorage.setItem('fxhub_alexg_account',newAccountStr); written.push('fxhub_alexg_account');
+    currentStep='fxhub_alexg_account_version'; localStorage.setItem('fxhub_alexg_account_version',newVersionStr); written.push('fxhub_alexg_account_version');
+    currentStep='fxhub_alexg_journal'; localStorage.setItem('fxhub_alexg_journal',newJournalStr); written.push('fxhub_alexg_journal');
+  }catch(e){
+    const failedRollbackKeys=rollbackWritten();
+    if(failedRollbackKeys.length){
+      recordAlexGEngineError('FATAL: strategy=ALEX, operation=commitAlexGLedger, failedCommitStep='+currentStep+', failedRollbackKeys=['+failedRollbackKeys.join(',')+'], expectedVersion='+alexGAccountKnownVersion+', persistedVersionAtStart='+persistedVersion+'. A compensating rollback write itself failed -- persisted state may be inconsistent. Run Diagnostics > Paper Trading Health Check.');
+      return{ok:false,integrityCompromised:true,reason:'ROLLBACK_FAILED',failedCommitStep:currentStep,failedRollbackKeys};
+    }
+    recordAlexGEngineError('Alex G ledger commit failed and was fully rolled back (account/version/journal all restored to their pre-commit values): '+(e&&e.message?e.message:String(e)));
+    return{ok:false,integrityCompromised:false,reason:'WRITE_FAILED'};
+  }
+  alexGAccountKnownVersion=nextVersion;
+  return{ok:true,integrityCompromised:false};
+}
+function recordAlexGEngineError(msg){
+  alexGEngineErrors.unshift({message:msg,at:new Date().toISOString()});
+  alexGEngineErrors=alexGEngineErrors.slice(0,50);
+}
+// saveAlexGRest() -- everything saveAlexG() used to write EXCEPT the account+journal (now part
+// of the atomic unit above): auto/zone/setup state only. Unguarded, called from non-account-
+// mutating places (auto-trading toggle, zone/setup engine writes, the one-time journalEntryId
+// backfill) exactly as JVM's own save() is for its own non-ledger state.
+function saveAlexGRest(){
+  try{
     localStorage.setItem('fxhub_alexg_auto',JSON.stringify(alexGAutoTrading));
     localStorage.setItem('fxhub_alexg_zones',JSON.stringify(alexGZoneState));
     localStorage.setItem('fxhub_alexg_setups',JSON.stringify(alexGSetupState));
   }catch(e){}
 }
+// saveAlexG() -- back-compat alias, now scoped to exactly what its remaining (non-account-
+// mutating) call sites need: toggleAlexGLiveTrading(). migrateJournalEntryIds()'s ALEX branch
+// mutates alexGJournalEntries specifically, which now lives in the guarded unit above -- see
+// its own call site for how that's handled without a full account-mutation commit.
+function saveAlexG(){
+  saveAlexGRest();
+}
+// commitAlexGLedger() -- the ONLY function allowed to persist alexGAccount/alexGJournalEntries.
+// saveAlexGAccountGuarded() now persists both as one atomic unit; only once that succeeds does
+// this call saveAlexGRest() for the unrelated, non-ledger state it covers (auto-trading
+// toggle/zone/setup state), which keeps its existing best-effort semantics since it was never
+// part of this correction's scope. Every ALEX account-mutation call site is responsible for
+// snapshotting alexGAccount/alexGJournalEntries BEFORE calling this and rolling back to that
+// snapshot when the result is {ok:false} -- this function has no way to know what a given
+// caller changed and cannot roll anything back itself. Mirrors commitPaperLedger() exactly.
+function commitAlexGLedger(){
+  const result=saveAlexGAccountGuarded();
+  if(!result.ok){
+    if(result.integrityCompromised){
+      // Fatal: a compensating rollback write itself failed -- categorically different from an
+      // ordinary rejection. Never displayed as trade success, never as an ordinary stale-tab
+      // warning.
+      alexGLedgerIntegrityWarning='Alex G paper trading data may be inconsistent after a failed save-and-restore attempt (ALEX). Do not assume your last action succeeded. Open Diagnostics > Developer Mode > Paper Trading Health Check to review your real account and journal state before continuing to trade.';
+      // reason is deliberately the same human-readable text as the warning above (not the terse
+      // result.reason code like 'ROLLBACK_FAILED') -- mirrors commitPaperLedger()'s fatal branch.
+      // The terse code is still available under reasonCode for anything that needs to branch on it.
+      return{ok:false,integrityCompromised:true,reason:alexGLedgerIntegrityWarning,reasonCode:result.reason,failedCommitStep:result.failedCommitStep,failedRollbackKeys:result.failedRollbackKeys};
+    }
+    // saveAlexGAccountGuarded() already recorded the specific reason (stale version vs. a
+    // storage-read/serialize/write exception) via recordAlexGEngineError() -- this banner
+    // text covers both, since either way the action was not applied and storage was left
+    // unchanged.
+    alexGLedgerBlockingError='Your Alex G paper trading data could not be saved (either a newer version already exists in another tab, or the save itself failed) — no changes were applied. Reload this page and check Diagnostics for the specific reason before trying again.';
+    return{ok:false,integrityCompromised:false,reason:alexGLedgerBlockingError};
+  }
+  alexGLedgerBlockingError=null;
+  alexGLedgerIntegrityWarning=null;
+  saveAlexGRest();
+  return{ok:true,integrityCompromised:false};
+}
 function loadAlexGSaved(){
   try{
     const a=localStorage.getItem('fxhub_alexg_account');if(a) alexGAccount=JSON.parse(a);
+    const av=localStorage.getItem('fxhub_alexg_account_version');alexGAccountKnownVersion=av?parseInt(av,10):0; // v12.3.2: sync this session's known version at load time, mirrors loadSaved()
     const j=localStorage.getItem('fxhub_alexg_journal');if(j) alexGJournalEntries=JSON.parse(j);
     const at=localStorage.getItem('fxhub_alexg_auto');if(at) alexGAutoTrading=JSON.parse(at);
     const z=localStorage.getItem('fxhub_alexg_zones');if(z) alexGZoneState=JSON.parse(z);
@@ -3766,10 +3951,22 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta){
     return;
   }
   const position=result.position;
+  // v12.3.2: snapshot BEFORE mutating, so a rejected ledger commit (below) can be rolled
+  // back cleanly -- the position and its journal record must not exist in memory if the
+  // account write itself didn't actually persist. Mirrors openPaperPosition()'s own pattern.
+  const alexGAccountSnapshot=JSON.parse(JSON.stringify(alexGAccount));
+  const alexGJournalEntriesSnapshot=JSON.parse(JSON.stringify(alexGJournalEntries));
   alexGAccount.openPositions.push(position);
+  journalNoteOpenAlex(position); // v5.0: additive journaling side effect only -- creates one OPEN journal record, never alters direction/entry/stop/target
+  const committed=commitAlexGLedger();
+  if(!committed.ok){
+    alexGAccount=alexGAccountSnapshot;
+    alexGJournalEntries=alexGJournalEntriesSnapshot;
+    renderAlexGLivePanel();
+    return;
+  }
   alexGAutoTrading.tradedSignals[signalId]=true;
   alexGAutoTrading.tradedToday[setup.pair]=new Date().toDateString(); // secondary guard only, non-controlling
-  journalNoteOpenAlex(position); // v5.0: additive journaling side effect only -- creates one OPEN journal record, never alters direction/entry/stop/target
   alexGRecordLiveSetupStatus(base);
   alexGAutoTrading.log.unshift({status:'TRADE OPENED',pair:setup.pair,timeframe:setup.timeframe,setupType:setup.setupType,
     direction:position.direction,entry:position.entry,stop:position.stop,target:position.target,riskAmount:position.riskAmount,
@@ -3999,12 +4196,18 @@ async function alexGCheckLivePositions(){
 // snapshot exit's actual executable tick, per the authorization's "EXIT PRICE" section.
 function alexGCloseLivePosition(tradeId,result,exitPrice,ba,exitMeta){
   const idx=alexGAccount.openPositions.findIndex(p=>p.tradeId===tradeId);
-  if(idx===-1) return;
+  if(idx===-1) return; // already closed (or never existed) -- prevents a sequential duplicate close from double-mutating; cross-tab duplicates are separately caught by commitAlexGLedger()'s version guard below
   const pos=alexGAccount.openPositions[idx];
   const pip=pipSize(pos.pair);
   const movePips=(exitPrice-pos.entry)/pip*(pos.direction==='buy'?1:-1);
   const pnl=movePips*pos.pipValue*pos.positionSize;
   const resultR=result==='Win'?pos.plannedRR:-1; // fixed R per the frozen methodology, not recomputed from actual slippage
+  // v12.3.2: snapshot BEFORE mutating, so a rejected ledger commit (below) rolls the position
+  // back to open and the journal record back to its pre-close state together -- the close
+  // must not be considered to have happened at all if it didn't actually persist. Mirrors
+  // closePaperPosition()'s own pattern.
+  const alexGAccountSnapshot=JSON.parse(JSON.stringify(alexGAccount));
+  const alexGJournalEntriesSnapshot=JSON.parse(JSON.stringify(alexGJournalEntries));
   alexGAccount.balance=parseFloat((alexGAccount.balance+pnl).toFixed(2));
   alexGAccount.openPositions.splice(idx,1);
   const m=exitMeta||{};
@@ -4021,6 +4224,13 @@ function alexGCloseLivePosition(tradeId,result,exitPrice,ba,exitMeta){
   // v5.0: updates the SAME OPEN journal record created at trade-open (by tradeId) rather
   // than appending a second row -- see journalNoteCloseAlex/applyJournalCloseUpdate.
   journalNoteCloseAlex(pos,closed);
+  const committed=commitAlexGLedger();
+  if(!committed.ok){
+    alexGAccount=alexGAccountSnapshot;
+    alexGJournalEntries=alexGJournalEntriesSnapshot;
+    renderAlexGLivePanel();
+    return{error:committed.reason,blocked:true,integrityCompromised:!!committed.integrityCompromised};
+  }
   alexGAutoTrading.log.unshift({status:'CLOSED',pair:pos.pair,timeframe:pos.timeframe,direction:pos.direction,
     result,resultR,pnl:closed.pnl,tradeId:pos.tradeId,at:closed.closedAt});
   alexGAutoTrading.log=alexGAutoTrading.log.slice(0,200);
@@ -4082,8 +4292,17 @@ function toggleAlexGLiveTrading(){
 function resetAlexGLiveAccount(){
   if(mogoLockBlocked())return;
   if(!confirm('Reset the Alex G live paper account? This clears Alex open/closed positions, the Alex journal, and resets the Alex balance to $10,000. Your current-strategy paper account is never touched.')) return;
+  const alexGAccountSnapshot=JSON.parse(JSON.stringify(alexGAccount));
+  const alexGJournalEntriesSnapshot=JSON.parse(JSON.stringify(alexGJournalEntries));
   alexGAccount={balance:10000,openPositions:[],closedPositions:[]};
   alexGJournalEntries=[];
+  const committed=commitAlexGLedger(); // v12.3.2: establishes a valid new version on the reset account, same as every other account-mutating commit
+  if(!committed.ok){
+    alexGAccount=alexGAccountSnapshot;
+    alexGJournalEntries=alexGJournalEntriesSnapshot;
+    alert(committed.reason);
+    return;
+  }
   alexGAutoTrading.tradedSignals={};
   alexGAutoTrading.tradedToday={};
   alexGAutoTrading.log=[];
@@ -4151,9 +4370,17 @@ function generateTestAlexTrade(direction,forceResult){
     firstLiveEvaluationTimestamp:Date.now(),signalAgeMinutesAtEvaluation:0,liveEvaluationFinal:true,
     isDeveloperTrade:true,tradeSource:'TEST'
   };
+  const alexGAccountSnapshot=JSON.parse(JSON.stringify(alexGAccount));
+  const alexGJournalEntriesSnapshot=JSON.parse(JSON.stringify(alexGJournalEntries));
   alexGAccount.openPositions.push(pos);
   journalNoteOpenAlex(pos); // v5.0: additive journaling side effect only
-  saveAlexG();
+  const committed=commitAlexGLedger();
+  if(!committed.ok){
+    alexGAccount=alexGAccountSnapshot;
+    alexGJournalEntries=alexGJournalEntriesSnapshot;
+    alert(committed.reason);
+    return;
+  }
   renderAlexGLivePanel();
   playAlexGAlert();
   showAlexGLiveToast(pos);
@@ -4172,6 +4399,8 @@ function toggleHideTestTradesAlex(){
 }
 function clearTestTradesAlex(){
   if(!confirm('Clear all TEST trades from the Alex G live paper account? Any realized P&L those specific test trades produced is reversed out of your balance first. Real Alex trades are never touched.'))return;
+  const alexGAccountSnapshot=JSON.parse(JSON.stringify(alexGAccount));
+  const alexGJournalEntriesSnapshot=JSON.parse(JSON.stringify(alexGJournalEntries));
   const testClosed=alexGAccount.closedPositions.filter(p=>p.isDeveloperTrade);
   const testTradeIds=new Set(
     alexGAccount.openPositions.filter(p=>p.isDeveloperTrade).map(p=>p.tradeId).concat(testClosed.map(p=>p.tradeId))
@@ -4181,14 +4410,32 @@ function clearTestTradesAlex(){
   alexGAccount.openPositions=alexGAccount.openPositions.filter(p=>!p.isDeveloperTrade);
   alexGAccount.closedPositions=alexGAccount.closedPositions.filter(p=>!p.isDeveloperTrade);
   alexGJournalEntries=alexGJournalEntries.filter(e=>!testTradeIds.has(e.tradeId));
-  saveAlexG();
+  const committed=commitAlexGLedger();
+  if(!committed.ok){
+    alexGAccount=alexGAccountSnapshot;
+    alexGJournalEntries=alexGJournalEntriesSnapshot;
+    alert(committed.reason);
+    return;
+  }
   renderAlexGLivePanel();
 }
 
 function alexGLiveStatCard(val,label,color){
   return `<div class="stat-card"><div class="stat-val"${color?` style="color:${color}"`:''}>${val}</div><div class="stat-lbl">${label}</div></div>`;
 }
+// v12.3.2 Final Pre-Commit Integrity Gate: mirrors renderPaperLedgerIntegrityWarningBanner() --
+// purely read-only, never creates or modifies any localStorage key.
+function renderAlexGLedgerIntegrityWarningBanner(){
+  const el=document.getElementById('alexGLedgerIntegrityWarningBanner');
+  if(!el) return;
+  if(!alexGLedgerIntegrityWarning){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="card" style="background:rgba(220,50,50,0.2);border:2px solid var(--red);margin-bottom:12px">
+    <div style="color:var(--red);font-weight:700;font-size:12px">⚠ POSSIBLE DATA INCONSISTENCY -- Paper Trading Health Check recommended</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">${escapeHtml(alexGLedgerIntegrityWarning)}</div>
+  </div>`;
+}
 function renderAlexGLivePanel(){
+  renderAlexGLedgerIntegrityWarningBanner();
   const toggleBtn=document.getElementById('alexgLiveToggleBtn');
   const statusEl=document.getElementById('alexgLiveStatus');
   if(toggleBtn){
@@ -4509,23 +4756,90 @@ function recordPaperEngineError(msg){
   paperEngineErrors.unshift({message:msg,at:new Date().toISOString()});
   paperEngineErrors=paperEngineErrors.slice(0,50);
 }
+// v12.3.2 Final Ledger Atomicity Review: account, version, AND journal are now written as one
+// logical, all-or-nothing unit. localStorage has no native transactions, so atomicity is
+// implemented directly: read the exact pre-op serialized value of every key in the unit ->
+// verify the version guard -> serialize both new values BEFORE writing anything (a
+// serialization exception here means literally nothing has been written yet) -> write
+// fxhub_paper, fxhub_paper_version, fxhub_journal in order, tracking exactly which of the three
+// this attempt has actually written -> if any write throws, restore every already-written key
+// to its exact pre-op value (or remove it, if it did not exist before) and report failure.
+// Previously, this function wrote only the account+version, and the journal was written
+// separately (and unconditionally) inside the general save() below -- meaning a successful
+// account/version write followed by a failed journal write left the persisted account and
+// journal genuinely divergent after reload, with commitPaperLedger() still reporting success.
+// That gap is what this correction closes; the reasoning that general save() must never touch
+// paperAccount/fxhub_paper_version itself (directly below) is unchanged, but fxhub_journal is
+// no longer save()'s to write either -- it moves into this same atomic unit.
+// v12.3.2 Final Pre-Commit Integrity Gate: localStorage gives no guarantee that a compensating
+// rollback write will itself succeed. Every prior version of this function treated "rollback
+// attempted" as equivalent to "rollback succeeded" -- silently swallowing a THIRD failure (the
+// rollback write itself throwing) and reporting the exact same {ok:false} shape as an ordinary,
+// fully-recovered rejection. That is dishonest: if a rollback write fails, storage may now hold
+// a genuinely partial, inconsistent commit, and callers/users must be told this is categorically
+// different from "nothing changed, try again." This function now returns a richer result object
+// in every path (never a bare boolean): {ok:true} on success; {ok:false,integrityCompromised:
+// false,reason} for an ordinary rejection (stale version, or a write failure whose rollback
+// fully succeeded); {ok:false,integrityCompromised:true,reason:'ROLLBACK_FAILED',
+// failedCommitStep,failedRollbackKeys} when a rollback write itself failed -- storage may be
+// inconsistent and this is surfaced as a distinct, non-recoverable-automatically state.
 function savePaperAccountGuarded(){
+  let persistedAccountBefore,persistedVersionBefore,persistedJournalBefore;
   try{
-    const rawVersion=localStorage.getItem('fxhub_paper_version');
-    const persistedVersion=rawVersion?parseInt(rawVersion,10):0;
-    if(persistedVersion>paperAccountKnownVersion){
-      // Storage already holds a version newer than what this session last loaded
-      // or saved -- some other tab/session wrote it. Refuse to clobber it rather
-      // than silently overwriting newer data with this session's stale copy.
-      recordPaperEngineError('Paper account save blocked: storage has version '+persistedVersion+' but this session last knew version '+paperAccountKnownVersion+'. Reload to pick up the latest state before making further changes.');
-      return false;
+    persistedAccountBefore=localStorage.getItem('fxhub_paper');
+    persistedVersionBefore=localStorage.getItem('fxhub_paper_version');
+    persistedJournalBefore=localStorage.getItem('fxhub_journal');
+  }catch(e){
+    recordPaperEngineError('Paper ledger commit blocked: could not read current storage before saving: '+(e&&e.message?e.message:String(e)));
+    return{ok:false,integrityCompromised:false,reason:'READ_FAILED'};
+  }
+  const persistedVersion=persistedVersionBefore?parseInt(persistedVersionBefore,10):0;
+  if(persistedVersion>paperAccountKnownVersion){
+    // Storage already holds a version newer than what this session last loaded
+    // or saved -- some other tab/session wrote it. Refuse to clobber it rather
+    // than silently overwriting newer data with this session's stale copy.
+    recordPaperEngineError('Paper account save blocked: strategy=JVM, expectedVersion='+paperAccountKnownVersion+', persistedVersion='+persistedVersion+'. Storage has a newer version than this session last knew. Reload to pick up the latest state before making further changes.');
+    return{ok:false,integrityCompromised:false,reason:'STALE_VERSION'};
+  }
+  const nextVersion=persistedVersion+1;
+  let newAccountStr,newJournalStr;
+  try{
+    newAccountStr=JSON.stringify(paperAccount);
+    newJournalStr=JSON.stringify(journalEntries);
+  }catch(e){
+    recordPaperEngineError('Paper ledger commit blocked: could not serialize account/journal for saving: '+(e&&e.message?e.message:String(e)));
+    return{ok:false,integrityCompromised:false,reason:'SERIALIZE_FAILED'};
+  }
+  const newVersionStr=String(nextVersion);
+  const beforeByKey={fxhub_paper:persistedAccountBefore,fxhub_paper_version:persistedVersionBefore,fxhub_journal:persistedJournalBefore};
+  const written=[];
+  // Returns the list of keys whose rollback write ITSELF failed -- never silently swallowed.
+  function rollbackWritten(){
+    const failedRollbackKeys=[];
+    written.forEach(key=>{
+      try{
+        const before=beforeByKey[key];
+        if(before==null) localStorage.removeItem(key); else localStorage.setItem(key,before);
+      }catch(e){ failedRollbackKeys.push(key); }
+    });
+    return failedRollbackKeys;
+  }
+  let currentStep=null;
+  try{
+    currentStep='fxhub_paper'; localStorage.setItem('fxhub_paper',newAccountStr); written.push('fxhub_paper');
+    currentStep='fxhub_paper_version'; localStorage.setItem('fxhub_paper_version',newVersionStr); written.push('fxhub_paper_version');
+    currentStep='fxhub_journal'; localStorage.setItem('fxhub_journal',newJournalStr); written.push('fxhub_journal');
+  }catch(e){
+    const failedRollbackKeys=rollbackWritten();
+    if(failedRollbackKeys.length){
+      recordPaperEngineError('FATAL: strategy=JVM, operation=commitPaperLedger, failedCommitStep='+currentStep+', failedRollbackKeys=['+failedRollbackKeys.join(',')+'], expectedVersion='+paperAccountKnownVersion+', persistedVersionAtStart='+persistedVersion+'. A compensating rollback write itself failed -- persisted state may be inconsistent. Run Diagnostics > Paper Trading Health Check.');
+      return{ok:false,integrityCompromised:true,reason:'ROLLBACK_FAILED',failedCommitStep:currentStep,failedRollbackKeys};
     }
-    const nextVersion=persistedVersion+1;
-    localStorage.setItem('fxhub_paper',JSON.stringify(paperAccount));
-    localStorage.setItem('fxhub_paper_version',String(nextVersion));
-    paperAccountKnownVersion=nextVersion;
-    return true;
-  }catch(e){ recordPaperEngineError('Paper account save threw: '+(e&&e.message?e.message:String(e))); return false; }
+    recordPaperEngineError('Paper ledger commit failed and was fully rolled back (account/version/journal all restored to their pre-commit values): '+(e&&e.message?e.message:String(e)));
+    return{ok:false,integrityCompromised:false,reason:'WRITE_FAILED'};
+  }
+  paperAccountKnownVersion=nextVersion;
+  return{ok:true,integrityCompromised:false};
 }
 // v11.0.1: general save() must NEVER write or version paperAccount itself -- it is called
 // from dozens of unrelated places (scanner renders, alerts, checklist edits, autoScan,
@@ -4534,17 +4848,16 @@ function savePaperAccountGuarded(){
 // calls even though paperAccount itself hadn't changed. That let one tab's completely
 // unrelated save() (e.g. toggling a checklist item) silently advance fxhub_paper_version,
 // making a different, actively-trading tab's NEXT real trade look "stale" and get rejected
-// for no real conflict at all. Worse, because this function used to write fxhub_journal
-// BEFORE attempting the guarded paperAccount write, a genuinely rejected paperAccount write
-// still left an already-persisted journal record behind with no matching account position --
-// a real JOURNAL_ONLY orphan, exactly matching the reported bug. paperAccount/fxhub_paper are
-// now written ONLY by commitPaperLedger() below, called only from the specific paper-ledger
-// mutation call sites (open/close/setBalance/reset/test-clear/reconciliation) -- see this
-// release's changelog entry for the full reasoning and the independent review that found it.
+// for no real conflict at all. v12.3.2: fxhub_journal moved out of this function too (see
+// savePaperAccountGuarded() above) for the same reason -- it is now part of the same atomic
+// unit as the account/version it must never be persisted ahead of or independently from.
+// paperAccount/fxhub_paper and journalEntries/fxhub_journal are now written ONLY by
+// commitPaperLedger() below, called only from the specific paper-ledger mutation call sites
+// (open/close/setBalance/reset/test-clear/reconciliation) -- see this release's changelog
+// entry for the full reasoning and the independent review that found it.
 function save(){
   try{
     localStorage.setItem('fxhub_scan',JSON.stringify(scanData));
-    localStorage.setItem('fxhub_journal',JSON.stringify(journalEntries));
     localStorage.setItem('fxhub_checklist',JSON.stringify(checklistState));
     localStorage.setItem('fxhub_alerts',JSON.stringify(alertLog));
     localStorage.setItem('fxhub_env',cfg.env);
@@ -4555,24 +4868,47 @@ function save(){
     localStorage.setItem('fxhub_paper_reconciliation_audit',JSON.stringify(paperReconciliationAudit)); // v11.0: isolated audit trail
   }catch(e){}
 }
-// v11.0.1: the ONE AND ONLY function allowed to persist paperAccount/fxhub_paper_version.
-// Attempts the guarded paper-account write FIRST; only if that succeeds does it persist
-// everything else save() covers (the linked journalEntries mutation, autoTrading.tradedToday/
-// log, paperResetHistory, paperReconciliationAudit, etc.) -- this is what actually closes the
-// split-transaction gap, since the journal write can no longer happen ahead of a paper-account
-// write that might still be rejected. Every paper-ledger mutation call site is responsible for
-// snapshotting whatever it's about to mutate (paperAccount, journalEntries, autoTrading, ...)
-// BEFORE calling this, and rolling back to that snapshot when the result is {ok:false} -- this
-// function has no way to know what a given caller changed and cannot roll anything back itself.
+// v11.0.1, corrected v12.3.2: the ONE AND ONLY function allowed to persist paperAccount/
+// fxhub_paper_version/journalEntries. savePaperAccountGuarded() now persists all three as one
+// atomic unit (account+version+journal, in that order, fully rolled back together if any of the
+// three writes throws) -- only once that unit has genuinely succeeded does this call save() for
+// the unrelated, non-ledger state it covers (autoTrading.tradedToday/log bookkeeping,
+// paperResetHistory, paperReconciliationAudit, etc.), which keeps its existing best-effort
+// semantics since it was never part of this correction's scope. Every paper-ledger mutation call
+// site is still responsible for snapshotting whatever it's about to mutate (paperAccount,
+// journalEntries, autoTrading, ...) BEFORE calling this, and rolling back to that snapshot when
+// the result is {ok:false} -- this function has no way to know what a given caller changed and
+// cannot roll anything back itself; savePaperAccountGuarded() only guarantees storage itself
+// ends up either fully updated or fully unchanged, not that this session's own in-memory state
+// (which the caller mutated before calling this) gets reverted.
 function commitPaperLedger(){
-  const ok=savePaperAccountGuarded();
-  if(!ok){
-    paperLedgerBlockingError='Your paper trading data is out of date in this browser tab — another tab or session has saved a newer version. This action was NOT applied. Reload this page before trying again.';
-    return{ok:false,reason:paperLedgerBlockingError};
+  const result=savePaperAccountGuarded();
+  if(!result.ok){
+    if(result.integrityCompromised){
+      // Fatal: a compensating rollback write itself failed. This is categorically different from
+      // an ordinary rejection -- never displayed as a stale-tab warning, never as trade success.
+      // paperLedgerBlockingError is deliberately NOT set here (that banner implies "reload and
+      // retry is enough"); this is its own, more severe state.
+      paperLedgerIntegrityWarning='Paper trading data may be inconsistent after a failed save-and-restore attempt (JVM). Do not assume your last action succeeded. Open Diagnostics > Developer Mode > Paper Trading Health Check to review your real account and journal state before continuing to trade.';
+      // reason is deliberately the same human-readable text as the warning above (not the terse
+      // result.reason code like 'ROLLBACK_FAILED') -- every existing caller does alert(committed.reason)
+      // or displays it as text, and a raw code string there would be confusing. The terse code is
+      // still available under reasonCode for anything that needs to branch on it programmatically.
+      return{ok:false,integrityCompromised:true,reason:paperLedgerIntegrityWarning,reasonCode:result.reason,failedCommitStep:result.failedCommitStep,failedRollbackKeys:result.failedRollbackKeys};
+    }
+    // savePaperAccountGuarded() already recorded the specific reason (stale version vs. a
+    // storage-read/serialize/write exception) via recordPaperEngineError() -- this banner text
+    // covers both, since either way the action was not applied and storage was left unchanged.
+    paperLedgerBlockingError='Your paper trading data could not be saved (either a newer version already exists in another tab, or the save itself failed) — no changes were applied. Reload this page and check Diagnostics for the specific reason before trying again.';
+    return{ok:false,integrityCompromised:false,reason:paperLedgerBlockingError};
   }
   paperLedgerBlockingError=null;
+  // A fresh successful commit does not retroactively prove any earlier fatal warning was wrong
+  // (that warning was about a DIFFERENT, already-attempted operation) -- but it does mean this
+  // session's own write path is currently healthy again, so the runtime warning is cleared.
+  paperLedgerIntegrityWarning=null;
   save();
-  return{ok:true};
+  return{ok:true,integrityCompromised:false};
 }
 function loadSaved(){
   try{
@@ -7642,12 +7978,21 @@ function approveManualReviewTrade(oPair){
   }
   const committed=commitPaperLedger();
   if(!committed.ok){
-    // Roll back: this candidate's position/journal record must not partially persist.
+    // Roll back the in-memory addition either way -- but only attempt a SECOND persisted write
+    // (to actually remove the position/journal record that this function's own earlier,
+    // already-successful openPaperPosition() commit put into storage) when this was an ORDINARY
+    // rejection. If this commit came back integrityCompromised, storage may already be left in an
+    // unknown partial state by a failed compensating rollback -- attempting another write on top
+    // of that here would be exactly the "automatically retry a write after a possible integrity
+    // compromise" behavior the ledger's safety contract forbids. In that case, in-memory state is
+    // still restored to pre-attribution-add (satisfying "preserve pre-operation snapshots where
+    // possible"), but no further persisted write is attempted; the fatal warning already set by
+    // commitPaperLedger() itself is what surfaces to the user.
     paperAccount.openPositions=paperAccount.openPositions.filter(p=>p.id!==pos.id);
     const idx=journalEntries.findIndex(e=>e.tradeId===pos.id);
     if(idx!==-1) journalEntries.splice(idx,1);
-    commitPaperLedger();
-    return{ok:false,reason:committed.reason};
+    if(!committed.integrityCompromised) commitPaperLedger();
+    return{ok:false,reason:committed.reason,integrityCompromised:!!committed.integrityCompromised};
   }
   manualReviewApprovedDecisionTs[oPair]=b.decisionTs;
   delete manualReviewCandidates[oPair];
@@ -9351,7 +9696,11 @@ function logTrade(){
     session:document.getElementById('j-session').value,
     notes:document.getElementById('j-notes').value,
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})});
-  renderJournal();clearJForm();save();
+  // v12.3.2: journalEntries is now written only as part of the atomic account+journal unit --
+  // a bare save() no longer touches fxhub_journal at all, even for a manual, account-unrelated
+  // entry like this one.
+  commitPaperLedger();
+  renderJournal();clearJForm();
 }
 function clearJForm(){
   ['j-pair','j-dir','j-result','j-grade','j-session'].forEach(id=>document.getElementById(id).value='');
@@ -9360,7 +9709,9 @@ function clearJForm(){
 function deleteEntry(id){
   if(mogoLockBlocked())return;
   if(!confirm('Permanently delete this journal entry? This cannot be undone.')) return;
-  journalEntries=journalEntries.filter(e=>e.id!==id);renderJournal();save();
+  journalEntries=journalEntries.filter(e=>e.id!==id);
+  commitPaperLedger(); // v12.3.2: journalEntries now persists only through the atomic account+journal unit
+  renderJournal();
 }
 // ══════════════════════════════════════════════════════════════════════════
 // ── v5.0 UNIFIED JOURNAL NORMALIZER (read-side) ──
@@ -9402,6 +9753,7 @@ function normalizeJournalRecord(raw,storeStrategy){
     maePips:raw.maePips!=null?raw.maePips:null,mfePips:raw.mfePips!=null?raw.mfePips:null,
     maeR:raw.maeR!=null?raw.maeR:null,mfeR:raw.mfeR!=null?raw.mfeR:null,
     status,exitDetectionSource:raw.exitDetectionSource||null,
+    closeReason:raw.closeReason||null, // v12.3.2: normalized TAKE_PROFIT/STOP_LOSS/MANUAL_CLOSE/BREAK_EVEN/SYSTEM_CLOSE -- null (never fabricated) for any record closed before this release
     durationMs:raw.durationMs!=null?raw.durationMs:((raw.openedAt&&raw.closedAt)?(new Date(raw.closedAt).getTime()-new Date(raw.openedAt).getTime()):null),
     configurationSnapshot:raw.configurationSnapshot||null,
     zoneId:raw.zoneId!=null?raw.zoneId:null,zoneLow:raw.zoneLow!=null?raw.zoneLow:null,zoneHigh:raw.zoneHigh!=null?raw.zoneHigh:null,
@@ -9462,7 +9814,14 @@ function getUnifiedJournalRecords(){
 function getFilteredJournalRecords(filters){
   filters=filters||{};
   let records=getUnifiedJournalRecords();
-  if(filters.strategy&&filters.strategy!=='All') records=records.filter(r=>r.strategyLabel===filters.strategy);
+  // v12.3.2 Paper Trading Operational Audit: strategyId (stable, rename-proof identity per
+  // ADR-006 §0) is now the ownership key here, not strategyLabel (display metadata only, which
+  // could previously misattribute a record if two strategies ever shared or renamed a label).
+  // normalizeJournalRecord() guarantees every record -- including any legacy one with no
+  // explicit strategyId of its own -- already has strategyId populated (falling back to the
+  // literal store it was read from), so no separate legacy-fallback branch is needed here: the
+  // fallback already lives inside the normalizer, isolated and documented at its own call site.
+  if(filters.strategy&&filters.strategy!=='All') records=records.filter(r=>r.strategyId===filters.strategy);
   if(filters.source&&filters.source!=='All') records=records.filter(r=>r.tradeSource===filters.source);
   if(filters.status&&filters.status!=='All') records=records.filter(r=>r.status===filters.status);
   if(filters.result&&filters.result!=='All') records=records.filter(r=>r.result===filters.result);
@@ -9591,6 +9950,178 @@ function computePaperLedgerIntegrity(){
     expectedBalance,actualBalance,balanceDifference,
     newlyOrphanedAfterReset
   };
+}
+// v12.3.2 Paper Trading Operational Audit: Developer Mode "Paper Trading Health Check" --
+// analyzes whatever JVM/ALEX state is ALREADY loaded in this browser (paperAccount/
+// journalEntries/alexGAccount/alexGJournalEntries, all already in memory from loadSaved()/
+// loadAlexGSaved() at connect time) without changing any of it. Strictly read-only: no
+// localStorage.setItem call of any kind lives anywhere in this function or
+// buildPaperTradingHealthReportText() below -- both are pure functions over already-loaded
+// state, confirmed by a dedicated fixture that snapshots every fxhub_* key before and after
+// calling this function and asserts byte-identical output. Reuses computePaperLedgerIntegrity()
+// for JVM's existing, detailed reconciliation rather than reimplementing it; builds an
+// equivalent basic reconciliation for ALEX (no equivalent function exists yet, per this
+// audit's own disclosed finding that ALEX has no reconciliation tooling); adds the
+// cross-cutting checks (strategy-ID mismatches, result/P&L/R mismatches, invalid timestamps/
+// prices, missing strategyId, legacy records, test artifacts) neither per-strategy function
+// covers on its own.
+function computePaperTradingHealthReport(){
+  const jvmIntegrity=computePaperLedgerIntegrity();
+  const jvmOpen=paperAccount.openPositions.length;
+  const jvmClosed=paperAccount.closedPositions.length;
+  const jvmRealizedPnl=parseFloat(paperAccount.closedPositions.reduce((s,p)=>s+(p.pnl||0),0).toFixed(2));
+  const jvmVersion=(function(){ try{ const v=localStorage.getItem('fxhub_paper_version'); return v?parseInt(v,10):0; }catch(e){ return null; } })();
+
+  const alexOpen=alexGAccount.openPositions.length;
+  const alexClosed=alexGAccount.closedPositions.length;
+  const alexRealizedPnl=parseFloat(alexGAccount.closedPositions.reduce((s,p)=>s+(p.pnl||0),0).toFixed(2));
+  const alexVersion=(function(){ try{ const v=localStorage.getItem('fxhub_alexg_account_version'); return v?parseInt(v,10):0; }catch(e){ return null; } })();
+  const alexAllIds=alexGAccount.openPositions.map(p=>p.tradeId).concat(alexGAccount.closedPositions.map(p=>p.tradeId));
+  const alexIdCounts={};
+  alexAllIds.forEach(id=>{alexIdCounts[id]=(alexIdCounts[id]||0)+1;});
+  const alexDuplicateAccountIds=Object.keys(alexIdCounts).filter(id=>alexIdCounts[id]>1);
+  const alexJournalIdCounts={};
+  alexGJournalEntries.forEach(e=>{ if(e.tradeId!=null) alexJournalIdCounts[e.tradeId]=(alexJournalIdCounts[e.tradeId]||0)+1; });
+  const alexDuplicateJournalTradeIds=Object.keys(alexJournalIdCounts).filter(id=>alexJournalIdCounts[id]>1);
+  const alexAccountPositionsWithNoJournal=[];
+  alexGAccount.openPositions.forEach(p=>{ if(!alexGJournalEntries.some(e=>e.tradeId===p.tradeId)) alexAccountPositionsWithNoJournal.push({id:p.tradeId,pair:p.pair,status:'open'}); });
+  alexGAccount.closedPositions.forEach(p=>{ if(!alexGJournalEntries.some(e=>e.tradeId===p.tradeId)) alexAccountPositionsWithNoJournal.push({id:p.tradeId,pair:p.pair,status:'closed'}); });
+  const alexJournalWithNoAccountMatch=alexGJournalEntries.filter(e=>e.tradeId!=null&&!e.isDeveloperTrade&&alexAllIds.indexOf(e.tradeId)===-1).map(e=>({tradeId:e.tradeId}));
+  const alexExpectedBalance=parseFloat((10000+alexGAccount.closedPositions.reduce((s,p)=>s+(p.pnl||0),0)).toFixed(2));
+  const alexActualBalance=alexGAccount.balance;
+  const alexBalanceDifference=parseFloat((alexActualBalance-alexExpectedBalance).toFixed(2));
+
+  // Cross-cutting checks, over the RAW stored records (not the normalized view) so
+  // "records missing strategyId" reflects what's actually persisted, not what the normalizer
+  // would backfill at read time.
+  const isValidTimestamp=t=>{ if(!t) return true; const ms=Date.parse(t); return !Number.isNaN(ms); };
+  const isValidPrice=p=>p==null||(typeof p==='number'&&isFinite(p)&&p>0);
+  const strategyIdMismatches=[],resultMismatches=[],pnlMismatches=[],rMismatches=[],
+    invalidTimestamps=[],invalidPrices=[],missingStrategyId=[],legacyRecords=[],testArtifacts=[];
+
+  function checkStore(records,accountOpen,accountClosed,expectedStrategyId,idField,storeLabel){
+    records.forEach(e=>{
+      if(e.isDeveloperTrade) testArtifacts.push({tradeId:e.tradeId,store:storeLabel});
+      const sid=e.strategyId||e.strategy||null;
+      if(sid==null&&e.tradeId!=null) missingStrategyId.push({tradeId:e.tradeId,store:storeLabel});
+      else if(sid!=null&&sid!==expectedStrategyId) strategyIdMismatches.push({tradeId:e.tradeId,store:storeLabel,foundStrategyId:sid,expected:expectedStrategyId});
+      if(!isValidTimestamp(e.openedAt)) invalidTimestamps.push({tradeId:e.tradeId,store:storeLabel,field:'openedAt',value:e.openedAt});
+      if(!isValidTimestamp(e.closedAt)) invalidTimestamps.push({tradeId:e.tradeId,store:storeLabel,field:'closedAt',value:e.closedAt});
+      if(e.openedAt&&e.closedAt&&isValidTimestamp(e.openedAt)&&isValidTimestamp(e.closedAt)&&Date.parse(e.closedAt)<Date.parse(e.openedAt)){
+        invalidTimestamps.push({tradeId:e.tradeId,store:storeLabel,field:'closedAt<openedAt',value:e.closedAt});
+      }
+      ['entry','stop','target','exitPrice'].forEach(f=>{ if(e[f]!=null&&!isValidPrice(e[f])) invalidPrices.push({tradeId:e.tradeId,store:storeLabel,field:f,value:e[f]}); });
+      if(e.status!=='CLOSED'||e.tradeId==null) return;
+      const match=(accountClosed||[]).find(p=>(p[idField])===e.tradeId)||(accountOpen||[]).find(p=>(p[idField])===e.tradeId);
+      if(!match) return; // already reported via journalWithNoAccountMatch/alexJournalWithNoAccountMatch
+      if(e.result!=null&&match.result!=null&&e.result!==match.result) resultMismatches.push({tradeId:e.tradeId,store:storeLabel,journalResult:e.result,accountResult:match.result});
+      if(e.pnl!=null&&match.pnl!=null&&Math.abs(e.pnl-match.pnl)>0.01) pnlMismatches.push({tradeId:e.tradeId,store:storeLabel,journalPnl:e.pnl,accountPnl:match.pnl});
+      const expectedR=match.resultR!=null?match.resultR:(match.riskAmount?match.pnl/match.riskAmount:null);
+      if(e.resultR!=null&&expectedR!=null&&Math.abs(e.resultR-expectedR)>0.01) rMismatches.push({tradeId:e.tradeId,store:storeLabel,journalR:e.resultR,expectedR:Number(expectedR.toFixed(2))});
+      if(!e.strategy&&!e.strategyId&&e.tradeId!=null) legacyRecords.push({tradeId:e.tradeId,store:storeLabel});
+    });
+  }
+  checkStore(journalEntries,paperAccount.openPositions,paperAccount.closedPositions,'current_strategy','id','JVM');
+  checkStore(alexGJournalEntries,alexGAccount.openPositions,alexGAccount.closedPositions,'alex_g_sr_v1','tradeId','ALEX');
+  journalEntries.filter(e=>e.tradeId==null).forEach(()=>legacyRecords.push({tradeId:null,store:'JVM',note:'no tradeId (pre-v10.0 manual entry)'}));
+
+  const reconciliationStatus=(jvmIntegrity.balanceDifference===0&&alexBalanceDifference===0&&
+    jvmIntegrity.duplicateAccountIds.length===0&&alexDuplicateAccountIds.length===0&&
+    jvmIntegrity.newlyOrphanedAfterReset.length===0&&alexJournalWithNoAccountMatch.length===0&&
+    strategyIdMismatches.length===0&&resultMismatches.length===0&&pnlMismatches.length===0&&rMismatches.length===0)
+    ?'CLEAN — no reconciliation issues detected':'ISSUES DETECTED — see sections above';
+
+  return{
+    generatedAt:new Date().toISOString(),
+    jvm:{openPositions:jvmOpen,closedPositions:jvmClosed,journalRecords:journalEntries.length,
+      balance:paperAccount.balance,realizedPnl:jvmRealizedPnl,ledgerVersion:jvmVersion,
+      integrity:jvmIntegrity},
+    alex:{openPositions:alexOpen,closedPositions:alexClosed,journalRecords:alexGJournalEntries.length,
+      balance:alexGAccount.balance,realizedPnl:alexRealizedPnl,accountVersion:alexVersion,
+      duplicateAccountIds:alexDuplicateAccountIds,duplicateJournalTradeIds:alexDuplicateJournalTradeIds,
+      accountPositionsWithNoJournal:alexAccountPositionsWithNoJournal,journalWithNoAccountMatch:alexJournalWithNoAccountMatch,
+      expectedBalance:alexExpectedBalance,actualBalance:alexActualBalance,balanceDifference:alexBalanceDifference},
+    combined:{strategyIdMismatches,resultMismatches,pnlMismatches,rMismatches,invalidTimestamps,invalidPrices,
+      missingStrategyId,legacyRecords,testArtifacts,reconciliationStatus}
+  };
+}
+// Plain-text formatter for the "Copy Health Report" button -- builds the report text field by
+// field from the computed report object above ONLY (never a raw JSON.stringify of
+// paperAccount/alexGAccount/journalEntries/cfg/aiChat or any other live object), so it
+// structurally cannot include the OANDA key/account ID, the Anthropic key, or any other
+// credential -- none of those ever flow into computePaperTradingHealthReport()'s inputs or
+// outputs in the first place.
+function buildPaperTradingHealthReportText(report){
+  const lines=[];
+  lines.push('MOGO Paper Trading Health Check — '+report.generatedAt);
+  lines.push('');
+  lines.push('JVM: '+report.jvm.openPositions+' open, '+report.jvm.closedPositions+' closed, '+report.jvm.journalRecords+' journal records');
+  lines.push('  Balance: '+fmtCurrency(report.jvm.balance)+' | Realized P&L: '+fmtCurrency(report.jvm.realizedPnl)+' | Ledger version: '+(report.jvm.ledgerVersion!=null?report.jvm.ledgerVersion:'—'));
+  lines.push('  Expected balance: '+fmtCurrency(report.jvm.integrity.expectedBalance)+' | Actual: '+fmtCurrency(report.jvm.integrity.actualBalance)+' | Difference: '+fmtCurrency(report.jvm.integrity.balanceDifference));
+  lines.push('');
+  lines.push('ALEX: '+report.alex.openPositions+' open, '+report.alex.closedPositions+' closed, '+report.alex.journalRecords+' journal records');
+  lines.push('  Balance: '+fmtCurrency(report.alex.balance)+' | Realized P&L: '+fmtCurrency(report.alex.realizedPnl)+' | Account version: '+(report.alex.accountVersion!=null?report.alex.accountVersion:'—'));
+  lines.push('  Expected balance: '+fmtCurrency(report.alex.expectedBalance)+' | Actual: '+fmtCurrency(report.alex.actualBalance)+' | Difference: '+fmtCurrency(report.alex.balanceDifference));
+  lines.push('');
+  const c=report.combined;
+  lines.push('Duplicate trade IDs — JVM: '+report.jvm.integrity.duplicateAccountIds.length+', ALEX: '+report.alex.duplicateAccountIds.length);
+  lines.push('Account trades missing journal — JVM: '+report.jvm.integrity.accountPositionsWithNoJournal.length+', ALEX: '+report.alex.accountPositionsWithNoJournal.length);
+  lines.push('Journal records missing account trade — JVM: '+report.jvm.integrity.journalWithNoAccountMatch.length+' (newly orphaned: '+report.jvm.integrity.newlyOrphanedAfterReset.length+'), ALEX: '+report.alex.journalWithNoAccountMatch.length);
+  lines.push('Strategy-ID mismatches: '+c.strategyIdMismatches.length);
+  lines.push('Result mismatches: '+c.resultMismatches.length);
+  lines.push('P&L mismatches: '+c.pnlMismatches.length);
+  lines.push('R mismatches: '+c.rMismatches.length);
+  lines.push('Invalid timestamps: '+c.invalidTimestamps.length);
+  lines.push('Invalid prices: '+c.invalidPrices.length);
+  lines.push('Records missing strategyId: '+c.missingStrategyId.length);
+  lines.push('Legacy records: '+c.legacyRecords.length);
+  lines.push('Likely test artifacts: '+c.testArtifacts.length);
+  lines.push('');
+  lines.push('Reconciliation status: '+c.reconciliationStatus);
+  return lines.join('\n');
+}
+function renderPaperTradingHealthCheck(){
+  const el=document.getElementById('paperTradingHealthCheckCard');
+  if(!el) return;
+  if(!developerModeEnabled){ el.innerHTML=''; return; }
+  const report=computePaperTradingHealthReport();
+  paperTradingHealthReportCache=report; // read by copyPaperTradingHealthReport() below -- never persisted, never written to localStorage
+  const c=report.combined;
+  const row=(label,val,warn)=>`<div class="dash-row"><span style="color:var(--text2)">${escapeHtml(label)}</span><span${warn?' style="color:var(--red)"':''}>${escapeHtml(String(val))}</span></div>`;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px">
+      <div><div class="section-label" style="margin-bottom:4px">JVM</div>
+        ${row('Open positions',report.jvm.openPositions)}${row('Closed positions',report.jvm.closedPositions)}
+        ${row('Journal records',report.jvm.journalRecords)}${row('Balance',fmtCurrency(report.jvm.balance))}
+        ${row('Realized P&L',fmtCurrency(report.jvm.realizedPnl))}${row('Ledger version',report.jvm.ledgerVersion!=null?report.jvm.ledgerVersion:'—')}
+      </div>
+      <div><div class="section-label" style="margin-bottom:4px">ALEX</div>
+        ${row('Open positions',report.alex.openPositions)}${row('Closed positions',report.alex.closedPositions)}
+        ${row('Journal records',report.alex.journalRecords)}${row('Balance',fmtCurrency(report.alex.balance))}
+        ${row('Realized P&L',fmtCurrency(report.alex.realizedPnl))}${row('Account version',report.alex.accountVersion!=null?report.alex.accountVersion:'—')}
+      </div>
+    </div>
+    <div class="section-label" style="margin-bottom:4px">Combined</div>
+    ${row('Duplicate trade IDs (JVM/ALEX)',report.jvm.integrity.duplicateAccountIds.length+' / '+report.alex.duplicateAccountIds.length,report.jvm.integrity.duplicateAccountIds.length||report.alex.duplicateAccountIds.length)}
+    ${row('Account trades missing journal (JVM/ALEX)',report.jvm.integrity.accountPositionsWithNoJournal.length+' / '+report.alex.accountPositionsWithNoJournal.length,report.jvm.integrity.accountPositionsWithNoJournal.length||report.alex.accountPositionsWithNoJournal.length)}
+    ${row('Journal missing account trade (JVM/ALEX)',report.jvm.integrity.journalWithNoAccountMatch.length+' / '+report.alex.journalWithNoAccountMatch.length,report.jvm.integrity.journalWithNoAccountMatch.length||report.alex.journalWithNoAccountMatch.length)}
+    ${row('Strategy-ID mismatches',c.strategyIdMismatches.length,c.strategyIdMismatches.length)}
+    ${row('Result mismatches',c.resultMismatches.length,c.resultMismatches.length)}
+    ${row('P&L mismatches',c.pnlMismatches.length,c.pnlMismatches.length)}
+    ${row('R mismatches',c.rMismatches.length,c.rMismatches.length)}
+    ${row('Invalid timestamps',c.invalidTimestamps.length,c.invalidTimestamps.length)}
+    ${row('Invalid prices',c.invalidPrices.length,c.invalidPrices.length)}
+    ${row('Records missing strategyId',c.missingStrategyId.length)}
+    ${row('Legacy records',c.legacyRecords.length)}
+    ${row('Likely test artifacts',c.testArtifacts.length)}
+    <div style="margin-top:8px;font-weight:700;color:${c.reconciliationStatus.indexOf('CLEAN')===0?'var(--green)':'var(--red)'}">${escapeHtml(c.reconciliationStatus)}</div>`;
+}
+function copyPaperTradingHealthReport(){
+  if(!paperTradingHealthReportCache) renderPaperTradingHealthCheck();
+  if(!paperTradingHealthReportCache) return;
+  const text=buildPaperTradingHealthReportText(paperTradingHealthReportCache);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(()=>{});
+  alert('Health report copied. Paste it wherever you need it for engineering review — it contains only paper-trading counts/balances/discrepancies, never OANDA credentials, the Anthropic key, or any account identifier.');
 }
 // Read-only preview of what balance/P&L would become if the given tradeIds were restored
 // into paperAccount.closedPositions. Never mutates paperAccount -- only applyPaperReconciliation
@@ -9967,8 +10498,12 @@ function migrateJournalEntryIds(){
   alexGJournalEntries.forEach(e=>{
     if(e.journalEntryId==null){ e.journalEntryId='ALEXJ|'+(e.tradeId!=null?e.tradeId:e.id); alexChanged=true; }
   });
-  if(jvmChanged) save();
-  if(alexChanged) saveAlexG();
+  // v12.3.2: journalEntries/alexGJournalEntries are now written only as part of the atomic
+  // account+journal unit (commitPaperLedger()/commitAlexGLedger()) -- a bare save()/saveAlexG()
+  // no longer touches either journal at all, so this backfill must go through the same guarded
+  // commit path as any other journal mutation, even though it doesn't change balance/positions.
+  if(jvmChanged) commitPaperLedger();
+  if(alexChanged) commitAlexGLedger();
   return jvmChanged||alexChanged;
 }
 // v10.0: manual per-trade notes -- isolated store, keyed by journalEntryId,
@@ -10006,7 +10541,8 @@ function renderTradeInspectorContent(r,containerId){
   ]);
   const exitSec=inspectorRows([
     ['Exit price',fmtNum(r.exitPrice)],['Result',fmtDash(r.result)],['Result R',fmtRMult(r.resultR)],['PnL',fmtCurrency(r.pnl)],
-    ['Closed',fmtJournalDate(r.closedAt)],['Exit detected',fmtDash(r.exitDetectionSource)]
+    ['Closed',fmtJournalDate(r.closedAt)],['Exit detected',fmtDash(r.exitDetectionSource)],
+    ['Close reason',fmtDash(r.closeReason)] // v12.3.2: normalized TAKE_PROFIT/STOP_LOSS/MANUAL_CLOSE/BREAK_EVEN/SYSTEM_CLOSE, '—' for any record closed before this release
   ]);
   const timelineSec=inspectorRows([
     ['Opened',fmtJournalDate(r.openedAt)],['Closed',fmtJournalDate(r.closedAt)],['Duration',fmtDuration(r.durationMs)]
@@ -10297,6 +10833,15 @@ function openPaperPosition(oPair,dir,entry,stop,target,source){
   logPaperLifecycle('before-open',null);
   const pip=pipSize(oPair);
   const riskPips=Math.abs(entry-stop)/pip,rewardPips=Math.abs(target-entry)/pip;
+  // Paper Trading Operational Audit correction: this zero-risk guard previously existed only
+  // in the UI wrapper (placePaperTrade()'s "Stop cannot equal entry." check) -- any other
+  // caller invoking this engine function directly with stop===entry (riskPips===0) fell
+  // through to a lots:Infinity/NaN position with no rejection at all. Rejecting here too
+  // closes that gap at the source rather than relying on every future caller to remember to
+  // re-implement the same check.
+  if(!(riskPips>0)){
+    return{error:'Stop cannot equal entry — this trade has zero risk and cannot be sized.'};
+  }
   const ratio=rewardPips/riskPips;
   const riskAmount=paperAccount.balance*0.01;
   const pipVal=pipValuePerLot(oPair);
@@ -10328,7 +10873,7 @@ function openPaperPosition(oPair,dir,entry,stop,target,source){
     journalEntries=journalEntriesSnapshot;
     logPaperLifecycle('open-commit-rejected',pos.id);
     renderPaper();
-    return{error:committed.reason,blocked:true};
+    return{error:committed.reason,blocked:true,integrityCompromised:!!committed.integrityCompromised};
   }
   logPaperLifecycle('after-save',pos.id);
   renderPaper();
@@ -10351,6 +10896,16 @@ function placePaperTrade(silent){
   if(pos.error){if(!silent)alert(pos.error);return;}
   if(!silent) alert(`Paper ${dir==='buy'?'BUY':'SELL'} placed on ${pair.replace('_','/')} — risking $${pos.riskAmount.toFixed(2)} (${pos.lots.toFixed(2)} lots), ${pos.ratio.toFixed(2)}:1 R:R.`);
 }
+// v12.3.2 Paper Trading Operational Audit, break-even classification: 1e-9 R is roughly nine
+// orders of magnitude above JS's own Number.EPSILON (~2.22e-16), safely absorbing any realistic
+// compounded floating-point error from the exitPrice/pip/pipVal/lots arithmetic in
+// closePaperPosition() below, while remaining astronomically smaller than the smallest
+// realistic real R-value a genuine trade can produce (a single pip on a typical position is
+// already several orders of magnitude larger than this). This is a numerical-precision floor,
+// not a discretionary trading tolerance -- it exists only so an exact-zero close that happens
+// to land at, say, realizedR=3e-14 due to floating-point noise is still correctly classified
+// Break even, never so a genuinely small 1-pip profit or loss gets folded into Break even.
+const BREAK_EVEN_R_EPSILON=1e-9;
 async function closePaperPosition(id,manual,autoResult){
   // v11.0: reject a duplicate concurrent call for the same id outright (e.g. a
   // user double-clicking Close while an auto-close for the same position is
@@ -10395,10 +10950,30 @@ async function closePaperPosition(id,manual,autoResult){
       // otherwise a target hit could look like a near-miss once the bid/ask spread is applied.
       result=autoResult;
     } else if(manual){
-      result=pnl>0?'Win':pnl<0?'Loss':'Break even';
+      // v12.3.2: break-even classification is a realized-R check against BREAK_EVEN_R_EPSILON
+      // (defined below, near PROTECTED_CONSTANTS-adjacent trading math) instead of an exact
+      // pnl===0 check -- the epsilon exists ONLY to absorb floating-point noise from the
+      // exitPrice/pip/pipVal arithmetic above (which, at any realistic position size, cannot
+      // exceed a small fraction of BREAK_EVEN_R_EPSILON itself), not to introduce a
+      // discretionary "close enough to flat" trading tolerance. A genuine 1-pip move remains
+      // many orders of magnitude larger than this epsilon and is still classified Win/Loss,
+      // never silently folded into Break even.
+      const realizedR=pos.riskAmount?pnl/pos.riskAmount:pnl;
+      result=Math.abs(realizedR)<BREAK_EVEN_R_EPSILON?'Break even':(pnl>0?'Win':'Loss');
     } else {
       result=(pos.dir==='buy'?exitPrice>=pos.target:exitPrice<=pos.target)?'Win':'Loss';
     }
+    // v12.3.2: normalized close-reason, added alongside (never replacing) the existing
+    // free-text whyClosed explanation computed further below. Inferred only from data already
+    // deterministically known at this point -- never a guess: a developer/self-test forced
+    // close (pos.isDeveloperTrade, set before this call by generateTestPaperTrade()) is always
+    // SYSTEM_CLOSE regardless of its Win/Loss label, since it did not come from a real price
+    // cross or a discretionary user decision; otherwise an automated Win/Loss (autoResult, or
+    // the exitPrice-vs-target check above) means the corresponding level was actually crossed
+    // (TAKE_PROFIT/STOP_LOSS); a manual close is BREAK_EVEN or MANUAL_CLOSE per the realized-R
+    // check just above.
+    const closeReason=pos.isDeveloperTrade?'SYSTEM_CLOSE':
+      (manual?(result==='Break even'?'BREAK_EVEN':'MANUAL_CLOSE'):(result==='Win'?'TAKE_PROFIT':'STOP_LOSS'));
     // v11.0.1: snapshot BEFORE mutating, so a rejected ledger commit (below) rolls the position
     // back to open and the journal record back to its pre-close state together -- the close
     // must not be considered to have happened at all if it didn't actually persist.
@@ -10408,7 +10983,7 @@ async function closePaperPosition(id,manual,autoResult){
     logPaperLifecycle('after-balance-update',id);
     paperAccount.openPositions.splice(idx2,1);
     logPaperLifecycle('after-open-position-removal',id);
-    const closedPos={...pos,exitPrice,pnl:parseFloat(pnl.toFixed(2)),result,closedAt:new Date().toISOString()};
+    const closedPos={...pos,exitPrice,pnl:parseFloat(pnl.toFixed(2)),result,closeReason,closedAt:new Date().toISOString()};
     paperAccount.closedPositions.unshift(closedPos);
     logPaperLifecycle('after-closed-position-push',id);
     journalNoteCloseJVM(pos,closedPos); // v5.0: additive journaling side effect only -- updates the same OPEN record by tradeId, never recomputes P&L/result
@@ -10419,7 +10994,7 @@ async function closePaperPosition(id,manual,autoResult){
       journalEntries=journalEntriesSnapshot;
       logPaperLifecycle('close-commit-rejected',id);
       renderPaper();
-      return{error:committed.reason,blocked:true};
+      return{error:committed.reason,blocked:true,integrityCompromised:!!committed.integrityCompromised};
     }
     logPaperLifecycle('after-final-save',id);
     renderPaper();
@@ -10533,8 +11108,22 @@ function renderPaperLedgerBlockingBanner(){
     </div>
   </div>`;
 }
+// v12.3.2 Final Pre-Commit Integrity Gate: renders paperLedgerIntegrityWarning, a categorically
+// more severe state than paperLedgerBlockingError -- set only when a compensating rollback write
+// itself failed, meaning persisted state may genuinely be inconsistent. This render is purely
+// read-only: it never creates or modifies any localStorage key.
+function renderPaperLedgerIntegrityWarningBanner(){
+  const el=document.getElementById('paperLedgerIntegrityWarningBanner');
+  if(!el) return;
+  if(!paperLedgerIntegrityWarning){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="card" style="background:rgba(220,50,50,0.2);border:2px solid var(--red);margin-bottom:12px">
+    <div style="color:var(--red);font-weight:700;font-size:12px">⚠ POSSIBLE DATA INCONSISTENCY -- Paper Trading Health Check recommended</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">${escapeHtml(paperLedgerIntegrityWarning)}</div>
+  </div>`;
+}
 function renderPaper(){
   renderPaperLedgerBlockingBanner();
+  renderPaperLedgerIntegrityWarningBanner();
   const startBal=10000;
   const pnlTotal=paperAccount.balance-startBal;
   // v4.3: Developer Test Mode display filter -- defaults to false (show everything,
@@ -10720,6 +11309,9 @@ function applyDeveloperModeVisibility(){
     btn.textContent=developerModeEnabled?'Developer Mode: ON':'Developer Mode: OFF';
     btn.className=developerModeEnabled?'danger':'';
   }
+  const healthCheckWrap=document.getElementById('paperTradingHealthCheckCardWrap');
+  if(healthCheckWrap) healthCheckWrap.style.display=developerModeEnabled?'block':'none';
+  renderPaperTradingHealthCheck(); // populates (or clears, if now OFF) immediately on toggle
 }
 function generateTestPaperTrade(direction,forceResult){
   if(!developerModeEnabled)return;
@@ -11665,18 +12257,60 @@ const SC_DISQUALIFIERS=[
 ];
 // Pure read-only computation over real Paper Trading history -- excludes
 // developer/test trades, never mutates anything, never invents a figure.
+// v12.3.2 Paper Trading Operational Audit, Decision 2: the single canonical performance
+// calculation -- previously Dashboard's inline tile formula (wins/closed.length, break-even
+// counted as a loss against the denominator, no isDeveloperTrade filter, no minimum sample)
+// and Strategy Center's computeMogoStrategyPerformance() (wins/count with break-even ALSO in
+// the denominator, isDeveloperTrade excluded, n>=50 gate) genuinely disagreed on identical
+// underlying data -- confirmed both offline and live (Dashboard showed 100% JVM win rate on a
+// single closed trade while Strategy Center reported insufficientSample for the same data).
+// This function is the one place decisiveTrades/winRate/netR/etc. are ever computed; every
+// caller below builds on it rather than repeating the formula.
+//
+// Canonical formula: Win Rate = Wins / (Wins + Losses) -- break-even trades are reported
+// separately and never appear in the winRate denominator, matching the explicit requirement
+// that a trade classified Break Even must remain Break Even, never silently folded into a win
+// or loss just to make a percentage computable.
+//
+// Contract: takes an array of ALREADY-FILTERED closed trade-like records (strategy filtering,
+// developer/test-trade exclusion, and any other scope decision happen in the caller, before
+// this function ever sees the array -- kept generic on purpose so it works identically for
+// JVM's paperAccount.closedPositions and ALEX's alexGAccount.closedPositions despite their
+// different internal shapes). A record is excluded entirely (not counted anywhere, not even as
+// "malformed") unless result is exactly 'Win', 'Loss', or 'Break even' -- an unrecognized or
+// missing result can't be confidently classified and is never guessed at. R-multiple prefers an
+// existing resultR field when present (ALEX's fixed-R policy, never recomputed from pnl) and
+// falls back to pnl/riskAmount only when resultR is absent (JVM's raw account records, which
+// carry pnl+riskAmount but no resultR field of their own).
+function computeCanonicalPerformance(records){
+  const valid=(records||[]).filter(r=>r&&(r.result==='Win'||r.result==='Loss'||r.result==='Break even'));
+  const wins=valid.filter(r=>r.result==='Win').length;
+  const losses=valid.filter(r=>r.result==='Loss').length;
+  const breakEven=valid.filter(r=>r.result==='Break even').length;
+  const totalClosed=wins+losses+breakEven;
+  const decisiveTrades=wins+losses;
+  const winRate=decisiveTrades>0?Math.round(wins/decisiveTrades*100):null; // null, not 0% or NaN, when there is nothing decisive to divide by
+  const rOf=r=>r.resultR!=null?r.resultR:(r.riskAmount?r.pnl/r.riskAmount:null);
+  const rMults=valid.map(rOf).filter(r=>r!=null);
+  const netR=rMults.length?rMults.reduce((a,b)=>a+b,0):0;
+  const averageR=rMults.length?netR/rMults.length:null;
+  const pnls=valid.map(r=>r.pnl).filter(p=>p!=null);
+  const netPnl=pnls.length?pnls.reduce((a,b)=>a+b,0):0;
+  const grossProfit=pnls.filter(p=>p>0).reduce((a,b)=>a+b,0);
+  const grossLoss=Math.abs(pnls.filter(p=>p<0).reduce((a,b)=>a+b,0));
+  const profitFactor=grossLoss>0?grossProfit/grossLoss:(grossProfit>0?Infinity:null);
+  return{totalClosed,wins,losses,breakEven,decisiveTrades,winRate,
+    netPnl:Number(netPnl.toFixed(2)),netR:Number(netR.toFixed(2)),
+    averageR:averageR!=null?Number(averageR.toFixed(2)):null,
+    grossProfit:Number(grossProfit.toFixed(2)),grossLoss:Number(grossLoss.toFixed(2)),profitFactor};
+}
 function computeMogoStrategyPerformance(){
-  const closed=paperAccount.closedPositions.filter(p=>!p.isDeveloperTrade);
+  const closed=paperAccount.closedPositions.filter(p=>!p.isDeveloperTrade); // preserved test-trade exclusion, unchanged from before v12.3.2
   const count=closed.length;
   if(count<50){
     return{sufficientSample:false,count,message:'Insufficient clean sample — collect at least 50 valid trades before drawing conclusions.'};
   }
-  const wins=closed.filter(p=>p.result==='Win').length;
-  const losses=closed.filter(p=>p.result==='Loss').length;
-  const winRate=Math.round(wins/count*100);
-  const rMults=closed.filter(p=>p.riskAmount).map(p=>p.pnl/p.riskAmount);
-  const netR=rMults.reduce((a,b)=>a+b,0);
-  const avgR=rMults.length?netR/rMults.length:null;
+  const perf=computeCanonicalPerformance(closed);
   const byPair={};
   closed.forEach(p=>{ if(!p.riskAmount) return; byPair[p.pair]=byPair[p.pair]||{netR:0}; byPair[p.pair].netR+=p.pnl/p.riskAmount; });
   let bestPair=null,bestPairR=-Infinity;
@@ -11685,8 +12319,12 @@ function computeMogoStrategyPerformance(){
   closed.forEach(p=>{ if(!p.riskAmount||!p.openedAt) return; const s=getSession(new Date(p.openedAt)).name; bySession[s]=bySession[s]||{netR:0}; bySession[s].netR+=p.pnl/p.riskAmount; });
   let bestSession=null,bestSessionR=-Infinity;
   Object.keys(bySession).forEach(s=>{ if(bySession[s].netR>bestSessionR){bestSessionR=bySession[s].netR;bestSession=s;} });
-  return{sufficientSample:true,count,wins,losses,winRate,
-    netR:Number(netR.toFixed(2)),avgR:avgR!=null?Number(avgR.toFixed(2)):null,bestPair,bestSession};
+  // count/wins/losses/winRate/netR/avgR are kept as this function's existing field names for
+  // full backward compatibility with every existing caller (Strategy Center, Services.
+  // computePerformance()) -- their VALUES now come from the one canonical calculation instead
+  // of a second, separately-maintained copy of the same formula.
+  return{sufficientSample:true,count,wins:perf.wins,losses:perf.losses,breakEven:perf.breakEven,winRate:perf.winRate,
+    netR:perf.netR,avgR:perf.averageR,bestPair,bestSession};
 }
 
 // v12.1.2: MANUAL REVIEW ELIGIBLE performance groups. Reads journalEntries (not
@@ -11937,7 +12575,7 @@ function renderScPerformance(){
       <div class="stat-card"><div class="stat-val">${p.count}</div><div class="stat-lbl">Clean Trades</div></div>
       <div class="stat-card"><div class="stat-val" style="color:var(--green)">${p.wins}</div><div class="stat-lbl">Wins</div></div>
       <div class="stat-card"><div class="stat-val" style="color:var(--red)">${p.losses}</div><div class="stat-lbl">Losses</div></div>
-      <div class="stat-card"><div class="stat-val">${p.winRate}%</div><div class="stat-lbl">Win Rate</div></div>
+      <div class="stat-card"><div class="stat-val">${p.winRate!=null?p.winRate+'%':'—'}</div><div class="stat-lbl">Win Rate</div></div>
       <div class="stat-card"><div class="stat-val" style="color:${p.netR>=0?'var(--green)':'var(--red)'}">${p.netR>=0?'+':''}${p.netR}R</div><div class="stat-lbl">Net R</div></div>
       <div class="stat-card"><div class="stat-val">${p.avgR!=null?((p.avgR>=0?'+':'')+p.avgR+'R'):'—'}</div><div class="stat-lbl">Average R</div></div>
     </div>
@@ -13269,9 +13907,19 @@ function showPanel(name,btn){
   if(name==='ai') renderAiMessages();
   if(name==='backtest') initBacktestPair();
   if(name==='truemtf') initMTFPair();
-  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();}
+  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();}
   if(name==='rules') renderRules(); // v8.0: refreshes Strategy Center performance stats from current paperAccount data on every visit
   if(name==='academy') renderAcademy();
+  // Paper Trading Operational Audit correction: the unified Journal tab had no dispatch
+  // branch here at all, so navigating to it only ever showed whatever renderJournal() last
+  // rendered (initAll() at connect time, a filter edit, a delete, or a full reset) -- never a
+  // fresh read of the current journalEntries/alexGJournalEntries. Neither openPaperPosition()/
+  // closePaperPosition() nor alexGConstructLivePosition()/alexGCloseLivePosition() call
+  // renderJournal(), so a trade opened or closed elsewhere in the same page session could leave
+  // this tab showing stale (including falsely-empty) content until an unrelated filter action
+  // happened to trigger a refresh. Every other real destination panel already refreshes itself
+  // here; this makes 'journal' consistent with that same pattern.
+  if(name==='journal') renderJournal();
 }
 
 // ── v7.0: grouped navigation (dropdown open/close only -- never touches panel state) ──
@@ -13334,10 +13982,18 @@ function renderDashboard(){
   if(perfEl){
     perfEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(${dashAccountsByEntry.length*2},1fr);gap:8px">`+
       dashAccountsByEntry.map(({entry,account})=>{
-        const closed=account.closedPositions,wins=closed.filter(p=>p.result==='Win').length,pnl=account.balance-10000;
+        // v12.3.2 Decision 2: was wins/closed.length inline here (break-even counted against
+        // the denominator, no test-trade exclusion, no strategy-appropriate scoping) -- now
+        // built on the same computeCanonicalPerformance() Strategy Center uses, so the two
+        // surfaces can never silently disagree on identical data again. Developer/test trades
+        // are excluded here exactly as they already are in this same function's running-trades
+        // table below (account.openPositions.filter(p=>!p.isDeveloperTrade)).
+        const closed=account.closedPositions.filter(p=>!p.isDeveloperTrade);
+        const perf=computeCanonicalPerformance(closed);
+        const pnl=account.balance-10000;
         const label=escapeHtml(entry.manifest.label);
         return `<div class="stat-card"><div class="stat-val" style="color:${pnl>=0?'var(--green)':'var(--red)'};font-size:20px">${fmtCurrency(pnl)}</div><div class="stat-lbl">${label} P&L</div></div>
-      <div class="stat-card"><div class="stat-val" style="font-size:20px">${closed.length?Math.round(wins/closed.length*100)+'%':'—'}</div><div class="stat-lbl">${label} Win Rate</div></div>`;
+      <div class="stat-card"><div class="stat-val" style="font-size:20px">${perf.winRate!=null?perf.winRate+'%':'—'}</div><div class="stat-lbl">${label} Win Rate</div></div>`;
       }).join('')+`</div>`;
   }
 

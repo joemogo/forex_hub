@@ -151,6 +151,62 @@ adds a new fixture that calls `approveManualReviewTrade()` (or any other functio
 real `getSession()`), bracket it with the same `g.forceActiveSession()`/`g.restoreSession()` pair
 rather than reintroducing a real-clock dependency.
 
+### A third pattern, established in v12.3.2: offline-testable vs. live-only async functions, and read-only utility fixtures
+
+`tests/v_paper_trading_audit_tests.js` (115 fixtures) is the permanent suite for the Paper Trading
+Operational Audit, its v12.3.2 corrective pass, the subsequent Final Ledger Atomicity Review, and
+the Final Pre-Commit Integrity Gate (rollback-failure-of-rollback detection, `RollbackFailure.*`).
+It exercises the same permanent limitation above from a different angle: `closePaperPosition()`
+has one genuine internal `await fetchBidAsk(...)`, so its exit-price/P&L/result-classification
+math cannot be driven to completion offline — those specific scenarios (winning/losing long and
+short, manual partial close, break-even) are proven directly against the real running app in a
+live browser instead, disclosed as a `requires-live-browser` note in the fixture output rather
+than silently skipped. `alexGCloseLivePosition()`, by contrast, has no internal `await`
+(confirmed by direct reading, not assumption) and its atomicity/version-guard fixtures call it
+directly and observe a real, synchronous return value.
+
+The `AlexAtomic.*`/`JvmAtomic.*` fixtures establish a fourth pattern: for anything claiming to be
+an atomic, all-or-nothing commit, a fixture that only checks in-memory variables immediately
+after the call is insufficient. Each one instead (1) captures the exact pre-op serialized
+`localStorage` string for every key in the unit, (2) injects a real thrown exception on one
+specific key via a temporary `localStorage.setItem` override, restored immediately after, (3)
+asserts the function reports failure and every persisted string is still byte-identical to its
+pre-op value, and (4) calls the real `loadSaved()`/`loadAlexGSaved()` to simulate an actual reload
+and confirm the restored in-memory state matches too. A prior version of this suite's own
+`ALEX-Version.10` fixture asserted that a thrown journal-write was "correctly non-gating" — that
+was itself a defect in the design being tested, not a documented limitation; see
+[PAPER_TRADING_AUDIT.md](PAPER_TRADING_AUDIT.md#0-the-real-persistence-contract-account-journal-and-version)
+for the corrected contract.
+
+The `RollbackFailure.*` fixtures (Final Pre-Commit Integrity Gate) establish a fifth pattern, one
+level deeper than `AlexAtomic`/`JvmAtomic`: proving what happens when the *compensating rollback
+write itself* also throws, not just the original commit write. A new harness helper,
+`injectNthCallFailure(spec,fn)`, overrides both `localStorage.setItem` and `.removeItem`, tracks a
+per-key call counter, and throws only on a caller-specified `failOnCall` number for a given key —
+so a fixture can let the ORIGINAL write for key X succeed, then fail only the LATER rollback write
+for key X (or fail two different keys independently, e.g. "journal's original write fails, and
+version's rollback-restore also fails"). This supersedes the earlier single-purpose
+`injectAlexWriteFailure`/`injectPaperWriteFailure` helpers (which could only make a key "always
+fail"), which remain in use for the simpler `AlexAtomic`/`JvmAtomic` scenarios. One of the four
+required sequences for this gate — the journal write failing AND the journal's own restoration
+subsequently failing — is structurally impossible to construct honestly under the account →
+version → journal write order (journal, written last, can never have been successfully written
+earlier in the same attempt, so it can never itself appear as a rollback target); this is disclosed
+directly in
+[PAPER_TRADING_AUDIT.md §0.1](PAPER_TRADING_AUDIT.md#01-when-the-compensating-rollback-write-itself-fails-final-pre-commit-integrity-gate)
+rather than faked with an artificial test. `RollbackFailure.16`–`18` explicitly re-confirm that an
+ORDINARY commit failure (rollback succeeds) still returns `integrityCompromised:false` and does
+not set the new fatal-integrity runtime warning — proving the richer return shape didn't change
+existing ordinary-rejection behavior.
+
+The Health Check fixtures (`HealthCheck.1`–`HealthCheck.15`) establish a reusable pattern for any
+future read-only utility: snapshot every relevant piece of state (`localStorage` keys/values,
+`paperAccount`, `journalEntries`, `alexGAccount`, `alexGJournalEntries`) before calling the
+function under test, assert byte-identical `JSON.stringify` equality after, and — for anything
+that formats output for external use (a copy button, an export) — assert the formatted text
+never contains known credential/sensitive values even when those are deliberately set in the
+test to a realistic-looking value first.
+
 ## 2. Live browser verification
 
 For UI changes and for anything the offline harness can't reach (see above), verification is

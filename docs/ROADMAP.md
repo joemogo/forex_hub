@@ -33,9 +33,17 @@ verbatim source of record and is never rewritten by this documentation.
   reference. **v12.3.1** added the Strategy Workspace Framework and TJR's own dedicated
   workspace panel (registry-driven "Strategies" nav, isolated chart, Rules/Diagnostics/Paper
   Trading/Replay/Journal/Developer tabs) — architecture and navigation only, no new trading
-  intelligence; the v12.3.0 engine underneath is unchanged. ICT, Silver Bullet, and TJR's own
-  later implementation phases (Zone Interaction/Reaction Engine, BOS confirmation, candidate
-  generation, paper trading, replay validation) have not started.
+  intelligence; the v12.3.0 engine underneath is unchanged. **v12.3.2** was a corrective
+  engineering milestone, not a Phase 2 step itself: a Paper Trading Operational Audit of the
+  existing JVM/ALEX pipeline (before adding any new strategy execution logic on top of it),
+  followed by giving ALEX the same version-guard/atomicity protection JVM already had, unifying
+  Dashboard's and Strategy Center's win-rate calculations into one canonical formula, adding a
+  normalized close-reason field and a documented break-even precision epsilon, switching journal
+  strategy filtering to the stable `strategyId` rather than the display label, and adding a
+  read-only Developer Mode Paper Trading Health Check. See
+  [PAPER_TRADING_AUDIT.md](PAPER_TRADING_AUDIT.md). ICT, Silver Bullet, and TJR's own later
+  implementation phases (Zone Interaction/Reaction Engine, BOS confirmation, candidate
+  generation, paper trading, replay validation) have still not started.
 
 ## Where the project has been
 

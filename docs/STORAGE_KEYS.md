@@ -21,7 +21,7 @@ data — see [ADR-002](adr/ADR-002-isolated-strategy-and-feature-storage.md).
 |---|---|---|---|
 | `fxhub_paper` | `paperAccount` | `savePaperAccountGuarded()` only, called only from `commitPaperLedger()` | Balance, open positions, closed positions. **Never written by general `save()`** — see [ARCHITECTURE.md](ARCHITECTURE.md#the-paper-ledger-transaction-model-v1101). |
 | `fxhub_paper_version` | `paperAccountKnownVersion` | `savePaperAccountGuarded()` | Monotonic counter guarding `fxhub_paper` against a stale/concurrent-tab overwrite. |
-| `fxhub_journal` | `journalEntries` | `save()` | Every JVM journal record (auto, manual, developer-test, legacy, and — as of v12.1.2 — manual-review). Manual-review records carry additional attribution fields (`entrySource`, `windowStatus`, `userApproved`, `automaticEntry`, `approvalTimestamp`, `decisionCandleTimestamp`, `evaluatorVersionAtApproval`, `confluenceSnapshotAtApproval`, `ruleSnapshotAtApproval`, `weekdayAtApproval`, `sessionAtApproval`, `thuFriClassification`, and more) — additive fields on the existing record shape, not a new store. |
+| `fxhub_journal` | `journalEntries` | `savePaperAccountGuarded()` only, called only from `commitPaperLedger()` (v12.3.2) — **never** by general `save()`, which no longer touches this key at all | Every JVM journal record (auto, manual, developer-test, legacy, and — as of v12.1.2 — manual-review). Written as part of the same atomic account+version+journal commit as `fxhub_paper` (v12.3.2 Final Ledger Atomicity Review) — never as a separate, independently-failable write. Manual-review records carry additional attribution fields (`entrySource`, `windowStatus`, `userApproved`, `automaticEntry`, `approvalTimestamp`, `decisionCandleTimestamp`, `evaluatorVersionAtApproval`, `confluenceSnapshotAtApproval`, `ruleSnapshotAtApproval`, `weekdayAtApproval`, `sessionAtApproval`, `thuFriClassification`, and more) — additive fields on the existing record shape, not a new store. |
 | `fxhub_auto` | `autoTrading` | `save()` | Auto Trading on/off, `tradedToday`, the auto-trade log. |
 | `fxhub_autoscan` | `autoScan` | `save()` | Automatic Sunday-Scan scheduling state. |
 | `fxhub_scan` | `scanData` | `save()` | Per-pair scanner/confluence data. |
@@ -36,13 +36,14 @@ data — see [ADR-002](adr/ADR-002-isolated-strategy-and-feature-storage.md).
 
 Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-strategy-and-feature-storage.md).
 
-| Key | Variable | Written by |
-|---|---|---|
-| `fxhub_alexg_account` | `alexGAccount` | `saveAlexG()` |
-| `fxhub_alexg_journal` | `alexGJournalEntries` | `saveAlexG()` |
-| `fxhub_alexg_auto` | `alexGAutoTrading` | `saveAlexG()` |
-| `fxhub_alexg_zones` | `alexGZoneState` | `saveAlexG()` |
-| `fxhub_alexg_setups` | `alexGSetupState` | `saveAlexG()` |
+| Key | Variable | Written by | Notes |
+|---|---|---|---|
+| `fxhub_alexg_account` | `alexGAccount` | `saveAlexGAccountGuarded()` only, called only from `commitAlexGLedger()` (v12.3.2) | **Never** by `saveAlexG()`, which as of v12.3.2 is a thin alias for `saveAlexGRest()` below. |
+| `fxhub_alexg_account_version` | `alexGAccountKnownVersion` | `saveAlexGAccountGuarded()` (v12.3.2) | Monotonic counter guarding `fxhub_alexg_account` against a stale/concurrent-tab overwrite — mirrors `fxhub_paper_version`, scoped to the account only (not the journal/auto/zone/setup keys below), for the same reason JVM's own guard excludes those. |
+| `fxhub_alexg_journal` | `alexGJournalEntries` | `saveAlexGAccountGuarded()` only, called only from `commitAlexGLedger()` (v12.3.2) — **never** by `saveAlexGRest()`/`saveAlexG()`, which no longer touch this key at all | Written as part of the same atomic account+version+journal commit as `fxhub_alexg_account` (v12.3.2 Final Ledger Atomicity Review) — never as a separate, independently-failable write. |
+| `fxhub_alexg_auto` | `alexGAutoTrading` | `saveAlexGRest()` | |
+| `fxhub_alexg_zones` | `alexGZoneState` | `saveAlexGRest()` | |
+| `fxhub_alexg_setups` | `alexGSetupState` | `saveAlexGRest()` | |
 
 ## Non-trading feature state
 

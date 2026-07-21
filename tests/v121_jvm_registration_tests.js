@@ -108,9 +108,13 @@ function runV121Fixtures(g){
   }
 
   // ═══ Fixture 9: getFilteredJournalRecords({strategy:'JVM'}) still correctly isolates JVM records from a mixed journal ═══
+  // UPDATED (v12.3.2), not weakened: getFilteredJournalRecords() now matches on strategyId
+  // (the stable ownership key, ADR-006 §0) rather than strategyLabel -- the filter value is
+  // now the registry id ('current_strategy'), not the display label ('JVM'). The assertion
+  // itself (exactly one JVM record isolated from a mixed journal) is unchanged.
   {
-    const filtered=g.getFilteredJournalRecords({strategy:'JVM'});
-    assert('Fixture 9: getFilteredJournalRecords({strategy:"JVM"}) returns only JVM records from a mixed journal',
+    const filtered=g.getFilteredJournalRecords({strategy:'current_strategy'});
+    assert('Fixture 9: getFilteredJournalRecords({strategy:"current_strategy"}) returns only JVM records from a mixed journal',
       filtered.length===1&&filtered[0].strategyLabel==='JVM', 'filtered='+JSON.stringify(filtered.map(r=>r.strategyLabel)));
   }
 

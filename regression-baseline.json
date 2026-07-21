@@ -1,15 +1,15 @@
 {
-  "generatedFromAppVersion": "12.3.1",
+  "generatedFromAppVersion": "12.3.2",
   "knownGoodHtmlSha1": "31baa279ddc64fdfa90f052da195239bff9a0569",
   "protectedFunctionCount": 63,
   "protectedFunctions": {
     "openPaperPosition": {
-      "sha1": "dbfe2b4e4beacb8840e0339f7abe73dd1953a952",
-      "length": 2406
+      "sha1": "829154ba5b13e617f07e3bd5f5b6913408bf45d6",
+      "length": 3069
     },
     "closePaperPosition": {
-      "sha1": "1295772ab652a030547c8fa4199fe815fd4d5cac",
-      "length": 4273
+      "sha1": "b03719e4296496971d4bdf5d57ccd37922f057ae",
+      "length": 6075
     },
     "checkPaperPositions": {
       "sha1": "91e737eb6a75f7477a5633bc629c6ccae568524a",
@@ -84,8 +84,8 @@
       "length": 958
     },
     "alexGCloseLivePosition": {
-      "sha1": "ea1eecadcba3510ea97f30332106cf4b5a9332a9",
-      "length": 1927
+      "sha1": "c2e9636c331b68cec5b03fd9f99901cd90ae221c",
+      "length": 2876
     },
     "alexGClusterId": {
       "sha1": "eb20689098b4da03d268cb80d9975bc0866c3884",

@@ -83,9 +83,14 @@ function runV120Fixtures(g){
   }
 
   // ═══ Fixture 7: getFilteredJournalRecords/renderMiniJournal remain untouched and still work through the new getUnifiedJournalRecords() ═══
+  // UPDATED (v12.3.2), not weakened: getFilteredJournalRecords() now matches on strategyId
+  // (the stable ownership key, ADR-006 §0) rather than strategyLabel -- the filter value is
+  // now the registry id ('alex_g_sr_v1'), not the display label ('ALEX'), matching the same
+  // dropdown/value change made in the real Journal UI. The assertion itself (exactly one ALEX
+  // record isolated from a mixed journal) is unchanged.
   {
-    const filtered=g.getFilteredJournalRecords({strategy:'ALEX'});
-    assert('Fixture 7: getFilteredJournalRecords({strategy:"ALEX"}) still returns only ALEX records after the registry change',
+    const filtered=g.getFilteredJournalRecords({strategy:'alex_g_sr_v1'});
+    assert('Fixture 7: getFilteredJournalRecords({strategy:"alex_g_sr_v1"}) still returns only ALEX records after the registry change',
       filtered.length===1&&filtered[0].strategyLabel==='ALEX', 'filtered='+JSON.stringify(filtered.map(r=>r.strategyLabel)));
   }
 
