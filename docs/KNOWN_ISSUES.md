@@ -145,3 +145,20 @@ endpoint first.
 MOGO never places a real order against any brokerage account — every trade it opens or closes is
 a simulated paper position. This is a permanent design boundary, not a gap to be filled — see
 [ADR-004](adr/ADR-004-read-only-analytics-principle.md).
+
+## Baseline Registry's JS-side protected-function lists are manually synced, not shared-source
+
+As of v12.4.0 (PROGRAM-001 Phase 1), `BASELINE_JVM_FUNCTIONS`/`BASELINE_ALEX_FUNCTIONS` in
+`index.html` are a copy of `regression-baseline-tools.py`'s `PROTECTED_FUNCTIONS` list, generated
+programmatically from that file at the time this feature was built (not hand-transcribed), so they
+started in exact agreement. There is no shared source between that Python build-time tool and this
+browser-side JS, so if a future release adds a name to `PROTECTED_FUNCTIONS`, these two JS arrays
+must be updated by hand to match, or the in-app Baseline Registry Diagnostics card will silently
+under-cover the real protected set (it will still correctly fingerprint everything it knows about,
+it just won't know about the new addition until synced). This is an accepted limitation for this
+release, not a defect: the in-app registry is explicitly a lightweight **companion** diagnostic for
+Developer Mode, never a replacement for `regression-baseline-tools.py`, which remains the sole
+authoritative, build-time drift gate `tests/run_all.sh` actually fails on. Do not expand this into
+a shared-source refactor (e.g., generating the JS arrays from the Python file at build time) without
+a deliberate, scoped follow-up release — this repository has no build step today, and introducing
+one is a significant architectural change of its own.
