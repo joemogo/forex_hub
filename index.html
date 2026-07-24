@@ -1322,6 +1322,16 @@ button.danger:hover{background:var(--red-dim)}
           <div id="baselineRegistryDiagnosticsCard"></div>
         </div>
 
+        <!-- v12.5.0 PROGRAM-001 Phase 2A: Developer-Mode-gated, strictly read-only preview of the
+             in-memory Decision Event bus. Memory-only by design -- no localStorage key, nothing
+             survives a reload. Never places/modifies/closes a trade, never touches paperAccount/
+             journalEntries/alexGAccount/alexGJournalEntries. Only SCAN_STARTED/SCAN_COMPLETED/
+             ENGINE_ERROR are emitted so far, from scanAll()/alexGLivePollTick() (neither a
+             protected function). -->
+        <div class="card" id="decisionEventDiagnosticsCardWrap" style="display:none">
+          <div id="decisionEventDiagnosticsCard"></div>
+        </div>
+
         <div class="card">
           <div class="section-label">Historical data diagnostic</div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:12px">
@@ -1927,9 +1937,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.4.0';
-const APP_VERSION_DATE='23 Jul 2026';
+const APP_VERSION='12.5.0';
+const APP_VERSION_DATE='24 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.5.0 — PROGRAM-001 PHASE 2A: DECISION EVENT SCHEMA &amp; OBSERVABILITY FOUNDATION (infrastructure release -- no trading behavior change; the exact same market data produces the exact same trades before and after this release, proven by zero protected-function/protected-constant drift verified directly against the true committed v12.4.0 baseline). Establishes the universal Decision Event architecture every strategy (JVM/ALEX/TJR/future) will eventually emit through -- a versioned schema (mogo.decision-event.v1), a centralized reason-code registry, an evidence-completeness model, and a memory-only, append-only in-memory event bus. THE SCHEMA (createDecisionEvent()) supports all 13 required event types (SCAN_STARTED/SCAN_COMPLETED/SETUP_OBSERVED/CANDIDATE_CREATED/RULE_EVALUATED/CANDIDATE_REJECTED/CANDIDATE_APPROVED/TRADE_OPEN_REQUESTED/TRADE_OPENED/TRADE_OPEN_FAILED/TRADE_CLOSED/DATA_UNAVAILABLE/ENGINE_ERROR) and every required field (eventId/schemaVersion/eventType/occurredAt/recordedAt/strategyId/strategyVersion/baselineId/applicationVersion/scanId/candidateId/tradeId/pair/direction/timeframe/session/source/engineMode/stage/decision/reasonCode/reasonText/ruleId/ruleVersion/ruleResult/severity/marketTimestamp/marketDataReference/context/metrics/diagnostics/parentEventId/correlationId/sequenceNumber/evidenceCompleteness/unknownFields) -- not every type is emitted yet, but the schema already supports the full future decision lifecycle without a breaking change later. A missing value is always an explicit null (never a fabricated 0/empty-string/false); evidenceCompleteness defaults to the honest UNKNOWN, never a guessed COMPLETE. REASON CODE REGISTRY: REASON_CODE_REGISTRY is the single source of truth for valid reasonCodes across 14 categories (DATA/SESSION/STRUCTURE/BIAS/AOI/CONFLUENCE/ENTRY/RISK/SPREAD/EXECUTION/STATE/CONFIG/SYSTEM/UNKNOWN) -- codes are validated against this registry (not a loose prefix guess), so "codes remain stable" is actually enforced; reasonText stays independent free-form human wording, never itself validated, so analytics can depend on the stable code while a human reads the text. EVIDENCE MODEL: EVIDENCE_COMPLETENESS_LEVELS (COMPLETE/PARTIAL/MINIMAL/UNKNOWN) is the per-event overall level; EVIDENCE_FIELD_PROVENANCE (OBSERVED/DERIVED/UNAVAILABLE/UNSAFE_TO_RECONSTRUCT/FUTURE_WORK) is the taxonomy future phases use to tag individual fields -- JVM and ALEX are deliberately never forced into artificial parity; a thin engine honestly reporting lower completeness than a richer one is correct, not a bug to hide. IDENTITY: generateDecisionEventId(prefix) combines Date.now() with a monotonic in-memory counter so IDs never collide even across repeated ticks in the same millisecond; sequenceNumber is assigned by emitDecisionEvent() itself, only to events that pass validation, so a rejected event never consumes a slot and the retained log is always reconstructable in true emission order. IMMUTABILITY: emitDecisionEvent() is the only function that ever appends to the log, and Object.freeze()s every event before storing it -- a caller holding a reference (via getDecisionEvents(), which itself returns a defensive array copy) can never rewrite an already-emitted event; this is enforced, not just documented convention. MEMORY-ONLY: the entire event log (decisionEventLog, bounded to DECISION_EVENT_MAX_LOG_SIZE=500, oldest dropped first) lives in one in-memory array for the browser tab\'s lifetime -- zero localStorage keys are written by this layer, confirmed directly (unlike the Baseline Registry\'s one persisted key). FAILURE ISOLATION: every emitDecisionEvent() call is wrapped so an internal bug in this brand-new layer can never throw into its caller -- proven directly with a deliberately circular/unserializable payload, which is rejected safely rather than crashing anything. INSTRUMENTATION: only SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR are actually wired, from the two genuine outer scan-tick boundaries -- scanAll() (JVM) and alexGLivePollTick() (ALEX) -- both confirmed NOT protected functions (cross-checked directly against the v12.4.0 Baseline Registry\'s own BASELINE_JVM_FUNCTIONS/BASELINE_ALEX_FUNCTIONS mirror of PROTECTED_FUNCTIONS); every original statement inside both functions is byte-identical and unreordered, only wrapped in try/catch with emit calls at the boundaries -- no protected rule logic (checkAutoTrades, evaluateLiveTrigger, scoreConfluence, bestConfluence, computeAOI, detectSignals, getBias, getSession, or any alexG* protected function) is itself touched or instrumented anywhere in this release. A new Developer-Mode-gated Diagnostics preview (renderDecisionEventDiagnostics(), wired into the same three trigger points as the Baseline Registry and Health Check cards) shows Schema Version, Event Bus Status, Events in Memory, Last Event, Validation Failures, and Persistence Status (always "NOT PERSISTED"). TESTING: new tests/v125_decision_event_tests.js (40 fixtures) covers schema completeness and never-fabricated missing-field handling; valid/invalid event creation; reason-code and evidence-level validation against the centralized registries; unique/collision-free identifiers (200 rapid-fire IDs, all unique); correlation and parent-event linkage; strict sequence ordering (a rejected event never consumes a sequence number); true append-only immutability (an attempted mutation on a retrieved event, and pushing to a retrieved array, never affects the real log); payload-size limits; JSON serialization round-tripping; failure isolation against a deliberately circular payload; zero mutation of paperAccount/journalEntries/alexGAccount/alexGJournalEntries/scanData/autoTrading/alexGAutoTrading and zero mutation of the Baseline Registry\'s own fingerprints (cross-feature isolation); zero localStorage keys written; Developer Mode preview rendering on/off; simulated-reload behavior (the log is empty after a fresh start, since nothing persists, by design); confirmation that neither instrumented function is a protected function; and real, executing (not merely source-read) proof that the actual scanAll()/alexGLivePollTick() functions emit a genuine SCAN_STARTED event with correct strategyId/scanId/correlationId, exploiting the fact that SCAN_STARTED is each function\'s literal first statement, executed synchronously before either function\'s first genuine await -- SCAN_COMPLETED/ENGINE_ERROR from those two call sites (gated behind a real await this offline JXA harness cannot resolve, the same documented, permanent limitation as closePaperPosition()/alexGCloseLivePosition() elsewhere in this suite family) are disclosed as verified live instead. Full regression: 469/469 fixtures pass across all 11 canonical suites (429 pre-existing + 40 new), zero skipped, zero drift (all 63 protected functions and 4 protected constants byte-identical, verified directly against the true committed v12.4.0 baseline). See docs/DECISION_EVENT_ARCHITECTURE.md for the complete schema/registry/evidence-model/identifier/immutability/memory-limit documentation and known limitations.',
   '12.4.0 — PROGRAM-001 PHASE 1: BASELINE REGISTRY & LOGIC PROTECTION (infrastructure release -- no trading behavior change; JVM and ALEX produce the exact same decisions before and after this release, proven by zero protected-function/protected-constant drift, byte-identical before/after). Establishes a formal, identifiable baseline for JVM and ALEX so future logic drift is detectable in-app, in Developer Mode, without running a script -- a lightweight, runtime COMPANION to the existing build-time regression-baseline-tools.py drift check, never a replacement for it. computeBaselineRegistry() builds one registry entry per strategy (id/name/version, applicationVersion, createdAt, status, a deterministic logicFingerprint of that strategy\'s own protected-function source, a shared riskFingerprint covering pipSize/pipValuePerLot -- the two genuinely cross-strategy position-sizing utilities both engines call -- a configurationFingerprint of that strategy\'s protected constants, instruments/timeframes/sessionRules/riskModel/dataSource/executionModel drawn from real, already-disclosed app state, and an explicit notes field) using a new deterministic 32-bit FNV-1a hash (baselineFnv1aHash) over each protected function\'s own .toString() source text, sorted alphabetically first so the array\'s own declaration order can never itself affect the fingerprint -- only real source-text changes can. dataContractVersion and metricsVersion are explicitly null on both entries (no such versioning scheme exists yet for either strategy\'s trade-record shape or performance-metric formula) rather than fabricated. BASELINE_JVM_FUNCTIONS/BASELINE_ALEX_FUNCTIONS are a byte-for-byte copy of regression-baseline-tools.py\'s own PROTECTED_FUNCTIONS list, generated directly from that file (not hand-transcribed) to avoid transcription drift -- there is no shared source between that Python build tool and this browser code, so the two must be kept in manual sync going forward (disclosed in each entry\'s own notes field). The registry itself is computed fresh every time (pure, deterministic, reads only already-existing function references and protected constants -- never localStorage, never any account/journal/scanner state); the only thing ever WRITTEN is an explicitly-locked reference snapshot, via a new isolated fxhub_baseline_registry key, written ONLY by lockBaselineRegistry() -- never called automatically, mirroring regression-baseline-tools.py\'s own manual "--update" philosophy exactly. A new Developer-Mode-gated Diagnostics card (renderBaselineRegistryDiagnostics(), wired into the same three trigger points as the existing Paper Trading Health Check: the diagnostics panel load, the Developer Mode toggle, and its own Refresh button) shows both strategies\' Baseline IDs, JVM/ALEX/shared-risk Fingerprint Status (MATCH / DRIFT DETECTED / NO BASELINE LOCKED YET), Application Version, and Baseline Registry Version, plus a confirmation-gated "Lock Current Baseline" action. Nothing in this release places, modifies, or closes a trade, changes risk/thresholds/filters/execution/journal behavior, or migrates any existing trade history -- verified directly, not just by design: paperAccount/journalEntries/alexGAccount/alexGJournalEntries/scanData/autoTrading/alexGAutoTrading are proven byte-identical before and after every Baseline Registry operation (computeBaselineRegistry, lockBaselineRegistry, getBaselineDiagnosticsSummary, renderBaselineRegistryDiagnostics), and lockBaselineRegistry() is proven to write to exactly one new key and touch nothing else. TESTING: new tests/v124_baseline_registry_tests.js (31 fixtures) covers baseline generation and full schema-field presence; registry integrity (every BASELINE_JVM_FUNCTIONS/BASELINE_ALEX_FUNCTIONS name resolves to a real function reference in the currently-loaded app, zero missing); fingerprint stability (identical results across repeated computation, and order-independence -- hashing the same function set in a different array order produces the identical fingerprint); fingerprint sensitivity (two different real functions produce two different fingerprints, proving the hash reflects real content rather than being a stub constant); unknown-field handling (an unresolvable function name is recorded in a missing[] list rather than silently fabricated or omitted, and dataContractVersion/metricsVersion are confirmed explicitly null); fingerprint drift detection (a persisted baseline whose logicFingerprint no longer matches the current one is reported DRIFT DETECTED for exactly the affected strategy, never both); no-baseline-yet handling; persistence round-tripping and reload-behavior (read back byte-identical after a real simulated reload); idempotence (locking twice with no code change produces the same fingerprints both times); storage isolation; Diagnostics rendering with Developer Mode on/off; and the mutation-safety proofs described above. Full regression: 429/429 fixtures pass across all 10 canonical suites (398 pre-existing + 31 new), zero skipped, zero drift (all 63 protected functions and 4 protected constants byte-identical to the v12.3.2 baseline). LIVE VERIFICATION (fresh local server, browser origin started and ended completely empty): confirmed the Diagnostics card renders correctly gated by Developer Mode; "Lock Current Baseline" writes exactly the one new key and immediately reports MATCH for JVM/ALEX/shared-risk; Paper Trading Health Check remains fully functional and reports CLEAN alongside the new card with paperAccount/journalEntries/alexGAccount/alexGJournalEntries all still at their pristine, untouched defaults; a real page reload preserves the locked baseline and its MATCH status; and a deliberately corrupted persisted fingerprint is correctly reported as DRIFT DETECTED for only the affected strategy. Zero console errors at every step. Explicitly out of scope for this phase (documented for future phases only, not implemented): candidate/rejection logging, trade failure analysis, missed-opportunity/counterfactual trades, an Experiment Registry, shadow variants, a market-context engine, EMA/ATR/AOI reconstruction, historical candle retrieval, and any Trade Inspector or computeTiCompliance change.',
   '12.3.2 — PAPER TRADING INTEGRITY & ANALYTICS CONSISTENCY (corrective engineering milestone, two phases -- an investigation/verification audit followed, in the same version, by a reviewed corrective pass; no new strategy intelligence; TJR Phase 2 explicitly NOT started; JVM/ALEX entry rules, stop/target logic, and ALEX\'s fixed-R policy completely untouched). PHASE 1 (audit) found and corrected two narrow defects, both meeting all 9 of the audit\'s own correction criteria: showPanel() had no dispatch branch for the unified Journal tab (fixed with one additive `if(name===\'journal\') renderJournal();` line); openPaperPosition() did not itself reject a zero-risk trade (fixed with an early riskPips>0 guard). PHASE 1 also surfaced three findings requiring a decision rather than a silent fix -- all three were reviewed and approved for correction in Phase 2 below. TEST HARNESS LIMITATION (both phases): closePaperPosition()\'s and alexGCloseLivePosition()\'s (the latter now genuinely synchronous, confirmed by direct reading) async paths were verified live in-browser wherever the offline JXA harness\'s permanent inability to resolve a real `await` (reconfirmed via three independent techniques) made offline verification impossible. PHASE 2 (this pass) implements all three previously-deferred decisions plus four further requested corrections: (1) ALEX VERSION-GUARD -- alexGConstructLivePosition\'s real mutation site (the async alexGAttemptOpenLivePosition, NOT the pure, protected alexGConstructLivePosition itself, which needed no change) and alexGCloseLivePosition now snapshot alexGAccount/alexGJournalEntries and commit through a new commitAlexGLedger()/saveAlexGAccountGuarded() pair, deliberately NOT a blind copy of JVM\'s architecture: the version counter (new fxhub_alexg_account_version key, new alexGAccountKnownVersion session state) is scoped to the account only, exactly mirroring why JVM\'s own fxhub_paper_version excludes journalEntries -- bundling alexGAutoTrading/alexGZoneState/alexGSetupState into the same gate would reproduce the exact false-stale-rejection bug JVM\'s v11.0.1 fix was built to prevent. saveAlexG() is now a thin alias for the new, unguarded saveAlexGRest() (auto+zones+setups only), used only by its one remaining non-account-mutating call site (toggleAlexGLiveTrading; the journalEntryId backfill migration\'s ALEX branch now goes through commitAlexGLedger() directly, since it mutates the journal); resetAlexGLiveAccount() and clearTestTradesAlex() were updated to the same guarded-commit-plus-rollback pattern. A stale rejection leaves balance/openPositions/closedPositions/journal/version completely untouched, proven directly. **CORRECTED by a subsequent Final Ledger Atomicity Review, same version:** an initial draft of this decision persisted the journal via the unguarded saveAlexGRest() (mirroring where JVM\'s own journalEntries write used to live relative to its guard) -- but that reintroduced, for ALEX, the exact account/journal divergence-after-reload gap JVM\'s own v11.0.1 fix was built to close. saveAlexGAccountGuarded() now persists fxhub_alexg_account+fxhub_alexg_account_version+fxhub_alexg_journal as ONE atomic, all-or-nothing unit: every pre-op serialized value is read first, both new values are serialized before anything is written, the three writes happen in order while tracking exactly which keys this attempt touched, and ANY of the three throwing rolls every already-written key back to its exact prior value (or removes it, if it did not exist before) and reports failure -- proven directly against real injected failures on the account, version, and journal keys individually, each fully rolled back, plus a real simulated reload after each failure confirming complete pre-operation restoration, not just an in-memory check (AlexAtomic.1-13). commitPaperLedger()/savePaperAccountGuarded() received the identical correction for JVM (see JVM PERSISTENCE ATOMICITY below) -- the same gap existed there too, via journalEntries\' write living inside the separate, unguarded save(). (2) CANONICAL ANALYTICS -- a new computeCanonicalPerformance(records) is the one place wins/losses/breakEven/decisiveTrades/winRate/netPnl/netR/averageR/grossProfit/grossLoss/profitFactor are ever computed; winRate = wins/(wins+losses), break-even trades reported separately and never in the denominator, null (never NaN/Infinity/a fabricated 0%) when decisiveTrades is 0, malformed/unrecognized-result records excluded entirely, an existing resultR field preferred over recomputing pnl/riskAmount (preserving ALEX\'s fixed-R policy exactly). Dashboard\'s tile and computeMogoStrategyPerformance() (Strategy Center) both now build on it -- the two surfaces can no longer silently disagree on identical data; Strategy Center\'s own separate n>=50 minimum-sample gate is unchanged by design (a distinct, pre-existing display policy, not part of the formula unification). (3) CLOSE REASON -- closePaperPosition() now derives a normalized closeReason (TAKE_PROFIT/STOP_LOSS/MANUAL_CLOSE/BREAK_EVEN/SYSTEM_CLOSE) from data already deterministically known at close time (isDeveloperTrade forces SYSTEM_CLOSE regardless of Win/Loss; otherwise automated Win/Loss maps to TAKE_PROFIT/STOP_LOSS; manual maps to BREAK_EVEN/MANUAL_CLOSE), propagated additively through applyJournalCloseUpdate()/normalizeJournalRecord() (null, never fabricated, for any record closed before this release) and displayed in Trade Inspector. (4) BREAK-EVEN EPSILON -- replaces the exact pnl===0 check with a documented BREAK_EVEN_R_EPSILON=1e-9 realized-R threshold, a numerical-precision floor absorbing only floating-point noise from the exitPrice/pip/pipVal arithmetic (astronomically smaller than any realistic 1-pip move) -- NOT a discretionary trading tolerance; a genuinely small profit/loss is still classified Win/Loss exactly as before. (5) STRATEGY-ID FILTERING -- getFilteredJournalRecords() now matches r.strategyId (the option values in the real Journal filter dropdown changed from the display labels "JVM"/"ALEX" to the registry ids "current_strategy"/"alex_g_sr_v1"; visible text unchanged) instead of r.strategyLabel, since normalizeJournalRecord() already guarantees every record -- including legacy ones -- has strategyId populated via its existing store-fallback; proven against a deliberately mislabeled record (strategyLabel:"ALEX", strategyId:"current_strategy") that now correctly filters under JVM. (6) PAPER TRADING HEALTH CHECK -- a new, strictly read-only Developer Mode utility (computePaperTradingHealthReport(), a Diagnostics-page card, gated by developerModeEnabled exactly like the existing Developer Test Tools) reporting JVM/ALEX open/closed/journal counts, balance, realized P&L, and ledger/account version, plus combined duplicate-ID/orphan/strategy-ID-mismatch/result-mismatch/P&L-mismatch/R-mismatch/invalid-timestamp/invalid-price/missing-strategyId/legacy-record/test-artifact detection (JVM\'s half reuses the existing computePaperLedgerIntegrity() rather than duplicating it; ALEX\'s equivalent basic reconciliation is new, since no ALEX reconciliation tooling existed before this release) and an overall reconciliation-status line; a Copy Health Report button copies a plain-text report built field-by-field from the computed report object only (never a raw dump of any live account/config object), proven live to contain no OANDA token/account ID/Anthropic key even when both were actually set. This utility analyzes only whatever JVM/ALEX state is already loaded in the browser it runs in -- it must be run in the user\'s own normal MOGO browser tab to evaluate their own actual stored records; this development environment has no access to that data and never claims to have inspected it. JVM PERSISTENCE ATOMICITY (Final Ledger Atomicity Review): savePaperAccountGuarded() previously wrote only paperAccount+fxhub_paper_version, with journalEntries persisted separately and unconditionally inside the general save() -- meaning a successful account/version write followed by a failed journal write (save() wraps all its setItem calls in one try/catch, silently swallowing any exception) left storage genuinely divergent after reload, with commitPaperLedger() still reporting success. This is the exact class of defect INC-001 (the historical JOURNAL_ONLY-orphan incident) already proved this codebase is vulnerable to. savePaperAccountGuarded() now persists paperAccount+fxhub_paper_version+journalEntries as the same kind of atomic, all-or-nothing unit described above for ALEX -- fxhub_journal moved out of save() entirely; save() now covers only genuinely unrelated state (scan/checklist/alerts/env/auto/autoscan/resetHistory/tradeNotes/reconciliationAudit) and keeps its pre-existing best-effort semantics, since that was never part of this correction\'s scope. Two additional call sites that previously relied on a bare save() to persist a journal-only change -- logTrade() (the manual "Log a Trade" form) and deleteEntry() -- now call commitPaperLedger() instead, since save() no longer touches fxhub_journal at all; migrateJournalEntryIds()\'s JVM branch was corrected the same way. PROTECTED-FUNCTION DRIFT vs. the original committed v12.3.1 baseline, reconfirmed after this correction: still exactly three items -- openPaperPosition (zero-risk guard), closePaperPosition (close-reason + break-even epsilon), alexGCloseLivePosition (version-guard atomicity); savePaperAccountGuarded/save/commitPaperLedger/saveAlexGAccountGuarded/saveAlexGRest/saveAlexG/commitAlexGLedger/migrateJournalEntryIds/logTrade/deleteEntry are NOT on the protected list, so this atomicity correction added zero additional protected drift. All other 60 protected functions and all 4 protected constants remain byte-identical; the v12.3.2 baseline was regenerated and accepted only after every correction, including this one, was complete and verified. TESTING: tests/v_paper_trading_audit_tests.js grew from 32 to 73 fixtures after Phase 2, then to 93 after this atomicity review (14 ALEX version-safety fixtures; 6 canonical-analytics fixtures; 5 strategy-ownership fixtures; 15 Health Check fixtures; then 13 new ALEX PERSISTENCE ATOMICITY fixtures and 3 new JVM PERSISTENCE ATOMICITY fixtures verifying, for both engines, that account/journal/version write failures on any one key roll back all three, that a real simulated reload after a failure restores the exact pre-operation state -- not just an in-memory check -- and that a retry after removing the injected failure succeeds cleanly with no duplicate close and no duplicate journal record). Full regression: 376/376 fixtures pass across all 9 canonical suites, zero failures. LIVE VERIFICATION (browser session\'s localStorage started and ended completely empty, verified by key-listing before and after) confirmed, in addition to everything verified for Phase 2: a real ALEX open persisting account+journal+version together, a real reload restoring it, a real injected journal-write failure during close correctly reporting failure while the position stayed open with balance/journal/version all unchanged (both in memory and in the exact persisted serialized values), a real reload after that failure still showing the same pre-close state, and -- after removing the injection -- a real successful close followed by a reload confirming exactly one closed position, one journal record, and one balance update; the identical 12-step sequence was repeated for JVM. Zero console errors at every step, including throughout the deliberately-injected-and-handled failure paths. FINAL PRE-COMMIT INTEGRITY GATE (same version, third and final corrective pass): the two atomicity fixes above still could not honestly guarantee full restoration if the COMPENSATING ROLLBACK WRITE itself also fails -- localStorage has no native transaction, so a third outcome exists alongside success/ordinary-rejection: a commit write fails AND at least one of its own rollback writes also fails, leaving storage in a partial, indeterminate state. savePaperAccountGuarded()/saveAlexGAccountGuarded() now detect this directly (a new injectNthCallFailure() harness helper independently targets "the Nth call to setItem/removeItem for key X," letting a fixture make the ORIGINAL write for one key succeed while only its LATER rollback-restore fails) and return a categorically distinct {ok:false,integrityCompromised:true,reason:<human-readable>,reasonCode:\'ROLLBACK_FAILED\',failedCommitStep,failedRollbackKeys} -- never conflated with an ordinary {ok:false,integrityCompromised:false,reason:...} rejection. commitPaperLedger()/commitAlexGLedger() propagate this and set a new, categorically separate paperLedgerIntegrityWarning/alexGLedgerIntegrityWarning (own dedicated red banner on Paper Trading/Alex G Live, distinct from the existing ordinary-rejection banner) directing to Diagnostics > Developer Mode > Paper Trading Health Check -- a plain in-memory assignment that never itself touches localStorage (proven directly). openPaperPosition/closePaperPosition/alexGCloseLivePosition/approveManualReviewTrade now propagate integrityCompromised on their return objects; approveManualReviewTrade()\'s own reconciling second commit (which persists an in-memory undo after an ORDINARY rejection) is now explicitly skipped when the first commit came back integrityCompromised, so a fatal result is never followed by an automatic second write attempt against possibly-corrupted storage -- the one caller-side gap this review found. Of the four required rollback-failure sequences, one (the journal write failing AND the journal\'s own restoration also failing) is structurally impossible under the fixed account->version->journal write order, since journal, written last, can never have been successfully written earlier in the same attempt and so can never itself be a rollback target -- disclosed directly in PAPER_TRADING_AUDIT.md §0.1 rather than faked with an artificial test; the other three (version-restoration failure, account-restoration failure, and a never-existed-before key\'s removeItem() failing) are all covered directly, for both engines. Health Check remains strictly read-only against a rollback-failure-shaped inconsistency; no automatic retry, repair, reset, or migration is attempted anywhere in this path. TESTING: tests/v_paper_trading_audit_tests.js grew from 93 to 115 fixtures (22 new RollbackFailure.* fixtures covering both engines\' fatal-result detection, in-memory snapshot preservation, the runtime warning\'s own no-localStorage-write guarantee, Health Check\'s continued read-only detection of a rollback-failure-shaped inconsistency, no-automatic-retry, credential-free diagnostic logging, and confirmation that ordinary rollback-success behavior is unchanged). Full regression: 398/398 fixtures pass across all 9 canonical suites, zero skipped. Protected drift reconfirmed unchanged at exactly the same three items (openPaperPosition, closePaperPosition, alexGCloseLivePosition), verified directly against both the regenerated v12.3.2 baseline and the original committed v12.3.1 baseline. LIVE VERIFICATION (fresh local server, browser origin started and ended completely empty, an external pre-test snapshot captured and used to restore the intermediate state before the final full clear): confirmed real JVM and ALEX open+close still succeed and persist atomically; confirmed a real injected ORDINARY commit failure (rollback succeeds) is safely rejected with the ordinary banner, storage fully restored, and a real page reload showing the exact pre-attempt state; confirmed a real injected ROLLBACK-FAILURE (journal write fails, then the version-key rollback restore also fails) returns the fatal result with no thrown exception, sets only the new fatal warning (never the ordinary banner), renders correctly on the Alex G Live panel identifying ALEX by name with no credentials present anywhere, does not itself touch localStorage, and leaves Health Check fully functional and still read-only even with a live secret token/account ID set in cfg; zero console errors, including an explicit check for any uncaught exception, at every step. See docs/PAPER_TRADING_AUDIT.md §0.1 for the complete rollback-failure contract.',
   '12.3.1 — STRATEGY WORKSPACE FRAMEWORK & DEDICATED TJR WORKSPACE (architecture/navigation release -- transforms MOGO from strategy overlays into a modular multi-strategy Trading Operating System; NO new trading intelligence added: no Zone Interaction Engine, Reaction Engine, BOS Confirmation, Candidate Generation, Risk Engine, Entry/Target Logic, Paper Trading, Replay Logic, or Live Trading. JVM and ALEX strategy logic, all 63 protected functions, all 4 protected constants, OANDA integration, paper-account logic, unified journal ownership, and the existing replay engine are completely untouched -- zero drift confirmed. The v12.3.0 TJR Session & Zone Engine is unchanged and remains fully functional; v12.3.0\'s commit and tag are untouched). SCOPE: TJR becomes a first-class strategy alongside ALEX and JVM via a reusable Strategy Workspace pattern, and a dedicated TJR workspace replaces TJR\'s prior residency inside the shared Scanner chart and Strategy Center. REGISTRY (Phase 7): four new, additive Manifest fields -- navLabel, workspaceTitle, currentPhase, and (for TJR) a real panelId (\'tjrworkspace\', previously null) -- added to JVM_MANIFEST/ALEX_MANIFEST/TJR_MANIFEST; JVM and ALEX keep their exact pre-existing panelId values (\'paper\'/\'alexg\') and are otherwise untouched. TJR_SERVICES.onOpen now calls the new initTjrWorkspace() instead of a no-op. TJR\'s standalone devToolsTjrCard (Strategy Center) is retired -- superseded by the workspace\'s own Developer tab, avoiding duplicate TJR diagnostics surfaces. NAVIGATION (Phase 3): a new registry-driven "Strategies" nav group (renderStrategyNavGroup(), called once from initAll()) generates one button per STRATEGY_REGISTRY entry in registry order, routing through the existing, unmodified showPanel(manifest.panelId) mechanism -- proven genuinely registry-driven (not hardcoded) by a fixture that injects a 4th synthetic strategy and confirms a 4th nav button appears automatically. The "Paper Trading" and "ALEX" leaf buttons are removed from the Trading dropdown (moved into Strategies); Trading keeps Scanner/Charts/Watchlist -- Scanner is the "Shared Trading Chart" from the architecture diagram, kept under its existing, well-established label rather than cosmetically renamed. The JVM-specific "unseen auto-trade count" nav badge (a real, existing JVM-only feature with no generic equivalent) moved from the removed hardcoded button to the registry-driven one, keyed by manifest.id -- updatePaperNavBadge() updated accordingly, still JVM-only, honestly disclosed as an exception rather than fabricated for strategies that don\'t have the concept. DEDICATED TJR WORKSPACE (Phase 4): a new panel-tjrworkspace with an always-visible Strategy Header (Strategy Name/Version/Current Phase/Detection/Candidate/Paper/Live/Profitability Status/Current Pair/Timeframe/Session/Previous Session -- session values computed live via the unchanged Phase 1 getTjrSessionForTimestamp()/getPreviousCompletedTjrSession()) and seven tabs mirroring Strategy Center\'s own tab-rendering pattern: (1) Chart -- a fully separate, isolated Lightweight Charts instance (own tjrWsChart/tjrWsCandleSeries/tjrWsZoneLines globals, own instrument selector spanning all 34 ALL_PAIRS, own M15/H1/H4/Daily/Weekly timeframe selector, own Show/Hide Zones toggle, own legend) that never reads or writes activePair/activeTf/lwChart/candleSeries/chartOverlayToggles/tjrChartZoneLines/tjrZoneState -- "this chart belongs only to TJR"; (2) Rules -- IMPLEMENTED (Previous Completed Session, M30 Session Source, Session High/Low Zone, Immutable Zones, Deterministic IDs, DST-aware Sessions) vs. APPROVED FOR IMPLEMENTATION (Zone Interaction, Reaction Detection, Five-minute BOS) vs. FUTURE (Candidate Generation, Trade Grading, Paper Trading, Replay Validation, Live Trading), clearly separated, matching ADR-007\'s per-component status; (3) Diagnostics -- the full required field list (Source Session, Session Date, Session Start/End, DST Result, Candle/Missing/Duplicate/Invalid Candle counts, Selected High/Low Candle, Zone Bounds, Zone IDs, Lifecycle, Warnings, Errors), never hiding incomplete data; (4) Paper Trading -- every control (Risk %, Entry/Stop/Target Model, Minimum Grade, Manual Approval, Automatic Paper Trading) rendered `disabled`, with the exact required not-yet-available message, zero execution logic, zero paper-account mutation; (5) Replay -- the exact required "future milestone" placeholder, no replay logic; (6) Journal -- the exact required "No TJR trades exist" placeholder, zero journal records created; (7) Developer -- raw session/zone objects, zone ids, and DST-calculation detail (no credentials/tokens/account identifiers of any kind, confirmed by a dedicated fixture). The pure Phase 1 engine (buildTjrSessionZones and all nine core functions) is reused completely unmodified; only the DOM-drawing glue (drawTjrWorkspaceZoneOverlay/clearTjrWorkspaceZoneOverlay) is a small, deliberate, isolated parallel to the shared chart\'s own drawTjrZoneOverlay/clearTjrZoneOverlay -- required for genuine chart-instance isolation, not a violation of "don\'t duplicate architecture" (the valuable logic -- session/zone computation -- has zero duplication). SHARED CHART CLEANUP (Phase 5): the single loadAndRenderTjrZones(activePair) call inside loadChart() was removed -- the shared Scanner/Trading chart no longer auto-renders TJR zones, labels, legend, or diagnostics. Every v12.3.0 Phase 1 function/state variable this call used to invoke (loadAndRenderTjrZones, drawTjrZoneOverlay, clearTjrZoneOverlay, renderTjrZoneLegend, tjrZoneState, tjrChartZoneLines, chartOverlayToggles.tjrZones, the tjrZoneOverlayLegend DOM element) is retained, completely unmodified, and still directly callable/testable -- proven by a source-inspection fixture confirming the call site is gone while the function definitions remain. STRATEGY CENTER (Phase 6): renderTjrStrategyCenterPanel() is now a thin "Strategy Overview + Launch Workspace" card (name, description, current phase, execution-disabled notice, and an "Open TJR Workspace" button routing via showPanel(TJR_MANIFEST.panelId,null)) -- the detailed session/zone/candle breakdown this function used to render directly now lives only in the workspace\'s own Diagnostics/Developer tabs, avoiding duplication. TESTING: 31 new fixtures in tests/v1231_strategy_workspace_framework_tests.js covering registry metadata, registry-driven nav generation (including the synthetic-4th-strategy proof), workspace routing via the existing showPanel() mechanism, all 12 header fields and their exact required values, all 7 tabs rendering, Rules\' three-category separation, Diagnostics\' full field list against an intentionally incomplete dataset, Paper Trading\'s fully-disabled controls, Replay/Journal\'s exact placeholder text, Developer\'s raw-object exposure with a dedicated no-credentials-leaked check, dedicated-chart isolation (drawing/clearing the workspace overlay never touches the shared chart\'s tjrChartZoneLines), the Show/Hide Zones toggle suppressing the overlay, chart lifecycle/cleanup (destroyTjrWorkspaceChart leaves no leaked instance or price lines), the Phase 5 source-inspection proof, ALEX/JVM registry compatibency (their onOpen still fires their real, unmodified initAlexGPair()/initJvmPaperPanel()), and a zero-mutation/zero-new-localStorage-key proof across opening the workspace and visiting every tab. Full regression: 283/283 discovered fixtures pass (252 pre-existing + 31 new), zero skipped/excluded, zero protected-function/constant drift. Live browser verification (zero real trade data throughout -- paperAccount.balance stayed at $10,000, journalEntries/alexGJournalEntries stayed empty, localStorage stayed empty for the whole session): the new Strategies nav group rendered JVM/ALEX/TJR Session Level Reaction in order; opening the TJR workspace rendered the header with correct live session values, all 7 tabs, and a real (empty, since no OANDA connection in this environment) chart canvas; Strategy Center\'s TJR tab rendered its overview card and Open TJR Workspace button; the shared Scanner chart\'s tjrZoneState/legend stayed empty/hidden after a normal chart load; zero console errors at every step. KNOWN LIMITATIONS, disclosed rather than silently deferred: the architecture diagram\'s top-level placement of Journal/Replay/Developer as standalone nav items (siblings of Dashboard/Trading/Strategies) was intentionally NOT implemented this release -- Phase 3\'s own literal instructions only specified the Trading/Strategies split, and moving Journal out of Performance, Replay out of Strategy, and carving a standalone Developer page out of Diagnostics would each be a larger, unrequested structural change with real regression risk; treated as a longer-term aspirational target, not this release\'s literal scope, and disclosed here rather than silently decided. Syntax clean, known-good hash unchanged.',
@@ -4269,19 +4280,35 @@ function stopAlexGLivePollingIfDone(){
     alexGLiveInterval=null;
   }
 }
+// v12.5.0 PROGRAM-001 Phase 2A: wrapped in SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR Decision
+// Event instrumentation. alexGLivePollTick() is NOT a protected function (confirmed against
+// PROTECTED_FUNCTIONS) -- this is the genuine outer poll-tick boundary; every original
+// statement below is byte-identical and unreordered, only wrapped in try/catch with emit
+// calls at the boundaries. No protected rule logic is instrumented.
 async function alexGLivePollTick(){
-  await alexGCheckLivePositions(); // always monitor/close existing positions first
-  stopAlexGLivePollingIfDone();
-  if(!alexGAutoTrading.enabled) return; // do not look for new setups while OFF
-  // Strategy evaluation only advances when a new completed H1 candle exists --
-  // computed from wall-clock time (H1 candles close on the UTC hour), not by
-  // fetching candles just to check, so a poll with nothing new is essentially free.
-  const currentH1Boundary=Math.floor(Date.now()/3600000)*3600000;
-  for(const pair of SCAN_PAIRS){
-    const oPair=pair.replace('/','_');
-    const lastEval=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1)||0;
-    if(currentH1Boundary<=lastEval) continue;
-    await alexGEvaluatePairForLiveSetups(oPair);
+  const __scanId=generateDecisionEventId('SCAN');
+  emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
+  try{
+    await alexGCheckLivePositions(); // always monitor/close existing positions first
+    stopAlexGLivePollingIfDone();
+    if(!alexGAutoTrading.enabled){ // do not look for new setups while OFF
+      emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
+      return;
+    }
+    // Strategy evaluation only advances when a new completed H1 candle exists --
+    // computed from wall-clock time (H1 candles close on the UTC hour), not by
+    // fetching candles just to check, so a poll with nothing new is essentially free.
+    const currentH1Boundary=Math.floor(Date.now()/3600000)*3600000;
+    for(const pair of SCAN_PAIRS){
+      const oPair=pair.replace('/','_');
+      const lastEval=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1)||0;
+      if(currentH1Boundary<=lastEval) continue;
+      await alexGEvaluatePairForLiveSetups(oPair);
+    }
+    emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
+  }catch(e){
+    emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',reasonCode:'SYSTEM_UNEXPECTED_ERROR',reasonText:(e&&e.message)?e.message:'Unknown error',severity:'ERROR',evidenceCompleteness:'MINIMAL'});
+    throw e; // preserve existing error propagation exactly -- never swallow a real error
   }
 }
 
@@ -7751,25 +7778,40 @@ async function scanPair(pair){
     addAlert(pair,conf,price,getSession());
   }
 }
+// v12.5.0 PROGRAM-001 Phase 2A: wrapped in SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR Decision
+// Event instrumentation. scanAll() is NOT a protected function (confirmed against
+// PROTECTED_FUNCTIONS) -- this is the genuine outer scan-tick boundary; every original
+// statement below is byte-identical and unreordered, only wrapped in try/catch with emit
+// calls at the boundaries. No protected rule logic (checkAutoTrades, evaluateLiveTrigger,
+// scoreConfluence, bestConfluence, computeAOI, detectSignals, getBias, getSession, etc.) is
+// itself instrumented or modified anywhere in this release.
 async function scanAll(){
-  document.getElementById('scanStatus').textContent='Scanning...';
-  document.getElementById('liveDot').classList.remove('off');
-  const chunks=[];
-  for(let i=0;i<ALL_PAIRS.length;i+=5) chunks.push(ALL_PAIRS.slice(i,i+5));
-  for(const ch of chunks){await Promise.all(ch.map(p=>scanPair(p)));renderPairList();}
-  const high=Object.values(pairData).filter(d=>d.conf&&d.conf.total>=ALERT_THRESHOLD).length;
-  document.getElementById('setupCount').textContent=`${high} setups`;
-  document.getElementById('scanStatus').textContent=`${new Date().toLocaleTimeString()}`;
-  updateSessionBadge();
-  const ad=pairData[activePair];
-  if(ad){
-    if(ad.price) document.getElementById('chartPrice').textContent=ad.price.toFixed(activePair.includes('JPY')?3:5);
+  const __scanId=generateDecisionEventId('SCAN');
+  emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
+  try{
+    document.getElementById('scanStatus').textContent='Scanning...';
+    document.getElementById('liveDot').classList.remove('off');
+    const chunks=[];
+    for(let i=0;i<ALL_PAIRS.length;i+=5) chunks.push(ALL_PAIRS.slice(i,i+5));
+    for(const ch of chunks){await Promise.all(ch.map(p=>scanPair(p)));renderPairList();}
+    const high=Object.values(pairData).filter(d=>d.conf&&d.conf.total>=ALERT_THRESHOLD).length;
+    document.getElementById('setupCount').textContent=`${high} setups`;
+    document.getElementById('scanStatus').textContent=`${new Date().toLocaleTimeString()}`;
+    updateSessionBadge();
+    const ad=pairData[activePair];
+    if(ad){
+      if(ad.price) document.getElementById('chartPrice').textContent=ad.price.toFixed(activePair.includes('JPY')?3:5);
+    }
+    renderScan();
+    checkPaperPositions();
+    await checkAutoTrades();
+    await runManualReviewScan();
+    if(document.getElementById('panel-paper')&&document.getElementById('panel-paper').classList.contains('active')) renderPaper();
+    emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
+  }catch(e){
+    emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',reasonCode:'SYSTEM_UNEXPECTED_ERROR',reasonText:(e&&e.message)?e.message:'Unknown error',severity:'ERROR',evidenceCompleteness:'MINIMAL'});
+    throw e; // preserve existing error propagation exactly -- never swallow a real error
   }
-  renderScan();
-  checkPaperPositions();
-  await checkAutoTrades();
-  await runManualReviewScan();
-  if(document.getElementById('panel-paper')&&document.getElementById('panel-paper').classList.contains('active')) renderPaper();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════
@@ -10375,6 +10417,251 @@ function lockBaselineRegistryFromUI(){
   alert(result.ok?'Baseline locked.':'Failed to lock baseline: '+result.error);
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// ── v12.5.0 PROGRAM-001 PHASE 2A: DECISION EVENT SCHEMA & OBSERVABILITY FOUNDATION ──
+// Infrastructure only, memory-only, additive. No trading behavior change: the exact same
+// market data produces the exact same trades before and after this release. This section
+// defines a universal Decision Event schema every strategy (JVM/ALEX/TJR/future) will
+// eventually emit through, a centralized reason-code contract, an evidence-completeness
+// model, and a lightweight in-memory append-only event bus -- plus, at the very bottom of
+// this section, the minimal SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR instrumentation of
+// scanAll() (JVM) and alexGLivePollTick() (ALEX), the two genuine outer scan-tick
+// boundaries. Neither function is a protected function (confirmed against
+// regression-baseline-tools.py's PROTECTED_FUNCTIONS list) -- no protected rule logic
+// (openPaperPosition/closePaperPosition/checkAutoTrades/evaluateLiveTrigger/scoreConfluence/
+// bestConfluence/computeAOI/detectSignals/getBias/getSession/pipSize/pipValuePerLot/any
+// alexG* protected function) is touched or instrumented anywhere in this release. Every
+// event-bus call site is wrapped in its own try/catch that can never throw outward, so a
+// bug in this brand-new layer can never interrupt scanning or trading -- proven directly in
+// the test suite, not just by inspection. Nothing here makes a network request, writes to
+// localStorage, writes to the journal, or writes to any paper account: the entire event log
+// lives in one in-memory array for the lifetime of the browser tab, per Phase 2A's explicit
+// memory-only mandate.
+
+const DECISION_EVENT_SCHEMA_VERSION='mogo.decision-event.v1';
+
+// Every event type the schema supports. Not every type is emitted yet in this release --
+// SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR are the only three actually wired below, from the
+// two safe outer boundaries. The rest exist so the schema itself already supports the full
+// future decision lifecycle (candidate creation, rule evaluation, rejection/approval, trade
+// open/close) without a breaking schema change when a later phase starts emitting them.
+const DECISION_EVENT_TYPES=Object.freeze({
+  SCAN_STARTED:'SCAN_STARTED',
+  SCAN_COMPLETED:'SCAN_COMPLETED',
+  SETUP_OBSERVED:'SETUP_OBSERVED',
+  CANDIDATE_CREATED:'CANDIDATE_CREATED',
+  RULE_EVALUATED:'RULE_EVALUATED',
+  CANDIDATE_REJECTED:'CANDIDATE_REJECTED',
+  CANDIDATE_APPROVED:'CANDIDATE_APPROVED',
+  TRADE_OPEN_REQUESTED:'TRADE_OPEN_REQUESTED',
+  TRADE_OPENED:'TRADE_OPENED',
+  TRADE_OPEN_FAILED:'TRADE_OPEN_FAILED',
+  TRADE_CLOSED:'TRADE_CLOSED',
+  DATA_UNAVAILABLE:'DATA_UNAVAILABLE',
+  ENGINE_ERROR:'ENGINE_ERROR'
+});
+
+// ── Reason Code Registry ── Codes are the stable, analytics-safe contract; reasonText on an
+// individual event is free-form human wording and must never be relied on programmatically.
+// This registry is deliberately the single source of truth for valid codes (validated by
+// validateDecisionEvent() below) rather than a loose prefix convention, so "Codes must remain
+// stable" is actually enforced, not just suggested -- a future phase adds new codes here
+// first, then uses them, never the reverse.
+const REASON_CODE_CATEGORIES=Object.freeze(['DATA','SESSION','STRUCTURE','BIAS','AOI','CONFLUENCE','ENTRY','RISK','SPREAD','EXECUTION','STATE','CONFIG','SYSTEM','UNKNOWN']);
+const REASON_CODE_REGISTRY=Object.freeze({
+  DATA_CANDLES_UNAVAILABLE:Object.freeze({code:'DATA_CANDLES_UNAVAILABLE',category:'DATA',label:'Candle data unavailable'}),
+  DATA_PRICE_UNAVAILABLE:Object.freeze({code:'DATA_PRICE_UNAVAILABLE',category:'DATA',label:'Live price unavailable'}),
+  SESSION_OUTSIDE_ALLOWED_WINDOW:Object.freeze({code:'SESSION_OUTSIDE_ALLOWED_WINDOW',category:'SESSION',label:'Outside allowed trading session'}),
+  SESSION_OUTSIDE_PREFERRED_DAY:Object.freeze({code:'SESSION_OUTSIDE_PREFERRED_DAY',category:'SESSION',label:'Outside preferred trading day window'}),
+  STRUCTURE_AOI_NOT_VALIDATED:Object.freeze({code:'STRUCTURE_AOI_NOT_VALIDATED',category:'STRUCTURE',label:'Area of interest not validated'}),
+  STRUCTURE_ZONE_ALREADY_BROKEN:Object.freeze({code:'STRUCTURE_ZONE_ALREADY_BROKEN',category:'STRUCTURE',label:'Structural zone already broken'}),
+  BIAS_CONFLICT:Object.freeze({code:'BIAS_CONFLICT',category:'BIAS',label:'Directional bias conflict'}),
+  BIAS_SPLIT:Object.freeze({code:'BIAS_SPLIT',category:'BIAS',label:'Bias split across timeframes'}),
+  AOI_TOO_FAR:Object.freeze({code:'AOI_TOO_FAR',category:'AOI',label:'Price too far from area of interest'}),
+  AOI_INSUFFICIENT_TOUCHES:Object.freeze({code:'AOI_INSUFFICIENT_TOUCHES',category:'AOI',label:'Insufficient touches to validate area of interest'}),
+  CONFLUENCE_BELOW_THRESHOLD:Object.freeze({code:'CONFLUENCE_BELOW_THRESHOLD',category:'CONFLUENCE',label:'Confluence score below alert threshold'}),
+  ENTRY_SIGNAL_NOT_PRESENT:Object.freeze({code:'ENTRY_SIGNAL_NOT_PRESENT',category:'ENTRY',label:'No qualifying entry signal present'}),
+  ENTRY_RATIO_BELOW_MINIMUM:Object.freeze({code:'ENTRY_RATIO_BELOW_MINIMUM',category:'ENTRY',label:'Reward-to-risk ratio below minimum'}),
+  RISK_OPEN_POSITION_LIMIT:Object.freeze({code:'RISK_OPEN_POSITION_LIMIT',category:'RISK',label:'Open-position limit reached for this pair'}),
+  RISK_ZERO_STOP_DISTANCE:Object.freeze({code:'RISK_ZERO_STOP_DISTANCE',category:'RISK',label:'Stop distance is zero'}),
+  SPREAD_UNAVAILABLE:Object.freeze({code:'SPREAD_UNAVAILABLE',category:'SPREAD',label:'Bid/ask spread unavailable'}),
+  SPREAD_EXPANDED:Object.freeze({code:'SPREAD_EXPANDED',category:'SPREAD',label:'Spread wider than tolerance'}),
+  EXECUTION_SPREAD_UNAVAILABLE:Object.freeze({code:'EXECUTION_SPREAD_UNAVAILABLE',category:'EXECUTION',label:'Execution price unavailable (no spread data)'}),
+  EXECUTION_LEDGER_REJECTED:Object.freeze({code:'EXECUTION_LEDGER_REJECTED',category:'EXECUTION',label:'Ledger commit rejected the trade'}),
+  STATE_ALREADY_TRADED_TODAY:Object.freeze({code:'STATE_ALREADY_TRADED_TODAY',category:'STATE',label:'Pair already traded today'}),
+  STATE_SIGNAL_ALREADY_DECIDED:Object.freeze({code:'STATE_SIGNAL_ALREADY_DECIDED',category:'STATE',label:'Signal already decided (duplicate-prevention)'}),
+  STATE_SIGNAL_STALE:Object.freeze({code:'STATE_SIGNAL_STALE',category:'STATE',label:'Signal stale (missed its evaluation window)'}),
+  CONFIG_AUTOMATION_DISABLED:Object.freeze({code:'CONFIG_AUTOMATION_DISABLED',category:'CONFIG',label:'Automated trading is turned off'}),
+  SYSTEM_UNEXPECTED_ERROR:Object.freeze({code:'SYSTEM_UNEXPECTED_ERROR',category:'SYSTEM',label:'Unexpected engine error'}),
+  UNKNOWN_NOT_RECORDED:Object.freeze({code:'UNKNOWN_NOT_RECORDED',category:'UNKNOWN',label:'Reason not recorded'})
+});
+
+// ── Evidence Completeness model ── An overall per-event level, plus a separate per-field
+// provenance taxonomy future phases use to tag WHY a given field is what it is. JVM and ALEX
+// are never forced into artificial parity -- each event honestly reflects what that engine
+// actually knows at that stage, independently; a thin engine (JVM has no per-trade rule
+// snapshot, no MAE/MFE) is expected to report lower completeness than a richer one (ALEX),
+// and that asymmetry is correct, not a bug to hide.
+const EVIDENCE_COMPLETENESS_LEVELS=Object.freeze(['COMPLETE','PARTIAL','MINIMAL','UNKNOWN']);
+const EVIDENCE_FIELD_PROVENANCE=Object.freeze(['OBSERVED','DERIVED','UNAVAILABLE','UNSAFE_TO_RECONSTRUCT','FUTURE_WORK']);
+
+// ── Identity ── A single monotonic counter guarantees uniqueness even for two IDs generated
+// within the same millisecond (repeated scans, back-to-back events) -- timestamp alone is not
+// sufficient for that guarantee, so both are combined. Never resets except via
+// clearDecisionEvents() (dev/test use only).
+let decisionEventIdCounter=0;
+function generateDecisionEventId(prefix){
+  decisionEventIdCounter++;
+  return prefix+'|'+Date.now()+'-'+decisionEventIdCounter;
+}
+
+// ── In-memory event bus state ── Deliberately NOT persisted anywhere (fxhub_* or otherwise)
+// per Phase 2A's explicit memory-only mandate -- this entire log is gone on reload, by design.
+// Bounded to a fixed size so an unattended browser tab can never grow this without limit;
+// oldest events are dropped first (still append-only in the sense that no RETAINED event is
+// ever rewritten -- only the oldest entries age out of the bounded window).
+let decisionEventLog=[];
+let decisionEventSequenceCounter=0;
+let decisionEventValidationFailures=[];
+const DECISION_EVENT_MAX_LOG_SIZE=500;
+const DECISION_EVENT_MAX_PAYLOAD_CHARS=8000;
+
+// Builds a candidate event object. Every schema field is explicitly present -- given a value
+// from `fields` if the caller provided one, else `null` -- so "missing" is always a real,
+// consistent `null`, never an absent key and never a fabricated 0/empty-string/false.
+// sequenceNumber is deliberately left null here: only emitDecisionEvent() (the sole place an
+// event actually enters the append-only log) assigns it, so a rejected/invalid event that
+// never makes it into the log can never consume or skew a sequence number.
+function createDecisionEvent(fields){
+  const f=fields||{};
+  const nowIso=new Date().toISOString();
+  return {
+    eventId:generateDecisionEventId('EVT'),
+    schemaVersion:DECISION_EVENT_SCHEMA_VERSION,
+    eventType:f.eventType!=null?f.eventType:null,
+    occurredAt:f.occurredAt!=null?f.occurredAt:nowIso,
+    recordedAt:nowIso,
+    strategyId:f.strategyId!=null?f.strategyId:null,
+    strategyVersion:f.strategyVersion!=null?f.strategyVersion:null,
+    baselineId:f.baselineId!=null?f.baselineId:null,
+    applicationVersion:APP_VERSION,
+    scanId:f.scanId!=null?f.scanId:null,
+    candidateId:f.candidateId!=null?f.candidateId:null,
+    tradeId:f.tradeId!=null?f.tradeId:null,
+    pair:f.pair!=null?f.pair:null,
+    direction:f.direction!=null?f.direction:null,
+    timeframe:f.timeframe!=null?f.timeframe:null,
+    session:f.session!=null?f.session:null,
+    source:f.source!=null?f.source:null,
+    engineMode:f.engineMode!=null?f.engineMode:null,
+    stage:f.stage!=null?f.stage:null,
+    decision:f.decision!=null?f.decision:null,
+    reasonCode:f.reasonCode!=null?f.reasonCode:null,
+    reasonText:f.reasonText!=null?f.reasonText:null,
+    ruleId:f.ruleId!=null?f.ruleId:null,
+    ruleVersion:f.ruleVersion!=null?f.ruleVersion:null,
+    ruleResult:f.ruleResult!=null?f.ruleResult:null,
+    severity:f.severity!=null?f.severity:null,
+    marketTimestamp:f.marketTimestamp!=null?f.marketTimestamp:null,
+    marketDataReference:f.marketDataReference!=null?f.marketDataReference:null,
+    context:f.context!=null?f.context:null,
+    metrics:f.metrics!=null?f.metrics:null,
+    diagnostics:f.diagnostics!=null?f.diagnostics:null,
+    parentEventId:f.parentEventId!=null?f.parentEventId:null,
+    correlationId:f.correlationId!=null?f.correlationId:null,
+    sequenceNumber:null,
+    evidenceCompleteness:f.evidenceCompleteness!=null?f.evidenceCompleteness:'UNKNOWN',
+    unknownFields:f.unknownFields!=null?f.unknownFields:[]
+  };
+}
+
+// Validates required fields, schema version, event-type/reason-code/evidence-level membership,
+// and serialization/payload size. Never throws -- always returns a {valid,errors} result so a
+// malformed event fails safely and is recorded as a validation failure, never silently dropped
+// and never allowed to crash the caller.
+function validateDecisionEvent(event){
+  const errors=[];
+  if(!event||typeof event!=='object') return{valid:false,errors:['event is not an object']};
+  if(event.schemaVersion!==DECISION_EVENT_SCHEMA_VERSION) errors.push('schemaVersion mismatch: '+event.schemaVersion);
+  if(!event.eventId) errors.push('missing eventId');
+  if(!event.eventType||!DECISION_EVENT_TYPES[event.eventType]) errors.push('invalid or missing eventType: '+event.eventType);
+  if(!event.occurredAt) errors.push('missing occurredAt');
+  if(!event.recordedAt) errors.push('missing recordedAt');
+  if(event.reasonCode!=null&&!REASON_CODE_REGISTRY[event.reasonCode]) errors.push('unknown reasonCode: '+event.reasonCode);
+  if(event.evidenceCompleteness!=null&&EVIDENCE_COMPLETENESS_LEVELS.indexOf(event.evidenceCompleteness)===-1) errors.push('invalid evidenceCompleteness: '+event.evidenceCompleteness);
+  let serialized=null;
+  try{serialized=JSON.stringify(event);}catch(e){errors.push('event is not serializable: '+e.message);}
+  if(serialized!=null&&serialized.length>DECISION_EVENT_MAX_PAYLOAD_CHARS) errors.push('event payload exceeds max size ('+serialized.length+' > '+DECISION_EVENT_MAX_PAYLOAD_CHARS+' chars)');
+  return{valid:errors.length===0,errors};
+}
+
+// The only function that ever appends to decisionEventLog. Validates first; an invalid event
+// is recorded in decisionEventValidationFailures (also bounded) and NEVER enters the log, so
+// the log only ever contains schema-valid events. sequenceNumber is assigned here, immediately
+// before push, guaranteeing a valid event always gets exactly one, in true emission order.
+// Object.freeze()s the event before storing it, so a caller holding a reference (e.g. from
+// getDecisionEvents()) can never rewrite a field on an already-emitted event -- true
+// append-only immutability, not just a documented convention. This entire function is wrapped
+// so that ANY internal failure -- a bug in this brand-new layer -- returns a safe {ok:false}
+// result instead of throwing into the caller (scanAll()/alexGLivePollTick()), which must never
+// have its own scanning/trading behavior interrupted by an observability bug.
+function emitDecisionEvent(fields){
+  try{
+    const event=createDecisionEvent(fields);
+    const validation=validateDecisionEvent(event);
+    if(!validation.valid){
+      decisionEventValidationFailures.push({at:new Date().toISOString(),errors:validation.errors,attemptedEventType:(fields&&fields.eventType)||null});
+      if(decisionEventValidationFailures.length>DECISION_EVENT_MAX_LOG_SIZE) decisionEventValidationFailures.shift();
+      return{ok:false,errors:validation.errors};
+    }
+    decisionEventSequenceCounter++;
+    event.sequenceNumber=decisionEventSequenceCounter;
+    Object.freeze(event);
+    decisionEventLog.push(event);
+    if(decisionEventLog.length>DECISION_EVENT_MAX_LOG_SIZE) decisionEventLog.shift();
+    return{ok:true,event};
+  }catch(e){
+    try{
+      decisionEventValidationFailures.push({at:new Date().toISOString(),errors:['internal event bus error: '+(e&&e.message?e.message:'unknown')],attemptedEventType:(fields&&fields.eventType)||null});
+    }catch(e2){/* even the failure-recording path must never throw outward */}
+    return{ok:false,errors:['internal event bus error']};
+  }
+}
+// Defensive shallow copy of the ARRAY (not the frozen event objects themselves, which don't
+// need copying since they're already immutable) -- a caller can never push/splice/reorder the
+// real in-memory log through the value this returns.
+function getDecisionEvents(){ return decisionEventLog.slice(); }
+// Wipes the entire in-memory log (dev/test reset only) -- distinct from "rewriting an event":
+// this clears the whole append-only window, it never modifies any individual retained event.
+function clearDecisionEvents(){
+  decisionEventLog=[];
+  decisionEventSequenceCounter=0;
+  decisionEventValidationFailures=[];
+}
+
+function renderDecisionEventDiagnostics(){
+  const el=document.getElementById('decisionEventDiagnosticsCard');
+  if(!el)return;
+  if(!developerModeEnabled){el.innerHTML='';return;}
+  const events=getDecisionEvents();
+  const last=events.length?events[events.length-1]:null;
+  el.innerHTML=`<div class="card">
+    <div style="font-weight:700;font-size:12px;margin-bottom:6px">Decision Event Bus (Phase 2A Preview)</div>
+    <div style="font-size:11px;color:var(--text2);line-height:1.7">
+      Schema Version: <strong>${escapeHtml(DECISION_EVENT_SCHEMA_VERSION)}</strong><br>
+      Event Bus Status: <strong style="color:var(--green)">ACTIVE (memory-only)</strong><br>
+      Events in Memory: <strong>${events.length}</strong><br>
+      Last Event: ${last?escapeHtml(last.eventType+' — '+(last.strategyId||'—')+' @ '+last.occurredAt):'(none yet)'}<br>
+      Validation Failures: <strong style="color:${decisionEventValidationFailures.length?'var(--red)':'var(--green)'}">${decisionEventValidationFailures.length}</strong><br>
+      Persistence Status: <strong>NOT PERSISTED (memory-only by design, per Phase 2A)</strong>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="secondary" onclick="renderDecisionEventDiagnostics()">Refresh</button>
+      <button class="secondary" onclick="clearDecisionEvents();renderDecisionEventDiagnostics();">Clear (dev only)</button>
+    </div>
+  </div>`;
+}
+
 // Read-only preview of what balance/P&L would become if the given tradeIds were restored
 // into paperAccount.closedPositions. Never mutates paperAccount -- only applyPaperReconciliation
 // (below), called after explicit user confirmation, does that. Matches only by verified
@@ -11567,6 +11854,9 @@ function applyDeveloperModeVisibility(){
   const baselineWrap=document.getElementById('baselineRegistryDiagnosticsCardWrap');
   if(baselineWrap) baselineWrap.style.display=developerModeEnabled?'block':'none';
   renderBaselineRegistryDiagnostics(); // populates (or clears, if now OFF) immediately on toggle
+  const decisionEventWrap=document.getElementById('decisionEventDiagnosticsCardWrap');
+  if(decisionEventWrap) decisionEventWrap.style.display=developerModeEnabled?'block':'none';
+  renderDecisionEventDiagnostics(); // populates (or clears, if now OFF) immediately on toggle
 }
 function generateTestPaperTrade(direction,forceResult){
   if(!developerModeEnabled)return;
@@ -14162,7 +14452,7 @@ function showPanel(name,btn){
   if(name==='ai') renderAiMessages();
   if(name==='backtest') initBacktestPair();
   if(name==='truemtf') initMTFPair();
-  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();renderBaselineRegistryDiagnostics();}
+  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();renderBaselineRegistryDiagnostics();renderDecisionEventDiagnostics();}
   if(name==='rules') renderRules(); // v8.0: refreshes Strategy Center performance stats from current paperAccount data on every visit
   if(name==='academy') renderAcademy();
   // Paper Trading Operational Audit correction: the unified Journal tab had no dispatch

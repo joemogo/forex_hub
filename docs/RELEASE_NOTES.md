@@ -13,6 +13,68 @@ its change actually affects.
 
 ---
 
+## v12.5.0 — PROGRAM-001 Phase 2A: Decision Event Schema & Observability Foundation
+Infrastructure-only release — no trading behavior change; the exact same market data produces
+the exact same trades before and after this release, confirmed by zero protected-function/
+protected-constant drift verified directly against the true committed v12.4.0 baseline. Builds
+the universal Decision Event architecture every strategy (JVM/ALEX/TJR/future) will eventually
+emit through: a versioned schema (`mogo.decision-event.v1`, `createDecisionEvent()`) supporting
+all 13 required event types and every required field, with missing values always an explicit
+`null` — never fabricated; a centralized, closed **reason-code registry**
+(`REASON_CODE_REGISTRY`, 14 categories) that `reasonCode` is validated against directly (not a
+loose prefix guess), keeping codes stable while `reasonText` stays independent free-form human
+wording; an **evidence model** distinguishing an overall per-event completeness level
+(`COMPLETE`/`PARTIAL`/`MINIMAL`/`UNKNOWN`) from a per-field provenance taxonomy
+(`OBSERVED`/`DERIVED`/`UNAVAILABLE`/`UNSAFE_TO_RECONSTRUCT`/`FUTURE_WORK`) — JVM and ALEX are
+deliberately never forced into artificial parity; and a lightweight, **memory-only, append-only
+event bus** (`emitDecisionEvent()`/`getDecisionEvents()`/`clearDecisionEvents()`/
+`validateDecisionEvent()`) that `Object.freeze()`s every event before storing it (true
+immutability, not just convention), assigns `sequenceNumber` only to events that pass validation,
+and writes **zero** `localStorage` keys — this entire log is gone on reload, by explicit Phase 2A
+mandate. Only `SCAN_STARTED`/`SCAN_COMPLETED`/`ENGINE_ERROR` are actually emitted so far, from
+the two genuine outer scan-tick boundaries — `scanAll()` (JVM) and `alexGLivePollTick()` (ALEX) —
+both confirmed **not** protected functions; every original statement inside both is byte-identical
+and unreordered, only wrapped in try/catch with emit calls at the boundaries. No protected rule
+logic (`checkAutoTrades`, `evaluateLiveTrigger`, `scoreConfluence`, `bestConfluence`,
+`computeAOI`, `detectSignals`, `getBias`, `getSession`, or any `alexG*` protected function) is
+touched anywhere in this release. A new Developer-Mode-gated Diagnostics preview shows Schema
+Version, Event Bus Status, Events in Memory, Last Event, Validation Failures, and Persistence
+Status. 40 new fixtures in `tests/v125_decision_event_tests.js`; full regression 469/469; zero
+protected drift. See [DECISION_EVENT_ARCHITECTURE.md](DECISION_EVENT_ARCHITECTURE.md) for the
+complete schema/registry/evidence-model/identifier/immutability/memory-limit documentation,
+known limitations, and the recommended Phase 2B scope.
+
+---
+
+## v12.4.0 — PROGRAM-001 Phase 1: Baseline Registry & Logic Protection
+Infrastructure-only release — no trading behavior change; JVM and ALEX produce the exact same
+decisions before and after this release, confirmed by zero protected-function/protected-constant
+drift. Establishes a formal, identifiable baseline for JVM and ALEX so future logic drift is
+detectable in-app, in Developer Mode, without running a script — a lightweight runtime
+**companion** to the existing build-time `regression-baseline-tools.py` drift check, never a
+replacement for it. `computeBaselineRegistry()` builds one entry per strategy (deterministic
+`logicFingerprint`/`riskFingerprint`/`configurationFingerprint` via a new 32-bit FNV-1a hash over
+each protected function's own `.toString()` source, sorted alphabetically so array-declaration
+order can never itself affect the fingerprint) plus `instruments`/`timeframes`/`sessionRules`/
+`riskModel`/`dataSource`/`executionModel` drawn from real, already-disclosed app state;
+`dataContractVersion`/`metricsVersion` are explicitly `null` (no such versioning scheme exists yet
+for either strategy) rather than fabricated. `BASELINE_JVM_FUNCTIONS`/`BASELINE_ALEX_FUNCTIONS`
+are a byte-for-byte, programmatically-generated copy of `regression-baseline-tools.py`'s
+`PROTECTED_FUNCTIONS` list — there is no shared source between that Python tool and this browser
+code, so the two must be kept in manual sync going forward (a disclosed, accepted limitation, see
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md)). The registry is computed fresh every time (pure,
+deterministic, never touches `localStorage` or any account/journal state); the only thing ever
+**written** is an explicitly-locked reference snapshot, via a new isolated
+`fxhub_baseline_registry` key, written only by `lockBaselineRegistry()` — never automatic,
+mirroring the Python tool's own manual `--update` philosophy. A new Developer-Mode-gated
+Diagnostics card shows both strategies' Baseline IDs, Fingerprint Status
+(MATCH/DRIFT DETECTED/NO BASELINE LOCKED YET), Application Version, and Baseline Registry
+Version, plus a confirmation-gated "Lock Current Baseline" action. 31 new fixtures in
+`tests/v124_baseline_registry_tests.js`; full regression 429/429; zero protected drift verified
+directly against the true committed v12.3.2 baseline.
+
+---
+
 ## v12.3.2 — Paper Trading Integrity & Analytics Consistency
 A corrective engineering milestone in two phases: a Paper Trading Operational Audit
 (investigation/verification) followed, in the same version, by a reviewed corrective pass. No
