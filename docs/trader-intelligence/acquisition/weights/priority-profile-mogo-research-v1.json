@@ -1,0 +1,27 @@
+{
+  "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+  "version": 1,
+  "name": "MOGO Research V1",
+  "description": "Default Phase 1 priority weighting (PROGRAM-004 Owner Decision 8). Prioritizes objective strategy-rule extraction, resolving unresolved strategy questions (ADR-007-style gaps), understanding why trades win or fail, replay/paper-trading learning value, chart evidence, risk-management relevance, high-authority primary sources, and novelty relative to existing research. Penalizes promotional/lifestyle/generic-motivation content, exact duplicates, and low-authority secondary summaries with little actionable trading information -- without ever coercing an unassessed penalty dimension to zero.",
+  "positiveDimensionWeights": {
+    "ruleExtractionPotential": 18,
+    "repositoryGapRelevance": 16,
+    "tradeFailureInsightPotential": 12,
+    "creatorAuthenticity": 12,
+    "replayModelingPotential": 10,
+    "paperTradingLearningPotential": 8,
+    "chartExampleDensity": 8,
+    "riskManagementRelevance": 8,
+    "noveltyScore": 8
+  },
+  "penaltyDimensions": [
+    "promotionalContentScore",
+    "lifestyleContentScore",
+    "genericMotivationScore",
+    "duplicationPenalty",
+    "lowAuthoritySummaryPenalty"
+  ],
+  "maxPenaltyDiscount": 0.9,
+  "supersedesWeightProfileId": null,
+  "createdAt": "2026-07-25T00:00:00Z"
+}

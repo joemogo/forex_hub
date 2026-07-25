@@ -1214,5 +1214,53 @@
     "supersedesEdgeId": null,
     "toNodeId": "NODE|TRADER|TJR",
     "traderId": null
+  },
+  {
+    "confidenceDimensions": null,
+    "createdAt": "2026-07-25T00:00:00Z",
+    "edgeId": "EDGE|REFERENCES|DECISION|MOGO|20260725|002|ALEX_G",
+    "edgeType": "REFERENCES",
+    "evidenceIds": [],
+    "fromNodeId": "NODE|OWNER_DECISION|DECISION|MOGO|20260725|002",
+    "generated": true,
+    "metadata": {},
+    "sourceFile": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-002.json",
+    "status": "active",
+    "strategyFamilyId": null,
+    "supersedesEdgeId": null,
+    "toNodeId": "NODE|TRADER|ALEX_G",
+    "traderId": null
+  },
+  {
+    "confidenceDimensions": null,
+    "createdAt": "2026-07-25T00:00:00Z",
+    "edgeId": "EDGE|REFERENCES|DECISION|MOGO|20260725|002|JVM",
+    "edgeType": "REFERENCES",
+    "evidenceIds": [],
+    "fromNodeId": "NODE|OWNER_DECISION|DECISION|MOGO|20260725|002",
+    "generated": true,
+    "metadata": {},
+    "sourceFile": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-002.json",
+    "status": "active",
+    "strategyFamilyId": null,
+    "supersedesEdgeId": null,
+    "toNodeId": "NODE|TRADER|JVM",
+    "traderId": null
+  },
+  {
+    "confidenceDimensions": null,
+    "createdAt": "2026-07-25T00:00:00Z",
+    "edgeId": "EDGE|REFERENCES|DECISION|MOGO|20260725|002|TJR",
+    "edgeType": "REFERENCES",
+    "evidenceIds": [],
+    "fromNodeId": "NODE|OWNER_DECISION|DECISION|MOGO|20260725|002",
+    "generated": true,
+    "metadata": {},
+    "sourceFile": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-002.json",
+    "status": "active",
+    "strategyFamilyId": null,
+    "supersedesEdgeId": null,
+    "toNodeId": "NODE|TRADER|TJR",
+    "traderId": null
   }
 ]

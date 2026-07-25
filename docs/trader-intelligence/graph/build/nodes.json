@@ -15,6 +15,21 @@
     "updatedAt": "2026-07-25T00:00:00Z"
   },
   {
+    "contentHash": "e8b6a7ba0a9c95d4ca258058507c81564d0f414c5dc250ecd69d7ab7c3b5037f",
+    "createdAt": "2026-07-25T00:00:00Z",
+    "entityId": "DECISION|MOGO|20260725|002",
+    "generated": true,
+    "label": "Should the PROGRAM-004 Research Acquisition and Prioritization Engine Phase 1A-1D foundation (acquisition schemas, offl…",
+    "metadata": {},
+    "nodeId": "NODE|OWNER_DECISION|DECISION|MOGO|20260725|002",
+    "nodeType": "OWNER_DECISION",
+    "sourceFile": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-002.json",
+    "status": "active",
+    "strategyFamilyId": null,
+    "traderId": null,
+    "updatedAt": "2026-07-25T00:00:00Z"
+  },
+  {
     "contentHash": "4392f5ae3a59745f8687b59c8a933ba81b0b6d646c2d92c328798f154dc4cd46",
     "createdAt": "2026-07-25",
     "entityId": "SF|ALEX_G|SUPPORT_RESISTANCE_V1",

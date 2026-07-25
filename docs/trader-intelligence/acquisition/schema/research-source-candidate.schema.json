@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/acquisition/schema/research-source-candidate.schema.json",
+  "title": "ResearchSourceCandidate",
+  "description": "One candidate research source discovered before it has been acquired, extracted, or accepted into the Trader Intelligence Framework. Distinct from ResearchSource (docs/trader-intelligence/schema/research-source.schema.json): a candidate is pre-acquisition, untrusted, and carries no authority over any trading decision. A candidate only ever influences downstream trading behavior after graduating -- via a separate, human-driven, owner-approved step -- into a real ResearchSource/StrategyAssertion/StrategyRule, exactly like PROGRAM-003's rule-promotion model. candidateId deliberately carries no trader attribution (PROGRAM-004 Owner Decision 3): claimedTraderId/verifiedTraderId may change without changing candidate identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidateId", "submittedBy", "discoveryMethod", "discoveredAt", "platform", "sourceType",
+    "metadataConfidence", "authenticityStatus", "acquisitionStatus", "processingStatus",
+    "priorityAssessments", "duplicateStatus", "relatedCandidateIds", "topicCandidates",
+    "strategyFamilyCandidates", "ownerReviewStatus", "ownerDecisionIds", "provenance",
+    "storagePolicy", "contentOrigin", "changeLog", "createdAt", "updatedAt"
+  ],
+  "properties": {
+    "candidateId": {
+      "type": "string",
+      "pattern": "^CAND\\|MOGO\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: CAND|MOGO|{YYYYMMDD}|{sequence}. Never derived from claimedTraderId/verifiedTraderId/title/creatorName/mutable URL metadata."
+    },
+    "submittedBy": { "type": "string" },
+    "discoveryMethod": {
+      "type": "string",
+      "enum": [
+        "MANUAL_URL", "PLAYLIST_URL", "CHANNEL_URL", "SEARCH_RESULTS_URL", "ARTICLE_URL",
+        "UPLOADED_TEXT", "PDF_REFERENCE", "OWNER_NOTE"
+      ]
+    },
+    "discoveredAt": { "type": "string", "format": "date-time" },
+    "url": { "type": ["string", "null"], "default": null },
+    "normalizedUrl": { "type": ["string", "null"], "default": null },
+    "platform": {
+      "type": "string",
+      "enum": ["YOUTUBE", "ARTICLE_WEB", "PDF", "LOCAL_UPLOAD", "OWNER_NOTE", "UNKNOWN"]
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": [
+        "VIDEO", "TRANSCRIPT", "LIVESTREAM", "SHORT_VIDEO", "CHART_SCREENSHOT",
+        "TRADE_RECAP", "INTERVIEW", "ARTICLE", "SOCIAL_POST", "COURSE_MATERIAL",
+        "USER_NOTE", "MOGO_OBSERVATION", "PLAYLIST", "CHANNEL", "SEARCH_RESULTS_PAGE"
+      ],
+      "description": "A superset of research-source.schema.json's sourceType enum, adding three container-only values (PLAYLIST, CHANNEL, SEARCH_RESULTS_PAGE) that describe a candidate before per-item expansion exists. These three values must never appear on a graduated ResearchSource -- expansion (a future connector) replaces a container candidate with individual VIDEO/etc. candidates first."
+    },
+    "title": { "type": ["string", "null"], "default": null },
+    "creatorName": { "type": ["string", "null"], "default": null },
+    "claimedTraderId": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]*$", "default": null },
+    "verifiedTraderId": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]*$", "default": null },
+    "channelOrPublisher": { "type": ["string", "null"], "default": null },
+    "publicationDate": { "type": ["string", "null"], "format": "date", "default": null },
+    "durationSeconds": { "type": ["integer", "null"], "minimum": 0, "default": null },
+    "playlistId": { "type": ["string", "null"], "default": null },
+    "playlistPosition": { "type": ["integer", "null"], "minimum": 0, "default": null },
+    "language": { "type": ["string", "null"], "default": null },
+    "description": { "type": ["string", "null"], "default": null },
+    "metadataConfidence": {
+      "type": "string",
+      "enum": ["unverified", "owner_provided", "heuristic", "verified"]
+    },
+    "authenticityStatus": {
+      "type": "string",
+      "enum": [
+        "VERIFIED_PRIMARY", "LIKELY_PRIMARY", "VERIFIED_SECONDARY", "LIKELY_SECONDARY",
+        "UNVERIFIED", "MISATTRIBUTED", "REJECTED"
+      ],
+      "description": "VERIFIED_PRIMARY, VERIFIED_SECONDARY, MISATTRIBUTED, and REJECTED may only be set by a step backed by an active OwnerDecision (see ownerDecisionIds). Heuristics may only ever produce LIKELY_PRIMARY, LIKELY_SECONDARY, or UNVERIFIED."
+    },
+    "acquisitionStatus": { "$ref": "acquisition-status.schema.json" },
+    "processingStatus": {
+      "type": "string",
+      "enum": ["registered", "metadata_processed", "duplicate_checked", "prioritized", "fully_processed"],
+      "description": "A coarser, easily-filterable companion to acquisitionStatus's full 18-state machine -- tracks which offline processing passes (metadata/duplicate/priority) have actually been run against this record."
+    },
+    "priorityAssessments": {
+      "type": "array",
+      "description": "Append-only history -- a re-score never overwrites a prior entry (PROGRAM-004 Owner Decision 8).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "assessmentId", "weightProfileId", "weightProfileVersion", "dimensions",
+          "missingDimensions", "scoringConfidence", "recommendationScore", "explanation", "computedAt"
+        ],
+        "properties": {
+          "assessmentId": { "type": "string", "pattern": "^SCORE\\|CAND\\|MOGO\\|\\d{8}\\|\\d{3,}\\|\\d{3,}$" },
+          "weightProfileId": { "type": "string" },
+          "weightProfileVersion": { "type": "integer", "minimum": 1 },
+          "dimensions": {
+            "type": "object",
+            "description": "dimension name -> number (0-100) or null. null means not assessed -- never coerced to 0.",
+            "additionalProperties": { "type": ["number", "null"] }
+          },
+          "missingDimensions": { "type": "array", "items": { "type": "string" } },
+          "scoringConfidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "recommendationScore": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+          "explanation": { "type": "string" },
+          "computedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "default": []
+    },
+    "duplicateStatus": {
+      "type": "string",
+      "enum": [
+        "NONE", "EXACT_DUPLICATE", "POSSIBLE_NEAR_DUPLICATE", "DERIVATIVE",
+        "EXCERPT", "UPDATED_VERSION", "RELATED_BUT_DISTINCT", "UNCERTAIN"
+      ],
+      "description": "Automatic detection may only ever set NONE, EXACT_DUPLICATE, or POSSIBLE_NEAR_DUPLICATE. DERIVATIVE, EXCERPT, UPDATED_VERSION, and RELATED_BUT_DISTINCT require owner review; UNCERTAIN is the safe default when neither automatic detection nor the owner has decided."
+    },
+    "canonicalCandidateId": {
+      "type": ["string", "null"], "pattern": "^CAND\\|", "default": null,
+      "description": "May only be set by an OwnerDecision, unless duplicateStatus is exactly EXACT_DUPLICATE (URL/platform-ID/content-hash identity), in which case automatic assignment to the earliest-discovered exact match is permitted."
+    },
+    "relatedCandidateIds": { "type": "array", "items": { "type": "string", "pattern": "^CAND\\|" }, "default": [] },
+    "topicCandidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic", "confidence", "classifiedFrom", "assessedAt"],
+        "properties": {
+          "topic": {
+            "type": "string",
+            "enum": [
+              "OVERALL_STRATEGY", "MARKET_STRUCTURE", "LIQUIDITY", "SESSIONS", "ENTRIES", "EXITS",
+              "STOP_PLACEMENT", "TARGETS", "RISK_MANAGEMENT", "TRADE_MANAGEMENT", "PSYCHOLOGY",
+              "JOURNALING", "BACKTESTING", "REPLAY", "TRADE_FAILURE", "MISSED_TRADE",
+              "FALSE_POSITIVE", "FALSE_NEGATIVE", "MISTAKES", "LIVE_TRADE", "TRADE_RECAP",
+              "Q_AND_A", "BEGINNER_EDUCATION", "ADVANCED_EDUCATION", "PROMOTIONAL_CONTENT",
+              "LIFESTYLE_CONTENT", "NON_STRATEGY_CONTENT"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["low", "medium", "high"],
+            "description": "TITLE_DERIVED classification must never exceed 'medium'."
+          },
+          "classifiedFrom": {
+            "type": "string",
+            "enum": [
+              "URL_DERIVED", "TITLE_DERIVED", "DESCRIPTION_DERIVED",
+              "TRANSCRIPT_DERIVED", "OWNER_PROVIDED", "OWNER_CONFIRMED"
+            ]
+          },
+          "evidenceReference": { "type": ["string", "null"], "default": null },
+          "assessedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "default": []
+    },
+    "strategyFamilyCandidates": { "type": "array", "items": { "type": "string", "pattern": "^SF\\|" }, "default": [] },
+    "ownerReviewStatus": {
+      "type": "string",
+      "enum": ["not_reviewed", "reviewed_pending_decision", "approved", "rejected"]
+    },
+    "ownerDecisionIds": { "type": "array", "items": { "type": "string", "pattern": "^DECISION\\|" }, "default": [] },
+    "rejectionReason": { "type": ["string", "null"], "default": null },
+    "provenance": {
+      "type": "object",
+      "required": ["registeredVia"],
+      "additionalProperties": true,
+      "properties": { "registeredVia": { "type": "string" } }
+    },
+    "storagePolicy": {
+      "type": "string",
+      "enum": ["METADATA_ONLY", "REFERENCED_LOCAL_CONTENT", "COMMITTED_OWNER_CONTENT"],
+      "description": "COMMITTED_OWNER_CONTENT may be defaulted automatically only when discoveryMethod=OWNER_NOTE (an owner-authored note). For every other discoveryMethod, COMMITTED_OWNER_CONTENT requires an explicit caller selection (recorded in provenance.explicitStoragePolicySelection) -- supplying or pasting text never by itself establishes that the owner authored it or approved committing the full text to git (PROGRAM-004 Correction 1)."
+    },
+    "contentOrigin": {
+      "type": "string",
+      "enum": ["OWNER_AUTHORED", "THIRD_PARTY_OWNER_PROVIDED", "UNKNOWN_ORIGIN"],
+      "description": "Distinct from storagePolicy: this records who actually created the content, not how/whether it is stored. OWNER_AUTHORED is the default only for discoveryMethod=OWNER_NOTE. Uploaded transcripts or third-party material default to THIRD_PARTY_OWNER_PROVIDED (the owner supplied it, but did not necessarily author it) or UNKNOWN_ORIGIN when nothing was supplied at all."
+    },
+    "contentReference": { "type": ["string", "null"], "default": null },
+    "contentHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "default": null },
+    "contentSizeBytes": { "type": ["integer", "null"], "minimum": 0, "default": null },
+    "contentType": { "type": ["string", "null"], "default": null },
+    "changeLog": {
+      "type": "array",
+      "description": "Append-only, ordered by changedAt. The first entry for every candidate must record the DISCOVERED -> REGISTERED transition (priorStatus/newStatus/discoveryMethod/actor) -- DISCOVERED is never itself a persisted acquisitionStatus value, but it must still appear in history as the origin of every registered candidate.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["changedAt", "changedFields"],
+        "properties": {
+          "changedAt": { "type": "string", "format": "date-time" },
+          "changedFields": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": ["string", "null"], "default": null },
+          "priorStatus": { "type": ["string", "null"], "default": null },
+          "newStatus": { "type": ["string", "null"], "default": null },
+          "discoveryMethod": { "type": ["string", "null"], "default": null },
+          "actor": { "type": ["string", "null"], "default": null }
+        }
+      },
+      "default": []
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "discoveryMethod": { "enum": ["MANUAL_URL", "PLAYLIST_URL", "CHANNEL_URL", "SEARCH_RESULTS_URL", "ARTICLE_URL"] }
+        }
+      },
+      "then": {
+        "properties": {
+          "url": { "type": "string" },
+          "normalizedUrl": { "type": "string" }
+        },
+        "required": ["url", "normalizedUrl"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "storagePolicy": { "const": "METADATA_ONLY" } }
+      },
+      "else": {
+        "required": ["contentReference", "contentHash", "contentSizeBytes", "contentType"],
+        "properties": {
+          "contentReference": { "type": "string" },
+          "contentHash": { "type": "string" },
+          "contentSizeBytes": { "type": "integer" },
+          "contentType": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

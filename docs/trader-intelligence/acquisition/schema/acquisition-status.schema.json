@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/acquisition/schema/acquisition-status.schema.json",
+  "title": "AcquisitionStatus",
+  "description": "The complete, granular acquisition lifecycle for a ResearchSourceCandidate (PROGRAM-004 Owner Decision 2, 2026-07-25). No state is collapsed. DISCOVERED is the transient, pre-validation moment a possible source was identified -- it is never itself persisted to a candidate file; REGISTERED is the first state that is ever written to disk, meaning a durable candidate record was successfully created and passed structural validation. APPROVED_FOR_ACQUISITION, APPROVED_FOR_RESEARCH_INTAKE, and REJECTED may only be reached via an active OwnerDecision -- never automatically. This is a shared, versioned enum definition, referenced by research-source-candidate.schema.json.",
+  "$comment": "Allowed transitions (enforced by scripts/trader_intelligence/acquisition_common.py:ALLOWED_TRANSITIONS, not by this schema alone): DISCOVERED->REGISTERED (in-memory only, requires successful validation); REGISTERED->METADATA_PENDING|METADATA_VERIFIED; METADATA_PENDING->METADATA_VERIFIED; METADATA_VERIFIED->DUPLICATE_REVIEW; DUPLICATE_REVIEW->PRIORITIZED; PRIORITIZED->OWNER_REVIEW; OWNER_REVIEW->APPROVED_FOR_ACQUISITION|REJECTED (OwnerDecision required); APPROVED_FOR_ACQUISITION->ACQUISITION_IN_PROGRESS; ACQUISITION_IN_PROGRESS->ACQUIRED|ACQUISITION_FAILED; ACQUISITION_FAILED->APPROVED_FOR_ACQUISITION (retry, requires a fresh OwnerDecision); ACQUIRED->APPROVED_FOR_EXTRACTION; APPROVED_FOR_EXTRACTION->EXTRACTION_IN_PROGRESS; EXTRACTION_IN_PROGRESS->EXTRACTED; EXTRACTED->READY_FOR_RESEARCH_INTAKE; READY_FOR_RESEARCH_INTAKE->APPROVED_FOR_RESEARCH_INTAKE (OwnerDecision required, never automatic); any non-terminal state->REJECTED (OwnerDecision required) or ->ARCHIVED (owner action, no OwnerDecision strictly required since it discards nothing and grants no authority).",
+  "type": "string",
+  "enum": [
+    "DISCOVERED",
+    "REGISTERED",
+    "METADATA_PENDING",
+    "METADATA_VERIFIED",
+    "DUPLICATE_REVIEW",
+    "PRIORITIZED",
+    "OWNER_REVIEW",
+    "APPROVED_FOR_ACQUISITION",
+    "ACQUISITION_IN_PROGRESS",
+    "ACQUIRED",
+    "ACQUISITION_FAILED",
+    "APPROVED_FOR_EXTRACTION",
+    "EXTRACTION_IN_PROGRESS",
+    "EXTRACTED",
+    "READY_FOR_RESEARCH_INTAKE",
+    "APPROVED_FOR_RESEARCH_INTAKE",
+    "REJECTED",
+    "ARCHIVED"
+  ]
+}

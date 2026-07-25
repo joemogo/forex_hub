@@ -1,0 +1,32 @@
+{
+  "decisionId": "DECISION|MOGO|20260725|002",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-07-25",
+  "affectedEntityIds": ["TJR", "ALEX_G", "JVM"],
+  "decisionType": "acquisition",
+  "question": "Should the PROGRAM-004 Research Acquisition and Prioritization Engine Phase 1A-1D foundation (acquisition schemas, offline manual registration across 8 discovery methods, exact/near-duplicate detection, transparent priority scoring, and a read-only research queue) be implemented now, and under what scope and constraints?",
+  "optionsConsidered": [
+    "Defer all acquisition tooling until a network-connector phase can be authorized together with it",
+    "Implement Phase 1A-1D now as a fully offline, zero-network queue foundation, with all connectors explicitly deferred",
+    "Implement Phase 1A-1D now plus one YouTube metadata connector immediately"
+  ],
+  "selectedOption": "Implement Phase 1A-1D now: acquisition-status/candidate/duplicate-group/priority-weight-profile schemas, an additive 'acquisition' value on the existing OwnerDecision decisionType/approvalScope enums, offline registration across manual URL, playlist URL, channel URL, search-results URL, article URL, uploaded text, PDF reference, and owner-note discovery methods, deterministic URL normalization, exact-duplicate detection (URL/platform-ID/content-hash only), owner-gated near-duplicate flagging, transparent multi-dimension priority scoring under a versioned default weight profile, and a deterministic, read-only research queue. Zero network connectors of any kind are implemented in this milestone.",
+  "rationale": "Research content is untrusted input and must never influence trading, so acquisition tooling must exist entirely outside the trust boundary of candidate generation, entries, exits, stops, targets, risk, and execution -- this Phase 1 scope proves that boundary holds (registration/scoring/queueing are fully offline and reversible) before any network-touching capability is even considered. Deferring every connector avoids the largest real risks in this domain (uncontrolled downloading, copyright exposure, external-provider dependency, rate limits) while still replacing fully manual source-tracking with a ranked, deduplicated, owner-reviewable queue -- the stated goal.",
+  "approvalScope": "acquisition",
+  "supportingEvidenceIds": [
+    "PROGRAM-004 Phase 1 Architecture and Implementation Specification (delivered in chat, repository-grounded, 2026-07-25)"
+  ],
+  "dissentingEvidenceIds": [],
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-07-25T00:00:00Z",
+  "updatedAt": "2026-07-25T00:00:00Z"
+}

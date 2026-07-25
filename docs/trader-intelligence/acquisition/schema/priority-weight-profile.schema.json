@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/acquisition/schema/priority-weight-profile.schema.json",
+  "title": "PriorityWeightProfile",
+  "description": "A versioned, owner-authored set of weights used to compute a candidate's recommendationScore. Never edited in place -- a changed weighting creates a new profile with supersedesWeightProfileId pointing at the one it replaces (mirrors RuleVersion's supersession pattern). Component dimensions on the candidate are never collapsed away by this profile -- it only defines how they combine into one sortable, explainable number.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["weightProfileId", "version", "name", "positiveDimensionWeights", "penaltyDimensions", "createdAt"],
+  "properties": {
+    "weightProfileId": {
+      "type": "string",
+      "pattern": "^PRIORITY_PROFILE\\|[A-Z0-9_]+\\|V\\d+$",
+      "description": "Format: PRIORITY_PROFILE|{NAME}|V{version}, e.g. PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1."
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string" },
+    "description": { "type": "string", "default": "" },
+    "positiveDimensionWeights": {
+      "type": "object",
+      "description": "dimension name -> weight (0-100). Weights across all keys should sum to 100; the scoring code normalizes over only the dimensions actually populated on a given candidate.",
+      "additionalProperties": { "type": "number", "minimum": 0, "maximum": 100 }
+    },
+    "penaltyDimensions": {
+      "type": "array",
+      "description": "Names of dimensions that reduce recommendationScore when present (e.g. promotionalContentScore). Never defaulted to 0 when unassessed -- absence of evidence is not evidence of absence.",
+      "items": { "type": "string" }
+    },
+    "maxPenaltyDiscount": {
+      "type": "number", "minimum": 0, "maximum": 1, "default": 0.9,
+      "description": "Upper bound on how much penalty dimensions may discount the base score, so recommendationScore never reaches zero purely from penalties."
+    },
+    "supersedesWeightProfileId": { "type": ["string", "null"], "pattern": "^PRIORITY_PROFILE\\|", "default": null },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

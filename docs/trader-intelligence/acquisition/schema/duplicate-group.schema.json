@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/acquisition/schema/duplicate-group.schema.json",
+  "title": "DuplicateGroup",
+  "description": "A generated grouping of candidates sharing an EXACT_DUPLICATE or POSSIBLE_NEAR_DUPLICATE relationship, produced by scripts/trader_intelligence/detect_duplicates.py. Never deletes a member; canonicalCandidateId may be automatically populated only when every member's duplicateStatus is EXACT_DUPLICATE (URL/platform-ID/content-hash identity) -- any group containing a POSSIBLE_NEAR_DUPLICATE member requires an OwnerDecision before canonicalCandidateId may be set.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated", "groupId", "memberCandidateIds", "status", "createdAt", "updatedAt"],
+  "properties": {
+    "generated": { "type": "boolean", "const": true },
+    "groupId": { "type": "string", "pattern": "^DUPGROUP\\|\\d{8}\\|\\d{3,}$", "description": "Format: DUPGROUP|{YYYYMMDD}|{seq}." },
+    "memberCandidateIds": { "type": "array", "items": { "type": "string", "pattern": "^CAND\\|" }, "minItems": 2 },
+    "canonicalCandidateId": { "type": ["string", "null"], "pattern": "^CAND\\|", "default": null },
+    "matchBasis": {
+      "type": "string",
+      "enum": ["NORMALIZED_URL", "PLATFORM_CONTENT_ID", "CONTENT_HASH", "TITLE_SIMILARITY", "CREATOR_SIMILARITY", "TEXT_OVERLAP", "DESCRIPTION_SIMILARITY"],
+      "description": "What matched. The first three are exact-duplicate bases; the remaining four are near-duplicate heuristics only."
+    },
+    "status": { "type": "string", "enum": ["pending_owner_review", "resolved"] },
+    "ownerDecisionId": { "type": ["string", "null"], "pattern": "^DECISION\\|", "default": null },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

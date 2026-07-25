@@ -1,0 +1,16 @@
+{
+  "buildId": "QUEUE|20260725|003",
+  "builderVersion": "1.0.0",
+  "builtAt": "2026-07-25T14:48:11Z",
+  "candidateCount": 0,
+  "generated": true,
+  "inputFiles": [],
+  "loadErrors": [],
+  "outputFiles": [
+    {
+      "contentHash": "c4ddbd5793d3b2b5b7f71732bf3be74a52ec5e8bb96a6b1a4a53e75e4a694590",
+      "path": "docs/trader-intelligence/acquisition/queue/queue-snapshot.json"
+    }
+  ],
+  "status": "success"
+}

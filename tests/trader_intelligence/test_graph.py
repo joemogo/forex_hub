@@ -153,9 +153,13 @@ class TestRealProductionBuild(unittest.TestCase):
         self.assertEqual(counts.get("TRADER"), 3)
         self.assertEqual(counts.get("STRATEGY_FAMILY"), 3)
         self.assertEqual(counts.get("UNRESOLVED_QUESTION"), 35)
-        self.assertEqual(counts.get("OWNER_DECISION"), 1)
-        self.assertEqual(len(nodes), 42)
-        self.assertEqual(len(edges), 76)
+        # OWNER_DECISION is 2 as of PROGRAM-004 Phase 1 (the original PROGRAM-003
+        # authorization decision, plus the additive PROGRAM-004 authorization
+        # decision) -- both are real, generic OwnerDecision records under
+        # graph/decisions/, picked up by the same unmodified node-discovery logic.
+        self.assertEqual(counts.get("OWNER_DECISION"), 2)
+        self.assertEqual(len(nodes), 43)
+        self.assertEqual(len(edges), 79)
 
     def test_no_trader_self_belongs_to_trader_edge(self):
         nodes, edges, findings, raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, GRAPH_ROOT)

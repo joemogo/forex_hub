@@ -30,7 +30,7 @@
       "type": "string",
       "enum": [
         "architectural", "research", "modeling", "implementation",
-        "replay", "shadow", "paper", "production", "live"
+        "replay", "shadow", "paper", "production", "live", "acquisition"
       ]
     },
     "question": { "type": "string", "description": "The decision actually being made, stated plainly." },
@@ -45,7 +45,7 @@
       "type": "string",
       "enum": [
         "architectural", "research_only", "implementation", "replay",
-        "shadow", "paper", "production", "live"
+        "shadow", "paper", "production", "live", "acquisition"
       ],
       "description": "The highest scope this decision actually authorizes. Independent of, but must stay consistent with, the specific *Authorization booleans below."
     },

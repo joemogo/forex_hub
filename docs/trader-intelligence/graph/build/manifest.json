@@ -1,17 +1,21 @@
 {
-  "buildId": "BUILD|20260725|005",
+  "buildId": "BUILD|20260725|008",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-07-25T13:30:23Z",
+  "builtAt": "2026-07-25T14:48:11Z",
   "edgeCounts": {
     "BELONGS_TO_TRADER": 38,
     "BLOCKS": 35,
-    "REFERENCES": 3
+    "REFERENCES": 6
   },
   "generated": true,
   "inputFiles": [
     {
       "contentHash": "acd3cb6c1a413d52dd0fd7c3b4dbe97d79e06e19a2282319ded44fc98d8f39ea",
       "path": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-001.json"
+    },
+    {
+      "contentHash": "d01ab80efda164a24e2b5e25b708ba38baef7f8d053855a32242f3fe6c2fc0bb",
+      "path": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-002.json"
     },
     {
       "contentHash": "7389e43c083764d215d1cf0ce51972da11915c4b3c50221e05d4edcede9808f3",
@@ -42,9 +46,9 @@
       "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
     }
   ],
-  "integrityReportId": "INTEGRITY|BUILD|20260725|005",
+  "integrityReportId": "INTEGRITY|BUILD|20260725|008",
   "nodeCounts": {
-    "OWNER_DECISION": 1,
+    "OWNER_DECISION": 2,
     "STRATEGY_FAMILY": 3,
     "TRADER": 3,
     "UNRESOLVED_QUESTION": 35
@@ -52,11 +56,11 @@
   "notes": "",
   "outputFiles": [
     {
-      "contentHash": "723bf45b9ff8028c071f171139a89f3ab43f456639b60424562cdb8573d4dcd3",
+      "contentHash": "9cc6bee5ee933a2fe0d581300f121caa40d44d5200ea9abbffc8edc8eab680c0",
       "path": "docs/trader-intelligence/graph/build/nodes.json"
     },
     {
-      "contentHash": "9826429180ee4cc9217033323f7856096da0d1835b8ef6125b92056ec482b929",
+      "contentHash": "459428fffb081813335dbda03a915e005dd4faec7688521a16d69a3c865851b6",
       "path": "docs/trader-intelligence/graph/build/edges.json"
     }
   ],
