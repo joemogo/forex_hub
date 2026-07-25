@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/trader-record.schema.json",
+  "title": "TraderRecord",
+  "description": "One record per trader/strategy-methodology source the Trader Intelligence Framework tracks (e.g. TJR, ALEX_G, JVM, or any future trader). Generic by design -- a new trader never requires a new schema, only a new instance of this one.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["traderId", "displayName", "externalResearchStatus", "repositoryModelStatus", "createdAt", "updatedAt"],
+  "properties": {
+    "traderId": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "description": "Stable, uppercase-snake identifier, never renamed. Every other entity in this framework references a trader only by this id."
+    },
+    "displayName": { "type": "string" },
+    "aliases": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Other names/ids this trader/strategy is known by in this repository or elsewhere (e.g. JVM's registry id 'current_strategy')."
+    },
+    "sourceChannels": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Where this trader's external research material originates (YouTube channel, course platform, etc.) -- empty until research intake begins."
+    },
+    "markets": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "instruments": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "sessions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "timeframes": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "terminology": {
+      "type": "object",
+      "description": "This trader's own vocabulary, mapped to a normalized concept name where known (e.g. {\"sweep\": \"liquidity_sweep\"}). Deliberately an open object -- vocabulary grows as research is ingested.",
+      "additionalProperties": { "type": "string" },
+      "default": {}
+    },
+    "strategyFamilyIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^SF\\|" },
+      "default": []
+    },
+    "externalResearchStatus": {
+      "type": "string",
+      "description": "How much of THIS trader's external, source-backed research material has been ingested into this framework. Distinct from repositoryModelStatus -- a trader can be fully operational in MOGO's codebase while its external research status is 'not_started' (e.g. ALEX_G, JVM today).",
+      "enum": ["not_started", "in_progress", "partial", "comprehensive"]
+    },
+    "repositoryModelStatus": {
+      "type": "string",
+      "description": "What MOGO's own codebase currently implements for this trader/strategy, independent of external research status. Use the most precise applicable term -- never an unqualified 'fully implemented'.",
+      "enum": [
+        "not_implemented",
+        "research_only",
+        "session_zone_engine_only",
+        "implemented_with_known_limitations",
+        "operational_implementation"
+      ]
+    },
+    "replayStatus": {
+      "type": "string",
+      "enum": ["not_started", "not_applicable", "in_progress", "implemented"]
+    },
+    "shadowStatus": {
+      "type": "string",
+      "enum": ["not_started", "not_applicable", "in_progress", "implemented"]
+    },
+    "paperTradingStatus": {
+      "type": "string",
+      "enum": ["not_approved", "manual_approval_only", "live_automatic_paper_trading"]
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form, repository-confirmed facts and disclosed limitations. Must never state or imply an external trading rule that has not actually been ingested as a StrategyAssertion."
+    },
+    "createdAt": { "type": "string", "format": "date" },
+    "updatedAt": { "type": "string", "format": "date" }
+  }
+}

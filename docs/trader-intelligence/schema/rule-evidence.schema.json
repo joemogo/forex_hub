@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/rule-evidence.schema.json",
+  "title": "RuleEvidence",
+  "description": "Aggregates the StrategyAssertion/ChartExample records that support one StrategyRule, so the rule's evidence strength can be judged once rather than re-derived from raw assertions every time the rule is displayed. A rule cannot have modelingStatus 'modeled' without at least one RuleEvidence record with at least one cited assertion or chart example.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidenceId", "ruleId", "traderId"],
+  "properties": {
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^EVID\\|.+\\|\\d{3,}$",
+      "description": "Format: EVID|{ruleId}|{seq}."
+    },
+    "ruleId": { "type": "string", "pattern": "^RULE\\|" },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "assertionIds": { "type": "array", "items": { "type": "string", "pattern": "^SRC\\|" }, "default": [] },
+    "chartExampleIds": { "type": "array", "items": { "type": "string", "pattern": "^SRC\\|" }, "default": [] },
+    "supportStrength": {
+      "type": "string",
+      "enum": ["single_mention", "repeated_mention", "multi_source_agreement", "worked_example_confirmed"],
+      "description": "How strongly this evidence bundle, taken together, supports the rule as currently modeled -- never a substitute for performanceConfidence, which requires real trading data."
+    },
+    "independentSourceCount": { "type": "integer", "minimum": 0, "default": 0 },
+    "notes": { "type": "string", "default": "" }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/research-source.schema.json",
+  "title": "ResearchSource",
+  "description": "One external or internal source of trader research material (a video, a transcript, a chart screenshot, MOGO's own repository observation, etc.). Every StrategyAssertion must cite a ResearchSource -- there is no such thing as an unsourced assertion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceId", "traderId", "title", "sourceType", "processingStatus"],
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "pattern": "^SRC\\|[A-Z0-9_]+\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: SRC|{traderId}|{ingestionDate:YYYYMMDD}|{seq}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "title": { "type": "string" },
+    "sourceType": {
+      "type": "string",
+      "enum": [
+        "VIDEO", "TRANSCRIPT", "LIVESTREAM", "SHORT_VIDEO", "CHART_SCREENSHOT",
+        "TRADE_RECAP", "INTERVIEW", "ARTICLE", "SOCIAL_POST", "COURSE_MATERIAL",
+        "USER_NOTE", "MOGO_OBSERVATION"
+      ]
+    },
+    "creator": { "type": ["string", "null"], "default": null },
+    "platform": { "type": ["string", "null"], "default": null },
+    "publicationDate": { "type": ["string", "null"], "format": "date", "default": null },
+    "ingestionDate": { "type": "string", "format": "date" },
+    "urlOrReference": { "type": ["string", "null"], "default": null },
+    "localFileReference": { "type": ["string", "null"], "default": null },
+    "transcriptReference": { "type": ["string", "null"], "default": null },
+    "authenticityConfidence": {
+      "type": "string",
+      "enum": ["unverified", "low", "medium", "high", "confirmed_primary_source"],
+      "default": "unverified"
+    },
+    "sourceQuality": {
+      "type": "string",
+      "enum": ["poor", "mixed", "good", "excellent"],
+      "default": "mixed"
+    },
+    "processingStatus": {
+      "type": "string",
+      "enum": ["registered", "segmented", "assertions_extracted", "fully_processed"]
+    },
+    "notes": { "type": "string", "default": "" }
+  }
+}

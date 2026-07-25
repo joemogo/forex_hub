@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/rule-version.schema.json",
+  "title": "RuleVersion",
+  "description": "One historical revision of a StrategyRule. StrategyRule.activeRuleVersionId always points to the latest; every prior RuleVersion remains permanently queryable -- a rule's fields are mutable in the current record, but never without first recording what changed and why here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ruleVersionId", "ruleId", "traderId", "versionNumber", "changeSummary", "createdAt"],
+  "properties": {
+    "ruleVersionId": {
+      "type": "string",
+      "pattern": "^RULE\\|.+\\|V\\d+$",
+      "description": "Format: {ruleId}|V{versionNumber}."
+    },
+    "ruleId": { "type": "string", "pattern": "^RULE\\|" },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "versionNumber": { "type": "integer", "minimum": 1 },
+    "changeSummary": { "type": "string" },
+    "changedFields": {
+      "type": "object",
+      "description": "field name -> {before, after}.",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "supersedesRuleVersionId": { "type": ["string", "null"], "default": null },
+    "triggeringAssertionIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Which new assertion(s) justified this revision -- may be empty only for the initial version."
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

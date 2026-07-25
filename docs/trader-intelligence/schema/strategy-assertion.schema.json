@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/strategy-assertion.schema.json",
+  "title": "StrategyAssertion",
+  "description": "One specific claim drawn from one source segment. Immutable once created -- a correction never edits an existing assertion, it creates a new one with supersedesAssertionId pointing at the one it revises. exactQuoteOrFaithfulParaphrase (what was actually said) is kept strictly separate from normalizedMeaning (MOGO's interpretation), so a future re-reading can independently re-derive a different interpretation without losing the original language.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assertionId", "traderId", "sourceId", "sourceSegmentId",
+    "exactQuoteOrFaithfulParaphrase", "concept", "evidenceClassification",
+    "interpretationConfidence", "reviewerStatus", "createdAt"
+  ],
+  "properties": {
+    "assertionId": {
+      "type": "string",
+      "pattern": "^SRC\\|.+\\|ASSERT\\|\\d{3,}$",
+      "description": "Format: {sourceSegmentId}|ASSERT|{seq}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "sourceId": { "type": "string", "pattern": "^SRC\\|" },
+    "sourceSegmentId": { "type": "string", "pattern": "^SRC\\|.+\\|SEG\\|" },
+    "timestampStart": { "type": ["string", "null"], "default": null },
+    "timestampEnd": { "type": ["string", "null"], "default": null },
+    "exactQuoteOrFaithfulParaphrase": {
+      "type": "string",
+      "description": "What was actually said or shown -- never MOGO's own interpretation."
+    },
+    "normalizedMeaning": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "MOGO's interpretation of the quote above, kept as a distinct field so the two can never be confused."
+    },
+    "concept": {
+      "type": "string",
+      "description": "A short, normalized concept tag this assertion is about (e.g. 'liquidity_sweep', 'entry_trigger'). Open vocabulary, not a closed enum -- new concepts are expected as research grows."
+    },
+    "timeframe": { "type": ["string", "null"], "default": null },
+    "session": { "type": ["string", "null"], "default": null },
+    "marketCondition": { "type": ["string", "null"], "default": null },
+    "direction": { "type": ["string", "null"], "enum": ["long", "short", "either", null], "default": null },
+    "entryGuidance": { "type": ["string", "null"], "default": null },
+    "stopGuidance": { "type": ["string", "null"], "default": null },
+    "targetGuidance": { "type": ["string", "null"], "default": null },
+    "managementGuidance": { "type": ["string", "null"], "default": null },
+    "invalidationGuidance": { "type": ["string", "null"], "default": null },
+    "exceptions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "evidenceClassification": {
+      "type": "string",
+      "enum": ["EXPLICIT", "STRONGLY_IMPLIED", "INFERRED", "OPINION", "EXAMPLE_ONLY", "CONTRADICTORY", "UNSUPPORTED"]
+    },
+    "interpretationConfidence": {
+      "type": "string",
+      "enum": ["very_low", "low", "medium", "high", "very_high"]
+    },
+    "reviewerStatus": {
+      "type": "string",
+      "enum": ["unreviewed", "owner_reviewed", "owner_confirmed", "owner_rejected"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "supersedesAssertionId": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "If this assertion corrects an earlier one, the earlier assertion's id. The earlier record is never edited or deleted."
+    }
+  }
+}

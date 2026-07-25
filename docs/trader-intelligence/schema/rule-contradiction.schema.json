@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/rule-contradiction.schema.json",
+  "title": "RuleContradiction",
+  "description": "A retained record of two or more assertions/rules that disagree. Never deleted, even once 'resolved' -- status transitions, but both sides of the disagreement and the eventual resolution remain permanently queryable history.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contradictionId", "traderId", "relatedRuleIds", "supportingAssertionIds", "conflictingAssertionIds", "status"],
+  "properties": {
+    "contradictionId": {
+      "type": "string",
+      "pattern": "^CONTRA\\|[A-Z0-9_]+\\|\\d{3,}$",
+      "description": "Format: CONTRA|{traderId}|{seq}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "relatedRuleIds": { "type": "array", "items": { "type": "string", "pattern": "^RULE\\|" }, "minItems": 1 },
+    "supportingAssertionIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "conflictingAssertionIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "contradictionType": {
+      "type": "string",
+      "enum": ["DEFINITIONAL", "NUMERIC_THRESHOLD", "CONDITIONAL_SCOPE", "TEMPORAL_DRIFT"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["cosmetic", "minor", "material", "blocking"]
+    },
+    "marketContextDifference": { "type": ["string", "null"], "default": null },
+    "timeframeDifference": { "type": ["string", "null"], "default": null },
+    "publicationTimeDifference": { "type": ["string", "null"], "default": null },
+    "possibleExplanation": { "type": ["string", "null"], "default": null },
+    "proposedResolution": { "type": ["string", "null"], "default": null },
+    "status": {
+      "type": "string",
+      "enum": ["open", "resolved_by_owner", "superseded", "accepted_as_context_dependent"]
+    },
+    "reviewerNotes": { "type": "string", "default": "" }
+  }
+}

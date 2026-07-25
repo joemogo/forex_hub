@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/source-segment.schema.json",
+  "title": "SourceSegment",
+  "description": "A specific excerpt/time-range within one ResearchSource. Every StrategyAssertion cites the exact segment it was drawn from, not just the source as a whole, so provenance stays precise even within a long video or document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["segmentId", "sourceId", "traderId", "rawExcerpt", "processingStatus"],
+  "properties": {
+    "segmentId": {
+      "type": "string",
+      "pattern": "^SRC\\|.+\\|SEG\\|\\d{3,}$",
+      "description": "Format: {sourceId}|SEG|{seq}."
+    },
+    "sourceId": { "type": "string", "pattern": "^SRC\\|" },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "timestampStart": {
+      "type": ["string", "null"],
+      "description": "Video/audio offset (e.g. '00:12:34') or null for non-timed sources (articles, notes).",
+      "default": null
+    },
+    "timestampEnd": { "type": ["string", "null"], "default": null },
+    "rawExcerpt": { "type": "string", "description": "The exact language from the source -- never paraphrased at this level." },
+    "segmentSummary": { "type": ["string", "null"], "default": null },
+    "segmentTopics": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "processingStatus": {
+      "type": "string",
+      "enum": ["captured", "reviewed", "assertions_extracted"]
+    }
+  }
+}

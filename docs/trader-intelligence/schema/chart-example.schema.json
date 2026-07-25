@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/chart-example.schema.json",
+  "title": "ChartExample",
+  "description": "One chart screenshot or worked trade example cited as evidence for one or more StrategyAssertion/StrategyRule records.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["chartExampleId", "traderId", "sourceId", "imageReference"],
+  "properties": {
+    "chartExampleId": {
+      "type": "string",
+      "pattern": "^SRC\\|.+\\|CHART\\|\\d{3,}$",
+      "description": "Format: {sourceId}|CHART|{seq}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "sourceId": { "type": "string", "pattern": "^SRC\\|" },
+    "segmentId": { "type": ["string", "null"], "default": null },
+    "instrument": { "type": ["string", "null"], "default": null },
+    "timeframe": { "type": ["string", "null"], "default": null },
+    "capturedAt": { "type": ["string", "null"], "format": "date-time", "default": null },
+    "imageReference": { "type": "string", "description": "A path/reference -- never an inline base64 blob in this record." },
+    "annotatedLevels": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "describedOutcome": { "type": ["string", "null"], "default": null },
+    "relatedAssertionIds": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "relatedRuleIds": { "type": "array", "items": { "type": "string", "pattern": "^RULE\\|" }, "default": [] },
+    "notes": { "type": "string", "default": "" }
+  }
+}

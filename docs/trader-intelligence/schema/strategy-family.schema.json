@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/strategy-family.schema.json",
+  "title": "StrategyFamily",
+  "description": "A named strategy methodology belonging to one trader. A trader may have multiple strategy families; a future hybrid strategy may reference more than one via relatedStrategyFamilyIds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["strategyFamilyId", "traderId", "name", "status", "createdAt", "updatedAt"],
+  "properties": {
+    "strategyFamilyId": {
+      "type": "string",
+      "pattern": "^SF\\|[A-Z0-9_]+\\|[A-Z0-9_]+$",
+      "description": "Format: SF|{traderId}|{SLUG}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "relatedStrategyFamilyIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^SF\\|" },
+      "default": [],
+      "description": "Used for hybrid families that combine or reference more than one parent strategy family, potentially across traders."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["not_started", "research_in_progress", "modeled", "implemented", "operational"]
+    },
+    "createdAt": { "type": "string", "format": "date" },
+    "updatedAt": { "type": "string", "format": "date" }
+  }
+}

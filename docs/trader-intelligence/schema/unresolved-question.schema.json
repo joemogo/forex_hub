@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/unresolved-question.schema.json",
+  "title": "UnresolvedQuestion",
+  "description": "One open question blocking further implementation, replay, shadow trading, or paper trading for a trader/strategy family. Where an authoritative existing document (e.g. an ADR) already records the question, externalRef cites it exactly rather than re-typing (and risking silently diverging from) the original text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["questionId", "traderId", "question", "status", "ownerApprovalRequired"],
+  "properties": {
+    "questionId": {
+      "type": "string",
+      "pattern": "^Q\\|[A-Z0-9_]+\\|\\d{3,}$",
+      "description": "Format: Q|{traderId}|{seq}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "relatedRuleIds": { "type": "array", "items": { "type": "string", "pattern": "^RULE\\|" }, "default": [] },
+    "question": { "type": "string" },
+    "whyItMatters": { "type": ["string", "null"], "default": null },
+    "implementationBlocked": { "type": "boolean", "default": true },
+    "replayBlocked": { "type": "boolean", "default": true },
+    "shadowTradingBlocked": { "type": "boolean", "default": true },
+    "paperTradingBlocked": { "type": "boolean", "default": true },
+    "requiredEvidence": { "type": ["string", "null"], "default": null },
+    "status": {
+      "type": "string",
+      "enum": ["open", "partially_resolved", "resolved", "superseded"]
+    },
+    "resolutionAssertionIds": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "ownerApprovalRequired": { "type": "boolean" },
+    "externalRef": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Citation to an authoritative existing document that already records this question in full (e.g. 'ADR-007 §C, item 8'), so the original text is never forked or paraphrased away."
+    }
+  }
+}

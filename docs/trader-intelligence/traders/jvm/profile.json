@@ -1,0 +1,20 @@
+{
+  "traderId": "JVM",
+  "displayName": "JVM",
+  "aliases": ["current_strategy"],
+  "sourceChannels": [],
+  "markets": ["forex"],
+  "instruments": [],
+  "sessions": [],
+  "timeframes": ["M15", "D", "W"],
+  "terminology": {},
+  "strategyFamilyIds": ["SF|JVM|CONFLUENCE_SCORING_V1"],
+  "externalResearchStatus": "not_started",
+  "repositoryModelStatus": "operational_implementation",
+  "replayStatus": "implemented",
+  "shadowStatus": "not_applicable",
+  "paperTradingStatus": "live_automatic_paper_trading",
+  "notes": "High-level profile only, per this wave's explicit scope limit -- no rule-by-rule extraction into StrategyRule records has been performed for JVM, and none is authorized by this wave. Confirmed operational: MOGO's original numeric confluence-scoring engine, live automatic paper trading, and a historical/TRUE MTF replay engine. 'operational_implementation' describes that this strategy runs and trades live paper positions today. Explicitly disclosed limitation: as of v12.6.0, Decision Event observability for JVM remains scan-boundary-only (SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR) -- candidate-level observability (which specific setup was considered, scored, and why it was accepted or rejected) remains structurally deferred, not merely unbuilt: the PROGRAM-001 Phase 2B repository analysis found that JVM's protected functions call each other directly in the auto-trade path (checkAutoTrades -> evaluateLiveTrigger -> openPaperPosition, all three protected), trapping every meaningful rejection reason inside a protected-calls-protected chain with no safe non-protected instrumentation hook today -- unlike ALEX G, whose equivalent detail is safely observable. Future strictness and trade-frequency evaluation (e.g. whether JVM's confluence threshold or session/day gates are well-calibrated) is deferred future work, contingent on either accepting a permanently coarse observability signal for JVM or a separate, explicit decision to authorize a minimal, disclosed protected-function exception. External, source-backed research material describing JVM's own trading methodology has not yet been ingested into this framework -- JVM's rules today are fully specified by MOGO's own implementation and documentation (docs/ARCHITECTURE.md, docs/DECISION_EVENT_ARCHITECTURE.md, docs/PAPER_TRADING_AUDIT.md), not derived from an external trader's research. Full StrategyRule extraction for JVM is deferred to a separately-authorized future milestone.",
+  "createdAt": "2026-07-25",
+  "updatedAt": "2026-07-25"
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/strategy-rule.schema.json",
+  "title": "StrategyRule",
+  "description": "One discrete, named rule belonging to one trader's strategy family. Source, interpretation, implementation, and performance confidence are deliberately four separate fields -- never collapsed into one number -- because a rule can be well-evidenced by source material while completely unvalidated by real trading data, and conflating the two would hide that gap.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ruleId", "traderId", "name", "category", "modelingStatus", "implementationStatus", "validationStatus", "createdAt", "updatedAt"],
+  "properties": {
+    "ruleId": {
+      "type": "string",
+      "pattern": "^RULE\\|[A-Z0-9_]+\\|[A-Z_]+\\|[A-Z0-9_]+$",
+      "description": "Format: RULE|{traderId}|{CATEGORY}|{SLUG}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "name": { "type": "string" },
+    "description": { "type": "string", "default": "" },
+    "category": {
+      "type": "string",
+      "enum": [
+        "CONTEXT", "SESSION", "LEVEL", "LIQUIDITY", "STRUCTURE", "DISPLACEMENT",
+        "ENTRY", "STOP", "TARGET", "MANAGEMENT", "REJECTION", "EXPIRATION",
+        "RISK", "DUPLICATE_PREVENTION", "EXIT"
+      ]
+    },
+    "lifecycleStage": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Which candidate-lifecycle stage (trader-specific, not hardcoded here) this rule governs, once that lifecycle is designed for this trader."
+    },
+    "requiredInputs": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "objectiveConditions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "discretionaryElements": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "parameters": {
+      "type": "object",
+      "description": "name -> {value, unit, source} where source is 'confirmed'|'proposed'|'unresolved'. Left maximally open since real research will dictate the actual parameter shape per rule.",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "exceptions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "invalidation": { "type": ["string", "null"], "default": null },
+    "supportedMarkets": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "supportedSessions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "supportedTimeframes": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "sourceEvidenceIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^EVID\\|" },
+      "default": [],
+      "description": "Must be non-empty once modelingStatus is 'modeled' -- a rule with no traceable evidence is an invented rule."
+    },
+    "contradictionIds": { "type": "array", "items": { "type": "string", "pattern": "^CONTRA\\|" }, "default": [] },
+    "sourceConfidence": {
+      "type": "string",
+      "enum": ["unknown", "very_low", "low", "medium", "high", "very_high"],
+      "default": "unknown",
+      "description": "How reliable/authoritative the underlying source material is."
+    },
+    "interpretationConfidence": {
+      "type": "string",
+      "enum": ["unknown", "very_low", "low", "medium", "high", "very_high"],
+      "default": "unknown",
+      "description": "How confident MOGO is that its reading of the source is correct."
+    },
+    "implementationConfidence": {
+      "type": "string",
+      "enum": ["unknown", "not_applicable", "very_low", "low", "medium", "high", "very_high"],
+      "default": "not_applicable",
+      "description": "How confident MOGO is that coded logic faithfully represents the modeled rule. 'not_applicable' while modelingStatus is still 'not_modeled'."
+    },
+    "performanceConfidence": {
+      "type": "string",
+      "enum": ["unknown", "not_applicable", "very_low", "low", "medium", "high", "very_high"],
+      "default": "not_applicable",
+      "description": "How confident MOGO is that the rule performs as claimed. Must NEVER be set from source material alone -- only from real replay/shadow/paper trading data."
+    },
+    "modelingStatus": {
+      "type": "string",
+      "enum": ["not_modeled", "modeled"]
+    },
+    "implementationStatus": {
+      "type": "string",
+      "enum": ["not_modeled", "modeled", "coded", "tested"]
+    },
+    "validationStatus": {
+      "type": "string",
+      "enum": ["untested", "replay_validated", "shadow_validated", "paper_approved"]
+    },
+    "activeRuleVersionId": { "type": ["string", "null"], "pattern": "^RULE\\|.+\\|V\\d+$", "default": null },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

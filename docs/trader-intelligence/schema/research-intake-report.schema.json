@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/schema/research-intake-report.schema.json",
+  "title": "ResearchIntakeReport",
+  "description": "Summarizes the output of one research intake session for one trader -- what was registered, extracted, matched, contradicted, and what still requires an owner decision. One report per intake session, never edited after creation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reportId", "traderId", "sourceIds", "intakeDate", "createdAt"],
+  "properties": {
+    "reportId": {
+      "type": "string",
+      "pattern": "^INTAKE\\|[A-Z0-9_]+\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: INTAKE|{traderId}|{intakeDate:YYYYMMDD}|{seq}."
+    },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "sourceIds": { "type": "array", "items": { "type": "string", "pattern": "^SRC\\|" }, "minItems": 1 },
+    "intakeDate": { "type": "string", "format": "date" },
+    "sourcesRegistered": { "type": "integer", "minimum": 0, "default": 0 },
+    "segmentsCreated": { "type": "integer", "minimum": 0, "default": 0 },
+    "explicitAssertionCount": { "type": "integer", "minimum": 0, "default": 0 },
+    "impliedAssertionCount": { "type": "integer", "minimum": 0, "default": 0 },
+    "inferredAssertionCount": { "type": "integer", "minimum": 0, "default": 0 },
+    "chartExamplesAdded": { "type": "integer", "minimum": 0, "default": 0 },
+    "existingRuleMatches": { "type": "array", "items": { "type": "string", "pattern": "^RULE\\|" }, "default": [] },
+    "proposedNewRules": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "contradictionsFound": { "type": "array", "items": { "type": "string", "pattern": "^CONTRA\\|" }, "default": [] },
+    "openQuestionsAdded": { "type": "array", "items": { "type": "string", "pattern": "^Q\\|" }, "default": [] },
+    "openQuestionsResolved": { "type": "array", "items": { "type": "string", "pattern": "^Q\\|" }, "default": [] },
+    "confidenceChanges": { "type": "array", "items": { "type": "object" }, "default": [] },
+    "implementationImpact": { "type": ["string", "null"], "default": null },
+    "replayImpact": { "type": ["string", "null"], "default": null },
+    "shadowTradingImpact": { "type": ["string", "null"], "default": null },
+    "paperTradingImpact": { "type": ["string", "null"], "default": null },
+    "ownerDecisionsRequired": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
