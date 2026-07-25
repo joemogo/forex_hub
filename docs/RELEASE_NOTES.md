@@ -13,6 +13,54 @@ its change actually affects.
 
 ---
 
+## v12.6.0 — PROGRAM-001 Phase 2C Wave 1: ALEX Candidate Lifecycle Instrumentation
+Infrastructure-only release — no trading behavior change; the exact same market data produces the
+exact same ALEX trades before and after this release, confirmed by zero protected-function/
+protected-constant drift against the committed v12.5.0 baseline. **Pre-release correction:** an
+earlier draft's `CANDIDATE_CREATED` logic deduped only by "already reported this session," which
+would have mislabeled a historical setup ALEX's zone engine simply reconstructs from 90 days of
+candles (e.g. on the first poll after a page load) as an ordinary live candidate. Corrected before
+commit: `CANDIDATE_CREATED` now additionally requires the setup's real `qualificationTimestamp` to
+fall strictly after a real, pre-existing, non-persisted timestamp (`alexGLastEvaluatedCloseTime`)
+already captured by the app — never persisted, resetting to empty on every real reload — so a cold
+start's backfill is never mistaken for a genuine live candidate. A historical setup's real trading
+treatment (rule evaluation, duplicate checking, trade-open) is completely unchanged; only its
+`CANDIDATE_CREATED` label is suppressed. Connects the Phase 2A Decision
+Event bus to ALEX's real candidate lifecycle for the first time. Per the prior Phase 2B repository
+analysis, ALEX's real gate (`alexGConstructLivePosition`) is protected but **pure**, feeding a
+complete structured result to its non-protected caller (`alexGAttemptOpenLivePosition`) — while
+JVM's equivalent detail is trapped inside a protected-calls-protected chain with no safe external
+hook. This release implements ALEX's full lifecycle only; **JVM remains exactly
+`SCAN_STARTED`/`SCAN_COMPLETED`/`ENGINE_ERROR`, byte-identical to v12.5.0** — JVM and ALEX are
+deliberately not forced into artificial observability parity. New events, all from the two
+existing, non-protected call sites (`alexGEvaluatePairForLiveSetups()`/
+`alexGAttemptOpenLivePosition()`; every protected function they call — `alexGConstructLivePosition`,
+`alexGRunSetupEngine`, `alexGCreateSetupRecord`, `alexGClassifyTouch`, and the whole zone engine —
+remains completely unedited): `CANDIDATE_CREATED` (once per genuinely new setup, via a new bounded
+dedup set separate from ALEX's own trading-state dedup), `RULE_EVALUATED` (activation-cutoff and
+signal-staleness gates, PASS/FAIL), linked `CANDIDATE_REJECTED` events, `TRADE_OPEN_REQUESTED`,
+`CANDIDATE_APPROVED`/`TRADE_OPEN_FAILED` (mapped honestly from the real construction result via a
+new `ALEXG_CONSTRUCTION_REASON_CODE_MAP`), and `TRADE_OPENED`/`TRADE_OPEN_FAILED` after the ledger
+commit. Eight new reason codes added to `REASON_CODE_REGISTRY`. Identity (`candidateId = setupId`,
+`signalId`, `tradeId`) and `scanId`/`correlationId` (threaded from the existing Phase 2A `__scanId`
+via two new, additive function parameters on non-protected functions) required no new plumbing —
+the app already computed all of it. The pre-existing silent `catch` in
+`alexGEvaluatePairForLiveSetups()` now additionally emits `ENGINE_ERROR`, with its
+swallow-and-continue behavior completely unchanged. 61 fixtures in
+`tests/v126_phase2c_wave1_tests.js` — unlike Phase 2A's boundary-only proof, this suite engineered
+a genuinely qualifying setup and ran it through the real, unmodified zone/setup engine end-to-end
+(network stubbed only at `fetch()`, in OANDA's own response shapes), then verified the full
+lifecycle, all 10 real construction outcomes, a real ledger rollback, a real `ENGINE_ERROR`, the
+first-poll/reload historical-exclusion correction, boundary determinism at exact/±1ms, deterministic
+FIFO eviction of the bounded dedup set, and the session dedup set's role as a secondary guard.
+Full regression 530/530; zero protected drift. Live-verified in a real Chrome tab (identical
+result to the offline suite, including the corrected first-poll exclusion); Paper Trading Health
+Check reported CLEAN for both engines. Real OANDA connectivity could not be exercised — OANDA's own
+practice API was independently confirmed to be returning HTTP 503 (system maintenance) during this
+release; anything requiring it is disclosed as blocked, not faked. See
+[DECISION_EVENT_ARCHITECTURE.md](DECISION_EVENT_ARCHITECTURE.md) for the complete updated
+schema/event/reason-code documentation and the deferred Wave 2+ scope.
+
 ## v12.5.0 — PROGRAM-001 Phase 2A: Decision Event Schema & Observability Foundation
 Infrastructure-only release — no trading behavior change; the exact same market data produces
 the exact same trades before and after this release, confirmed by zero protected-function/

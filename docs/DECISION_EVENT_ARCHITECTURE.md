@@ -1,9 +1,17 @@
 # Decision Event Schema & Observability Foundation
 
-**Status:** PROGRAM-001 Phase 2A, shipped in v12.5.0. Infrastructure only — no trading behavior
-change. This document is the source of record for the schema, reason-code registry, evidence
-model, identifier rules, immutability guarantee, and memory limits; the in-code
-`APP_VERSION_LOG` entry is the condensed summary, this file is the full detail.
+**Status:** PROGRAM-001 Phase 2A (schema/bus, v12.5.0) plus Phase 2C Wave 1 (ALEX candidate
+lifecycle instrumentation, v12.6.0). Infrastructure only — no trading behavior change in either
+phase. This document is the source of record for the schema, reason-code registry, evidence
+model, identifier rules, immutability guarantee, memory limits, and instrumentation coverage; the
+in-code `APP_VERSION_LOG` entries are the condensed per-release summaries, this file is the full,
+continuously-updated detail.
+
+**JVM vs. ALEX coverage asymmetry (read this first):** JVM emits only `SCAN_STARTED`/
+`SCAN_COMPLETED`/`ENGINE_ERROR`, exactly as it did in v12.5.0. ALEX additionally emits its full
+candidate lifecycle as of v12.6.0. This is not an oversight or a temporary gap to be closed
+symmetrically later — see "Why ALEX and not JVM" below. JVM and ALEX are deliberately never
+forced into artificial observability parity.
 
 ## Purpose
 
@@ -48,9 +56,16 @@ field is silently `0`, `''`, `false`, or omitted when it isn't known.
 All 13 required types are defined in `DECISION_EVENT_TYPES` (frozen): `SCAN_STARTED`,
 `SCAN_COMPLETED`, `SETUP_OBSERVED`, `CANDIDATE_CREATED`, `RULE_EVALUATED`, `CANDIDATE_REJECTED`,
 `CANDIDATE_APPROVED`, `TRADE_OPEN_REQUESTED`, `TRADE_OPENED`, `TRADE_OPEN_FAILED`,
-`TRADE_CLOSED`, `DATA_UNAVAILABLE`, `ENGINE_ERROR`. **Only `SCAN_STARTED`, `SCAN_COMPLETED`, and
-`ENGINE_ERROR` are actually emitted as of v12.5.0** — the rest exist so a later phase can start
-emitting them without a breaking schema change.
+`TRADE_CLOSED`, `DATA_UNAVAILABLE`, `ENGINE_ERROR`.
+
+**As of v12.6.0:**
+- **JVM** emits only `SCAN_STARTED`/`SCAN_COMPLETED`/`ENGINE_ERROR` — unchanged since v12.5.0.
+- **ALEX** additionally emits `CANDIDATE_CREATED`, `RULE_EVALUATED`, `CANDIDATE_REJECTED`,
+  `TRADE_OPEN_REQUESTED`, `CANDIDATE_APPROVED`, `TRADE_OPENED`, and `TRADE_OPEN_FAILED` — see
+  "ALEX Candidate Lifecycle Instrumentation (Phase 2C Wave 1)" below.
+- **Still never emitted, by anyone:** `SETUP_OBSERVED` (would require exposing ALEX's per-touch
+  zone-engine rejection reasons, which are structurally discarded today — see Known Limitations)
+  and `TRADE_CLOSED`/`DATA_UNAVAILABLE` (out of scope for this wave).
 
 ## Reason Code Registry
 
@@ -75,6 +90,38 @@ Seeded codes as of v12.5.0 (illustrative coverage per category, not exhaustive �
 `EXECUTION_SPREAD_UNAVAILABLE`, `EXECUTION_LEDGER_REJECTED`, `STATE_ALREADY_TRADED_TODAY`,
 `STATE_SIGNAL_ALREADY_DECIDED`, `STATE_SIGNAL_STALE`, `CONFIG_AUTOMATION_DISABLED`,
 `SYSTEM_UNEXPECTED_ERROR`, `UNKNOWN_NOT_RECORDED`).
+
+**Added in v12.6.0** (Phase 2C Wave 1, ALEX only): `CONFIG_BEFORE_ACTIVATION`,
+`ENTRY_INVALID_ZONE_ROLE`, `ENTRY_INVALID_BROKEN_DIRECTION`, `ENTRY_UNSUPPORTED_SETUP_TYPE`,
+`ENTRY_MOVED_TOO_FAR_FROM_SIGNAL`, `DATA_ATR_UNAVAILABLE`, `RISK_INVALID_STOP`,
+`DATA_PIP_VALUE_UNAVAILABLE`. `RISK_OPEN_POSITION_LIMIT`, `EXECUTION_SPREAD_UNAVAILABLE`,
+`STATE_SIGNAL_ALREADY_DECIDED`, `STATE_SIGNAL_STALE`, and `EXECUTION_LEDGER_REJECTED` were already
+seeded in v12.5.0 and are now genuinely used, wired to real ALEX outcomes for the first time.
+
+### ALEX construction-outcome mapping (`ALEXG_CONSTRUCTION_REASON_CODE_MAP`)
+
+`alexGConstructLivePosition()` (protected, pure, never edited) returns one of a fixed set of real
+`{status,reason}` outcomes. A new, exact one-to-one lookup table — defined once, alongside the
+reason registry, never inline at the trading call site — relabels each real `reason` string to its
+registry code; nothing here re-implements or approximates the protected function's own logic:
+
+| Real `reason` (from `alexGConstructLivePosition`) | `reasonCode` |
+|---|---|
+| `INVALID_ZONE_ROLE_INSIDE` | `ENTRY_INVALID_ZONE_ROLE` |
+| `INVALID_BROKEN_DIRECTION` | `ENTRY_INVALID_BROKEN_DIRECTION` |
+| `UNSUPPORTED_SETUP_TYPE` | `ENTRY_UNSUPPORTED_SETUP_TYPE` |
+| `EXISTING_OPEN_TRADE_SAME_PAIR_TIMEFRAME` | `RISK_OPEN_POSITION_LIMIT` |
+| `ATR_UNAVAILABLE` | `DATA_ATR_UNAVAILABLE` |
+| `LIVE_BID_ASK_UNAVAILABLE` | `EXECUTION_SPREAD_UNAVAILABLE` |
+| `ENTRY_MOVED_TOO_FAR_FROM_SIGNAL` | `ENTRY_MOVED_TOO_FAR_FROM_SIGNAL` |
+| `INVALID_STOP` | `RISK_INVALID_STOP` |
+| `PIP_VALUE_UNAVAILABLE` | `DATA_PIP_VALUE_UNAVAILABLE` |
+| `DUPLICATE` (either duplicate check; `reason` is `null` on this status) | `STATE_SIGNAL_ALREADY_DECIDED` (the one authorized, honest fit — not a fabrication, since the status itself already means "already decided") |
+
+A `reason` string that somehow isn't in this table falls back to `UNKNOWN_NOT_RECORDED` rather
+than being invented — this should never occur given the table's completeness against the real
+function's full outcome set, verified directly against all 10 real outcomes in
+`tests/v126_phase2c_wave1_tests.js`.
 
 ## Evidence Model
 
@@ -137,6 +184,111 @@ reading. This matters because the only two places this layer is wired into real 
 `scanAll()` and `alexGLivePollTick()` — must never have their own scanning/trading behavior
 interrupted by an observability bug.
 
+## ALEX Candidate Lifecycle Instrumentation (Phase 2C Wave 1, v12.6.0)
+
+### Why ALEX and not JVM
+
+The Phase 2B repository analysis (see the conversation history / prior pre-commit reports for the
+full 15-section report) traced both engines' complete decision paths and found a structural
+asymmetry, not a scope choice:
+
+- **JVM's protected functions call each other directly.** `checkAutoTrades()` (protected) calls
+  `evaluateLiveTrigger()` (protected) calls `openPaperPosition()` (protected). Both of the latter
+  two already compute and return rich, structured rejection reasons — but `checkAutoTrades()`
+  discards them before any non-protected code ever sees them. There is no safe external hook for
+  JVM's candidate-level detail today.
+- **ALEX's real gate is a pure function feeding a non-protected wrapper.**
+  `alexGConstructLivePosition()` is protected but pure (zero side effects) and returns a complete,
+  structured 10-outcome result to its caller, `alexGAttemptOpenLivePosition()` — which is **not**
+  protected, and is the function that actually mutates `alexGAccount`. ALEX's entire
+  candidate-approval outcome is achievable at SAFE instrumentation risk with zero protected-code
+  edits.
+
+Per the user's own explicit rule ("do not recommend implementing UNSAFE locations during the first
+Phase 2C release"), this wave implements ALEX's full lifecycle and leaves JVM exactly as it was in
+v12.5.0. Whether JVM ever gets deeper instrumentation is an open product decision (would require
+either accepting a permanently coarse JVM signal, or authorizing a disclosed, minimal protected-
+function edit) — not decided or implemented here.
+
+### Where each ALEX event is emitted
+
+All of the following live in `alexGEvaluatePairForLiveSetups()` and
+`alexGAttemptOpenLivePosition()` — both confirmed **not** protected functions. Neither function's
+original trading logic was reordered; every new statement is either a new `emitDecisionEvent()`
+call or a new function parameter (`scanId`) threaded through.
+
+| Event | Location | Real values used |
+|---|---|---|
+| `CANDIDATE_CREATED` | `alexGEvaluatePairForLiveSetups()`, immediately after the real `alexGRunSetupEngine()` call, once per setup whose `qualificationTimestamp` is strictly newer than this pair's real, pre-existing live boundary (see below) and not yet in the `decisionEventKnownCandidateIds` dedup set | `candidateId = setup.setupId`; full setup metadata in `context` |
+| `RULE_EVALUATED` (`ALEX_ACTIVATION_CUTOFF`) | same function, at the existing call to `alexGIsSetupEligibleForLiveTrading()` | real `PASS`/`FAIL`, `reasonCode` only on `FAIL` |
+| `CANDIDATE_REJECTED` (`CONFIG_BEFORE_ACTIVATION`) | same function, linked via `parentEventId` to the `RULE_EVALUATED` above, only on `FAIL` | — |
+| `RULE_EVALUATED` (`ALEX_SIGNAL_STALENESS`) | same function, at the existing call to `alexGIsSetupSignalStale()` | real `PASS`/`FAIL` |
+| `CANDIDATE_REJECTED` (`STATE_SIGNAL_STALE`) | same function, linked via `parentEventId`, only on `FAIL` | — |
+| `CANDIDATE_REJECTED` (`STATE_SIGNAL_ALREADY_DECIDED`) | same function, at the existing `alexGLiveSetupStatuses` dedup check | — |
+| `TRADE_OPEN_REQUESTED` | `alexGAttemptOpenLivePosition()`, immediately before the real `alexGConstructLivePosition()` call | `direction` intentionally `null` (`evidenceCompleteness:'PARTIAL'`) |
+| `CANDIDATE_REJECTED` (`STATE_SIGNAL_ALREADY_DECIDED`) | same function, on a `DUPLICATE` construction result | — |
+| `CANDIDATE_APPROVED` | same function, on a `TRADE OPENED` construction result | real `direction`, `tradeId` |
+| `TRADE_OPEN_FAILED` | same function, on any other `BLOCKED_*` construction result | mapped via `ALEXG_CONSTRUCTION_REASON_CODE_MAP` |
+| `TRADE_OPEN_FAILED` (`EXECUTION_LEDGER_REJECTED`) | same function, after the existing `commitAlexGLedger()` call, on failure | real `committed.reason` |
+| `TRADE_OPENED` | same function, after `commitAlexGLedger()` succeeds | real `position` fields (entry/stop/target/positionSize/tradeId) |
+
+### Identity and correlation
+
+- `candidateId` = the real `setup.setupId` (already existed, deterministic, unique per zone/touch).
+- `signalId` = `alexGLiveSignalId(setup)` (already existed) appears in event `context`.
+- `tradeId` = the real `position.tradeId` once minted (already existed).
+- The pre-existing `setupId → signalId → tradeId` linkage required no new plumbing — this release
+  only reads and forwards identities the app already computes.
+- `scanId`/`correlationId` are the real per-tick `__scanId` generated in `alexGLivePollTick()`
+  (Phase 2A), threaded through as a new parameter on both instrumented functions:
+  `alexGEvaluatePairForLiveSetups(oPair, scanId)` and
+  `alexGAttemptOpenLivePosition(setup, datasets, evalMeta, scanId)`.
+
+### Live-window classification: genuinely new vs. historical reconstruction
+
+ALEX's zone/setup engine fully rebuilds `alexGSetupState` for a pair from 90 days of candles on
+*every* poll — the same historical setup reappears every tick even once its trading fate is
+permanently decided (that permanence is tracked separately, by the pre-existing
+`alexGLiveSetupStatuses`, keyed by `signalId`). An earlier draft of this release deduped
+`CANDIDATE_CREATED` using only a session-level `Set` keyed by `setupId` — but that meant "have I
+already told someone about this setup," not "did this setup genuinely just become live," so the
+very first poll after a page load (or reload) would emit a `CANDIDATE_CREATED` burst for every
+historically-qualifying setup the 90-day reconstruction found. **This was corrected before
+release.**
+
+**The authoritative boundary:** `alexGEvaluatePairForLiveSetups()` now captures
+`alexGLastEvaluatedCloseTime[pair].H1` — a real, pre-existing, non-protected value the frozen zone
+engine itself already maintains (it is never persisted, and resets to `{}` on every real page
+reload, exactly like the rest of ALEX's live-polling cursor state) — at the very start of the
+function, *before* that same poll's rebuild advances it further. A setup is classified as
+genuinely newly live only if its own real `qualificationTimestamp` is **strictly greater than**
+that captured boundary. On a pair's very first-ever live evaluation this session (including the
+first poll after a reload), the boundary is `null` — nothing a 90-day reconstruction finds on that
+poll can be classified as live, so a cold start is never mistaken for genuine new activity.
+
+The `decisionEventKnownCandidateIds` dedup `Set` (bounded,
+`DECISION_EVENT_KNOWN_CANDIDATE_IDS_MAX=5000`, oldest evicted first — a plain JS `Set` preserves
+insertion order, so evicting `.values().next().value` before inserting the newest entry once the
+cap is hit is a deterministic FIFO policy) is retained as a **secondary** guard only, covering the
+edge case where the same already-classified-live setup could otherwise be re-emitted twice within
+one boundary (e.g. a retried call before the boundary itself advances) — it is never, by itself,
+what decides live vs. historical. Reset only by the existing dev-only `clearDecisionEvents()`
+action, which now also clears it.
+
+**Boundary determinism:** exactly-at-boundary (`qualificationTimestamp === previousH1Boundary`) is
+classified as historical, not live — the comparison is strict `>`. One millisecond after the
+boundary is live; one millisecond before is historical. An invalid or missing
+`qualificationTimestamp` (not a real possibility from the real engine, which always computes a
+valid one via `getCandleCloseTime()`) can never fabricate a live classification either — the guard
+also requires `typeof qualificationTimestamp === 'number' && isFinite(...)`.
+
+**A historical setup's real trading treatment is completely unchanged.** `RULE_EVALUATED`
+(activation/staleness), the existing `alexGLiveSetupStatuses` duplicate check, and the full
+trade-open pipeline all still run for every setup regardless of its live/historical
+classification — only the `CANDIDATE_CREATED` observability label is suppressed for a historical
+one. This was verified directly, both offline and live: a historical (first-poll) setup still
+produces `RULE_EVALUATED` PASS/PASS and a real `TRADE_OPENED`, with zero `CANDIDATE_CREATED`.
+
 ## Instrumentation (what's actually wired, v12.5.0)
 
 Only `SCAN_STARTED`, `SCAN_COMPLETED`, and `ENGINE_ERROR` are emitted, from exactly two call
@@ -173,30 +325,46 @@ PERSISTED"). No dashboard, no charts, no Strategy Center changes.
 - **Memory-only, by design.** The event log does not survive a page reload. This is the explicit
   Phase 2A mandate ("no persistent storage unless absolutely required") — persistence, if ever
   needed, is an explicit future decision requiring its own storage-key/retention/migration/
-  corruption-handling/rollback proposal, not an assumption baked in here.
+  corruption-handling/rollback proposal, not an assumption baked in here. Still true as of v12.6.0
+  — zero new localStorage keys were added by this wave, confirmed directly.
 - **`SCAN_COMPLETED`/`ENGINE_ERROR` from `scanAll()`/`alexGLivePollTick()` could not be exercised
-  end-to-end in the offline JXA test harness**, for the same documented, permanent reason
-  `closePaperPosition()`/`alexGCloseLivePosition()` couldn't be in earlier releases (see
-  `docs/TESTING.md`): both functions have a real internal `await` this harness cannot resolve.
-  `SCAN_STARTED` specifically **was** proven with real execution (it's each function's literal
-  first statement, before either function's first `await`); the remainder was verified live in a
-  real browser instead (see the pre-commit report for this release).
-- **Reason codes are a fixed, curated set for now**, not exhaustive — future phases will add
-  codes to `REASON_CODE_REGISTRY` as real rule-evaluation logic starts emitting `RULE_EVALUATED`/
-  `CANDIDATE_REJECTED` events with specific reasons.
-- **Per-field evidence provenance (`EVIDENCE_FIELD_PROVENANCE`) is a defined taxonomy only** —
-  nothing in Phase 2A actually tags an individual field with it yet, since no real candidate/rule
-  evaluation exists yet to have fields worth tagging.
+  end-to-end in the offline JXA test harness for Phase 2A**, for the same documented, permanent
+  reason `closePaperPosition()`/`alexGCloseLivePosition()` couldn't be in earlier releases (see
+  `docs/TESTING.md`). By contrast, Phase 2C Wave 1's ALEX event chain — including the full
+  `CANDIDATE_CREATED → … → TRADE_OPENED` lifecycle — **was** proven with genuinely real,
+  end-to-end execution offline, by engineering an actual qualifying candle sequence and stubbing
+  only the `fetch()` network boundary (never any application function) in OANDA's own response
+  shapes; the same scenario was independently re-run live in a real Chrome tab for this release's
+  pre-commit verification.
+- **JVM candidate-level detail remains structurally unreachable** without either accepting a
+  permanently coarse signal or authorizing a disclosed, minimal protected-function edit — see "Why
+  ALEX and not JVM" above. Not a limitation of this release specifically; a standing architectural
+  fact about JVM's protected-calls-protected call chain.
+- **ALEX's own touch-level rejection detail is still unreachable.** `alexGEvaluateBreakRetest()`
+  and `alexGEvaluateRepeatedReaction()` are protected-on-protected, and their `{qualifies:false}`
+  return contract structurally discards *which* of several conditions failed — recovering that
+  would require either editing a protected function or reimplementing its logic externally, both
+  explicitly out of scope for this wave. Only "a candidate was/wasn't created" is observable today,
+  not "why a touch didn't qualify."
+- **Reason codes are a fixed, curated set**, not exhaustive — future work will add codes to
+  `REASON_CODE_REGISTRY` as real rule-evaluation logic starts emitting more specific reasons (see
+  above: 8 new codes were added in v12.6.0 for ALEX's construction outcomes, following the same
+  add-before-use discipline).
+- **Per-field evidence provenance (`EVIDENCE_FIELD_PROVENANCE`) is still a defined taxonomy only**
+  — no event in either phase tags an individual field with it yet; every v12.6.0 ALEX event uses
+  the simpler, event-level `evidenceCompleteness` (`COMPLETE` for nearly all fields, `PARTIAL` only
+  for `TRADE_OPEN_REQUESTED`'s not-yet-resolved `direction`).
 
-## Future Phase 2B (not started, not authorized by this release)
+## Future Phase 2C Wave 2+ (not started, not authorized)
 
-Phase 2A's own spec explicitly reserves the following for later, separately-authorized phases:
-candidate/rejection logging, trade-failure analysis, missed-opportunity/counterfactual trades, a
-market-context/regime engine, historical-candle retrieval, EMA/ATR/AOI reconstruction, an
-Experiment Registry, shadow strategies, AI coaching, and any Trade Inspector or
-`computeTiCompliance()` change. A natural Phase 2B would begin wiring `SETUP_OBSERVED`/
-`CANDIDATE_CREATED`/`RULE_EVALUATED`/`CANDIDATE_REJECTED`/`CANDIDATE_APPROVED` from the actual
-signal-detection/confluence-scoring layer (still without touching protected functions — likely by
-wrapping their call sites the same way `scanAll()`/`alexGLivePollTick()` were wrapped here, not by
-editing the protected functions themselves), and populating real `evidenceCompleteness`/
-`EVIDENCE_FIELD_PROVENANCE` values once there is real per-candidate evidence to describe.
+Explicitly deferred, per the Wave 1 authorization's own scope boundary:
+
+- JVM candidate/rule/rejection/approval/failure instrumentation of any kind (blocked on the open
+  product decision described above).
+- ALEX touch-level `SETUP_OBSERVED` and the two rule-by-rule sub-evaluators' individual condition
+  detail (blocked on the protected-on-protected structural issue described above).
+- Any protected-function or protected-constant edit anywhere.
+- Persistent Decision Event storage, missed-opportunity/counterfactual analytics, an Experiment
+  Registry, shadow strategies, AI coaching, historical-candle retrieval/replay reconstruction, and
+  any Trade Inspector or `computeTiCompliance()` change — all still out of scope, unchanged from
+  Phase 2A's own reservation list.
