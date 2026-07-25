@@ -1,0 +1,17 @@
+{
+  "sourceId": "SRC|TJR|20260101|001",
+  "traderId": "TJR",
+  "title": "[SYNTHETIC TEST FIXTURE -- NOT REAL TJR RESEARCH] Sample source used only to exercise the PROGRAM-003 graph builder/validator/query engine against non-empty ResearchSource/SourceSegment/StrategyAssertion/StrategyRule/RuleEvidence/RuleContradiction/RuleVersion data, since the real repository has zero such instances until Wave 2 TJR primary-source intake occurs. This file must never be copied into docs/trader-intelligence/.",
+  "sourceType": "MOGO_OBSERVATION",
+  "creator": "SYNTHETIC_TEST_FIXTURE",
+  "platform": null,
+  "publicationDate": null,
+  "ingestionDate": "2026-01-01",
+  "urlOrReference": null,
+  "localFileReference": "tests/trader_intelligence/fixtures/happy_path/source.json",
+  "transcriptReference": null,
+  "authenticityConfidence": "unverified",
+  "sourceQuality": "mixed",
+  "processingStatus": "fully_processed",
+  "notes": "SYNTHETIC TEST FIXTURE. Never real research. Never present under docs/trader-intelligence/."
+}

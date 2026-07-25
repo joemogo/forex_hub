@@ -1,0 +1,10 @@
+{
+  "strategyFamilyId": "SF|JVM|CONFLUENCE_SCORING_V1",
+  "traderId": "JVM",
+  "name": "Confluence Scoring v1",
+  "description": "MOGO's repository-confirmed implementation: the original numeric confluence-scoring engine, live automatic paper trading, and a historical/TRUE MTF replay engine (simulateTrueMTFReplay). Decision Event observability for JVM remains scan-boundary-only (SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR) -- candidate-level observability is structurally deferred because JVM's protected functions call each other directly in the auto-trade path (checkAutoTrades -> evaluateLiveTrigger -> openPaperPosition), unlike ALEX G's equivalent chain. External, source-backed research describing JVM's own trading methodology has not been ingested into this framework -- these rules are fully specified by MOGO's own implementation and documentation (docs/ARCHITECTURE.md, docs/DECISION_EVENT_ARCHITECTURE.md, docs/PAPER_TRADING_AUDIT.md).",
+  "relatedStrategyFamilyIds": [],
+  "status": "operational",
+  "createdAt": "2026-07-25",
+  "updatedAt": "2026-07-25"
+}

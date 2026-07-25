@@ -1,0 +1,10 @@
+{
+  "strategyFamilyId": "SF|TJR|SESSION_ZONE_REACTION",
+  "traderId": "TJR",
+  "name": "Session Zone Reaction",
+  "description": "MOGO's repository-confirmed implementation of this family currently covers only the Session/Zone Engine: deterministic previous-session (Asian/London/New York) high/low zone construction (9 pure functions, 48 fixtures, shipped v12.3.0), chart-rendered and surfaced in the dedicated TJR Workspace (shipped v12.3.1). The Zone Interaction/Reaction Engine, five-minute BOS confirmation, candidate generation, and entry/stop/target/risk calculation -- the logic that would make this a complete, tradeable strategy family -- are not implemented; all remain unresolved per docs/adr/ADR-007-tjr-strategy-definition.md Sections B and C. This record asserts or infers no TJR trading rule beyond what MOGO's own codebase currently builds; see docs/trader-intelligence/traders/tjr/profile.json for the full disclosed scope.",
+  "relatedStrategyFamilyIds": [],
+  "status": "implemented",
+  "createdAt": "2026-07-25",
+  "updatedAt": "2026-07-25"
+}

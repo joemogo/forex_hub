@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/graph/schema/graph-manifest.schema.json",
+  "title": "GraphManifest",
+  "description": "One record per graph build, produced by scripts/trader_intelligence/build_graph.py. Also serves as the build record (GraphBuildRecord and GraphManifest are the same concept in this design -- collapsed into one schema to avoid duplicating one idea across two types). Records exactly which authoritative inputs produced which generated outputs, so any graph state is fully traceable back to the source files it came from.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated", "buildId", "builderVersion", "builtAt", "inputFiles", "outputFiles", "nodeCounts", "edgeCounts", "status"],
+  "properties": {
+    "generated": { "type": "boolean", "const": true },
+    "buildId": {
+      "type": "string",
+      "pattern": "^BUILD\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: BUILD|{YYYYMMDD}|{sequence}."
+    },
+    "builderVersion": {
+      "type": "string",
+      "description": "The build_graph.py script version that produced this manifest, so future format changes are distinguishable from data changes."
+    },
+    "builtAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Real wall-clock build timestamp. This field, and only this field (plus generatedAt-style fields elsewhere), is allowed to differ between two otherwise-identical rebuilds -- deterministic-rebuild tests must compare all other fields and never this one."
+    },
+    "inputFiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "contentHash"],
+        "properties": {
+          "path": { "type": "string" },
+          "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      },
+      "description": "Every authoritative source file the builder read, sorted by path, with its content hash at build time."
+    },
+    "outputFiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "contentHash"],
+        "properties": {
+          "path": { "type": "string" },
+          "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "nodeCounts": {
+      "type": "object",
+      "description": "nodeType -> count.",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "edgeCounts": {
+      "type": "object",
+      "description": "edgeType -> count.",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "failed"]
+    },
+    "integrityReportId": { "type": ["string", "null"], "default": null },
+    "notes": { "type": "string", "default": "" }
+  }
+}

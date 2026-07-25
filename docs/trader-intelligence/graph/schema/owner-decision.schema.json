@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/graph/schema/owner-decision.schema.json",
+  "title": "OwnerDecision",
+  "description": "One authoritative, auditable record of an owner decision -- architectural, research, modeling, implementation, replay, shadow, paper, production, or future live-trading. OwnerDecision records are authoritative source data (like a TraderRecord or StrategyRule), not generated graph artifacts: they live under docs/trader-intelligence/graph/decisions/ and are hand-authored, one file per decision, never edited after creation (a revised decision supersedes an earlier one via supersedesDecisionId; the earlier record is never edited or deleted). Owner approval must be auditable this way and must never be represented only as prose in a chat transcript.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decisionId", "owner", "decisionDate", "decisionType", "question",
+    "optionsConsidered", "selectedOption", "rationale", "approvalScope",
+    "implementationAuthorization", "replayAuthorization", "shadowAuthorization",
+    "paperAuthorization", "productionAuthorization", "liveAuthorization",
+    "status", "createdAt", "updatedAt"
+  ],
+  "properties": {
+    "decisionId": {
+      "type": "string",
+      "pattern": "^DECISION\\|MOGO\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: DECISION|MOGO|{YYYYMMDD}|{seq}. 'MOGO' is a fixed scope segment -- this repository has one owner today; the segment exists so the id format does not need to change if that ever stops being true."
+    },
+    "owner": { "type": "string" },
+    "decisionDate": { "type": "string", "format": "date" },
+    "affectedEntityIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "IDs of the entities (traders, strategy families, rules, questions, etc.) this decision concerns."
+    },
+    "decisionType": {
+      "type": "string",
+      "enum": [
+        "architectural", "research", "modeling", "implementation",
+        "replay", "shadow", "paper", "production", "live"
+      ]
+    },
+    "question": { "type": "string", "description": "The decision actually being made, stated plainly." },
+    "optionsConsidered": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "selectedOption": { "type": "string" },
+    "rationale": { "type": "string" },
+    "approvalScope": {
+      "type": "string",
+      "enum": [
+        "architectural", "research_only", "implementation", "replay",
+        "shadow", "paper", "production", "live"
+      ],
+      "description": "The highest scope this decision actually authorizes. Independent of, but must stay consistent with, the specific *Authorization booleans below."
+    },
+    "supportingEvidenceIds": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "dissentingEvidenceIds": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "implementationAuthorization": { "type": "boolean" },
+    "replayAuthorization": { "type": "boolean" },
+    "shadowAuthorization": { "type": "boolean" },
+    "paperAuthorization": { "type": "boolean" },
+    "productionAuthorization": { "type": "boolean" },
+    "liveAuthorization": { "type": "boolean" },
+    "reviewDate": { "type": ["string", "null"], "format": "date", "default": null },
+    "expiresAt": { "type": ["string", "null"], "format": "date", "default": null },
+    "supersedesDecisionId": { "type": ["string", "null"], "pattern": "^DECISION\\|", "default": null },
+    "status": {
+      "type": "string",
+      "enum": ["active", "superseded", "expired", "rescinded"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

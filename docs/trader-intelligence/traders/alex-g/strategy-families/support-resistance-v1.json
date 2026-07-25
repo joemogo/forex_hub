@@ -1,0 +1,10 @@
+{
+  "strategyFamilyId": "SF|ALEX_G|SUPPORT_RESISTANCE_V1",
+  "traderId": "ALEX_G",
+  "name": "Support & Resistance v1",
+  "description": "MOGO's repository-confirmed implementation: a zone-detection/setup-qualification engine (Break & Retest and Repeated Zone Reaction setup types), live automatic paper trading with an atomic ledger-commit/rollback transaction model (commitAlexGLedger), a historical setup-replay engine (alexGRunSetupReplay), and, as of v12.6.0, real candidate-lifecycle Decision Event observability (CANDIDATE_CREATED/RULE_EVALUATED/CANDIDATE_APPROVED/CANDIDATE_REJECTED/TRADE_OPEN_REQUESTED/TRADE_OPENED/TRADE_OPEN_FAILED, all genuinely emitted from live, non-protected call sites). External, source-backed research describing ALEX G's own trading methodology has not been ingested into this framework -- these rules are fully specified by MOGO's own implementation and documentation (docs/adr/ADR-005-strategy-framework.md, docs/DECISION_EVENT_ARCHITECTURE.md, docs/PAPER_TRADING_AUDIT.md), not derived from an external trader's research.",
+  "relatedStrategyFamilyIds": [],
+  "status": "operational",
+  "createdAt": "2026-07-25",
+  "updatedAt": "2026-07-25"
+}

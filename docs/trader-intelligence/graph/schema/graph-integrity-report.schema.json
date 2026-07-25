@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/graph/schema/graph-integrity-report.schema.json",
+  "title": "GraphIntegrityReport",
+  "description": "One record per validation run, produced by scripts/trader_intelligence/validate_graph.py. Surfaces real problems (e.g. a strategyFamilyId referenced by a TraderRecord with no backing StrategyFamily file) rather than hiding them -- a missing reference is reported here, never silently synthesized as a placeholder entity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated", "integrityReportId", "buildId", "generatedAt", "findings", "summary"],
+  "properties": {
+    "generated": { "type": "boolean", "const": true },
+    "integrityReportId": {
+      "type": "string",
+      "pattern": "^INTEGRITY\\|BUILD\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: INTEGRITY|{buildId}. One-to-one with the build it validates."
+    },
+    "buildId": { "type": "string", "pattern": "^BUILD\\|\\d{8}\\|\\d{3,}$" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "severity", "category", "message", "affectedIds", "blocksArtifactReplacement"],
+        "properties": {
+          "findingId": { "type": "string" },
+          "severity": { "type": "string", "enum": ["INFO", "WARNING", "ERROR", "FATAL"] },
+          "category": {
+            "type": "string",
+            "enum": [
+              "INVALID_JSON", "SCHEMA_STRUCTURE", "DUPLICATE_ENTITY_ID", "DUPLICATE_NODE_ID",
+              "DUPLICATE_EDGE_ID", "MISSING_REFERENCE", "INVALID_NODE_TYPE", "INVALID_EDGE_TYPE",
+              "INVALID_EDGE_DIRECTION", "INVALID_TRADER_REFERENCE", "INVALID_STRATEGY_FAMILY_REFERENCE",
+              "ORPHAN_NODE", "CIRCULAR_SUPERSESSION", "BROKEN_VERSION_CHAIN", "MISSING_PROVENANCE",
+              "MODELED_RULE_WITHOUT_EVIDENCE", "CONFIDENCE_MISUSE", "PERFORMANCE_CONFIDENCE_WITHOUT_EVIDENCE",
+              "INVALID_PROMOTION_TRANSITION", "PROMOTION_WITHOUT_OWNER_AUTHORIZATION",
+              "PAPER_APPROVAL_WITHOUT_STATE", "PRODUCTION_APPROVAL_WITHOUT_STATE", "LIVE_APPROVAL_WITHOUT_STATE"
+            ]
+          },
+          "message": { "type": "string" },
+          "affectedIds": { "type": "array", "items": { "type": "string" } },
+          "blocksArtifactReplacement": {
+            "type": "boolean",
+            "description": "True for ERROR/FATAL findings -- a build producing any such finding must not replace the last valid nodes.json/edges.json. False for INFO/WARNING, which are recorded but do not block."
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["INFO", "WARNING", "ERROR", "FATAL"],
+      "properties": {
+        "INFO": { "type": "integer", "minimum": 0 },
+        "WARNING": { "type": "integer", "minimum": 0 },
+        "ERROR": { "type": "integer", "minimum": 0 },
+        "FATAL": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

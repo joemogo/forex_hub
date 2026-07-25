@@ -1,0 +1,11 @@
+{
+  "ruleVersionId": "RULE|TJR|ENTRY|SYNTHETIC_TEST_ENTRY_RULE|V1",
+  "ruleId": "RULE|TJR|ENTRY|SYNTHETIC_TEST_ENTRY_RULE",
+  "traderId": "TJR",
+  "versionNumber": 1,
+  "changeSummary": "[SYNTHETIC TEST FIXTURE] Initial synthetic version, placeholder only.",
+  "changedFields": {},
+  "supersedesRuleVersionId": null,
+  "triggeringAssertionIds": ["SRC|TJR|20260101|001|SEG|001|ASSERT|001"],
+  "createdAt": "2026-01-01T00:00:00Z"
+}

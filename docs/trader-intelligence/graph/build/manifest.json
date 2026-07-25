@@ -1,0 +1,64 @@
+{
+  "buildId": "BUILD|20260725|005",
+  "builderVersion": "1.0.0",
+  "builtAt": "2026-07-25T13:30:23Z",
+  "edgeCounts": {
+    "BELONGS_TO_TRADER": 38,
+    "BLOCKS": 35,
+    "REFERENCES": 3
+  },
+  "generated": true,
+  "inputFiles": [
+    {
+      "contentHash": "acd3cb6c1a413d52dd0fd7c3b4dbe97d79e06e19a2282319ded44fc98d8f39ea",
+      "path": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-001.json"
+    },
+    {
+      "contentHash": "7389e43c083764d215d1cf0ce51972da11915c4b3c50221e05d4edcede9808f3",
+      "path": "docs/trader-intelligence/traders/alex-g/profile.json"
+    },
+    {
+      "contentHash": "df29efd24aa53ccb7c82b27e18253bf5b130ff716f02bd8a68f95146be103e67",
+      "path": "docs/trader-intelligence/traders/alex-g/strategy-families/support-resistance-v1.json"
+    },
+    {
+      "contentHash": "8d15d6c21acfb69fdef007f99838cbd37e4253e386cd9d53d5bc354ffb3a6e42",
+      "path": "docs/trader-intelligence/traders/jvm/profile.json"
+    },
+    {
+      "contentHash": "7c40e8e223499902eabeab48334cb948cbdf824c9158a648f6bfb4aaeb4b308a",
+      "path": "docs/trader-intelligence/traders/jvm/strategy-families/confluence-scoring-v1.json"
+    },
+    {
+      "contentHash": "9f78399bde2eedf669f4a768c4c411f26c040dfc4c00457e37ab801ecb45f127",
+      "path": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json"
+    },
+    {
+      "contentHash": "f0231db80b63a6967be7c94a6dd8deac03ce99b202f7c14400c977704738acad",
+      "path": "docs/trader-intelligence/traders/tjr/profile.json"
+    },
+    {
+      "contentHash": "839c855938225b84f2d77618b319c7314fedcec4b70791be71ab0a88d7ba5f5a",
+      "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
+    }
+  ],
+  "integrityReportId": "INTEGRITY|BUILD|20260725|005",
+  "nodeCounts": {
+    "OWNER_DECISION": 1,
+    "STRATEGY_FAMILY": 3,
+    "TRADER": 3,
+    "UNRESOLVED_QUESTION": 35
+  },
+  "notes": "",
+  "outputFiles": [
+    {
+      "contentHash": "723bf45b9ff8028c071f171139a89f3ab43f456639b60424562cdb8573d4dcd3",
+      "path": "docs/trader-intelligence/graph/build/nodes.json"
+    },
+    {
+      "contentHash": "9826429180ee4cc9217033323f7856096da0d1835b8ef6125b92056ec482b929",
+      "path": "docs/trader-intelligence/graph/build/edges.json"
+    }
+  ],
+  "status": "success"
+}

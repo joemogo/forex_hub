@@ -1,0 +1,33 @@
+{
+  "decisionId": "DECISION|MOGO|20260725|001",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-07-25",
+  "affectedEntityIds": ["TJR", "ALEX_G", "JVM"],
+  "decisionType": "architectural",
+  "question": "Should the PROGRAM-003 Knowledge Graph & Reasoning Engine Phase 1 Core Foundation (constitutional documentation, graph schemas, deterministic builder, integrity validator, and read-only query engine) be implemented now, and under what scope and constraints?",
+  "optionsConsidered": [
+    "Defer all of Phase 1 until Wave 2 TJR primary-source intake produces real research data to build the graph from",
+    "Implement Phase 1A-1C now (schemas, builder, validator, query engine) with the OwnerDecision schema and the full 18-state promotion lifecycle also deferred",
+    "Implement Phase 1A-1C now with the OwnerDecision schema and full 18-state promotion lifecycle built immediately, Concept Registry still deferred until real terminology exists",
+    "Implement the full originally-proposed 1A-1D scope including a Concept Registry immediately"
+  ],
+  "selectedOption": "Implement Phase 1A-1C now: constitutional documentation, generic GraphNode/GraphEdge/GraphManifest/GraphIntegrityReport/OwnerDecision schemas, the full unmodified 18-state promotion lifecycle as a shared enum definition, three real repository-grounded StrategyFamily records resolving the previously-dangling strategyFamilyId references, a deterministic Python-stdlib-only graph builder, an integrity validator, and a read-only 15-query engine. The Concept Registry, natural-language reasoning layer, and all replay/paper-trade/journal/Decision-Event/UI/trading-engine integration remain explicitly deferred to later, separately-authorized phases.",
+  "rationale": "Nothing may influence trading until it has passed through the Knowledge Graph and all required promotion gates. Building the OwnerDecision schema and the complete, uncollapsed promotion lifecycle now -- even though zero StrategyRule instances currently exist to be promoted -- makes every future rule-promotion decision auditable as a structured record from the very first one, rather than retrofitting governance after informal decisions have already accumulated as chat-transcript prose. The Concept Registry remains deferred because building it before any real trader terminology has been ingested would mean inventing normalized concepts from zero evidence, which conflicts with this framework's core no-invention discipline. Every other capability (replay/paper/journal/reasoning/UI/trading integration) depends on data or engines that do not yet exist for any trader whose research is being tracked here, so building interfaces for them now would be speculative.",
+  "approvalScope": "architectural",
+  "supportingEvidenceIds": [
+    "PROGRAM-003 Phase 1 Engineering Specification (delivered in chat, repository-grounded, 2026-07-25)"
+  ],
+  "dissentingEvidenceIds": [],
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-07-25T00:00:00Z",
+  "updatedAt": "2026-07-25T00:00:00Z"
+}

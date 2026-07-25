@@ -1,0 +1,702 @@
+[
+  {
+    "contentHash": "40100310512c453c81bf5bbf83c91d55421885c6fe89c724de89a2f3cb1d27b8",
+    "createdAt": "2026-07-25T00:00:00Z",
+    "entityId": "DECISION|MOGO|20260725|001",
+    "generated": true,
+    "label": "Should the PROGRAM-003 Knowledge Graph & Reasoning Engine Phase 1 Core Foundation (constitutional documentation, graph…",
+    "metadata": {},
+    "nodeId": "NODE|OWNER_DECISION|DECISION|MOGO|20260725|001",
+    "nodeType": "OWNER_DECISION",
+    "sourceFile": "docs/trader-intelligence/graph/decisions/decision-mogo-20260725-001.json",
+    "status": "active",
+    "strategyFamilyId": null,
+    "traderId": null,
+    "updatedAt": "2026-07-25T00:00:00Z"
+  },
+  {
+    "contentHash": "4392f5ae3a59745f8687b59c8a933ba81b0b6d646c2d92c328798f154dc4cd46",
+    "createdAt": "2026-07-25",
+    "entityId": "SF|ALEX_G|SUPPORT_RESISTANCE_V1",
+    "generated": true,
+    "label": "Support & Resistance v1",
+    "metadata": {},
+    "nodeId": "NODE|STRATEGY_FAMILY|SF|ALEX_G|SUPPORT_RESISTANCE_V1",
+    "nodeType": "STRATEGY_FAMILY",
+    "sourceFile": "docs/trader-intelligence/traders/alex-g/strategy-families/support-resistance-v1.json",
+    "status": "operational",
+    "strategyFamilyId": "SF|ALEX_G|SUPPORT_RESISTANCE_V1",
+    "traderId": "ALEX_G",
+    "updatedAt": "2026-07-25"
+  },
+  {
+    "contentHash": "6db85aa3938e95eda199b73cba7c4af9ae57c2a235ea1f972cb28a696a185d38",
+    "createdAt": "2026-07-25",
+    "entityId": "SF|JVM|CONFLUENCE_SCORING_V1",
+    "generated": true,
+    "label": "Confluence Scoring v1",
+    "metadata": {},
+    "nodeId": "NODE|STRATEGY_FAMILY|SF|JVM|CONFLUENCE_SCORING_V1",
+    "nodeType": "STRATEGY_FAMILY",
+    "sourceFile": "docs/trader-intelligence/traders/jvm/strategy-families/confluence-scoring-v1.json",
+    "status": "operational",
+    "strategyFamilyId": "SF|JVM|CONFLUENCE_SCORING_V1",
+    "traderId": "JVM",
+    "updatedAt": "2026-07-25"
+  },
+  {
+    "contentHash": "1248fedc1b5042a1aa24bc6292be1c9f1f4508cc8df365c40a3f8293265ca4e2",
+    "createdAt": "2026-07-25",
+    "entityId": "SF|TJR|SESSION_ZONE_REACTION",
+    "generated": true,
+    "label": "Session Zone Reaction",
+    "metadata": {},
+    "nodeId": "NODE|STRATEGY_FAMILY|SF|TJR|SESSION_ZONE_REACTION",
+    "nodeType": "STRATEGY_FAMILY",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json",
+    "status": "implemented",
+    "strategyFamilyId": "SF|TJR|SESSION_ZONE_REACTION",
+    "traderId": "TJR",
+    "updatedAt": "2026-07-25"
+  },
+  {
+    "contentHash": "11024e6885a191e622a76c4f223665ca623799dae1cf5d964b3ea73610c52f91",
+    "createdAt": "2026-07-25",
+    "entityId": "ALEX_G",
+    "generated": true,
+    "label": "ALEX G",
+    "metadata": {},
+    "nodeId": "NODE|TRADER|ALEX_G",
+    "nodeType": "TRADER",
+    "sourceFile": "docs/trader-intelligence/traders/alex-g/profile.json",
+    "status": "operational_implementation",
+    "strategyFamilyId": null,
+    "traderId": "ALEX_G",
+    "updatedAt": "2026-07-25"
+  },
+  {
+    "contentHash": "053942922ca4e19d4d80e0a48b45167353dc595f3d6cdd09f0b6d654163ab884",
+    "createdAt": "2026-07-25",
+    "entityId": "JVM",
+    "generated": true,
+    "label": "JVM",
+    "metadata": {},
+    "nodeId": "NODE|TRADER|JVM",
+    "nodeType": "TRADER",
+    "sourceFile": "docs/trader-intelligence/traders/jvm/profile.json",
+    "status": "operational_implementation",
+    "strategyFamilyId": null,
+    "traderId": "JVM",
+    "updatedAt": "2026-07-25"
+  },
+  {
+    "contentHash": "45c2015ff4067e8b83d53092cc74e6ec558907379d8ae80d4cc72ac2f4305025",
+    "createdAt": "2026-07-25",
+    "entityId": "TJR",
+    "generated": true,
+    "label": "TJR",
+    "metadata": {},
+    "nodeId": "NODE|TRADER|TJR",
+    "nodeType": "TRADER",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/profile.json",
+    "status": "session_zone_engine_only",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": "2026-07-25"
+  },
+  {
+    "contentHash": "265e9a1cb9d6f352904ae1579fc4ad5a1f46bb337744bcbe1948074af71393f1",
+    "createdAt": "",
+    "entityId": "Q|TJR|001",
+    "generated": true,
+    "label": "Exact pair list and any per-pair exceptions.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 1"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|001",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "fd3e023e21ab7b5f82eddd93ea44f295ab63375f1ec236bec4ef49183dcf0807",
+    "createdAt": "",
+    "entityId": "Q|TJR|002",
+    "generated": true,
+    "label": "Exact session window(s) and whether they differ from JVM's.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 2"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|002",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "1447ec156d252d5733119ae443441daa901eff29bc2ddbd62b38f0848aff7161",
+    "createdAt": "",
+    "entityId": "Q|TJR|003",
+    "generated": true,
+    "label": "Whether a news blackout is required, and if so, its data source.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 3"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|003",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "46db711552e410d53b139d83b29dd8328032fa43e185ca397b2b97a0a1e4ddb3",
+    "createdAt": "",
+    "entityId": "Q|TJR|004",
+    "generated": true,
+    "label": "The three (or more) timeframe roles and their actual values.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 4"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|004",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "f7acf1a313f769f17e21c8c8b7e15589eb3a3cdbbdc980e6c5f54036b5dfb7d3",
+    "createdAt": "",
+    "entityId": "Q|TJR|005",
+    "generated": true,
+    "label": "The exact bias-derivation rule and what makes a \"neutral\" (no-trade) state.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 5"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|005",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "d0c14ec72583a417db573b525823dbce486ef08dfd6b61d981a6ebcce5d3e12d",
+    "createdAt": "",
+    "entityId": "Q|TJR|006",
+    "generated": true,
+    "label": "What counts as a valid liquidity level (equal-high/low tolerance in pips or %; whether session/day/week highs-lows all…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 6"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|006",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "414d500838b062f1ec85fedc781713fd06ff46e3c3bf70abd4486ae968892b5e",
+    "createdAt": "",
+    "entityId": "Q|TJR|007",
+    "generated": true,
+    "label": "Internal vs. external liquidity distinction, if any, and whether it changes entry weighting.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 7"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|007",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "f6d1b07cdd909629804c33bcc5350b76fe58f8a1e6de4c5f8f1f06723243586a",
+    "createdAt": "",
+    "entityId": "Q|TJR|008",
+    "generated": true,
+    "label": "The exact, objective sweep definition (wick-through vs. close-through; how many bars the close-back-inside must happen…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 8"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|008",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "ef6fc51111cce438ffd1e8c484c48d1fad54c33b4d15fb70c292dbdb78f83b88",
+    "createdAt": "",
+    "entityId": "Q|TJR|009",
+    "generated": true,
+    "label": "The exact swing-point algorithm (lookback bars; strict vs. equal-high tolerance).",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 9"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|009",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "f78cc451f9c0c110a12af112d7e0f1af871ad6f3725e536ffad10129ab554ecd",
+    "createdAt": "",
+    "entityId": "Q|TJR|010",
+    "generated": true,
+    "label": "The exact structure-shift/break-of-structure definition (close-based vs. wick-based; minimum displacement size, in pips…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 10"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|010",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "c81f253eef76e12fccf91c5c1a2f09e64b45565ac193cc20ea4e6f4e7db28d4d",
+    "createdAt": "",
+    "entityId": "Q|TJR|011",
+    "generated": true,
+    "label": "The exact entry trigger (FVG minimum size and how staleness is defined; order-block selection rule if multiple exist; c…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 11"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|011",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "c67eba3dd497cab0b6889108466ace9306b7924ce4dd526d54063b0739eb3546",
+    "createdAt": "",
+    "entityId": "Q|TJR|012",
+    "generated": true,
+    "label": "Limit vs. market entry, and -- if limit -- how long an unfilled limit order remains valid.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 12"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|012",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "bd26d42337e6c16be488f6e2ee7dad8a1c85417d246395da5c1dadb80d386d3c",
+    "createdAt": "",
+    "entityId": "Q|TJR|013",
+    "generated": true,
+    "label": "Maximum bars/time allowed between the sweep (or structure shift) and a valid entry.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 13"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|013",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "f0da5f1d2aed1159a755af81e2e84e444a0021b277f7c0555fd2a0cd03193969",
+    "createdAt": "",
+    "entityId": "Q|TJR|014",
+    "generated": true,
+    "label": "Whether a \"missed\" entry (price ran past the zone without filling) may ever be chased, and if so, how.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 14"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|014",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "596a512f543e2dd37b244b9f2a32f5d1181bde3b47846aded5d766a738968b40",
+    "createdAt": "",
+    "entityId": "Q|TJR|015",
+    "generated": true,
+    "label": "Stop-loss placement rule and buffer (fixed pips? ATR-based? beyond the sweep wick?).",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 15"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|015",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "8b081c3aaa42e7edec0329ec0462807c03402bc023acc095c1af00585cfe5d3b",
+    "createdAt": "",
+    "entityId": "Q|TJR|016",
+    "generated": true,
+    "label": "Minimum and maximum acceptable stop distance, if any.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 16"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|016",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "a3af03fbb8cb6eda43046b8fab0853398d76c82e1a49ec2a5d3a5f81c51ad154",
+    "createdAt": "",
+    "entityId": "Q|TJR|017",
+    "generated": true,
+    "label": "Spread treatment in stop/target math (JVM fills at real bid/ask; does TJR need the same, and does spread affect stop pl…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 17"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|017",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "9444d6fda6d062b7f2b560681f7b1bc4e52d5ed61000987bd37ebb0755c16948",
+    "createdAt": "",
+    "entityId": "Q|TJR|018",
+    "generated": true,
+    "label": "Target rule: fixed R-multiple, next opposing liquidity level, or something else.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 18"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|018",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "d94ae533c58ceac5c91129b9faf423f04a350f9603c577038b4c6eec925a14a9",
+    "createdAt": "",
+    "entityId": "Q|TJR|019",
+    "generated": true,
+    "label": "Partial-exit rules, if any (size split, trigger price, whether MOGO's paper-account model even needs to support partial…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 19"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|019",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "985ab573c9a5a5f1606b6ebb5ef6688c2d4789bc82269ea18c55954878a69247",
+    "createdAt": "",
+    "entityId": "Q|TJR|020",
+    "generated": true,
+    "label": "Break-even rule (trigger condition, exact new stop price).",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 20"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|020",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "682c7c19c92f09ee1694f50166dc4b643a13e7e82cc286f2378a6cec8984e6c5",
+    "createdAt": "",
+    "entityId": "Q|TJR|021",
+    "generated": true,
+    "label": "Trailing-stop rule, if any.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 21"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|021",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "563cb0fb226f493c834df84bb9dbc34551539846dcd558ae12f1cef01d134857",
+    "createdAt": "",
+    "entityId": "Q|TJR|022",
+    "generated": true,
+    "label": "Maximum holding time and/or forced end-of-session closure rule.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 22"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|022",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "f46d9243a625a55e22ae473939963b59b4c22d5d2a60cd37f98a2833861538bc",
+    "createdAt": "",
+    "entityId": "Q|TJR|023",
+    "generated": true,
+    "label": "Risk-per-trade percentage.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 23"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|023",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "11f388029b6891a8d5a79d4c27b6dd22007c5d5851c8aea9445858f132d77249",
+    "createdAt": "",
+    "entityId": "Q|TJR|024",
+    "generated": true,
+    "label": "One-position-per-pair vs. a different concurrency rule.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 24"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|024",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "6e1e7c49ad4170ddbde3cb9808ddd0817f5545b6d9e81f970c8d824daf754f36",
+    "createdAt": "",
+    "entityId": "Q|TJR|025",
+    "generated": true,
+    "label": "Total concurrent-position cap across all pairs.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 25"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|025",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "9cdd64806f919b50bf263217122dd3494cec08a8584c67199f8a6d5d72d3d257",
+    "createdAt": "",
+    "entityId": "Q|TJR|026",
+    "generated": true,
+    "label": "Daily loss limit / circuit breaker, if any (JVM and ALEX both currently have none enforced -- see docs/KNOWN_ISSUES.md).",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 26"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|026",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "5a20074b343f32af0b37acb9b9cd492b5aa2dc3258fe24ee0864fd441e1d2070",
+    "createdAt": "",
+    "entityId": "Q|TJR|027",
+    "generated": true,
+    "label": "Maximum trades per session/day.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 27"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|027",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "eab4bbb90c66e82b5147f53e77f074d97a8c9fe51dd5a8235c6c513e6eac9300",
+    "createdAt": "",
+    "entityId": "Q|TJR|028",
+    "generated": true,
+    "label": "Correlated-pair exposure restrictions, if any.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 28"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|028",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "e87d3e6c549122a68247bede7c167009edf56e4f41162b69c375f5db3cc1f539",
+    "createdAt": "",
+    "entityId": "Q|TJR|029",
+    "generated": true,
+    "label": "Whether TJR is strictly pass/fail or scored; if scored, every component and its weight, and the minimum qualifying thre…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 29"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|029",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "06cdb5c97a68c359e7a99bb37ac23f674cf341660e8198adee2e44f329571625",
+    "createdAt": "",
+    "entityId": "Q|TJR|030",
+    "generated": true,
+    "label": "Cooldown duration and same-liquidity-event re-trigger handling.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 30"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|030",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "35aa1f59f90062381b41c7e3eefb6417a93a4cd91f5d237aed40619b8df1a4fd",
+    "createdAt": "",
+    "entityId": "Q|TJR|031",
+    "generated": true,
+    "label": "Re-entry rule after a stop-out or a missed target on the same setup.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 31"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|031",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "8c11bbf64d3a36a8924219866900135e77920735da17f5c1373f60ea2516ea55",
+    "createdAt": "",
+    "entityId": "Q|TJR|032",
+    "generated": true,
+    "label": "Replay-specific tie-break for a candle that touches both stop and target (JVM's Replay engine has its own resolved conv…",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 32"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|032",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "d2a3f52f29096b7f698370ec7ed6d5a5159dcdb762293a4273bcce5dc02cc9c7",
+    "createdAt": "",
+    "entityId": "Q|TJR|033",
+    "generated": true,
+    "label": "Spread/slippage assumption for Replay fills.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 33"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|033",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "c4d2cfec61df0aad36e46a5d257eab1b6a09da5367152a4edeb37021293f84b6",
+    "createdAt": "",
+    "entityId": "Q|TJR|034",
+    "generated": true,
+    "label": "Warm-up history requirement (minimum candles before a decision is trusted) per timeframe.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 34"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|034",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  },
+  {
+    "contentHash": "3b463988f4b5bf373d87b0e43913f9f4fa55880aeeb6aef5a543274897afec8c",
+    "createdAt": "",
+    "entityId": "Q|TJR|035",
+    "generated": true,
+    "label": "Whether \"incomplete\" (still-forming) candles are ever evaluated, or only closed ones.",
+    "metadata": {
+      "externalRef": "ADR-007 §C, item 35"
+    },
+    "nodeId": "NODE|UNRESOLVED_QUESTION|Q|TJR|035",
+    "nodeType": "UNRESOLVED_QUESTION",
+    "sourceFile": "docs/trader-intelligence/traders/tjr/open-questions/adr-007-cross-reference.json",
+    "status": "open",
+    "strategyFamilyId": null,
+    "traderId": "TJR",
+    "updatedAt": null
+  }
+]

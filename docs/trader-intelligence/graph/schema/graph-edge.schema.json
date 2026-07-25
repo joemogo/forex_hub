@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/graph/schema/graph-edge.schema.json",
+  "title": "GraphEdge",
+  "description": "One relationship in the deterministically generated PROGRAM-003 Knowledge Graph index. Every GraphEdge must be derived from a real field on a real authoritative record -- the builder never invents a relationship to complete the taxonomy. RELATED_TO is intentionally excluded from edgeType: it is the ambiguous, catch-all relationship this design explicitly avoids. Rebuilding from unchanged source files must reproduce byte-identical GraphEdge records.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated", "edgeId", "edgeType", "fromNodeId", "toNodeId", "status", "sourceFile", "createdAt"],
+  "properties": {
+    "generated": {
+      "type": "boolean",
+      "const": true,
+      "description": "Always true. Marks this record as a build artifact, never as an authoritative research record."
+    },
+    "edgeId": {
+      "type": "string",
+      "pattern": "^EDGE\\|(BELONGS_TO_TRADER|BELONGS_TO_STRATEGY_FAMILY|DERIVED_FROM|SEGMENT_OF|ASSERTED_IN|SUPPORTS|EVIDENCES|CONTRADICTS|IMPLEMENTS|SUPERSEDES|REFERENCES|BLOCKS|RESOLVES|PARTIALLY_RESOLVES|REQUIRES_OWNER_DECISION|VERSION_OF|VALIDATES)\\|.+$",
+      "description": "Format: EDGE|{EDGE_TYPE}|{fromEntityId}|{toEntityId}. If the raw concatenation of both entity ids would exceed 200 characters, the builder truncates each entity id to its first 40 characters and appends '~' + the first 12 hex characters of SHA-256({edgeType}|{fromEntityId}|{toEntityId}) -- see scripts/trader_intelligence/build_graph.py:make_edge_id for the exact algorithm. This keeps ids readable while remaining collision-resistant and fully deterministic."
+    },
+    "edgeType": {
+      "type": "string",
+      "enum": [
+        "BELONGS_TO_TRADER", "BELONGS_TO_STRATEGY_FAMILY", "DERIVED_FROM", "SEGMENT_OF",
+        "ASSERTED_IN", "SUPPORTS", "EVIDENCES", "CONTRADICTS", "IMPLEMENTS",
+        "SUPERSEDES", "REFERENCES", "BLOCKS", "RESOLVES", "PARTIALLY_RESOLVES",
+        "REQUIRES_OWNER_DECISION", "VERSION_OF", "VALIDATES"
+      ]
+    },
+    "fromNodeId": { "type": "string", "pattern": "^NODE\\|" },
+    "toNodeId": { "type": "string", "pattern": "^NODE\\|" },
+    "traderId": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]*$", "default": null },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "evidenceIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Populated for evidentiary edge types (SUPPORTS, EVIDENCES, CONTRADICTS, VALIDATES, RESOLVES, PARTIALLY_RESOLVES); left empty for structural edges (BELONGS_TO_TRADER, SEGMENT_OF, VERSION_OF, etc.)."
+    },
+    "confidenceDimensions": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "Present only when the underlying relationship itself carries confidence (e.g. a SUPPORTS edge copies the source assertion's interpretationConfidence). Never invented for structural edges. UNKNOWN must never be substituted for an absent value -- absence is represented as null, not as a confidence level.",
+      "properties": {
+        "sourceConfidence": { "type": "string" },
+        "interpretationConfidence": { "type": "string" },
+        "implementationConfidence": { "type": "string" },
+        "performanceConfidence": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "superseded", "retired"]
+    },
+    "sourceFile": {
+      "type": "string",
+      "description": "Repo-relative path of the authoritative record whose field produced this edge."
+    },
+    "createdAt": { "type": "string" },
+    "supersedesEdgeId": { "type": ["string", "null"], "default": null },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "contradictionId": "CONTRA|TJR|001",
+  "traderId": "TJR",
+  "relatedRuleIds": ["RULE|TJR|ENTRY|SYNTHETIC_TEST_ENTRY_RULE"],
+  "supportingAssertionIds": ["SRC|TJR|20260101|001|SEG|001|ASSERT|001"],
+  "conflictingAssertionIds": ["SRC|TJR|20260101|001|SEG|001|ASSERT|002"],
+  "contradictionType": "DEFINITIONAL",
+  "severity": "minor",
+  "marketContextDifference": null,
+  "timeframeDifference": null,
+  "publicationTimeDifference": null,
+  "possibleExplanation": "[SYNTHETIC TEST FIXTURE] Placeholder explanation.",
+  "proposedResolution": null,
+  "status": "open",
+  "reviewerNotes": "[SYNTHETIC TEST FIXTURE] Placeholder, not a real contradiction."
+}

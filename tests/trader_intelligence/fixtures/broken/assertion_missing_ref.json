@@ -1,0 +1,12 @@
+{
+  "assertionId": "SRC|TJR|20260101|999|SEG|001|ASSERT|001",
+  "traderId": "TJR",
+  "sourceId": "SRC|TJR|20260101|999",
+  "sourceSegmentId": "SRC|TJR|20260101|999|SEG|001",
+  "exactQuoteOrFaithfulParaphrase": "[SYNTHETIC TEST FIXTURE -- INTENTIONALLY BROKEN] References a sourceId/sourceSegmentId that does not exist, used only to test MISSING_REFERENCE detection in validate_graph.py.",
+  "concept": "synthetic_test_broken_reference",
+  "evidenceClassification": "EXPLICIT",
+  "interpretationConfidence": "low",
+  "reviewerStatus": "unreviewed",
+  "createdAt": "2026-01-01T00:00:00Z"
+}

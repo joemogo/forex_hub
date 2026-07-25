@@ -1,0 +1,11 @@
+{
+  "segmentId": "SRC|TJR|20260101|001|SEG|001",
+  "sourceId": "SRC|TJR|20260101|001",
+  "traderId": "TJR",
+  "timestampStart": null,
+  "timestampEnd": null,
+  "rawExcerpt": "[SYNTHETIC TEST FIXTURE] Placeholder excerpt text used only to test SOURCE_SEGMENT node generation. Not real TJR source language.",
+  "segmentSummary": "[SYNTHETIC TEST FIXTURE] Placeholder segment summary.",
+  "segmentTopics": ["synthetic_test"],
+  "processingStatus": "assertions_extracted"
+}

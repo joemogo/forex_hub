@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/graph/schema/promotion-state.schema.json",
+  "title": "PromotionState",
+  "description": "The complete, granular rule-promotion lifecycle used by the Knowledge Graph's promotion-gate model (PROGRAM-003 Owner Decision 3, 2026-07-25). No state is collapsed. Every transition beyond DISCOVERED requires a traceable OwnerDecision record (see owner-decision.schema.json) documenting the evidence, validation, or authorization appropriate to that specific stage -- no promotion happens automatically. This is a shared, versioned enum definition: a future revision to strategy-rule.schema.json may $ref this file's enum for a promotionState field once a real StrategyRule reaches DISCOVERED, rather than redeclaring the list inline.",
+  "$comment": "Required linear order: DISCOVERED < ASSERTION_SUPPORTED < RESEARCH_REVIEWED < MODELED < IMPLEMENTATION_APPROVED < CODED < IMPLEMENTATION_VERIFIED < REPLAY_ELIGIBLE < REPLAY_VALIDATED < SHADOW_ELIGIBLE < SHADOW_VALIDATED < PAPER_ELIGIBLE < PAPER_APPROVED < PAPER_VALIDATED < PRODUCTION_REVIEW < PRODUCTION_APPROVED < LIVE_REVIEW < LIVE_APPROVED. A rule's recorded state must never exceed the highest stage its OwnerDecision history actually authorizes; the integrity validator checks this directly (see PROMOTION_WITHOUT_OWNER_AUTHORIZATION in graph-integrity-report.schema.json).",
+  "type": "string",
+  "enum": [
+    "DISCOVERED",
+    "ASSERTION_SUPPORTED",
+    "RESEARCH_REVIEWED",
+    "MODELED",
+    "IMPLEMENTATION_APPROVED",
+    "CODED",
+    "IMPLEMENTATION_VERIFIED",
+    "REPLAY_ELIGIBLE",
+    "REPLAY_VALIDATED",
+    "SHADOW_ELIGIBLE",
+    "SHADOW_VALIDATED",
+    "PAPER_ELIGIBLE",
+    "PAPER_APPROVED",
+    "PAPER_VALIDATED",
+    "PRODUCTION_REVIEW",
+    "PRODUCTION_APPROVED",
+    "LIVE_REVIEW",
+    "LIVE_APPROVED"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "assertionId": "SRC|TJR|20260101|001|SEG|001|ASSERT|902",
+  "traderId": "TJR",
+  "sourceId": "SRC|TJR|20260101|001",
+  "sourceSegmentId": "SRC|TJR|20260101|001|SEG|001",
+  "exactQuoteOrFaithfulParaphrase": "[SYNTHETIC TEST FIXTURE -- INTENTIONALLY BROKEN] Other half of a deliberate circular supersession pair, used only to test CIRCULAR_SUPERSESSION detection in validate_graph.py.",
+  "concept": "synthetic_test_broken_cycle",
+  "evidenceClassification": "EXPLICIT",
+  "interpretationConfidence": "low",
+  "reviewerStatus": "unreviewed",
+  "createdAt": "2026-01-01T00:00:00Z",
+  "supersedesAssertionId": "SRC|TJR|20260101|001|SEG|001|ASSERT|901"
+}

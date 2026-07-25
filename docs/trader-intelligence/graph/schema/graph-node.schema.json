@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/graph/schema/graph-node.schema.json",
+  "title": "GraphNode",
+  "description": "One node in the deterministically generated PROGRAM-003 Knowledge Graph index. Every GraphNode is produced by scripts/trader_intelligence/build_graph.py from exactly one authoritative Trader Intelligence source file. GraphNode records are never hand-authored and never authoritative -- the source file named in sourceFile always remains the ground truth. Rebuilding from unchanged source files must reproduce byte-identical GraphNode records.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated", "nodeId", "nodeType", "entityId", "label", "status", "sourceFile", "contentHash", "createdAt"],
+  "properties": {
+    "generated": {
+      "type": "boolean",
+      "const": true,
+      "description": "Always true. Marks this record as a build artifact, never as an authoritative research record."
+    },
+    "nodeId": {
+      "type": "string",
+      "pattern": "^NODE\\|(TRADER|STRATEGY_FAMILY|RESEARCH_SOURCE|SOURCE_SEGMENT|STRATEGY_ASSERTION|CHART_EXAMPLE|RULE_EVIDENCE|STRATEGY_RULE|RULE_VERSION|RULE_CONTRADICTION|UNRESOLVED_QUESTION|RESEARCH_INTAKE_REPORT|OWNER_DECISION)\\|.+$",
+      "description": "Format: NODE|{NODE_TYPE}|{entityId}. Fully deterministic from the source entity's own id -- never a random UUID."
+    },
+    "nodeType": {
+      "type": "string",
+      "enum": [
+        "TRADER", "STRATEGY_FAMILY", "RESEARCH_SOURCE", "SOURCE_SEGMENT",
+        "STRATEGY_ASSERTION", "CHART_EXAMPLE", "RULE_EVIDENCE", "STRATEGY_RULE",
+        "RULE_VERSION", "RULE_CONTRADICTION", "UNRESOLVED_QUESTION",
+        "RESEARCH_INTAKE_REPORT", "OWNER_DECISION"
+      ],
+      "description": "CONCEPT is intentionally excluded -- deferred until real primary-source terminology exists to normalize."
+    },
+    "entityId": {
+      "type": "string",
+      "description": "The source entity's own id, copied exactly as it appears in its authoritative file (e.g. traderId, strategyFamilyId, ruleId, questionId, decisionId)."
+    },
+    "traderId": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "default": null,
+      "description": "Present whenever the source entity is trader-scoped. Null only for entities that genuinely carry no traderId field (none exist among the required node types today, but the field stays optional for forward compatibility)."
+    },
+    "strategyFamilyId": {
+      "type": ["string", "null"],
+      "pattern": "^SF\\|",
+      "default": null
+    },
+    "label": {
+      "type": "string",
+      "description": "Human-readable label derived from the source entity's own displayName/name/title/question/etc. field -- never independently authored by the builder."
+    },
+    "status": {
+      "type": "string",
+      "description": "Mirrors the source entity's own lifecycle/status field where one exists (e.g. a STRATEGY_RULE node mirrors modelingStatus); 'active' for entities with no native lifecycle field."
+    },
+    "sourceFile": {
+      "type": "string",
+      "description": "Repo-relative path this node was generated from. This is what makes the graph auditable and rebuildable."
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hex digest over the canonical serialization of the source entity's JSON at build time (see scripts/trader_intelligence/build_graph.py:canonical_json). This is the staleness signal."
+    },
+    "createdAt": {
+      "type": "string",
+      "description": "Copied verbatim from the source entity's own createdAt field when present, else the ISO date this node was first generated. Never the current build's wall-clock time -- that would break rebuild determinism."
+    },
+    "updatedAt": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Copied verbatim from the source entity's own updatedAt field when present."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {},
+      "description": "Small, optional passthrough of source-entity fields not otherwise promoted to first-class node fields. Kept minimal by convention -- not a dumping ground."
+    }
+  }
+}
