@@ -1,13 +1,13 @@
 {
-  "buildId": "BUILD|20260726|005",
   "findings": [],
   "generated": true,
   "generatedAt": "2026-07-26T11:58:33Z",
-  "integrityReportId": "INTEGRITY|BUILD|20260726|005",
+  "integrityReportId": "EVIDENCE_INTEGRITY|20260726|001",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
     "WARNING": 0
-  }
+  },
+  "validatorVersion": "1.0.0"
 }

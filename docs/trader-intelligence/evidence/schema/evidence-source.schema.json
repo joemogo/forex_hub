@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/evidence-source.schema.json",
+  "title": "EvidenceSource",
+  "description": "PROGRAM-006 (ADR-008). The evidence-producing source or source artifact -- a container, not the primary intelligence unit (see ADR-008 sec. 3). Distinct from ResearchSource (Wave 1) and ResearchSourceCandidate (PROGRAM-004): those track pre-acquisition research candidates; EvidenceSource tracks anything that can ever produce an EvidenceItem, including non-document producers (replay sessions, paper trades, live-trade reviews) that ResearchSource's document-shaped model does not fit.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sourceId", "sourceType", "registeredAt", "storageLocationType",
+    "provenanceStatus", "lifecycleStatus", "schemaVersion", "createdAt", "updatedAt"
+  ],
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "pattern": "^EVSRC\\|[A-Z0-9_]+\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: EVSRC|{traderIdOrUNATTRIBUTED}|{YYYYMMDD}|{seq}."
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": [
+        "transcript", "video", "audio", "article", "book", "note", "strategy_document",
+        "paper_trade", "replay_observation", "live_trade_review", "journal_entry",
+        "market_observation", "owner_observation", "generated_analysis", "other"
+      ],
+      "description": "Extensible list. Listing a type here does not imply that type is currently ingestible -- see ADR-008 sec. 17 (Phase 1A implements no ingestion pipeline for any of these)."
+    },
+    "title": { "type": ["string", "null"], "default": null },
+    "traderId": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]*$", "default": null },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "canonicalReference": { "type": ["string", "null"], "default": null },
+    "externalReference": { "type": ["string", "null"], "default": null },
+    "contentHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "default": null },
+    "sourceDate": { "type": ["string", "null"], "format": "date", "default": null },
+    "acquiredAt": { "type": ["string", "null"], "format": "date-time", "default": null },
+    "registeredAt": { "type": "string", "format": "date-time" },
+    "storageLocationType": {
+      "type": "string",
+      "enum": ["repository", "external"],
+      "description": "repository: content lives under docs/trader-intelligence/evidence/ in version control. external: original media/large files live outside the repository; only reference/hash/metadata are kept here (hybrid canonical storage policy, ADR-008 sec. 4)."
+    },
+    "repositoryPath": { "type": ["string", "null"], "default": null },
+    "externalAssetReference": { "type": ["string", "null"], "default": null },
+    "transcriptReference": { "type": ["string", "null"], "default": null },
+    "language": { "type": ["string", "null"], "default": null },
+    "licensingStatus": {
+      "type": "string",
+      "enum": ["unknown", "owner_authored", "permitted_third_party", "restricted_third_party", "public_domain"],
+      "default": "unknown"
+    },
+    "provenanceStatus": {
+      "type": "string",
+      "enum": ["unverified", "partially_verified", "verified"]
+    },
+    "lifecycleStatus": {
+      "type": "string",
+      "enum": ["registered", "under_review", "active", "superseded", "archived", "rejected"]
+    },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "storageLocationType": { "const": "external" } } },
+      "then": {
+        "required": ["externalAssetReference", "canonicalReference"],
+        "properties": {
+          "externalAssetReference": { "type": "string" },
+          "canonicalReference": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

@@ -20,6 +20,8 @@ NODE_TYPES = [
     "STRATEGY_ASSERTION", "CHART_EXAMPLE", "RULE_EVIDENCE", "STRATEGY_RULE",
     "RULE_VERSION", "RULE_CONTRADICTION", "UNRESOLVED_QUESTION",
     "RESEARCH_INTAKE_REPORT", "OWNER_DECISION",
+    # PROGRAM-006 (ADR-008) additive node types:
+    "EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "CONTRADICTION_RECORD",
 ]
 
 EDGE_TYPES = [
@@ -27,6 +29,11 @@ EDGE_TYPES = [
     "ASSERTED_IN", "SUPPORTS", "EVIDENCES", "CONTRADICTS", "IMPLEMENTS",
     "SUPERSEDES", "REFERENCES", "BLOCKS", "RESOLVES", "PARTIALLY_RESOLVES",
     "REQUIRES_OWNER_DECISION", "VERSION_OF", "VALIDATES",
+    # PROGRAM-006 (ADR-008) additive edge types -- SUPPORTS/CONTRADICTS/SUPERSEDES/
+    # DERIVED_FROM/BELONGS_TO_TRADER/BELONGS_TO_STRATEGY_FAMILY above are reused
+    # as-is for the evidence layer rather than duplicated (ADR-008 sec. "use
+    # existing graph conventions"); only genuinely new relationships are added:
+    "WEAKENS", "CONTEXTUALIZES", "EXEMPLIFIES", "QUALIFIES", "UNRESOLVED", "CANDIDATE_FOR_RULE",
 ]
 
 PROMOTION_STATES = [
@@ -149,6 +156,11 @@ NODE_TYPE_FIELD_MAP = {
     "UNRESOLVED_QUESTION": {"id_field": "questionId", "label_fields": ["question"], "status_fields": ["status"]},
     "RESEARCH_INTAKE_REPORT": {"id_field": "reportId", "label_fields": ["reportId"], "status_fields": []},
     "OWNER_DECISION": {"id_field": "decisionId", "label_fields": ["question"], "status_fields": ["status"]},
+    # PROGRAM-006 (ADR-008):
+    "EVIDENCE_SOURCE": {"id_field": "sourceId", "label_fields": ["title"], "status_fields": ["lifecycleStatus"]},
+    "EVIDENCE_ITEM": {"id_field": "evidenceId", "label_fields": ["normalizedObservation", "exactExcerpt"], "status_fields": ["evidenceStatus"]},
+    "CLAIM": {"id_field": "claimId", "label_fields": ["normalizedClaim"], "status_fields": ["claimStatus"]},
+    "CONTRADICTION_RECORD": {"id_field": "contradictionId", "label_fields": ["contradictionType"], "status_fields": ["status"]},
 }
 
 
@@ -202,6 +214,29 @@ def discover_entities(repo_root, ti_root, graph_root):
     # OWNER_DECISION: lives under graph/decisions/, not traders/.
     for path in _sorted_glob(graph_root, "decisions", "*.json"):
         yield "OWNER_DECISION", _load_json(path), _relpath(path, repo_root)
+
+    # PROGRAM-006 (ADR-008): evidence entities live under ti_root/evidence/,
+    # a sibling of traders/ and graph/, not nested under either.
+    evidence_root = os.path.join(ti_root, "evidence")
+    evidence_simple = [
+        ("EVIDENCE_SOURCE", ("sources", "*.json")),
+        ("EVIDENCE_ITEM", ("items", "*.json")),
+        ("CLAIM", ("claims", "*.json")),
+        ("CONTRADICTION_RECORD", ("contradictions", "*.json")),
+    ]
+    for node_type, parts in evidence_simple:
+        for path in _sorted_glob(evidence_root, *parts):
+            yield node_type, _load_json(path), _relpath(path, repo_root)
+
+
+def discover_evidence_links(ti_root, repo_root):
+    """EvidenceClaimLink records (docs/trader-intelligence/evidence/links/*.json)
+    are not Knowledge Graph nodes -- they ARE the edges between EVIDENCE_ITEM and
+    CLAIM nodes, with relationshipType mapping directly onto an edge type.
+    Yields (link_dict, source_file_relpath)."""
+    evidence_root = os.path.join(ti_root, "evidence")
+    for path in _sorted_glob(evidence_root, "links", "*.json"):
+        yield _load_json(path), _relpath(path, repo_root)
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +374,8 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
             if target:
                 add_edge("BELONGS_TO_TRADER", from_node_id, target, eid, trader_id, source_file, created_at)
 
-        if node_type in ("STRATEGY_ASSERTION", "CHART_EXAMPLE", "STRATEGY_RULE", "UNRESOLVED_QUESTION") and family_id:
+        if node_type in ("STRATEGY_ASSERTION", "CHART_EXAMPLE", "STRATEGY_RULE", "UNRESOLVED_QUESTION",
+                         "EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM") and family_id:
             target = resolve(family_id, "BELONGS_TO_STRATEGY_FAMILY", eid, category="INVALID_STRATEGY_FAMILY_REFERENCE")
             if target:
                 add_edge("BELONGS_TO_STRATEGY_FAMILY", from_node_id, target, eid, family_id, source_file, created_at)
@@ -470,6 +506,70 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
                 target = resolve(supersedes, "SUPERSEDES", eid)
                 if target:
                     add_edge("SUPERSEDES", from_node_id, target, eid, supersedes, source_file, created_at)
+
+        # --- PROGRAM-006 (ADR-008) additive node-type edge derivation ---
+
+        if node_type == "EVIDENCE_ITEM":
+            src = entity.get("sourceId")
+            if src:
+                target = resolve(src, "DERIVED_FROM", eid)
+                if target:
+                    add_edge("DERIVED_FROM", from_node_id, target, eid, src, source_file, created_at)
+            parent = entity.get("parentEvidenceId")
+            if parent:
+                target = resolve(parent, "DERIVED_FROM", eid)
+                if target:
+                    add_edge("DERIVED_FROM", from_node_id, target, eid, parent, source_file, created_at,
+                              metadata={"relationship": "parentEvidence"})
+            supersedes = entity.get("supersedesEvidenceId")
+            if supersedes:
+                target = resolve(supersedes, "SUPERSEDES", eid)
+                if target:
+                    add_edge("SUPERSEDES", from_node_id, target, eid, supersedes, source_file, created_at)
+
+        if node_type == "CONTRADICTION_RECORD":
+            for claim_ref in (entity.get("claimAId"), entity.get("claimBId")):
+                if claim_ref:
+                    target = resolve(claim_ref, "CONTRADICTS", eid)
+                    if target:
+                        # The ContradictionRecord itself is the evidence for this
+                        # disagreement (it carries contradictionType/rationale),
+                        # so it satisfies the evidentiary-edge provenance check.
+                        add_edge("CONTRADICTS", from_node_id, target, eid, claim_ref, source_file, created_at,
+                                  evidence_ids=[eid])
+
+        if node_type == "STRATEGY_RULE":
+            for claim_ref in entity.get("originatingClaimIds", []):
+                target = resolve(claim_ref, "CANDIDATE_FOR_RULE", eid)
+                if target:
+                    claim_node_id = node_id_by_entity_id[claim_ref]
+                    add_edge("CANDIDATE_FOR_RULE", claim_node_id, from_node_id, claim_ref, eid, source_file, created_at)
+
+    # PROGRAM-006 (ADR-008): EvidenceClaimLink records are edges, not nodes --
+    # relationshipType maps directly onto an existing or additive edge type.
+    _LINK_RELATIONSHIP_TO_EDGE_TYPE = {
+        "supports": "SUPPORTS", "contradicts": "CONTRADICTS", "weakens": "WEAKENS",
+        "contextualizes": "CONTEXTUALIZES", "exemplifies": "EXEMPLIFIES",
+        "qualifies": "QUALIFIES", "supersedes": "SUPERSEDES", "unresolved": "UNRESOLVED",
+    }
+    for link, link_source_file in discover_evidence_links(ti_root, repo_root):
+        evidence_ref = link.get("evidenceId")
+        claim_ref = link.get("claimId")
+        relationship = link.get("relationshipType")
+        edge_type = _LINK_RELATIONSHIP_TO_EDGE_TYPE.get(relationship)
+        if not (evidence_ref and claim_ref and edge_type):
+            continue
+        from_target = resolve(evidence_ref, edge_type, link.get("linkId", "?"))
+        to_target = resolve(claim_ref, edge_type, link.get("linkId", "?"))
+        if from_target and to_target:
+            # The EvidenceItem the edge originates from IS the evidence being
+            # cited, so evidenceIds is trivially and correctly [evidence_ref]
+            # (satisfies the same evidentiary-edge provenance check that
+            # STRATEGY_ASSERTION-derived SUPPORTS/CONTRADICTS edges must meet).
+            add_edge(edge_type, from_target, to_target, evidence_ref, claim_ref, link_source_file,
+                      link.get("linkedAt", ""), evidence_ids=[evidence_ref],
+                      confidence_dimensions={"relevanceWeight": link.get("relevanceWeight")} if link.get("relevanceWeight") is not None else None,
+                      metadata={"linkId": link.get("linkId"), "independenceGroup": link.get("independenceGroup")})
 
     nodes.sort(key=lambda n: n["nodeId"])
     edges.sort(key=lambda e: e["edgeId"])

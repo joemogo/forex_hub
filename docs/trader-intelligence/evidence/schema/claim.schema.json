@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/claim.schema.json",
+  "title": "Claim",
+  "description": "PROGRAM-006 (ADR-008). A normalized proposition that zero or more EvidenceItems support, contradict, weaken, or contextualize. confidenceState/confidenceScore are always derived by scripts/trader_intelligence/evidence_confidence.py from EvidenceClaimLink records -- never manually asserted (ADR-008 sec. 7). normalizedFingerprint supports deterministic duplicate detection (scripts/trader_intelligence/evidence_dedup.py); possibleDuplicateClaimIds/mergeRecommendation are advisory only -- no automatic destructive merge ever occurs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claimId", "claimType", "normalizedClaim", "normalizedFingerprint", "claimStatus",
+    "confidenceState", "evidenceCount", "supportingEvidenceCount", "contradictingEvidenceCount",
+    "weakeningEvidenceCount", "contextualEvidenceCount", "schemaVersion", "createdAt", "updatedAt"
+  ],
+  "properties": {
+    "claimId": {
+      "type": "string",
+      "pattern": "^CLAIM\\|[A-Z0-9_]+\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: CLAIM|{traderIdOrGENERIC}|{YYYYMMDD}|{seq}."
+    },
+    "claimType": {
+      "type": "string",
+      "enum": [
+        "definition", "marketCondition", "setup_requirement", "entry_rule", "confirmation_rule",
+        "invalidation_rule", "stop_rule", "target_rule", "risk_rule", "trade_management_rule",
+        "session_rule", "timeframe_rule", "failure_condition", "success_condition", "exception",
+        "causal_hypothesis", "performance_hypothesis", "behavioral_observation", "other"
+      ]
+    },
+    "normalizedClaim": { "type": "string" },
+    "normalizedFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the canonicalized (normalizedClaim, traderId, strategyFamilyId, timeframe, session, marketCondition) tuple -- used for exact-duplicate detection. Two claims differing only in scope (e.g. session) must never fingerprint identically."
+    },
+    "subjectEntityType": {
+      "type": ["string", "null"],
+      "enum": ["trader", "strategy_family", "rule", "instrument", "session", "timeframe", "other", null],
+      "default": null
+    },
+    "subjectEntityId": { "type": ["string", "null"], "default": null },
+    "predicate": { "type": ["string", "null"], "default": null },
+    "objectValue": { "type": ["string", "null"], "default": null },
+    "scope": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {},
+      "description": "Free-form human-readable scope summary. The queryable scope fields below (traderId, strategyFamilyId, marketSymbol, timeframe, session, marketCondition) are authoritative for filtering/fingerprinting."
+    },
+    "traderId": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]*$", "default": null },
+    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
+    "marketSymbol": { "type": ["string", "null"], "default": null },
+    "timeframe": { "type": ["string", "null"], "default": null },
+    "session": { "type": ["string", "null"], "default": null },
+    "marketCondition": { "type": ["string", "null"], "default": null },
+    "claimStatus": {
+      "type": "string",
+      "enum": ["active", "superseded", "retracted", "merged"]
+    },
+    "confidenceState": {
+      "type": "string",
+      "enum": [
+        "insufficient_evidence", "tentative", "emerging", "supported", "strongly_supported",
+        "contested", "weakened", "contradicted", "unresolved"
+      ]
+    },
+    "confidenceScore": { "type": ["number", "null"], "minimum": 0, "maximum": 100, "default": null },
+    "confidenceMethod": { "type": ["string", "null"], "default": null },
+    "evidenceCount": { "type": "integer", "minimum": 0 },
+    "supportingEvidenceCount": { "type": "integer", "minimum": 0 },
+    "contradictingEvidenceCount": { "type": "integer", "minimum": 0 },
+    "weakeningEvidenceCount": { "type": "integer", "minimum": 0 },
+    "contextualEvidenceCount": { "type": "integer", "minimum": 0 },
+    "possibleDuplicateClaimIds": { "type": "array", "items": { "type": "string", "pattern": "^CLAIM\\|" }, "default": [] },
+    "mergeRecommendation": {
+      "type": ["object", "null"],
+      "default": null,
+      "additionalProperties": false,
+      "properties": {
+        "recommendedMergeIntoClaimId": { "type": "string", "pattern": "^CLAIM\\|" },
+        "rationale": { "type": "string" },
+        "computedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recommendedMergeIntoClaimId", "rationale", "computedAt"]
+    },
+    "firstObservedAt": { "type": ["string", "null"], "format": "date-time", "default": null },
+    "lastEvaluatedAt": { "type": ["string", "null"], "format": "date-time", "default": null },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

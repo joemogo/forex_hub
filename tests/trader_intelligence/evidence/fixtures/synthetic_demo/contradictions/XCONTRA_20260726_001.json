@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|TJR|20260726|001",
+  "claimBId": "CLAIM|TJR|20260726|002",
+  "contradictionId": "XCONTRA|20260726|001",
+  "contradictionType": "DIRECTIONAL",
+  "detectedAt": "2026-07-26T09:00:00Z",
+  "metadata": {},
+  "rationale": "SYNTHETIC TEST DATA / NOT REAL TJR RESEARCH / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION RULE: the two claims take opposing positions on whether a sweep is required.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

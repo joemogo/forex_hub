@@ -82,17 +82,21 @@ def check_types_and_direction(nodes, edges, findings):
 _EDGE_DIRECTION_TABLE = {
     "BELONGS_TO_TRADER": {(t, "TRADER") for t in gc.NODE_TYPES if t != "TRADER"},
     "BELONGS_TO_STRATEGY_FAMILY": {("STRATEGY_ASSERTION", "STRATEGY_FAMILY"), ("CHART_EXAMPLE", "STRATEGY_FAMILY"),
-                                    ("STRATEGY_RULE", "STRATEGY_FAMILY"), ("UNRESOLVED_QUESTION", "STRATEGY_FAMILY")},
+                                    ("STRATEGY_RULE", "STRATEGY_FAMILY"), ("UNRESOLVED_QUESTION", "STRATEGY_FAMILY"),
+                                    ("EVIDENCE_SOURCE", "STRATEGY_FAMILY"), ("EVIDENCE_ITEM", "STRATEGY_FAMILY"),
+                                    ("CLAIM", "STRATEGY_FAMILY")},
     "DERIVED_FROM": {("SOURCE_SEGMENT", "RESEARCH_SOURCE"), ("STRATEGY_ASSERTION", "RESEARCH_SOURCE"),
-                      ("CHART_EXAMPLE", "RESEARCH_SOURCE"), ("RESEARCH_INTAKE_REPORT", "RESEARCH_SOURCE")},
+                      ("CHART_EXAMPLE", "RESEARCH_SOURCE"), ("RESEARCH_INTAKE_REPORT", "RESEARCH_SOURCE"),
+                      ("EVIDENCE_ITEM", "EVIDENCE_SOURCE"), ("EVIDENCE_ITEM", "EVIDENCE_ITEM")},
     "SEGMENT_OF": {("SOURCE_SEGMENT", "RESEARCH_SOURCE")},
     "ASSERTED_IN": {("STRATEGY_ASSERTION", "SOURCE_SEGMENT")},
-    "SUPPORTS": {("STRATEGY_ASSERTION", "STRATEGY_RULE")},
+    "SUPPORTS": {("STRATEGY_ASSERTION", "STRATEGY_RULE"), ("EVIDENCE_ITEM", "CLAIM")},
     "EVIDENCES": {("RULE_EVIDENCE", "STRATEGY_RULE")},
-    "CONTRADICTS": {("RULE_CONTRADICTION", "STRATEGY_RULE")},
+    "CONTRADICTS": {("RULE_CONTRADICTION", "STRATEGY_RULE"), ("EVIDENCE_ITEM", "CLAIM"),
+                     ("CONTRADICTION_RECORD", "CLAIM")},
     "IMPLEMENTS": set(),  # not populated in Phase 1 -- no valid direction has ever been exercised
     "SUPERSEDES": {("STRATEGY_ASSERTION", "STRATEGY_ASSERTION"), ("RULE_VERSION", "RULE_VERSION"),
-                    ("OWNER_DECISION", "OWNER_DECISION")},
+                    ("OWNER_DECISION", "OWNER_DECISION"), ("EVIDENCE_ITEM", "EVIDENCE_ITEM")},
     "REFERENCES": {(t, u) for t in gc.NODE_TYPES for u in gc.NODE_TYPES},  # deliberately permissive, generic citation
     "BLOCKS": {("UNRESOLVED_QUESTION", "STRATEGY_RULE"), ("UNRESOLVED_QUESTION", "STRATEGY_FAMILY"),
                ("UNRESOLVED_QUESTION", "TRADER")},
@@ -101,6 +105,13 @@ _EDGE_DIRECTION_TABLE = {
     "REQUIRES_OWNER_DECISION": {("STRATEGY_RULE", "OWNER_DECISION")},
     "VERSION_OF": {("RULE_VERSION", "STRATEGY_RULE")},
     "VALIDATES": set(),  # not populated in Phase 1 -- no replay/paper integration yet
+    # PROGRAM-006 (ADR-008) additive edge types:
+    "WEAKENS": {("EVIDENCE_ITEM", "CLAIM")},
+    "CONTEXTUALIZES": {("EVIDENCE_ITEM", "CLAIM")},
+    "EXEMPLIFIES": {("EVIDENCE_ITEM", "CLAIM")},
+    "QUALIFIES": {("EVIDENCE_ITEM", "CLAIM")},
+    "UNRESOLVED": {("EVIDENCE_ITEM", "CLAIM")},
+    "CANDIDATE_FOR_RULE": {("CLAIM", "STRATEGY_RULE")},
 }
 
 

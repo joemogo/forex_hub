@@ -50,6 +50,12 @@
       "description": "Must be non-empty once modelingStatus is 'modeled' -- a rule with no traceable evidence is an invented rule."
     },
     "contradictionIds": { "type": "array", "items": { "type": "string", "pattern": "^CONTRA\\|" }, "default": [] },
+    "originatingClaimIds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^CLAIM\\|" },
+      "default": [],
+      "description": "PROGRAM-006 (ADR-008), additive field. Claims (docs/trader-intelligence/evidence/schema/claim.schema.json) that motivated considering this rule -- a StrategyRule IS the rule-candidate entity referenced by ADR-008; this field closes the one gap (linking back to originating claims) without duplicating sourceEvidenceIds/contradictionIds/confidence/scope/status fields already present on this schema."
+    },
     "sourceConfidence": {
       "type": "string",
       "enum": ["unknown", "very_low", "low", "medium", "high", "very_high"],

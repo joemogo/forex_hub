@@ -1,0 +1,13 @@
+{
+  "actor": "fixture_generator",
+  "entityId": "EV|EVSRC|TJR|20260726|001|002",
+  "entityType": "EVIDENCE_ITEM",
+  "eventId": "LCEVT|EVIDENCE_ITEM|EV|EVSRC|TJR|20260726|001|002|002",
+  "eventType": "superseded",
+  "metadata": {},
+  "newStatus": "superseded",
+  "priorStatus": "active",
+  "reason": "Superseded by EV|EVSRC|TJR|20260726|001|003.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-26T09:00:00Z"
+}

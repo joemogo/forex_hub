@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/evidence-lifecycle-event.schema.json",
+  "title": "EvidenceLifecycleEvent",
+  "description": "PROGRAM-006 (ADR-008). Immutable, append-only audit history for EvidenceSource/EvidenceItem/Claim/EvidenceClaimLink/ContradictionRecord status changes. Never overwritten; a status transition always appends a new event (same discipline as the Knowledge Graph's OwnerDecision-gated transitions and PROGRAM-004's candidate changeLog).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "entityType", "entityId", "eventType", "actor", "timestamp", "schemaVersion"],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "pattern": "^LCEVT\\|(EVIDENCE_SOURCE|EVIDENCE_ITEM|CLAIM|EVIDENCE_CLAIM_LINK|CONTRADICTION_RECORD)\\|.+\\|\\d{3,}$",
+      "description": "Format: LCEVT|{entityType}|{entityId}|{seq}."
+    },
+    "entityType": {
+      "type": "string",
+      "enum": ["EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "EVIDENCE_CLAIM_LINK", "CONTRADICTION_RECORD"]
+    },
+    "entityId": { "type": "string" },
+    "eventType": {
+      "type": "string",
+      "enum": ["created", "status_changed", "confidence_recomputed", "superseded", "corrected", "linked", "unlinked", "reviewed", "other"]
+    },
+    "priorStatus": { "type": ["string", "null"], "default": null },
+    "newStatus": { "type": ["string", "null"], "default": null },
+    "reason": { "type": ["string", "null"], "default": null },
+    "actor": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
+    "schemaVersion": { "type": "integer", "const": 1 }
+  }
+}

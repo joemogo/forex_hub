@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/evidence-claim-link.schema.json",
+  "title": "EvidenceClaimLink",
+  "description": "PROGRAM-006 (ADR-008). The relationship between one EvidenceItem and one Claim. This is the sole input to confidence computation (scripts/trader_intelligence/evidence_confidence.py) -- confidence is always recomputed from the set of links attached to a claim, never edited directly.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["linkId", "evidenceId", "claimId", "relationshipType", "linkedBy", "linkedAt", "schemaVersion"],
+  "properties": {
+    "linkId": {
+      "type": "string",
+      "pattern": "^LINK\\|.+$",
+      "description": "Format: LINK|{evidenceId}|{claimId}, hash-truncated the same way as Knowledge Graph edge ids when the raw concatenation would be excessively long."
+    },
+    "evidenceId": { "type": "string", "pattern": "^EV\\|" },
+    "claimId": { "type": "string", "pattern": "^CLAIM\\|" },
+    "relationshipType": {
+      "type": "string",
+      "enum": ["supports", "contradicts", "weakens", "contextualizes", "exemplifies", "qualifies", "supersedes", "unresolved"]
+    },
+    "relevanceWeight": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 },
+    "qualityWeight": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "default": null },
+    "independenceGroup": {
+      "type": ["string", "null"], "default": null,
+      "description": "Populated by the confidence engine (defaults to the evidence item's sourceId) so multiple excerpts from the same source are never double-counted as independent confirmation (ADR-008 / Deliverable 5)."
+    },
+    "rationale": { "type": ["string", "null"], "default": null },
+    "linkedBy": { "type": "string" },
+    "linkedAt": { "type": "string", "format": "date-time" },
+    "schemaVersion": { "type": "integer", "const": 1 }
+  }
+}

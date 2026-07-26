@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/contradiction-record.schema.json",
+  "title": "ContradictionRecord",
+  "description": "PROGRAM-006 (ADR-008). A retained record of two Claims that disagree. Complementary to (not a replacement for) Wave 1's RuleContradiction, which operates at the rule level -- this operates one level down, at the claim level. Never resolved by deleting or overwriting either claim (ADR-008 sec. 8); status transitions, but both claims and the full rationale remain permanently queryable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contradictionId", "claimAId", "claimBId", "contradictionType", "severity", "status", "detectedAt", "schemaVersion"],
+  "properties": {
+    "contradictionId": {
+      "type": "string",
+      "pattern": "^XCONTRA\\|\\d{8}\\|\\d{3,}$",
+      "description": "Format: XCONTRA|{YYYYMMDD}|{seq}."
+    },
+    "claimAId": { "type": "string", "pattern": "^CLAIM\\|" },
+    "claimBId": { "type": "string", "pattern": "^CLAIM\\|" },
+    "contradictionType": {
+      "type": "string",
+      "enum": ["DEFINITIONAL", "NUMERIC_THRESHOLD", "CONDITIONAL_SCOPE", "TEMPORAL_DRIFT", "DIRECTIONAL", "SCOPE_MISMATCH", "OTHER"]
+    },
+    "scopeOverlap": {
+      "type": "string",
+      "enum": ["full", "partial", "none", "unknown"],
+      "default": "unknown"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["cosmetic", "minor", "material", "blocking"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "resolved_by_owner", "superseded", "accepted_as_context_dependent"]
+    },
+    "rationale": { "type": ["string", "null"], "default": null },
+    "detectedAt": { "type": "string", "format": "date-time" },
+    "reviewedAt": { "type": ["string", "null"], "format": "date-time", "default": null },
+    "resolution": { "type": ["string", "null"], "default": null },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
+    "schemaVersion": { "type": "integer", "const": 1 }
+  }
+}

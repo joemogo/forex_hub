@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/evidence-item.schema.json",
+  "title": "EvidenceItem",
+  "description": "PROGRAM-006 (ADR-008). One discrete, immutable observation or excerpt from an EvidenceSource -- the actual primary intelligence unit (ADR-008 sec. 2-3). Never edited in place once created (ADR-008 sec. 5): a correction creates a new EvidenceItem with supersedesEvidenceId pointing at the one it replaces.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidenceId", "sourceId", "evidenceType", "evidenceQuality", "evidenceStatus",
+    "extractionMethod", "extractionVersion", "schemaVersion", "createdAt"
+  ],
+  "properties": {
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^EV\\|EVSRC\\|.+\\|\\d{3,}$",
+      "description": "Format: EV|{sourceId}|{seq}."
+    },
+    "sourceId": { "type": "string", "pattern": "^EVSRC\\|" },
+    "evidenceType": {
+      "type": "string",
+      "enum": [
+        "explicit_statement", "demonstrated_behavior", "chart_example", "trade_example",
+        "rule_statement", "exception_statement", "opinion", "intuition", "prediction",
+        "post_trade_observation", "replay_result", "paper_trade_result", "market_context",
+        "failure_observation", "success_observation", "risk_observation", "execution_observation",
+        "unresolved_question", "other"
+      ]
+    },
+    "exactExcerpt": {
+      "type": ["string", "null"], "default": null,
+      "description": "What was actually said/shown, verbatim, when legally and operationally appropriate to store. Never MOGO's interpretation -- see normalizedObservation."
+    },
+    "normalizedObservation": {
+      "type": ["string", "null"], "default": null,
+      "description": "MOGO's interpretation of the excerpt, kept as a distinct field so the two can never be confused (same discipline as StrategyAssertion, Wave 1)."
+    },
+    "sourceLocator": { "type": ["string", "null"], "default": null },
+    "startTimestamp": { "type": ["string", "null"], "default": null },
+    "endTimestamp": { "type": ["string", "null"], "default": null },
+    "pageNumber": { "type": ["integer", "null"], "minimum": 0, "default": null },
+    "sectionReference": { "type": ["string", "null"], "default": null },
+    "speaker": { "type": ["string", "null"], "default": null },
+    "observationDate": { "type": ["string", "null"], "format": "date", "default": null },
+    "marketSymbol": { "type": ["string", "null"], "default": null },
+    "timeframe": { "type": ["string", "null"], "default": null },
+    "session": { "type": ["string", "null"], "default": null },
+    "marketCondition": { "type": ["string", "null"], "default": null },
+    "direction": { "type": ["string", "null"], "enum": ["long", "short", "either", null], "default": null },
+    "extractionMethod": {
+      "type": "string",
+      "enum": ["manual_owner_entry", "manual_transcription", "derived_analysis", "other"],
+      "description": "Phase 1A supports manual entry only -- no automated parsing exists (ADR-008 sec. 17)."
+    },
+    "extractionVersion": { "type": "string" },
+    "evidenceQuality": {
+      "type": "string",
+      "enum": ["unknown", "low", "medium", "high"],
+      "description": "How strong this individual item is as evidence (directness, explicitness), independent of the source's overall authenticity."
+    },
+    "evidenceStatus": {
+      "type": "string",
+      "enum": ["active", "superseded", "retracted", "disputed"]
+    },
+    "contentHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "default": null },
+    "parentEvidenceId": { "type": ["string", "null"], "pattern": "^EV\\|", "default": null },
+    "supersedesEvidenceId": { "type": ["string", "null"], "pattern": "^EV\\|", "default": null },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
