@@ -608,6 +608,70 @@ def check_explanation_provenance(claims, links, findings, now):
                       "claim would have counts with nothing to cite.", now)
 
 
+# ---------------------------------------------------------------------------
+# PROGRAM-007 Phase 7A (Deliverable 8/19) -- Knowledge Library integrity
+# ---------------------------------------------------------------------------
+
+def check_blueprint_claim_references(blueprints, claims, findings, now):
+    claim_ids = {c["claimId"] for c in claims}
+    for bp in blueprints:
+        for cid in (bp.get("sourceLineage") or {}).get("claimIds", []) or []:
+            if cid not in claim_ids:
+                _finding(findings, "BLUEPRINT_REFERENCES_NONEXISTENT_CLAIM", "ERROR", "STRATEGY_BLUEPRINT",
+                          bp["blueprintId"], "sourceLineage.claimIds references nonexistent claimId %r." % (cid,), now)
+
+
+def check_gap_blueprint_references(gaps, blueprints, findings, now):
+    blueprint_ids = {bp["blueprintId"] for bp in blueprints}
+    for gap in gaps:
+        bid = gap.get("blueprintId")
+        if bid and bid not in blueprint_ids:
+            _finding(findings, "GAP_REFERENCES_NONEXISTENT_BLUEPRINT", "ERROR", "KNOWLEDGE_GAP", gap["gapId"],
+                      "blueprintId references nonexistent blueprintId %r." % (bid,), now)
+
+
+def check_hypothesis_claim_references(hypotheses, claims, findings, now):
+    claim_ids = {c["claimId"] for c in claims}
+    for h in hypotheses:
+        for cid in h.get("sourceClaimIds", []) or []:
+            if cid not in claim_ids:
+                _finding(findings, "HYPOTHESIS_REFERENCES_NONEXISTENT_CLAIM", "ERROR", "HYPOTHESIS",
+                          h["hypothesisId"], "sourceClaimIds references nonexistent claimId %r." % (cid,), now)
+
+
+def check_no_executable_blueprint_linkage(ti_root, findings, now):
+    """Structural proof that a StrategyRule -- the one thing that IS
+    executable -- never names a Blueprint as its origin. A Blueprint is
+    research output only; nothing may cite one as authorization for a rule."""
+    for path in _iter_strategy_rule_paths(ti_root):
+        with open(path, "r", encoding="utf-8") as f:
+            rule = json.load(f)
+        for value in rule.values():
+            values = value if isinstance(value, list) else [value]
+            for v in values:
+                if isinstance(v, str) and v.startswith("BLUEPRINT|"):
+                    _finding(findings, "EXECUTABLE_LINKAGE_FROM_RESEARCH_BLUEPRINT", "FATAL", "STRATEGY_RULE",
+                              rule.get("ruleId", path),
+                              "StrategyRule references %r -- a research-only StrategyBlueprint must never "
+                              "be cited as authorization for an executable rule." % (v,), now)
+
+
+def check_duplicate_canonical_trader_identity(profiles, findings, now):
+    """Multiple TraderProfile snapshots for the same traderId are expected
+    (each build is a new immutable snapshot) -- but they must always agree
+    on canonicalName. Disagreement means two conflicting canonical identities
+    exist for one traderId, which Deliverable 8 requires this validator to
+    catch."""
+    names_by_trader = {}
+    for p in profiles:
+        names_by_trader.setdefault(p["traderId"], set()).add(p["canonicalName"])
+    for trader_id, names in names_by_trader.items():
+        if len(names) > 1:
+            _finding(findings, "DUPLICATE_CANONICAL_TRADER_IDENTITY", "ERROR", "TRADER_PROFILE", trader_id,
+                      "TraderProfile snapshots for traderId %r disagree on canonicalName: %s." % (
+                          trader_id, sorted(names)), now)
+
+
 def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_production=True):
     now = datetime.now(timezone.utc)
     sources = _load_dir(os.path.join(evidence_root, "sources"), "sourceId")
@@ -623,6 +687,11 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     questions = _load_dir(os.path.join(evidence_root, "questions"), "questionId")
     proposals = _load_dir(os.path.join(evidence_root, "proposals"), "proposalId")
     queue_entries = _load_dir(os.path.join(evidence_root, "review-queue"), "queueEntryId")
+    # PROGRAM-007 Phase 7A (Knowledge Library vertical slice):
+    profiles = _load_dir(os.path.join(evidence_root, "profiles"), "profileId")
+    blueprints = _load_dir(os.path.join(evidence_root, "blueprints"), "blueprintId")
+    gaps = _load_dir(os.path.join(evidence_root, "gaps"), "gapId")
+    hypotheses = _load_dir(os.path.join(evidence_root, "hypotheses"), "hypothesisId")
 
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
@@ -630,6 +699,8 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
         ("TRANSCRIPT_SEGMENT", segments, "segmentId"), ("INTAKE_MANIFEST", intakes, "intakeId"),
         ("MANUAL_ANNOTATION", annotations, "annotationId"), ("EVIDENCE_QUESTION", questions, "questionId"),
         ("RULE_CANDIDATE_PROPOSAL", proposals, "proposalId"), ("REVIEW_QUEUE_ENTRY", queue_entries, "queueEntryId"),
+        ("TRADER_PROFILE", profiles, "profileId"), ("STRATEGY_BLUEPRINT", blueprints, "blueprintId"),
+        ("KNOWLEDGE_GAP", gaps, "gapId"), ("HYPOTHESIS", hypotheses, "hypothesisId"),
     ])
     check_duplicate_immutable_content(items, findings, now)
     check_inconsistent_hash(items, findings, now)
@@ -670,9 +741,26 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     check_segment_sequence_and_line_ranges(segments, findings, now)
     check_explanation_provenance(claims, links, findings, now)
 
+    # PROGRAM-007 Phase 7A (Deliverable 8/19):
+    check_blueprint_claim_references(blueprints, claims, findings, now)
+    check_gap_blueprint_references(gaps, blueprints, findings, now)
+    check_hypothesis_claim_references(hypotheses, claims, findings, now)
+    check_duplicate_canonical_trader_identity(profiles, findings, now)
+    for label, records, id_field in (
+        ("TRADER_PROFILE", profiles, "profileId"), ("STRATEGY_BLUEPRINT", blueprints, "blueprintId"),
+        ("KNOWLEDGE_GAP", gaps, "gapId"), ("HYPOTHESIS", hypotheses, "hypothesisId"),
+    ):
+        for r in records:
+            v = r.get("schemaVersion")
+            if not isinstance(v, int) or v > evc.SCHEMA_VERSION:
+                _finding(findings, "UNSUPPORTED_SCHEMA_VERSION", "ERROR", label, r[id_field],
+                          "Record has schemaVersion=%r; this validator supports up to %d." % (
+                              v, evc.SCHEMA_VERSION), now)
+
     if repo_root and ti_root:
         check_graph_relationships(repo_root, ti_root, links, claims, findings, now)
         check_production_rule_linkage(ti_root, findings, now)
+        check_no_executable_blueprint_linkage(ti_root, findings, now)
 
     summary = {"INFO": 0, "WARNING": 0, "ERROR": 0, "FATAL": 0}
     for f in findings:

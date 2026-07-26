@@ -24,7 +24,15 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 TI_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence")
 GRAPH_ROOT = os.path.join(TI_ROOT, "graph")
 
-_EVIDENTIARY_EDGE_TYPES = {"SUPPORTS", "EVIDENCES", "CONTRADICTS", "VALIDATES", "RESOLVES", "PARTIALLY_RESOLVES"}
+_EVIDENTIARY_EDGE_TYPES = {"SUPPORTS", "EVIDENCES", "CONTRADICTS", "VALIDATES", "RESOLVES", "PARTIALLY_RESOLVES",
+                           # PROGRAM-007 Phase 7A: BLUEPRINT_DERIVED_FROM_CLAIM and
+                           # CLAIM_CONTRADICTS_HYPOTHESIS always carry a real, non-empty evidenceIds at
+                           # creation time (see graph_common.py's edge-derivation blocks). CLAIM_SUPPORTS_
+                           # HYPOTHESIS is deliberately NOT included here: a hypothesis may legitimately be
+                           # anchored to a claim with zero supportingEvidenceIds of its own (e.g. a gap-derived
+                           # hypothesis, where the claim itself -- already the edge's fromNode -- is the only
+                           # provenance), so requiring extra evidenceIds on that edge would misclassify valid data.
+                           "BLUEPRINT_DERIVED_FROM_CLAIM", "CLAIM_CONTRADICTS_HYPOTHESIS"}
 _CONFIDENCE_ENUM = {"unknown", "not_applicable", "very_low", "low", "medium", "high", "very_high"}
 
 
@@ -123,6 +131,12 @@ _EDGE_DIRECTION_TABLE = {
     "BLOCKED_BY": {("RULE_CANDIDATE_PROPOSAL", "CONTRADICTION_RECORD"),
                    ("RULE_CANDIDATE_PROPOSAL", "EVIDENCE_QUESTION")},
     "RESOLVED_BY_EVIDENCE": {("EVIDENCE_QUESTION", "EVIDENCE_ITEM")},
+    # PROGRAM-007 Phase 7A (Knowledge Library vertical slice) additive edge types:
+    "BLUEPRINT_DERIVED_FROM_CLAIM": {("STRATEGY_BLUEPRINT", "CLAIM")},
+    "BLUEPRINT_HAS_GAP": {("STRATEGY_BLUEPRINT", "KNOWLEDGE_GAP")},
+    "GAP_GENERATES_RESEARCH_QUESTION": {("KNOWLEDGE_GAP", "EVIDENCE_QUESTION")},
+    "CLAIM_SUPPORTS_HYPOTHESIS": {("CLAIM", "HYPOTHESIS")},
+    "CLAIM_CONTRADICTS_HYPOTHESIS": {("CLAIM", "HYPOTHESIS")},
 }
 
 

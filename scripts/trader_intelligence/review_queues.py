@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph_common as gc          # noqa: E402
 import evidence_common as evc      # noqa: E402
 import evidence_dedup as dedup     # noqa: E402
+import evidence_questions as eqs   # noqa: E402
 
 
 def _load_all(dir_path, id_field):
@@ -36,7 +37,8 @@ def _make_entry(queue_dir, now, entityType, entityId, queueType, priority, reaso
         "queueEntryId": queueEntryId, "entityType": entityType, "entityId": entityId,
         "queueType": queueType, "priority": priority, "reason": reason, "blockingStatus": blockingStatus,
         "createdAt": now_iso, "updatedAt": now_iso, "reviewStatus": "open", "reviewer": None,
-        "resolution": None, "metadata": {}, "schemaVersion": evc.SCHEMA_VERSION,
+        "resolution": None, "reviewAction": None, "reviewNotes": None,
+        "metadata": {}, "schemaVersion": evc.SCHEMA_VERSION,
     }
     path = os.path.join(queue_dir, evc.queue_entry_id_to_filename(queueEntryId))
     gc.atomic_write_text(path, gc.pretty_json(record))
@@ -204,3 +206,81 @@ def set_entry_review_status(queue_dir, queueEntryId, newStatus, now, reviewer=No
     path = os.path.join(queue_dir, evc.queue_entry_id_to_filename(queueEntryId))
     gc.atomic_write_text(path, gc.pretty_json(record))
     return record
+
+
+# ---------------------------------------------------------------------------
+# PROGRAM-007 Phase 7A (Deliverable 7) -- reviewer action workflow
+# ---------------------------------------------------------------------------
+
+# The reviewStatus each action settles a queue entry into. approve_as_*/
+# reject/mark_contradictory/convert_to_research_question/propose_hypothesis
+# all represent a completed reviewer decision on THIS entry -- "resolved"
+# (reject uses "dismissed", the existing status for "we looked at it and it
+# doesn't proceed"). request_more_evidence keeps the entry open but signals
+# active work ("in_review"). leave_unresolved is a genuine, valid reviewer
+# decision to defer -- recorded, but the entry stays "open" rather than being
+# forced toward a false sense of resolution.
+_REVIEW_STATUS_BY_ACTION = {
+    "approve_as_supported_claim": "resolved",
+    "approve_as_inferred_claim": "resolved",
+    "reject": "dismissed",
+    "mark_contradictory": "resolved",
+    "request_more_evidence": "in_review",
+    "convert_to_research_question": "resolved",
+    "propose_hypothesis": "resolved",
+    "leave_unresolved": "open",
+}
+
+
+def apply_review_action(queue_dir, questions_dir, queueEntryId, action, reviewer, now, notes=None):
+    """Applies one of the 8 Deliverable-7 reviewer actions to a single
+    ReviewQueueEntry.
+
+    Mirrors set_entry_review_status()'s own safety invariant: resolving an
+    entry only ever changes the entry itself -- it never mutates the Claim,
+    EvidenceItem, or other entity the entry points at, and it never runs
+    without an explicit human `reviewer` on one entry at a time (nothing here
+    is triggered automatically). The one exception is
+    convert_to_research_question, which creates a brand-new, additive
+    EvidenceQuestion record (never edits an existing one).
+
+    propose_hypothesis deliberately does NOT auto-create a Hypothesis here --
+    a hypothesis must be derived from the trader's full claim set via
+    hypothesis_proposals.generate_hypotheses(), never fabricated from a
+    single queue entry considered in isolation. This action only records
+    that a human has flagged the entity as worth that later analysis.
+    """
+    if action not in evc.REVIEW_ACTIONS:
+        raise evc.EvidenceValidationError("Unknown review action %r" % (action,))
+    entries = _load_all(queue_dir, "queueEntryId")
+    if queueEntryId not in entries:
+        raise evc.EvidenceValidationError("Cannot act on nonexistent queueEntryId %r" % (queueEntryId,))
+    entry = entries[queueEntryId]
+    if entry["reviewStatus"] in ("resolved", "dismissed"):
+        raise evc.EvidenceValidationError(
+            "queueEntryId %r is already %s -- reopen it explicitly (set_entry_review_status) "
+            "before applying another action." % (queueEntryId, entry["reviewStatus"]))
+
+    generated_question = None
+    if action == "convert_to_research_question":
+        claim_id = entry["entityId"] if entry["entityType"] == "CLAIM" else None
+        evidence_ids = [entry["entityId"]] if entry["entityType"] == "EVIDENCE_ITEM" else []
+        generated_question = eqs.create_question(
+            questions_dir, now, "ambiguous_statement",
+            notes or ("What is the correct interpretation of %s %s?" % (entry["entityType"], entry["entityId"])),
+            "medium",
+            "Raised via review workflow action 'convert_to_research_question' on queue entry %s." % queueEntryId,
+            "non_blocking", claimId=claim_id, evidenceIds=evidence_ids)
+
+    now_iso = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    entry["reviewStatus"] = _REVIEW_STATUS_BY_ACTION[action]
+    entry["updatedAt"] = now_iso
+    entry["reviewer"] = reviewer
+    entry["resolution"] = action
+    entry["reviewAction"] = action
+    entry["reviewNotes"] = notes
+    if generated_question is not None:
+        entry.setdefault("metadata", {})["generatedQuestionId"] = generated_question["questionId"]
+    path = os.path.join(queue_dir, evc.queue_entry_id_to_filename(queueEntryId))
+    gc.atomic_write_text(path, gc.pretty_json(entry))
+    return entry, generated_question

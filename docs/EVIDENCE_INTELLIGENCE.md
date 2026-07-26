@@ -460,3 +460,161 @@ see `docs/PROGRAM_006_STATUS.md`). When you have one:
 4. Nothing becomes a production rule until you, separately and explicitly, decide to extend a
    real `StrategyRule` with the claim IDs a `RuleCandidateProposal` names — that step is
    intentionally outside what this phase automates.
+
+---
+
+# Part 3: PROGRAM-007 Phase 7A — Real Trader Knowledge Library Vertical Slice
+
+Full status, verification, and counts live in `docs/PROGRAM_007_STATUS.md`. This section
+documents what the vertical slice adds on top of Phase 1B's Evidence Intelligence Engine and
+is written as an extension of this document, not a replacement of §1–38 above.
+
+## 39. Terminology change: Corpus → Knowledge Library
+
+Earlier phases occasionally used "corpus" informally to describe the accumulated evidence for
+a trader. PROGRAM-007 formally retires that word from all new user-facing naming: the accepted
+terms going forward are **Knowledge Library** (the accumulated Trader Profile + Strategy
+Blueprint + Knowledge Gaps + Hypotheses for one trader), **Evidence Library** (the underlying
+EvidenceItem/Claim/Link records Phase 1A/1B already built), **Knowledge Intake** (a processed
+transcript), **Trader Profile**, **Strategy Blueprint**, **Knowledge Gap**, **Research
+Question**, and **Hypothesis**. Existing internal Python identifiers, file/directory names, and
+schema `$id`s from Phase 1A/1B (`evidence_root`, `EvidenceItem`, `docs/trader-intelligence/
+evidence/`, etc.) are unchanged — renaming them would only add regression risk for a naming
+preference with no functional benefit. The change is scoped to new user-facing vocabulary only.
+
+## 40. Trader Profile
+
+`scripts/trader_intelligence/trader_profile.py` builds a deterministic, versioned summary of
+everything currently known about one trader, computed purely from already-approved Claims and
+their linked Evidence. Every concept list entry (`entryConcepts`, `riskConcepts`, etc.) is a
+labeled statement carrying its own `evidenceIds` and a `status` of `confirmed` (backed by
+`direct_explicit`/`direct_demonstrated` evidence), `inferred` (backed only by indirect/derived
+evidence), or `conflicting` (a contradiction exists). Absence stays absence — a trader with no
+`risk_rule` claims gets `riskConcepts: []`, never a fabricated placeholder. Each call to
+`register_trader_profile()` writes a brand-new, immutable `profileId` snapshot rather than
+editing a prior one, mirroring `EvidenceItem`'s own immutability discipline; there is
+deliberately no lifecycle-transition state machine for `TraderProfile` the way `IntakeManifest`
+has one, since a profile never transitions — it is superseded by the next full rebuild.
+
+## 41. Strategy Blueprint
+
+`scripts/trader_intelligence/strategy_blueprint.py` produces a `StrategyBlueprint` — non-
+executable, research-only, structurally incapable of being mistaken for a live strategy.
+`status` is always `DRAFT_RESEARCH_ONLY` (the schema's own enum has no other non-superseded
+value), and `validationStatus.productionStatus` is a JSON Schema `const: "not_applicable"` — no
+code path can ever set it to anything else. A blueprint is built from ten sections (Identity,
+Scope, Ordered Workflow, Entry Logic, Invalidation/Exit Logic, Risk Logic, Contradictions,
+Validation Status, Source Lineage, Limitations); every rule-like statement in Entry/Exit/Risk
+Logic is classified into exactly one of `required`/`preferred`/`optional`/`forbidden`/
+`unresolved` (derived from the backing claim's `confidenceState` — `supported`/
+`strongly_supported` → required, `emerging` → preferred, `weakened` → optional, anything else →
+unresolved), and always carries its own `evidenceIds` and `confidence`. `build_strategy_blueprint()`
+never creates or edits a `StrategyRule` file and is never read by any scanner/execution code
+path (see `validate_evidence.check_no_executable_blueprint_linkage`, §46).
+
+## 42. Knowledge Gap Engine
+
+`scripts/trader_intelligence/knowledge_gaps.py` detects 17 fixed categories of missing or
+ambiguous information (instrument, session, higher-timeframe bias, execution timeframe, setup
+sequence, entry trigger, confirmation, invalidation, stop placement, risk percentage, target
+selection, trade management, news/spread/volatility handling, no-trade conditions, exception
+handling) by checking structural absence on the already-built blueprint and claim set — never
+by guessing. `currentBestAnswer` is only ever set to the literal `normalizedClaim` text of an
+existing claim with genuine (if partial) confidence, and only for categories where a
+structurally relevant claim type actually exists to draw from; for the seven categories that
+fire precisely because *no* claim of a relevant type exists (instrument, session, news/spread/
+volatility handling, no-trade conditions, exception handling), the answer pool is deliberately
+empty so an unrelated claim's text is never misattributed as answering a different question.
+
+## 43. Hypothesis Proposals
+
+`scripts/trader_intelligence/hypothesis_proposals.py` proposes a `Hypothesis` only when a real
+trigger already exists: an unsettled claim (`emerging`/`contested`/`weakened` confidence), an
+open `ContradictionRecord` touching one of the trader's claims, or an unanswered knowledge gap
+in the `session`/`volatility_handling`/`news_handling` categories *and* a real anchor claim
+(`entry_rule`/`setup_requirement`) to point at — never proposed from nothing. Every hypothesis
+starts `PROPOSED_UNVALIDATED` and carries `proposedReplayTest`/`proposedPaperTest` text plus its
+own `sourceClaimIds`/`supportingEvidenceIds`/`contradictingEvidenceIds`. Nothing here ever edits
+a Claim, EvidenceItem, ContradictionRecord, or StrategyRule.
+
+## 44. Real transcript search (Deliverable 5)
+
+A fresh, direct search of the repository (file-extension search, untracked-files check,
+acquisition-candidate check, `traders/tjr/sources/`, and the full Phase 1B search already
+recorded in `docs/PROGRAM_006_STATUS.md`) found zero real TJR (or other trader) transcript
+material anywhere in this repository as of Phase 7A. The reusable transcript → Knowledge
+Library pipeline is fully implemented and tested end to end using a small, real (not a
+committed fixture file) transcript constructed inline by the test suite
+(`tests/trader_intelligence/evidence/test_phase7a.py`,
+`TestCategoryETranscriptIntegration`) — see `docs/PROGRAM_007_STATUS.md`'s "Source Selection"
+section for the full SOURCE_REQUIRED statement and exact next-source instructions.
+
+## 45. Knowledge Library Report (Deliverable 6)
+
+`scripts/trader_intelligence/knowledge_library_report.py` assembles the 14-section
+human-review report (source summary, extraction statistics, Trader Profile, Strategy
+Blueprint, explicit rules, implied/inferred rules, contradictions, knowledge gaps, proposed
+hypotheses, items requiring human review, replay recommendations, paper-trading
+recommendations, limitations, full lineage summary) from an already-generated profile,
+blueprint, gap list, and hypothesis list — every field is read directly from those records,
+nothing is free-form narrative. The report always carries an explicit `disclaimers` block
+(`researchOnly`, `unvalidated`, `notExecutable`, `noProfitabilityClaim`,
+`requiresReplayValidation`, `requiresPaperTradingValidation`, all `true`) plus a plain-language
+`disclaimerText` repeated at the top of the Markdown rendering.
+
+## 46. Review Workflow (Deliverable 7)
+
+`review_queues.apply_review_action()` extends the existing 14-type review-queue system with
+the 8 reviewer actions Deliverable 7 requires: `approve_as_supported_claim`,
+`approve_as_inferred_claim`, `reject`, `mark_contradictory`, `request_more_evidence`,
+`convert_to_research_question`, `propose_hypothesis`, `leave_unresolved`. It mirrors the
+existing `set_entry_review_status()` safety invariant exactly: applying an action only ever
+writes the `ReviewQueueEntry` itself (plus, for `convert_to_research_question`, a brand-new
+additive `EvidenceQuestion`) — it never mutates the Claim/EvidenceItem the entry points at, and
+`propose_hypothesis` deliberately does not auto-create a `Hypothesis` record (a hypothesis must
+come from the real claim-set analysis in §43, never fabricated from one queue entry in
+isolation). **No UI exists for this yet** — `index.html` is the live trading application, not a
+research-review surface, so exposing this workflow through a UI is explicitly deferred; every
+action is currently invoked directly against this Python service layer.
+
+## 47. Knowledge Graph integration (Deliverable 8)
+
+Four additive node types (`TRADER_PROFILE`, `STRATEGY_BLUEPRINT`, `KNOWLEDGE_GAP`,
+`HYPOTHESIS`) and five additive edge types (`BLUEPRINT_DERIVED_FROM_CLAIM`,
+`BLUEPRINT_HAS_GAP`, `GAP_GENERATES_RESEARCH_QUESTION`, `CLAIM_SUPPORTS_HYPOTHESIS`,
+`CLAIM_CONTRADICTS_HYPOTHESIS`) in `graph_common.py`. `BELONGS_TO_TRADER` is reused generically
+(already keys off any node with a truthy `traderId`) rather than adding
+`TRADER_HAS_PROFILE`/`TRADER_HAS_DRAFT_BLUEPRINT`; `DERIVED_FROM` already covers
+profile-to-source derivation. No `Concept` node type or `BLUEPRINT_CONTAINS_STAGE` edge was
+added — concept values stay plain labeled strings on `TraderProfile` (a Concept Registry
+remains explicitly deferred, per ADR-008), and workflow stages stay embedded array fields on
+`StrategyBlueprint` rather than becoming independent graph nodes. `validate_evidence.py` gained
+five new integrity checks (`check_blueprint_claim_references`,
+`check_gap_blueprint_references`, `check_hypothesis_claim_references`,
+`check_no_executable_blueprint_linkage`, `check_duplicate_canonical_trader_identity`), and
+`validate_graph.py` gained the corresponding edge-direction and evidentiary-edge-type entries.
+
+## 48. Empty-Knowledge-Library behavior
+
+Every Phase 7A builder function follows the same not-found/empty convention as the rest of this
+system: `build_trader_profile()` returns a valid zero-claim profile (never `None`) for a trader
+with no claims yet; `build_strategy_blueprint()` returns `None` for a trader with zero claims
+(nothing to draft); `generate_knowledge_gaps()`/`generate_hypotheses()` both return empty lists
+rather than fabricating placeholder content; `generate_knowledge_library_report()` returns
+`None` if either the profile or blueprint it's given is `None`.
+
+## 49. No-network, no-LLM policy (Phase 7A)
+
+Identical guarantee to Phase 1A/1B: `trader_profile.py`, `strategy_blueprint.py`,
+`knowledge_gaps.py`, `hypothesis_proposals.py`, and `knowledge_library_report.py` are pure
+Python standard library, import no network-capable module, and contain no LLM call of any
+kind — every classification (directness bucket, confidence-to-classification mapping, gap
+category trigger) is a fixed, deterministic, re-derivable rule over already-stored data.
+
+## 50. What Phase 7A explicitly does not do
+
+No automatic `StrategyRule` creation or promotion-state change from any Hypothesis, Knowledge
+Gap, or Blueprint statement. No replay or paper-trading execution — "replay"/"paper-trading
+recommendations" are text describing what a human should test next, not an automated test
+runner. No UI (see §46). No autonomous trading of any kind. No change to `index.html`,
+`APP_VERSION`, or any protected JVM/ALEX/TJR execution function.

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/hypothesis.schema.json",
+  "title": "Hypothesis",
+  "description": "PROGRAM-007 Phase 7A (Knowledge Library vertical slice). A research hypothesis proposed only when supported by real claims, observations, contradictions, or knowledge gaps -- never invented from nothing. Always starts PROPOSED_UNVALIDATED. A Hypothesis never alters any Claim, EvidenceItem, or StrategyRule; it is a pointer into existing evidence plus a proposed way to test it later (replay/paper), not a conclusion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hypothesisId", "statement", "sourceClaimIds", "status", "confidence", "createdAt", "schemaVersion"],
+  "properties": {
+    "hypothesisId": { "type": "string", "pattern": "^HYP\\|\\d{8}\\|\\d{3,}$" },
+    "statement": { "type": "string" },
+    "sourceClaimIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^CLAIM\\|" } },
+    "supportingEvidenceIds": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" }, "default": [] },
+    "contradictingEvidenceIds": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" }, "default": [] },
+    "assumptions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "independentVariables": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "dependentVariables": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "applicableMarketConditions": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "proposedReplayTest": { "type": ["string", "null"], "default": null },
+    "proposedPaperTest": { "type": ["string", "null"], "default": null },
+    "status": { "type": "string",
+      "enum": ["PROPOSED_UNVALIDATED", "UNDER_RESEARCH", "SUPPORTED", "REFUTED", "WITHDRAWN"],
+      "default": "PROPOSED_UNVALIDATED" },
+    "confidence": { "type": "string",
+      "enum": ["insufficient_evidence", "tentative", "emerging", "supported", "strongly_supported",
+        "contested", "weakened", "contradicted", "unresolved"] },
+    "limitations": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -36,7 +36,8 @@ def _load_dir(dir_path, id_field):
 class EvidenceIndex:
     def __init__(self, sources, items, claims, links, contradictions, lifecycle_events,
                  intakes=None, segments=None, annotations=None, questions=None,
-                 proposals=None, queue_entries=None):
+                 proposals=None, queue_entries=None, profiles=None, blueprints=None,
+                 gaps=None, hypotheses=None):
         self.sources = sources
         self.items = items
         self.claims = claims
@@ -51,6 +52,12 @@ class EvidenceIndex:
         self.questions = questions or {}
         self.proposals = proposals or {}
         self.queue_entries = queue_entries or {}
+        # PROGRAM-007 Phase 7A (Knowledge Library) additions -- same
+        # backward-compatible default-to-{} pattern.
+        self.profiles = profiles or {}
+        self.blueprints = blueprints or {}
+        self.gaps = gaps or {}
+        self.hypotheses = hypotheses or {}
 
     @classmethod
     def load(cls, evidence_root):
@@ -66,8 +73,13 @@ class EvidenceIndex:
         questions = _load_dir(os.path.join(evidence_root, "questions"), "questionId")
         proposals = _load_dir(os.path.join(evidence_root, "proposals"), "proposalId")
         queue_entries = _load_dir(os.path.join(evidence_root, "review-queue"), "queueEntryId")
+        profiles = _load_dir(os.path.join(evidence_root, "profiles"), "profileId")
+        blueprints = _load_dir(os.path.join(evidence_root, "blueprints"), "blueprintId")
+        gaps = _load_dir(os.path.join(evidence_root, "gaps"), "gapId")
+        hypotheses = _load_dir(os.path.join(evidence_root, "hypotheses"), "hypothesisId")
         return cls(sources, items, claims, links, contradictions, lifecycle_events,
-                   intakes, segments, annotations, questions, proposals, queue_entries)
+                   intakes, segments, annotations, questions, proposals, queue_entries,
+                   profiles, blueprints, gaps, hypotheses)
 
     def links_for_claim(self, claim_id):
         return [l for l in self.links.values() if l["claimId"] == claim_id]
@@ -86,6 +98,9 @@ class EvidenceIndex:
         item_ids = {i["evidenceId"] for i in self.items_for_source(source_id)}
         claim_ids = {l["claimId"] for l in self.links.values() if l["evidenceId"] in item_ids}
         return [self.claims[cid] for cid in claim_ids if cid in self.claims]
+
+    def claims_for_trader(self, trader_id):
+        return [c for c in self.claims.values() if c.get("traderId") == trader_id]
 
 
 def _result(query, inputs, status, results, uncertainty_notes=None):

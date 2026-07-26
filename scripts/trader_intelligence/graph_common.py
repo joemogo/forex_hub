@@ -31,6 +31,17 @@ NODE_TYPES = [
     # graph entities.
     "TRANSCRIPT_SEGMENT", "INTAKE_MANIFEST", "EVIDENCE_QUESTION", "REVIEW_QUEUE_ENTRY",
     "RULE_CANDIDATE_PROPOSAL",
+    # PROGRAM-007 Phase 7A (Knowledge Library vertical slice) additive node
+    # types. No Concept node type is added -- PROFILE_REFERENCES_CONCEPT
+    # (suggested in the milestone) would require a Concept Registry, already
+    # explicitly deferred in ADR-008; concept values stay plain labeled
+    # strings on TraderProfile until that registry exists. No BlueprintStage
+    # node type either -- workflow stages stay embedded array fields on
+    # StrategyBlueprint (queryable via the blueprint itself); giving them
+    # independent node identity isn't needed for this vertical slice and
+    # would proliferate node types without a concrete cross-blueprint query
+    # that requires it.
+    "TRADER_PROFILE", "STRATEGY_BLUEPRINT", "KNOWLEDGE_GAP", "HYPOTHESIS",
 ]
 
 EDGE_TYPES = [
@@ -51,6 +62,18 @@ EDGE_TYPES = [
     # already covered by the existing evidence-to-claim relationship edges.
     "EVIDENCE_FROM_SEGMENT", "RAISES_QUESTION", "REQUIRES_REVIEW", "PROPOSES_RULE",
     "BLOCKED_BY", "RESOLVED_BY_EVIDENCE",
+    # PROGRAM-007 Phase 7A (Knowledge Library vertical slice) additive edge
+    # types. TRADER_HAS_PROFILE / TRADER_HAS_DRAFT_BLUEPRINT (suggested in the
+    # milestone) are deliberately NOT added -- BELONGS_TO_TRADER already
+    # connects any node type carrying a truthy traderId to its TRADER node
+    # generically, and TRADER_PROFILE/STRATEGY_BLUEPRINT/KNOWLEDGE_GAP all
+    # have traderId, so adding a second, narrower edge type would just
+    # duplicate an existing relationship. PROFILE_DERIVED_FROM_SOURCE is
+    # covered by the existing DERIVED_FROM edge (already generic across
+    # entity types). BLUEPRINT_CONTAINS_STAGE is not added -- workflow stages
+    # are embedded fields on STRATEGY_BLUEPRINT, not separate nodes.
+    "BLUEPRINT_DERIVED_FROM_CLAIM", "BLUEPRINT_HAS_GAP", "GAP_GENERATES_RESEARCH_QUESTION",
+    "CLAIM_SUPPORTS_HYPOTHESIS", "CLAIM_CONTRADICTS_HYPOTHESIS",
 ]
 
 PROMOTION_STATES = [
@@ -184,6 +207,11 @@ NODE_TYPE_FIELD_MAP = {
     "EVIDENCE_QUESTION": {"id_field": "questionId", "label_fields": ["questionText"], "status_fields": ["researchStatus"]},
     "REVIEW_QUEUE_ENTRY": {"id_field": "queueEntryId", "label_fields": ["reason"], "status_fields": ["reviewStatus"]},
     "RULE_CANDIDATE_PROPOSAL": {"id_field": "proposalId", "label_fields": ["proposalRationale"], "status_fields": ["status"]},
+    # PROGRAM-007 Phase 7A (Knowledge Library vertical slice):
+    "TRADER_PROFILE": {"id_field": "profileId", "label_fields": ["canonicalName"], "status_fields": ["reviewStatus"]},
+    "STRATEGY_BLUEPRINT": {"id_field": "blueprintId", "label_fields": ["strategyName"], "status_fields": ["status"]},
+    "KNOWLEDGE_GAP": {"id_field": "gapId", "label_fields": ["question"], "status_fields": ["answerStatus"]},
+    "HYPOTHESIS": {"id_field": "hypothesisId", "label_fields": ["statement"], "status_fields": ["status"]},
 }
 
 
@@ -252,6 +280,11 @@ def discover_entities(repo_root, ti_root, graph_root):
         ("EVIDENCE_QUESTION", ("questions", "*.json")),
         ("REVIEW_QUEUE_ENTRY", ("review-queue", "*.json")),
         ("RULE_CANDIDATE_PROPOSAL", ("proposals", "*.json")),
+        # PROGRAM-007 Phase 7A (Knowledge Library vertical slice):
+        ("TRADER_PROFILE", ("profiles", "*.json")),
+        ("STRATEGY_BLUEPRINT", ("blueprints", "*.json")),
+        ("KNOWLEDGE_GAP", ("gaps", "*.json")),
+        ("HYPOTHESIS", ("hypotheses", "*.json")),
     ]
     for node_type, parts in evidence_simple:
         for path in _sorted_glob(evidence_root, *parts):
@@ -347,6 +380,15 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
     findings = []
 
     entities = list(discover_entities(repo_root, ti_root, graph_root))
+
+    # PROGRAM-007 Phase 7A: precomputed once (not per-HYPOTHESIS) so a
+    # Hypothesis's contradictingEvidenceIds can be traced back to the claim(s)
+    # that evidence actually contradicts, reusing the existing EvidenceClaimLink
+    # data rather than adding a new persisted relationship for the same fact.
+    _evidence_to_contradicted_claims = {}
+    for _link, _link_source_file in discover_evidence_links(ti_root, repo_root):
+        if _link.get("relationshipType") == "contradicts" and _link.get("evidenceId") and _link.get("claimId"):
+            _evidence_to_contradicted_claims.setdefault(_link["evidenceId"], []).append(_link["claimId"])
 
     for node_type, entity, source_file in entities:
         node = build_node(node_type, entity, source_file)
@@ -626,6 +668,46 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
                 if target:
                     claim_node_id = node_id_by_entity_id[claim_ref]
                     add_edge("CANDIDATE_FOR_RULE", claim_node_id, from_node_id, claim_ref, eid, source_file, created_at)
+
+        # --- PROGRAM-007 Phase 7A (Knowledge Library vertical slice) additive
+        # node-type edge derivation ---
+
+        if node_type == "STRATEGY_BLUEPRINT":
+            claim_ids = (entity.get("sourceLineage") or {}).get("claimIds", []) or []
+            for claim_ref in claim_ids:
+                target = resolve(claim_ref, "BLUEPRINT_DERIVED_FROM_CLAIM", eid)
+                if target:
+                    # The blueprint's own sourceLineage IS the assembled
+                    # evidence trail for this derivation, so citing the
+                    # blueprint's claimIds as evidenceIds is not circular --
+                    # it records exactly which claims produced this edge.
+                    add_edge("BLUEPRINT_DERIVED_FROM_CLAIM", from_node_id, target, eid, claim_ref, source_file,
+                              created_at, evidence_ids=[claim_ref])
+
+        if node_type == "KNOWLEDGE_GAP":
+            blueprint_ref = entity.get("blueprintId")
+            if blueprint_ref:
+                target = resolve(blueprint_ref, "BLUEPRINT_HAS_GAP", eid)
+                if target:
+                    add_edge("BLUEPRINT_HAS_GAP", target, from_node_id, blueprint_ref, eid, source_file, created_at)
+            eq_ref = (entity.get("provenance") or {}).get("evidenceQuestionId")
+            if eq_ref:
+                target = resolve(eq_ref, "GAP_GENERATES_RESEARCH_QUESTION", eid)
+                if target:
+                    add_edge("GAP_GENERATES_RESEARCH_QUESTION", from_node_id, target, eid, eq_ref, source_file, created_at)
+
+        if node_type == "HYPOTHESIS":
+            for claim_ref in entity.get("sourceClaimIds", []) or []:
+                target = resolve(claim_ref, "CLAIM_SUPPORTS_HYPOTHESIS", eid)
+                if target:
+                    add_edge("CLAIM_SUPPORTS_HYPOTHESIS", target, from_node_id, claim_ref, eid, source_file,
+                              created_at, evidence_ids=entity.get("supportingEvidenceIds") or [])
+            for evidence_ref in entity.get("contradictingEvidenceIds", []) or []:
+                for claim_ref in _evidence_to_contradicted_claims.get(evidence_ref, []):
+                    target = node_id_by_entity_id.get(claim_ref)
+                    if target:
+                        add_edge("CLAIM_CONTRADICTS_HYPOTHESIS", target, from_node_id, claim_ref, eid, source_file,
+                                  created_at, evidence_ids=[evidence_ref])
 
     # PROGRAM-006 (ADR-008): EvidenceClaimLink records are edges, not nodes --
     # relationshipType maps directly onto an existing or additive edge type.

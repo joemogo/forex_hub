@@ -152,6 +152,35 @@ RULE_CANDIDATE_OWNER_REVIEW_STATUSES = ["not_reviewed", "pending", "approved", "
 
 EXPLANATION_SCHEMA_VERSION = 1
 
+# ---------------------------------------------------------------------------
+# PROGRAM-007 Phase 7A (Knowledge Library vertical slice) vocabularies.
+# ---------------------------------------------------------------------------
+
+PROFILE_CONCEPT_STATUSES = ["confirmed", "inferred", "conflicting"]
+
+BLUEPRINT_STATUSES = ["DRAFT_RESEARCH_ONLY", "SUPERSEDED"]
+BLUEPRINT_STAGE_CLASSIFICATIONS = ["required", "preferred", "optional", "forbidden", "unknown"]
+BLUEPRINT_RESEARCH_STATUSES = ["draft", "under_review", "reviewed"]
+BLUEPRINT_VALIDATION_STATUSES = ["not_available", "pending", "in_progress", "validated", "failed"]
+
+GAP_CATEGORIES = [
+    "instrument", "session", "higher_timeframe_bias", "execution_timeframe", "setup_sequence",
+    "entry_trigger", "confirmation", "invalidation", "stop_placement", "risk_percentage",
+    "target_selection", "trade_management", "news_handling", "spread_handling",
+    "volatility_handling", "no_trade_conditions", "exception_handling",
+]
+GAP_ANSWER_STATUSES = ["unanswered", "partially_answered", "answered"]
+GAP_CONFIDENCE_LEVELS = ["none", "low", "moderate", "high"]
+
+HYPOTHESIS_STATUSES = ["PROPOSED_UNVALIDATED", "UNDER_RESEARCH", "SUPPORTED", "REFUTED", "WITHDRAWN"]
+
+# Deliverable 7: the 8 actions a reviewer may take on any Knowledge Library
+# item awaiting review. Never auto-applied -- always an explicit human choice.
+REVIEW_ACTIONS = [
+    "approve_as_supported_claim", "approve_as_inferred_claim", "reject", "mark_contradictory",
+    "request_more_evidence", "convert_to_research_question", "propose_hypothesis", "leave_unresolved",
+]
+
 
 class EvidenceValidationError(ValueError):
     """Raised on a fatal creation error. Carries structured findings (dicts
@@ -346,6 +375,59 @@ def next_proposal_id(proposals_dir, now):
 
 def text_sha256(text):
     return gc.sha256_hex((text or "").encode("utf-8"))
+
+
+# ---------------------------------------------------------------------------
+# PROGRAM-007 Phase 7A (Knowledge Library) deterministic identifiers. Literal
+# filenames (id.replace("|", "_") + ".json"), matching the source/claim/
+# proposal convention -- never hash-derived, so filename-pattern sequencing
+# is safe here.
+# ---------------------------------------------------------------------------
+
+def profile_id_to_filename(profileId):
+    return profileId.replace("|", "_") + ".json"
+
+
+def next_profile_id(profiles_dir, trader_id, now):
+    date_str = now.strftime("%Y%m%d")
+    scope = trader_id.upper()
+    pattern = re.compile(r"^PROFILE_%s_%s_(\d{3,})$" % (re.escape(scope), re.escape(date_str)))
+    seq = _next_seq(profiles_dir, pattern)
+    return "PROFILE|%s|%s|%03d" % (scope, date_str, seq)
+
+
+def blueprint_id_to_filename(blueprintId):
+    return blueprintId.replace("|", "_") + ".json"
+
+
+def next_blueprint_id(blueprints_dir, trader_id, now):
+    date_str = now.strftime("%Y%m%d")
+    scope = trader_id.upper()
+    pattern = re.compile(r"^BLUEPRINT_%s_%s_(\d{3,})$" % (re.escape(scope), re.escape(date_str)))
+    seq = _next_seq(blueprints_dir, pattern)
+    return "BLUEPRINT|%s|%s|%03d" % (scope, date_str, seq)
+
+
+def gap_id_to_filename(gapId):
+    return gapId.replace("|", "_") + ".json"
+
+
+def next_gap_id(gaps_dir, now):
+    date_str = now.strftime("%Y%m%d")
+    pattern = re.compile(r"^GAP_%s_(\d{3,})$" % re.escape(date_str))
+    seq = _next_seq(gaps_dir, pattern)
+    return "GAP|%s|%03d" % (date_str, seq)
+
+
+def hypothesis_id_to_filename(hypothesisId):
+    return hypothesisId.replace("|", "_") + ".json"
+
+
+def next_hypothesis_id(hypotheses_dir, now):
+    date_str = now.strftime("%Y%m%d")
+    pattern = re.compile(r"^HYP_%s_(\d{3,})$" % re.escape(date_str))
+    seq = _next_seq(hypotheses_dir, pattern)
+    return "HYP|%s|%03d" % (date_str, seq)
 
 
 # ---------------------------------------------------------------------------

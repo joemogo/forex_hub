@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/strategy-blueprint.schema.json",
+  "title": "StrategyBlueprint",
+  "description": "PROGRAM-007 Phase 7A (Knowledge Library vertical slice). A non-executable, research-only draft strategy write-up generated from approved claims. This is NEVER a StrategyRule and is never read by any execution or scanner path -- status is structurally restricted to non-executable values, and productionStatus is hardcoded to 'not_applicable'. Every rule-like statement keeps its evidenceIds and confidence so nothing here is presented as more certain than the evidence actually supports.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "blueprintId", "traderId", "strategyName", "version", "status", "generatedAt",
+    "scope", "workflow", "entryLogic", "exitLogic", "riskLogic", "contradictions",
+    "validationStatus", "sourceLineage", "limitations", "schemaVersion"
+  ],
+  "$defs": {
+    "labeledStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "evidenceIds", "confidence"],
+      "properties": {
+        "statement": { "type": "string" },
+        "evidenceIds": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" } },
+        "confidence": { "type": "string" }
+      }
+    },
+    "workflowStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageNumber", "stageName", "classification"],
+      "properties": {
+        "stageNumber": { "type": "integer", "minimum": 1 },
+        "stageName": { "type": "string" },
+        "description": { "type": "string" },
+        "classification": { "type": "string", "enum": ["required", "preferred", "optional", "forbidden", "unknown"] },
+        "confidence": { "type": ["string", "null"], "default": null },
+        "evidenceLinks": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" }, "default": [] },
+        "competingInterpretations": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "unknowns": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    }
+  },
+  "properties": {
+    "blueprintId": { "type": "string", "pattern": "^BLUEPRINT\\|[A-Z0-9_]+\\|\\d{8}\\|\\d{3,}$" },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "strategyName": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["DRAFT_RESEARCH_ONLY", "SUPERSEDED"], "default": "DRAFT_RESEARCH_ONLY",
+      "description": "Never any execution-implying value -- this blueprint can never itself become active." },
+    "supersedesBlueprintId": { "type": ["string", "null"], "pattern": "^BLUEPRINT\\|.*$", "default": null },
+    "generatedAt": { "type": "string", "format": "date-time" },
+
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "markets": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "instruments": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "sessions": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "higherTimeframes": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "executionTimeframes": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "confirmationTimeframes": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "preferredMarketConditions": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "prohibitedOrAvoidedConditions": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+
+    "workflow": { "type": "array", "items": { "$ref": "#/$defs/workflowStage" }, "default": [] },
+
+    "entryLogic": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "requiredConditions": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "preferredConditions": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "optionalConditions": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "forbiddenConditions": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "unresolvedConditions": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+
+    "exitLogic": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "stopPlacement": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "setupInvalidation": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "profitTargets": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "partials": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "breakEven": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "trailing": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "timeBasedExit": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "unknowns": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+
+    "riskLogic": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "statedRiskRules": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "inferredRiskRules": { "type": "array", "items": { "$ref": "#/$defs/labeledStatement" }, "default": [] },
+        "missingRiskRules": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+
+    "contradictions": {
+      "type": "array", "default": [],
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["conflictingClaimIds", "affectedSections", "currentHandling"],
+        "properties": {
+          "contradictionRecordId": { "type": ["string", "null"], "pattern": "^XCONTRA\\|.*$", "default": null },
+          "conflictingClaimIds": { "type": "array", "items": { "type": "string", "pattern": "^CLAIM\\|" } },
+          "affectedSections": { "type": "array", "items": { "type": "string" } },
+          "currentHandling": { "type": "string" }
+        }
+      }
+    },
+
+    "validationStatus": {
+      "type": "object", "additionalProperties": false,
+      "required": ["researchStatus", "replayStatus", "paperTradingStatus", "productionStatus"],
+      "properties": {
+        "researchStatus": { "type": "string", "enum": ["draft", "under_review", "reviewed"], "default": "draft" },
+        "replayStatus": { "type": "string", "enum": ["not_available", "pending", "in_progress", "validated", "failed"], "default": "not_available" },
+        "paperTradingStatus": { "type": "string", "enum": ["not_available", "pending", "in_progress", "validated", "failed"], "default": "not_available" },
+        "productionStatus": { "type": "string", "const": "not_applicable",
+          "description": "Always 'not_applicable' -- a StrategyBlueprint can never itself reach production." }
+      }
+    },
+
+    "sourceLineage": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "sourceIds": { "type": "array", "items": { "type": "string", "pattern": "^EVSRC\\|" }, "default": [] },
+        "segmentIds": { "type": "array", "items": { "type": "string", "pattern": "^TSEG\\|" }, "default": [] },
+        "evidenceIds": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" }, "default": [] },
+        "claimIds": { "type": "array", "items": { "type": "string", "pattern": "^CLAIM\\|" }, "default": [] }
+      }
+    },
+
+    "limitations": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "missingInformation": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "discretionaryLanguage": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "ambiguousDefinitions": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "insufficientEvidence": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+
+    "schemaVersion": { "type": "integer", "minimum": 1 }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/knowledge-gap.schema.json",
+  "title": "KnowledgeGap",
+  "description": "PROGRAM-007 Phase 7A (Knowledge Library vertical slice). A structured, blueprint-scoped gap: missing or ambiguous information the current evidence cannot yet answer. Built on top of the same deterministic detection primitives as EvidenceQuestion (ADR-009) but carries the richer, blueprint-oriented shape this milestone's review workflow needs (affected sections, next-source recommendation, proposed validation method). Never fabricates an answer -- currentBestAnswer is null whenever nothing in the evidence actually answers the question.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gapId", "traderId", "blueprintId", "category", "question", "answerStatus",
+    "confidence", "researchPriority", "createdAt", "schemaVersion"
+  ],
+  "properties": {
+    "gapId": { "type": "string", "pattern": "^GAP\\|\\d{8}\\|\\d{3,}$" },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "blueprintId": { "type": "string", "pattern": "^BLUEPRINT\\|.*$" },
+    "category": { "type": "string",
+      "enum": ["instrument", "session", "higher_timeframe_bias", "execution_timeframe", "setup_sequence",
+        "entry_trigger", "confirmation", "invalidation", "stop_placement", "risk_percentage",
+        "target_selection", "trade_management", "news_handling", "spread_handling",
+        "volatility_handling", "no_trade_conditions", "exception_handling"] },
+    "question": { "type": "string" },
+    "whyItMatters": { "type": ["string", "null"], "default": null },
+    "affectedSections": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "evidenceSearched": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" }, "default": [] },
+    "currentBestAnswer": { "type": ["string", "null"], "default": null },
+    "answerStatus": { "type": "string", "enum": ["unanswered", "partially_answered", "answered"], "default": "unanswered" },
+    "confidence": { "type": "string", "enum": ["none", "low", "moderate", "high"], "default": "none",
+      "description": "Confidence in currentBestAnswer -- 'none' whenever currentBestAnswer is null." },
+    "researchPriority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+    "recommendedNextSourceType": { "type": ["string", "null"], "default": null },
+    "proposedValidationMethod": { "type": ["string", "null"], "default": null },
+    "provenance": {
+      "type": "object", "additionalProperties": false, "default": {},
+      "properties": {
+        "evidenceQuestionId": { "type": ["string", "null"], "pattern": "^EQ\\|.*$", "default": null },
+        "relatedClaimIds": { "type": "array", "items": { "type": "string", "pattern": "^CLAIM\\|" }, "default": [] }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "resolvedAt": { "type": ["string", "null"], "format": "date-time", "default": null },
+    "schemaVersion": { "type": "integer", "minimum": 1 }
+  }
+}

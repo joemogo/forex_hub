@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/trader-profile.schema.json",
+  "title": "TraderProfile",
+  "description": "PROGRAM-007 Phase 7A (Knowledge Library vertical slice). A deterministic, versioned summary of everything the Evidence Intelligence Engine currently knows about one trader, built purely from approved claims/evidence/sources -- never a standalone source of truth. Every concept list item is a labeled statement (value + status + evidenceIds), never a bare string, so inferred values stay distinguishable from confirmed ones and conflicting values remain visible rather than silently collapsed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileId", "traderId", "canonicalName", "evidenceCount", "observationCount", "claimCount",
+    "contradictionCount", "unresolvedQuestionCount", "hypothesisCount", "sourceCount",
+    "extractionStatus", "reviewStatus", "generatedAt", "schemaVersion"
+  ],
+  "$defs": {
+    "labeledConcept": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "status", "evidenceIds"],
+      "properties": {
+        "value": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmed", "inferred", "conflicting"] },
+        "evidenceIds": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" } }
+      }
+    }
+  },
+  "properties": {
+    "profileId": { "type": "string", "pattern": "^PROFILE\\|[A-Z0-9_]+\\|\\d{8}\\|\\d{3,}$" },
+    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "canonicalName": { "type": "string" },
+    "aliases": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "marketsMentioned": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "instrumentsMentioned": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "sessionsMentioned": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "timeframesMentioned": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "strategyTypes": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "primaryConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "entryConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "confirmationConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "invalidationConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "stopLossConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "targetConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "tradeManagementConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "riskConcepts": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "marketConditionsPreferred": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "marketConditionsAvoided": { "type": "array", "items": { "$ref": "#/$defs/labeledConcept" }, "default": [] },
+    "evidenceCount": { "type": "integer", "minimum": 0 },
+    "observationCount": { "type": "integer", "minimum": 0,
+      "description": "Count of evidence items whose directness is direct_demonstrated/owner_observation -- observed rather than stated." },
+    "claimCount": { "type": "integer", "minimum": 0 },
+    "contradictionCount": { "type": "integer", "minimum": 0 },
+    "unresolvedQuestionCount": { "type": "integer", "minimum": 0 },
+    "hypothesisCount": { "type": "integer", "minimum": 0 },
+    "sourceCount": { "type": "integer", "minimum": 0 },
+    "extractionStatus": { "type": "string", "enum": ["not_started", "in_progress", "completed", "failed"] },
+    "reviewStatus": { "type": "string", "enum": ["not_required", "pending", "in_review", "approved", "rejected"] },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sourceLineage": {
+      "type": "object", "additionalProperties": false, "default": {},
+      "properties": {
+        "sourceIds": { "type": "array", "items": { "type": "string", "pattern": "^EVSRC\\|" }, "default": [] },
+        "claimIds": { "type": "array", "items": { "type": "string", "pattern": "^CLAIM\\|" }, "default": [] }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "confidenceSummary": {
+      "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 }, "default": {},
+      "description": "Breakdown of claimCount by confidenceState, e.g. {\"supported\": 2, \"contested\": 1}."
+    },
+    "schemaVersion": { "type": "integer", "minimum": 1 }
+  }
+}
