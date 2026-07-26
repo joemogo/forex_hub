@@ -61,6 +61,17 @@
       "type": "string",
       "enum": ["active", "superseded", "retracted", "disputed"]
     },
+    "directness": {
+      "type": ["string", "null"], "default": null,
+      "enum": ["direct_explicit", "direct_demonstrated", "indirect_implied",
+        "inferred_from_context", "derived_from_analysis", "owner_observation", "unresolved", null],
+      "description": "PROGRAM-006 Phase 1B (ADR-009). How explicit/observed vs. inferred this item is -- kept strictly separate from evidenceQuality. Null on Phase 1A records created before this field existed."
+    },
+    "extractionCertainty": {
+      "type": ["string", "null"], "default": null,
+      "enum": ["certain", "high", "moderate", "low", "ambiguous", "unresolved", null],
+      "description": "PROGRAM-006 Phase 1B (ADR-009). Confidence that the source was interpreted correctly -- never conflated with claim confidence or evidence quality. Null on Phase 1A records created before this field existed."
+    },
     "contentHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "default": null },
     "parentEvidenceId": { "type": ["string", "null"], "pattern": "^EV\\|", "default": null },
     "supersedesEvidenceId": { "type": ["string", "null"], "pattern": "^EV\\|", "default": null },

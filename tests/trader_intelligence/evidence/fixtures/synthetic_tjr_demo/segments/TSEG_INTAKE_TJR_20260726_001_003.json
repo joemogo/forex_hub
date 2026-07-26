@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 3,
+  "lineStart": 3,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "You always want confirmation before entering, that's basically required.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|003",
+  "segmentType": "other",
+  "sequenceNumber": 3,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:02:15",
+  "textHash": "f294e2ac26045ae517a49b7d3a8f1618054f59111faf60a009ff0c950b602b07"
+}

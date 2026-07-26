@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 9,
+  "lineStart": 9,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "This trade worked out well, displacement carried price straight to target.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|009",
+  "segmentType": "other",
+  "sequenceNumber": 9,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:09:20",
+  "textHash": "2dc4d40f0e08b324ccc00c3170ef300cedb86d2b7234ec8830dae16002afd9f2"
+}

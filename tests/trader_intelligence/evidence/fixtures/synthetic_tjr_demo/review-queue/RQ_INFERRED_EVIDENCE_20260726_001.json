@@ -1,0 +1,16 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "entityId": "EV|EVSRC|TJR|20260726|001|008",
+  "entityType": "EVIDENCE_ITEM",
+  "metadata": {},
+  "priority": "low",
+  "queueEntryId": "RQ|INFERRED_EVIDENCE|20260726|001",
+  "queueType": "inferred_evidence",
+  "reason": "directness='inferred_from_context' (not a direct statement/observation).",
+  "resolution": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-26T15:00:00Z"
+}

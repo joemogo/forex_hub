@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 8,
+  "lineStart": 8,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "My stop management is honestly discretionary, it depends on the day.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|008",
+  "segmentType": "other",
+  "sequenceNumber": 8,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:08:10",
+  "textHash": "701af1950a7403ff755069fb1b3ab778d4bf28b17c1eb2a03a1595f3930f070c"
+}

@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260726|006",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260726|014",
+  "questionText": "Stop rule 'CLAIM|TJR|20260726|006' has no direct (explicit or demonstrated) supporting evidence -- is stop placement actually well-defined, or discretionary/ambiguous?",
+  "questionType": "missing_stop_placement",
+  "reason": "No supporting link has directness in {direct_explicit, direct_demonstrated}.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

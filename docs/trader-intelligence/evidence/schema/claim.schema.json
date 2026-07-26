@@ -53,7 +53,8 @@
     "marketCondition": { "type": ["string", "null"], "default": null },
     "claimStatus": {
       "type": "string",
-      "enum": ["active", "superseded", "retracted", "merged"]
+      "enum": ["active", "pending_review", "superseded", "retracted", "merged"],
+      "description": "pending_review added PROGRAM-006 Phase 1B (ADR-009, Deliverable 11): claims generated from unreviewed extraction/annotation must carry this status until a human confirms them -- never presented as equivalent to an actively-confirmed claim."
     },
     "confidenceState": {
       "type": "string",

@@ -1,7 +1,7 @@
 {
-  "buildId": "BUILD|20260726|005",
+  "buildId": "BUILD|20260726|011",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-07-26T11:58:33Z",
+  "builtAt": "2026-07-26T13:14:13Z",
   "edgeCounts": {
     "BELONGS_TO_TRADER": 38,
     "BLOCKS": 35,
@@ -46,7 +46,7 @@
       "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
     }
   ],
-  "integrityReportId": "INTEGRITY|BUILD|20260726|005",
+  "integrityReportId": "INTEGRITY|BUILD|20260726|011",
   "nodeCounts": {
     "OWNER_DECISION": 2,
     "STRATEGY_FAMILY": 3,

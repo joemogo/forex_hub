@@ -1,0 +1,13 @@
+{
+  "actor": "fixture_generator",
+  "entityId": "CLAIM|TJR|20260726|003",
+  "entityType": "CLAIM",
+  "eventId": "LCEVT|CLAIM|CLAIM|TJR|20260726|003|004",
+  "eventType": "confidence_recomputed",
+  "metadata": {},
+  "newStatus": "contested",
+  "priorStatus": "contested",
+  "reason": "score=0.00 from 1 independent supporting group(s) (support_score=0.70) vs 1 independent contradicting group(s) (contra_score=0.42); weakening_score=0.16 from 1 weakening item(s); contextual/unresolved=0 not scored directly. Same-source items beyond the first in a group are discounted to 25% weight to avoid double-counting repeated excerpts as independent confirmation.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-26T15:00:00Z"
+}

@@ -1,0 +1,685 @@
+{
+  "claimConfidence": {
+    "CLAIM|TJR|20260726|001": {
+      "score": 46.77,
+      "state": "supported"
+    },
+    "CLAIM|TJR|20260726|002": {
+      "score": 22.0,
+      "state": "emerging"
+    },
+    "CLAIM|TJR|20260726|003": {
+      "score": 0.0,
+      "state": "contested"
+    },
+    "CLAIM|TJR|20260726|004": {
+      "score": 22.0,
+      "state": "emerging"
+    },
+    "CLAIM|TJR|20260726|006": {
+      "score": 22.0,
+      "state": "emerging"
+    },
+    "CLAIM|TJR|20260726|007": {
+      "score": 22.0,
+      "state": "emerging"
+    },
+    "CLAIM|TJR|20260726|008": {
+      "score": 0.0,
+      "state": "contradicted"
+    },
+    "CLAIM|TJR|20260726|009": {
+      "score": 22.0,
+      "state": "emerging"
+    }
+  },
+  "claimsGenerated": [
+    {
+      "claimId": "CLAIM|TJR|20260726|001",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 46.77,
+      "confidenceState": "supported",
+      "normalizedClaim": "Displacement occurs after a liquidity sweep."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|002",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "normalizedClaim": "Displacement occurs after a liquidity sweep."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|003",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 0.0,
+      "confidenceState": "contested",
+      "normalizedClaim": "A confirmation candle is required before entry."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|004",
+      "claimStatus": "pending_review",
+      "claimType": "exception",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "normalizedClaim": "The liquidity-sweep requirement is waived immediately after high-impact news."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|006",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "normalizedClaim": "Stop placement follows a single well-defined rule."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|007",
+      "claimStatus": "pending_review",
+      "claimType": "trade_management_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "normalizedClaim": "Trade management follows a fixed, non-discretionary rule."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|008",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 0.0,
+      "confidenceState": "contradicted",
+      "normalizedClaim": "Displacement-based entries reliably reach target once the setup criteria are met."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260726|009",
+      "claimStatus": "pending_review",
+      "claimType": "risk_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "normalizedClaim": "Risk per trade should not exceed one percent."
+    }
+  ],
+  "contradictions": [
+    {
+      "claimAId": "CLAIM|TJR|20260726|003",
+      "claimBId": "CLAIM|TJR|20260726|004",
+      "contradictionId": "XCONTRA|20260726|001",
+      "contradictionType": "SCOPE_MISMATCH",
+      "detectedAt": "2026-07-26T15:00:00Z",
+      "metadata": {},
+      "rationale": "SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING: one claim treats confirmation as basically required; the other says the underlying sweep requirement itself is waived immediately after high-impact news -- these need owner reconciliation, not automatic resolution.",
+      "resolution": null,
+      "reviewedAt": null,
+      "schemaVersion": 1,
+      "scopeOverlap": "unknown",
+      "severity": "material",
+      "status": "open"
+    }
+  ],
+  "demonstratedBehavior": [
+    {
+      "directness": "direct_demonstrated",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|003",
+      "evidenceType": "demonstrated_behavior",
+      "exactExcerpt": "Here is a chart example where price swept the high and then displaced down hard, that is the setup.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:03:30"
+    },
+    {
+      "directness": "direct_demonstrated",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|012",
+      "evidenceType": "success_observation",
+      "exactExcerpt": "This trade worked out well, displacement carried price straight to target.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:09:20"
+    },
+    {
+      "directness": "direct_demonstrated",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|013",
+      "evidenceType": "failure_observation",
+      "exactExcerpt": "This other trade failed because the displacement reversed right after entry.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:10:30"
+    }
+  ],
+  "evidenceExtracted": {
+    "annotationCount": 14,
+    "count": 14,
+    "evidenceIds": [
+      "EV|EVSRC|TJR|20260726|001|001",
+      "EV|EVSRC|TJR|20260726|001|002",
+      "EV|EVSRC|TJR|20260726|001|003",
+      "EV|EVSRC|TJR|20260726|001|004",
+      "EV|EVSRC|TJR|20260726|001|005",
+      "EV|EVSRC|TJR|20260726|001|006",
+      "EV|EVSRC|TJR|20260726|001|007",
+      "EV|EVSRC|TJR|20260726|001|008",
+      "EV|EVSRC|TJR|20260726|001|009",
+      "EV|EVSRC|TJR|20260726|001|010",
+      "EV|EVSRC|TJR|20260726|001|011",
+      "EV|EVSRC|TJR|20260726|001|012",
+      "EV|EVSRC|TJR|20260726|001|013",
+      "EV|EVSRC|TJR|20260726|001|014"
+    ]
+  },
+  "exceptions": [
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|007",
+      "evidenceType": "exception_statement",
+      "exactExcerpt": "Sometimes I skip the confirmation candle if the displacement is really strong.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:04:45"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|009",
+      "evidenceType": "exception_statement",
+      "exactExcerpt": "Except when the news just came out, then I ignore the sweep requirement entirely.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:07:00"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|011",
+      "evidenceType": "exception_statement",
+      "exactExcerpt": "My stop management is honestly discretionary, it depends on the day.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:08:10"
+    }
+  ],
+  "explicitStatements": [
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|001",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "Displacement must always follow a liquidity sweep before I consider an entry valid.",
+      "extractionCertainty": "certain",
+      "startTimestamp": "00:01:00"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|002",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "Displacement must always follow a liquidity sweep before I consider an entry valid.",
+      "extractionCertainty": "certain",
+      "startTimestamp": "00:12:50"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|005",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "On the 15 minute chart, displacement must always follow a liquidity sweep before I consider an entry valid.",
+      "extractionCertainty": "certain",
+      "startTimestamp": "00:13:55"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|007",
+      "evidenceType": "exception_statement",
+      "exactExcerpt": "Sometimes I skip the confirmation candle if the displacement is really strong.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:04:45"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|009",
+      "evidenceType": "exception_statement",
+      "exactExcerpt": "Except when the news just came out, then I ignore the sweep requirement entirely.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:07:00"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|011",
+      "evidenceType": "exception_statement",
+      "exactExcerpt": "My stop management is honestly discretionary, it depends on the day.",
+      "extractionCertainty": "high",
+      "startTimestamp": "00:08:10"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|014",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "Risk-wise, I never risk more than one percent per trade.",
+      "extractionCertainty": "certain",
+      "startTimestamp": "00:11:40"
+    }
+  ],
+  "extractionStatus": "completed",
+  "generatedAt": "2026-07-26T15:00:00Z",
+  "inferredObservations": [
+    {
+      "directness": "inferred_from_context",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|008",
+      "evidenceType": "opinion",
+      "exactExcerpt": "I think a confirmation candle is usually a good idea but it is not a hard rule for me.",
+      "extractionCertainty": "low",
+      "startTimestamp": "00:05:50"
+    },
+    {
+      "directness": "inferred_from_context",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|010",
+      "evidenceType": "opinion",
+      "exactExcerpt": "Maybe the stop should go above the sweep high, or maybe below the previous structure, I have not fully decided.",
+      "extractionCertainty": "ambiguous",
+      "startTimestamp": "00:15:00"
+    }
+  ],
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "missingStrategyComponents": [
+    "Claim 'CLAIM|TJR|20260726|001' has no session recorded -- does this rule apply in every session or only specific ones?",
+    "Claim 'CLAIM|TJR|20260726|001' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+    "Claim 'CLAIM|TJR|20260726|002' has no session recorded -- does this rule apply in every session or only specific ones?",
+    "Claim 'CLAIM|TJR|20260726|003' has no session recorded -- does this rule apply in every session or only specific ones?",
+    "Claim 'CLAIM|TJR|20260726|003' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+    "Claim 'CLAIM|TJR|20260726|006' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+    "Entry rule 'CLAIM|TJR|20260726|001' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+    "Entry rule 'CLAIM|TJR|20260726|002' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+    "Stop rule 'CLAIM|TJR|20260726|006' has no direct (explicit or demonstrated) supporting evidence -- is stop placement actually well-defined, or discretionary/ambiguous?"
+  ],
+  "opinionsAndUnsupportedStatements": [
+    {
+      "directness": "inferred_from_context",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|008",
+      "evidenceType": "opinion",
+      "exactExcerpt": "I think a confirmation candle is usually a good idea but it is not a hard rule for me.",
+      "extractionCertainty": "low",
+      "startTimestamp": "00:05:50"
+    },
+    {
+      "directness": "inferred_from_context",
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|010",
+      "evidenceType": "opinion",
+      "exactExcerpt": "Maybe the stop should go above the sweep high, or maybe below the previous structure, I have not fully decided.",
+      "extractionCertainty": "ambiguous",
+      "startTimestamp": "00:15:00"
+    }
+  ],
+  "ownerReviewItems": [
+    {
+      "blockingStatus": "non_blocking",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "entityId": "CLAIM|TJR|20260726|003",
+      "entityType": "CLAIM",
+      "metadata": {},
+      "priority": "high",
+      "queueEntryId": "RQ|CONTESTED_CLAIMS|20260726|001",
+      "queueType": "contested_claims",
+      "reason": "confidenceState='contested'.",
+      "resolution": null,
+      "reviewStatus": "open",
+      "reviewer": null,
+      "schemaVersion": 1,
+      "updatedAt": "2026-07-26T15:00:00Z"
+    }
+  ],
+  "paperTradingHypotheses": [],
+  "processingWarnings": [],
+  "productionBehaviorChanged": false,
+  "provenance": {
+    "canonicalReference": null,
+    "contentHash": null,
+    "licensingStatus": "owner_authored",
+    "sourceProvenanceStatus": "unverified"
+  },
+  "recommendedNextSource": "Resolve open items on this intake (see ownerReviewItems) before moving to a new source.",
+  "replayHypotheses": [],
+  "reportId": "TJRREPORT|INTAKE|TJR|20260726|001|20260726T150000Z",
+  "reportSchemaVersion": 1,
+  "ruleCandidates": [
+    {
+      "claimType": "entry_rule",
+      "confidenceState": "supported",
+      "contradictingEvidenceIds": [],
+      "contradictionStatus": "none",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "directnessDistribution": {
+        "direct_demonstrated": 1,
+        "direct_explicit": 3,
+        "unresolved": 1
+      },
+      "evidenceIds": [
+        "EV|EVSRC|TJR|20260726|001|001",
+        "EV|EVSRC|TJR|20260726|001|002",
+        "EV|EVSRC|TJR|20260726|001|003",
+        "EV|EVSRC|TJR|20260726|001|004",
+        "EV|EVSRC|TJR|20260726|002|001"
+      ],
+      "extractionCertaintyDistribution": {
+        "certain": 2,
+        "high": 2,
+        "unresolved": 1
+      },
+      "marketCondition": null,
+      "originatingClaimIds": [
+        "CLAIM|TJR|20260726|001"
+      ],
+      "ownerReviewStatus": "not_reviewed",
+      "paperTradingStatus": "not_available",
+      "proposalId": "RCPROP|20260726|001",
+      "proposalRationale": "Auto-suggested by the controlled extraction pipeline: claimType='entry_rule' reached confidenceState='supported'.",
+      "proposalVersion": 1,
+      "replayStatus": "not_available",
+      "schemaVersion": 1,
+      "session": null,
+      "status": "proposed",
+      "strategyFamilyId": null,
+      "supersedesProposalId": null,
+      "supportingSourceIds": [
+        "EVSRC|TJR|20260726|001",
+        "EVSRC|TJR|20260726|002"
+      ],
+      "symbols": [],
+      "timeframe": null,
+      "traderId": "TJR",
+      "unresolvedQuestionIds": [
+        "EQ|20260726|001",
+        "EQ|20260726|002",
+        "EQ|20260726|003",
+        "EQ|20260726|004",
+        "EQ|20260726|005"
+      ],
+      "updatedAt": "2026-07-26T15:00:00Z"
+    }
+  ],
+  "segmentsAnalyzed": {
+    "count": 15,
+    "segmentIds": [
+      "TSEG|INTAKE|TJR|20260726|001|001",
+      "TSEG|INTAKE|TJR|20260726|001|002",
+      "TSEG|INTAKE|TJR|20260726|001|003",
+      "TSEG|INTAKE|TJR|20260726|001|004",
+      "TSEG|INTAKE|TJR|20260726|001|005",
+      "TSEG|INTAKE|TJR|20260726|001|006",
+      "TSEG|INTAKE|TJR|20260726|001|007",
+      "TSEG|INTAKE|TJR|20260726|001|008",
+      "TSEG|INTAKE|TJR|20260726|001|009",
+      "TSEG|INTAKE|TJR|20260726|001|010",
+      "TSEG|INTAKE|TJR|20260726|001|011",
+      "TSEG|INTAKE|TJR|20260726|001|012",
+      "TSEG|INTAKE|TJR|20260726|001|013",
+      "TSEG|INTAKE|TJR|20260726|001|014",
+      "TSEG|INTAKE|TJR|20260726|001|015"
+    ]
+  },
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "sourceOverview": {
+    "intakeStatus": "extracted",
+    "registeredAt": "2026-07-26T15:00:00Z",
+    "sourceType": "transcript",
+    "title": "SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING -- synthetic multi-topic session",
+    "traderId": "TJR"
+  },
+  "transcriptQuality": {
+    "language": null,
+    "transcriptCompleteness": "complete",
+    "transcriptFormat": "timestamped_text",
+    "warnings": []
+  },
+  "unresolvedQuestions": [
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "high",
+      "questionId": "EQ|20260726|001",
+      "questionText": "Entry rule 'CLAIM|TJR|20260726|001' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+      "questionType": "missing_invalidation",
+      "reason": "No claimType='invalidation_rule' claim shares this claim's (trader, strategyFamily, timeframe) scope.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_promotion",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "low",
+      "questionId": "EQ|20260726|002",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?",
+      "questionType": "missing_paper_validation",
+      "reason": "Rule-eligible claimType with confidenceState in {supported, strongly_supported} but no paper-trading evidence producer has run yet (out of scope for Phase 1B).",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_promotion",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "low",
+      "questionId": "EQ|20260726|003",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?",
+      "questionType": "missing_replay_validation",
+      "reason": "Rule-eligible claimType with confidenceState in {supported, strongly_supported} but no replay evidence producer has run yet (out of scope for Phase 1B).",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|004",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' has no session recorded -- does this rule apply in every session or only specific ones?",
+      "questionType": "missing_session",
+      "reason": "claimType='entry_rule' is session-sensitive and claim.session is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|005",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+      "questionType": "missing_timeframe",
+      "reason": "claimType='entry_rule' is timeframe-sensitive and claim.timeframe is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|002",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "high",
+      "questionId": "EQ|20260726|006",
+      "questionText": "Entry rule 'CLAIM|TJR|20260726|002' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+      "questionType": "missing_invalidation",
+      "reason": "No claimType='invalidation_rule' claim shares this claim's (trader, strategyFamily, timeframe) scope.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|002",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|007",
+      "questionText": "Claim 'CLAIM|TJR|20260726|002' has no session recorded -- does this rule apply in every session or only specific ones?",
+      "questionType": "missing_session",
+      "reason": "claimType='entry_rule' is session-sensitive and claim.session is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|003",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|008",
+      "questionText": "Claim 'CLAIM|TJR|20260726|003' has no session recorded -- does this rule apply in every session or only specific ones?",
+      "questionType": "missing_session",
+      "reason": "claimType='confirmation_rule' is session-sensitive and claim.session is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|003",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|009",
+      "questionText": "Claim 'CLAIM|TJR|20260726|003' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+      "questionType": "missing_timeframe",
+      "reason": "claimType='confirmation_rule' is timeframe-sensitive and claim.timeframe is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|003",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "high",
+      "questionId": "EQ|20260726|010",
+      "questionText": "Claim 'CLAIM|TJR|20260726|003' has supporting and contradicting evidence from the same source (EVSRC|TJR|20260726|001) -- did this source contradict itself, or state an exception?",
+      "questionType": "self_contradiction",
+      "reason": "The same sourceId appears in both a supporting and a contradicting link for this claim.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": [
+        "EVSRC|TJR|20260726|001"
+      ]
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|006",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "high",
+      "questionId": "EQ|20260726|014",
+      "questionText": "Stop rule 'CLAIM|TJR|20260726|006' has no direct (explicit or demonstrated) supporting evidence -- is stop placement actually well-defined, or discretionary/ambiguous?",
+      "questionType": "missing_stop_placement",
+      "reason": "No supporting link has directness in {direct_explicit, direct_demonstrated}.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|006",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|015",
+      "questionText": "Claim 'CLAIM|TJR|20260726|006' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+      "questionType": "missing_timeframe",
+      "reason": "claimType='stop_rule' is timeframe-sensitive and claim.timeframe is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|007",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [
+        "EV|EVSRC|TJR|20260726|001|011"
+      ],
+      "priority": "medium",
+      "questionId": "EQ|20260726|016",
+      "questionText": "Evidence for trade-management claim 'CLAIM|TJR|20260726|007' describes discretionary judgment rather than a fixed rule -- should this remain discretionary, or is there a more precise rule underneath it?",
+      "questionType": "discretionary_management",
+      "reason": "Evidence text matched a configured discretionary-language marker.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|008",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "high",
+      "questionId": "EQ|20260726|017",
+      "questionText": "Claim 'CLAIM|TJR|20260726|008' has supporting and contradicting evidence from the same source (EVSRC|TJR|20260726|001) -- did this source contradict itself, or state an exception?",
+      "questionType": "self_contradiction",
+      "reason": "The same sourceId appears in both a supporting and a contradicting link for this claim.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": [
+        "EVSRC|TJR|20260726|001"
+      ]
+    }
+  ],
+  "whatMogoLearned": [
+    "Displacement occurs after a liquidity sweep. (supported, score=46.77)"
+  ],
+  "whatMogoStillDoesNotKnow": [
+    "Entry rule 'CLAIM|TJR|20260726|001' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+    "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?",
+    "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?",
+    "Claim 'CLAIM|TJR|20260726|001' has no session recorded -- does this rule apply in every session or only specific ones?",
+    "Claim 'CLAIM|TJR|20260726|001' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+    "Entry rule 'CLAIM|TJR|20260726|002' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+    "Claim 'CLAIM|TJR|20260726|002' has no session recorded -- does this rule apply in every session or only specific ones?",
+    "Claim 'CLAIM|TJR|20260726|003' has no session recorded -- does this rule apply in every session or only specific ones?",
+    "Claim 'CLAIM|TJR|20260726|003' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+    "Claim 'CLAIM|TJR|20260726|003' has supporting and contradicting evidence from the same source (EVSRC|TJR|20260726|001) -- did this source contradict itself, or state an exception?",
+    "Stop rule 'CLAIM|TJR|20260726|006' has no direct (explicit or demonstrated) supporting evidence -- is stop placement actually well-defined, or discretionary/ambiguous?",
+    "Claim 'CLAIM|TJR|20260726|006' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+    "Evidence for trade-management claim 'CLAIM|TJR|20260726|007' describes discretionary judgment rather than a fixed rule -- should this remain discretionary, or is there a more precise rule underneath it?",
+    "Claim 'CLAIM|TJR|20260726|008' has supporting and contradicting evidence from the same source (EVSRC|TJR|20260726|001) -- did this source contradict itself, or state an exception?"
+  ]
+}

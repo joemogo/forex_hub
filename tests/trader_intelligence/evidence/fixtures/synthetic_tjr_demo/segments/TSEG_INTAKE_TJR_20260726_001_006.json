@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 6,
+  "lineStart": 6,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "I think a confirmation candle is usually a good idea but it is not a hard rule for me.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|006",
+  "segmentType": "other",
+  "sequenceNumber": 6,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:05:50",
+  "textHash": "191ee32d43d03a40db4406186a684b1a4f3f4fe18663a92f2f4c5cab56c7a290"
+}

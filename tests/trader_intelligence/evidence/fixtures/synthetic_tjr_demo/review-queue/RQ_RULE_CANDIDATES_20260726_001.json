@@ -1,0 +1,16 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "entityId": "RCPROP|20260726|001",
+  "entityType": "RULE_CANDIDATE_PROPOSAL",
+  "metadata": {},
+  "priority": "medium",
+  "queueEntryId": "RQ|RULE_CANDIDATES|20260726|001",
+  "queueType": "rule_candidates",
+  "reason": "status='proposed', awaiting owner review.",
+  "resolution": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-26T15:00:00Z"
+}

@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 11,
+  "lineStart": 11,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Risk-wise, I never risk more than one percent per trade.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|011",
+  "segmentType": "other",
+  "sequenceNumber": 11,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:11:40",
+  "textHash": "4cf7283a5852b29aa5c0d3e0487f6817fe69244ade1785349b376c185a1c427f"
+}

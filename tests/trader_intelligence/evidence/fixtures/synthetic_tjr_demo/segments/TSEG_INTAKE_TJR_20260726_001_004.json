@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 4,
+  "lineStart": 4,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Here is a chart example where price swept the high and then displaced down hard, that is the setup.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|004",
+  "segmentType": "other",
+  "sequenceNumber": 4,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:03:30",
+  "textHash": "da38b898283f59f0996026632b4b0a5cd78a9d6352fc23f914b161a2bdc2efd6"
+}

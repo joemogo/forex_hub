@@ -89,12 +89,12 @@ def check_orphans(sources, items, claims, links, findings, now):
 # 2. Duplicate IDs (DUPLICATE_ID)
 # ---------------------------------------------------------------------------
 
-def check_duplicate_ids(sources, items, claims, links, contradictions, findings, now):
+def check_duplicate_ids(sources, items, claims, links, contradictions, findings, now, extra=None):
     for label, records, id_field in (
         ("EVIDENCE_SOURCE", sources, "sourceId"), ("EVIDENCE_ITEM", items, "evidenceId"),
         ("CLAIM", claims, "claimId"), ("EVIDENCE_CLAIM_LINK", links, "linkId"),
         ("CONTRADICTION_RECORD", contradictions, "contradictionId"),
-    ):
+    ) + tuple(extra or ()):
         seen = {}
         for r in records:
             rid = r[id_field]
@@ -458,6 +458,156 @@ def check_synthetic_leakage(sources, items, claims, findings, now, is_production
 # Orchestration
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# PROGRAM-006 Phase 1B (ADR-009, Deliverable 19) additive integrity checks
+# ---------------------------------------------------------------------------
+
+def check_orphaned_segments(intakes, segments, findings, now):
+    intake_ids = {m["intakeId"] for m in intakes}
+    for seg in segments:
+        if seg["intakeId"] not in intake_ids:
+            _finding(findings, "ORPHANED_SEGMENT", "ERROR", "TRANSCRIPT_SEGMENT", seg["segmentId"],
+                      "TranscriptSegment references nonexistent intakeId %r." % (seg["intakeId"],), now)
+
+
+def check_missing_transcript_locator(items, findings, now):
+    for item in items:
+        if item.get("extractionMethod") == "manual_transcription" and not item.get("sourceLocator"):
+            _finding(findings, "MISSING_TRANSCRIPT_LOCATOR", "WARNING", "EVIDENCE_ITEM", item["evidenceId"],
+                      "extractionMethod='manual_transcription' but sourceLocator is null -- transcript-derived "
+                      "evidence should preserve its originating segment locator.", now)
+
+
+def check_annotation_references(annotations, intakes, segments, findings, now):
+    intake_ids = {m["intakeId"] for m in intakes}
+    segment_ids = {s["segmentId"] for s in segments}
+    for a in annotations:
+        if a["intakeId"] not in intake_ids:
+            _finding(findings, "INVALID_ANNOTATION_REFERENCE", "ERROR", "MANUAL_ANNOTATION", a["annotationId"],
+                      "Annotation references nonexistent intakeId %r." % (a["intakeId"],), now)
+        if a["segmentId"] not in segment_ids:
+            _finding(findings, "INVALID_ANNOTATION_REFERENCE", "ERROR", "MANUAL_ANNOTATION", a["annotationId"],
+                      "Annotation references nonexistent segmentId %r." % (a["segmentId"],), now)
+
+
+def check_directness_and_certainty_present(items, findings, now):
+    for item in items:
+        has_directness = item.get("directness") is not None
+        has_certainty = item.get("extractionCertainty") is not None
+        if has_directness != has_certainty:
+            _finding(findings, "MISSING_DIRECTNESS_OR_CERTAINTY", "WARNING", "EVIDENCE_ITEM", item["evidenceId"],
+                      "directness=%r but extractionCertainty=%r -- Phase 1B evidence should set both together, "
+                      "or leave both null (Phase 1A legacy record)." % (
+                          item.get("directness"), item.get("extractionCertainty")), now)
+
+
+def check_claim_candidate_without_evidence(claims, links, findings, now):
+    links_by_claim = {}
+    for l in links:
+        links_by_claim.setdefault(l["claimId"], []).append(l)
+    for c in claims:
+        if c["claimStatus"] == "pending_review" and not links_by_claim.get(c["claimId"]):
+            _finding(findings, "CLAIM_CANDIDATE_WITHOUT_EVIDENCE", "ERROR", "CLAIM", c["claimId"],
+                      "claimStatus='pending_review' but no EvidenceClaimLink references this claim.", now)
+
+
+def check_rule_candidate_proposals(proposals, claims, findings, now):
+    claim_ids = {c["claimId"] for c in claims}
+    for p in proposals:
+        if not p.get("originatingClaimIds"):
+            _finding(findings, "RULE_CANDIDATE_WITHOUT_CLAIM", "FATAL", "RULE_CANDIDATE_PROPOSAL", p["proposalId"],
+                      "originatingClaimIds is empty.", now)
+        else:
+            missing = [cid for cid in p["originatingClaimIds"] if cid not in claim_ids]
+            if missing:
+                _finding(findings, "RULE_CANDIDATE_WITHOUT_CLAIM", "ERROR", "RULE_CANDIDATE_PROPOSAL", p["proposalId"],
+                          "originatingClaimIds references nonexistent claims %r." % (missing,), now)
+        if p.get("status") not in evc.RULE_CANDIDATE_STATUSES:
+            _finding(findings, "RULE_CANDIDATE_INCORRECTLY_ACTIVE", "FATAL", "RULE_CANDIDATE_PROPOSAL", p["proposalId"],
+                      "status=%r is not one of the non-executable values %r -- a RuleCandidateProposal must "
+                      "never claim an execution-implying status." % (p.get("status"), evc.RULE_CANDIDATE_STATUSES), now)
+
+
+def check_questions_reference_existing_claims(questions, claims, findings, now):
+    claim_ids = {c["claimId"] for c in claims}
+    for q in questions:
+        if q.get("claimId") and q["claimId"] not in claim_ids:
+            _finding(findings, "QUESTION_REFERENCES_NONEXISTENT_CLAIM", "ERROR", "EVIDENCE_QUESTION", q["questionId"],
+                      "claimId %r does not exist." % (q["claimId"],), now)
+
+
+def check_review_queue_references(queue_entries, known_ids_by_entity_type, findings, now):
+    for e in queue_entries:
+        known = known_ids_by_entity_type.get(e["entityType"])
+        if known is not None and e["entityId"] not in known:
+            _finding(findings, "REVIEW_QUEUE_REFERENCES_NONEXISTENT_ENTITY", "ERROR", "REVIEW_QUEUE_ENTRY", e["queueEntryId"],
+                      "References nonexistent %s %r." % (e["entityType"], e["entityId"]), now)
+
+
+def check_approved_intake_findings(intakes, findings, now):
+    for m in intakes:
+        if m["intakeStatus"] == "approved" and m.get("warnings"):
+            _finding(findings, "APPROVED_INTAKE_WITH_UNRESOLVED_FINDINGS", "WARNING", "INTAKE_MANIFEST", m["intakeId"],
+                      "intakeStatus='approved' but warnings list is still non-empty: %r." % (m["warnings"],), now)
+
+
+def check_approved_source_licensing(intakes, findings, now):
+    for m in intakes:
+        if m["intakeStatus"] == "approved" and m.get("licensingStatus") in ("unknown", "restricted_third_party"):
+            _finding(findings, "APPROVED_SOURCE_WITH_UNRESOLVED_LICENSING", "FATAL", "INTAKE_MANIFEST", m["intakeId"],
+                      "intakeStatus='approved' but licensingStatus=%r is still unresolved." % (m["licensingStatus"],), now)
+
+
+def check_segment_hashes(segments, findings, now):
+    for seg in segments:
+        expected = evc.text_sha256(seg["rawText"])
+        if seg.get("textHash") != expected:
+            _finding(findings, "SEGMENT_HASH_MISMATCH", "ERROR", "TRANSCRIPT_SEGMENT", seg["segmentId"],
+                      "Stored textHash does not match the hash recomputed from rawText -- content may have "
+                      "been edited in place, which is prohibited.", now)
+
+
+def check_intake_content_hash(intakes, findings, now):
+    for m in intakes:
+        if m.get("contentHash") is not None and not isinstance(m["contentHash"], str):
+            _finding(findings, "TRANSCRIPT_HASH_MISMATCH", "ERROR", "INTAKE_MANIFEST", m["intakeId"],
+                      "contentHash is set but is not a string hash value.", now)
+
+
+def check_segment_sequence_and_line_ranges(segments, findings, now):
+    by_intake = {}
+    for seg in segments:
+        by_intake.setdefault(seg["intakeId"], []).append(seg)
+    for intake_id, segs in sorted(by_intake.items()):
+        seqs = sorted(s["sequenceNumber"] for s in segs)
+        if seqs != list(range(1, len(seqs) + 1)):
+            _finding(findings, "SEGMENT_SEQUENCE_GAP", "ERROR", "INTAKE_MANIFEST", intake_id,
+                      "Segment sequence numbers are not a contiguous 1..N run: found %r." % (seqs,), now)
+        seen_timestamps = {}
+        for s in segs:
+            if s.get("startTimestamp"):
+                seen_timestamps.setdefault(s["startTimestamp"], []).append(s["segmentId"])
+        for ts, ids in sorted(seen_timestamps.items()):
+            if len(ids) > 1:
+                _finding(findings, "OVERLAPPING_SEGMENT_TIMESTAMPS", "WARNING", "TRANSCRIPT_SEGMENT", sorted(ids)[0],
+                          "Segments %r in intake %r share identical startTimestamp %r." % (sorted(ids), intake_id, ts), now)
+    for seg in segments:
+        if seg.get("lineStart") is not None and seg.get("lineEnd") is not None and seg["lineStart"] > seg["lineEnd"]:
+            _finding(findings, "IMPOSSIBLE_LINE_RANGE", "ERROR", "TRANSCRIPT_SEGMENT", seg["segmentId"],
+                      "lineStart=%r is greater than lineEnd=%r." % (seg["lineStart"], seg["lineEnd"]), now)
+
+
+def check_explanation_provenance(claims, links, findings, now):
+    links_by_claim = {}
+    for l in links:
+        links_by_claim.setdefault(l["claimId"], []).append(l)
+    for c in claims:
+        if c["evidenceCount"] > 0 and not links_by_claim.get(c["claimId"]):
+            _finding(findings, "EXPLANATION_WITHOUT_PROVENANCE", "ERROR", "CLAIM", c["claimId"],
+                      "evidenceCount>0 but no linked evidence exists -- any explanation generated for this "
+                      "claim would have counts with nothing to cite.", now)
+
+
 def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_production=True):
     now = datetime.now(timezone.utc)
     sources = _load_dir(os.path.join(evidence_root, "sources"), "sourceId")
@@ -466,10 +616,21 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     links = _load_dir(os.path.join(evidence_root, "links"), "linkId")
     contradictions = _load_dir(os.path.join(evidence_root, "contradictions"), "contradictionId")
     lifecycle_events = _load_dir(os.path.join(evidence_root, "lifecycle"), "eventId")
+    # PROGRAM-006 Phase 1B (ADR-009):
+    intakes = _load_dir(os.path.join(evidence_root, "intake"), "intakeId")
+    segments = _load_dir(os.path.join(evidence_root, "segments"), "segmentId")
+    annotations = _load_dir(os.path.join(evidence_root, "annotations"), "annotationId")
+    questions = _load_dir(os.path.join(evidence_root, "questions"), "questionId")
+    proposals = _load_dir(os.path.join(evidence_root, "proposals"), "proposalId")
+    queue_entries = _load_dir(os.path.join(evidence_root, "review-queue"), "queueEntryId")
 
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
-    check_duplicate_ids(sources, items, claims, links, contradictions, findings, now)
+    check_duplicate_ids(sources, items, claims, links, contradictions, findings, now, extra=[
+        ("TRANSCRIPT_SEGMENT", segments, "segmentId"), ("INTAKE_MANIFEST", intakes, "intakeId"),
+        ("MANUAL_ANNOTATION", annotations, "annotationId"), ("EVIDENCE_QUESTION", questions, "questionId"),
+        ("RULE_CANDIDATE_PROPOSAL", proposals, "proposalId"), ("REVIEW_QUEUE_ENTRY", queue_entries, "queueEntryId"),
+    ])
     check_duplicate_immutable_content(items, findings, now)
     check_inconsistent_hash(items, findings, now)
     check_malformed_provenance(sources, items, findings, now)
@@ -487,6 +648,27 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     check_claim_scope(claims, findings, now)
     check_schema_versions(sources, items, claims, links, contradictions, findings, now)
     check_synthetic_leakage(sources, items, claims, findings, now, is_production)
+
+    # PROGRAM-006 Phase 1B (ADR-009, Deliverable 19):
+    check_orphaned_segments(intakes, segments, findings, now)
+    check_missing_transcript_locator(items, findings, now)
+    check_annotation_references(annotations, intakes, segments, findings, now)
+    check_directness_and_certainty_present(items, findings, now)
+    check_claim_candidate_without_evidence(claims, links, findings, now)
+    check_rule_candidate_proposals(proposals, claims, findings, now)
+    check_questions_reference_existing_claims(questions, claims, findings, now)
+    check_review_queue_references(queue_entries, {
+        "EVIDENCE_SOURCE": {s["sourceId"] for s in sources}, "EVIDENCE_ITEM": {i["evidenceId"] for i in items},
+        "CLAIM": {c["claimId"] for c in claims}, "CONTRADICTION_RECORD": {c["contradictionId"] for c in contradictions},
+        "EVIDENCE_QUESTION": {q["questionId"] for q in questions}, "RULE_CANDIDATE_PROPOSAL": {p["proposalId"] for p in proposals},
+        "INTAKE_MANIFEST": {m["intakeId"] for m in intakes}, "TRANSCRIPT_SEGMENT": {s["segmentId"] for s in segments},
+    }, findings, now)
+    check_approved_intake_findings(intakes, findings, now)
+    check_approved_source_licensing(intakes, findings, now)
+    check_segment_hashes(segments, findings, now)
+    check_intake_content_hash(intakes, findings, now)
+    check_segment_sequence_and_line_ranges(segments, findings, now)
+    check_explanation_provenance(claims, links, findings, now)
 
     if repo_root and ti_root:
         check_graph_relationships(repo_root, ti_root, links, claims, findings, now)

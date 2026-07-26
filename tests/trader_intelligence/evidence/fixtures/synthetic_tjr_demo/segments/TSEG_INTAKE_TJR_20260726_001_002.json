@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 2,
+  "lineStart": 2,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Displacement must always follow a liquidity sweep before I consider an entry valid.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|002",
+  "segmentType": "other",
+  "sequenceNumber": 2,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:01:00",
+  "textHash": "8a697204ecbd2e86b6b8d33bad186dc0bb82d5f17a32d6136adc72153ee9b802"
+}

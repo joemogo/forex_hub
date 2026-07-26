@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/transcript-segment.schema.json",
+  "title": "TranscriptSegment",
+  "description": "PROGRAM-006 Phase 1B (ADR-009). One ordered, source-located unit of a locally-supplied transcript. rawText is the exact source text and is never replaced by normalizedText -- both are always stored. Distinct from Wave-1 SourceSegment (traders/*/segments/), which belongs to the older ResearchSource/StrategyAssertion model; this entity belongs to an IntakeManifest and feeds the Evidence Intelligence Engine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["segmentId", "intakeId", "sequenceNumber", "rawText", "textHash", "segmentType",
+    "schemaVersion", "createdAt"],
+  "properties": {
+    "segmentId": { "type": "string", "pattern": "^TSEG\\|INTAKE\\|.+\\|\\d{3,}$" },
+    "intakeId": { "type": "string", "pattern": "^INTAKE\\|.*$" },
+    "sourceId": { "type": ["string", "null"], "pattern": "^EVSRC\\|.*$", "default": null },
+    "sequenceNumber": { "type": "integer", "minimum": 0 },
+    "speaker": { "type": ["string", "null"], "default": null },
+    "startTimestamp": { "type": ["string", "null"], "default": null },
+    "endTimestamp": { "type": ["string", "null"], "default": null },
+    "lineStart": { "type": ["integer", "null"], "default": null },
+    "lineEnd": { "type": ["integer", "null"], "default": null },
+    "sectionTitle": { "type": ["string", "null"], "default": null },
+    "rawText": { "type": "string", "description": "Exact source text, verbatim. Never edited in place." },
+    "normalizedText": { "type": ["string", "null"], "default": null },
+    "textHash": { "type": "string", "description": "SHA-256 of rawText, for tamper/consistency detection." },
+    "language": { "type": ["string", "null"], "default": null },
+    "segmentType": { "type": "string",
+      "enum": ["narration", "instruction", "example", "question", "answer", "disclaimer",
+        "promotion", "introduction", "conclusion", "chart_commentary", "trade_commentary", "other"] },
+    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

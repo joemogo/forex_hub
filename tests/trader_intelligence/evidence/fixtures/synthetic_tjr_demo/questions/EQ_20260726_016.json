@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260726|007",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [
+    "EV|EVSRC|TJR|20260726|001|011"
+  ],
+  "priority": "medium",
+  "questionId": "EQ|20260726|016",
+  "questionText": "Evidence for trade-management claim 'CLAIM|TJR|20260726|007' describes discretionary judgment rather than a fixed rule -- should this remain discretionary, or is there a more precise rule underneath it?",
+  "questionType": "discretionary_management",
+  "reason": "Evidence text matched a configured discretionary-language marker.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

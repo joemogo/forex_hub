@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 15,
+  "lineStart": 15,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Not sure yet whether this only works in New York session or all sessions.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|015",
+  "segmentType": "other",
+  "sequenceNumber": 15,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:16:10",
+  "textHash": "3e964fe2b3af9f3344f6a369768ad963e626ffb88d76c49dbc39421e1bcf2f0e"
+}

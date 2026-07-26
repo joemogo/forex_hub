@@ -1,8 +1,12 @@
-# Evidence Intelligence Engine (PROGRAM-006, Phase 1A)
+# Evidence Intelligence Engine (PROGRAM-006, Phases 1A + 1B)
 
 **Status:** Phase 1A — data model, provenance, confidence, deduplication, Knowledge Graph
-integration, query service, and integrity validation. Zero real evidence ingested. Zero
-network access. Zero effect on trading, paper accounts, or production rules.
+integration, query service, and integrity validation. Phase 1B (added below, §17 onward) —
+claim explainability, traceability, directness/extraction-certainty classification, a
+controlled TJR (or any trader) intake pipeline, manual annotation, claim-candidate
+generation, unresolved-question detection, rule-candidate proposals, review queues, and TJR
+research reports. Zero real evidence ingested. Zero network access. Zero effect on trading,
+paper accounts, or production rules.
 
 This document explains what the Evidence Intelligence Engine is, what it does today, and
 what it deliberately does not do yet — written for both the engineer maintaining the code
@@ -205,3 +209,254 @@ transcript-ingestion pipeline, wiring paper/live trade outcomes into `EvidenceIt
 creation automatically, or defining the policy under which a `StrategyRule` with strong
 `originatingClaimIds` support is allowed to advance its `promotionState`. None of that is
 implied, started, or authorized by this phase.
+
+---
+
+# Phase 1B — Explainability and Controlled TJR Intake (ADR-009)
+
+**Status:** Implemented. Explainability, traceability, and a controlled, human-reviewed
+transcript-intake pipeline. Still zero real evidence, zero network access, zero execution
+coupling, zero automatic rule promotion.
+
+## 17. What claim explainability means
+
+A confidence score alone can't answer the questions an owner actually asks: which sources
+back this, was it stated or inferred, does independent evidence agree, what's still
+missing. `evidence_explain.explain_claim()` answers those questions directly from stored
+records — every line in its output traces to a specific `EvidenceItem`, `ContradictionRecord`,
+or `EvidenceQuestion` ID. See ADR-008 §2 for why confidence alone was already known to be
+insufficient before this phase existed to fix it.
+
+## 18. Why confidence alone is insufficient
+
+Two claims can carry an identical score for entirely different reasons — one from three
+independent explicit statements, another from a single borderline inference that happened
+to land at the same number. A number can't distinguish those cases; an explanation can.
+
+## 19. How explanations are generated
+
+`evidence_explain.explain_claim(idx, claimId)` walks every `EvidenceClaimLink` attached to a
+claim, buckets each into direct support / indirect support / contradicting / weakening /
+contextual / unresolved based on the linked item's `relationshipType` and `directness`, pulls
+in any `ContradictionRecord`s and `EvidenceQuestion`s naming the claim, and recomputes the
+same confidence explanation `evidence_confidence.py` already produces. Nothing is invented:
+every field is a direct read or a deterministic aggregation of stored fields.
+
+## 20. How explanations remain traceable
+
+`evidence_explain.trace_explanation_component(explanation, component)` maps any top-level
+field of a generated explanation (e.g. `directSupportingEvidence`) back to the record IDs it
+was built from and the algorithm version that produced it — so "which evidence caused this
+line" is always a direct lookup, never a re-derivation from prose.
+
+## 21. Directness vs. evidence quality vs. extraction certainty
+
+Three genuinely separate dimensions, never conflated:
+
+- **Directness** (`EvidenceItem.directness`) — how explicit/observed vs. inferred an item is:
+  `direct_explicit`, `direct_demonstrated`, `indirect_implied`, `inferred_from_context`,
+  `derived_from_analysis`, `owner_observation`, `unresolved`.
+- **Evidence quality** (`EvidenceItem.evidenceQuality`, Phase 1A) — how strong the item is
+  taken alone, independent of whether it's explicit or inferred. A direct explicit statement
+  can still be low quality; a well-corroborated inference stays labeled as an inference
+  regardless of how strong it is.
+- **Extraction certainty** (`EvidenceItem.extractionCertainty`) — confidence that the *source
+  was interpreted correctly* (`certain`/`high`/`moderate`/`low`/`ambiguous`/`unresolved`).
+  Never the same as claim confidence, evidence quality, or trade expectancy. A low-certainty
+  extraction is automatically surfaced in the `low_certainty_evidence`/`ambiguous_evidence`
+  review queues and in any explanation referencing it.
+
+## 22. How transcripts enter MOGO
+
+A transcript is never fetched, downloaded, or scraped — it is supplied locally by the owner
+(as a Python string, in whatever accepted format) to `transcript_adapters.parse_transcript()`.
+There is no code path anywhere in this system that reaches the network.
+
+## 23. Accepted local transcript formats
+
+`plain_text` (blank-line-separated paragraphs, no timestamps), `timestamped_text`
+(`[HH:MM:SS] Speaker: text` lines, continuation lines appended to the prior segment),
+`structured_json` (`{"segments": [{"text": ..., "speaker": ..., "startTimestamp": ...}, ...]}`).
+Malformed content (bad JSON, a null byte, a timestamped file with no recognizable timestamp
+line) is rejected with a clear error — never silently guessed at.
+
+## 24. How transcript segments work
+
+Each `TranscriptSegment` is one ordered unit of a transcript, carrying its sequence number,
+speaker/timestamps/line-range when available, and both `rawText` (exact, never edited) and
+an optional `normalizedText` (never a replacement for the raw text). Every segment belongs to
+an `IntakeManifest`, and — once a real `EvidenceItem` cites it — every citing item's
+`sourceLocator` points back at the exact segment.
+
+## 25. How manual annotations work
+
+A `ManualAnnotation` (`annotation_pipeline.register_annotation()`) is a researcher's structured
+review of one segment: the exact excerpt (must appear verbatim in the segment's `rawText`),
+evidence type, directness, extraction certainty, evidence quality, and either a proposed new
+claim or a link to an existing one. It starts `reviewStatus="draft"` and must reach `"approved"`
+before it can ever be applied — draft/submitted/rejected annotations can never create evidence.
+
+## 26. How evidence candidates become evidence records
+
+`annotation_pipeline.apply_annotation()` is the *only* path from an approved annotation to a
+real `EvidenceItem` + `Claim` + `EvidenceClaimLink`. It requires the annotation's intake to
+already have a linked `EvidenceSource` (a source must exist before evidence can cite it), and
+any newly-created claim starts `claimStatus="pending_review"` — never `"active"` — until a
+human confirms it.
+
+## 27. How claims are normalized and deduplicated
+
+Before creating a new claim, `apply_annotation()` classifies the proposal against every
+existing claim: `exact_duplicate` (identical fingerprint — text + full scope) is the only
+case ever reused automatically; `scoped_variant` (same text, different scope) and
+`near_duplicate` (high similarity, same scope) always create a *new* claim, recording the
+match only as advisory `possibleDuplicateClaimIds` — scope must matter, and merges are never
+automatic (ADR-008 §7, reaffirmed in ADR-009 §15).
+
+## 28. How contradictions are detected
+
+Two distinct mechanisms: an individual `EvidenceClaimLink` with `relationshipType="contradicts"`
+folds into that claim's own confidence score, while a `ContradictionRecord` captures a
+disagreement between two *claims* independent of which evidence backs each side.
+`evidence_questions.py` additionally raises a `self_contradiction` question when the same
+source both supports and contradicts one claim, and a `behavior_conflicts_with_instruction`
+question when a direct explicit statement is contradicted by directly demonstrated behavior.
+
+## 29. How unresolved questions are created
+
+`evidence_questions.detect_questions_for_claim()` deterministically checks a fixed set of
+structural conditions — missing timeframe/session, no companion invalidation rule for an
+entry rule, a stop rule with no direct supporting evidence, discretionary-language markers on
+a trade-management claim, insufficient independent support, no replay/paper validation on an
+otherwise well-supported claim, and more — and raises an `EvidenceQuestion` for each one it
+finds. Nothing is ever auto-answered; `answerStatus` starts `"unanswered"`.
+
+## 30. How review queues work
+
+`review_queues.build_all_review_queues()` computes all 14 required queues (low-certainty
+evidence, ambiguous evidence, inferred evidence, duplicate candidates, contradiction
+candidates, contested claims, unresolved questions, rule candidates, incomplete transcripts,
+unresolved licensing, missing provenance, insufficient independent evidence, supersession
+review, extraction failures) from current stored state every time it's run. Resolving a
+`ReviewQueueEntry` only ever changes the entry itself — never the entity it points at, and
+never any production behavior.
+
+## 31. How rule candidates are proposed
+
+`rule_candidate_proposals.propose_rule_candidate()` creates a `RuleCandidateProposal` — a
+rationale document referencing originating claims, evidence, contradiction/question status,
+and directness/certainty distributions. It is explicitly **not** a `StrategyRule`; its
+`status` field only ever holds `proposed`/`superseded`/`withdrawn`, values that structurally
+cannot imply execution authority (`validate_evidence.py`'s
+`RULE_CANDIDATE_INCORRECTLY_ACTIVE` check exists specifically to catch a violation of this).
+
+## 32. Why rule candidates do not affect execution
+
+Nothing in this phase writes to a `StrategyRule` file, changes `modelingStatus` /
+`implementationStatus` / `promotionState`, creates a paper trade, or touches `index.html`. A
+`RuleCandidateProposal` is a suggestion a human reads and decides what — if anything — to do
+with, using the same `OwnerDecision`-gated promotion path ADR-008 §9–10 already established.
+
+## 33. How TJR research reports are generated
+
+`tjr_report.generate_tjr_research_report(idx, intakeId)` assembles a 25-section report (source
+overview, provenance, transcript quality, extraction status, segments/evidence/claims found,
+explicit statements vs. inferred observations vs. opinions, contradictions, exceptions,
+unresolved questions, rule candidates, missing strategy components, what MOGO learned/still
+doesn't know, recommended next source, owner-review items, warnings, and an explicit
+`productionBehaviorChanged: false` statement) directly from stored records, in both JSON and
+rendered Markdown. It works identically for a completed, partially-completed, or brand-new
+intake.
+
+## 34. Empty-corpus behavior
+
+Every Phase 1B service — explainability, the 22 new queries, review queues, TJR reports —
+is required to and does behave correctly with zero real intakes, transcripts, or claims
+(confirmed by test). The system is deliberately built to be ready before the first real
+transcript arrives, not only after.
+
+## 35. Synthetic-fixture separation
+
+`tests/trader_intelligence/evidence/fixtures/synthetic_tjr_demo/` is a comprehensive,
+clearly-marked synthetic transcript exercising every content type this phase needs to detect
+(explicit rule, implied rule, demonstrated behavior, contradiction, exception, missing
+timeframe/invalidation, ambiguous stop, success/failure observations, risk statement,
+discretionary statement, unsupported opinion, unresolved question, duplicate statement, scoped
+variant) and every outcome this phase needs to produce (a supported claim, a contested claim,
+an insufficient-evidence claim, a contradiction record, 17 questions, 1 rule-candidate
+proposal, all 14 review queues, a full explainability report, and a complete TJR research
+report). It is regenerated with
+`python3 scripts/trader_intelligence/generate_synthetic_tjr_fixture.py` and is never read by
+production code.
+
+## 36. No-network policy
+
+Identical guarantee to Phase 1A: no evidence, intake, annotation, extraction, question,
+proposal, or review-queue module imports any network-capable module anywhere in
+`scripts/trader_intelligence/`.
+
+## 37. No-LLM policy for Phase 1B
+
+The extraction pipeline's `suggest_candidate_evidence()` is a fixed, configured-phrase
+matcher (rule-language markers, hedge markers, exception markers) — not a language model, and
+never authoritative on its own. It only ever produces a suggestion a human researcher reviews
+via a `ManualAnnotation`; nothing is auto-created from a marker match. This is a deliberate
+seam: a future LLM-assisted suggester could sit behind the exact same
+`suggest_candidate_evidence()` contract without touching any canonical evidence model.
+
+## 38. Next intended phase
+
+Not implied or started by this phase: a real transcript-ingestion connector (still local-file
+only, never network), replay/paper-trade evidence ingestion pipelines, an LLM-assisted (never
+LLM-autonomous) extraction aid behind the same controlled-adapter boundary, a Research Center
+UI, and the eventual milestone defining the policy under which a `RuleCandidateProposal` may
+be acted on to change a real `StrategyRule`'s promotion state.
+
+## Owner workflow: processing a real TJR transcript
+
+1. **Place the transcript** somewhere local and readable (a plain-text, timestamped-text, or
+   structured-JSON file — no specific repository path is required by the code).
+2. **Create an intake manifest**:
+   `intake_registry.register_intake_manifest(intake_dir, lifecycle_dir, "transcript", "<you>", now, traderId="TJR", transcriptFormat="timestamped_text", licensingStatus="owner_authored")`.
+3. **Validate it**: `intake_registry.transition_intake_status(..., "validated", ...)` once
+   you've confirmed the source/licensing fields are correct, then `"ready_for_extraction"`.
+4. **Register a source and link it**: `evidence_registry.register_source(...)` then
+   `intake_registry.link_intake_to_source(...)`.
+5. **Run extraction**: `extraction_pipeline.run_intake_extraction_pipeline(evidence_root,
+   intakeId, <raw transcript text>)` — this segments the transcript and returns deterministic
+   candidate-evidence suggestions for you to review.
+6. **Apply annotations**: for each suggestion you agree with (or any excerpt you want to add
+   yourself), call `annotation_pipeline.register_annotation()`, then
+   `set_annotation_review_status(..., "approved", ...)`, then `apply_annotation()`.
+7. **Run the post-annotation pipeline**: `extraction_pipeline.run_post_annotation_pipeline(
+   evidence_root, [claimIds you touched])` — generates unresolved questions, auto-proposes rule
+   candidates for any claim that's both eligible and already well-supported, and rebuilds every
+   review queue.
+8. **Review claims**: `query_evidence.list_claims_awaiting_review(idx)` and
+   `explain_claim_by_id(idx, claimId)` for anything still `pending_review`.
+9. **Generate the research report**:
+   `tjr_report.generate_tjr_research_report(idx, intakeId)` (JSON) or
+   `render_tjr_report_markdown(report)` (Markdown).
+10. **See unresolved questions**: `query_evidence.list_unresolved_questions_by_source(idx,
+    sourceId)`.
+11. **Approve or reject rule candidates without activating them**: a `RuleCandidateProposal`'s
+    `ownerReviewStatus` field (`not_reviewed`/`pending`/`approved`/`rejected`) records your
+    decision, but changing it never touches a `StrategyRule` — acting on an approved proposal
+    (extending or creating the actual `StrategyRule` with `originatingClaimIds`) is a separate,
+    deliberate step outside this phase's automation, exactly as ADR-008 §9–10 requires.
+
+## First Real TJR Intake — Owner Guide
+
+No real TJR transcript exists in this repository as of Phase 1B (confirmed by direct search —
+see `docs/PROGRAM_006_STATUS.md`). When you have one:
+
+1. Confirm you have the right to use it (your own recording, licensed material, or material
+   you're otherwise authorized to process) — set `licensingStatus` accordingly at intake time.
+   If genuinely unsure, use `"unknown"` and expect it to appear in the `unresolved_licensing`
+   review queue until resolved.
+2. Follow the 11-step owner workflow above exactly — no new architecture is required.
+3. Read the generated TJR research report before deciding anything — it will tell you plainly
+   what MOGO learned, what it still doesn't know, and what's blocking further progress.
+4. Nothing becomes a production rule until you, separately and explicitly, decide to extend a
+   real `StrategyRule` with the claim IDs a `RuleCandidateProposal` names — that step is
+   intentionally outside what this phase automates.

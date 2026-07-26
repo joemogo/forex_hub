@@ -1,0 +1,16 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "entityId": "CLAIM|TJR|20260726|005",
+  "entityType": "CLAIM",
+  "metadata": {},
+  "priority": "low",
+  "queueEntryId": "RQ|INSUFFICIENT_INDEPENDENT_EVIDENCE|20260726|001",
+  "queueType": "insufficient_independent_evidence",
+  "reason": "confidenceState='insufficient_evidence'.",
+  "resolution": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-26T15:00:00Z"
+}

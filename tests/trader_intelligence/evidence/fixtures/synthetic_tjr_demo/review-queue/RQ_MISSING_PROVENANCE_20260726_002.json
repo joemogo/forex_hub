@@ -1,0 +1,16 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "entityId": "EVSRC|TJR|20260726|002",
+  "entityType": "EVIDENCE_SOURCE",
+  "metadata": {},
+  "priority": "medium",
+  "queueEntryId": "RQ|MISSING_PROVENANCE|20260726|002",
+  "queueType": "missing_provenance",
+  "reason": "provenanceStatus='unverified'.",
+  "resolution": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-26T15:00:00Z"
+}

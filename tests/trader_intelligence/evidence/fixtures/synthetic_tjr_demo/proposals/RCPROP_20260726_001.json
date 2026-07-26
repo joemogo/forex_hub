@@ -1,0 +1,54 @@
+{
+  "claimType": "entry_rule",
+  "confidenceState": "supported",
+  "contradictingEvidenceIds": [],
+  "contradictionStatus": "none",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "directnessDistribution": {
+    "direct_demonstrated": 1,
+    "direct_explicit": 3,
+    "unresolved": 1
+  },
+  "evidenceIds": [
+    "EV|EVSRC|TJR|20260726|001|001",
+    "EV|EVSRC|TJR|20260726|001|002",
+    "EV|EVSRC|TJR|20260726|001|003",
+    "EV|EVSRC|TJR|20260726|001|004",
+    "EV|EVSRC|TJR|20260726|002|001"
+  ],
+  "extractionCertaintyDistribution": {
+    "certain": 2,
+    "high": 2,
+    "unresolved": 1
+  },
+  "marketCondition": null,
+  "originatingClaimIds": [
+    "CLAIM|TJR|20260726|001"
+  ],
+  "ownerReviewStatus": "not_reviewed",
+  "paperTradingStatus": "not_available",
+  "proposalId": "RCPROP|20260726|001",
+  "proposalRationale": "Auto-suggested by the controlled extraction pipeline: claimType='entry_rule' reached confidenceState='supported'.",
+  "proposalVersion": 1,
+  "replayStatus": "not_available",
+  "schemaVersion": 1,
+  "session": null,
+  "status": "proposed",
+  "strategyFamilyId": null,
+  "supersedesProposalId": null,
+  "supportingSourceIds": [
+    "EVSRC|TJR|20260726|001",
+    "EVSRC|TJR|20260726|002"
+  ],
+  "symbols": [],
+  "timeframe": null,
+  "traderId": "TJR",
+  "unresolvedQuestionIds": [
+    "EQ|20260726|001",
+    "EQ|20260726|002",
+    "EQ|20260726|003",
+    "EQ|20260726|004",
+    "EQ|20260726|005"
+  ],
+  "updatedAt": "2026-07-26T15:00:00Z"
+}

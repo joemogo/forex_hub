@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260726|008",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260726|017",
+  "questionText": "Claim 'CLAIM|TJR|20260726|008' has supporting and contradicting evidence from the same source (EVSRC|TJR|20260726|001) -- did this source contradict itself, or state an exception?",
+  "questionType": "self_contradiction",
+  "reason": "The same sourceId appears in both a supporting and a contradicting link for this claim.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260726|001"
+  ]
+}

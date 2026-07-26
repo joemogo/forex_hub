@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|TJR|20260726|001",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260726|002",
+  "questionText": "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?",
+  "questionType": "missing_paper_validation",
+  "reason": "Rule-eligible claimType with confidenceState in {supported, strongly_supported} but no paper-trading evidence producer has run yet (out of scope for Phase 1B).",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

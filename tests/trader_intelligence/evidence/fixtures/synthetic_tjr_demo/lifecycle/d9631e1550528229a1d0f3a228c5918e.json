@@ -1,0 +1,13 @@
+{
+  "actor": "fixture_generator",
+  "entityId": "INTAKE|TJR|20260726|001",
+  "entityType": "INTAKE_MANIFEST",
+  "eventId": "LCEVT|INTAKE_MANIFEST|INTAKE|TJR|20260726|001|002",
+  "eventType": "status_changed",
+  "metadata": {},
+  "newStatus": "validated",
+  "priorStatus": "registered",
+  "reason": "Transitioned registered -> validated.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-26T15:00:00Z"
+}

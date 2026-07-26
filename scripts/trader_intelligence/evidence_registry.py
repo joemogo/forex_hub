@@ -96,7 +96,8 @@ def register_evidence_item(items_dir, sources_dir, lifecycle_dir, sourceId, evid
                             evidenceQuality, actor, now, exactExcerpt=None,
                             normalizedObservation=None, extractionMethod="manual_owner_entry",
                             extractionVersion="1.0.0", parentEvidenceId=None,
-                            supersedesEvidenceId=None, **fields):
+                            supersedesEvidenceId=None, directness=None, extractionCertainty=None,
+                            **fields):
     sources = _load_all(sources_dir, "sourceId")
     if sourceId not in sources:
         raise evc.EvidenceValidationError(
@@ -107,6 +108,10 @@ def register_evidence_item(items_dir, sources_dir, lifecycle_dir, sourceId, evid
         raise evc.EvidenceValidationError("Unknown evidenceQuality %r" % (evidenceQuality,))
     if extractionMethod not in evc.EXTRACTION_METHODS:
         raise evc.EvidenceValidationError("Unknown extractionMethod %r" % (extractionMethod,))
+    if directness is not None and directness not in evc.DIRECTNESS_CLASSIFICATIONS:
+        raise evc.EvidenceValidationError("Unknown directness %r" % (directness,))
+    if extractionCertainty is not None and extractionCertainty not in evc.EXTRACTION_CERTAINTY_LEVELS:
+        raise evc.EvidenceValidationError("Unknown extractionCertainty %r" % (extractionCertainty,))
     if parentEvidenceId:
         existing_items = _load_all(items_dir, "evidenceId")
         if parentEvidenceId not in existing_items:
@@ -134,6 +139,7 @@ def register_evidence_item(items_dir, sources_dir, lifecycle_dir, sourceId, evid
         "marketCondition": fields.get("marketCondition"), "direction": fields.get("direction"),
         "extractionMethod": extractionMethod, "extractionVersion": extractionVersion,
         "evidenceQuality": evidenceQuality, "evidenceStatus": "active",
+        "directness": directness, "extractionCertainty": extractionCertainty,
         "contentHash": contentHash, "parentEvidenceId": parentEvidenceId,
         "supersedesEvidenceId": supersedesEvidenceId, "metadata": fields.get("metadata") or {},
         "schemaVersion": evc.SCHEMA_VERSION, "createdAt": now_iso,
@@ -188,11 +194,13 @@ def correct_evidence_item(items_dir, sources_dir, lifecycle_dir, original_eviden
 
 def register_claim(claims_dir, lifecycle_dir, claimType, normalizedClaim, actor, now,
                     traderId=None, strategyFamilyId=None, timeframe=None, session=None,
-                    marketCondition=None, **fields):
+                    marketCondition=None, claimStatus="active", **fields):
     if claimType not in evc.CLAIM_TYPES:
         raise evc.EvidenceValidationError("Unknown claimType %r" % (claimType,))
     if not normalizedClaim or not normalizedClaim.strip():
         raise evc.EvidenceValidationError("normalizedClaim must not be empty")
+    if claimStatus not in evc.CLAIM_STATUSES:
+        raise evc.EvidenceValidationError("Unknown claimStatus %r" % (claimStatus,))
 
     scope = traderId or "GENERIC"
     now_iso = now.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -207,11 +215,11 @@ def register_claim(claims_dir, lifecycle_dir, claimType, normalizedClaim, actor,
         "predicate": fields.get("predicate"), "objectValue": fields.get("objectValue"),
         "scope": fields.get("scope") or {}, "traderId": traderId, "strategyFamilyId": strategyFamilyId,
         "marketSymbol": fields.get("marketSymbol"), "timeframe": timeframe, "session": session,
-        "marketCondition": marketCondition, "claimStatus": "active",
+        "marketCondition": marketCondition, "claimStatus": claimStatus,
         "confidenceState": "insufficient_evidence", "confidenceScore": None,
         "confidenceMethod": None, "evidenceCount": 0, "supportingEvidenceCount": 0,
         "contradictingEvidenceCount": 0, "weakeningEvidenceCount": 0, "contextualEvidenceCount": 0,
-        "possibleDuplicateClaimIds": [], "mergeRecommendation": None,
+        "possibleDuplicateClaimIds": fields.get("possibleDuplicateClaimIds") or [], "mergeRecommendation": None,
         "firstObservedAt": None, "lastEvaluatedAt": None, "metadata": fields.get("metadata") or {},
         "schemaVersion": evc.SCHEMA_VERSION, "createdAt": now_iso, "updatedAt": now_iso,
     }

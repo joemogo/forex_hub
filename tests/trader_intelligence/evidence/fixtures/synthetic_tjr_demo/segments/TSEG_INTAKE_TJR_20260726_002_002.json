@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|002",
+  "language": null,
+  "lineEnd": 3,
+  "lineStart": 3,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Owner confirms the same displacement-after-sweep pattern from a separate, independent review session.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|002|002",
+  "segmentType": "other",
+  "sequenceNumber": 2,
+  "sourceId": "EVSRC|TJR|20260726|002",
+  "speaker": null,
+  "startTimestamp": null,
+  "textHash": "a1bb4f18749e31e313324fb6399518414061520ea153ddb2ddfb4d520c03dbb2"
+}

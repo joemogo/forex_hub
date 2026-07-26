@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 10,
+  "lineStart": 10,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "This other trade failed because the displacement reversed right after entry.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|010",
+  "segmentType": "other",
+  "sequenceNumber": 10,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:10:30",
+  "textHash": "88484bcd27e1259cfb6675fb6b79c4590111fd25c124f69fa9f9a59c58cedbc3"
+}

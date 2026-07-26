@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260726|002",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260726|006",
+  "questionText": "Entry rule 'CLAIM|TJR|20260726|002' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+  "questionType": "missing_invalidation",
+  "reason": "No claimType='invalidation_rule' claim shares this claim's (trader, strategyFamily, timeframe) scope.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

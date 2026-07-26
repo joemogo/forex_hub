@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 13,
+  "lineStart": 13,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "On the 15 minute chart, displacement must always follow a liquidity sweep before I consider an entry valid.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|013",
+  "segmentType": "other",
+  "sequenceNumber": 13,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:13:55",
+  "textHash": "4b48a9a254167756e3f12aa99c607057b9723ec5d69e597a0b49dd5ed63187ed"
+}

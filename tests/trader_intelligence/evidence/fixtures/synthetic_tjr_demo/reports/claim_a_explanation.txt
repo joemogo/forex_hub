@@ -1,0 +1,30 @@
+SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING
+
+Claim:
+Displacement occurs after a liquidity sweep.
+
+Current assessment:
+supported, confidence 46.77.
+
+Why:
+score=46.77 from 2 independent supporting group(s) (support_score=2.46) vs 0 independent contradicting group(s) (contra_score=0.00); weakening_score=0.00 from 0 weakening item(s); contextual/unresolved=1 not scored directly. Same-source items beyond the first in a group are discounted to 25% weight to avoid double-counting repeated excerpts as independent confirmation.
+
+Supporting evidence:
+- EVSRC|TJR|20260726|001, 00:01:00, explicit_statement
+- EVSRC|TJR|20260726|001, 00:12:50, explicit_statement
+- EVSRC|TJR|20260726|001, 00:03:30, demonstrated_behavior
+- EVSRC|TJR|20260726|002, TSEG|INTAKE|TJR|20260726|002|002, explicit_statement
+
+Scope limitations:
+- No timeframe recorded for this claim.
+- No session recorded for this claim.
+- No market condition recorded for this claim.
+- No replay validation.
+- No paper-trading validation.
+
+Outstanding questions:
+- Entry rule 'CLAIM|TJR|20260726|001' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?
+- Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?
+- Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?
+- Claim 'CLAIM|TJR|20260726|001' has no session recorded -- does this rule apply in every session or only specific ones?
+- Claim 'CLAIM|TJR|20260726|001' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?

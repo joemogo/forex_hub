@@ -1,0 +1,306 @@
+{
+  "candidateRuleReferences": [
+    {
+      "claimType": "entry_rule",
+      "confidenceState": "supported",
+      "contradictingEvidenceIds": [],
+      "contradictionStatus": "none",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "directnessDistribution": {
+        "direct_demonstrated": 1,
+        "direct_explicit": 3,
+        "unresolved": 1
+      },
+      "evidenceIds": [
+        "EV|EVSRC|TJR|20260726|001|001",
+        "EV|EVSRC|TJR|20260726|001|002",
+        "EV|EVSRC|TJR|20260726|001|003",
+        "EV|EVSRC|TJR|20260726|001|004",
+        "EV|EVSRC|TJR|20260726|002|001"
+      ],
+      "extractionCertaintyDistribution": {
+        "certain": 2,
+        "high": 2,
+        "unresolved": 1
+      },
+      "marketCondition": null,
+      "originatingClaimIds": [
+        "CLAIM|TJR|20260726|001"
+      ],
+      "ownerReviewStatus": "not_reviewed",
+      "paperTradingStatus": "not_available",
+      "proposalId": "RCPROP|20260726|001",
+      "proposalRationale": "Auto-suggested by the controlled extraction pipeline: claimType='entry_rule' reached confidenceState='supported'.",
+      "proposalVersion": 1,
+      "replayStatus": "not_available",
+      "schemaVersion": 1,
+      "session": null,
+      "status": "proposed",
+      "strategyFamilyId": null,
+      "supersedesProposalId": null,
+      "supportingSourceIds": [
+        "EVSRC|TJR|20260726|001",
+        "EVSRC|TJR|20260726|002"
+      ],
+      "symbols": [],
+      "timeframe": null,
+      "traderId": "TJR",
+      "unresolvedQuestionIds": [
+        "EQ|20260726|001",
+        "EQ|20260726|002",
+        "EQ|20260726|003",
+        "EQ|20260726|004",
+        "EQ|20260726|005"
+      ],
+      "updatedAt": "2026-07-26T15:00:00Z"
+    }
+  ],
+  "claimId": "CLAIM|TJR|20260726|001",
+  "claimStatus": "pending_review",
+  "claimType": "entry_rule",
+  "confidenceFactorBreakdown": {
+    "contextualEvidenceCount": 1,
+    "contradictingEvidenceCount": 0,
+    "evidenceCount": 5,
+    "explanation": "score=46.77 from 2 independent supporting group(s) (support_score=2.46) vs 0 independent contradicting group(s) (contra_score=0.00); weakening_score=0.00 from 0 weakening item(s); contextual/unresolved=1 not scored directly. Same-source items beyond the first in a group are discounted to 25% weight to avoid double-counting repeated excerpts as independent confirmation.",
+    "supportingEvidenceCount": 4,
+    "weakeningEvidenceCount": 0
+  },
+  "confidenceScore": 46.77,
+  "confidenceState": "supported",
+  "contextualEvidence": [],
+  "contradictingEvidence": [],
+  "contradictionRecords": [],
+  "directSupportingEvidence": [
+    {
+      "directness": "direct_explicit",
+      "endTimestamp": null,
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|001",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "Displacement must always follow a liquidity sweep before I consider an entry valid.",
+      "extractionCertainty": "certain",
+      "independenceGroup": "EVSRC|TJR|20260726|001",
+      "relationshipType": "supports",
+      "sourceId": "EVSRC|TJR|20260726|001",
+      "sourceLocator": "TSEG|INTAKE|TJR|20260726|001|002",
+      "startTimestamp": "00:01:00"
+    },
+    {
+      "directness": "direct_explicit",
+      "endTimestamp": null,
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|002",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "Displacement must always follow a liquidity sweep before I consider an entry valid.",
+      "extractionCertainty": "certain",
+      "independenceGroup": "EVSRC|TJR|20260726|001",
+      "relationshipType": "supports",
+      "sourceId": "EVSRC|TJR|20260726|001",
+      "sourceLocator": "TSEG|INTAKE|TJR|20260726|001|012",
+      "startTimestamp": "00:12:50"
+    },
+    {
+      "directness": "direct_demonstrated",
+      "endTimestamp": null,
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|003",
+      "evidenceQuality": "high",
+      "evidenceType": "demonstrated_behavior",
+      "exactExcerpt": "Here is a chart example where price swept the high and then displaced down hard, that is the setup.",
+      "extractionCertainty": "high",
+      "independenceGroup": "EVSRC|TJR|20260726|001",
+      "relationshipType": "exemplifies",
+      "sourceId": "EVSRC|TJR|20260726|001",
+      "sourceLocator": "TSEG|INTAKE|TJR|20260726|001|004",
+      "startTimestamp": "00:03:30"
+    },
+    {
+      "directness": "direct_explicit",
+      "endTimestamp": null,
+      "evidenceId": "EV|EVSRC|TJR|20260726|002|001",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "Owner confirms the same displacement-after-sweep pattern from a separate, independent review session.",
+      "extractionCertainty": "high",
+      "independenceGroup": "EVSRC|TJR|20260726|002",
+      "relationshipType": "supports",
+      "sourceId": "EVSRC|TJR|20260726|002",
+      "sourceLocator": "TSEG|INTAKE|TJR|20260726|002|002",
+      "startTimestamp": null
+    }
+  ],
+  "evidenceCounts": {
+    "contextual": 1,
+    "contradicting": 0,
+    "supporting": 4,
+    "total": 5,
+    "weakening": 0
+  },
+  "explanationSchemaVersion": 1,
+  "generatedAt": "2026-07-26T15:00:00Z",
+  "indirectSupportingEvidence": [],
+  "knownScopeLimitations": [
+    "No timeframe recorded for this claim.",
+    "No session recorded for this claim.",
+    "No market condition recorded for this claim."
+  ],
+  "marketCondition": null,
+  "missingEvidenceCategories": [
+    "replay_result",
+    "paper_trade_result"
+  ],
+  "normalizedClaim": "Displacement occurs after a liquidity sweep.",
+  "ownerReviewStatus": "not_reviewed",
+  "paperTradingValidationStatus": "not_available",
+  "replayValidationStatus": "not_available",
+  "session": null,
+  "sourceCounts": {
+    "distinctSources": 2
+  },
+  "sourceIndependenceAnalysis": {
+    "groups": {
+      "EVSRC|TJR|20260726|001": [
+        "EV|EVSRC|TJR|20260726|001|001",
+        "EV|EVSRC|TJR|20260726|001|002",
+        "EV|EVSRC|TJR|20260726|001|003",
+        "EV|EVSRC|TJR|20260726|001|004"
+      ],
+      "EVSRC|TJR|20260726|002": [
+        "EV|EVSRC|TJR|20260726|002|001"
+      ]
+    },
+    "independentGroupCount": 2
+  },
+  "sourceProvenance": [
+    {
+      "canonicalReference": null,
+      "licensingStatus": "unknown",
+      "provenanceStatus": "unverified",
+      "sourceId": "EVSRC|TJR|20260726|001",
+      "sourceType": "transcript",
+      "storageLocationType": "repository",
+      "title": "SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING -- source for main session",
+      "traderId": "TJR"
+    },
+    {
+      "canonicalReference": null,
+      "licensingStatus": "unknown",
+      "provenanceStatus": "unverified",
+      "sourceId": "EVSRC|TJR|20260726|002",
+      "sourceType": "owner_observation",
+      "storageLocationType": "repository",
+      "title": "SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING -- independent corroborating source",
+      "traderId": "TJR"
+    }
+  ],
+  "strategyFamilyId": null,
+  "subjectEntityId": null,
+  "subjectEntityType": null,
+  "supersessionStatus": null,
+  "timeframe": null,
+  "traderId": "TJR",
+  "unresolvedQuestions": [
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "high",
+      "questionId": "EQ|20260726|001",
+      "questionText": "Entry rule 'CLAIM|TJR|20260726|001' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?",
+      "questionType": "missing_invalidation",
+      "reason": "No claimType='invalidation_rule' claim shares this claim's (trader, strategyFamily, timeframe) scope.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_promotion",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "low",
+      "questionId": "EQ|20260726|002",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?",
+      "questionType": "missing_paper_validation",
+      "reason": "Rule-eligible claimType with confidenceState in {supported, strongly_supported} but no paper-trading evidence producer has run yet (out of scope for Phase 1B).",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_promotion",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "low",
+      "questionId": "EQ|20260726|003",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?",
+      "questionType": "missing_replay_validation",
+      "reason": "Rule-eligible claimType with confidenceState in {supported, strongly_supported} but no replay evidence producer has run yet (out of scope for Phase 1B).",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|004",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' has no session recorded -- does this rule apply in every session or only specific ones?",
+      "questionType": "missing_session",
+      "reason": "claimType='entry_rule' is session-sensitive and claim.session is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    },
+    {
+      "answerEvidenceIds": [],
+      "answerStatus": "unanswered",
+      "blockingStatus": "blocks_rule_candidate",
+      "claimId": "CLAIM|TJR|20260726|001",
+      "createdAt": "2026-07-26T15:00:00Z",
+      "evidenceIds": [],
+      "priority": "medium",
+      "questionId": "EQ|20260726|005",
+      "questionText": "Claim 'CLAIM|TJR|20260726|001' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+      "questionType": "missing_timeframe",
+      "reason": "claimType='entry_rule' is timeframe-sensitive and claim.timeframe is null.",
+      "researchStatus": "open",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "sourceIds": []
+    }
+  ],
+  "unresolvedRelationshipEvidence": [
+    {
+      "directness": "unresolved",
+      "endTimestamp": null,
+      "evidenceId": "EV|EVSRC|TJR|20260726|001|004",
+      "evidenceQuality": "unknown",
+      "evidenceType": "unresolved_question",
+      "exactExcerpt": "Not sure yet whether this only works in New York session or all sessions.",
+      "extractionCertainty": "unresolved",
+      "independenceGroup": "EVSRC|TJR|20260726|001",
+      "relationshipType": "unresolved",
+      "sourceId": "EVSRC|TJR|20260726|001",
+      "sourceLocator": "TSEG|INTAKE|TJR|20260726|001|015",
+      "startTimestamp": "00:16:10"
+    }
+  ],
+  "weakeningEvidence": []
+}

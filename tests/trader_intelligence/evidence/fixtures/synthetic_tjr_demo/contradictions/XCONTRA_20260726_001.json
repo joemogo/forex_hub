@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|TJR|20260726|003",
+  "claimBId": "CLAIM|TJR|20260726|004",
+  "contradictionId": "XCONTRA|20260726|001",
+  "contradictionType": "SCOPE_MISMATCH",
+  "detectedAt": "2026-07-26T15:00:00Z",
+  "metadata": {},
+  "rationale": "SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING: one claim treats confirmation as basically required; the other says the underlying sweep requirement itself is waived immediately after high-impact news -- these need owner reconciliation, not automatic resolution.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

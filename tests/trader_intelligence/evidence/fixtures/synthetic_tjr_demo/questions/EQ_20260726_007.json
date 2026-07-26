@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260726|002",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260726|007",
+  "questionText": "Claim 'CLAIM|TJR|20260726|002' has no session recorded -- does this rule apply in every session or only specific ones?",
+  "questionType": "missing_session",
+  "reason": "claimType='entry_rule' is session-sensitive and claim.session is null.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

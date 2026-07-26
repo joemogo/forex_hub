@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260726|005",
+  "createdAt": "2026-07-26T15:00:00Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260726|011",
+  "questionText": "Claim 'CLAIM|TJR|20260726|005' is only 'insufficient_evidence' -- what additional independent source would raise confidence?",
+  "questionType": "insufficient_independent_support",
+  "reason": "confidenceState is 'insufficient_evidence'.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

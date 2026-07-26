@@ -46,7 +46,7 @@ CLAIM_TYPES = [
     "session_rule", "timeframe_rule", "failure_condition", "success_condition", "exception",
     "causal_hypothesis", "performance_hypothesis", "behavioral_observation", "other",
 ]
-CLAIM_STATUSES = ["active", "superseded", "retracted", "merged"]
+CLAIM_STATUSES = ["active", "pending_review", "superseded", "retracted", "merged"]
 CONFIDENCE_STATES = [
     "insufficient_evidence", "tentative", "emerging", "supported", "strongly_supported",
     "contested", "weakened", "contradicted", "unresolved",
@@ -58,7 +58,8 @@ _CONTRADICTING_RELATIONSHIPS = {"contradicts"}
 _WEAKENING_RELATIONSHIPS = {"weakens"}
 _CONTEXTUAL_RELATIONSHIPS = {"contextualizes", "qualifies", "supersedes", "unresolved"}
 
-LIFECYCLE_ENTITY_TYPES = ["EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "EVIDENCE_CLAIM_LINK", "CONTRADICTION_RECORD"]
+LIFECYCLE_ENTITY_TYPES = ["EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "EVIDENCE_CLAIM_LINK", "CONTRADICTION_RECORD",
+                          "INTAKE_MANIFEST"]
 LIFECYCLE_EVENT_TYPES = ["created", "status_changed", "confidence_recomputed", "superseded", "corrected", "linked", "unlinked", "reviewed", "other"]
 
 CONTRADICTION_TYPES = ["DEFINITIONAL", "NUMERIC_THRESHOLD", "CONDITIONAL_SCOPE", "TEMPORAL_DRIFT", "DIRECTIONAL", "SCOPE_MISMATCH", "OTHER"]
@@ -70,6 +71,86 @@ INTEGRITY_RESOLUTION_STATUSES = ["open", "acknowledged", "resolved"]
 
 SCHEMA_VERSION = 1
 SYNTHETIC_MARKERS = ("SYNTHETIC TEST DATA", "NOT REAL TJR RESEARCH")
+
+# ---------------------------------------------------------------------------
+# PROGRAM-006 Phase 1B (ADR-009) -- explainability, directness, extraction
+# certainty, and controlled TJR intake vocabularies.
+# ---------------------------------------------------------------------------
+
+# Evidence directness: how explicit/observed vs. inferred a piece of evidence
+# is. Kept strictly separate from evidenceQuality (ADR-009 sec. 4/Deliverable 4).
+DIRECTNESS_CLASSIFICATIONS = [
+    "direct_explicit", "direct_demonstrated", "indirect_implied",
+    "inferred_from_context", "derived_from_analysis", "owner_observation", "unresolved",
+]
+
+# Extraction certainty: confidence that a source was interpreted correctly.
+# Never conflated with claim confidence, evidence quality, or profitability
+# (ADR-009 sec. 10/Deliverable 5).
+EXTRACTION_CERTAINTY_LEVELS = ["certain", "high", "moderate", "low", "ambiguous", "unresolved"]
+
+# IntakeManifest lifecycle (Deliverable 6).
+INTAKE_STATUSES = [
+    "discovered", "registered", "validated", "ready_for_extraction",
+    "extraction_in_progress", "extracted", "review_required", "approved", "rejected",
+    "duplicate", "superseded", "blocked", "failed",
+]
+INTAKE_EXTRACTION_STATUSES = ["not_started", "in_progress", "completed", "failed"]
+INTAKE_REVIEW_STATUSES = ["not_required", "pending", "in_review", "approved", "rejected"]
+INTAKE_DUPLICATE_STATUSES = ["unknown", "unique", "duplicate", "possible_duplicate"]
+
+# Transcript ingestion (Deliverable 7/8).
+TRANSCRIPT_FORMATS = ["plain_text", "timestamped_text", "structured_json"]
+SEGMENT_TYPES = [
+    "narration", "instruction", "example", "question", "answer", "disclaimer",
+    "promotion", "introduction", "conclusion", "chart_commentary", "trade_commentary", "other",
+]
+
+# Manual annotation (Deliverable 10).
+ANNOTATION_REVIEW_STATUSES = ["draft", "submitted", "approved", "rejected", "applied"]
+
+# EvidenceQuestion (Deliverable 13 -- named to avoid colliding with the
+# pre-existing Wave-1 UNRESOLVED_QUESTION entity; see ADR-009 sec. 12).
+QUESTION_TYPES = [
+    "ambiguous_statement", "implied_requirement", "self_contradiction",
+    "behavior_conflicts_with_instruction", "unclear_scope", "missing_timeframe",
+    "missing_session", "missing_invalidation", "missing_stop_placement",
+    "missing_target_logic", "discretionary_management", "unruled_exception",
+    "example_mismatch", "insufficient_independent_support", "missing_replay_validation",
+    "missing_paper_validation", "other",
+]
+QUESTION_PRIORITIES = ["low", "medium", "high", "critical"]
+QUESTION_BLOCKING_STATUSES = ["non_blocking", "blocks_rule_candidate", "blocks_promotion"]
+QUESTION_RESEARCH_STATUSES = ["open", "researching", "answered", "deferred"]
+QUESTION_ANSWER_STATUSES = ["unanswered", "partially_answered", "answered"]
+
+# Review queues (Deliverable 14).
+REVIEW_QUEUE_TYPES = [
+    "low_certainty_evidence", "ambiguous_evidence", "inferred_evidence",
+    "duplicate_candidates", "contradiction_candidates", "contested_claims",
+    "unresolved_questions", "rule_candidates", "incomplete_transcripts",
+    "unresolved_licensing", "missing_provenance", "insufficient_independent_evidence",
+    "supersession_review", "extraction_failures",
+]
+REVIEW_QUEUE_ENTITY_TYPES = [
+    "EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "CONTRADICTION_RECORD",
+    "EVIDENCE_QUESTION", "RULE_CANDIDATE_PROPOSAL", "INTAKE_MANIFEST", "TRANSCRIPT_SEGMENT",
+]
+REVIEW_QUEUE_REVIEW_STATUSES = ["open", "in_review", "resolved", "dismissed"]
+
+# RuleCandidateProposal (Deliverable 12 -- distinct from StrategyRule, see
+# ADR-009 sec. 8).
+RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES = [
+    "setup_requirement", "entry_rule", "confirmation_rule", "invalidation_rule",
+    "stop_rule", "target_rule", "risk_rule", "trade_management_rule", "session_rule",
+    "timeframe_rule", "failure_condition", "exception",
+]
+RULE_CANDIDATE_STATUSES = ["proposed", "superseded", "withdrawn"]
+RULE_CANDIDATE_CONTRADICTION_STATUSES = ["none", "open_contradiction", "resolved_contradiction"]
+RULE_CANDIDATE_VALIDATION_STATUSES = ["not_available", "pending", "validated", "failed"]
+RULE_CANDIDATE_OWNER_REVIEW_STATUSES = ["not_reviewed", "pending", "approved", "rejected"]
+
+EXPLANATION_SCHEMA_VERSION = 1
 
 
 class EvidenceValidationError(ValueError):
@@ -186,6 +267,85 @@ def contradiction_id_to_filename(contradictionId):
 
 def make_integrity_report_id(now, seq=1):
     return "EVIDENCE_INTEGRITY|%s|%03d" % (now.strftime("%Y%m%d"), seq)
+
+
+# ---------------------------------------------------------------------------
+# PROGRAM-006 Phase 1B (ADR-009) deterministic identifiers. All filenames here
+# are literal (id.replace("|", "_") + ".json"), never hash-derived, so the
+# straightforward filename-pattern sequencing below is safe -- it does not
+# repeat the lifecycle-event hashed-filename bug fixed above.
+# ---------------------------------------------------------------------------
+
+def intake_id_to_filename(intakeId):
+    return intakeId.replace("|", "_") + ".json"
+
+
+def next_intake_id(intake_dir, trader_id_or_unattributed, now):
+    date_str = now.strftime("%Y%m%d")
+    scope = (trader_id_or_unattributed or "UNATTRIBUTED").upper()
+    pattern = re.compile(r"^INTAKE_%s_%s_(\d{3,})$" % (re.escape(scope), re.escape(date_str)))
+    seq = _next_seq(intake_dir, pattern)
+    return "INTAKE|%s|%s|%03d" % (scope, date_str, seq)
+
+
+def segment_id_to_filename(segmentId):
+    return segmentId.replace("|", "_") + ".json"
+
+
+def next_segment_id(segments_dir, intakeId, now):
+    prefix = "TSEG_" + intakeId.replace("|", "_") + "_"
+    pattern = re.compile(r"^%s(\d{3,})$" % re.escape(prefix))
+    seq = _next_seq(segments_dir, pattern)
+    return "TSEG|%s|%03d" % (intakeId, seq)
+
+
+def annotation_id_to_filename(annotationId):
+    return annotationId.replace("|", "_") + ".json"
+
+
+def next_annotation_id(annotations_dir, intakeId, now):
+    prefix = "ANNOT_" + intakeId.replace("|", "_") + "_"
+    pattern = re.compile(r"^%s(\d{3,})$" % re.escape(prefix))
+    seq = _next_seq(annotations_dir, pattern)
+    return "ANNOT|%s|%03d" % (intakeId, seq)
+
+
+def question_id_to_filename(questionId):
+    return questionId.replace("|", "_") + ".json"
+
+
+def next_question_id(questions_dir, now):
+    date_str = now.strftime("%Y%m%d")
+    pattern = re.compile(r"^EQ_%s_(\d{3,})$" % re.escape(date_str))
+    seq = _next_seq(questions_dir, pattern)
+    return "EQ|%s|%03d" % (date_str, seq)
+
+
+def queue_entry_id_to_filename(queueEntryId):
+    return queueEntryId.replace("|", "_") + ".json"
+
+
+def next_queue_entry_id(queue_dir, queueType, now):
+    date_str = now.strftime("%Y%m%d")
+    scope = queueType.upper()
+    pattern = re.compile(r"^RQ_%s_%s_(\d{3,})$" % (re.escape(scope), re.escape(date_str)))
+    seq = _next_seq(queue_dir, pattern)
+    return "RQ|%s|%s|%03d" % (scope, date_str, seq)
+
+
+def proposal_id_to_filename(proposalId):
+    return proposalId.replace("|", "_") + ".json"
+
+
+def next_proposal_id(proposals_dir, now):
+    date_str = now.strftime("%Y%m%d")
+    pattern = re.compile(r"^RCPROP_%s_(\d{3,})$" % re.escape(date_str))
+    seq = _next_seq(proposals_dir, pattern)
+    return "RCPROP|%s|%03d" % (date_str, seq)
+
+
+def text_sha256(text):
+    return gc.sha256_hex((text or "").encode("utf-8"))
 
 
 # ---------------------------------------------------------------------------

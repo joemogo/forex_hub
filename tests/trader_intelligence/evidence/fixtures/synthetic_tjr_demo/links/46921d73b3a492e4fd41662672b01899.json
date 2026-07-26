@@ -1,0 +1,13 @@
+{
+  "claimId": "CLAIM|TJR|20260726|004",
+  "evidenceId": "EV|EVSRC|TJR|20260726|001|009",
+  "independenceGroup": "EVSRC|TJR|20260726|001",
+  "linkId": "LINK|EV|EVSRC|TJR|20260726|001|009|CLAIM|TJR|20260726|004",
+  "linkedAt": "2026-07-26T15:00:00Z",
+  "linkedBy": "fixture_generator",
+  "qualityWeight": null,
+  "rationale": null,
+  "relationshipType": "supports",
+  "relevanceWeight": 1.0,
+  "schemaVersion": 1
+}

@@ -22,6 +22,15 @@ NODE_TYPES = [
     "RESEARCH_INTAKE_REPORT", "OWNER_DECISION",
     # PROGRAM-006 (ADR-008) additive node types:
     "EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "CONTRADICTION_RECORD",
+    # PROGRAM-006 Phase 1B (ADR-009) additive node types. EVIDENCE_QUESTION is
+    # deliberately not named UNRESOLVED_QUESTION -- see ADR-009 sec. 12 for why
+    # that would collide with the pre-existing Wave-1 entity above.
+    # ResearchReport-equivalent output (TJR research reports) is deliberately
+    # NOT a node type here, mirroring the existing convention that generated
+    # reports (GraphIntegrityReport, AcquisitionReports) are documents, not
+    # graph entities.
+    "TRANSCRIPT_SEGMENT", "INTAKE_MANIFEST", "EVIDENCE_QUESTION", "REVIEW_QUEUE_ENTRY",
+    "RULE_CANDIDATE_PROPOSAL",
 ]
 
 EDGE_TYPES = [
@@ -34,6 +43,14 @@ EDGE_TYPES = [
     # as-is for the evidence layer rather than duplicated (ADR-008 sec. "use
     # existing graph conventions"); only genuinely new relationships are added:
     "WEAKENS", "CONTEXTUALIZES", "EXEMPLIFIES", "QUALIFIES", "UNRESOLVED", "CANDIDATE_FOR_RULE",
+    # PROGRAM-006 Phase 1B (ADR-009) additive edge types. SEGMENT_OF above is
+    # reused for TRANSCRIPT_SEGMENT -> INTAKE_MANIFEST. GENERATED_CLAIM,
+    # EXPLAINED_BY, and INCLUDED_IN_REPORT (suggested in the milestone) were
+    # deliberately not added -- explanations and reports are computed output,
+    # not persisted graph-worthy entities, and "generated this claim" is
+    # already covered by the existing evidence-to-claim relationship edges.
+    "EVIDENCE_FROM_SEGMENT", "RAISES_QUESTION", "REQUIRES_REVIEW", "PROPOSES_RULE",
+    "BLOCKED_BY", "RESOLVED_BY_EVIDENCE",
 ]
 
 PROMOTION_STATES = [
@@ -161,6 +178,12 @@ NODE_TYPE_FIELD_MAP = {
     "EVIDENCE_ITEM": {"id_field": "evidenceId", "label_fields": ["normalizedObservation", "exactExcerpt"], "status_fields": ["evidenceStatus"]},
     "CLAIM": {"id_field": "claimId", "label_fields": ["normalizedClaim"], "status_fields": ["claimStatus"]},
     "CONTRADICTION_RECORD": {"id_field": "contradictionId", "label_fields": ["contradictionType"], "status_fields": ["status"]},
+    # PROGRAM-006 Phase 1B (ADR-009):
+    "TRANSCRIPT_SEGMENT": {"id_field": "segmentId", "label_fields": ["sectionTitle", "rawText"], "status_fields": ["segmentType"]},
+    "INTAKE_MANIFEST": {"id_field": "intakeId", "label_fields": ["title"], "status_fields": ["intakeStatus"]},
+    "EVIDENCE_QUESTION": {"id_field": "questionId", "label_fields": ["questionText"], "status_fields": ["researchStatus"]},
+    "REVIEW_QUEUE_ENTRY": {"id_field": "queueEntryId", "label_fields": ["reason"], "status_fields": ["reviewStatus"]},
+    "RULE_CANDIDATE_PROPOSAL": {"id_field": "proposalId", "label_fields": ["proposalRationale"], "status_fields": ["status"]},
 }
 
 
@@ -223,6 +246,12 @@ def discover_entities(repo_root, ti_root, graph_root):
         ("EVIDENCE_ITEM", ("items", "*.json")),
         ("CLAIM", ("claims", "*.json")),
         ("CONTRADICTION_RECORD", ("contradictions", "*.json")),
+        # PROGRAM-006 Phase 1B (ADR-009):
+        ("TRANSCRIPT_SEGMENT", ("segments", "*.json")),
+        ("INTAKE_MANIFEST", ("intake", "*.json")),
+        ("EVIDENCE_QUESTION", ("questions", "*.json")),
+        ("REVIEW_QUEUE_ENTRY", ("review-queue", "*.json")),
+        ("RULE_CANDIDATE_PROPOSAL", ("proposals", "*.json")),
     ]
     for node_type, parts in evidence_simple:
         for path in _sorted_glob(evidence_root, *parts):
@@ -526,6 +555,59 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
                 target = resolve(supersedes, "SUPERSEDES", eid)
                 if target:
                     add_edge("SUPERSEDES", from_node_id, target, eid, supersedes, source_file, created_at)
+            # PROGRAM-006 Phase 1B (ADR-009): sourceLocator only sometimes
+            # holds a TranscriptSegment id (Phase 1A manual-entry records use
+            # it for arbitrary free-text locations) -- only attempt this edge,
+            # and only then risk a MISSING_REFERENCE finding via resolve(),
+            # when it is actually shaped like a segment id.
+            locator = entity.get("sourceLocator")
+            if locator and locator.startswith("TSEG|"):
+                target = resolve(locator, "EVIDENCE_FROM_SEGMENT", eid)
+                if target:
+                    add_edge("EVIDENCE_FROM_SEGMENT", from_node_id, target, eid, locator, source_file, created_at,
+                              evidence_ids=[eid])
+
+        if node_type == "TRANSCRIPT_SEGMENT":
+            intake_ref = entity.get("intakeId")
+            if intake_ref:
+                target = resolve(intake_ref, "SEGMENT_OF", eid)
+                if target:
+                    add_edge("SEGMENT_OF", from_node_id, target, eid, intake_ref, source_file, created_at)
+
+        if node_type == "EVIDENCE_QUESTION":
+            claim_ref = entity.get("claimId")
+            if claim_ref:
+                target = resolve(claim_ref, "RAISES_QUESTION", eid)
+                if target:
+                    add_edge("RAISES_QUESTION", target, from_node_id, claim_ref, eid, source_file, created_at)
+            for answer_evidence_id in entity.get("answerEvidenceIds", []) or []:
+                target = resolve(answer_evidence_id, "RESOLVED_BY_EVIDENCE", eid)
+                if target:
+                    add_edge("RESOLVED_BY_EVIDENCE", from_node_id, target, eid, answer_evidence_id, source_file, created_at)
+
+        if node_type == "REVIEW_QUEUE_ENTRY":
+            entity_ref = entity.get("entityId")
+            if entity_ref:
+                target = resolve(entity_ref, "REQUIRES_REVIEW", eid)
+                if target:
+                    add_edge("REQUIRES_REVIEW", target, from_node_id, entity_ref, eid, source_file, created_at)
+
+        if node_type == "RULE_CANDIDATE_PROPOSAL":
+            for claim_ref in entity.get("originatingClaimIds", []) or []:
+                target = resolve(claim_ref, "PROPOSES_RULE", eid)
+                if target:
+                    add_edge("PROPOSES_RULE", target, from_node_id, claim_ref, eid, source_file, created_at)
+            if entity.get("contradictionStatus") == "open_contradiction":
+                for claim_ref in entity.get("originatingClaimIds", []) or []:
+                    for cr_node in [n for n in nodes if n["nodeType"] == "CONTRADICTION_RECORD"]:
+                        cr_entity = raw_by_entity_id.get(cr_node["entityId"], (None, {}, None))[1]
+                        if cr_entity.get("claimAId") == claim_ref or cr_entity.get("claimBId") == claim_ref:
+                            add_edge("BLOCKED_BY", from_node_id, cr_node["nodeId"], eid, cr_node["entityId"],
+                                      source_file, created_at)
+            for question_ref in entity.get("unresolvedQuestionIds", []) or []:
+                target = node_id_by_entity_id.get(question_ref)
+                if target:
+                    add_edge("BLOCKED_BY", from_node_id, target, eid, question_ref, source_file, created_at)
 
         if node_type == "CONTRADICTION_RECORD":
             for claim_ref in (entity.get("claimAId"), entity.get("claimBId")):

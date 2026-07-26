@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 1,
+  "lineStart": 1,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "SYNTHETIC TEST DATA / NOT A REAL TJR TRANSCRIPT / NOT VALIDATED TRADING KNOWLEDGE / NOT A PRODUCTION STRATEGY / DO NOT USE FOR TRADING.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|001",
+  "segmentType": "other",
+  "sequenceNumber": 1,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:00:00",
+  "textHash": "9045cdfcfa39e5471e7815c7dc4cc5a13e9f608423dda121227e35180bbc545a"
+}

@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 7,
+  "lineStart": 7,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Except when the news just came out, then I ignore the sweep requirement entirely.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|007",
+  "segmentType": "other",
+  "sequenceNumber": 7,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:07:00",
+  "textHash": "8f4607e81b23ec9ee18e884b6edb1eae03f2daeb3ee2273129f8e111114f7230"
+}

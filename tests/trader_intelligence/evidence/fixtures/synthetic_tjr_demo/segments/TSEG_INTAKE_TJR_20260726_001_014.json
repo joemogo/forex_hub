@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-26T15:00:00Z",
+  "endTimestamp": null,
+  "intakeId": "INTAKE|TJR|20260726|001",
+  "language": null,
+  "lineEnd": 14,
+  "lineStart": 14,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Maybe the stop should go above the sweep high, or maybe below the previous structure, I have not fully decided.",
+  "schemaVersion": 1,
+  "sectionTitle": null,
+  "segmentId": "TSEG|INTAKE|TJR|20260726|001|014",
+  "segmentType": "other",
+  "sequenceNumber": 14,
+  "sourceId": "EVSRC|TJR|20260726|001",
+  "speaker": "TJR",
+  "startTimestamp": "00:15:00",
+  "textHash": "5ec1bca8fe6edbb2513d4414a5892104b8b0e40db078e8cec2f231d3c695b1be"
+}
