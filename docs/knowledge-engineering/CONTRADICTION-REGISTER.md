@@ -1,0 +1,196 @@
+# Contradiction Register
+
+**MOGO-002.6 Phase 5** · **11 contradictions** involving at least one ALEX_G claim.
+
+Imported from existing `ContradictionRecord`s rather than re-derived — the evidence store already recorded each with a rationale at ingestion, and re-deciding them here would discard that reasoning. Each gains what the KE model requires and the evidence record lacks: **explicit alternative interpretations** and a **completion path**.
+
+| ID | Type | Severity | Domain | Replay helps? | Origin |
+|---|---|---|---|---|---|
+| `KECON|20260727|003` | DEFINITIONAL | **material** | MARKET_STRUCTURE | yes | `XCONTRA|20260727|003` |
+| `KECON|20260728|001` | DIRECTIONAL | **blocking** | ENTRY | yes | `XCONTRA|20260728|001` |
+| `KECON|20260728|002` | DEFINITIONAL | **material** | MARKET_STRUCTURE | yes | `XCONTRA|20260728|002` |
+| `KECON|20260728|003` | DIRECTIONAL | **material** | ENTRY | yes | `XCONTRA|20260728|003` |
+| `KECON|20260728|004` | CONDITIONAL_SCOPE | **material** | SETUP | yes | `XCONTRA|20260728|004` |
+| `KECON|20260728|005` | DIRECTIONAL | **material** | ENTRY | yes | `XCONTRA|20260728|005` |
+| `KECON|20260728|006` | SCOPE_MISMATCH | **material** | UNRESOLVED_QUESTIONS | no | `XCONTRA|20260728|006` |
+| `KECON|20260728|007` | TEMPORAL_DRIFT | **minor** | UNRESOLVED_QUESTIONS | no | `XCONTRA|20260728|007` |
+| `KECON|20260728|008` | CONDITIONAL_SCOPE | **material** | SETUP | yes | `XCONTRA|20260728|008` |
+| `KECON|20260728|009` | NUMERIC_THRESHOLD | **minor** | RISK | yes | `XCONTRA|20260728|009` |
+| `KECON|20260729|001` | CONDITIONAL_SCOPE | **material** | SETUP | yes | `XCONTRA|20260729|001` |
+
+## KECON|20260727|003 — DEFINITIONAL (material)
+
+**Claims:** `CLAIM|ALEX_G|20260727|020`, `CLAIM|TJR|20260727|065`
+
+**Issue:** CROSS-EDUCATOR. Alex G marks highs and lows at candle BODIES and states explicitly 'not at the wick'. TJR (source #2) marks a high at the highest WICK of the two candles forming it. Both are describing the same operation -- locating a structure point -- and prescribe incompatible price levels. This changes every downstream value: where the level sits, whether a break has occurred, stop placement, and risk-to-reward. Recorded, not resolved.
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|001 — DIRECTIONAL (blocking)
+
+**Claims:** `CLAIM|ALEX_G|20260728|025`, `CLAIM|TJR|20260727|006`
+
+**Issue:** CROSS-EDUCATOR, FOUNDATIONAL. Alex G: 'There's no way that you can have a specific strategy to trade solely off of these sweeps' — and that anyone claiming otherwise 'is 100% lying to you'. TJR: 'My strategy is based off of liquidity sweeps' and 'I'm looking for a liquidity sweep every single time'. This is not a disagreement about a parameter; one educator's entire method is the thing the other says cannot be done consistently. PARTIAL RECONCILIATION WORTH NOTING: Alex G's explicit target is ANTICIPATING a sweep before it happens, whereas TJR identifies a sweep that has already occurred and t
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|002 — DEFINITIONAL (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|022`, `CLAIM|TJR|20260727|036`
+
+**Issue:** CROSS-EDUCATOR, MECHANISM. TJR: 'It is assumed that market makers sweep highs and lows specifically to fill large positions in the opposite direction' — the causal engine of his entire framework. Alex G: 'There is no real hardcore evidence that this is a bank or an institution that has liquidated your position', and calls the narrative 'almost a big hoax'. Both are causal hypotheses about WHY price sweeps levels, and they are incompatible. Neither educator offers evidence: TJR asserts the mechanism, Alex G asserts the absence of proof for it. Notably Alex G is the only source in the library to
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|003 — DIRECTIONAL (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|028`, `CLAIM|ALEX_G|20260728|047`
+
+**Issue:** Within-educator. Source #5 (liquidity) states entry requires confirmation that price is ALREADY moving in the intended direction and explicitly rejects entering on anticipation. This source accepts a 'potential lower high' - a structure point that has not completed - as a valid sell location, and labels an incomplete lower high during the directional read. The two prescriptions are opposite for the same decision. Recorded, not resolved: the sources may be separated in time or address different stages, but neither states that. Note CLAIM|ALEX_G|20260728|033 already records him conceding he ente
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|004 — CONDITIONAL_SCOPE (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|082`, `CLAIM|ALEX_G|20260728|087`
+
+**Issue:** Within-source, roughly two minutes apart. At 16:56 he states that waiting for the session sometimes loses the trade entirely - 'the trade is completely gone from the direction, gone from the area where I was interested in taking'. At 18:51 he enumerates the outcomes of waiting and concludes 'there's no negative', listing only three cases: later entry but right direction, the loss you would have taken anyway, and a better entry. The forfeited-trade case he described himself is absent from the enumeration. The claim of no downside is therefore incomplete on the source's own evidence. Recorded, n
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|005 — DIRECTIONAL (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|028`, `CLAIM|ALEX_G|20260728|064`
+
+**Issue:** Within-source. The video's thesis, stated twice in the opening and again in the summary, is 'enter off of a confirmation, not an anticipation'. At 6:37 the instruction is that the 4-hour higher low 'is where you can then anticipate that wick fill'. This is the FOURTH record of the same inconsistency in Alex G's material (CLAIM|ALEX_G|20260728|033, |036, |047 and XCONTRA|20260728|003) and the first that is internal to a single source whose entire subject is the rule being broken. A possible reconciliation - that he anticipates the SETUP while still requiring a closed candle to ENTER - is cohere
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|006 — SCOPE_MISMATCH (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|089`, `CLAIM|ALEX_G|20260728|100`
+
+**Issue:** Within-source, and it concerns the numbers the video's authority rests on. The opening claims $50,000-$100,000 per day. The body asserts that 8-10% per month is the realistic, sustainable figure and that 50% per day/week/month is 'not going to happen'. At 8-10% per month, $50-100k per DAY implies an account in the tens of millions. The source's own flagship evidence is a 100K funded account returning $28,000 over 39 days. The three figures cannot describe the same trading operation. Recorded, not resolved: the daily figure may refer to gross position moves, or to accounts not described here - 
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Requires further source acquisition or an Engineering Authority ruling; no dataset available to MOGO can decide it.
+
+**Status:** OPEN
+
+## KECON|20260728|007 — TEMPORAL_DRIFT (minor)
+
+**Claims:** `CLAIM|ALEX_G|20260728|090`, `CLAIM|ALEX_G|20260728|116`
+
+**Issue:** Within-source. The same video gives four different durations for the same career: two and a half years before making any money, profitable for about six years, predicting markets for about five years, and five and a half years to work out the seasonal pattern. Casual speech rounds numbers, so this is filed as MINOR rather than material - but it is recorded because every performance claim in this source is anchored to experience length, and no two of these figures reconcile without assumptions the source does not supply.
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Requires further source acquisition or an Engineering Authority ruling; no dataset available to MOGO can decide it.
+
+**Status:** OPEN
+
+## KECON|20260728|008 — CONDITIONAL_SCOPE (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|068`, `CLAIM|ALEX_G|20260728|136`
+
+**Issue:** Behaviour versus stated rule. Every Alex G source states the setup condition as price reaching a level - the confirmation 'has to be at a support level', and away from one the rule is 'simply not applicable'. Here a setup is declined because price came roughly 10 pips SHORT of the level, which is a different and unstated condition: a proximity tolerance. No source in the library gives a tolerance, a maximum acceptable distance, or a rule for near-misses. The taught rule is binary; the demonstrated behaviour is graded. Recorded, not resolved - MOGO must not invent the threshold.
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260728|009 — NUMERIC_THRESHOLD (minor)
+
+**Claims:** `CLAIM|ALEX_G|20260728|100`, `CLAIM|ALEX_G|20260728|150`
+
+**Issue:** Same educator, two sources, on the figure both present as the realistic monthly return. Source #6: '8 to 10% a month ... that is a fact anybody can do that', with 50% per month explicitly unrealistic. Source #8: 'I wanna make seven twelve fifteen percent a month', then 'if you can make seven ten percent on any account'. The ranges overlap but do not match, and 15% sits outside the earlier stated ceiling. Filed MINOR: both are unevidenced performance figures that are already blocked from promotion, so the disagreement changes nothing operationally. Recorded because the library's practice is to 
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+
+## KECON|20260729|001 — CONDITIONAL_SCOPE (material)
+
+**Claims:** `CLAIM|ALEX_G|20260728|008`, `CLAIM|RAYNER_TEO|20260729|019`
+
+**Issue:** CROSS-EDUCATOR, and the first contradiction in the library involving three educators' worth of context. ALEX_G states that a body close beyond a structure level counts as a shift REGARDLESS OF SIZE - 'no minimum size threshold'. RAYNER_TEO states that only major swing points are used and that minor highs and lows should be deliberately ignored, on the reasoning that including them loses the larger picture. These are opposite instructions for the same operation: deciding which highs and lows count as structure. The disagreement is directly testable and is the same parameter RC-16 was already wr
+
+**Interpretations:**
+
+1. Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.
+2. Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.
+3. Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error.
+
+**Completion path:** Replay can settle this empirically once authorized.
+
+**Status:** OPEN
+

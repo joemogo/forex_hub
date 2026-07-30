@@ -1,0 +1,3307 @@
+{
+  "candidates": [
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|001",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|002"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Top-down analysis is required before any trade, regardless of trading style.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|002",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|004"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Trading the correct direction from the wrong area is a distinct failure mode from trading the wrong direction.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|003",
+      "category": "TIMEFRAMES",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|005"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Top-down analysis uses four timeframe tiers: weekly, daily, 4-hour, and the lower timeframes.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|004",
+      "category": "TIMEFRAMES",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|006"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The lower timeframes are 2-hour, 1-hour, 30-minute and 15-minute; anything below 15-minute is not considered a strong timeframe.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|005",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|007"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "When lower and higher timeframes disagree, the higher timeframe takes precedence.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|006",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|009"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|003",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|007",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|010"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|008",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|011"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "In practice Alex G stops the directional pass after the 4-hour and uses the lower timeframes for entry rather than for direction.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|009",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|016"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|010",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|017"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|011",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|018"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A break above the lower high shifts the market from bearish back to bullish.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|012",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|019"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Misidentifying the origin of a trend invalidates entry, risk-to-reward, take-profit, stop-loss and trade management even when the direction is correct.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|013",
+      "category": "SETUP",
+      "contradictionReferences": [
+        "KECON|20260727|003"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|020"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Highs and lows are marked at candle bodies, not at wicks.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|014",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|022"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|015",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|023"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|016",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|024"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Predicting tops or bottoms against the higher-timeframe direction has no longevity even when it occasionally works.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|017",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|025"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|018",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|026"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The area of interest must lie inside the current higher high and higher low, never outside that range.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "5 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|019",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|027"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "An area of interest placed below the higher low will only be reached after the market has already turned bearish, so the setup is invalid by the time price arrives.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|020",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|028"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Areas of interest are drawn only on the weekly and daily timeframes.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "4 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|021",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|029"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "An area of interest is identified by a decent number of prior rejections or touches.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|002",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "9 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|022",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|030"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|023",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|031"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": [
+        "5 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|024",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|032"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001",
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "4 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|025",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260727|034"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Buy when price is above support; sell when price is below resistance.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260727|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|026",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|004"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Judging trend from the visual slope of price rather than from market structure is a primary trader error.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|027",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|006"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Every new lower low forces reassignment of the active lower high to the most recent turn.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|028",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|007"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|029",
+      "category": "SETUP",
+      "contradictionReferences": [
+        "KECON|20260729|001"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|008"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A body close beyond a structure level counts as a shift regardless of how small the displacement is; no minimum size threshold applies.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001",
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|030",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|009"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick').",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|031",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|010"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The line chart is used as a visual aid to locate body-based structure points before returning to the candlestick chart.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|032",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|011"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001",
+          "EVSRC|ALEX_G|20260728|002",
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "7 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|033",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|013"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|001"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|034",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|017"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Liquidity concentrates where price has repeatedly been rejected from the same area.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|035",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|019"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Higher-timeframe rejection zones are stronger and attract more liquidation than lower-timeframe ones.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|036",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|020"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A zone with only one prior rejection is materially less predictable than one with several.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|037",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|021"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Trade in the direction the zone has historically pushed price: buy while above it, sell while below it.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|038",
+      "category": "LIQUIDITY",
+      "contradictionReferences": [
+        "KECON|20260728|001"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|025"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "No consistent strategy can be built on trading liquidity sweeps themselves.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|039",
+      "category": "LIQUIDITY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|026"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A liquidity sweep cannot be anticipated in advance; catching or avoiding one is luck, not method.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|040",
+      "category": "ENTRY",
+      "contradictionReferences": [
+        "KECON|20260728|003",
+        "KECON|20260728|005"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|028"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entry requires a confirmation that price is already moving in the intended direction; entering on anticipation is rejected.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002",
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "5 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|041",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|029"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|042",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|030"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002",
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "4 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|043",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|032"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|002"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|044",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|035"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|045",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|036"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A structure point that has not completed is labelled a 'potential' lower high and used in the directional read before it is confirmed.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|046",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|037"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low reading.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|047",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|038"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|048",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|039"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the maximum of the scale is not stated.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|049",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|040"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The region between the active lower high and lower low is drawn as an explicit box, and the search for an area of interest is confined to it.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|050",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|041"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|051",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|042"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A level may be a genuine and well-respected support/resistance level and still be untradeable, because price reaching it would already have invalidated the directional bias.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|052",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|043"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|053",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|044"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A candidate level is validated by looking left on the chart to confirm it has been respected historically.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|054",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|045"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003",
+          "EVSRC|ALEX_G|20260728|005",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|055",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|046"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "4 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|056",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [
+        "KECON|20260728|003"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|047"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A lower high that has not yet completed - a 'potential' lower high - is accepted as a valid sell location.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|057",
+      "category": "TIMEFRAMES",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|048"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The entry-side structure point must be present on the four-hour timeframe.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|058",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|049"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "4 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|059",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|050"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern. No EMA period is given.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "3 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|060",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|053"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entry additionally waits for 'the proper session'. Which sessions qualify is not stated.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|003"
+        ]
+      },
+      "unresolvedParameters": [
+        "3 blocking open question(s)",
+        "a named indicator or window has no stated setting",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|061",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|056"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|062",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|058"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count threshold is given.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "3 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|063",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|060"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "No trade is entered without either a rejection/doji or an engulfing candle, regardless of trade type. Stated as an absolute gate on every entry.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|064",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|062"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher low forming.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|065",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|063"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|066",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [
+        "KECON|20260728|005"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|064"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Once the 4-hour higher low is identified, the subsequent wick fill and daily engulfing are described as something to anticipate.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|067",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|067"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Rejection and engulfing candles occur throughout any chart, so the pattern alone carries no information; taking every one is explicitly called useless.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|068",
+      "category": "ENTRY",
+      "contradictionReferences": [
+        "KECON|20260728|008"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|068"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A confirmation counts only when it occurs at a support/resistance, supply and demand zone or order block - never in the middle of the chart.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "4 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|069",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|069"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|070",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|070"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|071",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|071"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entry on the rejection alone is permitted; waiting for the engulfing as well is optional and left to the trader.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|072",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|074"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004",
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "5 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|073",
+      "category": "INVALIDATION",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|075"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|074",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|077"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entering on a candlestick pattern without a strategy behind it is characterised as gambling rather than trading.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|075",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|078"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not to be traded.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|076",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|079"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Tradeable windows are defined by session volume, shown on an on-screen session map. The specific hours are displayed visually and never stated aloud.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "3 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|077",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|080"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A window offering only about an hour of volume followed by roughly nine hours without is rejected as an entry time.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|078",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|081"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A confirmation arriving before the Sydney session is held until just before the London session - roughly eight hours - rather than entered on arrival.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|079",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [
+        "KECON|20260728|004"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|082"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Waiting for the session is acknowledged to lose trades outright when price leaves the area before the session opens.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|080",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|083"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Entries on this confirmation are restricted to Monday, Tuesday and Wednesday.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|081",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|084"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|082",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|086"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The day restriction is overridden when the take-profit is shorter, the confirmation is very strong, or there is momentum. None of the three overrides is quantified.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|083",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|088"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The method is presented as conjunctive: every component must hold, and one failing component is said to produce unprofitability.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|004"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|084",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|093"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|085",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|094"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The full account balance is never risked on a trade.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|086",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|095"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The account must be funded with materially more than the intended per-trade risk, so that a loss leaves margin in the account. The worked figure is $100 risk on a $1,000 account, described as 10%.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|087",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|096"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|088",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|098"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005",
+          "EVSRC|ALEX_G|20260728|007"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|089",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|099"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Returns of 50% per day, week or month are described as unrealistic and unsustainable, though possible on isolated occasions.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|090",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|103"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The risk percentage chosen depends on account type and objective - personal, funded, or a disposable side account.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|091",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|104"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Conservative risk is 0.5 to 1% of the account per trade.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|092",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|105"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The conservative band is prescribed for lower-timeframe traders, on the stated reasoning that they take more trades and should not take many trades at high risk.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|093",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|107"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The recommended risk, described as the industry standard, is 1 to 2% of the account per trade.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|094",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|108"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|095",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|110"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|096",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|111"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The high-risk band is 3 to 5% of the account per trade.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|097",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|112"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|098",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|113"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|099",
+      "category": "RISK",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|114"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|100",
+      "category": "SESSION_RESTRICTIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|117"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Higher risk (3-5%) is taken only in November, December, January, February and possibly March, described as his statistically best months.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|005"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|101",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|124"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Correlated pairs are compared and the one presenting the cleaner structure is preferred. NZDUSD and NZDCAD are treated as moving very similarly.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|102",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|125"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The EMA is used as dynamic support or resistance: support while bullish and resistance while bearish. Its period is still not stated.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "3 blocking open question(s)",
+        "a named indicator or window has no stated setting",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|103",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|126"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The entry zone is where the EMA and a prior structure point converge on the same retracement, rather than either alone.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|104",
+      "category": "ENTRY",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|128"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The counter-trend leg is deliberately forgone in order to take the larger continuation leg that follows it.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|105",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|130"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Counter-trend trading is characterised as a beginner error he has stopped making. The phrasing 'not anymore' indicates he previously did it.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|106",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|131"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Trades are taken only when judged worth the capital risked. Selectivity is presented as a gate in its own right, separate from the mechanical entry conditions.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|107",
+      "category": "SETUP",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|134"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "Direction is chosen by counting the confluences available for each side and taking the side with materially more. The comparison is explicitly two-sided.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|108",
+      "category": "INVALIDATION",
+      "contradictionReferences": [
+        "KECON|20260728|008"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|136"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment.",
+      "proposedConditions": [],
+      "required": true,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|109",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|139"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "After missing an entry, the stated response is to set an alarm for the next pullback rather than to chase the move.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|110",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|140"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "A 1:4 risk-to-reward is described for one watchlist setup. Stated as an observation about that chart, not as a required minimum.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|006"
+        ]
+      },
+      "unresolvedParameters": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|111",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|145"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The named core failure: a trade set to a 1:4 target is closed at 1:2 because the unrealised dollar figure equals what the trader normally earns in a month. The exit is driven by the size of the number, not by the market.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|007"
+        ]
+      },
+      "unresolvedParameters": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|112",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|147"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The stated implication is that a target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|007"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|113",
+      "category": "NO_TRADE_CONDITIONS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|155"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The attributed cause of the loss of opportunity is deferring to someone else's judgement of what counts as a large amount of money, not the trade itself.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|007"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|114",
+      "category": "TRADE_MANAGEMENT",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "MEDIUM",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|156"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "The prescribed response is not to show open positions to others, on the reasoning that their reference point for a large sum will pull the trader back to a salary anchor.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|007"
+        ]
+      },
+      "unresolvedParameters": []
+    },
+    {
+      "approvalStatus": "DRAFT",
+      "candidateRuleId": "KECAND|ALEX_G|115",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "maturity": "CANDIDATE",
+      "normalizationConfidence": "LOW",
+      "notes": null,
+      "originatingClaimIds": [
+        "CLAIM|ALEX_G|20260728|159"
+      ],
+      "proposedAction": null,
+      "proposedCanonicalStatement": "He states he folds the 10% discretionary tranche into investment, so his own allocation is not the 30/30/30/10 he prescribes. The stated reason is compounding while young.",
+      "proposedConditions": [],
+      "required": false,
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceSupport": {
+        "claimCount": 1,
+        "originConfidenceState": "emerging",
+        "sourceIds": [
+          "EVSRC|ALEX_G|20260728|007"
+        ]
+      },
+      "unresolvedParameters": []
+    }
+  ],
+  "count": 115
+}

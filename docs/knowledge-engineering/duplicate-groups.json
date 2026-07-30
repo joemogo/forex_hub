@@ -1,0 +1,98 @@
+{
+  "count": 4,
+  "groups": [
+    {
+      "blockingReasons": [],
+      "confidence": "LOW",
+      "groupId": "KEDUP|ALEX_G|001",
+      "meaningfulDifferences": [
+        "012 [definition/EXPLICIT]: A bullish market is a series of higher highs and higher lows.",
+        "013 [definition/EXPLICIT]: A bearish market is a series of lower highs and lower lows."
+      ],
+      "memberClaimIds": [
+        "CLAIM|ALEX_G|20260727|012",
+        "CLAIM|ALEX_G|20260727|013"
+      ],
+      "mergeRecommendation": "MERGE_WITH_CAVEATS",
+      "overlapDegree": "SAME_CONCEPT_DIFFERENT_DETAIL",
+      "proposedCanonicalConcept": "A bullish market is a series of higher highs and higher lows.",
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceChronology": [
+        "EVSRC|ALEX_G|20260727|001",
+        "EVSRC|ALEX_G|20260728|001",
+        "EVSRC|ALEX_G|20260728|003"
+      ]
+    },
+    {
+      "blockingReasons": [
+        "023 vs 121: thresholds differ (['3'] vs ['99'])"
+      ],
+      "confidence": "LOW",
+      "groupId": "KEDUP|ALEX_G|002",
+      "meaningfulDifferences": [
+        "023 [performance_hypothesis/EXPLICIT]: Alex G states retail traders make up 3% of the market. No source is given for this figure.",
+        "121 [performance_hypothesis/EXPLICIT]: Alex G states 99% of traders lose money. No source is given for the figure."
+      ],
+      "memberClaimIds": [
+        "CLAIM|ALEX_G|20260728|023",
+        "CLAIM|ALEX_G|20260728|121"
+      ],
+      "mergeRecommendation": "DO_NOT_MERGE",
+      "overlapDegree": "RELATED_NOT_DUPLICATE",
+      "proposedCanonicalConcept": "Alex G states retail traders make up 3% of the market. No source is given for this figure.",
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceChronology": [
+        "EVSRC|ALEX_G|20260728|002",
+        "EVSRC|ALEX_G|20260728|005"
+      ]
+    },
+    {
+      "blockingReasons": [
+        "104 vs 107: thresholds differ (['0.5 ', '1'] vs ['1 ', '2'])",
+        "104 vs 111: thresholds differ (['0.5 ', '1'] vs ['3 ', '5'])",
+        "107 vs 111: thresholds differ (['1 ', '2'] vs ['3 ', '5'])"
+      ],
+      "confidence": "LOW",
+      "groupId": "KEDUP|ALEX_G|003",
+      "meaningfulDifferences": [
+        "104 [risk_rule/EXPLICIT]: Conservative risk is 0.5 to 1% of the account per trade.",
+        "107 [risk_rule/EXPLICIT]: The recommended risk, described as the industry standard, is 1 to 2% of the account per tr",
+        "111 [risk_rule/EXPLICIT]: The high-risk band is 3 to 5% of the account per trade."
+      ],
+      "memberClaimIds": [
+        "CLAIM|ALEX_G|20260728|104",
+        "CLAIM|ALEX_G|20260728|107",
+        "CLAIM|ALEX_G|20260728|111"
+      ],
+      "mergeRecommendation": "DO_NOT_MERGE",
+      "overlapDegree": "RELATED_NOT_DUPLICATE",
+      "proposedCanonicalConcept": "Conservative risk is 0.5 to 1% of the account per trade.",
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceChronology": [
+        "EVSRC|ALEX_G|20260728|005"
+      ]
+    },
+    {
+      "blockingReasons": [
+        "110 vs 113: thresholds differ (['1', '2 '] vs ['1', '15', '3 ', '5'])"
+      ],
+      "confidence": "LOW",
+      "groupId": "KEDUP|ALEX_G|004",
+      "meaningfulDifferences": [
+        "110 [target_rule/UNRESOLVED]: A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, n",
+        "113 [target_rule/UNRESOLVED]: A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustr"
+      ],
+      "memberClaimIds": [
+        "CLAIM|ALEX_G|20260728|110",
+        "CLAIM|ALEX_G|20260728|113"
+      ],
+      "mergeRecommendation": "DO_NOT_MERGE",
+      "overlapDegree": "RELATED_NOT_DUPLICATE",
+      "proposedCanonicalConcept": "A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum.",
+      "reviewStatus": "PENDING_REVIEW",
+      "sourceChronology": [
+        "EVSRC|ALEX_G|20260728|005"
+      ]
+    }
+  ]
+}

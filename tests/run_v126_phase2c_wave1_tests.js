@@ -67,6 +67,32 @@ globalThis.ResizeObserver=function(){return{observe:function(){},disconnect:func
 globalThis.LightweightCharts={LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}};
 globalThis.Notification=undefined;
 
+// ── MOGO-002.8A DETERMINISM FIX ──────────────────────────────────────────────
+// ALEX v1.1 adds a Monday-Wednesday entry-eligibility gate (ALEX_V11_001), which is
+// evaluated against the live wall clock. Every fixture below that opens a real trade
+// end-to-end would therefore PASS Mon/Tue/Wed and FAIL Thu/Fri/Sat/Sun with no code
+// change whatsoever -- a date-dependent regression suite.
+//
+// This suite exists to verify DECISION-EVENT EMISSION, not day-of-week eligibility
+// (which has its own dedicated coverage in v127_alex_v11_release_tests.js, fixtures
+// B1-B13). Pinning the clock to a fixed eligible Monday keeps every assertion below
+// testing exactly what it was written to test, deterministically, on any day.
+//
+// NOT A PRODUCTION CHANGE: this pins the clock for this test process only. Zero
+// assertions are modified. Zero production code is modified.
+const __PINNED_NOW=Date.UTC(2026,0,5,12,0,0); // Monday 2026-01-05 12:00 UTC
+const __RealDate=Date;
+function __PinnedDate(){
+  if(arguments.length===0) return new __RealDate(__PINNED_NOW);
+  if(arguments.length===1) return new __RealDate(arguments[0]);
+  return new __RealDate(arguments[0],arguments[1],arguments[2]||1,arguments[3]||0,arguments[4]||0,arguments[5]||0,arguments[6]||0);
+}
+__PinnedDate.now=function(){return __PINNED_NOW;};
+__PinnedDate.parse=__RealDate.parse;
+__PinnedDate.UTC=__RealDate.UTC;
+__PinnedDate.prototype=__RealDate.prototype;
+globalThis.Date=__PinnedDate;
+
 const g={};
 const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
@@ -113,6 +139,20 @@ const wrapped = new Function('g',
   'g.setLocalStorageItem=function(k,v){localStorage.setItem(k,v);};' +
   'g.clearLocalStorage=function(){localStorage.__clear();};' +
   'g.getAllLocalStorageKeys=function(){return localStorage.__keys();};' +
+  // ── MOGO-002.8B DETERMINISM FIX (same principle as the clock pin above) ──
+  // MOGO-002.8B suspends A_repeatedReaction from opening LIVE paper positions.
+  // Every fixture below that opens a trade end-to-end builds an A_repeatedReaction
+  // setup, so all of them would now be correctly withheld by the new gate.
+  //
+  // This suite exists to verify DECISION-EVENT EMISSION, not setup execution policy
+  // (which has dedicated coverage in v127_alex_v11_release_tests.js, fixtures K1-K23).
+  // Disabling the suspension for THIS TEST PROCESS ONLY keeps every assertion below
+  // testing exactly what it was written to test.
+  //
+  // NOT A PRODUCTION CHANGE and NOT a weakening of the gate: production default
+  // remains setupSuspensionEnabled:true, asserted by v127 fixture K9.
+  // Zero assertions modified. Zero production code modified.
+  'RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;' +
   'return runPhase2CWave1Fixtures(g);'
 );
 wrapped(g).then(function(results){

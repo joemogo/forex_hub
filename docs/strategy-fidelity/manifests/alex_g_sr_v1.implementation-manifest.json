@@ -1,0 +1,564 @@
+{
+  "engineVersion": "12.6.0",
+  "extraImplementationRules": [
+    {
+      "affectsTradingBehavior": true,
+      "category": "RISK",
+      "description": "RULES_ALEXG.hubTestStandardizations states this is '100% unaddressed by the source'. The implementation nonetheless trades a complete risk model: stopATRBuffer 0.25, riskPercent 1.0, minRR 2.0. Every ALEX trade's stop, target and size come from rules the specification does not contain.",
+      "evaluators": [
+        "alexGConstructLivePosition",
+        "alexGComputeATRAtEntry"
+      ],
+      "id": "ALEX_X_001",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3485",
+          "symbol": "RULES_ALEXG.config.stopATRBuffer"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:3956",
+          "symbol": "alexGConstructLivePosition"
+        }
+      ],
+      "origin": "hub_standardization",
+      "tests": [
+        "tests/v_paper_trading_audit_tests.js"
+      ],
+      "title": "Entire stop-loss / take-profit / risk / R:R mechanism"
+    },
+    {
+      "affectsTradingBehavior": true,
+      "category": "ENTRY",
+      "description": "A live-only gate rejecting a fill more than 5 pips from the qualification close (ENTRY_MOVED_TOO_FAR_FROM_SIGNAL). The artifact states 'the source never addresses live execution latency at all'.",
+      "evaluators": [
+        "alexGConstructLivePosition"
+      ],
+      "id": "ALEX_X_002",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3988",
+          "symbol": "RULES_ALEXG.config.maxLiveEntryDelayPips"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:3956",
+          "symbol": "alexGConstructLivePosition"
+        }
+      ],
+      "origin": "engineering_necessity",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ],
+      "title": "Live entry-delay gate (maxLiveEntryDelayPips)"
+    },
+    {
+      "affectsTradingBehavior": true,
+      "category": "ENTRY",
+      "description": "One bar-period per timeframe; a setup first evaluated later than that is IGNORED — STALE SIGNAL. Emitted as ruleId ALEX_SIGNAL_STALENESS. The artifact states the source never addresses signal age.",
+      "evaluators": [
+        "alexGIsSetupSignalStale"
+      ],
+      "id": "ALEX_X_003",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:2396",
+          "symbol": "RULES_ALEXG.config.maxLiveSignalAgeMinutes"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:4177",
+          "symbol": "alexGIsSetupSignalStale"
+        }
+      ],
+      "origin": "engineering_necessity",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ],
+      "title": "Signal staleness gate (maxLiveSignalAgeMinutes)"
+    },
+    {
+      "affectsTradingBehavior": true,
+      "category": "NO_TRADE_CONDITIONS",
+      "description": "Setups qualifying before the account's activation timestamp are rejected (CONFIG_BEFORE_ACTIVATION). Emitted as ruleId ALEX_ACTIVATION_CUTOFF. Not a source concept.",
+      "evaluators": [
+        "alexGIsSetupEligibleForLiveTrading"
+      ],
+      "id": "ALEX_X_004",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:4165",
+          "symbol": "alexGIsSetupEligibleForLiveTrading"
+        }
+      ],
+      "origin": "engineering_necessity",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ],
+      "title": "Activation cutoff gate"
+    },
+    {
+      "affectsTradingBehavior": true,
+      "category": "SETUP",
+      "description": "A zone with >=3 counted penetrations in a 50-bar lookback is flagged 'choppy' and disqualified. The source states no such filter.",
+      "evaluators": [
+        "alexGCorrectedQuality"
+      ],
+      "id": "ALEX_X_005",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3137",
+          "symbol": "alexGCorrectedQuality"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2384",
+          "symbol": "RULES_ALEXG.config.maxPenetrationsBeforeChoppyFlag"
+        }
+      ],
+      "origin": "hub_standardization",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ],
+      "title": "Choppy-zone penetration filter"
+    },
+    {
+      "affectsTradingBehavior": true,
+      "category": "SETUP",
+      "description": "A reaction only counts if confirmed within rejectionConfirmWithinBars=1 and displaces at least 0.25 ATR. The source describes reactions qualitatively with no threshold.",
+      "evaluators": [
+        "alexGAcceptReaction"
+      ],
+      "id": "ALEX_X_006",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:2379",
+          "symbol": "RULES_ALEXG.config.rejectionConfirmWithinBars"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2380",
+          "symbol": "RULES_ALEXG.config.rejectionDisplacementATRMultiplier"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2792",
+          "symbol": "alexGAcceptReaction"
+        }
+      ],
+      "origin": "hub_standardization",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ],
+      "title": "Rejection-confirmation window and displacement threshold"
+    },
+    {
+      "affectsTradingBehavior": false,
+      "category": "SESSION_RESTRICTIONS",
+      "description": "The artifact records this as 'a deliberate design choice, not a source gap'. Session and day metadata ARE computed and recorded but never restrict entry.",
+      "evaluators": [
+        "alexGComputeSessionMetadata"
+      ],
+      "id": "ALEX_X_007",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3225",
+          "symbol": "alexGComputeSessionMetadata"
+        }
+      ],
+      "origin": "hub_standardization",
+      "tests": [
+        "tests/v_paper_trading_audit_tests.js"
+      ],
+      "title": "Zero session / day / news filtering"
+    },
+    {
+      "affectsTradingBehavior": false,
+      "category": "SETUP",
+      "description": "A separate research strategy (strategyId ALEX_SCORE_V2, version 1.0.0-research) with its own weighted-score rule hierarchy: higher-timeframe trend, area of interest, price-action confirmation, 50 EMA confluence. It is shadow-mode only (alexV2AutoTrading.enabled is false and nothing flips it) and fully isolated in its own state and storage keys, so it does NOT execute paper trades and is out of scope for this fidelity comparison. It is recorded here because it is a second implementation claiming the Alex name.",
+      "evaluators": [
+        "alexV2ComputeTrendState",
+        "alexV2FindStructuralAOI",
+        "alexV2DetectEntrySignal"
+      ],
+      "id": "ALEX_X_008",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:14952",
+          "symbol": "ALEX_V2_META"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:14995",
+          "symbol": "saveAlexV2"
+        }
+      ],
+      "origin": "experimental",
+      "tests": [],
+      "title": "ALEX_SCORE_V2 — a second, parallel Alex strategy"
+    }
+  ],
+  "implementationVersion": "alex_g_sr_v1.impl.1",
+  "manifestHash": "a29338591b053ec2c8b4295a9a2434a4ad4b20982b9e4a41d93069f6da41b000",
+  "mappingCount": 13,
+  "mappings": [
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGZoneRole"
+      ],
+      "implementationNotes": "Role is derived positionally: price above the zone -> 'support', below -> 'resistance', within -> 'inside'. That is a faithful mechanisation of the definitional concept.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:2735",
+          "symbol": "alexGZoneRole"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "Definitional rule; there is no behavioural assertion to test directly."
+      ],
+      "ruleId": "ALEX_SR_001",
+      "tests": [
+        "tests/v_paper_trading_audit_tests.js",
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGCreateSetupRecord",
+        "alexGZoneRole"
+      ],
+      "implementationNotes": "The single `zone` object carries both roles over time via lastKnownRole; there is no separate support-object and resistance-object, which is what the concept requires.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3249",
+          "symbol": "alexGCreateSetupRecord"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2735",
+          "symbol": "alexGZoneRole"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [],
+      "ruleId": "ALEX_SR_002",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGDetermineTradeDirection"
+      ],
+      "implementationNotes": "support -> buy, resistance -> sell, and an 'inside' role returns {direction:null, rejectionReason:'INVALID_ZONE_ROLE_INSIDE'}, which the caller surfaces as reason code ENTRY_INVALID_ZONE_ROLE. The prohibition is enforced by construction: there is no code path that produces a trade against the role.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3396",
+          "symbol": "alexGDetermineTradeDirection"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "PROTECTED function (regression-baseline.json). It cannot be edited or instrumented without baseline drift, so its internal rule detail is not externally observable."
+      ],
+      "ruleId": "ALEX_SR_003",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGDetermineFromSide",
+        "alexGAcceptReaction"
+      ],
+      "implementationNotes": "fromSide is resolved to 'above' or 'below' from the pre-anchor close, and both feed one shared zone.touches array -- a single bidirectional tally, as specified.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:2752",
+          "symbol": "alexGDetermineFromSide"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2792",
+          "symbol": "alexGAcceptReaction"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "PROTECTED function (regression-baseline.json). It cannot be edited or instrumented without baseline drift, so its internal rule detail is not externally observable."
+      ],
+      "ruleId": "ALEX_SR_004",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGEvaluateRepeatedReaction"
+      ],
+      "implementationNotes": "Two independent guards enforce it exactly: `touchIndex<3 -> {qualifies:false}` (0-based, so the 4th reaction is the first eligible) and `zone.touches.length<4 -> {qualifies:false}`. Also requires status 'validated' and a non-choppy corrected quality.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3165",
+          "symbol": "alexGEvaluateRepeatedReaction"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "PROTECTED function (regression-baseline.json). It cannot be edited or instrumented without baseline drift, so its internal rule detail is not externally observable.",
+        "The {qualifies:false} return contract discards WHICH of the four conditions failed, so a rejection cannot be attributed to a specific rule in a trace."
+      ],
+      "ruleId": "ALEX_SR_005",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGAcceptReaction"
+      ],
+      "implementationNotes": "Exact ternary: `touches.length<3 ? 'weak' : ===3 ? 'valid' : 'strong'`. The three named tiers and their boundaries match the concept literally.",
+      "implementationReferences": [
+        {
+          "detail": "zoneStrength assignment",
+          "locator": "index.html:2792",
+          "symbol": "alexGAcceptReaction"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "PROTECTED function (regression-baseline.json). It cannot be edited or instrumented without baseline drift, so its internal rule detail is not externally observable."
+      ],
+      "ruleId": "ALEX_SR_006",
+      "tests": [
+        "tests/v_paper_trading_audit_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": "The concept says more touches are ALWAYS better with NO CEILING. The strength tier saturates at 'strong' for 4 or more touches, so a 12-touch zone and a 4-touch zone are indistinguishable to every consumer of zoneStrength. The raw count survives in zone.touches.length and zoneTouchNumber, so the information is retained -- but no decision uses it beyond the tier.",
+      "evaluators": [
+        "alexGAcceptReaction"
+      ],
+      "implementationNotes": "Faithful up to 4 touches; flat thereafter.",
+      "implementationReferences": [
+        {
+          "detail": "zoneStrength assignment",
+          "locator": "index.html:2792",
+          "symbol": "alexGAcceptReaction"
+        }
+      ],
+      "implementationStatus": "APPROXIMATED",
+      "inspected": true,
+      "knownLimitations": [
+        "No consumer ranks two 'strong' zones against each other."
+      ],
+      "ruleId": "ALEX_SR_007",
+      "tests": []
+    },
+    {
+      "approximationDetail": "The source gives NO formula -- RULES_ALEXG itself records 'demonstrated visually, no formula given'. The implementation substitutes an ATR-proportional grouping tolerance (zoneClusterATRMultiplier = 0.5), which RULES_ALEXG.experimentalParams flags as EXPERIMENTAL and 'not tuned against outcomes'. This is a chosen standardization, not a reconstruction of a stated rule.",
+      "evaluators": [
+        "alexGAssignCluster"
+      ],
+      "implementationNotes": "Nearest-cluster assignment with a deterministic tie-break cascade (nearest centre -> earlier creation -> lower id).",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:2763",
+          "symbol": "alexGAssignCluster"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2377",
+          "symbol": "RULES_ALEXG.config.zoneClusterATRMultiplier"
+        }
+      ],
+      "implementationStatus": "APPROXIMATED",
+      "inspected": true,
+      "knownLimitations": [
+        "The specification is UNRESOLVED here, so no comparison can establish whether 0.5 ATR is faithful. Sensitivity range [0.25, 0.5, 0.75, 1.0] is declared but untested."
+      ],
+      "ruleId": "ALEX_SR_008",
+      "tests": []
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGEnsureZoneState",
+        "alexGRunZoneEngine",
+        "alexGRunSetupEngine"
+      ],
+      "implementationNotes": "The traded behaviour is correct -- exactly H1, H4, D and W are processed. DISCREPANCY: the three real loops use the HARDCODED array literal ['H1','H4','D','W'] and never read RULES_ALEXG.config.zoneTimeframes, which is therefore a dead configuration key. Behaviourally faithful today; a future edit to the config would silently have no effect.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:2741",
+          "symbol": "alexGEnsureZoneState"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2996",
+          "symbol": "alexGRunZoneEngine"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:3349",
+          "symbol": "alexGRunSetupEngine"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2375",
+          "symbol": "RULES_ALEXG.config.zoneTimeframes"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "config.zoneTimeframes is declared but unread -- see FIDELITY-DISC-001."
+      ],
+      "ruleId": "ALEX_SR_009",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGSetupSortComparator"
+      ],
+      "implementationNotes": "htfPriority {W:4, D:3, H4:2, H1:1} is read from config and used to order competing setups so a higher-timeframe zone is preferred.",
+      "implementationReferences": [
+        {
+          "detail": "htfPriority",
+          "locator": "index.html:3589",
+          "symbol": "alexGSetupSortComparator"
+        },
+        {
+          "detail": null,
+          "locator": "index.html:2376",
+          "symbol": "RULES_ALEXG.config.htfPriority"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "Priority affects ORDERING only. The concept says higher-timeframe zones are 'more respected'; the implementation never uses that to gate, weight or size a trade, so the two are only partially comparable."
+      ],
+      "ruleId": "ALEX_SR_010",
+      "tests": [
+        "tests/v_paper_trading_audit_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGEvaluateBreakRetest",
+        "alexGBreakCycleId"
+      ],
+      "implementationNotes": "The full ordered sequence is enforced: zone.status must be 'broken', the retest bar must be strictly after brokenAtBar, the swing type and fromSide must match the post-break side, and only the first qualifying retest per breakCycleId is taken. The role flip is carried by brokenDirection -> direction in alexGDetermineTradeDirection.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3147",
+          "symbol": "alexGEvaluateBreakRetest"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "PROTECTED function (regression-baseline.json). It cannot be edited or instrumented without baseline drift, so its internal rule detail is not externally observable.",
+        "maxBarsBetweenBreakAndRetest = 50 is a Hub standardization; the source states no time limit on the retest."
+      ],
+      "ruleId": "ALEX_SR_011",
+      "tests": [
+        "tests/v126_phase2c_wave1_tests.js"
+      ]
+    },
+    {
+      "approximationDetail": "The concept calls round numbers 'additional, non-mandatory confluence'. The implementation computes and records RAW DISTANCES ONLY and deliberately does not treat them as confluence -- the proximity boolean was removed in v3.6.1 as an unsupported standardization. So the rule is recorded but never acts as confluence anywhere in the decision path.",
+      "evaluators": [
+        "alexGComputePsychLevels"
+      ],
+      "implementationNotes": "Record-only metadata; pair-aware via the frozen pipSize().",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3184",
+          "symbol": "alexGComputePsychLevels"
+        }
+      ],
+      "implementationStatus": "APPROXIMATED",
+      "inspected": true,
+      "knownLimitations": [
+        "No consumer reads psych-level distance to influence a decision."
+      ],
+      "ruleId": "ALEX_SR_012",
+      "tests": []
+    },
+    {
+      "approximationDetail": null,
+      "evaluators": [
+        "alexGComputeTrendContext"
+      ],
+      "implementationNotes": "Structural trend (UPTREND / DOWNTREND / RANGE_MIXED / INSUFFICIENT_DATA) is computed from confirmed swing structure and recorded on the setup and journal record. It never gates, scores, sizes or alters a trade -- which is FAITHFUL, because the source never stated it as a requirement.",
+      "implementationReferences": [
+        {
+          "detail": null,
+          "locator": "index.html:3199",
+          "symbol": "alexGComputeTrendContext"
+        },
+        {
+          "detail": "trendContext recorded",
+          "locator": "index.html:2245",
+          "symbol": "buildAlexJournalOpenRecord"
+        }
+      ],
+      "implementationStatus": "IMPLEMENTED",
+      "inspected": true,
+      "knownLimitations": [
+        "Because the rule is DISCRETIONARY, no fidelity verdict is possible either way; see the NOT_APPLICABLE finding."
+      ],
+      "ruleId": "ALEX_SR_013",
+      "tests": [
+        "tests/v_paper_trading_audit_tests.js"
+      ]
+    }
+  ],
+  "modelVersion": "mogo.strategy-fidelity.v1",
+  "notes": "Every mapping was produced by reading the cited code path during MOGO-002.5. 48 of the 63 protected functions in regression-baseline.json are ALEX functions, so several rules are implemented inside code that cannot be instrumented without baseline drift; those limitations are stated per mapping rather than hidden.",
+  "referenceVerification": {
+    "checked": true,
+    "method": "symbol_resolution_at_build_time",
+    "note": "Locators are RESOLVED from symbols each time the manifest is built, never stored by hand. A renamed or deleted symbol is reported here rather than silently pointing at unrelated code.",
+    "problemCount": 0,
+    "problems": []
+  },
+  "specificationVersion": "alex_g_sr_v1",
+  "strategyId": "alex_g_sr_v1"
+}

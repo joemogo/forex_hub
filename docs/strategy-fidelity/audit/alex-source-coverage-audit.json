@@ -1,0 +1,506 @@
+{
+  "acquiredAndProcessedCount": 9,
+  "duplicateAnalysis": {
+    "distinctVideoIds": 9,
+    "exactDuplicates": 0,
+    "method": "SHA-256 content hash compared at ingestion for every source; plus canonicalReference (videoId) uniqueness across the 9 registered sources.",
+    "note": "No source is DUPLICATE_OR_REDUNDANT. Topic overlap exists (e.g. 20260728|003 and 20260728|006 both narrate chart markup) but each carries distinct claims."
+  },
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "identifiedNotAcquired": [
+    {
+      "attribution": "ALEX_G (@fxalexg__)",
+      "note": "No specific video identified; channel listing is JS-rendered and could not be enumerated.",
+      "sourceRef": "ACQTARGET|ALEX_G|COMPLETE-WALKTHROUGH",
+      "status": "SOURCE_IDENTIFIED_NOT_ACQUIRED",
+      "title": "TARGET PROFILE -- complete single-trade walkthrough, setup through close",
+      "url": null
+    },
+    {
+      "attribution": "ALEX_G (@fxalexg__)",
+      "note": "Standing target A2-LIVE (BACKLOG-002). Highest-value remaining target: a stop price must be typed into an order ticket, which is where the missing buffer would appear.",
+      "sourceRef": "ACQTARGET|ALEX_G|LIVE-SESSION-ORDER-ENTRY",
+      "status": "SOURCE_IDENTIFIED_NOT_ACQUIRED",
+      "title": "TARGET PROFILE -- live session in which an order is actually placed",
+      "url": null
+    },
+    {
+      "attribution": "ALEX_G (@fxalexg__)",
+      "note": "EVSRC|ALEX_G|20260728|007 self-identifies as episode three of this series, so the format demonstrably exists.",
+      "sourceRef": "ACQTARGET|ALEX_G|SET-AND-FORGET-EXPLAINER",
+      "status": "SOURCE_IDENTIFIED_NOT_ACQUIRED",
+      "title": "TARGET PROFILE -- dedicated 'set and forget' methodology explainer",
+      "url": null
+    },
+    {
+      "attribution": "ALEX_G speaks; publisher is Trading Nut (third party)",
+      "note": "Educator speech on a third-party channel. EvidenceSource has no field distinguishing publisher from speaker, so ingesting it would require a governance decision first.",
+      "sourceRef": "ACQCAND|INTERVIEW|20260729|001",
+      "status": "ATTRIBUTION_UNCERTAIN",
+      "title": "How This Young Trader Claims He Made $2M in 1 Year ... w FxAlexG",
+      "url": "https://www.youtube.com/watch?v=VMjbJCmFXMk"
+    }
+  ],
+  "milestone": "MOGO-002.8",
+  "modelVersion": "mogo.alex-audit.v1",
+  "narrativeArtifact": "docs/strategy-fidelity/audit/ALEX-SOURCE-COVERAGE-AUDIT.md",
+  "rejectedSources": {
+    "count": 7,
+    "reason": "Channel ownership verified individually via oEmbed; none is @fxalexg__. Rejected for LINEAGE, not for quality: a third party's account of Alex's rule cannot establish Alex attribution.",
+    "sources": [
+      {
+        "channel": "SIR TREVOR TRADES",
+        "title": "Complete Guide Of Set And Forget Strategy by FXALEXG (Must Watch)",
+        "videoId": "iXjrVyTAS6M"
+      },
+      {
+        "channel": "Nick's Trade",
+        "title": "The Set And Forget Forex Trading Strategy (By FX Alex G)",
+        "videoId": "N4ipW0VlGI8"
+      },
+      {
+        "channel": "Vidollar",
+        "title": "I Tried FX Alex G Trading Strategy With $1000 Live Account",
+        "videoId": "R4mNrUy_azU"
+      },
+      {
+        "channel": "Revelio Trading",
+        "title": "I Tried to Improve fxalexg's Trading Strategy",
+        "videoId": "HzVSi9ux1NU"
+      },
+      {
+        "channel": "Chuck Index",
+        "title": "@FXALEXG Set and Forget Forex Course Review",
+        "videoId": "AFOp_jsm1Ak"
+      },
+      {
+        "channel": "Alex Trading Reviews",
+        "title": "A Full Year With @FXALEXG's Forex Signals: RESULTS EXPOSED",
+        "videoId": "kBWjkO1GCyk"
+      },
+      {
+        "channel": "MOBILE TRADING ACADEMY",
+        "title": "Where to Place Your Stop-Loss and Take-Profit Forex Tutorial",
+        "videoId": "rr1IBysoGYY"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 35,
+      "claimTypes": {
+        "behavioral_observation": 1,
+        "causal_hypothesis": 4,
+        "confirmation_rule": 2,
+        "definition": 5,
+        "entry_rule": 7,
+        "exception": 1,
+        "failure_condition": 4,
+        "invalidation_rule": 2,
+        "setup_requirement": 7,
+        "timeframe_rule": 2
+      },
+      "contentHash": "c9c4193a8aeedc9aee13264dd58568a8c96f70b5db7019a7badd13fced674606",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 37,
+      "evidenceQuality": {
+        "high": 26,
+        "low": 1,
+        "medium": 10
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-why-99-percent-of-traders-fail.raw.txt",
+      "ruleBearingClaimTypes": {
+        "confirmation_rule": 2,
+        "entry_rule": 7,
+        "invalidation_rule": 2,
+        "setup_requirement": 7,
+        "timeframe_rule": 2
+      },
+      "segmentCount": 17,
+      "sourceId": "EVSRC|ALEX_G|20260727|001",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "Best Top Down Analysis Strategy for 2026 | Forex Trading Guide",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=pD1vAUMbSjw"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 18,
+      "claimTypes": {
+        "definition": 6,
+        "entry_rule": 1,
+        "failure_condition": 1,
+        "invalidation_rule": 2,
+        "performance_hypothesis": 1,
+        "setup_requirement": 7
+      },
+      "contentHash": "f48d9c1c8c13f0fa85f1cb830e71ef40af7f6163d528bb8407ee29575408a6db",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 21,
+      "evidenceQuality": {
+        "high": 13,
+        "low": 1,
+        "medium": 7
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-advanced-market-structure.raw.txt",
+      "ruleBearingClaimTypes": {
+        "entry_rule": 1,
+        "invalidation_rule": 2,
+        "setup_requirement": 7
+      },
+      "segmentCount": 17,
+      "sourceId": "EVSRC|ALEX_G|20260728|001",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "Simplifying Advanced Market Structure in 20 Minutes | Forex Trading Tutorial",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=sZAE_lqdeno"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 22,
+      "claimTypes": {
+        "behavioral_observation": 2,
+        "causal_hypothesis": 2,
+        "definition": 3,
+        "entry_rule": 7,
+        "failure_condition": 3,
+        "invalidation_rule": 1,
+        "performance_hypothesis": 1,
+        "setup_requirement": 3
+      },
+      "contentHash": "175af73d2094664d7e978c9526e2ebd658c3dbf6f9880f0bfb8154611abc39c2",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 24,
+      "evidenceQuality": {
+        "high": 13,
+        "low": 3,
+        "medium": 8
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-liquidity-and-liquidity-sweeps.raw.txt",
+      "ruleBearingClaimTypes": {
+        "entry_rule": 7,
+        "invalidation_rule": 1,
+        "setup_requirement": 3
+      },
+      "segmentCount": 15,
+      "sourceId": "EVSRC|ALEX_G|20260728|002",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "How to Master Liquidity in Trading (Advanced Guide)",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=Rua24ytuHuY"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 29,
+      "claimTypes": {
+        "behavioral_observation": 1,
+        "confirmation_rule": 3,
+        "definition": 1,
+        "entry_rule": 7,
+        "exception": 3,
+        "failure_condition": 1,
+        "invalidation_rule": 2,
+        "other": 1,
+        "performance_hypothesis": 1,
+        "session_rule": 1,
+        "setup_requirement": 6,
+        "timeframe_rule": 1,
+        "trade_management_rule": 1
+      },
+      "contentHash": "c4901808d9eecc7b42dea8723df43440892a91c195bc3bd836778c1f6308c8a8",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 31,
+      "evidenceQuality": {
+        "high": 13,
+        "low": 3,
+        "medium": 15
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-area-of-interest-markup.raw.txt",
+      "ruleBearingClaimTypes": {
+        "confirmation_rule": 3,
+        "entry_rule": 7,
+        "invalidation_rule": 2,
+        "session_rule": 1,
+        "setup_requirement": 6,
+        "timeframe_rule": 1,
+        "trade_management_rule": 1
+      },
+      "segmentCount": 13,
+      "sourceId": "EVSRC|ALEX_G|20260728|003",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "Learn How THIS Forex AOI SECRET Bought Me A $200,000 Watch",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=urX1iWvHc5g"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 40,
+      "claimTypes": {
+        "behavioral_observation": 4,
+        "causal_hypothesis": 4,
+        "confirmation_rule": 3,
+        "definition": 3,
+        "entry_rule": 6,
+        "exception": 3,
+        "failure_condition": 4,
+        "invalidation_rule": 2,
+        "performance_hypothesis": 2,
+        "session_rule": 5,
+        "setup_requirement": 3,
+        "target_rule": 1
+      },
+      "contentHash": "ac65aa885212b7a367260af07732e9d1a2699162c3d697a911fb1f486d0cbbe3",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 42,
+      "evidenceQuality": {
+        "high": 25,
+        "low": 5,
+        "medium": 12
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-entry-confirmation.raw.txt",
+      "ruleBearingClaimTypes": {
+        "confirmation_rule": 3,
+        "entry_rule": 6,
+        "invalidation_rule": 2,
+        "session_rule": 5,
+        "setup_requirement": 3,
+        "target_rule": 1
+      },
+      "segmentCount": 15,
+      "sourceId": "EVSRC|ALEX_G|20260728|004",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "The ONLY confirmation YOU need to make $1000/day Trading Forex",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=BcWxqfcjk9A"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 35,
+      "claimTypes": {
+        "behavioral_observation": 5,
+        "causal_hypothesis": 4,
+        "failure_condition": 1,
+        "marketCondition": 1,
+        "performance_hypothesis": 7,
+        "risk_rule": 13,
+        "session_rule": 1,
+        "target_rule": 2,
+        "trade_management_rule": 1
+      },
+      "contentHash": "193966d9f5d3e19bee2bcd81ada1454ab25d649e92e1d7117cba22b5cc4618b1",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 35,
+      "evidenceQuality": {
+        "high": 15,
+        "low": 7,
+        "medium": 13
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-risk-management.raw.txt",
+      "ruleBearingClaimTypes": {
+        "risk_rule": 13,
+        "session_rule": 1,
+        "target_rule": 2,
+        "trade_management_rule": 1
+      },
+      "segmentCount": 15,
+      "sourceId": "EVSRC|ALEX_G|20260728|005",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "Best Risk Management Strategy to Make Millions with Trading",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=VzMlFZbWA0Y"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 27,
+      "claimTypes": {
+        "behavioral_observation": 7,
+        "causal_hypothesis": 2,
+        "confirmation_rule": 1,
+        "entry_rule": 6,
+        "failure_condition": 1,
+        "invalidation_rule": 1,
+        "setup_requirement": 6,
+        "target_rule": 1,
+        "trade_management_rule": 2
+      },
+      "contentHash": "5bb848bb21951c53dc239f6d6b3bb4238cff8ee8e10b303e4d637bf865d78466",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 30,
+      "evidenceQuality": {
+        "high": 21,
+        "medium": 9
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-live-session-market-breakdown.raw.txt",
+      "ruleBearingClaimTypes": {
+        "confirmation_rule": 1,
+        "entry_rule": 6,
+        "invalidation_rule": 1,
+        "setup_requirement": 6,
+        "target_rule": 1,
+        "trade_management_rule": 2
+      },
+      "segmentCount": 13,
+      "sourceId": "EVSRC|ALEX_G|20260728|006",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "Market break down learn and earn",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=1JMVE4Y5U7o"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 21,
+      "claimTypes": {
+        "behavioral_observation": 6,
+        "causal_hypothesis": 3,
+        "exception": 1,
+        "failure_condition": 4,
+        "other": 2,
+        "performance_hypothesis": 2,
+        "risk_rule": 1,
+        "trade_management_rule": 2
+      },
+      "contentHash": "f48d3ff425cce672d914f0b512eb8be37f92f45c8fc118ff227689adb80a432a",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 24,
+      "evidenceQuality": {
+        "high": 10,
+        "low": 3,
+        "medium": 11
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-psychology-money-mindset.raw.txt",
+      "ruleBearingClaimTypes": {
+        "risk_rule": 1,
+        "trade_management_rule": 2
+      },
+      "segmentCount": 16,
+      "sourceId": "EVSRC|ALEX_G|20260728|007",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "The best FOREX MONEY MINDSET psychology video PT 2",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=lcfyxUtYVSk"
+    },
+    {
+      "attributionMethod": "channel @fxalexg__ verified via YouTube oEmbed author_url",
+      "claimCount": 31,
+      "claimTypes": {
+        "behavioral_observation": 1,
+        "confirmation_rule": 3,
+        "definition": 7,
+        "entry_rule": 2,
+        "invalidation_rule": 1,
+        "marketCondition": 1,
+        "performance_hypothesis": 6,
+        "setup_requirement": 2,
+        "stop_rule": 2,
+        "target_rule": 1,
+        "timeframe_rule": 4,
+        "trade_management_rule": 1
+      },
+      "contentHash": "7f954e14ec5cb0a6b17de28fb0e6caed6910e6cc4f2ec72c8c6cc3b3441e58d2",
+      "duplicateStatus": "NO_DUPLICATE_DETECTED",
+      "educatorAttribution": "ALEX_G",
+      "evidenceItemCount": 36,
+      "evidenceQuality": {
+        "high": 14,
+        "low": 6,
+        "medium": 16
+      },
+      "extractionStatus": "EXTRACTED",
+      "furtherAcquisitionRequired": false,
+      "ingestionStatus": "registered",
+      "licensingStatus": "restricted_third_party",
+      "provenanceStatus": "partially_verified",
+      "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-break-and-retest-26k-12-hours.raw.txt",
+      "ruleBearingClaimTypes": {
+        "confirmation_rule": 3,
+        "entry_rule": 2,
+        "invalidation_rule": 1,
+        "setup_requirement": 2,
+        "stop_rule": 2,
+        "target_rule": 1,
+        "timeframe_rule": 4,
+        "trade_management_rule": 1
+      },
+      "segmentCount": 13,
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "status": "ACQUIRED_AND_PROCESSED",
+      "title": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "transcriptAvailable": true,
+      "transcriptCompleteness": "complete",
+      "url": "https://www.youtube.com/watch?v=kg-rOo9_xjU"
+    }
+  ],
+  "statusVocabulary": [
+    "ACQUIRED_AND_PROCESSED",
+    "ACQUIRED_NOT_PROCESSED",
+    "PARTIAL_TRANSCRIPT",
+    "TRANSCRIPT_MISSING",
+    "SOURCE_IDENTIFIED_NOT_ACQUIRED",
+    "DUPLICATE_OR_REDUNDANT",
+    "ATTRIBUTION_UNCERTAIN",
+    "REJECTED_SOURCE"
+  ],
+  "totalClaims": 258,
+  "totalEvidenceItems": 280,
+  "totalKnownAlexVideoCount": null,
+  "totalKnownAlexVideoCountNote": "DELIBERATELY NULL. No defensible inventory of the channel's full catalogue exists: the channel listing page is JS-rendered and returned no titles when fetched. Any total would be a guess, so none is stated.",
+  "totalSegments": 134
+}

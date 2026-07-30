@@ -1,0 +1,893 @@
+{
+  "mappings": [
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|002",
+      "exactExcerpt": "is a non-negotiable in trading. Doesn't matter if you're a scalper, you're a trader, if you're a swing trader, institutional trader, investor, doesn't matter.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|001",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|004",
+      "exactExcerpt": "you might be right on the direction of the trade, but it might be at the wrong area",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|002",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|005",
+      "exactExcerpt": "I'm going to break this down in four very simple time frames. The first one is going to be the weekly time frame.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|003",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|006",
+      "exactExcerpt": "Now the lower time frames are considered the two hour, the one hour, the 30 minute and the 15 minutes. Anything below is not a strong lower time frame.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|004",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|007",
+      "exactExcerpt": "The lower time frames could be telling you one thing, but if the higher time frames are telling you another, you go based off of the higher time frames.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|005",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|009",
+      "exactExcerpt": "We will start from the top all the way down. So we will start we will start from the weekly time frame. Then we will work our way down to the daily.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|006",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|010",
+      "exactExcerpt": "we will find if this market is bullish or bearish on the weekly, find if it's bullish or bearish on the daily, bullish and bearish on the 4 hour all the way down to the lowest time frame and then we will have an overall score at the end of our analysis to determine where the majority of the time frames are going.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|007",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|011",
+      "exactExcerpt": "the reason why I pause right here after the 4 hour is because I use the lower time frames more for the entry point",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|008",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|016",
+      "exactExcerpt": "Once you have a new higher high, you must have a new higher low. So the higher low simply follows the previous structure point, you would just move this up.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|009",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|017",
+      "exactExcerpt": "once it breaks above below the higher low, this market becomes the new lower low. Now once you have a new lower low, you must have a new lower high.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|010",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|018",
+      "exactExcerpt": "You broke above your lower high. Now, making this market back to bullish once again.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|011",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|019",
+      "exactExcerpt": "they could be wrong or they could even be right about it being bullish, but they're wrong about where it's bullish from. And that completely changes",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|012",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|022",
+      "exactExcerpt": "the market will remain bullish as long as we stay in between this higher high and higher low the moment we body close above or under this line is when we will have a shift in the market",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|014",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|023",
+      "exactExcerpt": "Is impossible to have the higher low in front of the higher high. It is impossible to have the lower high in front of the lower low.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|015",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|024",
+      "exactExcerpt": "Now some people somehow have a strategy or the audacity to say, \"Okay, you know what? It's a good time to predict the top. We're going to sell.\" Now they might get lucky once, twice, maybe three times, but there's no longevity in that.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|016",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|025",
+      "exactExcerpt": "You can't just enter based off of the overall trend. If everything's going up doesn't mean that you",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|017",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|026",
+      "exactExcerpt": "this is the lower high and then this would be the lower low so we understand we're only looking for areas of interest within this box",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|018",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|027",
+      "exactExcerpt": "if you have an area of interest below the higher low, once price gets to this area, guess what? Now we're bearish.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|019",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|028",
+      "exactExcerpt": "we need to sell at a weekly area of interest because again keep in mind we are bearishing the weekly",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|020",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|029",
+      "exactExcerpt": "off looking for areas of interest from the bottom up and I pretty much look for whatever points have the most touches",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|021",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|030",
+      "exactExcerpt": "what I like to do is mark this area off as a weekly and a daily area of interest. So, now I know that this is two areas of interest strong.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|022",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|031",
+      "exactExcerpt": "this is where I would then wait for my rejection candlesticks which can consist of multiple dogees or an engulfing candlestick which will be my entry signal",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|023",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|032",
+      "exactExcerpt": "This entry signal can happen on the lower time frame, higher time frames. Obviously the higher the stronger.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|024",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260727|034",
+      "exactExcerpt": "when you're above support, you buy. When you're below resistance, you sell.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|025",
+      "sourceId": "EVSRC|ALEX_G|20260727|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|004",
+      "exactExcerpt": "they just pull up to a chart and because they see the overall movement heading up or the overall movement heading down they think a market is bullish or a market is bearish and that cannot be further from the truth",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|026",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|006",
+      "exactExcerpt": "since this has now created a new lower low this becomes the new lower low and you must need a new lower high it is impossible to have a new lower low without a new lower high",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|027",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|007",
+      "exactExcerpt": "this Market can do absolutely whatever it wants inside of here as long as we don't body Candlestick close above or below the lower high or lower low we will remain bearish",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|028",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|009",
+      "exactExcerpt": "a new lower high is identified by getting the head of the snake following it back and as soon as you get the turn that is where the new lower high is placed",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|030",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|010",
+      "exactExcerpt": "if I were to come into here and I would erase the candlesticks and go to the line chart you can see that the structure is at this higher low and at this higher high",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|031",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|011",
+      "exactExcerpt": "should I go and chase this market and continue buying with it or is the market at too much of a high price or too much at a low price and wait for a retracement so then I can execute the trade",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|032",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|013",
+      "exactExcerpt": "Market structure is only 50% of the problem now how you do that together with top analysis entry signal and trading at the the right times is where you actually make the money",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|033",
+      "sourceId": "EVSRC|ALEX_G|20260728|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|017",
+      "exactExcerpt": "the most places where the majority of liquidity is at is where there is a consistent amount of rejection",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|034",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|019",
+      "exactExcerpt": "The higher the time frame, the stronger the rejection, the more liquidation that comes in for longer periods of time.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|035",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|020",
+      "exactExcerpt": "something like this that has one rejection, one liquidation from this area could mean that there could be another liquidation, but it's not as predictable",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|036",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|021",
+      "exactExcerpt": "If we are above this zone specifically, you want to make sure you're buying because that's where the buyers are coming in.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|037",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|025",
+      "exactExcerpt": "There's no way that you can have a specific strategy to trade solely off of these sweeps.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|038",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|026",
+      "exactExcerpt": "There is no way that you can anticipate for a move like this to happen.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|039",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|029",
+      "exactExcerpt": "If there's a move that happens against my sell position, I'm not going to be interested in selling because it's clearly not going in my favor.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|041",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|030",
+      "exactExcerpt": "So that is going to consist of two types of candlesticks. Either a rejection candlestick or a engulfing candlestick",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|042",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|032",
+      "exactExcerpt": "Wait for the market to give a little bit of that discount. That discount is where the sellers are going to come in.",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|043",
+      "sourceId": "EVSRC|ALEX_G|20260728|002"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|035",
+      "exactExcerpt": "I do not take any trade unless we have two time frames in sync",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|044",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|036",
+      "exactExcerpt": "now we're creating a potential lower high to create a lower low",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|045",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|037",
+      "exactExcerpt": "another way to tell how this Market shifted from bearish to bullish we had here an inverted head and shoulders",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|046",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|038",
+      "exactExcerpt": "there's no reason why you should be taking Longs obviously the majority of the market is going down",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|047",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|039",
+      "exactExcerpt": "it's 10 per time frame",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|048",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|040",
+      "exactExcerpt": "a little hack that I do is I would Zone it off like this",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|049",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|041",
+      "exactExcerpt": "if you break out of this box we are now bullish we're no longer looking to sell",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|050",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|042",
+      "exactExcerpt": "this is a clean level of support resistance support resistance but if price gets to that point right there we're no longer Birch we're no longer",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|051",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|043",
+      "exactExcerpt": "in this case it is around psychological 66",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|052",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|044",
+      "exactExcerpt": "if you look left that it's a very well respected level of support and resistance",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|053",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|045",
+      "exactExcerpt": "we just set it forget just pretty much just wait until the price gets there",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|054",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|046",
+      "exactExcerpt": "if you're looking to sell you need to sell at a lower high if you're looking to buy you need to buy at a higher low",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|055",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|047",
+      "exactExcerpt": "you need to sell at a lower high or a potential lower high",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|056",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|048",
+      "exactExcerpt": "this is where you would go down to the four hour and I need to have a four hour lower high to sell",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|057",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|049",
+      "exactExcerpt": "and then here's where we wait for the breaker structure and then we continue shorting it down",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|058",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|050",
+      "exactExcerpt": "retest of 6500 read system air adventures in the weekly retest the four hour EMA reaches the neckline of the head and shoulders",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|059",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|053",
+      "exactExcerpt": "wait for the proper session to take the train",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|060",
+      "sourceId": "EVSRC|ALEX_G|20260728|003"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|056",
+      "exactExcerpt": "as soon as that candlestick closes, it is a confirmation. One second before it closes, it is an entire anticipation",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|061",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|058",
+      "exactExcerpt": "if you have both of these combined, they would be a lot more powerful. The more dogeis that you would have, the more powerful",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|062",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|060",
+      "exactExcerpt": "if I don't have either a rejection dogee candlestick or a bullish engulfing, bearish engulfing, I am not",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|063",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|062",
+      "exactExcerpt": "if you were to cross reference that with the 4 hour, you would see that the 4 hour is",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|064",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|063",
+      "exactExcerpt": "within the same day it then shifts to bullish and after it shifts to bullish it decides to have a",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|065",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|064",
+      "exactExcerpt": "Now that perfect higher low is where you can then anticipate that wick fill where then you",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|066",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|067",
+      "exactExcerpt": "You will find this anywhere you go in the chart",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|067",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|069",
+      "exactExcerpt": "If it's not at a support level, you don't enter the trade and it is simply not applicable",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|069",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|070",
+      "exactExcerpt": "you need to apply your bearish rejection candlestick and you need to apply your bearish engulfing candlestick once",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|070",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|071",
+      "exactExcerpt": "You can enter off of just the rejection confirmation, but it really comes down",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|071",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|074",
+      "exactExcerpt": "we've confirmed that we are now completely bearish we know this we were looking for shorts",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|072",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|075",
+      "exactExcerpt": "you simply don't just change your direction or change your bias overnight",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|073",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|077",
+      "exactExcerpt": "you would only be entering a trade off of just a candlestick and not a strategy. And that's not a strategy. That's just gambling at that point",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|074",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|078",
+      "exactExcerpt": "There are specific sessions, there are specific days that this actually is more probable of having an impact",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|075",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|079",
+      "exactExcerpt": "everything that is in a darker color in orange is going to be where there's the most",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|076",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|080",
+      "exactExcerpt": "You don't really want to enter a trade if you're just going to have volume for about an hour",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|077",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|081",
+      "exactExcerpt": "if I get it right before Sydney session, I will not enter that trade until right before London session",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|078",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|082",
+      "exactExcerpt": "many times where I miss out on the trade and by the time London session comes, the trade is completely gone from the direction",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|079",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|083",
+      "exactExcerpt": "it's really only going to come down to Monday, Tuesday, and",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|080",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|084",
+      "exactExcerpt": "an average of about 80 to 90 to even 100 pips at a time of a takerit",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|081",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|086",
+      "exactExcerpt": "Sometimes I break the rules depending if my take profit is shorter, if it's a very strong confirmation, if there's a lot of momentum",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|082",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|088",
+      "exactExcerpt": "If one component of the strategy is not working properly, you're going to have negative results",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|083",
+      "sourceId": "EVSRC|ALEX_G|20260728|004"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|093",
+      "exactExcerpt": "you're risk managing your account so you need to know that the money that you put into your trading account that is your account balance",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|084",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|094",
+      "exactExcerpt": "based off of your account balance you can't risk the whole entire account balance",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|085",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|095",
+      "exactExcerpt": "if you want to bet $100 per trade don't just deposit 100 bucks and risk the full hundred bucks",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|086",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|096",
+      "exactExcerpt": "you have to have a strict risk management rule that every single time you take a trade you risk the same percentage per trade",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|087",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|098",
+      "exactExcerpt": "risk management is percentage based system not dollar based system",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|088",
+      "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|099",
+      "exactExcerpt": "50% a day 50% a week 50% a month those are all unrealistic numbers it's not going to happen",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|089",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|103",
+      "exactExcerpt": "depending your objective what are you trying to do are you on a personal account are you on a funded account",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|090",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|104",
+      "exactExcerpt": "the conservative approach where it's risking anywhere from 0.5 to 1% per trade",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|091",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|105",
+      "exactExcerpt": "this is what I personally recommend to Traders taking trades on the lower time frame",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|092",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|107",
+      "exactExcerpt": "which is anywh from risking 1 to 2% per trade",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|093",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|108",
+      "exactExcerpt": "once you pick the percentage you stick to it you don't go up or down when you're making money or you're losing money",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|094",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|110",
+      "exactExcerpt": "with a one to two risk reward",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|095",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|111",
+      "exactExcerpt": "it can be anywhere from 3 to 5% of your account",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|096",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|112",
+      "exactExcerpt": "the riskier approach I recommend is done on a personal account so that way you don't breach any rules on a funded account",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|097",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|113",
+      "exactExcerpt": "if you risk 5% of your account and then you get a 1 to3 risk reward ratio you have just made 15% on",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|098",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|114",
+      "exactExcerpt": "at the beginning of every single month I risk a percentage that I'm going to to choose for the month",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|099",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|117",
+      "exactExcerpt": "certain months out of the Year and that is November December January and February and maybe March",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|100",
+      "sourceId": "EVSRC|ALEX_G|20260728|005"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|124",
+      "exactExcerpt": "would be nzdusd which is basically like its",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|101",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|125",
+      "exactExcerpt": "because clearly when it's bullish its support when it's bearish it's resistance",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|102",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|126",
+      "exactExcerpt": "waiting for that lower high a previous structure and by the time that this comes back up here",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|103",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|128",
+      "exactExcerpt": "we don't really want to catch this little move up because then we catch the bigger leg all",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|104",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|130",
+      "exactExcerpt": "that's like a that's like a rookie thing",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|105",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|131",
+      "exactExcerpt": "i only take trades that are worth my money i don't want to put",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|106",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|134",
+      "exactExcerpt": "find me this many conferences here to go along there won't be any",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|107",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|136",
+      "exactExcerpt": "i wasn't really that convinced because we were shy about let's say",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|108",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|139",
+      "exactExcerpt": "i had set my alarm to get another entry at the next pullback",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|109",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|140",
+      "exactExcerpt": "it's a nice one to four to previous",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|110",
+      "sourceId": "EVSRC|ALEX_G|20260728|006"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|145",
+      "exactExcerpt": "you set a trade to have a take profit of a one to four risk to reward",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|111",
+      "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|147",
+      "exactExcerpt": "i close the trade keeps on going it could have given you 15 000",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|112",
+      "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|155",
+      "exactExcerpt": "i got mad at myself because i just listened to",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|113",
+      "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|156",
+      "exactExcerpt": "don't show anybody else",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|114",
+      "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260728|159",
+      "exactExcerpt": "i personally try to not even have this i personally try to add this",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|115",
+      "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|007",
+      "exactExcerpt": "now breaking retest is most effective at these zones",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|116",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|008",
+      "exactExcerpt": "the higher the time frame the more it is going to be respected",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|117",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|009",
+      "exactExcerpt": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|118",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|011",
+      "exactExcerpt": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|119",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|013",
+      "exactExcerpt": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|120",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|015",
+      "exactExcerpt": "for your day Trad you want to use it more on the 4our one hour",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|121",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|016",
+      "exactExcerpt": "swing trades you want to take it on the daily and then weekly time frame",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|122",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|017",
+      "exactExcerpt": "but now the actual entry signal you have to go on the lower time frame",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|123",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|018",
+      "exactExcerpt": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|124",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|019",
+      "exactExcerpt": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|125",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|020",
+      "exactExcerpt": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|126",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|021",
+      "exactExcerpt": "you would have simply put your entry point right here",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|127",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|022",
+      "exactExcerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|128",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|023",
+      "exactExcerpt": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|129",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|024",
+      "exactExcerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|130",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|025",
+      "exactExcerpt": "it's literally the same thing every single time your stop- loss is right under it",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|131",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    }
+  ]
+}

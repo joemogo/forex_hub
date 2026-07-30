@@ -1,0 +1,45 @@
+{
+  "count": 4,
+  "gaps": [
+    {
+      "blocking": true,
+      "completionPath": "Acquire a source stating stop placement (BACKLOG-002/A1-STOP), or record that the educator's published material cannot support one.",
+      "domain": "RISK",
+      "evidence": "195 claims, 8 sources, 0 stop_rule claims. 13 RISK rules are all sizing.",
+      "gap": "No stop-placement rule exists anywhere in the educator library.",
+      "gapId": "KEGAP-001",
+      "impact": "Position size is not computable; no risk rule is implementable.",
+      "priority": "CRITICAL"
+    },
+    {
+      "blocking": true,
+      "completionPath": "Source acquisition. No amount of re-analysis of existing claims can produce an exit rule that was never stated.",
+      "domain": "EXIT",
+      "evidence": "0 claims classified EXIT across all 8 sources.",
+      "gap": "No claim in the library addresses closing a position on a market condition.",
+      "gapId": "KEGAP-002",
+      "impact": "Exit behaviour cannot be specified from this educator at all.",
+      "priority": "CRITICAL"
+    },
+    {
+      "blocking": true,
+      "completionPath": "Acquire a source that reads the hours aloud, or capture them from the video frame under a separate approved method.",
+      "domain": "SESSION_RESTRICTIONS",
+      "evidence": "Session windows are displayed on an on-screen map; the transcript carries the rule and not its parameter.",
+      "gap": "Session rules are prescriptive but their hours are never spoken.",
+      "gapId": "KEGAP-003",
+      "impact": "Session rules cannot be implemented as stated.",
+      "priority": "HIGH"
+    },
+    {
+      "blocking": false,
+      "completionPath": "Replay sensitivity sweep (RC-29), which requires replay authorization.",
+      "domain": "MARKET_STRUCTURE",
+      "evidence": "ALEX_G: any body close counts, no minimum. RAYNER_TEO: only major swings. Recorded as XCONTRA|20260729|001.",
+      "gap": "Swing-point significance is undefined and cross-educator contradicted.",
+      "gapId": "KEGAP-004",
+      "impact": "Determines which highs and lows count, therefore every structure rule.",
+      "priority": "HIGH"
+    }
+  ]
+}

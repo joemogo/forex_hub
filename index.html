@@ -1937,9 +1937,11 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.6.0';
+const APP_VERSION='12.7.1';
 const APP_VERSION_DATE='24 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.7.1 — MOGO-002.8B: ALEX SETUP-LEVEL EXECUTION POLICY. Implements the approved setup-level execution gate from the MOGO-002.8B Setup Isolation Audit. EXECUTION POLICY: Break & Retest (B_breakRetest) ACTIVE; Repeated Zone Reaction (A_repeatedReaction) SUSPENDED FOR RESEARCH. ADDITIVE ONLY -- zero protected functions and zero protected constants modified, drift check clean (63 functions / 4 constants byte-identical). THE GATE: alexGV11SetupTypePermitted() plus one gate inside alexGEvaluatePairForLiveSetups (NOT a protected function), placed immediately AFTER the Monday-Wednesday gate and immediately BEFORE position creation, exactly as authorized. It mirrors the existing activation/staleness/entry-day gate pattern. NO SILENT SKIP: a withheld candidate is still detected, still classified, still recorded in alexGSetupState and still persisted to fxhub_alexg_setups -- only the trade-OPEN step is withheld. Each withheld candidate receives a permanent Setups-panel status row (SUSPENDED - RESEARCH HOLD) plus a linked RULE_EVALUATED (ruleId ALEX_V11_SETUP_EXECUTION_POLICY) / CANDIDATE_REJECTED pair carrying reasonCode SETUP_SUSPENDED_FOR_RESEARCH, so the suppression is countable and the candidate stays fully visible to future replay analysis. SCOPE: LIVE PAPER TRADING ONLY. alexGRunSetupReplay is PROTECTED and untouched; replay continues generating BOTH setup types, because replay is research and is the only route to the Tier 2+ sample that could ever retire this suspension (MOGO-003 section 9). CONFIGURATION: a single boolean, RULES_ALEXG_V11.v11Config.setupSuspensionEnabled (default true), with suspendedSetupTypes listing A_repeatedReaction and a recorded setupSuspensionWindow (startedAt/endedAt/authority/reason) -- without that window a period with zero RZR trades would be indistinguishable from a period where RZR was suppressed, invalidating any later period comparison. The gate FAILS OPEN in every ambiguous case (disabled, empty list, unknown/blank setup type), so a misconfiguration can never silently stop trading. NOT A RULE CHANGE: ruleVersion remains alex_g_sr_v1_1. Entry, stop, target, risk, sizing, confirmation, zone creation, zone qualification, analytics calculations, historical trades, existing open trades and the rule-set version are all unchanged. An already-open A_repeatedReaction position closes normally -- the exit path (alexGCheckLivePositions/alexGCloseLivePosition) never consults setupType. DEFECT FOUND AND FIXED: reasonCode CONFIG_ENTRY_DAY_NOT_ELIGIBLE, used by the v12.7.0 Monday-Wednesday gate, was NEVER ADDED to REASON_CODE_REGISTRY. validateDecisionEvent rejects any event whose reasonCode is unregistered, so BOTH v1.1 entry-day rejection events were being silently dropped and counted as validation failures -- the entry-day gate blocked trades correctly but produced no decision-event evidence. Both CONFIG_ENTRY_DAY_NOT_ELIGIBLE and the new SETUP_SUSPENDED_FOR_RESEARCH are now registered, and fixtures K11-K14 assert that suppression events actually validate and are retained. TESTING: 23 new fixtures (K1-K23) in the v127 suite -- B&R still permitted, RZR suspended, DEV_TEST unaffected, reversibility by the single boolean, four fail-open cases, purity, both reason codes registered and their events retained, REAL protected qualifiers still qualifying both setup types, direction resolution unchanged, exit path indifferent to setupType, and historical RZR trades still counted in analytics. Full suite 679/679 across 14 suites, zero drift. The v126 Phase 2C suite required the same kind of test-process pin already used for the v12.7.0 clock: its end-to-end fixtures build A_repeatedReaction setups, so setupSuspensionEnabled is disabled for that test process only -- zero assertions changed, zero production code changed, and v127 K9 asserts the production default remains true.',
+  '12.7.0 — MOGO-002.8A: ALEX v1.1 RELEASE (alex_g_sr_v1_1). First behaviour-changing ALEX release since v4.2.1. ADDITIVE ONLY: RULES_ALEXG remains a PROTECTED CONSTANT, byte-identical, and all 63 protected functions / 4 protected constants show ZERO drift. RULES_ALEXG own change-control rule requires that any rule or default change take a NEW ruleVersion rather than an in-place edit; v1.1 follows that exactly via a new additive constant RULES_ALEXG_V11, so historical alex_g_sr_v1 results can never be silently recalculated. ENGINE PARAMETERS ARE UNCHANGED -- zone detection, touch counting, break-of-structure, break-and-retest, entry sequencing, the zoneLow/High -/+ 0.25*ATR stop and the fixed 2R target all still read RULES_ALEXG.config from the same PROTECTED functions, so a v1.1 trade and a v1.0 trade on identical data qualify and size identically. ONE BEHAVIOURAL CHANGE: ALEX_V11_001, a Monday-Wednesday entry-eligibility gate (UTC), evaluated on the live entry moment in the NON-protected alexGEvaluatePairForLiveSetups loop, after the staleness gate and before the open attempt -- mirroring the existing activation/staleness gate pattern including the permanent IGNORED - ENTRY DAY NOT ELIGIBLE status and a linked RULE_EVALUATED/CANDIDATE_REJECTED decision-event pair (ruleId ALEX_V11_ENTRY_DAY, reasonCode CONFIG_ENTRY_DAY_NOT_ELIGIBLE). Evidence: AXR-080 / CLAIM|ALEX_G|20260728|083. SCOPE CAVEAT recorded in the rule registry -- the educator claim is scoped to a confirmation setup MOGO does not implement (AXR-011 deferred), so this gate is config-controlled via v11Config.entryDayRuleEnabled and fails OPEN (never blocks) if disabled, if the timestamp is unreadable, or if the allowed-day list is empty. STATISTICS CORRECTED (reporting only, zero trading effect, applies to v1.0 and v1.1 records alike so historical REPORTING is fixed without any historical RECORD being rewritten): ALEX_V11_002 alexGRealizedR() computes R from each trade own entry/stop/exitPrice instead of the frozen +plannedRR/-1 (a v1.0 win recorded +2.00R regardless of the actual exit); ALEX_V11_003 alexGComputeEquityStats() walks the equity curve CHRONOLOGICALLY by closedAt ascending (closedPositions is stored newest-first, so the previous walk described a reversed curve) and now reports current drawdown and maximum drawdown as two separate cards -- the old single card was labelled Current drawdown while computing the maximum; ALEX_V11_004 alexGStartingBalance() replaces the hardcoded 10000 in dashboard P&L with a configured value, seeded onto the account and falling back safely for pre-v1.1 accounts. VERSIONING: ALEX_V11_005 stamps strategyVersion alex_g_sr_v1_1 into the provenance block of every NEWLY opened trade via the non-protected alexGStampTradeProvenance seam. strategySpecificationVersion deliberately REMAINS alex_g_sr_v1 because no engine parameter changed, so ruleSetHash/configurationHash are identical to a v1.0 trade. Existing trades are never back-filled, open positions continue to be managed by the version that opened them (exit logic is untouched), and mixed history still reports MIXED_VERSION rather than being silently averaged. DEAD CONFIG: v11Config deliberately omits the four v1.0 keys that are read by nothing (zoneTimeframes, requireWick, minWickRatio, maxZoneAgeBars); they remain in RULES_ALEXG because it is protected. Full active-rule registry with Rule ID / Name / Origin (Alex Explicit | MOGO Operationalization | Existing MOGO Design) / Evidence / Version Introduced / Enabled, plus an explicit deferredRules list (AXR-011 confirmation gate, AXR-020/021 stop anchor+buffer under open KEREV-A, AXR-030 R:R floor, AXR-081 session hours). TESTING: new suite tests/run_v127_alex_v11_release_tests.js, 65 fixtures (version identity, Mon-Wed eligibility incl. UTC-boundary and fail-open cases, realized R incl. a slipped-exit case proving it diverges from plannedRR, chronological equity, current vs max drawdown, starting balance, dead-config omission, engine-parameter preservation via the REAL protected evaluators, historical preservation, duplicate-trade identity). Full suite 656/656 across 14 suites, zero drift. DEFECT FOUND AND FIXED DURING THIS RELEASE: the new date-dependent gate made 9 pre-existing v126 Phase 2C fixtures fail on Thu-Sun and pass Mon-Wed with no code change, because they drive alexGEvaluatePairForLiveSetups end-to-end against the live wall clock. Fixed in tests/run_v126_phase2c_wave1_tests.js ONLY, by pinning that test process clock to Monday 2026-01-05 12:00 UTC -- zero assertions changed, zero production code changed, zero fixtures rewritten. Day-of-week behaviour has its own dedicated coverage in the v127 suite.',
   '12.6.0 — PROGRAM-001 PHASE 2C WAVE 1: ALEX CANDIDATE LIFECYCLE INSTRUMENTATION (infrastructure release -- no trading behavior change; the exact same market data produces the exact same ALEX trades before and after this release, proven by zero protected-function/protected-constant drift verified directly against the committed v12.5.0 baseline). Connects the Phase 2A Decision Event bus to ALEX\'s real candidate lifecycle for the first time. Per the Phase 2B repository analysis\'s central finding -- ALEX\'s real gating function (alexGConstructLivePosition) is protected but PURE, feeding a complete structured 10-outcome result to its non-protected caller (alexGAttemptOpenLivePosition), while JVM\'s equivalent detail is trapped inside a protected-calls-protected chain (checkAutoTrades -> evaluateLiveTrigger -> openPaperPosition) with no safe external hook -- this release implements ALEX\'s full candidate lifecycle only. JVM remains EXACTLY SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR, byte-identical to v12.5.0; JVM and ALEX are deliberately NOT forced into artificial observability parity. EVENTS NOW EMITTED (all from alexGEvaluatePairForLiveSetups()/alexGAttemptOpenLivePosition(), neither a protected function; alexGConstructLivePosition/alexGRunSetupEngine/alexGCreateSetupRecord/alexGClassifyTouch and all zone-engine functions remain completely unedited): CANDIDATE_CREATED (one per genuinely new setupId, via a new bounded in-memory dedup set -- decisionEventKnownCandidateIds, distinct from ALEX\'s own permanent alexGLiveSetupStatuses dedup -- since alexGSetupState is fully rebuilt from 90 days of candles every poll); RULE_EVALUATED for both the activation-cutoff (ruleId ALEX_ACTIVATION_CUTOFF) and signal-staleness (ALEX_SIGNAL_STALENESS) gates, PASS or FAIL, at their existing non-protected call sites; CANDIDATE_REJECTED linked via parentEventId on either gate\'s failure, and on the existing signalId dedup check (STATE_SIGNAL_ALREADY_DECIDED); TRADE_OPEN_REQUESTED immediately before the real alexGConstructLivePosition() call (direction intentionally still null -- never predicted ahead of the real, protected function\'s own result); CANDIDATE_APPROVED or CANDIDATE_REJECTED/TRADE_OPEN_FAILED immediately after, using the REAL returned status/reason honestly mapped via a new ALEXG_CONSTRUCTION_REASON_CODE_MAP (DUPLICATE -> CANDIDATE_REJECTED/STATE_SIGNAL_ALREADY_DECIDED, since that outcome carries no reason of its own; every other BLOCKED_* status -> TRADE_OPEN_FAILED, since TRADE_OPEN_REQUESTED already fired by that point); TRADE_OPENED or TRADE_OPEN_FAILED(EXECUTION_LEDGER_REJECTED) after the existing commitAlexGLedger() call, preserving the exact pre-existing rollback behavior untouched. Eight new reason codes added to the centralized REASON_CODE_REGISTRY (CONFIG_BEFORE_ACTIVATION, ENTRY_INVALID_ZONE_ROLE, ENTRY_INVALID_BROKEN_DIRECTION, ENTRY_UNSUPPORTED_SETUP_TYPE, ENTRY_MOVED_TOO_FAR_FROM_SIGNAL, DATA_ATR_UNAVAILABLE, RISK_INVALID_STOP, DATA_PIP_VALUE_UNAVAILABLE) -- added before use, never stretching an unrelated existing code to avoid a correct new one; RISK_OPEN_POSITION_LIMIT, EXECUTION_SPREAD_UNAVAILABLE, STATE_SIGNAL_ALREADY_DECIDED, STATE_SIGNAL_STALE, and EXECUTION_LEDGER_REJECTED were already present and reused as-is. IDENTITY: candidateId is always the real setup.setupId; signalId (alexGLiveSignalId(setup), already existing) appears in event context; tradeId is the real position.tradeId once minted -- the existing setupId -> signalId -> tradeId linkage already present in the codebase required no new plumbing. scanId/correlationId are threaded from alexGLivePollTick\'s existing Phase 2A __scanId through both new function parameters (alexGEvaluatePairForLiveSetups(oPair,scanId), alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId)) -- an additive parameter on two non-protected functions, not a protected-signature change. EVIDENCE COMPLETENESS: COMPLETE for every ALEX event in this release except TRADE_OPEN_REQUESTED\'s direction field (PARTIAL, since direction is genuinely not yet resolved at that point) -- never a fabricated COMPLETE. ENGINE_ERROR OBSERVABILITY: the pre-existing silent catch(e){} in alexGEvaluatePairForLiveSetups() now additionally emits ENGINE_ERROR (reasonCode SYSTEM_UNEXPECTED_ERROR) -- the swallow-and-continue behavior itself, the lack of a rethrow, and scan-completion behavior are all completely unchanged; this is observability only. FAILURE ISOLATION: every new emit call is a single, fire-and-forget emitDecisionEvent() statement whose return value is never checked by the trading path -- proven directly by deliberately triggering a validation-rejected emit elsewhere on the bus and confirming the real candidate/trade path completes identically regardless. EXPLICITLY OUT OF SCOPE (deferred, not implemented): JVM candidate/rule/rejection/approval/failure instrumentation of any kind (structurally blocked -- see Phase 2B\'s protected-calls-protected finding); ALEX touch-level SETUP_OBSERVED and the two rule-by-rule sub-evaluators\' (alexGEvaluateBreakRetest/alexGEvaluateRepeatedReaction) individual condition detail (both protected-on-protected, and their {qualifies:false} return contract structurally discards which condition failed -- recovering that would require either a protected-function edit or reimplementing their logic externally, both explicitly out of scope); any protected-function or protected-constant edit anywhere; persistent Decision Event storage (still memory-only, still zero new localStorage keys, confirmed directly); missed-opportunity/counterfactual analytics; any change to duplicate/activation/staleness rules, account/journal/ledger mutation order, market-data requests, or scan timing. RETENTION: unchanged from Phase 2A -- DECISION_EVENT_MAX_LOG_SIZE=500 still bounds the shared event log; the new candidate-dedup set is separately bounded (DECISION_EVENT_KNOWN_CANDIDATE_IDS_MAX=5000, oldest evicted first) and reset only by the existing dev-only clearDecisionEvents() action, which now also clears it. TESTING: new tests/v126_phase2c_wave1_tests.js (48 fixtures) -- unlike Phase 2A\'s scan-boundary-only proof, this suite engineered a genuinely qualifying REPEATED ZONE REACTION setup (4 real swing-low touches forming a valid zone) and ran it through the REAL, completely unmodified alexGRunSetupEngine/alexGClassifyTouch/alexGEvaluateRepeatedReaction chain, then called the real alexGEvaluatePairForLiveSetups()/alexGAttemptOpenLivePosition() end-to-end (network stubbed only at the fetch() boundary, in OANDA\'s own real response shapes, never at any application function) to prove the complete organic lifecycle: CANDIDATE_CREATED -> RULE_EVALUATED(activation PASS/FAIL) -> RULE_EVALUATED(staleness PASS/FAIL) -> [CANDIDATE_REJECTED on either FAIL, linked via parentEventId] -> TRADE_OPEN_REQUESTED -> CANDIDATE_APPROVED -> TRADE_OPENED, plus a real STALE_VERSION ledger rejection (via the existing, unmodified version-guard) producing TRADE_OPEN_FAILED with the existing rollback fully preserved, and a real ENGINE_ERROR from a genuine exception surfaced through fetchAlexGReplayDatasets. All 10 of alexGConstructLivePosition\'s real outcomes (including every BLOCKED_* status and the two duplicate paths) were verified directly against the real, unmodified function, confirming the reason-code map is honest and complete. Also covers: exactly-once CANDIDATE_CREATED across repeated polls of the same setup; candidateId/signalId/tradeId linkage; scanId propagation through the full chain; strict sequence-number ordering; parentEventId validity; zero paper-account/journal/Baseline-Registry mutation from instrumentation alone; zero new localStorage keys; existing Phase 2A diagnostics still functional. Full regression: 517/517 fixtures pass across all 12 canonical suites (469 pre-existing + 48 new), zero skipped, zero drift (all 63 protected functions and 4 protected constants byte-identical to the committed v12.5.0 baseline). LIVE VERIFICATION (fresh local server, browser origin cleared before and after): zero console errors on load and after the connect-screen bypass; the same synthetic-but-genuine setup construction was re-run directly in a real Chrome tab (not just the offline JXA harness) and produced the identical real 6-event lifecycle culminating in one real paper position opened; JVM\'s scanAll() was independently re-run live and confirmed to still emit only SCAN_STARTED/ENGINE_ERROR (the same pre-existing, disclosed scanData-seeding test-setup artifact noted in Phase 2A, not a regression); only the pre-existing, already-documented ALEX storage keys were present after the real trade opened, confirming the Decision Event layer itself wrote nothing. Real OANDA connectivity could not be exercised this release -- OANDA\'s own practice API was independently confirmed, via a separate incident during this work, to be returning HTTP 503 (System under maintenance) at the time; anything requiring a genuine external OANDA round-trip is BLOCKED BY EXTERNAL OANDA HTTP 503 MAINTENANCE and was not fabricated or bypassed. PRE-RELEASE CORRECTION (same v12.6.0, before commit/tag/push): a release review correctly identified that the original CANDIDATE_CREATED logic -- dedup-Set-only, keyed by "has this observability layer already reported this setupId this session" -- would mislabel a historical setup alexGRunSetupEngine() simply reconstructs from 90 days of candles (e.g. on the very first poll after a page load) as an ordinary live CANDIDATE_CREATED. CORRECTED: CANDIDATE_CREATED now additionally requires the setup\'s real qualificationTimestamp to fall strictly after a new, real, pre-existing timestamp already captured by this codebase -- alexGLastEvaluatedCloseTime[pair].H1 as of the START of the current evaluation (before this poll\'s rebuild advances it further). This value is never persisted (reset to {} on every real page reload, exactly like the rest of ALEX\'s live-polling cursor state) and was never duplicated or approximated -- it is simply read, not computed independently. On a pair\'s very first-ever live evaluation (including the first poll after any reload), this boundary is unset, so nothing that poll\'s 90-day reconstruction finds can be classified as newly live -- a cold-start backfill is never mistaken for a genuine live candidate. The session-level dedup Set (decisionEventKnownCandidateIds) is retained as a secondary guard only, never the sole determinant. A historical setup\'s real trading treatment -- RULE_EVALUATED (activation/staleness), duplicate checking, and eventual trade-open -- is completely unchanged; only its CANDIDATE_CREATED observability label is suppressed. 13 new/revised fixtures added (first-poll exclusion, reload-simulation exclusion, two-pair multi-candidate separation, exact/±1ms boundary determinism, a disclosed source-verified note on the invalid-timestamp guard being unreachable via real execution, deterministic FIFO eviction at the 5,000-entry dedup-set cap, and a dedicated proof that the session Set independently prevents a duplicate even when the timestamp boundary alone would still classify the setup as new). Full regression after correction: 530/530 (469 pre-existing + 61 in this suite), zero drift. Live-verified in a real Chrome tab: a first-poll historical reconstruction correctly produced zero CANDIDATE_CREATED while still opening a real trade end-to-end; Paper Trading Health Check reported CLEAN (JVM and ALEX both, zero mismatches/duplicates/orphans); Baseline Registry MATCH; only the pre-existing, already-documented ALEX storage keys present; JVM unchanged. See docs/DECISION_EVENT_ARCHITECTURE.md for the complete updated schema/event/reason-code/evidence documentation.',
   '12.5.0 — PROGRAM-001 PHASE 2A: DECISION EVENT SCHEMA &amp; OBSERVABILITY FOUNDATION (infrastructure release -- no trading behavior change; the exact same market data produces the exact same trades before and after this release, proven by zero protected-function/protected-constant drift verified directly against the true committed v12.4.0 baseline). Establishes the universal Decision Event architecture every strategy (JVM/ALEX/TJR/future) will eventually emit through -- a versioned schema (mogo.decision-event.v1), a centralized reason-code registry, an evidence-completeness model, and a memory-only, append-only in-memory event bus. THE SCHEMA (createDecisionEvent()) supports all 13 required event types (SCAN_STARTED/SCAN_COMPLETED/SETUP_OBSERVED/CANDIDATE_CREATED/RULE_EVALUATED/CANDIDATE_REJECTED/CANDIDATE_APPROVED/TRADE_OPEN_REQUESTED/TRADE_OPENED/TRADE_OPEN_FAILED/TRADE_CLOSED/DATA_UNAVAILABLE/ENGINE_ERROR) and every required field (eventId/schemaVersion/eventType/occurredAt/recordedAt/strategyId/strategyVersion/baselineId/applicationVersion/scanId/candidateId/tradeId/pair/direction/timeframe/session/source/engineMode/stage/decision/reasonCode/reasonText/ruleId/ruleVersion/ruleResult/severity/marketTimestamp/marketDataReference/context/metrics/diagnostics/parentEventId/correlationId/sequenceNumber/evidenceCompleteness/unknownFields) -- not every type is emitted yet, but the schema already supports the full future decision lifecycle without a breaking change later. A missing value is always an explicit null (never a fabricated 0/empty-string/false); evidenceCompleteness defaults to the honest UNKNOWN, never a guessed COMPLETE. REASON CODE REGISTRY: REASON_CODE_REGISTRY is the single source of truth for valid reasonCodes across 14 categories (DATA/SESSION/STRUCTURE/BIAS/AOI/CONFLUENCE/ENTRY/RISK/SPREAD/EXECUTION/STATE/CONFIG/SYSTEM/UNKNOWN) -- codes are validated against this registry (not a loose prefix guess), so "codes remain stable" is actually enforced; reasonText stays independent free-form human wording, never itself validated, so analytics can depend on the stable code while a human reads the text. EVIDENCE MODEL: EVIDENCE_COMPLETENESS_LEVELS (COMPLETE/PARTIAL/MINIMAL/UNKNOWN) is the per-event overall level; EVIDENCE_FIELD_PROVENANCE (OBSERVED/DERIVED/UNAVAILABLE/UNSAFE_TO_RECONSTRUCT/FUTURE_WORK) is the taxonomy future phases use to tag individual fields -- JVM and ALEX are deliberately never forced into artificial parity; a thin engine honestly reporting lower completeness than a richer one is correct, not a bug to hide. IDENTITY: generateDecisionEventId(prefix) combines Date.now() with a monotonic in-memory counter so IDs never collide even across repeated ticks in the same millisecond; sequenceNumber is assigned by emitDecisionEvent() itself, only to events that pass validation, so a rejected event never consumes a slot and the retained log is always reconstructable in true emission order. IMMUTABILITY: emitDecisionEvent() is the only function that ever appends to the log, and Object.freeze()s every event before storing it -- a caller holding a reference (via getDecisionEvents(), which itself returns a defensive array copy) can never rewrite an already-emitted event; this is enforced, not just documented convention. MEMORY-ONLY: the entire event log (decisionEventLog, bounded to DECISION_EVENT_MAX_LOG_SIZE=500, oldest dropped first) lives in one in-memory array for the browser tab\'s lifetime -- zero localStorage keys are written by this layer, confirmed directly (unlike the Baseline Registry\'s one persisted key). FAILURE ISOLATION: every emitDecisionEvent() call is wrapped so an internal bug in this brand-new layer can never throw into its caller -- proven directly with a deliberately circular/unserializable payload, which is rejected safely rather than crashing anything. INSTRUMENTATION: only SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR are actually wired, from the two genuine outer scan-tick boundaries -- scanAll() (JVM) and alexGLivePollTick() (ALEX) -- both confirmed NOT protected functions (cross-checked directly against the v12.4.0 Baseline Registry\'s own BASELINE_JVM_FUNCTIONS/BASELINE_ALEX_FUNCTIONS mirror of PROTECTED_FUNCTIONS); every original statement inside both functions is byte-identical and unreordered, only wrapped in try/catch with emit calls at the boundaries -- no protected rule logic (checkAutoTrades, evaluateLiveTrigger, scoreConfluence, bestConfluence, computeAOI, detectSignals, getBias, getSession, or any alexG* protected function) is itself touched or instrumented anywhere in this release. A new Developer-Mode-gated Diagnostics preview (renderDecisionEventDiagnostics(), wired into the same three trigger points as the Baseline Registry and Health Check cards) shows Schema Version, Event Bus Status, Events in Memory, Last Event, Validation Failures, and Persistence Status (always "NOT PERSISTED"). TESTING: new tests/v125_decision_event_tests.js (40 fixtures) covers schema completeness and never-fabricated missing-field handling; valid/invalid event creation; reason-code and evidence-level validation against the centralized registries; unique/collision-free identifiers (200 rapid-fire IDs, all unique); correlation and parent-event linkage; strict sequence ordering (a rejected event never consumes a sequence number); true append-only immutability (an attempted mutation on a retrieved event, and pushing to a retrieved array, never affects the real log); payload-size limits; JSON serialization round-tripping; failure isolation against a deliberately circular payload; zero mutation of paperAccount/journalEntries/alexGAccount/alexGJournalEntries/scanData/autoTrading/alexGAutoTrading and zero mutation of the Baseline Registry\'s own fingerprints (cross-feature isolation); zero localStorage keys written; Developer Mode preview rendering on/off; simulated-reload behavior (the log is empty after a fresh start, since nothing persists, by design); confirmation that neither instrumented function is a protected function; and real, executing (not merely source-read) proof that the actual scanAll()/alexGLivePollTick() functions emit a genuine SCAN_STARTED event with correct strategyId/scanId/correlationId, exploiting the fact that SCAN_STARTED is each function\'s literal first statement, executed synchronously before either function\'s first genuine await -- SCAN_COMPLETED/ENGINE_ERROR from those two call sites (gated behind a real await this offline JXA harness cannot resolve, the same documented, permanent limitation as closePaperPosition()/alexGCloseLivePosition() elsewhere in this suite family) are disclosed as verified live instead. Full regression: 469/469 fixtures pass across all 11 canonical suites (429 pre-existing + 40 new), zero skipped, zero drift (all 63 protected functions and 4 protected constants byte-identical, verified directly against the true committed v12.4.0 baseline). See docs/DECISION_EVENT_ARCHITECTURE.md for the complete schema/registry/evidence-model/identifier/immutability/memory-limit documentation and known limitations.',
   '12.4.0 — PROGRAM-001 PHASE 1: BASELINE REGISTRY & LOGIC PROTECTION (infrastructure release -- no trading behavior change; JVM and ALEX produce the exact same decisions before and after this release, proven by zero protected-function/protected-constant drift, byte-identical before/after). Establishes a formal, identifiable baseline for JVM and ALEX so future logic drift is detectable in-app, in Developer Mode, without running a script -- a lightweight, runtime COMPANION to the existing build-time regression-baseline-tools.py drift check, never a replacement for it. computeBaselineRegistry() builds one registry entry per strategy (id/name/version, applicationVersion, createdAt, status, a deterministic logicFingerprint of that strategy\'s own protected-function source, a shared riskFingerprint covering pipSize/pipValuePerLot -- the two genuinely cross-strategy position-sizing utilities both engines call -- a configurationFingerprint of that strategy\'s protected constants, instruments/timeframes/sessionRules/riskModel/dataSource/executionModel drawn from real, already-disclosed app state, and an explicit notes field) using a new deterministic 32-bit FNV-1a hash (baselineFnv1aHash) over each protected function\'s own .toString() source text, sorted alphabetically first so the array\'s own declaration order can never itself affect the fingerprint -- only real source-text changes can. dataContractVersion and metricsVersion are explicitly null on both entries (no such versioning scheme exists yet for either strategy\'s trade-record shape or performance-metric formula) rather than fabricated. BASELINE_JVM_FUNCTIONS/BASELINE_ALEX_FUNCTIONS are a byte-for-byte copy of regression-baseline-tools.py\'s own PROTECTED_FUNCTIONS list, generated directly from that file (not hand-transcribed) to avoid transcription drift -- there is no shared source between that Python build tool and this browser code, so the two must be kept in manual sync going forward (disclosed in each entry\'s own notes field). The registry itself is computed fresh every time (pure, deterministic, reads only already-existing function references and protected constants -- never localStorage, never any account/journal/scanner state); the only thing ever WRITTEN is an explicitly-locked reference snapshot, via a new isolated fxhub_baseline_registry key, written ONLY by lockBaselineRegistry() -- never called automatically, mirroring regression-baseline-tools.py\'s own manual "--update" philosophy exactly. A new Developer-Mode-gated Diagnostics card (renderBaselineRegistryDiagnostics(), wired into the same three trigger points as the existing Paper Trading Health Check: the diagnostics panel load, the Developer Mode toggle, and its own Refresh button) shows both strategies\' Baseline IDs, JVM/ALEX/shared-risk Fingerprint Status (MATCH / DRIFT DETECTED / NO BASELINE LOCKED YET), Application Version, and Baseline Registry Version, plus a confirmation-gated "Lock Current Baseline" action. Nothing in this release places, modifies, or closes a trade, changes risk/thresholds/filters/execution/journal behavior, or migrates any existing trade history -- verified directly, not just by design: paperAccount/journalEntries/alexGAccount/alexGJournalEntries/scanData/autoTrading/alexGAutoTrading are proven byte-identical before and after every Baseline Registry operation (computeBaselineRegistry, lockBaselineRegistry, getBaselineDiagnosticsSummary, renderBaselineRegistryDiagnostics), and lockBaselineRegistry() is proven to write to exactly one new key and touch nothing else. TESTING: new tests/v124_baseline_registry_tests.js (31 fixtures) covers baseline generation and full schema-field presence; registry integrity (every BASELINE_JVM_FUNCTIONS/BASELINE_ALEX_FUNCTIONS name resolves to a real function reference in the currently-loaded app, zero missing); fingerprint stability (identical results across repeated computation, and order-independence -- hashing the same function set in a different array order produces the identical fingerprint); fingerprint sensitivity (two different real functions produce two different fingerprints, proving the hash reflects real content rather than being a stub constant); unknown-field handling (an unresolvable function name is recorded in a missing[] list rather than silently fabricated or omitted, and dataContractVersion/metricsVersion are confirmed explicitly null); fingerprint drift detection (a persisted baseline whose logicFingerprint no longer matches the current one is reported DRIFT DETECTED for exactly the affected strategy, never both); no-baseline-yet handling; persistence round-tripping and reload-behavior (read back byte-identical after a real simulated reload); idempotence (locking twice with no code change produces the same fingerprints both times); storage isolation; Diagnostics rendering with Developer Mode on/off; and the mutation-safety proofs described above. Full regression: 429/429 fixtures pass across all 10 canonical suites (398 pre-existing + 31 new), zero skipped, zero drift (all 63 protected functions and 4 protected constants byte-identical to the v12.3.2 baseline). LIVE VERIFICATION (fresh local server, browser origin started and ended completely empty): confirmed the Diagnostics card renders correctly gated by Developer Mode; "Lock Current Baseline" writes exactly the one new key and immediately reports MATCH for JVM/ALEX/shared-risk; Paper Trading Health Check remains fully functional and reports CLEAN alongside the new card with paperAccount/journalEntries/alexGAccount/alexGJournalEntries all still at their pristine, untouched defaults; a real page reload preserves the locked baseline and its MATCH status; and a deliberately corrupted persisted fingerprint is correctly reported as DRIFT DETECTED for only the affected strategy. Zero console errors at every step. Explicitly out of scope for this phase (documented for future phases only, not implemented): candidate/rejection logging, trade failure analysis, missed-opportunity/counterfactual trades, an Experiment Registry, shadow variants, a market-context engine, EMA/ATR/AOI reconstruction, historical candle retrieval, and any Trade Inspector or computeTiCompliance change.',
@@ -2097,7 +2099,7 @@ const STRATEGY_CURRENT='current_strategy';
 const STRATEGY_ALEXG='alex_g_sr_v1';
 
 // ── ALEX G STATE (fully separate from every current-strategy state object above) ──
-let alexGAccount={balance:10000,openPositions:[],closedPositions:[]};
+let alexGAccount={balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]}; // v1.1: startingBalance replaces the hardcoded 10000 in dashboard P&L (ALEX_V11_004). A pre-v1.1 account lacking it falls back safely via alexGStartingBalance().
 let alexGJournalEntries=[];
 // v12.3.2: ALEX version-guard state, mirroring JVM's paperAccountKnownVersion -- this
 // session's last-known fxhub_alexg_account_version. See saveAlexGAccountGuarded()/
@@ -2403,6 +2405,325 @@ const RULES_ALEXG={
     }
   }
 };
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── MOGO-002.8A: ALEX v1.1 RELEASE ────────────────────────────────────────────
+// alex_g_sr_v1_1. ADDITIVE ONLY. RULES_ALEXG above is a PROTECTED CONSTANT and is
+// byte-identical to the committed baseline; this block never mutates it.
+//
+// WHY A NEW CONSTANT RATHER THAN AN EDIT: RULES_ALEXG's own change-control rule
+// states "Once alex_g_sr_v1 trades or zones exist, these values must never change
+// in place -- any future rule or default change requires a new ruleVersion (e.g.
+// alex_g_sr_v1_1, alex_g_sr_v2), so historical alex_g_sr_v1 results can never be
+// silently recalculated and re-presented as if they were the original v1 output."
+// v1.1 follows that instruction exactly.
+//
+// WHAT v1.1 DOES NOT CHANGE: every engine parameter. Zone detection, touch
+// counting, break-of-structure, break-and-retest, entry sequencing, stop
+// placement (zoneLow/High -/+ 0.25*ATR) and the 2R target all continue to read
+// RULES_ALEXG.config, unchanged, from the same PROTECTED functions. A v1.1 trade
+// and a v1.0 trade on identical data qualify identically and are sized
+// identically. The ONLY behavioural change is the Monday-Wednesday entry gate.
+//
+// WHAT v1.1 ADDS: (1) the approved Mon-Wed entry-eligibility rule, (2) a release
+// version stamped on every new trade, (3) corrected statistics (realized R,
+// chronological equity, current vs maximum drawdown, configured starting
+// balance), (4) omission of the four dead v1.0 config keys.
+//
+// DEAD KEYS DELIBERATELY ABSENT FROM v11Config (present in v1.0, read by nothing):
+//   zoneTimeframes  -- all three loops use a hardcoded ['H1','H4','D','W'] literal
+//   requireWick     -- never read
+//   minWickRatio    -- never read
+//   maxZoneAgeBars  -- never read (zone ageing is OFF)
+// They remain in RULES_ALEXG because it is protected; v1.1 simply does not
+// re-declare them, so nothing new implies a control that does not exist.
+// ══════════════════════════════════════════════════════════════════════════════
+const ALEX_V11_RULE_VERSION='alex_g_sr_v1_1';
+const ALEX_V11_INTRODUCED_IN_ENGINE='12.7.0';
+
+const RULES_ALEXG_V11={
+  ruleVersion:ALEX_V11_RULE_VERSION,
+  inheritsFrom:RULES_ALEXG.ruleVersion,
+  engineParametersUnchangedFrom:RULES_ALEXG.ruleVersion,
+  releaseNote:'MOGO-002.8A. Engine parameters identical to alex_g_sr_v1; adds the Mon-Wed entry gate, release versioning, and corrected statistics.',
+  // v1.1-ONLY parameters. Engine parameters are NOT duplicated here -- the engine
+  // continues to read RULES_ALEXG.config so v1.0 and v1.1 provably share them.
+  v11Config:{
+    entryDaysOfWeekUTC:[1,2,3],          // Mon, Tue, Wed (UTC). AXR-080 / CLAIM|ALEX_G|20260728|083
+    entryDayRuleEnabled:true,
+    startingBalance:10000,               // replaces the hardcoded 10000 in the dashboard P&L
+    // ── MOGO-002.8B: SETUP-LEVEL EXECUTION POLICY ──────────────────────────
+    // The single controlling boolean. Set false to restore both setup types to
+    // live paper trading with no code change.
+    //
+    // EXECUTION POLICY (Engineering Authority, MOGO-002.8B):
+    //   B_breakRetest      ACTIVE
+    //   A_repeatedReaction SUSPENDED FOR RESEARCH
+    //
+    // This is an OPERATIONAL SUSPENSION, not a rule change. The rule set is
+    // identical -- A_repeatedReaction setups are still detected, still classified,
+    // still recorded and still persisted; only the trade-OPEN step is withheld, and
+    // every withheld candidate is recorded with reasonCode SETUP_SUSPENDED_FOR_RESEARCH.
+    // ruleVersion therefore remains alex_g_sr_v1_1 (see MOGO-002.8B audit §3.2).
+    //
+    // SCOPE: LIVE PAPER TRADING ONLY. Replay (alexGRunSetupReplay, PROTECTED) is
+    // deliberately untouched and continues to generate BOTH setup types -- replay is
+    // research, and it is the only route to the Tier 2+ sample that could ever retire
+    // this suspension (MOGO-003 section 9).
+    setupSuspensionEnabled:true,
+    suspendedSetupTypes:['A_repeatedReaction'],
+    // Suspension window. Without this, a period with zero RZR trades is
+    // indistinguishable from a period where RZR was suppressed, and any later
+    // period-over-period comparison is invalid (MOGO-002.8B audit section 3.2).
+    setupSuspensionWindow:{
+      startedAt:'2026-07-30T00:00:00Z',
+      endedAt:null,
+      authority:'MOGO-002.8B',
+      reason:'Operational suspension pending Tier 2+ replay evidence. Basis: Tier 1 forward-paper observation (18 RZR trades, 1W/17L) which does NOT establish that the setup is invalid.'
+    }
+  },
+  // Every ACTIVE rule, per the MOGO-002.8A rule-governance requirement.
+  // origin: 'Alex Explicit' | 'MOGO Operationalization' | 'Existing MOGO Design'
+  ruleRegistry:[
+    {ruleId:'ALEX_SR_001',name:'Support/resistance role',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[0]; AXR-001 / CLAIM|ALEX_G|20260729|006',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_002',name:'S/R jointly the area of interest',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[1]; AXR-001',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_003',name:'Never trade against zone role',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[2]',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_004',name:'Bidirectional touch tally',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[3]',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_005',name:'Three validate, fourth is tradeable',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[4]',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_006',name:'Zone strength tiers',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[5]',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_007',name:'More touches better (tier saturates)',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[6]; AXR-007',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_008',name:'Zone tightness (no source formula)',origin:'MOGO Operationalization',evidence:'RULES_ALEXG.originalAlexConcepts[7]; zoneClusterATRMultiplier EXPERIMENTAL; AXR-008',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_009',name:'Four zone timeframes H1/H4/D/W',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[8]; AXR-071',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_010',name:'Higher timeframe more respected',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[9]; AXR-070. NOTE: ordering only, and the comparator is called only from the replay engine',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_011',name:'Break and retest',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[10]; AXR-004',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_012',name:'Psychological levels (record-only)',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[11]; AXR-012. Raw distances only, never used as confluence',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_SR_013',name:'Trend context (record-only)',origin:'Alex Explicit',evidence:'RULES_ALEXG.originalAlexConcepts[12]; AXR-002. Never gates',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_001',name:'Stop / target / risk mechanism',origin:'MOGO Operationalization',evidence:'RULES_ALEXG.hubTestStandardizations -- "100% unaddressed by the source". AXR-020 relationship is educator-stated; the 0.25 ATR buffer (AXR-021) and the short-side mirror (AXR-022) are MOGO-authored. KEREV-A OPEN',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_002',name:'Live entry-delay gate (5 pips)',origin:'MOGO Operationalization',evidence:'RULES_ALEXG.hubTestStandardizations -- source never addresses live execution latency',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_003',name:'Signal staleness (one bar-period)',origin:'MOGO Operationalization',evidence:'RULES_ALEXG.hubTestStandardizations -- source never addresses signal age',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_004',name:'Activation cutoff',origin:'Existing MOGO Design',evidence:'v4.2 -- prevents backfilling a paused period on resume',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_005',name:'Choppy-zone filter',origin:'MOGO Operationalization',evidence:'RULES_ALEXG.hubTestStandardizations; AXR-091 -- no educator counterpart',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_006',name:'Rejection confirmation window + displacement',origin:'MOGO Operationalization',evidence:'RULES_ALEXG.hubTestStandardizations; AXR-013',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_007',name:'No session-hour filtering',origin:'Existing MOGO Design',evidence:'RULES_ALEXG.hubTestStandardizations -- deliberate. Session HOURS remain unimplemented (AXR-081 absent from source)',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_009',name:'Overlap: one open trade per pair+timeframe',origin:'Existing MOGO Design',evidence:'Validated replay rule, reused live',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    {ruleId:'ALEX_X_010',name:'No break-even / trailing / partials / scaling',origin:'MOGO Operationalization',evidence:'AXR-060/061/062/063 -- ZERO educator mentions across 9 sources. MOGO-authored in an evidentiary vacuum, NOT educator agreement',versionIntroduced:'alex_g_sr_v1',enabled:true},
+    // ── v1.1 ──
+    {ruleId:'ALEX_V11_001',name:'Monday-Wednesday entry eligibility',origin:'Alex Explicit',evidence:'AXR-080 / CLAIM|ALEX_G|20260728|083 -- "Entries on this confirmation are restricted to Monday, Tuesday and Wednesday" (rule_statement, direct_explicit). SCOPE CAVEAT: the claim is scoped to the educator confirmation setup, which MOGO does not implement (AXR-011 deferred)',versionIntroduced:'alex_g_sr_v1_1',enabled:true},
+    {ruleId:'ALEX_V11_002',name:'Realized R from actual exit',origin:'Existing MOGO Design',evidence:'MOGO-002.8A reconciliation M-1 -- corrects a statistics defect; no educator input',versionIntroduced:'alex_g_sr_v1_1',enabled:true},
+    {ruleId:'ALEX_V11_003',name:'Chronological equity + current vs max drawdown',origin:'Existing MOGO Design',evidence:'MOGO-002.8A reconciliation M-3/M-4',versionIntroduced:'alex_g_sr_v1_1',enabled:true},
+    {ruleId:'ALEX_V11_004',name:'Configured starting balance',origin:'Existing MOGO Design',evidence:'MOGO-002.8A reconciliation M-2',versionIntroduced:'alex_g_sr_v1_1',enabled:true},
+    {ruleId:'ALEX_V11_005',name:'Release version stamped on every new trade',origin:'Existing MOGO Design',evidence:'MOGO-002.8A versioning requirement',versionIntroduced:'alex_g_sr_v1_1',enabled:true},
+    {ruleId:'ALEX_V11_006',name:'Setup-level execution policy (RZR suspended for research)',origin:'Existing MOGO Design',evidence:'MOGO-002.8B Setup Isolation Audit. OPERATIONAL SUSPENSION of A_repeatedReaction in LIVE paper trading only -- detection/classification/recording continue, replay is untouched. Basis is Tier 1 forward-paper observation which does NOT establish the setup is invalid.',versionIntroduced:'alex_g_sr_v1_1',enabled:true}
+  ],
+  // Explicitly NOT implemented in v1.1 -- recorded so their absence is a decision, not an oversight.
+  deferredRules:[
+    {ruleId:'AXR-011',name:'Candlestick confirmation gate',reason:'Pattern family ambiguous (AXG-03); educator-referenced video unidentified'},
+    {ruleId:'AXR-020',name:'Stop anchored to rejection formation',reason:'KEREV-A OPEN; anchor has three readings'},
+    {ruleId:'AXR-021',name:'Stop buffer distance',reason:'ABSENT from all 9 sources; 0.25 ATR remains MOGO-authored'},
+    {ruleId:'AXR-030',name:'1:2 as a floor rather than a fixed ratio',reason:'No target-selection procedure exists; XCONTRA|20260729|004 open'},
+    {ruleId:'AXR-081',name:'Session-hour filter',reason:'Hours shown on-screen, never spoken -- no transcript can close it'}
+  ]
+};
+
+// Pure: is `whenMs` on a v1.1-eligible entry day (UTC)? Returns true when the rule
+// is disabled, so a disabled rule can never block a trade.
+function alexGV11EntryDayEligible(whenMs,v11){
+  const cfg=(v11||RULES_ALEXG_V11).v11Config;
+  if(!cfg||cfg.entryDayRuleEnabled!==true) return true;
+  const days=cfg.entryDaysOfWeekUTC;
+  if(!Array.isArray(days)||!days.length) return true;
+  const d=new Date(whenMs);
+  if(isNaN(d.getTime())) return true; // never block on an unreadable timestamp
+  return days.indexOf(d.getUTCDay())>=0;
+}
+
+// MOGO-002.8B: is this setup type permitted to OPEN a live paper position?
+// Pure. FAILS OPEN in every ambiguous case -- a misconfiguration can never silently
+// stop trading. Read-only: it never mutates the setup or the config.
+// Detection, classification and candidate recording are unaffected by this function;
+// it governs the trade-open step only.
+function alexGV11SetupTypePermitted(setupType,v11){
+  const cfg=(v11||RULES_ALEXG_V11).v11Config;
+  if(!cfg||cfg.setupSuspensionEnabled!==true) return true;
+  const suspended=cfg.suspendedSetupTypes;
+  if(!Array.isArray(suspended)||!suspended.length) return true;
+  if(typeof setupType!=='string'||!setupType) return true; // unknown type -> never blocked
+  return suspended.indexOf(setupType)<0;
+}
+
+// Realized R from a trade's OWN stored fields -- never the frozen plannedRR.
+// Works identically for a v1.0 record and a v1.1 record, so historical reporting
+// is corrected without a single historical record being rewritten.
+// Returns null when the trade cannot support the calculation.
+function alexGRealizedR(trade){
+  if(!trade||typeof trade!=='object') return null;
+  const entry=trade.entry,stop=trade.stop,exit=trade.exitPrice;
+  if(typeof entry!=='number'||typeof stop!=='number'||typeof exit!=='number') return null;
+  if(!isFinite(entry)||!isFinite(stop)||!isFinite(exit)) return null;
+  const risk=Math.abs(entry-stop);
+  if(!(risk>0)) return null;
+  const dir=trade.direction==='buy'?1:-1;
+  return ((exit-entry)*dir)/risk;
+}
+
+// Chronological equity walk over decided trades. Sorts by closedAt ASCENDING --
+// alexGAccount.closedPositions is stored newest-first (closes are unshifted), so
+// walking it in stored order does not describe the real equity curve.
+// Returns realized-R based figures plus both drawdown measures.
+function alexGComputeEquityStats(closedPositions){
+  const decided=(closedPositions||[]).filter(p=>p&&(p.result==='Win'||p.result==='Loss'));
+  const sorted=decided.slice().sort((a,b)=>{
+    const ta=Date.parse(a.closedAt||'')||0,tb=Date.parse(b.closedAt||'')||0;
+    if(ta!==tb) return ta-tb;
+    return String(a.tradeId||'').localeCompare(String(b.tradeId||''));
+  });
+  let equity=0,peak=0,maxDD=0,netRealized=0,netPlanned=0,realizedCount=0;
+  sorted.forEach(p=>{
+    const rr=alexGRealizedR(p);
+    const r=(rr!=null)?rr:(p.resultR||0);
+    if(rr!=null) realizedCount++;
+    netRealized+=r;
+    netPlanned+=(p.resultR||0);
+    equity+=r;
+    if(equity>peak) peak=equity;
+    const dd=peak-equity;
+    if(dd>maxDD) maxDD=dd;
+  });
+  return{
+    decidedCount:sorted.length,
+    wins:sorted.filter(p=>p.result==='Win').length,
+    losses:sorted.filter(p=>p.result==='Loss').length,
+    netR:netRealized,                 // realized
+    netPlannedR:netPlanned,           // legacy fixed +plannedRR/-1, retained for comparison
+    realizedCount,
+    finalEquityR:equity,
+    peakEquityR:peak,
+    currentDrawdownR:peak-equity,     // distance from the running peak RIGHT NOW
+    maxDrawdownR:maxDD                // worst peak-to-trough over the whole curve
+  };
+}
+
+// Configured starting balance, with a safe fallback. Never throws.
+function alexGStartingBalance(){
+  try{
+    if(typeof alexGAccount==='object'&&alexGAccount&&typeof alexGAccount.startingBalance==='number'
+       &&isFinite(alexGAccount.startingBalance)) return alexGAccount.startingBalance;
+    const v=RULES_ALEXG_V11.v11Config.startingBalance;
+    return (typeof v==='number'&&isFinite(v))?v:10000;
+  }catch(e){ return 10000; }
+}
+
+// ── MOGO-002.5 PHASE 5: STRATEGY PROVENANCE ────────────────────────────────────
+// Version identity stamped onto every NEWLY created ALEX paper trade so a trade can
+// always be traced back to the exact specification, implementation and configuration
+// that produced it.
+//
+// WHY THESE ARE NOT INSIDE alexGConstructLivePosition(): that function is PROTECTED
+// (regression-baseline.json). Editing it would be baseline drift, so provenance is
+// stamped by its non-protected caller instead. This is observability metadata only --
+// no value below is ever read by entry, stop, target, sizing or exit logic.
+//
+// BACKWARDS COMPATIBILITY: nothing here rewrites, migrates or back-fills an existing
+// record. A trade opened before this release simply lacks these fields and is honestly
+// classified LEGACY_UNVERSIONED by alexGClassifyTradeProvenance() -- never given a
+// provenance it did not actually have.
+const ALEX_PROVENANCE_SCHEMA_VERSION='mogo.strategy-provenance.v1';
+const ALEX_IMPLEMENTATION_VERSION='alex_g_sr_v1.impl.1';   // matches docs/strategy-fidelity/manifests/
+const ALEX_PROVENANCE_CLASSES={VERSIONED:'VERSIONED',PARTIAL:'PARTIAL_PROVENANCE',LEGACY:'LEGACY_UNVERSIONED'};
+
+// Order-independent, stable hash of a plain object. Used for ruleSetHash/configurationHash
+// so two trades opened under an identical config produce an identical hash, and any config
+// change is detectable after the fact without storing the whole config twice.
+function alexGStableHash(value){
+  const canon=v=>{
+    if(v===null||typeof v!=='object') return JSON.stringify(v===undefined?null:v);
+    if(Array.isArray(v)) return '['+v.map(canon).join(',')+']';
+    return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canon(v[k])).join(',')+'}';
+  };
+  const s=canon(value);
+  let h1=0x811c9dc5,h2=0x01000193;
+  for(let i=0;i<s.length;i++){
+    const c=s.charCodeAt(i);
+    h1=(h1^c)>>>0; h1=Math.imul(h1,0x01000193)>>>0;
+    h2=(h2+c)>>>0; h2=Math.imul(h2,0x85ebca6b)>>>0;
+  }
+  return ('00000000'+h1.toString(16)).slice(-8)+('00000000'+h2.toString(16)).slice(-8);
+}
+
+// The version identity of the CURRENTLY RUNNING ALEX engine.
+function alexGStrategyVersionReference(){
+  const snap=snapshotAlexGConfig();
+  return{
+    provenanceSchemaVersion:ALEX_PROVENANCE_SCHEMA_VERSION,
+    strategyId:RULES_ALEXG.ruleVersion,
+    strategySpecificationVersion:RULES_ALEXG.ruleVersion,
+    // MOGO-002.8A: the RELEASE governing this trade. Distinct from
+    // strategySpecificationVersion, which remains alex_g_sr_v1 because v1.1 changes
+    // no engine parameter -- ruleSetHash/configurationHash below are computed from
+    // the unchanged RULES_ALEXG and are therefore identical to a v1.0 trade's.
+    // A trade opened before this release simply lacks this field and is honestly
+    // read as v1.0; nothing back-fills it.
+    strategyVersion:ALEX_V11_RULE_VERSION,
+    strategyVersionIntroducedInEngine:ALEX_V11_INTRODUCED_IN_ENGINE,
+    implementationVersion:ALEX_IMPLEMENTATION_VERSION,
+    ruleSetHash:alexGStableHash(RULES_ALEXG.originalAlexConcepts),
+    configurationHash:alexGStableHash(snap.config),
+    decisionTraceVersion:(typeof DECISION_EVENT_SCHEMA_VERSION!=='undefined')?DECISION_EVENT_SCHEMA_VERSION:null,
+    engineVersion:APP_VERSION
+  };
+}
+
+// Stamp provenance onto a newly constructed position. Never overwrites an existing
+// stamp, and never touches any other field on the record.
+function alexGStampTradeProvenance(position){
+  try{
+    if(!position||typeof position!=='object') return position;
+    if(position.strategyProvenance) return position; // already stamped -- never re-stamp
+    position.strategyProvenance=alexGStrategyVersionReference();
+  }catch(e){ /* provenance must never be able to block a real trade */ }
+  return position;
+}
+
+// Honest classification of ANY trade record, old or new. Read-only.
+//   VERSIONED          -- a full provenance stamp is present
+//   PARTIAL_PROVENANCE -- some version evidence exists (the pre-existing
+//                         configurationSnapshot/createdByEngineVersion fields) but not a
+//                         full stamp. Reported separately rather than being rounded up to
+//                         VERSIONED or down to LEGACY, because it is genuinely neither.
+//   LEGACY_UNVERSIONED -- no version evidence at all
+function alexGClassifyTradeProvenance(trade){
+  if(!trade||typeof trade!=='object') return ALEX_PROVENANCE_CLASSES.LEGACY;
+  const p=trade.strategyProvenance;
+  if(p&&p.strategySpecificationVersion&&p.implementationVersion&&p.ruleSetHash&&p.configurationHash){
+    return ALEX_PROVENANCE_CLASSES.VERSIONED;
+  }
+  if(p) return ALEX_PROVENANCE_CLASSES.PARTIAL;
+  if(trade.configurationSnapshot||trade.createdByEngineVersion) return ALEX_PROVENANCE_CLASSES.PARTIAL;
+  return ALEX_PROVENANCE_CLASSES.LEGACY;
+}
+
+// Summary for performance reporting: lets a report state plainly whether it is describing
+// verified-version trades, legacy trades, or a mix -- rather than silently averaging them.
+function alexGProvenanceSummary(trades){
+  const out={total:0,VERSIONED:0,PARTIAL_PROVENANCE:0,LEGACY_UNVERSIONED:0,
+             specificationVersions:[],implementationVersions:[],mixed:false};
+  (trades||[]).forEach(t=>{
+    out.total++;
+    out[alexGClassifyTradeProvenance(t)]++;
+    const p=t&&t.strategyProvenance;
+    if(p&&p.strategySpecificationVersion&&out.specificationVersions.indexOf(p.strategySpecificationVersion)<0)
+      out.specificationVersions.push(p.strategySpecificationVersion);
+    if(p&&p.implementationVersion&&out.implementationVersions.indexOf(p.implementationVersion)<0)
+      out.implementationVersions.push(p.implementationVersion);
+  });
+  out.specificationVersions.sort(); out.implementationVersions.sort();
+  // "mixed" means the set of trades does not share one provenance story -- either more than
+  // one version is present, or versioned and unversioned trades are being counted together.
+  const classesPresent=['VERSIONED','PARTIAL_PROVENANCE','LEGACY_UNVERSIONED'].filter(k=>out[k]>0);
+  out.mixed=out.specificationVersions.length>1||out.implementationVersions.length>1||classesPresent.length>1;
+  out.reportable=out.mixed?'MIXED_VERSION':(classesPresent[0]||'NONE');
+  return out;
+}
 
 // Deterministic deep snapshot of the currently active Alex G configuration. Every future
 // Alex G trade/zone record stores the OUTPUT of this function, never a live reference to
@@ -4005,6 +4326,15 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
     tradeId:result.position?result.position.tradeId:null,source:'alexGAttemptOpenLivePosition',
     stage:'CONSTRUCTION',decision:'APPROVED',context:{signalId},evidenceCompleteness:'COMPLETE'});
   const position=result.position;
+  // MOGO-002.5 Phase 5: strategy provenance stamp. ADDITIVE AND OUTSIDE PROTECTED CODE --
+  // alexGConstructLivePosition() is a PROTECTED function (regression-baseline.json) and is
+  // deliberately NOT edited; the stamp is applied here, in its non-protected caller, on the
+  // object it already returned. Nothing already on the position is read, overwritten or
+  // reordered, and no field below participates in any entry/stop/target/size decision --
+  // the same market data still produces the same trade. Existing fields
+  // (configurationSnapshot, createdByEngineVersion) are left exactly as the protected
+  // constructor set them and are referenced, never duplicated.
+  alexGStampTradeProvenance(position);
   // v12.3.2: snapshot BEFORE mutating, so a rejected ledger commit (below) can be rolled
   // back cleanly -- the position and its journal record must not exist in memory if the
   // account write itself didn't actually persist. Mirrors openPaperPosition()'s own pattern.
@@ -4172,6 +4502,72 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
           candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,source:'alexGEvaluatePairForLiveSetups',
           stage:'SIGNAL_STALENESS',decision:'REJECTED',reasonCode:'STATE_SIGNAL_STALE',
           parentEventId:(__stalenessRuleEvent&&__stalenessRuleEvent.event)?__stalenessRuleEvent.event.eventId:null,
+          evidenceCompleteness:'COMPLETE'});
+        continue;
+      }
+      // ── MOGO-002.8A ALEX v1.1: Monday-Wednesday entry eligibility (ALEX_V11_001) ──
+      // Evaluated on the LIVE ENTRY MOMENT, not the qualification candle, because the
+      // educator rule governs when an ENTRY may be taken. Placed here -- in the
+      // non-protected evaluation loop, after staleness and before the open attempt --
+      // so alexGConstructLivePosition (PROTECTED) is untouched. Mirrors the existing
+      // activation/staleness gate pattern exactly, including the permanent status
+      // record, so a rejected setup is never silently reconsidered on a later poll.
+      const v11DayEligible=alexGV11EntryDayEligible(nowMs,RULES_ALEXG_V11);
+      const __entryDayRuleEvent=emitDecisionEvent({eventType:'RULE_EVALUATED',strategyId:RULES_ALEXG.ruleVersion,scanId,
+        correlationId:scanId,candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,
+        source:'alexGEvaluatePairForLiveSetups',ruleId:'ALEX_V11_ENTRY_DAY',
+        ruleResult:v11DayEligible?'PASS':'FAIL',reasonCode:v11DayEligible?null:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',
+        context:{strategyVersion:ALEX_V11_RULE_VERSION,evaluatedAt:nowMs,
+          entryDayUTC:new Date(nowMs).getUTCDay(),
+          allowedDaysUTC:RULES_ALEXG_V11.v11Config.entryDaysOfWeekUTC,
+          qualificationDayOfWeek:setup.dayOfWeek},
+        evidenceCompleteness:'COMPLETE'});
+      if(!v11DayEligible){
+        alexGRecordLiveSetupStatus({signalId,setupId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,
+          setupType:setup.setupType,direction:null,qualificationTimestamp:setup.qualificationTimestamp,
+          zoneId:setup.zoneId,zoneTouchNumber:setup.zoneTouchNumber,status:'IGNORED — ENTRY DAY NOT ELIGIBLE',
+          reason:'ENTRY_DAY_NOT_ELIGIBLE',
+          firstLiveEvaluationTimestamp,signalAgeMinutesAtEvaluation,liveEvaluationFinal:true});
+        emitDecisionEvent({eventType:'CANDIDATE_REJECTED',strategyId:RULES_ALEXG.ruleVersion,scanId,correlationId:scanId,
+          candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,source:'alexGEvaluatePairForLiveSetups',
+          stage:'ENTRY_DAY_ELIGIBILITY',decision:'REJECTED',reasonCode:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',
+          parentEventId:(__entryDayRuleEvent&&__entryDayRuleEvent.event)?__entryDayRuleEvent.event.eventId:null,
+          evidenceCompleteness:'COMPLETE'});
+        continue;
+      }
+      // ── MOGO-002.8B: SETUP-LEVEL EXECUTION GATE (ALEX_V11_006) ──────────────
+      // Placed immediately AFTER the Monday-Wednesday gate and immediately BEFORE
+      // position creation, exactly as authorized. Lives in this NON-protected
+      // function; alexGConstructLivePosition, alexGEvaluateRepeatedReaction,
+      // alexGClassifyTouch, alexGCreateSetupRecord and alexGRunSetupReplay are all
+      // PROTECTED and are not touched.
+      //
+      // The setup has ALREADY been detected, classified and recorded in
+      // alexGSetupState by this point -- this gate withholds only the trade-open
+      // step. NO SILENT SKIP: the candidate gets a permanent status row (visible in
+      // the Setups panel) plus a linked RULE_EVALUATED/CANDIDATE_REJECTED pair, so
+      // the withheld candidate stays fully visible to future replay analysis and the
+      // suppression itself is countable rather than being an unexplained absence.
+      const setupTypePermitted=alexGV11SetupTypePermitted(setup.setupType,RULES_ALEXG_V11);
+      const __setupPolicyRuleEvent=emitDecisionEvent({eventType:'RULE_EVALUATED',strategyId:RULES_ALEXG.ruleVersion,scanId,
+        correlationId:scanId,candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,
+        source:'alexGEvaluatePairForLiveSetups',ruleId:'ALEX_V11_SETUP_EXECUTION_POLICY',
+        ruleResult:setupTypePermitted?'PASS':'FAIL',reasonCode:setupTypePermitted?null:'SETUP_SUSPENDED_FOR_RESEARCH',
+        context:{strategyVersion:ALEX_V11_RULE_VERSION,setupType:setup.setupType,setupLabel:setup.setupLabel,
+          suspendedSetupTypes:RULES_ALEXG_V11.v11Config.suspendedSetupTypes,
+          suspensionAuthority:RULES_ALEXG_V11.v11Config.setupSuspensionWindow.authority,
+          suspensionStartedAt:RULES_ALEXG_V11.v11Config.setupSuspensionWindow.startedAt},
+        evidenceCompleteness:'COMPLETE'});
+      if(!setupTypePermitted){
+        alexGRecordLiveSetupStatus({signalId,setupId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,
+          setupType:setup.setupType,direction:null,qualificationTimestamp:setup.qualificationTimestamp,
+          zoneId:setup.zoneId,zoneTouchNumber:setup.zoneTouchNumber,status:'SUSPENDED — RESEARCH HOLD',
+          reason:'SETUP_SUSPENDED_FOR_RESEARCH',
+          firstLiveEvaluationTimestamp,signalAgeMinutesAtEvaluation,liveEvaluationFinal:true});
+        emitDecisionEvent({eventType:'CANDIDATE_REJECTED',strategyId:RULES_ALEXG.ruleVersion,scanId,correlationId:scanId,
+          candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,source:'alexGEvaluatePairForLiveSetups',
+          stage:'SETUP_EXECUTION_POLICY',decision:'REJECTED',reasonCode:'SETUP_SUSPENDED_FOR_RESEARCH',
+          parentEventId:(__setupPolicyRuleEvent&&__setupPolicyRuleEvent.event)?__setupPolicyRuleEvent.event.eventId:null,
           evidenceCompleteness:'COMPLETE'});
         continue;
       }
@@ -4455,7 +4851,7 @@ function resetAlexGLiveAccount(){
   if(!confirm('Reset the Alex G live paper account? This clears Alex open/closed positions, the Alex journal, and resets the Alex balance to $10,000. Your current-strategy paper account is never touched.')) return;
   const alexGAccountSnapshot=JSON.parse(JSON.stringify(alexGAccount));
   const alexGJournalEntriesSnapshot=JSON.parse(JSON.stringify(alexGJournalEntries));
-  alexGAccount={balance:10000,openPositions:[],closedPositions:[]};
+  alexGAccount={balance:RULES_ALEXG_V11.v11Config.startingBalance,startingBalance:RULES_ALEXG_V11.v11Config.startingBalance,openPositions:[],closedPositions:[]};
   alexGJournalEntries=[];
   const committed=commitAlexGLedger(); // v12.3.2: establishes a valid new version on the reset account, same as every other account-mutating commit
   if(!committed.ok){
@@ -4609,12 +5005,18 @@ function renderAlexGLivePanel(){
       :'<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border)">LIVE ALEX PAPER TRADING: OFF</span>';
   }
   const closed=alexGAccount.closedPositions;
-  const decided=closed.filter(p=>p.result==='Win'||p.result==='Loss');
-  const wins=decided.filter(p=>p.result==='Win').length;
-  const netR=decided.reduce((s,p)=>s+(p.resultR||0),0);
-  const pnlTotal=alexGAccount.balance-10000;
-  let equity=0,peak=0,maxDD=0;
-  decided.forEach(p=>{equity+=(p.resultR||0);peak=Math.max(peak,equity);maxDD=Math.max(maxDD,peak-equity);});
+  // ── MOGO-002.8A ALEX v1.1 statistics correction ──
+  // ALEX_V11_002 realized R from each trade's own exit price (was a fixed +plannedRR/-1)
+  // ALEX_V11_003 chronological equity walk; current drawdown separated from maximum
+  // ALEX_V11_004 configured starting balance (was a hardcoded 10000)
+  // Read-only over the account -- computes, never mutates. Applies to v1.0 and v1.1
+  // records alike, so historical REPORTING is corrected without any historical RECORD
+  // being rewritten.
+  const st=alexGComputeEquityStats(closed);
+  const wins=st.wins;
+  const netR=st.netR;
+  const startBal=alexGStartingBalance();
+  const pnlTotal=alexGAccount.balance-startBal;
   const dd=document.getElementById('alexgLiveStats');
   if(dd){
     dd.innerHTML=[
@@ -4622,11 +5024,12 @@ function renderAlexGLivePanel(){
       alexGLiveStatCard(alexGAccount.openPositions.length,'Open positions'),
       alexGLiveStatCard(closed.length,'Closed positions'),
       alexGLiveStatCard(wins,'Wins','var(--green)'),
-      alexGLiveStatCard(decided.length-wins,'Losses','var(--red)'),
-      alexGLiveStatCard(decided.length?Math.round(wins/decided.length*100)+'%':'—','Win rate'),
-      alexGLiveStatCard((netR>=0?'+':'')+netR.toFixed(2)+'R','Net R',netR>=0?'var(--green)':'var(--red)'),
+      alexGLiveStatCard(st.losses,'Losses','var(--red)'),
+      alexGLiveStatCard(st.decidedCount?Math.round(wins/st.decidedCount*100)+'%':'—','Win rate'),
+      alexGLiveStatCard((netR>=0?'+':'')+netR.toFixed(2)+'R','Net R (realized)',netR>=0?'var(--green)':'var(--red)'),
       alexGLiveStatCard((pnlTotal>=0?'+':'')+'$'+pnlTotal.toFixed(2),'P&L',pnlTotal>=0?'var(--green)':'var(--red)'),
-      alexGLiveStatCard(maxDD.toFixed(2)+'R','Current drawdown')
+      alexGLiveStatCard(st.currentDrawdownR.toFixed(2)+'R','Current drawdown'),
+      alexGLiveStatCard(st.maxDrawdownR.toFixed(2)+'R','Max drawdown')
     ].join('');
   }
   renderAlexGLiveSetupsPanel();
@@ -10623,6 +11026,8 @@ const REASON_CODE_REGISTRY=Object.freeze({
   STATE_SIGNAL_STALE:Object.freeze({code:'STATE_SIGNAL_STALE',category:'STATE',label:'Signal stale (missed its evaluation window)'}),
   CONFIG_AUTOMATION_DISABLED:Object.freeze({code:'CONFIG_AUTOMATION_DISABLED',category:'CONFIG',label:'Automated trading is turned off'}),
   CONFIG_BEFORE_ACTIVATION:Object.freeze({code:'CONFIG_BEFORE_ACTIVATION',category:'CONFIG',label:'Setup qualified before live trading was activated'}),
+  CONFIG_ENTRY_DAY_NOT_ELIGIBLE:Object.freeze({code:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',category:'CONFIG',label:'Entry day is outside the configured eligible days'}),
+  SETUP_SUSPENDED_FOR_RESEARCH:Object.freeze({code:'SETUP_SUSPENDED_FOR_RESEARCH',category:'CONFIG',label:'Setup type suspended for research; candidate recorded, no position opened'}),
   SYSTEM_UNEXPECTED_ERROR:Object.freeze({code:'SYSTEM_UNEXPECTED_ERROR',category:'SYSTEM',label:'Unexpected engine error'}),
   UNKNOWN_NOT_RECORDED:Object.freeze({code:'UNKNOWN_NOT_RECORDED',category:'UNKNOWN',label:'Reason not recorded'})
 });

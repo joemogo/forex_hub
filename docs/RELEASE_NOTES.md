@@ -13,6 +13,98 @@ its change actually affects.
 
 ---
 
+## v12.7.1 — MOGO-002.8B: ALEX Setup-Level Execution Policy
+
+**Execution Policy**
+
+| Setup | Status |
+|---|---|
+| **Break & Retest** (`B_breakRetest`) | **ACTIVE** |
+| **Repeated Zone Reaction** (`A_repeatedReaction`) | **SUSPENDED FOR RESEARCH** |
+
+**Reason:** MOGO-002.8B Setup Isolation Audit. An operational suspension pending Tier 2+ replay
+evidence — **not** a finding that the setup is invalid. The basis is a Tier 1 forward-paper
+observation (18 RZR trades, 1W/17L) which, per the MOGO Research & Validation Standard §9, may justify
+an operational change but cannot support any conclusion about the setup's validity.
+
+**Additive only.** Zero protected functions and zero protected constants modified; drift check clean.
+
+**No silent skip.** A suspended candidate is still detected, still classified, still recorded and
+still persisted — **only the trade-open step is withheld**. Each withheld candidate gets a permanent
+`SUSPENDED — RESEARCH HOLD` status row plus a linked `RULE_EVALUATED` / `CANDIDATE_REJECTED` pair
+carrying `SETUP_SUSPENDED_FOR_RESEARCH`, so the suppression is countable and the candidate stays
+visible to future replay analysis.
+
+**Replay is untouched** and continues generating both setup types — replay is research, and is the
+only route to the sample that could retire this suspension.
+
+**Reversible by one boolean:** `RULES_ALEXG_V11.v11Config.setupSuspensionEnabled`. The gate fails
+**open** in every ambiguous case, so a misconfiguration can never silently stop trading. A recorded
+suspension window (start/end/authority/reason) keeps later period-over-period comparisons valid.
+
+**Not a rule change** — `ruleVersion` remains `alex_g_sr_v1_1`. Entry, stop, target, risk, sizing,
+confirmation, zone logic, analytics, historical trades and existing open trades are all unchanged. An
+already-open RZR position closes normally; the exit path never consults `setupType`.
+
+**Defect found and fixed:** `CONFIG_ENTRY_DAY_NOT_ELIGIBLE` — used by the v12.7.0 Monday–Wednesday
+gate — was never added to `REASON_CODE_REGISTRY`. Unregistered reason codes are rejected by
+`validateDecisionEvent`, so **both v1.1 entry-day rejection events were being silently dropped**. The
+gate blocked trades correctly but produced no decision-event evidence. Both codes are now registered
+and asserted by fixtures.
+
+**Testing:** 23 new fixtures (K1–K23). Full suite **679/679** across 14 suites, zero drift.
+
+---
+
+## v12.7.0 — MOGO-002.8A: ALEX v1.1 Release (`alex_g_sr_v1_1`)
+
+**The first behaviour-changing ALEX release since v4.2.1**, and the first to introduce a new ALEX
+rule version. Additive only: `RULES_ALEXG` remains a protected constant and is byte-identical, with
+zero drift across all 63 protected functions and 4 protected constants.
+
+`RULES_ALEXG`'s own change-control rule requires that any rule or default change take a **new
+`ruleVersion`** rather than an in-place edit, so historical `alex_g_sr_v1` results can never be
+silently recalculated. v1.1 follows that exactly, via a new additive constant `RULES_ALEXG_V11`.
+
+**Engine parameters are unchanged.** Zone detection, touch counting, break-of-structure,
+break-and-retest, entry sequencing, the `zoneLow/High ∓ 0.25×ATR` stop and the fixed 2R target all
+still read `RULES_ALEXG.config` from the same protected functions — a v1.1 trade and a v1.0 trade on
+identical data qualify and size identically.
+
+**One behavioural change:** `ALEX_V11_001`, a **Monday–Wednesday entry-eligibility gate** (UTC),
+evaluated at the live entry moment in the non-protected evaluation loop, after staleness and before
+the open attempt. It mirrors the existing activation/staleness gate pattern, including a permanent
+`IGNORED — ENTRY DAY NOT ELIGIBLE` status and a linked decision-event pair. Evidence: `AXR-080` /
+`CLAIM|ALEX_G|20260728|083`. A scope caveat is recorded in the rule registry — the educator claim is
+scoped to a confirmation setup MOGO does not implement — so the gate is config-controlled and **fails
+open**, never blocking a trade if disabled or if its inputs are unreadable.
+
+**Statistics corrected** (reporting only, zero trading effect; applies to v1.0 and v1.1 records alike,
+so historical *reporting* is fixed without any historical *record* being rewritten):
+
+- **Realized R** — computed from each trade's own entry/stop/exit instead of the frozen `+plannedRR`/`-1`. A v1.0 win recorded `+2.00R` regardless of the actual exit price.
+- **Chronological equity** — the curve is now walked by `closedAt` ascending. `closedPositions` is stored newest-first, so the previous walk described a reversed curve.
+- **Current vs maximum drawdown** — now two separate cards. The single previous card was labelled "Current drawdown" while computing the maximum.
+- **Configured starting balance** — replaces a hardcoded `10000` in dashboard P&L.
+
+**Versioning:** every newly opened trade is stamped `strategyVersion: alex_g_sr_v1_1`.
+`strategySpecificationVersion` deliberately remains `alex_g_sr_v1`, because no engine parameter
+changed. Existing trades are never back-filled, open positions continue under the version that opened
+them, and mixed history still reports `MIXED_VERSION` rather than being silently averaged.
+
+**Dead configuration:** v1.1 omits the four v1.0 keys read by nothing (`zoneTimeframes`,
+`requireWick`, `minWickRatio`, `maxZoneAgeBars`). They remain in `RULES_ALEXG` because it is protected.
+
+**Testing:** new suite `run_v127_alex_v11_release_tests.js` (65 fixtures). Full suite **656/656**
+across 14 suites, zero drift.
+
+**Defect found and fixed during this release:** the new date-dependent gate made 9 pre-existing v126
+fixtures pass Mon–Wed and fail Thu–Sun with no code change, because they drive the evaluation loop
+end-to-end against the live wall clock. Fixed in the **v126 runner only**, by pinning that test
+process's clock — zero assertions changed, zero production code changed, zero fixtures rewritten.
+
+---
+
 ## v12.6.0 — PROGRAM-001 Phase 2C Wave 1: ALEX Candidate Lifecycle Instrumentation
 Infrastructure-only release — no trading behavior change; the exact same market data produces the
 exact same ALEX trades before and after this release, confirmed by zero protected-function/

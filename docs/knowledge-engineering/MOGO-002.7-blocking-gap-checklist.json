@@ -1,0 +1,262 @@
+{
+  "alexGClaimCount": 226,
+  "alexGEvidenceItemCount": 280,
+  "alexGSourceCount": 9,
+  "alexGStopRuleClaimCount": 2,
+  "claimTypeCensus": {
+    "ALEX_G": {
+      "behavioral_observation": 27,
+      "causal_hypothesis": 18,
+      "confirmation_rule": 12,
+      "definition": 22,
+      "entry_rule": 22,
+      "exception": 7,
+      "failure_condition": 19,
+      "invalidation_rule": 10,
+      "marketCondition": 2,
+      "other": 3,
+      "performance_hypothesis": 20,
+      "risk_rule": 13,
+      "session_rule": 7,
+      "setup_requirement": 25,
+      "stop_rule": 2,
+      "target_rule": 5,
+      "timeframe_rule": 7,
+      "trade_management_rule": 5
+    },
+    "RAYNER_TEO": {
+      "behavioral_observation": 5,
+      "confirmation_rule": 3,
+      "definition": 8,
+      "entry_rule": 5,
+      "failure_condition": 2,
+      "invalidation_rule": 2,
+      "risk_rule": 4,
+      "session_rule": 2,
+      "setup_requirement": 6,
+      "stop_rule": 6,
+      "target_rule": 2,
+      "timeframe_rule": 1
+    },
+    "TJR": {
+      "behavioral_observation": 9,
+      "causal_hypothesis": 7,
+      "confirmation_rule": 6,
+      "definition": 20,
+      "entry_rule": 1,
+      "exception": 4,
+      "failure_condition": 2,
+      "invalidation_rule": 1,
+      "performance_hypothesis": 6,
+      "session_rule": 1,
+      "setup_requirement": 9,
+      "stop_rule": 1,
+      "target_rule": 1,
+      "trade_management_rule": 1
+    }
+  },
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "milestone": "MOGO-002.7",
+  "modelVersion": "mogo.source-acquisition.v1",
+  "narrativeArtifact": "docs/knowledge-engineering/MOGO-002.7-BLOCKING-GAP-ACQUISITION-CHECKLIST.md",
+  "note": "Counts are recomputed from the evidence store, not copied from MOGO-002.6. matchingEvidenceItemCount is a LEXICAL match count and is deliberately not a rule count -- see the narrative artifact, where each match is classified. A nonzero match count does not mean the domain contains a rule.",
+  "rows": [
+    {
+      "blockingGapId": "BG-01",
+      "domain": "STOP_PLACEMENT",
+      "keDomain": "RISK",
+      "matchPatterns": [
+        "\\bstop\\b",
+        "\\bstop[- ]loss",
+        "\\bsl\\b",
+        "\\bstopped out\\b"
+      ],
+      "matchingEvidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|020",
+        "EV|EVSRC|ALEX_G|20260728|001|019",
+        "EV|EVSRC|ALEX_G|20260728|002|010",
+        "EV|EVSRC|ALEX_G|20260728|002|011",
+        "EV|EVSRC|ALEX_G|20260728|005|033",
+        "EV|EVSRC|ALEX_G|20260729|001|023",
+        "EV|EVSRC|ALEX_G|20260729|001|026",
+        "EV|EVSRC|ALEX_G|20260729|001|027",
+        "EV|EVSRC|ALEX_G|20260729|001|028",
+        "EV|EVSRC|ALEX_G|20260729|001|033"
+      ],
+      "matchingEvidenceItemCount": 10,
+      "ruleBearingClaimTypesPresent": [
+        "stop_rule",
+        "trade_management_rule"
+      ]
+    },
+    {
+      "blockingGapId": "BG-02",
+      "domain": "POSITION_SIZING",
+      "keDomain": "RISK",
+      "matchPatterns": [
+        "\\brisk\\b.*\\b(percent|%)",
+        "\\b1\\s*%",
+        "\\blot size",
+        "\\bposition size",
+        "\\bsizing\\b",
+        "\\bequity\\b"
+      ],
+      "matchingEvidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|001",
+        "EV|EVSRC|ALEX_G|20260728|005|007",
+        "EV|EVSRC|ALEX_G|20260728|005|008",
+        "EV|EVSRC|ALEX_G|20260728|005|009",
+        "EV|EVSRC|ALEX_G|20260728|005|010",
+        "EV|EVSRC|ALEX_G|20260728|005|015",
+        "EV|EVSRC|ALEX_G|20260728|005|016",
+        "EV|EVSRC|ALEX_G|20260728|005|019",
+        "EV|EVSRC|ALEX_G|20260728|005|020",
+        "EV|EVSRC|ALEX_G|20260728|005|021",
+        "EV|EVSRC|ALEX_G|20260728|005|023",
+        "EV|EVSRC|ALEX_G|20260728|005|025",
+        "EV|EVSRC|ALEX_G|20260728|005|026",
+        "EV|EVSRC|ALEX_G|20260728|005|027",
+        "EV|EVSRC|ALEX_G|20260728|005|030",
+        "EV|EVSRC|ALEX_G|20260728|007|003",
+        "EV|EVSRC|ALEX_G|20260729|001|001",
+        "EV|EVSRC|ALEX_G|20260729|001|031"
+      ],
+      "matchingEvidenceItemCount": 18,
+      "ruleBearingClaimTypesPresent": [
+        "risk_rule",
+        "session_rule",
+        "target_rule"
+      ]
+    },
+    {
+      "blockingGapId": "BG-03",
+      "domain": "TAKE_PROFIT",
+      "keDomain": "EXIT",
+      "matchPatterns": [
+        "\\btake profit",
+        "\\btp\\b",
+        "\\btarget\\b",
+        "\\brisk[- ]to[- ]reward",
+        "\\brisk reward",
+        "\\br:r\\b",
+        "\\b1:\\d",
+        "\\breward\\b"
+      ],
+      "matchingEvidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|020",
+        "EV|EVSRC|ALEX_G|20260728|004|024",
+        "EV|EVSRC|ALEX_G|20260728|004|036",
+        "EV|EVSRC|ALEX_G|20260728|004|038",
+        "EV|EVSRC|ALEX_G|20260728|005|021",
+        "EV|EVSRC|ALEX_G|20260728|005|022",
+        "EV|EVSRC|ALEX_G|20260728|005|025",
+        "EV|EVSRC|ALEX_G|20260728|006|024",
+        "EV|EVSRC|ALEX_G|20260728|006|030",
+        "EV|EVSRC|ALEX_G|20260728|007|005",
+        "EV|EVSRC|ALEX_G|20260728|007|007",
+        "EV|EVSRC|ALEX_G|20260728|007|009",
+        "EV|EVSRC|ALEX_G|20260728|007|011",
+        "EV|EVSRC|ALEX_G|20260729|001|024",
+        "EV|EVSRC|ALEX_G|20260729|001|029",
+        "EV|EVSRC|ALEX_G|20260729|001|031",
+        "EV|EVSRC|ALEX_G|20260729|001|033"
+      ],
+      "matchingEvidenceItemCount": 17,
+      "ruleBearingClaimTypesPresent": [
+        "invalidation_rule",
+        "target_rule",
+        "trade_management_rule"
+      ]
+    },
+    {
+      "blockingGapId": "BG-04",
+      "domain": "TRADE_MANAGEMENT",
+      "keDomain": "TRADE_MANAGEMENT",
+      "matchPatterns": [
+        "\\bmanage",
+        "\\bset and forget",
+        "\\bmove (my |the )?stop",
+        "\\bonce (i'm |im |i am )?in\\b"
+      ],
+      "matchingEvidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|020",
+        "EV|EVSRC|ALEX_G|20260728|005|004",
+        "EV|EVSRC|ALEX_G|20260728|005|005",
+        "EV|EVSRC|ALEX_G|20260728|005|008",
+        "EV|EVSRC|ALEX_G|20260728|005|009",
+        "EV|EVSRC|ALEX_G|20260728|005|010",
+        "EV|EVSRC|ALEX_G|20260728|007|001",
+        "EV|EVSRC|ALEX_G|20260728|007|023",
+        "EV|EVSRC|ALEX_G|20260729|001|033",
+        "EV|EVSRC|ALEX_G|20260729|001|036"
+      ],
+      "matchingEvidenceItemCount": 10,
+      "ruleBearingClaimTypesPresent": [
+        "risk_rule"
+      ]
+    },
+    {
+      "blockingGapId": "BG-05",
+      "domain": "EXIT",
+      "keDomain": "EXIT",
+      "matchPatterns": [
+        "\\bexit\\b",
+        "\\bclose (the |my |out)",
+        "\\bclosing\\b",
+        "\\bget out\\b",
+        "\\bcut (the |my )?(trade|loss)"
+      ],
+      "matchingEvidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|003",
+        "EV|EVSRC|ALEX_G|20260728|004|006",
+        "EV|EVSRC|ALEX_G|20260728|004|016",
+        "EV|EVSRC|ALEX_G|20260728|007|005",
+        "EV|EVSRC|ALEX_G|20260728|007|006",
+        "EV|EVSRC|ALEX_G|20260728|007|007",
+        "EV|EVSRC|ALEX_G|20260729|001|027"
+      ],
+      "matchingEvidenceItemCount": 7,
+      "ruleBearingClaimTypesPresent": [
+        "trade_management_rule"
+      ]
+    },
+    {
+      "blockingGapId": "BG-06",
+      "domain": "BREAK_EVEN",
+      "keDomain": "TRADE_MANAGEMENT",
+      "matchPatterns": [
+        "\\bbreak[- ]?even\\b"
+      ],
+      "matchingEvidenceIds": [],
+      "matchingEvidenceItemCount": 0,
+      "ruleBearingClaimTypesPresent": []
+    },
+    {
+      "blockingGapId": "BG-07",
+      "domain": "PARTIAL_PROFIT",
+      "keDomain": "TRADE_MANAGEMENT",
+      "matchPatterns": [
+        "\\bpartial",
+        "\\btake (some|half|profit off)",
+        "\\bsecure (some )?profit"
+      ],
+      "matchingEvidenceIds": [],
+      "matchingEvidenceItemCount": 0,
+      "ruleBearingClaimTypesPresent": []
+    },
+    {
+      "blockingGapId": "BG-08",
+      "domain": "SCALING",
+      "keDomain": "TRADE_MANAGEMENT",
+      "matchPatterns": [
+        "\\bscal(e|ing) (in|out)",
+        "\\badd(ing)? to (the |my )?position",
+        "\\bpyramid"
+      ],
+      "matchingEvidenceIds": [],
+      "matchingEvidenceItemCount": 0,
+      "ruleBearingClaimTypesPresent": []
+    }
+  ]
+}

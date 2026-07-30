@@ -1,0 +1,137 @@
+{
+  "blockerCount": 10,
+  "blockers": [
+    {
+      "class": "SOURCE_GAP",
+      "finding": "The educator stop buffer is absent (AXG-01), so no educator-faithful position size is computable and MOGO's 0.25 ATR remains unattributable.",
+      "id": "FRZ-01",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "IMPLEMENTATION_MISMATCH",
+      "finding": "MOGO implements NO candlestick-confirmation gate, which the educator states as a necessary entry condition (AXR-011/AXR-015). Trade eligibility differs materially.",
+      "id": "FRZ-02",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "IMPLEMENTATION_MISMATCH",
+      "finding": "MOGO applies NO session or day-of-week restriction while the educator states an explicit Mon-Wed and session gate (AXR-080). MOGO computes the metadata and deliberately ignores it.",
+      "id": "FRZ-03",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "IMPLEMENTATION_MISMATCH",
+      "finding": "MOGO's minRR=2.0 is a FIXED ratio; the educator states 1:2 as a MINIMUM (AXR-030). Also the subject of open contradiction XCONTRA|20260729|004.",
+      "id": "FRZ-04",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "IMPLEMENTATION_MISMATCH",
+      "finding": "MOGO requires 4+ touches for the repeated-reaction setup; the educator states a MINIMUM OF ONE structure point (AXR-005). MOGO is materially stricter.",
+      "id": "FRZ-05",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "SOURCE_GAP",
+      "finding": "Break-even, partials, scaling and trailing are at absolute zero across 9 sources (AXG-05), so realized-R behaviour cannot be validated against the educator.",
+      "id": "FRZ-06",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "SOURCE_GAP",
+      "finding": "Session hours (AXG-04) exist only as on-screen pixels; no transcript acquisition can close them.",
+      "id": "FRZ-07",
+      "severity": "BLOCKING"
+    },
+    {
+      "class": "BOTH",
+      "finding": "ALEX_SR_008 (zone tightness) is AMBIGUOUS in the production specification and the educator EXPLICITLY declines to constrain zone width (AXR-008). MOGO imposes zoneClusterATRMultiplier=0.5 anyway.",
+      "id": "FRZ-08",
+      "severity": "MATERIAL"
+    },
+    {
+      "class": "GOVERNANCE",
+      "finding": "All 341 library claims remain at `emerging` confidence and 0 rule candidates exist. Under POLICY-001 nothing in the educator library is promotable, so no educator rule can be frozen into a specification today regardless of its content.",
+      "id": "FRZ-09",
+      "severity": "MATERIAL"
+    },
+    {
+      "class": "IMPLEMENTATION_MISMATCH",
+      "finding": "Execution readiness for alex_g_sr_v1 is NOT_VERIFIED (6/10 criteria failed) and profitability is UNVALIDATED, unchanged by this audit.",
+      "id": "FRZ-10",
+      "severity": "MATERIAL"
+    }
+  ],
+  "blockingCount": 7,
+  "byClass": {
+    "BOTH": 1,
+    "GOVERNANCE": 1,
+    "IMPLEMENTATION_MISMATCH": 5,
+    "SOURCE_GAP": 3
+  },
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "importantScopeNote": "'Freeze' here means freezing an EDUCATOR-FAITHFUL ALEX v1 specification. The production strategy alex_g_sr_v1 is already frozen against its OWN specification (13 rules, hash a0b7641e288c1725) and this audit does not change it. The two must not be conflated.",
+  "kerevA": {
+    "decisionId": "KEREV-A",
+    "proposedReframing": "KEREV-A becomes: 'The stop RELATIONSHIP is educator-authored and evidenced. May MOGO author the BUFFER and the ANCHOR READING as explicitly-labelled MOGO parameters, or must acquisition continue first?' -- with the standing constraint that neither may ever be presented as Alex's.",
+    "recommendation": "REFRAME_KEREV_A",
+    "recommendationVocabulary": [
+      "CLOSE_KEREV_A",
+      "KEEP_KEREV_A_OPEN",
+      "REFRAME_KEREV_A",
+      "ADDITIONAL_SOURCE_REQUIRED"
+    ],
+    "reviewQueueRecord": "KEREV|058",
+    "separationAssessment": {
+      "educatorAuthoredComponent": {
+        "basis": "CLAIM|ALEX_G|20260729|025 -- rule_statement, direct_explicit, extractionCertainty certain, explicitly universalised ('the same thing every single time'), plus two same-source demonstrations (CLAIM|ALEX_G|20260729|022).",
+        "evidenceClass": "EXPLICIT",
+        "limits": [
+          "Long side only -- the short-side mirror is never stated.",
+          "The anchor is deictic and admits three readings."
+        ],
+        "statement": "The stop-loss belongs immediately beyond the rejection structure that produced the entry.",
+        "supported": true
+      },
+      "mogoAuthoredComponent": {
+        "basis": "ZERO ALEX_G claims across 9 sources and 226 claims state any buffer in any unit. No ALEX_G claim mentions ATR at all. MOGO's stopATRBuffer=0.25 therefore has no educator provenance whatsoever and must remain labelled MOGO-authored.",
+        "evidenceClass": "UNSUPPORTED",
+        "statement": "The numerical or volatility-based buffer beyond that structure.",
+        "supported": false
+      }
+    },
+    "separationSupported": true,
+    "whatCanBeClosed": [
+      "The question 'does Alex state a stop-placement rule at all?' -- YES, and it is now evidenced.",
+      "Option B of the original KEREV-A ('accept stop placement as absent from the ALEX_G specification') is FACTUALLY UNAVAILABLE and can be struck.",
+      "Option D ('use a separately attributed cross-educator module') is unnecessary and can be struck: Alex has his own stated relationship, so importing Rayner Teo's ATR rule would overwrite a real attribution with a foreign one."
+    ],
+    "whatMustRemainOpen": [
+      "The buffer distance -- explicitly MOGO-authored, and it must be labelled as such wherever it appears (AXG-01 / AXR-021).",
+      "The anchor identity -- three readings, unresolved (AXG-02 / STOP-UNK-2).",
+      "The short-side rule -- never stated; MOGO's symmetric implementation is an assumption (AXG-08 / AXR-022)."
+    ],
+    "whyNotAdditionalSourceOnly": "ADDITIONAL_SOURCE_REQUIRED understates what has already changed. The decision as originally framed offered four options, two of which are now dead. Leaving it unchanged would send the Authority back to a menu that no longer matches the evidence.",
+    "whyNotClose": "Closing KEREV-A would imply stop placement is settled. It is not: two of the three parameters needed to place a stop mechanically are still absent, and MOGO's anchor (zone boundary) is a DIFFERENT OBJECT from the educator's (rejection formation). Closing would also license reading MOGO's existing 0.25 ATR as educator-supported, which is exactly the lineage error the decision exists to prevent."
+  },
+  "milestone": "MOGO-002.8",
+  "modelVersion": "mogo.alex-audit.v1",
+  "narrativeArtifact": "docs/strategy-fidelity/audit/ALEX-STRATEGY-FREEZE-READINESS.md",
+  "replayAuthorizationBasis": "replayAuthorization is false on all six OwnerDecision records; MOGO holds no market data; 5 of 8 audit gaps are annotated blocksReplay. Nothing in this audit changes that, and this audit does not request it. Authorization remains a separate Engineering Authority decision.",
+  "replayAuthorized": false,
+  "verdict": "NOT_READY_BOTH",
+  "verdictBasis": "Three independent source gaps (stop buffer, session hours, the four post-entry-management zeros) AND five implementation mismatches (no confirmation gate, no session gate, fixed vs minimum R:R, stricter touch requirement, unconstrained-vs-constrained zone width). Neither category alone would be decisive; both are present.",
+  "verdictVocabulary": [
+    "READY_TO_FREEZE",
+    "READY_WITH_DOCUMENTED_MOGO_PARAMETERS",
+    "NOT_READY_SOURCE_GAPS",
+    "NOT_READY_IMPLEMENTATION_MISMATCHES",
+    "NOT_READY_BOTH"
+  ],
+  "whatWouldChangeTheVerdict": [
+    "Close AXG-01 (stop buffer) -> removes FRZ-01.",
+    "An Engineering Authority ruling that MOGO-authored parameters are acceptable when explicitly labelled -> could move the verdict to READY_WITH_DOCUMENTED_MOGO_PARAMETERS for the SOURCE_GAP class, but not for the five implementation mismatches.",
+    "Resolving D2 so educator claims can exceed `emerging` -> removes FRZ-09."
+  ]
+}

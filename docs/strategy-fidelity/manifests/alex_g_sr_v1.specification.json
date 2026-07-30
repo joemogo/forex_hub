@@ -1,0 +1,305 @@
+{
+  "extractedFrom": {
+    "artifact": "RULES_ALEXG",
+    "conceptCount": 13,
+    "extractorVersion": "1.0.0",
+    "hubStandardizationCount": 15,
+    "locator": "index.html:2340",
+    "rawBlockSha256": "935553c99f9046b425b925e37f4bb0cad85caf743b18c5e355ba792ec50eb07a"
+  },
+  "modelVersion": "mogo.strategy-fidelity.v1",
+  "provenanceNote": "Extracted from the PROTECTED constant RULES_ALEXG.originalAlexConcepts at index.html:2340. This is the repository's approved statement of what the Alex source teaches. It is NOT derived from the Trader Intelligence ALEX_G claim library -- see DECISION|MOGO|20260727|004 and docs/trader-intelligence/traders/alex-g/profile.json, which state that this engine's rules come from MOGO's own implementation and documentation rather than the educator's published material.",
+  "ruleCount": 13,
+  "ruleSetHash": "a0b7641e288c17250203a7060ea213f2dead6b7694693d7d967faef932f5e38e",
+  "rules": [
+    {
+      "category": "MARKET_STRUCTURE",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": false,
+      "id": "ALEX_SR_001",
+      "normalizedStatement": "Support is where buyers hold price up; resistance is where sellers push price down.",
+      "notes": "Definitional. Deterministic=False: the artifact defines the concept, not a computable test for it.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "Support is where buyers hold price up; resistance is where sellers push price down.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Support and resistance definition",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": false,
+      "id": "ALEX_SR_002",
+      "normalizedStatement": "Support and resistance are collectively \"area of interest\" (AOI) -- support is your AOI when buying, resistance when selling.",
+      "notes": "Definitional mapping of the two terms onto one role-dependent concept.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "Support and resistance are collectively \"area of interest\" (AOI) -- support is your AOI when buying, resistance when selling.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Support/resistance are jointly the area of interest",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_003",
+      "normalizedStatement": "A zone can never be traded against its current role -- no buying resistance, no selling support.",
+      "notes": "A hard prohibition, stated absolutely ('never'), and mechanically checkable once a zone role exists.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "A zone can never be traded against its current role -- no buying resistance, no selling support.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Never trade a zone against its current role",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "MARKET_STRUCTURE",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_004",
+      "normalizedStatement": "A single zone is bidirectional: reactions from above AND below the same price area both count toward one shared touch tally.",
+      "notes": null,
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "A single zone is bidirectional: reactions from above AND below the same price area both count toward one shared touch tally.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "One zone, one shared touch tally from both sides",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_005",
+      "normalizedStatement": "Three confirmed reactions validate a zone; the fourth (or later) return that produces its own confirmed rejection is the first trade opportunity.",
+      "notes": "The single most load-bearing quantified rule in the artifact.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "Three confirmed reactions validate a zone; the fourth (or later) return that produces its own confirmed rejection is the first trade opportunity.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Three reactions validate; the fourth is the first trade",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_006",
+      "normalizedStatement": "Three named strength tiers: weak (<3 touches), valid (3 touches), strong (4+ touches).",
+      "notes": null,
+      "required": false,
+      "sourceReferences": [
+        {
+          "excerpt": "Three named strength tiers: weak (<3 touches), valid (3 touches), strong (4+ touches).",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Zone strength tiers: weak / valid / strong",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": false,
+      "id": "ALEX_SR_007",
+      "normalizedStatement": "More touches are always better, with no stated ceiling on strength.",
+      "notes": "Directional preference with no threshold; cannot gate a decision as stated.",
+      "required": false,
+      "sourceReferences": [
+        {
+          "excerpt": "More touches are always better, with no stated ceiling on strength.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "More touches are better, with no stated ceiling",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": false,
+      "id": "ALEX_SR_008",
+      "normalizedStatement": "Zones must be tight, fitted to where reactions actually clustered -- demonstrated visually, no formula given.",
+      "notes": "The artifact itself says 'demonstrated visually, no formula given'. Required for the method to work, but the source supplies no computable definition -- so it is UNRESOLVED, not EXPLICIT.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "Zones must be tight, fitted to where reactions actually clustered -- demonstrated visually, no formula given.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Zones are fitted tightly to where reactions clustered",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "TIMEFRAMES",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_009",
+      "normalizedStatement": "Zones exist on H1, H4, Daily, and Weekly timeframes -- exactly these four, explicitly named.",
+      "notes": "The artifact stresses 'exactly these four, explicitly named'.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "Zones exist on H1, H4, Daily, and Weekly timeframes -- exactly these four, explicitly named.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Zone timeframes are exactly H1, H4, D, W",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "TIMEFRAMES",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_010",
+      "normalizedStatement": "Higher timeframe zones are more respected than lower timeframe zones.",
+      "notes": null,
+      "required": false,
+      "sourceReferences": [
+        {
+          "excerpt": "Higher timeframe zones are more respected than lower timeframe zones.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Higher-timeframe zones outrank lower-timeframe zones",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_011",
+      "normalizedStatement": "Break and retest: a failed rejection, then a confirmed break, then price returns and retests from the new side, then the zone role flips.",
+      "notes": "A four-step ordered sequence: failed rejection, confirmed break, retest from the new side, role flip.",
+      "required": true,
+      "sourceReferences": [
+        {
+          "excerpt": "Break and retest: a failed rejection, then a confirmed break, then price returns and retests from the new side, then the zone role flips.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Break and retest sequence with role flip",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": true,
+      "id": "ALEX_SR_012",
+      "normalizedStatement": "Psychological round-number levels are additional, non-mandatory confluence, demonstrated at both 500-level and 100-level granularity.",
+      "notes": "The artifact states 'additional, non-mandatory'. Required=False is the artifact's own word, not a downgrade.",
+      "required": false,
+      "sourceReferences": [
+        {
+          "excerpt": "Psychological round-number levels are additional, non-mandatory confluence, demonstrated at both 500-level and 100-level granularity.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Psychological round numbers are optional confluence",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    },
+    {
+      "category": "DIRECTIONAL_BIAS",
+      "classification": "DISCRETIONARY",
+      "confidence": "MEDIUM",
+      "dependencies": [],
+      "deterministic": false,
+      "id": "ALEX_SR_013",
+      "normalizedStatement": "A single soft mention that trend direction increases the odds of a trade working -- never stated as a requirement.",
+      "notes": "The artifact's own framing: 'a single soft mention ... never stated as a requirement'. DISCRETIONARY, so its absence from a gate is NOT a fidelity failure -- see the NOT_APPLICABLE finding status.",
+      "required": false,
+      "sourceReferences": [
+        {
+          "excerpt": "A single soft mention that trend direction increases the odds of a trade working -- never stated as a requirement.",
+          "kind": "repository_constant",
+          "locator": "index.html:2340 (RULES_ALEXG.originalAlexConcepts)",
+          "note": "Protected constant; byte-identical to the committed baseline."
+        }
+      ],
+      "title": "Trend direction may improve odds (never a requirement)",
+      "validationStatus": "SOURCE_VERIFIED",
+      "version": "alex_g_sr_v1"
+    }
+  ],
+  "specificationVersion": "alex_g_sr_v1",
+  "strategyId": "alex_g_sr_v1",
+  "title": "ALEX — Alex G Support & Resistance (reconstructed source concepts)"
+}

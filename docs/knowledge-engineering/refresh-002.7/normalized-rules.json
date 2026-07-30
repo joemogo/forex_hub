@@ -1,0 +1,4126 @@
+{
+  "count": 127,
+  "rules": [
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Top-down analysis is required before any trade, regardless of trading style.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|001",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|002",
+          "exactExcerpt": "is a non-negotiable in trading. Doesn't matter if you're a scalper, you're a trader, if you're a swing trader, institutional trader, investor, doesn't matter.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|001",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Trading the correct direction from the wrong area is a distinct failure mode from trading the wrong direction.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|002",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|004",
+          "exactExcerpt": "you might be right on the direction of the trade, but it might be at the wrong area",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|002",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Top-down analysis uses four timeframe tiers: weekly, daily, 4-hour, and the lower timeframes.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|003",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|005",
+          "exactExcerpt": "I'm going to break this down in four very simple time frames. The first one is going to be the weekly time frame.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|003",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The lower timeframes are 2-hour, 1-hour, 30-minute and 15-minute; anything below 15-minute is not considered a strong timeframe.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|004",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|006",
+          "exactExcerpt": "Now the lower time frames are considered the two hour, the one hour, the 30 minute and the 15 minutes. Anything below is not a strong lower time frame.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|004",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "When lower and higher timeframes disagree, the higher timeframe takes precedence.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|005",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|007",
+          "exactExcerpt": "The lower time frames could be telling you one thing, but if the higher time frames are telling you another, you go based off of the higher time frames.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|005",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|006",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|009",
+          "exactExcerpt": "We will start from the top all the way down. So we will start we will start from the weekly time frame. Then we will work our way down to the daily.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|006",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|007",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|010",
+          "exactExcerpt": "we will find if this market is bullish or bearish on the weekly, find if it's bullish or bearish on the daily, bullish and bearish on the 4 hour all the way down to the lowest time frame and then we will have an overall score at the end of our analysis to determine where the majority of the time frames are going.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|007",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "In practice Alex G stops the directional pass after the 4-hour and uses the lower timeframes for entry rather than for direction.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|008",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|011",
+          "exactExcerpt": "the reason why I pause right here after the 4 hour is because I use the lower time frames more for the entry point",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|008",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|009",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|016",
+          "exactExcerpt": "Once you have a new higher high, you must have a new higher low. So the higher low simply follows the previous structure point, you would just move this up.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|009",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|010",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|017",
+          "exactExcerpt": "once it breaks above below the higher low, this market becomes the new lower low. Now once you have a new lower low, you must have a new lower high.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|010",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A break above the lower high shifts the market from bearish back to bullish.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|011",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|018",
+          "exactExcerpt": "You broke above your lower high. Now, making this market back to bullish once again.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|011",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Misidentifying the origin of a trend invalidates entry, risk-to-reward, take-profit, stop-loss and trade management even when the direction is correct.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|012",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|019",
+          "exactExcerpt": "they could be wrong or they could even be right about it being bullish, but they're wrong about where it's bullish from. And that completely changes",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|012",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|014",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|022",
+          "exactExcerpt": "the market will remain bullish as long as we stay in between this higher high and higher low the moment we body close above or under this line is when we will have a shift in the market",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|014",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|015",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|023",
+          "exactExcerpt": "Is impossible to have the higher low in front of the higher high. It is impossible to have the lower high in front of the lower low.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|015",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Predicting tops or bottoms against the higher-timeframe direction has no longevity even when it occasionally works.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|016",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|024",
+          "exactExcerpt": "Now some people somehow have a strategy or the audacity to say, \"Okay, you know what? It's a good time to predict the top. We're going to sell.\" Now they might get lucky once, twice, maybe three times, but there's no longevity in that.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|016",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|017",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|025",
+          "exactExcerpt": "You can't just enter based off of the overall trend. If everything's going up doesn't mean that you",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|017",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The area of interest must lie inside the current higher high and higher low, never outside that range.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|018",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|026",
+          "exactExcerpt": "this is the lower high and then this would be the lower low so we understand we're only looking for areas of interest within this box",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|018",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "5 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "An area of interest placed below the higher low will only be reached after the market has already turned bearish, so the setup is invalid by the time price arrives.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|019",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|027",
+          "exactExcerpt": "if you have an area of interest below the higher low, once price gets to this area, guess what? Now we're bearish.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|019",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Areas of interest are drawn only on the weekly and daily timeframes.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|020",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|028",
+          "exactExcerpt": "we need to sell at a weekly area of interest because again keep in mind we are bearishing the weekly",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|020",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "An area of interest is identified by a decent number of prior rejections or touches.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|021",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|029",
+          "exactExcerpt": "off looking for areas of interest from the bottom up and I pretty much look for whatever points have the most touches",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|021",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "9 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|022",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|030",
+          "exactExcerpt": "what I like to do is mark this area off as a weekly and a daily area of interest. So, now I know that this is two areas of interest strong.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|022",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|023",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|031",
+          "exactExcerpt": "this is where I would then wait for my rejection candlesticks which can consist of multiple dogees or an engulfing candlestick which will be my entry signal",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|023",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "5 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|024",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|032",
+          "exactExcerpt": "This entry signal can happen on the lower time frame, higher time frames. Obviously the higher the stronger.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|024",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Buy when price is above support; sell when price is below resistance.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|025",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|034",
+          "exactExcerpt": "when you're above support, you buy. When you're below resistance, you sell.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|025",
+          "sourceId": "EVSRC|ALEX_G|20260727|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Judging trend from the visual slope of price rather than from market structure is a primary trader error.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|026",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|004",
+          "exactExcerpt": "they just pull up to a chart and because they see the overall movement heading up or the overall movement heading down they think a market is bullish or a market is bearish and that cannot be further from the truth",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|026",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Every new lower low forces reassignment of the active lower high to the most recent turn.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|027",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|006",
+          "exactExcerpt": "since this has now created a new lower low this becomes the new lower low and you must need a new lower high it is impossible to have a new lower low without a new lower high",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|027",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|028",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|007",
+          "exactExcerpt": "this Market can do absolutely whatever it wants inside of here as long as we don't body Candlestick close above or below the lower high or lower low we will remain bearish",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|028",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick').",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|030",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|009",
+          "exactExcerpt": "a new lower high is identified by getting the head of the snake following it back and as soon as you get the turn that is where the new lower high is placed",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|030",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The line chart is used as a visual aid to locate body-based structure points before returning to the candlestick chart.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|031",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|010",
+          "exactExcerpt": "if I were to come into here and I would erase the candlesticks and go to the line chart you can see that the structure is at this higher low and at this higher high",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|031",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|032",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|011",
+          "exactExcerpt": "should I go and chase this market and continue buying with it or is the market at too much of a high price or too much at a low price and wait for a retracement so then I can execute the trade",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|032",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [
+        "7 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|033",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|013",
+          "exactExcerpt": "Market structure is only 50% of the problem now how you do that together with top analysis entry signal and trading at the the right times is where you actually make the money",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|033",
+          "sourceId": "EVSRC|ALEX_G|20260728|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Liquidity concentrates where price has repeatedly been rejected from the same area.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|034",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|017",
+          "exactExcerpt": "the most places where the majority of liquidity is at is where there is a consistent amount of rejection",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|034",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Higher-timeframe rejection zones are stronger and attract more liquidation than lower-timeframe ones.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|035",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|019",
+          "exactExcerpt": "The higher the time frame, the stronger the rejection, the more liquidation that comes in for longer periods of time.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|035",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A zone with only one prior rejection is materially less predictable than one with several.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|036",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|020",
+          "exactExcerpt": "something like this that has one rejection, one liquidation from this area could mean that there could be another liquidation, but it's not as predictable",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|036",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Trade in the direction the zone has historically pushed price: buy while above it, sell while below it.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|037",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|021",
+          "exactExcerpt": "If we are above this zone specifically, you want to make sure you're buying because that's where the buyers are coming in.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|037",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "No consistent strategy can be built on trading liquidity sweeps themselves.",
+      "category": "LIQUIDITY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260728|001"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|038",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|025",
+          "exactExcerpt": "There's no way that you can have a specific strategy to trade solely off of these sweeps.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|038",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A liquidity sweep cannot be anticipated in advance; catching or avoiding one is luck, not method.",
+      "category": "LIQUIDITY",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|039",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|026",
+          "exactExcerpt": "There is no way that you can anticipate for a move like this to happen.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|039",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|041",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|029",
+          "exactExcerpt": "If there's a move that happens against my sell position, I'm not going to be interested in selling because it's clearly not going in my favor.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|041",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|042",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|030",
+          "exactExcerpt": "So that is going to consist of two types of candlesticks. Either a rejection candlestick or a engulfing candlestick",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|042",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|043",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|032",
+          "exactExcerpt": "Wait for the market to give a little bit of that discount. That discount is where the sellers are going to come in.",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|043",
+          "sourceId": "EVSRC|ALEX_G|20260728|002"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|044",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|035",
+          "exactExcerpt": "I do not take any trade unless we have two time frames in sync",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|044",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A structure point that has not completed is labelled a 'potential' lower high and used in the directional read before it is confirmed.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|045",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|036",
+          "exactExcerpt": "now we're creating a potential lower high to create a lower low",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|045",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low reading.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|046",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|037",
+          "exactExcerpt": "another way to tell how this Market shifted from bearish to bullish we had here an inverted head and shoulders",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|046",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|047",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|038",
+          "exactExcerpt": "there's no reason why you should be taking Longs obviously the majority of the market is going down",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|047",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the maximum of the scale is not stated.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|048",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|039",
+          "exactExcerpt": "it's 10 per time frame",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|048",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The region between the active lower high and lower low is drawn as an explicit box, and the search for an area of interest is confined to it.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|049",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|040",
+          "exactExcerpt": "a little hack that I do is I would Zone it off like this",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|049",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|050",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|041",
+          "exactExcerpt": "if you break out of this box we are now bullish we're no longer looking to sell",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|050",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A level may be a genuine and well-respected support/resistance level and still be untradeable, because price reaching it would already have invalidated the directional bias.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|051",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|042",
+          "exactExcerpt": "this is a clean level of support resistance support resistance but if price gets to that point right there we're no longer Birch we're no longer",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|051",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|052",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|043",
+          "exactExcerpt": "in this case it is around psychological 66",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|052",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A candidate level is validated by looking left on the chart to confirm it has been respected historically.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|053",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|044",
+          "exactExcerpt": "if you look left that it's a very well respected level of support and resistance",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|053",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|054",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|045",
+          "exactExcerpt": "we just set it forget just pretty much just wait until the price gets there",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|054",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|055",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|046",
+          "exactExcerpt": "if you're looking to sell you need to sell at a lower high if you're looking to buy you need to buy at a higher low",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|055",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A lower high that has not yet completed - a 'potential' lower high - is accepted as a valid sell location.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260728|003"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|056",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|047",
+          "exactExcerpt": "you need to sell at a lower high or a potential lower high",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|056",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The entry-side structure point must be present on the four-hour timeframe.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|057",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|048",
+          "exactExcerpt": "this is where you would go down to the four hour and I need to have a four hour lower high to sell",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|057",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|058",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|049",
+          "exactExcerpt": "and then here's where we wait for the breaker structure and then we continue shorting it down",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|058",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern. No EMA period is given.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|059",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|050",
+          "exactExcerpt": "retest of 6500 read system air adventures in the weekly retest the four hour EMA reaches the neckline of the head and shoulders",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|059",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry additionally waits for 'the proper session'. Which sessions qualify is not stated.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|060",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|053",
+          "exactExcerpt": "wait for the proper session to take the train",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|060",
+          "sourceId": "EVSRC|ALEX_G|20260728|003"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)",
+        "a named indicator or window has no stated setting",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|061",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|056",
+          "exactExcerpt": "as soon as that candlestick closes, it is a confirmation. One second before it closes, it is an entire anticipation",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|061",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count threshold is given.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|062",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|058",
+          "exactExcerpt": "if you have both of these combined, they would be a lot more powerful. The more dogeis that you would have, the more powerful",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|062",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "No trade is entered without either a rejection/doji or an engulfing candle, regardless of trade type. Stated as an absolute gate on every entry.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|063",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|060",
+          "exactExcerpt": "if I don't have either a rejection dogee candlestick or a bullish engulfing, bearish engulfing, I am not",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|063",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher low forming.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|064",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|062",
+          "exactExcerpt": "if you were to cross reference that with the 4 hour, you would see that the 4 hour is",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|064",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|065",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|063",
+          "exactExcerpt": "within the same day it then shifts to bullish and after it shifts to bullish it decides to have a",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|065",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Once the 4-hour higher low is identified, the subsequent wick fill and daily engulfing are described as something to anticipate.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260728|005"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|066",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|064",
+          "exactExcerpt": "Now that perfect higher low is where you can then anticipate that wick fill where then you",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|066",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Rejection and engulfing candles occur throughout any chart, so the pattern alone carries no information; taking every one is explicitly called useless.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|067",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|067",
+          "exactExcerpt": "You will find this anywhere you go in the chart",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|067",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|069",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|069",
+          "exactExcerpt": "If it's not at a support level, you don't enter the trade and it is simply not applicable",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|069",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|070",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|070",
+          "exactExcerpt": "you need to apply your bearish rejection candlestick and you need to apply your bearish engulfing candlestick once",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|070",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry on the rejection alone is permitted; waiting for the engulfing as well is optional and left to the trader.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|071",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|071",
+          "exactExcerpt": "You can enter off of just the rejection confirmation, but it really comes down",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|071",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|072",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|074",
+          "exactExcerpt": "we've confirmed that we are now completely bearish we know this we were looking for shorts",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|072",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "5 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|073",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|075",
+          "exactExcerpt": "you simply don't just change your direction or change your bias overnight",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|073",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entering on a candlestick pattern without a strategy behind it is characterised as gambling rather than trading.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|074",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|077",
+          "exactExcerpt": "you would only be entering a trade off of just a candlestick and not a strategy. And that's not a strategy. That's just gambling at that point",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|074",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not to be traded.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|075",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|078",
+          "exactExcerpt": "There are specific sessions, there are specific days that this actually is more probable of having an impact",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|075",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Tradeable windows are defined by session volume, shown on an on-screen session map. The specific hours are displayed visually and never stated aloud.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|076",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|079",
+          "exactExcerpt": "everything that is in a darker color in orange is going to be where there's the most",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|076",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A window offering only about an hour of volume followed by roughly nine hours without is rejected as an entry time.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|077",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|080",
+          "exactExcerpt": "You don't really want to enter a trade if you're just going to have volume for about an hour",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|077",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A confirmation arriving before the Sydney session is held until just before the London session - roughly eight hours - rather than entered on arrival.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|078",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|081",
+          "exactExcerpt": "if I get it right before Sydney session, I will not enter that trade until right before London session",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|078",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Waiting for the session is acknowledged to lose trades outright when price leaves the area before the session opens.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260728|004"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|079",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|082",
+          "exactExcerpt": "many times where I miss out on the trade and by the time London session comes, the trade is completely gone from the direction",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|079",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entries on this confirmation are restricted to Monday, Tuesday and Wednesday.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|080",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|083",
+          "exactExcerpt": "it's really only going to come down to Monday, Tuesday, and",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|080",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|081",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|084",
+          "exactExcerpt": "an average of about 80 to 90 to even 100 pips at a time of a takerit",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|081",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The day restriction is overridden when the take-profit is shorter, the confirmation is very strong, or there is momentum. None of the three overrides is quantified.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|082",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|086",
+          "exactExcerpt": "Sometimes I break the rules depending if my take profit is shorter, if it's a very strong confirmation, if there's a lot of momentum",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|082",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The method is presented as conjunctive: every component must hold, and one failing component is said to produce unprofitability.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|083",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|088",
+          "exactExcerpt": "If one component of the strategy is not working properly, you're going to have negative results",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|083",
+          "sourceId": "EVSRC|ALEX_G|20260728|004"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|084",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|093",
+          "exactExcerpt": "you're risk managing your account so you need to know that the money that you put into your trading account that is your account balance",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|084",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The full account balance is never risked on a trade.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|085",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|094",
+          "exactExcerpt": "based off of your account balance you can't risk the whole entire account balance",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|085",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The account must be funded with materially more than the intended per-trade risk, so that a loss leaves margin in the account. The worked figure is $100 risk on a $1,000 account, described as 10%.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|086",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|095",
+          "exactExcerpt": "if you want to bet $100 per trade don't just deposit 100 bucks and risk the full hundred bucks",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|086",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management.",
+      "category": "RISK",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|087",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|096",
+          "exactExcerpt": "you have to have a strict risk management rule that every single time you take a trade you risk the same percentage per trade",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|087",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|088",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|098",
+          "exactExcerpt": "risk management is percentage based system not dollar based system",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|088",
+          "sourceId": "EVSRC|ALEX_G|20260728|007"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Returns of 50% per day, week or month are described as unrealistic and unsustainable, though possible on isolated occasions.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|089",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|099",
+          "exactExcerpt": "50% a day 50% a week 50% a month those are all unrealistic numbers it's not going to happen",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|089",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The risk percentage chosen depends on account type and objective - personal, funded, or a disposable side account.",
+      "category": "RISK",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|090",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|103",
+          "exactExcerpt": "depending your objective what are you trying to do are you on a personal account are you on a funded account",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|090",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Conservative risk is 0.5 to 1% of the account per trade.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|091",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|104",
+          "exactExcerpt": "the conservative approach where it's risking anywhere from 0.5 to 1% per trade",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|091",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The conservative band is prescribed for lower-timeframe traders, on the stated reasoning that they take more trades and should not take many trades at high risk.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|092",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|105",
+          "exactExcerpt": "this is what I personally recommend to Traders taking trades on the lower time frame",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|092",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The recommended risk, described as the industry standard, is 1 to 2% of the account per trade.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|093",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|107",
+          "exactExcerpt": "which is anywh from risking 1 to 2% per trade",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|093",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|094",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|108",
+          "exactExcerpt": "once you pick the percentage you stick to it you don't go up or down when you're making money or you're losing money",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|094",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|095",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|110",
+          "exactExcerpt": "with a one to two risk reward",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|095",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The high-risk band is 3 to 5% of the account per trade.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|096",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|111",
+          "exactExcerpt": "it can be anywhere from 3 to 5% of your account",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|096",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|097",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|112",
+          "exactExcerpt": "the riskier approach I recommend is done on a personal account so that way you don't breach any rules on a funded account",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|097",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|098",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|113",
+          "exactExcerpt": "if you risk 5% of your account and then you get a 1 to3 risk reward ratio you have just made 15% on",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|098",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks.",
+      "category": "RISK",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|099",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|114",
+          "exactExcerpt": "at the beginning of every single month I risk a percentage that I'm going to to choose for the month",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|099",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Higher risk (3-5%) is taken only in November, December, January, February and possibly March, described as his statistically best months.",
+      "category": "SESSION_RESTRICTIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|100",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|117",
+          "exactExcerpt": "certain months out of the Year and that is November December January and February and maybe March",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|100",
+          "sourceId": "EVSRC|ALEX_G|20260728|005"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Correlated pairs are compared and the one presenting the cleaner structure is preferred. NZDUSD and NZDCAD are treated as moving very similarly.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|101",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|124",
+          "exactExcerpt": "would be nzdusd which is basically like its",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|101",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The EMA is used as dynamic support or resistance: support while bullish and resistance while bearish. Its period is still not stated.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|102",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|125",
+          "exactExcerpt": "because clearly when it's bullish its support when it's bearish it's resistance",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|102",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)",
+        "a named indicator or window has no stated setting",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The entry zone is where the EMA and a prior structure point converge on the same retracement, rather than either alone.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|103",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|126",
+          "exactExcerpt": "waiting for that lower high a previous structure and by the time that this comes back up here",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|103",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The counter-trend leg is deliberately forgone in order to take the larger continuation leg that follows it.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|104",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|128",
+          "exactExcerpt": "we don't really want to catch this little move up because then we catch the bigger leg all",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|104",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Counter-trend trading is characterised as a beginner error he has stopped making. The phrasing 'not anymore' indicates he previously did it.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|105",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|130",
+          "exactExcerpt": "that's like a that's like a rookie thing",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|105",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Trades are taken only when judged worth the capital risked. Selectivity is presented as a gate in its own right, separate from the mechanical entry conditions.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|106",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|131",
+          "exactExcerpt": "i only take trades that are worth my money i don't want to put",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|106",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Direction is chosen by counting the confluences available for each side and taking the side with materially more. The comparison is explicitly two-sided.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|107",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|134",
+          "exactExcerpt": "find me this many conferences here to go along there won't be any",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|107",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260728|008"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|108",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|136",
+          "exactExcerpt": "i wasn't really that convinced because we were shy about let's say",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|108",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "After missing an entry, the stated response is to set an alarm for the next pullback rather than to chase the move.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|109",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|139",
+          "exactExcerpt": "i had set my alarm to get another entry at the next pullback",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|109",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A 1:4 risk-to-reward is described for one watchlist setup. Stated as an observation about that chart, not as a required minimum.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|110",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|140",
+          "exactExcerpt": "it's a nice one to four to previous",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|110",
+          "sourceId": "EVSRC|ALEX_G|20260728|006"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The named core failure: a trade set to a 1:4 target is closed at 1:2 because the unrealised dollar figure equals what the trader normally earns in a month. The exit is driven by the size of the number, not by the market.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260729|004"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|111",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|145",
+          "exactExcerpt": "you set a trade to have a take profit of a one to four risk to reward",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|111",
+          "sourceId": "EVSRC|ALEX_G|20260728|007"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The stated implication is that a target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|112",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|147",
+          "exactExcerpt": "i close the trade keeps on going it could have given you 15 000",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|112",
+          "sourceId": "EVSRC|ALEX_G|20260728|007"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The attributed cause of the loss of opportunity is deferring to someone else's judgement of what counts as a large amount of money, not the trade itself.",
+      "category": "NO_TRADE_CONDITIONS",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|113",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|155",
+          "exactExcerpt": "i got mad at myself because i just listened to",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|113",
+          "sourceId": "EVSRC|ALEX_G|20260728|007"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The prescribed response is not to show open positions to others, on the reasoning that their reference point for a large sum will pull the trader back to a salary anchor.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|114",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|156",
+          "exactExcerpt": "don't show anybody else",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|114",
+          "sourceId": "EVSRC|ALEX_G|20260728|007"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "He states he folds the 10% discretionary tranche into investment, so his own allocation is not the 30/30/30/10 he prescribes. The stated reason is compounding while young.",
+      "category": "DISCRETIONARY_ELEMENTS",
+      "classification": "DISCRETIONARY",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|115",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|159",
+          "exactExcerpt": "i personally try to not even have this i personally try to add this",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|115",
+          "sourceId": "EVSRC|ALEX_G|20260728|007"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|116",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|007",
+          "exactExcerpt": "now breaking retest is most effective at these zones",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|116",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A break-and-retest on a higher timeframe is asserted to be more reliable than one on a lower timeframe. Comparative only - no ranking, weighting or threshold is stated.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|117",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|008",
+          "exactExcerpt": "the higher the time frame the more it is going to be respected",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|117",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "His own practice is to identify break-and-retest continuation on the 4-hour and daily and to take entries on lower timeframes. Framed as personal preference ('I personally like'), not as a requirement.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|118",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|009",
+          "exactExcerpt": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|118",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|119",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|011",
+          "exactExcerpt": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|119",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|120",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|013",
+          "exactExcerpt": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|120",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "For day trading, break-and-retest is to be read on the 4-hour and 1-hour. Qualified immediately by 'depending on how approach you want to take it', so it is a default rather than a constraint.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|121",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|015",
+          "exactExcerpt": "for your day Trad you want to use it more on the 4our one hour",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|121",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "For swing trades, break-and-retest is to be read on the daily and weekly. The preceding word in the transcript ('Inay') is garbled and the second trading style it names cannot be recovered from this transcript - recorded as an open question, not guessed.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|122",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|016",
+          "exactExcerpt": "swing trades you want to take it on the daily and then weekly time frame",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|122",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|123",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|017",
+          "exactExcerpt": "but now the actual entry signal you have to go on the lower time frame",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|123",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have').",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|124",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|018",
+          "exactExcerpt": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|124",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|125",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|019",
+          "exactExcerpt": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|125",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|126",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|020",
+          "exactExcerpt": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|126",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|127",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|021",
+          "exactExcerpt": "you would have simply put your entry point right here",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|127",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated.",
+      "category": "RISK",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|128",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|022",
+          "exactExcerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|128",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260729|004"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|129",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|023",
+          "exactExcerpt": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|129",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|130",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|024",
+          "exactExcerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|130",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere.",
+      "category": "RISK",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|131",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|025",
+          "exactExcerpt": "it's literally the same thing every single time your stop- loss is right under it",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|131",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    }
+  ]
+}

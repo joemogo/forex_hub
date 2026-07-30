@@ -1,0 +1,122 @@
+{
+  "acceptanceClassification": "ACCEPTED_PRIMARY",
+  "acceptanceRationale": "Direct educator statements and three narrated chart demonstrations bearing on the blocking gaps; attribution verified to @fxalexg__; provenance complete (content hash, reversible normalization, 13 segments, every excerpt verbatim). Marketing content is heavy and is classified as such rather than discarded -- see marketingDisclosure.",
+  "briefDescribedContentVerification": {
+    "bullishBearishEngulfingConfirmation": "PARTIALLY CONFIRMED -- bullish engulfing is stated as required at 7:28. BEARISH engulfing is mentioned only as a cross-reference to another video (5:33) and no short-side rule is stated or shown.",
+    "higherTimeframeBreakAndRetest": "CONFIRMED -- 4-hour/daily for continuation, stated at 3:29",
+    "illustrative1PercentRiskExamples": "CONFIRMED AS ILLUSTRATIVE -- 1% appears only inside worked arithmetic at 9:23, not as a restated risk rule. The explicit bands remain those of source #6.",
+    "lowerTimeframeEntryConfirmation": "CONFIRMED -- 'the actual entry signal you have to go on the lower time frame', 6:47",
+    "minimum1to2RiskToReward": "CONFIRMED -- stated twice as a minimum, 8:09 and 8:59",
+    "morningStarConfirmation": "CONFIRMED -- 'a series of bullish engulfing Morning Star formation', 7:52",
+    "note": "The MOGO-002.7 brief predicted specific content. Now that the transcript has been read, each prediction is checked against it. This is recorded because the previous pass explicitly refused to rely on the description.",
+    "stopPlacementBelowOrAboveRejectionStructure": "CONFIRMED FOR 'BELOW' ONLY -- 'your stop- loss is right under it', stated as invariant at 8:59. 'Above' for a short is never stated or demonstrated, so the brief's 'below or above' overstates the source by one half."
+  },
+  "candidateRulesCreated": 0,
+  "candidateRulesNote": "0, and this is the POLICY-001 gate working as designed: RuleCandidateProposal is created only for claims at `supported`, and every claim from this source is at `emerging` because a single source cannot corroborate itself.",
+  "claimsCreated": 31,
+  "confidenceMovement": {
+    "claimsAfter": 341,
+    "claimsBefore": 310,
+    "interpretation": "ZERO confidence movement, and it is not a defect. The independence group for this source is AUTHOR|ALEX_G, identical to the eight existing ALEX_G sources, so DECISION|MOGO|20260727|006 correctly refuses to count a ninth same-educator source as independent corroboration. This is the THIRD demonstration of the D2 blocker: the library can acquire a decisive new rule and still not be able to believe it.",
+    "maxScoreAfter": 25.62,
+    "maxScoreBefore": 25.62,
+    "stateChanges": 0,
+    "statesAfter": {
+      "emerging": 341
+    },
+    "statesBefore": {
+      "emerging": 310
+    }
+  },
+  "contradictionsCreated": 2,
+  "evidenceItemsCreated": 36,
+  "gapCoverage": {
+    "KEGAP-001": "PARTIALLY_ADDRESSED -- anchor and invariance now stated; buffer, anchor identity and short side still absent",
+    "KEGAP-002": "PARTIALLY_ADDRESSED -- exits demonstrated at preset stop or target only, across three trades",
+    "KEGAP-003": "NOT_ADDRESSED -- this source says nothing about sessions or hours",
+    "KEGAP-004": "NOT_CLOSED, REINFORCED -- 'minimum of one structure point' is quantified over an undefined unit",
+    "KEGAP-005": "PARTIALLY_ADDRESSED -- a 1:2 MINIMUM is stated twice; selection above the floor still absent",
+    "KEGAP-006": "PARTIALLY_ADDRESSED -- first evidence of no intervention between entry and exit",
+    "KEGAP-007": "NOT_ADDRESSED -- break-even still zero mentions across 9 sources",
+    "KEGAP-008": "NOT_ADDRESSED -- partials still zero mentions across 9 sources",
+    "KEGAP-009": "NOT_ADDRESSED -- scaling still zero mentions across 9 sources",
+    "KEGAP-010": "MADE_MORE_AMBIGUOUS -- two new within-educator contradictions, one material"
+  },
+  "gapsClosed": [],
+  "gapsMadeMoreAmbiguous": [
+    "KEGAP-010",
+    "KEGAP-005"
+  ],
+  "gapsNotAddressed": [
+    "KEGAP-003",
+    "KEGAP-007",
+    "KEGAP-008",
+    "KEGAP-009"
+  ],
+  "gapsPartiallyAddressed": [
+    "KEGAP-001",
+    "KEGAP-002",
+    "KEGAP-005",
+    "KEGAP-006"
+  ],
+  "generated": true,
+  "generatorVersion": "2.0.0",
+  "ingested": true,
+  "ingestionBlocked": false,
+  "marketingDisclosure": {
+    "assessment": "MARKETING_HEAVY_BUT_NOT_MARKETING_DOMINANT",
+    "detail": "$26,000/12h, millionaire, $37,000 live open profit, student income (lower bound unreadable), and 9-12%/month. Two funnel CTAs. Classified ACCEPTED_PRIMARY regardless because the mechanical content is genuine, specific and demonstrated -- but 6 of 31 claims are performance_hypothesis at evidenceQuality low, and none supports a rule.",
+    "unverifiedMonetaryClaims": 5
+  },
+  "milestone": "MOGO-002.7",
+  "modelVersion": "mogo.source-acquisition.v1",
+  "narrativeArtifact": "docs/knowledge-engineering/MOGO-002.7-SOURCE-COVERAGE-REPORT.md",
+  "noGapFullyClosed": true,
+  "noGapFullyClosedNote": "Deliberate. The brief warns not to claim a gap is closed because one example was shown. Three examples were shown and one invariant was stated, which moves four gaps to PARTIALLY_SUPPORTED and closes none.",
+  "openQuestionsAuthored": 9,
+  "openQuestionsAuto": 18,
+  "priorStopCondition": {
+    "condition": "PROVIDED_TRANSCRIPT_CANNOT_BE_FOUND_OR_RECONSTRUCTED",
+    "raisedAt": "MOGO-002.7 first pass",
+    "resolvedBy": "Operator supplied the transcript verbatim on 2026-07-29.",
+    "status": "RESOLVED"
+  },
+  "source": {
+    "acquisitionStatus": "acquired_operator_supplied",
+    "annotations": 36,
+    "authenticityStatus": "channel_verified",
+    "candidateId": "ACQCAND|ALEX_G|20260729|001",
+    "channelOrPublisher": "fxalexg",
+    "channelUrl": "https://www.youtube.com/@fxalexg__",
+    "claimedTraderId": "ALEX_G",
+    "claimsCreated": 31,
+    "contentHash": "7f954e14ec5cb0a6b17de28fb0e6caed6910e6cc4f2ec72c8c6cc3b3441e58d2",
+    "contentSizeBytes": 15232,
+    "durationSeconds": null,
+    "intakeId": "INTAKE|ALEX_G|20260729|001",
+    "licensingStatus": "restricted_third_party",
+    "metadataConfidence": "high",
+    "normalizationProfile": "youtube_duration_label",
+    "normalizationReversible": true,
+    "platform": "youtube",
+    "processingStatus": "ingested",
+    "publicationDate": null,
+    "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-break-and-retest-26k-12-hours.raw.txt",
+    "segments": 13,
+    "sourceId": "EVSRC|ALEX_G|20260729|001",
+    "sourceLineCount": 92,
+    "title": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+    "titleVerificationMethod": "YouTube oEmbed title field, exact match to the title supplied in the brief.",
+    "traderIdVerificationMethod": "YouTube oEmbed author_url for kg-rOo9_xjU resolves to https://www.youtube.com/@fxalexg__, byte-identical to the author_url of already-registered EVSRC|ALEX_G|20260728|005 (VzMlFZbWA0Y). Same channel, therefore same educator lineage.",
+    "transcriptAvailable": true,
+    "url": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+    "verifiedTraderId": "ALEX_G",
+    "videoId": "kg-rOo9_xjU"
+  },
+  "supportingLinksToExistingClaims": 5,
+  "transcriptQualityNotes": [
+    "Caption artifacts left uncorrected and recorded: 'breaking reetus' (break and retest), 'set freet' (set and forget), 'one to2 rward', 'dogee' (doji), 'Inay' (unrecoverable).",
+    "The student-income lower bound is corrupted to ',000' in both occurrences and is NOT reconstructed -- recorded as an unreadable figure.",
+    "Chapter 1 heading is absent from the supplied paste; chapters 2-8 are present and were recorded as removed non-spoken lines."
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "decisionTraceVersion": "mogo.decision-event.v1",
+  "existingRuleIdMappings": [
+    {
+      "decisionEventRuleId": "ALEX_ACTIVATION_CUTOFF",
+      "emittedFrom": "alexGEvaluatePairForLiveSetups",
+      "evaluator": "alexGIsSetupEligibleForLiveTrading",
+      "fidelityRuleId": "ALEX_X_004",
+      "traced": true
+    },
+    {
+      "decisionEventRuleId": "ALEX_SIGNAL_STALENESS",
+      "emittedFrom": "alexGEvaluatePairForLiveSetups",
+      "evaluator": "alexGIsSetupSignalStale",
+      "fidelityRuleId": "ALEX_X_003",
+      "traced": true
+    }
+  ],
+  "lifecycleCoverage": [
+    {
+      "eventTypes": [
+        "CANDIDATE_APPROVED",
+        "TRADE_OPEN_REQUESTED"
+      ],
+      "stage": "accepted trade candidates",
+      "traced": true
+    },
+    {
+      "eventTypes": [
+        "CANDIDATE_REJECTED"
+      ],
+      "stage": "rejected trade candidates",
+      "traced": true
+    },
+    {
+      "eventTypes": [
+        "CANDIDATE_REJECTED",
+        "RULE_EVALUATED"
+      ],
+      "limitation": "A setup that never qualifies inside the protected setup engine emits no event at all -- the engine only surfaces setups that already qualified.",
+      "stage": "no-trade decisions",
+      "traced": true
+    },
+    {
+      "eventTypes": [
+        "TRADE_OPEN_FAILED"
+      ],
+      "stage": "invalidated candidates",
+      "traced": true
+    },
+    {
+      "eventTypes": [
+        "TRADE_OPENED"
+      ],
+      "provenance": "Every newly opened trade now carries strategyProvenance (Phase 5).",
+      "stage": "opened paper trades",
+      "traced": true
+    },
+    {
+      "limitation": "alexGUpdatePositionExcursionAndCheckExit is PROTECTED and emits no decision event. Instrumenting it would require a protected-function edit.",
+      "stage": "managed positions",
+      "traced": false
+    },
+    {
+      "limitation": "TRADE_CLOSED is defined in the schema but not emitted for ALEX; alexGCloseLivePosition is PROTECTED.",
+      "stage": "closed positions",
+      "traced": false
+    }
+  ],
+  "modelVersion": "mogo.strategy-fidelity.v1",
+  "note": "MOGO-002.5 Phase 6 REUSES the existing Decision Event architecture rather than introducing a parallel trace. This file records which fidelity rule each existing RULE_EVALUATED ruleId corresponds to, and states honestly which lifecycle stages are already traced and which are structurally unreachable.",
+  "structuralLimitations": [
+    {
+      "affectedFidelityRules": [
+        "ALEX_SR_005",
+        "ALEX_SR_011"
+      ],
+      "detail": "alexGEvaluateBreakRetest and alexGEvaluateRepeatedReaction are PROTECTED and their {qualifies:false} return contract discards WHICH condition failed. Per-condition rule tracing for ALEX_SR_005 and ALEX_SR_011 is therefore unreachable without either a protected-function edit or reimplementing their logic externally -- both forbidden.",
+      "id": "TRACE-LIM-001",
+      "requiresEngineeringAuthority": true
+    },
+    {
+      "affectedFidelityRules": [],
+      "detail": "Decision events are memory-only (DECISION_EVENT_MAX_LOG_SIZE=500, zero localStorage keys). Traces do not survive a page reload, so a fidelity report cannot be built from historical traces today -- only from live observation.",
+      "id": "TRACE-LIM-002",
+      "requiresEngineeringAuthority": false
+    }
+  ]
+}

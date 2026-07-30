@@ -1,0 +1,202 @@
+{
+  "blockingReplayCount": 5,
+  "gapCount": 8,
+  "gaps": [
+    {
+      "affects": [
+        "stop placement",
+        "position sizing",
+        "replay validity",
+        "strategy fidelity"
+      ],
+      "blocksReplay": true,
+      "domain": "stop_loss_buffer",
+      "evidenceState": "ABSENT_FROM_REVIEWED_SOURCES",
+      "expectedGain": "DECISIVE",
+      "id": "AXG-01",
+      "knownSourceExists": false,
+      "priority": "P0",
+      "question": "How far beyond the rejection structure is the stop placed?",
+      "searchTerms": [
+        "fxalexg live trading session",
+        "fxalexg set and forget full trade",
+        "fxalexg how to place stop loss",
+        "fxalexg trade walkthrough"
+      ],
+      "whyItMatters": "Position size = risk / stop distance. This single absence makes all 13 educator sizing rules non-computable and is the only thing preventing an end-to-end educator-faithful trade from being expressible."
+    },
+    {
+      "affects": [
+        "stop placement",
+        "position sizing",
+        "replay validity"
+      ],
+      "blocksReplay": true,
+      "domain": "stop_loss_relationship",
+      "evidenceState": "AMBIGUOUS",
+      "expectedGain": "HIGH",
+      "id": "AXG-02",
+      "knownSourceExists": false,
+      "priority": "P0",
+      "question": "What exactly is the stop anchored to -- the final rejection candle, the whole Morning Star formation, or the retested zone boundary?",
+      "searchTerms": [
+        "fxalexg live trading session",
+        "fxalexg stop loss placement explained"
+      ],
+      "whyItMatters": "The three readings give materially different stop distances on the same setup, so every downstream R-multiple and position size changes with the choice."
+    },
+    {
+      "affects": [
+        "trade eligibility",
+        "entries",
+        "strategy fidelity"
+      ],
+      "blocksReplay": false,
+      "domain": "candlestick_confirmation",
+      "evidenceState": "PARTIALLY_SUPPORTED",
+      "expectedGain": "HIGH",
+      "id": "AXG-03",
+      "knownSourceExists": true,
+      "knownSourceNote": "EVSRC|ALEX_G|20260729|001 at 5:33 explicitly points at a dedicated engulfing video ('just look at this video right here'). That referenced video is a named, existing target.",
+      "priority": "P0",
+      "question": "Is a candlestick confirmation required, and if so which patterns qualify?",
+      "searchTerms": [
+        "fxalexg engulfing candlestick confirmation",
+        "fxalexg bullish bearish engulfing trend continuation"
+      ],
+      "whyItMatters": "The educator's hardest entry precondition is ABSENT FROM MOGO. Adding or omitting it changes which setups are eligible at all -- the largest trade-eligibility difference found by this audit."
+    },
+    {
+      "affects": [
+        "trade eligibility",
+        "entries",
+        "replay validity"
+      ],
+      "blocksReplay": true,
+      "domain": "session_requirements",
+      "evidenceState": "NON_DETERMINISTIC",
+      "expectedGain": "MEDIUM",
+      "id": "AXG-04",
+      "knownSourceExists": false,
+      "knownSourceNote": "Hours are displayed on an on-screen map in EVSRC|ALEX_G|20260728|004 and never spoken. A transcript of the SAME format cannot close this.",
+      "priority": "P1",
+      "question": "What are the exact session hours that gate entry?",
+      "searchTerms": [
+        "fxalexg best time to trade forex sessions",
+        "fxalexg london new york session"
+      ],
+      "whyItMatters": "7 session rules are prescriptive and unimplementable. MOGO currently applies NO session restriction at all, so this is a live divergence, not just a gap."
+    },
+    {
+      "affects": [
+        "trade management",
+        "exits",
+        "replay validity"
+      ],
+      "blocksReplay": true,
+      "domain": "post_entry_management",
+      "evidenceState": "ABSENT_FROM_REVIEWED_SOURCES",
+      "expectedGain": "HIGH",
+      "id": "AXG-05",
+      "knownSourceExists": true,
+      "knownSourceNote": "EVSRC|ALEX_G|20260728|007 self-identifies as episode 3 of a 'set and forget' podcast, so other episodes exist.",
+      "priority": "P1",
+      "question": "Is the stop ever moved to break-even, are partials taken, is the position ever scaled or trailed?",
+      "searchTerms": [
+        "fxalexg set and forget strategy explained",
+        "fxalexg managing open trades",
+        "fxalexg take partial profits"
+      ],
+      "whyItMatters": "Four domains at absolute zero across 9 sources. Each changes realized R per trade, so expectancy is not computable while they are unknown -- even though MOGO's no-intervention default is probably right."
+    },
+    {
+      "affects": [
+        "exits",
+        "replay validity",
+        "strategy fidelity"
+      ],
+      "blocksReplay": false,
+      "domain": "target_selection",
+      "evidenceState": "PARTIALLY_SUPPORTED",
+      "expectedGain": "MEDIUM",
+      "id": "AXG-06",
+      "knownSourceExists": false,
+      "priority": "P1",
+      "question": "How is the target chosen above the 1:2 floor?",
+      "searchTerms": [
+        "fxalexg take profit target selection",
+        "fxalexg risk reward ratio"
+      ],
+      "whyItMatters": "MOGO implements a FIXED 2R. The educator states a MINIMUM. Every trade where structure allowed more is a divergence, and expectancy differs materially."
+    },
+    {
+      "affects": [
+        "trade eligibility",
+        "entries",
+        "replay validity"
+      ],
+      "blocksReplay": true,
+      "domain": "market_structure",
+      "evidenceState": "AMBIGUOUS",
+      "expectedGain": "LOW",
+      "id": "AXG-07",
+      "knownSourceExists": false,
+      "knownSourceNote": "Two educators give contradictory guidance about a number NEITHER supplies. Recorded as replay candidate RC-29; acquisition is unlikely to resolve it.",
+      "priority": "P2",
+      "question": "What makes a swing point / structure point significant enough to count?",
+      "searchTerms": [
+        "fxalexg market structure swing points"
+      ],
+      "whyItMatters": "Gates every structure rule, the minimum-one-structure-point requirement, and the break-of-structure test. Cross-educator contradicted (XCONTRA|20260729|001)."
+    },
+    {
+      "affects": [
+        "stop placement",
+        "strategy fidelity"
+      ],
+      "blocksReplay": false,
+      "domain": "stop_loss_relationship",
+      "evidenceState": "ABSENT_FROM_REVIEWED_SOURCES",
+      "expectedGain": "MEDIUM",
+      "id": "AXG-08",
+      "knownSourceExists": false,
+      "priority": "P2",
+      "question": "Is the short-side mirror of the stop rule ever stated?",
+      "searchTerms": [
+        "fxalexg short trade example",
+        "fxalexg bearish setup walkthrough"
+      ],
+      "whyItMatters": "MOGO trades both directions symmetrically. The educator has only ever been recorded stating the long side, so MOGO's short-side stop is an assumption."
+    }
+  ],
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "milestone": "MOGO-002.8",
+  "modelVersion": "mogo.alex-audit.v1",
+  "narrativeArtifact": "docs/strategy-fidelity/audit/ALEX-KNOWLEDGE-GAPS-AND-SOURCE-PLAN.md",
+  "nextAcquisitionTarget": {
+    "rank": 1,
+    "rationale": "A stop price must be typed into an order ticket, which is the one context where the missing buffer becomes visible. It is the only single artifact that could close both P0 stop gaps at once.",
+    "resolves": [
+      "AXG-01",
+      "AXG-02",
+      "AXG-04",
+      "AXG-08"
+    ],
+    "risk": "May show the number on screen without speaking it -- the KEGAP-003 failure mode.",
+    "searchTerms": [
+      "fxalexg live trading session",
+      "fxalexg live trade",
+      "fxalexg trading live forex"
+    ],
+    "targetType": "ALEX_G live trading session showing an order actually being placed"
+  },
+  "secondTarget": {
+    "rank": 2,
+    "rationale": "The ONLY gap in this plan with a named, educator-pointed-at source. The educator says 'just look at this video right here' about bullish/bearish engulfing with trend continuation. Closes the largest trade-eligibility divergence, and it is the highest-certainty acquisition available.",
+    "resolves": [
+      "AXG-03"
+    ],
+    "targetType": "The engulfing-candlestick video explicitly referenced at 5:33 of EVSRC|ALEX_G|20260729|001"
+  }
+}

@@ -1,0 +1,1817 @@
+{
+  "channel": "fxalexg",
+  "channelId": "UCgPeeHdxYRal0HTNeAkjqLg",
+  "channelUrl": "https://www.youtube.com/@fxalexg__",
+  "completenessCaveat": "200 videos enumerated. Pagination terminated naturally, but this cannot be proven exhaustive: unlisted, removed, members-only and Shorts entries may be excluded. Validation: ALL 9 registered ALEX_G sources appear in this catalogue.",
+  "enumerationMethod": "YouTube public channel page ytInitialData plus innertube browse continuation, 7 pages, terminated naturally when no further continuation token was returned. Read-only metadata retrieval; no caption or transcript access.",
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "ingestedCount": 9,
+  "milestone": "MOGO-002.8",
+  "modelVersion": "mogo.alex-audit.v1",
+  "registeredSourcesPresent": 9,
+  "registeredSourcesTotal": 9,
+  "videoCount": 200,
+  "videos": [
+    {
+      "duration": "37:12",
+      "ingested": false,
+      "listingMetadata": "156K views | 3 days ago",
+      "sourceId": null,
+      "title": "How to Start Trading with Just $50",
+      "url": "https://www.youtube.com/watch?v=hb7ot1_szWI",
+      "videoId": "hb7ot1_szWI"
+    },
+    {
+      "duration": "38:52",
+      "ingested": false,
+      "listingMetadata": "161K views | 10 days ago",
+      "sourceId": null,
+      "title": "Seriously, you’re just 1 funded account away from changing your life",
+      "url": "https://www.youtube.com/watch?v=lHGkup8CoTE",
+      "videoId": "lHGkup8CoTE"
+    },
+    {
+      "duration": "1:02:28",
+      "ingested": false,
+      "listingMetadata": "196K views | 2 weeks ago",
+      "sourceId": null,
+      "title": "The Trading Industry Is About to Change Forever After This",
+      "url": "https://www.youtube.com/watch?v=DejB31rwv8c",
+      "videoId": "DejB31rwv8c"
+    },
+    {
+      "duration": "1:23:25",
+      "ingested": false,
+      "listingMetadata": "397K views | 1 month ago",
+      "sourceId": null,
+      "title": "This is Boring, But it’ll make your first $100,000 Trading",
+      "url": "https://www.youtube.com/watch?v=MhWSZp4yS2c",
+      "videoId": "MhWSZp4yS2c"
+    },
+    {
+      "duration": "26:35",
+      "ingested": false,
+      "listingMetadata": "216K views | 1 month ago",
+      "sourceId": null,
+      "title": "I Tried to Make $1 Million Trading in 24 Hours to Prove It’s Not Luck",
+      "url": "https://www.youtube.com/watch?v=DsPLtzjTONI",
+      "videoId": "DsPLtzjTONI"
+    },
+    {
+      "duration": "28:12",
+      "ingested": false,
+      "listingMetadata": "124K views | 1 month ago",
+      "sourceId": null,
+      "title": "How Trading Dumb Made Me a Millionaire Trader (You Can Too)",
+      "url": "https://www.youtube.com/watch?v=KPVVOa6c6dY",
+      "videoId": "KPVVOa6c6dY"
+    },
+    {
+      "duration": "25:23",
+      "ingested": false,
+      "listingMetadata": "146K views | 1 month ago",
+      "sourceId": null,
+      "title": "Price Action Trading Was Hard, Until I Discovered This",
+      "url": "https://www.youtube.com/watch?v=WEyJ-zKAEoA",
+      "videoId": "WEyJ-zKAEoA"
+    },
+    {
+      "duration": "19:19",
+      "ingested": true,
+      "listingMetadata": "140K views | 1 month ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|002",
+      "title": "How to Master Liquidity in Trading (Advanced Guide)",
+      "url": "https://www.youtube.com/watch?v=Rua24ytuHuY",
+      "videoId": "Rua24ytuHuY"
+    },
+    {
+      "duration": "27:20",
+      "ingested": false,
+      "listingMetadata": "238K views | 2 months ago",
+      "sourceId": null,
+      "title": "The Only Trading Strategy You Need To Be Profitable | Swing Trading",
+      "url": "https://www.youtube.com/watch?v=1dL3xmxA2e0",
+      "videoId": "1dL3xmxA2e0"
+    },
+    {
+      "duration": "30:06",
+      "ingested": false,
+      "listingMetadata": "583K views | 2 months ago",
+      "sourceId": null,
+      "title": "I Made $500,000 Day Trading and Blew It Repairing My Bugatti",
+      "url": "https://www.youtube.com/watch?v=ithXhNOITTA",
+      "videoId": "ithXhNOITTA"
+    },
+    {
+      "duration": "40:32",
+      "ingested": false,
+      "listingMetadata": "207K views | 2 months ago",
+      "sourceId": null,
+      "title": "This Is How Real People Get Profitable at Trading FAST",
+      "url": "https://www.youtube.com/watch?v=6E99Y-c-BjE",
+      "videoId": "6E99Y-c-BjE"
+    },
+    {
+      "duration": "42:25",
+      "ingested": false,
+      "listingMetadata": "291K views | 2 months ago",
+      "sourceId": null,
+      "title": "A $1,000,000 Weekend in the Life in Jake Paul's RANCH",
+      "url": "https://www.youtube.com/watch?v=0cHV5LFvcXo",
+      "videoId": "0cHV5LFvcXo"
+    },
+    {
+      "duration": "21:13",
+      "ingested": false,
+      "listingMetadata": "209K views | 3 months ago",
+      "sourceId": null,
+      "title": "This trading strategy is boring, but it makes me $150,000/week",
+      "url": "https://www.youtube.com/watch?v=1fGzVHI7rN0",
+      "videoId": "1fGzVHI7rN0"
+    },
+    {
+      "duration": "22:04",
+      "ingested": true,
+      "listingMetadata": "156K views | 3 months ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|004",
+      "title": "The ONLY confirmation YOU need to make $1000/day Trading Forex",
+      "url": "https://www.youtube.com/watch?v=BcWxqfcjk9A",
+      "videoId": "BcWxqfcjk9A"
+    },
+    {
+      "duration": "17:47",
+      "ingested": false,
+      "listingMetadata": "256K views | 3 months ago",
+      "sourceId": null,
+      "title": "⁠If I Wanted to Make $1,000/Day Trading, I’d Do This",
+      "url": "https://www.youtube.com/watch?v=M8wDlKjaQRk",
+      "videoId": "M8wDlKjaQRk"
+    },
+    {
+      "duration": "19:04",
+      "ingested": false,
+      "listingMetadata": "271K views | 4 months ago",
+      "sourceId": null,
+      "title": "Trading Has Changed This 2026: Don’t Trade Until You Watch This",
+      "url": "https://www.youtube.com/watch?v=MMRGV6Isxu8",
+      "videoId": "MMRGV6Isxu8"
+    },
+    {
+      "duration": "34:46",
+      "ingested": false,
+      "listingMetadata": "712K views | 4 months ago",
+      "sourceId": null,
+      "title": "I never thought I'd spend $3,000,000 on this...",
+      "url": "https://www.youtube.com/watch?v=PwHaMVHD9oQ",
+      "videoId": "PwHaMVHD9oQ"
+    },
+    {
+      "duration": "52:32",
+      "ingested": false,
+      "listingMetadata": "379K views | 5 months ago",
+      "sourceId": null,
+      "title": "How to Grow a Small Trading Account From Scratch in 2026",
+      "url": "https://www.youtube.com/watch?v=LwMsai2ppKc",
+      "videoId": "LwMsai2ppKc"
+    },
+    {
+      "duration": "31:52",
+      "ingested": false,
+      "listingMetadata": "1.3M views | 5 months ago",
+      "sourceId": null,
+      "title": "How I Streaked the Superbowl (AGAIN)",
+      "url": "https://www.youtube.com/watch?v=_ZVPrCyojrI",
+      "videoId": "_ZVPrCyojrI"
+    },
+    {
+      "duration": "33:01",
+      "ingested": true,
+      "listingMetadata": "371K views | 5 months ago",
+      "sourceId": "EVSRC|ALEX_G|20260727|001",
+      "title": "Best Top Down Analysis Strategy for 2026 | Forex Trading Guide",
+      "url": "https://www.youtube.com/watch?v=pD1vAUMbSjw",
+      "videoId": "pD1vAUMbSjw"
+    },
+    {
+      "duration": "1:11:58",
+      "ingested": false,
+      "listingMetadata": "623K views | 6 months ago",
+      "sourceId": null,
+      "title": "How to Start Day Trading for Beginners Step by Step in 2026 | Full Guide",
+      "url": "https://www.youtube.com/watch?v=noHsKFy7NgY",
+      "videoId": "noHsKFy7NgY"
+    },
+    {
+      "duration": "37:16",
+      "ingested": false,
+      "listingMetadata": "1.2M views | 6 months ago",
+      "sourceId": null,
+      "title": "Mat Armstrong Tries to REPAIR my Broken $6M Bugatti",
+      "url": "https://www.youtube.com/watch?v=1F6G_R0pCi4",
+      "videoId": "1F6G_R0pCi4"
+    },
+    {
+      "duration": "28:14",
+      "ingested": false,
+      "listingMetadata": "962K views | 6 months ago",
+      "sourceId": null,
+      "title": "A Billionaire Weekend Spending $300,000 in St. Martin",
+      "url": "https://www.youtube.com/watch?v=ffcWRgTXb14",
+      "videoId": "ffcWRgTXb14"
+    },
+    {
+      "duration": "28:44",
+      "ingested": false,
+      "listingMetadata": "188K views | 7 months ago",
+      "sourceId": null,
+      "title": "A Day in the Life with Jake Paul (I Lost $1,000,000 betting on him)",
+      "url": "https://www.youtube.com/watch?v=zFNE2v5z1kQ",
+      "videoId": "zFNE2v5z1kQ"
+    },
+    {
+      "duration": "25:17",
+      "ingested": false,
+      "listingMetadata": "175K views | 7 months ago",
+      "sourceId": null,
+      "title": "Revealing the Counter-Trade Scalping Strategy That Made Me $350K",
+      "url": "https://www.youtube.com/watch?v=EEpfmQo2Ars",
+      "videoId": "EEpfmQo2Ars"
+    },
+    {
+      "duration": "39:26",
+      "ingested": false,
+      "listingMetadata": "1M views | 7 months ago",
+      "sourceId": null,
+      "title": "I Bought a BROKEN $6M Bugatti & I Tried to Repair it",
+      "url": "https://www.youtube.com/watch?v=M5vbWrlyj00",
+      "videoId": "M5vbWrlyj00"
+    },
+    {
+      "duration": "1:44:15",
+      "ingested": false,
+      "listingMetadata": "593K views | 8 months ago",
+      "sourceId": null,
+      "title": "STEAL This Easy Day Trading Strategy I Taught Ashton Hall (A Complete Beginner)",
+      "url": "https://www.youtube.com/watch?v=bGpZ1QhOJQI",
+      "videoId": "bGpZ1QhOJQI"
+    },
+    {
+      "duration": "24:23",
+      "ingested": false,
+      "listingMetadata": "328K views | 8 months ago",
+      "sourceId": null,
+      "title": "How To Trade Gold in 2026 | The Easiest Strategy to Become Profitable",
+      "url": "https://www.youtube.com/watch?v=ig6Z2Gbk_LE",
+      "videoId": "ig6Z2Gbk_LE"
+    },
+    {
+      "duration": "26:30",
+      "ingested": false,
+      "listingMetadata": "276K views | 8 months ago",
+      "sourceId": null,
+      "title": "The ONLY 2 Indicators You Need To Make +$3,945/Day Trading",
+      "url": "https://www.youtube.com/watch?v=A8ncoQCPjF8",
+      "videoId": "A8ncoQCPjF8"
+    },
+    {
+      "duration": "55:06",
+      "ingested": false,
+      "listingMetadata": "802K views | 9 months ago",
+      "sourceId": null,
+      "title": "A Week in the Life of a Trillionaire Trader in Dubai",
+      "url": "https://www.youtube.com/watch?v=v3aPSZkVQYA",
+      "videoId": "v3aPSZkVQYA"
+    },
+    {
+      "duration": "1:16:39",
+      "ingested": false,
+      "listingMetadata": "340K views | 9 months ago",
+      "sourceId": null,
+      "title": "I Tried to Make $1,000,000 in a Week Day Trading",
+      "url": "https://www.youtube.com/watch?v=8rqdN1FnY4s",
+      "videoId": "8rqdN1FnY4s"
+    },
+    {
+      "duration": "1:02:23",
+      "ingested": false,
+      "listingMetadata": "475K views | 9 months ago",
+      "sourceId": null,
+      "title": "How I Turned $500 Into $50,000,000 at 25 | My Journey",
+      "url": "https://www.youtube.com/watch?v=Jg3hYJ3JOTA",
+      "videoId": "Jg3hYJ3JOTA"
+    },
+    {
+      "duration": "10:35:59",
+      "ingested": false,
+      "listingMetadata": "2.1M views | 10 months ago",
+      "sourceId": null,
+      "title": "The Trading Industry Will Hate Me for This FREE 10+ Hour Course",
+      "url": "https://www.youtube.com/watch?v=grw58BIzotU",
+      "videoId": "grw58BIzotU"
+    },
+    {
+      "duration": "48:56",
+      "ingested": false,
+      "listingMetadata": "578K views | 10 months ago",
+      "sourceId": null,
+      "title": "Night in the life of a rich trader in Miami",
+      "url": "https://www.youtube.com/watch?v=m884pbQ7QA0",
+      "videoId": "m884pbQ7QA0"
+    },
+    {
+      "duration": "1:05:58",
+      "ingested": false,
+      "listingMetadata": "217K views | 10 months ago",
+      "sourceId": null,
+      "title": "Every Single Trading Strategy Explained for Beginners",
+      "url": "https://www.youtube.com/watch?v=hJyYxKtys04",
+      "videoId": "hJyYxKtys04"
+    },
+    {
+      "duration": "15:32",
+      "ingested": false,
+      "listingMetadata": "306K views | 11 months ago",
+      "sourceId": null,
+      "title": "I Made $700,000 Day Trading so I Bought another Hyper Car",
+      "url": "https://www.youtube.com/watch?v=eZ3zGasWTTY",
+      "videoId": "eZ3zGasWTTY"
+    },
+    {
+      "duration": "21:48",
+      "ingested": false,
+      "listingMetadata": "507K views | 11 months ago",
+      "sourceId": null,
+      "title": "This 1 Hour Day Trading Strategy Works Every Day ($1,000/day)",
+      "url": "https://www.youtube.com/watch?v=iCU1EJMrEZ0",
+      "videoId": "iCU1EJMrEZ0"
+    },
+    {
+      "duration": "15:27",
+      "ingested": false,
+      "listingMetadata": "1M views | 1 year ago",
+      "sourceId": null,
+      "title": "I Gave Whistlin Diesel $100,000 to Day Trade for Me",
+      "url": "https://www.youtube.com/watch?v=1nVgxuG97wU",
+      "videoId": "1nVgxuG97wU"
+    },
+    {
+      "duration": "1:02:29",
+      "ingested": false,
+      "listingMetadata": "886K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Took A Stranger From Broke To Rich In 30 Days",
+      "url": "https://www.youtube.com/watch?v=ClwWG0SydYg",
+      "videoId": "ClwWG0SydYg"
+    },
+    {
+      "duration": "26:04",
+      "ingested": false,
+      "listingMetadata": "553K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Crashed My $6M Bugatti… So I Bought an SVJ",
+      "url": "https://www.youtube.com/watch?v=NQppFY_9YgY",
+      "videoId": "NQppFY_9YgY"
+    },
+    {
+      "duration": "1:06:19",
+      "ingested": false,
+      "listingMetadata": "231K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Helped a Subscriber Turn $1,000 into $9,000 Day Trading in 14 Days",
+      "url": "https://www.youtube.com/watch?v=UlATmH-ux3I",
+      "videoId": "UlATmH-ux3I"
+    },
+    {
+      "duration": "1:05:25",
+      "ingested": false,
+      "listingMetadata": "323K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Helped a Subscriber Make Money Trading Forex in 7 Days",
+      "url": "https://www.youtube.com/watch?v=aEBpEMkx3jE",
+      "videoId": "aEBpEMkx3jE"
+    },
+    {
+      "duration": "27:19",
+      "ingested": false,
+      "listingMetadata": "935K views | 1 year ago",
+      "sourceId": null,
+      "title": "This Trading Strategy is Boring, but Made Me My First $100,000",
+      "url": "https://www.youtube.com/watch?v=E3lYZsy8nYE",
+      "videoId": "E3lYZsy8nYE"
+    },
+    {
+      "duration": "23:22",
+      "ingested": false,
+      "listingMetadata": "984K views | 1 year ago",
+      "sourceId": null,
+      "title": "I FINALLY Bought a $3,200,000 Private Jet",
+      "url": "https://www.youtube.com/watch?v=svOKoo3CY0c",
+      "videoId": "svOKoo3CY0c"
+    },
+    {
+      "duration": "33:02",
+      "ingested": false,
+      "listingMetadata": "242K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Made $1,000,000 Trading Forex to Prove It's Not Luck",
+      "url": "https://www.youtube.com/watch?v=dsohnQdm9Qs",
+      "videoId": "dsohnQdm9Qs"
+    },
+    {
+      "duration": "13:22",
+      "ingested": false,
+      "listingMetadata": "274K views | 1 year ago",
+      "sourceId": null,
+      "title": "How I Made $400,000 Day Trading in 13 minutes (Copy me)",
+      "url": "https://www.youtube.com/watch?v=BvSC5htaRUw",
+      "videoId": "BvSC5htaRUw"
+    },
+    {
+      "duration": "15:13",
+      "ingested": false,
+      "listingMetadata": "221K views | 1 year ago",
+      "sourceId": null,
+      "title": "How I Would Trade Forex in 2026 (Step by Step to Build Wealth Fast)",
+      "url": "https://www.youtube.com/watch?v=ny7zRePso_U",
+      "videoId": "ny7zRePso_U"
+    },
+    {
+      "duration": "20:03",
+      "ingested": false,
+      "listingMetadata": "707K views | 1 year ago",
+      "sourceId": null,
+      "title": "Boring Day in the Life of a Miami Millionaire Trader",
+      "url": "https://www.youtube.com/watch?v=6pdOyBmOlf8",
+      "videoId": "6pdOyBmOlf8"
+    },
+    {
+      "duration": "30:25",
+      "ingested": false,
+      "listingMetadata": "441K views | 1 year ago",
+      "sourceId": null,
+      "title": "This Trading Strategy Will Create Millionaires in 2026 | Day Trading",
+      "url": "https://www.youtube.com/watch?v=5J01qKDAziM",
+      "videoId": "5J01qKDAziM"
+    },
+    {
+      "duration": "38:59",
+      "ingested": false,
+      "listingMetadata": "475K views | 1 year ago",
+      "sourceId": null,
+      "title": "Young Millionaire Reveals His +$11,000,000 Car Collection",
+      "url": "https://www.youtube.com/watch?v=zzQXJJrIc5Q",
+      "videoId": "zzQXJJrIc5Q"
+    },
+    {
+      "duration": "59:20",
+      "ingested": false,
+      "listingMetadata": "194K views | 1 year ago",
+      "sourceId": null,
+      "title": "The Easiest Way to Make Money Online in 2025 (Beginner's Guide)",
+      "url": "https://www.youtube.com/watch?v=yFkNBR1gZnI",
+      "videoId": "yFkNBR1gZnI"
+    },
+    {
+      "duration": "20:26",
+      "ingested": false,
+      "listingMetadata": "699K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Bought my Second $5M Bugatti at 24 years old",
+      "url": "https://www.youtube.com/watch?v=OwQTxsUu53U",
+      "videoId": "OwQTxsUu53U"
+    },
+    {
+      "duration": "55:09",
+      "ingested": false,
+      "listingMetadata": "258K views | 1 year ago",
+      "sourceId": null,
+      "title": "How To Make 'F*ck You' Money With Day Trading in 2025",
+      "url": "https://www.youtube.com/watch?v=nOUJcxt9Ugk",
+      "videoId": "nOUJcxt9Ugk"
+    },
+    {
+      "duration": "40:05",
+      "ingested": false,
+      "listingMetadata": "1.2M views | 1 year ago",
+      "sourceId": null,
+      "title": "I Made $400,000 Day Trading & Spent it All On a Porsche 911 GT3 RS",
+      "url": "https://www.youtube.com/watch?v=G3Cj4K8STNo",
+      "videoId": "G3Cj4K8STNo"
+    },
+    {
+      "duration": "20:45",
+      "ingested": true,
+      "listingMetadata": "513K views | 1 year ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|001",
+      "title": "Simplifying Advanced Market Structure in 20 Minutes | Forex Trading Tutorial",
+      "url": "https://www.youtube.com/watch?v=sZAE_lqdeno",
+      "videoId": "sZAE_lqdeno"
+    },
+    {
+      "duration": "19:09",
+      "ingested": false,
+      "listingMetadata": "344K views | 1 year ago",
+      "sourceId": null,
+      "title": "Young Millionaire Buys His First Private Jet at 24",
+      "url": "https://www.youtube.com/watch?v=zX3t7-TDTCI",
+      "videoId": "zX3t7-TDTCI"
+    },
+    {
+      "duration": "32:28",
+      "ingested": false,
+      "listingMetadata": "252K views | 1 year ago",
+      "sourceId": null,
+      "title": "The Blueprint To Become a Profitable Trader in 2025",
+      "url": "https://www.youtube.com/watch?v=2pEtH0g0z1o",
+      "videoId": "2pEtH0g0z1o"
+    },
+    {
+      "duration": "19:42",
+      "ingested": false,
+      "listingMetadata": "359K views | 1 year ago",
+      "sourceId": null,
+      "title": "How to Grow a Small Forex Account So Fast It Feels Illegal",
+      "url": "https://www.youtube.com/watch?v=McRKOYBcAiI",
+      "videoId": "McRKOYBcAiI"
+    },
+    {
+      "duration": "28:00",
+      "ingested": false,
+      "listingMetadata": "223K views | 1 year ago",
+      "sourceId": null,
+      "title": "I bought a $4,000,000 Bugatti at 24 (I still can’t believe it)",
+      "url": "https://www.youtube.com/watch?v=e7yVRB0f4xY",
+      "videoId": "e7yVRB0f4xY"
+    },
+    {
+      "duration": "24:43",
+      "ingested": false,
+      "listingMetadata": "765K views | 1 year ago",
+      "sourceId": null,
+      "title": "Forex Trading Paid For This $3,500,000 Mansion in Miami",
+      "url": "https://www.youtube.com/watch?v=wVmNxcrCF78",
+      "videoId": "wVmNxcrCF78"
+    },
+    {
+      "duration": "25:45",
+      "ingested": false,
+      "listingMetadata": "1.4M views | 1 year ago",
+      "sourceId": null,
+      "title": "At 21, I became a millionaire. This is the story.",
+      "url": "https://www.youtube.com/watch?v=Is_8UamxEOk",
+      "videoId": "Is_8UamxEOk"
+    },
+    {
+      "duration": "1:44:48",
+      "ingested": false,
+      "listingMetadata": "2.6M views | 1 year ago",
+      "sourceId": null,
+      "title": "How I Turned $100 into $1 Million In 90 Days",
+      "url": "https://www.youtube.com/watch?v=xAJT6cmJ5gs",
+      "videoId": "xAJT6cmJ5gs"
+    },
+    {
+      "duration": "57:45",
+      "ingested": false,
+      "listingMetadata": "281K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Turned $100 Into $332,588 in 12 Weeks Trading Forex",
+      "url": "https://www.youtube.com/watch?v=a03Vmo_d9Tk",
+      "videoId": "a03Vmo_d9Tk"
+    },
+    {
+      "duration": "42:28",
+      "ingested": false,
+      "listingMetadata": "213K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Turned $45,144 Into $201,940 in 7 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=AgOgdLow6Ow",
+      "videoId": "AgOgdLow6Ow"
+    },
+    {
+      "duration": "59:25",
+      "ingested": false,
+      "listingMetadata": "244K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Turned $42,000 to $107,351 in 3 Days Trading Forex, but...",
+      "url": "https://www.youtube.com/watch?v=qGNeo8RvV50",
+      "videoId": "qGNeo8RvV50"
+    },
+    {
+      "duration": "1:03:04",
+      "ingested": false,
+      "listingMetadata": "250K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Tried to Turn $90,000 Into $200,000 in 7 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=f0Us3YBL1tg",
+      "videoId": "f0Us3YBL1tg"
+    },
+    {
+      "duration": "1:13:13",
+      "ingested": false,
+      "listingMetadata": "246K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Turned $20,000 Into $90,278 in 7 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=yGkd32dirJ8",
+      "videoId": "yGkd32dirJ8"
+    },
+    {
+      "duration": "46:23",
+      "ingested": false,
+      "listingMetadata": "425K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Tried to Turn $100 Into $40,000 in 49 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=hiad0PbI47o",
+      "videoId": "hiad0PbI47o"
+    },
+    {
+      "duration": "52:52",
+      "ingested": false,
+      "listingMetadata": "235K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Turned $100 Into $22,696 in 6 Weeks Trading Forex",
+      "url": "https://www.youtube.com/watch?v=JiEJMpdraG4",
+      "videoId": "JiEJMpdraG4"
+    },
+    {
+      "duration": "1:16:23",
+      "ingested": false,
+      "listingMetadata": "311K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Tried to Turn $100 Into $1,000,000 in 37 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=oJvao6Ca4aA",
+      "videoId": "oJvao6Ca4aA"
+    },
+    {
+      "duration": "1:12:58",
+      "ingested": false,
+      "listingMetadata": "339K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Tried to Turn $100 into $30,000 in 30 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=iFs8BmHYnks",
+      "videoId": "iFs8BmHYnks"
+    },
+    {
+      "duration": "1:14:08",
+      "ingested": false,
+      "listingMetadata": "475K views | 1 year ago",
+      "sourceId": null,
+      "title": "I Tried to Flip $100 Into $6,000 in 21 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=ILJ5_ZbB5r0",
+      "videoId": "ILJ5_ZbB5r0"
+    },
+    {
+      "duration": "52:59",
+      "ingested": false,
+      "listingMetadata": "540K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $100 Into $3,074 in 14 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=njvjjOgiLKo",
+      "videoId": "njvjjOgiLKo"
+    },
+    {
+      "duration": "46:26",
+      "ingested": false,
+      "listingMetadata": "665K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Tried to turn $100 Into $200 in a Week Trading Forex",
+      "url": "https://www.youtube.com/watch?v=f-7_8hmb0M0",
+      "videoId": "f-7_8hmb0M0"
+    },
+    {
+      "duration": "12:54",
+      "ingested": false,
+      "listingMetadata": "382K views | 2 years ago",
+      "sourceId": null,
+      "title": "I'm going to turn $100 into a $1,000,000",
+      "url": "https://www.youtube.com/watch?v=b80QhvUHHoU",
+      "videoId": "b80QhvUHHoU"
+    },
+    {
+      "duration": "20:32",
+      "ingested": false,
+      "listingMetadata": "430K views | 2 years ago",
+      "sourceId": null,
+      "title": "A Week In The Life of a Millionaire Forex Trader In Cape Town",
+      "url": "https://www.youtube.com/watch?v=cOml55gLPl0",
+      "videoId": "cOml55gLPl0"
+    },
+    {
+      "duration": "16:36",
+      "ingested": false,
+      "listingMetadata": "236K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Just Made $120,000 in 48h With This Forex Trade",
+      "url": "https://www.youtube.com/watch?v=mBFVeLagITA",
+      "videoId": "mBFVeLagITA"
+    },
+    {
+      "duration": "14:14",
+      "ingested": false,
+      "listingMetadata": "927K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Grow Small Forex Trading Account with Very Little Money in 2025",
+      "url": "https://www.youtube.com/watch?v=QU65j9eQobc",
+      "videoId": "QU65j9eQobc"
+    },
+    {
+      "duration": "17:15",
+      "ingested": false,
+      "listingMetadata": "366K views | 2 years ago",
+      "sourceId": null,
+      "title": "Forex Trading Paid For This $15,000,000 Mansion at 23 Years Old",
+      "url": "https://www.youtube.com/watch?v=sIeOLHTFET0",
+      "videoId": "sIeOLHTFET0"
+    },
+    {
+      "duration": "27:30",
+      "ingested": false,
+      "listingMetadata": "1.4M views | 2 years ago",
+      "sourceId": null,
+      "title": "The Best Top Down Analysis Strategy for 2025 | Forex Trading Guide",
+      "url": "https://www.youtube.com/watch?v=FmKJDOSUAUY",
+      "videoId": "FmKJDOSUAUY"
+    },
+    {
+      "duration": "31:20",
+      "ingested": false,
+      "listingMetadata": "147K views | 2 years ago",
+      "sourceId": null,
+      "title": "Trading Forex is a Video Game (Here's How to Win)",
+      "url": "https://www.youtube.com/watch?v=tQ7pUImfYlY",
+      "videoId": "tQ7pUImfYlY"
+    },
+    {
+      "duration": "48:12",
+      "ingested": false,
+      "listingMetadata": "920K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Do Technical Analysis for Beginners in 2025 | Forex Trading Course",
+      "url": "https://www.youtube.com/watch?v=lNPRb2GPOwI",
+      "videoId": "lNPRb2GPOwI"
+    },
+    {
+      "duration": "51:24",
+      "ingested": false,
+      "listingMetadata": "372K views | 2 years ago",
+      "sourceId": null,
+      "title": "Forex Trading Bought Me a $2.3 Million Car Collection",
+      "url": "https://www.youtube.com/watch?v=ah_0uzLr5yo",
+      "videoId": "ah_0uzLr5yo"
+    },
+    {
+      "duration": "19:18",
+      "ingested": false,
+      "listingMetadata": "165K views | 2 years ago",
+      "sourceId": null,
+      "title": "Revealing How I Made $2,800,000 With Trading Forex in 2025",
+      "url": "https://www.youtube.com/watch?v=oC-nXDUMkTw",
+      "videoId": "oC-nXDUMkTw"
+    },
+    {
+      "duration": "28:27",
+      "ingested": false,
+      "listingMetadata": "430K views | 2 years ago",
+      "sourceId": null,
+      "title": "How To Start SWING TRADING as Beginner in 2025 | Full Guide Step by Step",
+      "url": "https://www.youtube.com/watch?v=bYROdw0xJdc",
+      "videoId": "bYROdw0xJdc"
+    },
+    {
+      "duration": "24:53",
+      "ingested": false,
+      "listingMetadata": "427K views | 2 years ago",
+      "sourceId": null,
+      "title": "I made $346,000 in 1 trade to prove it’s not luck (full breakdown)",
+      "url": "https://www.youtube.com/watch?v=phphBbRex1M",
+      "videoId": "phphBbRex1M"
+    },
+    {
+      "duration": "31:05",
+      "ingested": false,
+      "listingMetadata": "147K views | 2 years ago",
+      "sourceId": null,
+      "title": "How I make millions with forex trading so you can just copy me",
+      "url": "https://www.youtube.com/watch?v=YjMH8zaqkkA",
+      "videoId": "YjMH8zaqkkA"
+    },
+    {
+      "duration": "18:16",
+      "ingested": false,
+      "listingMetadata": "327K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Become Profitable at Trading so Fast it Feels Illegal",
+      "url": "https://www.youtube.com/watch?v=-fJ3X8xSXL4",
+      "videoId": "-fJ3X8xSXL4"
+    },
+    {
+      "duration": "17:28",
+      "ingested": false,
+      "listingMetadata": "304K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Grow a SMALL Forex Account in Less than a Week",
+      "url": "https://www.youtube.com/watch?v=H4BUyvFYcgc",
+      "videoId": "H4BUyvFYcgc"
+    },
+    {
+      "duration": "11:26",
+      "ingested": false,
+      "listingMetadata": "267K views | 2 years ago",
+      "sourceId": null,
+      "title": "This Trading Strategy Made Me $54,000 In Just 24 Hours",
+      "url": "https://www.youtube.com/watch?v=bx4pIv4Wtck",
+      "videoId": "bx4pIv4Wtck"
+    },
+    {
+      "duration": "9:08",
+      "ingested": false,
+      "listingMetadata": "104K views | 2 years ago",
+      "sourceId": null,
+      "title": "Trading was Hard Until I Understood This 4 Concepts",
+      "url": "https://www.youtube.com/watch?v=XGfP3v5KOyY",
+      "videoId": "XGfP3v5KOyY"
+    },
+    {
+      "duration": "32:50",
+      "ingested": false,
+      "listingMetadata": "473K views | 2 years ago",
+      "sourceId": null,
+      "title": "EVERY Candlestick Pattern YOU Need to Know to Trade Forex",
+      "url": "https://www.youtube.com/watch?v=kLLMCoPb6h0",
+      "videoId": "kLLMCoPb6h0"
+    },
+    {
+      "duration": "8:47",
+      "ingested": false,
+      "listingMetadata": "89K views | 2 years ago",
+      "sourceId": null,
+      "title": "How I made $100,000 in 8 hours Trading Forex (copy me)",
+      "url": "https://www.youtube.com/watch?v=apR0C9pLDgg",
+      "videoId": "apR0C9pLDgg"
+    },
+    {
+      "duration": "26:07",
+      "ingested": false,
+      "listingMetadata": "790K views | 2 years ago",
+      "sourceId": null,
+      "title": "24h In The Life of a Millionaire Forex Trader",
+      "url": "https://www.youtube.com/watch?v=63v9VXxyjUw",
+      "videoId": "63v9VXxyjUw"
+    },
+    {
+      "duration": "17:45",
+      "ingested": false,
+      "listingMetadata": "72K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Spend a Day with the Student that Made $110,000 Trading Forex",
+      "url": "https://www.youtube.com/watch?v=cjJB9uGmuuk",
+      "videoId": "cjJB9uGmuuk"
+    },
+    {
+      "duration": "12:06",
+      "ingested": false,
+      "listingMetadata": "263K views | 2 years ago",
+      "sourceId": null,
+      "title": "How I Streaked The Super Bowl in 2024",
+      "url": "https://www.youtube.com/watch?v=f7R-V1I1reQ",
+      "videoId": "f7R-V1I1reQ"
+    },
+    {
+      "duration": "16:53",
+      "ingested": false,
+      "listingMetadata": "68K views | 2 years ago",
+      "sourceId": null,
+      "title": "My 2025 Goals List: $10M, Private Jet, Philanthropy...",
+      "url": "https://www.youtube.com/watch?v=4Fb9aVn_gXo",
+      "videoId": "4Fb9aVn_gXo"
+    },
+    {
+      "duration": "13:00",
+      "ingested": false,
+      "listingMetadata": "280K views | 2 years ago",
+      "sourceId": null,
+      "title": "How this Trading Strategy Made Me $70,000 in 1 Day | Head And Shoulders Pattern",
+      "url": "https://www.youtube.com/watch?v=JA4N8nlycXY",
+      "videoId": "JA4N8nlycXY"
+    },
+    {
+      "duration": "11:10",
+      "ingested": true,
+      "listingMetadata": "208K views | 2 years ago",
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "title": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "url": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+      "videoId": "kg-rOo9_xjU"
+    },
+    {
+      "duration": "12:38",
+      "ingested": true,
+      "listingMetadata": "343K views | 2 years ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|005",
+      "title": "Best Risk Management Strategy to Make Millions with Trading",
+      "url": "https://www.youtube.com/watch?v=VzMlFZbWA0Y",
+      "videoId": "VzMlFZbWA0Y"
+    },
+    {
+      "duration": "19:46",
+      "ingested": false,
+      "listingMetadata": "297K views | 2 years ago",
+      "sourceId": null,
+      "title": "Easiest Forex Trading Strategy to be Profitable in 2025 | Shift of Structure",
+      "url": "https://www.youtube.com/watch?v=X0Ua4XeA2Xo",
+      "videoId": "X0Ua4XeA2Xo"
+    },
+    {
+      "duration": "11:13",
+      "ingested": false,
+      "listingMetadata": "118K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $1,100 Into $17,000 in 1 Month Trading Forex",
+      "url": "https://www.youtube.com/watch?v=7otxB9VIiDs",
+      "videoId": "7otxB9VIiDs"
+    },
+    {
+      "duration": "14:29",
+      "ingested": false,
+      "listingMetadata": "278K views | 2 years ago",
+      "sourceId": null,
+      "title": "The Ultimate Guide to Price Action Trading Strategy For Begginers",
+      "url": "https://www.youtube.com/watch?v=SvJ1ZmZKfc0",
+      "videoId": "SvJ1ZmZKfc0"
+    },
+    {
+      "duration": "11:07",
+      "ingested": false,
+      "listingMetadata": "219K views | 2 years ago",
+      "sourceId": null,
+      "title": "Worst TRADING MISTAKES And How To Fix Them",
+      "url": "https://www.youtube.com/watch?v=vjlttwZOBMo",
+      "videoId": "vjlttwZOBMo"
+    },
+    {
+      "duration": "16:58",
+      "ingested": false,
+      "listingMetadata": "59K views | 2 years ago",
+      "sourceId": null,
+      "title": "Why I haven't taken a trade in 30 Days...",
+      "url": "https://www.youtube.com/watch?v=KnZ03FjD-i0",
+      "videoId": "KnZ03FjD-i0"
+    },
+    {
+      "duration": "21:32",
+      "ingested": false,
+      "listingMetadata": "622K views | 2 years ago",
+      "sourceId": null,
+      "title": "Support & Resistance Trading Strategy Was Hard, Until I Understood This",
+      "url": "https://www.youtube.com/watch?v=7KedELXv68I",
+      "videoId": "7KedELXv68I"
+    },
+    {
+      "duration": "15:36",
+      "ingested": false,
+      "listingMetadata": "226K views | 2 years ago",
+      "sourceId": null,
+      "title": "How I Would Become a Profitable Trader Earlier (If I Could Start Over)",
+      "url": "https://www.youtube.com/watch?v=Yv04PBna-Dk",
+      "videoId": "Yv04PBna-Dk"
+    },
+    {
+      "duration": "21:43",
+      "ingested": false,
+      "listingMetadata": "269K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Make $250 a Day With Day Trading AS A BEGINNER",
+      "url": "https://www.youtube.com/watch?v=Vjda5pI5vKQ",
+      "videoId": "Vjda5pI5vKQ"
+    },
+    {
+      "duration": "55:27",
+      "ingested": false,
+      "listingMetadata": "596K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Start Day Trading for Beginners in 2025 | Free Course",
+      "url": "https://www.youtube.com/watch?v=NFb0rX2LOp0",
+      "videoId": "NFb0rX2LOp0"
+    },
+    {
+      "duration": "11:01",
+      "ingested": false,
+      "listingMetadata": "93K views | 2 years ago",
+      "sourceId": null,
+      "title": "How I Turned $1,111 into $3,461 in 7 Days Forex Trading",
+      "url": "https://www.youtube.com/watch?v=XJ6lNP_Ihkg",
+      "videoId": "XJ6lNP_Ihkg"
+    },
+    {
+      "duration": "18:11",
+      "ingested": false,
+      "listingMetadata": "230K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Become a Profitable Trader in Less Than 30 Days",
+      "url": "https://www.youtube.com/watch?v=WjsSd5Owf9A",
+      "videoId": "WjsSd5Owf9A"
+    },
+    {
+      "duration": "15:35",
+      "ingested": false,
+      "listingMetadata": "98K views | 2 years ago",
+      "sourceId": null,
+      "title": "My newest challenge turning $1 into ...",
+      "url": "https://www.youtube.com/watch?v=1ufBfxizmds",
+      "videoId": "1ufBfxizmds"
+    },
+    {
+      "duration": "46:06",
+      "ingested": false,
+      "listingMetadata": "2M views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Start Forex Trading for Beginners Step by Step in 2025 | Full Guide",
+      "url": "https://www.youtube.com/watch?v=4NBUlfnETBY",
+      "videoId": "4NBUlfnETBY"
+    },
+    {
+      "duration": "7:45",
+      "ingested": false,
+      "listingMetadata": "136K views | 2 years ago",
+      "sourceId": null,
+      "title": "How to Use the News to Make Money Trading Forex | Fundamental Analysis",
+      "url": "https://www.youtube.com/watch?v=x7Ki7QV7USU",
+      "videoId": "x7Ki7QV7USU"
+    },
+    {
+      "duration": "9:43",
+      "ingested": false,
+      "listingMetadata": "290K views | 2 years ago",
+      "sourceId": null,
+      "title": "Starting in Trading is Hard, Until You Watch this Video",
+      "url": "https://www.youtube.com/watch?v=iKKyxN9IIKg",
+      "videoId": "iKKyxN9IIKg"
+    },
+    {
+      "duration": "34:06",
+      "ingested": false,
+      "listingMetadata": "136K views | 2 years ago",
+      "sourceId": null,
+      "title": "The Truth Behind The $100 to $1,000,000 Challenge",
+      "url": "https://www.youtube.com/watch?v=DZ9l_dpmbyM",
+      "videoId": "DZ9l_dpmbyM"
+    },
+    {
+      "duration": "24:37",
+      "ingested": false,
+      "listingMetadata": "136K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Tried to Flip $250,000 into 1M in One Week Trading Forex",
+      "url": "https://www.youtube.com/watch?v=kb3t0xHbpGQ",
+      "videoId": "kb3t0xHbpGQ"
+    },
+    {
+      "duration": "45:43",
+      "ingested": false,
+      "listingMetadata": "166K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Tried to Turn $300,000 into $600,000 in Just a Week Trading Forex",
+      "url": "https://www.youtube.com/watch?v=HmlA-Ro_k9k",
+      "videoId": "HmlA-Ro_k9k"
+    },
+    {
+      "duration": "40:18",
+      "ingested": false,
+      "listingMetadata": "189K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Tried to Turn $130,000 into $260,000 in a Week of Trading",
+      "url": "https://www.youtube.com/watch?v=7dcJ2WZYDDQ",
+      "videoId": "7dcJ2WZYDDQ"
+    },
+    {
+      "duration": "8:57",
+      "ingested": false,
+      "listingMetadata": "286K views | 2 years ago",
+      "sourceId": null,
+      "title": "6 Reversal Candlestick Patterns You Need To Know Before Starting Trading",
+      "url": "https://www.youtube.com/watch?v=ibgnOrk9MLo",
+      "videoId": "ibgnOrk9MLo"
+    },
+    {
+      "duration": "33:58",
+      "ingested": false,
+      "listingMetadata": "241K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Tried Flipping $100 into $180,000 in 2 Months",
+      "url": "https://www.youtube.com/watch?v=7kOPNrRw0jM",
+      "videoId": "7kOPNrRw0jM"
+    },
+    {
+      "duration": "30:06",
+      "ingested": false,
+      "listingMetadata": "178K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $100 into $78,486 in 6 Weeks",
+      "url": "https://www.youtube.com/watch?v=EzABRvWTIBo",
+      "videoId": "EzABRvWTIBo"
+    },
+    {
+      "duration": "6:28",
+      "ingested": false,
+      "listingMetadata": "283K views | 2 years ago",
+      "sourceId": null,
+      "title": "How I Do Forex Technical Analysis (For BEGINNERS)",
+      "url": "https://www.youtube.com/watch?v=vtuW1XIgixI",
+      "videoId": "vtuW1XIgixI"
+    },
+    {
+      "duration": "42:15",
+      "ingested": false,
+      "listingMetadata": "189K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Made $46,205 From $100 in Less Than 40 Days",
+      "url": "https://www.youtube.com/watch?v=DqI1BpWtf7c",
+      "videoId": "DqI1BpWtf7c"
+    },
+    {
+      "duration": "44:36",
+      "ingested": false,
+      "listingMetadata": "223K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $100 into $19,806 in Less Than 30 Days",
+      "url": "https://www.youtube.com/watch?v=OyfI83yU0KM",
+      "videoId": "OyfI83yU0KM"
+    },
+    {
+      "duration": "38:19",
+      "ingested": false,
+      "listingMetadata": "293K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $100 into $7,106 in ONLY 21 Days Trading Forex",
+      "url": "https://www.youtube.com/watch?v=uOtKqV9HQss",
+      "videoId": "uOtKqV9HQss"
+    },
+    {
+      "duration": "39:44",
+      "ingested": false,
+      "listingMetadata": "283K views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $100 in $4,160 in 14 Days with Trading",
+      "url": "https://www.youtube.com/watch?v=okx_3_Uxht0",
+      "videoId": "okx_3_Uxht0"
+    },
+    {
+      "duration": "47:56",
+      "ingested": false,
+      "listingMetadata": "1M views | 2 years ago",
+      "sourceId": null,
+      "title": "I Turned $100 Into $2,737 in a Week Trading Forex",
+      "url": "https://www.youtube.com/watch?v=M8OcMuD_eEQ",
+      "videoId": "M8OcMuD_eEQ"
+    },
+    {
+      "duration": "26:40",
+      "ingested": false,
+      "listingMetadata": "346K views | 2 years ago",
+      "sourceId": null,
+      "title": "I'm Going to Turn $100 to $1,000,000 with Forex Trading",
+      "url": "https://www.youtube.com/watch?v=dVCbyu6kDm0",
+      "videoId": "dVCbyu6kDm0"
+    },
+    {
+      "duration": "1:07",
+      "ingested": false,
+      "listingMetadata": "102K views | 3 years ago",
+      "sourceId": null,
+      "title": "I Will Turn $100 Into $1,000,000 in Under 60 Days",
+      "url": "https://www.youtube.com/watch?v=_MB8eXLyV2Q",
+      "videoId": "_MB8eXLyV2Q"
+    },
+    {
+      "duration": "10:59",
+      "ingested": false,
+      "listingMetadata": "533K views | 3 years ago",
+      "sourceId": null,
+      "title": "The Story of How I Made My First $1,000,000",
+      "url": "https://www.youtube.com/watch?v=_mYKZ0Il0ZI",
+      "videoId": "_mYKZ0Il0ZI"
+    },
+    {
+      "duration": "27:28",
+      "ingested": false,
+      "listingMetadata": "1.9M views | 3 years ago",
+      "sourceId": null,
+      "title": "How To Trade Forex For Beginners in 2025 | Full Tutorial",
+      "url": "https://www.youtube.com/watch?v=Y6xyQRDbJvU",
+      "videoId": "Y6xyQRDbJvU"
+    },
+    {
+      "duration": "17:48",
+      "ingested": false,
+      "listingMetadata": "1.2M views | 3 years ago",
+      "sourceId": null,
+      "title": "The Only Trading Strategy You Need To Be Profitable | Swing Trading",
+      "url": "https://www.youtube.com/watch?v=HYCdwPCLc8U",
+      "videoId": "HYCdwPCLc8U"
+    },
+    {
+      "duration": "38:41",
+      "ingested": false,
+      "listingMetadata": "212K views | 3 years ago",
+      "sourceId": null,
+      "title": "How To Learn The Most Profitable Skill Ever",
+      "url": "https://www.youtube.com/watch?v=gbzqdgoCA98",
+      "videoId": "gbzqdgoCA98"
+    },
+    {
+      "duration": "13:47",
+      "ingested": false,
+      "listingMetadata": "32K views | 3 years ago",
+      "sourceId": null,
+      "title": "22 Years Old Forex Millionaire Gives Away His Lamborghini",
+      "url": "https://www.youtube.com/watch?v=ia8dP44BnFI",
+      "videoId": "ia8dP44BnFI"
+    },
+    {
+      "duration": "10:54",
+      "ingested": false,
+      "listingMetadata": "87K views | 3 years ago",
+      "sourceId": null,
+      "title": "How I Make $2,280,000/Year At Age 22",
+      "url": "https://www.youtube.com/watch?v=jU_1mBDh_sc",
+      "videoId": "jU_1mBDh_sc"
+    },
+    {
+      "duration": "14:52",
+      "ingested": false,
+      "listingMetadata": "108K views | 3 years ago",
+      "sourceId": null,
+      "title": "How I Made $110,000 Trading Forex in Just 24 Hours",
+      "url": "https://www.youtube.com/watch?v=KNFmPcFqPn8",
+      "videoId": "KNFmPcFqPn8"
+    },
+    {
+      "duration": "12:35",
+      "ingested": false,
+      "listingMetadata": "49K views | 3 years ago",
+      "sourceId": null,
+      "title": "Master the Millionaire Mindset for 2025 Success",
+      "url": "https://www.youtube.com/watch?v=gOyS4aQ8j-U",
+      "videoId": "gOyS4aQ8j-U"
+    },
+    {
+      "duration": "11:58",
+      "ingested": false,
+      "listingMetadata": "34K views | 3 years ago",
+      "sourceId": null,
+      "title": "Millionaire TRADER is Giving Away his LAMBORGHINI",
+      "url": "https://www.youtube.com/watch?v=c8iof-3bU10",
+      "videoId": "c8iof-3bU10"
+    },
+    {
+      "duration": "24:33",
+      "ingested": false,
+      "listingMetadata": "83K views | 3 years ago",
+      "sourceId": null,
+      "title": "Forex TRADER VS Guru WINNER Takes $20,000 Pt. 2",
+      "url": "https://www.youtube.com/watch?v=iNfYt0eIoqI",
+      "videoId": "iNfYt0eIoqI"
+    },
+    {
+      "duration": "9:43",
+      "ingested": false,
+      "listingMetadata": "132K views | 3 years ago",
+      "sourceId": null,
+      "title": "BEST Forex Strategy To NEVER Lose Streaks AGAIN",
+      "url": "https://www.youtube.com/watch?v=o1T6dLoywTw",
+      "videoId": "o1T6dLoywTw"
+    },
+    {
+      "duration": "13:25",
+      "ingested": false,
+      "listingMetadata": "114K views | 3 years ago",
+      "sourceId": null,
+      "title": "Forex GURU VS His STUDENT! ($10,000 Forex Challenge)",
+      "url": "https://www.youtube.com/watch?v=Vg7iYXDR0Do",
+      "videoId": "Vg7iYXDR0Do"
+    },
+    {
+      "duration": "11:11",
+      "ingested": false,
+      "listingMetadata": "157K views | 3 years ago",
+      "sourceId": null,
+      "title": "From DUNKIN Donuts To MILLIONAIRE TRADER (My Story)",
+      "url": "https://www.youtube.com/watch?v=DpC9A20ZrkU",
+      "videoId": "DpC9A20ZrkU"
+    },
+    {
+      "duration": "6:50",
+      "ingested": false,
+      "listingMetadata": "44K views | 3 years ago",
+      "sourceId": null,
+      "title": "Making $50,000 Trading forex on Vacation",
+      "url": "https://www.youtube.com/watch?v=W0KdS8Kcv-g",
+      "videoId": "W0KdS8Kcv-g"
+    },
+    {
+      "duration": "11:12",
+      "ingested": false,
+      "listingMetadata": "86K views | 3 years ago",
+      "sourceId": null,
+      "title": "How To RECOVER From A Forex DRAWDOWN (The Fast Way)",
+      "url": "https://www.youtube.com/watch?v=toCzE2VLrQE",
+      "videoId": "toCzE2VLrQE"
+    },
+    {
+      "duration": "12:16",
+      "ingested": false,
+      "listingMetadata": "323K views | 3 years ago",
+      "sourceId": null,
+      "title": "TRADING FOREX Bought Me A $2,000,000 House At 22 Years Old",
+      "url": "https://www.youtube.com/watch?v=WlGy0TLuSSs",
+      "videoId": "WlGy0TLuSSs"
+    },
+    {
+      "duration": "8:42",
+      "ingested": false,
+      "listingMetadata": "24K views | 3 years ago",
+      "sourceId": null,
+      "title": "Giving away $100,000 Forex Profits in DR FT. graham stephan",
+      "url": "https://www.youtube.com/watch?v=rlmN6sOPUr0",
+      "videoId": "rlmN6sOPUr0"
+    },
+    {
+      "duration": "9:16",
+      "ingested": true,
+      "listingMetadata": "245K views | 3 years ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|003",
+      "title": "Learn How THIS Forex AOI SECRET Bought Me A $200,000 Watch",
+      "url": "https://www.youtube.com/watch?v=urX1iWvHc5g",
+      "videoId": "urX1iWvHc5g"
+    },
+    {
+      "duration": "9:43",
+      "ingested": false,
+      "listingMetadata": "111K views | 3 years ago",
+      "sourceId": null,
+      "title": "HOW This Trading Strategy Made Me $60,000 In 30 Seconds!!",
+      "url": "https://www.youtube.com/watch?v=pFcOnuksC4Y",
+      "videoId": "pFcOnuksC4Y"
+    },
+    {
+      "duration": "14:43",
+      "ingested": false,
+      "listingMetadata": "78K views | 3 years ago",
+      "sourceId": null,
+      "title": "Forex Student Makes $10,000 & Takes My Lamborghini FT. Nelkboys",
+      "url": "https://www.youtube.com/watch?v=VljTH-yqQow",
+      "videoId": "VljTH-yqQow"
+    },
+    {
+      "duration": "30:43",
+      "ingested": false,
+      "listingMetadata": "150K views | 3 years ago",
+      "sourceId": null,
+      "title": "This Ex-Factory Worker Now Makes Money Trading Full-Time",
+      "url": "https://www.youtube.com/watch?v=xQDOeXy7Fgg",
+      "videoId": "xQDOeXy7Fgg"
+    },
+    {
+      "duration": "32:07",
+      "ingested": false,
+      "listingMetadata": "172K views | 3 years ago",
+      "sourceId": null,
+      "title": "Teaching a McDonald's employee how to TRADE FOREX PT.2",
+      "url": "https://www.youtube.com/watch?v=rQGKjTc5zoc",
+      "videoId": "rQGKjTc5zoc"
+    },
+    {
+      "duration": "15:09",
+      "ingested": false,
+      "listingMetadata": "70K views | 3 years ago",
+      "sourceId": null,
+      "title": "How to Win at Forex Trading (Psychological Fundamentals)",
+      "url": "https://www.youtube.com/watch?v=MrJKB4DQgOo",
+      "videoId": "MrJKB4DQgOo"
+    },
+    {
+      "duration": "22:51",
+      "ingested": false,
+      "listingMetadata": "378K views | 3 years ago",
+      "sourceId": null,
+      "title": "I Helped a McDonald's Employee to Become a Profitable Trader",
+      "url": "https://www.youtube.com/watch?v=Z4BQm4Yx0cM",
+      "videoId": "Z4BQm4Yx0cM"
+    },
+    {
+      "duration": "49:37",
+      "ingested": false,
+      "listingMetadata": "269K views | 3 years ago",
+      "sourceId": null,
+      "title": "RajaBanks - What It Takes To Make It In Forex",
+      "url": "https://www.youtube.com/watch?v=D0oVtdqhWH8",
+      "videoId": "D0oVtdqhWH8"
+    },
+    {
+      "duration": "14:43",
+      "ingested": false,
+      "listingMetadata": "99K views | 3 years ago",
+      "sourceId": null,
+      "title": "This Strategy Made Me $100,000 TRADING FOREX",
+      "url": "https://www.youtube.com/watch?v=WvDg8jILTok",
+      "videoId": "WvDg8jILTok"
+    },
+    {
+      "duration": "33:35",
+      "ingested": false,
+      "listingMetadata": "57K views | 3 years ago",
+      "sourceId": null,
+      "title": "This Student Used Our Strategy to Make $50K+ in Payouts",
+      "url": "https://www.youtube.com/watch?v=Nf1MCSw9AdM",
+      "videoId": "Nf1MCSw9AdM"
+    },
+    {
+      "duration": "15:23",
+      "ingested": false,
+      "listingMetadata": "549K views | 3 years ago",
+      "sourceId": null,
+      "title": "Day In The Life of MIAMI FOREX Millionaire Trader",
+      "url": "https://www.youtube.com/watch?v=Uf7Wm1hhuJo",
+      "videoId": "Uf7Wm1hhuJo"
+    },
+    {
+      "duration": "15:07",
+      "ingested": false,
+      "listingMetadata": "34K views | 3 years ago",
+      "sourceId": null,
+      "title": "7 Most Frequently Struggles & Barriers On FOREX (PROCRASTINATION)",
+      "url": "https://www.youtube.com/watch?v=YbnlGA1nTb4",
+      "videoId": "YbnlGA1nTb4"
+    },
+    {
+      "duration": "38:51",
+      "ingested": false,
+      "listingMetadata": "29K views | 4 years ago",
+      "sourceId": null,
+      "title": "QB Stew Making $100,000 in 1 Day & Smoking Weed in professional football game",
+      "url": "https://www.youtube.com/watch?v=RxCwQusClKE",
+      "videoId": "RxCwQusClKE"
+    },
+    {
+      "duration": "11:08",
+      "ingested": false,
+      "listingMetadata": "248K views | 4 years ago",
+      "sourceId": null,
+      "title": "The BEST SWING TRADING Strategy (For Beginners)",
+      "url": "https://www.youtube.com/watch?v=_KSjBauVHT8",
+      "videoId": "_KSjBauVHT8"
+    },
+    {
+      "duration": "15:03",
+      "ingested": true,
+      "listingMetadata": "44K views | 4 years ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|007",
+      "title": "The best FOREX MONEY MINDSET psychology video PT 2",
+      "url": "https://www.youtube.com/watch?v=lcfyxUtYVSk",
+      "videoId": "lcfyxUtYVSk"
+    },
+    {
+      "duration": "12:59",
+      "ingested": false,
+      "listingMetadata": "81K views | 4 years ago",
+      "sourceId": null,
+      "title": "How to Trade GBPJPY with EMA. Pt. 2",
+      "url": "https://www.youtube.com/watch?v=P4pHJaDGkHU",
+      "videoId": "P4pHJaDGkHU"
+    },
+    {
+      "duration": "13:20",
+      "ingested": false,
+      "listingMetadata": "42K views | 4 years ago",
+      "sourceId": null,
+      "title": "Golden Ticket to becoming a FULL TIME  profitable trader , FOMO , FEAR EP 19",
+      "url": "https://www.youtube.com/watch?v=yPi6xWI-kuE",
+      "videoId": "yPi6xWI-kuE"
+    },
+    {
+      "duration": "4:29",
+      "ingested": false,
+      "listingMetadata": "146K views | 4 years ago",
+      "sourceId": null,
+      "title": "MT4 vs MT5 Which One Is BETTER?",
+      "url": "https://www.youtube.com/watch?v=eqBrwOZf904",
+      "videoId": "eqBrwOZf904"
+    },
+    {
+      "duration": "57:18",
+      "ingested": false,
+      "listingMetadata": "157K views | 4 years ago",
+      "sourceId": null,
+      "title": "How Swaggy C Went From Homeless to Owning a $10M House",
+      "url": "https://www.youtube.com/watch?v=XUc0hMGF0JY",
+      "videoId": "XUc0hMGF0JY"
+    },
+    {
+      "duration": "14:38",
+      "ingested": false,
+      "listingMetadata": "15K views | 4 years ago",
+      "sourceId": null,
+      "title": "I Predicted the Bitcoin Drop Before It Happened (Here's How)",
+      "url": "https://www.youtube.com/watch?v=tyw7MoLTL58",
+      "videoId": "tyw7MoLTL58"
+    },
+    {
+      "duration": "31:15",
+      "ingested": false,
+      "listingMetadata": "54K views | 4 years ago",
+      "sourceId": null,
+      "title": "Student QUITS Construction Job Turns FULLTIME Trader ($1500 To $7000 In 2 days)",
+      "url": "https://www.youtube.com/watch?v=LxUbtGZ1Z3U",
+      "videoId": "LxUbtGZ1Z3U"
+    },
+    {
+      "duration": "17:35",
+      "ingested": false,
+      "listingMetadata": "185K views | 4 years ago",
+      "sourceId": null,
+      "title": "How I Turned $102 To $3000 LIVE TRADING FOREX (STRATEGY EXPOSED!)",
+      "url": "https://www.youtube.com/watch?v=P3XoDm0wswc",
+      "videoId": "P3XoDm0wswc"
+    },
+    {
+      "duration": "30:19",
+      "ingested": false,
+      "listingMetadata": "18K views | 4 years ago",
+      "sourceId": null,
+      "title": "From Getting FIRED By Grant Cardone To Investing $1,000,000! - Cody",
+      "url": "https://www.youtube.com/watch?v=mK5CBCUMRq0",
+      "videoId": "mK5CBCUMRq0"
+    },
+    {
+      "duration": "10:05",
+      "ingested": false,
+      "listingMetadata": "250K views | 4 years ago",
+      "sourceId": null,
+      "title": "Watch Me Turn $100 Into $3,000 (Live Strategy Breakdown)",
+      "url": "https://www.youtube.com/watch?v=Z7G52M9_nhM",
+      "videoId": "Z7G52M9_nhM"
+    },
+    {
+      "duration": "51:34",
+      "ingested": false,
+      "listingMetadata": "15K views | 4 years ago",
+      "sourceId": null,
+      "title": "Time Piece Trading CRASHES Podcast with BILLIONAIRE Barber, $2 Million + in Watches!",
+      "url": "https://www.youtube.com/watch?v=QVnZMpp4TyE",
+      "videoId": "QVnZMpp4TyE"
+    },
+    {
+      "duration": "37:18",
+      "ingested": false,
+      "listingMetadata": "62K views | 4 years ago",
+      "sourceId": null,
+      "title": "Nour Trades from WALL STREET, to Full Time Options Day Trader!",
+      "url": "https://www.youtube.com/watch?v=nJ6dW2dkoIk",
+      "videoId": "nJ6dW2dkoIk"
+    },
+    {
+      "duration": "32:53",
+      "ingested": false,
+      "listingMetadata": "14K views | 4 years ago",
+      "sourceId": null,
+      "title": "Forex Attorney on selling his firm & partnering with Cuebanks",
+      "url": "https://www.youtube.com/watch?v=t-XYs6TIZ5w",
+      "videoId": "t-XYs6TIZ5w"
+    },
+    {
+      "duration": "10:07",
+      "ingested": false,
+      "listingMetadata": "133K views | 4 years ago",
+      "sourceId": null,
+      "title": "How to Trade FOREX with Moving Averages. Part 1",
+      "url": "https://www.youtube.com/watch?v=R24MdNFjAGU",
+      "videoId": "R24MdNFjAGU"
+    },
+    {
+      "duration": "47:11",
+      "ingested": false,
+      "listingMetadata": "225K views | 4 years ago",
+      "sourceId": null,
+      "title": "Secrets to success with MILLIONAIRE FOREX TRADER Cuebanks",
+      "url": "https://www.youtube.com/watch?v=7FQBCFxR4fE",
+      "videoId": "7FQBCFxR4fE"
+    },
+    {
+      "duration": "7:33",
+      "ingested": false,
+      "listingMetadata": "42K views | 4 years ago",
+      "sourceId": null,
+      "title": "My FOREX TRADING OFFICE Where I've Made $100,000+",
+      "url": "https://www.youtube.com/watch?v=8K-lJSmh2Vc",
+      "videoId": "8K-lJSmh2Vc"
+    },
+    {
+      "duration": "36:30",
+      "ingested": false,
+      "listingMetadata": "65K views | 4 years ago",
+      "sourceId": null,
+      "title": "She Quit the Miami Police to Trade Forex Full Time – Here’s Her Story",
+      "url": "https://www.youtube.com/watch?v=e_DBn5FOYs8",
+      "videoId": "e_DBn5FOYs8"
+    },
+    {
+      "duration": "32:30",
+      "ingested": false,
+      "listingMetadata": "36K views | 4 years ago",
+      "sourceId": null,
+      "title": "Interview with Top Student make 25% in 2 weeks Forex Swing Trader SETANDFORGET PODCAST",
+      "url": "https://www.youtube.com/watch?v=SucN5bnbnNo",
+      "videoId": "SucN5bnbnNo"
+    },
+    {
+      "duration": "47:12",
+      "ingested": false,
+      "listingMetadata": "87K views | 4 years ago",
+      "sourceId": null,
+      "title": "What James Storms Did After LOSING $400,000 When He Made $1.4 Million TRADING FOREX",
+      "url": "https://www.youtube.com/watch?v=xVy9chXFmM0",
+      "videoId": "xVy9chXFmM0"
+    },
+    {
+      "duration": "49:04",
+      "ingested": false,
+      "listingMetadata": "69K views | 4 years ago",
+      "sourceId": null,
+      "title": "Forex Trader spends $100,000+ on CLOTHES!! (SETANDFORGET) Podcast EP.4",
+      "url": "https://www.youtube.com/watch?v=bMZFcHYi714",
+      "videoId": "bMZFcHYi714"
+    },
+    {
+      "duration": "26:40",
+      "ingested": false,
+      "listingMetadata": "61K views | 4 years ago",
+      "sourceId": null,
+      "title": "DrewizeBanks on the MISTAKES Traders Make #setandforget Podcast EP3",
+      "url": "https://www.youtube.com/watch?v=IR9d8d1_Xoc",
+      "videoId": "IR9d8d1_Xoc"
+    },
+    {
+      "duration": "16:11",
+      "ingested": false,
+      "listingMetadata": "85K views | 4 years ago",
+      "sourceId": null,
+      "title": "GBPJPY Forex Trade That Made Me $25,000 (In ONE WEEK!)",
+      "url": "https://www.youtube.com/watch?v=gDou_3q55EY",
+      "videoId": "gDou_3q55EY"
+    },
+    {
+      "duration": "27:14",
+      "ingested": false,
+      "listingMetadata": "18K views | 4 years ago",
+      "sourceId": null,
+      "title": "NFTs Are Dying? Or Coming Back Stronger?",
+      "url": "https://www.youtube.com/watch?v=_S8pLFuReW4",
+      "videoId": "_S8pLFuReW4"
+    },
+    {
+      "duration": "8:32",
+      "ingested": false,
+      "listingMetadata": "31K views | 4 years ago",
+      "sourceId": null,
+      "title": "#setandforget PODCAST EP1 Making $100,000 Trading Mindset",
+      "url": "https://www.youtube.com/watch?v=oFQ9mJLPK8M",
+      "videoId": "oFQ9mJLPK8M"
+    },
+    {
+      "duration": "17:12",
+      "ingested": false,
+      "listingMetadata": "306K views | 4 years ago",
+      "sourceId": null,
+      "title": "How I Made $58K Trading in 60 Days – Full Strategy + Track Record",
+      "url": "https://www.youtube.com/watch?v=S5n1Jmhbydo",
+      "videoId": "S5n1Jmhbydo"
+    },
+    {
+      "duration": "12:22",
+      "ingested": false,
+      "listingMetadata": "30K views | 4 years ago",
+      "sourceId": null,
+      "title": "Live Forex Session With 965 Traders – Full Strategy Reveal (Pt. 1)",
+      "url": "https://www.youtube.com/watch?v=frXFCucMp6w",
+      "videoId": "frXFCucMp6w"
+    },
+    {
+      "duration": "10:30",
+      "ingested": false,
+      "listingMetadata": "66K views | 4 years ago",
+      "sourceId": null,
+      "title": "3 Things That Could’ve Saved My Forex Account",
+      "url": "https://www.youtube.com/watch?v=3aAWeVJ2qB8",
+      "videoId": "3aAWeVJ2qB8"
+    },
+    {
+      "duration": "13:14",
+      "ingested": false,
+      "listingMetadata": "56K views | 4 years ago",
+      "sourceId": null,
+      "title": "THIS Trade Cost Me $50,000 in Minutes",
+      "url": "https://www.youtube.com/watch?v=N4WKRGCRhwQ",
+      "videoId": "N4WKRGCRhwQ"
+    },
+    {
+      "duration": "12:28",
+      "ingested": false,
+      "listingMetadata": "82K views | 4 years ago",
+      "sourceId": null,
+      "title": "How I Made $60,000 TRADING FOREX IN 3 DAYS PART 2",
+      "url": "https://www.youtube.com/watch?v=g7EMYqCqqzU",
+      "videoId": "g7EMYqCqqzU"
+    },
+    {
+      "duration": "14:41",
+      "ingested": false,
+      "listingMetadata": "153K views | 4 years ago",
+      "sourceId": null,
+      "title": "How I Made $60,000 TRADING FOREX IN 3 DAYS pt.1",
+      "url": "https://www.youtube.com/watch?v=0P8ZLXv3Sx8",
+      "videoId": "0P8ZLXv3Sx8"
+    },
+    {
+      "duration": "6:12",
+      "ingested": false,
+      "listingMetadata": "19K views | 4 years ago",
+      "sourceId": null,
+      "title": "McLaren Drift Gone WILD – Doors Open Challenge",
+      "url": "https://www.youtube.com/watch?v=9kHH8RQM0Ls",
+      "videoId": "9kHH8RQM0Ls"
+    },
+    {
+      "duration": "9:20",
+      "ingested": false,
+      "listingMetadata": "53K views | 4 years ago",
+      "sourceId": null,
+      "title": "LIVE FOREX MARKET BREAKDOWN GBPUSD",
+      "url": "https://www.youtube.com/watch?v=lh5rKjSO7_w",
+      "videoId": "lh5rKjSO7_w"
+    },
+    {
+      "duration": "13:43",
+      "ingested": false,
+      "listingMetadata": "68K views | 4 years ago",
+      "sourceId": null,
+      "title": "How I Spot Forex Patterns That Print Money",
+      "url": "https://www.youtube.com/watch?v=4Lv_SzhdyhM",
+      "videoId": "4Lv_SzhdyhM"
+    },
+    {
+      "duration": "17:28",
+      "ingested": false,
+      "listingMetadata": "70K views | 5 years ago",
+      "sourceId": null,
+      "title": "When to BUY When to SELL Forex / Crypto Markets #vlog",
+      "url": "https://www.youtube.com/watch?v=gONIDK45QFc",
+      "videoId": "gONIDK45QFc"
+    },
+    {
+      "duration": "16:52",
+      "ingested": false,
+      "listingMetadata": "99K views | 5 years ago",
+      "sourceId": null,
+      "title": "Live Swing Trading Forex At Its SIMPLEST Market BREAKDOWN",
+      "url": "https://www.youtube.com/watch?v=Yn6Yltqnk9Q",
+      "videoId": "Yn6Yltqnk9Q"
+    },
+    {
+      "duration": "9:12",
+      "ingested": false,
+      "listingMetadata": "39K views | 5 years ago",
+      "sourceId": null,
+      "title": "Live Forex swing trade breakdown with the students  # Sunday Swings",
+      "url": "https://www.youtube.com/watch?v=c5PdraC8KkA",
+      "videoId": "c5PdraC8KkA"
+    },
+    {
+      "duration": "12:12",
+      "ingested": false,
+      "listingMetadata": "77K views | 5 years ago",
+      "sourceId": null,
+      "title": "Forex swing trading at its simplest LIVE with my telegram group",
+      "url": "https://www.youtube.com/watch?v=n30ztrFZ2zI",
+      "videoId": "n30ztrFZ2zI"
+    },
+    {
+      "duration": "5:50",
+      "ingested": false,
+      "listingMetadata": "165K views | 5 years ago",
+      "sourceId": null,
+      "title": "200k ftmo Challenge GBPUSD Swing Trade BREAKDOWN",
+      "url": "https://www.youtube.com/watch?v=6eAyc0rnvdQ",
+      "videoId": "6eAyc0rnvdQ"
+    },
+    {
+      "duration": "7:41",
+      "ingested": true,
+      "listingMetadata": "149K views | 5 years ago",
+      "sourceId": "EVSRC|ALEX_G|20260728|006",
+      "title": "Market break down learn and earn",
+      "url": "https://www.youtube.com/watch?v=1JMVE4Y5U7o",
+      "videoId": "1JMVE4Y5U7o"
+    }
+  ]
+}

@@ -1,0 +1,879 @@
+{
+  "approvalStatus": "NEEDS_REVIEW",
+  "derivedFromEducator": "ALEX_G",
+  "domainReports": [
+    {
+      "candidateRules": 0,
+      "claimsReviewed": 19,
+      "confidenceLevel": "NONE",
+      "contradictions": 0,
+      "coverageLevel": "CLAIMS_ONLY_NO_RULES",
+      "deterministicRules": 0,
+      "domain": "MARKET_CONDITIONS",
+      "missingSourceEvidence": [],
+      "normalizedRules": 0,
+      "rulesWithUnresolvedElements": 0,
+      "unresolvedClaims": 19
+    },
+    {
+      "candidateRules": 7,
+      "claimsReviewed": 7,
+      "confidenceLevel": "LOW",
+      "contradictions": 0,
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministicRules": 0,
+      "domain": "TIMEFRAMES",
+      "missingSourceEvidence": [
+        "7 of 7 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 7,
+      "rulesWithUnresolvedElements": 7,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 0,
+      "claimsReviewed": 0,
+      "confidenceLevel": "NONE",
+      "contradictions": 0,
+      "coverageLevel": "NONE",
+      "deterministicRules": 0,
+      "domain": "DIRECTIONAL_BIAS",
+      "missingSourceEvidence": [
+        "No educator claim in the library addresses this domain at all."
+      ],
+      "normalizedRules": 0,
+      "rulesWithUnresolvedElements": 0,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 0,
+      "claimsReviewed": 19,
+      "confidenceLevel": "NONE",
+      "contradictions": 2,
+      "coverageLevel": "CLAIMS_ONLY_NO_RULES",
+      "deterministicRules": 0,
+      "domain": "MARKET_STRUCTURE",
+      "missingSourceEvidence": [],
+      "normalizedRules": 0,
+      "rulesWithUnresolvedElements": 0,
+      "unresolvedClaims": 19
+    },
+    {
+      "candidateRules": 2,
+      "claimsReviewed": 5,
+      "confidenceLevel": "MEDIUM",
+      "contradictions": 0,
+      "coverageLevel": "PARTIAL",
+      "deterministicRules": 1,
+      "domain": "LIQUIDITY",
+      "missingSourceEvidence": [
+        "1 of 2 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 2,
+      "rulesWithUnresolvedElements": 1,
+      "unresolvedClaims": 3
+    },
+    {
+      "candidateRules": 25,
+      "claimsReviewed": 25,
+      "confidenceLevel": "MEDIUM",
+      "contradictions": 4,
+      "coverageLevel": "PARTIAL",
+      "deterministicRules": 14,
+      "domain": "SETUP",
+      "missingSourceEvidence": [
+        "9 of 23 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 23,
+      "rulesWithUnresolvedElements": 9,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 34,
+      "claimsReviewed": 34,
+      "confidenceLevel": "LOW",
+      "contradictions": 3,
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministicRules": 0,
+      "domain": "ENTRY",
+      "missingSourceEvidence": [
+        "32 of 32 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 32,
+      "rulesWithUnresolvedElements": 32,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 10,
+      "claimsReviewed": 10,
+      "confidenceLevel": "LOW",
+      "contradictions": 0,
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministicRules": 0,
+      "domain": "INVALIDATION",
+      "missingSourceEvidence": [
+        "10 of 10 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 10,
+      "rulesWithUnresolvedElements": 10,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 15,
+      "claimsReviewed": 15,
+      "confidenceLevel": "MEDIUM",
+      "contradictions": 2,
+      "coverageLevel": "PARTIAL",
+      "deterministicRules": 11,
+      "domain": "RISK",
+      "missingSourceEvidence": [
+        "4 of 15 rules carry an unresolved parameter the source never states.",
+        "Risk SIZING is present; STOP PLACEMENT is absent -- position size cannot be computed from these rules alone."
+      ],
+      "normalizedRules": 15,
+      "rulesWithUnresolvedElements": 4,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 10,
+      "claimsReviewed": 10,
+      "confidenceLevel": "MEDIUM",
+      "contradictions": 0,
+      "coverageLevel": "PARTIAL",
+      "deterministicRules": 5,
+      "domain": "TRADE_MANAGEMENT",
+      "missingSourceEvidence": [
+        "5 of 10 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 10,
+      "rulesWithUnresolvedElements": 5,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 0,
+      "claimsReviewed": 0,
+      "confidenceLevel": "NONE",
+      "contradictions": 0,
+      "coverageLevel": "NONE",
+      "deterministicRules": 0,
+      "domain": "EXIT",
+      "missingSourceEvidence": [
+        "No educator claim in the library addresses this domain at all.",
+        "No claim describes closing a position on a market condition."
+      ],
+      "normalizedRules": 0,
+      "rulesWithUnresolvedElements": 0,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 7,
+      "claimsReviewed": 7,
+      "confidenceLevel": "LOW",
+      "contradictions": 0,
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministicRules": 0,
+      "domain": "SESSION_RESTRICTIONS",
+      "missingSourceEvidence": [
+        "7 of 7 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 7,
+      "rulesWithUnresolvedElements": 7,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 14,
+      "claimsReviewed": 14,
+      "confidenceLevel": "MEDIUM",
+      "contradictions": 0,
+      "coverageLevel": "PARTIAL",
+      "deterministicRules": 12,
+      "domain": "NO_TRADE_CONDITIONS",
+      "missingSourceEvidence": [
+        "1 of 14 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 14,
+      "rulesWithUnresolvedElements": 1,
+      "unresolvedClaims": 0
+    },
+    {
+      "candidateRules": 7,
+      "claimsReviewed": 40,
+      "confidenceLevel": "LOW",
+      "contradictions": 0,
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministicRules": 0,
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "missingSourceEvidence": [
+        "4 of 7 rules carry an unresolved parameter the source never states."
+      ],
+      "normalizedRules": 7,
+      "rulesWithUnresolvedElements": 4,
+      "unresolvedClaims": 33
+    },
+    {
+      "candidateRules": 0,
+      "claimsReviewed": 21,
+      "confidenceLevel": "NONE",
+      "contradictions": 2,
+      "coverageLevel": "CLAIMS_ONLY_NO_RULES",
+      "deterministicRules": 0,
+      "domain": "UNRESOLVED_QUESTIONS",
+      "missingSourceEvidence": [],
+      "normalizedRules": 0,
+      "rulesWithUnresolvedElements": 0,
+      "unresolvedClaims": 21
+    }
+  ],
+  "draftRuleSetHash": "28c80a7492ca39ad50c6a1dab80e428d0f294b2af76ed37e3e7330348e2f860a",
+  "draftVersion": "v2.0.0-draft",
+  "modelVersion": "mogo.knowledge-engineering.v1",
+  "provenanceNote": "Derived from the ALEX_G educator claim library (195 claims, 8 source artifacts) under Engineering Authority decision OD-1 (approved with modification). This draft is SEPARATE from and does NOT modify alex_g_sr_v1, which remains the production specification. Every rule references normalized rules by id rather than copying them, and every normalized rule carries its originating claim and verbatim excerpt.",
+  "ruleReferenceCount": 127,
+  "ruleReferences": [
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|003",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|004",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|057",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|117",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|118",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|121",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|122",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "LIQUIDITY",
+      "ruleId": "KERULE|ALEX_G|038",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "LIQUIDITY",
+      "ruleId": "KERULE|ALEX_G|039",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|001",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|006",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|007",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|009",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|015",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|017",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|027",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|030",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|031",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|033",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|034",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|035",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|036",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|044",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|048",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|049",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|063",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|064",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|101",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|106",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|107",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|116",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|119",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|005",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|011",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|018",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|020",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|021",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|022",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|023",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|024",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|025",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|032",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|037",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|042",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|043",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|046",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|052",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|053",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|055",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|058",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|059",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|061",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|062",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|065",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|070",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|072",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|102",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|103",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|104",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|123",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|124",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|125",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|126",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|127",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|010",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|014",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|028",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|041",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|047",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|050",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|069",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|073",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|108",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|120",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|084",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|085",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|086",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|087",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|088",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|090",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|091",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|092",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|093",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|094",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|096",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|097",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|099",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|128",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|131",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|054",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|081",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|095",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|098",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|109",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|110",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|112",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|114",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|129",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|130",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|060",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|075",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|076",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|077",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|078",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|080",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SESSION_RESTRICTIONS",
+      "ruleId": "KERULE|ALEX_G|100",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|002",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|012",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|016",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|019",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|026",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|051",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|067",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|074",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|079",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|083",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|089",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|105",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|111",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "NO_TRADE_CONDITIONS",
+      "ruleId": "KERULE|ALEX_G|113",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|008",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|045",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|056",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|066",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|071",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|082",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "ruleId": "KERULE|ALEX_G|115",
+      "version": "v2.0.0-draft"
+    }
+  ],
+  "statusFlags": {
+    "ENGINEERING_AUTHORITY_APPROVAL_REQUIRED": true,
+    "NOT_IMPLEMENTED": true,
+    "NOT_PAPER_VALIDATED": true,
+    "NOT_PRODUCTION": true,
+    "NOT_REPLAY_VALIDATED": true,
+    "PROFITABILITY_UNVALIDATED": true
+  },
+  "strategyId": "alex_g_educator_v2_draft",
+  "title": "ALEX (educator-derived) — DRAFT Strategy Specification v2"
+}

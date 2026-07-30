@@ -1,0 +1,243 @@
+{
+  "claimsByCategory": {
+    "DEFINITION": 15,
+    "DISCRETIONARY_GUIDANCE": 7,
+    "EDUCATIONAL_COMMENTARY": 34,
+    "ENTRY": 29,
+    "EXAMPLE": 2,
+    "INVALIDATION": 9,
+    "MARKETING": 14,
+    "MARKET_CONTEXT": 1,
+    "NO_TRADE_CONDITION": 16,
+    "PSYCHOLOGY": 13,
+    "RISK": 13,
+    "SESSION": 7,
+    "TIMEFRAME": 3,
+    "TRADE_MANAGEMENT": 8,
+    "TRADING_RULE": 23,
+    "UNKNOWN": 1
+  },
+  "claimsByExplicitness": {
+    "DISCRETIONARY": 7,
+    "EXPLICIT": 122,
+    "UNRESOLVED": 66
+  },
+  "claimsBySource": {
+    "EVSRC|ALEX_G|20260727|001": 30,
+    "EVSRC|ALEX_G|20260728|001": 13,
+    "EVSRC|ALEX_G|20260728|002": 16,
+    "EVSRC|ALEX_G|20260728|003": 24,
+    "EVSRC|ALEX_G|20260728|004": 37,
+    "EVSRC|ALEX_G|20260728|005": 33,
+    "EVSRC|ALEX_G|20260728|006": 21,
+    "EVSRC|ALEX_G|20260728|007": 21
+  },
+  "claimsByStrategyDomain": {
+    "DISCRETIONARY_ELEMENTS": 39,
+    "ENTRY": 29,
+    "INVALIDATION": 9,
+    "LIQUIDITY": 5,
+    "MARKET_CONDITIONS": 18,
+    "MARKET_STRUCTURE": 12,
+    "NO_TRADE_CONDITIONS": 14,
+    "RISK": 13,
+    "SESSION_RESTRICTIONS": 7,
+    "SETUP": 23,
+    "TIMEFRAMES": 3,
+    "TRADE_MANAGEMENT": 8,
+    "UNRESOLVED_QUESTIONS": 15
+  },
+  "confidenceDistribution": {
+    "claims": {
+      "LOW": 195
+    },
+    "normalizedRules": {
+      "LOW": 70,
+      "MEDIUM": 41
+    }
+  },
+  "coverageByDomain": [
+    {
+      "claims": 18,
+      "confidenceLevel": "NONE",
+      "coverageLevel": "CLAIMS_ONLY_NO_RULES",
+      "deterministic": "0 / 0 rules",
+      "domain": "MARKET_CONDITIONS",
+      "normalizedRules": "0 / 0 candidates"
+    },
+    {
+      "claims": 3,
+      "confidenceLevel": "LOW",
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministic": "0 / 3 rules",
+      "domain": "TIMEFRAMES",
+      "normalizedRules": "3 / 3 candidates"
+    },
+    {
+      "claims": 0,
+      "confidenceLevel": "NONE",
+      "coverageLevel": "NONE",
+      "deterministic": "0 / 0 rules",
+      "domain": "DIRECTIONAL_BIAS",
+      "normalizedRules": "0 / 0 candidates"
+    },
+    {
+      "claims": 12,
+      "confidenceLevel": "NONE",
+      "coverageLevel": "CLAIMS_ONLY_NO_RULES",
+      "deterministic": "0 / 0 rules",
+      "domain": "MARKET_STRUCTURE",
+      "normalizedRules": "0 / 0 candidates"
+    },
+    {
+      "claims": 5,
+      "confidenceLevel": "MEDIUM",
+      "coverageLevel": "PARTIAL",
+      "deterministic": "1 / 2 rules",
+      "domain": "LIQUIDITY",
+      "normalizedRules": "2 / 2 candidates"
+    },
+    {
+      "claims": 23,
+      "confidenceLevel": "MEDIUM",
+      "coverageLevel": "PARTIAL",
+      "deterministic": "13 / 21 rules",
+      "domain": "SETUP",
+      "normalizedRules": "21 / 23 candidates"
+    },
+    {
+      "claims": 29,
+      "confidenceLevel": "LOW",
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministic": "0 / 27 rules",
+      "domain": "ENTRY",
+      "normalizedRules": "27 / 29 candidates"
+    },
+    {
+      "claims": 9,
+      "confidenceLevel": "LOW",
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministic": "0 / 9 rules",
+      "domain": "INVALIDATION",
+      "normalizedRules": "9 / 9 candidates"
+    },
+    {
+      "claims": 13,
+      "confidenceLevel": "MEDIUM",
+      "coverageLevel": "PARTIAL",
+      "deterministic": "11 / 13 rules",
+      "domain": "RISK",
+      "normalizedRules": "13 / 13 candidates"
+    },
+    {
+      "claims": 8,
+      "confidenceLevel": "MEDIUM",
+      "coverageLevel": "PARTIAL",
+      "deterministic": "4 / 8 rules",
+      "domain": "TRADE_MANAGEMENT",
+      "normalizedRules": "8 / 8 candidates"
+    },
+    {
+      "claims": 0,
+      "confidenceLevel": "NONE",
+      "coverageLevel": "NONE",
+      "deterministic": "0 / 0 rules",
+      "domain": "EXIT",
+      "normalizedRules": "0 / 0 candidates"
+    },
+    {
+      "claims": 7,
+      "confidenceLevel": "LOW",
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministic": "0 / 7 rules",
+      "domain": "SESSION_RESTRICTIONS",
+      "normalizedRules": "7 / 7 candidates"
+    },
+    {
+      "claims": 14,
+      "confidenceLevel": "MEDIUM",
+      "coverageLevel": "PARTIAL",
+      "deterministic": "12 / 14 rules",
+      "domain": "NO_TRADE_CONDITIONS",
+      "normalizedRules": "14 / 14 candidates"
+    },
+    {
+      "claims": 39,
+      "confidenceLevel": "LOW",
+      "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
+      "deterministic": "0 / 7 rules",
+      "domain": "DISCRETIONARY_ELEMENTS",
+      "normalizedRules": "7 / 7 candidates"
+    },
+    {
+      "claims": 15,
+      "confidenceLevel": "NONE",
+      "coverageLevel": "CLAIMS_ONLY_NO_RULES",
+      "deterministic": "0 / 0 rules",
+      "domain": "UNRESOLVED_QUESTIONS",
+      "normalizedRules": "0 / 0 candidates"
+    }
+  ],
+  "educatorId": "ALEX_G",
+  "generatorVersion": "1.0.0",
+  "highestPriorityMissingKnowledge": [
+    "STOP PLACEMENT — zero rules across 195 claims and 8 sources. Position size is not computable without it, so no risk rule here can be implemented.",
+    "EXIT — zero claims and zero rules in the entire library.",
+    "SESSION WINDOWS — session rules exist and are prescriptive, but their hours are shown on-screen and never spoken, so they are absent from every transcript.",
+    "INDICATOR SETTINGS — the EMA is load-bearing in two sources and its period is never stated.",
+    "SWING SIGNIFICANCE — the parameter that decides which highs and lows count is undefined and is contradicted across educators."
+  ],
+  "modelVersion": "mogo.knowledge-engineering.v1",
+  "note": "Coverage is reported as numerator/denominator per domain. No single composite score is emitted: one number would conceal that EXIT is zero and RISK has no stop rule.",
+  "recommendedNextSourceMaterial": [
+    "An ALEX_G source that states stop placement (BACKLOG-002/A1-STOP). Highest leverage single acquisition: it would make the 13 risk rules implementable.",
+    "Further LIVE sessions (BACKLOG-002/A2-LIVE) — one live session produced three filters absent from six instructional sources.",
+    "Any source in which the session-hours graphic is read aloud."
+  ],
+  "sourceTraceability": {
+    "claimsWithSourceReference": {
+      "n": 195,
+      "of": 195
+    },
+    "rulesWithSourceMapping": {
+      "n": 111,
+      "of": 111
+    },
+    "rulesWithVerbatimExcerpt": {
+      "n": 111,
+      "of": 111
+    }
+  },
+  "totals": {
+    "approvedRules": {
+      "n": 0,
+      "note": "MOGO-002.6 may not approve any rule (OD-1 mod. 6).",
+      "of": 111
+    },
+    "candidateRuleEligibleClaims": {
+      "n": 115,
+      "of": 195
+    },
+    "candidateRules": 115,
+    "claims": 195,
+    "contradictions": 11,
+    "deferredCandidates": 4,
+    "draftRules": {
+      "n": 111,
+      "of": 111
+    },
+    "duplicateGroups": 4,
+    "normalizedRules": 111,
+    "sourceArtifacts": 8
+  },
+  "unresolvedItems": {
+    "nonDeterministicRules": {
+      "n": 70,
+      "of": 111
+    },
+    "rulesWithUnresolvedElements": {
+      "n": 66,
+      "of": 111
+    }
+  }
+}

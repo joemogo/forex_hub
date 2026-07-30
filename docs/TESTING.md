@@ -8,6 +8,10 @@ application logic:
 2. **The durable regression baseline** (`regression-baseline-tools.py`)
 3. **Live browser verification** for anything the offline harness cannot exercise
 
+A fourth layer covers the **Trader Intelligence research subsystem** (Python, `unittest`). It is
+independent of the three above because that subsystem contains no application logic — it never
+runs in the browser and never touches `index.html`. See §4 below.
+
 ## 1. Offline fixture suites
 
 Each release that adds behavior has added its own fixture file, named by version
@@ -304,6 +308,61 @@ release that adds a new fixture suite, or adds fixtures to an existing suite, mu
 corresponding entry (or add a new one) **before** running `--update`, so the committed baseline's
 `totalFixtureCount` always matches what a full regression run should actually reproduce.
 
+### ALEX v1.1 release suite (v12.7.0)
+
+`tests/run_v127_alex_v11_release_tests.js` — **65 fixtures** covering the MOGO-002.8A release:
+version identity, Monday–Wednesday entry eligibility (including UTC-boundary and fail-open cases),
+realized R, chronological equity, current vs maximum drawdown, configured starting balance,
+dead-config omission, engine-parameter preservation via the **real protected evaluators**, historical
+preservation, and duplicate-trade identity.
+
+> **Determinism note.** ALEX v1.1 adds a date-dependent entry gate. Any suite that opens a trade
+> end-to-end is therefore date-sensitive: `run_v126_phase2c_wave1_tests.js` pins its own process
+> clock to a fixed eligible Monday for exactly this reason. **Any future suite that drives
+> `alexGEvaluatePairForLiveSetups()` to a real open must do the same**, or it will pass Mon–Wed and
+> fail Thu–Sun with no code change.
+
+## 4. Trader Intelligence suites (Python)
+
+The research subsystem under `docs/trader-intelligence/` and `scripts/trader_intelligence/` is
+tested by five Python `unittest` modules — **307 tests** as of PROGRAM-007 Phase 7A:
+
+| Module | Tests | Covers |
+|---|---|---|
+| `tests/trader_intelligence/test_graph.py` | 25 | Knowledge Graph build, integrity, queries |
+| `tests/trader_intelligence/acquisition/test_acquisition.py` | 57 | Source candidates, duplicates, priority scoring |
+| `tests/trader_intelligence/evidence/test_evidence.py` | 77 | Evidence Intelligence Engine (Phase 1A) |
+| `tests/trader_intelligence/evidence/test_phase1b.py` | 103 | Explainability, intake, annotation, review queues |
+| `tests/trader_intelligence/evidence/test_phase7a.py` | 45 | Trader profiles, blueprints, gaps, hypotheses |
+
+```bash
+python3 -m unittest tests.trader_intelligence.test_graph \
+  tests.trader_intelligence.acquisition.test_acquisition \
+  tests.trader_intelligence.evidence.test_evidence \
+  tests.trader_intelligence.evidence.test_phase1b \
+  tests.trader_intelligence.evidence.test_phase7a
+```
+
+Two suite-specific conventions matter:
+
+**Fixtures that copy the repository must clear the evidence tree.** `TempRepo`, `TempGraphRepo`,
+and `TempKnowledgeLibraryRepo` each `shutil.copytree` the whole `docs/trader-intelligence` tree and
+then use the copied `evidence/` directory as **scratch**. That guarantee was implicit — and silently
+false — once real evidence existed on disk: seven tests began asserting against production records
+instead of their own fixtures. Each fixture now empties the evidence record collections on copy
+(keeping `evidence/schema/`, which is structural). **Any new fixture that copies the tree must do
+the same.**
+
+**Prefer invariants over emptiness.** Several tests originally asserted "the production evidence
+tree is empty" or "the graph has exactly N nodes". Those assertions expire the first time real data
+is ingested, and they fail in a way that looks like a regression but is not. Assert what must remain
+true (every source traces to a registered intake; every blueprint is `DRAFT_RESEARCH_ONLY`) rather
+than what merely happens to be true today.
+
+These suites exercise no application logic, so they cannot affect protected-function drift — but
+`test_phase7a.py` deliberately *runs* `regression-baseline-tools.py` and asserts zero drift, so a
+failure there is a real signal about `index.html`, not about the research subsystem.
+
 ## What a release should run before shipping
 
 0. `tests/run_all.sh` — the canonical command for every repository-owned permanent suite plus the
@@ -320,7 +379,9 @@ corresponding entry (or add a new one) **before** running `--update`, so the com
    exercise (see above) — governed by the Browser Testing Policy: prefer fixtures/mocks/in-memory
    state first, and if a real paper trade is genuinely unavoidable, tag/exclude/make it
    cleanable exactly as that policy requires.
-6. Only then: `regression-baseline-tools.py --update`, version bump, and changelog entry.
+6. The Trader Intelligence Python suites (§4) — required for any release touching
+   `docs/trader-intelligence/` or `scripts/trader_intelligence/`, and cheap enough to run always.
+7. Only then: `regression-baseline-tools.py --update`, version bump, and changelog entry.
 
 **Rule for future releases:** update this file whenever the testing process itself changes —
 a new suite naming convention, a new verification pattern, or a change to what the offline

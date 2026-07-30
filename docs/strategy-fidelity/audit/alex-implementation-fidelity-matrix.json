@@ -1,0 +1,787 @@
+{
+  "comparedRuleCount": 41,
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "milestone": "MOGO-002.8",
+  "modelVersion": "mogo.alex-audit.v1",
+  "mogoAuthoredParameters": [
+    "AXR-021"
+  ],
+  "mogoOnlyBehaviour": [
+    {
+      "affectsTradingBehaviour": true,
+      "behaviour": "Live entry-delay gate, 5 pips (maxLiveEntryDelayPips)",
+      "category": "ENTRY",
+      "codeLocation": "index.html:3988",
+      "origin": "engineering_necessity",
+      "ruleId": "ALEX_X_002"
+    },
+    {
+      "affectsTradingBehaviour": true,
+      "behaviour": "Signal staleness, one bar-period per timeframe",
+      "category": "ENTRY",
+      "codeLocation": "index.html:4177",
+      "origin": "engineering_necessity",
+      "ruleId": "ALEX_X_003"
+    },
+    {
+      "affectsTradingBehaviour": true,
+      "behaviour": "Account activation cutoff",
+      "category": "NO_TRADE_CONDITIONS",
+      "codeLocation": "index.html:4165",
+      "origin": "engineering_necessity",
+      "ruleId": "ALEX_X_004"
+    },
+    {
+      "affectsTradingBehaviour": true,
+      "behaviour": "Choppy-zone filter, >=3 penetrations per 50 bars",
+      "category": "SETUP",
+      "codeLocation": "index.html:3137",
+      "origin": "hub_standardization",
+      "ruleId": "ALEX_X_005"
+    },
+    {
+      "affectsTradingBehaviour": true,
+      "behaviour": "Rejection confirmation window 1 bar + 0.25 ATR displacement",
+      "category": "SETUP",
+      "codeLocation": "index.html:2792",
+      "origin": "hub_standardization",
+      "ruleId": "ALEX_X_006"
+    },
+    {
+      "affectsTradingBehaviour": false,
+      "behaviour": "ALEX_SCORE_V2, a second strategy claiming the Alex name (shadow only)",
+      "category": "SETUP",
+      "codeLocation": "index.html:14952",
+      "origin": "experimental",
+      "ruleId": "ALEX_X_008"
+    }
+  ],
+  "narrativeArtifact": "docs/strategy-fidelity/audit/ALEX-IMPLEMENTATION-FIDELITY-MATRIX.md",
+  "nonImplementableDiscretion": [
+    "AXR-093",
+    "AXR-100"
+  ],
+  "productionSpecComparison": {
+    "executionReadiness": "NOT_VERIFIED (6/10 criteria failed)",
+    "findings": {
+      "AMBIGUOUS": 1,
+      "APPROXIMATED": 2,
+      "DIFFERING": 0,
+      "EXTRA": 8,
+      "MATCH": 9,
+      "MISSING": 0,
+      "NOT_APPLICABLE": 1,
+      "UNVERIFIABLE": 0
+    },
+    "note": "The MOGO-002.5 comparison against alex_g_sr_v1 (the approved 13-rule specification) is UNCHANGED by this audit and remains the authoritative fidelity result for the production strategy.",
+    "profitability": "UNVALIDATED",
+    "riskFidelity": "0/0",
+    "tradeManagementFidelity": "0/0"
+  },
+  "rows": [
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGZoneRole (index.html:2735)",
+      "domain": "support_and_resistance",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-001",
+      "educatorStatement": "Support is where price has previously held; resistance is where price has previously been rejected. Support/resistance, supply/demand and 'area of interest' are the same concept under three names.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "Role derived positionally: above->support, below->resistance, within->inside.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": "ALEX_SR_001/002",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|006"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGComputeTrendContext (index.html:3199)",
+      "domain": "trend_definition",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-002",
+      "educatorStatement": "A continuing downtrend is a sequence of lows with lower highs between them; the uptrend mirror is highs with retracements.",
+      "fidelityStatus": "PARTIAL_MATCH",
+      "implementationBehaviour": "Trend context is computed and recorded but never gates a trade.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|014"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "alexGEvaluateBreakRetest (index.html:3147)",
+      "domain": "break_of_structure",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-003",
+      "educatorStatement": "A body close beyond a structure level counts as a structural shift, with no stated minimum size.",
+      "fidelityStatus": "PARTIAL_MATCH",
+      "implementationBehaviour": "MOGO enforces an ordered break/retest sequence; the educator states no minimum displacement, MOGO adds rejectionDisplacementATRMultiplier=0.25 (ALEX_X_006).",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": "ALEX_SR_011",
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGEvaluateBreakRetest (index.html:3147)",
+      "domain": "break_and_retest",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-004",
+      "educatorStatement": "Break-and-retest is a CONTINUATION pattern: price breaks a structure point, returns to retest it, then continues in the original direction.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "Break-then-retest continuation is implemented as a first-class setup type (B_breakRetest).",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": "ALEX_SR_011",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|004"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "alexGEvaluateRepeatedReaction (index.html:3165)",
+      "domain": "entry_setup",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-005",
+      "educatorStatement": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point.",
+      "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+      "implementationBehaviour": "Educator: MINIMUM ONE structure point. MOGO: requires touchIndex>=3 AND zone.touches.length>=4 for the repeated-reaction setup. MOGO is materially STRICTER than the educator states.",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": "ALEX_SR_005/006",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|011"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "entry_setup",
+      "educatorDeterministic": true,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-006",
+      "educatorStatement": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively.",
+      "fidelityStatus": "NOT_APPLICABLE",
+      "implementationBehaviour": "Recursive chaining of retested zones into new structure points is not modelled as such.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|012"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGRunZoneEngine (index.html:2996)",
+      "domain": "entry_setup",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-007",
+      "educatorStatement": "Break-and-retest is MOST EFFECTIVE at a pre-existing zone.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "MOGO only ever evaluates setups at detected zones, which satisfies the comparative preference.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|007"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "alexGAssignCluster (index.html:2763)",
+      "domain": "entry_setup",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-008",
+      "educatorStatement": "Zone width is unconstrained -- 'doesn't matter the size of the box' -- subject only to leaving enough room to contain multiple touches.",
+      "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+      "implementationBehaviour": "Educator: zone width is EXPLICITLY UNCONSTRAINED. MOGO: zoneClusterATRMultiplier=0.5 constrains clustering. MOGO imposes a constraint the educator explicitly declines to impose.",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": "ALEX_SR_008",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|010"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "entry_trigger",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-010",
+      "educatorStatement": "Structure and continuation are read on the higher timeframe; the entry signal must be taken on a lower timeframe.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "MOGO evaluates zones and setups on H1/H4/D/W and does not drop to a lower timeframe for entry. There is no separate HTF-structure / LTF-entry split.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|017"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "candlestick_confirmation",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-011",
+      "educatorStatement": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "MOGO has NO candlestick-confirmation requirement. Entry is the qualification candle's close. The educator's single hardest entry precondition is absent from the implementation.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|018"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "candlestick_confirmation",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "ILLUSTRATIVE",
+      "educatorRuleId": "AXR-012",
+      "educatorStatement": "The confirmation demonstrated is a Morning Star: three doji rejection candles followed by one bullish engulfing candle.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "No Morning Star detection exists.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|020"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "alexGAcceptReaction (index.html:2792)",
+      "domain": "entry_trigger",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-013",
+      "educatorStatement": "The retest is complete when rejection candlesticks appear -- it is not timed or measured.",
+      "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+      "implementationBehaviour": "Educator: retest ends when rejection candles appear. MOGO: reaction counts if confirmed within rejectionConfirmWithinBars=1 and displaces >=0.25 ATR (ALEX_X_006).",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|019"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "alexGConstructLivePosition (index.html:3956)",
+      "domain": "entry_trigger",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "ILLUSTRATIVE",
+      "educatorRuleId": "AXR-014",
+      "educatorStatement": "Entry is taken at the confirmation candle of the retest.",
+      "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+      "implementationBehaviour": "MOGO enters at the qualification candle close; the educator indicates the confirmation candle without naming a price.",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|021"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "invalidation",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-015",
+      "educatorStatement": "A structurally ideal break-and-retest is NOT taken when the engulfing confirmation does not appear.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "MOGO has no confirmation gate, so it cannot decline a setup for a missing confirmation. This is the fidelity gap with the clearest trade-eligibility consequence.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|013"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGConstructLivePosition (index.html:3487-3488)",
+      "domain": "stop_loss_relationship",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-020",
+      "educatorStatement": "On every break-and-retest trade the stop-loss is placed immediately BEYOND the rejection formation at the retest ('right under it' for a long).",
+      "fidelityStatus": "PARTIAL_MATCH",
+      "implementationBehaviour": "RELATIONSHIP MATCHES: stop sits just beyond the structure. ANCHOR DIFFERS: MOGO anchors on setup.zoneLow/zoneHigh (zone boundary); the educator anchors on the rejection formation at the retest. A rejection wick can extend well beyond the zone boundary, so these are not the same object.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": "ALEX_X_001",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|025",
+        "CLAIM|ALEX_G|20260729|022"
+      ]
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": "RULES_ALEXG.config.stopATRBuffer (index.html:2392)",
+      "domain": "stop_loss_buffer",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-021",
+      "educatorStatement": "[NO RULE EXISTS] The distance between the stop and the rejection structure.",
+      "fidelityStatus": "MOGO_AUTHORED_PARAMETER",
+      "implementationBehaviour": "stopATRBuffer = 0.25 ATR. NO educator counterpart exists -- no ALEX_G claim in 9 sources mentions ATR at all. Entirely MOGO-authored.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": "ALEX_X_001",
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": "index.html:3488",
+      "domain": "stop_loss_relationship",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-022",
+      "educatorStatement": "[NO RULE EXISTS] The short-side stop placement.",
+      "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+      "implementationBehaviour": "MOGO implements the short-side stop symmetrically (zoneHigh + buffer). The educator never states the short-side rule, so MOGO's symmetry is an assumption, not a match.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": "ALEX_X_001",
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "RULES_ALEXG.config.minRR (index.html:2394)",
+      "domain": "minimum_risk_reward",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-030",
+      "educatorStatement": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward.",
+      "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+      "implementationBehaviour": "Educator: 1:2 is a MINIMUM (floor). MOGO: minRR=2.0 is a FIXED ratio -- target = entry +/- 2.0 x risk, always. These are different rules that coincide at the boundary. MOGO can never take the 1:3 or 1:4 the educator also describes.",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": "ALEX_X_001",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|023"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "target_selection",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "ILLUSTRATIVE",
+      "educatorRuleId": "AXR-031",
+      "educatorStatement": "[NO RULE EXISTS] How the target level is chosen when structure allows more than 1:2.",
+      "fidelityStatus": "UNRESOLVED",
+      "implementationBehaviour": "No educator target-selection procedure exists, so MOGO's fixed 2R cannot be compared against one.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|084",
+        "CLAIM|ALEX_G|20260728|110",
+        "CLAIM|ALEX_G|20260728|113",
+        "CLAIM|ALEX_G|20260728|140"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "index.html:3512",
+      "domain": "account_risk",
+      "educatorDeterministic": true,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-040",
+      "educatorStatement": "Risk is sized as a percentage of the account balance, never as a fixed monetary amount, and the same percentage is risked on every trade.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "riskAmount = balanceBefore * (riskPercent/100) -- percentage-based off account balance, fixed per trade. This is the closest genuine agreement between MOGO and the educator on any risk rule.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": "ALEX_X_001",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|098",
+        "CLAIM|ALEX_G|20260728|096",
+        "CLAIM|ALEX_G|20260728|093"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "RULES_ALEXG.config.riskPercent (index.html:2393)",
+      "domain": "position_sizing",
+      "educatorDeterministic": true,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-041",
+      "educatorStatement": "Three risk bands: conservative 0.5-1%, recommended/industry-standard 1-2%, high 3-5%.",
+      "fidelityStatus": "PARTIAL_MATCH",
+      "implementationBehaviour": "MOGO uses riskPercent=1.0, which falls inside BOTH the conservative (0.5-1%) and recommended (1-2%) bands. Consistent with the educator, but MOGO chose the single value; the educator states bands and an account-type dependency MOGO does not model.",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": "ALEX_X_001",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|104",
+        "CLAIM|ALEX_G|20260728|107",
+        "CLAIM|ALEX_G|20260728|111"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "position_sizing",
+      "educatorDeterministic": true,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-042",
+      "educatorStatement": "The high band (3-5%) is confined to a personal or disposable account, and to the months November-March.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "No account-type or calendar-month risk modulation.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|112",
+        "CLAIM|ALEX_G|20260728|117"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "RULES_ALEXG.config.riskPercent",
+      "domain": "account_risk",
+      "educatorDeterministic": true,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-043",
+      "educatorStatement": "Once chosen, the risk percentage is not raised after wins or lowered after losses; his own practice fixes one percentage per calendar month.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "riskPercent is a constant, so it is never raised after wins or lowered after losses. MOGO satisfies the stability rule by construction.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|108",
+        "CLAIM|ALEX_G|20260728|114"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGUpdatePositionExcursionAndCheckExit",
+      "domain": "post_entry_management",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "ILLUSTRATIVE",
+      "educatorRuleId": "AXR-050",
+      "educatorStatement": "A losing trade is allowed to reach its stop without intervention; the loss is accepted as normal variance.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "MOGO never intervenes between entry and exit: the stop and target are frozen at entry and never trailed or moved. Matches the demonstrated no-intervention behaviour.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|024"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGRunSetupEngine (index.html:3349)",
+      "domain": "post_entry_management",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-051",
+      "educatorStatement": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "No action is taken until a setup qualifies at the zone.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|045"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGConstructLivePosition",
+      "domain": "post_entry_management",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-052",
+      "educatorStatement": "A target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+      "fidelityStatus": "FUNCTIONAL_MATCH",
+      "implementationBehaviour": "The target is frozen at entry and never cut early.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|147"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "post_entry_management",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "ILLUSTRATIVE",
+      "educatorRuleId": "AXR-053",
+      "educatorStatement": "After missing an entry, set an alarm for the next pullback rather than chase.",
+      "fidelityStatus": "NOT_APPLICABLE",
+      "implementationBehaviour": "Human behaviour; no automation counterpart.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|139"
+      ]
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": "APP_VERSION_LOG v4.0",
+      "domain": "break_even",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-060",
+      "educatorStatement": "[NO RULE EXISTS] Whether the stop is ever moved to break-even.",
+      "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+      "implementationBehaviour": "MOGO documents 'never trailed or moved to break-even' as an explicit MOGO choice. The educator says nothing either way, so this is a MOGO decision in an evidentiary vacuum -- not a match.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": null,
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": null,
+      "domain": "partial_profit",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-061",
+      "educatorStatement": "[NO RULE EXISTS] Whether any portion of a position is closed before the full target.",
+      "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+      "implementationBehaviour": "MOGO takes no partials. Educator silent.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": null,
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": null,
+      "domain": "scaling",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-062",
+      "educatorStatement": "[NO RULE EXISTS] Whether a position is ever added to or reduced after entry.",
+      "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+      "implementationBehaviour": "MOGO is single-entry. Educator silent.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": null,
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": null,
+      "domain": "trailing_stops",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-063",
+      "educatorStatement": "[NO RULE EXISTS] Whether the stop is ever trailed.",
+      "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+      "implementationBehaviour": "MOGO does not trail. Educator silent.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": null,
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGSetupSortComparator (index.html:3589)",
+      "domain": "timeframe_relationships",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-070",
+      "educatorStatement": "A break-and-retest on a higher timeframe is more respected than one on a lower timeframe.",
+      "fidelityStatus": "PARTIAL_MATCH",
+      "implementationBehaviour": "htfPriority {W:4,D:3,H4:2,H1:1} orders competing setups. It never gates, weights or sizes a trade, so 'more respected' is only partially realised.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": "ALEX_SR_010",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|008"
+      ]
+    },
+    {
+      "authorship": "EDUCATOR_CONVERGENT",
+      "codeLocation": "alexGRunZoneEngine (index.html:2996)",
+      "domain": "higher_timeframe_analysis",
+      "educatorDeterministic": true,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-071",
+      "educatorStatement": "Top-down analysis uses four tiers: weekly, daily, 4-hour, and the lower timeframes (2H/1H/30m/15m; below 15m is not a strong timeframe).",
+      "fidelityStatus": "PARTIAL_MATCH",
+      "implementationBehaviour": "MOGO processes H1/H4/D/W. Educator names W/D/4H plus 2H/1H/30m/15m. MOGO omits the sub-H1 tiers entirely and adds none.",
+      "lineageNote": "CONVERGENT_NOT_DERIVED",
+      "mogoRuleId": "ALEX_SR_009",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260727|005",
+        "CLAIM|ALEX_G|20260727|006"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "timeframe_relationships",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-072",
+      "educatorStatement": "Day trading reads break-and-retest on 4H/1H; swing trading on daily/weekly.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "No day-trade vs swing-trade mode distinction exists.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|015",
+        "CLAIM|ALEX_G|20260729|016"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": "alexGComputeSessionMetadata (index.html:3225)",
+      "domain": "session_requirements",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-080",
+      "educatorStatement": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not traded. Entries are restricted to Monday-Wednesday.",
+      "fidelityStatus": "MISSING_FROM_MOGO",
+      "implementationBehaviour": "Session and day metadata ARE computed and recorded but NEVER restrict entry. The educator states an explicit Mon-Wed restriction and a session gate; MOGO applies neither. Recorded in the manifest as 'a deliberate design choice, not a source gap' -- that note predates the session evidence.",
+      "lineageNote": null,
+      "mogoRuleId": "ALEX_X_007",
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|078",
+        "CLAIM|ALEX_G|20260728|083",
+        "CLAIM|ALEX_G|20260728|081"
+      ]
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "session_requirements",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-081",
+      "educatorStatement": "[PARAMETER ABSENT] The exact hours of the tradeable session windows.",
+      "fidelityStatus": "UNRESOLVED",
+      "implementationBehaviour": "Parameter absent from source; nothing to compare.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|079",
+        "CLAIM|ALEX_G|20260728|053"
+      ]
+    },
+    {
+      "authorship": "MIXED",
+      "codeLocation": "RULES_ALEXG.config",
+      "domain": "market_selection",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-090",
+      "educatorStatement": "The pattern applies to all timeframes and all instrument classes -- currencies, commodities, futures, stocks.",
+      "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+      "implementationBehaviour": "Educator states universal applicability. MOGO trades a fixed instrument set via its own scan configuration.",
+      "lineageNote": "MOGO_AUTHORED_PARAMETER",
+      "mogoRuleId": null,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|005"
+      ]
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": "alexGCorrectedQuality (index.html:3137)",
+      "domain": "market_conditions",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-091",
+      "educatorStatement": "[NO RULE EXISTS] Any market-condition filter (volatility, ranging vs trending, spread) gating whether to trade at all.",
+      "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+      "implementationBehaviour": "MOGO adds a choppy-zone filter (>=3 penetrations / 50 bars). The educator states no such filter.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": "ALEX_X_005",
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "news_filters",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "UNSUPPORTED",
+      "educatorRuleId": "AXR-092",
+      "educatorStatement": "[NO RULE EXISTS] Any news or economic-calendar filter.",
+      "fidelityStatus": "NOT_APPLICABLE",
+      "implementationBehaviour": "Neither implements a news filter. Absence in both is not agreement.",
+      "lineageNote": null,
+      "mogoRuleId": "ALEX_X_007",
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "NOT_APPLICABLE",
+      "codeLocation": null,
+      "domain": "liquidity",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "OPINION",
+      "educatorRuleId": "AXR-093",
+      "educatorStatement": "Alex G rejects the institutional-stop-hunt narrative as unproven and states no strategy can trade liquidity sweeps alone.",
+      "fidelityStatus": "NON_IMPLEMENTABLE_DISCRETION",
+      "implementationBehaviour": "Opinion; cross-educator contradicted.",
+      "lineageNote": null,
+      "mogoRuleId": null,
+      "supportingClaimIds": []
+    },
+    {
+      "authorship": "MOGO_AUTHORED",
+      "codeLocation": null,
+      "domain": "discretionary_judgment",
+      "educatorDeterministic": false,
+      "educatorEvidenceClass": "EXPLICIT",
+      "educatorRuleId": "AXR-100",
+      "educatorStatement": "Several gates are explicitly judgement calls: whether a second confirmation is needed depends on level strength, timeframe, days left in the week and R:R, with no threshold assigned to any input.",
+      "fidelityStatus": "NON_IMPLEMENTABLE_DISCRETION",
+      "implementationBehaviour": "MOGO necessarily formalizes what the educator leaves to judgement. Every such formalization is a MOGO-authored parameter and is listed as one.",
+      "lineageNote": "MOGO_AUTHORED",
+      "mogoRuleId": null,
+      "supportingClaimIds": []
+    }
+  ],
+  "rulesEducatorTeachesMogoLacks": [
+    "AXR-010",
+    "AXR-011",
+    "AXR-012",
+    "AXR-015",
+    "AXR-042",
+    "AXR-072",
+    "AXR-080"
+  ],
+  "rulesMogoImplementsDifferently": [
+    "AXR-005",
+    "AXR-008",
+    "AXR-013",
+    "AXR-014",
+    "AXR-030",
+    "AXR-090"
+  ],
+  "rulesMogoImplementsEducatorNeverTaught": [
+    "AXR-022",
+    "AXR-060",
+    "AXR-061",
+    "AXR-062",
+    "AXR-063",
+    "AXR-091"
+  ],
+  "statusCounts": {
+    "FUNCTIONAL_MATCH": 8,
+    "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT": 6,
+    "MISSING_FROM_MOGO": 7,
+    "MOGO_AUTHORED_PARAMETER": 1,
+    "NON_IMPLEMENTABLE_DISCRETION": 2,
+    "NOT_APPLICABLE": 3,
+    "PARTIAL_MATCH": 6,
+    "PRESENT_BUT_DIFFERENT": 6,
+    "UNRESOLVED": 2
+  },
+  "unresolved": [
+    "AXR-031",
+    "AXR-081"
+  ],
+  "vocabulary": [
+    "EXACT_MATCH",
+    "FUNCTIONAL_MATCH",
+    "PARTIAL_MATCH",
+    "MISSING_FROM_MOGO",
+    "PRESENT_BUT_DIFFERENT",
+    "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "MOGO_AUTHORED_PARAMETER",
+    "MOGO_ENHANCEMENT",
+    "NON_IMPLEMENTABLE_DISCRETION",
+    "NOT_APPLICABLE",
+    "UNRESOLVED"
+  ],
+  "⚠️lineageWarning": "This matrix compares MOGO's implementation against the EDUCATOR library. That comparison has never been performed before and is OBSERVATIONAL ONLY. alex_g_sr_v1's rules are MOGO's own (DECISION|MOGO|20260727|004); any agreement below is CONVERGENCE, NOT DERIVATION. This matrix does not re-specify the production strategy and does not merge the two bodies of knowledge (KEREV-B remains open)."
+}

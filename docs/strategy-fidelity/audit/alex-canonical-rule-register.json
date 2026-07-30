@@ -1,0 +1,2316 @@
+{
+  "allClaimsEmerging": true,
+  "byEvidenceClass": {
+    "EXPLICIT": 26,
+    "ILLUSTRATIVE": 5,
+    "OPINION": 1,
+    "UNSUPPORTED": 9
+  },
+  "coverageVocabulary": [
+    "WELL_SUPPORTED",
+    "SUPPORTED",
+    "PARTIALLY_SUPPORTED",
+    "AMBIGUOUS",
+    "CONTRADICTORY",
+    "DISCRETIONARY",
+    "NON_DETERMINISTIC",
+    "ABSENT_FROM_REVIEWED_SOURCES",
+    "NOT_APPLICABLE"
+  ],
+  "deterministicCount": 6,
+  "domainCoverage": [
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "market_selection",
+      "mostValuableNextSourceType": "Any source discussing which pairs he trades.",
+      "whatIsKnown": "A universal-applicability statement exists; no instrument filter, spread or liquidity requirement is stated.",
+      "whatRemainsUnknown": "Whether any pair/instrument is excluded."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "market_conditions",
+      "mostValuableNextSourceType": "A 'when not to trade' or market-conditions video.",
+      "whatIsKnown": "19 claims describe market behaviour; none gates a trading decision.",
+      "whatRemainsUnknown": "Whether any volatility or regime filter exists."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "directional_bias",
+      "mostValuableNextSourceType": "A top-down analysis walkthrough.",
+      "whatIsKnown": "Top-down bias is described; the production spec classifies its own bias rule DISCRETIONARY.",
+      "whatRemainsUnknown": "Whether bias is a hard gate or a preference."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "SUPPORTED",
+      "domain": "higher_timeframe_analysis",
+      "mostValuableNextSourceType": "A top-down scoring video.",
+      "whatIsKnown": "Four explicit tiers, W/D/4H plus lower TFs, with 15m named as the floor.",
+      "whatRemainsUnknown": "How the tiers are weighted against each other."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "market_structure",
+      "mostValuableNextSourceType": "Replay sweep RC-29; no transcript can supply the threshold.",
+      "whatIsKnown": "HH/HL and LH/LL definitions are explicit and repeated.",
+      "whatRemainsUnknown": "What makes a swing point significant enough to count."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "AMBIGUOUS",
+      "domain": "break_of_structure",
+      "mostValuableNextSourceType": "Cross-educator contradicted; needs replay.",
+      "whatIsKnown": "A body close beyond a level counts, with no minimum size.",
+      "whatRemainsUnknown": "How false breaks and noise are excluded."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "SUPPORTED",
+      "domain": "trend_definition",
+      "mostValuableNextSourceType": "Same blocker as market_structure.",
+      "whatIsKnown": "Explicitly defined in both directions in the newest source.",
+      "whatRemainsUnknown": "The swing-significance unit underneath it."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": false,
+      "coverage": "DISCRETIONARY",
+      "domain": "liquidity",
+      "mostValuableNextSourceType": "Not worth acquiring for implementation.",
+      "whatIsKnown": "Alex G rejects the institutional-sweep narrative; treats sweeps as untradeable alone.",
+      "whatRemainsUnknown": "Nothing implementable is claimed."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": false,
+      "coverage": "WELL_SUPPORTED",
+      "domain": "support_and_resistance",
+      "mostValuableNextSourceType": "None needed.",
+      "whatIsKnown": "Explicit definition plus an explicit statement that S/R, supply/demand and AOI are one concept.",
+      "whatRemainsUnknown": "Nothing material."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": false,
+      "coverage": "WELL_SUPPORTED",
+      "domain": "supply_and_demand",
+      "mostValuableNextSourceType": "None needed.",
+      "whatIsKnown": "Same as support_and_resistance by the educator's own equivalence statement.",
+      "whatRemainsUnknown": "Nothing material."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "WELL_SUPPORTED",
+      "domain": "break_and_retest",
+      "mostValuableNextSourceType": "Already well covered.",
+      "whatIsKnown": "Defined as a continuation pattern, demonstrated 5-6 times on one chart plus 3 worked trades.",
+      "whatRemainsUnknown": "The structure-point unit it chains on."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "entry_setup",
+      "mostValuableNextSourceType": "A markup-focused video that quantifies the box.",
+      "whatIsKnown": "Minimum one structure point; zone width explicitly unconstrained; chains recursively.",
+      "whatRemainsUnknown": "What a 'structure point' is; how much room is 'enough'."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "entry_trigger",
+      "mostValuableNextSourceType": "A live session showing order entry.",
+      "whatIsKnown": "Lower-timeframe entry is mandatory; entry is at the confirmation candle.",
+      "whatRemainsUnknown": "WHICH lower timeframe, and the exact price within the candle."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "candlestick_confirmation",
+      "mostValuableNextSourceType": "The referenced 'engulfing candlestick' video.",
+      "whatIsKnown": "Bullish engulfing is REQUIRED for longs; Morning Star demonstrated; a setup was declined for its absence.",
+      "whatRemainsUnknown": "Whether the family is one specific pattern or any rejection formation; the bearish mirror."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "timeframe_relationships",
+      "mostValuableNextSourceType": "A day-trading-specific video.",
+      "whatIsKnown": "HTF more respected; 4H/1H day, D/W swing; entries on lower TFs.",
+      "whatRemainsUnknown": "Weighting, and whether the pairings are constraints."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "NON_DETERMINISTIC",
+      "domain": "session_requirements",
+      "mostValuableNextSourceType": "No transcript can fix this; needs frame-reading approval.",
+      "whatIsKnown": "The RULE is explicit and prescriptive: session and day-of-week gate entry; Mon-Wed only.",
+      "whatRemainsUnknown": "The exact hours -- displayed on screen, never spoken."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "stop_loss_relationship",
+      "mostValuableNextSourceType": "A live session with order entry.",
+      "whatIsKnown": "Stop goes immediately beyond the rejection structure, stated as an invariant and demonstrated twice.",
+      "whatRemainsUnknown": "The anchor is deictic ('it'/'this point') with three readings; short side never stated."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "stop_loss_buffer",
+      "mostValuableNextSourceType": "A live session showing the order ticket.",
+      "whatIsKnown": "Nothing. No unit of any kind appears in 9 sources.",
+      "whatRemainsUnknown": "The entire parameter."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "invalidation",
+      "mostValuableNextSourceType": "A trade-review video.",
+      "whatIsKnown": "No confirmation means no trade, demonstrated; structural invalidation described.",
+      "whatRemainsUnknown": "Post-entry invalidation other than the stop."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "target_selection",
+      "mostValuableNextSourceType": "A complete walkthrough naming the target level.",
+      "whatIsKnown": "Distances observed (80-100 pips, 1:3, 1:4); one fragment measures 'to previous' structure.",
+      "whatRemainsUnknown": "How the level is chosen above the 1:2 floor."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "SUPPORTED",
+      "domain": "minimum_risk_reward",
+      "mostValuableNextSourceType": "An Authority ruling, not a source.",
+      "whatIsKnown": "1:2 minimum stated twice in one source as a floor.",
+      "whatRemainsUnknown": "Whether the floor may be revised down after entry (XCONTRA|20260729|004)."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "position_sizing",
+      "mostValuableNextSourceType": "Same as stop_loss_buffer.",
+      "whatIsKnown": "Three explicit percentage bands, deterministic as percentages.",
+      "whatRemainsUnknown": "Cannot produce a size without the stop distance."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": false,
+      "coverage": "WELL_SUPPORTED",
+      "domain": "account_risk",
+      "mostValuableNextSourceType": "None needed.",
+      "whatIsKnown": "Percentage-based, fixed per trade, never raised after wins; strongest rule family in the corpus.",
+      "whatRemainsUnknown": "Nothing material."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "break_even",
+      "mostValuableNextSourceType": "A 'set and forget' explainer.",
+      "whatIsKnown": "Zero mentions in 9 sources.",
+      "whatRemainsUnknown": "Whether it exists at all."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "partial_profit",
+      "mostValuableNextSourceType": "A 'set and forget' explainer.",
+      "whatIsKnown": "Zero mentions in 9 sources.",
+      "whatRemainsUnknown": "Whether it exists at all."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "scaling",
+      "mostValuableNextSourceType": "A 'set and forget' explainer.",
+      "whatIsKnown": "Zero mentions in 9 sources.",
+      "whatRemainsUnknown": "Whether it exists at all."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "trailing_stops",
+      "mostValuableNextSourceType": "A 'set and forget' explainer.",
+      "whatIsKnown": "Zero mentions in 9 sources.",
+      "whatRemainsUnknown": "Whether it exists at all."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": true,
+      "coverage": "PARTIALLY_SUPPORTED",
+      "domain": "post_entry_management",
+      "mostValuableNextSourceType": "A 'set and forget' explainer.",
+      "whatIsKnown": "No-intervention demonstrated once; leave-it-alone-before-arrival stated across 3 sources; anti-cut rule stated.",
+      "whatRemainsUnknown": "Whether no-intervention is a rule or just what happened."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": true,
+      "blocksFaithfulImplementation": false,
+      "coverage": "ABSENT_FROM_REVIEWED_SOURCES",
+      "domain": "news_filters",
+      "mostValuableNextSourceType": "Low priority.",
+      "whatIsKnown": "Zero mentions in 9 sources.",
+      "whatRemainsUnknown": "Whether any exists."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "SUPPORTED",
+      "domain": "no_trade_conditions",
+      "mostValuableNextSourceType": "See session_requirements.",
+      "whatIsKnown": "Wrong session/day, no confirmation, and role violations are all explicit no-trade conditions.",
+      "whatRemainsUnknown": "The session parameter underneath."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": true,
+      "coverage": "DISCRETIONARY",
+      "domain": "discretionary_judgment",
+      "mostValuableNextSourceType": "Not resolvable by acquisition; needs a MOGO formalization decision.",
+      "whatIsKnown": "Explicitly discretionary gates exist with named inputs and no thresholds.",
+      "whatRemainsUnknown": "Nothing -- this is correctly discretionary."
+    },
+    {
+      "anotherTranscriptCouldPlausiblyResolve": false,
+      "blocksFaithfulImplementation": false,
+      "coverage": "SUPPORTED",
+      "domain": "examples_vs_universal_rules",
+      "mostValuableNextSourceType": "None needed.",
+      "whatIsKnown": "The corpus distinguishes them cleanly once annotated: 1:2 is a stated floor, 1:3/1:4/80-100 pips are observations.",
+      "whatRemainsUnknown": "Nothing material."
+    }
+  ],
+  "generated": true,
+  "generatorVersion": "1.0.0",
+  "milestone": "MOGO-002.8",
+  "modelVersion": "mogo.alex-audit.v1",
+  "narrativeArtifact": "docs/strategy-fidelity/audit/ALEX-CANONICAL-RULE-REGISTER.md",
+  "ruleCount": 41,
+  "rules": [
+    {
+      "auditNote": "Definitional. Deterministic=False: names a concept, not a computable test.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "support_and_resistance",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Support is where price has previously held; resistance is where price has previously been rejected. Support/resistance, supply/demand and 'area of interest' are the same concept under three names.",
+      "ruleId": "AXR-001",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|006"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|006",
+          "claimType": "definition",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Alex G states explicitly that support and resistance, supply and demand, and area of interest are the same concept under different names.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "2:10"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "No swing-significance threshold, so not computable as stated.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "trend_definition",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "A continuing downtrend is a sequence of lows with lower highs between them; the uptrend mirror is highs with retracements.",
+      "ruleId": "AXR-002",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|014"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|014",
+          "claimType": "definition",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A continuing downtrend is defined as a sequence of lows with lower highs between them; the mirror of the uptrend high-plus-retracement sequence stated immediately before.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "5:58"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Carried from the pre-existing ALEX_G corpus; contradicted cross-educator by XCONTRA|20260729|001. No minimum displacement is stated anywhere.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "break_of_structure",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "A body close beyond a structure level counts as a structural shift, with no stated minimum size.",
+      "ruleId": "AXR-003",
+      "shortSideSupported": true,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "break_and_retest",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Break-and-retest is a CONTINUATION pattern: price breaks a structure point, returns to retest it, then continues in the original direction.",
+      "ruleId": "AXR-004",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|004"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|004",
+          "claimType": "definition",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Break-and-retest is defined as a CONTINUATION pattern: the retest is a pause that precedes further movement in the direction price was already travelling.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "0:52"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "A quantified minimum over an UNDEFINED unit -- 'structure point' is never defined, so the rule is not deterministic despite carrying a number.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "entry_setup",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point.",
+      "ruleId": "AXR-005",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|011"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|011",
+          "claimType": "setup_requirement",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "3:43"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": true,
+      "distinctSourceCount": 1,
+      "domain": "entry_setup",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively.",
+      "ruleId": "AXR-006",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|012"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|012",
+          "claimType": "definition",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively up (or down) the chart.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "3:43"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Comparative ('most effective', 'works best'), NOT stated as mandatory. Recording it as a hard requirement would over-read the source.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "entry_setup",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "Break-and-retest is MOST EFFECTIVE at a pre-existing zone.",
+      "ruleId": "AXR-007",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|007"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|007",
+          "claimType": "setup_requirement",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "2:10"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "An explicit NON-constraint. Directly relevant to production rule ALEX_SR_008, whose source is recorded as giving 'no formula given' for zone tightness.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "entry_setup",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Zone width is unconstrained -- 'doesn't matter the size of the box' -- subject only to leaving enough room to contain multiple touches.",
+      "ruleId": "AXR-008",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|010"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|010",
+          "claimType": "definition",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Zone width is stated to be unconstrained - 'doesn't matter the size of the box' - subject only to leaving 'enough room' to contain multiple touches. Neither the room nor the number of touches is quantified, so zone construction remains non-deterministic.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "3:43"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Stated as a requirement ('you have to'). WHICH lower timeframe is not specified.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "entry_trigger",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Structure and continuation are read on the higher timeframe; the entry signal must be taken on a lower timeframe.",
+      "ruleId": "AXR-010",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|017"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|017",
+          "claimType": "entry_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "6:38"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Necessary condition ('in order for us to take a trade we need to have'). The bearish mirror is referenced only as a pointer to another video and is NOT stated here.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "candlestick_confirmation",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken.",
+      "ruleId": "AXR-011",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|018"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|018",
+          "claimType": "confirmation_rule",
+          "confidenceScore": 22.89,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated",
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "demonstrated_behavior",
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have').",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "6:38",
+            "8:25"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "EXAMPLE, not a universal rule. The three-doji count is never stated as required.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "candlestick_confirmation",
+      "evidenceClass": "ILLUSTRATIVE",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "The confirmation demonstrated is a Morning Star: three doji rejection candles followed by one bullish engulfing candle.",
+      "ruleId": "AXR-012",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|020"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|020",
+          "claimType": "confirmation_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "demonstrated_behavior"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "7:52",
+            "8:59"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "entry_trigger",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "The retest is complete when rejection candlesticks appear -- it is not timed or measured.",
+      "ruleId": "AXR-013",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|019"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|019",
+          "claimType": "confirmation_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "6:38"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "The exact price within that candle (close / next open / mid) is indicated on the chart and never named.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "entry_trigger",
+      "evidenceClass": "ILLUSTRATIVE",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Entry is taken at the confirmation candle of the retest.",
+      "ruleId": "AXR-014",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|021"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|021",
+          "claimType": "entry_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "demonstrated_behavior"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "7:52"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Demonstrated as a binding negative -- the strongest evidence that confirmation is mandatory rather than advisory.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "invalidation",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "A structurally ideal break-and-retest is NOT taken when the engulfing confirmation does not appear.",
+      "ruleId": "AXR-015",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|013"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|013",
+          "claimType": "invalidation_rule",
+          "confidenceScore": 22.38,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "demonstrated_behavior"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "4:47"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "The ONLY generalised stop statement in 9 sources. rule_statement / direct_explicit, explicitly universalised ('the same thing every single time'), corroborated by two same-source demonstrations. Establishes the RELATIONSHIP only.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "stop_loss_relationship",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "CRITICAL",
+      "longSideSupported": true,
+      "normalizedStatement": "On every break-and-retest trade the stop-loss is placed immediately BEYOND the rejection formation at the retest ('right under it' for a long).",
+      "ruleId": "AXR-020",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|025",
+        "CLAIM|ALEX_G|20260729|022"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|025",
+          "claimType": "stop_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "8:59"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|022",
+          "claimType": "stop_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "demonstrated_behavior"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "7:52",
+            "8:25"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "ABSENT across all 9 sources and 226 claims. No pips, no ATR multiple, no percentage, and no statement that the stop sits flush. Position size = risk / stop distance, so this single absence makes all 13 sizing rules non-computable. MOGO's 0.25 ATR is MOGO-authored.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "stop_loss_buffer",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "CRITICAL",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] The distance between the stop and the rejection structure.",
+      "ruleId": "AXR-021",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "All three demonstrations are longs and the phrasing is always 'right under'. 'Right above' is never spoken or shown. Not mirrored by assumption.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "stop_loss_relationship",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] The short-side stop placement.",
+      "ruleId": "AXR-022",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Stated twice as a FLOOR. A fixed 1:2 is a different rule that merely coincides at the boundary. Contradicted by XCONTRA|20260729|004.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "IN_OPEN_CONTRADICTION",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "minimum_risk_reward",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "CRITICAL",
+      "longSideSupported": true,
+      "normalizedStatement": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward.",
+      "ruleId": "AXR-030",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|023"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|023",
+          "claimType": "target_rule",
+          "confidenceScore": 23.5,
+          "confidenceState": "emerging",
+          "contradictions": [
+            {
+              "contradictionId": "XCONTRA|20260729|004",
+              "severity": "material",
+              "status": "open",
+              "type": "CONDITIONAL_SCOPE"
+            }
+          ],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": true,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "7:52",
+            "8:59"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Four cited claims are all DISTANCES OBSERVED AFTER THE FACT (80-100 pip average; 1:2, 1:3, 1:4 ratios), each annotated illustrative. One fragment measures 1:4 'to previous' structure -- too truncated to normalize. No selection procedure exists.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 3,
+      "domain": "target_selection",
+      "evidenceClass": "ILLUSTRATIVE",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] How the target level is chosen when structure allows more than 1:2.",
+      "ruleId": "AXR-031",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|084",
+        "CLAIM|ALEX_G|20260728|110",
+        "CLAIM|ALEX_G|20260728|113",
+        "CLAIM|ALEX_G|20260728|140"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|084",
+          "claimType": "target_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|004"
+          ],
+          "timestamps": [
+            "17:28"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|110",
+          "claimType": "target_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "7:23"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|113",
+          "claimType": "target_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "8:34"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|140",
+          "claimType": "target_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A 1:4 risk-to-reward is described for one watchlist setup. Stated as an observation about that chart, not as a required minimum.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|006"
+          ],
+          "timestamps": [
+            "7:12"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "The most strongly stated rule family in the corpus. CLAIM|...|098 is one of only two ALEX_G claims carrying evidence from two distinct sources.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": true,
+      "distinctSourceCount": 2,
+      "domain": "account_risk",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Risk is sized as a percentage of the account balance, never as a fixed monetary amount, and the same percentage is risked on every trade.",
+      "ruleId": "AXR-040",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|098",
+        "CLAIM|ALEX_G|20260728|096",
+        "CLAIM|ALEX_G|20260728|093"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|098",
+          "claimType": "risk_rule",
+          "confidenceScore": 23.5,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 2,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005",
+            "EVSRC|ALEX_G|20260728|007"
+          ],
+          "timestamps": [
+            "3:29",
+            "5:58"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|096",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "2:34"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|093",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "1:14"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Bands are explicit and deterministic AS PERCENTAGES. They still cannot produce a position SIZE without AXR-021.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": true,
+      "distinctSourceCount": 1,
+      "domain": "position_sizing",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Three risk bands: conservative 0.5-1%, recommended/industry-standard 1-2%, high 3-5%.",
+      "ruleId": "AXR-041",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|104",
+        "CLAIM|ALEX_G|20260728|107",
+        "CLAIM|ALEX_G|20260728|111"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|104",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Conservative risk is 0.5 to 1% of the account per trade.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "6:23"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|107",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The recommended risk, described as the industry standard, is 1 to 2% of the account per trade.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "7:23"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|111",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The high-risk band is 3 to 5% of the account per trade.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "8:34"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": true,
+      "distinctSourceCount": 1,
+      "domain": "position_sizing",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "LOW",
+      "longSideSupported": true,
+      "normalizedStatement": "The high band (3-5%) is confined to a personal or disposable account, and to the months November-March.",
+      "ruleId": "AXR-042",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|112",
+        "CLAIM|ALEX_G|20260728|117"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|112",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "8:34"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|117",
+          "claimType": "session_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Higher risk (3-5%) is taken only in November, December, January, February and possibly March, described as his statistically best months.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "10:39"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": true,
+      "distinctSourceCount": 1,
+      "domain": "account_risk",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "Once chosen, the risk percentage is not raised after wins or lowered after losses; his own practice fixes one percentage per calendar month.",
+      "ruleId": "AXR-043",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|108",
+        "CLAIM|ALEX_G|20260728|114"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|108",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "7:23"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|114",
+          "claimType": "risk_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|005"
+          ],
+          "timestamps": [
+            "9:33"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "DEMONSTRATED once, never stated as a rule. The strongest available evidence for a no-intervention default, and deliberately not promoted to a universal rule.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "post_entry_management",
+      "evidenceClass": "ILLUSTRATIVE",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "A losing trade is allowed to reach its stop without intervention; the loss is accepted as normal variance.",
+      "ruleId": "AXR-050",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|024"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|024",
+          "claimType": "trade_management_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "demonstrated_behavior"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "8:25"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "The most-repeated claim in the corpus: evidence from THREE distinct sources. Still not independent corroboration (same educator).",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 3,
+      "domain": "post_entry_management",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+      "ruleId": "AXR-051",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|045"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|045",
+          "claimType": "trade_management_rule",
+          "confidenceScore": 23.2,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated",
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 3,
+          "evidenceCount": 3,
+          "evidenceTypes": [
+            "demonstrated_behavior",
+            "explicit_statement",
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|003",
+            "EVSRC|ALEX_G|20260728|005",
+            "EVSRC|ALEX_G|20260728|006"
+          ],
+          "timestamps": [
+            "4:48",
+            "5:08",
+            "9:33"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "An ANTI-exit rule: constrains discretionary exit without specifying one.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "post_entry_management",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "A target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+      "ruleId": "AXR-052",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|147"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|147",
+          "claimType": "trade_management_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "failure_observation"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The stated implication is that a target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|007"
+          ],
+          "timestamps": [
+            "4:37"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "post_entry_management",
+      "evidenceClass": "ILLUSTRATIVE",
+      "implementationRelevance": "LOW",
+      "longSideSupported": true,
+      "normalizedStatement": "After missing an entry, set an alarm for the next pullback rather than chase.",
+      "ruleId": "AXR-053",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|139"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|139",
+          "claimType": "trade_management_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "demonstrated_behavior"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "After missing an entry, the stated response is to set an alarm for the next pullback rather than to chase the move.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|006"
+          ],
+          "timestamps": [
+            "6:08"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "ZERO mentions across 9 sources / 280 evidence items. Strengthened by the fact that EVSRC|ALEX_G|20260729|001 narrates three complete trades end to end without mentioning it.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "break_even",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] Whether the stop is ever moved to break-even.",
+      "ruleId": "AXR-060",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "ZERO mentions across 9 sources.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "partial_profit",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] Whether any portion of a position is closed before the full target.",
+      "ruleId": "AXR-061",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "ZERO mentions. One near-match ('let me scale') refers to scaling an ACCOUNT, not a position.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "scaling",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] Whether a position is ever added to or reduced after entry.",
+      "ruleId": "AXR-062",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "ZERO mentions across 9 sources.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "trailing_stops",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] Whether the stop is ever trailed.",
+      "ruleId": "AXR-063",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Comparative only. No ranking, weighting or threshold.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "timeframe_relationships",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "A break-and-retest on a higher timeframe is more respected than one on a lower timeframe.",
+      "ruleId": "AXR-070",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|008"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|008",
+          "claimType": "timeframe_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A break-and-retest on a higher timeframe is asserted to be more reliable than one on a lower timeframe. Comparative only - no ranking, weighting or threshold is stated.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "2:51"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": null,
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": true,
+      "distinctSourceCount": 1,
+      "domain": "higher_timeframe_analysis",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Top-down analysis uses four tiers: weekly, daily, 4-hour, and the lower timeframes (2H/1H/30m/15m; below 15m is not a strong timeframe).",
+      "ruleId": "AXR-071",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260727|005",
+        "CLAIM|ALEX_G|20260727|006"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|005",
+          "claimType": "timeframe_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Top-down analysis uses four timeframe tiers: weekly, daily, 4-hour, and the lower timeframes.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260727|001"
+          ],
+          "timestamps": [
+            "2:30"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260727|006",
+          "claimType": "timeframe_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The lower timeframes are 2-hour, 1-hour, 30-minute and 15-minute; anything below 15-minute is not considered a strong timeframe.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260727|001"
+          ],
+          "timestamps": [
+            "4:03"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Immediately qualified ('depending on how approach you want to take it'), so a default rather than a constraint. The swing clause names a second style whose word is garbled in the transcript and was NOT guessed.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "timeframe_relationships",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": true,
+      "normalizedStatement": "Day trading reads break-and-retest on 4H/1H; swing trading on daily/weekly.",
+      "ruleId": "AXR-072",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|015",
+        "CLAIM|ALEX_G|20260729|016"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|015",
+          "claimType": "timeframe_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "For day trading, break-and-retest is to be read on the 4-hour and 1-hour. Qualified immediately by 'depending on how approach you want to take it', so it is a default rather than a constraint.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "5:58"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|016",
+          "claimType": "timeframe_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "For swing trades, break-and-retest is to be read on the daily and weekly. The preceding word in the transcript ('Inay') is garbled and the second trading style it names cannot be recovered from this transcript - recorded as an open question, not guessed.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "5:58"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "The RULE is prescriptive and explicit; the HOURS are displayed on an on-screen session map and never spoken. Day-of-week IS deterministic; session hours are not.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "session_requirements",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not traded. Entries are restricted to Monday-Wednesday.",
+      "ruleId": "AXR-080",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|078",
+        "CLAIM|ALEX_G|20260728|083",
+        "CLAIM|ALEX_G|20260728|081"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|078",
+          "claimType": "session_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not to be traded.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|004"
+          ],
+          "timestamps": [
+            "14:41"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|083",
+          "claimType": "session_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Entries on this confirmation are restricted to Monday, Tuesday and Wednesday.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|004"
+          ],
+          "timestamps": [
+            "17:28"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|081",
+          "claimType": "session_rule",
+          "confidenceScore": 23.5,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 2,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "A confirmation arriving before the Sydney session is held until just before the London session - roughly eight hours - rather than entered on arrival.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|004"
+          ],
+          "timestamps": [
+            "14:41",
+            "17:28"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "Exists in the source material as PIXELS, not words. No further transcript of the same format can close it.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 2,
+      "domain": "session_requirements",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": false,
+      "normalizedStatement": "[PARAMETER ABSENT] The exact hours of the tradeable session windows.",
+      "ruleId": "AXR-081",
+      "shortSideSupported": false,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260728|079",
+        "CLAIM|ALEX_G|20260728|053"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|079",
+          "claimType": "session_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_demonstrated"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "chart_example"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Tradeable windows are defined by session volume, shown on an on-screen session map. The specific hours are displayed visually and never stated aloud.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|004"
+          ],
+          "timestamps": [
+            "14:41"
+          ]
+        },
+        {
+          "claimId": "CLAIM|ALEX_G|20260728|053",
+          "claimType": "session_rule",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "rule_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "Entry additionally waits for 'the proper session'. Which sessions qualify is not stated.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260728|003"
+          ],
+          "timestamps": [
+            "9:03"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "A NON-restriction. No instrument filter, no liquidity/spread requirement, no pair shortlist is stated anywhere.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "emerging",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 1,
+      "domain": "market_selection",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "LOW",
+      "longSideSupported": true,
+      "normalizedStatement": "The pattern applies to all timeframes and all instrument classes -- currencies, commodities, futures, stocks.",
+      "ruleId": "AXR-090",
+      "shortSideSupported": true,
+      "supportingClaimIds": [
+        "CLAIM|ALEX_G|20260729|005"
+      ],
+      "supportingClaims": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|005",
+          "claimType": "definition",
+          "confidenceScore": 22.0,
+          "confidenceState": "emerging",
+          "contradictions": [],
+          "directness": [
+            "direct_explicit"
+          ],
+          "distinctSourceCount": 1,
+          "evidenceCount": 1,
+          "evidenceTypes": [
+            "explicit_statement"
+          ],
+          "inContradiction": false,
+          "independentCorroborationCount": 0,
+          "independentCorroborationNote": "0 by construction: every ALEX_G source shares independence group AUTHOR|ALEX_G, so same-educator repetition is not independent corroboration (DECISION|MOGO|20260727|006). Repetition across sources is reported as distinctSourceCount and must not be read as corroboration.",
+          "normalizedClaim": "The pattern is asserted to apply on every timeframe and to every instrument class - currencies, commodities, futures and stocks. No instrument-specific qualification is given.",
+          "sourceIds": [
+            "EVSRC|ALEX_G|20260729|001"
+          ],
+          "timestamps": [
+            "0:52"
+          ]
+        }
+      ],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "MARKET_CONDITIONS carries 19 claims and yields 0 normalized rules -- claims describe the market, none gates a decision.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "market_conditions",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] Any market-condition filter (volatility, ranging vs trending, spread) gating whether to trade at all.",
+      "ruleId": "AXR-091",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "ZERO mentions across 9 sources. MOGO also implements none (ALEX_X_007), so the absence is consistent -- but it is an absence in both, not agreement.",
+      "authorship": "UNSUPPORTED",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "news_filters",
+      "evidenceClass": "UNSUPPORTED",
+      "implementationRelevance": "MEDIUM",
+      "longSideSupported": false,
+      "normalizedStatement": "[NO RULE EXISTS] Any news or economic-calendar filter.",
+      "ruleId": "AXR-092",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "OPINION, and the subject of blocking cross-educator contradiction KECON|20260728|001 with TJR. Not implementable and not intended to be.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "liquidity",
+      "evidenceClass": "OPINION",
+      "implementationRelevance": "LOW",
+      "longSideSupported": false,
+      "normalizedStatement": "Alex G rejects the institutional-stop-hunt narrative as unproven and states no strategy can trade liquidity sweeps alone.",
+      "ruleId": "AXR-093",
+      "shortSideSupported": false,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    },
+    {
+      "auditNote": "DISCRETIONARY_ELEMENTS carries 40 claims and yields 7 rules, 0 of them deterministic.",
+      "authorship": "EDUCATOR",
+      "confidenceStatus": "NO_CLAIM_EXISTS",
+      "contradictionStatus": "NONE",
+      "deterministic": false,
+      "distinctSourceCount": 0,
+      "domain": "discretionary_judgment",
+      "evidenceClass": "EXPLICIT",
+      "implementationRelevance": "HIGH",
+      "longSideSupported": true,
+      "normalizedStatement": "Several gates are explicitly judgement calls: whether a second confirmation is needed depends on level strength, timeframe, days left in the week and R:R, with no threshold assigned to any input.",
+      "ruleId": "AXR-100",
+      "shortSideSupported": true,
+      "supportingClaimIds": [],
+      "supportingClaims": [],
+      "unresolvedCitations": []
+    }
+  ],
+  "rulesWithOpenContradiction": [
+    "AXR-030"
+  ],
+  "scopeNote": "This register is an AUDIT VIEW over the ALEX_G educator claim library. It is NOT a specification, is NOT approved, and does NOT merge with alex_g_sr_v1 (DECISION|MOGO|20260727|004, KEREV-B). No rule here authorizes any code change.",
+  "shortSideSupportedCount": 21,
+  "unsupportedCount": 10
+}

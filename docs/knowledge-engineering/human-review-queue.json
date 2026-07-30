@@ -1,0 +1,1230 @@
+{
+  "count": 59,
+  "items": [
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|082",
+        "CLAIM|ALEX_G|20260728|087"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects SETUP. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] Within-source, roughly two minutes apart. At 16:56 he states that waiting for the session sometimes loses the trade entirely - 'the trade is completely gone from the direction, gone from the area where I was interested i",
+      "priorityRank": 1,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|005",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|068",
+        "CLAIM|ALEX_G|20260728|136"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects SETUP. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] Behaviour versus stated rule. Every Alex G source states the setup condition as price reaching a level - the confirmation 'has to be at a support level', and away from one the rule is 'simply not applicable'. Here a setu",
+      "priorityRank": 1,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|008",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|008"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|008",
+        "CLAIM|RAYNER_TEO|20260729|019"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects SETUP. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] CROSS-EDUCATOR, and the first contradiction in the library involving three educators' worth of context. ALEX_G states that a body close beyond a structure level counts as a shift REGARDLESS OF SIZE - 'no minimum size thr",
+      "priorityRank": 1,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|009",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260729|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|010"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|007",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point.",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|011",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|016"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|009",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point.",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|012",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|009"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|030",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick').",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|024",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|013"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|033",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required.",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|026",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|035"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|044",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate.",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|031",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|039"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|048",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s); the source states the rule but withholds its parameter",
+      "issue": "Required SETUP rule with an unresolved parameter: Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the ",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|034",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|062"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|064",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher lo",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|043",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|131"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|106",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required SETUP rule with an unresolved parameter: Trades are taken only when judged worth the capital risked. Selectivity is presented as a gate in its own right, separate from the mechanical entry conditions.",
+      "priorityRank": 1,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|052",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [],
+      "availableInterpretations": [
+        "Keep the two specifications permanently separate.",
+        "Plan a future milestone that reconciles them under explicit approval."
+      ],
+      "candidateRuleId": null,
+      "impact": "Overlap between alex_g_sr_v1 and the draft is convergence, not derivation (DECISION|MOGO|20260727|004). Treating overlap as corroboration would be a lineage error.",
+      "issue": "The draft duplicates production coverage in some domains without shared lineage",
+      "priorityRank": 1,
+      "recommendation": "Keep separate for now; reconciliation is its own governed milestone.",
+      "reviewId": "KEREV|059",
+      "smallestDecisionRequired": "Confirm the two specifications remain separate.",
+      "sourceEvidence": [
+        "MOGO-002.5",
+        "MOGO-002.6"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|025",
+        "CLAIM|TJR|20260727|006"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects ENTRY. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[BLOCKING] CROSS-EDUCATOR, FOUNDATIONAL. Alex G: 'There's no way that you can have a specific strategy to trade solely off of these sweeps' — and that anyone claiming otherwise 'is 100% lying to you'. TJR: 'My strategy is based off",
+      "priorityRank": 2,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|001",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|028",
+        "CLAIM|ALEX_G|20260728|047"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects ENTRY. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] Within-educator. Source #5 (liquidity) states entry requires confirmation that price is ALREADY moving in the intended direction and explicitly rejects entering on anticipation. This source accepts a 'potential lower hig",
+      "priorityRank": 2,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|004",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|028",
+        "CLAIM|ALEX_G|20260728|064"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects ENTRY. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] Within-source. The video's thesis, stated twice in the opening and again in the summary, is 'enter off of a confirmation, not an anticipation'. At 6:37 the instruction is that the 4-hour higher low 'is where you can then",
+      "priorityRank": 2,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|006",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|005"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|007"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|005",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: When lower and higher timeframes disagree, the higher timeframe takes precedence.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|010",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|017"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|010",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|013",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|018"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|011",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: A break above the lower high shifts the market from bearish back to bullish.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|014",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|022"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|014",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|015",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|026"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|018",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 5 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The area of interest must lie inside the current higher high and higher low, never outside that range.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|016",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|028"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|020",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 4 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Areas of interest are drawn only on the weekly and daily timeframes.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|017",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|029"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|021",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 9 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: An area of interest is identified by a decent number of prior rejections or touches.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|018",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|030"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|022",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|019",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|031"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|023",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 5 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|020",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|032"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|024",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 4 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|021",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|034"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|025",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Buy when price is above support; sell when price is below resistance.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|022",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260727|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|007"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|028",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|023",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|011"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|032",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 7 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|025",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|001"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|021"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|037",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Trade in the direction the zone has historically pushed price: buy while above it, sell while below it.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|027",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|002"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|029"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|041",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|028",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|002"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|030"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|042",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 4 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|029",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|032"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|043",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|030",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|002"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|037"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|046",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low readin",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|032",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|038"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|047",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|033",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|041"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|050",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|035",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|043"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|052",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|036",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|044"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|053",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: A candidate level is validated by looking left on the chart to confirm it has been respected historically.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|037",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|046"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|055",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 4 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|038",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|049"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|058",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 4 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|039",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|050"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|059",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 3 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|040",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|056"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|061",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|041",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|058"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|062",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 3 blocking open question(s); the source states the rule but withholds its parameter",
+      "issue": "Required ENTRY rule with an unresolved parameter: A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count thre",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|042",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|063"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|065",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|044",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|069"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|069",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|045",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|070"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|070",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|046",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|074"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|072",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 5 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|047",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|075"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|073",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 1 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|048",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|004"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|125"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|102",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 3 blocking open question(s); a named indicator or window has no stated setting; the source states the rule but withholds its parameter",
+      "issue": "Required ENTRY rule with an unresolved parameter: The EMA is used as dynamic support or resistance: support while bullish and resistance while bearish. Its period is still not stated.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|049",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|126"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|103",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The entry zone is where the EMA and a prior structure point converge on the same retracement, rather than either alone.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|050",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|128"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|104",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required ENTRY rule with an unresolved parameter: The counter-trend leg is deliberately forgone in order to take the larger continuation leg that follows it.",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|051",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|136"
+      ],
+      "availableInterpretations": [
+        "Acquire source material that states the parameter, then normalize.",
+        "Defer the rule until replay can establish a defensible value empirically.",
+        "Reject the rule as unimplementable from this educator's published material."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|108",
+      "impact": "This rule decides whether a trade is taken, and the source does not supply the parameter it depends on: 2 blocking open question(s)",
+      "issue": "Required INVALIDATION rule with an unresolved parameter: A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in t",
+      "priorityRank": 2,
+      "recommendation": "Defer. MOGO must not choose the parameter -- doing so would author a rule and attribute it to the educator.",
+      "reviewId": "KEREV|053",
+      "smallestDecisionRequired": "Decide whether this rule is DEFERRED or REJECTED for v2.",
+      "sourceEvidence": [
+        "EVSRC|ALEX_G|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [],
+      "availableInterpretations": [
+        "Normalize with the unresolved parameter explicitly carried.",
+        "Leave deferred until the contradiction is settled."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|013",
+      "impact": "carries both a contradiction and an unresolved parameter; a canonical statement would have to invent one and pick the other",
+      "issue": "Candidate not normalized: KECAND|ALEX_G|013",
+      "priorityRank": 2,
+      "recommendation": "Leave deferred; normalizing would require picking a side.",
+      "reviewId": "KEREV|054",
+      "smallestDecisionRequired": "Confirm deferral.",
+      "sourceEvidence": [],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [],
+      "availableInterpretations": [
+        "Normalize with the unresolved parameter explicitly carried.",
+        "Leave deferred until the contradiction is settled."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|029",
+      "impact": "carries both a contradiction and an unresolved parameter; a canonical statement would have to invent one and pick the other",
+      "issue": "Candidate not normalized: KECAND|ALEX_G|029",
+      "priorityRank": 2,
+      "recommendation": "Leave deferred; normalizing would require picking a side.",
+      "reviewId": "KEREV|055",
+      "smallestDecisionRequired": "Confirm deferral.",
+      "sourceEvidence": [],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [],
+      "availableInterpretations": [
+        "Normalize with the unresolved parameter explicitly carried.",
+        "Leave deferred until the contradiction is settled."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|040",
+      "impact": "carries both a contradiction and an unresolved parameter; a canonical statement would have to invent one and pick the other",
+      "issue": "Candidate not normalized: KECAND|ALEX_G|040",
+      "priorityRank": 2,
+      "recommendation": "Leave deferred; normalizing would require picking a side.",
+      "reviewId": "KEREV|056",
+      "smallestDecisionRequired": "Confirm deferral.",
+      "sourceEvidence": [],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [],
+      "availableInterpretations": [
+        "Normalize with the unresolved parameter explicitly carried.",
+        "Leave deferred until the contradiction is settled."
+      ],
+      "candidateRuleId": "KECAND|ALEX_G|068",
+      "impact": "carries both a contradiction and an unresolved parameter; a canonical statement would have to invent one and pick the other",
+      "issue": "Candidate not normalized: KECAND|ALEX_G|068",
+      "priorityRank": 2,
+      "recommendation": "Leave deferred; normalizing would require picking a side.",
+      "reviewId": "KEREV|057",
+      "smallestDecisionRequired": "Confirm deferral.",
+      "sourceEvidence": [],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [],
+      "availableInterpretations": [
+        "Acquire an ALEX_G source that states stop placement.",
+        "Accept that this educator's published material cannot support a risk implementation.",
+        "Permit MOGO-authored stop placement, recorded explicitly as MOGO-authored."
+      ],
+      "candidateRuleId": null,
+      "impact": "13 RISK rules describe sizing only. Position size = risk / stop distance, so none of them is implementable. This is the same gap MOGO-002.5 recorded as GAP-RISK-001.",
+      "issue": "Stop placement is absent from the entire educator library",
+      "priorityRank": 3,
+      "recommendation": "Acquire, or formally accept the limitation. Do not permit an unlabelled MOGO-authored stop to enter a rule attributed to the educator.",
+      "reviewId": "KEREV|058",
+      "smallestDecisionRequired": "Decide whether stop placement is acquired, accepted as absent, or MOGO-authored.",
+      "sourceEvidence": [
+        "MOGO-002.5",
+        "MOGO-002.6"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260727|020",
+        "CLAIM|TJR|20260727|065"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects MARKET_STRUCTURE. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] CROSS-EDUCATOR. Alex G marks highs and lows at candle BODIES and states explicitly 'not at the wick'. TJR (source #2) marks a high at the highest WICK of the two candles forming it. Both are describing the same operation",
+      "priorityRank": 5,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|002",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260727|003"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|022",
+        "CLAIM|TJR|20260727|036"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both are internally correct for their own educator, and the disagreement is genuine cross-educator divergence rather than an error."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects MARKET_STRUCTURE. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] CROSS-EDUCATOR, MECHANISM. TJR: 'It is assumed that market makers sweep highs and lows specifically to fill large positions in the opposite direction' — the causal engine of his entire framework. Alex G: 'There is no rea",
+      "priorityRank": 5,
+      "recommendation": "Replay can settle this empirically once authorized.",
+      "reviewId": "KEREV|003",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending replay.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|002"
+      ],
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "affectedClaims": [
+        "CLAIM|ALEX_G|20260728|089",
+        "CLAIM|ALEX_G|20260728|100"
+      ],
+      "availableInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "candidateRuleId": null,
+      "impact": "Affects UNRESOLVED_QUESTIONS. A normalized rule in this domain cannot be trusted while the contradiction is open.",
+      "issue": "[MATERIAL] Within-source, and it concerns the numbers the video's authority rests on. The opening claims $50,000-$100,000 per day. The body asserts that 8-10% per month is the realistic, sustainable figure and that 50% per day/week",
+      "priorityRank": 10,
+      "recommendation": "Requires further source acquisition or an Engineering Authority ruling; no dataset available to MOGO can decide it.",
+      "reviewId": "KEREV|007",
+      "smallestDecisionRequired": "Record which interpretation governs, or defer pending further source acquisition.",
+      "sourceEvidence": [
+        "XCONTRA|20260728|006"
+      ],
+      "status": "PENDING_REVIEW"
+    }
+  ]
+}

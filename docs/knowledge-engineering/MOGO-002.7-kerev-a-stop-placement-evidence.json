@@ -1,0 +1,377 @@
+{
+  "alexGStopRuleClaimCount": 2,
+  "authorityOptions": [
+    {
+      "costsNothingIrreversible": true,
+      "option": "Acquire more ALEX_G material",
+      "optionId": "A",
+      "reversible": true,
+      "risks": [
+        "The provided source could not be ingested in this environment, so the option is untested against its most promising candidate.",
+        "Eight sources already yielded zero stop rules; the base rate for this channel is poor.",
+        "KEGAP-003 shows some parameters exist only as on-screen pixels, so a further transcript may reproduce the same failure."
+      ]
+    },
+    {
+      "costsNothingIrreversible": true,
+      "option": "Accept stop placement as absent from the ALEX_G specification",
+      "optionId": "B",
+      "reversible": true,
+      "risks": [
+        "Permanently caps the educator draft: 13 risk rules stay non-implementable and no ALEX_G claim becomes P&L-replayable.",
+        "Records a negative that later material could falsify, so it should be recorded as 'absent from reviewed sources', never as 'the educator does not teach it'."
+      ]
+    },
+    {
+      "option": "Define a clearly labelled MOGO-authored stop module",
+      "optionId": "C",
+      "requiresExplicitLabelling": true,
+      "reversible": true,
+      "risks": [
+        "This is what production already does; the risk is not the logic but the label.",
+        "If labelled inside a specification attributed to the educator, it fabricates lineage -- the exact outcome KEREV|058 warns against.",
+        "Formalising 0.25 ATR would elevate a parameter that RULES_ALEXG itself flags as EXPERIMENTAL and 'not tuned against outcomes'."
+      ]
+    },
+    {
+      "option": "Use a separately attributed cross-educator module",
+      "optionId": "D",
+      "prohibitedWithoutRelabelling": true,
+      "reversible": true,
+      "risks": [
+        "RAYNER_TEO states a complete stop rule (support low minus 1 ATR(20,SMA), never flush, never tightened), so this is technically available.",
+        "Applying it to an ALEX_G setup attributes to Alex a rule he never stated -- prohibited by governance rule 8 and by the standing note in REPLAY-CANDIDATES.md.",
+        "Would produce a hybrid strategy that is neither educator's, presented under one educator's name."
+      ]
+    }
+  ],
+  "classificationCounts": {
+    "EXAMPLE_DEMONSTRATED_PLACEMENT": 2,
+    "EXPLICIT_RULE": 1,
+    "INCOMPLETE": 2,
+    "LEXICAL_FALSE_POSITIVE": 1,
+    "NOT_A_STOP_STATEMENT": 3,
+    "TRADE_MANAGEMENT_NOT_PLACEMENT": 1
+  },
+  "decidedByThisMilestone": false,
+  "decisionId": "KEREV-A",
+  "decisionStatus": "OPEN_AWAITING_ENGINEERING_AUTHORITY",
+  "decisionStatusAfterIngestion": "OPEN_BUT_NOW_DECIDABLE_ON_PRIMARY_SOURCE_EVIDENCE",
+  "demonstratedStopPlacementCount": 2,
+  "explicitStopPlacementRuleCount": 1,
+  "generated": true,
+  "generatorRecommendation": {
+    "basis": "Acquire against the one verified, unexhausted candidate first; if it also yields no stop rule, accept absence as a recorded property of the reviewed set. Both are reversible and neither fabricates attribution. C is acceptable only with explicit MOGO-authored labelling outside the educator specification. D should not be adopted under the ALEX_G name.",
+    "explicitlyNotRecommended": [
+      "Deciding KEREV-A on the strength of the structural resemblance between MOGO's zone-boundary stop and the brief's description of the un-ingested video. The resemblance is real and is NOT evidence -- the transcript was never read."
+    ],
+    "isDecision": false,
+    "recommendation": "A then B"
+  },
+  "generatorVersion": "1.0.0",
+  "milestone": "MOGO-002.7",
+  "modelVersion": "mogo.source-acquisition.v1",
+  "mogoAuthoredStopLogic": {
+    "affectsTradingBehavior": true,
+    "buyFormula": "stop = setup.zoneLow - stopATRBuffer * atrAtEntry",
+    "evaluators": [
+      "alexGConstructLivePosition",
+      "alexGComputeATRAtEntry"
+    ],
+    "extraImplementationRuleId": "ALEX_X_001",
+    "implementationReferences": [
+      "index.html:3485 RULES_ALEXG.config.stopATRBuffer",
+      "index.html:3487-3488 stop computation",
+      "index.html:3494-3495 target computation",
+      "index.html:3512 risk amount"
+    ],
+    "minRR": 2.0,
+    "origin": "hub_standardization",
+    "repositoryStatedProvenance": "RULES_ALEXG.hubTestStandardizations records the stop/TP/risk/R:R mechanism as '100% unaddressed by the source'. The repository has always disclosed this.",
+    "riskPercent": 1.0,
+    "sellFormula": "stop = setup.zoneHigh + stopATRBuffer * atrAtEntry",
+    "sizeFormula": "riskAmount = balanceBefore * (riskPercent / 100)",
+    "stopATRBuffer": 0.25,
+    "targetFormula": "target = entry +/- minRR * riskDistance",
+    "title": "Entire stop-loss / take-profit / risk / R:R mechanism",
+    "whyNotAttributableToAlex": [
+      "The specification field it lives in is hubTestStandardizations -- MOGO's own choices -- not originalAlexConcepts.",
+      "DECISION|MOGO|20260727|004 states ALEX's constants describe what MOGO built, not what any trader teaches.",
+      "traders/alex-g/profile.json states ALEX G's rules are fully specified by MOGO's own implementation, not derived from the educator's research.",
+      "The 0.25 ATR buffer appears in no ALEX_G claim. No educator statement mentions ATR at all.",
+      "MOGO-002.6 established that overlap between production and the educator draft is convergence, not derivation. Reading a structural resemblance as corroboration would be a lineage error."
+    ]
+  },
+  "narrativeArtifact": "docs/knowledge-engineering/KEREV-A-STOP-PLACEMENT-EVIDENCE-PACKAGE.md",
+  "relatedGapIds": [
+    "KEGAP-001",
+    "GAP-RISK-001"
+  ],
+  "residualUnknowns": [
+    {
+      "detail": "No unit of any kind is given -- not pips, not an ATR multiple, not a percentage, and not an explicit 'flush against the structure'. Position size = risk / stop distance, so the 13 sizing rules remain non-computable.",
+      "id": "STOP-UNK-1",
+      "missing": "The buffer distance beyond the anchor",
+      "openQuestion": "missing_stop_placement / critical / blocks_rule_candidate",
+      "severity": "BLOCKING"
+    },
+    {
+      "detail": "Three readings are each consistent with the words and the chart narration: (a) the low of the final rejection/engulfing candle, (b) the low of the whole Morning Star formation, (c) the far boundary of the retested zone. They give materially different stop distances on the same setup.",
+      "id": "STOP-UNK-2",
+      "missing": "The identity of the anchor ('it' / 'this point')",
+      "openQuestion": "unclear_scope / high / blocks_rule_candidate",
+      "severity": "BLOCKING"
+    },
+    {
+      "detail": "All three demonstrations are longs and the phrasing is always 'right under'. The symmetric 'right above' for a short is never spoken or shown, although the pattern is stated to work in both directions.",
+      "id": "STOP-UNK-3",
+      "missing": "The short-side mirror",
+      "openQuestion": "unclear_scope / medium / blocks_rule_candidate",
+      "severity": "MATERIAL"
+    }
+  ],
+  "reviewQueueRecord": "KEREV|058",
+  "statements": [
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=pD1vAUMbSjw",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260727|019"
+      ],
+      "claimTypes": [
+        "failure_condition"
+      ],
+      "classificationRationale": "Establishes that a wrong trend origin invalidates the stop-loss. Says nothing about where the stop is placed. Names the stop as one of five things affected, which confirms he treats stop placement as a definite decision -- without stating it.",
+      "directness": "direct_explicit",
+      "endTimestamp": "16:26",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260727|001|020",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "they could be wrong or they could even be right about it being bullish, but they're wrong about where it's bullish from. And that completely changes",
+      "extractionCertainty": "high",
+      "normalizedObservation": "Misidentifying the origin of a trend invalidates entry, risk-to-reward, take-profit, stop-loss and trade management even when the direction is correct.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260727|001",
+      "sourceTitle": "Best Top Down Analysis Strategy for 2026 | Forex Trading Guide",
+      "startTimestamp": "14:48",
+      "stopStatementClassification": "INCOMPLETE"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=sZAE_lqdeno",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260728|012"
+      ],
+      "claimTypes": [
+        "definition"
+      ],
+      "classificationRationale": "Establishes that the lower timeframe is used to judge how much ROOM the stop needs. This is the closest statement in the library to a placement rule and it still names no reference price and no buffer.",
+      "directness": "direct_explicit",
+      "endTimestamp": "17:32",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260728|001|019",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "we're looking at the exact same Market structure just more details of it so we have a better understanding of how much more can this move go how long can we have on our stop-loss on a takeprofit",
+      "extractionCertainty": "moderate",
+      "normalizedObservation": "Lower timeframes provide the detail used to judge how far a move may run and how much room a stop-loss and take-profit require.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260728|001",
+      "sourceTitle": "Simplifying Advanced Market Structure in 20 Minutes | Forex Trading Tutorial",
+      "startTimestamp": "16:03",
+      "stopStatementClassification": "INCOMPLETE"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=Rua24ytuHuY",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260728|022"
+      ],
+      "claimTypes": [
+        "causal_hypothesis"
+      ],
+      "classificationRationale": "Opinion on whether institutions deliberately target retail stops. Bears on the liquidity-sweep narrative, not on placement.",
+      "directness": "direct_explicit",
+      "endTimestamp": "8:40",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260728|002|010",
+      "evidenceQuality": "medium",
+      "evidenceType": "opinion",
+      "exactExcerpt": "There is no real hardcore evidence that this is a bank or an institution that has liquidated your position.",
+      "extractionCertainty": "certain",
+      "normalizedObservation": "Alex G asserts there is no hard evidence that banks or institutions deliberately liquidate retail stop-losses, and treats the institutional-sweep narrative as unproven.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260728|002",
+      "sourceTitle": "How to Master Liquidity in Trading (Advanced Guide)",
+      "startTimestamp": "6:10",
+      "stopStatementClassification": "NOT_A_STOP_STATEMENT"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=Rua24ytuHuY",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260728|023"
+      ],
+      "claimTypes": [
+        "performance_hypothesis"
+      ],
+      "classificationRationale": "Unsourced market-composition statistic (retail stops as 3% of the market). No placement content.",
+      "directness": "direct_explicit",
+      "endTimestamp": "8:40",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260728|002|011",
+      "evidenceQuality": "low",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "the retail trader stop- losses that only make up 3% of the market",
+      "extractionCertainty": "high",
+      "normalizedObservation": "Alex G states retail traders make up 3% of the market. No source is given for this figure.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260728|002",
+      "sourceTitle": "How to Master Liquidity in Trading (Advanced Guide)",
+      "startTimestamp": "6:10",
+      "stopStatementClassification": "NOT_A_STOP_STATEMENT"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=VzMlFZbWA0Y",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260728|120"
+      ],
+      "claimTypes": [
+        "behavioral_observation"
+      ],
+      "classificationRationale": "The phrase is 'stop losing money' -- a beginner objective, not a stop-loss. Retained in the package so the Authority can see the matcher was not tuned to produce a convenient zero.",
+      "directness": "direct_explicit",
+      "endTimestamp": "11:49",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260728|005|033",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "goal as a beginner Trader is not to make money right away it's to stop losing money",
+      "extractionCertainty": "high",
+      "normalizedObservation": "The stated first objective for a beginner is to stop losing money rather than to make it.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260728|005",
+      "sourceTitle": "Best Risk Management Strategy to Make Millions with Trading",
+      "startTimestamp": "11:19",
+      "stopStatementClassification": "LEXICAL_FALSE_POSITIVE"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260729|022"
+      ],
+      "claimTypes": [
+        "stop_rule"
+      ],
+      "classificationRationale": "TRADE 1. The first ALEX_G evidence in nine sources that places a stop at all: 'you would have put your stop loss right under this point', spoken over the chart. States the RELATIONSHIP (immediately beyond the rejection structure) and leaves the ANCHOR deictic and the DISTANCE unstated.",
+      "directness": "direct_demonstrated",
+      "endTimestamp": "8:17",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|023",
+      "evidenceQuality": "medium",
+      "evidenceType": "demonstrated_behavior",
+      "exactExcerpt": "you would have put your stop loss right under this point",
+      "extractionCertainty": "high",
+      "normalizedObservation": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "sourceTitle": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "startTimestamp": "7:52",
+      "stopStatementClassification": "EXAMPLE_DEMONSTRATED_PLACEMENT"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260729|022"
+      ],
+      "claimTypes": [
+        "stop_rule"
+      ],
+      "classificationRationale": "TRADE 2. Second consistent demonstration, same construction. Corroborates the relationship within the same source; adds no parameter.",
+      "directness": "direct_demonstrated",
+      "endTimestamp": "8:50",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|026",
+      "evidenceQuality": "medium",
+      "evidenceType": "demonstrated_behavior",
+      "exactExcerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+      "extractionCertainty": "high",
+      "normalizedObservation": null,
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "sourceTitle": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "startTimestamp": "8:25",
+      "stopStatementClassification": "EXAMPLE_DEMONSTRATED_PLACEMENT"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260729|024"
+      ],
+      "claimTypes": [
+        "trade_management_rule"
+      ],
+      "classificationRationale": "The stopped-out trade is accepted without intervention ('it is what it is it happens'). Evidence about what happens AFTER the stop is set, not about where it goes. Counted under KEGAP-006, not KEGAP-001.",
+      "directness": "direct_demonstrated",
+      "endTimestamp": "8:50",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|027",
+      "evidenceQuality": "high",
+      "evidenceType": "demonstrated_behavior",
+      "exactExcerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+      "extractionCertainty": "certain",
+      "normalizedObservation": "A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "sourceTitle": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "startTimestamp": "8:25",
+      "stopStatementClassification": "TRADE_MANAGEMENT_NOT_PLACEMENT"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260729|025"
+      ],
+      "claimTypes": [
+        "stop_rule"
+      ],
+      "classificationRationale": "TRADE 3, and the decisive item. 'it's literally the same thing every single time your stop- loss is right under it' GENERALISES the two demonstrations into an invariant. This is the statement that converts stop placement from absent to partially supported: it is a rule_statement with directness direct_explicit, not a chart aside.",
+      "directness": "direct_explicit",
+      "endTimestamp": "9:16",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|028",
+      "evidenceQuality": "high",
+      "evidenceType": "rule_statement",
+      "exactExcerpt": "it's literally the same thing every single time your stop- loss is right under it",
+      "extractionCertainty": "certain",
+      "normalizedObservation": "Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "sourceTitle": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "startTimestamp": "8:59",
+      "stopStatementClassification": "EXPLICIT_RULE"
+    },
+    {
+      "annotationNotes": null,
+      "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260729|028"
+      ],
+      "claimTypes": [
+        "definition"
+      ],
+      "classificationRationale": "The 'set and forget' identification. Matched only because the domain patterns include 'set and forget'. Relevant to KEGAP-006; contains no placement content.",
+      "directness": "direct_explicit",
+      "endTimestamp": "11:07",
+      "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|033",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "exactExcerpt": "everything I've showed you in this video is an example of what I do with my set",
+      "extractionCertainty": "high",
+      "normalizedObservation": "Alex G identifies the method demonstrated in this video - break-and-retest plus engulfing confirmation, fixed stop and preset minimum 1:2 target - as his 'set and forget' strategy. This is the first source that ties the named strategy to a specific mechanical procedure rather than using the phrase as a format or brand label.",
+      "recordedOpenQuestion": null,
+      "sourceId": "EVSRC|ALEX_G|20260729|001",
+      "sourceTitle": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+      "startTimestamp": "9:57",
+      "stopStatementClassification": "NOT_A_STOP_STATEMENT"
+    }
+  ],
+  "stopReferencingEvidenceItemCount": 10
+}
