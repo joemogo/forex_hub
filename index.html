@@ -1332,6 +1332,13 @@ button.danger:hover{background:var(--red-dim)}
           <div id="decisionEventDiagnosticsCard"></div>
         </div>
 
+        <!-- v12.8.0 MOGO-003 Phase 1 Evidence Platform. Reports the SHA-256 integrity status, the
+             tier-(b) IndexedDB store, unexported/unverifiable counts and every recorded evidence
+             write failure. Integrity here means alteration detection ONLY -- never authenticity. -->
+        <div class="card" id="evidencePlatformDiagnosticsCardWrap" style="display:none">
+          <div id="evidencePlatformDiagnosticsCard"></div>
+        </div>
+
         <div class="card">
           <div class="section-label">Historical data diagnostic</div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:12px">
@@ -1643,6 +1650,10 @@ button.danger:hover{background:var(--red-dim)}
         <!-- v12.3.2 Final Pre-Commit Integrity Gate: mirrors paperLedgerIntegrityWarningBanner --
              set only when a compensating rollback write itself failed for ALEX. Runtime-only. -->
         <div id="alexGLedgerIntegrityWarningBanner"></div>
+        <!-- v12.8.0 MOGO-003 Phase 1: standing, non-dismissible evidence banners. Shows a storage
+             failure (quota / evidence store unavailable) and a live count of packages that exist
+             only in this browser profile and have never been exported to disk. -->
+        <div id="evidenceExportBanner"></div>
         <div class="card" style="border-color:var(--purple)">
           <div class="section-label" style="color:var(--purple);margin-bottom:2px">ALEX</div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Support &amp; Resistance Strategy — <span style="font-family:monospace">alex_g_sr_v1</span> — Hub v<span id="alexgHubVersion"></span></div>
@@ -1937,9 +1948,12 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.7.1';
-const APP_VERSION_DATE='24 Jul 2026';
+const APP_VERSION='12.8.2';
+const APP_VERSION_DATE='31 Jul 2026';
 const APP_VERSION_LOG=[
+  '12.8.2 — EXP-001 CORRECTION: A BROWSER DOWNLOAD IS AN ATTEMPT, NOT A DURABILITY PROOF (evidence-integrity correction; no trading behavior change; zero protected-function/protected-constant drift, 63 functions and 4 constants byte-identical). THE DEFECT, FOUND BY LITERAL BROWSER VERIFICATION: evidenceExportPackage() marked a package successfully exported whenever downloadTextFile() returned without throwing. But downloadTextFile() uses the anchor-click download idiom -- it returns nothing, has no error handling, and CANNOT report whether the browser accepted, blocked, cancelled or failed the write. Chrome silently refused two real downloads while the app reported ok:true, set exportVerified:true and cleared the standing unexported-evidence warning, with no file anywhere on disk. That directly violated the milestone rule that a failed or cancelled export is never marked successful, and it made the banner lie -- the one surface an operator relies on to know their evidence is safe. The earlier fixture missed it because its stub THREW; the real API never throws. THE CORRECTION: an AUTO_DOWNLOAD or MANUAL export now records an ATTEMPT ONLY (exportAttemptedAt, exportMechanism, exportFilename, exportAttemptCount). exportedAt stays null, exportVerified stays false, the package remains in the unexported count and THE WARNING DOES NOT CLEAR. A package is marked exported ONLY after the operator re-imports the downloaded JSON and every one of five conditions holds: the bytes parse, the package validates against schema v1, the package identity (packageId and sourceTradeId) matches the stored package, the SHA-256 content hash verifies, and the EXACT canonical content is byte-identical to the stored Evidence Package. Only then is exportedAt stamped, exportVerified set true, exportVerificationMethod set REIMPORT_VERIFIED, and the warning cleared. MOGO now only ever claims evidence is on disk when it has actually read it back off disk. NO SHORTCUTS: no File System Access API, and no operator-confirmation override -- an operator saying \'yes it downloaded\' is not evidence, the bytes are; the decision function consults neither confirm() nor prompt(). An UNVERIFIABLE hash (no Web Crypto) can never confirm an export and degrades to an explicit DUPLICATE_IDENTICAL_UNVERIFIABLE no-op rather than a silent pass. The banner and Diagnostics now state plainly that a browser download alone does not prove disk persistence, and report the count of attempted-but-unconfirmed downloads separately. TESTING: v128 grows 62 -> 74 fixtures. New E1-E12 exercise the REAL, pure evidenceEvaluateExportReimport() decision offline: attempted export, cancelled/missing download, absent re-import, malformed re-import, mismatched package identity, failed SHA-256, UNVERIFIABLE hash, noncanonical content mismatch, valid re-import, warning clearance only after verification, absence of any confirmation shortcut or FS Access path, and that the import path actually routes through the decision. X4 was STRENGTHENED, not weakened: it previously asserted ordering around a marking step that should not exist, and now asserts the export path can never stamp exportedAt under any ordering. The counting rule was extracted into the pure evidenceSummarizePackages() so fixtures exercise the real logic rather than a copy. NO BROWSER WAS OPENED and no Chrome profile was accessed for this release. Full regression: 779/779 fixtures across 16 suites, zero drift.',
+  '12.8.1 — INC-001 LOAD-INTEGRITY CORRECTION + INC-004 MANDATORY BROWSER-TEST ISOLATION (safety release -- no trading behavior change; zero protected-function/protected-constant drift, 63 functions and 4 constants byte-identical). INC-004: on 2026-07-31 developer browser verification issued a browser storage-clearing call three times against http://localhost:8744 inside the operator\'s ACTIVE Chrome Profile 2 -- the live MOGO origin -- destroying real ALEX and JVM paper-trading data, which was recovered from a Time Machine backup. The origin had been INFERRED from .claude/launch.json (port 8743) and assumed isolated; that assumption was never verified and was wrong. No MOGO code was involved: the calls were ad-hoc inline scripts at the tool layer. INC-001 LOAD-INTEGRITY (the real code defect this exposed): loadSaved()/loadAlexGSaved()/loadAlexV2Saved() each wrapped EVERY key in ONE try/catch, so a single JSON.parse throw on the first key silently abandoned every remaining key, leaving empty in-memory defaults that the next ordinary save() then wrote straight over real, intact stored data -- the bytes were readable the whole time. FIXED IN TWO HALVES, either alone insufficient: (1) loadStoredKey() loads each key independently so one unreadable key can never suppress the others; (2) keys that were PRESENT BUT UNREADABLE are recorded in storageLoadFailures and become UNWRITABLE for the rest of the session -- persistStorageKey() enforces this for the unguarded save()/saveAlexGRest(), and both savePaperAccountGuarded() and saveAlexGAccountGuarded() refuse the commit with reason LOAD_INTEGRITY_BLOCKED. A failed read now degrades into \'don\'t touch it\', never into \'replace it with a default\'. This also closes the missing-version hole, where an account key present with no version key left 0 > 0 false and let the staleness guard pass. An ABSENT key is NOT a failure -- the in-memory default is correct there and a fresh install writes normally. Every load failure is reported loudly through both engine-error channels, so the operator learns their data is being PRESERVED rather than silently frozen. Return SHAPES are unchanged ({ok,integrityCompromised,reason}); LOAD_INTEGRITY_BLOCKED is a new additive reason value and no call site compares reason by equality. ISOLATION CONTROLS: new scripts/browser_test_profile.sh creates a DISPOSABLE Chrome --user-data-dir under a temp directory and FAILS CLOSED -- refusing an inferred origin, a profile root inside the operator\'s Chrome directory, a reused profile directory, or a profile that is not verifiably empty -- and records the test-profile path, exact origin, not-the-operator-profile confirmation and a pre-clear inventory. docs/TESTING.md gains Rule 0 (mandatory profile isolation) and an absolute prohibition on storage clearing, IndexedDB deletion, account resets and session/tab reuse outside a verified disposable profile. TESTING: new tests/v129_browser_isolation_guard_tests.js (26 fixtures) -- L1-L14 drive the REAL loaders and savers through a controllable storage stub (L4 reproduces the exact original overwrite and asserts the stored bytes survive it; L8/L9 prove both guarded ledgers refuse to commit; L10 proves the guard is not a freeze), and G1-G12 statically assert that no committed source performs a destructive storage call, none targets the operator Chrome profile directory, and the launcher keeps its fail-closed behaviour. DISCLOSED LIMITATION: these guards constrain the REPOSITORY only; they cannot intercept ad-hoc inline scripts at the tool layer, which is how INC-004 actually happened -- recorded in docs/KNOWN_ISSUES.md rather than implied away. NO BROWSER WAS OPENED and no Chrome profile was accessed during this release; the launcher is statically asserted, never executed. Full regression: 767/767 fixtures across 16 suites, zero drift. See docs/INCIDENTS.md INC-004 and the INC-001 v12.8.1 correction.',
+  '12.8.0 — MOGO-003 PHASE 1: EVIDENCE PLATFORM — DURABLE CAPTURE &amp; EXPORT (infrastructure release -- no trading behavior change; the exact same market data produces the exact same trades before and after this release, proven by zero protected-function/protected-constant drift, 63 functions and 4 constants byte-identical). Implements the Engineering-Authority-approved MOGO-003 Phase 1 under rulings C1-C5 and minor corrections 1-5. THREE TIERS: (a) localStorage is now a WORKING BUFFER only, (b) a new IndexedDB store (mogo_evidence) is the AUTOMATIC browser evidence store written with no user action on every trade close, and (c) a successfully completed disk export is the only tier intended to survive clearing site data. THE HONEST LIMIT, STATED RATHER THAN IMPLIED: IndexedDB does NOT survive a browser-profile clear, device loss or disk loss, and even an exported file does not survive device or disk loss unless the operator backs it up off-device -- both statements appear verbatim in the Diagnostics card and the banner. SILENT WRITE FAILURE ENDED (R3/G2): saveAlexGRest() and save() carried a bare catch(e){} that made silent evidence loss the default -- a quota-exceeded write failed and nothing anywhere reported it. Both now classify the error, record it to the existing engine-error channel, emit a DATA_UNAVAILABLE decision event and raise a persistent banner. Both still NEVER THROW: commitAlexGLedger()/commitPaperLedger() call them after their guarded units already succeeded, so their best-effort semantics are byte-for-byte preserved. saveAlexGAccountGuarded() now distinguishes a quota exhaustion from the STALE_VERSION concurrent-tab conflict, with its {ok,integrityCompromised,reason} return SHAPE unchanged (storageErrorKind is purely additive). Three reason codes registered BEFORE use (DATA_STORAGE_QUOTA_EXCEEDED/DATA_STORAGE_WRITE_FAILED/DATA_EVIDENCE_STORE_UNAVAILABLE) so the events actually validate rather than being silently dropped. INTEGRITY (ruling C1): contentHash is SHA-256 via Web Crypto over mogo.evidence-canon.v1, a canonical form defined exactly (object keys sorted ascending by UTF-16 code unit so key order is insignificant; ARRAY ORDER IS SIGNIFICANT because a reordered decision chain is a different chain; undefined becomes explicit null; non-finite numbers are a validation error; UTF-8; and the five integrity fields plus the whole export block are excluded so marking a package exported can never change its hash). alexGStableHash is deliberately NOT used and is untouched -- it is a 64-bit FNV variant, not cryptographic. THE CLAIM IS SCOPED HONESTLY: contentHash detects ALTERATION. It is NOT authenticity, NOT identity verification, NOT a signature, and offers NO protection against an attacker able to replace both the package and its hash. No string anywhere in this layer says signed, authentic or tamper-proof, and a fixture asserts that. When Web Crypto is absent (e.g. a file:// origin) capture still proceeds and the package is stored with contentHash null + UNAVAILABLE -- it NEVER falls back to a weak digest, and such packages are counted and displayed separately, never reported as verified. CAPTURE SEAM (ruling C5): installed only AFTER the alexGCheckLivePositions loop, adjacent to the existing save, in its own try/catch. alexGCloseLivePosition is PROTECTED and completely untouched. The capture path reads already-closed positions only, returns immediately on a detached promise chain, cannot re-enter the close path, cannot mutate openPositions, cannot write the journal/ledger, and is idempotent per tradeId via a UNIQUE IndexedDB index on sourceTradeId -- so it can never prevent, repeat, delay or alter a position close. BUFFER LIMITS (ruling C4): applied ONLY to the two genuinely unbounded stores, fxhub_alexg_setups (1,000) and fxhub_alexg_zones (200 per pair). THE GUARDED ALEX JOURNAL/LEDGER IS NEVER CAPPED, EVICTED, REWRITTEN OR BYPASSED, and a fixture asserts it. Eviction is gated on tier-(b) persistence: a setup or zone belonging to an open position, or to a closed trade whose package is not yet committed, is skipped -- and if tier (b) is unavailable at all, eviction does not run, because an over-full buffer is recoverable and a deleted record is not. EXPORT: one JSON file per package via the existing downloadTextFile(), filename mogo-evidence-<strategy>-<packageId>-<hash12>.json with packageId sanitized for the filename only (the canonical \'|\' delimited ID is preserved inside the package). The exact bytes about to be written are re-parsed and re-hashed before the write; a package is marked exported ONLY after the write resolves AND that verification passes -- a failed or cancelled export is never marked successful, because optimistic marking would make the unexported banner lie. Automatic export is operator opt-in (a programmatic download is an outward-facing side effect); once enabled it fires on trade close and on tab hide. The File System Access API is EXCLUDED and is not implemented, referenced or capability-detected anywhere; FS_ACCESS remains a reserved, never-emitted enum value. IMPORT: verifies the recomputed hash and REJECTS a mismatch without ever repairing or re-hashing it; rejects an unsupported algorithm, an unsupported/newer schema and a duplicate packageId carrying a different hash; treats a duplicate with an identical hash as a no-op; preserves unknown fields (which are covered by the hash); and never touches alexGAccount, alexGJournalEntries, paperAccount or journalEntries. An imported package never advances the sequence counter -- recovery is for analysis, not for resurrecting a live account. BACKFILL: one-time and idempotent, READ-ONLY over existing history; builds a MINIMAL package per closed trade from only the fields genuinely present, marks every gap with UNSAFE_TO_RECONSTRUCT, leaves pre-v1.1 trades honestly unstamped (matching alexGClassifyTradeProvenance) and never fabricates a value. IDENTIFIERS: sequence numbers come from a persistent IndexedDB meta store, never process memory, so a reload cannot mint duplicate packageIds. DISCLOSED DEVIATION: allocation and the package write cannot share one transaction because the SHA-256 digest between them is asynchronous and an IndexedDB transaction auto-commits when the microtask queue drains -- allocation is its own committed transaction and the package is then add()ed (never put()), so a failed write burns a sequence number rather than reusing one. COMPLETENESS: every Phase 1 package honestly reports PARTIAL (MINIMAL for backfill), naming market context (Phase 3), durable decision chains (Phase 2), commitHash and time-to-MFE/MAE (Phase 5) as explicit gaps. EXPLICITLY OUT OF SCOPE: replay, analytics, strategy optimization, and any strategy rule, entry, exit, stop, target or sizing change. TESTING: new tests/v128_evidence_platform_tests.js (62 fixtures) covering canonicalization determinism, the excluded-field rules, array-order significance, filename sanitization, schema validation, write-failure classification, the buffer caps and the eviction-safety rule, export marking, import rejection, backfill read-only guarantees, the seam\'s non-protected status and the forbidden integrity vocabulary. DISCLOSED HARNESS LIMITATION: the offline JXA runner has neither crypto.subtle nor IndexedDB, so the SHA-256 digest itself and the IndexedDB layer are browser-verified rather than fixture-verified -- the same documented offline/live split already used for alexGCloseLivePosition. Full regression: 741/741 fixtures across 15 suites, zero drift.',
   '12.7.1 — MOGO-002.8B: ALEX SETUP-LEVEL EXECUTION POLICY. Implements the approved setup-level execution gate from the MOGO-002.8B Setup Isolation Audit. EXECUTION POLICY: Break & Retest (B_breakRetest) ACTIVE; Repeated Zone Reaction (A_repeatedReaction) SUSPENDED FOR RESEARCH. ADDITIVE ONLY -- zero protected functions and zero protected constants modified, drift check clean (63 functions / 4 constants byte-identical). THE GATE: alexGV11SetupTypePermitted() plus one gate inside alexGEvaluatePairForLiveSetups (NOT a protected function), placed immediately AFTER the Monday-Wednesday gate and immediately BEFORE position creation, exactly as authorized. It mirrors the existing activation/staleness/entry-day gate pattern. NO SILENT SKIP: a withheld candidate is still detected, still classified, still recorded in alexGSetupState and still persisted to fxhub_alexg_setups -- only the trade-OPEN step is withheld. Each withheld candidate receives a permanent Setups-panel status row (SUSPENDED - RESEARCH HOLD) plus a linked RULE_EVALUATED (ruleId ALEX_V11_SETUP_EXECUTION_POLICY) / CANDIDATE_REJECTED pair carrying reasonCode SETUP_SUSPENDED_FOR_RESEARCH, so the suppression is countable and the candidate stays fully visible to future replay analysis. SCOPE: LIVE PAPER TRADING ONLY. alexGRunSetupReplay is PROTECTED and untouched; replay continues generating BOTH setup types, because replay is research and is the only route to the Tier 2+ sample that could ever retire this suspension (MOGO-003 section 9). CONFIGURATION: a single boolean, RULES_ALEXG_V11.v11Config.setupSuspensionEnabled (default true), with suspendedSetupTypes listing A_repeatedReaction and a recorded setupSuspensionWindow (startedAt/endedAt/authority/reason) -- without that window a period with zero RZR trades would be indistinguishable from a period where RZR was suppressed, invalidating any later period comparison. The gate FAILS OPEN in every ambiguous case (disabled, empty list, unknown/blank setup type), so a misconfiguration can never silently stop trading. NOT A RULE CHANGE: ruleVersion remains alex_g_sr_v1_1. Entry, stop, target, risk, sizing, confirmation, zone creation, zone qualification, analytics calculations, historical trades, existing open trades and the rule-set version are all unchanged. An already-open A_repeatedReaction position closes normally -- the exit path (alexGCheckLivePositions/alexGCloseLivePosition) never consults setupType. DEFECT FOUND AND FIXED: reasonCode CONFIG_ENTRY_DAY_NOT_ELIGIBLE, used by the v12.7.0 Monday-Wednesday gate, was NEVER ADDED to REASON_CODE_REGISTRY. validateDecisionEvent rejects any event whose reasonCode is unregistered, so BOTH v1.1 entry-day rejection events were being silently dropped and counted as validation failures -- the entry-day gate blocked trades correctly but produced no decision-event evidence. Both CONFIG_ENTRY_DAY_NOT_ELIGIBLE and the new SETUP_SUSPENDED_FOR_RESEARCH are now registered, and fixtures K11-K14 assert that suppression events actually validate and are retained. TESTING: 23 new fixtures (K1-K23) in the v127 suite -- B&R still permitted, RZR suspended, DEV_TEST unaffected, reversibility by the single boolean, four fail-open cases, purity, both reason codes registered and their events retained, REAL protected qualifiers still qualifying both setup types, direction resolution unchanged, exit path indifferent to setupType, and historical RZR trades still counted in analytics. Full suite 679/679 across 14 suites, zero drift. The v126 Phase 2C suite required the same kind of test-process pin already used for the v12.7.0 clock: its end-to-end fixtures build A_repeatedReaction setups, so setupSuspensionEnabled is disabled for that test process only -- zero assertions changed, zero production code changed, and v127 K9 asserts the production default remains true.',
   '12.7.0 — MOGO-002.8A: ALEX v1.1 RELEASE (alex_g_sr_v1_1). First behaviour-changing ALEX release since v4.2.1. ADDITIVE ONLY: RULES_ALEXG remains a PROTECTED CONSTANT, byte-identical, and all 63 protected functions / 4 protected constants show ZERO drift. RULES_ALEXG own change-control rule requires that any rule or default change take a NEW ruleVersion rather than an in-place edit; v1.1 follows that exactly via a new additive constant RULES_ALEXG_V11, so historical alex_g_sr_v1 results can never be silently recalculated. ENGINE PARAMETERS ARE UNCHANGED -- zone detection, touch counting, break-of-structure, break-and-retest, entry sequencing, the zoneLow/High -/+ 0.25*ATR stop and the fixed 2R target all still read RULES_ALEXG.config from the same PROTECTED functions, so a v1.1 trade and a v1.0 trade on identical data qualify and size identically. ONE BEHAVIOURAL CHANGE: ALEX_V11_001, a Monday-Wednesday entry-eligibility gate (UTC), evaluated on the live entry moment in the NON-protected alexGEvaluatePairForLiveSetups loop, after the staleness gate and before the open attempt -- mirroring the existing activation/staleness gate pattern including the permanent IGNORED - ENTRY DAY NOT ELIGIBLE status and a linked RULE_EVALUATED/CANDIDATE_REJECTED decision-event pair (ruleId ALEX_V11_ENTRY_DAY, reasonCode CONFIG_ENTRY_DAY_NOT_ELIGIBLE). Evidence: AXR-080 / CLAIM|ALEX_G|20260728|083. SCOPE CAVEAT recorded in the rule registry -- the educator claim is scoped to a confirmation setup MOGO does not implement (AXR-011 deferred), so this gate is config-controlled via v11Config.entryDayRuleEnabled and fails OPEN (never blocks) if disabled, if the timestamp is unreadable, or if the allowed-day list is empty. STATISTICS CORRECTED (reporting only, zero trading effect, applies to v1.0 and v1.1 records alike so historical REPORTING is fixed without any historical RECORD being rewritten): ALEX_V11_002 alexGRealizedR() computes R from each trade own entry/stop/exitPrice instead of the frozen +plannedRR/-1 (a v1.0 win recorded +2.00R regardless of the actual exit); ALEX_V11_003 alexGComputeEquityStats() walks the equity curve CHRONOLOGICALLY by closedAt ascending (closedPositions is stored newest-first, so the previous walk described a reversed curve) and now reports current drawdown and maximum drawdown as two separate cards -- the old single card was labelled Current drawdown while computing the maximum; ALEX_V11_004 alexGStartingBalance() replaces the hardcoded 10000 in dashboard P&L with a configured value, seeded onto the account and falling back safely for pre-v1.1 accounts. VERSIONING: ALEX_V11_005 stamps strategyVersion alex_g_sr_v1_1 into the provenance block of every NEWLY opened trade via the non-protected alexGStampTradeProvenance seam. strategySpecificationVersion deliberately REMAINS alex_g_sr_v1 because no engine parameter changed, so ruleSetHash/configurationHash are identical to a v1.0 trade. Existing trades are never back-filled, open positions continue to be managed by the version that opened them (exit logic is untouched), and mixed history still reports MIXED_VERSION rather than being silently averaged. DEAD CONFIG: v11Config deliberately omits the four v1.0 keys that are read by nothing (zoneTimeframes, requireWick, minWickRatio, maxZoneAgeBars); they remain in RULES_ALEXG because it is protected. Full active-rule registry with Rule ID / Name / Origin (Alex Explicit | MOGO Operationalization | Existing MOGO Design) / Evidence / Version Introduced / Enabled, plus an explicit deferredRules list (AXR-011 confirmation gate, AXR-020/021 stop anchor+buffer under open KEREV-A, AXR-030 R:R floor, AXR-081 session hours). TESTING: new suite tests/run_v127_alex_v11_release_tests.js, 65 fixtures (version identity, Mon-Wed eligibility incl. UTC-boundary and fail-open cases, realized R incl. a slipped-exit case proving it diverges from plannedRR, chronological equity, current vs max drawdown, starting balance, dead-config omission, engine-parameter preservation via the REAL protected evaluators, historical preservation, duplicate-trade identity). Full suite 656/656 across 14 suites, zero drift. DEFECT FOUND AND FIXED DURING THIS RELEASE: the new date-dependent gate made 9 pre-existing v126 Phase 2C fixtures fail on Thu-Sun and pass Mon-Wed with no code change, because they drive alexGEvaluatePairForLiveSetups end-to-end against the live wall clock. Fixed in tests/run_v126_phase2c_wave1_tests.js ONLY, by pinning that test process clock to Monday 2026-01-05 12:00 UTC -- zero assertions changed, zero production code changed, zero fixtures rewritten. Day-of-week behaviour has its own dedicated coverage in the v127 suite.',
   '12.6.0 — PROGRAM-001 PHASE 2C WAVE 1: ALEX CANDIDATE LIFECYCLE INSTRUMENTATION (infrastructure release -- no trading behavior change; the exact same market data produces the exact same ALEX trades before and after this release, proven by zero protected-function/protected-constant drift verified directly against the committed v12.5.0 baseline). Connects the Phase 2A Decision Event bus to ALEX\'s real candidate lifecycle for the first time. Per the Phase 2B repository analysis\'s central finding -- ALEX\'s real gating function (alexGConstructLivePosition) is protected but PURE, feeding a complete structured 10-outcome result to its non-protected caller (alexGAttemptOpenLivePosition), while JVM\'s equivalent detail is trapped inside a protected-calls-protected chain (checkAutoTrades -> evaluateLiveTrigger -> openPaperPosition) with no safe external hook -- this release implements ALEX\'s full candidate lifecycle only. JVM remains EXACTLY SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR, byte-identical to v12.5.0; JVM and ALEX are deliberately NOT forced into artificial observability parity. EVENTS NOW EMITTED (all from alexGEvaluatePairForLiveSetups()/alexGAttemptOpenLivePosition(), neither a protected function; alexGConstructLivePosition/alexGRunSetupEngine/alexGCreateSetupRecord/alexGClassifyTouch and all zone-engine functions remain completely unedited): CANDIDATE_CREATED (one per genuinely new setupId, via a new bounded in-memory dedup set -- decisionEventKnownCandidateIds, distinct from ALEX\'s own permanent alexGLiveSetupStatuses dedup -- since alexGSetupState is fully rebuilt from 90 days of candles every poll); RULE_EVALUATED for both the activation-cutoff (ruleId ALEX_ACTIVATION_CUTOFF) and signal-staleness (ALEX_SIGNAL_STALENESS) gates, PASS or FAIL, at their existing non-protected call sites; CANDIDATE_REJECTED linked via parentEventId on either gate\'s failure, and on the existing signalId dedup check (STATE_SIGNAL_ALREADY_DECIDED); TRADE_OPEN_REQUESTED immediately before the real alexGConstructLivePosition() call (direction intentionally still null -- never predicted ahead of the real, protected function\'s own result); CANDIDATE_APPROVED or CANDIDATE_REJECTED/TRADE_OPEN_FAILED immediately after, using the REAL returned status/reason honestly mapped via a new ALEXG_CONSTRUCTION_REASON_CODE_MAP (DUPLICATE -> CANDIDATE_REJECTED/STATE_SIGNAL_ALREADY_DECIDED, since that outcome carries no reason of its own; every other BLOCKED_* status -> TRADE_OPEN_FAILED, since TRADE_OPEN_REQUESTED already fired by that point); TRADE_OPENED or TRADE_OPEN_FAILED(EXECUTION_LEDGER_REJECTED) after the existing commitAlexGLedger() call, preserving the exact pre-existing rollback behavior untouched. Eight new reason codes added to the centralized REASON_CODE_REGISTRY (CONFIG_BEFORE_ACTIVATION, ENTRY_INVALID_ZONE_ROLE, ENTRY_INVALID_BROKEN_DIRECTION, ENTRY_UNSUPPORTED_SETUP_TYPE, ENTRY_MOVED_TOO_FAR_FROM_SIGNAL, DATA_ATR_UNAVAILABLE, RISK_INVALID_STOP, DATA_PIP_VALUE_UNAVAILABLE) -- added before use, never stretching an unrelated existing code to avoid a correct new one; RISK_OPEN_POSITION_LIMIT, EXECUTION_SPREAD_UNAVAILABLE, STATE_SIGNAL_ALREADY_DECIDED, STATE_SIGNAL_STALE, and EXECUTION_LEDGER_REJECTED were already present and reused as-is. IDENTITY: candidateId is always the real setup.setupId; signalId (alexGLiveSignalId(setup), already existing) appears in event context; tradeId is the real position.tradeId once minted -- the existing setupId -> signalId -> tradeId linkage already present in the codebase required no new plumbing. scanId/correlationId are threaded from alexGLivePollTick\'s existing Phase 2A __scanId through both new function parameters (alexGEvaluatePairForLiveSetups(oPair,scanId), alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId)) -- an additive parameter on two non-protected functions, not a protected-signature change. EVIDENCE COMPLETENESS: COMPLETE for every ALEX event in this release except TRADE_OPEN_REQUESTED\'s direction field (PARTIAL, since direction is genuinely not yet resolved at that point) -- never a fabricated COMPLETE. ENGINE_ERROR OBSERVABILITY: the pre-existing silent catch(e){} in alexGEvaluatePairForLiveSetups() now additionally emits ENGINE_ERROR (reasonCode SYSTEM_UNEXPECTED_ERROR) -- the swallow-and-continue behavior itself, the lack of a rethrow, and scan-completion behavior are all completely unchanged; this is observability only. FAILURE ISOLATION: every new emit call is a single, fire-and-forget emitDecisionEvent() statement whose return value is never checked by the trading path -- proven directly by deliberately triggering a validation-rejected emit elsewhere on the bus and confirming the real candidate/trade path completes identically regardless. EXPLICITLY OUT OF SCOPE (deferred, not implemented): JVM candidate/rule/rejection/approval/failure instrumentation of any kind (structurally blocked -- see Phase 2B\'s protected-calls-protected finding); ALEX touch-level SETUP_OBSERVED and the two rule-by-rule sub-evaluators\' (alexGEvaluateBreakRetest/alexGEvaluateRepeatedReaction) individual condition detail (both protected-on-protected, and their {qualifies:false} return contract structurally discards which condition failed -- recovering that would require either a protected-function edit or reimplementing their logic externally, both explicitly out of scope); any protected-function or protected-constant edit anywhere; persistent Decision Event storage (still memory-only, still zero new localStorage keys, confirmed directly); missed-opportunity/counterfactual analytics; any change to duplicate/activation/staleness rules, account/journal/ledger mutation order, market-data requests, or scan timing. RETENTION: unchanged from Phase 2A -- DECISION_EVENT_MAX_LOG_SIZE=500 still bounds the shared event log; the new candidate-dedup set is separately bounded (DECISION_EVENT_KNOWN_CANDIDATE_IDS_MAX=5000, oldest evicted first) and reset only by the existing dev-only clearDecisionEvents() action, which now also clears it. TESTING: new tests/v126_phase2c_wave1_tests.js (48 fixtures) -- unlike Phase 2A\'s scan-boundary-only proof, this suite engineered a genuinely qualifying REPEATED ZONE REACTION setup (4 real swing-low touches forming a valid zone) and ran it through the REAL, completely unmodified alexGRunSetupEngine/alexGClassifyTouch/alexGEvaluateRepeatedReaction chain, then called the real alexGEvaluatePairForLiveSetups()/alexGAttemptOpenLivePosition() end-to-end (network stubbed only at the fetch() boundary, in OANDA\'s own real response shapes, never at any application function) to prove the complete organic lifecycle: CANDIDATE_CREATED -> RULE_EVALUATED(activation PASS/FAIL) -> RULE_EVALUATED(staleness PASS/FAIL) -> [CANDIDATE_REJECTED on either FAIL, linked via parentEventId] -> TRADE_OPEN_REQUESTED -> CANDIDATE_APPROVED -> TRADE_OPENED, plus a real STALE_VERSION ledger rejection (via the existing, unmodified version-guard) producing TRADE_OPEN_FAILED with the existing rollback fully preserved, and a real ENGINE_ERROR from a genuine exception surfaced through fetchAlexGReplayDatasets. All 10 of alexGConstructLivePosition\'s real outcomes (including every BLOCKED_* status and the two duplicate paths) were verified directly against the real, unmodified function, confirming the reason-code map is honest and complete. Also covers: exactly-once CANDIDATE_CREATED across repeated polls of the same setup; candidateId/signalId/tradeId linkage; scanId propagation through the full chain; strict sequence-number ordering; parentEventId validity; zero paper-account/journal/Baseline-Registry mutation from instrumentation alone; zero new localStorage keys; existing Phase 2A diagnostics still functional. Full regression: 517/517 fixtures pass across all 12 canonical suites (469 pre-existing + 48 new), zero skipped, zero drift (all 63 protected functions and 4 protected constants byte-identical to the committed v12.5.0 baseline). LIVE VERIFICATION (fresh local server, browser origin cleared before and after): zero console errors on load and after the connect-screen bypass; the same synthetic-but-genuine setup construction was re-run directly in a real Chrome tab (not just the offline JXA harness) and produced the identical real 6-event lifecycle culminating in one real paper position opened; JVM\'s scanAll() was independently re-run live and confirmed to still emit only SCAN_STARTED/ENGINE_ERROR (the same pre-existing, disclosed scanData-seeding test-setup artifact noted in Phase 2A, not a regression); only the pre-existing, already-documented ALEX storage keys were present after the real trade opened, confirming the Decision Event layer itself wrote nothing. Real OANDA connectivity could not be exercised this release -- OANDA\'s own practice API was independently confirmed, via a separate incident during this work, to be returning HTTP 503 (System under maintenance) at the time; anything requiring a genuine external OANDA round-trip is BLOCKED BY EXTERNAL OANDA HTTP 503 MAINTENANCE and was not fabricated or bypassed. PRE-RELEASE CORRECTION (same v12.6.0, before commit/tag/push): a release review correctly identified that the original CANDIDATE_CREATED logic -- dedup-Set-only, keyed by "has this observability layer already reported this setupId this session" -- would mislabel a historical setup alexGRunSetupEngine() simply reconstructs from 90 days of candles (e.g. on the very first poll after a page load) as an ordinary live CANDIDATE_CREATED. CORRECTED: CANDIDATE_CREATED now additionally requires the setup\'s real qualificationTimestamp to fall strictly after a new, real, pre-existing timestamp already captured by this codebase -- alexGLastEvaluatedCloseTime[pair].H1 as of the START of the current evaluation (before this poll\'s rebuild advances it further). This value is never persisted (reset to {} on every real page reload, exactly like the rest of ALEX\'s live-polling cursor state) and was never duplicated or approximated -- it is simply read, not computed independently. On a pair\'s very first-ever live evaluation (including the first poll after any reload), this boundary is unset, so nothing that poll\'s 90-day reconstruction finds can be classified as newly live -- a cold-start backfill is never mistaken for a genuine live candidate. The session-level dedup Set (decisionEventKnownCandidateIds) is retained as a secondary guard only, never the sole determinant. A historical setup\'s real trading treatment -- RULE_EVALUATED (activation/staleness), duplicate checking, and eventual trade-open -- is completely unchanged; only its CANDIDATE_CREATED observability label is suppressed. 13 new/revised fixtures added (first-poll exclusion, reload-simulation exclusion, two-pair multi-candidate separation, exact/±1ms boundary determinism, a disclosed source-verified note on the invalid-timestamp guard being unreachable via real execution, deterministic FIFO eviction at the 5,000-entry dedup-set cap, and a dedicated proof that the session Set independently prevents a duplicate even when the timestamp boundary alone would still classify the setup as new). Full regression after correction: 530/530 (469 pre-existing + 61 in this suite), zero drift. Live-verified in a real Chrome tab: a first-poll historical reconstruction correctly produced zero CANDIDATE_CREATED while still opening a real trade end-to-end; Paper Trading Health Check reported CLEAN (JVM and ALEX both, zero mismatches/duplicates/orphans); Baseline Registry MATCH; only the pre-existing, already-documented ALEX storage keys present; JVM unchanged. See docs/DECISION_EVENT_ARCHITECTURE.md for the complete updated schema/event/reason-code/evidence documentation.',
@@ -2770,6 +2784,15 @@ function snapshotAlexGConfig(){
 // 'ROLLBACK_FAILED',failedCommitStep,failedRollbackKeys}) is never confused with an ordinary,
 // fully-recovered rejection ({ok:false,integrityCompromised:false,reason}).
 function saveAlexGAccountGuarded(){
+  // v12.8.1 INC-001: if the account, version or journal key existed in storage but could not be
+  // read at load time, this session's in-memory ledger is a DEFAULT, not the real one. Committing
+  // it would overwrite intact stored trades with an empty account. Refuse, loudly, and keep the
+  // stored bytes exactly as they are -- they are still recoverable; an overwrite is not.
+  const alexGBlocked=['fxhub_alexg_account','fxhub_alexg_account_version','fxhub_alexg_journal'].filter(storageKeyBlockedFromWrite);
+  if(alexGBlocked.length){
+    recordAlexGEngineError('Alex G ledger commit BLOCKED to prevent data loss: '+alexGBlocked.join(', ')+' exist in storage but could not be read this session, so the in-memory ALEX account/journal is a default rather than your real data. Nothing was overwritten. Reload; if this persists, restore from a backup before trading.');
+    return{ok:false,integrityCompromised:false,reason:'LOAD_INTEGRITY_BLOCKED',blockedKeys:alexGBlocked};
+  }
   let persistedAccountBefore,persistedVersionBefore,persistedJournalBefore;
   try{
     persistedAccountBefore=localStorage.getItem('fxhub_alexg_account');
@@ -2821,7 +2844,14 @@ function saveAlexGAccountGuarded(){
       return{ok:false,integrityCompromised:true,reason:'ROLLBACK_FAILED',failedCommitStep:currentStep,failedRollbackKeys};
     }
     recordAlexGEngineError('Alex G ledger commit failed and was fully rolled back (account/version/journal all restored to their pre-commit values): '+(e&&e.message?e.message:String(e)));
-    return{ok:false,integrityCompromised:false,reason:'WRITE_FAILED'};
+    // v12.8.0 MOGO-003 Phase 1: a quota-exhausted write is now surfaced DISTINCTLY from the
+    // STALE_VERSION concurrent-tab conflict above, which is a completely different operator
+    // problem with a completely different remedy. The returned SHAPE is deliberately unchanged
+    // ({ok,integrityCompromised,reason}) -- every call site's rollback contract still holds
+    // byte-for-byte; storageErrorKind is purely additive diagnostic detail.
+    let storageErrorKind='OTHER';
+    try{ storageErrorKind=evidenceClassifyStorageError(e); evidenceRecordWriteFailure('saveAlexGAccountGuarded',e); }catch(e2){}
+    return{ok:false,integrityCompromised:false,reason:'WRITE_FAILED',storageErrorKind};
   }
   alexGAccountKnownVersion=nextVersion;
   return{ok:true,integrityCompromised:false};
@@ -2834,12 +2864,25 @@ function recordAlexGEngineError(msg){
 // of the atomic unit above): auto/zone/setup state only. Unguarded, called from non-account-
 // mutating places (auto-trading toggle, zone/setup engine writes, the one-time journalEntryId
 // backfill) exactly as JVM's own save() is for its own non-ledger state.
+// v12.8.0 MOGO-003 Phase 1 (G2/R3): the bare catch(e){} this function used to carry made silent
+// evidence loss the DEFAULT -- a quota-exceeded write failed and nothing anywhere reported it.
+// The failure is now classified, recorded to the existing engine-error channel, emitted as a
+// DATA_UNAVAILABLE decision event and surfaced in a persistent banner.
+//
+// CRITICAL: this function must still NEVER THROW. commitAlexGLedger() calls it AFTER the guarded
+// account+journal unit has already succeeded, and its best-effort semantics are load-bearing --
+// throwing here would make a genuinely committed ledger look like a failed one. Reporting is
+// added; the control flow is byte-for-byte unchanged.
 function saveAlexGRest(){
   try{
-    localStorage.setItem('fxhub_alexg_auto',JSON.stringify(alexGAutoTrading));
-    localStorage.setItem('fxhub_alexg_zones',JSON.stringify(alexGZoneState));
-    localStorage.setItem('fxhub_alexg_setups',JSON.stringify(alexGSetupState));
-  }catch(e){}
+    // v12.8.1 INC-001: persistStorageKey() refuses any key that was present but unreadable at
+    // load time -- writing an in-memory default over real stored data is the incident itself.
+    persistStorageKey('fxhub_alexg_auto',JSON.stringify(alexGAutoTrading));
+    persistStorageKey('fxhub_alexg_zones',JSON.stringify(alexGZoneState));
+    persistStorageKey('fxhub_alexg_setups',JSON.stringify(alexGSetupState));
+  }catch(e){
+    try{ evidenceRecordWriteFailure('saveAlexGRest',e); }catch(e2){/* never throw outward */}
+  }
 }
 // saveAlexG() -- back-compat alias, now scoped to exactly what its remaining (non-account-
 // mutating) call sites need: toggleAlexGLiveTrading(). migrateJournalEntryIds()'s ALEX branch
@@ -2881,15 +2924,14 @@ function commitAlexGLedger(){
   saveAlexGRest();
   return{ok:true,integrityCompromised:false};
 }
+// v12.8.1 INC-001: per-key isolation, identical rationale to loadSaved() above.
 function loadAlexGSaved(){
-  try{
-    const a=localStorage.getItem('fxhub_alexg_account');if(a) alexGAccount=JSON.parse(a);
-    const av=localStorage.getItem('fxhub_alexg_account_version');alexGAccountKnownVersion=av?parseInt(av,10):0; // v12.3.2: sync this session's known version at load time, mirrors loadSaved()
-    const j=localStorage.getItem('fxhub_alexg_journal');if(j) alexGJournalEntries=JSON.parse(j);
-    const at=localStorage.getItem('fxhub_alexg_auto');if(at) alexGAutoTrading=JSON.parse(at);
-    const z=localStorage.getItem('fxhub_alexg_zones');if(z) alexGZoneState=JSON.parse(z);
-    const su=localStorage.getItem('fxhub_alexg_setups');if(su) alexGSetupState=JSON.parse(su);
-  }catch(e){}
+  loadStoredKey('fxhub_alexg_account',v=>{alexGAccount=JSON.parse(v);});
+  loadStoredKey('fxhub_alexg_account_version',v=>{alexGAccountKnownVersion=parseInt(v,10)||0;}); // v12.3.2: sync this session's known version at load time, mirrors loadSaved()
+  loadStoredKey('fxhub_alexg_journal',v=>{alexGJournalEntries=JSON.parse(v);});
+  loadStoredKey('fxhub_alexg_auto',v=>{alexGAutoTrading=JSON.parse(v);});
+  loadStoredKey('fxhub_alexg_zones',v=>{alexGZoneState=JSON.parse(v);});
+  loadStoredKey('fxhub_alexg_setups',v=>{alexGSetupState=JSON.parse(v);});
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -4728,6 +4770,15 @@ async function alexGCheckLivePositions(){
     }catch(e){}
   }
   saveAlexG();
+  // ── v12.8.0 MOGO-003 Phase 1 EVIDENCE CAPTURE SEAM (Engineering Authority ruling C5) ──
+  // Placed AFTER the loop, never inside it. By this point every close this tick was going to
+  // perform has already completed through the protected, unmodified alexGCloseLivePosition.
+  // This call: reads already-closed positions only; has its own try/catch so a capture failure
+  // is REPORTED rather than swallowed by the loop's pre-existing catch; returns immediately
+  // (all real work is on a detached promise chain); cannot re-enter alexGCloseLivePosition;
+  // cannot mutate openPositions; cannot write the journal/ledger; and is idempotent per tradeId.
+  // It therefore cannot prevent, repeat, delay or alter a position close.
+  try{ evidenceCaptureClosedTrades(); }catch(e){ try{ evidenceRecordWriteFailure('capture-seam',e); }catch(e2){} }
   renderAlexGLivePanel();
 }
 
@@ -4834,6 +4885,15 @@ async function alexGLivePollTick(){
 function toggleAlexGLiveTrading(){
   if(mogoLockBlocked())return;
   const turningOn=!alexGAutoTrading.enabled;
+  // v12.8.0 MOGO-003 Phase 1: escalate the standing unexported-evidence warning to a blocking
+  // confirmation when the backlog is large and the operator is about to generate MORE evidence.
+  // Fails open -- an evidence surface must never be able to stop trading on its own.
+  if(turningOn){
+    try{
+      const w=evidenceUnexportedBlockingWarning();
+      if(w&&!confirm('⚠ '+w+'\n\nTurn ON Live Alex Paper Trading anyway?')) return;
+    }catch(e){}
+  }
   if(!confirm(turningOn?'Turn ON Live Alex Paper Trading? The app will begin automatically opening and closing simulated ALEX positions.':'Turn OFF Live Alex Paper Trading? Automated ALEX paper trading will stop until you turn it back on.')) return;
   alexGAutoTrading.enabled=turningOn;
   if(turningOn){
@@ -4993,6 +5053,7 @@ function renderAlexGLedgerIntegrityWarningBanner(){
 }
 function renderAlexGLivePanel(){
   renderAlexGLedgerIntegrityWarningBanner();
+  try{ renderEvidenceExportBanner(); }catch(e){/* an evidence surface must never break the panel */} // v12.8.0
   const toggleBtn=document.getElementById('alexgLiveToggleBtn');
   const statusEl=document.getElementById('alexgLiveStatus');
   if(toggleBtn){
@@ -5348,6 +5409,14 @@ function recordPaperEngineError(msg){
 // failedCommitStep,failedRollbackKeys} when a rollback write itself failed -- storage may be
 // inconsistent and this is surfaced as a distinct, non-recoverable-automatically state.
 function savePaperAccountGuarded(){
+  // v12.8.1 INC-001: same protection as saveAlexGAccountGuarded() -- an unreadable ledger key at
+  // load time means the in-memory JVM account/journal is a default, and committing it would
+  // destroy real stored trades. Refuse rather than overwrite.
+  const jvmBlocked=['fxhub_paper','fxhub_paper_version','fxhub_journal'].filter(storageKeyBlockedFromWrite);
+  if(jvmBlocked.length){
+    recordPaperEngineError('Paper ledger commit BLOCKED to prevent data loss: '+jvmBlocked.join(', ')+' exist in storage but could not be read this session, so the in-memory paper account/journal is a default rather than your real data. Nothing was overwritten. Reload; if this persists, restore from a backup before trading.');
+    return{ok:false,integrityCompromised:false,reason:'LOAD_INTEGRITY_BLOCKED',blockedKeys:jvmBlocked};
+  }
   let persistedAccountBefore,persistedVersionBefore,persistedJournalBefore;
   try{
     persistedAccountBefore=localStorage.getItem('fxhub_paper');
@@ -5421,16 +5490,22 @@ function savePaperAccountGuarded(){
 // entry for the full reasoning and the independent review that found it.
 function save(){
   try{
-    localStorage.setItem('fxhub_scan',JSON.stringify(scanData));
-    localStorage.setItem('fxhub_checklist',JSON.stringify(checklistState));
-    localStorage.setItem('fxhub_alerts',JSON.stringify(alertLog));
-    localStorage.setItem('fxhub_env',cfg.env);
-    localStorage.setItem('fxhub_auto',JSON.stringify(autoTrading));
-    localStorage.setItem('fxhub_autoscan',JSON.stringify(autoScan));
-    localStorage.setItem('fxhub_paper_reset_history',JSON.stringify(paperResetHistory)); // v9.0: isolated, never merged into paperAccount/journalEntries
-    localStorage.setItem('fxhub_trade_notes',JSON.stringify(tradeNotes)); // v10.0: isolated, never merged into journalEntries/alexGJournalEntries
-    localStorage.setItem('fxhub_paper_reconciliation_audit',JSON.stringify(paperReconciliationAudit)); // v11.0: isolated audit trail
-  }catch(e){}
+    // v12.8.1 INC-001: every write goes through persistStorageKey(), which refuses any key that
+    // was present but unreadable at load time. This is the exact path that destroyed real data.
+    persistStorageKey('fxhub_scan',JSON.stringify(scanData));
+    persistStorageKey('fxhub_checklist',JSON.stringify(checklistState));
+    persistStorageKey('fxhub_alerts',JSON.stringify(alertLog));
+    persistStorageKey('fxhub_env',cfg.env);
+    persistStorageKey('fxhub_auto',JSON.stringify(autoTrading));
+    persistStorageKey('fxhub_autoscan',JSON.stringify(autoScan));
+    persistStorageKey('fxhub_paper_reset_history',JSON.stringify(paperResetHistory)); // v9.0: isolated, never merged into paperAccount/journalEntries
+    persistStorageKey('fxhub_trade_notes',JSON.stringify(tradeNotes)); // v10.0: isolated, never merged into journalEntries/alexGJournalEntries
+    persistStorageKey('fxhub_paper_reconciliation_audit',JSON.stringify(paperReconciliationAudit)); // v11.0: isolated audit trail
+  }catch(e){
+    // v12.8.0 MOGO-003 Phase 1 (G2/R3): same correction as saveAlexGRest -- report, never swallow.
+    // Also must never throw: commitPaperLedger() calls this after its own guarded unit succeeded.
+    try{ evidenceRecordWriteFailure('save',e); }catch(e2){/* never throw outward */}
+  }
 }
 // v11.0.1, corrected v12.3.2: the ONE AND ONLY function allowed to persist paperAccount/
 // fxhub_paper_version/journalEntries. savePaperAccountGuarded() now persists all three as one
@@ -5474,22 +5549,68 @@ function commitPaperLedger(){
   save();
   return{ok:true,integrityCompromised:false};
 }
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// INC-001 LOAD INTEGRITY (v12.8.1) — "a key we could not read is never a key we may overwrite"
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// THE DEFECT: every loader below used to be ONE try/catch wrapping every key in sequence. A
+// single JSON.parse throw on the FIRST key silently abandoned every REMAINING key, leaving those
+// variables at their in-memory defaults (empty account, empty journal, empty arrays). The next
+// ordinary save() then wrote those defaults straight over real, intact stored data. The stored
+// bytes were readable the whole time -- MOGO simply stopped reading them and then overwrote them.
+//
+// THE FIX, in two halves, because either alone is insufficient:
+//   1. Load each key independently, so one unreadable key can never suppress the others.
+//   2. Remember which keys were PRESENT BUT UNREADABLE, and REFUSE TO WRITE those keys for the
+//      rest of the session. A failed read must degrade into "don't touch it", never into
+//      "replace it with a default".
+//
+// A key that is simply ABSENT is not a failure -- the in-memory default is genuinely correct
+// there, and writing it is correct too. Only present-but-unreadable is treated as protected.
+let storageLoadFailures={};
+function recordStorageLoadFailure(key,e){
+  storageLoadFailures[key]={at:new Date().toISOString(),message:(e&&e.message)?e.message:String(e)};
+  // Fail LOUD. A protected key is a key MOGO will now refuse to write for the rest of the
+  // session, which the operator must know about -- silence here is what made INC-001 possible.
+  const msg='STORAGE LOAD FAILURE: "'+key+'" exists in browser storage but could not be read ('+
+    ((e&&e.message)?e.message:String(e))+'). MOGO will NOT overwrite this key for the rest of this '+
+    'session, so your stored data is preserved. Reload; if it persists, restore from a backup.';
+  try{ recordPaperEngineError(msg); }catch(e2){}
+  try{ recordAlexGEngineError(msg); }catch(e3){}
+}
+function storageKeyBlockedFromWrite(key){
+  return Object.prototype.hasOwnProperty.call(storageLoadFailures,key);
+}
+function storageLoadFailureKeys(){ return Object.keys(storageLoadFailures); }
+// Reads one key and applies it in isolation. Returns true when the key is safe to write later.
+function loadStoredKey(key,apply){
+  let raw=null;
+  try{ raw=localStorage.getItem(key); }
+  catch(e){ recordStorageLoadFailure(key,e); return false; }
+  if(raw==null) return true;                 // absent -- the in-memory default is correct
+  try{ apply(raw); return true; }
+  catch(e){ recordStorageLoadFailure(key,e); return false; }  // present but unreadable -- PROTECT IT
+}
+// The only way the unguarded savers may write. Refuses any key whose stored value exists but
+// could not be parsed this session -- that is precisely the INC-001 overwrite.
+function persistStorageKey(key,value){
+  if(storageKeyBlockedFromWrite(key)) return false;
+  localStorage.setItem(key,value);
+  return true;
+}
 function loadSaved(){
-  try{
-    const sd=localStorage.getItem('fxhub_scan');if(sd) scanData=JSON.parse(sd);
-    const je=localStorage.getItem('fxhub_journal');if(je) journalEntries=JSON.parse(je);
-    const cs=localStorage.getItem('fxhub_checklist');if(cs) checklistState=JSON.parse(cs);
-    const al=localStorage.getItem('fxhub_alerts');if(al) alertLog=JSON.parse(al);
-    const env=localStorage.getItem('fxhub_env');if(env){cfg.env=env;setEnv(env);}
-    const pa=localStorage.getItem('fxhub_paper');if(pa) paperAccount=JSON.parse(pa);
-    const pav=localStorage.getItem('fxhub_paper_version');paperAccountKnownVersion=pav?parseInt(pav,10):0; // v11.0: sync this session's known version at load time
-    const at=localStorage.getItem('fxhub_auto');if(at) autoTrading=JSON.parse(at);
-    const asc=localStorage.getItem('fxhub_autoscan');if(asc) autoScan=JSON.parse(asc);
-    const prh=localStorage.getItem('fxhub_paper_reset_history');if(prh) paperResetHistory=JSON.parse(prh); // v9.0
-    const tn=localStorage.getItem('fxhub_trade_notes');if(tn) tradeNotes=JSON.parse(tn); // v10.0
-    const pra=localStorage.getItem('fxhub_paper_reconciliation_audit');if(pra) paperReconciliationAudit=JSON.parse(pra); // v11.0
-    const lk=localStorage.getItem('fxhub_lock');mogoLock.locked=lk==='1'; // v12.1.3: non-sensitive UI-state flag only
-  }catch(e){}
+  loadStoredKey('fxhub_scan',v=>{scanData=JSON.parse(v);});
+  loadStoredKey('fxhub_journal',v=>{journalEntries=JSON.parse(v);});
+  loadStoredKey('fxhub_checklist',v=>{checklistState=JSON.parse(v);});
+  loadStoredKey('fxhub_alerts',v=>{alertLog=JSON.parse(v);});
+  loadStoredKey('fxhub_env',v=>{cfg.env=v;setEnv(v);});
+  loadStoredKey('fxhub_paper',v=>{paperAccount=JSON.parse(v);});
+  loadStoredKey('fxhub_paper_version',v=>{paperAccountKnownVersion=parseInt(v,10)||0;}); // v11.0: sync this session's known version at load time
+  loadStoredKey('fxhub_auto',v=>{autoTrading=JSON.parse(v);});
+  loadStoredKey('fxhub_autoscan',v=>{autoScan=JSON.parse(v);});
+  loadStoredKey('fxhub_paper_reset_history',v=>{paperResetHistory=JSON.parse(v);}); // v9.0
+  loadStoredKey('fxhub_trade_notes',v=>{tradeNotes=JSON.parse(v);}); // v10.0
+  loadStoredKey('fxhub_paper_reconciliation_audit',v=>{paperReconciliationAudit=JSON.parse(v);}); // v11.0
+  loadStoredKey('fxhub_lock',v=>{mogoLock.locked=v==='1';}); // v12.1.3: non-sensitive UI-state flag only
 }
 function saveAiChatHistory(){
   try{localStorage.setItem('fxhub_ai_messages',JSON.stringify(aiChat.messages.slice(-40)));}catch(e){}
@@ -11029,6 +11150,11 @@ const REASON_CODE_REGISTRY=Object.freeze({
   CONFIG_ENTRY_DAY_NOT_ELIGIBLE:Object.freeze({code:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',category:'CONFIG',label:'Entry day is outside the configured eligible days'}),
   SETUP_SUSPENDED_FOR_RESEARCH:Object.freeze({code:'SETUP_SUSPENDED_FOR_RESEARCH',category:'CONFIG',label:'Setup type suspended for research; candidate recorded, no position opened'}),
   SYSTEM_UNEXPECTED_ERROR:Object.freeze({code:'SYSTEM_UNEXPECTED_ERROR',category:'SYSTEM',label:'Unexpected engine error'}),
+  // v12.8.0 MOGO-003 Phase 1 -- registered BEFORE use, so an evidence-persistence failure event
+  // actually validates and is retained rather than being silently dropped by validateDecisionEvent.
+  DATA_STORAGE_QUOTA_EXCEEDED:Object.freeze({code:'DATA_STORAGE_QUOTA_EXCEEDED',category:'DATA',label:'Browser storage quota exceeded -- evidence was not saved'}),
+  DATA_STORAGE_WRITE_FAILED:Object.freeze({code:'DATA_STORAGE_WRITE_FAILED',category:'DATA',label:'Evidence persistence write failed'}),
+  DATA_EVIDENCE_STORE_UNAVAILABLE:Object.freeze({code:'DATA_EVIDENCE_STORE_UNAVAILABLE',category:'DATA',label:'Durable evidence store (IndexedDB) unavailable'}),
   UNKNOWN_NOT_RECORDED:Object.freeze({code:'UNKNOWN_NOT_RECORDED',category:'UNKNOWN',label:'Reason not recorded'})
 });
 
@@ -11238,6 +11364,1042 @@ function renderDecisionEventDiagnostics(){
     </div>
   </div>`;
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// MOGO-003 PHASE 1 — EVIDENCE PLATFORM (v12.8.0)
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// Implements the reconciled docs/MOGO-003-PHASE-1-SPECIFICATION.md under Engineering Authority
+// rulings C1-C5 and minor corrections 1-5. ADDITIVE ONLY: zero protected functions and zero
+// protected constants are modified anywhere in this release.
+//
+// THE THREE TIERS (ruling C2) -- and what each one does NOT survive:
+//   (a) localStorage      -- temporary working buffer. Does NOT survive profile clear/device loss.
+//   (b) IndexedDB         -- automatic browser evidence store, written with no user action.
+//                            Does NOT survive profile clear, device loss, or disk loss. NOT a backup.
+//   (c) completed export  -- the only tier intended to survive a browser-profile clear. Still does
+//                            NOT survive device or disk loss unless the operator backs the file up.
+// Nothing in this layer may ever claim otherwise.
+//
+// INTEGRITY (ruling C1): contentHash is SHA-256 (Web Crypto) over a deterministically canonical
+// form. It detects ALTERATION. It is NOT authenticity, NOT identity, NOT a signature, and offers
+// NO protection against an attacker who can replace both the package and its hash.
+// alexGStableHash is deliberately NOT used here -- it is a 64-bit FNV variant, not cryptographic.
+//
+// TRADING SAFETY (ruling C5): this entire layer is fire-and-forget. It is installed only at the
+// approved post-loop seam in alexGCheckLivePositions, in its own try/catch, and can never
+// prevent, repeat, delay or alter a position close. It never writes the ALEX journal/ledger.
+
+const EVIDENCE_PACKAGE_SCHEMA_VERSION='mogo.evidence-package.v1';
+const EVIDENCE_CANON_VERSION='mogo.evidence-canon.v1';
+const EVIDENCE_HASH_ALGORITHM='SHA-256';
+// Normative wording (spec 5.2): every user-facing integrity string must describe INTEGRITY only,
+// and must never assert authenticity, a signature, or immunity from deliberate modification.
+// Fixture H6 enforces this by asserting the corresponding vocabulary appears nowhere in this
+// layer -- which is why this comment states the rule without using any of the banned tokens.
+const EVIDENCE_HASH_SCOPE='INTEGRITY_ONLY_NOT_AUTHENTICITY';
+const EVIDENCE_HASH_CLAIM_TEXT='Content integrity verified (SHA-256). This detects alteration only -- it is not authenticity, not identity verification, and not protection against an attacker able to replace both the package and its hash.';
+const EVIDENCE_DB_NAME='mogo_evidence';
+const EVIDENCE_DB_VERSION=1;
+const EVIDENCE_STORE_PACKAGES='packages';
+const EVIDENCE_STORE_META='meta';
+// K2: these top-level keys are removed before canonicalization, so marking a package exported
+// can never change its hash, and the hash can never cover itself.
+const EVIDENCE_HASH_EXCLUDED_FIELDS=Object.freeze(['contentHash','contentHashAlgorithm','contentHashCanonicalization','contentHashProvenance','contentHashScope','export']);
+const EVIDENCE_SETUPS_MAX=1000;              // ruling C4
+const EVIDENCE_ZONES_MAX_PER_PAIR=200;       // ruling C4
+const EVIDENCE_UNEXPORTED_BLOCKING_THRESHOLD=50;
+const EVIDENCE_FILENAME_HASH_CHARS=12;
+const EVIDENCE_MAX_WRITE_FAILURES=50;
+const EVIDENCE_COMPLETENESS_LEVEL_PHASE1='PARTIAL';
+
+// ── Runtime state (memory-only; none of this is a system of record) ──
+let evidenceWriteFailures=[];
+let evidenceDbHandle=null;
+let evidenceDbUnavailableReason=null;
+let evidenceStorageBanner=null;          // {severity,message} or null
+let evidenceUnexportedCount=0;
+let evidenceUnverifiableCount=0;
+let evidenceAttemptedUnverifiedCount=0;   // EXP-001: downloaded but not yet proven to be on disk
+let evidencePackageCount=0;
+let evidenceLastCaptureAt=null;
+let evidenceCaptureInFlight=false;
+// Explicit operator opt-in for automatic disk export. Defaults OFF: a programmatic download is an
+// outward-facing side effect, so MOGO asks once rather than starting to write files unprompted.
+// Once enabled, exports run automatically on trade close, on cadence, and on tab hide -- which is
+// exactly the "automatic after one grant" model the specification describes.
+let evidenceAutoExportEnabled=false;
+
+// ══ Canonicalization -- mogo.evidence-canon.v1 (spec 5.1, rules K1-K8) ═══════════════════════
+// Pure, synchronous and fully testable offline. The hash is only as trustworthy as the
+// determinism of what it hashes, so this is defined exactly and tested independently of the
+// digest step. Deliberately NOT borrowed from alexGStableHash's internal canon: sharing it would
+// let an unrelated change there silently redefine every evidence hash ever produced.
+function evidenceCanonValue(v,seen){
+  if(v===undefined||v===null) return 'null';                              // K5
+  const t=typeof v;
+  if(t==='number'){
+    if(!isFinite(v)) throw new Error('EVIDENCE_CANON_NON_FINITE_NUMBER'); // K6
+    return JSON.stringify(v);
+  }
+  if(t==='boolean'||t==='string') return JSON.stringify(v);
+  if(t==='function'||t==='symbol'||t==='bigint') throw new Error('EVIDENCE_CANON_UNSUPPORTED_TYPE');
+  if(seen.indexOf(v)!==-1) throw new Error('EVIDENCE_CANON_CIRCULAR');
+  seen.push(v);
+  let out;
+  if(Array.isArray(v)){
+    out='['+v.map(function(x){return evidenceCanonValue(x,seen);}).join(',')+']';  // K4 order significant
+  }else{
+    // K3: ascending UTF-16 code-unit order -- Array.prototype.sort()'s default. Object key order
+    // is therefore insignificant; array order is not.
+    out='{'+Object.keys(v).sort().map(function(k){
+      return JSON.stringify(k)+':'+evidenceCanonValue(v[k],seen);
+    }).join(',')+'}';
+  }
+  seen.pop();
+  return out;                                                             // K8: no whitespace
+}
+function evidenceCanonicalize(pkg){
+  if(!pkg||typeof pkg!=='object'||Array.isArray(pkg)) throw new Error('EVIDENCE_CANON_NOT_A_PACKAGE');
+  const stripped={};                                                      // K1 + K2
+  Object.keys(pkg).forEach(function(k){
+    if(EVIDENCE_HASH_EXCLUDED_FIELDS.indexOf(k)===-1) stripped[k]=pkg[k];
+  });
+  return evidenceCanonValue(stripped,[]);
+}
+
+// ══ SHA-256 via Web Crypto (ruling C1) ═══════════════════════════════════════════════════════
+// crypto.subtle requires a secure context. http://localhost:8743 (.claude/launch.json) is one;
+// a file:// origin is NOT. When it is absent we degrade honestly -- see evidenceFinalizePackage.
+function evidenceHashAvailable(){
+  try{
+    return typeof crypto!=='undefined'&&!!crypto&&!!crypto.subtle&&
+           typeof crypto.subtle.digest==='function'&&typeof TextEncoder!=='undefined';
+  }catch(e){ return false; }
+}
+function evidenceBytesToHex(buffer){
+  const bytes=new Uint8Array(buffer);
+  let out='';
+  for(let i=0;i<bytes.length;i++) out+=('0'+bytes[i].toString(16)).slice(-2);
+  return out;                                                             // 64 lowercase hex chars
+}
+async function evidenceContentHash(canonicalString){
+  if(!evidenceHashAvailable()) return null;
+  const bytes=new TextEncoder().encode(String(canonicalString));          // K7 UTF-8
+  const digest=await crypto.subtle.digest(EVIDENCE_HASH_ALGORITHM,bytes);
+  return evidenceBytesToHex(digest);
+}
+// Writes the integrity block onto the package. Called exactly once per package, before it is
+// stored. NEVER falls back to alexGStableHash: a weak digest sitting in a field labelled SHA-256
+// would be a false integrity claim, which is worse than an honest absence.
+async function evidenceFinalizePackage(pkg){
+  const canonical=evidenceCanonicalize(pkg);
+  const hash=await evidenceContentHash(canonical);
+  pkg.contentHash=hash;
+  pkg.contentHashAlgorithm=EVIDENCE_HASH_ALGORITHM;
+  pkg.contentHashCanonicalization=EVIDENCE_CANON_VERSION;
+  pkg.contentHashProvenance=hash?'OBSERVED':'UNAVAILABLE';
+  pkg.contentHashScope=EVIDENCE_HASH_SCOPE;
+  if(!hash&&pkg.completenessReport&&Array.isArray(pkg.completenessReport.missing)){
+    pkg.completenessReport.missing.push({field:'contentHash',reason:'UNAVAILABLE',
+      detail:'Web Crypto (crypto.subtle) is not available in this browsing context, so no SHA-256 integrity hash could be computed. The package is stored unverified rather than hashed with a non-cryptographic substitute.'});
+  }
+  return pkg;
+}
+// Recomputes and compares. Never repairs, never re-hashes a mismatching package into agreement.
+async function evidenceVerifyPackageHash(pkg){
+  if(!pkg||typeof pkg!=='object') return{status:'MALFORMED',computed:null,recorded:null};
+  const recorded=pkg.contentHash==null?null:String(pkg.contentHash);
+  if(pkg.contentHashAlgorithm!=null&&pkg.contentHashAlgorithm!==EVIDENCE_HASH_ALGORITHM){
+    return{status:'UNSUPPORTED_ALGORITHM',computed:null,recorded};
+  }
+  if(recorded==null) return{status:'UNVERIFIABLE',computed:null,recorded:null};
+  if(!evidenceHashAvailable()) return{status:'UNVERIFIABLE',computed:null,recorded};
+  let computed=null;
+  try{ computed=await evidenceContentHash(evidenceCanonicalize(pkg)); }
+  catch(e){ return{status:'MALFORMED',computed:null,recorded}; }
+  return{status:computed===recorded?'VERIFIED':'MISMATCH',computed,recorded};
+}
+
+// ══ Filename sanitization (Minor 1) ══════════════════════════════════════════════════════════
+// The canonical packageId keeps its '|' delimiter INSIDE the package -- matching this codebase's
+// own ID convention (alexGSetupId -> 'AGS|...') and staying unambiguously parseable. Sanitization
+// applies only where an ID reaches a filesystem name.
+function evidenceSanitizeForFilename(s){
+  if(s==null) return null;
+  let out=String(s).replace(/[^A-Za-z0-9._-]/g,'_').replace(/_{2,}/g,'_')
+                   .replace(/^[._-]+/,'').replace(/[._-]+$/,'');
+  if(out.length>64) out=out.slice(0,64).replace(/[._-]+$/,'');
+  return out.length?out:null;
+}
+function evidenceExportFilename(pkg){
+  const strat=evidenceSanitizeForFilename(pkg&&pkg.identity?pkg.identity.strategyId:null)||'strategy';
+  const id=evidenceSanitizeForFilename(pkg?pkg.packageId:null)||'package';
+  const h=pkg&&pkg.contentHash?String(pkg.contentHash).slice(0,EVIDENCE_FILENAME_HASH_CHARS):'unverified';
+  return'mogo-evidence-'+strat+'-'+id+'-'+h+'.json';
+}
+
+// ══ Failure classification and loud reporting (spec 7) ════════════════════════════════════════
+function evidenceClassifyStorageError(err){
+  if(!err) return'UNKNOWN';
+  const name=String(err.name||'');
+  const msg=String(err.message||'');
+  const code=typeof err.code==='number'?err.code:null;
+  if(name==='QuotaExceededError'||name==='NS_ERROR_DOM_QUOTA_REACHED'||code===22||code===1014||/quota/i.test(msg)) return'QUOTA_EXCEEDED';
+  if(name==='SecurityError') return'SECURITY';
+  if(name==='ConstraintError') return'CONSTRAINT';
+  if(name==='InvalidStateError') return'INVALID_STATE';
+  if(name==='AbortError') return'ABORTED';
+  return'OTHER';
+}
+// The single most important behaviour in Phase 1: a persistence failure is recorded, surfaced and
+// emitted -- never swallowed. Wrapped so that the reporting path itself can never throw outward.
+function evidenceRecordWriteFailure(context,err,extra){
+  try{
+    const kind=evidenceClassifyStorageError(err);
+    const message=(err&&err.message?err.message:String(err||'unknown error'));
+    evidenceWriteFailures.unshift({at:new Date().toISOString(),context:String(context||'unknown'),
+      kind,message,detail:extra||null});
+    evidenceWriteFailures=evidenceWriteFailures.slice(0,EVIDENCE_MAX_WRITE_FAILURES);
+    if(kind==='QUOTA_EXCEEDED'){
+      evidenceStorageBanner={severity:'critical',
+        message:'Storage full — evidence is not being saved. Export now.'};
+    }else if(context==='indexeddb-open'){
+      evidenceStorageBanner={severity:'critical',
+        message:'Durable evidence storage unavailable — running in buffer-only mode. Nothing is being captured for later review.'};
+    }else if(!evidenceStorageBanner){
+      evidenceStorageBanner={severity:'warning',
+        message:'An evidence write failed ('+kind+'). See Diagnostics → Evidence Platform.'};
+    }
+    // Reuse the existing, already-surfaced engine-error channel rather than inventing a new one.
+    try{ recordAlexGEngineError('Evidence platform ['+context+'] '+kind+': '+message); }catch(e2){}
+    try{
+      emitDecisionEvent({eventType:'DATA_UNAVAILABLE',strategyId:STRATEGY_ALEXG,
+        source:'evidence-platform',stage:String(context||'unknown'),
+        reasonCode:kind==='QUOTA_EXCEEDED'?'DATA_STORAGE_QUOTA_EXCEEDED'
+                  :(context==='indexeddb-open'?'DATA_EVIDENCE_STORE_UNAVAILABLE':'DATA_STORAGE_WRITE_FAILED'),
+        reasonText:message,severity:'ERROR',evidenceCompleteness:'PARTIAL'});
+    }catch(e3){}
+    try{ renderEvidenceExportBanner(); }catch(e4){}
+  }catch(fatal){ /* the failure-recording path must never throw outward */ }
+}
+
+// ══ Tier (b) -- IndexedDB store ══════════════════════════════════════════════════════════════
+// The automatic browser evidence store. NOT a backup: it does not survive a profile clear,
+// device loss, or disk loss. Packages here are NEVER automatically deleted (ruling C4).
+function evidenceOpenDb(){
+  return new Promise(function(resolve,reject){
+    if(evidenceDbHandle){ resolve(evidenceDbHandle); return; }
+    if(typeof indexedDB==='undefined'||!indexedDB){ reject(new Error('IndexedDB is not available in this context')); return; }
+    let req;
+    try{ req=indexedDB.open(EVIDENCE_DB_NAME,EVIDENCE_DB_VERSION); }
+    catch(e){ reject(e); return; }
+    req.onupgradeneeded=function(ev){
+      const db=ev.target.result;
+      if(!db.objectStoreNames.contains(EVIDENCE_STORE_PACKAGES)){
+        const os=db.createObjectStore(EVIDENCE_STORE_PACKAGES,{keyPath:'packageId'});
+        // Structural idempotence (S8): one package per source trade, enforced by the store
+        // itself rather than by remembering what this session already did.
+        os.createIndex('bySourceTradeId','sourceTradeId',{unique:true});
+      }
+      if(!db.objectStoreNames.contains(EVIDENCE_STORE_META)){
+        db.createObjectStore(EVIDENCE_STORE_META,{keyPath:'key'});
+      }
+    };
+    req.onsuccess=function(){ evidenceDbHandle=req.result; evidenceDbUnavailableReason=null; resolve(evidenceDbHandle); };
+    req.onerror=function(){ reject(req.error||new Error('IndexedDB open failed')); };
+    req.onblocked=function(){ reject(new Error('IndexedDB open blocked by another tab')); };
+  });
+}
+function evidenceDbReady(){
+  return evidenceOpenDb().catch(function(e){
+    evidenceDbUnavailableReason=(e&&e.message)?e.message:String(e);
+    evidenceRecordWriteFailure('indexeddb-open',e);
+    throw e;
+  });
+}
+function evidenceTxDone(tx){
+  return new Promise(function(resolve,reject){
+    tx.oncomplete=function(){ resolve(true); };
+    tx.onerror=function(){ reject(tx.error||new Error('transaction failed')); };
+    tx.onabort=function(){ reject(tx.error||new Error('transaction aborted')); };
+  });
+}
+function evidenceReq(request){
+  return new Promise(function(resolve,reject){
+    request.onsuccess=function(){ resolve(request.result); };
+    request.onerror=function(){ reject(request.error||new Error('request failed')); };
+  });
+}
+
+// Minor 2 -- sequence identifiers come from persistent IndexedDB state, never process memory.
+// An in-memory counter would silently mint duplicate packageIds after every reload.
+//
+// DISCLOSED DEVIATION from spec 5.3's original wording: allocation and the package write cannot
+// share ONE transaction, because the SHA-256 digest between them is asynchronous and an
+// IndexedDB transaction auto-commits as soon as the microtask queue drains with no pending
+// request. Allocation is therefore its own committed readwrite transaction, and the package is
+// added afterwards with add() (not put()), which fails loudly on a duplicate key. If the later
+// write fails, a sequence number is burned -- harmless, and strictly safer than reusing one.
+async function evidenceAllocateSequence(strategyId,yyyymmdd){
+  const db=await evidenceDbReady();
+  const key='seq|'+strategyId+'|'+yyyymmdd;
+  const tx=db.transaction([EVIDENCE_STORE_META],'readwrite');
+  const store=tx.objectStore(EVIDENCE_STORE_META);
+  const existing=await evidenceReq(store.get(key));
+  const next=(existing&&typeof existing.value==='number'?existing.value:0)+1;
+  await evidenceReq(store.put({key,value:next}));
+  await evidenceTxDone(tx);
+  return next;
+}
+async function evidencePutPackage(pkg){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_PACKAGES],'readwrite');
+  // add() -- never put() -- so an existing packageId or a duplicate sourceTradeId is rejected
+  // rather than silently overwriting a stored package.
+  const p=evidenceReq(tx.objectStore(EVIDENCE_STORE_PACKAGES).add(pkg));
+  await p; await evidenceTxDone(tx);
+  return pkg.packageId;
+}
+// The ONLY function permitted to write back to an existing package, and only to record the
+// outcome of an export. The hash excludes the export block, so this never invalidates integrity.
+async function evidenceUpdateExportState(packageId,exportState){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_PACKAGES],'readwrite');
+  const store=tx.objectStore(EVIDENCE_STORE_PACKAGES);
+  const existing=await evidenceReq(store.get(packageId));
+  if(!existing){ await evidenceTxDone(tx); return false; }
+  existing.export=exportState;
+  await evidenceReq(store.put(existing));
+  await evidenceTxDone(tx);
+  return true;
+}
+async function evidenceGetPackage(packageId){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_PACKAGES],'readonly');
+  const out=await evidenceReq(tx.objectStore(EVIDENCE_STORE_PACKAGES).get(packageId));
+  return out||null;
+}
+async function evidenceListPackages(){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_PACKAGES],'readonly');
+  const out=await evidenceReq(tx.objectStore(EVIDENCE_STORE_PACKAGES).getAll());
+  return out||[];
+}
+async function evidenceHasPackageForTrade(tradeId){
+  if(tradeId==null) return false;
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_PACKAGES],'readonly');
+  const got=await evidenceReq(tx.objectStore(EVIDENCE_STORE_PACKAGES).index('bySourceTradeId').get(String(tradeId)));
+  return !!got;
+}
+// PURE and synchronous, so the EXP-001 counting rule is testable offline against the real code.
+// EXP-001: ONLY a verified re-import clears a package from the unexported count. A download
+// attempt never does, because a browser download proves nothing about what reached the disk.
+function evidenceSummarizePackages(list){
+  const all=list||[];
+  let unexported=0,unverifiable=0,attempted=0;
+  all.forEach(function(p){
+    const ex=(p&&p.export)||{};
+    if(!ex.exportedAt) unexported++;
+    if(!ex.exportedAt&&ex.exportAttemptedAt) attempted++;
+    if(!p||p.contentHashProvenance==='UNAVAILABLE'||p.contentHash==null) unverifiable++;
+  });
+  return{total:all.length,unexported,unverifiable,attempted};
+}
+async function evidenceCountUnexported(){
+  const all=await evidenceListPackages();
+  const s=evidenceSummarizePackages(all);
+  evidencePackageCount=s.total;
+  evidenceUnexportedCount=s.unexported;
+  evidenceUnverifiableCount=s.unverifiable;
+  evidenceAttemptedUnverifiedCount=s.attempted;
+  return s;
+}
+
+// ══ Evidence Package v1 construction ═════════════════════════════════════════════════════════
+function evidenceUtcDateStamp(iso){
+  const d=iso?new Date(iso):new Date();
+  const t=isNaN(d.getTime())?new Date():d;
+  return String(t.getUTCFullYear())+
+    ('0'+(t.getUTCMonth()+1)).slice(-2)+
+    ('0'+t.getUTCDate()).slice(-2);
+}
+// Phase 1 is deliberately PARTIAL. A package claiming COMPLETE while lacking market context would
+// be dishonest, and completenessReport is what makes that honesty machine-readable.
+function evidenceComputeCompleteness(basis){
+  const missing=[
+    {field:'objects.marketContexts',reason:'FUTURE_WORK',
+     detail:'Candle/market-context capture is MOGO-003 Phase 3. No market context was captured at decision time, so none is reported.'},
+    {field:'objects.decisions',reason:'FUTURE_WORK',
+     detail:'Durable decision chains are MOGO-003 Phase 2. The decision-event bus remains memory-only in this release.'},
+    {field:'identity.commitHash',reason:'UNAVAILABLE',
+     detail:'No build-time commit injection exists at this engine version.'},
+    {field:'outcomes[].timeToMFE',reason:'FUTURE_WORK',
+     detail:'Excursion timing is MOGO-003 Phase 5. MAE/MFE extremes are captured; when they occurred is not.'}
+  ];
+  if(basis==='HISTORICAL_BACKFILL'){
+    missing.push({field:'*',reason:'UNSAFE_TO_RECONSTRUCT',
+      detail:'Adopted from existing localStorage history. Only fields genuinely present on the stored record are included; nothing was inferred, back-filled or fabricated.'});
+  }
+  return{level:basis==='HISTORICAL_BACKFILL'?'MINIMAL':EVIDENCE_COMPLETENESS_LEVEL_PHASE1,missing};
+}
+// Read-only over the closed position. Copies only fields that genuinely exist -- a missing value
+// is an explicit null, never a fabricated 0/''/false (architecture 3.1 rule 2).
+function evidenceBuildPackageFromTrade(trade,opts){
+  const o=opts||{};
+  const basis=o.captureBasis||'LIVE_CLOSE';
+  if(!trade||typeof trade!=='object') throw new Error('EVIDENCE_BUILD_NO_TRADE');
+  const has=function(k){ return Object.prototype.hasOwnProperty.call(trade,k)&&trade[k]!==undefined; };
+  const pick=function(k){ return has(k)?trade[k]:null; };
+  const prov=trade.strategyProvenance||null;
+  // Never invent a version. An unstamped historical trade stays honestly unstamped, matching
+  // alexGClassifyTradeProvenance's own classification.
+  let strategyVersion,versionProvenance;
+  if(prov&&prov.strategySpecificationVersion){ strategyVersion=prov.strategySpecificationVersion; versionProvenance='OBSERVED'; }
+  else if(trade.ruleVersion){ strategyVersion=trade.ruleVersion; versionProvenance='OBSERVED'; }
+  else { strategyVersion='alex_g_sr_v1 (inferred, unstamped)'; versionProvenance='DERIVED'; }
+  const cfgSnapshot=has('configurationSnapshot')&&trade.configurationSnapshot?trade.configurationSnapshot:null;
+  const completeness=evidenceComputeCompleteness(basis);
+  const pkg={
+    packageSchemaVersion:EVIDENCE_PACKAGE_SCHEMA_VERSION,
+    packageId:o.packageId||null,
+    contentHash:null,contentHashAlgorithm:null,contentHashCanonicalization:null,
+    contentHashProvenance:null,contentHashScope:null,
+    createdAt:o.createdAt||new Date().toISOString(),
+    captureBasis:basis,
+    sourceTradeId:trade.tradeId!=null?String(trade.tradeId):null,
+    identity:{
+      strategyId:trade.strategy||'alex_g_sr_v1',
+      strategyVersion,
+      strategyVersionProvenance:versionProvenance,
+      implementationVersion:prov&&prov.implementationVersion?prov.implementationVersion:null,
+      engineVersion:has('createdByEngineVersion')?trade.createdByEngineVersion:(o.engineVersion||null),
+      commitHash:null,
+      commitHashProvenance:'UNAVAILABLE',
+      mode:'LIVE_PAPER',
+      runId:null
+    },
+    configSnapshot:cfgSnapshot,
+    configSnapshotProvenance:cfgSnapshot?'OBSERVED':'UNAVAILABLE',
+    objects:{
+      candidates:[],
+      decisions:[],
+      qualifiedSetups:(function(){
+        if(!has('setupId')) return [];
+        return [{
+          setupId:pick('setupId'),candidateId:pick('setupId'),signalId:pick('signalId'),
+          strategyId:trade.strategy||'alex_g_sr_v1',strategyVersion,
+          instrument:pick('pair'),timeframe:pick('timeframe'),
+          setupType:pick('setupType'),setupLabel:pick('setupLabel'),
+          qualifiedAt:pick('qualificationTimestamp'),qualificationClose:pick('qualificationClose'),
+          structureRefs:{
+            zoneId:pick('zoneId'),zoneLow:pick('zoneLow'),zoneHigh:pick('zoneHigh'),
+            zoneCenter:pick('zoneCenter'),zoneStrength:pick('zoneStrength'),
+            zoneQualityAtQualification:pick('zoneQualityAtQualification'),
+            zoneRoleAtQualification:pick('zoneRoleAtQualification'),
+            reactionId:pick('reactionId'),zoneTouchNumber:pick('zoneTouchNumber'),
+            breakCycleId:pick('breakCycleId'),brokenDirection:pick('brokenDirection'),
+            barsSinceBreak:pick('barsSinceBreak'),
+            breakCandleRef:null,retestCandleRef:null,penetrationDepth:null
+          },
+          structureRefsProvenance:{breakCandleRef:'FUTURE_WORK',retestCandleRef:'FUTURE_WORK',penetrationDepth:'FUTURE_WORK'},
+          contextRefs:{
+            session:pick('session'),dayOfWeek:pick('dayOfWeek'),hourOfDay:pick('hourOfDay'),
+            trendContext:pick('trendContext'),atrAtEntry:pick('atrAtEntry'),
+            nearestPsych500Level:pick('nearestPsych500Level'),distanceToPsych500Pips:pick('distanceToPsych500Pips'),
+            nearestPsych100Level:pick('nearestPsych100Level'),distanceToPsych100Pips:pick('distanceToPsych100Pips')
+          },
+          evidenceCompleteness:completeness.level
+        }];
+      })(),
+      positions:[{
+        positionId:pick('tradeId'),setupId:pick('setupId'),
+        instrument:pick('pair'),timeframe:pick('timeframe'),direction:pick('direction'),
+        entryPrice:pick('entry'),entryTimestamp:pick('openedAt'),
+        entryBid:pick('entryBid'),entryAsk:pick('entryAsk'),entrySpreadPips:pick('entrySpreadPips'),
+        entryFillBasis:has('liveFillPrice')?'live_fill':null,
+        liveFillPrice:pick('liveFillPrice'),entryDelayPips:pick('entryDelayPips'),
+        originalStop:pick('stop'),currentStop:pick('stop'),
+        target:pick('target'),plannedRR:pick('plannedRR'),
+        riskPercent:pick('riskPercent'),riskAmount:pick('riskAmount'),
+        positionSize:pick('positionSize'),pipValue:pick('pipValue'),
+        balanceBefore:pick('balanceAtEntry'),
+        stopManagementPolicy:'NONE_BY_DESIGN',
+        evidenceCompleteness:completeness.level
+      }],
+      outcomes:[{
+        outcomeId:has('tradeId')?String(trade.tradeId)+'|outcome':null,
+        positionId:pick('tradeId'),
+        exitPrice:pick('exitPrice'),exitTimestamp:pick('closedAt'),
+        exitReasonCode:pick('result'),
+        exitDetectionSource:pick('exitDetectionSource'),
+        exitTriggerLevel:pick('exitTriggerLevel'),
+        exitDetectedAt:pick('exitDetectedAt'),
+        exitCandleStart:pick('exitCandleStart'),exitCandleEnd:pick('exitCandleEnd'),
+        exitBid:pick('exitBid'),exitAsk:pick('exitAsk'),exitSpreadPips:pick('exitSpreadPips'),
+        plannedR:pick('plannedRR'),recordedResultR:pick('resultR'),
+        realizedR:null,realizedRProvenance:'DERIVED_AT_READ_TIME',
+        pnl:pick('pnl'),balanceAfter:pick('balanceAfter'),
+        maePips:pick('maePips'),mfePips:pick('mfePips'),maeR:pick('maeR'),mfeR:pick('mfeR'),
+        timeToMFE:null,timeToMAE:null,
+        ambiguous:has('ambiguous')?!!trade.ambiguous:null,ambiguityBasis:pick('ambiguousMode'),
+        exitPathCandleRefs:[],
+        dataQualityFlags:[],
+        evidenceCompleteness:completeness.level
+      }],
+      marketContexts:[]
+    },
+    objectCounts:{candidates:0,decisions:0,qualifiedSetups:0,positions:0,outcomes:0,marketContexts:0},
+    completenessReport:completeness,
+    export:{exportedAt:null,exportMechanism:null,exportFilename:null,exportVerified:null}
+  };
+  pkg.objectCounts={
+    candidates:pkg.objects.candidates.length,decisions:pkg.objects.decisions.length,
+    qualifiedSetups:pkg.objects.qualifiedSetups.length,positions:pkg.objects.positions.length,
+    outcomes:pkg.objects.outcomes.length,marketContexts:pkg.objects.marketContexts.length
+  };
+  return pkg;
+}
+function evidenceValidatePackage(pkg){
+  const errors=[];
+  if(!pkg||typeof pkg!=='object'||Array.isArray(pkg)) return{valid:false,errors:['package is not an object']};
+  if(pkg.packageSchemaVersion!==EVIDENCE_PACKAGE_SCHEMA_VERSION) errors.push('unsupported packageSchemaVersion: '+pkg.packageSchemaVersion);
+  if(!pkg.packageId) errors.push('missing packageId');
+  if(!pkg.createdAt) errors.push('missing createdAt');
+  if(!pkg.identity||typeof pkg.identity!=='object') errors.push('missing identity block');
+  else{
+    if(!pkg.identity.strategyId) errors.push('missing identity.strategyId');
+    if(!pkg.identity.strategyVersion) errors.push('missing identity.strategyVersion');
+    if(pkg.identity.mode!=='LIVE_PAPER'&&pkg.identity.mode!=='REPLAY') errors.push('invalid identity.mode: '+pkg.identity.mode);
+  }
+  if(!pkg.objects||typeof pkg.objects!=='object') errors.push('missing objects block');
+  if(!pkg.completenessReport||typeof pkg.completenessReport!=='object') errors.push('missing completenessReport');
+  else{
+    if(EVIDENCE_COMPLETENESS_LEVELS.indexOf(pkg.completenessReport.level)===-1) errors.push('invalid completenessReport.level: '+pkg.completenessReport.level);
+    if(!Array.isArray(pkg.completenessReport.missing)) errors.push('completenessReport.missing must be an array');
+    else pkg.completenessReport.missing.forEach(function(m,i){
+      if(!m||EVIDENCE_FIELD_PROVENANCE.indexOf(m.reason)===-1) errors.push('completenessReport.missing['+i+'] has an invalid reason: '+(m&&m.reason));
+    });
+  }
+  if(pkg.objects&&pkg.objectCounts){
+    ['candidates','decisions','qualifiedSetups','positions','outcomes','marketContexts'].forEach(function(k){
+      const arr=pkg.objects[k];
+      if(!Array.isArray(arr)) errors.push('objects.'+k+' must be an array');
+      else if(pkg.objectCounts[k]!==arr.length) errors.push('objectCounts.'+k+' ('+pkg.objectCounts[k]+') does not match objects.'+k+'.length ('+arr.length+')');
+    });
+  }
+  if(pkg.contentHash!=null&&!/^[0-9a-f]{64}$/.test(String(pkg.contentHash))) errors.push('contentHash is not 64 lowercase hex characters');
+  if(pkg.contentHash!=null&&pkg.contentHashAlgorithm!==EVIDENCE_HASH_ALGORITHM) errors.push('contentHashAlgorithm must be '+EVIDENCE_HASH_ALGORITHM);
+  try{ evidenceCanonicalize(pkg); }catch(e){ errors.push('package is not canonicalizable: '+(e&&e.message?e.message:String(e))); }
+  return{valid:errors.length===0,errors};
+}
+
+// ══ Automatic capture -- the approved post-loop seam (ruling C5) ══════════════════════════════
+// Called from alexGCheckLivePositions AFTER its loop has finished, next to the existing save.
+// Returns synchronously and immediately; all real work happens on a detached promise chain whose
+// every failure is caught and recorded. It can never prevent, repeat, delay or alter a close.
+function evidenceCaptureClosedTrades(){
+  if(evidenceCaptureInFlight) return;                        // never queue behind the trading tick
+  if(typeof alexGAccount==='undefined'||!alexGAccount||!Array.isArray(alexGAccount.closedPositions)) return;
+  const snapshot=alexGAccount.closedPositions.slice(0,25);    // read-only view of recent closes
+  if(!snapshot.length) return;
+  evidenceCaptureInFlight=true;
+  evidenceCaptureClosedTradesAsync(snapshot).catch(function(e){
+    evidenceRecordWriteFailure('capture',e);
+  }).then(function(){ evidenceCaptureInFlight=false; },function(){ evidenceCaptureInFlight=false; });
+}
+async function evidenceCaptureClosedTradesAsync(trades){
+  let captured=0;
+  for(let i=trades.length-1;i>=0;i--){                        // oldest first, so seq follows time
+    const trade=trades[i];
+    if(!trade||trade.tradeId==null) continue;
+    try{
+      if(await evidenceHasPackageForTrade(trade.tradeId)) continue;   // S8 idempotence
+      await evidencePersistTradePackage(trade,'LIVE_CLOSE');
+      captured++;
+    }catch(e){
+      // A ConstraintError means another path already captured this trade -- not a failure.
+      if(evidenceClassifyStorageError(e)==='CONSTRAINT') continue;
+      evidenceRecordWriteFailure('capture-trade',e,{tradeId:trade.tradeId});
+    }
+  }
+  if(captured){ evidenceLastCaptureAt=new Date().toISOString(); }
+  await evidenceCountUnexported();
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  try{ await evidenceEnforceBufferLimits(); }catch(e){ evidenceRecordWriteFailure('buffer-limits',e); }
+  if(captured&&evidenceAutoExportEnabled){
+    try{ await evidenceExportPending('AUTO_DOWNLOAD'); }catch(e){ evidenceRecordWriteFailure('auto-export',e); }
+  }
+  return captured;
+}
+async function evidencePersistTradePackage(trade,basis){
+  const strategyId=trade.strategy||'alex_g_sr_v1';
+  const stamp=evidenceUtcDateStamp(trade.closedAt||trade.openedAt||null);
+  const seq=await evidenceAllocateSequence(strategyId,stamp);
+  const pkg=evidenceBuildPackageFromTrade(trade,{
+    packageId:'PKG|'+strategyId+'|'+stamp+'|'+seq,
+    captureBasis:basis,
+    engineVersion:(typeof APP_VERSION!=='undefined'?APP_VERSION:null)
+  });
+  await evidenceFinalizePackage(pkg);
+  const v=evidenceValidatePackage(pkg);
+  if(!v.valid) throw new Error('constructed package failed validation: '+v.errors.join('; '));
+  await evidencePutPackage(pkg);
+  return pkg;
+}
+
+// ══ Bounded working buffer (ruling C4) ═══════════════════════════════════════════════════════
+// Caps apply ONLY to the two genuinely unbounded stores. The ALEX journal/ledger is never capped,
+// evicted, rewritten or bypassed by anything in this layer.
+//
+// Eviction is gated on tier-(b) persistence: a record whose trade has no committed package stays.
+// If tier (b) is unavailable at all, eviction does not run -- an over-full buffer is recoverable,
+// a deleted record is not.
+async function evidenceEnforceBufferLimits(){
+  const overSetups=(typeof alexGSetupState!=='undefined'&&Array.isArray(alexGSetupState))?alexGSetupState.length>EVIDENCE_SETUPS_MAX:false;
+  let overZones=false;
+  if(typeof alexGZoneState!=='undefined'&&alexGZoneState){
+    Object.keys(alexGZoneState).forEach(function(pair){
+      if(evidenceCountZonesForPair(pair)>EVIDENCE_ZONES_MAX_PER_PAIR) overZones=true;
+    });
+  }
+  if(!overSetups&&!overZones) return{evictedSetups:0,evictedZones:0,skipped:0};
+  const packages=await evidenceListPackages();               // throws if tier (b) is unavailable
+  const persistedTradeIds={};
+  packages.forEach(function(p){ if(p&&p.sourceTradeId!=null) persistedTradeIds[String(p.sourceTradeId)]=true; });
+  return evidenceEvictBuffers(persistedTradeIds);
+}
+function evidenceCountZonesForPair(pair){
+  const tfs=(typeof alexGZoneState!=='undefined'&&alexGZoneState&&alexGZoneState[pair])?alexGZoneState[pair]:null;
+  if(!tfs) return 0;
+  let n=0;
+  Object.keys(tfs).forEach(function(tf){
+    const z=tfs[tf]&&Array.isArray(tfs[tf].validatedZones)?tfs[tf].validatedZones:null;
+    if(z) n+=z.length;
+  });
+  return n;
+}
+// Pure and synchronous given the set of trade IDs already persisted to tier (b) -- so the whole
+// eviction-safety rule is testable offline without IndexedDB.
+function evidenceEvictBuffers(persistedTradeIds){
+  const persisted=persistedTradeIds||{};
+  let evictedSetups=0,evictedZones=0,skipped=0;
+  const closed=(typeof alexGAccount!=='undefined'&&alexGAccount&&Array.isArray(alexGAccount.closedPositions))?alexGAccount.closedPositions:[];
+  const open=(typeof alexGAccount!=='undefined'&&alexGAccount&&Array.isArray(alexGAccount.openPositions))?alexGAccount.openPositions:[];
+  // A setup/zone is PROTECTED FROM EVICTION when it belongs to an open position, or to a closed
+  // trade whose evidence is not yet in tier (b). Eviction must never outrun capture.
+  const blockedSetupIds={},blockedZoneIds={};
+  open.forEach(function(p){
+    if(p&&p.setupId!=null) blockedSetupIds[String(p.setupId)]=true;
+    if(p&&p.zoneId!=null) blockedZoneIds[String(p.zoneId)]=true;
+  });
+  closed.forEach(function(p){
+    if(!p||p.tradeId==null) return;
+    if(persisted[String(p.tradeId)]) return;                 // evidence is safe -- eviction allowed
+    if(p.setupId!=null) blockedSetupIds[String(p.setupId)]=true;
+    if(p.zoneId!=null) blockedZoneIds[String(p.zoneId)]=true;
+  });
+  if(typeof alexGSetupState!=='undefined'&&Array.isArray(alexGSetupState)&&alexGSetupState.length>EVIDENCE_SETUPS_MAX){
+    const sorted=alexGSetupState.slice().sort(function(a,b){
+      return (b&&b.qualificationTimestamp||0)-(a&&a.qualificationTimestamp||0);   // newest first
+    });
+    const keep=[],overflow=sorted.slice(EVIDENCE_SETUPS_MAX);
+    sorted.slice(0,EVIDENCE_SETUPS_MAX).forEach(function(s){ keep.push(s); });
+    overflow.forEach(function(s){
+      if(s&&s.setupId!=null&&blockedSetupIds[String(s.setupId)]){ keep.push(s); skipped++; }
+      else evictedSetups++;
+    });
+    if(evictedSetups) alexGSetupState=keep;
+  }
+  if(typeof alexGZoneState!=='undefined'&&alexGZoneState){
+    Object.keys(alexGZoneState).forEach(function(pair){
+      if(evidenceCountZonesForPair(pair)<=EVIDENCE_ZONES_MAX_PER_PAIR) return;
+      const tfs=alexGZoneState[pair];
+      const all=[];
+      Object.keys(tfs).forEach(function(tf){
+        const list=tfs[tf]&&Array.isArray(tfs[tf].validatedZones)?tfs[tf].validatedZones:null;
+        if(list) list.forEach(function(z){ all.push({tf,z}); });
+      });
+      all.sort(function(a,b){ return (b.z&&b.z.formedAt||0)-(a.z&&a.z.formedAt||0); });  // newest first
+      const survivors={};
+      Object.keys(tfs).forEach(function(tf){ survivors[tf]=[]; });
+      all.forEach(function(entry,i){
+        const blocked=entry.z&&entry.z.id!=null&&blockedZoneIds[String(entry.z.id)];
+        if(i<EVIDENCE_ZONES_MAX_PER_PAIR||blocked){
+          survivors[entry.tf].push(entry.z);
+          if(i>=EVIDENCE_ZONES_MAX_PER_PAIR&&blocked) skipped++;
+        }else evictedZones++;
+      });
+      if(evictedZones){
+        Object.keys(tfs).forEach(function(tf){
+          if(tfs[tf]&&Array.isArray(tfs[tf].validatedZones)) tfs[tf].validatedZones=survivors[tf]||[];
+        });
+      }
+    });
+  }
+  if(evictedSetups||evictedZones){
+    try{ saveAlexGRest(); }catch(e){ evidenceRecordWriteFailure('eviction-persist',e); }
+  }
+  return{evictedSetups,evictedZones,skipped};
+}
+
+// ══ Export -- tier (c) (spec 8) ══════════════════════════════════════════════════════════════
+// A package is marked exported ONLY after the write resolves AND the exact bytes written re-hash
+// to its recorded contentHash. Optimistic marking would make the unexported banner lie, which is
+// worse than having no banner at all.
+async function evidenceExportPackage(pkg,mechanism){
+  const v=evidenceValidatePackage(pkg);
+  if(!v.valid) return{ok:false,reason:'INVALID_PACKAGE',errors:v.errors};
+  const text=JSON.stringify(pkg,null,2);
+  // Verify the EXACT bytes about to be written, by re-parsing them and re-hashing.
+  if(pkg.contentHash!=null){
+    let reparsed=null;
+    try{ reparsed=JSON.parse(text); }catch(e){ return{ok:false,reason:'SERIALIZATION_FAILED'}; }
+    const check=await evidenceVerifyPackageHash(reparsed);
+    if(check.status==='MISMATCH') return{ok:false,reason:'HASH_MISMATCH',computed:check.computed,recorded:check.recorded};
+    if(check.status==='MALFORMED') return{ok:false,reason:'HASH_UNCOMPUTABLE'};
+  }
+  const filename=evidenceExportFilename(pkg);
+  try{
+    downloadTextFile(filename,'application/json',text);
+  }catch(e){
+    evidenceRecordWriteFailure('export',e,{packageId:pkg.packageId});
+    return{ok:false,reason:'WRITE_FAILED'};                  // NOT marked exported
+  }
+  // ── EXP-001 CORRECTION ────────────────────────────────────────────────────────────────────
+  // A browser download CANNOT be self-verified. downloadTextFile() uses the anchor-click idiom:
+  // it returns nothing, has no error handling, and cannot report whether the browser accepted,
+  // blocked, cancelled or failed the write. This was proven live -- Chrome silently refused two
+  // real downloads while the app reported success and cleared the standing warning.
+  //
+  // Therefore a download records an ATTEMPT ONLY. exportedAt stays null, the package stays in the
+  // unexported count, and the warning does NOT clear. The only thing that proves a durable disk
+  // artifact exists is the operator handing the written file back: see the re-import verification
+  // in evidenceImportPackageObject(). MOGO must never claim disk persistence it has not read back.
+  const prev=pkg.export||{};
+  const attemptState={
+    exportedAt:null,                                                 // ONLY a verified re-import sets this
+    exportAttemptedAt:new Date().toISOString(),
+    exportMechanism:mechanism==='MANUAL'?'MANUAL':'AUTO_DOWNLOAD',   // never FS_ACCESS in Phase 1
+    exportFilename:filename,
+    exportVerified:false,
+    exportVerificationMethod:null,
+    exportAttemptCount:(typeof prev.exportAttemptCount==='number'?prev.exportAttemptCount:0)+1
+  };
+  try{ await evidenceUpdateExportState(pkg.packageId,attemptState); }
+  catch(e){
+    evidenceRecordWriteFailure('export-mark',e,{packageId:pkg.packageId});
+    return{ok:false,reason:'MARK_FAILED',filename};
+  }
+  return{ok:true,attempted:true,verified:false,requiresReimport:true,filename,
+         reason:'EXPORT_ATTEMPTED_AWAITING_REIMPORT'};
+}
+// PURE and synchronous, so every EXP-001 rule is testable offline without IndexedDB or Web Crypto.
+// Decides whether a re-imported file genuinely proves that a durable disk artifact of the stored
+// package exists. Every condition must hold; there is no confirmation shortcut and no operator
+// override -- an operator saying "yes it downloaded" is not evidence, the bytes are.
+function evidenceEvaluateExportReimport(parsed,stored,hashVerification){
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) return{verified:false,reason:'MALFORMED'};
+  if(!stored||typeof stored!=='object') return{verified:false,reason:'NO_STORED_PACKAGE'};
+  if(String(parsed.packageId)!==String(stored.packageId)) return{verified:false,reason:'IDENTITY_MISMATCH'};
+  if(parsed.sourceTradeId!=null&&stored.sourceTradeId!=null&&
+     String(parsed.sourceTradeId)!==String(stored.sourceTradeId)) return{verified:false,reason:'IDENTITY_MISMATCH'};
+  const v=hashVerification||{status:'UNVERIFIABLE'};
+  if(v.status==='MISMATCH') return{verified:false,reason:'HASH_MISMATCH'};
+  if(v.status!=='VERIFIED') return{verified:false,reason:'HASH_UNVERIFIABLE'};
+  let a,b;
+  try{ a=evidenceCanonicalize(parsed); b=evidenceCanonicalize(stored); }
+  catch(e){ return{verified:false,reason:'NOT_CANONICALIZABLE'}; }
+  // Byte-for-byte canonical equality against what is actually stored -- a hash match alone would
+  // only prove the file is self-consistent, not that it is THIS package.
+  if(a!==b) return{verified:false,reason:'CANONICAL_CONTENT_MISMATCH'};
+  return{verified:true,reason:'REIMPORT_VERIFIED'};
+}
+function evidenceBuildVerifiedExportState(stored,filename){
+  const prev=(stored&&stored.export)||{};
+  return{
+    exportedAt:new Date().toISOString(),                 // set here and ONLY here
+    exportAttemptedAt:prev.exportAttemptedAt||null,
+    exportMechanism:prev.exportMechanism||null,
+    exportFilename:filename||prev.exportFilename||null,
+    exportVerified:true,
+    exportVerificationMethod:'REIMPORT_VERIFIED',
+    exportAttemptCount:(typeof prev.exportAttemptCount==='number'?prev.exportAttemptCount:0)
+  };
+}
+async function evidenceExportPending(mechanism){
+  const all=await evidenceListPackages();
+  const pending=all.filter(function(p){ return !p.export||!p.export.exportedAt; });
+  let exported=0,failed=0;
+  for(const pkg of pending){
+    const r=await evidenceExportPackage(pkg,mechanism||'AUTO_DOWNLOAD');
+    if(r.ok) exported++; else failed++;
+  }
+  await evidenceCountUnexported();
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  return{exported,failed,attempted:pending.length};
+}
+async function evidenceExportAll(mechanism){
+  const all=await evidenceListPackages();
+  let exported=0,failed=0;
+  for(const pkg of all){
+    const r=await evidenceExportPackage(pkg,mechanism||'MANUAL');
+    if(r.ok) exported++; else failed++;
+  }
+  await evidenceCountUnexported();
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  return{exported,failed,attempted:all.length};
+}
+
+// ══ Import and recovery (spec 9) ═════════════════════════════════════════════════════════════
+// Recovery is for analysis, never for resurrecting a live account. This path NEVER touches
+// alexGAccount, alexGJournalEntries, paperAccount or journalEntries, and NEVER advances the
+// tier-(b) sequence counter -- a recovered package must not influence the IDs this installation
+// goes on to mint.
+async function evidenceImportPackageObject(parsed){
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) return{ok:false,reason:'NOT_A_PACKAGE'};
+  if(parsed.packageSchemaVersion!==EVIDENCE_PACKAGE_SCHEMA_VERSION){
+    if(typeof parsed.packageSchemaVersion==='string'&&parsed.packageSchemaVersion.indexOf('mogo.evidence-package.')===0){
+      return{ok:false,reason:'NEWER_SCHEMA_READ_ONLY',
+        detail:'Package schema '+parsed.packageSchemaVersion+' is not understood by this engine. It was not imported; nothing was modified or guessed at.'};
+    }
+    return{ok:false,reason:'UNSUPPORTED_SCHEMA'};
+  }
+  if(parsed.contentHashAlgorithm!=null&&parsed.contentHashAlgorithm!==EVIDENCE_HASH_ALGORITHM){
+    return{ok:false,reason:'UNSUPPORTED_ALGORITHM'};
+  }
+  const v=evidenceValidatePackage(parsed);
+  if(!v.valid) return{ok:false,reason:'INVALID_PACKAGE',errors:v.errors};
+  const check=await evidenceVerifyPackageHash(parsed);
+  if(check.status==='MISMATCH') return{ok:false,reason:'HASH_MISMATCH',computed:check.computed,recorded:check.recorded};
+  if(check.status==='UNSUPPORTED_ALGORITHM') return{ok:false,reason:'UNSUPPORTED_ALGORITHM'};
+  if(check.status==='MALFORMED') return{ok:false,reason:'INVALID_PACKAGE'};
+  const existing=await evidenceGetPackage(parsed.packageId);
+  if(existing){
+    // ── EXP-001: re-importing a package we already hold IS the export verification event. ──
+    // The operator handing back the written file is the only proof MOGO ever gets that a durable
+    // disk artifact exists, because a browser download reports nothing. Every condition must
+    // hold: parses, validates, identity matches, SHA-256 verifies, and the canonical content is
+    // byte-identical to what is stored.
+    const decision=evidenceEvaluateExportReimport(parsed,existing,check);
+    if(decision.verified){
+      try{ await evidenceUpdateExportState(existing.packageId,evidenceBuildVerifiedExportState(existing,null)); }
+      catch(e){
+        evidenceRecordWriteFailure('export-verify-mark',e,{packageId:existing.packageId});
+        return{ok:false,reason:'VERIFY_MARK_FAILED'};
+      }
+      await evidenceCountUnexported();
+      try{ renderEvidenceExportBanner(); }catch(e){}
+      return{ok:true,reason:'EXPORT_VERIFIED_BY_REIMPORT',imported:false,exportVerified:true};
+    }
+    if(existing.contentHash===parsed.contentHash&&decision.reason==='HASH_UNVERIFIABLE'){
+      // Same package, but this context cannot compute SHA-256, so nothing is proven. A no-op --
+      // never an export confirmation.
+      return{ok:true,reason:'DUPLICATE_IDENTICAL_UNVERIFIABLE',imported:false,exportVerified:false};
+    }
+    if(decision.reason==='CANONICAL_CONTENT_MISMATCH'||decision.reason==='HASH_MISMATCH'){
+      return{ok:false,reason:'DUPLICATE_CONFLICTING_HASH',detail:decision.reason}; // never overwrite
+    }
+    return{ok:false,reason:'DUPLICATE_CONFLICTING_HASH',detail:decision.reason};
+  }
+  const record=JSON.parse(JSON.stringify(parsed));            // unknown fields preserved as-is
+  record.importedAt=new Date().toISOString();
+  record.importVerification=check.status==='VERIFIED'?'VERIFIED':'UNVERIFIED';
+  try{ await evidencePutPackage(record); }
+  catch(e){
+    if(evidenceClassifyStorageError(e)==='CONSTRAINT') return{ok:false,reason:'DUPLICATE_SOURCE_TRADE'};
+    evidenceRecordWriteFailure('import',e);
+    return{ok:false,reason:'WRITE_FAILED'};
+  }
+  await evidenceCountUnexported();
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  return{ok:true,reason:record.importVerification,imported:true};
+}
+async function evidenceImportFile(file){
+  if(!file) return{ok:false,reason:'NO_FILE'};
+  let text;
+  try{ text=await file.text(); }catch(e){ return{ok:false,reason:'READ_FAILED'}; }
+  let parsed;
+  try{ parsed=JSON.parse(text); }catch(e){ return{ok:false,reason:'MALFORMED_JSON'}; }
+  return evidenceImportPackageObject(parsed);
+}
+
+// ══ Historical backfill (spec 10) ════════════════════════════════════════════════════════════
+// One-time, idempotent, and READ-ONLY over every existing store. No existing record is modified,
+// moved or deleted; the journal and ledger are only read. Nothing is inferred or fabricated --
+// a field that did not exist at the time stays null with an explicit reason.
+async function evidenceBackfillFromLocalStorage(){
+  const closed=(typeof alexGAccount!=='undefined'&&alexGAccount&&Array.isArray(alexGAccount.closedPositions))?alexGAccount.closedPositions:[];
+  const journal=(typeof alexGJournalEntries!=='undefined'&&Array.isArray(alexGJournalEntries))?alexGJournalEntries:[];
+  const byTradeId={};
+  closed.forEach(function(p){ if(p&&p.tradeId!=null) byTradeId[String(p.tradeId)]=p; });
+  journal.forEach(function(e){
+    if(!e||e.tradeId==null) return;
+    const k=String(e.tradeId);
+    if(!byTradeId[k]&&e.status==='closed') byTradeId[k]=e;    // journal-only closed records
+  });
+  const ids=Object.keys(byTradeId);
+  let created=0,skipped=0,failed=0;
+  for(const id of ids){
+    try{
+      if(await evidenceHasPackageForTrade(id)){ skipped++; continue; }   // idempotent
+      await evidencePersistTradePackage(byTradeId[id],'HISTORICAL_BACKFILL');
+      created++;
+    }catch(e){
+      if(evidenceClassifyStorageError(e)==='CONSTRAINT'){ skipped++; continue; }
+      evidenceRecordWriteFailure('backfill',e,{tradeId:id});
+      failed++;
+    }
+  }
+  await evidenceCountUnexported();
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  return{examined:ids.length,created,skipped,failed};
+}
+
+// ══ User-visible surfaces -- no failure may be silent (spec 7.3) ══════════════════════════════
+function evidenceBannerHtml(){
+  const parts=[];
+  if(evidenceStorageBanner){
+    const critical=evidenceStorageBanner.severity==='critical';
+    parts.push('<div class="card" style="background:rgba(220,50,50,0.2);border:2px solid var(--red);margin-bottom:12px">'+
+      '<div style="color:var(--red);font-weight:700;font-size:12px">'+(critical?'⚠ EVIDENCE NOT BEING SAVED':'⚠ EVIDENCE WRITE PROBLEM')+'</div>'+
+      '<div style="font-size:11px;color:var(--text2);margin-top:4px">'+escapeHtml(evidenceStorageBanner.message)+'</div>'+
+      '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button class="secondary" onclick="evidenceExportAll(\'MANUAL\')">Export now</button>'+
+      '</div></div>');
+  }
+  if(evidenceUnexportedCount>0){
+    const blocking=evidenceUnexportedCount>EVIDENCE_UNEXPORTED_BLOCKING_THRESHOLD;
+    parts.push('<div class="card" style="background:rgba(220,160,40,0.16);border:2px solid var(--amber,#d8a028);margin-bottom:12px">'+
+      '<div style="font-weight:700;font-size:12px;color:var(--amber,#d8a028)">⚠ '+evidenceUnexportedCount+
+        ' evidence package'+(evidenceUnexportedCount===1?' has':'s have')+' never been exported</div>'+
+      '<div style="font-size:11px;color:var(--text2);margin-top:4px">'+
+        'They exist only in this browser profile. Clearing site data — or losing this device — will destroy them. '+
+        'Only a completed export to disk survives a profile clear.'+
+        (evidenceAttemptedUnverifiedCount>0
+          ? ' <br><strong>'+evidenceAttemptedUnverifiedCount+' download(s) were attempted but are NOT yet confirmed.</strong> '+
+            'A browser cannot tell MOGO whether a download actually reached your disk, so these still count as unexported. '+
+            'To confirm: use <em>Import package…</em> in Diagnostics to re-import the downloaded file — MOGO verifies its hash '+
+            'and content against the stored package, and only then clears this warning.'
+          : '')+
+        (blocking?' <strong style="color:var(--red)">More than '+EVIDENCE_UNEXPORTED_BLOCKING_THRESHOLD+' packages are unexported — export before enabling live paper trading.</strong>':'')+
+        (evidenceUnverifiableCount>0?' <br>'+evidenceUnverifiableCount+' package(s) have no integrity hash (Web Crypto unavailable when they were captured) and cannot be verified.':'')+
+      '</div>'+
+      '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button class="primary" onclick="evidenceExportPending(\'MANUAL\')">Export now</button>'+
+        '<button class="secondary" onclick="evidenceSetAutoExport('+(evidenceAutoExportEnabled?'false':'true')+')">'+
+          (evidenceAutoExportEnabled?'Disable automatic export':'Enable automatic export')+'</button>'+
+      '</div></div>');
+  }
+  return parts.join('');
+}
+function renderEvidenceExportBanner(){
+  if(typeof document==='undefined'||!document.getElementById) return;
+  const el=document.getElementById('evidenceExportBanner');
+  if(!el) return;
+  el.innerHTML=evidenceBannerHtml();
+}
+function evidenceSetAutoExport(on){
+  evidenceAutoExportEnabled=!!on;
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  try{ renderEvidencePlatformDiagnostics(); }catch(e){}
+}
+// Blocking check surfaced when live paper trading is enabled with a large unexported backlog.
+function evidenceUnexportedBlockingWarning(){
+  if(evidenceUnexportedCount<=EVIDENCE_UNEXPORTED_BLOCKING_THRESHOLD) return null;
+  return evidenceUnexportedCount+' evidence packages have never been exported. They exist only in this browser profile and will be lost if site data is cleared. Export them before continuing.';
+}
+function renderEvidencePlatformDiagnostics(){
+  if(typeof document==='undefined'||!document.getElementById) return;
+  const el=document.getElementById('evidencePlatformDiagnosticsCard');
+  if(!el) return;
+  if(typeof developerModeEnabled!=='undefined'&&!developerModeEnabled){ el.innerHTML=''; return; }
+  const hashOk=evidenceHashAvailable();
+  const dbOk=!evidenceDbUnavailableReason;
+  const lastFail=evidenceWriteFailures.length?evidenceWriteFailures[0]:null;
+  el.innerHTML='<div class="card">'+
+    '<div style="font-weight:700;font-size:12px;margin-bottom:6px">Evidence Platform (MOGO-003 Phase 1)</div>'+
+    '<div style="font-size:11px;color:var(--text2);line-height:1.7">'+
+      'Package Schema: <strong>'+escapeHtml(EVIDENCE_PACKAGE_SCHEMA_VERSION)+'</strong><br>'+
+      'Canonicalization: <strong>'+escapeHtml(EVIDENCE_CANON_VERSION)+'</strong><br>'+
+      'Integrity Hash: <strong style="color:'+(hashOk?'var(--green)':'var(--red)')+'">'+
+        (hashOk?'SHA-256 (Web Crypto) AVAILABLE':'UNAVAILABLE — packages are being stored without verification')+'</strong><br>'+
+      'Integrity Claim: <strong>INTEGRITY ONLY — NOT AUTHENTICITY</strong><br>'+
+      'Tier (b) IndexedDB: <strong style="color:'+(dbOk?'var(--green)':'var(--red)')+'">'+
+        (dbOk?'ACTIVE (automatic)':'UNAVAILABLE — '+escapeHtml(String(evidenceDbUnavailableReason)))+'</strong><br>'+
+      'Packages Stored: <strong>'+evidencePackageCount+'</strong><br>'+
+      'Unexported (not yet confirmed on disk): <strong style="color:'+(evidenceUnexportedCount?'var(--red)':'var(--green)')+'">'+evidenceUnexportedCount+'</strong><br>'+
+      'Download attempted, awaiting re-import confirmation: <strong>'+evidenceAttemptedUnverifiedCount+'</strong><br>'+
+      'Unverifiable (no hash): <strong>'+evidenceUnverifiableCount+'</strong><br>'+
+      'Automatic Export: <strong>'+(evidenceAutoExportEnabled?'ENABLED':'DISABLED (operator opt-in)')+'</strong><br>'+
+      'Last Capture: '+escapeHtml(evidenceLastCaptureAt||'(none this session)')+'<br>'+
+      'Write Failures: <strong style="color:'+(evidenceWriteFailures.length?'var(--red)':'var(--green)')+'">'+evidenceWriteFailures.length+'</strong>'+
+      (lastFail?'<br>Last Failure: '+escapeHtml(lastFail.context+' — '+lastFail.kind+' — '+lastFail.message):'')+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--text2);margin-top:8px;line-height:1.6">'+
+      '<strong>A browser download alone does not prove disk persistence.</strong> The download API reports '+
+      'nothing back to the page, so an export records only an ATTEMPT. A package is marked exported '+
+      'only after you re-import the downloaded file and MOGO verifies its identity, SHA-256 hash and '+
+      'exact canonical content against the stored package.<br>'+
+      'Durability: tier (a) localStorage is a working buffer only. Tier (b) IndexedDB is automatic but '+
+      '<strong>does not survive clearing site data, device loss, or disk loss</strong>. Only a completed '+
+      'tier (c) export to disk survives a profile clear, and it survives device or disk loss only if you '+
+      'back the file up elsewhere.<br>'+escapeHtml(EVIDENCE_HASH_CLAIM_TEXT)+
+    '</div>'+
+    '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="secondary" onclick="evidenceRefreshDiagnostics()">Refresh</button>'+
+      '<button class="secondary" onclick="evidenceExportPending(\'MANUAL\')">Export unexported</button>'+
+      '<button class="secondary" onclick="evidenceExportAll(\'MANUAL\')">Export all</button>'+
+      '<button class="secondary" onclick="evidenceRunBackfill()">Backfill history (read-only)</button>'+
+      '<input type="file" id="evidenceImportInput" accept="application/json" style="display:none" onchange="evidenceHandleImportInput(this)">'+
+      '<button class="secondary" onclick="document.getElementById(\'evidenceImportInput\').click()">Import package…</button>'+
+    '</div>'+
+  '</div>';
+}
+function evidenceRefreshDiagnostics(){
+  evidenceCountUnexported().then(function(){
+    try{ renderEvidencePlatformDiagnostics(); }catch(e){}
+    try{ renderEvidenceExportBanner(); }catch(e){}
+  }).catch(function(e){ evidenceRecordWriteFailure('diagnostics-refresh',e); });
+}
+function evidenceRunBackfill(){
+  evidenceBackfillFromLocalStorage().then(function(r){
+    try{ alert('Evidence backfill complete (read-only over existing history).\n\nExamined: '+r.examined+'\nPackages created: '+r.created+'\nAlready present: '+r.skipped+'\nFailed: '+r.failed+'\n\nNo existing record was modified, moved or deleted.'); }catch(e){}
+    evidenceRefreshDiagnostics();
+  }).catch(function(e){ evidenceRecordWriteFailure('backfill',e); });
+}
+function evidenceHandleImportInput(input){
+  const file=input&&input.files&&input.files[0];
+  if(!file) return;
+  evidenceImportFile(file).then(function(r){
+    try{ alert(r.ok?('Import '+r.reason+'.'):('Import rejected: '+r.reason+(r.errors?'\n'+r.errors.join('\n'):''))); }catch(e){}
+    input.value='';
+    evidenceRefreshDiagnostics();
+  }).catch(function(e){ evidenceRecordWriteFailure('import',e); input.value=''; });
+}
+
+// ── Startup + tab-hide export trigger. The visibilitychange listener is new surface; there is no
+// other visibilitychange handler in this application. Auto-export only fires once the operator
+// has explicitly enabled it.
+function evidenceInitPlatform(){
+  evidenceCountUnexported().then(function(){
+    try{ renderEvidenceExportBanner(); }catch(e){}
+    try{ renderEvidencePlatformDiagnostics(); }catch(e){}
+  }).catch(function(){ /* already recorded by evidenceDbReady */ });
+  try{
+    if(typeof document!=='undefined'&&document.addEventListener){
+      document.addEventListener('visibilitychange',function(){
+        if(document.visibilityState!=='hidden') return;
+        if(!evidenceAutoExportEnabled) return;
+        try{ evidenceExportPending('AUTO_DOWNLOAD'); }catch(e){}
+      });
+    }
+  }catch(e){}
+}
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// END MOGO-003 PHASE 1 — EVIDENCE PLATFORM
+// ══════════════════════════════════════════════════════════════════════════════════════════
+
 
 // Read-only preview of what balance/P&L would become if the given tradeIds were restored
 // into paperAccount.closedPositions. Never mutates paperAccount -- only applyPaperReconciliation
@@ -12434,6 +13596,9 @@ function applyDeveloperModeVisibility(){
   const decisionEventWrap=document.getElementById('decisionEventDiagnosticsCardWrap');
   if(decisionEventWrap) decisionEventWrap.style.display=developerModeEnabled?'block':'none';
   renderDecisionEventDiagnostics(); // populates (or clears, if now OFF) immediately on toggle
+  const evidencePlatformWrap=document.getElementById('evidencePlatformDiagnosticsCardWrap'); // v12.8.0
+  if(evidencePlatformWrap) evidencePlatformWrap.style.display=developerModeEnabled?'block':'none';
+  renderEvidencePlatformDiagnostics();
 }
 function generateTestPaperTrade(direction,forceResult){
   if(!developerModeEnabled)return;
@@ -15029,7 +16194,7 @@ function showPanel(name,btn){
   if(name==='ai') renderAiMessages();
   if(name==='backtest') initBacktestPair();
   if(name==='truemtf') initMTFPair();
-  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();renderBaselineRegistryDiagnostics();renderDecisionEventDiagnostics();}
+  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();renderBaselineRegistryDiagnostics();renderDecisionEventDiagnostics();evidenceRefreshDiagnostics();}
   if(name==='rules') renderRules(); // v8.0: refreshes Strategy Center performance stats from current paperAccount data on every visit
   if(name==='academy') renderAcademy();
   // Paper Trading Operational Audit correction: the unified Journal tab had no dispatch
@@ -15201,6 +16366,10 @@ function initAll(){
   loadChartViewsSaved(); // v6.0: restores saved Fit Visible/candle-spacing/overlay preferences, isolated from trading state
   loadChartDrawingsSaved(); // v6.0: restores drawing-tool data model (no interactive UI yet this release), isolated from trading state
   loadAcademyProgressSaved(); // v8.0: restores Training Academy progress, isolated from trading state
+  // v12.8.0 MOGO-003 Phase 1: opens the tier-(b) evidence store, refreshes the unexported count
+  // and installs the tab-hide export trigger. Fully isolated -- if IndexedDB is unavailable the
+  // failure is surfaced loudly and everything else continues unchanged.
+  try{ evidenceInitPlatform(); }catch(e){ try{ evidenceRecordWriteFailure('init',e); }catch(e2){} }
   renderPairList();loadChart();scanAll();startCountdown();
   scanInterval=setInterval(scanAll,60000);
   // v4.2: restore Alex live paper trading -- resumes exit monitoring for any
@@ -15292,13 +16461,12 @@ function saveAlexV2(){
     localStorage.setItem('fxhub_alexv2_shadowlog',JSON.stringify(alexV2ShadowLog));
   }catch(e){}
 }
+// v12.8.1 INC-001: per-key isolation, identical rationale to loadSaved() above.
 function loadAlexV2Saved(){
-  try{
-    const a=localStorage.getItem('fxhub_alexv2_account');if(a) alexV2Account=JSON.parse(a);
-    const j=localStorage.getItem('fxhub_alexv2_journal');if(j) alexV2JournalEntries=JSON.parse(j);
-    const at=localStorage.getItem('fxhub_alexv2_auto');if(at) alexV2AutoTrading=JSON.parse(at);
-    const sl=localStorage.getItem('fxhub_alexv2_shadowlog');if(sl) alexV2ShadowLog=JSON.parse(sl);
-  }catch(e){}
+  loadStoredKey('fxhub_alexv2_account',v=>{alexV2Account=JSON.parse(v);});
+  loadStoredKey('fxhub_alexv2_journal',v=>{alexV2JournalEntries=JSON.parse(v);});
+  loadStoredKey('fxhub_alexv2_auto',v=>{alexV2AutoTrading=JSON.parse(v);});
+  loadStoredKey('fxhub_alexv2_shadowlog',v=>{alexV2ShadowLog=JSON.parse(v);});
 }
 
 // ── PURE ANALYTICAL HELPERS ── (each calls an existing frozen function unmodified)

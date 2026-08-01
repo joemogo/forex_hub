@@ -13,6 +13,205 @@ its change actually affects.
 
 ---
 
+## v12.8.2 — EXP-001: a browser download is an attempt, not a durability proof
+
+**Evidence-integrity correction — no trading behavior change.** Zero protected drift (63 functions,
+4 constants byte-identical).
+
+### The defect, found by literal browser verification
+
+`evidenceExportPackage()` marked a package **successfully exported** whenever `downloadTextFile()`
+returned without throwing. It cannot throw on refusal — the anchor-`click()` idiom **returns
+nothing, has no error handling, and cannot report whether the browser accepted, blocked, cancelled
+or failed the write.**
+
+Chrome silently refused two real downloads while the app reported `ok:true`, set
+`exportVerified: true`, and **cleared the standing unexported-evidence warning — with no file
+anywhere on disk.** That violated the milestone's own rule and made the banner lie, which is worse
+than having no banner. The original fixture missed it because its stub *threw*; the real API never does.
+
+### The correction
+
+| Stage | Recorded | Warning |
+|---|---|---|
+| Download attempted | `exportAttemptedAt`, `exportMechanism`, `exportFilename`, `exportAttemptCount`. **`exportedAt: null`** | ❌ **does not clear** |
+| Operator re-imports the file | all five conditions below | ✅ **clears** |
+
+**All five required:** bytes parse · package validates · **identity matches** (`packageId` and
+`sourceTradeId`) · **SHA-256 verifies** · **exact canonical content byte-identical to the stored
+package**. Only then are `exportedAt`, `exportVerified: true` and
+`exportVerificationMethod: 'REIMPORT_VERIFIED'` recorded.
+
+**MOGO now only claims evidence is on disk when it has actually read it back off disk.**
+
+**No shortcuts:** no File System Access API, and **no operator-confirmation override** — an operator
+saying *"yes, it downloaded"* is not evidence; the bytes are. An `UNVERIFIABLE` hash can never
+confirm an export. The banner and Diagnostics now state plainly that a download alone proves
+nothing, and report attempted-but-unconfirmed downloads separately.
+
+### Verification
+
+**779/779 fixtures across 16 suites, zero drift.** v128 grows 62 → 74: **E1–E12** exercise the real,
+pure `evidenceEvaluateExportReimport()` decision offline across attempted export, cancelled/missing
+download, absent re-import, malformed re-import, identity mismatch, failed SHA-256, unverifiable
+hash, noncanonical content mismatch, valid re-import, warning clearance, absence of any shortcut,
+and that the import path actually routes through the decision.
+
+**X4 was strengthened, not weakened** — it previously asserted ordering around a marking step that
+should not exist; it now asserts the export path can never stamp `exportedAt` under any ordering.
+
+**No browser was opened and no Chrome profile was accessed for this release.**
+
+---
+
+## v12.8.1 — INC-001 Load-Integrity Correction + INC-004 Mandatory Browser-Test Isolation
+
+**Safety release — no trading behavior change.** Zero protected-function/protected-constant drift
+(63 functions, 4 constants byte-identical). No strategy rule, replay logic, analytics, or
+evidence-package behavior changed.
+
+### Why this release exists
+
+On 2026-07-31, developer browser verification issued a browser storage-clearing call **three times**
+against `http://localhost:8744` inside the operator's **active Chrome Profile 2** — the live MOGO
+origin. Real ALEX and JVM paper-trading data was destroyed and recovered from a Time Machine backup.
+
+The origin had been **inferred** from `.claude/launch.json` (port 8743) and assumed isolated. That
+assumption was never verified, and it was wrong. **No MOGO code was involved** — the calls were
+ad-hoc inline scripts at the tool layer. Full account: [INCIDENTS.md → INC-004](INCIDENTS.md).
+
+### The real code defect it exposed — INC-001 load integrity
+
+`loadSaved()`, `loadAlexGSaved()` and `loadAlexV2Saved()` each wrapped **every key in one
+`try/catch`**. A single `JSON.parse` throw on the first key silently abandoned **every remaining
+key**, leaving empty in-memory defaults that the next ordinary `save()` wrote straight over real,
+intact stored data. **The stored bytes were readable the whole time.**
+
+**Fixed in two halves — either alone is insufficient:**
+
+1. **Per-key isolation** — `loadStoredKey()` loads each key independently, so one unreadable key can
+   never suppress the others.
+2. **Refusal to overwrite** — keys **present but unreadable** become unwritable for the session.
+   `persistStorageKey()` enforces this for the unguarded savers; `savePaperAccountGuarded()` and
+   `saveAlexGAccountGuarded()` refuse outright with `reason:'LOAD_INTEGRITY_BLOCKED'`.
+
+A failed read now degrades into *"don't touch it"*, never *"replace it with a default"*. This also
+closes the **missing-version hole**, where an account key with no version key left `0 > 0` false and
+let the staleness guard pass.
+
+An **absent** key is not a failure — the in-memory default is correct there, and a fresh install
+writes normally. Every failure is reported loudly through both engine-error channels, so the operator
+learns their data is being **preserved**, not silently frozen. Return **shapes** are unchanged;
+`LOAD_INTEGRITY_BLOCKED` is additive and no call site compares `reason` by equality.
+
+### Mandatory browser-test isolation
+
+**`scripts/browser_test_profile.sh`** creates a **disposable** Chrome `--user-data-dir` and **fails
+closed** — refusing an inferred origin, a profile root inside the operator's Chrome directory, a
+reused profile directory, or a profile that is not verifiably empty. It records the profile path,
+exact origin, not-the-operator-profile confirmation, and a pre-clear inventory.
+
+**`docs/TESTING.md` Rule 0:** browser testing never attaches to, reuses, inspects, modifies, or
+clears the operator's Chrome profile — with an absolute prohibition on storage clearing, IndexedDB
+deletion, account resets, and session/tab reuse outside a verified disposable profile.
+
+### Verification
+
+**767/767 fixtures across 16 suites, zero drift.** New suite
+`tests/v129_browser_isolation_guard_tests.js` (26 fixtures): **L1–L14** drive the *real* loaders and
+savers through a controllable storage stub — **L4 reproduces the exact original overwrite and
+asserts the stored bytes survive it**; L8/L9 prove both guarded ledgers refuse to commit; L10 proves
+the guard is not a freeze. **G1–G12** statically assert no committed source performs a destructive
+storage call, none targets the operator's Chrome profile directory, and the launcher keeps its
+fail-closed behaviour.
+
+**No browser was opened and no Chrome profile was accessed during this release.** The launcher is
+statically asserted, never executed.
+
+⚠️ **Disclosed limitation:** these guards constrain the *repository* only. They cannot intercept
+ad-hoc inline scripts at the tool layer — which is how INC-004 actually happened. Recorded in
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md) rather than implied away.
+
+---
+
+## v12.8.0 — MOGO-003 Phase 1: Evidence Platform (Durable Capture & Export)
+
+**Infrastructure release — no trading behavior change.** The same market data produces the same
+trades before and after, proven by zero protected-function/protected-constant drift (63 functions
+and 4 constants byte-identical). No strategy rule, entry, exit, stop, target or sizing value changed.
+
+### The defect this closes
+
+`saveAlexGRest()` and `save()` were both `try{…}catch(e){}`. A quota-exceeded write failed and
+**nothing anywhere reported it** — silent evidence loss was the default. Both now classify the
+error, record it to the existing engine-error channel, emit a `DATA_UNAVAILABLE` decision event and
+raise a persistent banner. **Both still never throw**, because `commitAlexGLedger()` /
+`commitPaperLedger()` call them *after* their guarded units already succeeded and depend on that
+best-effort behaviour. `saveAlexGAccountGuarded()` now distinguishes a quota exhaustion from the
+`STALE_VERSION` concurrent-tab conflict, with its `{ok,integrityCompromised,reason}` return **shape
+unchanged**.
+
+### Three storage tiers — and what each one does *not* survive
+
+| Tier | Medium | Automatic? | Site-data clear | Device / disk loss |
+|---|---|---|---|---|
+| (a) | `localStorage` — working buffer only | ✅ | ❌ | ❌ |
+| (b) | **IndexedDB `mogo_evidence`** — evidence store | ✅ **no user action, ever** | ❌ | ❌ |
+| (c) | **Completed file export** | 🟡 after one download grant | ✅ | 🟡 only if backed up off-device |
+
+⚠️ **IndexedDB is not a backup**, and MOGO now says so in the Diagnostics card and the banner
+rather than implying durability it does not have.
+
+### Integrity — and the limits of the claim
+
+Each package carries a **SHA-256** `contentHash` over `mogo.evidence-canon.v1`: object keys sorted
+(order insignificant), **array order significant**, `undefined` → explicit `null`, non-finite numbers
+rejected, UTF-8, and the integrity fields plus the whole `export` block excluded — so marking a
+package exported can never change its hash.
+
+**This detects alteration. It is not authenticity, not identity verification, and not a signature** —
+anyone who can modify a package can recompute its hash. `alexGStableHash` is a 64-bit FNV variant and
+is deliberately **not** used here. When Web Crypto is unavailable (e.g. a `file://` origin), capture
+still proceeds and the package is stored with `contentHash: null` + `UNAVAILABLE`; it **never** falls
+back to a weak digest, and such packages are counted separately and never shown as verified.
+
+### What else Phase 1 delivers
+
+- **Automatic capture** at the approved seam — *after* the `alexGCheckLivePositions` loop, in its own
+  try/catch. `alexGCloseLivePosition` is protected and untouched. Capture cannot prevent, repeat,
+  delay or alter a close, and is idempotent per `tradeId` via a unique store index.
+- **Standing unexported-evidence banner** with a live count, escalating to a blocking confirmation
+  above 50 when live trading is switched on.
+- **Export** with the exact bytes re-hashed before writing. **A failed or cancelled export is never
+  marked successful** — optimistic marking would make the banner lie.
+- **Import** that rejects an altered package outright and never repairs it, rejects a
+  duplicate `packageId` carrying a different hash, and never touches live trading state.
+- **Read-only historical backfill** that adopts existing trades as `MINIMAL` packages without
+  modifying one record or fabricating one value; unstamped trades stay honestly unstamped.
+- **Bounded buffers** on `fxhub_alexg_setups` (1,000) and `fxhub_alexg_zones` (200/pair) — the two
+  genuinely unbounded stores. **The guarded journal/ledger is never capped, evicted, rewritten or
+  bypassed.** No tier-(a) record is evicted until its evidence is committed to tier (b), and
+  tier-(b) packages are never automatically deleted.
+
+### Deliberately excluded
+
+Replay, analytics, strategy optimization, market-context/candle capture (Phase 3), durable decision
+chains (Phase 2), and the **File System Access API** (not implemented, not referenced, not
+capability-detected). Every Phase 1 package therefore honestly reports `PARTIAL` — a package
+claiming `COMPLETE` while lacking market context would be dishonest.
+
+### Verification
+
+**741/741 fixtures across 15 suites, zero drift.** New suite:
+`tests/v128_evidence_platform_tests.js` (62 fixtures).
+
+⚠️ **Disclosed limitation:** the offline JXA harness has neither `crypto.subtle` nor `indexedDB`, so
+the SHA-256 digest itself and the IndexedDB layer are **browser-verified, not fixture-verified** —
+the same documented split already used for `alexGCloseLivePosition`. See
+[TESTING.md](TESTING.md) §1 and [ADR-010](adr/ADR-010-evidence-package-persistence.md).
+
+---
+
 ## v12.7.1 — MOGO-002.8B: ALEX Setup-Level Execution Policy
 
 **Execution Policy**

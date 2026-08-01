@@ -74,6 +74,18 @@ runner (`run_v90_tests.js`, ...) that:
   exactly 2 — updated, not weakened, to assert JVM and ALEX are both present (`reg.length>=2`),
   since the exact count was only ever true before TJR_SLR's own registration and is now,
   correctly, obsolete.
+  **v12.8.0 addition (MOGO-003 Phase 1 — Evidence Platform):**
+  `tests/v128_evidence_platform_tests.js` / `tests/run_v128_evidence_platform_tests.js`,
+  **62 fixtures** across ten groups — canonicalization (`mogo.evidence-canon.v1` rules K1–K8,
+  including that object-key order is insignificant while **array order is significant**, and that
+  the five integrity fields plus the whole `export` block are excluded from the hash);
+  integrity vocabulary and the no-weak-fallback rule; Evidence Package v1 schema validation;
+  write-failure classification and the "nothing may fail silently" guarantees; buffer caps and
+  the eviction-safety rule (including a direct assertion that the ALEX journal/ledger is never
+  capped, evicted or rewritten); export filename sanitization and never-marked-on-failure
+  ordering; import rejection rules; backfill read-only guarantees; the capture seam's
+  non-protected status and non-blocking behaviour; and the store contract. As of v12.8.0 the
+  repository-owned total is **741 fixtures across 15 suites**.
 - **Historical scratch-only suites** — the remaining 22 suites referenced in
   `regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict (476 fixtures) live only in the
   ephemeral Claude Code scratchpad used during development, not in this repository, and are
@@ -211,6 +223,40 @@ that formats output for external use (a copy button, an export) — assert the f
 never contains known credential/sensitive values even when those are deliberately set in the
 test to a realistic-looking value first.
 
+### ⚠️ Disclosed harness limitation — Web Crypto and IndexedDB (v12.8.0)
+
+**The offline JXA runner provides neither `crypto.subtle` nor `indexedDB`, because `osascript`
+genuinely has neither.** The v128 runner deliberately does **not** stub them into false existence.
+Two consequences, stated plainly rather than glossed:
+
+| Layer | Offline-testable? | How it is actually verified |
+|---|---|---|
+| Canonicalization (`mogo.evidence-canon.v1`) | ✅ Fully — pure and synchronous | 7 fixtures |
+| The SHA-256 digest itself | ❌ No `crypto.subtle` in JXA | **Browser-verified against published NIST SHA-256 known-answer vectors** |
+| IndexedDB read/write, sequence allocation | ❌ Async and absent | Browser-verified; the offline suite covers the pure decision logic |
+| Package construction, validation, eviction, backfill, filename sanitization | ✅ Fully | 44 fixtures |
+
+This is the same offline/live split already documented for `alexGCloseLivePosition` and
+`closePaperPosition`. **The async surface is kept deliberately thin so the untestable area stays
+small** — every decision worth testing lives in a pure function that the harness can execute.
+
+Fixture **H5** turns the limitation into a genuine test: because the harness really does lack Web
+Crypto, it exercises the *real* degraded path and asserts that capture still succeeds, the package
+is marked `UNAVAILABLE`, and nothing falls back to a non-cryptographic digest.
+
+**Evidence-platform browser-verification checklist** (required before Phase 1 is declared done):
+
+1. NIST SHA-256 known-answer vectors match `evidenceContentHash`.
+2. A live paper trade close produces a tier-(b) package with **no user action**.
+3. A forced `QuotaExceededError` is visible in Diagnostics within one render cycle.
+4. Export writes a file; its bytes re-hash to `contentHash`; the package is marked only then.
+5. A **cancelled** export leaves the package unmarked and the banner count unchanged.
+6. A hand-edited exported file is **rejected** on import.
+7. Reload → the sequence counter continues; no duplicate `packageId`.
+8. `file://` open → integrity-unavailable banner; capture still succeeds; nothing claims verification.
+9. Backfill run twice changes nothing.
+10. Journal/ledger byte-identical before and after a full session.
+
 ## 2. Live browser verification
 
 For UI changes and for anything the offline harness can't reach (see above), verification is
@@ -237,6 +283,60 @@ screenshot capture step, not the application. When a screenshot at a large viewp
 verify with direct DOM measurement before treating it as a real layout bug.
 
 ## Browser Testing Policy
+
+### ⛔ RULE 0 — MANDATORY PROFILE ISOLATION (v12.8.1, after INC-004)
+
+> **Browser testing NEVER attaches to, reuses, inspects, modifies, or clears the operator's Chrome
+> profile. Ever. Under any circumstance. There is no exception, and no result is worth one.**
+
+This rule exists because on 2026-07-31 developer browser verification executed
+`localStorage.clear()` **three times** against `http://localhost:8744` inside the operator's active
+**Chrome Profile 2**. That was the live MOGO origin. Real ALEX and JVM paper-trading data was
+destroyed and had to be restored from a Time Machine backup. The root cause was an **unverified
+assumption**: the operator's origin was inferred from `.claude/launch.json` (port 8743), port 8744
+was assumed isolated, and that assumption was never checked. See
+[INCIDENTS.md → INC-004](INCIDENTS.md#inc-004--real-alex-and-jvm-paper-trading-data-destroyed-by-developer-browser-testing).
+
+**Mandatory mechanism:** [`scripts/browser_test_profile.sh`](../scripts/browser_test_profile.sh).
+It creates a **disposable** Chrome `--user-data-dir` under a temporary directory and **fails
+closed** — refusing an inferred origin, a profile root inside the operator's Chrome directory, a
+reused profile directory, or a profile that is not verifiably empty.
+
+**Before any storage-touching test, these four facts must be recorded** (the launcher writes them to
+an isolation manifest automatically):
+
+1. the dedicated test-profile path
+2. the exact test origin
+3. positive confirmation that it is **not** the operator's profile
+4. a pre-clear storage inventory
+
+**If isolation cannot be positively verified, the test does not run.** An unrun test is a nuisance;
+an overwritten ledger is an incident.
+
+### ⛔ ABSOLUTELY PROHIBITED — outside a verified disposable profile
+
+- `localStorage.clear()` · `sessionStorage.clear()` · `localStorage.removeItem()` on any `fxhub_*` key
+- `indexedDB.deleteDatabase()`
+- Any account-reset action (`resetPaperAccount`, `resetAlexGLiveAccount`, `clearTestTrades*`)
+- Reusing an existing Chrome window, tab, browsing context, or MOGO session
+- **Inferring the origin from a config file.** The origin must be confirmed with the operator.
+
+**Never take a destructive action without first logging what is about to be destroyed.** The most
+damaging step in INC-004 was a clear with *no* inventory — which is why nobody can say what it removed.
+
+### Enforcement and its limit
+
+`tests/v129_browser_isolation_guard_tests.js` fails the build if any committed source performs a
+destructive storage call, targets the operator's Chrome profile directory, or if the launcher loses
+its fail-closed behaviour.
+
+⚠️ **These guards constrain the repository, not an operator or agent at the keyboard.** INC-004 was
+caused by ad-hoc inline JavaScript typed into a live tab; no repository fixture can intercept that.
+The guards prevent a *committed* regression. The rest of this policy is the actual control — and if
+a hard stop is wanted, remove the browser automation tools from the session's permitted-tool
+configuration. Disclosed in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+### Data-contamination rule (INC-001)
 
 **Permanent rule.** Developer browser testing must never contaminate the user's real
 paper-trading data. This was written after live verification of the v11.0/v11.0.1 paper-ledger

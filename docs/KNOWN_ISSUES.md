@@ -11,6 +11,38 @@ instead — this file is for things that are working exactly as currently design
 **Rule for future releases:** update this file whenever a release closes one of these gaps, or
 opens a new one that should be disclosed here rather than silently shipped.
 
+## Browser-isolation guards cannot intercept ad-hoc tool-layer scripts (INC-004)
+
+**Status:** Accepted limitation, disclosed rather than implied away.
+
+`tests/v129_browser_isolation_guard_tests.js` and
+[`scripts/browser_test_profile.sh`](../scripts/browser_test_profile.sh) enforce the mandatory
+browser-profile isolation introduced after
+[INC-004](INCIDENTS.md#inc-004--real-alex-and-jvm-paper-trading-data-destroyed-by-developer-browser-testing).
+They are effective against a **committed** regression: no source file in this repository can
+perform a destructive browser-storage call, reference the operator's Chrome profile directory, or
+weaken the launcher's fail-closed behaviour without failing the suite.
+
+**What they cannot do:** INC-004 was not caused by anything in this repository. It was caused by
+**ad-hoc inline JavaScript issued at the tool layer** — `localStorage.clear()` typed directly into a
+live browser tab through automation. No repository fixture can observe or veto that. `run_all.sh`
+runs offline JXA suites; it has no visibility into a browser session at all.
+
+**What actually controls this risk:**
+
+1. The Browser Testing Policy's Rule 0 in [TESTING.md](TESTING.md) — procedural, and binding on
+   whoever is performing verification.
+2. Always launching through `scripts/browser_test_profile.sh`, so the only profile ever exposed is
+   disposable and empty.
+3. **The only hard technical stop:** removing the browser automation tools from the session's
+   permitted-tool configuration (`.claude/settings.json`). That file is operator configuration and
+   is deliberately **not** modified by the repository or by any automated change.
+
+This is recorded here because a guard that appears to prevent something it cannot prevent is worse
+than no guard — it converts a known risk into an assumed-safe one.
+
+---
+
 ## Diagnostics: "Paper trading engine (sizing + auto-close)" self-test failing
 
 Discovered during v12.0.0 (Strategy Framework Foundation, Release 1) live verification, this is

@@ -1,8 +1,24 @@
 # Storage Keys
 
-MOGO persists all of its state in the browser's `localStorage`. There is no server-side storage
-and no backend. This document lists every key currently in use, what in-memory variable owns it,
-which function(s) read/write it, and which keys hold sensitive data.
+MOGO persists its state in the browser. There is no server-side storage and no backend.
+
+**As of v12.8.0 (MOGO-003 Phase 1) there are two browser storage media, not one.** Until that
+release this document opened by stating that MOGO persisted *all* of its state in `localStorage`
+— that is no longer true, and the correction is recorded here rather than left implied:
+
+| Tier | Medium | Holds | Survives reload | Survives **clearing site data** | Survives **device / disk loss** |
+|---|---|---|---|---|---|
+| **(a)** | **`localStorage`** — the 31 keys documented below | Live account, open positions, journal, engine/zone/setup state, feature state | ✅ | ❌ | ❌ |
+| **(b)** | **IndexedDB** — database `mogo_evidence` | Evidence Packages, written automatically on every trade close | ✅ | ❌ | ❌ |
+| **(c)** | **A successfully completed file export** | Self-contained, hash-verified Evidence Packages | ✅ | ✅ | 🟡 only if backed up off-device |
+
+⚠️ **IndexedDB is not a backup.** Clearing site data removes `localStorage` and IndexedDB
+*together*. Only a completed tier-(c) export survives that, and even it lives on the same disk as
+the browser profile — off-device backup remains the operator's responsibility. See
+[ADR-010](adr/ADR-010-evidence-package-persistence.md).
+
+This document lists every key currently in use, what in-memory variable owns it, which function(s)
+read/write it, and which keys hold sensitive data.
 
 **General rule:** each key belongs to exactly one owning variable and is written by exactly one
 save path. No two keys are ever merged, and no key is ever silently rebuilt from another key's
@@ -69,6 +85,24 @@ Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-s
 |---|---|
 | `fxhub_diag_test` | Written and immediately removed by the Diagnostics self-test's `localStorage` read/write check. Never holds real data. |
 
+## IndexedDB — `mogo_evidence` (v12.8.0, MOGO-003 Phase 1)
+
+The only non-`localStorage` browser storage MOGO uses. It is **written automatically with no user
+action** on every ALEX trade close, from the approved post-loop seam in `alexGCheckLivePositions`.
+
+| Object store | Key path | Holds | Written by | Deleted by |
+|---|---|---|---|---|
+| `packages` | `packageId` | Evidence Package v1 records. Unique index `bySourceTradeId` structurally enforces one package per trade | `evidencePutPackage()` via `add()` — **never `put()`**, so an existing package can never be silently overwritten | **Nothing. Packages are never automatically deleted.** |
+| `meta` | `key` | Per-strategy, per-UTC-day package sequence counters (`seq\|<strategyId>\|<YYYYMMDD>`) | `evidenceAllocateSequence()` in its own committed `readwrite` transaction | Nothing |
+
+**The one permitted write-back to an existing package** is `evidenceUpdateExportState()`, which
+records the outcome of an export. The content hash deliberately excludes the `export` block, so
+marking a package exported can never invalidate its integrity.
+
+**This store holds no credentials and no trading state.** It is written *from* the ledger and never
+*to* it: nothing in the evidence layer writes `alexGAccount`, `alexGJournalEntries`, `paperAccount`
+or `journalEntries`, and the import path is likewise forbidden from touching them.
+
 ## Rules for adding a new key
 
 1. Every new piece of persisted state gets its **own** key — never merge two concerns into one
@@ -80,3 +114,9 @@ Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-s
    under a clearly marked "sensitive" heading, and disclose the persistence to the user in the UI
    at the point they enter it — do not persist a secret silently.
 4. Update this file in the same release that adds the key.
+5. **If the new state is durable evidence rather than working state, it belongs in IndexedDB, not
+   in a 32nd `localStorage` key.** The ~5 MB `localStorage` quota is shared across every key and
+   both strategies; `localStorage` is a bounded working buffer, not a system of record
+   ([ADR-010](adr/ADR-010-evidence-package-persistence.md)).
+6. **Never describe any browser-resident storage as a backup.** Both media are destroyed together
+   when site data is cleared. Only a completed file export survives that.

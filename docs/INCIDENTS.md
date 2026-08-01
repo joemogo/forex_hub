@@ -11,9 +11,84 @@ could produce incorrect data or behavior for a real user, even if caught before 
 
 ---
 
+## INC-004 — Real ALEX and JVM paper-trading data destroyed by developer browser testing
+
+**Status:** Resolved for the operator (data restored from a Time Machine backup). Controls added in
+v12.8.1. **Cause was the verification process, not MOGO's code.**
+
+### Symptom
+
+After MOGO-003 Phase 1 implementation and browser verification on 2026-07-31, the operator opened
+MOGO at `http://localhost:8744/index.html` and found **all ALEX and JVM paper-trading data absent**.
+Chrome Profile 2 was restored from the pre-implementation Time Machine backup, MOGO was served again
+at the same origin, and **the records reappeared** — proving both that the data had been intact in
+the backup and that `http://localhost:8744` was the live MOGO origin.
+
+### Proven root cause
+
+**Developer browser verification executed `localStorage.clear()` three times against
+`http://localhost:8744` inside the operator's active Chrome Profile 2.**
+
+The calls were ad-hoc inline scripts issued through browser automation
+(`javascript_exec` on a reused tab), not committed code. One of the three — the first statement of
+the export-verification script — **took no pre-clear inventory**, so there is no record of what it
+removed. Chrome Profile 2 was confirmed as the profile used: it contains
+`IndexedDB/http_localhost_8744.indexeddb.leveldb`, created by that session.
+
+**The originating mistake was an unverified assumption.** The operator's origin was inferred from
+`.claude/launch.json` (port **8743**), port **8744** was chosen as "a different origin, therefore
+isolated", and that assumption was never checked. 8744 was the operator's real working origin. Every
+subsequent safety claim rested on that one unchecked inference.
+
+**Aggravating factors:**
+
+- No disposable Chrome profile was used. A pre-existing tab, window, and the operator's live profile
+  were all reused.
+- Synthetic trades were driven through the real `alexGCloseLivePosition()` → `commitAlexGLedger()`,
+  writing real ledger keys — the most dangerous option in the Browser Testing Policy's own preferred
+  order, used without authorization for that instance and without developer-test tagging.
+- An initial forensic audit wrongly exonerated the process, concluding from raw LevelDB byte counts
+  that the data lived under a `file://` origin. That method was invalid — LevelDB SSTable blocks are
+  Snappy-compressed, so a raw byte scan cannot see into them, and it separated none of live records,
+  tombstones, or superseded versions. **Absence in that scan was not evidence of anything.** The
+  conclusion was withdrawn in full.
+
+### What MOGO's code did *not* do
+
+Phase 1 was audited by source inspection and cleared: the evidence-platform layer contains zero
+destructive storage operations, adds no reference to any load path, and its only startup hook
+performs no `localStorage` write. All destructive reset functions are reachable only from explicit
+UI buttons. **No repository file performs a storage-clearing call.**
+
+### Resolution (v12.8.1)
+
+1. **`scripts/browser_test_profile.sh`** — every browser test must launch a **disposable**
+   `--user-data-dir` created fresh under a temporary directory. It **fails closed**: it refuses an
+   inferred origin, a profile root inside the operator's Chrome directory, a reused profile
+   directory, or a profile that is not verifiably empty, and it records the test profile path, the
+   exact origin, the not-the-operator-profile confirmation, and a pre-clear inventory.
+2. **Browser Testing Policy rewritten** ([TESTING.md](TESTING.md)) — mandatory profile isolation and
+   an absolute prohibition on `localStorage`/`sessionStorage` clearing and IndexedDB deletion.
+3. **Repository guards** — `tests/v129_browser_isolation_guard_tests.js` fails the build if any
+   committed source performs a destructive storage call, targets the operator's Chrome profile
+   directory, or if the launcher loses its fail-closed behaviour.
+4. **INC-001 hardened in the same release** (below), so that a comparable event degrades into
+   "refuse to write" rather than "overwrite with defaults".
+
+### Honest limitation
+
+**These controls cannot prevent an agent from repeating this by hand.** The destructive calls were
+inline scripts at the tool layer; no repository fixture can intercept them. The guards prevent a
+committed regression. The remaining control is procedural — and, if a hard stop is wanted, removing
+the browser automation tools from the session's permitted-tool configuration. Disclosed in
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+---
+
 ## INC-001 — Completed paper trades appearing as "JOURNAL ONLY" after a reset
 
-**Status:** Resolved (v11.0 partial fix, v11.0.1 root-cause correction).
+**Status:** Resolved (v11.0 partial fix, v11.0.1 root-cause correction). **Residual load-path
+overwrite gap closed in v12.8.1 — see "v12.8.1 load-integrity correction" at the end of this entry.**
 
 ### Symptom
 
@@ -97,6 +172,41 @@ See [ADR-003](adr/ADR-003-paper-ledger-transaction-model.md) for the full design
   functions changed (`openPaperPosition`/`closePaperPosition`, plus `checkAutoTrades` in v11.0
   only) with the underlying sizing/entry/stop/target/direction/pnl/result math confirmed
   byte-identical in every case.
+
+### v12.8.1 load-integrity correction — the residual overwrite gap
+
+The v11.0.1 work fixed the *commit* path. It did not fix the *load* path, and a real gap survived
+until v12.8.1.
+
+**The gap.** `loadSaved()`, `loadAlexGSaved()` and `loadAlexV2Saved()` each wrapped **every key in
+one `try/catch`**. A single `JSON.parse` throw on the first key silently abandoned **every remaining
+key**, leaving those variables at their in-memory defaults — empty account, empty journal, empty
+arrays. The next ordinary `save()` then wrote those defaults straight over real, intact stored data.
+The stored bytes were readable the whole time; MOGO simply stopped reading them and then overwrote
+them. A related hole: an account key present with **no** version key left `0 > 0` false, so the
+staleness guard passed and a default account could overwrite a real one.
+
+**The fix, in two halves — either alone is insufficient:**
+
+1. **Per-key isolation.** `loadStoredKey()` loads each key independently, so one unreadable key can
+   never suppress the others.
+2. **Refusal to overwrite.** Keys that were **present but unreadable** are recorded in
+   `storageLoadFailures` and become **unwritable for the rest of the session**. `persistStorageKey()`
+   enforces this for the unguarded savers, and both `savePaperAccountGuarded()` and
+   `saveAlexGAccountGuarded()` refuse the commit outright with
+   `reason:'LOAD_INTEGRITY_BLOCKED'`. A failed read now degrades into *"don't touch it"*, never into
+   *"replace it with a default"* — which also closes the missing-version hole.
+
+An absent key is **not** treated as a failure: the in-memory default is genuinely correct there, and
+a fresh install writes normally.
+
+Every load failure is reported loudly through both engine-error channels
+(`STORAGE LOAD FAILURE: … MOGO will NOT overwrite this key …`), so the operator learns their data is
+being *preserved* rather than silently frozen.
+
+**Verification:** 14 new fixtures (`L1`–`L14`) in `tests/v129_browser_isolation_guard_tests.js`,
+driving the **real** loaders and savers through a controllable storage stub — including `L4`, which
+reproduces the exact original overwrite and asserts the stored bytes survive it.
 
 No trading methodology (JVM or ALEX) was touched by either release.
 

@@ -144,3 +144,42 @@ untouched.
   percentages (`academyComputeSchoolProgress`/`academyComputeOverallProgress`) are always
   computed on demand from `completedLessonIds`, never separately cached — the same read-only
   derived-value principle as [ADR-004](adr/ADR-004-read-only-analytics-principle.md).
+
+## Evidence Platform (v12.8.0, MOGO-003 Phase 1)
+
+MOGO now has **two browser storage media, not one**. `localStorage` is a bounded **working buffer**;
+a new IndexedDB database (`mogo_evidence`) is the **automatic evidence store**, written with no user
+action on every ALEX trade close; and a **successfully completed file export** is the only tier
+intended to survive clearing site data. See
+[ADR-010](adr/ADR-010-evidence-package-persistence.md) and [STORAGE_KEYS.md](STORAGE_KEYS.md).
+
+⚠️ **IndexedDB is not a backup.** Clearing site data destroys `localStorage` and IndexedDB together,
+and an exported file still lives on the same disk as the browser profile. The application states
+both limits in the Diagnostics card and the standing banner rather than implying durability it does
+not have.
+
+**The defect this closes.** `saveAlexGRest()` and `save()` were both `try{…}catch(e){}` — a
+quota-exceeded write failed and nothing anywhere reported it, which made *silent* evidence loss the
+default. Both now classify the error, record it to the existing engine-error channel, emit a
+`DATA_UNAVAILABLE` decision event and raise a persistent banner. **Both still never throw**:
+`commitAlexGLedger()`/`commitPaperLedger()` call them *after* their guarded units have already
+succeeded, so their best-effort semantics are load-bearing and are preserved exactly.
+
+**Integrity, scoped honestly.** Each package carries a SHA-256 `contentHash` over a deterministic
+canonical form (`mogo.evidence-canon.v1`) that excludes the integrity fields and the `export` block,
+so marking a package exported can never change its hash. This detects **alteration**. It is not
+authenticity, not identity verification, and not a signature — anyone able to modify a package can
+recompute its hash. `alexGStableHash` is a 64-bit FNV variant and is deliberately not used here.
+
+**The capture seam.** `alexGCloseLivePosition` is protected and untouched. Capture is installed at
+the non-protected caller, **after** the `alexGCheckLivePositions` loop and next to the existing
+save, in its own try/catch — the same seam pattern used by MOGO-002.5 provenance stamping, the v1.1
+entry-day gate and the 002.8B suspension gate. It is fire-and-forget and structurally cannot
+prevent, repeat, delay or alter a close.
+
+**The boundary with the ledger.** The evidence layer reads trading state and never writes it. Buffer
+caps apply only to `fxhub_alexg_setups` (1,000) and `fxhub_alexg_zones` (200 per pair) — the two
+genuinely unbounded stores. **The guarded journal/ledger path is never capped, evicted, rewritten or
+bypassed** ([ADR-003](adr/ADR-003-paper-ledger-transaction-model.md) is reinforced, not relaxed).
+No tier-(a) record is evicted until its evidence is committed to tier (b), and tier-(b) packages are
+never automatically deleted.
