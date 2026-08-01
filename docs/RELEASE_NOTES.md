@@ -13,6 +13,67 @@ its change actually affects.
 
 ---
 
+## v12.8.3 — Market Data Completeness Contract (ADR-011)
+
+**Closes a verified defect: a materially truncated candle history was treated as complete and
+still produced signals and confluence scores.** Zero protected drift (63 functions, 4 constants
+byte-identical) — `detectSignals`, `bestConfluence`, `scoreConfluence` and `findSwingPoints` are
+**not** modified, re-implemented or wrapped.
+
+### What was actually wrong
+
+An initial audit alleged `fetchCandles()` paginated and returned truncated data after HTTP 429.
+**Test-first investigation disproved that** — it issues one request and returns `null` on any
+non-OK status, and `null` is rejected by every guard.
+
+The real risk arrived through a **perfectly successful HTTP 200**. A response carrying fewer
+candles than requested was indistinguishable from a full one, because production validated only a
+minimum usable length (`candles.length < 10`), never the requested lookback. `scanPair()` requested
+220 and scored `conf.total=20` with 1 signal from **80**.
+
+The pagination mechanism does exist — in `fetchCandlesRange()` (replay/backtest consumers), which
+breaks on a later-page HTTP 429 and returned the partial accumulation silently.
+
+### The contract
+
+**One abstraction: `completenessState` ∈ {`COMPLETE`, `PARTIAL`, `UNAVAILABLE`}. Consumers depend
+on that and nothing else.** `httpStatus`, `paginationTerminationReason`, `pagesRequested`,
+`pagesReceived`, `fetchDurationMs` and `retryCount` are diagnostics only.
+
+That rule is load-bearing: **a consumer branching on `httpStatus === 429` would re-create the
+original defect**, because the case that actually reached scoring was `httpStatus === 200`.
+
+**`PARTIAL` means the request was not fully satisfied — never that N candles are missing.**
+Session, weekend, holiday, instrument and liquidity gaps are all legitimate, so there is
+deliberately **no `missingCandles` field**, and a fixture asserts its absence.
+
+**Classification compares the RAW response size against the request**, never the
+post-completeness-filter size — the newest candle is almost always still forming, so comparing
+filtered length would mark essentially every healthy scan `PARTIAL`.
+
+### Implementation
+
+Completeness is attached to the returned array as **non-enumerable** properties, so all 21
+existing call sites are byte-for-byte unaffected. `scanPair()` gates evaluation by passing `null`
+into the protected evaluators when the state is not `COMPLETE` — relying on guards they **already**
+have. Full candles are still recorded for charting and diagnostics; only *evaluation* is gated.
+
+### Accepted trade-off
+
+An instrument whose **genuine** history is shorter than the requested lookback is `PARTIAL` and
+will not be scanned. MOGO cannot distinguish that from a truncated response, and the conservative
+reading was chosen deliberately. The remedy is a per-request lookback the instrument can satisfy —
+not a relaxed contract.
+
+### Verification
+
+**789/789 fixtures across 17 suites, zero drift.** `SAFETY-1` … `SAFETY-4` were written first and
+failed against the previous build. `BEHAVIOUR-2b` was added to prove a healthy scan with one
+still-forming candle stays `COMPLETE` and still evaluates — the fix must not suppress normal
+scanning.
+
+---
+
 ## v12.8.2 — EXP-001: a browser download is an attempt, not a durability proof
 
 **Evidence-integrity correction — no trading behavior change.** Zero protected drift (63 functions,

@@ -11,6 +11,60 @@ instead — this file is for things that are working exactly as currently design
 **Rule for future releases:** update this file whenever a release closes one of these gaps, or
 opens a new one that should be disclosed here rather than silently shipped.
 
+## ~~Incomplete candle history is treated as complete~~ — RESOLVED in v12.8.3
+
+**Status:** ✅ **Resolved** by the Market Data Completeness Contract
+([ADR-011](adr/ADR-011-market-data-completeness-contract.md)). Retained here as the record of a
+verified defect and the reasoning that produced the contract.
+
+`tests/v130_candle_completeness_regression_tests.js` now passes 10/10. `SAFETY-1` … `SAFETY-4`
+were written **first** and failed against the pre-fix build; they are the regression guard and
+**must not be weakened, inverted, skipped or deleted**.
+
+**One accepted trade-off shipped with the fix:** an instrument whose *genuine* history is shorter
+than the requested lookback is classified `PARTIAL` and will not be scanned. MOGO cannot
+distinguish a truncated response from an instrument that simply has less history, and the
+conservative reading was chosen deliberately. The remedy for a legitimately short-history
+instrument is a per-request lookback it can satisfy — **not** a relaxation of the contract.
+
+*The defect as originally found is recorded below.*
+
+**Initial audit hypothesized** that `fetchCandles()` silently paginated and returned truncated
+data after HTTP 429. **Test-first investigation disproved that** for `fetchCandles()`: it issues a
+single request and returns `null` on any non-OK status, and `null` is rejected by every downstream
+guard.
+
+**The mechanism does exist in `fetchCandlesRange()`**, which paginates and `break`s on a
+later-page HTTP 429, returning the partial accumulation with no error signal. Its consumers are
+the replay/backtest paths, so it does not reach `scanPair()` — but it is directly relevant to
+replay trustworthiness.
+
+**The risk on the live scanner path is different in kind.** A *successful* response containing
+materially fewer candles than requested is treated as complete, because production validates only
+a minimum usable length (`candles.length < 10`), never the requested lookback. `scanPair()`
+requests 220 and will score confluence and emit signals from 80.
+
+**Future completeness protections should therefore key on requested-versus-observed history, not
+HTTP error handling alone** — while recording only directly observable facts. Requested-minus-received
+is *not* a count of missing market candles; legitimate session, weekend, holiday and liquidity gaps
+make that subtraction unsound. The observable facts are `requestedCount`, `receivedCount`,
+`pagesRequested`, `pagesReceived`, `paginationTerminationReason`, `httpStatus`, `fetchDurationMs`
+and `retryCount`.
+
+**Measured behaviour** (real functions, network scripted only at the `fetch()` boundary):
+
+| Path | Requested | Result |
+|---|---|---|
+| `fetchCandles()` + HTTP 429 | 220 | `null` — 1 request, no accumulation ✅ safe |
+| `fetchCandles()` + HTTP 200 carrying 80 complete candles | 220 | 80-length array, no completeness metadata |
+| `fetchCandlesRange()`, page 2 HTTP 429 | 220 | 80-length array after 2 pages, HTTP 429 invisible |
+| `scanPair()` with an 80-candle response | 220 | `signals=1`, `conf.total=20`, `pairData` records only `[candles, price, signals, conf]` |
+
+`v130` is deliberately **excluded** from `FIXTURE_COUNTS` in `regression-baseline-tools.py` until
+production satisfies the contract, so its red state is not recorded as an accepted baseline.
+
+---
+
 ## Browser-isolation guards cannot intercept ad-hoc tool-layer scripts (INC-004)
 
 **Status:** Accepted limitation, disclosed rather than implied away.

@@ -103,14 +103,15 @@ FIXTURE_COUNTS = {
     "run_v127_alex_v11_release_tests.js (MOGO-002.8A/002.8B -- ALEX v1.1 release + setup execution policy)": 88,
     "run_v128_evidence_platform_tests.js (MOGO-003 Phase 1 -- Evidence Platform + EXP-001)": 74,
     "run_v129_browser_isolation_guard_tests.js (INC-001 load integrity + INC-004 isolation guards)": 26,
+    "run_v130_candle_completeness_regression_tests.js (ADR-011 market data completeness contract)": 14,
 }
 
 # Repository-owned permanent suites only -- the figure `tests/run_all.sh` actually reproduces.
 # This is DELIBERATELY smaller than sum(FIXTURE_COUNTS.values()), which also includes the 22
 # historical suites that exist only in an ephemeral scratchpad outside this repository (see
 # docs/KNOWN_ISSUES.md). The two numbers must never be conflated in a release report.
-REPOSITORY_OWNED_SUITES = 16
-REPOSITORY_OWNED_FIXTURES = 779
+REPOSITORY_OWNED_SUITES = 17
+REPOSITORY_OWNED_FIXTURES = 793
 
 
 def extract_script_body(html_text):
