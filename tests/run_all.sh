@@ -62,13 +62,41 @@ for runner in "${RUNNERS[@]}"; do
   NP=$(printf '%s\n' "$OUT" | grep -c '^PASS -- ' || true)
   NF=$(printf '%s\n' "$OUT" | grep -c '^FAIL -- ' || true)
 
-  if [ "$EC" -ne 0 ] && [ $((NP + NF)) -eq 0 ]; then
+  # Count self-reported internal errors. Every runner in this repository catches its own
+  # load/parse failures, prints "RUNNER ERROR: ..." and then exits 0 -- so the interpreter's
+  # exit code alone cannot be trusted to reveal a suite that never ran.
+  RE=$(printf '%s\n' "$OUT" | grep -c '^RUNNER ERROR' || true)
+
+  # A suite that produced NO fixture results has not passed -- it has failed to run.
+  #
+  # This condition previously also required a nonzero interpreter exit code, which made it
+  # unreachable in practice: because each runner swallows its own error and exits 0, a suite
+  # that failed to load reported "0 PASS, 0 FAIL" and the overall run still exited 0. If
+  # index.html had ever failed to parse, every suite would have reported RUNNER ERROR, zero
+  # fixtures would have run, and this script would have declared success. Zero fixtures is now
+  # a failure on its own, regardless of exit code.
+  if [ $((NP + NF)) -eq 0 ]; then
     echo "$OUT"
     echo "EXECUTION ERROR (exit code $EC) -- suite produced no fixture results"
     TOTAL_EXEC_ERRORS=$((TOTAL_EXEC_ERRORS + 1))
     OVERALL_EXIT=1
     echo ""
     continue
+  fi
+
+  # A runner can also report an internal error AFTER emitting some fixtures -- e.g. an async
+  # rejection partway through. Those fixtures are real, but the suite is still not trustworthy.
+  if [ "$RE" -gt 0 ]; then
+    printf '%s\n' "$OUT" | grep '^RUNNER ERROR'
+    echo "RUNNER ERROR reported by this suite -- treating as a failure"
+    TOTAL_EXEC_ERRORS=$((TOTAL_EXEC_ERRORS + 1))
+    OVERALL_EXIT=1
+  fi
+
+  # A nonzero interpreter exit is a failure even when fixtures were emitted.
+  if [ "$EC" -ne 0 ]; then
+    echo "NONZERO INTERPRETER EXIT ($EC) -- treating as a failure"
+    OVERALL_EXIT=1
   fi
 
   if [ "$NF" -gt 0 ]; then
