@@ -82,6 +82,19 @@ globalThis.Notification=undefined;
 
 const g={};
 g.appSource=appCode;
+// Brace-depth extraction of a real function's source, so J7/J8/J9 assert against the ACTUAL
+// shipped text of protected and ledger functions rather than a paraphrase of them.
+g.getSource=function(decl){
+  const i=appCode.indexOf(decl);
+  if(i===-1) throw new Error('function not found in index.html: '+decl);
+  let depth=0,started=false;
+  for(let k=i;k<appCode.length;k++){
+    const c=appCode[k];
+    if(c==='{'){ depth++; started=true; }
+    else if(c==='}'){ depth--; if(started&&depth===0) return appCode.slice(i,k+1); }
+  }
+  throw new Error('unterminated function: '+decl);
+};
 const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // ── canonicalization + integrity (real, unmodified) ──
@@ -119,6 +132,14 @@ const wrapped = new Function('g',
   'g.evidenceExportPackage=evidenceExportPackage;' +
   'g.evidencePutPackage=evidencePutPackage;' +
   'g.evidenceUpdateExportState=evidenceUpdateExportState;' +
+  // ── DoD #10: JVM / current_strategy (real, unmodified) ──
+  'g.evidenceNormalizeJvmTrade=evidenceNormalizeJvmTrade;' +
+  'g.evidenceCaptureClosedPaperTrades=evidenceCaptureClosedPaperTrades;' +
+  'g.evidenceCaptureClosedPaperTradesAsync=evidenceCaptureClosedPaperTradesAsync;' +
+  'g.evidencePersistTradePackage=evidencePersistTradePackage;' +
+  'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
+  'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
+  'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
   'g.evidenceEvaluateExportReimport=evidenceEvaluateExportReimport;' +   // EXP-001 (pure)
   'g.evidenceBuildVerifiedExportState=evidenceBuildVerifiedExportState;' +
   'g.countUnexportedLike=evidenceSummarizePackages;' +                   // the REAL counting rule

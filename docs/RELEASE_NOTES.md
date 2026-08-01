@@ -13,6 +13,58 @@ its change actually affects.
 
 ---
 
+## v12.8.4 — MOGO-003 Phase 1 DoD #10: second-strategy evidence capture (JVM)
+
+**Closes the one Phase 1 acceptance criterion that remained unmet.** The platform was required to
+be demonstrated on **ALEX and one other strategy with no schema change** — only ALEX had a capture
+seam. Zero protected drift (63 functions, 4 constants byte-identical); `closePaperPosition`,
+`checkPaperPositions`, `checkAutoTrades` and `openPaperPosition` are all **protected and untouched**.
+
+### The seam
+
+Capture is invoked **only** from `commitPaperLedger()`'s successful-commit path.
+`commitPaperLedger` is not protected, and it is the **durable commit point** — the trade is already
+persisted before capture runs. Every JVM close route reaches it: automatic (`checkPaperPositions`),
+**manual (the Close button, which bypasses `scanAll` entirely)**, and developer-test.
+
+Fire-and-forget, own try/catch, read-only over `closedPositions`. It cannot propagate, cannot mutate
+`paperAccount`/`journalEntries`/balance/`closedPositions`, cannot re-enter the protected close, and
+cannot alter `commitPaperLedger`'s return value — including the `integrityCompromised` branch. **A
+failed or blocked commit returns before the capture call is reached, so a rejected close creates no
+package.**
+
+### Latent defect found and fixed
+
+The builder carried `strategyId: trade.strategy || 'alex_g_sr_v1'`. **A JVM position has no
+`strategy` field at all**, so a JVM trade would have been silently attributed to ALEX — corrupting
+every later per-strategy analysis. The fallback is removed and identity now **fails closed**: an
+unattributable trade throws `EVIDENCE_STRATEGY_ID_REQUIRED` and produces **no package** rather than
+a mislabelled one. The ALEX capture and backfill paths now pass their `strategyId` explicitly, since
+both read `alexGAccount` and therefore *know* the strategy rather than inferring it.
+
+### Normalization, not schema change
+
+**Evidence Package v1 is byte-identical across both strategies** (fixture J4 compares every
+top-level, `identity`, `objects` and `objectCounts` key). A thin adapter maps JVM's genuine field
+names — `id`/`oPair`/`dir`/`lots` — onto the common shape. Without it `sourceTradeId` would be
+`null`, and **because IndexedDB does not index null keys the unique `bySourceTradeId` index would
+not have prevented duplicate capture.**
+
+Fields JVM genuinely lacks (`timeframe`, `setupId`, zone structure, MAE/MFE, balance snapshots) are
+deliberately **not** synthesized — the builder records honest nulls and `completenessReport` stays
+truthful rather than inventing parity ALEX has and JVM does not.
+
+Per-strategy sequence isolation preserved (`seq|current_strategy|…` vs `seq|alex_g_sr_v1|…`).
+`current_strategy` is the identifier already used by the journal normalizer and decision-event bus.
+
+### Verification
+
+**804/804 fixtures across 17 suites, zero drift.** v128 grows 74 → 85; `J1`–`J11` exercise the real
+adapter, real builder and the real `commitPaperLedger` source text. No browser opened, no OANDA
+connection.
+
+---
+
 ## v12.8.3 — Market Data Completeness Contract (ADR-011)
 
 **Closes a verified defect: a materially truncated candle history was treated as complete and

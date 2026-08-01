@@ -520,6 +520,153 @@ function runEvidencePlatformFixtures(g){
     ok(src.indexOf('DUPLICATE_CONFLICTING_HASH')!==-1,'a conflicting duplicate must still be rejected');
   });
 
+  // ══ GROUP 6C — DoD #10: JVM / current_strategy second-strategy demonstration ═══════════
+  // Phase 1 requires the platform be demonstrated on ALEX AND one other strategy with no schema
+  // change. These exercise the REAL normalization adapter, the REAL builder and the REAL
+  // commitPaperLedger seam. Nothing is re-implemented.
+  function jvmClosedPosition(over){
+    // The genuine JVM shape: id/oPair/dir/lots -- NOT tradeId/pair/direction/positionSize, and
+    // no `strategy` field at all. That mismatch is exactly what the adapter exists to bridge.
+    const p={id:1754000000001,pair:'EUR/USD',oPair:'EUR_USD',dir:'buy',
+      entry:1.1000,stop:1.0950,target:1.1100,riskPips:50,rewardPips:100,ratio:2,
+      riskAmount:100,lots:0.2,units:20000,pipValueAtEntry:10,
+      openedAt:'2026-08-01T10:00:00.000Z',source:'auto',
+      exitPrice:1.1100,pnl:200,result:'Win',closeReason:'TARGET_HIT',
+      closedAt:'2026-08-01T12:00:00.000Z'};
+    if(over) Object.keys(over).forEach(function(k){ p[k]=over[k]; });
+    return p;
+  }
+
+  t('J1 a JVM closed position normalizes into exactly one buildable v1 package',function(){
+    const norm=g.evidenceNormalizeJvmTrade(jvmClosedPosition());
+    ok(norm,'the adapter must accept a real JVM closed position');
+    eq(norm.tradeId,'1754000000001','JVM id -> tradeId');
+    eq(norm.pair,'EUR_USD','oPair (OANDA form) preferred over the display form');
+    eq(norm.direction,'buy','dir -> direction');
+    eq(norm.positionSize,0.2,'lots -> positionSize');
+    const pkg=g.evidenceBuildPackageFromTrade(norm,
+      {packageId:'PKG|current_strategy|20260801|1',strategyId:'current_strategy'});
+    ok(g.evidenceValidatePackage(pkg).valid,'the built package must validate: '+
+      g.evidenceValidatePackage(pkg).errors.join('; '));
+    eq(pkg.objectCounts.positions,1);
+    eq(pkg.objectCounts.outcomes,1);
+    return 'one valid v1 package from a real JVM position';
+  });
+
+  t('J2 identity.strategyId is current_strategy and NEVER alex_g_sr_v1',function(){
+    const norm=g.evidenceNormalizeJvmTrade(jvmClosedPosition());
+    const pkg=g.evidenceBuildPackageFromTrade(norm,
+      {packageId:'PKG|current_strategy|20260801|1',strategyId:'current_strategy'});
+    eq(pkg.identity.strategyId,'current_strategy');
+    ok(pkg.identity.strategyId!=='alex_g_sr_v1','a JVM trade must never be attributed to ALEX');
+    eq(g.getJvmStrategyId(),'current_strategy','the committed JVM identifier is used verbatim');
+  });
+
+  t('J2b a missing/invalid strategyId FAILS CLOSED — no silent ALEX default',function(){
+    const bare={tradeId:'X1',pair:'EUR_USD'};            // no strategy field anywhere
+    throws(function(){ g.evidenceBuildPackageFromTrade(bare,{packageId:'PKG|x|1|1'}); },
+      'an unattributable trade must throw, not default to ALEX');
+    // and the removed defect must not reappear anywhere in the shipped layer
+    ok(!/strategyId:\s*trade\.strategy\s*\|\|\s*'alex_g_sr_v1'/.test(LAYER),
+      'the ALEX fallback must not exist in code');
+    return 'fails closed on missing identity';
+  });
+
+  t('J3 ALEX and JVM packages coexist and remain independently retrievable',function(){
+    const alexPkg=builtPackage();                        // strategy alex_g_sr_v1
+    const jvmPkg=g.evidenceBuildPackageFromTrade(g.evidenceNormalizeJvmTrade(jvmClosedPosition()),
+      {packageId:'PKG|current_strategy|20260801|1',strategyId:'current_strategy'});
+    eq(alexPkg.identity.strategyId,'alex_g_sr_v1');
+    eq(jvmPkg.identity.strategyId,'current_strategy');
+    ok(alexPkg.packageId!==jvmPkg.packageId,'distinct package ids');
+    ok(alexPkg.sourceTradeId!==jvmPkg.sourceTradeId,'distinct source trade ids');
+    const summary=g.countUnexportedLike([alexPkg,jvmPkg]);
+    eq(summary.total,2,'both coexist in one store view');
+  });
+
+  t('J4 packageSchemaVersion and structure are IDENTICAL across both strategies',function(){
+    const a=builtPackage();
+    const j=g.evidenceBuildPackageFromTrade(g.evidenceNormalizeJvmTrade(jvmClosedPosition()),
+      {packageId:'PKG|current_strategy|20260801|1',strategyId:'current_strategy'});
+    eq(j.packageSchemaVersion,a.packageSchemaVersion,'same schema version');
+    eq(Object.keys(j).sort().join(','),Object.keys(a).sort().join(','),'same top-level keys');
+    eq(Object.keys(j.objects).sort().join(','),Object.keys(a.objects).sort().join(','),'same objects keys');
+    eq(Object.keys(j.identity).sort().join(','),Object.keys(a.identity).sort().join(','),'same identity keys');
+    eq(Object.keys(j.objectCounts).sort().join(','),Object.keys(a.objectCounts).sort().join(','),'same count keys');
+    return 'schema unchanged — no per-strategy divergence';
+  });
+
+  t('J5 sequence allocation is isolated per strategy',function(){
+    const src=String(g.evidenceAllocateSequence);
+    ok(/'seq\|'\+strategyId\+'\|'\+yyyymmdd/.test(src),
+      'the counter key must be namespaced by strategyId, so JVM cannot consume ALEX sequence numbers');
+    const persist=String(g.evidencePersistTradePackageResolved||g.evidencePersistTradePackage);
+    ok(persist.indexOf('evidenceAllocateSequence(strategyId')!==-1,
+      'allocation must use the resolved strategyId');
+  });
+
+  t('J6 evidence capture cannot alter paperAccount, journal, balance or closedPositions',function(){
+    const src=String(g.evidenceCaptureClosedPaperTrades)+String(g.evidenceCaptureClosedPaperTradesAsync)+
+              String(g.evidenceNormalizeJvmTrade);
+    eq(src.indexOf('journalEntries'),-1,'must never reference the JVM journal');
+    eq(src.indexOf('commitPaperLedger'),-1,'must never re-enter the ledger commit');
+    eq(src.indexOf('closePaperPosition'),-1,'must never re-enter the protected close');
+    ok(!/paperAccount\.(balance|closedPositions|openPositions)\s*=/.test(src),'must never assign account state');
+    ok(!/closedPositions\.(push|splice|unshift|pop|shift)/.test(src),'must never mutate closedPositions');
+    ok(src.indexOf('closedPositions.slice')!==-1,'it reads a COPY of closed positions');
+  });
+
+  t('J7/J8 closePaperPosition and commitPaperLedger return contracts are unchanged',function(){
+    const close=g.getSource('function closePaperPosition');
+    ok(close.indexOf('return{closedPos,committed:true}')!==-1,'success contract intact');
+    ok(close.indexOf('integrityCompromised:!!committed.integrityCompromised')!==-1,'blocked contract intact');
+    eq(close.indexOf('evidenceCapture'),-1,'the PROTECTED close function must contain no evidence code');
+    const commit=g.getSource('function commitPaperLedger');
+    ok(commit.indexOf('return{ok:true,integrityCompromised:false}')!==-1,'success return unchanged');
+    ok(commit.indexOf('return{ok:false,integrityCompromised:true')!==-1,'fatal return unchanged');
+    ok(commit.indexOf('return{ok:false,integrityCompromised:false')!==-1,'ordinary rejection return unchanged');
+    // the capture call must come AFTER save() and BEFORE the success return, and nowhere else
+    ok(commit.indexOf('evidenceCaptureClosedPaperTrades')>commit.indexOf('save();'),
+      'capture must follow the successful save');
+    ok(commit.indexOf('evidenceCaptureClosedPaperTrades')<commit.indexOf('return{ok:true'),
+      'and precede only the success return');
+  });
+
+  t('J9 a failed or blocked commit creates NO package',function(){
+    const commit=g.getSource('function commitPaperLedger');
+    const firstFail=commit.indexOf('return{ok:false');
+    const capture=commit.indexOf('evidenceCaptureClosedPaperTrades');
+    ok(firstFail<capture,'both failure returns exit before the capture call is ever reached');
+    ok(commit.indexOf('return{ok:false,integrityCompromised:true')<capture,'including the fatal branch');
+  });
+
+  t('J10 duplicate capture is impossible — non-null sourceTradeId + unique index',function(){
+    const norm=g.evidenceNormalizeJvmTrade(jvmClosedPosition());
+    ok(norm.tradeId!=null&&norm.tradeId!=='','tradeId must be non-null, or the unique index cannot bind');
+    const pkg=g.evidenceBuildPackageFromTrade(norm,
+      {packageId:'PKG|current_strategy|20260801|1',strategyId:'current_strategy'});
+    eq(pkg.sourceTradeId,'1754000000001','sourceTradeId populated — IndexedDB does not index nulls');
+    ok(String(g.evidenceOpenDb).indexOf("createIndex('bySourceTradeId','sourceTradeId',{unique:true})")!==-1,
+      'the unique index still enforces one package per trade');
+    ok(String(g.evidenceCaptureClosedPaperTradesAsync).indexOf('evidenceHasPackageForTrade')!==-1,
+      'and capture checks before persisting');
+    // a position with no id cannot be captured at all, rather than becoming a null-keyed duplicate
+    eq(g.evidenceNormalizeJvmTrade({oPair:'EUR_USD'}),null,'an id-less position is refused outright');
+  });
+
+  t('J11 a throwing capture cannot propagate into the close path',function(){
+    const commit=g.getSource('function commitPaperLedger');
+    ok(/try\{\s*evidenceCaptureClosedPaperTrades\(\);\s*\}catch\(e\)\{/.test(commit),
+      'the capture call must be individually wrapped');
+    ok(/catch\(e\)\{[^}]*evidenceRecordWriteFailure\('capture-jvm-seam'/.test(commit),
+      'and must record rather than swallow');
+    // real execution: no IndexedDB in this harness, so the async path genuinely fails
+    let threw=false,ret;
+    try{ ret=g.evidenceCaptureClosedPaperTrades(); }catch(e){ threw=true; }
+    no(threw,'the capture call must never throw');
+    eq(ret,undefined,'and must not return a value the ledger path could block on');
+  });
+
   // ══ GROUP 7 — IMPORT AND RECOVERY ═════════════════════════════════════════════════════
   t('I1 a hash mismatch is REJECTED and never repaired',function(){
     const src=String(g.evidenceImportPackageObject);

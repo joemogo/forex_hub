@@ -101,7 +101,7 @@ FIXTURE_COUNTS = {
     "run_v123_tests.js (TJR_SLR Phase 1 -- Session and Zone Engine)": 48,
     "run_v1231_tests.js (Strategy Workspace Framework + dedicated TJR workspace)": 31,
     "run_v127_alex_v11_release_tests.js (MOGO-002.8A/002.8B -- ALEX v1.1 release + setup execution policy)": 88,
-    "run_v128_evidence_platform_tests.js (MOGO-003 Phase 1 -- Evidence Platform + EXP-001)": 74,
+    "run_v128_evidence_platform_tests.js (MOGO-003 Phase 1 -- Evidence Platform + EXP-001 + DoD #10)": 85,
     "run_v129_browser_isolation_guard_tests.js (INC-001 load integrity + INC-004 isolation guards)": 26,
     "run_v130_candle_completeness_regression_tests.js (ADR-011 market data completeness contract)": 14,
 }
@@ -111,7 +111,7 @@ FIXTURE_COUNTS = {
 # historical suites that exist only in an ephemeral scratchpad outside this repository (see
 # docs/KNOWN_ISSUES.md). The two numbers must never be conflated in a release report.
 REPOSITORY_OWNED_SUITES = 17
-REPOSITORY_OWNED_FIXTURES = 793
+REPOSITORY_OWNED_FIXTURES = 804
 
 
 def extract_script_body(html_text):
