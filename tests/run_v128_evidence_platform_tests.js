@@ -133,6 +133,13 @@ const wrapped = new Function('g',
   'g.evidencePutPackage=evidencePutPackage;' +
   'g.evidenceUpdateExportState=evidenceUpdateExportState;' +
   // ── DoD #10: JVM / current_strategy (real, unmodified) ──
+  // ── v12.9.0 replay run identity + capture (real, unmodified) ──
+  'g.evidenceNormalizeReplayTrade=evidenceNormalizeReplayTrade;' +
+  'g.evidenceCaptureReplayTrades=evidenceCaptureReplayTrades;' +
+  'g.evidenceCaptureReplayTradesAsync=evidenceCaptureReplayTradesAsync;' +
+  'g.evidenceReplayDatasetHash=evidenceReplayDatasetHash;' +
+  'g.alexGBuildReplayRunIdentity=alexGBuildReplayRunIdentity;' +
+  'g.evidenceComputeCompleteness=evidenceComputeCompleteness;' +
   'g.evidenceNormalizeJvmTrade=evidenceNormalizeJvmTrade;' +
   'g.evidenceCaptureClosedPaperTrades=evidenceCaptureClosedPaperTrades;' +
   'g.evidenceCaptureClosedPaperTradesAsync=evidenceCaptureClosedPaperTradesAsync;' +

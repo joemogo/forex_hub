@@ -667,6 +667,152 @@ function runEvidencePlatformFixtures(g){
     eq(ret,undefined,'and must not return a value the ledger path could block on');
   });
 
+  // ══ GROUP 6D — REPLAY run identity + evidence capture (v12.9.0) ════════════════════════
+  // Replay is the only route to a statistically meaningful sample. These exercise the REAL
+  // normalizer, the REAL builder and the REAL source of runAlexGReplay/runAlexGReplayUI.
+  function replayTrade(over){
+    const t={tradeId:'AGT|REPLAY|1', setupId:'AGS|EUR_USD|H1|z1|B_breakRetest|r1',
+      strategy:'alex_g_sr_v1', ruleVersion:'alex_g_sr_v1', createdByEngineVersion:'12.9.0',
+      pair:'EUR_USD', timeframe:'H1', setupType:'B_breakRetest', setupLabel:'BREAK & RETEST',
+      direction:'buy', entry:1.1000, stop:1.0950, target:1.1100, plannedRR:2,
+      riskPercent:1, riskAmount:100, pipValue:10, positionSize:0.2,
+      balanceBefore:10000, balanceAfter:10200,
+      entryTimestamp:Date.UTC(2026,4,1,10,0), exitTimestamp:Date.UTC(2026,4,1,16,0),
+      qualificationTimestamp:Date.UTC(2026,4,1,9,0),
+      exitPrice:1.1100, result:'Win', resultR:2,
+      maePips:5, mfePips:100, maeR:-0.1, mfeR:2,
+      ambiguous:false, ambiguousMode:'conservative', stillOpen:false,
+      zoneId:'AGZ|z1', zoneLow:1.094, zoneHigh:1.096, zoneCenter:1.095, atrAtEntry:0.0012,
+      configurationSnapshot:{ruleVersion:'alex_g_sr_v1'}};
+    if(over) Object.keys(over).forEach(function(k){ t[k]=over[k]; });
+    return t;
+  }
+  const RUN={runId:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+    datasetHash:'0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f',
+    strategyId:'alex_g_sr_v1',
+    range:{requestedDays:90,fromUTC:'2026-02-01T00:00:00.000Z',toUTC:'2026-05-01T00:00:00.000Z'}};
+
+  t('R1 a resolved replay trade normalizes onto the common shape',function(){
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    ok(n,'the adapter must accept a real replay trade');
+    eq(n.direction,'buy'); eq(n.entry,1.1000); eq(n.result,'Win'); eq(n.resultR,2);
+    eq(n.balanceAtEntry,10000,'balanceBefore -> balanceAtEntry');
+    eq(n.openedAt,'2026-05-01T10:00:00.000Z','entryTimestamp -> ISO openedAt');
+    eq(n.closedAt,'2026-05-01T16:00:00.000Z','exitTimestamp -> ISO closedAt');
+    ok(!Object.prototype.hasOwnProperty.call(n,'pnl'),
+      'pnl must NOT be reconstructed by subtracting balances — arithmetic on stored values is not an observation');
+  });
+
+  t('R2 sourceTradeId is namespaced so live and replay observations cannot collide',function(){
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    ok(n.tradeId.indexOf('REPLAY|')===0,'replay ids must be namespaced');
+    ok(n.tradeId.indexOf(String(RUN.runId).slice(0,12))!==-1,'namespaced by runId');
+    ok(n.tradeId!=='AGT|REPLAY|1','and must differ from the raw live-style id');
+    eq(n.replaySourceTradeId,'AGT|REPLAY|1','the original id is preserved, not discarded');
+  });
+
+  t('R3 an UNRESOLVED replay trade produces no package',function(){
+    eq(g.evidenceNormalizeReplayTrade(replayTrade({stillOpen:true}),RUN),null,'still-open is not an observation');
+    eq(g.evidenceNormalizeReplayTrade(replayTrade({result:null}),RUN),null,'no result is not an observation');
+    eq(g.evidenceNormalizeReplayTrade(replayTrade(),null),null,'no run identity -> no capture');
+    eq(g.evidenceNormalizeReplayTrade(null,RUN),null);
+  });
+
+  t('R4 a replay package carries mode REPLAY, the runId and the dataset hash',function(){
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    const pkg=g.evidenceBuildPackageFromTrade(n,{packageId:'PKG|alex_g_sr_v1|20260501|1',
+      strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN',
+      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range});
+    eq(pkg.identity.mode,'REPLAY');
+    eq(pkg.identity.runId,RUN.runId);
+    eq(pkg.identity.datasetHash,RUN.datasetHash);
+    eq(pkg.identity.replayDateRange.fromUTC,'2026-02-01T00:00:00.000Z','ABSOLUTE range, not "N days back from now"');
+    eq(pkg.identity.replayDateRange.toUTC,'2026-05-01T00:00:00.000Z');
+    ok(g.evidenceValidatePackage(pkg).valid,'must validate: '+g.evidenceValidatePackage(pkg).errors.join('; '));
+  });
+
+  t('R5 schema is UNCHANGED — identical key sets across LIVE_PAPER and REPLAY',function(){
+    const live=builtPackage();
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    const rep=g.evidenceBuildPackageFromTrade(n,{packageId:'PKG|alex_g_sr_v1|20260501|1',
+      strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN',
+      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range});
+    eq(rep.packageSchemaVersion,live.packageSchemaVersion,'same schema version');
+    eq(Object.keys(rep).sort().join(','),Object.keys(live).sort().join(','),'same top-level keys');
+    eq(Object.keys(rep.identity).sort().join(','),Object.keys(live.identity).sort().join(','),
+      'identity key sets must match — the additive keys are always present, null for live');
+    eq(live.identity.mode,'LIVE_PAPER'); eq(live.identity.runId,null);
+    eq(live.identity.datasetHash,null); eq(live.identity.replayDateRange,null);
+  });
+
+  t('R6 replay completeness honestly flags money-space non-determinism',function(){
+    const c=g.evidenceComputeCompleteness('REPLAY_RUN');
+    eq(c.level,'PARTIAL','a replay package must never claim COMPLETE');
+    ok(c.missing.some(function(m){ return /money-space/.test(m.field)&&m.reason==='DERIVED'; }),
+      'money-space values must be flagged DERIVED with a LIVE_DATA_DEPENDENCY note');
+    ok(c.missing.some(function(m){ return m.field==='outcomes[].pnl'&&m.reason==='UNAVAILABLE'; }),
+      'pnl must be recorded as UNAVAILABLE rather than reconstructed');
+    ok(JSON.stringify(c).indexOf('LIVE_DATA_DEPENDENCY')!==-1,'architecture 7.1 flag present');
+  });
+
+  t('R7 the run identity is DETERMINISTIC and content-derived',function(){
+    const src=String(g.alexGBuildReplayRunIdentity);
+    ok(/runId=await evidenceContentHash/.test(src),'runId must be a content hash, not a random id');
+    ['strategyId','pair','fromUTC','toUTC','datasetHash','configHash','paramsHash'].forEach(function(k){
+      ok(src.indexOf(k)!==-1,'runId must incorporate '+k);
+    });
+    eq(src.indexOf('Math.random'),-1,'never random');
+    eq(src.indexOf('Date.now()'),-1,'never wall-clock — that would break reproducibility');
+  });
+
+  t('R8 the dataset hash covers EVERY candle, not a fingerprint',function(){
+    const src=String(g.evidenceReplayDatasetHash);
+    ok(/for\(let i=0;i<arr\.length;i\+\+\)/.test(src),'every candle must be walked');
+    ok(/c\.o\+','\+c\.h\+','\+c\.l\+','\+c\.c/.test(src),'OHLC must all contribute');
+    ok(src.indexOf('evidenceContentHash')!==-1,'hashed with SHA-256');
+    ok(/'W','D','H4','H1'/.test(src),'all four timeframes covered');
+  });
+
+  t('R9 the capture seam is in a NON-protected function and cannot alter replay output',function(){
+    const protectedList=g.getBaselineAlexFunctions();
+    ['alexGRunSetupReplay','alexGConstructTrade','alexGWalkOutcome','alexGComputeReplayStats']
+      .forEach(function(f){ ok(protectedList.indexOf(f)!==-1,f+' must be PROTECTED'); });
+    eq(protectedList.indexOf('runAlexGReplay'),-1,'the identity seam is not protected');
+    eq(protectedList.indexOf('runAlexGReplayUI'),-1,'the capture seam is not protected');
+    const ui=g.getSource('async function runAlexGReplayUI()');
+    ok(/try\{ evidenceCaptureReplayTrades\(result\.runIdentity,result\.trades\); \}catch/.test(ui),
+      'capture must be individually wrapped');
+    ok(ui.indexOf('evidenceCaptureReplayTrades')>ui.indexOf('alexGReplayStats=result.stats'),
+      'capture must run AFTER the replay results are assigned');
+    const cap=String(g.evidenceCaptureReplayTrades)+String(g.evidenceCaptureReplayTradesAsync)+
+              String(g.evidenceNormalizeReplayTrade);
+    ['alexGRunSetupReplay','alexGComputeReplayStats','commitPaperLedger','commitAlexGLedger',
+     'paperAccount','alexGAccount','journalEntries'].forEach(function(f){
+      eq(cap.indexOf(f),-1,'capture must never reference '+f);
+    });
+  });
+
+  t('R10 re-running an identical replay is idempotent, not duplicating evidence',function(){
+    ok(String(g.evidenceCaptureReplayTradesAsync).indexOf('evidenceHasPackageForTrade')!==-1,
+      'already-captured trades must be skipped');
+    ok(String(g.evidenceCaptureReplayTradesAsync).indexOf("==='CONSTRAINT'")!==-1,
+      'a store-level duplicate must be treated as already-captured, not as a failure');
+    // deterministic runId + namespaced id => identical inputs produce identical sourceTradeIds
+    const a=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    const b=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    eq(a.tradeId,b.tradeId,'same run + same trade => same sourceTradeId => unique index blocks a duplicate');
+  });
+
+  t('R11 an identity failure degrades the run, it does not break it',function(){
+    const src=g.getSource('async function runAlexGReplay(');
+    ok(/catch\(e\)\{[\s\S]{0,160}evidenceRecordWriteFailure\('replay-run-identity'/.test(src),
+      'identity failure must be recorded');
+    ok(src.indexOf('let runIdentity=null')!==-1,'and must default to null rather than throwing');
+    ok(src.indexOf('trades,rejected,stats')!==-1,'the run still returns its trades');
+    ok(src.indexOf('alexGBuildReplayRunIdentity')>src.indexOf('alexGRunSetupReplay'),
+      'identity is computed AFTER the protected engine, so it cannot influence results');
+  });
+
   // ══ GROUP 7 — IMPORT AND RECOVERY ═════════════════════════════════════════════════════
   t('I1 a hash mismatch is REJECTED and never repaired',function(){
     const src=String(g.evidenceImportPackageObject);

@@ -13,6 +13,69 @@ its change actually affects.
 
 ---
 
+## v12.9.0 — Replay run identity & evidence capture
+
+**Turns replay from a disposable in-memory preview into citable evidence.** Zero protected drift
+(63 functions, 4 constants byte-identical) — `alexGRunSetupReplay`, `alexGConstructTrade`,
+`alexGWalkOutcome` and `alexGComputeReplayStats` are **protected and untouched**. No replay math or
+strategy rule changed.
+
+### Why
+
+Replay is the only route to a statistically meaningful sample — live paper trading yields roughly
+one ALEX setup per pair per week, and the entire real dataset is **two July Break & Retest losses**.
+But replay trades lived in one in-memory array, were **never persisted** (zero replay storage keys),
+carried **no run identity**, and vanished on reload. Even with data, results were uncitable,
+unreproducible, and unattributable to a configuration.
+
+### Run identity
+
+`alexGBuildReplayRunIdentity()` records an **absolute observed UTC range** taken from the real
+candles — never *"N days back from now"* (architecture gap R5) — per-timeframe candle counts, each
+dataset's ADR-011 `completenessState`, a SHA-256 `configHash`, a `paramsHash`, and a **`datasetHash`
+computed over every candle's OHLC across all four timeframes**. Deliberately not a
+count/first/last fingerprint, which would miss a broker revising a candle mid-range.
+
+`runId` is a SHA-256 over strategyId + pair + range + datasetHash + configHash + paramsHash — so it
+is **deterministic**. Identical inputs always yield the same id, which is what makes two runs
+comparable and re-capture idempotent. No `Math.random`, no wall clock.
+
+### Capture
+
+The seam sits in `runAlexGReplayUI` (**not protected**), after results are assigned, fire-and-forget
+in its own try/catch, reading trades only. Identity is computed in `runAlexGReplay` (**not
+protected**) *after* the protected engine returns, so it cannot influence results. If identity
+fails, the run still returns its trades and the failure is recorded rather than hidden.
+
+### Schema preserved
+
+`mogo.evidence-package.v1` unchanged. `identity.mode` and `identity.runId` already existed but were
+hardcoded; `identity.datasetHash` and `identity.replayDateRange` are **additive and always present**
+(null for live), so every package keeps an identical key set across strategy and mode — fixture
+**R5** asserts exactly that.
+
+### Honesty
+
+Replay packages report **`PARTIAL`**, never `COMPLETE`. **`pnl` is recorded `UNAVAILABLE` rather
+than reconstructed** by subtracting balances — arithmetic on two stored values is a derivation, not
+an observation. Money-space values are flagged `DERIVED` with `LIVE_DATA_DEPENDENCY`, because
+`pipValuePerLot()` reads live `pairData`; **R-space is the reproducible comparison surface, money-space
+is not** (architecture §7.1). An unresolved (`stillOpen`) trade produces **no package**.
+
+Replay `sourceTradeId` is namespaced `REPLAY|<runId12>|<tradeId>`, so the same setup observed both
+live and in replay cannot collide on the unique index — they are genuinely different observations.
+
+### Verification
+
+**815/815 fixtures across 17 suites, zero drift.** v128 grows 85 → 96; `R1`–`R11` exercise the real
+normalizer, builder, and the real source of `runAlexGReplay`/`runAlexGReplayUI`.
+
+⚠️ **Not yet exercised against real data.** Replay requires an OANDA connection, which is not
+authorized. This release makes replay output trustworthy so the **first** authorized run produces
+citable evidence rather than a throwaway.
+
+---
+
 ## v12.8.4 — MOGO-003 Phase 1 DoD #10: second-strategy evidence capture (JVM)
 
 **Closes the one Phase 1 acceptance criterion that remained unmet.** The platform was required to

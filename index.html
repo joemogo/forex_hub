@@ -1952,9 +1952,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.8.4';
-const APP_VERSION_DATE='31 Jul 2026';
+const APP_VERSION='12.9.0';
+const APP_VERSION_DATE='2 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.9.0 — REPLAY RUN IDENTITY &amp; EVIDENCE CAPTURE. Turns replay from a disposable in-memory preview into citable evidence. ZERO protected-function/protected-constant drift (63 functions, 4 constants byte-identical) -- alexGRunSetupReplay, alexGConstructTrade, alexGWalkOutcome and alexGComputeReplayStats are PROTECTED and completely untouched, and no replay math, strategy rule, entry, exit, stop, target or sizing value changed. THE PROBLEM: replay is the only route to a statistically meaningful sample -- live paper trading yields roughly one ALEX setup per pair per week, and the entire real dataset is two July Break &amp; Retest losses. But replay trades lived in one in-memory array (alexGReplayTrades), were never persisted (zero replay localStorage keys), carried no run identity, and vanished on reload. Even with data, results were uncitable, unreproducible and unattributable to a configuration. RUN IDENTITY: alexGBuildReplayRunIdentity() records an ABSOLUTE observed UTC range (fromUTC/toUTC taken from the real candles, never \'N days back from now\' -- architecture gap R5), per-timeframe observed candle counts, each dataset\'s ADR-011 completenessState, a SHA-256 configHash, a paramsHash, and a SHA-256 datasetHash computed over EVERY candle\'s OHLC in all four timeframes -- deliberately not a count/first/last fingerprint, which would not detect a broker revising a candle in the middle of the range (architecture section 5). runId is itself a SHA-256 over strategyId + pair + range + datasetHash + configHash + paramsHash, so it is DETERMINISTIC: identical inputs always produce the same id, which is what makes two runs comparable and makes re-capture idempotent. No Math.random, no wall clock. CAPTURE: the seam sits in runAlexGReplayUI (NOT protected), after the replay results are already assigned, fire-and-forget in its own try/catch, reading the trades only -- it cannot alter replay output, stats, rendering, any ledger or any account. Identity is computed in runAlexGReplay (NOT protected) AFTER the protected engine returns, so it cannot influence results; if it fails the run still returns its trades and the failure is recorded rather than hidden. SCHEMA PRESERVED: packageSchemaVersion stays mogo.evidence-package.v1. identity.mode and identity.runId already existed but were hardcoded LIVE_PAPER/null; identity.datasetHash and identity.replayDateRange are ADDITIVE and ALWAYS PRESENT (null for live), so every package keeps an identical key set across strategy and mode -- fixture R5 asserts that directly. HONESTY: replay packages report PARTIAL, never COMPLETE. pnl is recorded UNAVAILABLE rather than reconstructed by subtracting balanceBefore from balanceAfter -- arithmetic on two stored values is a derivation, not an observation. Money-space values are flagged DERIVED with LIVE_DATA_DEPENDENCY, because pipValuePerLot() reads live pairData, so R-space (plannedRR, resultR, maeR, mfeR) is the reproducible comparison surface and money-space is not (architecture 7.1). An unresolved (stillOpen) or result-less trade produces NO package. COLLISION SAFETY: replay sourceTradeId is namespaced REPLAY|runId12|tradeId, so the same setup observed both live and in replay cannot collide on the unique bySourceTradeId index -- they are genuinely different observations. TESTING: v128 grows 85 -> 96. R1-R11 exercise the real normalizer, builder and the real source of runAlexGReplay/runAlexGReplayUI: normalization, id namespacing, unresolved-trade rejection, mode/runId/datasetHash population, identical key sets vs LIVE_PAPER, money-space honesty, deterministic content-derived runId, full-candle dataset hashing, non-protected seam placement and isolation, idempotent re-run, and graceful identity degradation. Full regression: 815/815 across 17 suites, zero drift. NOT YET EXERCISED AGAINST REAL DATA: replay requires an OANDA connection, which is not authorized -- this release makes replay output trustworthy so the FIRST authorized run produces citable evidence rather than a throwaway.',
   '12.8.4 — MOGO-003 PHASE 1 DoD #10: SECOND-STRATEGY EVIDENCE CAPTURE (JVM / current_strategy). Closes the one Phase 1 acceptance criterion that remained unmet -- the platform was required to be demonstrated on ALEX AND one other strategy with no schema change, but only ALEX had a capture seam. ZERO protected-function/protected-constant drift (63 functions, 4 constants byte-identical): closePaperPosition, checkPaperPositions, checkAutoTrades and openPaperPosition are all PROTECTED and completely untouched. THE SEAM: capture is invoked ONLY from commitPaperLedger()\'s successful-commit path -- commitPaperLedger is NOT a protected function, and it is the durable commit point, so the trade is already persisted before capture runs. Every JVM close route reaches it: automatic (checkPaperPositions), manual (the Close button, which bypasses scanAll entirely) and developer-test. The call is fire-and-forget in its own try/catch, read-only over closedPositions; it cannot propagate, cannot mutate paperAccount/journalEntries/balance/closedPositions, cannot re-enter the protected close, and cannot alter commitPaperLedger\'s return value, which is emitted exactly as before including the integrityCompromised branch. A failed or blocked commit returns before the capture call is ever reached, so a rejected close creates NO package. LATENT DEFECT FOUND AND FIXED: the package builder carried strategyId:trade.strategy||\'alex_g_sr_v1\'. A JVM position has NO strategy field at all, so a JVM trade would have been silently attributed to ALEX -- corrupting every later per-strategy analysis. The fallback is REMOVED and identity now FAILS CLOSED: an unattributable trade throws EVIDENCE_STRATEGY_ID_REQUIRED and produces no package rather than a mislabelled one. The ALEX capture and backfill paths now pass their strategyId explicitly, since both read alexGAccount and therefore KNOW the strategy rather than inferring it from a field a legacy record may lack. NORMALIZATION, NOT SCHEMA CHANGE: Evidence Package v1 is byte-identical across both strategies (asserted by fixture J4 comparing every top-level, identity, objects and objectCounts key). A thin adapter maps the genuine JVM field names -- id/oPair/dir/lots -- onto the common shape; ALEX uses tradeId/pair/direction/positionSize. Without it sourceTradeId would have been null, and because IndexedDB does not index null keys the unique bySourceTradeId index would NOT have prevented duplicate capture. Fields JVM genuinely lacks (timeframe, setupId, zone structure, MAE/MFE, balance snapshots) are deliberately NOT synthesized -- the builder records honest nulls and completenessReport stays truthful rather than inventing parity ALEX has and JVM does not. Per-strategy sequence isolation is preserved (seq|current_strategy|... vs seq|alex_g_sr_v1|...). Identifier current_strategy is the one already used by the journal normalizer and the decision-event bus, used verbatim. TESTING: v128 grows 74 -> 85 fixtures. J1-J11 exercise the real adapter, real builder and real commitPaperLedger source: one package per JVM close, strategyId never alex_g_sr_v1, fail-closed on missing identity, ALEX/JVM coexistence, identical schema, sequence isolation, no ledger mutation, unchanged close/commit return contracts, no package on a blocked commit, duplicate impossibility, and non-propagating capture failure. Full regression: 804/804 across 17 suites, zero drift. NO BROWSER OPENED and no OANDA connection for this release.',
   '12.8.3 — MARKET DATA COMPLETENESS CONTRACT (ADR-011). Closes a verified defect in which a materially truncated candle history was treated as complete and still produced signals and confluence scores. ZERO protected-function/protected-constant drift (63 functions, 4 constants byte-identical) -- detectSignals, bestConfluence, scoreConfluence and findSwingPoints are NOT modified, re-implemented or wrapped. THE DEFECT, established test-first: an initial audit alleged fetchCandles() paginated and returned truncated data after HTTP 429. That was DISPROVEN -- fetchCandles() issues one request and returns null on any non-OK status, and null is rejected by every downstream guard. The real risk arrived through a perfectly successful HTTP 200: a response carrying fewer candles than requested was indistinguishable from a full one, because production validated only a minimum usable length (candles.length<10), never the requested lookback. scanPair() requested 220 and scored confluence 20 with 1 signal from 80. The pagination mechanism DOES exist, but in fetchCandlesRange() (replay/backtest consumers), which breaks on a later-page HTTP 429 and returned the partial accumulation silently. THE CONTRACT: one abstraction, completenessState in {COMPLETE, PARTIAL, UNAVAILABLE}. Consumers depend on that value and NOTHING else -- httpStatus, paginationTerminationReason, pagesRequested/pagesReceived, fetchDurationMs and retryCount are recorded as diagnostics for forensics and operator display, and no consumer may make an evaluation decision from them. That rule is load-bearing: a consumer branching on httpStatus===429 would re-create the original defect, because the case that actually reached scoring was httpStatus===200. PARTIAL means the REQUEST was not fully satisfied; it NEVER means N candles are missing. Session, weekend, holiday, instrument and liquidity gaps are all legitimate, so there is deliberately NO missingCandles field and none may be added -- a fixture asserts its absence. Classification compares the RAW response size against the requested count, never the post-completeness-filter size: the newest candle is almost always still forming, so comparing filtered length would classify essentially every healthy scan as PARTIAL (the identical trap fetchCandlesRange already documents). IMPLEMENTATION: completeness is attached to the returned array as NON-ENUMERABLE properties, so all 21 existing call sites are byte-for-byte unaffected -- iteration, .length, JSON.stringify and for...in behave exactly as before. scanPair() gates evaluation by passing null into the protected evaluators when the state is not COMPLETE, relying on the guards those functions ALREADY have. Full candles are still recorded in pairData for charting and diagnostics; only EVALUATION is gated, and evaluationSuppressed records when that happened. ACCEPTED TRADE-OFF: an instrument whose genuine history is shorter than the requested lookback is classified PARTIAL and is not scanned. MOGO cannot distinguish a truncated response from an instrument that simply has less history, and this release deliberately chooses the conservative reading; the remedy for a legitimately short-history instrument is a per-request lookback it can satisfy, NOT a relaxation of the contract. TESTING: tests/v130_candle_completeness_regression_tests.js grows to 10 fixtures, all passing. SAFETY-1..4 were written FIRST and failed against the previous build; BEHAVIOUR-2 was rewritten from documenting the defect to asserting the contract, and BEHAVIOUR-2b was added to prove a healthy scan with one still-forming candle stays COMPLETE and still evaluates -- the fix must not suppress normal scanning. Full regression: 789/789 across 17 suites, zero drift. See docs/adr/ADR-011.',
   '12.8.2 — EXP-001 CORRECTION: A BROWSER DOWNLOAD IS AN ATTEMPT, NOT A DURABILITY PROOF (evidence-integrity correction; no trading behavior change; zero protected-function/protected-constant drift, 63 functions and 4 constants byte-identical). THE DEFECT, FOUND BY LITERAL BROWSER VERIFICATION: evidenceExportPackage() marked a package successfully exported whenever downloadTextFile() returned without throwing. But downloadTextFile() uses the anchor-click download idiom -- it returns nothing, has no error handling, and CANNOT report whether the browser accepted, blocked, cancelled or failed the write. Chrome silently refused two real downloads while the app reported ok:true, set exportVerified:true and cleared the standing unexported-evidence warning, with no file anywhere on disk. That directly violated the milestone rule that a failed or cancelled export is never marked successful, and it made the banner lie -- the one surface an operator relies on to know their evidence is safe. The earlier fixture missed it because its stub THREW; the real API never throws. THE CORRECTION: an AUTO_DOWNLOAD or MANUAL export now records an ATTEMPT ONLY (exportAttemptedAt, exportMechanism, exportFilename, exportAttemptCount). exportedAt stays null, exportVerified stays false, the package remains in the unexported count and THE WARNING DOES NOT CLEAR. A package is marked exported ONLY after the operator re-imports the downloaded JSON and every one of five conditions holds: the bytes parse, the package validates against schema v1, the package identity (packageId and sourceTradeId) matches the stored package, the SHA-256 content hash verifies, and the EXACT canonical content is byte-identical to the stored Evidence Package. Only then is exportedAt stamped, exportVerified set true, exportVerificationMethod set REIMPORT_VERIFIED, and the warning cleared. MOGO now only ever claims evidence is on disk when it has actually read it back off disk. NO SHORTCUTS: no File System Access API, and no operator-confirmation override -- an operator saying \'yes it downloaded\' is not evidence, the bytes are; the decision function consults neither confirm() nor prompt(). An UNVERIFIABLE hash (no Web Crypto) can never confirm an export and degrades to an explicit DUPLICATE_IDENTICAL_UNVERIFIABLE no-op rather than a silent pass. The banner and Diagnostics now state plainly that a browser download alone does not prove disk persistence, and report the count of attempted-but-unconfirmed downloads separately. TESTING: v128 grows 62 -> 74 fixtures. New E1-E12 exercise the REAL, pure evidenceEvaluateExportReimport() decision offline: attempted export, cancelled/missing download, absent re-import, malformed re-import, mismatched package identity, failed SHA-256, UNVERIFIABLE hash, noncanonical content mismatch, valid re-import, warning clearance only after verification, absence of any confirmation shortcut or FS Access path, and that the import path actually routes through the decision. X4 was STRENGTHENED, not weakened: it previously asserted ordering around a marking step that should not exist, and now asserts the export path can never stamp exportedAt under any ordering. The counting rule was extracted into the pure evidenceSummarizePackages() so fixtures exercise the real logic rather than a copy. NO BROWSER WAS OPENED and no Chrome profile was accessed for this release. Full regression: 779/779 fixtures across 16 suites, zero drift.',
@@ -4016,7 +4017,18 @@ async function runAlexGReplay(oPair,days,replayParams,onProgress,shouldCancel){
   const{trades,rejected}=alexGRunSetupReplay(setupsForPair,datasets,RULES_ALEXG.config,replayParams);
   const stats=alexGComputeReplayStats(trades);
   const zs=alexGZoneState[oPair];
+  // v12.9.0: run identity, computed AFTER the protected engine has produced its results so it
+  // cannot influence them. A failure here must never break a replay -- the run still returns its
+  // trades, simply without a citable identity, and that is recorded rather than hidden.
+  let runIdentity=null;
+  try{
+    if(onProgress) onProgress('Computing replay run identity (dataset hash, absolute range)...');
+    runIdentity=await alexGBuildReplayRunIdentity(oPair,days,datasets,replayParams);
+  }catch(e){
+    try{ evidenceRecordWriteFailure('replay-run-identity',e); }catch(e2){}
+  }
   return{
+    runIdentity,
     pair:oPair.replace('_','/'),oPair,days,
     zoneCounts:{H1:zs?zs.H1.validatedZones.length:0,H4:zs?zs.H4.validatedZones.length:0,D:zs?zs.D.validatedZones.length:0,W:zs?zs.W.validatedZones.length:0},
     setupsConsidered:setupsForPair.length,
@@ -4073,6 +4085,14 @@ async function runAlexGReplayUI(){
       alexGReplayTrades=result.trades;
       alexGReplayRejected=result.rejected;
       alexGReplayStats=result.stats;
+      // ── v12.9.0 REPLAY EVIDENCE CAPTURE SEAM ──
+      // runAlexGReplayUI is NOT a protected function. Capture runs after the replay has fully
+      // completed and its results are already assigned, is fire-and-forget in its own try/catch,
+      // and reads the trades only. It cannot alter replay output, stats, rendering, or any
+      // account/ledger -- replay touches none of those. Idempotent per run: re-running the same
+      // pair, range, dataset and config yields the same deterministic runId, so re-capture is a
+      // no-op rather than a duplicate.
+      try{ evidenceCaptureReplayTrades(result.runIdentity,result.trades); }catch(e){ try{ evidenceRecordWriteFailure('capture-replay-seam',e); }catch(e2){} }
       status.textContent=`${result.pair} — ${result.days} days — zones: H1 ${result.zoneCounts.H1} / H4 ${result.zoneCounts.H4} / D ${result.zoneCounts.D} / W ${result.zoneCounts.W} — ${result.setupsConsidered} setups considered, ${result.trades.length} trades created, ${result.rejected.length} rejected.`;
       renderAlexGDashboard(result);
       renderAlexGTradesTable(result.trades);
@@ -11880,6 +11900,16 @@ function evidenceComputeCompleteness(basis){
     missing.push({field:'*',reason:'UNSAFE_TO_RECONSTRUCT',
       detail:'Adopted from existing localStorage history. Only fields genuinely present on the stored record are included; nothing was inferred, back-filled or fabricated.'});
   }
+  if(basis==='REPLAY_RUN'){
+    // Architecture 7.1: ALEX replay is deterministic in R-SPACE and non-deterministic in
+    // MONEY-space, because pipValuePerLot() reads live pairData. Declaring a replay package
+    // fully reproducible when its P&L is not would be a false guarantee, so the money-denominated
+    // fields are flagged here rather than silently presented as equivalent to R-space results.
+    missing.push({field:'outcomes[].pnl',reason:'UNAVAILABLE',
+      detail:'Replay records balanceBefore/balanceAfter but no pnl field. It is deliberately not reconstructed by subtraction -- arithmetic on two stored values is a derivation, not an observation.'});
+    missing.push({field:'money-space values',reason:'DERIVED',
+      detail:'LIVE_DATA_DEPENDENCY: pipValue and every money-denominated figure depend on pairData at run time, so they are not reproducible across runs. R-space (plannedRR, resultR, maeR, mfeR) is deterministic and is the reproducible comparison surface.'});
+  }
   return{level:basis==='HISTORICAL_BACKFILL'?'MINIMAL':EVIDENCE_COMPLETENESS_LEVEL_PHASE1,missing};
 }
 // Read-only over the closed position. Copies only fields that genuinely exist -- a missing value
@@ -11920,8 +11950,15 @@ function evidenceBuildPackageFromTrade(trade,opts){
       engineVersion:has('createdByEngineVersion')?trade.createdByEngineVersion:(o.engineVersion||null),
       commitHash:null,
       commitHashProvenance:'UNAVAILABLE',
-      mode:'LIVE_PAPER',
-      runId:null
+      // v12.9.0 replay trustworthiness: mode and runId were already in the v1 schema but were
+      // hardcoded. datasetHash and replayDateRange are ADDITIVE keys, always present so every
+      // package keeps an identical key set regardless of strategy or mode -- they are null for
+      // LIVE_PAPER and populated for REPLAY. Architecture section 5: a declared date range alone
+      // cannot prove two runs used the same data, because the broker may revise or gap-fill.
+      mode:(o.mode==='REPLAY'?'REPLAY':'LIVE_PAPER'),
+      runId:(o.runId!=null?String(o.runId):null),
+      datasetHash:(o.datasetHash!=null?String(o.datasetHash):null),
+      replayDateRange:(o.replayDateRange||null)
     },
     configSnapshot:cfgSnapshot,
     configSnapshotProvenance:cfgSnapshot?'OBSERVED':'UNAVAILABLE',
@@ -12082,25 +12119,166 @@ async function evidenceCaptureClosedTradesAsync(trades){
 // `trade.strategy||'alex_g_sr_v1'` fallback was a latent multi-strategy defect: a JVM position
 // carries no `strategy` field at all, so a JVM trade would have been silently attributed to ALEX.
 // Fail closed -- an unattributable trade produces NO package rather than a mislabelled one.
-async function evidencePersistTradePackage(trade,basis,strategyId){
+async function evidencePersistTradePackage(trade,basis,strategyId,extra){
   const resolved=strategyId||(trade&&trade.strategy)||null;
   if(!resolved||typeof resolved!=='string') throw new Error('EVIDENCE_STRATEGY_ID_REQUIRED');
-  return evidencePersistTradePackageResolved(trade,basis,resolved);
+  return evidencePersistTradePackageResolved(trade,basis,resolved,extra);
 }
-async function evidencePersistTradePackageResolved(trade,basis,strategyId){
+async function evidencePersistTradePackageResolved(trade,basis,strategyId,extra){
+  const x=extra||{};
   const stamp=evidenceUtcDateStamp(trade.closedAt||trade.openedAt||null);
   const seq=await evidenceAllocateSequence(strategyId,stamp);
   const pkg=evidenceBuildPackageFromTrade(trade,{
     packageId:'PKG|'+strategyId+'|'+stamp+'|'+seq,
     strategyId:strategyId,
     captureBasis:basis,
-    engineVersion:(typeof APP_VERSION!=='undefined'?APP_VERSION:null)
+    engineVersion:(typeof APP_VERSION!=='undefined'?APP_VERSION:null),
+    mode:x.mode, runId:x.runId, datasetHash:x.datasetHash, replayDateRange:x.replayDateRange
   });
   await evidenceFinalizePackage(pkg);
   const v=evidenceValidatePackage(pkg);
   if(!v.valid) throw new Error('constructed package failed validation: '+v.errors.join('; '));
   await evidencePutPackage(pkg);
   return pkg;
+}
+
+// ══ REPLAY run identity + evidence capture (v12.9.0) ═════════════════════════════════════════
+// Replay is the only route to a statistically meaningful sample -- live paper trading produces
+// roughly one ALEX setup per pair per week. Until now replay trades lived in one in-memory array
+// (alexGReplayTrades), were never persisted, carried no run identity, and vanished on reload.
+// That made them unusable as evidence: uncitable, unreproducible, unattributable to a config.
+//
+// The Evidence Package v1 SCHEMA is preserved. identity.mode and identity.runId already existed
+// (hardcoded LIVE_PAPER/null); identity.datasetHash and identity.replayDateRange are additive and
+// always present, so every package keeps an identical key set. No strategy rule, no protected
+// function and no replay math is touched -- alexGRunSetupReplay, alexGConstructTrade,
+// alexGWalkOutcome and alexGComputeReplayStats are PROTECTED and untouched.
+
+// Content hash over the ACTUAL candles used. Architecture section 5: two runs over the same
+// declared date range cannot be proven to have used the same data without this, because the
+// broker may revise or gap-fill history. Deliberately hashes every candle, not a count/first/last
+// fingerprint -- a fingerprint would not detect a revised candle in the middle of the range.
+async function evidenceReplayDatasetHash(datasets){
+  if(!datasets||typeof datasets!=='object') return null;
+  const parts=[];
+  ['W','D','H4','H1'].forEach(function(tf){
+    const arr=datasets[tf];
+    if(!Array.isArray(arr)){ parts.push(tf+':none'); return; }
+    const rows=new Array(arr.length);
+    for(let i=0;i<arr.length;i++){
+      const c=arr[i];
+      const t=(c.t instanceof Date)?c.t.getTime():c.t;
+      rows[i]=t+','+c.o+','+c.h+','+c.l+','+c.c;
+    }
+    parts.push(tf+':'+arr.length+':'+rows.join(';'));
+  });
+  return evidenceContentHash(parts.join('|'));
+}
+// Deterministic runId: the same pair, observed range, dataset, config and replay parameters
+// always produce the same id. That is what makes two runs comparable (architecture T2/T8) and
+// makes re-running a replay idempotent rather than duplicating evidence.
+async function alexGBuildReplayRunIdentity(oPair,days,datasets,replayParams){
+  const h1=(datasets&&Array.isArray(datasets.H1))?datasets.H1:[];
+  const first=h1.length?h1[0].t:null, last=h1.length?h1[h1.length-1].t:null;
+  const toIso=function(v){ if(v==null) return null; const d=(v instanceof Date)?v:new Date(v); return isNaN(d.getTime())?null:d.toISOString(); };
+  const range={
+    requestedDays:days,
+    // ABSOLUTE and OBSERVED, never "N days back from now" -- that is architecture gap R5.
+    fromUTC:toIso(first), toUTC:toIso(last),
+    observedCandleCounts:{
+      W:(datasets&&datasets.W?datasets.W.length:0), D:(datasets&&datasets.D?datasets.D.length:0),
+      H4:(datasets&&datasets.H4?datasets.H4.length:0), H1:h1.length
+    },
+    // ADR-011: record the producer's completeness verdict for each dataset. This is NOT a claim
+    // that candles are missing -- it states whether each request was fully satisfied.
+    datasetCompleteness:{
+      W:marketDataCompletenessOf(datasets&&datasets.W), D:marketDataCompletenessOf(datasets&&datasets.D),
+      H4:marketDataCompletenessOf(datasets&&datasets.H4), H1:marketDataCompletenessOf(h1)
+    }
+  };
+  const datasetHash=await evidenceReplayDatasetHash(datasets);
+  const cfg=snapshotAlexGConfig();
+  const configHash=await evidenceContentHash(evidenceCanonicalize({config:cfg}));
+  const paramsHash=await evidenceContentHash(evidenceCanonicalize({params:replayParams||{}}));
+  const runId=await evidenceContentHash(evidenceCanonicalize({
+    strategyId:STRATEGY_ALEXG, pair:oPair, fromUTC:range.fromUTC, toUTC:range.toUTC,
+    datasetHash, configHash, paramsHash
+  }));
+  return{runId,datasetHash,configHash,paramsHash,range,configSnapshot:cfg,
+         strategyId:STRATEGY_ALEXG,pair:oPair,builtAt:new Date().toISOString()};
+}
+// Maps a replay trade onto the common shape. Verbatim only -- nothing inferred or computed.
+// pnl is deliberately NOT derived from balanceAfter-balanceBefore: the replay record does not
+// carry a pnl field, and an arithmetic reconstruction is not an observation.
+function evidenceNormalizeReplayTrade(trade,run){
+  if(!trade||typeof trade!=='object'||trade.tradeId==null||!run) return null;
+  if(trade.stillOpen) return null;                 // unresolved -- not a trade observation yet
+  if(trade.result==null) return null;
+  const iso=function(v){ if(v==null) return null; const d=(v instanceof Date)?v:new Date(v); return isNaN(d.getTime())?null:d.toISOString(); };
+  return{
+    // Namespaced so a setup seen BOTH live and in replay cannot collide on the unique
+    // sourceTradeId index -- they are genuinely different observations of the same setup.
+    tradeId:'REPLAY|'+String(run.runId).slice(0,12)+'|'+String(trade.tradeId),
+    replaySourceTradeId:String(trade.tradeId),
+    strategy:trade.strategy||STRATEGY_ALEXG, ruleVersion:trade.ruleVersion,
+    createdByEngineVersion:trade.createdByEngineVersion,
+    pair:trade.pair, timeframe:trade.timeframe,
+    setupId:trade.setupId, setupType:trade.setupType, setupLabel:trade.setupLabel,
+    direction:trade.direction,
+    entry:trade.entry, stop:trade.stop, target:trade.target, plannedRR:trade.plannedRR,
+    riskPercent:trade.riskPercent, riskAmount:trade.riskAmount,
+    pipValue:trade.pipValue, positionSize:trade.positionSize,
+    balanceAtEntry:trade.balanceBefore, balanceAfter:trade.balanceAfter,
+    openedAt:iso(trade.entryTimestamp), closedAt:iso(trade.exitTimestamp),
+    qualificationTimestamp:trade.qualificationTimestamp, qualificationClose:trade.entry,
+    exitPrice:trade.exitPrice, result:trade.result, resultR:trade.resultR,
+    maePips:trade.maePips, mfePips:trade.mfePips, maeR:trade.maeR, mfeR:trade.mfeR,
+    ambiguous:trade.ambiguous, ambiguousMode:trade.ambiguousMode,
+    zoneId:trade.zoneId, reactionId:trade.reactionId,
+    zoneTouchNumber:trade.zoneTouchNumber, zoneStrength:trade.zoneStrength,
+    zoneQualityAtQualification:trade.zoneQualityAtQualification,
+    zoneRoleAtQualification:trade.zoneRoleAtQualification,
+    zoneLow:trade.zoneLow, zoneHigh:trade.zoneHigh, zoneCenter:trade.zoneCenter,
+    breakCycleId:trade.breakCycleId, brokenDirection:trade.brokenDirection,
+    barsSinceBreak:trade.barsSinceBreak, atrAtEntry:trade.atrAtEntry,
+    session:trade.session, dayOfWeek:trade.dayOfWeek, hourOfDay:trade.hourOfDay,
+    trendContext:trade.trendContext,
+    nearestPsych500Level:trade.nearestPsych500Level, distanceToPsych500Pips:trade.distanceToPsych500Pips,
+    nearestPsych100Level:trade.nearestPsych100Level, distanceToPsych100Pips:trade.distanceToPsych100Pips,
+    configurationSnapshot:trade.configurationSnapshot
+  };
+}
+let evidenceReplayCaptureInFlight=false;
+// Fire-and-forget, own try/catch, read-only over the replay result. Cannot alter replay output,
+// the ledger, or any account -- replay never touches those.
+function evidenceCaptureReplayTrades(run,trades){
+  if(evidenceReplayCaptureInFlight) return;
+  if(!run||!Array.isArray(trades)||!trades.length) return;
+  evidenceReplayCaptureInFlight=true;
+  evidenceCaptureReplayTradesAsync(run,trades).catch(function(e){
+    evidenceRecordWriteFailure('capture-replay',e);
+  }).then(function(){ evidenceReplayCaptureInFlight=false; },function(){ evidenceReplayCaptureInFlight=false; });
+}
+async function evidenceCaptureReplayTradesAsync(run,trades){
+  let captured=0,skipped=0;
+  for(let i=0;i<trades.length;i++){
+    const norm=evidenceNormalizeReplayTrade(trades[i],run);
+    if(!norm){ skipped++; continue; }
+    try{
+      if(await evidenceHasPackageForTrade(norm.tradeId)){ skipped++; continue; }  // idempotent re-run
+      await evidencePersistTradePackage(norm,'REPLAY_RUN',run.strategyId,{
+        mode:'REPLAY', runId:run.runId, datasetHash:run.datasetHash, replayDateRange:run.range
+      });
+      captured++;
+    }catch(e){
+      if(evidenceClassifyStorageError(e)==='CONSTRAINT'){ skipped++; continue; }
+      evidenceRecordWriteFailure('capture-replay-trade',e,{tradeId:norm.tradeId});
+    }
+  }
+  if(captured){ evidenceLastCaptureAt=new Date().toISOString(); }
+  await evidenceCountUnexported();
+  try{ renderEvidenceExportBanner(); }catch(e){}
+  return{captured,skipped};
 }
 
 // ══ JVM / current_strategy capture (DoD #10) ═════════════════════════════════════════════════
