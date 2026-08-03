@@ -1,0 +1,4761 @@
+{
+ "joinSchemaVersion": "mogo.alex-rule-evidence-join.v1",
+ "generatorVersion": "1.0.0",
+ "milestone": "MOGO-003 Phase 2 -- ALEX rule-to-evidence join",
+ "scope": "ALEX only. Educator rules, MOGO implementation behaviour and replay observations are kept in separate fields and are never merged.",
+ "lineageWarning": "This matrix compares MOGO's implementation against the EDUCATOR library. That comparison has never been performed before and is OBSERVATIONAL ONLY. alex_g_sr_v1's rules are MOGO's own (DECISION|MOGO|20260727|004); any agreement below is CONVERGENCE, NOT DERIVATION. This matrix does not re-specify the production strategy and does not merge the two bodies of knowledge (KEREV-B remains open).",
+ "evidenceRunIds": [
+  "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+ ],
+ "evidencePackageCount": 24,
+ "attributionAvailability": {
+  "triggeredConditionsPresentInRun": false,
+  "note": "Unit B (v12.11.0) added ruleIds/triggeredConditions to newly captured packages. RUN-001 was captured on engine 12.9.0 and carries none, so condition-level joins are unavailable for this run and every conditionIds list below is empty. Field-level joins are unaffected."
+ },
+ "ruleCount": 41,
+ "statusCounts": {
+  "LINKED": 12,
+  "NOT_EXERCISED": 4,
+  "NOT_IMPLEMENTED": 12,
+  "UNSUPPORTED": 7,
+  "UNRESOLVED": 6
+ },
+ "statusVocabulary": {
+  "LINKED": "MOGO implements this rule and at least one RUN-001 package carries the declared evidence field.",
+  "NOT_EXERCISED": "MOGO implements this rule but no RUN-001 package carries the declared field populated.",
+  "NOT_IMPLEMENTED": "The fidelity matrix records that MOGO does not implement this educator rule.",
+  "UNSUPPORTED": "MOGO implements behaviour the educator library does not support (MOGO-authored).",
+  "UNRESOLVED": "No fidelity row, no declared evidence mapping, or a fidelity status that asserts no implementation."
+ },
+ "metricRegistry": {
+  "MET_WIN_RATE": {
+   "name": "Win rate",
+   "unit": "percent",
+   "formula": "wins / (wins + losses) * 100",
+   "sourceFields": [
+    "objects.outcomes[].exitReasonCode"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_NET_R": {
+   "name": "Net R",
+   "unit": "R",
+   "formula": "sum(recordedResultR) over resolved trades",
+   "sourceFields": [
+    "objects.outcomes[].recordedResultR"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_EXPECTANCY_R": {
+   "name": "Expectancy per trade",
+   "unit": "R",
+   "formula": "netR / resolved trade count",
+   "sourceFields": [
+    "objects.outcomes[].recordedResultR"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_PROFIT_FACTOR": {
+   "name": "Profit factor",
+   "unit": "ratio",
+   "formula": "gross positive R / abs(gross negative R)",
+   "sourceFields": [
+    "objects.outcomes[].recordedResultR"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_MAE_PIPS": {
+   "name": "Maximum adverse excursion",
+   "unit": "pips",
+   "formula": "mean(maePips) over resolved trades",
+   "sourceFields": [
+    "objects.outcomes[].maePips"
+   ],
+   "betterWhen": "lower"
+  },
+  "MET_MFE_PIPS": {
+   "name": "Maximum favourable excursion",
+   "unit": "pips",
+   "formula": "mean(mfePips) over resolved trades",
+   "sourceFields": [
+    "objects.outcomes[].mfePips"
+   ],
+   "betterWhen": "higher"
+  }
+ },
+ "hypothesisStatuses": [
+  "UNTESTED",
+  "INSUFFICIENT_SAMPLE",
+  "TESTABLE_NOW",
+  "NOT_TESTABLE_BY_REPLAY",
+  "NOT_APPLICABLE"
+ ],
+ "minimumSamplePerArm": 30,
+ "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+ "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+ "outcomesBySetupType": {
+  "A_repeatedReaction": {
+   "trades": 16,
+   "wins": 5,
+   "losses": 11,
+   "netR": -1.0,
+   "packageIds": [
+    "PKG|alex_g_sr_v1|20260406|1",
+    "PKG|alex_g_sr_v1|20260408|1",
+    "PKG|alex_g_sr_v1|20260423|1",
+    "PKG|alex_g_sr_v1|20260424|1",
+    "PKG|alex_g_sr_v1|20260427|1",
+    "PKG|alex_g_sr_v1|20260429|1",
+    "PKG|alex_g_sr_v1|20260506|1",
+    "PKG|alex_g_sr_v1|20260513|1",
+    "PKG|alex_g_sr_v1|20260513|2",
+    "PKG|alex_g_sr_v1|20260602|1",
+    "PKG|alex_g_sr_v1|20260611|1",
+    "PKG|alex_g_sr_v1|20260617|1",
+    "PKG|alex_g_sr_v1|20260702|1",
+    "PKG|alex_g_sr_v1|20260713|1",
+    "PKG|alex_g_sr_v1|20260715|1",
+    "PKG|alex_g_sr_v1|20260728|1"
+   ],
+   "decided": 16,
+   "winRate": 31.25,
+   "expectancyR": -0.0625,
+   "meanMaePips": 40.41,
+   "meanMfePips": 31.45
+  },
+  "B_breakRetest": {
+   "trades": 8,
+   "wins": 1,
+   "losses": 7,
+   "netR": -5.0,
+   "packageIds": [
+    "PKG|alex_g_sr_v1|20260420|1",
+    "PKG|alex_g_sr_v1|20260507|1",
+    "PKG|alex_g_sr_v1|20260518|1",
+    "PKG|alex_g_sr_v1|20260529|1",
+    "PKG|alex_g_sr_v1|20260604|1",
+    "PKG|alex_g_sr_v1|20260615|1",
+    "PKG|alex_g_sr_v1|20260617|2",
+    "PKG|alex_g_sr_v1|20260714|1"
+   ],
+   "decided": 8,
+   "winRate": 12.5,
+   "expectancyR": -0.625,
+   "meanMaePips": 44.86,
+   "meanMfePips": 29.55
+  }
+ },
+ "hypothesisStatusCounts": {
+  "UNTESTED": 6,
+  "INSUFFICIENT_SAMPLE": 12,
+  "TESTABLE_NOW": 0,
+  "NOT_TESTABLE_BY_REPLAY": 4,
+  "NOT_APPLICABLE": 19
+ },
+ "rules": [
+  {
+   "ruleId": "AXR-001",
+   "domain": "support_and_resistance",
+   "educator": {
+    "statement": "Support is where price has previously held; resistance is where price has previously been rejected. Support/resistance, supply/demand and 'area of interest' are the same concept under three names.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|006"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": "ALEX_SR_001/002",
+    "codeLocation": "alexGZoneRole (index.html:2735)",
+    "resolvedFunction": "alexGZoneRole",
+    "implementationBehaviour": "Role derived positionally: above->support, below->resistance, within->inside.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].structureRefs.zoneRoleAtQualification"
+    ],
+    "introducedBy": "v12.8.0 (Evidence Package v1)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-001 fidelityStatus=FUNCTIONAL_MATCH",
+    "codeLocation -> alexGZoneRole (index.html:2735)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].structureRefs.zoneRoleAtQualification",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-002",
+   "domain": "trend_definition",
+   "educator": {
+    "statement": "A continuing downtrend is a sequence of lows with lower highs between them; the uptrend mirror is highs with retracements.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|014"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PARTIAL_MATCH",
+    "mogoRuleId": null,
+    "codeLocation": "alexGComputeTrendContext (index.html:3199)",
+    "resolvedFunction": "alexGComputeTrendContext",
+    "implementationBehaviour": "Trend context is computed and recorded but never gates a trade.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].contextRefs.trendContext"
+    ],
+    "introducedBy": "v12.8.0 (Evidence Package v1)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-002 fidelityStatus=PARTIAL_MATCH",
+    "codeLocation -> alexGComputeTrendContext (index.html:3199)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].contextRefs.trendContext",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-003",
+   "domain": "break_of_structure",
+   "educator": {
+    "statement": "A body close beyond a structure level counts as a structural shift, with no stated minimum size.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "PARTIAL_MATCH",
+    "mogoRuleId": "ALEX_SR_011",
+    "codeLocation": "alexGEvaluateBreakRetest (index.html:3147)",
+    "resolvedFunction": "alexGEvaluateBreakRetest",
+    "implementationBehaviour": "MOGO enforces an ordered break/retest sequence; the educator states no minimum displacement, MOGO adds rejectionDisplacementATRMultiplier=0.25 (ALEX_X_006).",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 8,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260714|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260507|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260518|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].structureRefs.breakCycleId",
+     "objects.qualifiedSetups[].structureRefs.brokenDirection",
+     "objects.qualifiedSetups[].structureRefs.barsSinceBreak"
+    ],
+    "introducedBy": "v12.10.0 (Unit A structureRefs) + v12.11.0 (Unit B attribution)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-003 fidelityStatus=PARTIAL_MATCH",
+    "codeLocation -> alexGEvaluateBreakRetest (index.html:3147)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].structureRefs.breakCycleId; objects.qualifiedSetups[].structureRefs.brokenDirection; objects.qualifiedSetups[].structureRefs.barsSinceBreak; objects.qualifiedSetups[].triggeredConditions[conditionId^=ALEX_SR_V1_B_]",
+    "observed populated in 8/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "trades": 8,
+    "wins": 1,
+    "losses": 7,
+    "netR": -5.0,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260714|1"
+    ],
+    "decided": 8,
+    "winRate": 12.5,
+    "expectancyR": -0.625,
+    "meanMaePips": 44.86,
+    "meanMfePips": 29.55
+   }
+  },
+  {
+   "ruleId": "AXR-004",
+   "domain": "break_and_retest",
+   "educator": {
+    "statement": "Break-and-retest is a CONTINUATION pattern: price breaks a structure point, returns to retest it, then continues in the original direction.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|004"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": "ALEX_SR_011",
+    "codeLocation": "alexGEvaluateBreakRetest (index.html:3147)",
+    "resolvedFunction": "alexGEvaluateBreakRetest",
+    "implementationBehaviour": "Break-then-retest continuation is implemented as a first-class setup type (B_breakRetest).",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 8,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260714|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260507|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1775836800000|v1777870800000|B_breakRetest|AGR|EUR_USD|H1|low|1778086800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260518|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|D|AGZ|AGC|EUR_USD|D|high|1773176400000|v1775163600000|B_breakRetest|AGR|EUR_USD|D|low|1777582800000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].structureRefs.breakCycleId",
+     "objects.qualifiedSetups[].structureRefs.brokenDirection",
+     "objects.qualifiedSetups[].structureRefs.barsSinceBreak"
+    ],
+    "introducedBy": "v12.10.0 (Unit A structureRefs) + v12.11.0 (Unit B attribution)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-004 fidelityStatus=FUNCTIONAL_MATCH",
+    "codeLocation -> alexGEvaluateBreakRetest (index.html:3147)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].structureRefs.breakCycleId; objects.qualifiedSetups[].structureRefs.brokenDirection; objects.qualifiedSetups[].structureRefs.barsSinceBreak; objects.qualifiedSetups[].triggeredConditions[conditionId^=ALEX_SR_V1_B_]",
+    "observed populated in 8/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "trades": 8,
+    "wins": 1,
+    "losses": 7,
+    "netR": -5.0,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260714|1"
+    ],
+    "decided": 8,
+    "winRate": 12.5,
+    "expectancyR": -0.625,
+    "meanMaePips": 44.86,
+    "meanMfePips": 29.55
+   }
+  },
+  {
+   "ruleId": "AXR-005",
+   "domain": "entry_setup",
+   "educator": {
+    "statement": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|011"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+    "mogoRuleId": "ALEX_SR_005/006",
+    "codeLocation": "alexGEvaluateRepeatedReaction (index.html:3165)",
+    "resolvedFunction": "alexGEvaluateRepeatedReaction",
+    "implementationBehaviour": "Educator: MINIMUM ONE structure point. MOGO: requires touchIndex>=3 AND zone.touches.length>=4 for the repeated-reaction setup. MOGO is materially STRICTER than the educator states.",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 16,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260423|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1775811600000|v1776088800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1776945600000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1775811600000|v1776088800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1776945600000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1775811600000|v1776088800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1776945600000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1775811600000|v1776088800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1776945600000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].structureRefs.zoneTouchNumber"
+    ],
+    "introducedBy": "v12.11.0 (Unit B attribution)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-005 fidelityStatus=PRESENT_BUT_DIFFERENT",
+    "codeLocation -> alexGEvaluateRepeatedReaction (index.html:3165)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].structureRefs.zoneTouchNumber; objects.qualifiedSetups[].triggeredConditions[conditionId^=ALEX_SR_V1_A_]",
+    "observed populated in 16/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "trades": 16,
+    "wins": 5,
+    "losses": 11,
+    "netR": -1.0,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "decided": 16,
+    "winRate": 31.25,
+    "expectancyR": -0.0625,
+    "meanMaePips": 40.41,
+    "meanMfePips": 31.45
+   }
+  },
+  {
+   "ruleId": "AXR-006",
+   "domain": "entry_setup",
+   "educator": {
+    "statement": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": true,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|012"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "NOT_APPLICABLE",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "Recursive chaining of retested zones into new structure points is not modelled as such.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-006 fidelityStatus=NOT_APPLICABLE",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-007",
+   "domain": "entry_setup",
+   "educator": {
+    "statement": "Break-and-retest is MOST EFFECTIVE at a pre-existing zone.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|007"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": null,
+    "codeLocation": "alexGRunZoneEngine (index.html:2996)",
+    "resolvedFunction": "alexGProcessTimeframeCandle",
+    "implementationBehaviour": "MOGO only ever evaluates setups at detected zones, which satisfies the comparative preference.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].structureRefs.zoneId",
+     "objects.qualifiedSetups[].structureRefs.zoneLow",
+     "objects.qualifiedSetups[].structureRefs.zoneHigh",
+     "objects.qualifiedSetups[].structureRefs.zoneStrength"
+    ],
+    "introducedBy": "v12.8.0 (Evidence Package v1)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-007 fidelityStatus=FUNCTIONAL_MATCH",
+    "codeLocation -> alexGProcessTimeframeCandle (index.html:2996)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].structureRefs.zoneId; objects.qualifiedSetups[].structureRefs.zoneLow; objects.qualifiedSetups[].structureRefs.zoneHigh; objects.qualifiedSetups[].structureRefs.zoneStrength",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-008",
+   "domain": "entry_setup",
+   "educator": {
+    "statement": "Zone width is unconstrained -- 'doesn't matter the size of the box' -- subject only to leaving enough room to contain multiple touches.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|010"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+    "mogoRuleId": "ALEX_SR_008",
+    "codeLocation": "alexGAssignCluster (index.html:2763)",
+    "resolvedFunction": "alexGAssignCluster",
+    "implementationBehaviour": "Educator: zone width is EXPLICITLY UNCONSTRAINED. MOGO: zoneClusterATRMultiplier=0.5 constrains clustering. MOGO imposes a constraint the educator explicitly declines to impose.",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNRESOLVED",
+   "unresolvedReason": "NO_EVIDENCE_FIELD_EXISTS",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-008 fidelityStatus=PRESENT_BUT_DIFFERENT",
+    "code location 'alexGAssignCluster (index.html:2763)' has no declared evidence-field mapping -- not guessed"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-010",
+   "domain": "entry_trigger",
+   "educator": {
+    "statement": "Structure and continuation are read on the higher timeframe; the entry signal must be taken on a lower timeframe.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|017"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO evaluates zones and setups on H1/H4/D/W and does not drop to a lower timeframe for entry. There is no separate HTF-structure / LTF-entry split.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-010 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-011",
+   "domain": "candlestick_confirmation",
+   "educator": {
+    "statement": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|018"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO has NO candlestick-confirmation requirement. Entry is the qualification candle's close. The educator's single hardest entry precondition is absent from the implementation.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-011 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-012",
+   "domain": "candlestick_confirmation",
+   "educator": {
+    "statement": "The confirmation demonstrated is a Morning Star: three doji rejection candles followed by one bullish engulfing candle.",
+    "evidenceClass": "ILLUSTRATIVE",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|020"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "No Morning Star detection exists.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-012 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-013",
+   "domain": "entry_trigger",
+   "educator": {
+    "statement": "The retest is complete when rejection candlesticks appear -- it is not timed or measured.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|019"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+    "mogoRuleId": null,
+    "codeLocation": "alexGAcceptReaction (index.html:2792)",
+    "resolvedFunction": "alexGAcceptReaction",
+    "implementationBehaviour": "Educator: retest ends when rejection candles appear. MOGO: reaction counts if confirmed within rejectionConfirmWithinBars=1 and displaces >=0.25 ATR (ALEX_X_006).",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNRESOLVED",
+   "unresolvedReason": "NO_EVIDENCE_FIELD_EXISTS",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-013 fidelityStatus=PRESENT_BUT_DIFFERENT",
+    "code location 'alexGAcceptReaction (index.html:2792)' has no declared evidence-field mapping -- not guessed"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-014",
+   "domain": "entry_trigger",
+   "educator": {
+    "statement": "Entry is taken at the confirmation candle of the retest.",
+    "evidenceClass": "ILLUSTRATIVE",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|021"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+    "mogoRuleId": null,
+    "codeLocation": "alexGConstructLivePosition (index.html:3956)",
+    "resolvedFunction": "alexGConstructLivePosition",
+    "implementationBehaviour": "MOGO enters at the qualification candle close; the educator indicates the confirmation candle without naming a price.",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "NOT_EXERCISED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "packageIds": [],
+    "conditionIds": [],
+    "reason": "cited implementation is on the LIVE paper-execution path; RUN-001 is a replay and never executed it"
+   },
+   "status": "NOT_EXERCISED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-014 fidelityStatus=PRESENT_BUT_DIFFERENT",
+    "codeLocation -> alexGConstructLivePosition, which is live-execution-only"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-015",
+   "domain": "invalidation",
+   "educator": {
+    "statement": "A structurally ideal break-and-retest is NOT taken when the engulfing confirmation does not appear.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|013"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO has no confirmation gate, so it cannot decline a setup for a missing confirmation. This is the fidelity gap with the clearest trade-eligibility consequence.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-015 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-020",
+   "domain": "stop_loss_relationship",
+   "educator": {
+    "statement": "On every break-and-retest trade the stop-loss is placed immediately BEYOND the rejection formation at the retest ('right under it' for a long).",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|025",
+     "CLAIM|ALEX_G|20260729|022"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PARTIAL_MATCH",
+    "mogoRuleId": "ALEX_X_001",
+    "codeLocation": "alexGConstructLivePosition (index.html:3487-3488)",
+    "resolvedFunction": "alexGConstructLivePosition",
+    "implementationBehaviour": "RELATIONSHIP MATCHES: stop sits just beyond the structure. ANCHOR DIFFERS: MOGO anchors on setup.zoneLow/zoneHigh (zone boundary); the educator anchors on the rejection formation at the retest. A rejection wick can extend well beyond the zone boundary, so these are not the same object.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "NOT_EXERCISED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "packageIds": [],
+    "conditionIds": [],
+    "reason": "cited implementation is on the LIVE paper-execution path; RUN-001 is a replay and never executed it"
+   },
+   "status": "NOT_EXERCISED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-020 fidelityStatus=PARTIAL_MATCH",
+    "codeLocation -> alexGConstructLivePosition, which is live-execution-only"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-021",
+   "domain": "stop_loss_buffer",
+   "educator": {
+    "statement": "[NO RULE EXISTS] The distance between the stop and the rejection structure.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "MOGO_AUTHORED_PARAMETER",
+    "mogoRuleId": "ALEX_X_001",
+    "codeLocation": "RULES_ALEXG.config.stopATRBuffer (index.html:2392)",
+    "resolvedFunction": "RULES_ALEXG.config.stopATRBuffer",
+    "implementationBehaviour": "stopATRBuffer = 0.25 ATR. NO educator counterpart exists -- no ALEX_G claim in 9 sources mentions ATR at all. Entirely MOGO-authored.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-021 fidelityStatus=MOGO_AUTHORED_PARAMETER",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-022",
+   "domain": "stop_loss_relationship",
+   "educator": {
+    "statement": "[NO RULE EXISTS] The short-side stop placement.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "mogoRuleId": "ALEX_X_001",
+    "codeLocation": "index.html:3488",
+    "resolvedFunction": "index.html:3488",
+    "implementationBehaviour": "MOGO implements the short-side stop symmetrically (zoneHigh + buffer). The educator never states the short-side rule, so MOGO's symmetry is an assumption, not a match.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-022 fidelityStatus=IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-030",
+   "domain": "minimum_risk_reward",
+   "educator": {
+    "statement": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|023"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+    "mogoRuleId": "ALEX_X_001",
+    "codeLocation": "RULES_ALEXG.config.minRR (index.html:2394)",
+    "resolvedFunction": "RULES_ALEXG.config.minRR",
+    "implementationBehaviour": "Educator: 1:2 is a MINIMUM (floor). MOGO: minRR=2.0 is a FIXED ratio -- target = entry +/- 2.0 x risk, always. These are different rules that coincide at the boundary. MOGO can never take the 1:3 or 1:4 the educator also describes.",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "configSnapshot.config.minRR",
+     "objects.positions[].plannedRR"
+    ],
+    "introducedBy": "v12.8.0 (configSnapshot) "
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-030 fidelityStatus=PRESENT_BUT_DIFFERENT",
+    "implementation is configuration parameter 'minRR'; snapshotAlexGConfig() copies RULES_ALEXG.config verbatim onto every package",
+    "codeLocation -> RULES_ALEXG.config.minRR (index.html:2394)",
+    "FUNCTION_EVIDENCE_MAP declares fields: configSnapshot.config.minRR; objects.positions[].plannedRR",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-031",
+   "domain": "target_selection",
+   "educator": {
+    "statement": "[NO RULE EXISTS] How the target level is chosen when structure allows more than 1:2.",
+    "evidenceClass": "ILLUSTRATIVE",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 3,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|084",
+     "CLAIM|ALEX_G|20260728|110",
+     "CLAIM|ALEX_G|20260728|113",
+     "CLAIM|ALEX_G|20260728|140"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "UNRESOLVED",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "No educator target-selection procedure exists, so MOGO's fixed 2R cannot be compared against one.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNRESOLVED",
+   "unresolvedReason": "FIDELITY_STATUS_UNRESOLVED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-031 fidelityStatus=UNRESOLVED",
+    "fidelityStatus 'UNRESOLVED' does not assert an implementation"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-040",
+   "domain": "account_risk",
+   "educator": {
+    "statement": "Risk is sized as a percentage of the account balance, never as a fixed monetary amount, and the same percentage is risked on every trade.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": true,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 2,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|098",
+     "CLAIM|ALEX_G|20260728|096",
+     "CLAIM|ALEX_G|20260728|093"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": "ALEX_X_001",
+    "codeLocation": "index.html:3512",
+    "resolvedFunction": "index.html:3512",
+    "implementationBehaviour": "riskAmount = balanceBefore * (riskPercent/100) -- percentage-based off account balance, fixed per trade. This is the closest genuine agreement between MOGO and the educator on any risk rule.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNRESOLVED",
+   "unresolvedReason": "NO_EVIDENCE_FIELD_EXISTS",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-040 fidelityStatus=FUNCTIONAL_MATCH",
+    "code location 'index.html:3512' has no declared evidence-field mapping -- not guessed"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-041",
+   "domain": "position_sizing",
+   "educator": {
+    "statement": "Three risk bands: conservative 0.5-1%, recommended/industry-standard 1-2%, high 3-5%.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": true,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|104",
+     "CLAIM|ALEX_G|20260728|107",
+     "CLAIM|ALEX_G|20260728|111"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PARTIAL_MATCH",
+    "mogoRuleId": "ALEX_X_001",
+    "codeLocation": "RULES_ALEXG.config.riskPercent (index.html:2393)",
+    "resolvedFunction": "RULES_ALEXG.config.riskPercent",
+    "implementationBehaviour": "MOGO uses riskPercent=1.0, which falls inside BOTH the conservative (0.5-1%) and recommended (1-2%) bands. Consistent with the educator, but MOGO chose the single value; the educator states bands and an account-type dependency MOGO does not model.",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "configSnapshot.config.riskPercent",
+     "objects.positions[].riskPercent"
+    ],
+    "introducedBy": "v12.8.0 (configSnapshot)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-041 fidelityStatus=PARTIAL_MATCH",
+    "implementation is configuration parameter 'riskPercent'; snapshotAlexGConfig() copies RULES_ALEXG.config verbatim onto every package",
+    "codeLocation -> RULES_ALEXG.config.riskPercent (index.html:2393)",
+    "FUNCTION_EVIDENCE_MAP declares fields: configSnapshot.config.riskPercent; objects.positions[].riskPercent",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-042",
+   "domain": "position_sizing",
+   "educator": {
+    "statement": "The high band (3-5%) is confined to a personal or disposable account, and to the months November-March.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": true,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|112",
+     "CLAIM|ALEX_G|20260728|117"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "No account-type or calendar-month risk modulation.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-042 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-043",
+   "domain": "account_risk",
+   "educator": {
+    "statement": "Once chosen, the risk percentage is not raised after wins or lowered after losses; his own practice fixes one percentage per calendar month.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": true,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|108",
+     "CLAIM|ALEX_G|20260728|114"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": null,
+    "codeLocation": "RULES_ALEXG.config.riskPercent",
+    "resolvedFunction": "RULES_ALEXG.config.riskPercent",
+    "implementationBehaviour": "riskPercent is a constant, so it is never raised after wins or lowered after losses. MOGO satisfies the stability rule by construction.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "configSnapshot.config.riskPercent",
+     "objects.positions[].riskPercent"
+    ],
+    "introducedBy": "v12.8.0 (configSnapshot)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-043 fidelityStatus=FUNCTIONAL_MATCH",
+    "implementation is configuration parameter 'riskPercent'; snapshotAlexGConfig() copies RULES_ALEXG.config verbatim onto every package",
+    "codeLocation -> RULES_ALEXG.config.riskPercent (None)",
+    "FUNCTION_EVIDENCE_MAP declares fields: configSnapshot.config.riskPercent; objects.positions[].riskPercent",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-050",
+   "domain": "post_entry_management",
+   "educator": {
+    "statement": "A losing trade is allowed to reach its stop without intervention; the loss is accepted as normal variance.",
+    "evidenceClass": "ILLUSTRATIVE",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|024"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": null,
+    "codeLocation": "alexGUpdatePositionExcursionAndCheckExit",
+    "resolvedFunction": "alexGUpdatePositionExcursionAndCheckExit",
+    "implementationBehaviour": "MOGO never intervenes between entry and exit: the stop and target are frozen at entry and never trailed or moved. Matches the demonstrated no-intervention behaviour.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "NOT_EXERCISED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "packageIds": [],
+    "conditionIds": [],
+    "reason": "cited implementation is on the LIVE paper-execution path; RUN-001 is a replay and never executed it"
+   },
+   "status": "NOT_EXERCISED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-050 fidelityStatus=FUNCTIONAL_MATCH",
+    "codeLocation -> alexGUpdatePositionExcursionAndCheckExit, which is live-execution-only"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-051",
+   "domain": "post_entry_management",
+   "educator": {
+    "statement": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 3,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|045"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": null,
+    "codeLocation": "alexGRunSetupEngine (index.html:3349)",
+    "resolvedFunction": "alexGClassifyTouch",
+    "implementationBehaviour": "No action is taken until a setup qualifies at the zone.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].setupType",
+     "objects.qualifiedSetups[].ruleAttribution.precedenceApplied"
+    ],
+    "introducedBy": "v12.11.0 (Unit B attribution)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-051 fidelityStatus=FUNCTIONAL_MATCH",
+    "codeLocation -> alexGClassifyTouch (index.html:3349)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].setupType; objects.qualifiedSetups[].ruleAttribution.precedenceApplied; objects.qualifiedSetups[].triggeredConditions[conditionId=ALEX_SR_V1_TOUCH_INDEX_MIN]",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-052",
+   "domain": "post_entry_management",
+   "educator": {
+    "statement": "A target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|147"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "FUNCTIONAL_MATCH",
+    "mogoRuleId": null,
+    "codeLocation": "alexGConstructLivePosition",
+    "resolvedFunction": "alexGConstructLivePosition",
+    "implementationBehaviour": "The target is frozen at entry and never cut early.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "NOT_EXERCISED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "packageIds": [],
+    "conditionIds": [],
+    "reason": "cited implementation is on the LIVE paper-execution path; RUN-001 is a replay and never executed it"
+   },
+   "status": "NOT_EXERCISED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-052 fidelityStatus=FUNCTIONAL_MATCH",
+    "codeLocation -> alexGConstructLivePosition, which is live-execution-only"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-053",
+   "domain": "post_entry_management",
+   "educator": {
+    "statement": "After missing an entry, set an alarm for the next pullback rather than chase.",
+    "evidenceClass": "ILLUSTRATIVE",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|139"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "NOT_APPLICABLE",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "Human behaviour; no automation counterpart.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-053 fidelityStatus=NOT_APPLICABLE",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-060",
+   "domain": "break_even",
+   "educator": {
+    "statement": "[NO RULE EXISTS] Whether the stop is ever moved to break-even.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "mogoRuleId": null,
+    "codeLocation": "APP_VERSION_LOG v4.0",
+    "resolvedFunction": "APP_VERSION_LOG v4.0",
+    "implementationBehaviour": "MOGO documents 'never trailed or moved to break-even' as an explicit MOGO choice. The educator says nothing either way, so this is a MOGO decision in an evidentiary vacuum -- not a match.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-060 fidelityStatus=IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-061",
+   "domain": "partial_profit",
+   "educator": {
+    "statement": "[NO RULE EXISTS] Whether any portion of a position is closed before the full target.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO takes no partials. Educator silent.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-061 fidelityStatus=IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-062",
+   "domain": "scaling",
+   "educator": {
+    "statement": "[NO RULE EXISTS] Whether a position is ever added to or reduced after entry.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO is single-entry. Educator silent.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-062 fidelityStatus=IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-063",
+   "domain": "trailing_stops",
+   "educator": {
+    "statement": "[NO RULE EXISTS] Whether the stop is ever trailed.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO does not trail. Educator silent.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-063 fidelityStatus=IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-070",
+   "domain": "timeframe_relationships",
+   "educator": {
+    "statement": "A break-and-retest on a higher timeframe is more respected than one on a lower timeframe.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|008"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PARTIAL_MATCH",
+    "mogoRuleId": "ALEX_SR_010",
+    "codeLocation": "alexGSetupSortComparator (index.html:3589)",
+    "resolvedFunction": "alexGSetupSortComparator",
+    "implementationBehaviour": "htfPriority {W:4,D:3,H4:2,H1:1} orders competing setups. It never gates, weights or sizes a trade, so 'more respected' is only partially realised.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNRESOLVED",
+   "unresolvedReason": "NO_EVIDENCE_FIELD_EXISTS",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-070 fidelityStatus=PARTIAL_MATCH",
+    "code location 'alexGSetupSortComparator (index.html:3589)' has no declared evidence-field mapping -- not guessed"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-071",
+   "domain": "higher_timeframe_analysis",
+   "educator": {
+    "statement": "Top-down analysis uses four tiers: weekly, daily, 4-hour, and the lower timeframes (2H/1H/30m/15m; below 15m is not a strong timeframe).",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": true,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260727|005",
+     "CLAIM|ALEX_G|20260727|006"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PARTIAL_MATCH",
+    "mogoRuleId": "ALEX_SR_009",
+    "codeLocation": "alexGRunZoneEngine (index.html:2996)",
+    "resolvedFunction": "alexGProcessTimeframeCandle",
+    "implementationBehaviour": "MOGO processes H1/H4/D/W. Educator names W/D/4H plus 2H/1H/30m/15m. MOGO omits the sub-H1 tiers entirely and adds none.",
+    "lineageNote": "CONVERGENT_NOT_DERIVED"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "objects.qualifiedSetups[].structureRefs.zoneId",
+     "objects.qualifiedSetups[].structureRefs.zoneLow",
+     "objects.qualifiedSetups[].structureRefs.zoneHigh",
+     "objects.qualifiedSetups[].structureRefs.zoneStrength"
+    ],
+    "introducedBy": "v12.8.0 (Evidence Package v1)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-071 fidelityStatus=PARTIAL_MATCH",
+    "codeLocation -> alexGProcessTimeframeCandle (index.html:2996)",
+    "FUNCTION_EVIDENCE_MAP declares fields: objects.qualifiedSetups[].structureRefs.zoneId; objects.qualifiedSetups[].structureRefs.zoneLow; objects.qualifiedSetups[].structureRefs.zoneHigh; objects.qualifiedSetups[].structureRefs.zoneStrength",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-072",
+   "domain": "timeframe_relationships",
+   "educator": {
+    "statement": "Day trading reads break-and-retest on 4H/1H; swing trading on daily/weekly.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|015",
+     "CLAIM|ALEX_G|20260729|016"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "No day-trade vs swing-trade mode distinction exists.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-072 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-080",
+   "domain": "session_requirements",
+   "educator": {
+    "statement": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not traded. Entries are restricted to Monday-Wednesday.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|078",
+     "CLAIM|ALEX_G|20260728|083",
+     "CLAIM|ALEX_G|20260728|081"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "MISSING_FROM_MOGO",
+    "mogoRuleId": "ALEX_X_007",
+    "codeLocation": "alexGComputeSessionMetadata (index.html:3225)",
+    "resolvedFunction": "alexGComputeSessionMetadata",
+    "implementationBehaviour": "Session and day metadata ARE computed and recorded but NEVER restrict entry. The educator states an explicit Mon-Wed restriction and a session gate; MOGO applies neither. Recorded in the manifest as 'a deliberate design choice, not a source gap' -- that note predates the session evidence.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-080 fidelityStatus=MISSING_FROM_MOGO",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-081",
+   "domain": "session_requirements",
+   "educator": {
+    "statement": "[PARAMETER ABSENT] The exact hours of the tradeable session windows.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 2,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260728|079",
+     "CLAIM|ALEX_G|20260728|053"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "UNRESOLVED",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "Parameter absent from source; nothing to compare.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNRESOLVED",
+   "unresolvedReason": "FIDELITY_STATUS_UNRESOLVED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-081 fidelityStatus=UNRESOLVED",
+    "fidelityStatus 'UNRESOLVED' does not assert an implementation"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-090",
+   "domain": "market_selection",
+   "educator": {
+    "statement": "The pattern applies to all timeframes and all instrument classes -- currencies, commodities, futures, stocks.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "emerging",
+    "distinctSourceCount": 1,
+    "supportingClaimIds": [
+     "CLAIM|ALEX_G|20260729|005"
+    ]
+   },
+   "implementation": {
+    "fidelityStatus": "PRESENT_BUT_DIFFERENT",
+    "mogoRuleId": null,
+    "codeLocation": "RULES_ALEXG.config",
+    "resolvedFunction": "RULES_ALEXG.config",
+    "implementationBehaviour": "Educator states universal applicability. MOGO trades a fixed instrument set via its own scan configuration.",
+    "lineageNote": "MOGO_AUTHORED_PARAMETER"
+   },
+   "evidence": {
+    "status": "LINKED",
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "runDirectory": "alex_g_sr_v1-EUR_USD-90d-3d7c3dc1af7f",
+    "packageCount": 24,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260602|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260611|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260702|1",
+     "PKG|alex_g_sr_v1|20260713|1",
+     "PKG|alex_g_sr_v1|20260714|1",
+     "PKG|alex_g_sr_v1|20260715|1",
+     "PKG|alex_g_sr_v1|20260728|1"
+    ],
+    "conditionIds": [],
+    "references": [
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260406|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260408|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "setupType": "A_repeatedReaction",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H4|AGZ|AGC|EUR_USD|H4|high|1773954000000|v1774414800000|A_repeatedReaction|AGR|EUR_USD|H4|high|1775062800000"
+     },
+     {
+      "packageId": "PKG|alex_g_sr_v1|20260420|1",
+      "setupId": "AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "setupType": "B_breakRetest",
+      "positionId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000",
+      "outcomeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000|outcome",
+      "sourceTradeId": "REPLAY|3d7c3dc1af7f|AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776250800000|v1776366000000|B_breakRetest|AGR|EUR_USD|H1|high|1776672000000"
+     }
+    ],
+    "fieldsObserved": [
+     "configSnapshot.config"
+    ],
+    "introducedBy": "v12.8.0 (configSnapshot)"
+   },
+   "status": "LINKED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-090 fidelityStatus=PRESENT_BUT_DIFFERENT",
+    "implementation is configuration parameter '*'; snapshotAlexGConfig() copies RULES_ALEXG.config verbatim onto every package",
+    "codeLocation -> RULES_ALEXG.config (None)",
+    "FUNCTION_EVIDENCE_MAP declares fields: configSnapshot.config",
+    "observed populated in 24/24 RUN-001 packages"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-091",
+   "domain": "market_conditions",
+   "educator": {
+    "statement": "[NO RULE EXISTS] Any market-condition filter (volatility, ranging vs trending, spread) gating whether to trade at all.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "mogoRuleId": "ALEX_X_005",
+    "codeLocation": "alexGCorrectedQuality (index.html:3137)",
+    "resolvedFunction": "alexGCorrectedQuality",
+    "implementationBehaviour": "MOGO adds a choppy-zone filter (>=3 penetrations / 50 bars). The educator states no such filter.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "UNSUPPORTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-091 fidelityStatus=IMPLEMENTED_WITHOUT_EDUCATOR_SUPPORT",
+    "fidelityStatus is in the MOGO-authored/unsupported set"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-092",
+   "domain": "news_filters",
+   "educator": {
+    "statement": "[NO RULE EXISTS] Any news or economic-calendar filter.",
+    "evidenceClass": "UNSUPPORTED",
+    "authorship": "UNSUPPORTED",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "NOT_APPLICABLE",
+    "mogoRuleId": "ALEX_X_007",
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "Neither implements a news filter. Absence in both is not agreement.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-092 fidelityStatus=NOT_APPLICABLE",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-093",
+   "domain": "liquidity",
+   "educator": {
+    "statement": "Alex G rejects the institutional-stop-hunt narrative as unproven and states no strategy can trade liquidity sweeps alone.",
+    "evidenceClass": "OPINION",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "NON_IMPLEMENTABLE_DISCRETION",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "Opinion; cross-educator contradicted.",
+    "lineageNote": null
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-093 fidelityStatus=NON_IMPLEMENTABLE_DISCRETION",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  },
+  {
+   "ruleId": "AXR-100",
+   "domain": "discretionary_judgment",
+   "educator": {
+    "statement": "Several gates are explicitly judgement calls: whether a second confirmation is needed depends on level strength, timeframe, days left in the week and R:R, with no threshold assigned to any input.",
+    "evidenceClass": "EXPLICIT",
+    "authorship": "EDUCATOR",
+    "deterministic": false,
+    "confidenceStatus": "NO_CLAIM_EXISTS",
+    "distinctSourceCount": 0,
+    "supportingClaimIds": []
+   },
+   "implementation": {
+    "fidelityStatus": "NON_IMPLEMENTABLE_DISCRETION",
+    "mogoRuleId": null,
+    "codeLocation": null,
+    "resolvedFunction": null,
+    "implementationBehaviour": "MOGO necessarily formalizes what the educator leaves to judgement. Every such formalization is a MOGO-authored parameter and is listed as one.",
+    "lineageNote": "MOGO_AUTHORED"
+   },
+   "evidence": {
+    "status": "NOT_ASSESSED",
+    "packageIds": [],
+    "conditionIds": []
+   },
+   "status": "NOT_IMPLEMENTED",
+   "linkBasis": [
+    "fidelity matrix row educatorRuleId=AXR-100 fidelityStatus=NON_IMPLEMENTABLE_DISCRETION",
+    "fidelityStatus states MOGO does not implement this rule"
+   ],
+   "measurableEvidence": {
+    "scope": "RUN_WIDE",
+    "trades": 24,
+    "decided": 24
+   }
+  }
+ ],
+ "hypotheses": [
+  {
+   "hypothesisId": "HYP|AXR-001",
+   "ruleId": "AXR-001",
+   "statement": "Trades qualifying under AXR-001 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-002",
+   "ruleId": "AXR-002",
+   "statement": "Trades qualifying under AXR-002 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-003",
+   "ruleId": "AXR-003",
+   "statement": "Trades qualifying under AXR-003 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": "B_breakRetest",
+    "resolvedTrades": 8,
+    "wins": 1,
+    "losses": 7,
+    "winRate": 12.5,
+    "netR": -5.0,
+    "expectancyR": -0.625,
+    "meanMaePips": 44.86,
+    "meanMfePips": 29.55,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260714|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 22
+  },
+  {
+   "hypothesisId": "HYP|AXR-004",
+   "ruleId": "AXR-004",
+   "statement": "Trades qualifying under AXR-004 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": "B_breakRetest",
+    "resolvedTrades": 8,
+    "wins": 1,
+    "losses": 7,
+    "winRate": 12.5,
+    "netR": -5.0,
+    "expectancyR": -0.625,
+    "meanMaePips": 44.86,
+    "meanMfePips": 29.55,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260420|1",
+     "PKG|alex_g_sr_v1|20260507|1",
+     "PKG|alex_g_sr_v1|20260518|1",
+     "PKG|alex_g_sr_v1|20260529|1",
+     "PKG|alex_g_sr_v1|20260604|1",
+     "PKG|alex_g_sr_v1|20260615|1",
+     "PKG|alex_g_sr_v1|20260617|2",
+     "PKG|alex_g_sr_v1|20260714|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 22
+  },
+  {
+   "hypothesisId": "HYP|AXR-005",
+   "ruleId": "AXR-005",
+   "statement": "Trades qualifying under AXR-005 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": "A_repeatedReaction",
+    "resolvedTrades": 16,
+    "wins": 5,
+    "losses": 11,
+    "winRate": 31.25,
+    "netR": -1.0,
+    "expectancyR": -0.0625,
+    "meanMaePips": 40.41,
+    "meanMfePips": 31.45,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 14
+  },
+  {
+   "hypothesisId": "HYP|AXR-006",
+   "ruleId": "AXR-006",
+   "statement": "Trades qualifying under AXR-006 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-007",
+   "ruleId": "AXR-007",
+   "statement": "Trades qualifying under AXR-007 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-008",
+   "ruleId": "AXR-008",
+   "statement": "Trades qualifying under AXR-008 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "UNTESTED",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-010",
+   "ruleId": "AXR-010",
+   "statement": "Trades qualifying under AXR-010 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-011",
+   "ruleId": "AXR-011",
+   "statement": "Trades qualifying under AXR-011 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-012",
+   "ruleId": "AXR-012",
+   "statement": "Trades qualifying under AXR-012 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-013",
+   "ruleId": "AXR-013",
+   "statement": "Trades qualifying under AXR-013 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "UNTESTED",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-014",
+   "ruleId": "AXR-014",
+   "statement": "Trades qualifying under AXR-014 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_TESTABLE_BY_REPLAY",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-015",
+   "ruleId": "AXR-015",
+   "statement": "Trades qualifying under AXR-015 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-020",
+   "ruleId": "AXR-020",
+   "statement": "Trades qualifying under AXR-020 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_TESTABLE_BY_REPLAY",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-021",
+   "ruleId": "AXR-021",
+   "statement": "Trades qualifying under AXR-021 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-022",
+   "ruleId": "AXR-022",
+   "statement": "Trades qualifying under AXR-022 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-030",
+   "ruleId": "AXR-030",
+   "statement": "Trades qualifying under AXR-030 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-031",
+   "ruleId": "AXR-031",
+   "statement": "Trades qualifying under AXR-031 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "UNTESTED",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-040",
+   "ruleId": "AXR-040",
+   "statement": "Trades qualifying under AXR-040 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "UNTESTED",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-041",
+   "ruleId": "AXR-041",
+   "statement": "Trades qualifying under AXR-041 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-042",
+   "ruleId": "AXR-042",
+   "statement": "Trades qualifying under AXR-042 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-043",
+   "ruleId": "AXR-043",
+   "statement": "Trades qualifying under AXR-043 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-050",
+   "ruleId": "AXR-050",
+   "statement": "Trades qualifying under AXR-050 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_TESTABLE_BY_REPLAY",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-051",
+   "ruleId": "AXR-051",
+   "statement": "Trades qualifying under AXR-051 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-052",
+   "ruleId": "AXR-052",
+   "statement": "Trades qualifying under AXR-052 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_TESTABLE_BY_REPLAY",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-053",
+   "ruleId": "AXR-053",
+   "statement": "Trades qualifying under AXR-053 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-060",
+   "ruleId": "AXR-060",
+   "statement": "Trades qualifying under AXR-060 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-061",
+   "ruleId": "AXR-061",
+   "statement": "Trades qualifying under AXR-061 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-062",
+   "ruleId": "AXR-062",
+   "statement": "Trades qualifying under AXR-062 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-063",
+   "ruleId": "AXR-063",
+   "statement": "Trades qualifying under AXR-063 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-070",
+   "ruleId": "AXR-070",
+   "statement": "Trades qualifying under AXR-070 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "UNTESTED",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-071",
+   "ruleId": "AXR-071",
+   "statement": "Trades qualifying under AXR-071 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-072",
+   "ruleId": "AXR-072",
+   "statement": "Trades qualifying under AXR-072 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-080",
+   "ruleId": "AXR-080",
+   "statement": "Trades qualifying under AXR-080 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-081",
+   "ruleId": "AXR-081",
+   "statement": "Trades qualifying under AXR-081 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "UNTESTED",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-090",
+   "ruleId": "AXR-090",
+   "statement": "Trades qualifying under AXR-090 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "INSUFFICIENT_SAMPLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 6
+  },
+  {
+   "hypothesisId": "HYP|AXR-091",
+   "ruleId": "AXR-091",
+   "statement": "Trades qualifying under AXR-091 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-092",
+   "ruleId": "AXR-092",
+   "statement": "Trades qualifying under AXR-092 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-093",
+   "ruleId": "AXR-093",
+   "statement": "Trades qualifying under AXR-093 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  },
+  {
+   "hypothesisId": "HYP|AXR-100",
+   "ruleId": "AXR-100",
+   "statement": "Trades qualifying under AXR-100 differ measurably in outcome from those qualifying without it.",
+   "metricId": "MET_EXPECTANCY_R",
+   "secondaryMetricIds": [
+    "MET_WIN_RATE",
+    "MET_NET_R",
+    "MET_MAE_PIPS",
+    "MET_MFE_PIPS"
+   ],
+   "comparison": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "threshold": {
+    "metric": "MET_EXPECTANCY_R",
+    "minimumDifference": 0.25,
+    "unit": "R",
+    "declaredInAdvance": true
+   },
+   "minimumSamplePerArm": 30,
+   "minimumSampleBasis": "Declared in advance, not derived from these results. Below roughly 30 resolved trades per arm, a 2R/-1R system's win-rate estimate is dominated by variance and no difference between arms is distinguishable from noise.",
+   "falsificationCondition": "The hypothesis is REFUTED if, with both arms at or above the minimum sample, the expectancy difference is smaller than the declared threshold or favours arm B.",
+   "currentEvidence": {
+    "runIds": [
+     "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+    ],
+    "setupTypeScope": null,
+    "resolvedTrades": 24,
+    "wins": 6,
+    "losses": 18,
+    "winRate": 25.0,
+    "netR": -6.0,
+    "expectancyR": -0.25,
+    "meanMaePips": null,
+    "meanMfePips": null,
+    "packageIds": [
+     "PKG|alex_g_sr_v1|20260406|1",
+     "PKG|alex_g_sr_v1|20260408|1",
+     "PKG|alex_g_sr_v1|20260423|1",
+     "PKG|alex_g_sr_v1|20260424|1",
+     "PKG|alex_g_sr_v1|20260427|1",
+     "PKG|alex_g_sr_v1|20260429|1",
+     "PKG|alex_g_sr_v1|20260506|1",
+     "PKG|alex_g_sr_v1|20260513|1",
+     "PKG|alex_g_sr_v1|20260513|2",
+     "PKG|alex_g_sr_v1|20260602|1"
+    ]
+   },
+   "status": "NOT_APPLICABLE",
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "shortfall": 0
+  }
+ ]
+}
