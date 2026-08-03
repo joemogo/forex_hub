@@ -738,8 +738,10 @@ commit-hash injection (recorded `null` + `UNAVAILABLE` until a build step exists
 > accurate.** Recording only what has since shipped in later units: replay run identity, absolute
 > date range and dataset hash landed in **v12.9.0**; `timeToMFE`/`timeToMAE` landed in **v12.12.0
 > (Unit C1)**, replay capture path only, with browser verification still pending. Market context /
-> candle capture (P3) and decision-chain durability (P2) remain **unimplemented** — Unit C2 covers
-> the bounded market-context excerpt and has **not started**.
+> candle capture (P3) is **partially delivered**: Unit C2-M1 (v12.13.0) captures a bounded
+> own-timeframe window plus evidence lineage for captured replay trades, while the content-addressed
+> candle store, higher-timeframe context (Unit C2-M2) and untraded-candidate context remain
+> **unimplemented**. Decision-chain durability (P2) remains **unimplemented**.
 
 **Excluded by explicit Engineering Authority ruling:**
 

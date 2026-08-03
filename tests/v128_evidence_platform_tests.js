@@ -1500,7 +1500,7 @@ function runEvidencePlatformFixtures(g){
     const seam=String(g.evidenceCaptureReplayTradesAsync);
     ok(seam.indexOf("rec.setupType==='B_breakRetest'&&rec.breakCycleId!=null")!==-1,'the tally must be scoped to B&R cycles');
     // v12.12.0 Unit C1 appended the excursion argument; the cycle count must still be threaded.
-    ok(seam.indexOf('evidenceNormalizeReplayTrade(t,run,setup,cycleCount,excursion)')!==-1,'and be passed to the normalizer');
+    ok(seam.indexOf('evidenceNormalizeReplayTrade(t,run,setup,cycleCount,excursion,marketContext)')!==-1,'and be passed to the normalizer');
     const norm=g.evidenceNormalizeReplayTrade(
       {tradeId:'AGT|1',setupId:'AGS|1',setupType:'B_breakRetest',result:'Loss',timeframe:'H1'},
       {runId:'r'.repeat(64),strategyId:'alex_g_sr_v1'},
@@ -1748,7 +1748,9 @@ function runEvidencePlatformFixtures(g){
     const eng=engineExtremes(c,0,1,'buy',1.1000);
     const p=g.evidenceBuildPackageFromTrade(sampleTrade({excursionTiming:timing(c,0,1,'buy',1.1000,eng.maePips,eng.mfePips)}),
       {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
-    eq(p.objects.marketContexts.length,0,'marketContexts is Unit C2 and must remain unimplemented');
+    // v12.13.0: market context is now implemented (Unit C2-M1) but is supplied by the SEAM. A
+    // package built without one must still carry an empty array -- Unit C1 never invents context.
+    eq(p.objects.marketContexts.length,0,'Unit C1 must not fabricate a market context');
     eq(p.objectCounts.marketContexts,0);
     const refs=p.objects.outcomes[0].exitPathCandleRefs;
     refs.forEach(function(r){
@@ -1767,6 +1769,200 @@ function runEvidencePlatformFixtures(g){
     ok(seam.indexOf('catch(e){ excursion=null;')!==-1,'a timing failure must never cost the package');
     eq(seam.indexOf('tfCandles.push'),-1,'the seam must never mutate the candle arrays');
     eq(seam.indexOf('tfCandles.sort'),-1);
+  });
+
+  // ══ GROUP 14 — v12.13.0 UNIT C2-M1 (CORR-6) MARKET CONTEXT + LINEAGE ═══════════════════
+  // The window must be a verbatim excerpt of the candles the engine walked, bounded, and loud
+  // about anything it dropped. Nothing here may invent, derive or re-fetch a candle.
+
+  function ctxCandles(n,startMs){
+    const base=startMs||Date.UTC(2026,3,1,0,0),arr=[];
+    for(let i=0;i<n;i++) arr.push({t:new Date(base+i*3600000),o:1.1+i*1e-5,h:1.1005+i*1e-5,l:1.0995+i*1e-5,c:1.1002+i*1e-5});
+    return arr;
+  }
+  function buildCtx(candles,entryIdx,exitIdx,opts){
+    return g.evidenceBuildMarketContext(candles,entryIdx,exitIdx,opts||{
+      contextId:'CTX|AGT|1',positionId:'AGT|1',instrument:'EUR_USD',timeframe:'H1',datasetHash:'d'.repeat(64)});
+  }
+
+  t('X1 the window is the traded path plus bounded pre-entry context, verbatim',function(){
+    const c=ctxCandles(200);
+    const mc=buildCtx(c,120,150);
+    eq(mc.window.entryBarIndex,120); eq(mc.window.exitBarIndex,150);
+    eq(mc.window.fromBarIndex,70,'50 bars of pre-entry context by default');
+    eq(mc.window.toBarIndex,150,'the window ends on the exit bar');
+    eq(mc.window.preEntryBars,50);
+    eq(mc.window.candleCount,81); eq(mc.candles.length,81);
+    eq(mc.candleProvenance,'OBSERVED');
+    eq(mc.scope,'TRADED_WINDOW_OWN_TIMEFRAME');
+    // verbatim: values and bar indices must match the source array exactly
+    eq(mc.candles[0].barIndex,70);
+    eq(mc.candles[0].o,c[70].o); eq(mc.candles[0].h,c[70].h);
+    eq(mc.candles[0].l,c[70].l); eq(mc.candles[0].c,c[70].c);
+    eq(mc.candles[0].t,c[70].t.toISOString(),'timestamps are serialized, never recomputed');
+    eq(mc.candles[80].barIndex,150);
+    eq(mc.window.fromUTC,c[70].t.toISOString()); eq(mc.window.toUTC,c[150].t.toISOString());
+    eq(mc.window.datasetCandleCount,200);
+    eq(mc.datasetHash,'d'.repeat(64),'the excerpt is tied to the run identity');
+  });
+  t('X2 pre-entry context is clipped at the start of the dataset, not padded',function(){
+    const c=ctxCandles(60);
+    const mc=buildCtx(c,10,20);
+    eq(mc.window.fromBarIndex,0,'there are only 10 bars of history available');
+    eq(mc.window.preEntryBars,10,'and the window says so rather than claiming 50');
+    eq(mc.window.requestedPreEntryBars,50);
+    eq(mc.window.truncated,false,'running out of history is not a truncation');
+    eq(mc.window.candleCount,21);
+  });
+  t('X3 a cap is LOUD -- it names the reason and the bars it dropped',function(){
+    const c=ctxCandles(1200);
+    const mc=g.evidenceBuildMarketContext(c,300,1000,{preEntryBars:300,maxCandles:600,timeframe:'H1'});
+    eq(mc.window.truncated,true);
+    ok(mc.window.droppedPreEntryBars>0,'and the drop is counted: '+mc.window.droppedPreEntryBars);
+    eq(mc.window.toBarIndex,1000,'the exit bar must survive truncation');
+    eq(mc.candles[mc.candles.length-1].barIndex,1000);
+    eq(mc.window.fromBarIndex,300,'the cap consumes PRE-ENTRY context only -- never the traded path');
+    eq(mc.window.preEntryBars,0,'all pre-entry context was dropped');
+    eq(mc.window.pathExceedsMaxCandles,true,'the path alone exceeds the ceiling, and says so');
+    eq(mc.window.truncationReason,'PATH_EXCEEDS_MAX_CANDLES');
+    eq(mc.window.pathCandleCount,701);
+  });
+  t('X4 truncation always preserves the entry-to-exit path',function(){
+    const c=ctxCandles(1000);
+    const mc=g.evidenceBuildMarketContext(c,100,800,{preEntryBars:50,maxCandles:600,timeframe:'H1'});
+    eq(mc.window.truncated,true);
+    // The path itself is 701 bars -- longer than the cap. It is kept IN FULL and the overrun is
+    // declared, because a window that stops before the exit cannot support the outcome.
+    eq(mc.window.fromBarIndex,100,'the window starts at the entry bar');
+    eq(mc.window.toBarIndex,800);
+    eq(mc.candles[0].barIndex,100);
+    eq(mc.candles[mc.candles.length-1].barIndex,800);
+    eq(mc.window.candleCount,701);
+    eq(mc.window.pathExceedsMaxCandles,true);
+    eq(mc.window.truncationReason,'PATH_EXCEEDS_MAX_CANDLES');
+  });
+  t('X5 an unusable window returns null rather than a partial claim',function(){
+    const c=ctxCandles(50);
+    eq(buildCtx(c,10,9),null,'exit before entry');
+    eq(buildCtx(c,10,60),null,'exit outside the dataset');
+    eq(g.evidenceBuildMarketContext([],0,1,{}),null,'no candles');
+    eq(g.evidenceBuildMarketContext(null,0,1,{}),null);
+    const holed=ctxCandles(30); holed[15]=null;
+    eq(g.evidenceBuildMarketContext(holed,10,20,{}),null,'a hole makes the window untrustworthy');
+  });
+  t('X6 higher-timeframe context is DECLARED absent, not silently missing',function(){
+    const mc=buildCtx(ctxCandles(100),50,60);
+    eq(mc.higherTimeframeContext,null);
+    eq(mc.higherTimeframeContextProvenance,'FUTURE_WORK','Unit C2-M2 is not started');
+  });
+  t('X7 a captured package carries the context and counts it',function(){
+    const c=ctxCandles(100);
+    const mc=buildCtx(c,50,60);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),
+      {packageId:'PKG|alex_g_sr_v1|20260720|1',strategyId:'alex_g_sr_v1'});
+    eq(p.objects.marketContexts.length,1);
+    eq(p.objectCounts.marketContexts,1,'objectCounts must track it');
+    eq(p.objects.marketContexts[0].candles.length,61,'50 pre-entry bars + the 11-bar path');
+    eq(p.objects.marketContexts[0].window.candleCount,61);
+    ok(g.evidenceValidatePackage(p).valid,g.evidenceValidatePackage(p).errors.join('; '));
+  });
+  t('X8 the completeness report swaps one honest gap for another',function(){
+    const without=builtPackage().completenessReport.missing.map(function(m){return m.field;});
+    eq(without[0],'objects.marketContexts','the original gap keeps its original position');
+    const mc=buildCtx(ctxCandles(100),50,60);
+    const withCtx=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'}).completenessReport.missing.map(function(m){return m.field;});
+    eq(withCtx.indexOf('objects.marketContexts'),-1,'a package holding a window must not declare it missing');
+    ok(withCtx.indexOf('objects.marketContexts[].higherTimeframeContext')!==-1,
+       'but it MUST declare what the window does not cover');
+    ok(withCtx.indexOf('objects.decisions')!==-1,'decision chains remain an honest gap');
+  });
+  t('X9 lineage links every recorded object, and only by identifier',function(){
+    const c=ctxCandles(100),mc=buildCtx(c,50,60);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc,replaySourceTradeId:'AGT|src|1'}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1',runId:'r'.repeat(64),datasetHash:'d'.repeat(64)});
+    const L=p.objects.qualifiedSetups[0].lineage;
+    eq(L.runId,'r'.repeat(64)); eq(L.datasetHash,'d'.repeat(64));
+    eq(L.setupId,'AGS|EUR_USD|H1|z1|B_breakRetest|r1'); eq(L.candidateId,L.setupId);
+    eq(L.zoneId,'AGZ|z1'); eq(L.reactionId,'AGR|r1');
+    eq(L.positionId,'AGT|EUR_USD|1'); eq(L.outcomeId,'AGT|EUR_USD|1|outcome');
+    eq(L.marketContextId,'CTX|AGT|1','the context is reachable from the setup');
+    eq(L.packageId,'PKG|x|1'); eq(L.replaySourceTradeId,'AGT|src|1');
+    eq(L.provenance,'OBSERVED','every value is a stored identifier');
+    // links only -- never an embedded object graph
+    Object.keys(L).forEach(function(k){
+      const v=L[k]; ok(v===null||typeof v==='string',k+' must be a string identifier or null');
+    });
+  });
+  t('X10 decision chains are declared absent, never implied',function(){
+    const L=g.evidenceBuildLineage({tradeId:'AGT|1'},{});
+    eq(L.decisionChainRef,null);
+    eq(L.decisionChainProvenance,'FUTURE_WORK','CORR-5 is not implemented and must not look implemented');
+    const m=String(g.evidenceBuildLineage)+String(g.evidenceBuildMarketContext);
+    ['emitDecisionEvent','decisionEventLog','createDecisionEvent'].forEach(function(n){
+      eq(m.indexOf(n),-1,'Unit C2-M1 must not touch the decision bus');
+    });
+  });
+  t('X11 validation is present-only and rejects a silent cap',function(){
+    const old=preUnitAPackage();
+    ok(g.evidenceValidatePackage(old).valid,'a package with no context must still validate');
+    const mc=buildCtx(ctxCandles(100),50,60);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const bad1=JSON.parse(JSON.stringify(p));
+    bad1.objects.marketContexts[0].window.truncated=true;
+    bad1.objects.marketContexts[0].window.truncationReason=null;
+    no(g.evidenceValidatePackage(bad1).valid,'a silent cap must be rejected');
+    const bad2=JSON.parse(JSON.stringify(p));
+    bad2.objects.marketContexts[0].window.candleCount=999;
+    no(g.evidenceValidatePackage(bad2).valid,'a miscounted window must be rejected');
+    const bad3=JSON.parse(JSON.stringify(p));
+    bad3.objects.marketContexts[0].window.droppedPreEntryBars=5;
+    no(g.evidenceValidatePackage(bad3).valid,'dropped bars without truncation must be rejected');
+    const bad4=JSON.parse(JSON.stringify(p));
+    bad4.objects.qualifiedSetups[0].lineage.zoneId={id:'x'};
+    no(g.evidenceValidatePackage(bad4).valid,'lineage must be identifiers, not object graphs');
+  });
+  t('X12 context capture is deterministic and canonically stable',function(){
+    const c=ctxCandles(100);
+    const a=buildCtx(c,50,60),b=buildCtx(c,50,60);
+    eq(JSON.stringify(a),JSON.stringify(b),'identical inputs must produce an identical window');
+    const opts={packageId:'PKG|x|1',strategyId:'alex_g_sr_v1',createdAt:'2026-07-20T14:00:01.000Z'};
+    const p1=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:a}),opts);
+    const p2=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:b}),opts);
+    eq(g.evidenceCanonicalize(p1),g.evidenceCanonicalize(p2),'and an identical canonical form');
+  });
+  t('X13 the seam builds the window from the engine\'s own candles, read-only',function(){
+    const seam=String(g.evidenceCaptureReplayTradesAsync);
+    ok(seam.indexOf('evidenceBuildMarketContext(tfCandles')!==-1,'the window must come from the threaded candles');
+    ok(seam.indexOf('catch(e){ marketContext=null;')!==-1,'a context failure must never cost the package');
+    ok(seam.indexOf('evidenceNormalizeReplayTrade(t,run,setup,cycleCount,excursion,marketContext)')!==-1);
+    const b=String(g.evidenceBuildMarketContext);
+    ['fetch','fetchCandlesRange','localStorage','.push(candles','candles.sort','candles.splice']
+      .forEach(function(n){ eq(b.indexOf(n),-1,'the builder must never '+n); });
+  });
+  t('X14 Unit C2-M1 cannot influence trading, replay output or statistics',function(){
+    const m=String(g.evidenceBuildMarketContext)+String(g.evidenceBuildLineage);
+    ['alexGSetupState','alexGZoneState','alexGAccount','paperAccount','journalEntries',
+     'commitAlexGLedger','openPaperPosition','alexGConstructTrade','alexGRunSetupReplay','alexGComputeReplayStats']
+      .forEach(function(n){ eq(m.indexOf(n),-1,'context capture must never reference '+n); });
+    // The protected replay functions must not know this layer exists.
+    ['evidenceBuildMarketContext','marketContext','lineage']
+      .forEach(function(n){ eq(String(g.alexGRunSetupReplay).indexOf(n),-1,'protected replay must not reference '+n); });
+    // And a captured window must not alter the trade's own recorded values.
+    const mc=buildCtx(ctxCandles(100),50,60);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const oc=p.objects.outcomes[0],po=p.objects.positions[0];
+    eq(oc.maePips,5); eq(oc.mfePips,100); eq(oc.recordedResultR,2);
+    eq(po.entryPrice,1.1000); eq(po.originalStop,1.0950); eq(po.target,1.1100);
+    eq(p.objects.qualifiedSetups[0].setupType,'B_breakRetest','classification is untouched');
+  });
+  t('X15 the window size stays proportionate on a RUN-001-shaped trade',function(){
+    const c=ctxCandles(2220);                       // RUN-001's real H1 dataset size
+    const mc=buildCtx(c,1000,1030);                 // ~30 bars held, RUN-001's average
+    eq(mc.window.candleCount,81,'50 pre-entry + 31 path');
+    eq(mc.window.truncated,false);
+    const bytes=JSON.stringify(mc).length;
+    ok(bytes<20000,'a typical window must stay small; measured '+bytes+' bytes');
   });
 
   return out;

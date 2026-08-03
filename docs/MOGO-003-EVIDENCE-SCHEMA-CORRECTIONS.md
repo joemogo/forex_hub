@@ -8,7 +8,8 @@ record; the sections describing undelivered items are unchanged.
 | CORR-2 version split · CORR-3 `realizedR` · CORR-4 break/retest candle refs · CORR-8 canonical naming | **A** | **IMPLEMENTED — v12.10.0** |
 | CORR-1 rule attribution (`ruleIds`, `triggeredConditions`) | **B** | **IMPLEMENTED — v12.11.0** |
 | CORR-7 excursion timing | **C1** | **IMPLEMENTED — v12.12.0**, replay capture path only; browser verification **pending** |
-| CORR-6 market context | **C2** | **NOT STARTED** |
+| CORR-6 market context | **C2-M1** | **IMPLEMENTED — v12.13.0**: bounded own-timeframe window + evidence lineage; browser verification **pending** |
+| CORR-6 higher-timeframe context | **C2-M2** | **NOT STARTED** |
 | CORR-9 dataset artifact · CORR-5a boundary trace | D / E | proposed only |
 | CORR-5b in-engine decision capture | — | **not proposed** (needs protected code + separate authorisation) |
 
@@ -191,7 +192,19 @@ C-1.
 
 ---
 
-### CORR-6 — Market-context capture (Phase 3)
+### CORR-6 — Market-context capture (Phase 3) ✅ PARTIALLY IMPLEMENTED (v12.13.0, Unit C2-M1)
+
+> **As built, 2026-08-03.** `evidenceBuildMarketContext()` captures ONE bounded excerpt per captured
+> replay trade: the trade's **own timeframe only**, 50 bars before entry (`EVIDENCE_CONTEXT_PRE_ENTRY_BARS`)
+> through the exit bar, candles stored **verbatim** from the in-memory arrays the engine walked — never
+> re-fetched — with a `window` block, `candleProvenance: OBSERVED` and the run's `datasetHash`.
+> `EVIDENCE_CONTEXT_MAX_CANDLES` (600) is a hard ceiling that consumes **pre-entry context only**: the
+> cap never crosses the entry bar, and when the traded path alone exceeds it the path is kept in full
+> and the overrun is declared. Truncation is always explicit and validation rejects a silent cap.
+> `evidenceBuildLineage()` adds `qualifiedSetups[].lineage` — identifiers only, enforced by validation.
+> **Not delivered:** higher-timeframe context (declared `null` + `FUTURE_WORK`, Unit C2-M2), the
+> content-addressed candle store, untraded-candidate context, and decision chains (`decisionChainRef`
+> is declared `null` + `FUTURE_WORK`). Rationale for each choice: architecture §8.5.
 
 `objects.marketContexts` is empty in 24/24. `runAlexGReplay` holds all four datasets and is
 non-protected, so a **bounded** window is capturable as `OBSERVED`: N candles before entry through
@@ -352,7 +365,8 @@ The only thing that could invalidate the 24 is a careless version bump (§2) or 
 | **A** ✅ v12.10.0 | CORR-2, CORR-3, CORR-4, CORR-8 | none | none | **Low** — evidence layer + one seam widening |
 | B ✅ v12.11.0 | CORR-1 (+ mirror registry and differential suite) | none | none | Medium — correctness of the mirror is the whole point |
 | C1 ✅ v12.12.0 | CORR-7 | none | none | Low — no payload growth beyond per-bar references |
-| C2 ⬜ not started | CORR-6 | none | none | Medium — payload growth, needs explicit caps |
+| C2-M1 ✅ v12.13.0 | CORR-6 (own-timeframe window + lineage) | none | none | Medium — payload growth, capped and declared |
+| C2-M2 ⬜ not started | CORR-6 (higher-timeframe context) | none | none | Medium — multiplies payload across four timeframes |
 | D | CORR-9 dataset artifact | none | none | Medium — new export/verify path |
 | E | CORR-5a boundary trace | none | none | Medium |
 | — | CORR-5b in-engine decisions | **yes** | — | **Not proposed.** New `ruleVersion` + separate authorization. |

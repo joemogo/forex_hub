@@ -187,6 +187,18 @@ defines one. **Every candle must not become a candidate.**
 | **Duration** | Permanent for traded candidates; **windowed for untraded** (§8.4) |
 | **Consumers** | Forensics · replay · ML |
 
+> **As built — Unit C2-M1, v12.13.0 (partial).** The target object above is unchanged; this records
+> what actually ships. `objects.marketContexts[]` now carries **one bounded excerpt per captured
+> replay trade**: the trade's **own timeframe only**, `EVIDENCE_CONTEXT_PRE_ENTRY_BARS` (50) bars
+> before entry through the exit bar, each candle stored **verbatim** with its `barIndex` and an ISO
+> timestamp, plus a `window` block (requested vs actual pre-entry bars, from/to bar indices and UTC
+> bounds, candle counts, dataset size, truncation state) and the run's `datasetHash`.
+> **Deliberately not yet delivered:** the content-addressed candle store (candles are excerpted per
+> package, not deduplicated), `higherTimeframeState` (present as `higherTimeframeContext: null` with
+> provenance `FUTURE_WORK` — **Unit C2-M2, not started**), context for **untraded** candidates, and
+> `atr`/`spreadAtCapture`/`nearbyStructure` as first-class context fields (ATR and session already
+> live on the setup's `contextRefs`). Live-paper capture retains no candles and records no context.
+
 ## 4.5 `Position`
 
 | | |
@@ -342,7 +354,7 @@ Declaring a package "reproducible" when its P&L is not would be a false guarante
 
 | Stage | Must exist | Exists today? |
 |---|---|---|
-| **Before entry** | Candidate · MarketContext · Decision chain · QualifiedSetup with `structureRefs` | 🟡 Setup record · `structureRefs` incl. **break/retest candle refs** (v12.10.0) · **rule attribution** (v12.11.0); **no market context (Unit C2, not started), decisions still transient** |
+| **Before entry** | Candidate · MarketContext · Decision chain · QualifiedSetup with `structureRefs` | 🟡 Setup record · `structureRefs` incl. **break/retest candle refs** (v12.10.0) · **rule attribution** (v12.11.0) · **lineage by reference** and a **bounded own-timeframe market context** (v12.13.0, traded replay trades only); **no candidate/untraded context, no higher-timeframe context (Unit C2-M2, not started), decisions still transient** |
 | **During entry** | Fill basis · spread · delay from signal · original stop/target · sizing inputs | ✅ Mostly captured on the position |
 | **During management** | Any stop/target change + trigger | ✅ N/A — nothing moves (must stay recorded as *deliberately none*) |
 | **At exit** | Exit price/time/reason/detection source · trigger level · ambiguity · **exit-path candles** | 🟡 All present, plus **exit-path candle *references*** (v12.12.0, replay only). The candles themselves are still not stored — that is Unit C2 |
@@ -388,6 +400,52 @@ lose evidence *without anyone knowing*.
 every candidate is what makes the storage model unviable. Metadata and decision chains are permanent;
 the candle window is windowed. **This is a stated trade-off, not an oversight** — and it should be
 revisited if rule-attribution work later needs deeper history.
+
+---
+
+## 8.5 Unit C2-M1 design rationale (v12.13.0)
+
+Four decisions in this milestone are worth stating explicitly, because each one traded something away.
+
+**Bounded context, not a candle store.** The full P3 design is a content-addressed store that
+deduplicates candles across packages. That is the right end state and it is also the expensive one:
+it needs its own addressing scheme, retention policy and garbage-collection story, and §14 warns that
+market context is what stresses the storage model. A bounded per-package excerpt buys the property
+that actually blocked July's forensics — *a traded window that can be re-examined without a re-fetch*
+— for roughly **6 KB per package** and no new subsystem. The cost is duplication: two trades over
+overlapping candles each store their own copy. That is accepted for now and is the first thing the
+candle store would fix.
+
+**Why a re-fetch is not an option.** §10 of the July forensics established that re-fetching candles
+produces *a* sequence, not *the* sequence the engine saw, and that reconstructing from it would be
+fabrication. That is the whole reason the excerpt is stored verbatim from the in-memory arrays the
+engine was walked over, tied to the run's `datasetHash`, rather than re-requested at capture time.
+
+**Explicit truncation, and the entry bar is inviolable.** Every cap is declared: a truncated window
+sets `truncated`, names a `truncationReason`, and reports `droppedPreEntryBars`. Validation *rejects*
+a window that claims truncation without a reason, or reports dropped bars while denying truncation —
+because a silent cap makes a partial window read as a complete one, which is precisely the class of
+quiet failure this platform exists to prevent. The cap consumes **pre-entry context only and never
+crosses the entry bar**: a window that does not contain the traded path cannot support the outcome it
+is filed against, so when the path alone exceeds the ceiling the path is kept in full and the overrun
+is declared (`pathExceedsMaxCandles`). This was not the first implementation — the original dropped
+bars until the window fit and would have cut the entry bar off; the fixtures caught it.
+
+**Lineage by reference, never by embedding.** `qualifiedSetups[].lineage` records only identifiers,
+and validation enforces that every value is a string or null. Embedding the related objects would
+duplicate data the package already holds, inflate the canonical form that `contentHash` covers, and
+create two copies that can disagree. References keep a package a flat, hashable record while making
+the zone → reaction → setup → position → outcome → context → package chain traversable. The same rule
+is why `decisionChainRef` exists and is explicitly `null` with provenance `FUTURE_WORK`: the *shape*
+of the relationship is declared even though no durable decision chain exists to point at yet
+(CORR-5), which is honest in a way that omitting the field would not be.
+
+**Higher-timeframe context deferred, not forgotten.** `higherTimeframeContext` is present, `null`, and
+marked `FUTURE_WORK`. The W/D/H4 datasets are already in hand at the capture seam, so the work is
+small — but it multiplies payload across four timeframes, and the sizing question deserves its own
+decision rather than riding along with a milestone whose point was the traded window. A package that
+captures a window therefore **gains** the higher-timeframe gap in its completeness report as it sheds
+the market-context gap, so it can never read as more complete than it is.
 
 ---
 
@@ -482,6 +540,7 @@ be justified by ML** — that would be speculative.
 | **P1 — Durable capture & export** *(scope expanded per ruling C3)* | Loud write-failure detection · Evidence Package v1 schema + validation · **IndexedDB persistence** · **automatic evidence capture** · bounded working-buffer behaviour · export · **unexported-evidence warning** · **import and recovery** · **read-only historical backfill without fabricated evidence** · complete automated and browser-level validation | none | A live paper trade is captured automatically into tier (b) with no user action and exports as a complete, hash-verified, self-describing package; a forced quota failure is visibly reported |
 | **P2 — Decision & candidate durability** | Persist decision chains and candidates; add `Decision.inputs{}`/`thresholds{}`; rejected candidates included | P1 | Every traded and rejected candidate has a retrievable, ordered decision chain |
 | **P3 — Market context & candle store** | Content-addressed candle store; `MarketContext`; `sourceCandleRefs`/`exitPathCandleRefs`; `structureRefs` | P1, P2 | **The two July trades would be fully reconstructable if repeated today** |
+| ↳ *P3 status* | **PARTIAL — v12.13.0 (Unit C2-M1):** `structureRefs` (v12.10.0), `exitPathCandleRefs` (v12.12.0) and a bounded own-timeframe `MarketContext` (v12.13.0) are delivered for captured replay trades. **The content-addressed candle store, higher-timeframe state and untraded-candidate context are NOT delivered.** P3 was intentionally taken out of order, after P4/P5 items, because each delivered piece needed no new data — see §8.5 | — | Traded windows are re-examinable without a re-fetch; candidate-level reconstruction is not yet possible |
 | **P4 — Replay trustworthiness** | Absolute date range · `runId` · config snapshot + hash · dataset hash · replay package persistence | P1–P3 | Two runs of the same declared range produce identical R-space `contentHash` |
 | **P5 — Outcome completeness** | `realizedR` in replay · `timeToMFE`/`timeToMAE` · data-quality flags · loss-classification field | P4 | Every outcome answers "when did it peak?" |
 

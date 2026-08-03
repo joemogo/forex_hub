@@ -1952,9 +1952,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.12.0';
+const APP_VERSION='12.13.0';
 const APP_VERSION_DATE='3 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.13.0 — MOGO-003 UNIT C2-M1: BOUNDED MARKET CONTEXT &amp; EVIDENCE LINEAGE (CORR-6, first milestone) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: Unit C1 records WHEN a trade\'s extremes occurred, but exitPathCandleRefs point into a dataset the repository does not keep -- and re-fetching those candles would produce a DIFFERENT dataset, which the July 2026 forensics called a fabrication risk. This captures the candles themselves for the traded window. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.marketContexts carries ONE bounded excerpt per package -- the trade\'s OWN timeframe, EVIDENCE_CONTEXT_PRE_ENTRY_BARS (50) bars before entry through the exit bar, each candle stored verbatim with its barIndex and an ISO timestamp, plus a window block recording requested vs actual pre-entry bars, from/to bar indices and UTC bounds, candle counts and the dataset size, and datasetHash tying the excerpt to the run identity. CAPS ARE LOUD: EVIDENCE_CONTEXT_MAX_CANDLES (600) is a hard ceiling; a truncated window sets truncated:true, names truncationReason and reports droppedPreEntryBars, and truncation drops the OLDEST pre-entry bars first so the entry-to-exit path an outcome depends on is never what goes missing. Validation REJECTS a window that claims truncation without a reason, or reports dropped bars while claiming none. LINEAGE: objects.qualifiedSetups[].lineage records how the stored objects relate -- runId, datasetHash, zoneId, reactionId, breakCycleId, setupId/candidateId, positionId, outcomeId, marketContextId, packageId, sourceTradeId and replaySourceTradeId. Every value is an identifier the engine already stored, so provenance is OBSERVED; nothing is derived and no decision EVENT is implied. HONEST ABOUT WHAT IS ABSENT: higherTimeframeContext is present and explicitly null with provenance FUTURE_WORK (Unit C2-M2, not started), and decisionChainRef is null with provenance FUTURE_WORK -- faithful decision-event capture needs emission inside protected functions (CORR-5b) and is deliberately not attempted. A package that captures a window no longer declares marketContexts a gap, but DOES declare the higher-timeframe gap in its place; a package without one declares the original gap in the original array position, so canonical ordering for every earlier package shape is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. SIZE, MEASURED NOT ASSUMED: a RUN-001-shaped trade (30 bars held) yields roughly 80 candles per package, about 6 KB. EXPLICITLY NOT IMPLEMENTED: higher-timeframe context, candidate/untraded context, a content-addressed candle store, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 155 -> 170 (X1-X15). Full regression: 889/889 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
   '12.12.0 — MOGO-003 UNIT C1: EXCURSION TIMING (CORR-7) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification or statistic moves). THE QUESTION THIS ANSWERS: alexGComputeMAEMFE (PROTECTED) records how far a trade ran for and against but never WHEN, so the July 2026 loss forensics could not tell whether GBP/USD\'s 0.949R excursion came early or late -- and that distinction is the whole of in-trade loss forensics. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.outcomes gains timeToMFE and timeToMAE ({bars, minutes, barIndex, timestampUTC}), excursionTimingProvenance, excursionAgreement, and a populated exitPathCandleRefs listing every candle actually examined between entry and exit. HOW IT STAYS HONEST: the new non-protected evidenceRecomputeExcursionTiming() mirrors the protected traversal line for line -- same start at entryBarIndex+1, same inclusive end at exitBarIndex, same favourable/adverse formulas, and the same STRICT `>` comparison so the FIRST bar reaching an extreme wins a tie -- then emits timing ONLY IF its recomputed MAE and MFE equal the engine\'s stored values exactly. The protected function is untouched and its stored maePips/mfePips remain authoritative and are copied verbatim; nothing here rewrites them. An extreme of exactly 0 was never exceeded, so no bar achieved it and the corresponding timing is null rather than a fabricated bar 1 -- the real EUR/USD 14 Jul case (MFE 0.0). MISMATCH IS NOT A CAPTURE FAILURE: if the recomputation disagrees, timing is omitted, excursionAgreement.status becomes UNAVAILABLE with reason RECOMPUTED_EXTREMES_DIFFER_FROM_ENGINE, the deterministic flag EXCURSION_RECOMPUTATION_MISMATCH is recorded in dataQualityFlags, the engine values are preserved untouched, and THE PACKAGE IS STILL WRITTEN. This differs deliberately from Unit B, where a contradicted classification fails capture: a derived-field mismatch signals a candle-window problem, not corrupted evidence, and discarding a good package over it would destroy the observation. OBSERVATIONAL ONLY: timing runs at evidence capture, after the trade is closed and its outcome recorded, inside the existing fire-and-forget seam and its own try/catch, and is unreachable from qualification, classification, trade creation, entry/stop/target, sizing, outcome and execution. PLUMBING: runAlexGReplay (NOT protected) additionally returns the in-memory candle arrays the engine was just walked over, runAlexGReplayUI passes them read-only to the seam, and timing is recomputed from THOSE candles -- never from a re-fetch, which would be a different dataset. Provenance is DERIVED_FROM_OBSERVED_FIELDS; NO new provenance token was created. The completeness report\'s excursion-timing gap is now conditional: a package carrying verified timing no longer declares it missing, while every other package still does, in the identical array position. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT (and timing is rejected outright if it appears without an AGREES agreement), and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. EXPLICITLY NOT IMPLEMENTED (Unit C2 and beyond): marketContexts, candle-window capture or caching, higher-timeframe context, decision chains, eviction or quota changes. TESTING: v128 grows 140 -> 155 (C1-C15). Full regression: 874/874 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a timing-bearing package, crypto.subtle verification in-browser, and an actual replay producing populated timing all remain browser-verified; no replay was run.',
   '12.11.0 — MOGO-003 UNIT B: OBSERVATIONAL RULE ATTRIBUTION (CORR-1) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, classification, entry, exit, stop, target, sizing, execution or automation logic touched, and no classification or statistic moves). THE GAP THIS CLOSES: the protected evaluators alexGEvaluateBreakRetest and alexGEvaluateRepeatedReaction return only {qualifies}. They never say WHICH condition decided the outcome, and they may not be modified, so every Evidence Package could name its setup type but could not show why it held. Rule-level attribution was the one dimension the 2026-08-03 reconciliation had to rate PARTIAL. WHAT WAS ADDED: every newly captured qualified ALEX setup now carries ruleIds (stable semantic identifiers, sorted lexicographically so the canonical form never depends on declaration order), triggeredConditions (one structured record per condition: conditionId, ruleId, the requirement in words, the observed values, the pass/fail state, and its own provenance), and a ruleAttribution block (ruleSetId, mirrorVersion, precedenceApplied, repeatedReactionEvaluated, unverifiedConditionCount, failedConditionIds). Three canonical rule IDs: ALEX_SR_V1_CLASSIFY_PRECEDENCE, ALEX_SR_V1_SETUP_B_BREAK_RETEST, ALEX_SR_V1_SETUP_A_REPEATED_ZONE_REACTION; ten condition IDs beneath them, each mapping 1:1 onto one line of the protected source. IDs are semantic and permanent -- never display text, array position, line number or a generated label. OBSERVATIONAL ONLY, BY CONSTRUCTION: the mirror runs at EVIDENCE CAPTURE time, downstream of every decision, and is unreachable from qualification, classification, trade construction, execution or automation. The protected evaluator output remains authoritative: the mirror can agree with it, report that a condition is not verifiable from the stored record, or fail the capture -- it can never re-classify or suppress a setup. Verdicts are TRI-STATE, and INDETERMINATE is a real answer rather than a guess. FAIL-CLOSED ON DISAGREEMENT: if the mirror proves a recorded classification could not have satisfied its own rules, evidenceBuildPackageFromTrade throws EVIDENCE_RULE_ATTRIBUTION_MISMATCH naming the failed conditions and NO PACKAGE IS WRITTEN -- wrong attribution is worse than none. The seams already wrap each trade in their own try/catch, so the failure is recorded and skipped and can never reach replay, the ledger, an account or the trading tick. The validator additionally rejects any package that asserts a contradiction. ANTI-DRIFT IS THE POINT: conditions are declared ONCE in a frozen table, in the order the protected evaluator checks them, reading stored fields only, and alexGAttributionRecordFromEngineInputs reproduces exactly the copy alexGCreateSetupRecord performs so the differential fixtures drive the mirror from the same objects the protected evaluators receive. Six differential fixtures (B1-B6) run the mirror against the REAL protected evaluators over a generated case matrix (both setup types, qualifying and non-qualifying, every individual condition falsified in turn, a 35-case sweep over touch index and bars-since-break, and the precedence case where both branches could apply): the mirror may never claim a setup qualifies where the evaluator refused, nor contradict one the evaluator accepted, and where every condition is knowable the verdicts must match exactly. When a case says a break cycle was already used, the ENGINE is put in that same state, so a disagreement can only ever be the mirror\'s fault. TWO HONEST GAPS, DISCLOSED NOT PAPERED OVER: the first-retest-per-break-cycle rule needs the whole setup set, so the replay seam counts B_breakRetest setups per break cycle and passes the tally (OBSERVED); a capture path that cannot supply it leaves that one condition unverified rather than assumed. The zone touch-count rule reads zone.touches.length, which no setup record stores, so it is attributed DERIVED_FROM_OBSERVED_FIELDS from zoneTouchNumber -- an implication, explicitly not presented as OBSERVED. DERIVED_FROM_OBSERVED_FIELDS is an ADDITIVE seventh provenance token for exactly this distinction. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, attribution is validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. TESTING: v128 grows 118 -> 140 (B1-B21 plus B14b). Full regression: 859/859 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: crypto.subtle digests and the IndexedDB path remain browser-verified, and no replay was run.',
   '12.10.0 — MOGO-003 UNIT A: EVIDENCE ATTRIBUTION CORRECTIONS (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical, and no strategy rule, threshold, classification, entry, exit, stop, target or sizing value changed). Implements the four approved Unit A corrections found by the 2026-08-03 forensic reconciliation, which had to trace source code to answer questions the Evidence Packages should have answered directly. CORR-2 VERSION SPLIT: identity collapsed the executing SPECIFICATION and the running RELEASE into one strategyVersion field, so a package could not say that RUN-001 executed alex_g_sr_v1 inside the alex_g_sr_v1_1 release. identity now carries strategySpecificationVersion, releaseVersion and releaseGatesApplied (plus a provenance for each); strategyVersion is RETAINED unchanged so every existing reader keeps working. releaseGatesApplied is an OBSERVATION about the executing path, not a default: the replay seam records an EMPTY LIST because alexGV11EntryDayEligible and alexGV11SetupTypePermitted are reachable only from alexGEvaluatePairForLiveSetups, which replay never enters; a caller that does not supply the field records UNAVAILABLE rather than a guess. CORR-3 REALIZED R: outcomes.realizedR was null in every package while the number sat in recordedResultR, so a consumer reading the obvious field got nothing. evidenceComputeRealizedR() now computes R from the OBSERVED exit -- (exit - entry) x direction / risk distance, preferring the engine\'s own riskDistance and falling back to |entry - stop| -- and stores realizedRBasis alongside it so the number is checkable rather than asserted. recordedResultR is NEVER copied into realizedR: an engine-recorded value and a price-derived one are different observations, and collapsing them would make the provenance lie. When the inputs are absent the field stays null and says UNAVAILABLE. CORR-4 BREAK/RETEST CANDLE REFERENCES: these were reported FUTURE_WORK, but the protected engine already computes and stores them -- alexGCreateSetupRecord writes brokenAtBar/brokenAt and qualificationBarIndex, and alexGConstructTrade (also protected) simply does not copy the break fields onto the trade, while the capture seam only ever received trades. Nothing new is computed: runAlexGReplay (NOT protected) now also returns the setup records it already built, runAlexGReplayUI passes them read-only to the seam, and the normalizer copies brokenAtBar/brokenAt/qualificationBarIndex verbatim. breakCandleRef and retestCandleRef are OBSERVED when the engine recorded them, NOT_APPLICABLE for a Repeated Zone Reaction (which has no break cycle -- saying UNAVAILABLE would imply something was lost), and UNAVAILABLE when the capture path was not given the setup record. penetrationDepth stays honestly FUTURE_WORK. NOT_APPLICABLE is an ADDITIVE sixth EVIDENCE_FIELD_PROVENANCE token. CORR-8 CANONICAL NAMING: "Repeated Reaction" and "Repeated Zone Reaction" were used interchangeably and were mistaken for two setups during the reconciliation. ALEX_SETUP_CANONICAL_NAMES is now the single source of truth (Repeated Zone Reaction / RZR; Break & Retest / B&R) and packages carry setupCanonicalName and setupAbbreviation. This is PRESENTATION ONLY -- setupType and setupLabel are written by protected code and are untouched, alexGComputeReplayStats is protected and its bySetupType grouping is unchanged, so no classification and no statistic moves. BACKWARD COMPATIBILITY IS THE POINT: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical (changing it would silently invalidate every existing contentHash), and the new fields are validated ONLY WHEN PRESENT and are deliberately NOT required -- making them mandatory would retroactively invalidate the 24 verified RUN-001 packages, which is exactly what must not happen. Nothing is backfilled, migrated, rewritten or renamed; a package captured before this release stays byte-identical, still validates, still hash-verifies and still re-imports. TESTING: v128 grows 96 -> 118. New A1-A22 exercise the real builder, normalizer, validator and helpers: the version split and its provenance, an empty gate list as an observation vs UNAVAILABLE as an absence, realizedR sign/magnitude for winners and losers in both directions, realizedR never sourced from recordedResultR, UNAVAILABLE when inputs are missing, candle refs OBSERVED only from supplied setup records, NOT_APPLICABLE for RZR, canonical naming with no effect on setupType/setupLabel/stats keys, pre-v12.10.0 packages still validating without the new keys, and the seam still passing setups read-only. Full regression: 837/837 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: crypto.subtle digests and the IndexedDB read/write path remain browser-verified, unchanged from v12.8.0.',
@@ -11911,13 +11912,22 @@ function evidenceUtcDateStamp(iso){
 function evidenceComputeCompleteness(basis,opts){
   const o=opts||{};
   const missing=[
-    {field:'objects.marketContexts',reason:'FUTURE_WORK',
-     detail:'Candle/market-context capture is MOGO-003 Phase 3. No market context was captured at decision time, so none is reported.'},
     {field:'objects.decisions',reason:'FUTURE_WORK',
      detail:'Durable decision chains are MOGO-003 Phase 2. The decision-event bus remains memory-only in this release.'},
     {field:'identity.commitHash',reason:'UNAVAILABLE',
      detail:'No build-time commit injection exists at this engine version.'}
   ];
+  // v12.13.0 Unit C2-M1: the market-context gap is conditional for the same reason, and is
+  // declared FIRST so the array order every earlier package used is preserved exactly.
+  if(!o.marketContextCaptured){
+    missing.unshift({field:'objects.marketContexts',reason:'FUTURE_WORK',
+      detail:'Candle/market-context capture is MOGO-003 Phase 3. No market context was captured at decision time, so none is reported.'});
+  } else {
+    // A captured window is a TRADED window in ONE timeframe -- never a candidate context, and
+    // never higher-timeframe. Saying so keeps the package honest about what it does not hold.
+    missing.push({field:'objects.marketContexts[].higherTimeframeContext',reason:'FUTURE_WORK',
+      detail:'Unit C2-M1 captures the traded window in the trade\'s own timeframe only. Higher-timeframe context is Unit C2-M2 and is not captured.'});
+  }
   // v12.12.0 Unit C1: the excursion-timing gap is now conditional. A package that actually
   // carries verified timing must not declare it missing; every other package still does, and the
   // default (no opts) keeps the pre-Unit-C1 behaviour byte-for-byte.
@@ -12266,6 +12276,108 @@ function evidenceRecomputeExcursionTiming(candles,entryBarIndex,exitBarIndex,dir
   return out;
 }
 
+// ══ v12.13.0 UNIT C2-M1 -- CORR-6: BOUNDED MARKET CONTEXT + EVIDENCE LINEAGE ═════════════════
+//
+// WHAT THIS IS. Unit C1 records WHEN a trade's extremes occurred but still points at candles that
+// live nowhere: exitPathCandleRefs are references into a dataset the repository does not keep. This
+// captures the candles themselves for the traded window, so a package can be re-examined without
+// re-fetching -- and a re-fetch would be a DIFFERENT dataset, which is why §10 of the July forensics
+// called reconstruction-from-refetch a fabrication risk.
+//
+// WHAT IT IS NOT. It is not the Phase-3 content-addressed candle store, and it is not a market
+// context for untraded candidates. It is a bounded excerpt attached to trades already being
+// captured: N bars before entry through the exit bar, in the trade's OWN timeframe only.
+// Higher-timeframe context is deliberately NOT captured here (Unit C2-M2).
+//
+// CAPS ARE LOUD. A truncated window says so, says why, and says how many bars it dropped. Silent
+// truncation would make a partial window read as a complete one -- the exact failure mode the
+// evidence platform exists to prevent. Truncation drops the OLDEST pre-entry bars first, so the
+// entry->exit path an outcome depends on is never the part that goes missing.
+const EVIDENCE_CONTEXT_PRE_ENTRY_BARS=50;     // context before entry, in bars of the trade's timeframe
+const EVIDENCE_CONTEXT_MAX_CANDLES=600;       // hard ceiling per package
+function evidenceBuildMarketContext(candles,entryBarIndex,exitBarIndex,opts){
+  const o=opts||{};
+  const num=function(v){ return typeof v==='number'&&isFinite(v)?v:null; };
+  if(!Array.isArray(candles)||!candles.length) return null;
+  const eIdx=num(entryBarIndex),xIdx=num(exitBarIndex);
+  if(eIdx==null||xIdx==null||eIdx<0||xIdx>=candles.length||xIdx<eIdx) return null;
+  const requestedPre=(typeof o.preEntryBars==='number'&&o.preEntryBars>=0)?o.preEntryBars:EVIDENCE_CONTEXT_PRE_ENTRY_BARS;
+  const maxCandles=(typeof o.maxCandles==='number'&&o.maxCandles>0)?o.maxCandles:EVIDENCE_CONTEXT_MAX_CANDLES;
+  let from=Math.max(0,eIdx-requestedPre);
+  const to=xIdx;
+  const pathCandleCount=to-eIdx+1;                 // the entry->exit path, which an outcome depends on
+  let truncated=false,truncationReason=null,dropped=0,pathExceedsMaxCandles=false;
+  if((to-from+1)>maxCandles){
+    // The cap consumes PRE-ENTRY CONTEXT ONLY. Never drop past the entry bar: a window that does
+    // not contain the traded path cannot support the outcome it is filed against, and a package
+    // holding one would be worse than a package holding none.
+    const newFrom=Math.min(eIdx,to-maxCandles+1);
+    dropped=newFrom-from;
+    from=newFrom;
+    truncated=true;
+    truncationReason='PRE_ENTRY_CONTEXT_CAPPED';
+    if(pathCandleCount>maxCandles){
+      // The path alone is longer than the ceiling. It is kept in full and the overrun is declared,
+      // rather than silently returning a window that stops before the exit.
+      pathExceedsMaxCandles=true;
+      truncationReason='PATH_EXCEEDS_MAX_CANDLES';
+    }
+  }
+  const iso=function(v){ if(v==null) return null; const d=(v instanceof Date)?v:new Date(v); return isNaN(d.getTime())?null:d.toISOString(); };
+  const out=[];
+  for(let j=from;j<=to;j++){
+    const c=candles[j];
+    if(!c) return null;                            // a hole makes the window untrustworthy
+    out.push({barIndex:j,t:iso(c.t),o:c.o,h:c.h,l:c.l,c:c.c});
+  }
+  return{
+    contextId:o.contextId||null,
+    positionId:o.positionId||null,
+    instrument:o.instrument||null,
+    timeframe:o.timeframe||null,
+    window:{
+      requestedPreEntryBars:requestedPre,
+      preEntryBars:eIdx-from,
+      fromBarIndex:from,toBarIndex:to,
+      entryBarIndex:eIdx,exitBarIndex:xIdx,
+      fromUTC:out.length?out[0].t:null,toUTC:out.length?out[out.length-1].t:null,
+      candleCount:out.length,
+      datasetCandleCount:candles.length,
+      truncated,truncationReason,droppedPreEntryBars:dropped,
+      pathCandleCount,pathExceedsMaxCandles,
+      maxCandles
+    },
+    candles:out,
+    candleProvenance:'OBSERVED',                   // verbatim from the dataset the run hashed
+    datasetHash:o.datasetHash||null,               // ties the excerpt to the run identity
+    scope:'TRADED_WINDOW_OWN_TIMEFRAME',           // never a candidate context, never higher timeframe
+    higherTimeframeContext:null,                   // Unit C2-M2 -- declared, not silently missing
+    higherTimeframeContextProvenance:'FUTURE_WORK'
+  };
+}
+// Structural lineage: how the recorded objects relate to one another. Every value already exists on
+// the trade or the run -- nothing is derived, and no decision EVENT is implied. Decision-event
+// capture needs emission inside protected functions and is deliberately absent (CORR-5).
+function evidenceBuildLineage(trade,opts){
+  const o=opts||{};
+  const v=function(x){ return x==null?null:x; };
+  return{
+    runId:v(o.runId),datasetHash:v(o.datasetHash),
+    zoneId:v(trade&&trade.zoneId),reactionId:v(trade&&trade.reactionId),
+    breakCycleId:v(trade&&trade.breakCycleId),
+    setupId:v(trade&&trade.setupId),candidateId:v(trade&&trade.setupId),
+    positionId:v(trade&&trade.tradeId),
+    outcomeId:(trade&&trade.tradeId!=null)?String(trade.tradeId)+'|outcome':null,
+    marketContextId:v(o.contextId),
+    packageId:v(o.packageId),
+    sourceTradeId:v(trade&&trade.tradeId),
+    replaySourceTradeId:v(trade&&trade.replaySourceTradeId),
+    decisionChainRef:null,                         // CORR-5: no durable decision chain exists
+    decisionChainProvenance:'FUTURE_WORK',
+    provenance:'OBSERVED'                          // every id above is a stored identifier
+  };
+}
+
 // ══ v12.10.0 UNIT A -- CORR-4: BREAK AND RETEST CANDLE REFERENCES ════════════════════════════
 // These were reported FUTURE_WORK, but the PROTECTED engine already computes and stores them:
 // alexGCreateSetupRecord writes brokenAtBar/brokenAt (the break candle) and qualificationBarIndex/
@@ -12325,10 +12437,11 @@ function evidenceBuildPackageFromTrade(trade,opts){
   const cfgSnapshot=has('configurationSnapshot')&&trade.configurationSnapshot?trade.configurationSnapshot:null;
   // v12.12.0 Unit C1: a package that carries excursion timing must not also declare it a gap.
   // Every other gap in the report is unchanged.
+  const marketContextCaptured=!!(trade.marketContext&&Array.isArray(trade.marketContext.candles)&&trade.marketContext.candles.length);
   const excursionTimingCaptured=!!(trade.excursionTiming&&trade.excursionTiming.agreement&&
     trade.excursionTiming.agreement.status==='AGREES'&&
     (trade.excursionTiming.timeToMFE!=null||trade.excursionTiming.timeToMAE!=null));
-  const completeness=evidenceComputeCompleteness(basis,{excursionTimingCaptured});
+  const completeness=evidenceComputeCompleteness(basis,{excursionTimingCaptured,marketContextCaptured});
   // ── v12.10.0 UNIT A -- CORR-2: SPECIFICATION VERSION vs RUNNING RELEASE ──────────────────
   // The 2026-08-03 reconciliation had to trace source code to establish that RUN-001 executed
   // alex_g_sr_v1 while the build was the alex_g_sr_v1_1 release, because the package collapsed
@@ -12344,6 +12457,14 @@ function evidenceBuildPackageFromTrade(trade,opts){
   // v12.12.0 Unit C1 (CORR-7). The seam computes timing where it still holds the candles and
   // attaches it to the normalized trade; every other capture path leaves it absent, which reads
   // as an honest UNAVAILABLE rather than a fabricated zero.
+  // v12.13.0 Unit C2-M1: the seam supplies the window; the builder never fetches or derives one.
+  const marketContext=(trade.marketContext&&typeof trade.marketContext==='object')?trade.marketContext:null;
+  const lineage=evidenceBuildLineage(trade,{
+    runId:(o.runId!=null?o.runId:trade.runIdForLineage),
+    datasetHash:(o.datasetHash!=null?o.datasetHash:trade.datasetHashForLineage),
+    contextId:marketContext?marketContext.contextId:null,
+    packageId:o.packageId||null
+  });
   const excursion=(trade.excursionTiming&&typeof trade.excursionTiming==='object')?trade.excursionTiming:{
     timeToMFE:null,timeToMAE:null,provenance:'UNAVAILABLE',
     agreement:{status:'UNAVAILABLE',reason:'NOT_COMPUTED_ON_THIS_CAPTURE_PATH',
@@ -12422,6 +12543,9 @@ function evidenceBuildPackageFromTrade(trade,opts){
           ruleIds:attribution.ruleIds,
           triggeredConditions:attribution.triggeredConditions,
           ruleAttribution:attribution.attribution,
+          // v12.13.0 Unit C2-M1: structural lineage. Every value is an identifier the engine
+          // already stored; nothing is derived and no decision event is implied.
+          lineage:lineage,
           qualifiedAt:pick('qualificationTimestamp'),qualificationClose:pick('qualificationClose'),
           structureRefs:{
             zoneId:pick('zoneId'),zoneLow:pick('zoneLow'),zoneHigh:pick('zoneHigh'),
@@ -12492,7 +12616,7 @@ function evidenceBuildPackageFromTrade(trade,opts){
         dataQualityFlags:excursion.dataQualityFlags,
         evidenceCompleteness:completeness.level
       }],
-      marketContexts:[]
+      marketContexts:marketContext?[marketContext]:[]
     },
     objectCounts:{candidates:0,decisions:0,qualifiedSetups:0,positions:0,outcomes:0,marketContexts:0},
     completenessReport:completeness,
@@ -12550,6 +12674,16 @@ function evidenceValidatePackage(pkg){
       if(qs.ruleAttribution&&qs.ruleAttribution.contradictsEngineClassification===true){
         errors.push('objects.qualifiedSetups['+i+'].ruleAttribution contradicts the recorded classification');
       }
+      // v12.13.0 Unit C2-M1 lineage: present-only, and every link must be an identifier, never an
+      // object graph -- a package must stay a flat, hashable record.
+      if(qs.lineage!=null){
+        const at='objects.qualifiedSetups['+i+'].lineage';
+        if(typeof qs.lineage!=='object'||Array.isArray(qs.lineage)) errors.push(at+' must be an object or null');
+        else Object.keys(qs.lineage).forEach(function(k){
+          const v=qs.lineage[k];
+          if(v!==null&&typeof v!=='string') errors.push(at+'.'+k+' must be a string identifier or null');
+        });
+      }
     });
   }
   // Same rule for the outcome-level provenance introduced by Unit A: checked when present, never
@@ -12605,6 +12739,26 @@ function evidenceValidatePackage(pkg){
     if(!Array.isArray(pkg.completenessReport.missing)) errors.push('completenessReport.missing must be an array');
     else pkg.completenessReport.missing.forEach(function(m,i){
       if(!m||EVIDENCE_FIELD_PROVENANCE.indexOf(m.reason)===-1) errors.push('completenessReport.missing['+i+'] has an invalid reason: '+(m&&m.reason));
+    });
+  }
+  // ── v12.13.0 Unit C2-M1: market context validated ONLY WHEN PRESENT. A package captured before
+  // this release carries an empty array and must still validate, import and hash-verify. ──
+  if(pkg.objects&&Array.isArray(pkg.objects.marketContexts)){
+    pkg.objects.marketContexts.forEach(function(mc,i){
+      const at='objects.marketContexts['+i+']';
+      if(!mc||typeof mc!=='object'){ errors.push(at+' must be an object'); return; }
+      if(mc.candleProvenance!=null&&EVIDENCE_FIELD_PROVENANCE.indexOf(mc.candleProvenance)===-1) errors.push(at+'.candleProvenance is invalid: '+mc.candleProvenance);
+      if(!mc.window||typeof mc.window!=='object'){ errors.push(at+'.window is required when a context is present'); return; }
+      if(!Array.isArray(mc.candles)){ errors.push(at+'.candles must be an array'); return; }
+      if(mc.window.candleCount!==mc.candles.length) errors.push(at+'.window.candleCount ('+mc.window.candleCount+') does not match candles.length ('+mc.candles.length+')');
+      if(mc.window.truncated===true&&!mc.window.truncationReason) errors.push(at+' is truncated but gives no reason -- a silent cap is not permitted');
+      if(mc.window.truncated!==true&&mc.window.droppedPreEntryBars) errors.push(at+' reports dropped bars while claiming not to be truncated');
+      // The window must actually contain the traded path, or it cannot support the outcome.
+      if(typeof mc.window.entryBarIndex==='number'&&typeof mc.window.toBarIndex==='number'
+         &&mc.window.toBarIndex<mc.window.entryBarIndex) errors.push(at+'.window ends before entry');
+      mc.candles.forEach(function(c,j){
+        if(!c||typeof c!=='object'||typeof c.barIndex!=='number') errors.push(at+'.candles['+j+'] must carry a numeric barIndex');
+      });
     });
   }
   if(pkg.objects&&pkg.objectCounts){
@@ -12765,7 +12919,7 @@ async function alexGBuildReplayRunIdentity(oPair,days,datasets,replayParams){
 // v12.11.0 Unit B adds `breakCycleSetupCount`: how many B_breakRetest setups the run recorded for
 // this trade's break cycle. Only the whole setup set can show it, so the seam counts it and passes
 // it in; a caller that cannot supply it leaves that one condition honestly unverified.
-function evidenceNormalizeReplayTrade(trade,run,setup,breakCycleSetupCount,excursionTiming){
+function evidenceNormalizeReplayTrade(trade,run,setup,breakCycleSetupCount,excursionTiming,marketContext){
   if(!trade||typeof trade!=='object'||trade.tradeId==null||!run) return null;
   if(trade.stillOpen) return null;                 // unresolved -- not a trade observation yet
   if(trade.result==null) return null;
@@ -12803,6 +12957,9 @@ function evidenceNormalizeReplayTrade(trade,run,setup,breakCycleSetupCount,excur
     // v12.12.0 Unit C1 (CORR-7): carried verbatim from the seam. Absent on every other capture
     // path, where the builder then records an honest UNAVAILABLE.
     excursionTiming:(excursionTiming&&typeof excursionTiming==='object')?excursionTiming:null,
+    // v12.13.0 Unit C2-M1: carried verbatim from the seam; absent on every other capture path.
+    marketContext:(marketContext&&typeof marketContext==='object')?marketContext:null,
+    runIdForLineage:run.runId,datasetHashForLineage:run.datasetHash,
     zoneLow:trade.zoneLow, zoneHigh:trade.zoneHigh, zoneCenter:trade.zoneCenter,
     breakCycleId:trade.breakCycleId, brokenDirection:trade.brokenDirection,
     barsSinceBreak:trade.barsSinceBreak, atrAtEntry:trade.atrAtEntry,
@@ -12872,7 +13029,21 @@ async function evidenceCaptureReplayTradesAsync(run,trades,setups,candlesByTimef
           t.direction,t.entry,pipSize(t.pair),t.timeframe,t.maePips,t.mfePips,t.entryTimestamp);
       }
     }catch(e){ excursion=null; try{ evidenceRecordWriteFailure('excursion-timing',e,{tradeId:t&&t.tradeId}); }catch(e2){} }
-    const norm=evidenceNormalizeReplayTrade(t,run,setup,cycleCount,excursion);
+    // v12.13.0 Unit C2-M1 (CORR-6): the bounded own-timeframe window, read from the same candle
+    // array. Its own try/catch for the same reason as timing -- a context failure must never cost
+    // the package, which is evidence in its own right without it.
+    let marketContext=null;
+    try{
+      const tfCandles=(candlesByTimeframe&&t&&t.timeframe!=null)?candlesByTimeframe[t.timeframe]:null;
+      if(Array.isArray(tfCandles)&&t){
+        marketContext=evidenceBuildMarketContext(tfCandles,t.entryBarIndex,t.exitBarIndex,{
+          contextId:(t.tradeId!=null?'CTX|'+String(t.tradeId):null),
+          positionId:(t.tradeId!=null?String(t.tradeId):null),
+          instrument:t.pair,timeframe:t.timeframe,datasetHash:run.datasetHash
+        });
+      }
+    }catch(e){ marketContext=null; try{ evidenceRecordWriteFailure('market-context',e,{tradeId:t&&t.tradeId}); }catch(e2){} }
+    const norm=evidenceNormalizeReplayTrade(t,run,setup,cycleCount,excursion,marketContext);
     if(!norm){ skipped++; continue; }
     try{
       if(await evidenceHasPackageForTrade(norm.tradeId)){ skipped++; continue; }  // idempotent re-run
