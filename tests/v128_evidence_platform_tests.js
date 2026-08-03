@@ -2337,5 +2337,151 @@ function runEvidencePlatformFixtures(g){
     eq(g.tradeIntegrityFilterForStatistics(null,'alex_g_sr_v1').length,0);
   });
 
+  // ══ GROUP 17 — v12.16.0 IMMUTABLE TRADE LEDGER & DERIVED ACCOUNT STATE ═════════════════
+  // Every figure must be reproducible from starting balance + ledger + quarantined events.
+
+  function ledgerTrade(over){
+    const t={tradeId:'AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000',
+      strategy:'alex_g_sr_v1',pair:'EUR_USD',timeframe:'H1',direction:'buy',
+      entry:1.15,stop:1.1450,target:1.1600,exitPrice:1.1600,result:'Win',resultR:2,pnl:200,
+      riskAmount:100,maePips:2,mfePips:50,
+      openedAt:'2026-04-06T02:00:00.000Z',closedAt:'2026-04-06T03:00:00.000Z',
+      isDeveloperTrade:false,tradeSource:'AUTO'};
+    if(over) Object.keys(over).forEach(function(k){ t[k]=over[k]; });
+    return t;
+  }
+  function lossTrade(over){
+    return ledgerTrade(Object.assign({tradeId:ledgerTrade().tradeId+'|L',result:'Loss',resultR:-1,
+      pnl:-100,exitPrice:1.1450,maePips:52,mfePips:1,
+      closedAt:'2026-04-07T03:00:00.000Z'},over||{}));
+  }
+
+  t('L1 an account is rebuilt from starting balance + ledger alone',function(){
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),lossTrade()]});
+    eq(d.schemaVersion,'mogo.trade-ledger.v1');
+    eq(d.startingBalance,10000);
+    eq(d.balance,10100,'10000 + 200 - 100, derived, never read from a stored total');
+    eq(d.realizedPnl,100);
+    eq(d.wins,1); eq(d.losses,1); eq(d.decided,2); eq(d.winRate,50);
+    eq(d.grossWin,200); eq(d.grossLoss,100); eq(d.profitFactor,2);
+    eq(d.derivation.method,'DERIVED_FROM_LEDGER');
+    eq(d.eventCounts.included,2); eq(d.eventCounts.excluded,0);
+  });
+  t('L2 reconstruction is deterministic and order-independent',function(){
+    const a=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),lossTrade()]});
+    const b=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[lossTrade(),ledgerTrade()]});   // supplied in the opposite order
+    eq(JSON.stringify(a),JSON.stringify(b),'the ledger sorts chronologically, so input order cannot matter');
+    const c=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),lossTrade()]});
+    eq(JSON.stringify(a),JSON.stringify(c),'same inputs must always produce the same account');
+  });
+  t('L3 quarantined events are EXCLUDED from every figure but PRESERVED in full',function(){
+    const seeded=seededTrade();
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),seeded]});
+    eq(d.balance,10200,'only the genuine +200 is counted');
+    eq(d.wins,1,'the seeded Win must not inflate the win count');
+    eq(d.decided,1);
+    eq(d.eventCounts.quarantined,1);
+    eq(d.excludedEvents.length,1,'and it is still carried in the ledger');
+    const ex=d.excludedEvents[0];
+    eq(ex.tradeId,'AGT|MANUAL-B|1785634676564');
+    eq(ex.pnl,200,'its P&L is preserved -- that is what explains a stored-balance divergence');
+    ok(ex.integrityViolations.length>=3,'with the rules it violated');
+  });
+  t('L4 reconciliation explains a stored balance that includes an excluded trade',function(){
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[seededTrade()]});
+    eq(d.balance,10000,'the ledger says nothing genuine happened');
+    // this is the real INC-005 situation: storage says 10200
+    const rec=g.ledgerReconcileBalance(10200,d);
+    eq(rec.status,'EXPLAINED_BY_EXCLUSIONS');
+    eq(rec.storedBalance,10200); eq(rec.derivedBalance,10000);
+    eq(rec.delta,200); eq(rec.excludedPnl,200); eq(rec.unexplainedDelta,0);
+    ok(rec.explanation.indexOf('excluded')!==-1);
+  });
+  t('L5 an UNEXPLAINED divergence is reported, not absorbed',function(){
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade()]});
+    eq(d.balance,10200);
+    const rec=g.ledgerReconcileBalance(10500,d);   // stored total moved for no ledger reason
+    eq(rec.status,'UNEXPLAINED_DELTA');
+    eq(rec.delta,300); eq(rec.unexplainedDelta,300);
+    eq(g.ledgerReconcileBalance(10200,d).status,'MATCHES');
+    eq(g.ledgerReconcileBalance(null,d).status,'UNAVAILABLE');
+  });
+  t('L6 the ledger architecture is strategy-agnostic (JVM field names differ)',function(){
+    // JVM records name the id, pair and direction differently. Mapped verbatim by adapter.
+    const jvm=[{id:7,oPair:'EUR_USD',dir:'long',pnl:150,riskAmount:100,result:'Win',resultR:1.5,
+      entry:1.1,stop:1.09,exitPrice:1.115,maePips:3,mfePips:60,
+      openedAt:'2026-05-01T10:00:00.000Z',closedAt:'2026-05-01T14:00:00.000Z'}];
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'current_strategy',records:jvm});
+    eq(d.balance,10150); eq(d.wins,1); eq(d.eventCounts.included,1);
+    const ev=g.ledgerBuildEvents(jvm,'current_strategy')[0];
+    eq(ev.tradeId,'7'); eq(ev.pair,'EUR_USD'); eq(ev.direction,'long');
+    eq(ev.ledgerEventId,'current_strategy|7');
+    // an unknown future strategy falls back to canonical names rather than failing
+    const future=g.ledgerBuildEvents([{tradeId:'X|1',pair:'GBP_USD',direction:'sell',pnl:10,
+      result:'Win',closedAt:'2026-05-02T00:00:00.000Z'}],'crt_v1')[0];
+    eq(future.tradeId,'X|1'); eq(future.strategyId,'crt_v1');
+  });
+  t('L7 the ledger never mutates its source records',function(){
+    const recs=[ledgerTrade(),seededTrade()];
+    const before=JSON.stringify(recs);
+    g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',records:recs});
+    g.ledgerBuildEvents(recs,'alex_g_sr_v1');
+    eq(JSON.stringify(recs),before,'derivation must be read-only over the account');
+    const src=String(g.ledgerDeriveAccountState)+String(g.ledgerBuildEvents)+String(g.ledgerNormalizeEvent);
+    ['localStorage','commitAlexGLedger','saveAlexG','.splice(','delete ','alexGAccount.balance=']
+      .forEach(function(n){ eq(src.indexOf(n),-1,'the ledger layer must never '+n); });
+  });
+  t('L8 R-space reuses the SHIPPED equity engine rather than a second implementation',function(){
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),lossTrade()]});
+    eq(d.derivation.rSpaceEngine,'alexGComputeEquityStats (shipped, unmodified)');
+    eq(d.netR,1,'+2R then -1R');
+    eq(d.expectancyR,0.5);
+    ok(d.maxDrawdownR>=1,'the drawdown comes from the same chronological walk');
+    ok(String(g.ledgerDeriveAccountState).indexOf('alexGComputeEquityStats')!==-1,
+       'it must call the shipped engine, not re-derive equity');
+  });
+  t('L9 missing data is counted, never guessed',function(){
+    const noPnl=ledgerTrade({pnl:null,tradeId:'AGT|AGS|alex_g_sr_v1|X|1'});
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',records:[noPnl]});
+    eq(d.eventCounts.pnlUnavailable,1,'the gap is reported');
+    eq(d.balance,10000,'and never filled in with an invented number');
+    eq(d.wins,1,'the outcome is still counted where it IS known');
+    const empty=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',records:[]});
+    eq(empty.balance,10000); eq(empty.winRate,null); eq(empty.decided,0);
+    eq(g.ledgerDeriveAccountState({}).balance,0,'no inputs must not throw');
+  });
+  t('L10 developer test trades are excluded by default and preserved',function(){
+    const dev=ledgerTrade({tradeId:'AGT|TEST|1',isDeveloperTrade:true,pnl:500});
+    const d=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),dev]});
+    eq(d.balance,10200,'a test trade must not move a derived balance');
+    eq(d.eventCounts.developerTrades,1);
+    eq(d.excludedEvents.length,1);
+    const withDev=g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',
+      records:[ledgerTrade(),dev],includeDeveloperTrades:true});
+    eq(withDev.balance,10700,'an investigator can opt them back in');
+  });
+  t('L11 the ledger cannot influence trading or replay',function(){
+    const protectedList=g.getBaselineAlexFunctions();
+    ['alexGCloseLivePosition','alexGConstructTrade','alexGRunSetupReplay','alexGComputeReplayStats']
+      .forEach(function(f){
+        ok(protectedList.indexOf(f)!==-1,f+' must still be protected');
+        ['ledgerDeriveAccountState','ledgerReconcileBalance','TRADE_LEDGER_ADAPTERS']
+          .forEach(function(n){ eq(String(g[f]||'').indexOf(n),-1,f+' must not reference '+n); });
+      });
+    const p=builtPackage();
+    const before=g.evidenceCanonicalize(p);
+    g.ledgerDeriveAccountState({startingBalance:10000,strategyId:'alex_g_sr_v1',records:[ledgerTrade()]});
+    eq(g.evidenceCanonicalize(p),before,'deriving an account must not touch evidence');
+  });
+
   return out;
 }

@@ -1952,9 +1952,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.15.0';
+const APP_VERSION='12.16.0';
 const APP_VERSION_DATE='3 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.16.0 — MOGO-003 PHASE 2: IMMUTABLE TRADE LEDGER &amp; DERIVED ACCOUNT STATE (evidence-integrity release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical). THE PROBLEM: account totals are STORED and independently mutated -- alexGCloseLivePosition adds each trade\'s P&amp;L to alexGAccount.balance, after which the number cannot be recomputed, explained or checked. INC-005 showed the consequence: once the seeded record was excluded from statistics the stored balance still carried its +$200, and only the balance was authoritative. THE ANSWER: treat closed trades as an APPEND-ONLY LEDGER and DERIVE balance, realized P&amp;L, win rate, expectancy, profit factor, R statistics and drawdown from it. A derived figure can be recomputed and reconciled; a stored total cannot. THE DELIBERATE BOUNDARY: this does NOT rewrite the stored balance and does NOT touch the protected close path -- alexGCloseLivePosition stays byte-identical and keeps its own total. The ledger derives truth alongside it and RECONCILES the two, so a divergence becomes a visible, explained number instead of a silent one. Replacing the stored total is a later explicit step that this reconciliation is the prerequisite for, and doing it in this order keeps the milestone reversible. COMPONENTS: ledgerNormalizeEvent (one closed trade -&gt; one canonical immutable event, adapter-mapped, integrity verdict attached), ledgerBuildEvents (deterministic ordering by closedAt then tradeId -- the same walk alexGComputeEquityStats already uses), ledgerDeriveAccountState (the reconstruction: starting balance + verified ledger + quarantined events -&gt; the entire account) and ledgerReconcileBalance, which classifies any difference as MATCHES, EXPLAINED_BY_EXCLUSIONS (exactly the P&amp;L of excluded records -- the INC-005 case) or UNEXPLAINED_DELTA (the stored total moved for a reason the ledger cannot account for). The third verdict is reported, never absorbed. ONE ARCHITECTURE FOR EVERY STRATEGY: ALEX uses canonical names, JVM maps id/oPair/dir verbatim, and any strategy without an adapter falls back to canonical names -- so CRT, ICT and TJR work with no change here. Derivation is strategy-agnostic. NO SECOND EQUITY IMPLEMENTATION: R-space reuses the shipped alexGComputeEquityStats rather than a duplicate chronological walk, which is exactly the drift risk this milestone removes. FORENSIC HISTORY IS COMPLETE: quarantined and developer events are never dropped -- they are carried with their exclusion reasons and P&amp;L, which is what lets the layer explain a stored-balance divergence. HONEST GAPS: a record without P&amp;L is COUNTED as pnlUnavailable and never filled in; profit factor is null with a stated basis when there are no losses; and derived state is deliberately NOT yet wired into any display, because reconciliation must be observed against real accounts before a derivation bug can become a wrong number on screen. TESTING: v128 grows 194 -&gt; 205 (L1-L11): reconstruction from the ledger alone, determinism and order-independence, quarantined events excluded yet preserved with their P&amp;L, the actual INC-005 reconciliation resolving to EXPLAINED_BY_EXCLUSIONS with unexplainedDelta 0, an unexplained divergence reported, JVM field mapping plus unknown-strategy fallback, read-only behaviour over source records, reuse of the shipped equity engine, missing data counted never guessed, developer trades excluded by default but opt-in for investigators, and no influence on trading, replay or evidence. Full regression: 924/924 across 17 suites, zero drift.',
   '12.15.0 — MOGO-003 PHASE 2: TRADE INTEGRITY &amp; QUARANTINE (evidence-integrity release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change). WHY: on 2026-08-02 a record surfaced in an ALEX paper account claiming a Win at target with MAE 0.0 AND MFE 0.0 -- arithmetically impossible, because alexGUpdatePositionExcursionAndCheckExit updates the excursion BEFORE evaluating the exit from the same bid/ask. It carried tradeSource AUTO and isDeveloperTrade false, so every statistic counted it. Forensics established it was hand-seeded (tradeId AGT|MANUAL-B|..., setup tokens zB/rB -- strings no MOGO code path can mint, and absent from the entire repository), written under a non-production origin. The operator\'s live account was unaffected. WHAT WAS BUILT -- RULE-BASED, NOT IDENTIFIER-BASED: TRADE_INTEGRITY_RULES states invariants a genuine trade cannot violate: a Win must record a favourable excursion above zero, a Loss an adverse excursion above zero, a trade must close strictly after it opened, the recorded result must agree with the direction of the exit price, and (per strategy profile) the trade id must match the pattern that strategy\'s engine actually mints. A future seeded record with different identifiers is caught by the same rules. STRATEGY-AGNOSTIC BY DEFAULT: four of the five rules declare appliesTo \'*\', so TJR, CRT and any future strategy inherit them the moment they produce trades; a strategy adds its own checks by registering a profile in TRADE_INTEGRITY_STRATEGY_PROFILES, with no change to the evaluator. NOTHING IS DELETED OR REWRITTEN: quarantine is computed on read from the record\'s own fields -- no ledger write, no new storage key, no migration -- so a quarantined record stays byte-identical on disk and fully inspectable. STATISTICS EXCLUDE, SURFACES DISCLOSE: the ALEX live panel, the dashboard tiles (for EVERY registered strategy, keyed on manifest id), the journal summary and strategy-performance analytics all filter quarantined records out, and stored balances are corrected for display by netting the quarantined P&amp;L back out rather than touching the stored balance; meanwhile the trade tables still LIST every quarantined record with a red QUARANTINED badge naming the violated rule, and the journal summary states how many were excluded. A rule that throws never quarantines. OBSERVATIONAL ONLY: the layer runs at read time, downstream of every decision; it cannot open, close, size or price a trade, and no protected function references it. REPLAY IS UNTOUCHED: alexGComputeReplayStats is protected and unchanged, and replay Evidence Packages are not evaluated by this layer. TESTING: v128 grows 185 -> 194 (Q1-Q9). Full regression: 913/913 across 17 suites, zero drift.',
   '12.14.0 — MOGO-003 UNIT C2-M2: HIGHER-TIMEFRAME CONTEXT (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: C2-M1 captured the traded window in the trade\'s OWN timeframe, so a reader could see the entry and the path but not the structure the setup sat inside -- and ALEX is a multi-timeframe strategy whose zones come from H1/H4/D/W. WHAT WAS ADDED, on newly captured REPLAY packages only: marketContexts[].higherTimeframeContext carries a small window of EACH higher timeframe (EVIDENCE_HTF_BARS = 20 bars each), with per-timeframe window blocks (requested vs captured bars, from/to bar indices and UTC bounds, dataset size, bars available before the anchor, truncation state) and candles stored verbatim. Timeframes appear in a deterministic ascending-rank order (H4, D, W for an H1 trade). THE PROPERTY THAT MATTERS MOST -- NO LOOK-AHEAD: context is anchored at the ENTRY CANDLE\'S CLOSE and includes only higher-timeframe bars that had genuinely CLOSED by then, found by scanning candle close times rather than rounding or estimating from a bar\'s start. A daily bar closing hours after entry is hindsight, not context. VALIDATION ENFORCES IT: a context whose last bar closes after its own anchor is REJECTED, as is any candle starting after the anchor -- the evidence layer refuses to store look-ahead even though none of it ever touched a trading decision. HONEST ABSENCE: a timeframe with no dataset, no closed bar at the anchor, or a hole is recorded in omittedTimeframes WITH A REASON, never silently skipped; a trade on the highest timeframe reports NOT_APPLICABLE rather than a missing capture, because nothing exists above it. RANKING IS NOT REINVENTED: EVIDENCE_TIMEFRAME_RANK mirrors RULES_ALEXG.config.htfPriority (W > D > H4 > H1) so the evidence layer never reads a protected constant it could drift from, and a fixture asserts the two are identical -- the same anti-drift technique Unit B uses for its attribution mirror. COMPLETENESS: a package that captures higher-timeframe context sheds the higherTimeframeContext gap C2-M1 introduced; every other package still declares it, in the same array position, so canonical ordering for earlier package shapes is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. PAYLOAD, MEASURED NOT ASSUMED -- and the earlier estimate was WRONG: sizes are measured on the EXPORTED form (JSON.stringify with 2-space indent, which is what actually reaches disk), not compact JSON. On RUN-001\'s real dataset shape (H1 2220 / H4 600 / D 150 / W 73) with a 30-bar hold, one package measures 15.0 KB through Unit C1, 33.2 KB with the own-timeframe window (C2-M1, +18.2 KB) and 47.6 KB with higher-timeframe context (C2-M2, +14.5 KB: H4 20 bars, D 20, W 8). A 24-trade run therefore grows 360 KB -> 796 KB -> 1.14 MB. The v12.13.0 note estimating about 6 KB per package measured COMPACT JSON and understated the on-disk figure roughly threefold; this entry supersedes it. IndexedDB absorbs this comfortably, but a long multi-pair run is now a megabyte-scale store and the content-addressed candle store (deduplication) becomes the obvious next economy. EXPLICITLY NOT IMPLEMENTED: the content-addressed candle store, untraded-candidate context, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 170 -> 185 (Y1-Y15). Full regression: 904/904 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
   '12.13.0 — MOGO-003 UNIT C2-M1: BOUNDED MARKET CONTEXT &amp; EVIDENCE LINEAGE (CORR-6, first milestone) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: Unit C1 records WHEN a trade\'s extremes occurred, but exitPathCandleRefs point into a dataset the repository does not keep -- and re-fetching those candles would produce a DIFFERENT dataset, which the July 2026 forensics called a fabrication risk. This captures the candles themselves for the traded window. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.marketContexts carries ONE bounded excerpt per package -- the trade\'s OWN timeframe, EVIDENCE_CONTEXT_PRE_ENTRY_BARS (50) bars before entry through the exit bar, each candle stored verbatim with its barIndex and an ISO timestamp, plus a window block recording requested vs actual pre-entry bars, from/to bar indices and UTC bounds, candle counts and the dataset size, and datasetHash tying the excerpt to the run identity. CAPS ARE LOUD: EVIDENCE_CONTEXT_MAX_CANDLES (600) is a hard ceiling; a truncated window sets truncated:true, names truncationReason and reports droppedPreEntryBars, and truncation drops the OLDEST pre-entry bars first so the entry-to-exit path an outcome depends on is never what goes missing. Validation REJECTS a window that claims truncation without a reason, or reports dropped bars while claiming none. LINEAGE: objects.qualifiedSetups[].lineage records how the stored objects relate -- runId, datasetHash, zoneId, reactionId, breakCycleId, setupId/candidateId, positionId, outcomeId, marketContextId, packageId, sourceTradeId and replaySourceTradeId. Every value is an identifier the engine already stored, so provenance is OBSERVED; nothing is derived and no decision EVENT is implied. HONEST ABOUT WHAT IS ABSENT: higherTimeframeContext is present and explicitly null with provenance FUTURE_WORK (Unit C2-M2, not started), and decisionChainRef is null with provenance FUTURE_WORK -- faithful decision-event capture needs emission inside protected functions (CORR-5b) and is deliberately not attempted. A package that captures a window no longer declares marketContexts a gap, but DOES declare the higher-timeframe gap in its place; a package without one declares the original gap in the original array position, so canonical ordering for every earlier package shape is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. SIZE, MEASURED NOT ASSUMED: a RUN-001-shaped trade (30 bars held) yields roughly 80 candles per package, about 6 KB. EXPLICITLY NOT IMPLEMENTED: higher-timeframe context, candidate/untraded context, a content-addressed candle store, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 155 -> 170 (X1-X15). Full regression: 889/889 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
@@ -11572,6 +11573,180 @@ function renderDecisionEventDiagnostics(){
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// MOGO-003 PHASE 2 — IMMUTABLE TRADE LEDGER & DERIVED ACCOUNT STATE (v12.16.0)
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//
+// THE PROBLEM. Account totals are STORED and independently mutated: alexGCloseLivePosition adds a
+// trade's P&L to alexGAccount.balance, and from then on the balance is a number nobody can audit.
+// When INC-005's seeded record was excluded from statistics, the stored balance still carried its
+// +$200 -- statistics and balance disagreed, and only the balance was authoritative.
+//
+// THE ANSWER. Treat the closed-trade records as an APPEND-ONLY LEDGER and DERIVE every figure from
+// it: balance, realized P&L, win rate, expectancy, profit factor, R statistics and drawdown. A
+// derived figure can always be recomputed, explained and reconciled; a stored total cannot.
+//
+// WHAT THIS IS NOT. It does not rewrite the stored balance and it does not touch the protected
+// close path. alexGCloseLivePosition remains byte-identical and keeps maintaining its own total.
+// This layer derives the truth alongside it and RECONCILES the two, so a divergence becomes a
+// visible, explained number instead of a silent one. Replacing the stored total is a later,
+// explicit step that this reconciliation is the prerequisite for.
+//
+// FORENSIC HISTORY IS COMPLETE. Quarantined events are never dropped from the ledger -- they are
+// carried with their exclusion reasons and their P&L, which is exactly what lets the layer say
+// "the stored balance is $200 higher than the ledger, and here is the record that explains it".
+//
+// ONE ARCHITECTURE FOR EVERY STRATEGY. Normalisation is adapter-based: ALEX and JVM declare how
+// their records name things, and any strategy without an adapter falls back to the canonical field
+// names. Derivation itself is strategy-agnostic.
+const TRADE_LEDGER_SCHEMA_VERSION='mogo.trade-ledger.v1';
+const TRADE_LEDGER_ADAPTERS={
+  // ALEX already uses the canonical names; declared explicitly so the mapping is visible.
+  alex_g_sr_v1:{tradeId:'tradeId',pair:'pair',direction:'direction',pnl:'pnl',riskAmount:'riskAmount'},
+  // JVM names several fields differently. Mapped verbatim -- nothing inferred or computed.
+  current_strategy:{tradeId:'id',pair:'oPair',direction:'dir',pnl:'pnl',riskAmount:'riskAmount'},
+  DEFAULT:{tradeId:'tradeId',pair:'pair',direction:'direction',pnl:'pnl',riskAmount:'riskAmount'}
+};
+function ledgerAdapterFor(strategyId){
+  return TRADE_LEDGER_ADAPTERS[strategyId]||TRADE_LEDGER_ADAPTERS.DEFAULT;
+}
+// One closed trade -> one canonical, immutable ledger event. Reads only; the source record is
+// never modified, and a field the record genuinely lacks stays null rather than being invented.
+function ledgerNormalizeEvent(record,strategyId){
+  if(!record||typeof record!=='object') return null;
+  const a=ledgerAdapterFor(strategyId);
+  const num=function(v){ return typeof v==='number'&&isFinite(v)?v:null; };
+  const id=record[a.tradeId];
+  const integrity=evaluateTradeIntegrity(record,strategyId);
+  return{
+    ledgerEventId:(strategyId||'unknown')+'|'+(id!=null?String(id):'NO_ID'),
+    strategyId:strategyId||null,
+    tradeId:id!=null?String(id):null,
+    pair:record[a.pair]!=null?record[a.pair]:null,
+    timeframe:record.timeframe!=null?record.timeframe:null,
+    direction:record[a.direction]!=null?record[a.direction]:null,
+    openedAt:record.openedAt||null,
+    closedAt:record.closedAt||null,
+    result:record.result!=null?record.result:null,
+    pnl:num(record[a.pnl]),
+    riskAmount:num(record[a.riskAmount]),
+    recordedResultR:num(record.resultR),
+    isDeveloperTrade:!!record.isDeveloperTrade,
+    // Quarantine travels WITH the event. The event is never dropped -- that is what preserves the
+    // forensic history and what lets reconciliation explain a divergence.
+    quarantined:integrity.status==='QUARANTINED',
+    integrityStatus:integrity.status,
+    integrityViolations:integrity.violations.map(function(v){return v.ruleId;}),
+    sourceRef:{strategyId:strategyId||null,tradeId:id!=null?String(id):null}
+  };
+}
+// Deterministic ordering: chronological by close, tie-broken by trade id -- identical to the
+// ordering alexGComputeEquityStats already uses, so both views walk the same sequence.
+function ledgerBuildEvents(records,strategyId){
+  const evs=[];
+  (Array.isArray(records)?records:[]).forEach(function(r){
+    const e=ledgerNormalizeEvent(r,strategyId);
+    if(e) evs.push(e);
+  });
+  evs.sort(function(x,y){
+    const tx=Date.parse(x.closedAt||'')||0,ty=Date.parse(y.closedAt||'')||0;
+    if(tx!==ty) return tx-ty;
+    return String(x.tradeId||'').localeCompare(String(y.tradeId||''));
+  });
+  return evs;
+}
+// THE RECONSTRUCTION. Rebuilds an entire account from three inputs and nothing else:
+//   starting balance + the verified ledger + the quarantined events (excluded, but preserved).
+// Deterministic: same inputs, same output, no clock and no stored total consulted.
+function ledgerDeriveAccountState(opts){
+  const o=opts||{};
+  const strategyId=o.strategyId||null;
+  const start=(typeof o.startingBalance==='number'&&isFinite(o.startingBalance))?o.startingBalance:0;
+  const includeDeveloperTrades=!!o.includeDeveloperTrades;
+  const all=ledgerBuildEvents(o.records,strategyId);
+  const excluded=[],included=[];
+  all.forEach(function(e){
+    if(e.quarantined) excluded.push(e);
+    else if(e.isDeveloperTrade&&!includeDeveloperTrades) excluded.push(e);
+    else included.push(e);
+  });
+  // ── money space ──
+  let realizedPnl=0,grossWin=0,grossLoss=0,wins=0,losses=0,breakEven=0,pnlUnavailable=0;
+  let balance=start,peakBalance=start,maxDrawdownMoney=0;
+  included.forEach(function(e){
+    const res=String(e.result||'').toLowerCase();
+    if(res==='win') wins++; else if(res==='loss') losses++; else if(res) breakEven++;
+    if(e.pnl==null){ pnlUnavailable++; return; }       // counted, never guessed at
+    realizedPnl+=e.pnl;
+    if(e.pnl>0) grossWin+=e.pnl; else if(e.pnl<0) grossLoss+=Math.abs(e.pnl);
+    balance+=e.pnl;
+    if(balance>peakBalance) peakBalance=balance;
+    const dd=peakBalance-balance;
+    if(dd>maxDrawdownMoney) maxDrawdownMoney=dd;
+  });
+  // ── R space: reuse the SHIPPED chronological equity engine rather than writing a second one.
+  // A duplicate implementation is exactly the drift risk this milestone exists to remove.
+  let rStats=null;
+  try{ rStats=alexGComputeEquityStats(included.map(function(e){
+    return{result:e.result,closedAt:e.closedAt,tradeId:e.tradeId,resultR:e.recordedResultR,
+           entry:null,exitPrice:null,stop:null};
+  })); }catch(e){ rStats=null; }
+  const decided=wins+losses;
+  const round2=function(v){ return Math.round(v*100)/100; };
+  return{
+    schemaVersion:TRADE_LEDGER_SCHEMA_VERSION,
+    strategyId:strategyId,
+    derivation:{
+      method:'DERIVED_FROM_LEDGER',
+      inputs:['startingBalance','verifiedLedgerEvents','quarantinedEvents(excluded, preserved)'],
+      ordering:'closedAt ascending, tie-broken by tradeId',
+      rSpaceEngine:'alexGComputeEquityStats (shipped, unmodified)'
+    },
+    startingBalance:start,
+    eventCounts:{total:all.length,included:included.length,excluded:excluded.length,
+      quarantined:all.filter(function(e){return e.quarantined;}).length,
+      developerTrades:all.filter(function(e){return e.isDeveloperTrade;}).length,
+      pnlUnavailable:pnlUnavailable},
+    balance:round2(balance),
+    realizedPnl:round2(realizedPnl),
+    wins:wins,losses:losses,breakEven:breakEven,decided:decided,
+    winRate:decided?Math.round(wins/decided*100):null,
+    profitFactor:grossLoss>0?round2(grossWin/grossLoss):(grossWin>0?null:null),
+    profitFactorBasis:grossLoss>0?'grossWin/grossLoss':'UNDEFINED_NO_LOSSES',
+    grossWin:round2(grossWin),grossLoss:round2(grossLoss),
+    maxDrawdownMoney:round2(maxDrawdownMoney),
+    netR:rStats?rStats.netR:null,
+    expectancyR:(rStats&&rStats.decidedCount)?rStats.netR/rStats.decidedCount:null,
+    maxDrawdownR:rStats?rStats.maxDrawdownR:null,
+    currentDrawdownR:rStats?rStats.currentDrawdownR:null,
+    // Preserved in full -- excluded from every figure above, never deleted.
+    excludedEvents:excluded.map(function(e){
+      return{tradeId:e.tradeId,result:e.result,pnl:e.pnl,quarantined:e.quarantined,
+             isDeveloperTrade:e.isDeveloperTrade,integrityViolations:e.integrityViolations};
+    })
+  };
+}
+// Compares a STORED total against the derived one and explains the difference. An unexplained
+// delta is the signal worth acting on: it means the stored balance moved for a reason the ledger
+// cannot account for.
+function ledgerReconcileBalance(storedBalance,derived){
+  const stored=(typeof storedBalance==='number'&&isFinite(storedBalance))?storedBalance:null;
+  if(stored==null||!derived) return{status:'UNAVAILABLE',storedBalance:stored,derivedBalance:derived?derived.balance:null};
+  const excludedPnl=(derived.excludedEvents||[]).reduce(function(a,e){
+    return a+((typeof e.pnl==='number')?e.pnl:0);},0);
+  const round2=function(v){ return Math.round(v*100)/100; };
+  const delta=round2(stored-derived.balance);
+  const unexplained=round2(delta-round2(excludedPnl));
+  return{
+    status:(delta===0)?'MATCHES':(unexplained===0?'EXPLAINED_BY_EXCLUSIONS':'UNEXPLAINED_DELTA'),
+    storedBalance:stored,derivedBalance:derived.balance,
+    delta:delta,excludedPnl:round2(excludedPnl),unexplainedDelta:unexplained,
+    explanation:(delta===0)?'the stored total agrees with the ledger'
+      :(unexplained===0?'the difference is exactly the P&L of records excluded from the ledger'
+        :'the stored total moved by an amount the ledger cannot account for')
+  };
+}
+
 // ══════════════════════════════════════════════════════════════════════════════════════════
 // MOGO-003 PHASE 2 — TRADE INTEGRITY & QUARANTINE (v12.15.0)
 // ══════════════════════════════════════════════════════════════════════════════════════════

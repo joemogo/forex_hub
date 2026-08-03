@@ -147,6 +147,12 @@ const wrapped = new Function('g',
   'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
   'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
   'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
+  // ── v12.16.0 Immutable trade ledger ──
+  'g.ledgerNormalizeEvent=ledgerNormalizeEvent;' +
+  'g.ledgerBuildEvents=ledgerBuildEvents;' +
+  'g.ledgerDeriveAccountState=ledgerDeriveAccountState;' +
+  'g.ledgerReconcileBalance=ledgerReconcileBalance;' +
+  'g.alexGComputeEquityStats=alexGComputeEquityStats;' +
   // ── v12.15.0 Trade integrity & quarantine ──
   'g.evaluateTradeIntegrity=evaluateTradeIntegrity;' +
   'g.tradeIntegrityIsQuarantined=tradeIntegrityIsQuarantined;' +
