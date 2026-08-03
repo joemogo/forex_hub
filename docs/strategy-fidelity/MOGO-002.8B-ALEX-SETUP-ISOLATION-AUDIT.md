@@ -8,6 +8,40 @@
 
 ## 0. Scope note on the reported sample
 
+> ### ⚠️ ANNOTATION — 2026-08-03 · MOGO-003 forensic reconciliation
+>
+> **The figures in this section are UNVERIFIED TIER 1 LIVE-PAPER OBSERVATIONS. They came from a
+> different sample than any verified replay, and MUST NOT be compared directly with verified
+> replay runs.**
+>
+> | | This section's figures | Verified replay RUN-001 |
+> |---|---|---|
+> | Evidence mode | `LIVE_PAPER`, forward paper trading | `REPLAY`, `runId 3d7c3dc1af7f…` |
+> | Instruments | multi-pair (incl. GBP/USD) | EUR_USD only |
+> | Period | live trading up to 2026-07-30 | observed 2026-03-25 → 2026-08-03 |
+> | Engine / release | 12.7.0 · v1.0 trades | 12.9.0 · `alex_g_sr_v1` executed |
+> | Verifiable? | **No** — browser `localStorage` only, never persisted (stated in this section) | **Yes** — 24 Evidence Packages, SHA-256 content hashes, re-import verified on disk |
+> | B&R | 6 trades, 5W/1L | 8 trades, 1W/7L, −5.00R |
+> | RZR | 18 trades, 1W/17L | 16 trades, 5W/11L, −1.00R |
+>
+> **Why the two were mistaken for one sample:** both total 24 trades with 6 wins and 18 losses. That
+> aggregate collision is coincidence. The matching −6R total is *not* an independent coincidence — with
+> fixed 2R targets and −1R stops, any 24-trade sample with 6W/18L is exactly (6×2) − 18 = −6R, so the
+> R agreement follows arithmetically from the win/loss coincidence. Note also that the "6" here is a
+> *trade count* while the "6" in the replay is a *win count*.
+>
+> **Consequence for this audit's conclusion:** the operational decision recorded below (suspend RZR,
+> keep B&R active) rested in part on the 5-of-6 B&R win rate above. In the one verified sample that
+> now exists, B&R is the weaker of the two setups. **This does not reverse the suspension and no rule
+> change is proposed** — 8 and 16 trades settle nothing, neither setup is validated, and RZR remains
+> suspended from paper and live execution. It is recorded so the asymmetry is not carried forward as
+> if it were evidence.
+>
+> Reconciliation record: `docs/MOGO-003-VERIFIED-REPLAY-RECORD.md` §RUN-001. Related open flag:
+> `ALEX-BREAK-RETEST-LOSS-FORENSICS-2026-07.md` §1.2 (sample-count discrepancy) — **now resolved**:
+> the two losing B&R paper trades and this section's 5W/1L belong to the same unverified live-paper
+> record, and neither can be reconciled against replay evidence.
+
 The 24 reported trades (B&R 6: 5W/1L; RZR 18: 1W/17L) **cannot be verified from the repository.** ALEX
 paper trades persist only in browser `localStorage` (`fxhub_alexg_account`, `fxhub_alexg_journal`);
 nothing writes them into the repo. This audit therefore **takes the observation as given** and does not

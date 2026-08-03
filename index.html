@@ -1952,9 +1952,11 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.9.0';
-const APP_VERSION_DATE='2 Aug 2026';
+const APP_VERSION='12.11.0';
+const APP_VERSION_DATE='3 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.11.0 — MOGO-003 UNIT B: OBSERVATIONAL RULE ATTRIBUTION (CORR-1) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, classification, entry, exit, stop, target, sizing, execution or automation logic touched, and no classification or statistic moves). THE GAP THIS CLOSES: the protected evaluators alexGEvaluateBreakRetest and alexGEvaluateRepeatedReaction return only {qualifies}. They never say WHICH condition decided the outcome, and they may not be modified, so every Evidence Package could name its setup type but could not show why it held. Rule-level attribution was the one dimension the 2026-08-03 reconciliation had to rate PARTIAL. WHAT WAS ADDED: every newly captured qualified ALEX setup now carries ruleIds (stable semantic identifiers, sorted lexicographically so the canonical form never depends on declaration order), triggeredConditions (one structured record per condition: conditionId, ruleId, the requirement in words, the observed values, the pass/fail state, and its own provenance), and a ruleAttribution block (ruleSetId, mirrorVersion, precedenceApplied, repeatedReactionEvaluated, unverifiedConditionCount, failedConditionIds). Three canonical rule IDs: ALEX_SR_V1_CLASSIFY_PRECEDENCE, ALEX_SR_V1_SETUP_B_BREAK_RETEST, ALEX_SR_V1_SETUP_A_REPEATED_ZONE_REACTION; ten condition IDs beneath them, each mapping 1:1 onto one line of the protected source. IDs are semantic and permanent -- never display text, array position, line number or a generated label. OBSERVATIONAL ONLY, BY CONSTRUCTION: the mirror runs at EVIDENCE CAPTURE time, downstream of every decision, and is unreachable from qualification, classification, trade construction, execution or automation. The protected evaluator output remains authoritative: the mirror can agree with it, report that a condition is not verifiable from the stored record, or fail the capture -- it can never re-classify or suppress a setup. Verdicts are TRI-STATE, and INDETERMINATE is a real answer rather than a guess. FAIL-CLOSED ON DISAGREEMENT: if the mirror proves a recorded classification could not have satisfied its own rules, evidenceBuildPackageFromTrade throws EVIDENCE_RULE_ATTRIBUTION_MISMATCH naming the failed conditions and NO PACKAGE IS WRITTEN -- wrong attribution is worse than none. The seams already wrap each trade in their own try/catch, so the failure is recorded and skipped and can never reach replay, the ledger, an account or the trading tick. The validator additionally rejects any package that asserts a contradiction. ANTI-DRIFT IS THE POINT: conditions are declared ONCE in a frozen table, in the order the protected evaluator checks them, reading stored fields only, and alexGAttributionRecordFromEngineInputs reproduces exactly the copy alexGCreateSetupRecord performs so the differential fixtures drive the mirror from the same objects the protected evaluators receive. Six differential fixtures (B1-B6) run the mirror against the REAL protected evaluators over a generated case matrix (both setup types, qualifying and non-qualifying, every individual condition falsified in turn, a 35-case sweep over touch index and bars-since-break, and the precedence case where both branches could apply): the mirror may never claim a setup qualifies where the evaluator refused, nor contradict one the evaluator accepted, and where every condition is knowable the verdicts must match exactly. When a case says a break cycle was already used, the ENGINE is put in that same state, so a disagreement can only ever be the mirror\'s fault. TWO HONEST GAPS, DISCLOSED NOT PAPERED OVER: the first-retest-per-break-cycle rule needs the whole setup set, so the replay seam counts B_breakRetest setups per break cycle and passes the tally (OBSERVED); a capture path that cannot supply it leaves that one condition unverified rather than assumed. The zone touch-count rule reads zone.touches.length, which no setup record stores, so it is attributed DERIVED_FROM_OBSERVED_FIELDS from zoneTouchNumber -- an implication, explicitly not presented as OBSERVED. DERIVED_FROM_OBSERVED_FIELDS is an ADDITIVE seventh provenance token for exactly this distinction. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, attribution is validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. TESTING: v128 grows 118 -> 140 (B1-B21 plus B14b). Full regression: 859/859 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: crypto.subtle digests and the IndexedDB path remain browser-verified, and no replay was run.',
+  '12.10.0 — MOGO-003 UNIT A: EVIDENCE ATTRIBUTION CORRECTIONS (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical, and no strategy rule, threshold, classification, entry, exit, stop, target or sizing value changed). Implements the four approved Unit A corrections found by the 2026-08-03 forensic reconciliation, which had to trace source code to answer questions the Evidence Packages should have answered directly. CORR-2 VERSION SPLIT: identity collapsed the executing SPECIFICATION and the running RELEASE into one strategyVersion field, so a package could not say that RUN-001 executed alex_g_sr_v1 inside the alex_g_sr_v1_1 release. identity now carries strategySpecificationVersion, releaseVersion and releaseGatesApplied (plus a provenance for each); strategyVersion is RETAINED unchanged so every existing reader keeps working. releaseGatesApplied is an OBSERVATION about the executing path, not a default: the replay seam records an EMPTY LIST because alexGV11EntryDayEligible and alexGV11SetupTypePermitted are reachable only from alexGEvaluatePairForLiveSetups, which replay never enters; a caller that does not supply the field records UNAVAILABLE rather than a guess. CORR-3 REALIZED R: outcomes.realizedR was null in every package while the number sat in recordedResultR, so a consumer reading the obvious field got nothing. evidenceComputeRealizedR() now computes R from the OBSERVED exit -- (exit - entry) x direction / risk distance, preferring the engine\'s own riskDistance and falling back to |entry - stop| -- and stores realizedRBasis alongside it so the number is checkable rather than asserted. recordedResultR is NEVER copied into realizedR: an engine-recorded value and a price-derived one are different observations, and collapsing them would make the provenance lie. When the inputs are absent the field stays null and says UNAVAILABLE. CORR-4 BREAK/RETEST CANDLE REFERENCES: these were reported FUTURE_WORK, but the protected engine already computes and stores them -- alexGCreateSetupRecord writes brokenAtBar/brokenAt and qualificationBarIndex, and alexGConstructTrade (also protected) simply does not copy the break fields onto the trade, while the capture seam only ever received trades. Nothing new is computed: runAlexGReplay (NOT protected) now also returns the setup records it already built, runAlexGReplayUI passes them read-only to the seam, and the normalizer copies brokenAtBar/brokenAt/qualificationBarIndex verbatim. breakCandleRef and retestCandleRef are OBSERVED when the engine recorded them, NOT_APPLICABLE for a Repeated Zone Reaction (which has no break cycle -- saying UNAVAILABLE would imply something was lost), and UNAVAILABLE when the capture path was not given the setup record. penetrationDepth stays honestly FUTURE_WORK. NOT_APPLICABLE is an ADDITIVE sixth EVIDENCE_FIELD_PROVENANCE token. CORR-8 CANONICAL NAMING: "Repeated Reaction" and "Repeated Zone Reaction" were used interchangeably and were mistaken for two setups during the reconciliation. ALEX_SETUP_CANONICAL_NAMES is now the single source of truth (Repeated Zone Reaction / RZR; Break & Retest / B&R) and packages carry setupCanonicalName and setupAbbreviation. This is PRESENTATION ONLY -- setupType and setupLabel are written by protected code and are untouched, alexGComputeReplayStats is protected and its bySetupType grouping is unchanged, so no classification and no statistic moves. BACKWARD COMPATIBILITY IS THE POINT: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical (changing it would silently invalidate every existing contentHash), and the new fields are validated ONLY WHEN PRESENT and are deliberately NOT required -- making them mandatory would retroactively invalidate the 24 verified RUN-001 packages, which is exactly what must not happen. Nothing is backfilled, migrated, rewritten or renamed; a package captured before this release stays byte-identical, still validates, still hash-verifies and still re-imports. TESTING: v128 grows 96 -> 118. New A1-A22 exercise the real builder, normalizer, validator and helpers: the version split and its provenance, an empty gate list as an observation vs UNAVAILABLE as an absence, realizedR sign/magnitude for winners and losers in both directions, realizedR never sourced from recordedResultR, UNAVAILABLE when inputs are missing, candle refs OBSERVED only from supplied setup records, NOT_APPLICABLE for RZR, canonical naming with no effect on setupType/setupLabel/stats keys, pre-v12.10.0 packages still validating without the new keys, and the seam still passing setups read-only. Full regression: 837/837 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: crypto.subtle digests and the IndexedDB read/write path remain browser-verified, unchanged from v12.8.0.',
   '12.9.0 — REPLAY RUN IDENTITY &amp; EVIDENCE CAPTURE. Turns replay from a disposable in-memory preview into citable evidence. ZERO protected-function/protected-constant drift (63 functions, 4 constants byte-identical) -- alexGRunSetupReplay, alexGConstructTrade, alexGWalkOutcome and alexGComputeReplayStats are PROTECTED and completely untouched, and no replay math, strategy rule, entry, exit, stop, target or sizing value changed. THE PROBLEM: replay is the only route to a statistically meaningful sample -- live paper trading yields roughly one ALEX setup per pair per week, and the entire real dataset is two July Break &amp; Retest losses. But replay trades lived in one in-memory array (alexGReplayTrades), were never persisted (zero replay localStorage keys), carried no run identity, and vanished on reload. Even with data, results were uncitable, unreproducible and unattributable to a configuration. RUN IDENTITY: alexGBuildReplayRunIdentity() records an ABSOLUTE observed UTC range (fromUTC/toUTC taken from the real candles, never \'N days back from now\' -- architecture gap R5), per-timeframe observed candle counts, each dataset\'s ADR-011 completenessState, a SHA-256 configHash, a paramsHash, and a SHA-256 datasetHash computed over EVERY candle\'s OHLC in all four timeframes -- deliberately not a count/first/last fingerprint, which would not detect a broker revising a candle in the middle of the range (architecture section 5). runId is itself a SHA-256 over strategyId + pair + range + datasetHash + configHash + paramsHash, so it is DETERMINISTIC: identical inputs always produce the same id, which is what makes two runs comparable and makes re-capture idempotent. No Math.random, no wall clock. CAPTURE: the seam sits in runAlexGReplayUI (NOT protected), after the replay results are already assigned, fire-and-forget in its own try/catch, reading the trades only -- it cannot alter replay output, stats, rendering, any ledger or any account. Identity is computed in runAlexGReplay (NOT protected) AFTER the protected engine returns, so it cannot influence results; if it fails the run still returns its trades and the failure is recorded rather than hidden. SCHEMA PRESERVED: packageSchemaVersion stays mogo.evidence-package.v1. identity.mode and identity.runId already existed but were hardcoded LIVE_PAPER/null; identity.datasetHash and identity.replayDateRange are ADDITIVE and ALWAYS PRESENT (null for live), so every package keeps an identical key set across strategy and mode -- fixture R5 asserts that directly. HONESTY: replay packages report PARTIAL, never COMPLETE. pnl is recorded UNAVAILABLE rather than reconstructed by subtracting balanceBefore from balanceAfter -- arithmetic on two stored values is a derivation, not an observation. Money-space values are flagged DERIVED with LIVE_DATA_DEPENDENCY, because pipValuePerLot() reads live pairData, so R-space (plannedRR, resultR, maeR, mfeR) is the reproducible comparison surface and money-space is not (architecture 7.1). An unresolved (stillOpen) or result-less trade produces NO package. COLLISION SAFETY: replay sourceTradeId is namespaced REPLAY|runId12|tradeId, so the same setup observed both live and in replay cannot collide on the unique bySourceTradeId index -- they are genuinely different observations. TESTING: v128 grows 85 -> 96. R1-R11 exercise the real normalizer, builder and the real source of runAlexGReplay/runAlexGReplayUI: normalization, id namespacing, unresolved-trade rejection, mode/runId/datasetHash population, identical key sets vs LIVE_PAPER, money-space honesty, deterministic content-derived runId, full-candle dataset hashing, non-protected seam placement and isolation, idempotent re-run, and graceful identity degradation. Full regression: 815/815 across 17 suites, zero drift. NOT YET EXERCISED AGAINST REAL DATA: replay requires an OANDA connection, which is not authorized -- this release makes replay output trustworthy so the FIRST authorized run produces citable evidence rather than a throwaway.',
   '12.8.4 — MOGO-003 PHASE 1 DoD #10: SECOND-STRATEGY EVIDENCE CAPTURE (JVM / current_strategy). Closes the one Phase 1 acceptance criterion that remained unmet -- the platform was required to be demonstrated on ALEX AND one other strategy with no schema change, but only ALEX had a capture seam. ZERO protected-function/protected-constant drift (63 functions, 4 constants byte-identical): closePaperPosition, checkPaperPositions, checkAutoTrades and openPaperPosition are all PROTECTED and completely untouched. THE SEAM: capture is invoked ONLY from commitPaperLedger()\'s successful-commit path -- commitPaperLedger is NOT a protected function, and it is the durable commit point, so the trade is already persisted before capture runs. Every JVM close route reaches it: automatic (checkPaperPositions), manual (the Close button, which bypasses scanAll entirely) and developer-test. The call is fire-and-forget in its own try/catch, read-only over closedPositions; it cannot propagate, cannot mutate paperAccount/journalEntries/balance/closedPositions, cannot re-enter the protected close, and cannot alter commitPaperLedger\'s return value, which is emitted exactly as before including the integrityCompromised branch. A failed or blocked commit returns before the capture call is ever reached, so a rejected close creates NO package. LATENT DEFECT FOUND AND FIXED: the package builder carried strategyId:trade.strategy||\'alex_g_sr_v1\'. A JVM position has NO strategy field at all, so a JVM trade would have been silently attributed to ALEX -- corrupting every later per-strategy analysis. The fallback is REMOVED and identity now FAILS CLOSED: an unattributable trade throws EVIDENCE_STRATEGY_ID_REQUIRED and produces no package rather than a mislabelled one. The ALEX capture and backfill paths now pass their strategyId explicitly, since both read alexGAccount and therefore KNOW the strategy rather than inferring it from a field a legacy record may lack. NORMALIZATION, NOT SCHEMA CHANGE: Evidence Package v1 is byte-identical across both strategies (asserted by fixture J4 comparing every top-level, identity, objects and objectCounts key). A thin adapter maps the genuine JVM field names -- id/oPair/dir/lots -- onto the common shape; ALEX uses tradeId/pair/direction/positionSize. Without it sourceTradeId would have been null, and because IndexedDB does not index null keys the unique bySourceTradeId index would NOT have prevented duplicate capture. Fields JVM genuinely lacks (timeframe, setupId, zone structure, MAE/MFE, balance snapshots) are deliberately NOT synthesized -- the builder records honest nulls and completenessReport stays truthful rather than inventing parity ALEX has and JVM does not. Per-strategy sequence isolation is preserved (seq|current_strategy|... vs seq|alex_g_sr_v1|...). Identifier current_strategy is the one already used by the journal normalizer and the decision-event bus, used verbatim. TESTING: v128 grows 74 -> 85 fixtures. J1-J11 exercise the real adapter, real builder and real commitPaperLedger source: one package per JVM close, strategyId never alex_g_sr_v1, fail-closed on missing identity, ALEX/JVM coexistence, identical schema, sequence isolation, no ledger mutation, unchanged close/commit return contracts, no package on a blocked commit, duplicate impossibility, and non-propagating capture failure. Full regression: 804/804 across 17 suites, zero drift. NO BROWSER OPENED and no OANDA connection for this release.',
   '12.8.3 — MARKET DATA COMPLETENESS CONTRACT (ADR-011). Closes a verified defect in which a materially truncated candle history was treated as complete and still produced signals and confluence scores. ZERO protected-function/protected-constant drift (63 functions, 4 constants byte-identical) -- detectSignals, bestConfluence, scoreConfluence and findSwingPoints are NOT modified, re-implemented or wrapped. THE DEFECT, established test-first: an initial audit alleged fetchCandles() paginated and returned truncated data after HTTP 429. That was DISPROVEN -- fetchCandles() issues one request and returns null on any non-OK status, and null is rejected by every downstream guard. The real risk arrived through a perfectly successful HTTP 200: a response carrying fewer candles than requested was indistinguishable from a full one, because production validated only a minimum usable length (candles.length<10), never the requested lookback. scanPair() requested 220 and scored confluence 20 with 1 signal from 80. The pagination mechanism DOES exist, but in fetchCandlesRange() (replay/backtest consumers), which breaks on a later-page HTTP 429 and returned the partial accumulation silently. THE CONTRACT: one abstraction, completenessState in {COMPLETE, PARTIAL, UNAVAILABLE}. Consumers depend on that value and NOTHING else -- httpStatus, paginationTerminationReason, pagesRequested/pagesReceived, fetchDurationMs and retryCount are recorded as diagnostics for forensics and operator display, and no consumer may make an evaluation decision from them. That rule is load-bearing: a consumer branching on httpStatus===429 would re-create the original defect, because the case that actually reached scoring was httpStatus===200. PARTIAL means the REQUEST was not fully satisfied; it NEVER means N candles are missing. Session, weekend, holiday, instrument and liquidity gaps are all legitimate, so there is deliberately NO missingCandles field and none may be added -- a fixture asserts its absence. Classification compares the RAW response size against the requested count, never the post-completeness-filter size: the newest candle is almost always still forming, so comparing filtered length would classify essentially every healthy scan as PARTIAL (the identical trap fetchCandlesRange already documents). IMPLEMENTATION: completeness is attached to the returned array as NON-ENUMERABLE properties, so all 21 existing call sites are byte-for-byte unaffected -- iteration, .length, JSON.stringify and for...in behave exactly as before. scanPair() gates evaluation by passing null into the protected evaluators when the state is not COMPLETE, relying on the guards those functions ALREADY have. Full candles are still recorded in pairData for charting and diagnostics; only EVALUATION is gated, and evaluationSuppressed records when that happened. ACCEPTED TRADE-OFF: an instrument whose genuine history is shorter than the requested lookback is classified PARTIAL and is not scanned. MOGO cannot distinguish a truncated response from an instrument that simply has less history, and this release deliberately chooses the conservative reading; the remedy for a legitimately short-history instrument is a per-request lookback it can satisfy, NOT a relaxation of the contract. TESTING: tests/v130_candle_completeness_regression_tests.js grows to 10 fixtures, all passing. SAFETY-1..4 were written FIRST and failed against the previous build; BEHAVIOUR-2 was rewritten from documenting the defect to asserting the contract, and BEHAVIOUR-2b was added to prove a healthy scan with one still-forming candle stays COMPLETE and still evaluates -- the fix must not suppress normal scanning. Full regression: 789/789 across 17 suites, zero drift. See docs/adr/ADR-011.',
@@ -4032,6 +4034,10 @@ async function runAlexGReplay(oPair,days,replayParams,onProgress,shouldCancel){
     pair:oPair.replace('_','/'),oPair,days,
     zoneCounts:{H1:zs?zs.H1.validatedZones.length:0,H4:zs?zs.H4.validatedZones.length:0,D:zs?zs.D.validatedZones.length:0,W:zs?zs.W.validatedZones.length:0},
     setupsConsidered:setupsForPair.length,
+    // v12.10.0 Unit A (CORR-4): the setup records the engine already produced, returned so the
+    // evidence seam can read the break/retest candle references off them. ADDITIVE and read-only
+    // -- no caller is required to use it, and replay output, stats and rendering are unchanged.
+    setups:setupsForPair,
     trades,rejected,stats
   };
 }
@@ -4092,7 +4098,10 @@ async function runAlexGReplayUI(){
       // account/ledger -- replay touches none of those. Idempotent per run: re-running the same
       // pair, range, dataset and config yields the same deterministic runId, so re-capture is a
       // no-op rather than a duplicate.
-      try{ evidenceCaptureReplayTrades(result.runIdentity,result.trades); }catch(e){ try{ evidenceRecordWriteFailure('capture-replay-seam',e); }catch(e2){} }
+      // v12.10.0 Unit A (CORR-4): result.setups is passed read-only alongside the trades. The seam
+      // is otherwise unchanged -- still fire-and-forget, still in its own try/catch, still unable
+      // to alter replay output, stats, rendering, any ledger or any account.
+      try{ evidenceCaptureReplayTrades(result.runIdentity,result.trades,result.setups); }catch(e){ try{ evidenceRecordWriteFailure('capture-replay-seam',e); }catch(e2){} }
       status.textContent=`${result.pair} — ${result.days} days — zones: H1 ${result.zoneCounts.H1} / H4 ${result.zoneCounts.H4} / D ${result.zoneCounts.D} / W ${result.zoneCounts.W} — ${result.setupsConsidered} setups considered, ${result.trades.length} trades created, ${result.rejected.length} rejected.`;
       renderAlexGDashboard(result);
       renderAlexGTradesTable(result.trades);
@@ -11324,7 +11333,16 @@ const REASON_CODE_REGISTRY=Object.freeze({
 // snapshot, no MAE/MFE) is expected to report lower completeness than a richer one (ALEX),
 // and that asymmetry is correct, not a bug to hide.
 const EVIDENCE_COMPLETENESS_LEVELS=Object.freeze(['COMPLETE','PARTIAL','MINIMAL','UNKNOWN']);
-const EVIDENCE_FIELD_PROVENANCE=Object.freeze(['OBSERVED','DERIVED','UNAVAILABLE','UNSAFE_TO_RECONSTRUCT','FUTURE_WORK']);
+// v12.10.0 Unit A (CORR-3). DERIVED_AT_READ_TIME is retained because packages captured before
+// this release carry it; it is never written by this release.
+const EVIDENCE_REALIZED_R_PROVENANCE=Object.freeze(['OBSERVED_FROM_EXIT','UNAVAILABLE','DERIVED_AT_READ_TIME']);
+// v12.10.0 Unit A: NOT_APPLICABLE is ADDITIVE. "This setup has no break cycle" is a different
+// statement from "we did not capture it" (UNAVAILABLE) and from "we have not built it yet"
+// (FUTURE_WORK). Existing packages use only the original five tokens and are unaffected.
+// v12.11.0 Unit B adds DERIVED_FROM_OBSERVED_FIELDS: a value the engine did not record but that
+// stored, observed fields determine. It is deliberately distinct from OBSERVED -- an explanation
+// reconstructed from stored fields must never be presented as something the engine reported.
+const EVIDENCE_FIELD_PROVENANCE=Object.freeze(['OBSERVED','DERIVED','DERIVED_FROM_OBSERVED_FIELDS','UNAVAILABLE','UNSAFE_TO_RECONSTRUCT','FUTURE_WORK','NOT_APPLICABLE']);
 
 // ── Identity ── A single monotonic counter guarantees uniqueness even for two IDs generated
 // within the same millisecond (repeated scans, back-to-back events) -- timestamp alone is not
@@ -11912,6 +11930,279 @@ function evidenceComputeCompleteness(basis){
   }
   return{level:basis==='HISTORICAL_BACKFILL'?'MINIMAL':EVIDENCE_COMPLETENESS_LEVEL_PHASE1,missing};
 }
+// ══ v12.10.0 UNIT A -- CORR-8: ONE CANONICAL NAME PER SETUP CATEGORY ═════════════════════════
+// "Repeated Reaction" and "Repeated Zone Reaction" were used interchangeably across records and
+// were mistaken for two setups during the 2026-08-03 reconciliation. They are ONE category.
+// This table is the single source of truth for how a setup type is NAMED. It is presentation
+// only: setupType and setupLabel are written by PROTECTED code (alexGCreateSetupRecord) and are
+// NOT touched here, so classification, stats grouping and every stored value are unchanged.
+const ALEX_SETUP_CANONICAL_NAMES=Object.freeze({
+  A_repeatedReaction:Object.freeze({canonicalName:'Repeated Zone Reaction',abbreviation:'RZR',
+    displayLabel:'REPEATED ZONE REACTION',deprecatedAliases:Object.freeze(['Repeated Reaction'])}),
+  B_breakRetest:Object.freeze({canonicalName:'Break & Retest',abbreviation:'B&R',
+    displayLabel:'BREAK & RETEST',deprecatedAliases:Object.freeze([])})
+});
+function alexGSetupTypeCanonicalName(setupType){
+  const e=ALEX_SETUP_CANONICAL_NAMES[setupType];
+  return e?e.canonicalName:null;               // never invents a name for an unknown type
+}
+function alexGSetupTypeAbbreviation(setupType){
+  const e=ALEX_SETUP_CANONICAL_NAMES[setupType];
+  return e?e.abbreviation:null;
+}
+
+// ══ v12.11.0 UNIT B -- CORR-1: OBSERVATIONAL RULE ATTRIBUTION ════════════════════════════════
+//
+// WHAT THIS IS. The protected evaluators (alexGEvaluateBreakRetest, alexGEvaluateRepeatedReaction)
+// return only {qualifies}. They do not say WHICH condition decided the outcome, and they may not be
+// modified. This layer explains, after the fact, why the engine's own recorded decision holds --
+// reading ONLY the fields the protected engine already stored on the setup record.
+//
+// WHAT THIS IS NOT. It is not a second strategy implementation and it must never become one:
+//   * It runs at EVIDENCE CAPTURE time, downstream of every decision. Nothing here is reachable
+//     from qualification, classification, trade construction, execution or automation.
+//   * The PROTECTED EVALUATOR'S OUTPUT REMAINS AUTHORITATIVE. This layer can only agree with it,
+//     report that it cannot verify a condition, or -- if it genuinely contradicts the engine --
+//     FAIL THE CAPTURE. It can never re-classify a setup or suppress one.
+//   * Drift is caught, not assumed away: the differential fixtures run this table against the real
+//     protected evaluators over a generated case matrix, and a contradiction fails the suite.
+// Conditions are declared once, in the order the protected evaluator checks them, and each reads
+// stored fields only. Adding logic here that the evaluator does not have is the failure mode to
+// guard against -- every condition below maps 1:1 onto one line of the protected source.
+const ALEX_RULE_ATTRIBUTION_MIRROR_VERSION='alex-attr-1';
+const ALEX_ATTRIBUTION_RULE_IDS=Object.freeze({
+  PRECEDENCE:'ALEX_SR_V1_CLASSIFY_PRECEDENCE',
+  BREAK_RETEST:'ALEX_SR_V1_SETUP_B_BREAK_RETEST',
+  REPEATED_ZONE_REACTION:'ALEX_SR_V1_SETUP_A_REPEATED_ZONE_REACTION'
+});
+// Semantic, stable identifiers. Deliberately NOT display text, array positions, line numbers or
+// generated labels -- an ID here is a permanent reference that must survive refactors.
+const ALEX_ATTRIBUTION_CONDITIONS=Object.freeze([
+  // ── precedence (alexGClassifyTouch) ──
+  {conditionId:'ALEX_SR_V1_TOUCH_INDEX_MIN',ruleId:ALEX_ATTRIBUTION_RULE_IDS.PRECEDENCE,appliesTo:'*',
+   requirement:'zoneTouchNumber >= 4 (the 4th or later historical reaction; touchIndex >= 3)',
+   evaluate:function(r){
+     if(r.zoneTouchNumber==null) return{satisfied:null,observed:{zoneTouchNumber:null},provenance:'UNAVAILABLE'};
+     return{satisfied:r.zoneTouchNumber>=4,observed:{zoneTouchNumber:r.zoneTouchNumber,minimum:4},provenance:'OBSERVED'};
+   }},
+  // ── B_breakRetest (alexGEvaluateBreakRetest, in its own check order) ──
+  {conditionId:'ALEX_SR_V1_B_ZONE_STATUS_BROKEN',ruleId:ALEX_ATTRIBUTION_RULE_IDS.BREAK_RETEST,appliesTo:'B_breakRetest',
+   requirement:"zoneStatusAtQualification === 'broken'",
+   evaluate:function(r){
+     if(r.zoneStatusAtQualification==null) return{satisfied:null,observed:{zoneStatusAtQualification:null},provenance:'UNAVAILABLE'};
+     return{satisfied:r.zoneStatusAtQualification==='broken',
+       observed:{zoneStatusAtQualification:r.zoneStatusAtQualification,expected:'broken'},provenance:'OBSERVED'};
+   }},
+  {conditionId:'ALEX_SR_V1_B_BREAK_RECORDED',ruleId:ALEX_ATTRIBUTION_RULE_IDS.BREAK_RETEST,appliesTo:'B_breakRetest',
+   requirement:'the zone carries a recorded break (a break bar index and timestamp, or the barsSinceBreak that only exists when one was recorded)',
+   evaluate:function(r){
+     if(r.brokenAtBar!=null&&r.brokenAt!=null)
+       return{satisfied:true,observed:{brokenAtBar:r.brokenAtBar,brokenAt:r.brokenAt},provenance:'OBSERVED'};
+     // A record may carry barsSinceBreak without the raw break fields -- every package captured
+     // before v12.10.0 has exactly that shape, and so does any capture path that is not given the
+     // setup record. alexGCreateSetupRecord sets barsSinceBreak ONLY when zone.brokenAtBar exists,
+     // so its presence proves a break was recorded. Treating that as a contradiction would fail
+     // capture for correctly-classified trades, which is the opposite of the intent.
+     if(r.barsSinceBreak!=null)
+       return{satisfied:true,observed:{barsSinceBreak:r.barsSinceBreak,brokenAtBar:null,brokenAt:null,
+         note:'barsSinceBreak is set only when the zone carries a break bar index'},
+         provenance:'DERIVED_FROM_OBSERVED_FIELDS'};
+     return{satisfied:null,observed:{brokenAtBar:null,brokenAt:null,barsSinceBreak:null},provenance:'UNAVAILABLE'};
+   }},
+  {conditionId:'ALEX_SR_V1_B_RETEST_STRICTLY_AFTER_BREAK',ruleId:ALEX_ATTRIBUTION_RULE_IDS.BREAK_RETEST,appliesTo:'B_breakRetest',
+   requirement:'qualificationBarIndex > brokenAtBar (barsSinceBreak >= 1) -- never the break candle itself',
+   evaluate:function(r){
+     if(r.barsSinceBreak==null) return{satisfied:null,observed:{barsSinceBreak:null},provenance:'UNAVAILABLE'};
+     return{satisfied:r.barsSinceBreak>=1,observed:{barsSinceBreak:r.barsSinceBreak,minimum:1},provenance:'OBSERVED'};
+   }},
+  {conditionId:'ALEX_SR_V1_B_RETEST_WITHIN_MAX_BARS',ruleId:ALEX_ATTRIBUTION_RULE_IDS.BREAK_RETEST,appliesTo:'B_breakRetest',
+   requirement:'barsSinceBreak <= config.maxBarsBetweenBreakAndRetest',
+   evaluate:function(r,cfg){
+     const max=(cfg&&typeof cfg.maxBarsBetweenBreakAndRetest==='number')?cfg.maxBarsBetweenBreakAndRetest:null;
+     if(r.barsSinceBreak==null||max==null)
+       return{satisfied:null,observed:{barsSinceBreak:(r.barsSinceBreak==null?null:r.barsSinceBreak),maxBarsBetweenBreakAndRetest:max},provenance:'UNAVAILABLE'};
+     return{satisfied:r.barsSinceBreak<=max,
+       observed:{barsSinceBreak:r.barsSinceBreak,maxBarsBetweenBreakAndRetest:max},provenance:'OBSERVED'};
+   }},
+  {conditionId:'ALEX_SR_V1_B_REACTION_SIDE_MATCHES_BREAK',ruleId:ALEX_ATTRIBUTION_RULE_IDS.BREAK_RETEST,appliesTo:'B_breakRetest',
+   requirement:"downThroughSupport requires swingType 'high' from 'below'; upThroughResistance requires swingType 'low' from 'above'",
+   evaluate:function(r){
+     if(r.brokenDirection==null||r.reactionSwingType==null||r.reactionFromSide==null)
+       return{satisfied:null,provenance:'UNAVAILABLE',
+         observed:{brokenDirection:(r.brokenDirection==null?null:r.brokenDirection),
+           reactionSwingType:(r.reactionSwingType==null?null:r.reactionSwingType),
+           reactionFromSide:(r.reactionFromSide==null?null:r.reactionFromSide)}};
+     const wantSwing=r.brokenDirection==='downThroughSupport'?'high':'low';
+     const wantSide=r.brokenDirection==='downThroughSupport'?'below':'above';
+     return{satisfied:r.reactionSwingType===wantSwing&&r.reactionFromSide===wantSide,
+       observed:{brokenDirection:r.brokenDirection,reactionSwingType:r.reactionSwingType,
+         reactionFromSide:r.reactionFromSide,expectedSwingType:wantSwing,expectedFromSide:wantSide},
+       provenance:'OBSERVED'};
+   }},
+  {conditionId:'ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE',ruleId:ALEX_ATTRIBUTION_RULE_IDS.BREAK_RETEST,appliesTo:'B_breakRetest',
+   requirement:'exactly one B_breakRetest setup exists for this break cycle (only the first qualifying retest becomes a setup)',
+   evaluate:function(r,cfg,ctx){
+     const n=(ctx&&typeof ctx.breakCycleSetupCount==='number')?ctx.breakCycleSetupCount:null;
+     if(n==null) return{satisfied:null,observed:{breakCycleSetupCount:null,breakCycleId:(r.breakCycleId==null?null:r.breakCycleId)},
+       provenance:'UNAVAILABLE'};   // needs the whole setup set; a single record cannot show it
+     return{satisfied:n===1,observed:{breakCycleSetupCount:n,expected:1,breakCycleId:(r.breakCycleId==null?null:r.breakCycleId)},
+       provenance:'OBSERVED'};
+   }},
+  // ── A_repeatedReaction (alexGEvaluateRepeatedReaction, in its own check order) ──
+  {conditionId:'ALEX_SR_V1_A_ZONE_STATUS_VALIDATED',ruleId:ALEX_ATTRIBUTION_RULE_IDS.REPEATED_ZONE_REACTION,appliesTo:'A_repeatedReaction',
+   requirement:"zoneStatusAtQualification === 'validated' (never an already-broken zone)",
+   evaluate:function(r){
+     if(r.zoneStatusAtQualification==null) return{satisfied:null,observed:{zoneStatusAtQualification:null},provenance:'UNAVAILABLE'};
+     return{satisfied:r.zoneStatusAtQualification==='validated',
+       observed:{zoneStatusAtQualification:r.zoneStatusAtQualification,expected:'validated'},provenance:'OBSERVED'};
+   }},
+  {conditionId:'ALEX_SR_V1_A_ZONE_TOUCH_COUNT_MIN',ruleId:ALEX_ATTRIBUTION_RULE_IDS.REPEATED_ZONE_REACTION,appliesTo:'A_repeatedReaction',
+   requirement:'the zone carries at least 4 touches',
+   evaluate:function(r){
+     if(typeof r.zoneTouchCount==='number')
+       return{satisfied:r.zoneTouchCount>=4,observed:{zoneTouchCount:r.zoneTouchCount,minimum:4},provenance:'OBSERVED'};
+     if(r.zoneTouchNumber==null) return{satisfied:null,observed:{zoneTouchCount:null},provenance:'UNAVAILABLE'};
+     // This reaction IS one of the zone's touches, so touches.length >= zoneTouchNumber. Stated as
+     // an implication of an observed field rather than presented as a directly observed count.
+     return{satisfied:r.zoneTouchNumber>=4,
+       observed:{zoneTouchNumber:r.zoneTouchNumber,minimum:4,note:'zoneTouchNumber <= zone.touches.length'},
+       provenance:'DERIVED_FROM_OBSERVED_FIELDS'};
+   }},
+  {conditionId:'ALEX_SR_V1_A_ZONE_QUALITY_NOT_CHOPPY',ruleId:ALEX_ATTRIBUTION_RULE_IDS.REPEATED_ZONE_REACTION,appliesTo:'A_repeatedReaction',
+   requirement:"zoneQualityAtQualification !== 'choppy'",
+   evaluate:function(r){
+     if(r.zoneQualityAtQualification==null) return{satisfied:null,observed:{zoneQualityAtQualification:null},provenance:'UNAVAILABLE'};
+     return{satisfied:r.zoneQualityAtQualification!=='choppy',
+       observed:{zoneQualityAtQualification:r.zoneQualityAtQualification,disallowed:'choppy'},provenance:'OBSERVED'};
+   }}
+]);
+// The exact copy alexGCreateSetupRecord performs from the engine's own inputs. It makes NO
+// decision -- it exists so the differential fixtures can drive the mirror from the same objects
+// the protected evaluators receive, instead of re-deriving those fields a second way.
+function alexGAttributionRecordFromEngineInputs(zone,touch,touchIndex,idx,correctedQuality){
+  const z=zone||{},tc=touch||{};
+  return{
+    zoneStatusAtQualification:z.status==null?null:z.status,
+    zoneQualityAtQualification:correctedQuality==null?null:correctedQuality,
+    zoneTouchNumber:(typeof touchIndex==='number')?touchIndex+1:null,
+    zoneTouchCount:(z.touches&&typeof z.touches.length==='number')?z.touches.length:null,
+    brokenDirection:z.brokenDirection==null?null:z.brokenDirection,
+    brokenAtBar:z.brokenAtBar==null?null:z.brokenAtBar,
+    brokenAt:z.brokenAt==null?null:z.brokenAt,
+    barsSinceBreak:(z.brokenAtBar!=null&&typeof idx==='number')?idx-z.brokenAtBar:null,
+    qualificationBarIndex:(typeof idx==='number')?idx:null,
+    reactionSwingType:tc.swingType==null?null:tc.swingType,
+    reactionFromSide:tc.fromSide==null?null:tc.fromSide,
+    breakCycleId:null
+  };
+}
+// Verdicts are TRI-STATE. INDETERMINATE is a real answer: it says the stored record does not carry
+// enough to verify a condition, which is honest, whereas guessing would corrupt the attribution.
+function alexGBuildRuleAttribution(record,setupType,cfg,ctx){
+  const conditions=[],ruleIds={};
+  let anyFalse=false,anyNull=false;
+  if(setupType!=='A_repeatedReaction'&&setupType!=='B_breakRetest'){
+    return{ruleIds:[],triggeredConditions:[],verdict:'NOT_APPLICABLE',
+      attribution:{ruleSetId:null,mirrorVersion:ALEX_RULE_ATTRIBUTION_MIRROR_VERSION,
+        precedenceApplied:null,repeatedReactionEvaluated:null,provenance:'NOT_APPLICABLE',
+        unverifiedConditionCount:0,contradictsEngineClassification:false,failedConditionIds:[]}};
+  }
+  const r=record||{};
+  for(let i=0;i<ALEX_ATTRIBUTION_CONDITIONS.length;i++){
+    const c=ALEX_ATTRIBUTION_CONDITIONS[i];
+    if(c.appliesTo!=='*'&&c.appliesTo!==setupType) continue;
+    const res=c.evaluate(r,cfg,ctx)||{};
+    if(res.satisfied===false) anyFalse=true;
+    if(res.satisfied===null||res.satisfied===undefined) anyNull=true;
+    ruleIds[c.ruleId]=true;
+    conditions.push({conditionId:c.conditionId,ruleId:c.ruleId,requirement:c.requirement,
+      observed:res.observed===undefined?null:res.observed,
+      satisfied:res.satisfied===undefined?null:res.satisfied,
+      provenance:res.provenance||'UNAVAILABLE'});
+  }
+  const verdict=anyFalse?'CONTRADICTS_RECORDED_CLASSIFICATION':(anyNull?'INDETERMINATE':'AGREES_WITH_RECORDED_CLASSIFICATION');
+  return{
+    // Sorted lexicographically so the canonical form never depends on declaration order.
+    ruleIds:Object.keys(ruleIds).sort(),
+    triggeredConditions:conditions,                 // kept in the engine's own check order
+    verdict,
+    attribution:{
+      ruleSetId:'alex_g_sr_v1',
+      mirrorVersion:ALEX_RULE_ATTRIBUTION_MIRROR_VERSION,
+      precedenceApplied:'B_BREAK_RETEST_EVALUATED_BEFORE_A_REPEATED_ZONE_REACTION',
+      // A stored B_breakRetest means the repeated-reaction branch was never reached; a stored
+      // A_repeatedReaction means Break & Retest was evaluated first and did not qualify.
+      repeatedReactionEvaluated:setupType==='A_repeatedReaction',
+      provenance:'DERIVED_FROM_OBSERVED_FIELDS',
+      unverifiedConditionCount:conditions.filter(function(c){return c.satisfied===null;}).length,
+      contradictsEngineClassification:anyFalse,
+      failedConditionIds:conditions.filter(function(c){return c.satisfied===false;}).map(function(c){return c.conditionId;})
+    }
+  };
+}
+
+// ══ v12.10.0 UNIT A -- CORR-3: REALIZED R FROM THE ACTUAL EXIT ═══════════════════════════════
+// realizedR was null in every package while the number sat in recordedResultR, so a consumer
+// reading the obvious field got nothing. This computes R from the OBSERVED exit -- entry, exit,
+// direction and the risk distance -- and returns the inputs alongside it so the number is
+// checkable rather than merely asserted. It NEVER copies recordedResultR into realizedR: an
+// engine-recorded value is a different observation from a price-derived one, and collapsing them
+// would make the field lie about where it came from.
+function evidenceComputeRealizedR(trade){
+  const num=function(v){ return typeof v==='number'&&isFinite(v)?v:null; };
+  if(!trade||typeof trade!=='object') return{realizedR:null,provenance:'UNAVAILABLE',basis:null};
+  const entry=num(trade.entry),exit=num(trade.exitPrice);
+  const dirRaw=trade.direction==null?null:String(trade.direction).toLowerCase();
+  const dir=(dirRaw==='buy'||dirRaw==='long')?1:((dirRaw==='sell'||dirRaw==='short')?-1:null);
+  // Prefer the engine's own recorded risk distance; fall back to |entry - stop|, which is the
+  // same quantity observed from two stored prices rather than assumed.
+  let risk=num(trade.riskDistance),riskSource='riskDistance';
+  if(risk==null&&entry!=null&&num(trade.stop)!=null){ risk=Math.abs(entry-trade.stop); riskSource='abs(entry-stop)'; }
+  if(entry==null||exit==null||dir==null||risk==null||risk<=0) return{realizedR:null,provenance:'UNAVAILABLE',basis:null};
+  let r=((exit-entry)*dir)/risk;
+  if(!isFinite(r)) return{realizedR:null,provenance:'UNAVAILABLE',basis:null};
+  r=Math.round(r*1e6)/1e6;                      // deterministic; canonicalization rejects non-finite
+  if(r===0) r=0;                                // never emit -0
+  return{realizedR:r,provenance:'OBSERVED_FROM_EXIT',
+    basis:{entryPrice:entry,exitPrice:exit,direction:dirRaw,riskDistance:risk,riskDistanceSource:riskSource}};
+}
+
+// ══ v12.10.0 UNIT A -- CORR-4: BREAK AND RETEST CANDLE REFERENCES ════════════════════════════
+// These were reported FUTURE_WORK, but the PROTECTED engine already computes and stores them:
+// alexGCreateSetupRecord writes brokenAtBar/brokenAt (the break candle) and qualificationBarIndex/
+// qualificationTimestamp (the retest candle). alexGConstructTrade -- also protected -- simply does
+// not copy the break fields onto the trade, and the capture seam only ever received trades. So the
+// data is recovered by handing the setup record to the seam, NOT by computing anything new.
+// OBSERVED when the engine recorded it, NOT_APPLICABLE for a setup with no break cycle,
+// UNAVAILABLE when this capture path was not given the setup record.
+function evidenceBuildCandleRefs(trade){
+  const iso=function(v){ if(v==null) return null; const d=(v instanceof Date)?v:new Date(v); return isNaN(d.getTime())?null:d.toISOString(); };
+  const num=function(v){ return typeof v==='number'&&isFinite(v)?v:null; };
+  const tf=trade&&trade.timeframe!=null?trade.timeframe:null;
+  const isBreakSetup=!!(trade&&trade.setupType==='B_breakRetest');
+  const out={breakCandleRef:null,retestCandleRef:null,
+    provenance:{breakCandleRef:'UNAVAILABLE',retestCandleRef:'UNAVAILABLE'}};
+  if(!trade||typeof trade!=='object') return out;
+  const brokenAtBar=num(trade.brokenAtBar),brokenAt=iso(trade.brokenAt);
+  if(brokenAtBar!=null||brokenAt!=null){
+    out.breakCandleRef={barIndex:brokenAtBar,timestampUTC:brokenAt,timeframe:tf};
+    out.provenance.breakCandleRef='OBSERVED';
+  } else if(!isBreakSetup&&trade.setupType!=null){
+    // A Repeated Zone Reaction has no break cycle by construction -- saying "unavailable" would
+    // imply something was lost. Nothing was lost; there is nothing to record.
+    out.provenance.breakCandleRef='NOT_APPLICABLE';
+  }
+  const retestBar=num(trade.qualificationBarIndex),retestAt=iso(trade.qualificationTimestamp);
+  if(retestBar!=null||retestAt!=null){
+    out.retestCandleRef={barIndex:retestBar,timestampUTC:retestAt,timeframe:tf};
+    // The retest candle IS the qualifying reaction for a Break & Retest. For an RZR the same
+    // candle is the qualifying reaction but is not a "retest" in the break-cycle sense, so it is
+    // recorded and honestly marked NOT_APPLICABLE rather than presented as a retest.
+    out.provenance.retestCandleRef=isBreakSetup?'OBSERVED':'NOT_APPLICABLE';
+  }
+  return out;
+}
+
 // Read-only over the closed position. Copies only fields that genuinely exist -- a missing value
 // is an explicit null, never a fabricated 0/''/false (architecture 3.1 rule 2).
 function evidenceBuildPackageFromTrade(trade,opts){
@@ -11934,6 +12225,33 @@ function evidenceBuildPackageFromTrade(trade,opts){
   else { strategyVersion='alex_g_sr_v1 (inferred, unstamped)'; versionProvenance='DERIVED'; }
   const cfgSnapshot=has('configurationSnapshot')&&trade.configurationSnapshot?trade.configurationSnapshot:null;
   const completeness=evidenceComputeCompleteness(basis);
+  // ── v12.10.0 UNIT A -- CORR-2: SPECIFICATION VERSION vs RUNNING RELEASE ──────────────────
+  // The 2026-08-03 reconciliation had to trace source code to establish that RUN-001 executed
+  // alex_g_sr_v1 while the build was the alex_g_sr_v1_1 release, because the package collapsed
+  // both into one field. They are different facts: the SPECIFICATION is the ruleset that
+  // classified and constructed the trade; the RELEASE is the build it ran inside; and
+  // releaseGatesApplied states which release-level gates the executing path actually consulted --
+  // an empty array is a real answer (replay consults none), null means nobody told us.
+  const releaseVersion=(o.releaseVersion!=null?String(o.releaseVersion)
+                        :(prov&&prov.strategyVersion?String(prov.strategyVersion):null));
+  const releaseGates=Array.isArray(o.releaseGatesApplied)?o.releaseGatesApplied.slice():null;
+  const realized=evidenceComputeRealizedR(trade);
+  const candleRefs=evidenceBuildCandleRefs(trade);
+  // ── v12.11.0 UNIT B (CORR-1): observational rule attribution ─────────────────────────────
+  // The engine's recorded classification is the authority. If this layer can prove a stored
+  // classification could not have satisfied its own rules, that is a real defect somewhere --
+  // capture FAILS for this trade rather than emitting attribution that is known to be wrong.
+  // The seams call this inside their per-trade try/catch, so a failure is recorded and skipped;
+  // it can never propagate into replay, the ledger, an account or the trading tick.
+  const attributionCfg=(cfgSnapshot&&cfgSnapshot.config)?cfgSnapshot.config:null;
+  const attribution=alexGBuildRuleAttribution(trade,pick('setupType'),attributionCfg,{
+    breakCycleSetupCount:(typeof trade.breakCycleSetupCount==='number')?trade.breakCycleSetupCount:null
+  });
+  if(attribution.verdict==='CONTRADICTS_RECORDED_CLASSIFICATION'){
+    throw new Error('EVIDENCE_RULE_ATTRIBUTION_MISMATCH: '+String(pick('setupType'))+
+      ' failed '+attribution.attribution.failedConditionIds.join(',')+
+      ' -- the recorded classification and its own rules disagree; no package was written.');
+  }
   const pkg={
     packageSchemaVersion:EVIDENCE_PACKAGE_SCHEMA_VERSION,
     packageId:o.packageId||null,
@@ -11946,6 +12264,14 @@ function evidenceBuildPackageFromTrade(trade,opts){
       strategyId:resolvedStrategyId,
       strategyVersion,
       strategyVersionProvenance:versionProvenance,
+      // v12.10.0 Unit A (CORR-2). ADDITIVE and always present. strategyVersion is RETAINED
+      // unchanged so every existing reader keeps working and old packages stay comparable.
+      strategySpecificationVersion:strategyVersion,
+      strategySpecificationVersionProvenance:versionProvenance,
+      releaseVersion,
+      releaseVersionProvenance:releaseVersion?'OBSERVED':'UNAVAILABLE',
+      releaseGatesApplied:releaseGates,
+      releaseGatesAppliedProvenance:releaseGates?'OBSERVED':'UNAVAILABLE',
       implementationVersion:prov&&prov.implementationVersion?prov.implementationVersion:null,
       engineVersion:has('createdByEngineVersion')?trade.createdByEngineVersion:(o.engineVersion||null),
       commitHash:null,
@@ -11972,6 +12298,15 @@ function evidenceBuildPackageFromTrade(trade,opts){
           strategyId:resolvedStrategyId,strategyVersion,
           instrument:pick('pair'),timeframe:pick('timeframe'),
           setupType:pick('setupType'),setupLabel:pick('setupLabel'),
+          // v12.10.0 Unit A (CORR-8). Presentation-only, derived from the stored setupType by a
+          // single lookup table. setupType/setupLabel above are untouched.
+          setupCanonicalName:alexGSetupTypeCanonicalName(pick('setupType')),
+          setupAbbreviation:alexGSetupTypeAbbreviation(pick('setupType')),
+          // v12.11.0 Unit B (CORR-1). Always present. Observational only -- see
+          // alexGBuildRuleAttribution: this describes the engine's decision, never makes one.
+          ruleIds:attribution.ruleIds,
+          triggeredConditions:attribution.triggeredConditions,
+          ruleAttribution:attribution.attribution,
           qualifiedAt:pick('qualificationTimestamp'),qualificationClose:pick('qualificationClose'),
           structureRefs:{
             zoneId:pick('zoneId'),zoneLow:pick('zoneLow'),zoneHigh:pick('zoneHigh'),
@@ -11981,9 +12316,13 @@ function evidenceBuildPackageFromTrade(trade,opts){
             reactionId:pick('reactionId'),zoneTouchNumber:pick('zoneTouchNumber'),
             breakCycleId:pick('breakCycleId'),brokenDirection:pick('brokenDirection'),
             barsSinceBreak:pick('barsSinceBreak'),
-            breakCandleRef:null,retestCandleRef:null,penetrationDepth:null
+            // v12.10.0 Unit A (CORR-4) -- recovered from the setup record the protected engine
+            // already wrote. Nothing here is computed, inferred or reconstructed.
+            breakCandleRef:candleRefs.breakCandleRef,retestCandleRef:candleRefs.retestCandleRef,
+            penetrationDepth:null
           },
-          structureRefsProvenance:{breakCandleRef:'FUTURE_WORK',retestCandleRef:'FUTURE_WORK',penetrationDepth:'FUTURE_WORK'},
+          structureRefsProvenance:{breakCandleRef:candleRefs.provenance.breakCandleRef,
+            retestCandleRef:candleRefs.provenance.retestCandleRef,penetrationDepth:'FUTURE_WORK'},
           contextRefs:{
             session:pick('session'),dayOfWeek:pick('dayOfWeek'),hourOfDay:pick('hourOfDay'),
             trendContext:pick('trendContext'),atrAtEntry:pick('atrAtEntry'),
@@ -12019,7 +12358,11 @@ function evidenceBuildPackageFromTrade(trade,opts){
         exitCandleStart:pick('exitCandleStart'),exitCandleEnd:pick('exitCandleEnd'),
         exitBid:pick('exitBid'),exitAsk:pick('exitAsk'),exitSpreadPips:pick('exitSpreadPips'),
         plannedR:pick('plannedRR'),recordedResultR:pick('resultR'),
-        realizedR:null,realizedRProvenance:'DERIVED_AT_READ_TIME',
+        // v12.10.0 Unit A (CORR-3). realizedR is computed from the OBSERVED exit only; when the
+        // inputs are absent it stays null and says UNAVAILABLE. recordedResultR is never copied
+        // into it -- provenance would then be a lie -- and is retained unchanged beside it.
+        realizedR:realized.realizedR,realizedRProvenance:realized.provenance,
+        realizedRBasis:realized.basis,
         pnl:pick('pnl'),balanceAfter:pick('balanceAfter'),
         maePips:pick('maePips'),mfePips:pick('mfePips'),maeR:pick('maeR'),mfeR:pick('mfeR'),
         timeToMFE:null,timeToMAE:null,
@@ -12052,6 +12395,54 @@ function evidenceValidatePackage(pkg){
     if(!pkg.identity.strategyId) errors.push('missing identity.strategyId');
     if(!pkg.identity.strategyVersion) errors.push('missing identity.strategyVersion');
     if(pkg.identity.mode!=='LIVE_PAPER'&&pkg.identity.mode!=='REPLAY') errors.push('invalid identity.mode: '+pkg.identity.mode);
+    // ── v12.10.0 Unit A: the new identity fields are validated ONLY WHEN PRESENT. ──
+    // They are deliberately NOT required. Every package captured before v12.10.0 omits them and
+    // must still validate, still import and still verify -- making them mandatory would retro-
+    // actively invalidate the existing verified packages, which is exactly what must not happen.
+    if('releaseGatesApplied' in pkg.identity&&pkg.identity.releaseGatesApplied!==null
+       &&!Array.isArray(pkg.identity.releaseGatesApplied)) errors.push('identity.releaseGatesApplied must be an array or null');
+    ['strategySpecificationVersionProvenance','releaseVersionProvenance','releaseGatesAppliedProvenance'].forEach(function(k){
+      if(k in pkg.identity&&pkg.identity[k]!=null&&EVIDENCE_FIELD_PROVENANCE.indexOf(pkg.identity[k])===-1){
+        errors.push('identity.'+k+' has an invalid provenance: '+pkg.identity[k]);
+      }
+    });
+  }
+  // v12.11.0 Unit B: rule attribution is validated ONLY WHEN PRESENT, for the same reason -- a
+  // package captured before Unit B carries none of it and must still validate and verify.
+  if(pkg.objects&&Array.isArray(pkg.objects.qualifiedSetups)){
+    pkg.objects.qualifiedSetups.forEach(function(qs,i){
+      if(!qs||typeof qs!=='object') return;
+      if('ruleIds' in qs&&!Array.isArray(qs.ruleIds)) errors.push('objects.qualifiedSetups['+i+'].ruleIds must be an array');
+      if('triggeredConditions' in qs){
+        if(!Array.isArray(qs.triggeredConditions)) errors.push('objects.qualifiedSetups['+i+'].triggeredConditions must be an array');
+        else qs.triggeredConditions.forEach(function(c,j){
+          const at='objects.qualifiedSetups['+i+'].triggeredConditions['+j+']';
+          if(!c||typeof c!=='object'){ errors.push(at+' must be an object'); return; }
+          if(!c.conditionId||typeof c.conditionId!=='string') errors.push(at+'.conditionId must be a stable string identifier');
+          if(!c.ruleId||typeof c.ruleId!=='string') errors.push(at+'.ruleId must be a stable string identifier');
+          if(c.satisfied!==true&&c.satisfied!==false&&c.satisfied!==null) errors.push(at+'.satisfied must be true, false or null');
+          if(EVIDENCE_FIELD_PROVENANCE.indexOf(c.provenance)===-1) errors.push(at+'.provenance is invalid: '+c.provenance);
+        });
+      }
+      // A stored contradiction must never reach the store: capture fails before this point, so a
+      // package asserting one is malformed rather than merely unusual.
+      if(qs.ruleAttribution&&qs.ruleAttribution.contradictsEngineClassification===true){
+        errors.push('objects.qualifiedSetups['+i+'].ruleAttribution contradicts the recorded classification');
+      }
+    });
+  }
+  // Same rule for the outcome-level provenance introduced by Unit A: checked when present, never
+  // required, so older packages are untouched by it.
+  if(pkg.objects&&Array.isArray(pkg.objects.outcomes)){
+    pkg.objects.outcomes.forEach(function(oc,i){
+      if(!oc||typeof oc!=='object') return;
+      if(oc.realizedRProvenance!=null&&EVIDENCE_REALIZED_R_PROVENANCE.indexOf(oc.realizedRProvenance)===-1){
+        errors.push('objects.outcomes['+i+'].realizedRProvenance is invalid: '+oc.realizedRProvenance);
+      }
+      if(oc.realizedR!=null&&(typeof oc.realizedR!=='number'||!isFinite(oc.realizedR))){
+        errors.push('objects.outcomes['+i+'].realizedR must be a finite number or null');
+      }
+    });
   }
   if(!pkg.objects||typeof pkg.objects!=='object') errors.push('missing objects block');
   if(!pkg.completenessReport||typeof pkg.completenessReport!=='object') errors.push('missing completenessReport');
@@ -12133,7 +12524,10 @@ async function evidencePersistTradePackageResolved(trade,basis,strategyId,extra)
     strategyId:strategyId,
     captureBasis:basis,
     engineVersion:(typeof APP_VERSION!=='undefined'?APP_VERSION:null),
-    mode:x.mode, runId:x.runId, datasetHash:x.datasetHash, replayDateRange:x.replayDateRange
+    mode:x.mode, runId:x.runId, datasetHash:x.datasetHash, replayDateRange:x.replayDateRange,
+    // v12.10.0 Unit A (CORR-2): forwarded verbatim; absent for callers that do not supply them,
+    // which then record UNAVAILABLE rather than a guessed release identity.
+    releaseVersion:x.releaseVersion, releaseGatesApplied:x.releaseGatesApplied
   });
   await evidenceFinalizePackage(pkg);
   const v=evidenceValidatePackage(pkg);
@@ -12210,7 +12604,14 @@ async function alexGBuildReplayRunIdentity(oPair,days,datasets,replayParams){
 // Maps a replay trade onto the common shape. Verbatim only -- nothing inferred or computed.
 // pnl is deliberately NOT derived from balanceAfter-balanceBefore: the replay record does not
 // carry a pnl field, and an arithmetic reconstruction is not an observation.
-function evidenceNormalizeReplayTrade(trade,run){
+// v12.10.0 Unit A (CORR-4): `setup` is the OPTIONAL setup record the protected engine already
+// produced for this trade. It is read for the break-cycle candle references only -- brokenAtBar,
+// brokenAt and qualificationBarIndex, which alexGConstructTrade does not copy onto the trade. No
+// value is recomputed, and when no setup record is supplied the refs stay honestly UNAVAILABLE.
+// v12.11.0 Unit B adds `breakCycleSetupCount`: how many B_breakRetest setups the run recorded for
+// this trade's break cycle. Only the whole setup set can show it, so the seam counts it and passes
+// it in; a caller that cannot supply it leaves that one condition honestly unverified.
+function evidenceNormalizeReplayTrade(trade,run,setup,breakCycleSetupCount){
   if(!trade||typeof trade!=='object'||trade.tradeId==null||!run) return null;
   if(trade.stillOpen) return null;                 // unresolved -- not a trade observation yet
   if(trade.result==null) return null;
@@ -12238,9 +12639,23 @@ function evidenceNormalizeReplayTrade(trade,run){
     zoneTouchNumber:trade.zoneTouchNumber, zoneStrength:trade.zoneStrength,
     zoneQualityAtQualification:trade.zoneQualityAtQualification,
     zoneRoleAtQualification:trade.zoneRoleAtQualification,
+    // v12.11.0 Unit B (CORR-1): the fields the protected evaluators actually tested. The status
+    // and quality come from the trade; the reaction side/swing and the break-cycle setup count
+    // exist only on the setup record and the setup set, so they arrive through the seam.
+    zoneStatusAtQualification:trade.zoneStatusAtQualification,
+    reactionFromSide:(setup&&setup.reactionFromSide!=null)?setup.reactionFromSide:null,
+    reactionSwingType:(setup&&setup.reactionSwingType!=null)?setup.reactionSwingType:null,
+    breakCycleSetupCount:(typeof breakCycleSetupCount==='number')?breakCycleSetupCount:null,
     zoneLow:trade.zoneLow, zoneHigh:trade.zoneHigh, zoneCenter:trade.zoneCenter,
     breakCycleId:trade.breakCycleId, brokenDirection:trade.brokenDirection,
     barsSinceBreak:trade.barsSinceBreak, atrAtEntry:trade.atrAtEntry,
+    // v12.10.0 Unit A (CORR-3): the engine's own risk distance, so realizedR is computed from a
+    // recorded quantity rather than re-derived from two prices when the recorded one exists.
+    riskDistance:trade.riskDistance,
+    // v12.10.0 Unit A (CORR-4): verbatim from the setup record when the seam supplied it.
+    brokenAtBar:(setup&&setup.brokenAtBar!=null)?setup.brokenAtBar:null,
+    brokenAt:(setup&&setup.brokenAt!=null)?setup.brokenAt:null,
+    qualificationBarIndex:(setup&&setup.qualificationBarIndex!=null)?setup.qualificationBarIndex:null,
     session:trade.session, dayOfWeek:trade.dayOfWeek, hourOfDay:trade.hourOfDay,
     trendContext:trade.trendContext,
     nearestPsych500Level:trade.nearestPsych500Level, distanceToPsych500Pips:trade.distanceToPsych500Pips,
@@ -12251,23 +12666,51 @@ function evidenceNormalizeReplayTrade(trade,run){
 let evidenceReplayCaptureInFlight=false;
 // Fire-and-forget, own try/catch, read-only over the replay result. Cannot alter replay output,
 // the ledger, or any account -- replay never touches those.
-function evidenceCaptureReplayTrades(run,trades){
+// v12.10.0 Unit A: `setups` is OPTIONAL and read-only. Passing it recovers the break/retest
+// candle references (CORR-4); omitting it changes nothing except that those refs stay UNAVAILABLE.
+function evidenceCaptureReplayTrades(run,trades,setups){
   if(evidenceReplayCaptureInFlight) return;
   if(!run||!Array.isArray(trades)||!trades.length) return;
   evidenceReplayCaptureInFlight=true;
-  evidenceCaptureReplayTradesAsync(run,trades).catch(function(e){
+  evidenceCaptureReplayTradesAsync(run,trades,setups).catch(function(e){
     evidenceRecordWriteFailure('capture-replay',e);
   }).then(function(){ evidenceReplayCaptureInFlight=false; },function(){ evidenceReplayCaptureInFlight=false; });
 }
-async function evidenceCaptureReplayTradesAsync(run,trades){
+// v12.10.0 Unit A (CORR-2): replay consults NO release-level gate. alexGV11EntryDayEligible and
+// alexGV11SetupTypePermitted are called only from alexGEvaluatePairForLiveSetups, which the replay
+// path never reaches, so an EMPTY LIST here is an observation about the executing path, not a
+// default. That is the fact the 2026-08-03 reconciliation had to recover by reading source.
+const EVIDENCE_REPLAY_RELEASE_GATES=Object.freeze([]);
+async function evidenceCaptureReplayTradesAsync(run,trades,setups){
   let captured=0,skipped=0;
+  const setupById={},breakCycleCounts={};
+  if(Array.isArray(setups)){
+    for(let s=0;s<setups.length;s++){
+      const rec=setups[s];
+      if(!rec||rec.setupId==null) continue;
+      setupById[String(rec.setupId)]=rec;
+      // v12.11.0 Unit B: read-only tally of B_breakRetest setups per break cycle, so the
+      // "first qualifying retest only" rule can be attributed from observation instead of
+      // assumed. Counting is order-independent: the engine records at most one per cycle.
+      if(rec.setupType==='B_breakRetest'&&rec.breakCycleId!=null){
+        const k=String(rec.breakCycleId);
+        breakCycleCounts[k]=(breakCycleCounts[k]||0)+1;
+      }
+    }
+  }
+  const releaseVersion=(typeof ALEX_V11_RULE_VERSION!=='undefined')?ALEX_V11_RULE_VERSION:null;
   for(let i=0;i<trades.length;i++){
-    const norm=evidenceNormalizeReplayTrade(trades[i],run);
+    const t=trades[i];
+    const setup=(t&&t.setupId!=null)?setupById[String(t.setupId)]:null;
+    const cycleCount=(t&&t.setupType==='B_breakRetest'&&t.breakCycleId!=null&&Array.isArray(setups))
+      ?(breakCycleCounts[String(t.breakCycleId)]||0):null;
+    const norm=evidenceNormalizeReplayTrade(t,run,setup,cycleCount);
     if(!norm){ skipped++; continue; }
     try{
       if(await evidenceHasPackageForTrade(norm.tradeId)){ skipped++; continue; }  // idempotent re-run
       await evidencePersistTradePackage(norm,'REPLAY_RUN',run.strategyId,{
-        mode:'REPLAY', runId:run.runId, datasetHash:run.datasetHash, replayDateRange:run.range
+        mode:'REPLAY', runId:run.runId, datasetHash:run.datasetHash, replayDateRange:run.range,
+        releaseVersion:releaseVersion, releaseGatesApplied:EVIDENCE_REPLAY_RELEASE_GATES
       });
       captured++;
     }catch(e){

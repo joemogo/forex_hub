@@ -45,7 +45,9 @@ function runEvidencePlatformFixtures(g){
       entry:1.1000,stop:1.0950,target:1.1100,plannedRR:2,riskPercent:1,riskAmount:100,
       pipValue:10,positionSize:0.2,balanceAtEntry:10000,openedAt:'2026-07-20T10:00:00.000Z',
       qualificationTimestamp:1753000000000,qualificationClose:1.0999,zoneId:'AGZ|z1',
-      reactionId:'AGR|r1',zoneTouchNumber:3,zoneStrength:4,zoneQualityAtQualification:'A',
+      // touch 4 (touchIndex 3) is the earliest reaction the engine can turn into a setup at all;
+      // the previous value of 3 described a record the protected engine could never have created.
+      reactionId:'AGR|r1',zoneTouchNumber:4,zoneStrength:4,zoneQualityAtQualification:'A',
       zoneRoleAtQualification:'support',zoneLow:1.0940,zoneHigh:1.0960,zoneCenter:1.0950,
       atrAtEntry:0.0012,session:'London',dayOfWeek:1,hourOfDay:10,trendContext:'up',
       status:'closed',exitPrice:1.1100,closedAt:'2026-07-20T14:00:00.000Z',result:'Win',
@@ -780,7 +782,9 @@ function runEvidencePlatformFixtures(g){
     eq(protectedList.indexOf('runAlexGReplay'),-1,'the identity seam is not protected');
     eq(protectedList.indexOf('runAlexGReplayUI'),-1,'the capture seam is not protected');
     const ui=g.getSource('async function runAlexGReplayUI()');
-    ok(/try\{ evidenceCaptureReplayTrades\(result\.runIdentity,result\.trades\); \}catch/.test(ui),
+    // v12.10.0 Unit A (CORR-4) added the read-only setups argument. The assertion is UNCHANGED in
+    // strength: the call must still be individually wrapped in its own try/catch.
+    ok(/try\{ evidenceCaptureReplayTrades\(result\.runIdentity,result\.trades,result\.setups\); \}catch/.test(ui),
       'capture must be individually wrapped');
     ok(ui.indexOf('evidenceCaptureReplayTrades')>ui.indexOf('alexGReplayStats=result.stats'),
       'capture must run AFTER the replay results are assigned');
@@ -986,6 +990,558 @@ function runEvidencePlatformFixtures(g){
     eq(layer.indexOf('deleteDatabase'),-1,'no evidence code path may drop the database');
     // The only write-back permitted on an existing package is recording an export outcome.
     ok(String(g.evidenceUpdateExportState).indexOf('existing.export=exportState')!==-1);
+  });
+
+  // ══ GROUP 11 — v12.10.0 UNIT A (CORR-2/3/4/8) ══════════════════════════════════════════
+  // Every fixture calls the REAL builder, normalizer, validator and helpers. The governing
+  // constraint is that nothing here may retroactively affect a package captured earlier.
+
+  // A package exactly as v12.9.0 produced one: no Unit A keys at all. Used to prove the new
+  // validation is opt-in rather than retroactive.
+  function preUnitAPackage(){
+    const p=builtPackage();
+    delete p.identity.strategySpecificationVersion;
+    delete p.identity.strategySpecificationVersionProvenance;
+    delete p.identity.releaseVersion;
+    delete p.identity.releaseVersionProvenance;
+    delete p.identity.releaseGatesApplied;
+    delete p.identity.releaseGatesAppliedProvenance;
+    delete p.objects.qualifiedSetups[0].setupCanonicalName;
+    delete p.objects.qualifiedSetups[0].setupAbbreviation;
+    p.objects.qualifiedSetups[0].structureRefs.breakCandleRef=null;
+    p.objects.qualifiedSetups[0].structureRefs.retestCandleRef=null;
+    p.objects.qualifiedSetups[0].structureRefsProvenance={breakCandleRef:'FUTURE_WORK',retestCandleRef:'FUTURE_WORK',penetrationDepth:'FUTURE_WORK'};
+    p.objects.outcomes[0].realizedR=null;
+    p.objects.outcomes[0].realizedRProvenance='DERIVED_AT_READ_TIME';
+    delete p.objects.outcomes[0].realizedRBasis;
+    return p;
+  }
+
+  // ── CORR-2: specification version vs running release ──
+  t('A1 identity carries the specification version AND the release version as separate fields',function(){
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade(),
+      {packageId:'PKG|x|1',captureBasis:'REPLAY_RUN',strategyId:'alex_g_sr_v1',
+       releaseVersion:'alex_g_sr_v1_1',releaseGatesApplied:[]});
+    eq(p.identity.strategySpecificationVersion,'alex_g_sr_v1','the specification that classified the trade');
+    eq(p.identity.releaseVersion,'alex_g_sr_v1_1','the build it ran inside');
+    ok(p.identity.strategySpecificationVersion!==p.identity.releaseVersion,'the two facts must be separable');
+  });
+  t('A2 strategyVersion is RETAINED unchanged for backward compatibility',function(){
+    const p=builtPackage();
+    eq(p.identity.strategyVersion,'alex_g_sr_v1','the pre-existing field must not move');
+    eq(p.identity.strategyVersion,p.identity.strategySpecificationVersion,'and must agree with the new one');
+  });
+  t('A3 an EMPTY releaseGatesApplied is an observation; an ABSENT one is UNAVAILABLE',function(){
+    const observed=g.evidenceBuildPackageFromTrade(sampleTrade(),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1',releaseGatesApplied:[]});
+    ok(Array.isArray(observed.identity.releaseGatesApplied),'an empty list must survive as a list');
+    eq(observed.identity.releaseGatesApplied.length,0);
+    eq(observed.identity.releaseGatesAppliedProvenance,'OBSERVED','"no gates applied" is a real answer');
+    const silent=builtPackage();
+    eq(silent.identity.releaseGatesApplied,null,'a caller that says nothing must not be given an empty list');
+    eq(silent.identity.releaseGatesAppliedProvenance,'UNAVAILABLE');
+  });
+  t('A4 an unresolved release version is UNAVAILABLE, never guessed',function(){
+    const p=builtPackage();
+    eq(p.identity.releaseVersion,null);
+    eq(p.identity.releaseVersionProvenance,'UNAVAILABLE');
+  });
+  t('A5 the replay seam supplies the release identity and an empty gate list',function(){
+    const src=String(g.evidenceCaptureReplayTradesAsync);
+    ok(src.indexOf('releaseVersion:releaseVersion')!==-1,'the seam must forward the release version');
+    ok(src.indexOf('releaseGatesApplied:EVIDENCE_REPLAY_RELEASE_GATES')!==-1,'and the observed gate list');
+    eq(g.EVIDENCE_REPLAY_RELEASE_GATES.length,0,'replay consults no release-level gate');
+  });
+  t('A6 the release identity survives evidencePersistTradePackageResolved',function(){
+    const src=String(g.evidencePersistTradePackageResolved);
+    ok(src.indexOf('releaseVersion:x.releaseVersion')!==-1,'must be forwarded, not dropped at the persist layer');
+    ok(src.indexOf('releaseGatesApplied:x.releaseGatesApplied')!==-1);
+  });
+
+  // ── CORR-3: realized R from the actual exit ──
+  t('A7 realizedR is computed from the exit for a winner',function(){
+    const p=builtPackage();               // entry 1.1000 stop 1.0950 exit 1.1100 buy
+    eq(p.objects.outcomes[0].realizedR,2,'(1.1100-1.1000)/0.0050 = 2R');
+    eq(p.objects.outcomes[0].realizedRProvenance,'OBSERVED_FROM_EXIT');
+  });
+  t('A8 realizedR is computed from the exit for a loser',function(){
+    const p=builtPackage({exitPrice:1.0950,result:'Loss',resultR:-1});
+    eq(p.objects.outcomes[0].realizedR,-1,'a stop-out is exactly -1R');
+  });
+  t('A9 realizedR respects direction -- a short that falls is a WIN',function(){
+    const p=builtPackage({direction:'sell',entry:1.1000,stop:1.1050,exitPrice:1.0900,result:'Win'});
+    eq(p.objects.outcomes[0].realizedR,2,'(1.1000-1.0900)/0.0050 = 2R for a sell');
+  });
+  t('A10 realizedR is NEVER sourced from recordedResultR',function(){
+    // recordedResultR is deliberately contradicted by the prices; realizedR must follow the PRICES.
+    const p=builtPackage({resultR:99});
+    eq(p.objects.outcomes[0].recordedResultR,99,'the engine-recorded value is preserved verbatim');
+    eq(p.objects.outcomes[0].realizedR,2,'the observed value must come from the exit, not the record');
+    ok(String(g.evidenceComputeRealizedR).indexOf('resultR')===-1,'the helper must not read resultR at all');
+  });
+  t('A11 realizedR is UNAVAILABLE -- not zero, not recordedResultR -- when inputs are missing',function(){
+    const p=builtPackage({exitPrice:null});
+    eq(p.objects.outcomes[0].realizedR,null);
+    eq(p.objects.outcomes[0].realizedRProvenance,'UNAVAILABLE');
+    const r=g.evidenceComputeRealizedR({entry:1.1,exitPrice:1.2,direction:'buy',riskDistance:0});
+    eq(r.realizedR,null,'a zero risk distance must not divide');
+    eq(r.provenance,'UNAVAILABLE');
+  });
+  t('A12 realizedRBasis records the inputs, so the number is checkable',function(){
+    const b=builtPackage().objects.outcomes[0].realizedRBasis;
+    ok(b&&typeof b==='object','the basis must be present');
+    eq(b.entryPrice,1.1000); eq(b.exitPrice,1.1100); eq(b.direction,'buy');
+    ok(Math.abs(b.riskDistance-0.0050)<1e-12,'risk distance must be the observed one');
+    const recomputed=Math.round((((b.exitPrice-b.entryPrice)*1)/b.riskDistance)*1e6)/1e6;
+    eq(recomputed,2,'the stored basis must independently reproduce the stored realizedR');
+  });
+  t('A13 the engine-recorded riskDistance is preferred over re-derived prices',function(){
+    const r=g.evidenceComputeRealizedR({entry:1.1,exitPrice:1.11,direction:'buy',riskDistance:0.005,stop:1.0});
+    eq(r.basis.riskDistanceSource,'riskDistance');
+    eq(r.realizedR,2,'the recorded distance, not |entry-stop|, must govern');
+    const f=g.evidenceComputeRealizedR({entry:1.1,exitPrice:1.11,direction:'buy',stop:1.095});
+    eq(f.basis.riskDistanceSource,'abs(entry-stop)','and the fallback is honestly labelled');
+  });
+  t('A14 realizedRProvenance is restricted to the declared vocabulary',function(){
+    ok(g.EVIDENCE_REALIZED_R_PROVENANCE.indexOf('OBSERVED_FROM_EXIT')!==-1);
+    const p=builtPackage();
+    p.objects.outcomes[0].realizedRProvenance='TOTALLY_MADE_UP';
+    no(g.evidenceValidatePackage(p).valid,'an undeclared provenance must fail validation');
+  });
+
+  // ── CORR-4: break and retest candle references ──
+  t('A15 candle refs come from the SETUP RECORD and are marked OBSERVED',function(){
+    const setup={setupId:'AGS|x',brokenAtBar:100,brokenAt:1775000000000,qualificationBarIndex:114};
+    const norm=g.evidenceNormalizeReplayTrade(
+      {tradeId:'AGT|1',setupId:'AGS|x',setupType:'B_breakRetest',result:'Loss',timeframe:'H1',
+       entry:1.1,stop:1.105,exitPrice:1.105,direction:'sell',entryTimestamp:1775004000000},
+      {runId:'r'.repeat(64),strategyId:'alex_g_sr_v1'},setup);
+    eq(norm.brokenAtBar,100,'copied verbatim from the setup record');
+    eq(norm.qualificationBarIndex,114);
+    const p=g.evidenceBuildPackageFromTrade(norm,{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN'});
+    const s=p.objects.qualifiedSetups[0];
+    eq(s.structureRefs.breakCandleRef.barIndex,100);
+    eq(s.structureRefs.breakCandleRef.timestampUTC,new Date(1775000000000).toISOString());
+    eq(s.structureRefs.breakCandleRef.timeframe,'H1');
+    eq(s.structureRefsProvenance.breakCandleRef,'OBSERVED','recorded by the engine, not computed here');
+    eq(s.structureRefsProvenance.retestCandleRef,'OBSERVED');
+  });
+  t('A16 a Repeated Zone Reaction has NO break cycle -- NOT_APPLICABLE, never UNAVAILABLE',function(){
+    const p=builtPackage({setupType:'A_repeatedReaction',setupLabel:'REPEATED ZONE REACTION'});
+    const s=p.objects.qualifiedSetups[0];
+    eq(s.structureRefs.breakCandleRef,null);
+    eq(s.structureRefsProvenance.breakCandleRef,'NOT_APPLICABLE','nothing was lost; there is nothing to record');
+    ok(g.EVIDENCE_FIELD_PROVENANCE.indexOf('NOT_APPLICABLE')!==-1,'the token must be declared');
+  });
+  t('A17 without a setup record the refs stay UNAVAILABLE -- nothing is invented',function(){
+    const norm=g.evidenceNormalizeReplayTrade(
+      {tradeId:'AGT|1',setupId:'AGS|x',setupType:'B_breakRetest',result:'Loss',timeframe:'H1'},
+      {runId:'r'.repeat(64),strategyId:'alex_g_sr_v1'});      // no setup passed
+    eq(norm.brokenAtBar,null);
+    const p=g.evidenceBuildPackageFromTrade(norm,{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    eq(p.objects.qualifiedSetups[0].structureRefs.breakCandleRef,null);
+    eq(p.objects.qualifiedSetups[0].structureRefsProvenance.breakCandleRef,'UNAVAILABLE');
+  });
+  t('A18 penetrationDepth remains honestly FUTURE_WORK',function(){
+    eq(builtPackage().objects.qualifiedSetups[0].structureRefsProvenance.penetrationDepth,'FUTURE_WORK');
+  });
+  t('A19 the seam passes setups READ-ONLY and replay still returns its own results',function(){
+    const ui=String(g.runAlexGReplayUI);
+    ok(ui.indexOf('evidenceCaptureReplayTrades(result.runIdentity,result.trades,result.setups)')!==-1,
+       'the seam must receive the setup records');
+    ok(ui.indexOf('try{ evidenceCaptureReplayTrades')!==-1,'and must remain inside its own try/catch');
+    ok(String(g.runAlexGReplay).indexOf('setups:setupsForPair')!==-1,'replay must return the records it already built');
+    const seam=String(g.evidenceCaptureReplayTradesAsync);
+    eq(seam.indexOf('setups[s].setupId=null'),-1,'the seam must never write to a setup record');
+    ok(seam.indexOf('setupById[String(rec.setupId)]=rec')!==-1,'it may only index them');
+  });
+
+  // ── CORR-8: canonical naming ──
+  t('A20 one canonical name per category, and the RZR alias is recorded as deprecated',function(){
+    eq(g.alexGSetupTypeCanonicalName('A_repeatedReaction'),'Repeated Zone Reaction');
+    eq(g.alexGSetupTypeCanonicalName('B_breakRetest'),'Break & Retest');
+    eq(g.alexGSetupTypeAbbreviation('A_repeatedReaction'),'RZR');
+    eq(g.alexGSetupTypeCanonicalName('something_else'),null,'an unknown type must not be given a name');
+    ok(g.ALEX_SETUP_CANONICAL_NAMES.A_repeatedReaction.deprecatedAliases.indexOf('Repeated Reaction')!==-1,
+       'the alias that caused the 2026-08-03 confusion must be recorded as deprecated');
+  });
+  t('A21 canonical naming does NOT alter classification, stored labels or stats grouping',function(){
+    const p=builtPackage({setupType:'A_repeatedReaction',setupLabel:'REPEATED ZONE REACTION'});
+    const s=p.objects.qualifiedSetups[0];
+    eq(s.setupType,'A_repeatedReaction','the protected engine\'s value must be untouched');
+    eq(s.setupLabel,'REPEATED ZONE REACTION','the stored display label must be untouched');
+    eq(s.setupCanonicalName,'Repeated Zone Reaction','the canonical name is ADDITIVE');
+    // alexGComputeReplayStats is PROTECTED and groups by setupLabel -- prove the key is unchanged.
+    ok(String(g.alexGComputeReplayStats).indexOf('bySetupType:byGroup(t=>t.setupLabel)')!==-1,
+       'stats grouping must still key on the untouched setupLabel');
+  });
+
+  // ── Backward compatibility: the existing verified packages must be unaffected ──
+  t('A22 a pre-v12.10.0 package still validates, canonicalizes and keeps its hash',function(){
+    const old=preUnitAPackage();
+    const before=g.evidenceCanonicalize(old);
+    const v=g.evidenceValidatePackage(old);
+    ok(v.valid,'a package captured before Unit A must still validate: '+v.errors.join('; '));
+    eq(g.evidenceCanonicalize(old),before,'canonicalization must be byte-identical for it');
+    eq(old.packageSchemaVersion,g.EVIDENCE_PACKAGE_SCHEMA_VERSION,'the schema version must NOT have been bumped');
+    // The new keys must be optional, not required.
+    ok(!('releaseVersion' in old.identity),'the fixture really is missing the new keys');
+    const withNulls=preUnitAPackage(); withNulls.identity.releaseGatesApplied=null;
+    ok(g.evidenceValidatePackage(withNulls).valid,'an explicit null must also validate');
+    const bad=preUnitAPackage(); bad.identity.releaseGatesApplied='ALEX_V11_001';
+    no(g.evidenceValidatePackage(bad).valid,'but a wrongly-typed value must still be caught');
+  });
+
+  // ══ GROUP 12 — v12.11.0 UNIT B (CORR-1) RULE ATTRIBUTION ═══════════════════════════════
+  // The differential fixtures are the anti-drift mechanism: they drive the mirror and the REAL
+  // protected evaluators from the same objects and assert the mirror never contradicts them.
+
+  // A zone/touch pair that genuinely qualifies as B_breakRetest under the protected evaluator.
+  function brZone(over){
+    const z={id:'AGZ|z1',status:'broken',brokenAtBar:40,brokenAt:1752990000000,
+      brokenDirection:'downThroughSupport',touches:[{},{},{},{},{}],low:1.094,high:1.096,center:1.095};
+    if(over) Object.keys(over).forEach(function(k){ z[k]=over[k]; });
+    return z;
+  }
+  function brTouch(over){
+    const t={reactionId:'AGR|r1',swingType:'high',fromSide:'below',price:1.0955};
+    if(over) Object.keys(over).forEach(function(k){ t[k]=over[k]; });
+    return t;
+  }
+  function rzrZone(over){
+    const z={id:'AGZ|z2',status:'validated',brokenAtBar:null,brokenAt:null,brokenDirection:null,
+      touches:[{},{},{},{}],low:1.094,high:1.096,center:1.095};
+    if(over) Object.keys(over).forEach(function(k){ z[k]=over[k]; });
+    return z;
+  }
+  const CFG={maxBarsBetweenBreakAndRetest:50};
+
+  // Runs BOTH the protected evaluator and the mirror from the same inputs and returns both
+  // verdicts. alexGSetupState is emptied so the evaluator's own alreadyUsed check is false, and
+  // the mirror is told the matching break-cycle count, so the comparison is like-for-like.
+  function differential(zone,touch,touchIndex,idx,quality,setupType,cycleCount){
+    const prior=g.getAlexGSetupState();
+    g.setAlexGSetupState([]);
+    let engine;
+    try{
+      // When the case says this break cycle already produced a setup, the ENGINE must be put in
+      // that same state -- otherwise the comparison would be against an engine that never saw the
+      // earlier setup, and the "disagreement" would be the fixture's fault, not the mirror's.
+      if(setupType==='B_breakRetest'&&typeof cycleCount==='number'&&cycleCount>1){
+        const probe=g.alexGEvaluateBreakRetest(zone,touch,touchIndex,idx,CFG);
+        const priorSetups=[];
+        for(let i=1;i<cycleCount;i++) priorSetups.push({zoneId:zone.id,setupType:'B_breakRetest',breakCycleId:probe.breakCycleId});
+        g.setAlexGSetupState(priorSetups);
+      }
+      engine=(setupType==='B_breakRetest')
+        ? g.alexGEvaluateBreakRetest(zone,touch,touchIndex,idx,CFG).qualifies
+        : g.alexGEvaluateRepeatedReaction(zone,touch,touchIndex,quality,CFG).qualifies;
+    } finally { g.setAlexGSetupState(prior); }
+    const rec=g.alexGAttributionRecordFromEngineInputs(zone,touch,touchIndex,idx,quality);
+    const mirror=g.alexGBuildRuleAttribution(rec,setupType,CFG,
+      {breakCycleSetupCount:(typeof cycleCount==='number'?cycleCount:1)});
+    return{engine,mirror,rec};
+  }
+  function assertNoContradiction(d,label){
+    if(d.engine===true&&d.mirror.verdict==='CONTRADICTS_RECORDED_CLASSIFICATION')
+      throw new Error(label+': the evaluator QUALIFIED this setup but the mirror contradicted it ('+
+        d.mirror.attribution.failedConditionIds.join(',')+')');
+    if(d.engine===false&&d.mirror.verdict==='AGREES_WITH_RECORDED_CLASSIFICATION')
+      throw new Error(label+': the evaluator REFUSED this setup but the mirror found every condition satisfied');
+  }
+
+  t('B1 DIFFERENTIAL -- a qualifying Break & Retest: evaluator and mirror agree exactly',function(){
+    const d=differential(brZone(),brTouch(),3,45,'clean','B_breakRetest',1);
+    eq(d.engine,true,'the protected evaluator must qualify this setup');
+    eq(d.mirror.verdict,'AGREES_WITH_RECORDED_CLASSIFICATION');
+    eq(d.mirror.attribution.unverifiedConditionCount,0,'every condition must be knowable here');
+    assertNoContradiction(d,'B1');
+  });
+  t('B2 DIFFERENTIAL -- a qualifying Repeated Zone Reaction: evaluator and mirror agree exactly',function(){
+    const d=differential(rzrZone(),brTouch({swingType:'low',fromSide:'above'}),3,60,'clean','A_repeatedReaction');
+    eq(d.engine,true);
+    eq(d.mirror.verdict,'AGREES_WITH_RECORDED_CLASSIFICATION');
+    assertNoContradiction(d,'B2');
+  });
+  t('B3 DIFFERENTIAL -- every Break & Retest condition falsified in turn',function(){
+    const cases=[
+      ['touch index too low',      brZone(),                              brTouch(),3-1,45,1,'ALEX_SR_V1_TOUCH_INDEX_MIN'],
+      ['zone not broken',          brZone({status:'validated'}),          brTouch(),3,45,1,'ALEX_SR_V1_B_ZONE_STATUS_BROKEN'],
+      ['no break recorded',        brZone({brokenAtBar:null,brokenAt:null}),brTouch(),3,45,1,'ALEX_SR_V1_B_BREAK_RECORDED'],
+      ['retest on the break bar',  brZone(),                              brTouch(),3,40,1,'ALEX_SR_V1_B_RETEST_STRICTLY_AFTER_BREAK'],
+      ['retest too far after',     brZone(),                              brTouch(),3,140,1,'ALEX_SR_V1_B_RETEST_WITHIN_MAX_BARS'],
+      ['wrong reaction side',      brZone(),                              brTouch({fromSide:'above'}),3,45,1,'ALEX_SR_V1_B_REACTION_SIDE_MATCHES_BREAK'],
+      ['wrong swing type',         brZone(),                              brTouch({swingType:'low'}),3,45,1,'ALEX_SR_V1_B_REACTION_SIDE_MATCHES_BREAK'],
+      ['break cycle already used', brZone(),                              brTouch(),3,45,2,'ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE']
+    ];
+    cases.forEach(function(c){
+      const d=differential(c[1],c[2],c[3],c[4],'clean','B_breakRetest',c[5]);
+      assertNoContradiction(d,'B3/'+c[0]);
+      // The engine refuses every one of these (the break-cycle case is refused by the mirror only,
+      // because the evaluator's own alreadyUsed check is state-dependent and was cleared).
+      eq(d.engine,false,c[0]+': the evaluator must refuse');
+      ok(d.mirror.verdict!=='AGREES_WITH_RECORDED_CLASSIFICATION',
+         c[0]+': the mirror must never endorse a setup the evaluator refused');
+      // The named condition must be either FAILED or explicitly UNVERIFIABLE. The one honest gap
+      // is "no break recorded": a record whose break fields are all null cannot distinguish "the
+      // zone was never broken" from "this capture path did not carry the break fields", so the
+      // mirror says INDETERMINATE rather than inventing a verdict.
+      const named=d.mirror.triggeredConditions.filter(function(x){return x.conditionId===c[6];})[0];
+      ok(named,c[0]+': condition '+c[6]+' must be present');
+      ok(named.satisfied===false||named.satisfied===null,
+         c[0]+': expected '+c[6]+' to fail or be unverifiable, got satisfied='+named.satisfied);
+      if(c[6]!=='ALEX_SR_V1_B_BREAK_RECORDED'){
+        eq(d.mirror.verdict,'CONTRADICTS_RECORDED_CLASSIFICATION',c[0]+': the mirror must identify a definite failure');
+        ok(d.mirror.attribution.failedConditionIds.indexOf(c[6])!==-1,
+           c[0]+': expected '+c[6]+', got '+d.mirror.attribution.failedConditionIds.join(','));
+      }
+    });
+  });
+  t('B4 DIFFERENTIAL -- every Repeated Zone Reaction condition falsified in turn',function(){
+    const cases=[
+      ['already-broken zone', rzrZone({status:'broken'}),  3,'clean', 'ALEX_SR_V1_A_ZONE_STATUS_VALIDATED'],
+      ['touch index too low', rzrZone(),                   2,'clean', 'ALEX_SR_V1_TOUCH_INDEX_MIN'],
+      ['too few zone touches',rzrZone({touches:[{},{},{}]}),3,'clean','ALEX_SR_V1_A_ZONE_TOUCH_COUNT_MIN'],
+      ['choppy zone',         rzrZone(),                   3,'choppy','ALEX_SR_V1_A_ZONE_QUALITY_NOT_CHOPPY']
+    ];
+    cases.forEach(function(c){
+      const d=differential(c[1],brTouch({swingType:'low',fromSide:'above'}),c[2],60,c[3],'A_repeatedReaction');
+      eq(d.engine,false,c[0]+': the evaluator must refuse');
+      assertNoContradiction(d,'B4/'+c[0]);
+      eq(d.mirror.verdict,'CONTRADICTS_RECORDED_CLASSIFICATION',c[0]);
+      ok(d.mirror.attribution.failedConditionIds.indexOf(c[4])!==-1,
+         c[0]+': expected '+c[4]+', got '+d.mirror.attribution.failedConditionIds.join(','));
+    });
+  });
+  t('B5 DIFFERENTIAL -- precedence: a zone that could satisfy BOTH is attributed to the stored type',function(){
+    // A broken zone with 4+ touches: Break & Retest qualifies, so alexGClassifyTouch never reaches
+    // the RZR branch -- and the RZR evaluator itself refuses a broken zone. Both must hold.
+    const z=brZone(),tc=brTouch();
+    const b=differential(z,tc,3,45,'clean','B_breakRetest',1);
+    const a=differential(z,tc,3,45,'clean','A_repeatedReaction');
+    eq(b.engine,true,'Break & Retest must qualify');
+    eq(a.engine,false,'Repeated Zone Reaction must refuse the same broken zone');
+    eq(b.mirror.verdict,'AGREES_WITH_RECORDED_CLASSIFICATION');
+    eq(a.mirror.verdict,'CONTRADICTS_RECORDED_CLASSIFICATION','the mirror must not endorse the branch the engine refused');
+    eq(b.mirror.attribution.repeatedReactionEvaluated,false,'a stored B&R means the RZR branch was never reached');
+    eq(a.mirror.attribution.precedenceApplied,'B_BREAK_RETEST_EVALUATED_BEFORE_A_REPEATED_ZONE_REACTION');
+  });
+  t('B6 DIFFERENTIAL -- a sweep over touch index and bars-since-break never contradicts',function(){
+    let checked=0;
+    for(let ti=1;ti<=5;ti++){
+      for(let bars=0;bars<=60;bars+=10){
+        const d=differential(brZone(),brTouch(),ti,40+bars,'clean','B_breakRetest',1);
+        assertNoContradiction(d,'B6/ti='+ti+',bars='+bars);
+        // Where every condition is knowable the two verdicts must be equivalent.
+        if(d.mirror.attribution.unverifiedConditionCount===0){
+          eq(d.mirror.verdict==='AGREES_WITH_RECORDED_CLASSIFICATION',d.engine,
+             'ti='+ti+',bars='+bars+': verdicts must match when nothing is unverifiable');
+        }
+        checked++;
+      }
+    }
+    ok(checked>=35,'the sweep must actually cover the matrix, covered '+checked);
+  });
+  t('B7 the record view is the SAME copy alexGCreateSetupRecord performs',function(){
+    const src=String(g.alexGCreateSetupRecord),rec=g.alexGAttributionRecordFromEngineInputs(brZone(),brTouch(),3,45,'clean');
+    eq(rec.zoneStatusAtQualification,'broken'); eq(rec.zoneTouchNumber,4);
+    eq(rec.barsSinceBreak,5); eq(rec.reactionSwingType,'high'); eq(rec.reactionFromSide,'below');
+    // Each mapping below is the literal one in the protected creator -- proven against its source.
+    ok(src.indexOf('zoneStatusAtQualification:zone.status')!==-1);
+    ok(src.indexOf('zoneTouchNumber:touchIndex+1')!==-1);
+    ok(src.indexOf('barsSinceBreak:zone.brokenAtBar!=null?idx-zone.brokenAtBar:null')!==-1);
+    ok(src.indexOf('reactionFromSide:touch.fromSide,reactionSwingType:touch.swingType')!==-1);
+  });
+  t('B8 attribution CANNOT influence the evaluators or classification',function(){
+    // The protected functions must not reference the attribution layer at all.
+    [String(g.alexGEvaluateBreakRetest),String(g.alexGEvaluateRepeatedReaction),
+     String(g.alexGClassifyTouch),String(g.alexGCreateSetupRecord),String(g.alexGConstructTrade)]
+      .forEach(function(src){
+        ['alexGBuildRuleAttribution','ALEX_ATTRIBUTION_CONDITIONS','ruleAttribution',
+         'triggeredConditions','alexGAttributionRecordFromEngineInputs'].forEach(function(name){
+          eq(src.indexOf(name),-1,'protected code must never reference '+name);
+        });
+      });
+    // And the mirror must not write to anything.
+    const m=String(g.alexGBuildRuleAttribution)+String(g.alexGAttributionRecordFromEngineInputs);
+    ['alexGSetupState=','alexGZoneState=','alexGAccount','journalEntries','paperAccount',
+     'localStorage','commitAlexGLedger'].forEach(function(n){
+      eq(m.indexOf(n),-1,'the mirror must never touch '+n);
+    });
+  });
+  t('B9 running the mirror leaves engine state and evaluator output unchanged',function(){
+    const z=brZone(),tc=brTouch();
+    const before=g.alexGEvaluateBreakRetest(z,tc,3,45,CFG);
+    const zBefore=JSON.stringify(z),tBefore=JSON.stringify(tc);
+    g.alexGBuildRuleAttribution(g.alexGAttributionRecordFromEngineInputs(z,tc,3,45,'clean'),'B_breakRetest',CFG,{breakCycleSetupCount:1});
+    const after=g.alexGEvaluateBreakRetest(z,tc,3,45,CFG);
+    eq(after.qualifies,before.qualifies,'the evaluator must return the same answer after attribution ran');
+    eq(JSON.stringify(z),zBefore,'the zone must not be mutated');
+    eq(JSON.stringify(tc),tBefore,'the touch must not be mutated');
+  });
+  t('B10 a contradiction FAILS capture safely -- no package is produced',function(){
+    // zoneTouchNumber 2 could never have produced a setup; the builder must refuse to write one.
+    throws(function(){
+      g.evidenceBuildPackageFromTrade(sampleTrade({zoneTouchNumber:2}),
+        {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    },'a contradicted classification must throw rather than emit wrong attribution');
+    let msg='';
+    try{ g.evidenceBuildPackageFromTrade(sampleTrade({zoneTouchNumber:2}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'}); }
+    catch(e){ msg=e.message; }
+    ok(msg.indexOf('EVIDENCE_RULE_ATTRIBUTION_MISMATCH')===0,'the failure must be named, not generic: '+msg);
+    ok(msg.indexOf('ALEX_SR_V1_TOUCH_INDEX_MIN')!==-1,'and must name the failed condition');
+  });
+  t('B11 a package asserting a contradiction is rejected by validation',function(){
+    const p=builtPackage();
+    p.objects.qualifiedSetups[0].ruleAttribution.contradictsEngineClassification=true;
+    no(g.evidenceValidatePackage(p).valid,'a stored contradiction must never validate');
+  });
+  t('B12 ruleIds are stable, canonical and deterministically ordered',function(){
+    const rec=g.alexGAttributionRecordFromEngineInputs(brZone(),brTouch(),3,45,'clean');
+    const a=g.alexGBuildRuleAttribution(rec,'B_breakRetest',CFG,{breakCycleSetupCount:1});
+    eq(a.ruleIds.join('|'),'ALEX_SR_V1_CLASSIFY_PRECEDENCE|ALEX_SR_V1_SETUP_B_BREAK_RETEST',
+       'exact canonical order, sorted lexicographically');
+    const sorted=a.ruleIds.slice().sort();
+    eq(a.ruleIds.join('|'),sorted.join('|'),'order must not depend on declaration order');
+    const rzr=g.alexGBuildRuleAttribution(
+      g.alexGAttributionRecordFromEngineInputs(rzrZone(),brTouch(),3,60,'clean'),'A_repeatedReaction',CFG,{});
+    eq(rzr.ruleIds.join('|'),'ALEX_SR_V1_CLASSIFY_PRECEDENCE|ALEX_SR_V1_SETUP_A_REPEATED_ZONE_REACTION');
+  });
+  t('B13 rule and condition IDs are semantic -- never labels, positions or generated text',function(){
+    const all=[];
+    g.getAttributionConditions().forEach(function(c){ all.push(c.conditionId); all.push(c.ruleId); });
+    Object.keys(g.ALEX_ATTRIBUTION_RULE_IDS).forEach(function(k){ all.push(g.ALEX_ATTRIBUTION_RULE_IDS[k]); });
+    all.forEach(function(id){
+      ok(/^ALEX_SR_V1_[A-Z0-9_]+$/.test(id),'not a stable semantic identifier: '+id);
+      eq(id.indexOf('BREAK & RETEST'),-1,'must not embed display text');
+      eq(id.indexOf('REPEATED ZONE REACTION'),-1,'must not embed display text');
+      no(/[0-9]+$/.test(id.replace('ALEX_SR_V1_','')),'must not end in a positional index: '+id);
+    });
+    // Every condition must point at a declared rule.
+    const declared=Object.keys(g.ALEX_ATTRIBUTION_RULE_IDS).map(function(k){return g.ALEX_ATTRIBUTION_RULE_IDS[k];});
+    g.getAttributionConditions().forEach(function(c){
+      ok(declared.indexOf(c.ruleId)!==-1,c.conditionId+' points at an undeclared rule');
+    });
+  });
+  t('B14 triggeredConditions are complete, structured and deterministic',function(){
+    const rec=g.alexGAttributionRecordFromEngineInputs(brZone(),brTouch(),3,45,'clean');
+    const a=g.alexGBuildRuleAttribution(rec,'B_breakRetest',CFG,{breakCycleSetupCount:1});
+    eq(a.triggeredConditions.length,7,'precedence + six Break & Retest conditions');
+    a.triggeredConditions.forEach(function(c){
+      ok(typeof c.conditionId==='string'&&c.conditionId.length>0);
+      ok(typeof c.ruleId==='string'&&c.ruleId.length>0);
+      ok(typeof c.requirement==='string'&&c.requirement.length>0,'each condition must state its requirement');
+      ok(c.observed!==undefined&&c.observed!==null,'each condition must record the observed values');
+      ok(c.satisfied===true||c.satisfied===false||c.satisfied===null);
+      ok(g.EVIDENCE_FIELD_PROVENANCE.indexOf(c.provenance)!==-1,'invalid provenance '+c.provenance);
+    });
+    const b=g.alexGBuildRuleAttribution(rec,'B_breakRetest',CFG,{breakCycleSetupCount:1});
+    eq(JSON.stringify(a),JSON.stringify(b),'identical inputs must produce identical attribution');
+    const order=a.triggeredConditions.map(function(c){return c.conditionId;}).join('|');
+    eq(order,'ALEX_SR_V1_TOUCH_INDEX_MIN|ALEX_SR_V1_B_ZONE_STATUS_BROKEN|ALEX_SR_V1_B_BREAK_RECORDED|'+
+             'ALEX_SR_V1_B_RETEST_STRICTLY_AFTER_BREAK|ALEX_SR_V1_B_RETEST_WITHIN_MAX_BARS|'+
+             'ALEX_SR_V1_B_REACTION_SIDE_MATCHES_BREAK|ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE',
+       'conditions must appear in the engine\'s own check order');
+  });
+  t('B14b a record carrying barsSinceBreak but not the raw break fields is NOT a contradiction',function(){
+    // This is the shape of every package captured before v12.10.0, and of any capture path not
+    // given the setup record. Treating it as a contradiction would fail capture for correctly
+    // classified trades -- found by dry-running the mirror over the real RUN-001 packages.
+    const a=g.alexGBuildRuleAttribution({zoneTouchNumber:4,zoneStatusAtQualification:'broken',
+      barsSinceBreak:14,brokenDirection:'downThroughSupport',brokenAtBar:null,brokenAt:null},
+      'B_breakRetest',CFG,{breakCycleSetupCount:1});
+    ok(a.verdict!=='CONTRADICTS_RECORDED_CLASSIFICATION','must not contradict: '+a.attribution.failedConditionIds.join(','));
+    const c=a.triggeredConditions.filter(function(x){return x.conditionId==='ALEX_SR_V1_B_BREAK_RECORDED';})[0];
+    eq(c.satisfied,true);
+    eq(c.provenance,'DERIVED_FROM_OBSERVED_FIELDS','an implication must not be labelled OBSERVED');
+    // And a package built from such a trade must still be produced.
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({barsSinceBreak:14,zoneStatusAtQualification:'broken',
+      brokenDirection:'downThroughSupport',reactionSwingType:'high',reactionFromSide:'below'}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    ok(p&&p.objects.qualifiedSetups[0].ruleIds.length>0,'capture must succeed for this shape');
+  });
+  t('B15 OBSERVED and DERIVED_FROM_OBSERVED_FIELDS are kept distinct',function(){
+    const rzr=g.alexGBuildRuleAttribution(
+      {zoneStatusAtQualification:'validated',zoneTouchNumber:4,zoneQualityAtQualification:'clean'},
+      'A_repeatedReaction',CFG,{});
+    const touchCount=rzr.triggeredConditions.filter(function(c){return c.conditionId==='ALEX_SR_V1_A_ZONE_TOUCH_COUNT_MIN';})[0];
+    eq(touchCount.provenance,'DERIVED_FROM_OBSERVED_FIELDS','no record stores zone.touches.length');
+    const status=rzr.triggeredConditions.filter(function(c){return c.conditionId==='ALEX_SR_V1_A_ZONE_STATUS_VALIDATED';})[0];
+    eq(status.provenance,'OBSERVED','a stored field is OBSERVED');
+    // With the real count available it becomes a genuine observation.
+    const withCount=g.alexGBuildRuleAttribution(
+      g.alexGAttributionRecordFromEngineInputs(rzrZone(),brTouch(),3,60,'clean'),'A_repeatedReaction',CFG,{});
+    eq(withCount.triggeredConditions.filter(function(c){return c.conditionId==='ALEX_SR_V1_A_ZONE_TOUCH_COUNT_MIN';})[0].provenance,'OBSERVED');
+    ok(g.EVIDENCE_FIELD_PROVENANCE.indexOf('DERIVED_FROM_OBSERVED_FIELDS')!==-1,'the token must be declared');
+  });
+  t('B16 an unverifiable condition is INDETERMINATE, never assumed',function(){
+    const a=g.alexGBuildRuleAttribution({zoneTouchNumber:4,zoneStatusAtQualification:'broken',
+      brokenAtBar:40,brokenAt:1,barsSinceBreak:5,reactionSwingType:'high',reactionFromSide:'below',
+      brokenDirection:'downThroughSupport'},'B_breakRetest',CFG,{});   // no break-cycle count
+    eq(a.verdict,'INDETERMINATE');
+    eq(a.attribution.unverifiedConditionCount,1);
+    const c=a.triggeredConditions.filter(function(x){return x.conditionId==='ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE';})[0];
+    eq(c.satisfied,null,'unknown must be null, never an optimistic true');
+    eq(c.provenance,'UNAVAILABLE');
+  });
+  t('B17 a non-ALEX setup gets NOT_APPLICABLE attribution rather than invented rules',function(){
+    const a=g.alexGBuildRuleAttribution({},'current_strategy',null,{});
+    eq(a.verdict,'NOT_APPLICABLE'); eq(a.ruleIds.length,0); eq(a.triggeredConditions.length,0);
+    eq(a.attribution.provenance,'NOT_APPLICABLE');
+    const jvm=g.evidenceBuildPackageFromTrade(
+      g.evidenceNormalizeJvmTrade({id:7,oPair:'EUR_USD',dir:'long',entry:1.1,stop:1.09,result:'Win'}),
+      {packageId:'PKG|current_strategy|20260720|1',strategyId:g.getJvmStrategyId()});
+    eq(jvm.objects.qualifiedSetups.length,0,'a JVM trade has no qualified setup to attribute');
+  });
+  t('B18 the seam counts break-cycle setups read-only and passes them through',function(){
+    const seam=String(g.evidenceCaptureReplayTradesAsync);
+    ok(seam.indexOf("rec.setupType==='B_breakRetest'&&rec.breakCycleId!=null")!==-1,'the tally must be scoped to B&R cycles');
+    ok(seam.indexOf('evidenceNormalizeReplayTrade(t,run,setup,cycleCount)')!==-1,'and be passed to the normalizer');
+    const norm=g.evidenceNormalizeReplayTrade(
+      {tradeId:'AGT|1',setupId:'AGS|1',setupType:'B_breakRetest',result:'Loss',timeframe:'H1'},
+      {runId:'r'.repeat(64),strategyId:'alex_g_sr_v1'},
+      {setupId:'AGS|1',reactionFromSide:'below',reactionSwingType:'high'},1);
+    eq(norm.reactionFromSide,'below'); eq(norm.reactionSwingType,'high'); eq(norm.breakCycleSetupCount,1);
+  });
+  t('B19 a captured package carries complete attribution and stays deterministic',function(){
+    const trade=sampleTrade({zoneStatusAtQualification:'broken',brokenDirection:'downThroughSupport',
+      brokenAtBar:40,brokenAt:1752990000000,barsSinceBreak:5,qualificationBarIndex:45,
+      reactionSwingType:'high',reactionFromSide:'below',breakCycleSetupCount:1,
+      configurationSnapshot:{ruleVersion:'alex_g_sr_v1',config:CFG}});
+    const opts={packageId:'PKG|alex_g_sr_v1|20260720|1',strategyId:'alex_g_sr_v1',createdAt:'2026-07-20T14:00:01.000Z'};
+    const p1=g.evidenceBuildPackageFromTrade(trade,opts),p2=g.evidenceBuildPackageFromTrade(trade,opts);
+    const s=p1.objects.qualifiedSetups[0];
+    eq(s.ruleIds.join('|'),'ALEX_SR_V1_CLASSIFY_PRECEDENCE|ALEX_SR_V1_SETUP_B_BREAK_RETEST');
+    eq(s.triggeredConditions.length,7);
+    eq(s.ruleAttribution.unverifiedConditionCount,0,'this record verifies every condition');
+    eq(s.ruleAttribution.contradictsEngineClassification,false);
+    eq(s.ruleAttribution.mirrorVersion,'alex-attr-1');
+    eq(g.evidenceCanonicalize(p1),g.evidenceCanonicalize(p2),'identical inputs must canonicalize identically');
+    ok(g.evidenceValidatePackage(p1).valid,'the captured package must validate: '+g.evidenceValidatePackage(p1).errors.join('; '));
+  });
+  t('B20 a pre-Unit-B package validates without any attribution at all',function(){
+    const old=preUnitAPackage();
+    delete old.objects.qualifiedSetups[0].ruleIds;
+    delete old.objects.qualifiedSetups[0].triggeredConditions;
+    delete old.objects.qualifiedSetups[0].ruleAttribution;
+    const v=g.evidenceValidatePackage(old);
+    ok(v.valid,'attribution must never be required: '+v.errors.join('; '));
+    // But a malformed one, if present, is still caught.
+    const bad=builtPackage();
+    bad.objects.qualifiedSetups[0].triggeredConditions=[{conditionId:'',ruleId:null,satisfied:'yes',provenance:'NOPE'}];
+    no(g.evidenceValidatePackage(bad).valid,'a malformed condition must fail validation');
+  });
+  t('B21 attribution does not move any classification, label or statistic',function(){
+    const p=builtPackage();
+    const s=p.objects.qualifiedSetups[0];
+    eq(s.setupType,'B_breakRetest'); eq(s.setupLabel,'BREAK & RETEST');
+    eq(s.setupCanonicalName,'Break & Retest');
+    // The protected stats function must remain untouched and unaware of attribution.
+    const stats=String(g.alexGComputeReplayStats);
+    ['ruleIds','triggeredConditions','ruleAttribution'].forEach(function(n){
+      eq(stats.indexOf(n),-1,'the protected stats function must not reference '+n);
+    });
+    ok(stats.indexOf('bySetupType:byGroup(t=>t.setupLabel)')!==-1,'stats grouping is unchanged');
   });
 
   return out;
