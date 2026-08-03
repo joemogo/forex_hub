@@ -9,7 +9,7 @@ record; the sections describing undelivered items are unchanged.
 | CORR-1 rule attribution (`ruleIds`, `triggeredConditions`) | **B** | **IMPLEMENTED — v12.11.0** |
 | CORR-7 excursion timing | **C1** | **IMPLEMENTED — v12.12.0**, replay capture path only; browser verification **pending** |
 | CORR-6 market context | **C2-M1** | **IMPLEMENTED — v12.13.0**: bounded own-timeframe window + evidence lineage; browser verification **pending** |
-| CORR-6 higher-timeframe context | **C2-M2** | **NOT STARTED** |
+| CORR-6 higher-timeframe context | **C2-M2** | **IMPLEMENTED — v12.14.0**: 20 bars per higher timeframe, anchored at the entry candle's close, look-ahead rejected by validation; browser verification **pending** |
 | CORR-9 dataset artifact · CORR-5a boundary trace | D / E | proposed only |
 | CORR-5b in-engine decision capture | — | **not proposed** (needs protected code + separate authorisation) |
 
@@ -202,7 +202,7 @@ C-1.
 > cap never crosses the entry bar, and when the traded path alone exceeds it the path is kept in full
 > and the overrun is declared. Truncation is always explicit and validation rejects a silent cap.
 > `evidenceBuildLineage()` adds `qualifiedSetups[].lineage` — identifiers only, enforced by validation.
-> **Not delivered:** higher-timeframe context (declared `null` + `FUTURE_WORK`, Unit C2-M2), the
+> **Higher-timeframe context followed in v12.14.0 (Unit C2-M2).** Still not delivered: the
 > content-addressed candle store, untraded-candidate context, and decision chains (`decisionChainRef`
 > is declared `null` + `FUTURE_WORK`). Rationale for each choice: architecture §8.5.
 
@@ -366,7 +366,7 @@ The only thing that could invalidate the 24 is a careless version bump (§2) or 
 | B ✅ v12.11.0 | CORR-1 (+ mirror registry and differential suite) | none | none | Medium — correctness of the mirror is the whole point |
 | C1 ✅ v12.12.0 | CORR-7 | none | none | Low — no payload growth beyond per-bar references |
 | C2-M1 ✅ v12.13.0 | CORR-6 (own-timeframe window + lineage) | none | none | Medium — payload growth, capped and declared |
-| C2-M2 ⬜ not started | CORR-6 (higher-timeframe context) | none | none | Medium — multiplies payload across four timeframes |
+| C2-M2 ✅ v12.14.0 | CORR-6 (higher-timeframe context) | none | none | Medium — measured +14.5 KB/package (architecture §8.7) |
 | D | CORR-9 dataset artifact | none | none | Medium — new export/verify path |
 | E | CORR-5a boundary trace | none | none | Medium |
 | — | CORR-5b in-engine decisions | **yes** | — | **Not proposed.** New `ruleVersion` + separate authorization. |

@@ -193,9 +193,13 @@ defines one. **Every candle must not become a candidate.**
 > before entry through the exit bar, each candle stored **verbatim** with its `barIndex` and an ISO
 > timestamp, plus a `window` block (requested vs actual pre-entry bars, from/to bar indices and UTC
 > bounds, candle counts, dataset size, truncation state) and the run's `datasetHash`.
+> **Unit C2-M2, v12.14.0** then added `higherTimeframeContext`: a **20-bar window of each higher
+> timeframe** (H4, D, W for an H1 trade, in ascending rank order), **anchored at the entry candle's
+> close** so it contains only bars that had genuinely closed when the trade was taken. A timeframe
+> with no dataset, no closed bar at the anchor, or a hole is listed in `omittedTimeframes` **with a
+> reason**; a trade on the highest timeframe reports `NOT_APPLICABLE`.
 > **Deliberately not yet delivered:** the content-addressed candle store (candles are excerpted per
-> package, not deduplicated), `higherTimeframeState` (present as `higherTimeframeContext: null` with
-> provenance `FUTURE_WORK` — **Unit C2-M2, not started**), context for **untraded** candidates, and
+> package, not deduplicated), context for **untraded** candidates, and
 > `atr`/`spreadAtCapture`/`nearbyStructure` as first-class context fields (ATR and session already
 > live on the setup's `contextRefs`). Live-paper capture retains no candles and records no context.
 
@@ -354,7 +358,7 @@ Declaring a package "reproducible" when its P&L is not would be a false guarante
 
 | Stage | Must exist | Exists today? |
 |---|---|---|
-| **Before entry** | Candidate · MarketContext · Decision chain · QualifiedSetup with `structureRefs` | 🟡 Setup record · `structureRefs` incl. **break/retest candle refs** (v12.10.0) · **rule attribution** (v12.11.0) · **lineage by reference** and a **bounded own-timeframe market context** (v12.13.0, traded replay trades only); **no candidate/untraded context, no higher-timeframe context (Unit C2-M2, not started), decisions still transient** |
+| **Before entry** | Candidate · MarketContext · Decision chain · QualifiedSetup with `structureRefs` | 🟡 Setup record · `structureRefs` incl. **break/retest candle refs** (v12.10.0) · **rule attribution** (v12.11.0) · **lineage by reference**, a **bounded own-timeframe market context** (v12.13.0) and **higher-timeframe context anchored at entry** (v12.14.0), for traded replay trades only; **no candidate/untraded context, no content-addressed candle store, decisions still transient** |
 | **During entry** | Fill basis · spread · delay from signal · original stop/target · sizing inputs | ✅ Mostly captured on the position |
 | **During management** | Any stop/target change + trigger | ✅ N/A — nothing moves (must stay recorded as *deliberately none*) |
 | **At exit** | Exit price/time/reason/detection source · trigger level · ambiguity · **exit-path candles** | 🟡 All present, plus **exit-path candle *references*** (v12.12.0, replay only). The candles themselves are still not stored — that is Unit C2 |
@@ -440,12 +444,56 @@ is why `decisionChainRef` exists and is explicitly `null` with provenance `FUTUR
 of the relationship is declared even though no durable decision chain exists to point at yet
 (CORR-5), which is honest in a way that omitting the field would not be.
 
-**Higher-timeframe context deferred, not forgotten.** `higherTimeframeContext` is present, `null`, and
-marked `FUTURE_WORK`. The W/D/H4 datasets are already in hand at the capture seam, so the work is
-small — but it multiplies payload across four timeframes, and the sizing question deserves its own
-decision rather than riding along with a milestone whose point was the traded window. A package that
-captures a window therefore **gains** the higher-timeframe gap in its completeness report as it sheds
-the market-context gap, so it can never read as more complete than it is.
+**Higher-timeframe context deferred, not forgotten.** In C2-M1 `higherTimeframeContext` was present,
+`null` and marked `FUTURE_WORK`. The W/D/H4 datasets were already in hand at the capture seam, so the
+work was small — but it multiplies payload across four timeframes, and the sizing question deserved
+its own decision rather than riding along with a milestone whose point was the traded window. A
+package that captured a window therefore **gained** the higher-timeframe gap in its completeness
+report as it shed the market-context gap, so it could never read as more complete than it was.
+
+## 8.6 Unit C2-M2 design rationale (v12.14.0)
+
+**The anchor is the entry candle's close, and that is the whole design.** Higher-timeframe context
+answers "what did the larger structure look like *when this trade was taken*". A daily bar that closes
+hours after entry is hindsight. It never touched the decision — the protected engine's no-lookahead
+guarantees are unchanged — but storing it would put look-ahead *into the evidence*, where a later
+reader could mistake it for what was known. So the capture scans candle close times and stops at the
+last bar that had closed at the anchor, and **validation rejects** any stored context whose window
+ends after its own anchor, or any candle starting after it. This is the one rule in the milestone
+worth breaking a package over.
+
+**Twenty bars, not two hundred.** Higher-timeframe context is orientation, not a second dataset: it
+should show the structure the setup sat inside, and stop. Twenty bars per timeframe is enough to see
+the prevailing swing and the nearby levels, and it keeps three extra timeframes cheaper than the
+single own-timeframe window they accompany (+14.5 KB against +18.2 KB — §8.7).
+
+**Ranking is mirrored, not re-derived.** `EVIDENCE_TIMEFRAME_RANK` duplicates
+`RULES_ALEXG.config.htfPriority` so the evidence layer never depends on reading a protected constant
+it could silently drift from, and a fixture asserts the two are identical — the same anti-drift
+technique Unit B uses for its rule-attribution mirror. Ordering is by ascending rank, so the array is
+deterministic and the canonical form is stable.
+
+**Absence is enumerated, never implied.** Every higher timeframe either appears in `timeframes` with
+observed candles or in `omittedTimeframes` with a reason (`DATASET_UNAVAILABLE`,
+`NO_CLOSED_BAR_AT_ANCHOR`, `DATASET_INCOMPLETE_AT_ANCHOR`). A trade on the highest timeframe is
+`NOT_APPLICABLE`, not a gap — nothing exists above it to capture.
+
+## 8.7 Measured payload — and a corrected earlier estimate
+
+Measured on RUN-001's real dataset shape (H1 2,220 · H4 600 · D 150 · W 73, 30-bar hold), on the
+**exported** form (`JSON.stringify(pkg, null, 2)`, which is what reaches disk):
+
+| Package content | Per package | 24-trade run |
+|---|---|---|
+| Through Unit C1 (no context) | **15.0 KB** | 360 KB |
+| + C2-M1 own-timeframe window (81 candles) | **33.2 KB** (+18.2) | 796 KB |
+| + C2-M2 higher-timeframe context (H4 20 · D 20 · W 8) | **47.6 KB** (+14.5) | **1.14 MB** |
+
+⚠️ **The v12.13.0 note estimating "roughly 6 KB per package" measured *compact* JSON and understated
+the on-disk figure roughly threefold.** These measured numbers supersede it. IndexedDB absorbs this
+comfortably, but a long multi-pair run is now a megabyte-scale store, which makes the
+content-addressed candle store (deduplicating candles shared by overlapping trades) the obvious next
+economy rather than a theoretical nicety.
 
 ---
 
@@ -540,7 +588,7 @@ be justified by ML** — that would be speculative.
 | **P1 — Durable capture & export** *(scope expanded per ruling C3)* | Loud write-failure detection · Evidence Package v1 schema + validation · **IndexedDB persistence** · **automatic evidence capture** · bounded working-buffer behaviour · export · **unexported-evidence warning** · **import and recovery** · **read-only historical backfill without fabricated evidence** · complete automated and browser-level validation | none | A live paper trade is captured automatically into tier (b) with no user action and exports as a complete, hash-verified, self-describing package; a forced quota failure is visibly reported |
 | **P2 — Decision & candidate durability** | Persist decision chains and candidates; add `Decision.inputs{}`/`thresholds{}`; rejected candidates included | P1 | Every traded and rejected candidate has a retrievable, ordered decision chain |
 | **P3 — Market context & candle store** | Content-addressed candle store; `MarketContext`; `sourceCandleRefs`/`exitPathCandleRefs`; `structureRefs` | P1, P2 | **The two July trades would be fully reconstructable if repeated today** |
-| ↳ *P3 status* | **PARTIAL — v12.13.0 (Unit C2-M1):** `structureRefs` (v12.10.0), `exitPathCandleRefs` (v12.12.0) and a bounded own-timeframe `MarketContext` (v12.13.0) are delivered for captured replay trades. **The content-addressed candle store, higher-timeframe state and untraded-candidate context are NOT delivered.** P3 was intentionally taken out of order, after P4/P5 items, because each delivered piece needed no new data — see §8.5 | — | Traded windows are re-examinable without a re-fetch; candidate-level reconstruction is not yet possible |
+| ↳ *P3 status* | **PARTIAL — v12.14.0 (Units C2-M1/M2):** `structureRefs` (v12.10.0), `exitPathCandleRefs` (v12.12.0), a bounded own-timeframe `MarketContext` (v12.13.0) and **higher-timeframe context (v12.14.0)** are delivered for captured replay trades. **The content-addressed candle store and untraded-candidate context are NOT delivered.** P3 was intentionally taken out of order, after P4/P5 items, because each delivered piece needed no new data — see §8.5 | — | Traded windows are re-examinable without a re-fetch; candidate-level reconstruction is not yet possible |
 | **P4 — Replay trustworthiness** | Absolute date range · `runId` · config snapshot + hash · dataset hash · replay package persistence | P1–P3 | Two runs of the same declared range produce identical R-space `contentHash` |
 | **P5 — Outcome completeness** | `realizedR` in replay · `timeToMFE`/`timeToMAE` · data-quality flags · loss-classification field | P4 | Every outcome answers "when did it peak?" |
 

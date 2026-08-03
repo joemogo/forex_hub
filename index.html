@@ -1952,9 +1952,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.13.0';
+const APP_VERSION='12.14.0';
 const APP_VERSION_DATE='3 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.14.0 — MOGO-003 UNIT C2-M2: HIGHER-TIMEFRAME CONTEXT (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: C2-M1 captured the traded window in the trade\'s OWN timeframe, so a reader could see the entry and the path but not the structure the setup sat inside -- and ALEX is a multi-timeframe strategy whose zones come from H1/H4/D/W. WHAT WAS ADDED, on newly captured REPLAY packages only: marketContexts[].higherTimeframeContext carries a small window of EACH higher timeframe (EVIDENCE_HTF_BARS = 20 bars each), with per-timeframe window blocks (requested vs captured bars, from/to bar indices and UTC bounds, dataset size, bars available before the anchor, truncation state) and candles stored verbatim. Timeframes appear in a deterministic ascending-rank order (H4, D, W for an H1 trade). THE PROPERTY THAT MATTERS MOST -- NO LOOK-AHEAD: context is anchored at the ENTRY CANDLE\'S CLOSE and includes only higher-timeframe bars that had genuinely CLOSED by then, found by scanning candle close times rather than rounding or estimating from a bar\'s start. A daily bar closing hours after entry is hindsight, not context. VALIDATION ENFORCES IT: a context whose last bar closes after its own anchor is REJECTED, as is any candle starting after the anchor -- the evidence layer refuses to store look-ahead even though none of it ever touched a trading decision. HONEST ABSENCE: a timeframe with no dataset, no closed bar at the anchor, or a hole is recorded in omittedTimeframes WITH A REASON, never silently skipped; a trade on the highest timeframe reports NOT_APPLICABLE rather than a missing capture, because nothing exists above it. RANKING IS NOT REINVENTED: EVIDENCE_TIMEFRAME_RANK mirrors RULES_ALEXG.config.htfPriority (W > D > H4 > H1) so the evidence layer never reads a protected constant it could drift from, and a fixture asserts the two are identical -- the same anti-drift technique Unit B uses for its attribution mirror. COMPLETENESS: a package that captures higher-timeframe context sheds the higherTimeframeContext gap C2-M1 introduced; every other package still declares it, in the same array position, so canonical ordering for earlier package shapes is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. PAYLOAD, MEASURED NOT ASSUMED -- and the earlier estimate was WRONG: sizes are measured on the EXPORTED form (JSON.stringify with 2-space indent, which is what actually reaches disk), not compact JSON. On RUN-001\'s real dataset shape (H1 2220 / H4 600 / D 150 / W 73) with a 30-bar hold, one package measures 15.0 KB through Unit C1, 33.2 KB with the own-timeframe window (C2-M1, +18.2 KB) and 47.6 KB with higher-timeframe context (C2-M2, +14.5 KB: H4 20 bars, D 20, W 8). A 24-trade run therefore grows 360 KB -> 796 KB -> 1.14 MB. The v12.13.0 note estimating about 6 KB per package measured COMPACT JSON and understated the on-disk figure roughly threefold; this entry supersedes it. IndexedDB absorbs this comfortably, but a long multi-pair run is now a megabyte-scale store and the content-addressed candle store (deduplication) becomes the obvious next economy. EXPLICITLY NOT IMPLEMENTED: the content-addressed candle store, untraded-candidate context, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 170 -> 185 (Y1-Y15). Full regression: 904/904 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
   '12.13.0 — MOGO-003 UNIT C2-M1: BOUNDED MARKET CONTEXT &amp; EVIDENCE LINEAGE (CORR-6, first milestone) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: Unit C1 records WHEN a trade\'s extremes occurred, but exitPathCandleRefs point into a dataset the repository does not keep -- and re-fetching those candles would produce a DIFFERENT dataset, which the July 2026 forensics called a fabrication risk. This captures the candles themselves for the traded window. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.marketContexts carries ONE bounded excerpt per package -- the trade\'s OWN timeframe, EVIDENCE_CONTEXT_PRE_ENTRY_BARS (50) bars before entry through the exit bar, each candle stored verbatim with its barIndex and an ISO timestamp, plus a window block recording requested vs actual pre-entry bars, from/to bar indices and UTC bounds, candle counts and the dataset size, and datasetHash tying the excerpt to the run identity. CAPS ARE LOUD: EVIDENCE_CONTEXT_MAX_CANDLES (600) is a hard ceiling; a truncated window sets truncated:true, names truncationReason and reports droppedPreEntryBars, and truncation drops the OLDEST pre-entry bars first so the entry-to-exit path an outcome depends on is never what goes missing. Validation REJECTS a window that claims truncation without a reason, or reports dropped bars while claiming none. LINEAGE: objects.qualifiedSetups[].lineage records how the stored objects relate -- runId, datasetHash, zoneId, reactionId, breakCycleId, setupId/candidateId, positionId, outcomeId, marketContextId, packageId, sourceTradeId and replaySourceTradeId. Every value is an identifier the engine already stored, so provenance is OBSERVED; nothing is derived and no decision EVENT is implied. HONEST ABOUT WHAT IS ABSENT: higherTimeframeContext is present and explicitly null with provenance FUTURE_WORK (Unit C2-M2, not started), and decisionChainRef is null with provenance FUTURE_WORK -- faithful decision-event capture needs emission inside protected functions (CORR-5b) and is deliberately not attempted. A package that captures a window no longer declares marketContexts a gap, but DOES declare the higher-timeframe gap in its place; a package without one declares the original gap in the original array position, so canonical ordering for every earlier package shape is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. SIZE, MEASURED NOT ASSUMED: a RUN-001-shaped trade (30 bars held) yields roughly 80 candles per package, about 6 KB. EXPLICITLY NOT IMPLEMENTED: higher-timeframe context, candidate/untraded context, a content-addressed candle store, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 155 -> 170 (X1-X15). Full regression: 889/889 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
   '12.12.0 — MOGO-003 UNIT C1: EXCURSION TIMING (CORR-7) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification or statistic moves). THE QUESTION THIS ANSWERS: alexGComputeMAEMFE (PROTECTED) records how far a trade ran for and against but never WHEN, so the July 2026 loss forensics could not tell whether GBP/USD\'s 0.949R excursion came early or late -- and that distinction is the whole of in-trade loss forensics. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.outcomes gains timeToMFE and timeToMAE ({bars, minutes, barIndex, timestampUTC}), excursionTimingProvenance, excursionAgreement, and a populated exitPathCandleRefs listing every candle actually examined between entry and exit. HOW IT STAYS HONEST: the new non-protected evidenceRecomputeExcursionTiming() mirrors the protected traversal line for line -- same start at entryBarIndex+1, same inclusive end at exitBarIndex, same favourable/adverse formulas, and the same STRICT `>` comparison so the FIRST bar reaching an extreme wins a tie -- then emits timing ONLY IF its recomputed MAE and MFE equal the engine\'s stored values exactly. The protected function is untouched and its stored maePips/mfePips remain authoritative and are copied verbatim; nothing here rewrites them. An extreme of exactly 0 was never exceeded, so no bar achieved it and the corresponding timing is null rather than a fabricated bar 1 -- the real EUR/USD 14 Jul case (MFE 0.0). MISMATCH IS NOT A CAPTURE FAILURE: if the recomputation disagrees, timing is omitted, excursionAgreement.status becomes UNAVAILABLE with reason RECOMPUTED_EXTREMES_DIFFER_FROM_ENGINE, the deterministic flag EXCURSION_RECOMPUTATION_MISMATCH is recorded in dataQualityFlags, the engine values are preserved untouched, and THE PACKAGE IS STILL WRITTEN. This differs deliberately from Unit B, where a contradicted classification fails capture: a derived-field mismatch signals a candle-window problem, not corrupted evidence, and discarding a good package over it would destroy the observation. OBSERVATIONAL ONLY: timing runs at evidence capture, after the trade is closed and its outcome recorded, inside the existing fire-and-forget seam and its own try/catch, and is unreachable from qualification, classification, trade creation, entry/stop/target, sizing, outcome and execution. PLUMBING: runAlexGReplay (NOT protected) additionally returns the in-memory candle arrays the engine was just walked over, runAlexGReplayUI passes them read-only to the seam, and timing is recomputed from THOSE candles -- never from a re-fetch, which would be a different dataset. Provenance is DERIVED_FROM_OBSERVED_FIELDS; NO new provenance token was created. The completeness report\'s excursion-timing gap is now conditional: a package carrying verified timing no longer declares it missing, while every other package still does, in the identical array position. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT (and timing is rejected outright if it appears without an AGREES agreement), and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. EXPLICITLY NOT IMPLEMENTED (Unit C2 and beyond): marketContexts, candle-window capture or caching, higher-timeframe context, decision chains, eviction or quota changes. TESTING: v128 grows 140 -> 155 (C1-C15). Full regression: 874/874 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a timing-bearing package, crypto.subtle verification in-browser, and an actual replay producing populated timing all remain browser-verified; no replay was run.',
   '12.11.0 — MOGO-003 UNIT B: OBSERVATIONAL RULE ATTRIBUTION (CORR-1) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, classification, entry, exit, stop, target, sizing, execution or automation logic touched, and no classification or statistic moves). THE GAP THIS CLOSES: the protected evaluators alexGEvaluateBreakRetest and alexGEvaluateRepeatedReaction return only {qualifies}. They never say WHICH condition decided the outcome, and they may not be modified, so every Evidence Package could name its setup type but could not show why it held. Rule-level attribution was the one dimension the 2026-08-03 reconciliation had to rate PARTIAL. WHAT WAS ADDED: every newly captured qualified ALEX setup now carries ruleIds (stable semantic identifiers, sorted lexicographically so the canonical form never depends on declaration order), triggeredConditions (one structured record per condition: conditionId, ruleId, the requirement in words, the observed values, the pass/fail state, and its own provenance), and a ruleAttribution block (ruleSetId, mirrorVersion, precedenceApplied, repeatedReactionEvaluated, unverifiedConditionCount, failedConditionIds). Three canonical rule IDs: ALEX_SR_V1_CLASSIFY_PRECEDENCE, ALEX_SR_V1_SETUP_B_BREAK_RETEST, ALEX_SR_V1_SETUP_A_REPEATED_ZONE_REACTION; ten condition IDs beneath them, each mapping 1:1 onto one line of the protected source. IDs are semantic and permanent -- never display text, array position, line number or a generated label. OBSERVATIONAL ONLY, BY CONSTRUCTION: the mirror runs at EVIDENCE CAPTURE time, downstream of every decision, and is unreachable from qualification, classification, trade construction, execution or automation. The protected evaluator output remains authoritative: the mirror can agree with it, report that a condition is not verifiable from the stored record, or fail the capture -- it can never re-classify or suppress a setup. Verdicts are TRI-STATE, and INDETERMINATE is a real answer rather than a guess. FAIL-CLOSED ON DISAGREEMENT: if the mirror proves a recorded classification could not have satisfied its own rules, evidenceBuildPackageFromTrade throws EVIDENCE_RULE_ATTRIBUTION_MISMATCH naming the failed conditions and NO PACKAGE IS WRITTEN -- wrong attribution is worse than none. The seams already wrap each trade in their own try/catch, so the failure is recorded and skipped and can never reach replay, the ledger, an account or the trading tick. The validator additionally rejects any package that asserts a contradiction. ANTI-DRIFT IS THE POINT: conditions are declared ONCE in a frozen table, in the order the protected evaluator checks them, reading stored fields only, and alexGAttributionRecordFromEngineInputs reproduces exactly the copy alexGCreateSetupRecord performs so the differential fixtures drive the mirror from the same objects the protected evaluators receive. Six differential fixtures (B1-B6) run the mirror against the REAL protected evaluators over a generated case matrix (both setup types, qualifying and non-qualifying, every individual condition falsified in turn, a 35-case sweep over touch index and bars-since-break, and the precedence case where both branches could apply): the mirror may never claim a setup qualifies where the evaluator refused, nor contradict one the evaluator accepted, and where every condition is knowable the verdicts must match exactly. When a case says a break cycle was already used, the ENGINE is put in that same state, so a disagreement can only ever be the mirror\'s fault. TWO HONEST GAPS, DISCLOSED NOT PAPERED OVER: the first-retest-per-break-cycle rule needs the whole setup set, so the replay seam counts B_breakRetest setups per break cycle and passes the tally (OBSERVED); a capture path that cannot supply it leaves that one condition unverified rather than assumed. The zone touch-count rule reads zone.touches.length, which no setup record stores, so it is attributed DERIVED_FROM_OBSERVED_FIELDS from zoneTouchNumber -- an implication, explicitly not presented as OBSERVED. DERIVED_FROM_OBSERVED_FIELDS is an ADDITIVE seventh provenance token for exactly this distinction. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, attribution is validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. TESTING: v128 grows 118 -> 140 (B1-B21 plus B14b). Full regression: 859/859 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: crypto.subtle digests and the IndexedDB path remain browser-verified, and no replay was run.',
@@ -11925,8 +11926,10 @@ function evidenceComputeCompleteness(basis,opts){
   } else {
     // A captured window is a TRADED window in ONE timeframe -- never a candidate context, and
     // never higher-timeframe. Saying so keeps the package honest about what it does not hold.
-    missing.push({field:'objects.marketContexts[].higherTimeframeContext',reason:'FUTURE_WORK',
-      detail:'Unit C2-M1 captures the traded window in the trade\'s own timeframe only. Higher-timeframe context is Unit C2-M2 and is not captured.'});
+    if(!o.higherTimeframeContextCaptured){
+      missing.push({field:'objects.marketContexts[].higherTimeframeContext',reason:'FUTURE_WORK',
+        detail:'The traded window was captured in the trade\'s own timeframe only. Higher-timeframe context was not captured for this package.'});
+    }
   }
   // v12.12.0 Unit C1: the excursion-timing gap is now conditional. A package that actually
   // carries verified timing must not declare it missing; every other package still does, and the
@@ -12350,11 +12353,100 @@ function evidenceBuildMarketContext(candles,entryBarIndex,exitBarIndex,opts){
     candles:out,
     candleProvenance:'OBSERVED',                   // verbatim from the dataset the run hashed
     datasetHash:o.datasetHash||null,               // ties the excerpt to the run identity
-    scope:'TRADED_WINDOW_OWN_TIMEFRAME',           // never a candidate context, never higher timeframe
-    higherTimeframeContext:null,                   // Unit C2-M2 -- declared, not silently missing
-    higherTimeframeContextProvenance:'FUTURE_WORK'
+    scope:'TRADED_WINDOW_OWN_TIMEFRAME',           // never a candidate context
+    // v12.14.0 Unit C2-M2: supplied by the seam, anchored at the entry candle's close. Still null
+    // (with an honest provenance) on any path that cannot supply higher-timeframe datasets.
+    higherTimeframeContext:(o.higherTimeframeContext&&typeof o.higherTimeframeContext==='object')?o.higherTimeframeContext:null,
+    higherTimeframeContextProvenance:(o.higherTimeframeContext&&o.higherTimeframeContext.provenance)
+      ?o.higherTimeframeContext.provenance:'UNAVAILABLE'
   };
 }
+// ══ v12.14.0 UNIT C2-M2 -- HIGHER-TIMEFRAME CONTEXT ══════════════════════════════════════════
+//
+// WHAT THIS ADDS. C2-M1 captured the traded window in the trade's own timeframe. A reader can now
+// see the entry and the path, but not the structure the setup sat inside -- and ALEX is a
+// multi-timeframe strategy whose zones come from H1/H4/D/W. This captures a small window of each
+// HIGHER timeframe, so a package shows what the larger structure looked like at the decision moment.
+//
+// THE PROPERTY THAT MATTERS MOST: NO LOOK-AHEAD. Context is anchored at the ENTRY candle's close and
+// includes only higher-timeframe bars that had CLOSED by then. A daily bar that closes hours after
+// entry is not what the market looked like when the trade was taken, and storing it would put
+// look-ahead into the evidence even though it never touched the decision. Validation enforces this:
+// a context whose window ends after its own anchor is REJECTED.
+//
+// RANKING IS NOT REINVENTED. The engine already ranks timeframes in RULES_ALEXG.config.htfPriority
+// (W > D > H4 > H1). This mirror exists only so the evidence layer never reads a protected constant
+// it might drift from silently -- a fixture asserts the two are identical, exactly as Unit B pins
+// its attribution mirror.
+const EVIDENCE_TIMEFRAME_RANK=Object.freeze({H1:1,H4:2,D:3,W:4});
+const EVIDENCE_HTF_BARS=20;                    // bars per higher timeframe -- deliberately small
+function evidenceBuildHigherTimeframeContext(candlesByTimeframe,tradeTimeframe,anchorMs,opts){
+  const o=opts||{};
+  const bars=(typeof o.barsPerTimeframe==='number'&&o.barsPerTimeframe>0)?o.barsPerTimeframe:EVIDENCE_HTF_BARS;
+  const iso=function(v){ if(v==null) return null; const d=(v instanceof Date)?v:new Date(v); return isNaN(d.getTime())?null:d.toISOString(); };
+  const fail=function(reason){ return{anchorUTC:iso(anchorMs),anchorBasis:'ENTRY_CANDLE_CLOSE',
+    requestedBarsPerTimeframe:bars,timeframes:[],omittedTimeframes:[],provenance:'UNAVAILABLE',unavailableReason:reason}; };
+  if(!candlesByTimeframe||typeof candlesByTimeframe!=='object') return fail('NO_DATASETS_SUPPLIED');
+  if(typeof anchorMs!=='number'||!isFinite(anchorMs)) return fail('NO_ANCHOR_TIMESTAMP');
+  const ownRank=EVIDENCE_TIMEFRAME_RANK[tradeTimeframe];
+  if(ownRank==null) return fail('UNKNOWN_TRADE_TIMEFRAME');
+  const higher=Object.keys(EVIDENCE_TIMEFRAME_RANK)
+    .filter(function(tf){ return EVIDENCE_TIMEFRAME_RANK[tf]>ownRank; })
+    .sort(function(a,b){ return EVIDENCE_TIMEFRAME_RANK[a]-EVIDENCE_TIMEFRAME_RANK[b]; });
+  if(!higher.length){
+    // A trade on the top timeframe has no higher structure. That is not a missing capture.
+    return{anchorUTC:iso(anchorMs),anchorBasis:'ENTRY_CANDLE_CLOSE',requestedBarsPerTimeframe:bars,
+      timeframes:[],omittedTimeframes:[],provenance:'NOT_APPLICABLE',
+      unavailableReason:'TRADE_IS_ON_THE_HIGHEST_TIMEFRAME'};
+  }
+  const captured=[],omitted=[];
+  for(let i=0;i<higher.length;i++){
+    const tf=higher[i],cs=candlesByTimeframe[tf];
+    if(!Array.isArray(cs)||!cs.length){ omitted.push({timeframe:tf,reason:'DATASET_UNAVAILABLE'}); continue; }
+    // The last bar that had genuinely CLOSED at the anchor. Scanned forward and stopped -- never
+    // rounded, never estimated from the bar's own start time.
+    let last=-1;
+    for(let j=0;j<cs.length;j++){
+      let closeMs=null;
+      try{ const t=getCandleCloseTime(cs,j,tf); closeMs=t==null?null:((t instanceof Date)?t.getTime():new Date(t).getTime()); }
+      catch(e){ closeMs=null; }
+      if(closeMs==null||!isFinite(closeMs)) break;
+      if(closeMs<=anchorMs) last=j; else break;
+    }
+    if(last<0){ omitted.push({timeframe:tf,reason:'NO_CLOSED_BAR_AT_ANCHOR'}); continue; }
+    const from=Math.max(0,last-bars+1);
+    const out=[];
+    let holed=false;
+    for(let j=from;j<=last;j++){
+      const c=cs[j];
+      if(!c){ holed=true; break; }
+      out.push({barIndex:j,t:iso(c.t),o:c.o,h:c.h,l:c.l,c:c.c});
+    }
+    if(holed||!out.length){ omitted.push({timeframe:tf,reason:'DATASET_INCOMPLETE_AT_ANCHOR'}); continue; }
+    let lastCloseMs=null;
+    try{ const t=getCandleCloseTime(cs,last,tf); lastCloseMs=t==null?null:((t instanceof Date)?t.getTime():new Date(t).getTime()); }catch(e){}
+    captured.push({
+      timeframe:tf,rank:EVIDENCE_TIMEFRAME_RANK[tf],
+      window:{
+        requestedBars:bars,fromBarIndex:from,toBarIndex:last,
+        fromUTC:out[0].t,toUTC:out[out.length-1].t,
+        candleCount:out.length,datasetCandleCount:cs.length,
+        lastClosedBarCloseUTC:iso(lastCloseMs),
+        barsAvailableBeforeAnchor:last+1,
+        truncated:(last+1)>bars,truncationReason:((last+1)>bars)?'BARS_PER_TIMEFRAME_CAP':null
+      },
+      candles:out,provenance:'OBSERVED'
+    });
+  }
+  return{
+    anchorUTC:iso(anchorMs),anchorBasis:'ENTRY_CANDLE_CLOSE',
+    requestedBarsPerTimeframe:bars,
+    timeframes:captured,omittedTimeframes:omitted,
+    provenance:captured.length?'OBSERVED':'UNAVAILABLE',
+    unavailableReason:captured.length?null:'NO_HIGHER_TIMEFRAME_DATA_AT_ANCHOR'
+  };
+}
+
 // Structural lineage: how the recorded objects relate to one another. Every value already exists on
 // the trade or the run -- nothing is derived, and no decision EVENT is implied. Decision-event
 // capture needs emission inside protected functions and is deliberately absent (CORR-5).
@@ -12438,10 +12530,15 @@ function evidenceBuildPackageFromTrade(trade,opts){
   // v12.12.0 Unit C1: a package that carries excursion timing must not also declare it a gap.
   // Every other gap in the report is unchanged.
   const marketContextCaptured=!!(trade.marketContext&&Array.isArray(trade.marketContext.candles)&&trade.marketContext.candles.length);
+  // v12.14.0 Unit C2-M2: captured means at least one higher timeframe actually holds bars, or the
+  // trade is on the highest timeframe and there is genuinely nothing above it.
+  const htfBlock=trade.marketContext?trade.marketContext.higherTimeframeContext:null;
+  const higherTimeframeContextCaptured=!!(htfBlock&&(
+    (Array.isArray(htfBlock.timeframes)&&htfBlock.timeframes.length)||htfBlock.provenance==='NOT_APPLICABLE'));
   const excursionTimingCaptured=!!(trade.excursionTiming&&trade.excursionTiming.agreement&&
     trade.excursionTiming.agreement.status==='AGREES'&&
     (trade.excursionTiming.timeToMFE!=null||trade.excursionTiming.timeToMAE!=null));
-  const completeness=evidenceComputeCompleteness(basis,{excursionTimingCaptured,marketContextCaptured});
+  const completeness=evidenceComputeCompleteness(basis,{excursionTimingCaptured,marketContextCaptured,higherTimeframeContextCaptured});
   // ── v12.10.0 UNIT A -- CORR-2: SPECIFICATION VERSION vs RUNNING RELEASE ──────────────────
   // The 2026-08-03 reconciliation had to trace source code to establish that RUN-001 executed
   // alex_g_sr_v1 while the build was the alex_g_sr_v1_1 release, because the package collapsed
@@ -12759,6 +12856,44 @@ function evidenceValidatePackage(pkg){
       mc.candles.forEach(function(c,j){
         if(!c||typeof c!=='object'||typeof c.barIndex!=='number') errors.push(at+'.candles['+j+'] must carry a numeric barIndex');
       });
+      // ── v12.14.0 Unit C2-M2: higher-timeframe context, validated only when present. ──
+      if(mc.higherTimeframeContextProvenance!=null&&EVIDENCE_FIELD_PROVENANCE.indexOf(mc.higherTimeframeContextProvenance)===-1){
+        errors.push(at+'.higherTimeframeContextProvenance is invalid: '+mc.higherTimeframeContextProvenance);
+      }
+      const htf=mc.higherTimeframeContext;
+      if(htf!=null){
+        const hat=at+'.higherTimeframeContext';
+        if(typeof htf!=='object'||Array.isArray(htf)){ errors.push(hat+' must be an object or null'); return; }
+        if(!Array.isArray(htf.timeframes)) errors.push(hat+'.timeframes must be an array');
+        if(!Array.isArray(htf.omittedTimeframes)) errors.push(hat+'.omittedTimeframes must be an array');
+        if(EVIDENCE_FIELD_PROVENANCE.indexOf(htf.provenance)===-1) errors.push(hat+'.provenance is invalid: '+htf.provenance);
+        const anchorMs=htf.anchorUTC?Date.parse(htf.anchorUTC):NaN;
+        if(htf.timeframes&&htf.timeframes.length&&!isFinite(anchorMs)) errors.push(hat+' carries context without a parseable anchorUTC');
+        (htf.timeframes||[]).forEach(function(tf,k){
+          const tat=hat+'.timeframes['+k+']';
+          if(!tf||typeof tf!=='object'){ errors.push(tat+' must be an object'); return; }
+          if(!tf.timeframe||typeof tf.timeframe!=='string') errors.push(tat+'.timeframe must be a string');
+          if(!tf.window||typeof tf.window!=='object'){ errors.push(tat+'.window is required'); return; }
+          if(!Array.isArray(tf.candles)){ errors.push(tat+'.candles must be an array'); return; }
+          if(tf.window.candleCount!==tf.candles.length) errors.push(tat+'.window.candleCount does not match candles.length');
+          if(EVIDENCE_FIELD_PROVENANCE.indexOf(tf.provenance)===-1) errors.push(tat+'.provenance is invalid: '+tf.provenance);
+          if(tf.window.truncated===true&&!tf.window.truncationReason) errors.push(tat+' is truncated but gives no reason');
+          // THE LOOK-AHEAD RULE. Context is what was known AT the anchor. A higher-timeframe bar
+          // that had not closed by then is not context -- it is hindsight, and a package carrying
+          // it would misrepresent what the decision moment looked like.
+          const closeMs=tf.window.lastClosedBarCloseUTC?Date.parse(tf.window.lastClosedBarCloseUTC):NaN;
+          if(isFinite(closeMs)&&isFinite(anchorMs)&&closeMs>anchorMs){
+            errors.push(tat+' ends after its own anchor ('+tf.window.lastClosedBarCloseUTC+' > '+htf.anchorUTC+') -- captured context must not contain look-ahead');
+          }
+          tf.candles.forEach(function(c,j){
+            if(!c||typeof c!=='object'||typeof c.barIndex!=='number') errors.push(tat+'.candles['+j+'] must carry a numeric barIndex');
+            else if(isFinite(anchorMs)&&c.t&&Date.parse(c.t)>anchorMs) errors.push(tat+'.candles['+j+'] starts after the anchor -- look-ahead');
+          });
+        });
+        (htf.omittedTimeframes||[]).forEach(function(om,k){
+          if(!om||typeof om!=='object'||!om.timeframe||!om.reason) errors.push(hat+'.omittedTimeframes['+k+'] must name a timeframe and a reason');
+        });
+      }
     });
   }
   if(pkg.objects&&pkg.objectCounts){
@@ -13036,10 +13171,15 @@ async function evidenceCaptureReplayTradesAsync(run,trades,setups,candlesByTimef
     try{
       const tfCandles=(candlesByTimeframe&&t&&t.timeframe!=null)?candlesByTimeframe[t.timeframe]:null;
       if(Array.isArray(tfCandles)&&t){
+        // v12.14.0 Unit C2-M2: the anchor is the ENTRY candle's close -- the moment the trade was
+        // taken -- so higher-timeframe bars that had not closed by then are never captured.
+        const htf=evidenceBuildHigherTimeframeContext(candlesByTimeframe,t.timeframe,
+          (typeof t.entryTimestamp==='number'?t.entryTimestamp:null),{});
         marketContext=evidenceBuildMarketContext(tfCandles,t.entryBarIndex,t.exitBarIndex,{
           contextId:(t.tradeId!=null?'CTX|'+String(t.tradeId):null),
           positionId:(t.tradeId!=null?String(t.tradeId):null),
-          instrument:t.pair,timeframe:t.timeframe,datasetHash:run.datasetHash
+          instrument:t.pair,timeframe:t.timeframe,datasetHash:run.datasetHash,
+          higherTimeframeContext:htf
         });
       }
     }catch(e){ marketContext=null; try{ evidenceRecordWriteFailure('market-context',e,{tradeId:t&&t.tradeId}); }catch(e2){} }

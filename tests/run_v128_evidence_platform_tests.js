@@ -147,6 +147,10 @@ const wrapped = new Function('g',
   'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
   'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
   'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
+  // ── v12.14.0 Unit C2-M2 higher-timeframe context ──
+  'g.evidenceBuildHigherTimeframeContext=evidenceBuildHigherTimeframeContext;' +
+  'g.EVIDENCE_TIMEFRAME_RANK=EVIDENCE_TIMEFRAME_RANK;' +
+  'g.getRulesAlexG=function(){return RULES_ALEXG;};' +
   // ── v12.13.0 Unit C2-M1 (CORR-6) market context + lineage ──
   'g.evidenceBuildMarketContext=evidenceBuildMarketContext;' +
   'g.evidenceBuildLineage=evidenceBuildLineage;' +

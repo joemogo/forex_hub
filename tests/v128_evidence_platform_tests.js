@@ -1851,9 +1851,12 @@ function runEvidencePlatformFixtures(g){
     eq(g.evidenceBuildMarketContext(holed,10,20,{}),null,'a hole makes the window untrustworthy');
   });
   t('X6 higher-timeframe context is DECLARED absent, not silently missing',function(){
+    // v12.14.0: the capability now exists (Unit C2-M2), so a window built WITHOUT one reports
+    // UNAVAILABLE -- "nothing was supplied on this path" -- rather than the earlier FUTURE_WORK.
     const mc=buildCtx(ctxCandles(100),50,60);
     eq(mc.higherTimeframeContext,null);
-    eq(mc.higherTimeframeContextProvenance,'FUTURE_WORK','Unit C2-M2 is not started');
+    eq(mc.higherTimeframeContextProvenance,'UNAVAILABLE');
+    ok(g.EVIDENCE_FIELD_PROVENANCE.indexOf('UNAVAILABLE')!==-1);
   });
   t('X7 a captured package carries the context and counts it',function(){
     const c=ctxCandles(100);
@@ -1963,6 +1966,223 @@ function runEvidencePlatformFixtures(g){
     eq(mc.window.truncated,false);
     const bytes=JSON.stringify(mc).length;
     ok(bytes<20000,'a typical window must stay small; measured '+bytes+' bytes');
+  });
+
+  // ══ GROUP 15 — v12.14.0 UNIT C2-M2 HIGHER-TIMEFRAME CONTEXT ════════════════════════════
+  // The governing property is NO LOOK-AHEAD: context is what had closed at the entry moment.
+
+  function tfCandlesFor(tf,n,startMs){
+    const step={H1:3600000,H4:4*3600000,D:86400000,W:7*86400000}[tf];
+    const base=startMs||Date.UTC(2026,0,1,0,0),arr=[];
+    for(let i=0;i<n;i++) arr.push({t:new Date(base+i*step),o:1.1,h:1.1010,l:1.0990,c:1.1005});
+    return arr;
+  }
+  function datasets(){
+    return{H1:tfCandlesFor('H1',400),H4:tfCandlesFor('H4',120),D:tfCandlesFor('D',60),W:tfCandlesFor('W',20)};
+  }
+  // The anchor used throughout: the close of H1 bar 200.
+  function anchorAt(ds,idx){ return g.getCandleCloseTime(ds.H1,idx||200,'H1').getTime(); }
+
+  t('Y1 higher timeframes are captured in deterministic ascending rank order',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{});
+    eq(htf.provenance,'OBSERVED');
+    eq(htf.timeframes.map(function(x){return x.timeframe;}).join(','),'H4,D,W',
+       'an H1 trade must capture H4, then D, then W');
+    eq(htf.timeframes.map(function(x){return x.rank;}).join(','),'2,3,4');
+    eq(htf.anchorBasis,'ENTRY_CANDLE_CLOSE');
+    htf.timeframes.forEach(function(x){ eq(x.provenance,'OBSERVED'); });
+  });
+  t('Y2 the rank table mirrors the engine\'s own htfPriority exactly',function(){
+    const engine=g.getRulesAlexG().config.htfPriority;
+    const mirror=g.EVIDENCE_TIMEFRAME_RANK;
+    eq(Object.keys(mirror).sort().join(','),Object.keys(engine).sort().join(','),'same timeframes');
+    Object.keys(engine).forEach(function(tf){
+      eq(mirror[tf],engine[tf],tf+': the evidence mirror must not drift from RULES_ALEXG.config.htfPriority');
+    });
+  });
+  t('Y3 NO LOOK-AHEAD -- every captured bar closed at or before the anchor',function(){
+    const ds=datasets();
+    const anchorMs=anchorAt(ds,200);
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorMs,{});
+    ok(htf.timeframes.length>0);
+    htf.timeframes.forEach(function(x){
+      const lastClose=Date.parse(x.window.lastClosedBarCloseUTC);
+      ok(lastClose<=anchorMs,x.timeframe+': the last captured bar must have CLOSED by the anchor');
+      x.candles.forEach(function(c){
+        ok(Date.parse(c.t)<=anchorMs,x.timeframe+': no captured bar may START after the anchor');
+      });
+      // and it must be the LATEST such bar -- context must not be stale either
+      const next=x.window.toBarIndex+1;
+      const src=ds[x.timeframe];
+      if(next<src.length){
+        ok(g.getCandleCloseTime(src,next,x.timeframe).getTime()>anchorMs,
+           x.timeframe+': the next bar must genuinely be unclosed at the anchor');
+      }
+    });
+  });
+  t('Y4 the bar cap is respected and declared per timeframe',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:5});
+    htf.timeframes.forEach(function(x){
+      ok(x.candles.length<=5,x.timeframe+' exceeded the cap');
+      eq(x.window.requestedBars,5);
+      if(x.window.barsAvailableBeforeAnchor>5){
+        eq(x.window.truncated,true,x.timeframe+' must declare truncation');
+        eq(x.window.truncationReason,'BARS_PER_TIMEFRAME_CAP');
+      }
+      eq(x.window.candleCount,x.candles.length);
+    });
+  });
+  t('Y5 candles are verbatim, with their own bar indices',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:3});
+    const h4=htf.timeframes.filter(function(x){return x.timeframe==='H4';})[0];
+    const src=ds.H4;
+    h4.candles.forEach(function(c){
+      eq(c.o,src[c.barIndex].o); eq(c.h,src[c.barIndex].h);
+      eq(c.l,src[c.barIndex].l); eq(c.c,src[c.barIndex].c);
+      eq(c.t,src[c.barIndex].t.toISOString(),'timestamps are serialized, never recomputed');
+    });
+    eq(h4.window.fromBarIndex,h4.candles[0].barIndex);
+    eq(h4.window.toBarIndex,h4.candles[h4.candles.length-1].barIndex);
+    eq(h4.window.datasetCandleCount,src.length);
+  });
+  t('Y6 a missing or unusable timeframe is OMITTED WITH A REASON, never skipped',function(){
+    const ds=datasets(); delete ds.D;
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{});
+    eq(htf.timeframes.map(function(x){return x.timeframe;}).join(','),'H4,W');
+    const om=htf.omittedTimeframes.filter(function(x){return x.timeframe==='D';})[0];
+    ok(om,'the missing timeframe must be recorded');
+    eq(om.reason,'DATASET_UNAVAILABLE');
+    // a dataset whose first bar closes after the anchor has nothing closed yet
+    const late=datasets();
+    late.W=tfCandlesFor('W',5,Date.UTC(2027,0,1));
+    const htf2=g.evidenceBuildHigherTimeframeContext(late,'H1',anchorAt(late),{});
+    eq(htf2.omittedTimeframes.filter(function(x){return x.timeframe==='W';})[0].reason,'NO_CLOSED_BAR_AT_ANCHOR');
+  });
+  t('Y7 a trade on the highest timeframe reports NOT_APPLICABLE, not a gap',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'W',anchorAt(ds),{});
+    eq(htf.provenance,'NOT_APPLICABLE');
+    eq(htf.unavailableReason,'TRADE_IS_ON_THE_HIGHEST_TIMEFRAME');
+    eq(htf.timeframes.length,0);
+    // a D trade still has W above it
+    eq(g.evidenceBuildHigherTimeframeContext(ds,'D',anchorAt(ds),{}).timeframes.map(function(x){return x.timeframe;}).join(','),'W');
+  });
+  t('Y8 unusable inputs are UNAVAILABLE with a named reason, never fabricated',function(){
+    const ds=datasets();
+    eq(g.evidenceBuildHigherTimeframeContext(null,'H1',1,{}).unavailableReason,'NO_DATASETS_SUPPLIED');
+    eq(g.evidenceBuildHigherTimeframeContext(ds,'H1',null,{}).unavailableReason,'NO_ANCHOR_TIMESTAMP');
+    eq(g.evidenceBuildHigherTimeframeContext(ds,'M5',anchorAt(ds),{}).unavailableReason,'UNKNOWN_TRADE_TIMEFRAME');
+    const empty=g.evidenceBuildHigherTimeframeContext({H4:[],D:[],W:[]},'H1',anchorAt(ds),{});
+    eq(empty.provenance,'UNAVAILABLE');
+    eq(empty.unavailableReason,'NO_HIGHER_TIMEFRAME_DATA_AT_ANCHOR');
+    eq(empty.omittedTimeframes.length,3,'each absent timeframe is still named');
+  });
+  t('Y9 the context rides inside the market-context object and reaches the package',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:4});
+    const mc=g.evidenceBuildMarketContext(ds.H1,190,200,{contextId:'CTX|1',positionId:'AGT|1',
+      instrument:'EUR_USD',timeframe:'H1',datasetHash:'d'.repeat(64),higherTimeframeContext:htf});
+    eq(mc.higherTimeframeContextProvenance,'OBSERVED');
+    eq(mc.higherTimeframeContext.timeframes.length,3);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const stored=p.objects.marketContexts[0].higherTimeframeContext;
+    eq(stored.timeframes.map(function(x){return x.timeframe;}).join(','),'H4,D,W');
+    const v=g.evidenceValidatePackage(p);
+    ok(v.valid,'a context-bearing package must validate: '+v.errors.join('; '));
+  });
+  t('Y10 validation REJECTS look-ahead in captured context',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:4});
+    const mc=g.evidenceBuildMarketContext(ds.H1,190,200,{contextId:'CTX|1',timeframe:'H1',higherTimeframeContext:htf});
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    ok(g.evidenceValidatePackage(p).valid,'baseline must be valid');
+    // a bar that closes after the anchor is hindsight, not context
+    const bad=JSON.parse(JSON.stringify(p));
+    const tf0=bad.objects.marketContexts[0].higherTimeframeContext.timeframes[0];
+    tf0.window.lastClosedBarCloseUTC=new Date(Date.parse(bad.objects.marketContexts[0].higherTimeframeContext.anchorUTC)+3600000).toISOString();
+    const r1=g.evidenceValidatePackage(bad);
+    no(r1.valid,'a window ending after its anchor must be rejected');
+    ok(r1.errors.join(' ').indexOf('look-ahead')!==-1,'and must say why: '+r1.errors.join('; '));
+    const bad2=JSON.parse(JSON.stringify(p));
+    const tf1=bad2.objects.marketContexts[0].higherTimeframeContext.timeframes[0];
+    tf1.candles[tf1.candles.length-1].t=new Date(Date.parse(bad2.objects.marketContexts[0].higherTimeframeContext.anchorUTC)+7200000).toISOString();
+    no(g.evidenceValidatePackage(bad2).valid,'a candle starting after the anchor must be rejected');
+  });
+  t('Y11 validation rejects malformed or silently-capped context',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:4});
+    const mc=g.evidenceBuildMarketContext(ds.H1,190,200,{contextId:'CTX|1',timeframe:'H1',higherTimeframeContext:htf});
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const miscount=JSON.parse(JSON.stringify(p));
+    miscount.objects.marketContexts[0].higherTimeframeContext.timeframes[0].window.candleCount=99;
+    no(g.evidenceValidatePackage(miscount).valid,'a miscounted timeframe window must be rejected');
+    const silent=JSON.parse(JSON.stringify(p));
+    const w=silent.objects.marketContexts[0].higherTimeframeContext.timeframes[0].window;
+    w.truncated=true; w.truncationReason=null;
+    no(g.evidenceValidatePackage(silent).valid,'a silent cap must be rejected');
+    const nameless=JSON.parse(JSON.stringify(p));
+    nameless.objects.marketContexts[0].higherTimeframeContext.omittedTimeframes=[{timeframe:'D'}];
+    no(g.evidenceValidatePackage(nameless).valid,'an omission without a reason must be rejected');
+    const badProv=JSON.parse(JSON.stringify(p));
+    badProv.objects.marketContexts[0].higherTimeframeContext.provenance='MADE_UP';
+    no(g.evidenceValidatePackage(badProv).valid,'the provenance vocabulary is closed');
+  });
+  t('Y12 the completeness report sheds the gap only when context is really captured',function(){
+    const ds=datasets();
+    const mcNoHtf=g.evidenceBuildMarketContext(ds.H1,190,200,{contextId:'CTX|1',timeframe:'H1'});
+    const without=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mcNoHtf}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'}).completenessReport.missing.map(function(m){return m.field;});
+    ok(without.indexOf('objects.marketContexts[].higherTimeframeContext')!==-1,
+       'a window without higher-timeframe context must still declare the gap');
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:4});
+    const mc=g.evidenceBuildMarketContext(ds.H1,190,200,{contextId:'CTX|1',timeframe:'H1',higherTimeframeContext:htf});
+    const withCtx=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'}).completenessReport.missing.map(function(m){return m.field;});
+    eq(withCtx.indexOf('objects.marketContexts[].higherTimeframeContext'),-1,'a captured context sheds the gap');
+    ok(withCtx.indexOf('objects.decisions')!==-1,'decision chains remain an honest gap');
+    // and the original ordering for a package with no window at all is untouched
+    eq(builtPackage().completenessReport.missing[0].field,'objects.marketContexts');
+  });
+  t('Y13 context capture is deterministic and canonically stable',function(){
+    const ds=datasets();
+    const a=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:6});
+    const b=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{barsPerTimeframe:6});
+    eq(JSON.stringify(a),JSON.stringify(b),'identical inputs must produce identical context');
+    const opts={packageId:'PKG|x|1',strategyId:'alex_g_sr_v1',createdAt:'2026-07-20T14:00:01.000Z'};
+    const mkPkg=function(htf){
+      const mc=g.evidenceBuildMarketContext(ds.H1,190,200,{contextId:'CTX|1',timeframe:'H1',higherTimeframeContext:htf});
+      return g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),opts);
+    };
+    eq(g.evidenceCanonicalize(mkPkg(a)),g.evidenceCanonicalize(mkPkg(b)),'and identical canonical output');
+  });
+  t('Y14 payload growth is bounded and measured',function(){
+    const ds=datasets();
+    const htf=g.evidenceBuildHigherTimeframeContext(ds,'H1',anchorAt(ds),{});   // default 20 bars
+    const total=htf.timeframes.reduce(function(n,x){return n+x.candles.length;},0);
+    ok(total<=60,'three timeframes x 20 bars is the ceiling, measured '+total);
+    const bytes=JSON.stringify(htf).length;
+    ok(bytes<12000,'higher-timeframe context must stay small; measured '+bytes+' bytes');
+    const mc=g.evidenceBuildMarketContext(ds.H1,150,200,{contextId:'CTX|1',timeframe:'H1',higherTimeframeContext:htf});
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({marketContext:mc}),{packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const pkgBytes=JSON.stringify(p).length;
+    ok(pkgBytes<40000,'a full context-bearing package must stay well under 40 KB; measured '+pkgBytes+' bytes');
+  });
+  t('Y15 C2-M2 cannot influence trading, replay output or statistics',function(){
+    const m=String(g.evidenceBuildHigherTimeframeContext);
+    ['alexGSetupState','alexGZoneState','alexGAccount','paperAccount','journalEntries','localStorage',
+     'commitAlexGLedger','openPaperPosition','alexGConstructTrade','alexGRunSetupReplay','alexGComputeReplayStats','fetch']
+      .forEach(function(n){ eq(m.indexOf(n),-1,'higher-timeframe capture must never reference '+n); });
+    eq(m.indexOf('.push(cs['),-1,'it must never mutate a dataset');
+    ['evidenceBuildHigherTimeframeContext','higherTimeframeContext']
+      .forEach(function(n){ eq(String(g.alexGRunSetupReplay).indexOf(n),-1,'protected replay must not reference '+n); });
+    // the seam anchors on the entry timestamp, not on "now"
+    const seam=String(g.evidenceCaptureReplayTradesAsync);
+    ok(seam.indexOf('evidenceBuildHigherTimeframeContext(candlesByTimeframe,t.timeframe')!==-1);
+    ok(seam.indexOf('t.entryTimestamp')!==-1,'the anchor must be the trade\'s own entry timestamp');
+    eq(seam.indexOf('Date.now()'),-1,'context must never be anchored on wall-clock time');
   });
 
   return out;
