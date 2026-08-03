@@ -1292,6 +1292,22 @@ button.danger:hover{background:var(--red-dim)}
           <div id="paperLedgerIntegrityCard"></div>
         </div>
 
+        <!-- v12.17.0: LEDGER RECONCILIATION. Compares what each account SAYS against what the
+             immutable ledger DERIVES, field by field. Strictly read-only and DIAGNOSTICS ONLY --
+             it replaces no stored total and writes nothing. Every difference is classified
+             MATCHES / EXPLAINED_BY_EXCLUSIONS / UNEXPLAINED_DELTA and drills down to the ledger
+             events responsible. -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+            <div>
+              <div class="section-label" style="margin-bottom:2px">Ledger Reconciliation</div>
+              <div style="font-size:11px;color:var(--text2);max-width:640px">Compares stored account state against state derived from the immutable trade ledger, for every strategy. Each field shows the stored value, the derived value, the difference and an explanation, classified as MATCHES, EXPLAINED BY EXCLUSIONS, or UNEXPLAINED DELTA. Read-only: no stored total is replaced, and nothing is written.</div>
+            </div>
+            <button onclick="renderLedgerReconciliation()">Refresh</button>
+          </div>
+          <div id="ledgerReconciliationCard"></div>
+        </div>
+
         <!-- v12.3.2: Developer-Mode-gated, strictly read-only. Analyzes whatever JVM/ALEX
              state is already loaded in this browser -- never saves, repairs, deletes, resets,
              migrates, normalizes, reconciles by mutation, increments a version, or creates a
@@ -1952,9 +1968,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.16.0';
+const APP_VERSION='12.17.0';
 const APP_VERSION_DATE='3 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.17.0 — MOGO-003 PHASE 2: LEDGER RECONCILIATION DIAGNOSTICS (diagnostics-only release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; NO stored total is replaced and nothing is written). WHAT IT DOES: a new Diagnostics card renders one table per strategy comparing STORED account state against state DERIVED from the immutable ledger, with Field / Stored / Derived / Difference / Verdict / Explanation across eight figures -- balance, realizedPnl, wins, losses, decided, winRate, netR and maxDrawdownR -- plus the responsible trade ids on every non-matching row and a preserved list of excluded events beneath each table. HOW A DIFFERENCE IS EXPLAINED: the ledger is derived TWICE, once excluding quarantined events (the authoritative view) and once including them (the view the stored totals actually reflect). If a field\'s stored value matches the all-inclusive derivation, the difference is EXACTLY the excluded records and is reported as EXPLAINED_BY_EXCLUSIONS with those records named; if it matches neither it is UNEXPLAINED_DELTA -- the stored value moved for a reason the ledger cannot account for -- which is reported, never absorbed; otherwise MATCHES. The vocabulary is a frozen three-value constant. AGAINST THE REAL INC-005 ACCOUNT (stored 10200, ledger 10000) the view returns EXPLAINED_BY_EXCLUSIONS on six fields, MATCHES on two, and drill-down on balance returns the single responsible event AGT|MANUAL-B|1785634676564 with its $200 and the three integrity rules it violated. winRate derives as null rather than 0% -- zero decided trades has no win rate, and inventing one would be a fabricated figure. DRILL-DOWN: ledgerReconciliationDrillDown(report,field) returns the verdict, the explanation and the full ledger events behind it, each with result, P&amp;L and violated rules. READ-ONLY BY CONSTRUCTION: the layer contains no localStorage, commitAlexGLedger, saveAlexG, balance-assignment, splice or delete path; accounts are byte-identical after reconciliation; the report carries readOnly:true; and the card states on screen that it replaces nothing. DELIBERATE LIMITATION: nothing is corrected -- the stored balance still reads what it reads. This milestone makes the divergence visible and attributable; changing it is a separate explicit act. TESTING: v128 grows 205 -&gt; 214 (R1-R9): all-match, the INC-005 case field by field, an unexplained delta reported, all three verdicts from the declared vocabulary, drill-down reaching the responsible event, excluded events preserved, a no-write/no-mutation proof, both strategies covered and the view wired into Diagnostics, and determinism with safe degradation when no stored value exists. Full regression: 933/933 across 17 suites, zero drift.',
   '12.16.0 — MOGO-003 PHASE 2: IMMUTABLE TRADE LEDGER &amp; DERIVED ACCOUNT STATE (evidence-integrity release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical). THE PROBLEM: account totals are STORED and independently mutated -- alexGCloseLivePosition adds each trade\'s P&amp;L to alexGAccount.balance, after which the number cannot be recomputed, explained or checked. INC-005 showed the consequence: once the seeded record was excluded from statistics the stored balance still carried its +$200, and only the balance was authoritative. THE ANSWER: treat closed trades as an APPEND-ONLY LEDGER and DERIVE balance, realized P&amp;L, win rate, expectancy, profit factor, R statistics and drawdown from it. A derived figure can be recomputed and reconciled; a stored total cannot. THE DELIBERATE BOUNDARY: this does NOT rewrite the stored balance and does NOT touch the protected close path -- alexGCloseLivePosition stays byte-identical and keeps its own total. The ledger derives truth alongside it and RECONCILES the two, so a divergence becomes a visible, explained number instead of a silent one. Replacing the stored total is a later explicit step that this reconciliation is the prerequisite for, and doing it in this order keeps the milestone reversible. COMPONENTS: ledgerNormalizeEvent (one closed trade -&gt; one canonical immutable event, adapter-mapped, integrity verdict attached), ledgerBuildEvents (deterministic ordering by closedAt then tradeId -- the same walk alexGComputeEquityStats already uses), ledgerDeriveAccountState (the reconstruction: starting balance + verified ledger + quarantined events -&gt; the entire account) and ledgerReconcileBalance, which classifies any difference as MATCHES, EXPLAINED_BY_EXCLUSIONS (exactly the P&amp;L of excluded records -- the INC-005 case) or UNEXPLAINED_DELTA (the stored total moved for a reason the ledger cannot account for). The third verdict is reported, never absorbed. ONE ARCHITECTURE FOR EVERY STRATEGY: ALEX uses canonical names, JVM maps id/oPair/dir verbatim, and any strategy without an adapter falls back to canonical names -- so CRT, ICT and TJR work with no change here. Derivation is strategy-agnostic. NO SECOND EQUITY IMPLEMENTATION: R-space reuses the shipped alexGComputeEquityStats rather than a duplicate chronological walk, which is exactly the drift risk this milestone removes. FORENSIC HISTORY IS COMPLETE: quarantined and developer events are never dropped -- they are carried with their exclusion reasons and P&amp;L, which is what lets the layer explain a stored-balance divergence. HONEST GAPS: a record without P&amp;L is COUNTED as pnlUnavailable and never filled in; profit factor is null with a stated basis when there are no losses; and derived state is deliberately NOT yet wired into any display, because reconciliation must be observed against real accounts before a derivation bug can become a wrong number on screen. TESTING: v128 grows 194 -&gt; 205 (L1-L11): reconstruction from the ledger alone, determinism and order-independence, quarantined events excluded yet preserved with their P&amp;L, the actual INC-005 reconciliation resolving to EXPLAINED_BY_EXCLUSIONS with unexplainedDelta 0, an unexplained divergence reported, JVM field mapping plus unknown-strategy fallback, read-only behaviour over source records, reuse of the shipped equity engine, missing data counted never guessed, developer trades excluded by default but opt-in for investigators, and no influence on trading, replay or evidence. Full regression: 924/924 across 17 suites, zero drift.',
   '12.15.0 — MOGO-003 PHASE 2: TRADE INTEGRITY &amp; QUARANTINE (evidence-integrity release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change). WHY: on 2026-08-02 a record surfaced in an ALEX paper account claiming a Win at target with MAE 0.0 AND MFE 0.0 -- arithmetically impossible, because alexGUpdatePositionExcursionAndCheckExit updates the excursion BEFORE evaluating the exit from the same bid/ask. It carried tradeSource AUTO and isDeveloperTrade false, so every statistic counted it. Forensics established it was hand-seeded (tradeId AGT|MANUAL-B|..., setup tokens zB/rB -- strings no MOGO code path can mint, and absent from the entire repository), written under a non-production origin. The operator\'s live account was unaffected. WHAT WAS BUILT -- RULE-BASED, NOT IDENTIFIER-BASED: TRADE_INTEGRITY_RULES states invariants a genuine trade cannot violate: a Win must record a favourable excursion above zero, a Loss an adverse excursion above zero, a trade must close strictly after it opened, the recorded result must agree with the direction of the exit price, and (per strategy profile) the trade id must match the pattern that strategy\'s engine actually mints. A future seeded record with different identifiers is caught by the same rules. STRATEGY-AGNOSTIC BY DEFAULT: four of the five rules declare appliesTo \'*\', so TJR, CRT and any future strategy inherit them the moment they produce trades; a strategy adds its own checks by registering a profile in TRADE_INTEGRITY_STRATEGY_PROFILES, with no change to the evaluator. NOTHING IS DELETED OR REWRITTEN: quarantine is computed on read from the record\'s own fields -- no ledger write, no new storage key, no migration -- so a quarantined record stays byte-identical on disk and fully inspectable. STATISTICS EXCLUDE, SURFACES DISCLOSE: the ALEX live panel, the dashboard tiles (for EVERY registered strategy, keyed on manifest id), the journal summary and strategy-performance analytics all filter quarantined records out, and stored balances are corrected for display by netting the quarantined P&amp;L back out rather than touching the stored balance; meanwhile the trade tables still LIST every quarantined record with a red QUARANTINED badge naming the violated rule, and the journal summary states how many were excluded. A rule that throws never quarantines. OBSERVATIONAL ONLY: the layer runs at read time, downstream of every decision; it cannot open, close, size or price a trade, and no protected function references it. REPLAY IS UNTOUCHED: alexGComputeReplayStats is protected and unchanged, and replay Evidence Packages are not evaluated by this layer. TESTING: v128 grows 185 -> 194 (Q1-Q9). Full regression: 913/913 across 17 suites, zero drift.',
   '12.14.0 — MOGO-003 UNIT C2-M2: HIGHER-TIMEFRAME CONTEXT (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: C2-M1 captured the traded window in the trade\'s OWN timeframe, so a reader could see the entry and the path but not the structure the setup sat inside -- and ALEX is a multi-timeframe strategy whose zones come from H1/H4/D/W. WHAT WAS ADDED, on newly captured REPLAY packages only: marketContexts[].higherTimeframeContext carries a small window of EACH higher timeframe (EVIDENCE_HTF_BARS = 20 bars each), with per-timeframe window blocks (requested vs captured bars, from/to bar indices and UTC bounds, dataset size, bars available before the anchor, truncation state) and candles stored verbatim. Timeframes appear in a deterministic ascending-rank order (H4, D, W for an H1 trade). THE PROPERTY THAT MATTERS MOST -- NO LOOK-AHEAD: context is anchored at the ENTRY CANDLE\'S CLOSE and includes only higher-timeframe bars that had genuinely CLOSED by then, found by scanning candle close times rather than rounding or estimating from a bar\'s start. A daily bar closing hours after entry is hindsight, not context. VALIDATION ENFORCES IT: a context whose last bar closes after its own anchor is REJECTED, as is any candle starting after the anchor -- the evidence layer refuses to store look-ahead even though none of it ever touched a trading decision. HONEST ABSENCE: a timeframe with no dataset, no closed bar at the anchor, or a hole is recorded in omittedTimeframes WITH A REASON, never silently skipped; a trade on the highest timeframe reports NOT_APPLICABLE rather than a missing capture, because nothing exists above it. RANKING IS NOT REINVENTED: EVIDENCE_TIMEFRAME_RANK mirrors RULES_ALEXG.config.htfPriority (W > D > H4 > H1) so the evidence layer never reads a protected constant it could drift from, and a fixture asserts the two are identical -- the same anti-drift technique Unit B uses for its attribution mirror. COMPLETENESS: a package that captures higher-timeframe context sheds the higherTimeframeContext gap C2-M1 introduced; every other package still declares it, in the same array position, so canonical ordering for earlier package shapes is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. PAYLOAD, MEASURED NOT ASSUMED -- and the earlier estimate was WRONG: sizes are measured on the EXPORTED form (JSON.stringify with 2-space indent, which is what actually reaches disk), not compact JSON. On RUN-001\'s real dataset shape (H1 2220 / H4 600 / D 150 / W 73) with a 30-bar hold, one package measures 15.0 KB through Unit C1, 33.2 KB with the own-timeframe window (C2-M1, +18.2 KB) and 47.6 KB with higher-timeframe context (C2-M2, +14.5 KB: H4 20 bars, D 20, W 8). A 24-trade run therefore grows 360 KB -> 796 KB -> 1.14 MB. The v12.13.0 note estimating about 6 KB per package measured COMPACT JSON and understated the on-disk figure roughly threefold; this entry supersedes it. IndexedDB absorbs this comfortably, but a long multi-pair run is now a megabyte-scale store and the content-addressed candle store (deduplication) becomes the obvious next economy. EXPLICITLY NOT IMPLEMENTED: the content-addressed candle store, untraded-candidate context, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 170 -> 185 (Y1-Y15). Full regression: 904/904 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
@@ -11663,10 +11680,13 @@ function ledgerDeriveAccountState(opts){
   const strategyId=o.strategyId||null;
   const start=(typeof o.startingBalance==='number'&&isFinite(o.startingBalance))?o.startingBalance:0;
   const includeDeveloperTrades=!!o.includeDeveloperTrades;
+  // v12.17.0: an investigator can rebuild the account AS THE STORED TOTALS SEE IT -- quarantined
+  // records included -- which is what makes a divergence explainable field by field.
+  const includeQuarantined=!!o.includeQuarantined;
   const all=ledgerBuildEvents(o.records,strategyId);
   const excluded=[],included=[];
   all.forEach(function(e){
-    if(e.quarantined) excluded.push(e);
+    if(e.quarantined&&!includeQuarantined) excluded.push(e);
     else if(e.isDeveloperTrade&&!includeDeveloperTrades) excluded.push(e);
     else included.push(e);
   });
@@ -11745,6 +11765,98 @@ function ledgerReconcileBalance(storedBalance,derived){
       :(unexplained===0?'the difference is exactly the P&L of records excluded from the ledger'
         :'the stored total moved by an amount the ledger cannot account for')
   };
+}
+
+// ══ v12.17.0 LEDGER RECONCILIATION DIAGNOSTICS ═══════════════════════════════════════════
+//
+// Compares what the account SAYS against what the ledger DERIVES, field by field, and classifies
+// every difference as one of exactly three verdicts. Diagnostics only: it reads both views and
+// writes neither, and no stored total is replaced by anything computed here.
+//
+// HOW A DIFFERENCE IS EXPLAINED. The ledger is derived twice -- once excluding quarantined events
+// (the authoritative view) and once including them (the view the stored totals actually reflect).
+// If a field's stored value matches the all-inclusive derivation, the difference is EXACTLY the
+// excluded records and is reported as such, with those records named. If it matches neither, the
+// stored value moved for a reason the ledger cannot account for, and that is said plainly.
+const LEDGER_RECONCILIATION_SCHEMA_VERSION='mogo.ledger-reconciliation.v1';
+const LEDGER_RECONCILIATION_STATUSES=Object.freeze(['MATCHES','EXPLAINED_BY_EXCLUSIONS','UNEXPLAINED_DELTA']);
+function ledgerBuildReconciliationReport(opts){
+  const o=opts||{};
+  const strategyId=o.strategyId||null;
+  const records=Array.isArray(o.records)?o.records:[];
+  const start=(typeof o.startingBalance==='number'&&isFinite(o.startingBalance))?o.startingBalance:0;
+  const derived=ledgerDeriveAccountState({startingBalance:start,strategyId:strategyId,records:records});
+  const asStored=ledgerDeriveAccountState({startingBalance:start,strategyId:strategyId,records:records,
+    includeQuarantined:true,includeDeveloperTrades:!!o.storedIncludesDeveloperTrades});
+  const storedBalance=(typeof o.storedBalance==='number'&&isFinite(o.storedBalance))?o.storedBalance:null;
+  const excluded=derived.excludedEvents||[];
+  const excludedIds=excluded.map(function(e){return e.tradeId;});
+  const num=function(v){ return typeof v==='number'&&isFinite(v)?v:null; };
+  const round2=function(v){ return v==null?null:Math.round(v*100)/100; };
+
+  function compare(field,storedValue,derivedValue,inclusiveValue,unit){
+    const sv=storedValue,dv=derivedValue;
+    let status,explanation,responsible=[];
+    if(sv==null){
+      status='MATCHES';
+      explanation='no stored value exists for this field; the derived value stands alone';
+    } else if(sv===dv){
+      status='MATCHES';
+      explanation='the stored value agrees with the ledger';
+    } else if(inclusiveValue!=null&&sv===inclusiveValue){
+      status='EXPLAINED_BY_EXCLUSIONS';
+      responsible=excludedIds.slice();
+      explanation='the difference is exactly the effect of '+excluded.length+' record'+
+        (excluded.length===1?'':'s')+' excluded from the ledger';
+    } else {
+      status='UNEXPLAINED_DELTA';
+      responsible=excludedIds.slice();   // the only candidates the ledger knows about
+      explanation='the stored value matches neither the ledger nor the ledger with excluded '+
+        'records added back; it moved for a reason the ledger cannot account for';
+    }
+    const diff=(num(sv)!=null&&num(dv)!=null)?round2(sv-dv):null;
+    return{field:field,unit:unit||null,storedValue:sv,derivedValue:dv,
+      derivedIncludingExcluded:inclusiveValue,difference:diff,status:status,
+      explanation:explanation,responsibleTradeIds:responsible};
+  }
+
+  const fields=[
+    compare('balance',storedBalance,derived.balance,asStored.balance,'currency'),
+    compare('realizedPnl',storedBalance==null?null:round2(storedBalance-start),
+            derived.realizedPnl,asStored.realizedPnl,'currency'),
+    compare('wins',o.storedWins!=null?o.storedWins:asStored.wins,derived.wins,asStored.wins,'count'),
+    compare('losses',o.storedLosses!=null?o.storedLosses:asStored.losses,derived.losses,asStored.losses,'count'),
+    compare('decided',o.storedDecided!=null?o.storedDecided:asStored.decided,derived.decided,asStored.decided,'count'),
+    compare('winRate',o.storedWinRate!=null?o.storedWinRate:asStored.winRate,derived.winRate,asStored.winRate,'percent'),
+    compare('netR',o.storedNetR!=null?o.storedNetR:asStored.netR,derived.netR,asStored.netR,'R'),
+    compare('maxDrawdownR',o.storedMaxDrawdownR!=null?o.storedMaxDrawdownR:asStored.maxDrawdownR,
+            derived.maxDrawdownR,asStored.maxDrawdownR,'R')
+  ];
+  const counts={};
+  LEDGER_RECONCILIATION_STATUSES.forEach(function(st){
+    counts[st]=fields.filter(function(f){return f.status===st;}).length;
+  });
+  const overall=counts.UNEXPLAINED_DELTA?'UNEXPLAINED_DELTA'
+    :(counts.EXPLAINED_BY_EXCLUSIONS?'EXPLAINED_BY_EXCLUSIONS':'MATCHES');
+  return{
+    schemaVersion:LEDGER_RECONCILIATION_SCHEMA_VERSION,
+    strategyId:strategyId,startingBalance:start,
+    generatedFrom:{ledgerEvents:derived.eventCounts,storedBalance:storedBalance},
+    fields:fields,statusCounts:counts,overall:overall,
+    // Drill-down: every excluded record, with why it was excluded and what it was worth.
+    excludedEvents:excluded,
+    readOnly:true
+  };
+}
+// Drill-down helper: the ledger events behind one reconciliation row.
+function ledgerReconciliationDrillDown(report,field){
+  if(!report||!Array.isArray(report.fields)) return null;
+  const row=report.fields.filter(function(f){return f.field===field;})[0];
+  if(!row) return null;
+  const ids={};
+  (row.responsibleTradeIds||[]).forEach(function(id){ ids[id]=true; });
+  return{field:field,status:row.status,explanation:row.explanation,
+    events:(report.excludedEvents||[]).filter(function(e){return ids[e.tradeId];})};
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
@@ -14194,6 +14306,87 @@ function confirmPaperReconciliationUI(tradeId){
   if(result.blocked){ alert(result.reason); }
   _paperReconcilePreviewCache=null;
   renderPaperLedgerIntegrity();
+}
+// ── v12.17.0 LEDGER RECONCILIATION DIAGNOSTICS (read-only) ──────────────────────────────
+// Renders one reconciliation table per registered strategy. It reads alexGAccount/paperAccount and
+// writes NOTHING: no stored total is replaced, no record is modified, no key is written. Every
+// row states the stored value, the derived value, the difference, a verdict and an explanation,
+// and every non-matching row lists the ledger events responsible.
+function ledgerReconciliationSources(){
+  const out=[];
+  try{
+    if(typeof alexGAccount==='object'&&alexGAccount){
+      out.push({strategyId:'alex_g_sr_v1',label:'ALEX',account:alexGAccount,
+        startingBalance:(typeof alexGStartingBalance==='function')?alexGStartingBalance():10000});
+    }
+  }catch(e){}
+  try{
+    if(typeof paperAccount==='object'&&paperAccount){
+      out.push({strategyId:'current_strategy',label:'JVM',account:paperAccount,
+        startingBalance:(typeof paperAccount.startingBalance==='number')?paperAccount.startingBalance:10000});
+    }
+  }catch(e){}
+  return out;
+}
+function renderLedgerReconciliation(){
+  const el=document.getElementById('ledgerReconciliationCard');
+  if(!el) return;
+  const badge=function(st){
+    const c=st==='MATCHES'?'var(--green)':(st==='EXPLAINED_BY_EXCLUSIONS'?'var(--gold)':'var(--red)');
+    return '<span class="badge" style="background:'+c+';color:#000;font-size:9px">'+escapeHtml(st.replace(/_/g,' '))+'</span>';
+  };
+  const fmt=function(v,unit){
+    if(v==null) return '—';
+    if(typeof v!=='number') return escapeHtml(String(v));
+    if(unit==='currency') return fmtCurrency(v);
+    if(unit==='percent') return v+'%';
+    if(unit==='R') return (v>=0?'+':'')+v.toFixed(2)+'R';
+    return String(v);
+  };
+  let html='';
+  const sources=ledgerReconciliationSources();
+  if(!sources.length){ el.innerHTML='<div class="empty-state">No strategy accounts are loaded.</div>'; return; }
+  sources.forEach(function(src){
+    let report=null;
+    try{
+      report=ledgerBuildReconciliationReport({
+        strategyId:src.strategyId,records:src.account.closedPositions||[],
+        startingBalance:src.startingBalance,storedBalance:src.account.balance});
+    }catch(e){
+      html+='<div style="margin-bottom:14px"><strong>'+escapeHtml(src.label)+'</strong> — reconciliation unavailable: '+escapeHtml(e&&e.message?e.message:'error')+'</div>';
+      return;
+    }
+    html+='<div style="margin-bottom:6px;font-weight:700">'+escapeHtml(src.label)+' '+badge(report.overall)+
+      ' <span style="font-weight:400;color:var(--text2);font-size:11px">'+report.generatedFrom.ledgerEvents.included+
+      ' ledger events · '+report.generatedFrom.ledgerEvents.excluded+' excluded (preserved)</span></div>';
+    html+='<div style="overflow-x:auto"><table class="scan-table"><thead><tr>'+
+      '<th>Field</th><th>Stored</th><th>Derived</th><th>Difference</th><th>Verdict</th><th>Explanation</th></tr></thead><tbody>';
+    report.fields.forEach(function(f){
+      const diffColor=(f.difference==null||f.difference===0)?'var(--text2)':(f.status==='UNEXPLAINED_DELTA'?'var(--red)':'var(--gold)');
+      html+='<tr><td style="font-family:monospace;font-size:11px">'+escapeHtml(f.field)+'</td>'+
+        '<td>'+fmt(f.storedValue,f.unit)+'</td><td>'+fmt(f.derivedValue,f.unit)+'</td>'+
+        '<td style="color:'+diffColor+'">'+(f.difference==null?'—':fmt(f.difference,f.unit))+'</td>'+
+        '<td>'+badge(f.status)+'</td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+escapeHtml(f.explanation)+
+        (f.responsibleTradeIds&&f.responsibleTradeIds.length&&f.status!=='MATCHES'
+          ? '<br><span style="font-size:10px">responsible: '+f.responsibleTradeIds.map(function(id){return escapeHtml(String(id));}).join(', ')+'</span>' : '')+
+        '</td></tr>';
+    });
+    html+='</tbody></table></div>';
+    if(report.excludedEvents.length){
+      html+='<div style="margin:8px 0 16px;font-size:11px;color:var(--text2)"><strong>Excluded ledger events (preserved, never deleted):</strong><ul style="margin:4px 0 0 16px">';
+      report.excludedEvents.forEach(function(e){
+        html+='<li><span style="font-family:monospace">'+escapeHtml(String(e.tradeId))+'</span> · '+
+          escapeHtml(String(e.result||'—'))+' · '+(e.pnl==null?'no P&L':fmtCurrency(e.pnl))+' · '+
+          (e.quarantined?('quarantined: '+escapeHtml(e.integrityViolations.join(', '))):'developer test trade')+'</li>';
+      });
+      html+='</ul></div>';
+    } else {
+      html+='<div style="margin:8px 0 16px;font-size:11px;color:var(--text2)">No excluded events.</div>';
+    }
+  });
+  html+='<div style="font-size:10px;color:var(--text2);margin-top:6px">Diagnostics only — read-only. No stored total is replaced and nothing is written by this view.</div>';
+  el.innerHTML=html;
 }
 function renderPaperLedgerIntegrity(){
   const el=document.getElementById('paperLedgerIntegrityCard');
@@ -17892,7 +18085,7 @@ function showPanel(name,btn){
   if(name==='ai') renderAiMessages();
   if(name==='backtest') initBacktestPair();
   if(name==='truemtf') initMTFPair();
-  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();renderBaselineRegistryDiagnostics();renderDecisionEventDiagnostics();evidenceRefreshDiagnostics();renderMarketDataCompletenessDiagnostics();}
+  if(name==='diagnostics'){initDataDiagPair();renderPaperLedgerIntegrity();renderPaperTradingHealthCheck();renderBaselineRegistryDiagnostics();renderDecisionEventDiagnostics();evidenceRefreshDiagnostics();renderMarketDataCompletenessDiagnostics();renderLedgerReconciliation();}
   if(name==='rules') renderRules(); // v8.0: refreshes Strategy Center performance stats from current paperAccount data on every visit
   if(name==='academy') renderAcademy();
   // Paper Trading Operational Audit correction: the unified Journal tab had no dispatch

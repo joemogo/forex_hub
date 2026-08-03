@@ -2483,5 +2483,116 @@ function runEvidencePlatformFixtures(g){
     eq(g.evidenceCanonicalize(p),before,'deriving an account must not touch evidence');
   });
 
+  // ══ GROUP 18 — v12.17.0 LEDGER RECONCILIATION DIAGNOSTICS ══════════════════════════════
+  // Diagnostics only: read both views, write neither, and classify every difference as exactly
+  // one of three verdicts with the responsible ledger events named.
+
+  t('R1 every field MATCHES when the stored total agrees with the ledger',function(){
+    const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[ledgerTrade(),lossTrade()],storedBalance:10100});
+    eq(rep.schemaVersion,'mogo.ledger-reconciliation.v1');
+    eq(rep.overall,'MATCHES');
+    eq(rep.statusCounts.UNEXPLAINED_DELTA,0);
+    rep.fields.forEach(function(f){
+      eq(f.status,'MATCHES',f.field+' should match: stored '+f.storedValue+' vs derived '+f.derivedValue);
+      ok(f.explanation&&f.explanation.length,'every row must explain itself');
+    });
+    ok(rep.fields.length>=8,'balance, P&L, wins, losses, decided, win rate, netR and drawdown');
+  });
+  t('R2 the INC-005 case classifies as EXPLAINED_BY_EXCLUSIONS on every affected field',function(){
+    const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[seededTrade()],storedBalance:10200});
+    eq(rep.overall,'EXPLAINED_BY_EXCLUSIONS');
+    const bal=rep.fields.filter(function(f){return f.field==='balance';})[0];
+    eq(bal.storedValue,10200); eq(bal.derivedValue,10000); eq(bal.difference,200);
+    eq(bal.status,'EXPLAINED_BY_EXCLUSIONS');
+    ok(bal.explanation.indexOf('excluded')!==-1);
+    eq(bal.responsibleTradeIds.join(','),'AGT|MANUAL-B|1785634676564','the row must name the record');
+    const wins=rep.fields.filter(function(f){return f.field==='wins';})[0];
+    eq(wins.storedValue,1,'the stored view counted the seeded win');
+    eq(wins.derivedValue,0,'the ledger does not');
+    eq(wins.status,'EXPLAINED_BY_EXCLUSIONS');
+  });
+  t('R3 an UNEXPLAINED_DELTA is reported and never absorbed',function(){
+    const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[ledgerTrade()],storedBalance:10500});      // 300 the ledger cannot account for
+    eq(rep.overall,'UNEXPLAINED_DELTA');
+    const bal=rep.fields.filter(function(f){return f.field==='balance';})[0];
+    eq(bal.status,'UNEXPLAINED_DELTA');
+    eq(bal.difference,300);
+    ok(bal.explanation.indexOf('cannot account')!==-1,'and says so plainly');
+  });
+  t('R4 every verdict comes from the declared three-value vocabulary',function(){
+    eq(g.getLedgerReconciliationStatuses().join('|'),'MATCHES|EXPLAINED_BY_EXCLUSIONS|UNEXPLAINED_DELTA');
+    [[10100,'MATCHES'],[10300,'EXPLAINED_BY_EXCLUSIONS'],[99999,'UNEXPLAINED_DELTA']].forEach(function(c){
+      const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+        records:[ledgerTrade(),lossTrade(),seededTrade()],storedBalance:c[0]});
+      const bal=rep.fields.filter(function(f){return f.field==='balance';})[0];
+      eq(bal.status,c[1],'stored '+c[0]);
+      ok(g.getLedgerReconciliationStatuses().indexOf(bal.status)!==-1);
+    });
+  });
+  t('R5 every difference drills down to the ledger events responsible',function(){
+    const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[ledgerTrade(),seededTrade()],storedBalance:10400});
+    const drill=g.ledgerReconciliationDrillDown(rep,'balance');
+    eq(drill.field,'balance');
+    eq(drill.status,'EXPLAINED_BY_EXCLUSIONS');
+    eq(drill.events.length,1,'the responsible event must be reachable from the row');
+    eq(drill.events[0].tradeId,'AGT|MANUAL-B|1785634676564');
+    eq(drill.events[0].pnl,200,'with its P&L');
+    ok(drill.events[0].integrityViolations.length>=3,'and the rules it violated');
+    eq(g.ledgerReconciliationDrillDown(rep,'nosuchfield'),null);
+    eq(g.ledgerReconciliationDrillDown(null,'balance'),null);
+  });
+  t('R6 excluded events are preserved in the report, never dropped',function(){
+    const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[ledgerTrade(),seededTrade()],storedBalance:10400});
+    eq(rep.excludedEvents.length,1);
+    eq(rep.generatedFrom.ledgerEvents.excluded,1);
+    eq(rep.generatedFrom.ledgerEvents.included,1);
+    eq(rep.readOnly,true,'the report must declare itself read-only');
+  });
+  t('R7 diagnostics replace NO stored total and write nothing',function(){
+    const src=String(g.ledgerBuildReconciliationReport)+String(g.renderLedgerReconciliation)+
+              String(g.ledgerReconciliationDrillDown)+String(g.ledgerReconciliationSources);
+    ['localStorage','commitAlexGLedger','saveAlexG','alexGAccount.balance=','paperAccount.balance=',
+     '.splice(','delete ','openPaperPosition','alexGCloseLivePosition'].forEach(function(n){
+      eq(src.indexOf(n),-1,'the diagnostics view must never '+n);
+    });
+    // and running it leaves the accounts untouched
+    const acct={balance:10200,closedPositions:[seededTrade()],openPositions:[]};
+    const before=JSON.stringify(acct);
+    g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:acct.closedPositions,storedBalance:acct.balance});
+    eq(JSON.stringify(acct),before,'the account must be byte-identical after reconciliation');
+  });
+  t('R8 the view covers every strategy and is wired into Diagnostics',function(){
+    const sources=String(g.ledgerReconciliationSources);
+    ok(sources.indexOf('alex_g_sr_v1')!==-1&&sources.indexOf('current_strategy')!==-1,
+       'both live strategies must be reconciled');
+    ok(g.appSource.indexOf("renderLedgerReconciliation();}")!==-1,
+       'the Diagnostics panel must refresh the view when opened');
+    // appSource is the <script> body only, so the card's markup lives outside it; assert the
+    // renderer targets the card element instead, which is what actually couples them.
+    ok(String(g.renderLedgerReconciliation).indexOf("getElementById('ledgerReconciliationCard')")!==-1,
+       'the renderer must target the Diagnostics card');
+    ok(g.appSource.indexOf('Diagnostics only — read-only')!==-1,
+       'the view must state that it replaces nothing');
+  });
+  t('R9 reconciliation is deterministic and degrades safely',function(){
+    const args={strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[ledgerTrade(),seededTrade()],storedBalance:10400};
+    eq(JSON.stringify(g.ledgerBuildReconciliationReport(args)),
+       JSON.stringify(g.ledgerBuildReconciliationReport(args)),'same inputs, same report');
+    const noStored=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[ledgerTrade()]});
+    eq(noStored.fields.filter(function(f){return f.field==='balance';})[0].status,'MATCHES',
+       'an absent stored value must not manufacture a delta');
+    const empty=g.ledgerBuildReconciliationReport({});
+    ok(empty.fields.length>=8,'an empty account still produces a full report');
+    eq(empty.overall,'MATCHES');
+  });
+
   return out;
 }

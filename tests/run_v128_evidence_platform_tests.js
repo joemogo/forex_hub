@@ -147,6 +147,12 @@ const wrapped = new Function('g',
   'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
   'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
   'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
+  // ── v12.17.0 Ledger reconciliation diagnostics ──
+  'g.ledgerBuildReconciliationReport=ledgerBuildReconciliationReport;' +
+  'g.ledgerReconciliationDrillDown=ledgerReconciliationDrillDown;' +
+  'g.ledgerReconciliationSources=ledgerReconciliationSources;' +
+  'g.renderLedgerReconciliation=renderLedgerReconciliation;' +
+  'g.getLedgerReconciliationStatuses=function(){return LEDGER_RECONCILIATION_STATUSES;};' +
   // ── v12.16.0 Immutable trade ledger ──
   'g.ledgerNormalizeEvent=ledgerNormalizeEvent;' +
   'g.ledgerBuildEvents=ledgerBuildEvents;' +
