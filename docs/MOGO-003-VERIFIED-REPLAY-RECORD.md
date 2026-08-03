@@ -151,6 +151,15 @@ one-directional ambiguity affects no row in RUN-001.
 | Rule-level attribution | **Partial** — version chain is `OBSERVED`; per-rule attribution absent from the schema |
 | Loss forensics | **Partial** — geometry, R, MAE/MFE, zone refs and context present; break/retest candles, market context, decision chain and excursion timing absent |
 
+> **RUN-001's ceiling is fixed, 2026-08-03.** Later units improved what *future* runs capture, and
+> none of it can be retro-filled into these 24 immutable packages: **v12.10.0 (Unit A)** added the
+> version split, `realizedR` and break/retest candle references; **v12.11.0 (Unit B)** added rule
+> attribution; **v12.12.0 (Unit C1)** added excursion timing (`timeToMFE`/`timeToMAE`) and a
+> populated `exitPathCandleRefs`. **RUN-001 predates all three** — it was captured on engine 12.9.0
+> and carries none of them, and nothing has been or will be backfilled. Market context (Unit C2) and
+> decision chains remain unimplemented for every run, and browser verification of timing-bearing
+> packages is still pending.
+
 **A package cannot re-derive its own classification.** Internal consistency is checkable; reproduction
 still requires the source code plus a dataset matching `datasetHash`. See
 `docs/MOGO-003-EVIDENCE-SCHEMA-CORRECTIONS.md`.

@@ -1,6 +1,18 @@
 # MOGO-003 — Evidence Schema & Replay Reporting Corrections
 
-**Status:** PLAN ONLY — no code written, no package modified, nothing staged.
+**Status:** partially delivered — see the delivery table below. This document remains the plan of
+record; the sections describing undelivered items are unchanged.
+
+| Item | Unit | Status |
+|---|---|---|
+| CORR-2 version split · CORR-3 `realizedR` · CORR-4 break/retest candle refs · CORR-8 canonical naming | **A** | **IMPLEMENTED — v12.10.0** |
+| CORR-1 rule attribution (`ruleIds`, `triggeredConditions`) | **B** | **IMPLEMENTED — v12.11.0** |
+| CORR-7 excursion timing | **C1** | **IMPLEMENTED — v12.12.0**, replay capture path only; browser verification **pending** |
+| CORR-6 market context | **C2** | **NOT STARTED** |
+| CORR-9 dataset artifact · CORR-5a boundary trace | D / E | proposed only |
+| CORR-5b in-engine decision capture | — | **not proposed** (needs protected code + separate authorisation) |
+
+**Original status line, retained for the record:** PLAN ONLY — no code written, no package modified, nothing staged.
 **Origin:** MOGO-003 forensic reconciliation, 2026-08-03. Source run: `docs/MOGO-003-VERIFIED-REPLAY-RECORD.md` §RUN-001.
 **Baseline:** engine 12.9.0 · commit `65c9444` · schema `mogo.evidence-package.v1` · canon `mogo.evidence-canon.v1`.
 
@@ -192,7 +204,20 @@ must be explicit and logged when it truncates.
 
 ---
 
-### CORR-7 — Excursion timing for loss forensics
+### CORR-7 — Excursion timing for loss forensics ✅ IMPLEMENTED (v12.12.0, Unit C1)
+
+> **As built, 2026-08-03.** `evidenceRecomputeExcursionTiming()` mirrors the protected traversal line
+> for line — same `entryBarIndex+1` start, same inclusive `exitBarIndex` end, same formulas, same
+> strict `>` so the first bar wins a tie — and emits `timeToMFE`/`timeToMAE` as
+> `{bars, minutes, barIndex, timestampUTC}` **only** when its recomputed extremes equal the engine's
+> stored values exactly. `exitPathCandleRefs` is populated with the exact bars traversed. Two
+> departures from the plan below, both deliberate: the provenance token is
+> **`DERIVED_FROM_OBSERVED_FIELDS`** (reusing the Unit B token) rather than a new
+> `DERIVED_BY_RECOMPUTATION` token; and a disagreement **does not fail capture** — timing is omitted,
+> `excursionAgreement.status` becomes `UNAVAILABLE`, the deterministic flag
+> `EXCURSION_RECOMPUTATION_MISMATCH` is recorded, the engine's values are preserved, and the package
+> is still written. Replay capture path only: live paper retains no candles and records
+> `UNAVAILABLE`. Browser verification still pending.
 
 `alexGComputeMAEMFE` (protected) returns extremes without timing. Non-protected correction: recompute
 the excursion path over the same candle window in the evidence layer and record `timeToMFE` /
@@ -324,9 +349,10 @@ The only thing that could invalidate the 24 is a careless version bump (§2) or 
 
 | Unit | Contents | Protected code | Schema bump | Risk |
 |---|---|---|---|---|
-| **A** | CORR-2, CORR-3, CORR-4, CORR-8 | none | none | **Low** — evidence layer + one seam widening |
-| B | CORR-1 (+ mirror registry and differential suite) | none | none | Medium — correctness of the mirror is the whole point |
-| C | CORR-7, CORR-6 | none | none | Medium — payload growth, needs explicit caps |
+| **A** ✅ v12.10.0 | CORR-2, CORR-3, CORR-4, CORR-8 | none | none | **Low** — evidence layer + one seam widening |
+| B ✅ v12.11.0 | CORR-1 (+ mirror registry and differential suite) | none | none | Medium — correctness of the mirror is the whole point |
+| C1 ✅ v12.12.0 | CORR-7 | none | none | Low — no payload growth beyond per-bar references |
+| C2 ⬜ not started | CORR-6 | none | none | Medium — payload growth, needs explicit caps |
 | D | CORR-9 dataset artifact | none | none | Medium — new export/verify path |
 | E | CORR-5a boundary trace | none | none | Medium |
 | — | CORR-5b in-engine decisions | **yes** | — | **Not proposed.** New `ruleVersion` + separate authorization. |

@@ -147,6 +147,10 @@ const wrapped = new Function('g',
   'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
   'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
   'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
+  // ── v12.12.0 Unit C1 (CORR-7) excursion timing ──
+  'g.evidenceRecomputeExcursionTiming=evidenceRecomputeExcursionTiming;' +
+  'g.alexGComputeMAEMFE=alexGComputeMAEMFE;' +
+  'g.getCandleCloseTime=getCandleCloseTime;' +
   // ── v12.11.0 Unit B (CORR-1) rule attribution ──
   'g.alexGBuildRuleAttribution=alexGBuildRuleAttribution;' +
   'g.alexGAttributionRecordFromEngineInputs=alexGAttributionRecordFromEngineInputs;' +

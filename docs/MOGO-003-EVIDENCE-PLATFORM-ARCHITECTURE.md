@@ -203,7 +203,7 @@ defines one. **Every candle must not become a candidate.**
 | **Purpose** | How the exposure resolved |
 | **Required fields** | `outcomeId` · `positionId` · `exitPrice` · `exitTimestamp` · `exitReasonCode` · `exitDetectionSource` · `exitTriggerLevel` · **`realizedR`** · `plannedR` · `pnl` · `balanceAfter` · `mae` · `mfe` · **`timeToMFE`** · **`timeToMAE`** · `ambiguous` + `ambiguityBasis` · **`exitPathCandleRefs[]`** · `dataQualityFlags[]` |
 | **`realizedR`** | Computed from actual exit — **`plannedR` alone is the v1.0 defect ALEX v1.1 fixed** |
-| **`timeToMFE`** | Would have shown *when* the GBP/USD trade peaked at 0.949R — currently unknowable |
+| **`timeToMFE`** | Would have shown *when* the GBP/USD trade peaked at 0.949R. **IMPLEMENTED 2026-08-03 (v12.12.0, Unit C1)** for the replay capture path: `timeToMFE`/`timeToMAE` carry `{bars, minutes, barIndex, timestampUTC}`, recomputed over the same candles the engine walked and emitted **only** when the recomputation reproduces the protected `alexGComputeMAEMFE` extremes exactly. Provenance `DERIVED_FROM_OBSERVED_FIELDS`. Live-paper capture retains no candles, so it still records `UNAVAILABLE`. |
 | **Consumers** | Analytics · forensics · loss classification |
 
 ## 4.7 `EvidencePackage`
@@ -342,14 +342,20 @@ Declaring a package "reproducible" when its P&L is not would be a false guarante
 
 | Stage | Must exist | Exists today? |
 |---|---|---|
-| **Before entry** | Candidate · MarketContext · Decision chain · QualifiedSetup with `structureRefs` | 🟡 Setup record only; **no structure refs, no context, decisions transient** |
+| **Before entry** | Candidate · MarketContext · Decision chain · QualifiedSetup with `structureRefs` | 🟡 Setup record · `structureRefs` incl. **break/retest candle refs** (v12.10.0) · **rule attribution** (v12.11.0); **no market context (Unit C2, not started), decisions still transient** |
 | **During entry** | Fill basis · spread · delay from signal · original stop/target · sizing inputs | ✅ Mostly captured on the position |
 | **During management** | Any stop/target change + trigger | ✅ N/A — nothing moves (must stay recorded as *deliberately none*) |
-| **At exit** | Exit price/time/reason/detection source · trigger level · ambiguity · **exit-path candles** | 🟡 All but the candles |
-| **After close** | Realized R · MAE/MFE · **time-to-MFE/MAE** · data-quality flags | 🟡 Realized R fixed in v1.1; **timing absent** |
-| **During replay** | Everything above + run identity | ❌ Run identity absent |
-| **During analytics** | Aggregations over durable packages | ❌ No durable source |
-| **During forensics** | The complete chain | ❌ **Proven insufficient in July** |
+| **At exit** | Exit price/time/reason/detection source · trigger level · ambiguity · **exit-path candles** | 🟡 All present, plus **exit-path candle *references*** (v12.12.0, replay only). The candles themselves are still not stored — that is Unit C2 |
+| **After close** | Realized R · MAE/MFE · **time-to-MFE/MAE** · data-quality flags | ✅ Realized R from the actual exit (v12.10.0) · MAE/MFE (engine) · **timing (v12.12.0, replay capture only; live paper retains no candles)** · data-quality flags |
+| **During replay** | Everything above + run identity | 🟡 Run identity, absolute range, dataset/config hashes (v12.9.0) ✅; market context still absent |
+| **During analytics** | Aggregations over durable packages | ❌ No analytics implemented — deliberately out of MOGO-003 scope |
+| **During forensics** | The complete chain | 🟡 **Improved, not complete** — R-space, excursion extremes *and timing*, zone/break/retest refs and rule attribution are captured; market context and decision chains are not |
+
+> **Status column refreshed 2026-08-03** to match the repository as built. The "Must exist" column is
+> unchanged. **Unit C1 (excursion timing) is implemented and verified offline; browser verification —
+> IndexedDB persistence of a timing-bearing package, in-browser `crypto.subtle` verification, and a
+> real replay producing populated timing — is still PENDING. Unit C2 (market context) has NOT
+> STARTED.** Nothing here was backfilled into existing packages.
 
 ## 8.2 ⚠️ Where evidence disappears today — five named leaks
 
@@ -448,7 +454,7 @@ be justified by ML** — that would be speculative.
 | **R9** | No quota detection | **HIGH** | Zero `QuotaExceeded` handling |
 | **R10** | No commit hash on any artefact | **MEDIUM** | Only `APP_VERSION` |
 | **R11** | Rule-level rejection detail unreachable | **MEDIUM** | `{qualifies:false}` discards which condition failed (`TRACE-LIM-001`); protected functions |
-| **R12** | No `timeToMFE`/`timeToMAE` | **MEDIUM** | Extremes only |
+| **R12** | ~~No `timeToMFE`/`timeToMAE`~~ **RESOLVED for replay capture — v12.12.0 (Unit C1)** | **MEDIUM** | Was: extremes only. Now recomputed and emitted on newly captured replay packages, gated on exact agreement with the protected `alexGComputeMAEMFE`. **Still open for live paper**, which retains no candles to recompute from |
 | **R13** | Money-space non-determinism | **MEDIUM** | `pipValuePerLot` reads live `pairData` |
 | **R14** | TJR persists nothing | **LOW** | No `fxhub_tjr*` key — TJR has no evidence surface yet |
 
@@ -478,6 +484,15 @@ be justified by ML** — that would be speculative.
 | **P3 — Market context & candle store** | Content-addressed candle store; `MarketContext`; `sourceCandleRefs`/`exitPathCandleRefs`; `structureRefs` | P1, P2 | **The two July trades would be fully reconstructable if repeated today** |
 | **P4 — Replay trustworthiness** | Absolute date range · `runId` · config snapshot + hash · dataset hash · replay package persistence | P1–P3 | Two runs of the same declared range produce identical R-space `contentHash` |
 | **P5 — Outcome completeness** | `realizedR` in replay · `timeToMFE`/`timeToMAE` · data-quality flags · loss-classification field | P4 | Every outcome answers "when did it peak?" |
+
+> **P5 delivery status, 2026-08-03.** The phase plan above is unchanged; this records what has actually
+> shipped against it, out of order relative to P2/P3 and deliberately so — these items needed no new
+> data. `realizedR` shipped in **v12.10.0 (Unit A)**; `timeToMFE`/`timeToMAE` and the excursion
+> `dataQualityFlags` shipped in **v12.12.0 (Unit C1)**, replay capture path only. The
+> **loss-classification field is NOT implemented**. P2 (decision chains) and P3 (market context /
+> candle store) remain **not started** — Unit C2 covers the bounded market-context excerpt and has not
+> begun. Browser verification of the timing-bearing packages (IndexedDB persistence, in-browser
+> `crypto.subtle` verification, and a real replay producing populated timing) is **still pending**.
 
 **Deliberately excluded from MOGO-003:** analytics, metrics computation, the B1 resistance-role defect
 fix (separate, protected-code, needs its own authorisation), transaction-cost modelling, and any

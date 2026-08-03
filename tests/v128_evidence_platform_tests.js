@@ -782,9 +782,10 @@ function runEvidencePlatformFixtures(g){
     eq(protectedList.indexOf('runAlexGReplay'),-1,'the identity seam is not protected');
     eq(protectedList.indexOf('runAlexGReplayUI'),-1,'the capture seam is not protected');
     const ui=g.getSource('async function runAlexGReplayUI()');
-    // v12.10.0 Unit A (CORR-4) added the read-only setups argument. The assertion is UNCHANGED in
-    // strength: the call must still be individually wrapped in its own try/catch.
-    ok(/try\{ evidenceCaptureReplayTrades\(result\.runIdentity,result\.trades,result\.setups\); \}catch/.test(ui),
+    // v12.10.0 Unit A added the read-only setups argument; v12.12.0 Unit C1 added the read-only
+    // candle arrays. The assertion is UNCHANGED in strength: the call must still be individually
+    // wrapped in its own try/catch.
+    ok(/try\{ evidenceCaptureReplayTrades\(result\.runIdentity,result\.trades,result\.setups,result\.candlesByTimeframe\); \}catch/.test(ui),
       'capture must be individually wrapped');
     ok(ui.indexOf('evidenceCaptureReplayTrades')>ui.indexOf('alexGReplayStats=result.stats'),
       'capture must run AFTER the replay results are assigned');
@@ -1147,7 +1148,9 @@ function runEvidencePlatformFixtures(g){
   });
   t('A19 the seam passes setups READ-ONLY and replay still returns its own results',function(){
     const ui=String(g.runAlexGReplayUI);
-    ok(ui.indexOf('evidenceCaptureReplayTrades(result.runIdentity,result.trades,result.setups)')!==-1,
+    // v12.12.0 Unit C1 widened this call with the read-only candle arrays. The assertion keeps its
+    // strength: the setup records must still reach the seam.
+    ok(ui.indexOf('evidenceCaptureReplayTrades(result.runIdentity,result.trades,result.setups,result.candlesByTimeframe)')!==-1,
        'the seam must receive the setup records');
     ok(ui.indexOf('try{ evidenceCaptureReplayTrades')!==-1,'and must remain inside its own try/catch');
     ok(String(g.runAlexGReplay).indexOf('setups:setupsForPair')!==-1,'replay must return the records it already built');
@@ -1496,7 +1499,8 @@ function runEvidencePlatformFixtures(g){
   t('B18 the seam counts break-cycle setups read-only and passes them through',function(){
     const seam=String(g.evidenceCaptureReplayTradesAsync);
     ok(seam.indexOf("rec.setupType==='B_breakRetest'&&rec.breakCycleId!=null")!==-1,'the tally must be scoped to B&R cycles');
-    ok(seam.indexOf('evidenceNormalizeReplayTrade(t,run,setup,cycleCount)')!==-1,'and be passed to the normalizer');
+    // v12.12.0 Unit C1 appended the excursion argument; the cycle count must still be threaded.
+    ok(seam.indexOf('evidenceNormalizeReplayTrade(t,run,setup,cycleCount,excursion)')!==-1,'and be passed to the normalizer');
     const norm=g.evidenceNormalizeReplayTrade(
       {tradeId:'AGT|1',setupId:'AGS|1',setupType:'B_breakRetest',result:'Loss',timeframe:'H1'},
       {runId:'r'.repeat(64),strategyId:'alex_g_sr_v1'},
@@ -1542,6 +1546,227 @@ function runEvidencePlatformFixtures(g){
       eq(stats.indexOf(n),-1,'the protected stats function must not reference '+n);
     });
     ok(stats.indexOf('bySetupType:byGroup(t=>t.setupLabel)')!==-1,'stats grouping is unchanged');
+  });
+
+  // ══ GROUP 13 — v12.12.0 UNIT C1 (CORR-7) EXCURSION TIMING ══════════════════════════════
+  // The governing rule: the mirror must reproduce the PROTECTED alexGComputeMAEMFE exactly, and
+  // may emit timing only when it does. Fixtures compare against a LIVE call to that function.
+
+  // Candles are {t:Date,o,h,l,c}. Entry is at index 0; the walk examines 1..exit inclusive.
+  function candlePath(highs,lows,startMs){
+    const base=startMs||Date.UTC(2026,3,1,0,0);
+    return highs.map(function(h,i){
+      return{t:new Date(base+i*3600000),o:1.1,h:h,l:lows[i],c:1.1};
+    });
+  }
+  const PIP=0.0001;
+  function timing(candles,entryIdx,exitIdx,dir,entry,maeP,mfeP,tf){
+    return g.evidenceRecomputeExcursionTiming(candles,entryIdx,exitIdx,dir,entry,PIP,tf||'H1',
+      maeP,mfeP,candles[entryIdx]?g.getCandleCloseTime(candles,entryIdx,tf||'H1').getTime():null);
+  }
+  // The authoritative engine values for the same inputs.
+  function engineExtremes(candles,entryIdx,exitIdx,dir,entry){
+    return g.alexGComputeMAEMFE(candles,entryIdx,exitIdx,dir,entry,PIP);
+  }
+
+  t('C1 the mirror reproduces the PROTECTED alexGComputeMAEMFE exactly, then emits timing',function(){
+    //                     idx: 0     1     2     3     4
+    const c=candlePath([1.1000,1.1010,1.1030,1.1020,1.1015],
+                       [1.0990,1.0985,1.0995,1.0970,1.0980]);
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    eq(r.agreement.maePipsRecomputed,eng.maePips,'MAE must match the protected function exactly');
+    eq(r.agreement.mfePipsRecomputed,eng.mfePips,'MFE must match the protected function exactly');
+    eq(r.agreement.matchesEngineExtremes,true);
+    eq(r.agreement.status,'AGREES');
+    eq(r.provenance,'DERIVED_FROM_OBSERVED_FIELDS','recomputation is never labelled OBSERVED');
+    ok(r.timeToMFE&&r.timeToMAE,'timing must be emitted when the mirror agrees');
+  });
+  t('C2 timing points at the correct bars -- favourable-first path (long)',function(){
+    const c=candlePath([1.1000,1.1030,1.1010,1.1005,1.1000],   // MFE at bar 1
+                       [1.0990,1.0995,1.0993,1.0960,1.0985]);  // MAE at bar 3
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    eq(r.timeToMFE.barIndex,1,'the favourable extreme occurred on bar 1');
+    eq(r.timeToMFE.bars,1);
+    eq(r.timeToMAE.barIndex,3,'the adverse extreme occurred on bar 3');
+    eq(r.timeToMAE.bars,3);
+    ok(r.timeToMFE.minutes<r.timeToMAE.minutes,'the favourable extreme came first in time too');
+  });
+  t('C3 timing points at the correct bars -- adverse-first path (long)',function(){
+    const c=candlePath([1.1000,1.1002,1.1004,1.1050,1.1010],   // MFE at bar 3
+                       [1.0990,1.0940,1.0995,1.0999,1.0998]);  // MAE at bar 1
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    eq(r.timeToMAE.barIndex,1,'the adverse extreme came first');
+    eq(r.timeToMFE.barIndex,3);
+  });
+  t('C4 SHORT trades invert favourable and adverse correctly',function(){
+    const c=candlePath([1.1000,1.1005,1.1040,1.1002,1.1001],   // for a sell, highs are ADVERSE -> MAE bar 2
+                       [1.0990,1.0950,1.0995,1.0994,1.0996]);  // lows are FAVOURABLE -> MFE bar 1
+    const eng=engineExtremes(c,0,4,'sell',1.1000);
+    const r=timing(c,0,4,'sell',1.1000,eng.maePips,eng.mfePips);
+    eq(r.agreement.matchesEngineExtremes,true);
+    eq(r.timeToMFE.barIndex,1,'a sell profits as price falls');
+    eq(r.timeToMAE.barIndex,2,'and suffers as price rises');
+  });
+  t('C5 ties resolve to the FIRST bar, matching the engine\'s strict > comparison',function(){
+    const c=candlePath([1.1000,1.1020,1.1020,1.1020,1.1010],   // identical highs on bars 1,2,3
+                       [1.0990,1.0980,1.0980,1.0980,1.0985]);  // identical lows too
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    eq(r.timeToMFE.barIndex,1,'the first bar reaching the extreme must win the tie');
+    eq(r.timeToMAE.barIndex,1);
+    ok(String(g.evidenceRecomputeExcursionTiming).indexOf('favMove>mfeP')!==-1,
+       'the mirror must use the same strict > comparison as the protected function');
+    ok(String(g.alexGComputeMAEMFE).indexOf('favMove>mfeP')!==-1,'and the protected function must still use it');
+  });
+  t('C6 an extreme of exactly 0 yields NULL timing, never a fabricated bar',function(){
+    // A long that never trades above entry: MFE is 0.0 -- the real EUR/USD 14 Jul case.
+    const c=candlePath([1.1000,1.0999,1.0998,1.0997,1.0996],
+                       [1.0990,1.0985,1.0980,1.0975,1.0970]);
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    eq(eng.mfePips,0,'the engine itself reports MFE 0');
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    eq(r.agreement.status,'AGREES');
+    eq(r.timeToMFE,null,'no bar ever exceeded 0, so no bar can be named');
+    ok(r.timeToMAE&&r.timeToMAE.barIndex===4,'the adverse extreme is still timed');
+  });
+  t('C7 exitPathCandleRefs match the exact traversal, inclusive of the exit bar',function(){
+    const c=candlePath([1.1000,1.1010,1.1030,1.1020,1.1015,1.1012],
+                       [1.0990,1.0985,1.0995,1.0970,1.0980,1.0975]);
+    const eng=engineExtremes(c,1,4,'buy',1.1000);
+    const r=timing(c,1,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    eq(r.exitPathCandleRefs.map(function(x){return x.barIndex;}).join(','),'2,3,4',
+       'the walk runs entryBarIndex+1 .. exitBarIndex inclusive');
+    eq(r.agreement.barsExamined,3);
+    r.exitPathCandleRefs.forEach(function(x){ ok(typeof x.timestampUTC==='string','each ref must carry a UTC timestamp'); });
+    eq(r.exitPathCandleRefs[0].timestampUTC,g.getCandleCloseTime(c,2,'H1').toISOString(),
+       'refs must use the engine\'s own candle close time');
+  });
+  t('C8 a forced MISMATCH omits timing, flags it, and still yields a package',function(){
+    const c=candlePath([1.1000,1.1010,1.1030,1.1020,1.1015],
+                       [1.0990,1.0985,1.0995,1.0970,1.0980]);
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips+7,eng.mfePips);   // stored value deliberately wrong
+    eq(r.timeToMFE,null,'timing must be withheld');
+    eq(r.timeToMAE,null);
+    eq(r.agreement.status,'UNAVAILABLE');
+    eq(r.agreement.reason,'RECOMPUTED_EXTREMES_DIFFER_FROM_ENGINE');
+    eq(r.agreement.matchesEngineExtremes,false);
+    eq(r.dataQualityFlags.join('|'),'EXCURSION_RECOMPUTATION_MISMATCH','a deterministic, stable code');
+    eq(r.agreement.maePipsEngine,eng.maePips+7,'the engine-supplied value is preserved as given');
+    eq(r.provenance,'UNAVAILABLE');
+    // Capture must still succeed and must not disturb the authoritative stored extremes.
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({excursionTiming:r,maePips:eng.maePips+7,mfePips:eng.mfePips}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const oc=p.objects.outcomes[0];
+    eq(oc.timeToMFE,null); eq(oc.excursionAgreement.status,'UNAVAILABLE');
+    eq(oc.dataQualityFlags.join('|'),'EXCURSION_RECOMPUTATION_MISMATCH');
+    eq(oc.maePips,eng.maePips+7,'the stored engine MAE must be untouched');
+    eq(oc.mfePips,eng.mfePips,'the stored engine MFE must be untouched');
+    ok(g.evidenceValidatePackage(p).valid,'the package must still validate: '+g.evidenceValidatePackage(p).errors.join('; '));
+  });
+  t('C9 unusable inputs yield UNAVAILABLE rather than a guess',function(){
+    const c=candlePath([1.1000,1.1010],[1.0990,1.0985]);
+    eq(timing(c,0,0,'buy',1.1000,0,0).provenance,'UNAVAILABLE','exit at or before entry examines nothing');
+    eq(timing(c,0,1,'sideways',1.1000,0,0).provenance,'UNAVAILABLE','an unknown direction is not guessed');
+    eq(g.evidenceRecomputeExcursionTiming(null,0,1,'buy',1.1,PIP,'H1',0,0,0).provenance,'UNAVAILABLE');
+    eq(g.evidenceRecomputeExcursionTiming(c,0,1,'buy',1.1,0,'H1',0,0,0).provenance,'UNAVAILABLE','a zero pip size must not divide');
+  });
+  t('C10 timing is emitted through the real capture path and is deterministic',function(){
+    const c=candlePath([1.1000,1.1010,1.1030,1.1020,1.1015],
+                       [1.0990,1.0985,1.0995,1.0970,1.0980]);
+    const eng=engineExtremes(c,0,4,'buy',1.1000);
+    const r=timing(c,0,4,'buy',1.1000,eng.maePips,eng.mfePips);
+    const trade=sampleTrade({excursionTiming:r,maePips:eng.maePips,mfePips:eng.mfePips});
+    const opts={packageId:'PKG|alex_g_sr_v1|20260720|1',strategyId:'alex_g_sr_v1',createdAt:'2026-07-20T14:00:01.000Z'};
+    const p1=g.evidenceBuildPackageFromTrade(trade,opts),p2=g.evidenceBuildPackageFromTrade(trade,opts);
+    const oc=p1.objects.outcomes[0];
+    eq(oc.excursionTimingProvenance,'DERIVED_FROM_OBSERVED_FIELDS');
+    eq(oc.excursionAgreement.status,'AGREES');
+    eq(oc.timeToMFE.barIndex,2); eq(oc.timeToMAE.barIndex,3);
+    eq(oc.exitPathCandleRefs.length,4);
+    eq(g.evidenceCanonicalize(p1),g.evidenceCanonicalize(p2),'identical inputs must canonicalize identically');
+    ok(g.evidenceValidatePackage(p1).valid,g.evidenceValidatePackage(p1).errors.join('; '));
+  });
+  t('C11 a capture path without candles records UNAVAILABLE, not zero',function(){
+    const oc=builtPackage().objects.outcomes[0];      // no excursionTiming supplied at all
+    eq(oc.timeToMFE,null); eq(oc.timeToMAE,null);
+    eq(oc.excursionTimingProvenance,'UNAVAILABLE');
+    eq(oc.excursionAgreement.status,'UNAVAILABLE');
+    eq(oc.excursionAgreement.reason,'NOT_COMPUTED_ON_THIS_CAPTURE_PATH');
+    eq(oc.exitPathCandleRefs.length,0);
+    eq(oc.dataQualityFlags.length,0,'an absent computation is not a data-quality problem');
+  });
+  t('C12 the completeness report stops claiming a gap it no longer has',function(){
+    const withoutTiming=builtPackage().completenessReport.missing.map(function(m){return m.field;});
+    ok(withoutTiming.indexOf('outcomes[].timeToMFE')!==-1,'still declared when timing is absent');
+    const c=candlePath([1.1000,1.1030],[1.0990,1.0985]);
+    const eng=engineExtremes(c,0,1,'buy',1.1000);
+    const r=timing(c,0,1,'buy',1.1000,eng.maePips,eng.mfePips);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({excursionTiming:r,maePips:eng.maePips,mfePips:eng.mfePips}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    const fields=p.completenessReport.missing.map(function(m){return m.field;});
+    eq(fields.indexOf('outcomes[].timeToMFE'),-1,'a package carrying timing must not declare it missing');
+    ['objects.marketContexts','objects.decisions','identity.commitHash'].forEach(function(f){
+      ok(fields.indexOf(f)!==-1,f+' must still be declared -- Unit C1 did not implement it');
+    });
+    // Order must be unchanged for packages that do NOT carry timing (array order is canonical).
+    eq(withoutTiming.slice(0,4).join('|'),
+       'objects.marketContexts|objects.decisions|identity.commitHash|outcomes[].timeToMFE');
+  });
+  t('C13 validation is present-only and rejects unbacked timing',function(){
+    const old=preUnitAPackage();
+    delete old.objects.outcomes[0].timeToMFE; delete old.objects.outcomes[0].timeToMAE;
+    delete old.objects.outcomes[0].excursionTimingProvenance;
+    delete old.objects.outcomes[0].excursionAgreement;
+    ok(g.evidenceValidatePackage(old).valid,'a pre-Unit-C1 package must still validate: '+g.evidenceValidatePackage(old).errors.join('; '));
+    // Timing without a verified agreement is an unbacked claim.
+    const bad=builtPackage();
+    bad.objects.outcomes[0].timeToMFE={bars:1,minutes:60,barIndex:1,timestampUTC:'2026-04-01T01:00:00.000Z'};
+    no(g.evidenceValidatePackage(bad).valid,'timing must not stand without an AGREES agreement');
+    const bad2=builtPackage();
+    bad2.objects.outcomes[0].excursionAgreement={status:'AGREES',matchesEngineExtremes:false};
+    no(g.evidenceValidatePackage(bad2).valid,'AGREES must be backed by matchesEngineExtremes');
+    const bad3=builtPackage();
+    bad3.objects.outcomes[0].excursionTimingProvenance='INVENTED';
+    no(g.evidenceValidatePackage(bad3).valid,'the provenance vocabulary is closed');
+  });
+  t('C14 Unit C1 cannot influence the engine, and implements no part of Unit C2',function(){
+    const m=String(g.evidenceRecomputeExcursionTiming);
+    ['alexGSetupState','alexGZoneState','alexGAccount','paperAccount','journalEntries','localStorage',
+     'commitAlexGLedger','openPaperPosition','alexGConstructTrade','alexGRunSetupReplay']
+      .forEach(function(n){ eq(m.indexOf(n),-1,'the timing helper must never reference '+n); });
+    // It must not write the authoritative extremes.
+    eq(m.indexOf('maePips='),-1); eq(m.indexOf('mfePips='),-1);
+    // The protected function must not know this layer exists.
+    ['evidenceRecomputeExcursionTiming','excursionAgreement','timeToMFE']
+      .forEach(function(n){ eq(String(g.alexGComputeMAEMFE).indexOf(n),-1,'protected code must not reference '+n); });
+    // Unit C2 is NOT started: marketContexts stays empty and no candle window is stored.
+    const c=candlePath([1.1000,1.1030],[1.0990,1.0985]);
+    const eng=engineExtremes(c,0,1,'buy',1.1000);
+    const p=g.evidenceBuildPackageFromTrade(sampleTrade({excursionTiming:timing(c,0,1,'buy',1.1000,eng.maePips,eng.mfePips)}),
+      {packageId:'PKG|x|1',strategyId:'alex_g_sr_v1'});
+    eq(p.objects.marketContexts.length,0,'marketContexts is Unit C2 and must remain unimplemented');
+    eq(p.objectCounts.marketContexts,0);
+    const refs=p.objects.outcomes[0].exitPathCandleRefs;
+    refs.forEach(function(r){
+      ['o','h','l','c'].forEach(function(k){ eq(r[k],undefined,'refs must be references, not stored candles'); });
+    });
+  });
+  t('C15 the seam threads the engine\'s own candles, read-only',function(){
+    ok(String(g.runAlexGReplay).indexOf('candlesByTimeframe:datasets')!==-1,
+       'replay must expose the datasets it already walked');
+    const ui=String(g.runAlexGReplayUI);
+    ok(ui.indexOf('evidenceCaptureReplayTrades(result.runIdentity,result.trades,result.setups,result.candlesByTimeframe)')!==-1,
+       'the seam must receive them');
+    ok(ui.indexOf('try{ evidenceCaptureReplayTrades')!==-1,'and stay individually wrapped');
+    const seam=String(g.evidenceCaptureReplayTradesAsync);
+    ok(seam.indexOf('evidenceRecomputeExcursionTiming(tfCandles')!==-1,'timing must be computed from the threaded candles');
+    ok(seam.indexOf('catch(e){ excursion=null;')!==-1,'a timing failure must never cost the package');
+    eq(seam.indexOf('tfCandles.push'),-1,'the seam must never mutate the candle arrays');
+    eq(seam.indexOf('tfCandles.sort'),-1);
   });
 
   return out;

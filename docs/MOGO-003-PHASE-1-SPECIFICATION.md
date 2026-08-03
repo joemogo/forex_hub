@@ -322,6 +322,9 @@ never inside it.** Binding rules:
         "detail": "Candle capture is MOGO-003 Phase 3." },
       { "field": "identity.commitHash", "reason": "UNAVAILABLE",
         "detail": "No build-time commit injection exists at 12.7.1." },
+      // v12.12.0 (Unit C1): this entry is now CONDITIONAL. A package that actually carries
+      // verified excursion timing omits it; every other package still declares it exactly here,
+      // in this array position. Phase 1's own scope is unchanged.
       { "field": "outcomes[].timeToMFE", "reason": "FUTURE_WORK",
         "detail": "Excursion timing is Phase 5." }
     ]
@@ -730,6 +733,13 @@ bus already emits (P2) · replay run identity, date range, dataset hash (P4) · 
 optimisation** · **the B1 resistance-role defect** (protected code, separate authorisation) ·
 transaction-cost modelling · **any strategy rule, entry, exit, stop, target or sizing change** ·
 commit-hash injection (recorded `null` + `UNAVAILABLE` until a build step exists).
+
+> **Status note, 2026-08-03 — Phase 1's exclusions above are unchanged and remain historically
+> accurate.** Recording only what has since shipped in later units: replay run identity, absolute
+> date range and dataset hash landed in **v12.9.0**; `timeToMFE`/`timeToMAE` landed in **v12.12.0
+> (Unit C1)**, replay capture path only, with browser verification still pending. Market context /
+> candle capture (P3) and decision-chain durability (P2) remain **unimplemented** — Unit C2 covers
+> the bounded market-context excerpt and has **not started**.
 
 **Excluded by explicit Engineering Authority ruling:**
 
