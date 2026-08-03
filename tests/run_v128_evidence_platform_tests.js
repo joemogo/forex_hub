@@ -147,6 +147,11 @@ const wrapped = new Function('g',
   'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
   'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
   'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
+  // ── v12.18.0 Reporting authority transition ──
+  'g.ledgerReportingAuthorityEnabled=ledgerReportingAuthorityEnabled;' +
+  'g.ledgerReportingFigures=ledgerReportingFigures;' +
+  'g.getReportingAuthorityFlag=function(){return LEDGER_REPORTING_AUTHORITY;};' +
+  'g.alexGConstructLivePosition=alexGConstructLivePosition;' +
   // ── v12.17.0 Ledger reconciliation diagnostics ──
   'g.ledgerBuildReconciliationReport=ledgerBuildReconciliationReport;' +
   'g.ledgerReconciliationDrillDown=ledgerReconciliationDrillDown;' +

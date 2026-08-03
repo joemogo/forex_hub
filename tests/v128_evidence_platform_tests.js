@@ -2594,5 +2594,115 @@ function runEvidencePlatformFixtures(g){
     eq(empty.overall,'MATCHES');
   });
 
+  // ══ GROUP 19 — v12.18.0 REPORTING AUTHORITY TRANSITION ═════════════════════════════════
+  // Reporting only, behind a flag that defaults OFF. Sizing, replay and evidence untouched.
+
+  t('A1 the flag defaults OFF, for every strategy',function(){
+    const f=g.getReportingAuthorityFlag();
+    eq(f.enabled,false,'the master switch must ship OFF');
+    Object.keys(f.byStrategy).forEach(function(k){
+      eq(f.byStrategy[k],false,k+' must ship OFF');
+    });
+    eq(g.ledgerReportingAuthorityEnabled('alex_g_sr_v1'),false);
+    eq(g.ledgerReportingAuthorityEnabled('current_strategy'),false);
+    eq(g.ledgerReportingAuthorityEnabled(null),false);
+    ok(f.blockers&&f.blockers.current_strategy,'JVM must record WHY it is not yet eligible');
+  });
+  t('A2 with the flag OFF the stored value is returned unchanged',function(){
+    const r=g.ledgerReportingFigures('alex_g_sr_v1',10200,10000,[seededTrade()]);
+    eq(r.authoritative,false);
+    eq(r.source,'STORED');
+    eq(r.balance,10200,'the stored balance must pass through untouched');
+    eq(r.derived,null,'and no derivation is even performed');
+  });
+  t('A3 with the flag ON the ledger becomes the reported figure',function(){
+    const f=g.getReportingAuthorityFlag();
+    const prev={enabled:f.enabled,alex:f.byStrategy.alex_g_sr_v1};
+    try{
+      f.enabled=true; f.byStrategy.alex_g_sr_v1=true;
+      eq(g.ledgerReportingAuthorityEnabled('alex_g_sr_v1'),true);
+      eq(g.ledgerReportingAuthorityEnabled('current_strategy'),false,'other strategies stay off');
+      const r=g.ledgerReportingFigures('alex_g_sr_v1',10200,10000,[seededTrade()]);
+      eq(r.authoritative,true); eq(r.source,'LEDGER_DERIVED');
+      eq(r.balance,10000,'the seeded record no longer inflates the reported balance');
+      eq(r.realizedPnl,0);
+      ok(r.derived&&r.derived.excludedEvents.length===1,'and the excluded record is still carried');
+    } finally { f.enabled=prev.enabled; f.byStrategy.alex_g_sr_v1=prev.alex; }
+  });
+  t('A4 the master switch alone cannot enable a strategy',function(){
+    const f=g.getReportingAuthorityFlag();
+    const prev=f.enabled;
+    try{
+      f.enabled=true;                       // per-strategy flags remain false
+      eq(g.ledgerReportingAuthorityEnabled('alex_g_sr_v1'),false,'both switches are required');
+    } finally { f.enabled=prev; }
+  });
+  t('A5 a derivation failure falls back to the stored value, never to nothing',function(){
+    const f=g.getReportingAuthorityFlag();
+    const prev={enabled:f.enabled,alex:f.byStrategy.alex_g_sr_v1};
+    try{
+      f.enabled=true; f.byStrategy.alex_g_sr_v1=true;
+      // records that cannot be derived from must not blank the display
+      const r=g.ledgerReportingFigures('alex_g_sr_v1',10200,10000,null);
+      ok(r.balance===10200||r.balance===10000,'a figure must always be produced');
+      ok(typeof r.balance==='number','and it must be a number, never null');
+    } finally { f.enabled=prev.enabled; f.byStrategy.alex_g_sr_v1=prev.alex; }
+  });
+  t('A6 POSITION SIZING is untouched by the flag',function(){
+    // sizing reads the STORED balance through the protected constructor; the flag cannot reach it
+    const protectedList=g.getBaselineAlexFunctions();
+    ok(protectedList.indexOf('alexGConstructLivePosition')!==-1,'trade construction must stay protected');
+    ['ledgerReportingFigures','ledgerReportingAuthorityEnabled','LEDGER_REPORTING_AUTHORITY']
+      .forEach(function(n){
+        eq(String(g.alexGConstructLivePosition||'').indexOf(n),-1,'sizing must not reference '+n);
+      });
+    ok(g.appSource.indexOf('alexGConstructLivePosition(setup,datasets,ba,RULES_ALEXG.config,alexGAccount.balance')!==-1,
+       'the sizing call must still pass the STORED balance');
+    const layer=String(g.ledgerReportingFigures)+String(g.ledgerReportingAuthorityEnabled);
+    ['riskAmount','positionSize','openPaperPosition','alexGConstructLivePosition']
+      .forEach(function(n){ eq(layer.indexOf(n),-1,'the reporting layer must never reference '+n); });
+  });
+  t('A7 the reporting layer writes nothing',function(){
+    const layer=String(g.ledgerReportingFigures)+String(g.ledgerReportingAuthorityEnabled);
+    ['localStorage','commitAlexGLedger','saveAlexG','alexGAccount.balance=','paperAccount.balance=',
+     '.splice(','delete '].forEach(function(n){
+      eq(layer.indexOf(n),-1,'the reporting layer must never '+n);
+    });
+    const acct={balance:10200,closedPositions:[seededTrade()],openPositions:[]};
+    const before=JSON.stringify(acct);
+    g.ledgerReportingFigures('alex_g_sr_v1',acct.balance,10000,acct.closedPositions);
+    eq(JSON.stringify(acct),before,'accounts must be byte-identical afterwards');
+  });
+  t('A8 display seams route through the resolver and disclose the source',function(){
+    const panel=g.getSource('function renderAlexGLivePanel()');
+    ok(panel.indexOf("ledgerReportingFigures('alex_g_sr_v1'")!==-1,'the live panel must ask the resolver');
+    ok(panel.indexOf('ledger-derived')!==-1,'and must label a derived figure as derived');
+    ok(panel.indexOf('reporting.authoritative?reporting.realizedPnl')!==-1,'P&L must follow the same switch');
+    ok(g.appSource.indexOf('ledgerReportingFigures(entry.manifest.id,account.balance,10000,closedVisible)')!==-1,
+       'the dashboard must route every registered strategy through it');
+  });
+  t('A9 Diagnostics reconciliation remains available and unaffected',function(){
+    ok(typeof g.ledgerBuildReconciliationReport==='function','reconciliation must remain permanent');
+    const rep=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+      records:[seededTrade()],storedBalance:10200});
+    eq(rep.overall,'EXPLAINED_BY_EXCLUSIONS','and must keep reconciling derived against stored');
+    eq(rep.readOnly,true);
+    const f=g.getReportingAuthorityFlag();
+    const prev={enabled:f.enabled,alex:f.byStrategy.alex_g_sr_v1};
+    try{
+      f.enabled=true; f.byStrategy.alex_g_sr_v1=true;
+      const rep2=g.ledgerBuildReconciliationReport({strategyId:'alex_g_sr_v1',startingBalance:10000,
+        records:[seededTrade()],storedBalance:10200});
+      eq(JSON.stringify(rep2),JSON.stringify(rep),'the flag must not change what reconciliation reports');
+    } finally { f.enabled=prev.enabled; f.byStrategy.alex_g_sr_v1=prev.alex; }
+  });
+  t('A10 replay and evidence are untouched by the transition',function(){
+    eq(String(g.alexGComputeReplayStats).indexOf('ledgerReporting'),-1,'replay stats must not consult the flag');
+    const p=builtPackage();
+    const before=g.evidenceCanonicalize(p);
+    g.ledgerReportingFigures('alex_g_sr_v1',10200,10000,[seededTrade()]);
+    eq(g.evidenceCanonicalize(p),before,'reporting must not touch evidence');
+  });
+
   return out;
 }
