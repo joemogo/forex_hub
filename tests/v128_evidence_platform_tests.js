@@ -2185,5 +2185,157 @@ function runEvidencePlatformFixtures(g){
     eq(seam.indexOf('Date.now()'),-1,'context must never be anchored on wall-clock time');
   });
 
+  // ══ GROUP 16 — v12.15.0 TRADE INTEGRITY & QUARANTINE ═══════════════════════════════════
+  // Rule-based, not identifier-based: the seeded record is caught by invariants, and a genuine
+  // trade must survive every one of them untouched.
+
+  // A genuine ALEX trade, shaped exactly as the engine records one.
+  function genuineTrade(over){
+    const t={tradeId:'AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1774616400000|v1775134800000|A_repeatedReaction|AGR|EUR_USD|H1|low|1775430000000',
+      strategy:'alex_g_sr_v1',pair:'EUR_USD',timeframe:'H1',direction:'buy',
+      entry:1.15070,stop:1.14992,target:1.15226,exitPrice:1.15226,
+      result:'Win',resultR:2,pnl:198,maePips:0,mfePips:21.8,
+      openedAt:'2026-04-06T02:00:00.000Z',closedAt:'2026-04-06T03:00:00.000Z',
+      isDeveloperTrade:false,tradeSource:'AUTO'};
+    if(over) Object.keys(over).forEach(function(k){ t[k]=over[k]; });
+    return t;
+  }
+  // The record forensics recovered from storage on 2026-08-02.
+  function seededTrade(over){
+    const t={tradeId:'AGT|MANUAL-B|1785634676564',signalId:'SIG|MANUAL-B|1',
+      setupId:'AGS|EUR_USD|H1|zB|B_breakRetest|rB',strategy:'alex_g_sr_v1',
+      pair:'EUR_USD',timeframe:'H1',direction:'buy',setupLabel:'BREAK & RETEST',
+      entry:1.1,stop:1.095,target:1.11,exitPrice:1.11,plannedRR:2,
+      result:'Win',resultR:2,pnl:200,maePips:0,mfePips:0,
+      openedAt:'2026-08-02T01:37:56.564Z',closedAt:'2026-08-02T01:37:56.564Z',
+      isDeveloperTrade:false,tradeSource:'AUTO',exitDetectionSource:'live_snapshot'};
+    if(over) Object.keys(over).forEach(function(k){ t[k]=over[k]; });
+    return t;
+  }
+
+  t('Q1 a genuine trade passes every integrity rule untouched',function(){
+    const v=g.evaluateTradeIntegrity(genuineTrade(),'alex_g_sr_v1');
+    eq(v.status,'CLEAN','a real trade must never be quarantined: '+JSON.stringify(v.violations));
+    eq(v.violations.length,0);
+    ok(v.rulesEvaluated.length>=5,'every applicable rule must actually run');
+    // a genuine LOSS must also pass
+    const loss=g.evaluateTradeIntegrity(genuineTrade({result:'Loss',resultR:-1,pnl:-99,
+      exitPrice:1.14992,maePips:16,mfePips:0}),'alex_g_sr_v1');
+    eq(loss.status,'CLEAN',JSON.stringify(loss.violations));
+  });
+  t('Q2 the seeded record is QUARANTINED, by rules rather than by its id',function(){
+    const v=g.evaluateTradeIntegrity(seededTrade(),'alex_g_sr_v1');
+    eq(v.status,'QUARANTINED');
+    const ids=v.violations.map(function(x){return x.ruleId;}).sort();
+    ok(ids.indexOf('TI_WIN_REQUIRES_FAVOURABLE_EXCURSION')!==-1,'the impossible excursion must be caught');
+    ok(ids.indexOf('TI_NONZERO_LIFETIME')!==-1,'the zero-duration lifetime must be caught');
+    ok(ids.indexOf('TI_TRADE_ID_ENGINE_MINTED')!==-1,'the hand-written id must be caught');
+    // and it is caught EVEN IF the id is disguised as a genuine one -- rules, not identifiers
+    const disguised=seededTrade({tradeId:genuineTrade().tradeId});
+    const v2=g.evaluateTradeIntegrity(disguised,'alex_g_sr_v1');
+    eq(v2.status,'QUARANTINED','a convincing id must not rescue an impossible trade');
+    ok(v2.violations.some(function(x){return x.ruleId==='TI_WIN_REQUIRES_FAVOURABLE_EXCURSION';}));
+  });
+  t('Q3 each invariant catches its own impossibility independently',function(){
+    const cases=[
+      ['win with zero MFE',      genuineTrade({result:'Win',mfePips:0}),                 'TI_WIN_REQUIRES_FAVOURABLE_EXCURSION'],
+      ['loss with zero MAE',     genuineTrade({result:'Loss',exitPrice:1.14992,maePips:0,mfePips:5}),'TI_LOSS_REQUIRES_ADVERSE_EXCURSION'],
+      ['zero lifetime',          genuineTrade({closedAt:'2026-04-06T02:00:00.000Z'}),    'TI_NONZERO_LIFETIME'],
+      ['win exiting adversely',  genuineTrade({result:'Win',exitPrice:1.14000}),         'TI_RESULT_CONSISTENT_WITH_EXIT'],
+      ['hand-written id',        genuineTrade({tradeId:'AGT|MANUAL-Z|1'}),               'TI_TRADE_ID_ENGINE_MINTED']
+    ];
+    cases.forEach(function(c){
+      const v=g.evaluateTradeIntegrity(c[1],'alex_g_sr_v1');
+      eq(v.status,'QUARANTINED',c[0]+' must quarantine');
+      ok(v.violations.some(function(x){return x.ruleId===c[2];}),
+         c[0]+': expected '+c[2]+', got '+v.violations.map(function(x){return x.ruleId;}).join(','));
+    });
+  });
+  t('Q4 rules are UNIVERSAL -- a future strategy inherits them with no code change',function(){
+    const universal=g.getTradeIntegrityRules().filter(function(r){return r.appliesTo==='*';});
+    ok(universal.length>=4,'most rules must be strategy-agnostic, found '+universal.length);
+    // An unregistered strategy still gets the universal protection...
+    const tjr=g.evaluateTradeIntegrity({strategy:'tjr_session_v1',result:'Win',entry:1.1,stop:1.09,
+      target:1.12,exitPrice:1.12,mfePips:0,maePips:3,
+      openedAt:'2026-08-01T10:00:00.000Z',closedAt:'2026-08-01T12:00:00.000Z',tradeId:'TJR|1'},'tjr_session_v1');
+    eq(tjr.status,'QUARANTINED','an impossible TJR trade must be caught by the universal rules');
+    ok(tjr.violations.some(function(x){return x.ruleId==='TI_WIN_REQUIRES_FAVOURABLE_EXCURSION';}));
+    // ...but a strategy-specific id rule only applies where a profile declares one.
+    ok(tjr.rulesSkipped.indexOf('TI_TRADE_ID_ENGINE_MINTED')!==-1,
+       'the id-format rule must be skipped for a strategy with no declared profile, not guessed at');
+    ok(g.getTradeIntegrityProfiles().alex_g_sr_v1.tradeIdPattern instanceof RegExp);
+  });
+  t('Q5 quarantine NEVER deletes or rewrites the record',function(){
+    const rec=seededTrade();
+    const before=JSON.stringify(rec);
+    g.evaluateTradeIntegrity(rec,'alex_g_sr_v1');
+    g.tradeIntegrityIsQuarantined(rec,'alex_g_sr_v1');
+    const list=[genuineTrade(),rec];
+    const filtered=g.tradeIntegrityFilterForStatistics(list,'alex_g_sr_v1');
+    eq(JSON.stringify(rec),before,'the record must be byte-identical after evaluation');
+    eq(list.length,2,'the source collection must not shrink');
+    eq(filtered.length,1,'only the statistics view excludes it');
+    ok(list.indexOf(rec)!==-1,'the quarantined record stays in the account');
+    // the layer must contain no delete/write path at all
+    const src=String(g.evaluateTradeIntegrity)+String(g.tradeIntegrityFilterForStatistics)+String(g.tradeIntegrityReport);
+    ['localStorage','.splice(','delete ','commitAlexGLedger','saveAlexG'].forEach(function(n){
+      eq(src.indexOf(n),-1,'the integrity layer must never '+n);
+    });
+  });
+  t('Q6 the investigator report preserves and explains every exclusion',function(){
+    const rep=g.tradeIntegrityReport([genuineTrade(),seededTrade()],'alex_g_sr_v1');
+    eq(rep.evaluated,2); eq(rep.quarantined,1);
+    const row=rep.rows[0];
+    eq(row.tradeId,'AGT|MANUAL-B|1785634676564');
+    eq(row.preserved,true,'the report must state the record is preserved');
+    eq(row.pnl,200,'its P&L must be recoverable for the correction arithmetic');
+    ok(row.violations.length>=3,'every violated rule must be listed');
+    row.violations.forEach(function(v){
+      ok(v.ruleId&&v.requirement&&v.expectation&&v.detail,'each violation must explain itself');
+      ok(v.observed&&typeof v.observed==='object','and cite what it observed');
+    });
+  });
+  t('Q7 statistics, dashboard and journal all exclude quarantined records',function(){
+    const panel=g.getSource('function renderAlexGLivePanel()');
+    ok(panel.indexOf('tradeIntegrityFilterForStatistics(closedAll')!==-1,'the live panel must filter');
+    ok(panel.indexOf('quarantinedPnl')!==-1,'and must net quarantined P&L out of the displayed figure');
+    ok(panel.indexOf('QUARANTINED')!==-1,'while still badging the record in the table');
+    ok(g.appSource.indexOf('const closed=tradeIntegrityFilterForStatistics(closedVisible,entry.manifest.id);')!==-1,
+       'the dashboard must filter for EVERY registered strategy, keyed on manifest id');
+    ok(g.appSource.indexOf('const statRecords=tradeIntegrityFilterForStatistics(records);')!==-1,
+       'the journal summary must filter');
+    ok(g.appSource.indexOf('quarantined, excluded from these figures')!==-1,
+       'and must disclose how many it excluded');
+  });
+  t('Q8 replay evidence and protected logic are untouched by this layer',function(){
+    const protectedList=g.getBaselineAlexFunctions();
+    ['alexGCloseLivePosition','alexGUpdatePositionExcursionAndCheckExit','alexGComputeReplayStats',
+     'alexGConstructTrade','alexGRunSetupReplay'].forEach(function(f){
+      ok(protectedList.indexOf(f)!==-1,f+' must still be protected');
+      ['evaluateTradeIntegrity','tradeIntegrityFilterForStatistics','TRADE_INTEGRITY_RULES']
+        .forEach(function(n){ eq(String(g[f]||'').indexOf(n),-1,f+' must not reference '+n); });
+    });
+    // replay statistics must not be routed through the integrity filter
+    eq(String(g.alexGComputeReplayStats).indexOf('tradeIntegrity'),-1,
+       'replay statistics must be computed from replay trades exactly as before');
+    // and an Evidence Package must be unaffected by evaluation
+    const p=builtPackage();
+    const before=g.evidenceCanonicalize(p);
+    g.evaluateTradeIntegrity({strategy:'alex_g_sr_v1',result:'Win',mfePips:0},'alex_g_sr_v1');
+    eq(g.evidenceCanonicalize(p),before,'evaluating integrity must not touch evidence');
+  });
+  t('Q9 evaluation is deterministic and fails safe',function(){
+    const rec=seededTrade();
+    eq(JSON.stringify(g.evaluateTradeIntegrity(rec,'alex_g_sr_v1')),
+       JSON.stringify(g.evaluateTradeIntegrity(rec,'alex_g_sr_v1')),'same input, same verdict');
+    // insufficient data must not quarantine -- absence of evidence is not evidence of forgery
+    eq(g.evaluateTradeIntegrity({strategy:'alex_g_sr_v1',result:'Win',
+      tradeId:genuineTrade().tradeId}, 'alex_g_sr_v1').status,'CLEAN',
+      'a record lacking the fields a rule needs must not be quarantined');
+    eq(g.evaluateTradeIntegrity(null,'alex_g_sr_v1').status,'CLEAN');
+    eq(g.evaluateTradeIntegrity(undefined).status,'CLEAN');
+    eq(g.tradeIntegrityFilterForStatistics(null,'alex_g_sr_v1').length,0);
+  });
+
   return out;
 }

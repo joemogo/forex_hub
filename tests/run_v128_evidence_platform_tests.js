@@ -147,6 +147,15 @@ const wrapped = new Function('g',
   'g.evidencePersistTradePackageResolved=evidencePersistTradePackageResolved;' +
   'g.evidenceAllocateSequence=evidenceAllocateSequence;' +
   'g.getJvmStrategyId=function(){return EVIDENCE_JVM_STRATEGY_ID;};' +
+  // ── v12.15.0 Trade integrity & quarantine ──
+  'g.evaluateTradeIntegrity=evaluateTradeIntegrity;' +
+  'g.tradeIntegrityIsQuarantined=tradeIntegrityIsQuarantined;' +
+  'g.tradeIntegrityFilterForStatistics=tradeIntegrityFilterForStatistics;' +
+  'g.tradeIntegrityReport=tradeIntegrityReport;' +
+  'g.getTradeIntegrityRules=function(){return TRADE_INTEGRITY_RULES;};' +
+  'g.getTradeIntegrityProfiles=function(){return TRADE_INTEGRITY_STRATEGY_PROFILES;};' +
+  'g.alexGCloseLivePosition=alexGCloseLivePosition;' +
+  'g.alexGUpdatePositionExcursionAndCheckExit=alexGUpdatePositionExcursionAndCheckExit;' +
   // ── v12.14.0 Unit C2-M2 higher-timeframe context ──
   'g.evidenceBuildHigherTimeframeContext=evidenceBuildHigherTimeframeContext;' +
   'g.EVIDENCE_TIMEFRAME_RANK=EVIDENCE_TIMEFRAME_RANK;' +

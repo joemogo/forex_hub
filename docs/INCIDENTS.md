@@ -11,6 +11,66 @@ could produce incorrect data or behavior for a real user, even if caught before 
 
 ---
 
+## INC-005 — A hand-seeded record counted as a real ALEX paper trade
+
+**Status:** Root cause established 2026-08-03. Detection shipped in v12.15.0 (Trade Integrity &
+Quarantine). **The operator's live account was never affected.** The stored balance on the affected
+origin has NOT yet been corrected — that is a separate, explicit act.
+
+### Symptom
+
+An ALEX paper trade appeared with EUR_USD H1 BREAK & RETEST, BUY, entry 1.10000, stop 1.09500,
+target 1.11000, exit 1.11000, Win +2.00R / +$200, opened and closed at the same timestamp
+(2026-08-02T01:37:56.564Z), duration 0m, **MAE 0.0 and MFE 0.0**, exit detected "Live snapshot",
+trade source AUTO.
+
+### Why it was impossible
+
+`alexGUpdatePositionExcursionAndCheckExit` updates the excursion **before** it evaluates the exit,
+from the same bid/ask. For a BUY, `hitTarget` requires `bid >= target`, which forces
+`mfePips >= 100`. **A Win at target with MFE 0.0 cannot be produced by any MOGO code path.**
+
+### Root cause — hand-seeded record
+
+Read-only forensics on a copy of the Chrome storage recovered the record:
+
+| Field | Value | Verdict |
+|---|---|---|
+| `tradeId` | `AGT\|MANUAL-B\|1785634676564` | placeholder token |
+| `signalId` | `SIG\|MANUAL-B\|1` | placeholder token |
+| `setupId` | `AGS\|EUR_USD\|H1\|zB\|B_breakRetest\|rB` | `zB` / `rB` are stand-ins |
+
+The engine mints ids of the form `AGT|AGS|alex_g_sr_v1|<pair>|<tf>|AGZ|AGC|…`, visible on genuine
+records in the same store. **`MANUAL-B` appears nowhere in the repository** — no code path, fixture,
+script or test can produce it. The record also carried `tradeSource: AUTO` and
+`isDeveloperTrade: false`, which is why every statistic counted it.
+
+### Scope
+
+Confined to origin `http://localhost:8899`, whose ALEX account read `balance 10200` holding only
+this record. The operator's live origin `http://localhost:8744` read
+`{"balance":10000,"openPositions":[],"closedPositions":[]}` — **pristine**. RUN-001 and the 24
+Evidence Packages were unaffected (re-verified 24/24, byte-identical). No Evidence Package was ever
+created from this trade.
+
+### Control added (v12.15.0)
+
+A **rule-based** Trade Integrity layer, not an identifier blocklist: a Win must record a favourable
+excursion above zero, a Loss an adverse excursion above zero, a trade must close strictly after it
+opened, the result must agree with the direction of the exit price, and (per strategy profile) the
+trade id must match what that strategy's engine mints. Four of the five rules are strategy-agnostic,
+so every future strategy inherits them. Quarantine is computed on read — **nothing is deleted or
+rewritten** — statistics exclude quarantined records, and the trade tables still list them with a
+`QUARANTINED` badge naming the violated rules. A rule that throws never quarantines, and a record
+lacking the fields a rule needs is treated as clean.
+
+### Lesson
+
+`tradeSource` and `isDeveloperTrade` are **self-declared flags**. Anything that can write storage can
+set them. Trust the arithmetic a record cannot fake, not the label it carries.
+
+---
+
 ## INC-004 — Real ALEX and JVM paper-trading data destroyed by developer browser testing
 
 **Status:** Resolved for the operator (data restored from a Time Machine backup). Controls added in

@@ -1952,9 +1952,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.14.0';
+const APP_VERSION='12.15.0';
 const APP_VERSION_DATE='3 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.15.0 — MOGO-003 PHASE 2: TRADE INTEGRITY &amp; QUARANTINE (evidence-integrity release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change). WHY: on 2026-08-02 a record surfaced in an ALEX paper account claiming a Win at target with MAE 0.0 AND MFE 0.0 -- arithmetically impossible, because alexGUpdatePositionExcursionAndCheckExit updates the excursion BEFORE evaluating the exit from the same bid/ask. It carried tradeSource AUTO and isDeveloperTrade false, so every statistic counted it. Forensics established it was hand-seeded (tradeId AGT|MANUAL-B|..., setup tokens zB/rB -- strings no MOGO code path can mint, and absent from the entire repository), written under a non-production origin. The operator\'s live account was unaffected. WHAT WAS BUILT -- RULE-BASED, NOT IDENTIFIER-BASED: TRADE_INTEGRITY_RULES states invariants a genuine trade cannot violate: a Win must record a favourable excursion above zero, a Loss an adverse excursion above zero, a trade must close strictly after it opened, the recorded result must agree with the direction of the exit price, and (per strategy profile) the trade id must match the pattern that strategy\'s engine actually mints. A future seeded record with different identifiers is caught by the same rules. STRATEGY-AGNOSTIC BY DEFAULT: four of the five rules declare appliesTo \'*\', so TJR, CRT and any future strategy inherit them the moment they produce trades; a strategy adds its own checks by registering a profile in TRADE_INTEGRITY_STRATEGY_PROFILES, with no change to the evaluator. NOTHING IS DELETED OR REWRITTEN: quarantine is computed on read from the record\'s own fields -- no ledger write, no new storage key, no migration -- so a quarantined record stays byte-identical on disk and fully inspectable. STATISTICS EXCLUDE, SURFACES DISCLOSE: the ALEX live panel, the dashboard tiles (for EVERY registered strategy, keyed on manifest id), the journal summary and strategy-performance analytics all filter quarantined records out, and stored balances are corrected for display by netting the quarantined P&amp;L back out rather than touching the stored balance; meanwhile the trade tables still LIST every quarantined record with a red QUARANTINED badge naming the violated rule, and the journal summary states how many were excluded. A rule that throws never quarantines. OBSERVATIONAL ONLY: the layer runs at read time, downstream of every decision; it cannot open, close, size or price a trade, and no protected function references it. REPLAY IS UNTOUCHED: alexGComputeReplayStats is protected and unchanged, and replay Evidence Packages are not evaluated by this layer. TESTING: v128 grows 185 -> 194 (Q1-Q9). Full regression: 913/913 across 17 suites, zero drift.',
   '12.14.0 — MOGO-003 UNIT C2-M2: HIGHER-TIMEFRAME CONTEXT (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: C2-M1 captured the traded window in the trade\'s OWN timeframe, so a reader could see the entry and the path but not the structure the setup sat inside -- and ALEX is a multi-timeframe strategy whose zones come from H1/H4/D/W. WHAT WAS ADDED, on newly captured REPLAY packages only: marketContexts[].higherTimeframeContext carries a small window of EACH higher timeframe (EVIDENCE_HTF_BARS = 20 bars each), with per-timeframe window blocks (requested vs captured bars, from/to bar indices and UTC bounds, dataset size, bars available before the anchor, truncation state) and candles stored verbatim. Timeframes appear in a deterministic ascending-rank order (H4, D, W for an H1 trade). THE PROPERTY THAT MATTERS MOST -- NO LOOK-AHEAD: context is anchored at the ENTRY CANDLE\'S CLOSE and includes only higher-timeframe bars that had genuinely CLOSED by then, found by scanning candle close times rather than rounding or estimating from a bar\'s start. A daily bar closing hours after entry is hindsight, not context. VALIDATION ENFORCES IT: a context whose last bar closes after its own anchor is REJECTED, as is any candle starting after the anchor -- the evidence layer refuses to store look-ahead even though none of it ever touched a trading decision. HONEST ABSENCE: a timeframe with no dataset, no closed bar at the anchor, or a hole is recorded in omittedTimeframes WITH A REASON, never silently skipped; a trade on the highest timeframe reports NOT_APPLICABLE rather than a missing capture, because nothing exists above it. RANKING IS NOT REINVENTED: EVIDENCE_TIMEFRAME_RANK mirrors RULES_ALEXG.config.htfPriority (W > D > H4 > H1) so the evidence layer never reads a protected constant it could drift from, and a fixture asserts the two are identical -- the same anti-drift technique Unit B uses for its attribution mirror. COMPLETENESS: a package that captures higher-timeframe context sheds the higherTimeframeContext gap C2-M1 introduced; every other package still declares it, in the same array position, so canonical ordering for earlier package shapes is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. PAYLOAD, MEASURED NOT ASSUMED -- and the earlier estimate was WRONG: sizes are measured on the EXPORTED form (JSON.stringify with 2-space indent, which is what actually reaches disk), not compact JSON. On RUN-001\'s real dataset shape (H1 2220 / H4 600 / D 150 / W 73) with a 30-bar hold, one package measures 15.0 KB through Unit C1, 33.2 KB with the own-timeframe window (C2-M1, +18.2 KB) and 47.6 KB with higher-timeframe context (C2-M2, +14.5 KB: H4 20 bars, D 20, W 8). A 24-trade run therefore grows 360 KB -> 796 KB -> 1.14 MB. The v12.13.0 note estimating about 6 KB per package measured COMPACT JSON and understated the on-disk figure roughly threefold; this entry supersedes it. IndexedDB absorbs this comfortably, but a long multi-pair run is now a megabyte-scale store and the content-addressed candle store (deduplication) becomes the obvious next economy. EXPLICITLY NOT IMPLEMENTED: the content-addressed candle store, untraded-candidate context, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 170 -> 185 (Y1-Y15). Full regression: 904/904 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
   '12.13.0 — MOGO-003 UNIT C2-M1: BOUNDED MARKET CONTEXT &amp; EVIDENCE LINEAGE (CORR-6, first milestone) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification, outcome or statistic moves). THE GAP THIS CLOSES: Unit C1 records WHEN a trade\'s extremes occurred, but exitPathCandleRefs point into a dataset the repository does not keep -- and re-fetching those candles would produce a DIFFERENT dataset, which the July 2026 forensics called a fabrication risk. This captures the candles themselves for the traded window. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.marketContexts carries ONE bounded excerpt per package -- the trade\'s OWN timeframe, EVIDENCE_CONTEXT_PRE_ENTRY_BARS (50) bars before entry through the exit bar, each candle stored verbatim with its barIndex and an ISO timestamp, plus a window block recording requested vs actual pre-entry bars, from/to bar indices and UTC bounds, candle counts and the dataset size, and datasetHash tying the excerpt to the run identity. CAPS ARE LOUD: EVIDENCE_CONTEXT_MAX_CANDLES (600) is a hard ceiling; a truncated window sets truncated:true, names truncationReason and reports droppedPreEntryBars, and truncation drops the OLDEST pre-entry bars first so the entry-to-exit path an outcome depends on is never what goes missing. Validation REJECTS a window that claims truncation without a reason, or reports dropped bars while claiming none. LINEAGE: objects.qualifiedSetups[].lineage records how the stored objects relate -- runId, datasetHash, zoneId, reactionId, breakCycleId, setupId/candidateId, positionId, outcomeId, marketContextId, packageId, sourceTradeId and replaySourceTradeId. Every value is an identifier the engine already stored, so provenance is OBSERVED; nothing is derived and no decision EVENT is implied. HONEST ABOUT WHAT IS ABSENT: higherTimeframeContext is present and explicitly null with provenance FUTURE_WORK (Unit C2-M2, not started), and decisionChainRef is null with provenance FUTURE_WORK -- faithful decision-event capture needs emission inside protected functions (CORR-5b) and is deliberately not attempted. A package that captures a window no longer declares marketContexts a gap, but DOES declare the higher-timeframe gap in its place; a package without one declares the original gap in the original array position, so canonical ordering for every earlier package shape is preserved. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT, and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. SIZE, MEASURED NOT ASSUMED: a RUN-001-shaped trade (30 bars held) yields roughly 80 candles per package, about 6 KB. EXPLICITLY NOT IMPLEMENTED: higher-timeframe context, candidate/untraded context, a content-addressed candle store, decision chains, eviction or quota changes, and any browser or replay execution. TESTING: v128 grows 155 -> 170 (X1-X15). Full regression: 889/889 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a context-bearing package, in-browser crypto.subtle verification, and a real replay producing populated context all remain browser-verified; no replay was run.',
   '12.12.0 — MOGO-003 UNIT C1: EXCURSION TIMING (CORR-7) (evidence-layer release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; no strategy rule, threshold, evaluator, classification, trade-construction, sizing or execution change, and no classification or statistic moves). THE QUESTION THIS ANSWERS: alexGComputeMAEMFE (PROTECTED) records how far a trade ran for and against but never WHEN, so the July 2026 loss forensics could not tell whether GBP/USD\'s 0.949R excursion came early or late -- and that distinction is the whole of in-trade loss forensics. WHAT WAS ADDED, on newly captured REPLAY packages only: objects.outcomes gains timeToMFE and timeToMAE ({bars, minutes, barIndex, timestampUTC}), excursionTimingProvenance, excursionAgreement, and a populated exitPathCandleRefs listing every candle actually examined between entry and exit. HOW IT STAYS HONEST: the new non-protected evidenceRecomputeExcursionTiming() mirrors the protected traversal line for line -- same start at entryBarIndex+1, same inclusive end at exitBarIndex, same favourable/adverse formulas, and the same STRICT `>` comparison so the FIRST bar reaching an extreme wins a tie -- then emits timing ONLY IF its recomputed MAE and MFE equal the engine\'s stored values exactly. The protected function is untouched and its stored maePips/mfePips remain authoritative and are copied verbatim; nothing here rewrites them. An extreme of exactly 0 was never exceeded, so no bar achieved it and the corresponding timing is null rather than a fabricated bar 1 -- the real EUR/USD 14 Jul case (MFE 0.0). MISMATCH IS NOT A CAPTURE FAILURE: if the recomputation disagrees, timing is omitted, excursionAgreement.status becomes UNAVAILABLE with reason RECOMPUTED_EXTREMES_DIFFER_FROM_ENGINE, the deterministic flag EXCURSION_RECOMPUTATION_MISMATCH is recorded in dataQualityFlags, the engine values are preserved untouched, and THE PACKAGE IS STILL WRITTEN. This differs deliberately from Unit B, where a contradicted classification fails capture: a derived-field mismatch signals a candle-window problem, not corrupted evidence, and discarding a good package over it would destroy the observation. OBSERVATIONAL ONLY: timing runs at evidence capture, after the trade is closed and its outcome recorded, inside the existing fire-and-forget seam and its own try/catch, and is unreachable from qualification, classification, trade creation, entry/stop/target, sizing, outcome and execution. PLUMBING: runAlexGReplay (NOT protected) additionally returns the in-memory candle arrays the engine was just walked over, runAlexGReplayUI passes them read-only to the seam, and timing is recomputed from THOSE candles -- never from a re-fetch, which would be a different dataset. Provenance is DERIVED_FROM_OBSERVED_FIELDS; NO new provenance token was created. The completeness report\'s excursion-timing gap is now conditional: a package carrying verified timing no longer declares it missing, while every other package still does, in the identical array position. BACKWARD COMPATIBILITY UNCHANGED: packageSchemaVersion stays mogo.evidence-package.v1, evidenceCanonicalize is byte-identical, the new fields are validated ONLY WHEN PRESENT (and timing is rejected outright if it appears without an AGREES agreement), and nothing is backfilled, migrated, rewritten or renamed -- the 24 verified RUN-001 packages stay byte-identical, still validate, still hash-verify and still re-import. EXPLICITLY NOT IMPLEMENTED (Unit C2 and beyond): marketContexts, candle-window capture or caching, higher-timeframe context, decision chains, eviction or quota changes. TESTING: v128 grows 140 -> 155 (C1-C15). Full regression: 874/874 across 17 suites, zero drift. BROWSER-ONLY, DISCLOSED: IndexedDB persistence of a timing-bearing package, crypto.subtle verification in-browser, and an actual replay producing populated timing all remain browser-verified; no replay was run.',
@@ -5107,7 +5108,12 @@ function renderAlexGLivePanel(){
       ?'<span class="badge" style="background:var(--green);color:#fff">LIVE ALEX PAPER TRADING: ON</span>'
       :'<span class="badge" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border)">LIVE ALEX PAPER TRADING: OFF</span>';
   }
-  const closed=alexGAccount.closedPositions;
+  // ── v12.15.0 TRADE INTEGRITY: statistics exclude quarantined records ──
+  // The account is NOT modified -- the records stay in alexGAccount.closedPositions and are still
+  // rendered (badged) in the table below. Only the aggregates ignore them.
+  const closedAll=alexGAccount.closedPositions;
+  const integrityReport=tradeIntegrityReport(closedAll,'alex_g_sr_v1');
+  const closed=tradeIntegrityFilterForStatistics(closedAll,'alex_g_sr_v1');
   // ── MOGO-002.8A ALEX v1.1 statistics correction ──
   // ALEX_V11_002 realized R from each trade's own exit price (was a fixed +plannedRR/-1)
   // ALEX_V11_003 chronological equity walk; current drawdown separated from maximum
@@ -5119,7 +5125,12 @@ function renderAlexGLivePanel(){
   const wins=st.wins;
   const netR=st.netR;
   const startBal=alexGStartingBalance();
-  const pnlTotal=alexGAccount.balance-startBal;
+  // Balance is a stored total that already includes any quarantined trade's P&L, so it cannot be
+  // used directly. Net the quarantined P&L back out for the displayed figure; the stored balance
+  // itself is left exactly as it is.
+  const quarantinedPnl=integrityReport.rows.reduce(function(a,r){
+    return a+((r.status==='QUARANTINED'&&typeof r.pnl==='number')?r.pnl:0);},0);
+  const pnlTotal=alexGAccount.balance-startBal-quarantinedPnl;
   const dd=document.getElementById('alexgLiveStats');
   if(dd){
     dd.innerHTML=[
@@ -5191,6 +5202,13 @@ function renderAlexGLiveClosedTable(){
   if(!tbl) return;
   // v4.3: Developer Test Mode display filter -- defaults to false (show everything,
   // byte-for-byte identical to pre-v4.3 output) so this is purely additive.
+  // v12.15.0: quarantined records are STILL LISTED here -- excluded from statistics, never hidden
+  // from an investigator. This table computes its own report so it stays independent of the
+  // panel's render order and can be called on its own.
+  const quarantinedIds={};
+  tradeIntegrityReport(alexGAccount.closedPositions,'alex_g_sr_v1').rows.forEach(function(r){
+    if(r.status==='QUARANTINED'&&r.tradeId) quarantinedIds[r.tradeId]=r;
+  });
   const source=hideTestTradesAlex?alexGAccount.closedPositions.filter(p=>!p.isDeveloperTrade):alexGAccount.closedPositions;
   const positions=source.slice(0,100);
   if(!positions.length){tbl.innerHTML='<tbody><tr><td>No closed Alex live positions.</td></tr></tbody>';return;}
@@ -5210,9 +5228,13 @@ function renderAlexGLiveClosedTable(){
         :p.exitDetectionSource==='developer_test'?'Developer test':'—';
       const ambiguousBadge=p.ambiguous?' <span style="color:var(--red);font-weight:600" title="Same candle crossed both stop and target -- resolved conservatively as a Loss">⚠ AMBIGUOUS</span>':'';
       const testBadge=p.isDeveloperTrade?' <span class="badge" style="background:var(--gold);color:#000;font-size:9px" title="Developer test trade -- not a real signal">TEST</span>':'';
+      const q=quarantinedIds[p.tradeId];
+      const quarantineBadge=q?' <span class="badge" style="background:var(--red);color:#fff;font-size:9px" title="'+
+        escapeHtml('QUARANTINED — excluded from all statistics. '+q.violations.map(function(v){return v.ruleId+': '+v.detail;}).join(' | '))+
+        '">QUARANTINED</span>':'';
       const tradeSource=p.isDeveloperTrade?'TEST':'AUTO';
       return `<tr>
-        <td>${escapeHtml(p.pair)}</td><td>${p.timeframe}</td><td style="font-size:11px">${escapeHtml(p.setupLabel)}${testBadge}</td>
+        <td>${escapeHtml(p.pair)}</td><td>${p.timeframe}</td><td style="font-size:11px">${escapeHtml(p.setupLabel)}${testBadge}${quarantineBadge}</td>
         <td class="${p.direction==='buy'?'tag-long':'tag-short'} dir-tag" style="display:inline-block">${p.direction==='buy'?'BUY':'SELL'}</td>
         <td>${p.entry.toFixed(5)}</td><td>${p.exitPrice.toFixed(5)}</td><td>${p.stop.toFixed(5)}</td><td>${p.target.toFixed(5)}</td>
         <td style="color:${rc};font-weight:600">${p.result}</td><td style="color:${rc}">${fmtRMult(p.resultR)}</td>
@@ -11550,6 +11572,179 @@ function renderDecisionEventDiagnostics(){
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// MOGO-003 PHASE 2 — TRADE INTEGRITY & QUARANTINE (v12.15.0)
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS EXISTS. On 2026-08-02 a record surfaced in an ALEX paper account claiming a Win at
+// target with MAE 0.0 AND MFE 0.0 -- arithmetically impossible, because the engine updates the
+// excursion BEFORE it evaluates the exit, from the same bid/ask. It carried tradeSource 'AUTO'
+// and isDeveloperTrade false, so every statistic counted it. Forensics established it was
+// hand-seeded (tradeId 'AGT|MANUAL-B|...', setup 'zB'/'rB' -- tokens no MOGO code path can mint).
+//
+// WHAT THIS IS. A RULE-BASED integrity layer, not an identifier blocklist. It states invariants a
+// genuine trade cannot violate and quarantines any record that violates one, whatever its id.
+// A future seeded record with different identifiers is caught by the same rules.
+//
+// DESIGN COMMITMENTS
+//   * NOTHING IS DELETED OR REWRITTEN. Quarantine is computed on read from the record's own
+//     fields. No ledger write, no new storage key, no migration -- so a quarantined record stays
+//     byte-identical on disk and remains fully inspectable for forensic review.
+//   * STATISTICS EXCLUDE, SURFACES DISCLOSE. Every statistic, dashboard tile and journal
+//     aggregate filters quarantined records out; the trade tables still SHOW them, badged, so an
+//     investigator can see exactly what was excluded and why.
+//   * STRATEGY-AGNOSTIC BY DEFAULT. Universal rules apply to every strategy (appliesTo '*'), so
+//     TJR, CRT and anything else inherit them the moment they produce trades. A strategy adds its
+//     own rules by registering a profile -- no change to this engine.
+//   * OBSERVATIONAL ONLY. This layer runs at read time, downstream of every decision. It cannot
+//     open, close, size or price a trade, and no protected function references it.
+const TRADE_INTEGRITY_SCHEMA_VERSION='mogo.trade-integrity.v1';
+const TRADE_INTEGRITY_SEVERITY=Object.freeze(['INVALID','SUSPECT']);
+// A strategy profile declares only what is strategy-SPECIFIC. Everything universal is inherited.
+const TRADE_INTEGRITY_STRATEGY_PROFILES={
+  alex_g_sr_v1:{
+    // The engine mints trade ids as 'AGT|' + the setupId built by alexGSetupId(), which always
+    // begins 'AGS|<ruleVersion>|'. A hand-written id cannot satisfy this without impersonating
+    // the full generated structure.
+    tradeIdPattern:/^AGT\|AGS\|alex_g_sr_v1\|/,
+    tradeIdException:/^AGT\|TEST\|/,        // the declared developer-test path, tagged as such
+  }
+};
+function tradeIntegrityProfileFor(strategyId){
+  return TRADE_INTEGRITY_STRATEGY_PROFILES[strategyId]||null;
+}
+const TRADE_INTEGRITY_RULES=Object.freeze([
+  {
+    ruleId:'TI_WIN_REQUIRES_FAVOURABLE_EXCURSION',appliesTo:'*',severity:'INVALID',
+    requirement:'a winning trade must record a favourable excursion at least as large as its planned reward',
+    evaluate:function(t){
+      const num=function(v){return typeof v==='number'&&isFinite(v)?v:null;};
+      if(String(t.result||'').toLowerCase()!=='win') return null;
+      const mfe=num(t.mfePips),entry=num(t.entry),stop=num(t.stop),target=num(t.target);
+      if(mfe==null||entry==null||stop==null||target==null) return null;   // cannot judge
+      const risk=Math.abs(entry-stop),reward=Math.abs(target-entry);
+      if(!(risk>0)) return null;
+      const rewardPips=mfe>0?null:reward;                                  // only judge a zero MFE strictly
+      if(mfe>0) return null;
+      return{observed:{mfePips:mfe,result:t.result},
+        expectation:'mfePips > 0 for a Win (price must have reached the target to win)',
+        detail:'a Win whose favourable excursion never left zero cannot have reached its target'};
+    }
+  },
+  {
+    ruleId:'TI_LOSS_REQUIRES_ADVERSE_EXCURSION',appliesTo:'*',severity:'INVALID',
+    requirement:'a losing trade must record an adverse excursion greater than zero',
+    evaluate:function(t){
+      const num=function(v){return typeof v==='number'&&isFinite(v)?v:null;};
+      if(String(t.result||'').toLowerCase()!=='loss') return null;
+      const mae=num(t.maePips);
+      if(mae==null) return null;
+      if(mae>0) return null;
+      return{observed:{maePips:mae,result:t.result},
+        expectation:'maePips > 0 for a Loss (price must have reached the stop to lose)',
+        detail:'a Loss whose adverse excursion never left zero cannot have reached its stop'};
+    }
+  },
+  {
+    ruleId:'TI_NONZERO_LIFETIME',appliesTo:'*',severity:'INVALID',
+    requirement:'a trade must close strictly after it opened',
+    evaluate:function(t){
+      const o=t.openedAt?Date.parse(t.openedAt):NaN,c=t.closedAt?Date.parse(t.closedAt):NaN;
+      if(!isFinite(o)||!isFinite(c)) return null;
+      if(c>o) return null;
+      return{observed:{openedAt:t.openedAt,closedAt:t.closedAt,durationMs:c-o},
+        expectation:'closedAt > openedAt',
+        detail:'entry and exit were recorded at the same instant or out of order; no market '+
+               'observation can have occurred between them'};
+    }
+  },
+  {
+    ruleId:'TI_RESULT_CONSISTENT_WITH_EXIT',appliesTo:'*',severity:'INVALID',
+    requirement:'the recorded result must agree with the exit price relative to entry',
+    evaluate:function(t){
+      const num=function(v){return typeof v==='number'&&isFinite(v)?v:null;};
+      const entry=num(t.entry),exit=num(t.exitPrice);
+      const res=String(t.result||'').toLowerCase();
+      if(entry==null||exit==null||(res!=='win'&&res!=='loss')) return null;
+      const dir=String(t.direction||'').toLowerCase();
+      const sign=(dir==='buy'||dir==='long')?1:((dir==='sell'||dir==='short')?-1:null);
+      if(sign==null) return null;
+      const move=(exit-entry)*sign;
+      if(res==='win'&&move>0) return null;
+      if(res==='loss'&&move<0) return null;
+      if(move===0) return null;                    // a flat exit is judged by other rules
+      return{observed:{entry:entry,exitPrice:exit,direction:t.direction,result:t.result},
+        expectation:'a Win exits favourably and a Loss exits adversely',
+        detail:'the recorded result contradicts the direction of the exit price'};
+    }
+  },
+  {
+    ruleId:'TI_TRADE_ID_ENGINE_MINTED',appliesTo:'PROFILE',severity:'INVALID',
+    requirement:'the trade id must match the pattern this strategy\'s engine mints',
+    evaluate:function(t,ctx){
+      const prof=ctx&&ctx.profile;
+      if(!prof||!prof.tradeIdPattern) return null;
+      const id=t.tradeId==null?null:String(t.tradeId);
+      if(!id) return null;
+      if(prof.tradeIdException&&prof.tradeIdException.test(id)) return null;
+      if(prof.tradeIdPattern.test(id)) return null;
+      return{observed:{tradeId:id},
+        expectation:'tradeId matching '+String(prof.tradeIdPattern),
+        detail:'this identifier cannot have been produced by the strategy engine'};
+    }
+  }
+]);
+// Pure. Returns the same verdict for the same record every time; reads nothing outside the record.
+function evaluateTradeIntegrity(trade,strategyId){
+  const out={schemaVersion:TRADE_INTEGRITY_SCHEMA_VERSION,status:'CLEAN',strategyId:strategyId||null,
+    violations:[],rulesEvaluated:[],rulesSkipped:[]};
+  if(!trade||typeof trade!=='object'){ out.status='CLEAN'; return out; }
+  const sid=strategyId||trade.strategy||trade.strategyId||null;
+  out.strategyId=sid;
+  const profile=tradeIntegrityProfileFor(sid);
+  const ctx={profile:profile,strategyId:sid};
+  for(let i=0;i<TRADE_INTEGRITY_RULES.length;i++){
+    const rule=TRADE_INTEGRITY_RULES[i];
+    if(rule.appliesTo==='PROFILE'&&!profile){ out.rulesSkipped.push(rule.ruleId); continue; }
+    if(rule.appliesTo!=='*'&&rule.appliesTo!=='PROFILE'&&rule.appliesTo!==sid){ out.rulesSkipped.push(rule.ruleId); continue; }
+    out.rulesEvaluated.push(rule.ruleId);
+    let v=null;
+    try{ v=rule.evaluate(trade,ctx); }catch(e){ v=null; }   // a rule that throws never quarantines
+    if(v){
+      out.violations.push({ruleId:rule.ruleId,severity:rule.severity,requirement:rule.requirement,
+        observed:v.observed,expectation:v.expectation,detail:v.detail});
+    }
+  }
+  if(out.violations.some(function(v){return v.severity==='INVALID';})) out.status='QUARANTINED';
+  else if(out.violations.length) out.status='SUSPECT';
+  return out;
+}
+function tradeIntegrityIsQuarantined(trade,strategyId){
+  return evaluateTradeIntegrity(trade,strategyId).status==='QUARANTINED';
+}
+// The statistics boundary. Every aggregate calls this; nothing is removed from the account.
+function tradeIntegrityFilterForStatistics(records,strategyId){
+  if(!Array.isArray(records)) return [];
+  return records.filter(function(r){ return !tradeIntegrityIsQuarantined(r,strategyId); });
+}
+// The investigator surface: what was excluded, and exactly why.
+function tradeIntegrityReport(records,strategyId){
+  const rows=[];
+  (Array.isArray(records)?records:[]).forEach(function(r){
+    const v=evaluateTradeIntegrity(r,strategyId);
+    if(v.status!=='CLEAN'){
+      rows.push({tradeId:r&&r.tradeId!=null?String(r.tradeId):null,strategyId:v.strategyId,
+        status:v.status,violations:v.violations,
+        preserved:true,   // the record itself is untouched and still readable in the account
+        pnl:(r&&typeof r.pnl==='number')?r.pnl:null,
+        result:r?r.result:null});
+    }
+  });
+  return{schemaVersion:TRADE_INTEGRITY_SCHEMA_VERSION,evaluated:(records||[]).length,
+    quarantined:rows.filter(function(x){return x.status==='QUARANTINED';}).length,
+    suspect:rows.filter(function(x){return x.status==='SUSPECT';}).length,rows:rows};
+}
+
 // MOGO-003 PHASE 1 — EVIDENCE PLATFORM (v12.8.0)
 // ══════════════════════════════════════════════════════════════════════════════════════════
 // Implements the reconciled docs/MOGO-003-PHASE-1-SPECIFICATION.md under Engineering Authority
@@ -13998,9 +14193,13 @@ function renderJournal(){
     pairSel.innerHTML='<option value="All">All pairs</option>'+SCAN_PAIRS.map(p=>`<option>${p.replace('/','_')}</option>`).join('');
   }
   const records=getFilteredJournalRecords(journalFilters);
-  const closedRecords=records.filter(r=>r.result==='Win'||r.result==='Loss');
+  // v12.15.0 TRADE INTEGRITY: the SUMMARY excludes quarantined records; the LIST below still
+  // renders every record, so an investigator sees exactly what was excluded.
+  const statRecords=tradeIntegrityFilterForStatistics(records);
+  const closedRecords=statRecords.filter(r=>r.result==='Win'||r.result==='Loss');
   const wins=closedRecords.filter(r=>r.result==='Win').length,total=closedRecords.length;
-  if(sumEl) sumEl.textContent=records.length?`${records.length} trade${records.length!==1?'s':''} (${total} resolved) · ${wins}W/${total-wins}L${total?' · '+Math.round(wins/total*100)+'% WR':''}`:'';
+  const quarantinedCount=records.length-statRecords.length;
+  if(sumEl) sumEl.textContent=records.length?`${records.length} trade${records.length!==1?'s':''} (${total} resolved) · ${wins}W/${total-wins}L${total?' · '+Math.round(wins/total*100)+'% WR':''}${quarantinedCount?` · ${quarantinedCount} quarantined, excluded from these figures`:''}`:'';
   list.innerHTML=renderJournalRecordRows(records);
 }
 // Strategy mini-journal -- same component, same columns, fixed to one strategy.
@@ -15913,7 +16112,10 @@ function computeCanonicalPerformance(records){
     grossProfit:Number(grossProfit.toFixed(2)),grossLoss:Number(grossLoss.toFixed(2)),profitFactor};
 }
 function computeMogoStrategyPerformance(){
-  const closed=paperAccount.closedPositions.filter(p=>!p.isDeveloperTrade); // preserved test-trade exclusion, unchanged from before v12.3.2
+  // v12.15.0: test-trade exclusion preserved exactly, plus quarantined records excluded. The
+  // strategy id is passed so each strategy's own profile rules apply.
+  const closed=tradeIntegrityFilterForStatistics(
+    paperAccount.closedPositions.filter(p=>!p.isDeveloperTrade),'current_strategy');
   const count=closed.length;
   if(count<50){
     return{sufficientSample:false,count,message:'Insufficient clean sample — collect at least 50 valid trades before drawing conclusions.'};
@@ -17596,9 +17798,15 @@ function renderDashboard(){
         // surfaces can never silently disagree on identical data again. Developer/test trades
         // are excluded here exactly as they already are in this same function's running-trades
         // table below (account.openPositions.filter(p=>!p.isDeveloperTrade)).
-        const closed=account.closedPositions.filter(p=>!p.isDeveloperTrade);
+        // v12.15.0 TRADE INTEGRITY: quarantined records are excluded from every dashboard tile,
+        // for EVERY registered strategy -- the filter is keyed on the manifest id, so a strategy
+        // added later inherits this without a code change here. The account is never modified.
+        const closedVisible=account.closedPositions.filter(p=>!p.isDeveloperTrade);
+        const closed=tradeIntegrityFilterForStatistics(closedVisible,entry.manifest.id);
         const perf=computeCanonicalPerformance(closed);
-        const pnl=account.balance-10000;
+        const quarantinedPnlDash=tradeIntegrityReport(closedVisible,entry.manifest.id).rows
+          .reduce(function(a,r){return a+((r.status==='QUARANTINED'&&typeof r.pnl==='number')?r.pnl:0);},0);
+        const pnl=account.balance-10000-quarantinedPnlDash;
         const label=escapeHtml(entry.manifest.label);
         return `<div class="stat-card"><div class="stat-val" style="color:${pnl>=0?'var(--green)':'var(--red)'};font-size:20px">${fmtCurrency(pnl)}</div><div class="stat-lbl">${label} P&L</div></div>
       <div class="stat-card"><div class="stat-val" style="font-size:20px">${perf.winRate!=null?perf.winRate+'%':'—'}</div><div class="stat-lbl">${label} Win Rate</div></div>`;
