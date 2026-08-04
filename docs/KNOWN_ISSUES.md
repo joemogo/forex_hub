@@ -60,8 +60,47 @@ and `retryCount`.
 | `fetchCandlesRange()`, page 2 HTTP 429 | 220 | 80-length array after 2 pages, HTTP 429 invisible |
 | `scanPair()` with an 80-candle response | 220 | `signals=1`, `conf.total=20`, `pairData` records only `[candles, price, signals, conf]` |
 
-`v130` is deliberately **excluded** from `FIXTURE_COUNTS` in `regression-baseline-tools.py` until
-production satisfies the contract, so its red state is not recorded as an accepted baseline.
+~~`v130` is deliberately **excluded** from `FIXTURE_COUNTS` in `regression-baseline-tools.py` until
+production satisfies the contract, so its red state is not recorded as an accepted baseline.~~
+
+**Superseded 2026-08-04.** Production now satisfies the contract, `v130` passes **14/14**, and it is
+carried in `FIXTURE_COUNTS` as a normal suite. The exclusion was correct while the suite was red and
+is obsolete now that it is green.
+
+---
+
+## `regression-baseline.json` is stale — four suites behind `FIXTURE_COUNTS`
+
+**Status:** Disclosed, deliberately not fixed. Found during the MOGO-004 isolation audit, 2026-08-04.
+
+`regression-baseline-tools.py`'s `FIXTURE_COUNTS` dict is the source of truth and is current.
+**The committed `regression-baseline.json` snapshot is not**, and has not been regenerated since
+v12.5.0:
+
+| | `FIXTURE_COUNTS` (current) | `regression-baseline.json` (committed) |
+|---|---|---|
+| Suite entries | **34** | 30 |
+| Total fixtures | **984** | 759 |
+| `appVersion` | — | **absent** |
+
+**Four whole suites are missing from the committed snapshot:** `v127` (ALEX v1.1 release), `v128`
+(Evidence Platform), **`v129` (INC-001/INC-004 isolation guards)** and `v130` (ADR-011 candle
+completeness). The isolation guard suite being invisible to the committed baseline is the most
+notable of these, and is why it is recorded here rather than left to a commit message.
+
+**What is and is not affected.** The **protected-function/constant drift gate is unaffected and
+fully current** — it hashes the 63 functions and 4 constants out of `index.html` on every run and
+reports zero drift. `tests/run_all.sh` counts fixtures live and reports the real number (944 as of
+this entry; the 984 dict total includes the 22 historical scratch-only suites that a fresh clone
+cannot run). **Only the committed fixture-count snapshot is stale.**
+
+**Why it has not been fixed here.** Regenerating it means running
+`regression-baseline-tools.py --update`, which redefines the committed baseline wholesale — sweeping
+in thirteen releases of accumulated change under whatever task happened to notice. This file's own
+rule and [TESTING.md](TESTING.md) §3 both say the same thing: *never run `--update` reflexively just
+to make the tool pass.* **Rebaselining is a deliberate, separately-reviewed act**, not a side effect
+of an audit. Any release that does it must first confirm every suite's count and disclose the
+version jump.
 
 ---
 
