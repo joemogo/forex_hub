@@ -1,20 +1,28 @@
 {
-  "traderId": "TJR",
-  "displayName": "TJR",
   "aliases": [],
-  "sourceChannels": [],
-  "markets": ["forex"],
-  "instruments": [],
-  "sessions": ["Asian", "London", "New York"],
-  "timeframes": [],
-  "terminology": {},
-  "strategyFamilyIds": ["SF|TJR|SESSION_ZONE_REACTION"],
-  "externalResearchStatus": "not_started",
-  "repositoryModelStatus": "session_zone_engine_only",
-  "replayStatus": "not_started",
-  "shadowStatus": "not_started",
-  "paperTradingStatus": "not_approved",
-  "notes": "Repository-confirmed facts only (see the MOGO Trading OS TJR Research and Paper-Trading Readiness Report, and docs/adr/ADR-007-tjr-strategy-definition.md -- the authoritative source for TJR's open rule questions, cross-referenced in open-questions/adr-007-cross-reference.json rather than duplicated here). Confirmed as implemented and live: the Session/Zone Engine (previous-session Asian/London/New York high/low zone construction, 9 pure functions, 48 fixtures, index.html, shipped v12.3.0) and the Strategy Workspace UI (7 tabs: Chart/Rules/Diagnostics/Paper Trading/Replay/Journal/Developer, shipped v12.3.1). Confirmed as NOT implemented: the Zone Interaction/Reaction Engine, five-minute BOS confirmation, candidate generation (no candidate object or function exists anywhere), entry/stop/target/risk calculation (all remain unresolved per ADR-007 Sections B and C), duplicate prevention, candidate expiration, paper-trade opening/management/exit (the Workspace's Paper Trading tab renders only disabled controls and a static not-yet-available message), journal integration (TJR_SERVICES.getJournal() is hardcoded to return an empty array), and Decision Event participation (zero emitDecisionEvent() call sites anywhere reference TJR). No TJR-specific localStorage key exists. No TJR external research source has been ingested into this framework yet -- this profile records only what the MOGO codebase itself currently contains, not any claim about TJR's actual trading methodology.",
   "createdAt": "2026-07-25",
-  "updatedAt": "2026-07-25"
+  "displayName": "TJR",
+  "externalResearchStatus": "partial",
+  "instruments": [],
+  "markets": [
+    "forex"
+  ],
+  "notes": "Repository-confirmed facts only (see the MOGO Trading OS TJR Research and Paper-Trading Readiness Report, and docs/adr/ADR-007-tjr-strategy-definition.md -- the authoritative source for TJR's open rule questions, cross-referenced in open-questions/adr-007-cross-reference.json rather than duplicated here). Confirmed as implemented and live: the Session/Zone Engine (previous-session Asian/London/New York high/low zone construction, 9 pure functions, 48 fixtures, index.html, shipped v12.3.0) and the Strategy Workspace UI (7 tabs: Chart/Rules/Diagnostics/Paper Trading/Replay/Journal/Developer, shipped v12.3.1). Confirmed as NOT implemented: the Zone Interaction/Reaction Engine, five-minute BOS confirmation, candidate generation (no candidate object or function exists anywhere), entry/stop/target/risk calculation (all remain unresolved per ADR-007 Sections B and C), duplicate prevention, candidate expiration, paper-trade opening/management/exit (the Workspace's Paper Trading tab renders only disabled controls and a static not-yet-available message), journal integration (TJR_SERVICES.getJournal() is hardcoded to return an empty array), and Decision Event participation (zero emitDecisionEvent() call sites anywhere reference TJR). No TJR-specific localStorage key exists. No TJR external research source has been ingested into this framework yet -- this profile records only what the MOGO codebase itself currently contains, not any claim about TJR's actual trading methodology. | 2026-07-27: external research is no longer 'not_started' -- 2 source(s) ingested yielding 69 claims, all at 'emerging' confidence with zero rule candidates. Set to 'partial': the material covers only part of the method and no claim has been corroborated to 'supported'. See docs/trader-intelligence/KNOWLEDGE-DASHBOARD.md.",
+  "paperTradingStatus": "not_approved",
+  "replayStatus": "not_started",
+  "repositoryModelStatus": "session_zone_engine_only",
+  "sessions": [
+    "Asian",
+    "London",
+    "New York"
+  ],
+  "shadowStatus": "not_started",
+  "sourceChannels": [],
+  "strategyFamilyIds": [
+    "SF|TJR|SESSION_ZONE_REACTION"
+  ],
+  "terminology": {},
+  "timeframes": [],
+  "traderId": "TJR",
+  "updatedAt": "2026-07-27"
 }

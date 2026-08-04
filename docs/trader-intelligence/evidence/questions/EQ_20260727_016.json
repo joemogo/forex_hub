@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|066",
+  "createdAt": "2026-07-27T22:15:39Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|016",
+  "questionText": "Consolidation is named as one of the three market states but is never defined or given identification criteria, unlike uptrend and downtrend.",
+  "questionType": "unclear_scope",
+  "reason": "The source defines uptrend and downtrend structurally but leaves consolidation undefined.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|002"
+  ]
+}

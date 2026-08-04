@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|064",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|078",
+  "questionText": "Does Alex G's method permit anticipating a setup, or require a closed candle first?",
+  "questionType": "self_contradiction",
+  "reason": "Fourth record of the same inconsistency, and the first internal to a source whose whole subject is the rule being broken. See the contradiction filed in this ingestion. Until resolved, neither the confirmation rule nor any anticipation exception may be promoted.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|004"
+  ]
+}

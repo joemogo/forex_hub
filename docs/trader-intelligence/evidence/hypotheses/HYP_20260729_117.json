@@ -1,0 +1,32 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T23:45:30Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|117",
+  "independentVariables": [
+    "invalidation_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260729|013"
+  ],
+  "statement": "A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry may serve as the primary invalidation condition.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260729|001|013",
+    "EV|EVSRC|ALEX_G|20260729|001|014"
+  ],
+  "updatedAt": "2026-07-29T23:45:30Z"
+}

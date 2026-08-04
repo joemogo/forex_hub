@@ -1,0 +1,32 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-27T22:15:39Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260727|003",
+  "independentVariables": [
+    "setup_requirement"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|TJR|20260727|008"
+  ],
+  "statement": "Step 1 of the setup is to identify a liquidity sweep may be required before a valid entry.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|010",
+    "EV|EVSRC|TJR|20260727|001|011"
+  ],
+  "updatedAt": "2026-07-27T22:15:39Z"
+}

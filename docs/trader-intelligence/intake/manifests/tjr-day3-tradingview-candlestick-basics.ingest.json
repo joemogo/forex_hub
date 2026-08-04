@@ -1,0 +1,516 @@
+{
+  "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+  "_patchLog": [
+    "2026-07-27T22:26:06Z — canonicalReference supplied by owner (https://www.youtube.com/watch?v=8qwEmE1DwYw). Title left unresolved. Transcript NOT reprocessed: sourceFileSha256 unchanged, so segments, evidence and claims are unaffected."
+  ],
+  "annotations": [
+    {
+      "claim": "TJR identifies as a technical-analysis trader who trades primarily from what the chart and price show.",
+      "claimType": "behavioral_observation",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "There's technical analysis traders, which is what I am. Okay, I do the majority of my trading purely based off of what the chart is telling me, so what price is telling me.",
+      "extractionCertainty": "certain",
+      "key": "technical",
+      "section": 2
+    },
+    {
+      "claim": "Day trading as TJR frames it is buying low and selling high, or selling high and buying back low.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "That's what day traders do. We are just trying to buy low, sell high, sell high, buy back low",
+      "extractionCertainty": "high",
+      "key": "daytrade_def",
+      "section": 2
+    },
+    {
+      "claim": "TJR defines trading as predicting where price wants to go with high probability on a daily basis.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "what is trading? is being able to predict where price wants to go with",
+      "extractionCertainty": "moderate",
+      "key": "purpose",
+      "section": 1
+    },
+    {
+      "claim": "TradingView is the only charting platform TJR uses for active live charting.",
+      "claimType": "behavioral_observation",
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "This is the I mean the only kind of charting platform that I would use for active live charting.",
+      "extractionCertainty": "high",
+      "key": "tradingview",
+      "section": 3
+    },
+    {
+      "claim": "Indicators are never used to take trades; they are used only to mark out confluences.",
+      "claimType": "behavioral_observation",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "I personally don't use any indicators to actually take trades. Um, but I use indicators to help me mark out my",
+      "extractionCertainty": "high",
+      "key": "indicators_role",
+      "section": 3
+    },
+    {
+      "claim": "TJR uses neutral chart colours (blue and black) rather than green and red candles.",
+      "claimType": "behavioral_observation",
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "So I use pretty neutral colors. I use blue and black.",
+      "extractionCertainty": "certain",
+      "key": "colours",
+      "section": 4
+    },
+    {
+      "claim": "Green and red candle colours are asserted to harm trading psychology by associating candles with making and losing money.",
+      "claimType": "causal_hypothesis",
+      "directness": "direct_explicit",
+      "evidenceQuality": "low",
+      "evidenceType": "explicit_statement",
+      "excerpt": "the colors of green and red negatively affect our psychology when we're trading",
+      "extractionCertainty": "high",
+      "key": "colour_why",
+      "section": 4
+    },
+    {
+      "claim": "Charts must be set to New York (Eastern) time regardless of the trader's physical location.",
+      "claimType": "setup_requirement",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "Okay, we are going to set our time zone to New York time. Even if you guys are in Africa, if you guys are in Brazil, if you guys are in California, we need to be on Eastern time.",
+      "extractionCertainty": "certain",
+      "key": "timezone",
+      "section": 5,
+      "session": "New York"
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "Make sure that it's set to New York time because that's how we're going to be operating for the rest of the series.",
+      "extractionCertainty": "certain",
+      "key": "timezone_hw",
+      "section": 19,
+      "supports": "timezone"
+    },
+    {
+      "claim": "Charts are set to Eastern time because session opens and closes are defined in the market's own time zone.",
+      "claimType": "causal_hypothesis",
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "Well, the market lives on Eastern time. So, in turn, we have to live on Eastern time.",
+      "extractionCertainty": "high",
+      "key": "timezone_why",
+      "section": 5
+    },
+    {
+      "claim": "The New York Stock Exchange regular session opens at 9:30 a.m. Eastern time.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "But on the charts, market opens at 9:30 a.m.",
+      "extractionCertainty": "high",
+      "key": "nyse_open",
+      "section": 5,
+      "session": "New York"
+    },
+    {
+      "claim": "Marking session levels with charts set to a non-Eastern time zone places them at the wrong times and makes the strategy appear not to work.",
+      "claimType": "failure_condition",
+      "directness": "indirect_implied",
+      "evidenceQuality": "medium",
+      "evidenceType": "failure_observation",
+      "excerpt": "you're on Sa Paulo time and I'm on New York time and you're like, \"Hey, the strategy doesn't work.\"",
+      "extractionCertainty": "moderate",
+      "key": "timezone_fail",
+      "section": 5
+    },
+    {
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "because when we're explaining market open, I'm going to say, \"Hey, market opens at 9:30.\" 9:30 a.m. Eastern time.",
+      "extractionCertainty": "high",
+      "key": "xsrc_premarket_tz",
+      "notes": "Transcript #1 stated 'New York pre-market starts at 8:30' without naming a time zone; the GLOSSARY recorded that as an open ambiguity. This establishes that TJR's session times are quoted in Eastern time.",
+      "relationshipType": "contextualizes",
+      "section": 5,
+      "supportsClaimId": "CLAIM|TJR|20260727|003"
+    },
+    {
+      "claim": "Japanese candlesticks are preferred because they convey four price points for each period.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "medium",
+      "evidenceType": "explicit_statement",
+      "excerpt": "Japanese candlesticks are by far the most valuable because they tell us four different things about every single time frame",
+      "extractionCertainty": "high",
+      "key": "why_candles",
+      "section": 7
+    },
+    {
+      "claim": "The selected chart timeframe determines the period of price action each candlestick represents.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "So right now we are on the 1day time frame. That means every single one of these candles represents 24 hours worth of price action and price movement.",
+      "extractionCertainty": "certain",
+      "key": "timeframe_def",
+      "section": 8
+    },
+    {
+      "claim": "On an up candle the body's bottom is the open and its top is the close; the top of the upper wick is the high and the bottom of the lower wick is the low.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "The bottom of the body of the candle is the candle open. Okay. The top of the body of the candle is the close. The top of the top wick is the high and the bottom of the bottom wick is the low.",
+      "extractionCertainty": "certain",
+      "key": "ohlc",
+      "section": 9
+    },
+    {
+      "claim": "On a down candle the open is the top of the body and the close is the bottom; high and low remain the wick extremes.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "Now, for a down candle, it's the exact same except this up here is the open",
+      "extractionCertainty": "high",
+      "key": "ohlc_down",
+      "section": 10
+    },
+    {
+      "claim": "A high is a move up followed by a move down; a low is a move down followed by a move up.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "A high consists of a move up followed by a move down. A low consists of a move down followed by a move up.",
+      "extractionCertainty": "certain",
+      "key": "high_def",
+      "section": 13
+    },
+    {
+      "claim": "A high is identified as an up candle followed by a down candle; a low as a down candle followed by an up candle.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "we need an up candle followed by a down candle to create a high. We need a down candle followed by an up candle to create a low.",
+      "extractionCertainty": "certain",
+      "key": "high_candles",
+      "section": 15
+    },
+    {
+      "claim": "A high is marked at the highest wick of the two candles forming it; a low at the lowest wick of the two forming it.",
+      "claimType": "setup_requirement",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "We take the highest point of those two candlesticks.",
+      "extractionCertainty": "high",
+      "key": "high_mark",
+      "section": 15
+    },
+    {
+      "claim": "The market moves in exactly three states: uptrend, downtrend, or consolidation (sideways).",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "There's uptrends, there's downtrends, and then there's consolidation.",
+      "extractionCertainty": "certain",
+      "key": "three_states",
+      "section": 14
+    },
+    {
+      "claim": "An uptrend is a series of higher highs and higher lows.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "the market will form something called an uptrend which consists of higher highs being created and higher lows being created in the market",
+      "extractionCertainty": "certain",
+      "key": "uptrend",
+      "section": 16
+    },
+    {
+      "claim": "A downtrend is a series of lower highs and lower lows.",
+      "claimType": "definition",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "When price is trending down, we are making lower highs and lower lows in the market.",
+      "extractionCertainty": "certain",
+      "key": "downtrend",
+      "section": 17
+    },
+    {
+      "claim": "Trend direction alone is not a trade signal, because trends can break and change.",
+      "claimType": "exception",
+      "directness": "direct_explicit",
+      "evidenceQuality": "high",
+      "evidenceType": "explicit_statement",
+      "excerpt": "trading is not as simple as saying, hey, we're in an uptrend. I'm just going to blind blindly press buy. Because trends can break, trends can change.",
+      "extractionCertainty": "high",
+      "key": "trend_caveat",
+      "section": 18
+    }
+  ],
+  "contradictions": [],
+  "manifestVersion": 1,
+  "normalization": {
+    "charsRemoved": 1823,
+    "lineCount": 768,
+    "linesTransformed": 383,
+    "profile": "youtube_timestamp_lines",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "openQuestions": [
+    {
+      "blocking": "blocks_promotion",
+      "claim": null,
+      "priority": "high",
+      "reason": "canonicalReference is null; the source cannot be independently located, dated, or ordered within TJR's series.",
+      "text": "This source was supplied with placeholder title and URL (<video title>, <YouTube URL>). What is the canonical reference for this transcript?",
+      "type": "unclear_scope"
+    },
+    {
+      "blocking": "blocks_rule_candidate",
+      "claim": "three_states",
+      "priority": "medium",
+      "reason": "The source defines uptrend and downtrend structurally but leaves consolidation undefined.",
+      "text": "Consolidation is named as one of the three market states but is never defined or given identification criteria, unlike uptrend and downtrend.",
+      "type": "unclear_scope"
+    },
+    {
+      "blocking": "blocks_rule_candidate",
+      "claim": "high_mark",
+      "priority": "medium",
+      "reason": "Applied literally on a low timeframe this marks a very large number of highs and lows; no filter is stated.",
+      "text": "The two-candle rule for identifying a high or low has no minimum-size or significance filter. Does every up-then-down candle pair qualify as a high?",
+      "type": "unclear_scope"
+    },
+    {
+      "blocking": "blocks_rule_candidate",
+      "claim": "trend_caveat",
+      "priority": "high",
+      "reason": "'break of structure' is referenced in passing as future material but is not defined here.",
+      "text": "Trends can break and change, but this source never defines what constitutes a break of trend. How is a trend break identified?",
+      "type": "implied_requirement"
+    }
+  ],
+  "provenance": {
+    "canonicalReference": "https://www.youtube.com/watch?v=8qwEmE1DwYw",
+    "canonicalReferenceSuppliedAt": "2026-07-27T22:26:06Z",
+    "canonicalReferenceSuppliedBy": "owner",
+    "channelOrPublisher": null,
+    "language": "en",
+    "licensingStatus": "restricted_third_party",
+    "publicationDate": null,
+    "titleProvenance": "Derived by the operator from transcript content. The video's actual YouTube title has NOT been verified: no network access, the transcript states no title, and no repository context references video id 8qwEmE1DwYw. Left unresolved rather than invented.",
+    "titleStatus": "unverified_working_title",
+    "transcriptCompleteness": "unknown",
+    "transcriptProvider": "youtube_transcript_panel_copy",
+    "youtubeVideoId": "8qwEmE1DwYw"
+  },
+  "sections": [
+    {
+      "lines": [
+        1,
+        16
+      ],
+      "n": 1,
+      "title": "Series roadmap and what trading is",
+      "type": "introduction"
+    },
+    {
+      "lines": [
+        17,
+        46
+      ],
+      "n": 2,
+      "title": "Technical versus fundamental traders",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        47,
+        126
+      ],
+      "n": 3,
+      "title": "TradingView platform introduction and signup",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        127,
+        164
+      ],
+      "n": 4,
+      "title": "Chart colours and trading psychology",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        165,
+        200
+      ],
+      "n": 5,
+      "title": "Chart time zone must be New York / Eastern",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        201,
+        222
+      ],
+      "n": 6,
+      "title": "Framing: what today covers",
+      "type": "narration"
+    },
+    {
+      "lines": [
+        223,
+        252
+      ],
+      "n": 7,
+      "title": "Chart types and why Japanese candlesticks",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        253,
+        270
+      ],
+      "n": 8,
+      "title": "Timeframes: each candle is a period of time",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        271,
+        312
+      ],
+      "n": 9,
+      "title": "Candlestick anatomy: body, wicks, open, high, low, close",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        313,
+        406
+      ],
+      "n": 10,
+      "title": "Worked example: reading a daily candle",
+      "type": "chart_commentary"
+    },
+    {
+      "lines": [
+        407,
+        490
+      ],
+      "n": 11,
+      "title": "Scaling down timeframes: 4h to 1h to 15m to 1m",
+      "type": "chart_commentary"
+    },
+    {
+      "lines": [
+        491,
+        518
+      ],
+      "n": 12,
+      "title": "Learning curve and encouragement",
+      "type": "narration"
+    },
+    {
+      "lines": [
+        519,
+        574
+      ],
+      "n": 13,
+      "title": "Highs and lows defined",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        575,
+        596
+      ],
+      "n": 14,
+      "title": "Why highs and lows matter: the three market directions",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        597,
+        628
+      ],
+      "n": 15,
+      "title": "Identifying highs and lows from candle pairs",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        629,
+        670
+      ],
+      "n": 16,
+      "title": "Uptrend defined",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        671,
+        708
+      ],
+      "n": 17,
+      "title": "Downtrend defined",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        709,
+        722
+      ],
+      "n": 18,
+      "title": "Trends can break: the caveat",
+      "type": "instruction"
+    },
+    {
+      "lines": [
+        723,
+        768
+      ],
+      "n": 19,
+      "title": "Homework and close",
+      "type": "conclusion"
+    }
+  ],
+  "slug": "tjr-day3-tradingview-candlestick-basics",
+  "sourceFile": "docs/trader-intelligence/intake/pending/tjr-day3-tradingview-candlestick-basics.txt",
+  "sourceFileBytes": 36812,
+  "sourceFileSha256": "befb81e5ed6726e046b2bd2c3e68353fee93f4e9114b19308f0016cf416cfa9d",
+  "sourceLineCount": 768,
+  "title": "TJR — Day 3 (working title; actual YouTube title unverified)",
+  "traderId": "TJR"
+}

@@ -1,0 +1,37 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|002|020"
+  ],
+  "createdAt": "2026-07-28T03:24:25Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|114",
+  "independentVariables": [
+    "setup_requirement",
+    "setup_requirement"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260727|003) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260727|020",
+    "CLAIM|TJR|20260727|065"
+  ],
+  "statement": "Highs and lows are marked at candle bodies, not at wicks may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|065).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260727|001|021",
+    "EV|EVSRC|ALEX_G|20260727|001|022",
+    "EV|EVSRC|ALEX_G|20260728|001|009"
+  ],
+  "updatedAt": "2026-07-28T03:24:25Z"
+}

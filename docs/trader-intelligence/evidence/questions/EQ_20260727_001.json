@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260727|001",
+  "questionText": "No risk-per-trade sizing rule of any kind appears in this transcript. What percentage of account equity (or fixed dollar risk) does TJR risk per trade?",
+  "questionType": "unclear_scope",
+  "reason": "Zero risk_rule claims were extractable: risk management is referenced only as a mentorship selling point, never as a stated number or formula.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "EVSRC|ALEX_G|20260728|001",
+  "entityType": "EVIDENCE_SOURCE",
+  "eventId": "LCEVT|EVIDENCE_SOURCE|EVSRC|ALEX_G|20260728|001|001",
+  "eventType": "created",
+  "metadata": {},
+  "newStatus": "registered",
+  "priorStatus": null,
+  "reason": "Source registered.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-28T01:36:32Z"
+}

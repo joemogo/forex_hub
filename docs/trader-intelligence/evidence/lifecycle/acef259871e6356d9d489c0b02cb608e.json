@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "CLAIM|TJR|20260727|055",
+  "entityType": "CLAIM",
+  "eventId": "LCEVT|CLAIM|CLAIM|TJR|20260727|055|001",
+  "eventType": "created",
+  "metadata": {},
+  "newStatus": "active",
+  "priorStatus": null,
+  "reason": "Claim registered.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-27T22:15:39Z"
+}

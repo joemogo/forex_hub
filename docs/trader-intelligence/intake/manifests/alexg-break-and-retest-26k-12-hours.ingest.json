@@ -1,0 +1,636 @@
+{
+  "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+  "annotations": [
+    {
+      "key": "income-26k-12h",
+      "section": 1,
+      "excerpt": "breing reetus made me $26,000 in 12 hours",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "Alex G attributes $26,000 of profit in 12 hours to the break-and-retest pattern. No account statement, instrument, date, position size or risk figure accompanies it."
+    },
+    {
+      "key": "millionaire-claim",
+      "section": 1,
+      "excerpt": "breaking reetus has literally made me a millionaire",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "Alex G states the break-and-retest pattern made him a millionaire. Unverified and unquantified."
+    },
+    {
+      "key": "br-daily-frequency",
+      "section": 1,
+      "excerpt": "breaking retest happens literally every single day in the market",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "marketCondition",
+      "claim": "Break-and-retest is asserted to occur every day in the market, and is offered as the reason no other pattern needs to be studied. No frequency measurement is given."
+    },
+    {
+      "key": "br-is-continuation",
+      "section": 2,
+      "excerpt": "what price wants to communicate to you with a break and retest is a continuation breaking retest is a continuation pattern",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Break-and-retest is defined as a CONTINUATION pattern: the retest is a pause that precedes further movement in the direction price was already travelling."
+    },
+    {
+      "key": "br-any-timeframe-any-instrument",
+      "section": 2,
+      "excerpt": "it can happen across all different time frames and it can happen across all different currency pairs all different Commodities Futures stocks anything",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "definition",
+      "claim": "The pattern is asserted to apply on every timeframe and to every instrument class - currencies, commodities, futures and stocks. No instrument-specific qualification is given."
+    },
+    {
+      "key": "zone-terminology-equivalence",
+      "section": 3,
+      "excerpt": "support and resistance supply and demand area of interest it's all the same thing",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Alex G states explicitly that support and resistance, supply and demand, and area of interest are the same concept under different names."
+    },
+    {
+      "key": "br-most-effective-at-zones",
+      "section": 3,
+      "excerpt": "now breaking retest is most effective at these zones",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "setup_requirement",
+      "claim": "Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory."
+    },
+    {
+      "key": "htf-more-respected",
+      "section": 4,
+      "excerpt": "the higher the time frame the more it is going to be respected",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "timeframe_rule",
+      "claim": "A break-and-retest on a higher timeframe is asserted to be more reliable than one on a lower timeframe. Comparative only - no ranking, weighting or threshold is stated."
+    },
+    {
+      "key": "personal-4h-daily-for-continuation",
+      "section": 4,
+      "excerpt": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "timeframe_rule",
+      "claim": "His own practice is to identify break-and-retest continuation on the 4-hour and daily and to take entries on lower timeframes. Framed as personal preference ('I personally like'), not as a requirement."
+    },
+    {
+      "key": "zone-box-size-irrelevant",
+      "section": 5,
+      "excerpt": "doesn't matter the size of the box it can be this big can be this big as long as you kind of get enough room so you can get the multiple Taps into it",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "definition",
+      "claim": "Zone width is stated to be unconstrained - 'doesn't matter the size of the box' - subject only to leaving 'enough room' to contain multiple touches. Neither the room nor the number of touches is quantified, so zone construction remains non-deterministic."
+    },
+    {
+      "key": "min-one-structure-point",
+      "section": 5,
+      "excerpt": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum."
+    },
+    {
+      "key": "retest-becomes-next-structure-point",
+      "section": 5,
+      "excerpt": "now that we have broken this Zone and we have retested it this right here turns into the next structure point that we can then have the break and retest",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively up (or down) the chart."
+    },
+    {
+      "key": "no-engulfing-no-entry",
+      "section": 6,
+      "excerpt": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "invalidation_rule",
+      "claim": "A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry."
+    },
+    {
+      "key": "no-entry-signal-demonstrated",
+      "section": 6,
+      "supports": "no-engulfing-no-entry",
+      "excerpt": "you didn't get any entry signal you didn't get an engulfing Candlestick",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high"
+    },
+    {
+      "key": "downtrend-structure-definition",
+      "section": 7,
+      "excerpt": "if we're heading to the downside price has to have a low and has to have a lower high so then we continue heading to the down",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "A continuing downtrend is defined as a sequence of lows with lower highs between them; the mirror of the uptrend high-plus-retracement sequence stated immediately before."
+    },
+    {
+      "key": "daytrade-4h-1h",
+      "section": 7,
+      "excerpt": "for your day Trad you want to use it more on the 4our one hour",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "timeframe_rule",
+      "claim": "For day trading, break-and-retest is to be read on the 4-hour and 1-hour. Qualified immediately by 'depending on how approach you want to take it', so it is a default rather than a constraint."
+    },
+    {
+      "key": "swing-daily-weekly",
+      "section": 7,
+      "excerpt": "swing trades you want to take it on the daily and then weekly time frame",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "timeframe_rule",
+      "claim": "For swing trades, break-and-retest is to be read on the daily and weekly. The preceding word in the transcript ('Inay') is garbled and the second trading style it names cannot be recovered from this transcript - recorded as an open question, not guessed."
+    },
+    {
+      "key": "entry-signal-on-lower-timeframe",
+      "section": 8,
+      "excerpt": "but now the actual entry signal you have to go on the lower time frame",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour."
+    },
+    {
+      "key": "bullish-engulfing-required",
+      "section": 8,
+      "excerpt": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "confirmation_rule",
+      "claim": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have')."
+    },
+    {
+      "key": "rejection-candles-end-the-retest",
+      "section": 8,
+      "excerpt": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "confirmation_rule",
+      "claim": "The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern."
+    },
+    {
+      "key": "morning-star-composition",
+      "section": 9,
+      "excerpt": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "confirmation_rule",
+      "claim": "The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number."
+    },
+    {
+      "key": "entry-at-confirmation",
+      "section": 9,
+      "excerpt": "you would have simply put your entry point right here",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "entry_rule",
+      "claim": "Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named."
+    },
+    {
+      "key": "stop-under-the-rejection-point",
+      "section": 9,
+      "excerpt": "you would have put your stop loss right under this point",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "stop_rule",
+      "claim": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated."
+    },
+    {
+      "key": "minimum-1to2-risk-reward",
+      "section": 9,
+      "excerpt": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "target_rule",
+      "claim": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target."
+    },
+    {
+      "key": "entry-after-engulfing-trade2",
+      "section": 10,
+      "supports": "bullish-engulfing-required",
+      "excerpt": "we would enter our trade after this bullish engulfing",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium"
+    },
+    {
+      "key": "stop-placement-trade2",
+      "section": 10,
+      "supports": "stop-under-the-rejection-point",
+      "excerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium"
+    },
+    {
+      "key": "stopped-out-no-intervention",
+      "section": 10,
+      "excerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "trade_management_rule",
+      "claim": "A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit."
+    },
+    {
+      "key": "stop-rule-stated-as-invariant",
+      "section": 11,
+      "excerpt": "it's literally the same thing every single time your stop- loss is right under it",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "stop_rule",
+      "claim": "Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere."
+    },
+    {
+      "key": "minimum-1to2-repeated",
+      "section": 11,
+      "supports": "minimum-1to2-risk-reward",
+      "excerpt": "you have a minimum of a 1 to two risk to reward",
+      "evidenceType": "rule_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high"
+    },
+    {
+      "key": "morning-star-repeated",
+      "section": 11,
+      "supports": "morning-star-composition",
+      "excerpt": "you have that morning star formation bullish engulf and Candlestick",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium"
+    },
+    {
+      "key": "one-percent-worked-example",
+      "section": 12,
+      "excerpt": "you risk 1% you got 2% on this trade you lost 1% on this trade",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "performance_hypothesis",
+      "claim": "Worked arithmetic across the three demonstrated trades: 1% risked per trade, one win at 1:2 (+2%), one loss (-1%), one win (+2%), netting about +3%. The 1% is the figure used in the arithmetic; it is not restated here as the required risk percentage."
+    },
+    {
+      "key": "nine-to-twelve-percent-monthly",
+      "section": 12,
+      "excerpt": "you can average anywhere from 9 to 12% a month",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "A monthly return of 9 to 12% is presented as an achievable average, extrapolated from one 3% week repeated four times, and asserted to beat 'any single Bank any single institution'. The extrapolation assumes every week reproduces the demonstrated week."
+    },
+    {
+      "key": "set-and-forget-is-this-method",
+      "section": 13,
+      "excerpt": "everything I've showed you in this video is an example of what I do with my set",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Alex G identifies the method demonstrated in this video - break-and-retest plus engulfing confirmation, fixed stop and preset minimum 1:2 target - as his 'set and forget' strategy. This is the first source that ties the named strategy to a specific mechanical procedure rather than using the phrase as a format or brand label."
+    },
+    {
+      "key": "five-and-half-years",
+      "section": 13,
+      "excerpt": "it's something that I've been using for the last 5 and a half years",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "low",
+      "claimType": "behavioral_observation",
+      "claim": "Alex G states he has used this method for five and a half years. No track record accompanies it."
+    },
+    {
+      "key": "live-37k-open-profit",
+      "section": 13,
+      "excerpt": "we are currently about $37,000 in profit",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "An open position is described on screen as roughly $37,000 in unrealised profit. No instrument, entry, size, account size or verification accompanies it."
+    },
+    {
+      "key": "student-income-claim",
+      "section": 13,
+      "excerpt": "students that use my set forget strategy make anywhere from ,000 to $1,500 a week as a beginner set and forget Trader",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "moderate",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "Students are claimed to earn between an unreadable lower bound and $1,500 per week as beginners. The lower bound is corrupted in the transcript (',000') and is NOT reconstructed here. Repeated verbatim later in the same source alongside a 'first 3 months' framing. No sample size, failure rate or verification."
+    }
+  ],
+  "contradictions": [
+    {
+      "a": "nine-to-twelve-percent-monthly",
+      "bClaimId": "CLAIM|ALEX_G|20260728|100",
+      "type": "NUMERIC_THRESHOLD",
+      "severity": "minor",
+      "rationale": "Within-educator, third distinct figure for the same quantity. This source: 9-12% a month, extrapolated from one demonstrated 3% week. Source #6 (CLAIM|ALEX_G|20260728|100): 8-10% a month, asserted as 'a fact anybody can do that'. Source #8 (CLAIM|ALEX_G|20260728|150) already records a further set, 7/12/15% then 7-10%. Filed minor because no trading decision depends on the monthly figure, but recorded because three incompatible ranges for one headline number bear on how the source's numeric claims should be weighted generally."
+    },
+    {
+      "a": "minimum-1to2-risk-reward",
+      "bClaimId": "CLAIM|ALEX_G|20260728|145",
+      "type": "CONDITIONAL_SCOPE",
+      "severity": "material",
+      "rationale": "Behaviour versus stated rule, and it bears directly on trade management. This source states the take-profit is set to 'a minimum of a 1 to two risk to reward', which makes 1:2 an acceptable target. Source #8 (CLAIM|ALEX_G|20260728|145) names closing a trade that was set to 1:4 AT 1:2 as the core psychological failure - 'the exit is driven by the size of the number, not by the market'. Both cannot be applied without a rule distinguishing a target SET at the 1:2 floor from a target REVISED down to it. The distinction is never drawn in either source, and it determines whether a preset target may be reduced after entry."
+    }
+  ],
+  "manifestVersion": 1,
+  "normalization": {
+    "charsRemoved": 2258,
+    "lineCount": 92,
+    "linesTransformed": 91,
+    "profile": "youtube_duration_label",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [
+      1
+    ],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "openQuestions": [
+    {
+      "claim": "stop-rule-stated-as-invariant",
+      "type": "missing_stop_placement",
+      "priority": "critical",
+      "blocking": "blocks_rule_candidate",
+      "text": "How far beyond the rejection structure is the stop placed? The rule is stated as invariant ('the same thing every single time your stop-loss is right under it') but no buffer is given in any unit - no pips, no ATR multiple, no percentage, and no statement that it sits flush against the structure. Position size = risk / stop distance, so the sizing rules remain non-computable without this number.",
+      "reason": "This is the residual half of KEGAP-001. The ANCHOR is now stated for the first time in nine sources; the DISTANCE is still absent. Recorded so the gap is not reported as closed on the strength of the anchor alone."
+    },
+    {
+      "claim": "stop-rule-stated-as-invariant",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "What exactly is 'it' / 'this point'? Three readings are each consistent with the words and the chart narration: (a) the low of the final rejection/engulfing candle, (b) the low of the whole Morning Star formation, (c) the far boundary of the retested zone. The three give materially different stop distances on the same setup.",
+      "reason": "The anchor is deictic in all three demonstrations. Until it is resolved, an implementation would have to choose, and choosing would be MOGO authoring a parameter and attributing it to the educator."
+    },
+    {
+      "claim": "stop-rule-stated-as-invariant",
+      "type": "unclear_scope",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "Is the short-side mirror ever stated? All three demonstrations are longs and the phrasing is always 'right under'. The symmetric 'right above' for a short is never spoken or shown in this source.",
+      "reason": "The pattern is stated to work in both directions, but the stop rule is only ever articulated for one. Recorded rather than assumed symmetric."
+    },
+    {
+      "claim": "minimum-1to2-risk-reward",
+      "type": "missing_target_logic",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "1:2 is stated as a MINIMUM. How is the actual target chosen when structure would allow more? Existing ALEX_G sources record 1:3 and 1:4 as observations and an 80-100 pip personal average, none as a selection procedure.",
+      "reason": "Without a selection rule, the only mechanically implementable reading is 'always exactly 1:2', which the word 'minimum' explicitly contradicts."
+    },
+    {
+      "claim": "zone-box-size-irrelevant",
+      "type": "ambiguous_statement",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "Zone width is stated to be unconstrained ('doesn't matter the size of the box') subject to leaving 'enough room' for 'multiple Taps'. How much room, and how many touches? The same source quantifies a different requirement precisely ('a minimum of one structure point'), so the omission here is unlikely to be an oversight.",
+      "reason": "Bears directly on GAP-AMBIG-001 and on production rule ALEX_SR_008, whose source is recorded as giving 'no formula given' for zone tightness. This source states the non-constraint explicitly for the first time, which is evidence about the gap even though it does not close it."
+    },
+    {
+      "claim": "bullish-engulfing-required",
+      "type": "implied_requirement",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "Is the confirmation specifically a bullish engulfing candle, or any rejection formation? The requirement is stated as 'a bullish engulfing Candlestick confirmation', but the demonstrations show a Morning Star (three doji plus one engulfing) and the narration also accepts 'rejection candlesticks' generally.",
+      "reason": "Determines whether an implementation must detect one specific candle pattern or a family of them. The three phrasings are not interchangeable."
+    },
+    {
+      "claim": "swing-daily-weekly",
+      "type": "ambiguous_statement",
+      "priority": "low",
+      "blocking": "non_blocking",
+      "text": "The transcript reads 'for your Inay and swing trades'. 'Inay' is a caption artifact and the trading style it names cannot be recovered from this transcript.",
+      "reason": "Recorded rather than guessed. 'Intraday' is the obvious candidate but it would conflict with the immediately preceding day-trading rule, so the reading is not safe to assume."
+    },
+    {
+      "claim": "student-income-claim",
+      "type": "other",
+      "priority": "low",
+      "blocking": "non_blocking",
+      "text": "The lower bound of the student income claim is corrupted in the transcript, appearing as ',000' in both occurrences. The figure cannot be read.",
+      "reason": "Recorded as unreadable rather than reconstructed as '$1,000'. The claim is marketing content and no rule depends on it."
+    },
+    {
+      "claim": "min-one-structure-point",
+      "type": "unclear_scope",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "What counts as a 'structure point' for the minimum-of-one test - any candle body close beyond the level, or a swing high/low meeting some significance test? This source does not define it.",
+      "reason": "The same undefined term already gates several existing ALEX_G rules and is the subject of cross-educator contradiction XCONTRA|20260729|001 (Alex G: any body close counts; Rayner Teo: only major swings). A quantified minimum over an undefined unit is still non-deterministic."
+    }
+  ],
+  "provenance": {
+    "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+    "channelOrPublisher": "fxalexg (https://www.youtube.com/@fxalexg__)",
+    "language": "en",
+    "licensingStatus": "restricted_third_party",
+    "publicationDate": null,
+    "transcriptCompleteness": "complete",
+    "transcriptProvider": "youtube_auto_caption_copy"
+  },
+  "sections": [
+    {
+      "n": 1,
+      "lines": [
+        1,
+        8
+      ],
+      "title": "Hook: break-and-retest income claims and the 'it is simple' thesis",
+      "type": "introduction"
+    },
+    {
+      "n": 2,
+      "lines": [
+        9,
+        18
+      ],
+      "title": "What the pattern looks like; continuation and the breathing analogy",
+      "type": "narration"
+    },
+    {
+      "n": 3,
+      "lines": [
+        19,
+        24
+      ],
+      "title": "Where it works: strong zones, and S/R = supply-demand = area of interest",
+      "type": "instruction"
+    },
+    {
+      "n": 4,
+      "lines": [
+        25,
+        32
+      ],
+      "title": "Daily chart walkthrough; higher timeframes are more respected",
+      "type": "chart_commentary"
+    },
+    {
+      "n": 5,
+      "lines": [
+        33,
+        41
+      ],
+      "title": "Zone markup: box size, the minimum-one-structure-point rule, first break and retest",
+      "type": "chart_commentary"
+    },
+    {
+      "n": 6,
+      "lines": [
+        42,
+        50
+      ],
+      "title": "Repeated structure points both directions; the setup declined for no engulfing",
+      "type": "chart_commentary"
+    },
+    {
+      "n": 7,
+      "lines": [
+        51,
+        56
+      ],
+      "title": "Structure definition and which timeframe to use per trading style",
+      "type": "instruction"
+    },
+    {
+      "n": 8,
+      "lines": [
+        57,
+        66
+      ],
+      "title": "Dropping to the lower timeframe; the bullish engulfing confirmation requirement",
+      "type": "chart_commentary"
+    },
+    {
+      "n": 9,
+      "lines": [
+        67,
+        71
+      ],
+      "title": "TRADE 1 -- Morning Star confirmation, entry, stop placement, minimum 1:2 target",
+      "type": "trade_commentary"
+    },
+    {
+      "n": 10,
+      "lines": [
+        72,
+        75
+      ],
+      "title": "TRADE 2 -- same construction, stopped out by fluctuation",
+      "type": "trade_commentary"
+    },
+    {
+      "n": 11,
+      "lines": [
+        76,
+        78
+      ],
+      "title": "TRADE 3 -- 'the same thing every single time'; the stop rule stated as invariant",
+      "type": "trade_commentary"
+    },
+    {
+      "n": 12,
+      "lines": [
+        79,
+        82
+      ],
+      "title": "Worked 1% arithmetic across the three trades and the 9-12% monthly figure",
+      "type": "narration"
+    },
+    {
+      "n": 13,
+      "lines": [
+        83,
+        92
+      ],
+      "title": "'Set and forget' branding, live P&L, student income claims and the funnel CTA",
+      "type": "promotion"
+    }
+  ],
+  "slug": "alexg-break-and-retest-26k-12-hours",
+  "sourceFile": "docs/trader-intelligence/intake/pending/alexg-break-and-retest-26k-12-hours.txt",
+  "sourceFileBytes": 15232,
+  "sourceFileSha256": "7f954e14ec5cb0a6b17de28fb0e6caed6910e6cc4f2ec72c8c6cc3b3441e58d2",
+  "sourceLineCount": 92,
+  "title": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+  "traderId": "ALEX_G"
+}

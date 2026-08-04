@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:41:09Z",
+  "endTimestamp": "18:36",
+  "intakeId": "INTAKE|ALEX_G|20260727|001",
+  "language": "en",
+  "lineEnd": 372,
+  "lineStart": 368,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "someone speaks with. I have a very interesting American, Latin, Spanish, Cuban, Miami accents. Very different from the rest of America and the rest of the English speakaking native language.",
+  "schemaVersion": 1,
+  "sectionTitle": "Bodies versus wicks: where to mark structure (1/3)",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260727|001|011",
+  "segmentType": "other",
+  "sequenceNumber": 11,
+  "sourceId": "EVSRC|ALEX_G|20260727|001",
+  "speaker": null,
+  "startTimestamp": "18:23",
+  "textHash": "d408e6a61c5ce4a2507e085caf45f375c400cb87d357e2c1226046861eef6e0a"
+}

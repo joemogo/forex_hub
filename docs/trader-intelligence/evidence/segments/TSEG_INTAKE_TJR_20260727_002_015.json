@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "33:45",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 628,
+  "lineStart": 597,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Well, how are we supposed to identify a move down then and a move up? Well, awesome. We just learned about candlesticks. So, what does that mean? Well, we need an up candle followed by a down candle to create a high. We need a down candle followed by an up candle to create a low. So, let's go on here and let's look for them. We have an up candle followed by a down candle. Awesome. That's a high. We have a down candle followed by an up candle. Awesome. You take the lowest point of those two candlesticks. So, whichever wicks wick is lower, boom, this is a low. We have an up candle followed by a down candle. We take the highest point of those two candlesticks. So, this is the highest point that this candlestick got to, but this is the highest point that this candlestick got to. So, this is our high. Again, I don't want you guys to get overwhelmed, but what I want you guys to do is to be on your trading view and mark out five different examples of a high and five different examples of a low. So, we have a move up, then a move down. What do we do? We mark the highest point of those two candles. Which one has the higher wick? This first candle does. Awesome. This is our high. We have a move down then a move up. Lowest point of those who candlesticks. Boom. This is a low.",
+  "schemaVersion": 1,
+  "sectionTitle": "Identifying highs and lows from candle pairs",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|015",
+  "segmentType": "other",
+  "sequenceNumber": 15,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "32:11",
+  "textHash": "0aace24a96d5db3bb77c8f5c5af94e07e11ef26300272dab3c9e9842891b2863"
+}

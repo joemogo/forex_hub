@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|009",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|001",
+  "questionText": "The 'snake trick' locates a structure point at 'a sharp turn'. What quantitatively counts as a turn? No pivot strength, minimum swing size, lookback window or bar count is given, so the procedure is discretionary rather than algorithmic.",
+  "questionType": "unclear_scope",
+  "reason": "The only stated method for placing the active HL/LH depends on an undefined visual judgement.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

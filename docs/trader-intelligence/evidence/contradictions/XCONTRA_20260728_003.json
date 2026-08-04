@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|047",
+  "claimBId": "CLAIM|ALEX_G|20260728|028",
+  "contradictionId": "XCONTRA|20260728|003",
+  "contradictionType": "DIRECTIONAL",
+  "detectedAt": "2026-07-28T03:24:25Z",
+  "metadata": {},
+  "rationale": "Within-educator. Source #5 (liquidity) states entry requires confirmation that price is ALREADY moving in the intended direction and explicitly rejects entering on anticipation. This source accepts a 'potential lower high' - a structure point that has not completed - as a valid sell location, and labels an incomplete lower high during the directional read. The two prescriptions are opposite for the same decision. Recorded, not resolved: the sources may be separated in time or address different stages, but neither states that. Note CLAIM|ALEX_G|20260728|033 already records him conceding he enters on anticipation despite teaching against it.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

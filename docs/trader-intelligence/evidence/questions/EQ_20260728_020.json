@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|028",
+  "createdAt": "2026-07-28T02:23:09Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|020",
+  "questionText": "A confirmation is 'a bearish candlestick confirming that it's going in that direction', with engulfing, morning star and pin bar named. Is any candle in the intended direction sufficient, or only these named patterns? Must it close inside the zone?",
+  "questionType": "unclear_scope",
+  "reason": "The core rule of the source, stated both loosely (any directional candle) and specifically (named patterns), without reconciling the two.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|002"
+  ]
+}

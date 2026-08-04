@@ -1,0 +1,567 @@
+{
+ "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+ "annotations": [
+  {
+   "claim": "The source is a live recorded morning session with roughly 70 attendees, held at 6 a.m. It is trade commentary and Q&A rather than structured instruction.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "70 people on here for 6 a.m not bad",
+   "extractionCertainty": "certain",
+   "key": "live_format",
+   "section": 1
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "we've confirmed that we are now completely bearish we know this we were looking for shorts",
+   "extractionCertainty": "certain",
+   "key": "wait_for_leg_up",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|074"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "why because it's previous support here also resistance",
+   "extractionCertainty": "certain",
+   "key": "prior_sr_zone",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|068"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "so then we get that leg up and we wait for our entry signal here",
+   "extractionCertainty": "certain",
+   "key": "wait_entry_signal",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|060"
+  },
+  {
+   "claim": "Correlated pairs are compared and the one presenting the cleaner structure is preferred. NZDUSD and NZDCAD are treated as moving very similarly.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "would be nzdusd which is basically like its",
+   "extractionCertainty": "high",
+   "key": "correlated_pairs",
+   "section": 3
+  },
+  {
+   "claim": "The EMA is used as dynamic support or resistance: support while bullish and resistance while bearish. Its period is still not stated.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "this ema would have caught up and it would have been acting as resistance",
+   "extractionCertainty": "certain",
+   "key": "ema_role",
+   "section": 3
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "because clearly when it's bullish its support when it's bearish it's resistance",
+   "extractionCertainty": "certain",
+   "key": "ema_flips",
+   "section": 3,
+   "supports": "ema_role"
+  },
+  {
+   "claim": "The entry zone is where the EMA and a prior structure point converge on the same retracement, rather than either alone.",
+   "claimType": "entry_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "waiting for that lower high a previous structure and by the time that this comes back up here",
+   "extractionCertainty": "high",
+   "key": "ema_confluence",
+   "section": 3
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "so you can see the the shift and structure on the lower timeframes",
+   "extractionCertainty": "certain",
+   "key": "ltf_shift_read",
+   "section": 4,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|062"
+  },
+  {
+   "claim": "The expected path is projected forward - a pullback into the zone, then a resumption - while the entry itself is still deferred to a confirmation at the level. The setup is anticipated; the entry is not.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "so this might be like the one that's going to push it up",
+   "extractionCertainty": "certain",
+   "key": "project_path",
+   "relationshipType": "contextualizes",
+   "section": 4
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "and then here's where we wait for the breaker structure and then we continue shorting it down",
+   "extractionCertainty": "high",
+   "key": "wait_bos_then_short",
+   "section": 4,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|049"
+  },
+  {
+   "claim": "The counter-trend leg is deliberately forgone in order to take the larger continuation leg that follows it.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "we don't really want to catch this little move up because then we catch the bigger leg all",
+   "extractionCertainty": "certain",
+   "key": "skip_small_move",
+   "section": 5
+  },
+  {
+   "claim": "Trading with the trend is asserted to improve the odds. No figure is attached.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "and we're going with the trend so the odds are in our favor even more",
+   "extractionCertainty": "certain",
+   "key": "with_trend_odds",
+   "section": 5
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "ever trade the counter trend never bro not anymore",
+   "extractionCertainty": "certain",
+   "key": "never_counter_trend",
+   "section": 6,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|074"
+  },
+  {
+   "claim": "Counter-trend trading is characterised as a beginner error he has stopped making. The phrasing 'not anymore' indicates he previously did it.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "opinion",
+   "excerpt": "that's like a that's like a rookie thing",
+   "extractionCertainty": "certain",
+   "key": "counter_trend_rookie",
+   "section": 6
+  },
+  {
+   "claim": "Trades are taken only when judged worth the capital risked. Selectivity is presented as a gate in its own right, separate from the mechanical entry conditions.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "i only take trades that are worth my money i don't want to put",
+   "extractionCertainty": "certain",
+   "key": "only_worth_it_trades",
+   "section": 6
+  },
+  {
+   "claim": "Having already met his objective for the month is given as a reason not to take further trades. Month-to-date performance is treated as an input to trade selection.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "i've already made money trading this month so like i don't really need to take any",
+   "extractionCertainty": "certain",
+   "key": "no_need_to_trade",
+   "section": 6
+  },
+  {
+   "claim": "The stated rationale for selectivity is an investment analogy: capital is deployed only when the expected return justifies it, never to be active.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "you would only invest your money into a business if it's worth the investment",
+   "extractionCertainty": "certain",
+   "key": "business_analogy",
+   "section": 7
+  },
+  {
+   "claim": "Direction is chosen by counting the confluences available for each side and taking the side with materially more. The comparison is explicitly two-sided.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "find me this many conferences here to go along there won't be any",
+   "extractionCertainty": "high",
+   "key": "count_both_sides",
+   "section": 8
+  },
+  {
+   "claim": "Confluences are written down per trade as a recorded list. The list is displayed on screen in this session and its contents are never read aloud.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "you know how how i always write down the confluences",
+   "extractionCertainty": "certain",
+   "key": "written_confluences",
+   "section": 8
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "i have my alarm set on all of them so it's just a matter of time",
+   "extractionCertainty": "certain",
+   "key": "alarms_on_levels",
+   "section": 9,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|045"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "clearly bullish on the weekly is",
+   "extractionCertainty": "high",
+   "key": "weekly_bias_then_retest",
+   "section": 10,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|009"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "so you could tell it's a round psychological level of",
+   "extractionCertainty": "certain",
+   "key": "round_number_86",
+   "section": 10,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|016"
+  },
+  {
+   "claim": "A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "i wasn't really that convinced because we were shy about let's say",
+   "extractionCertainty": "certain",
+   "key": "shy_ten_pips",
+   "section": 10
+  },
+  {
+   "claim": "Where a level is approached but not reached, the stated response is to wait rather than to enter on the near-miss.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "i don't really want to force this thing",
+   "extractionCertainty": "certain",
+   "key": "dont_force_it",
+   "section": 10
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "let's just wait and just wait for the complete shift and structure",
+   "extractionCertainty": "certain",
+   "key": "wait_complete_shift",
+   "section": 10,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|049"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "chart_example",
+   "excerpt": "here is our higher low with our bullish engulfing",
+   "extractionCertainty": "certain",
+   "key": "hl_plus_engulfing",
+   "section": 11,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|046"
+  },
+  {
+   "claim": "A valid setup he had identified in advance was missed through inattention, despite alarms being part of his stated process. Recorded from the source's own account.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "failure_observation",
+   "excerpt": "i forgot what i was doing and i wasn't able to get this",
+   "extractionCertainty": "certain",
+   "key": "missed_entry",
+   "section": 11
+  },
+  {
+   "claim": "After missing an entry, the stated response is to set an alarm for the next pullback rather than to chase the move.",
+   "claimType": "trade_management_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "i had set my alarm to get another entry at the next pullback",
+   "extractionCertainty": "certain",
+   "key": "alarm_for_next_pullback",
+   "section": 11
+  },
+  {
+   "claim": "A 1:4 risk-to-reward is described for one watchlist setup. Stated as an observation about that chart, not as a required minimum.",
+   "claimType": "target_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "it's a nice one to four to previous",
+   "extractionCertainty": "moderate",
+   "key": "one_to_four_rr",
+   "section": 13
+  }
+ ],
+ "contradictions": [
+  {
+   "a": "shy_ten_pips",
+   "bClaimId": "CLAIM|ALEX_G|20260728|068",
+   "rationale": "Behaviour versus stated rule. Every Alex G source states the setup condition as price reaching a level - the confirmation 'has to be at a support level', and away from one the rule is 'simply not applicable'. Here a setup is declined because price came roughly 10 pips SHORT of the level, which is a different and unstated condition: a proximity tolerance. No source in the library gives a tolerance, a maximum acceptable distance, or a rule for near-misses. The taught rule is binary; the demonstrated behaviour is graded. Recorded, not resolved - MOGO must not invent the threshold.",
+   "severity": "material",
+   "type": "CONDITIONAL_SCOPE"
+  }
+ ],
+ "manifestVersion": 1,
+ "normalization": {
+  "charsRemoved": 872,
+  "lineCount": 438,
+  "linesTransformed": 218,
+  "profile": "youtube_timestamp_lines",
+  "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+  "reversible": true,
+  "unmatchedLines": [],
+  "wordsAdded": 0,
+  "wordsRemoved": 0,
+  "wordsReordered": 0
+ },
+ "openQuestions": [
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "shy_ten_pips",
+   "priority": "high",
+   "reason": "The taught rule is binary - at the level or not applicable. The demonstrated behaviour is graded: ~10 pips short was judged too far, on a pair where 10 pips is small relative to daily range. No source gives a tolerance. This is the clearest case yet in the library of a discretionary filter operating in live trading that appears in none of the instructional sources. **MOGO must not pick a number.**",
+   "text": "How close must price come to a level for the setup to count?",
+   "type": "behavior_conflicts_with_instruction"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "ema_role",
+   "priority": "high",
+   "reason": "Second source to use the EMA as a load-bearing confluence and the second to omit its period (see CLAIM|ALEX_G|20260728|050). Here its ROLE is finally stated - dynamic support while bullish, resistance while bearish - which is genuinely new. The parameter is still missing, so the rule remains non-reproducible.",
+   "text": "Which EMA period is used, and on which timeframe?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "written_confluences",
+   "priority": "high",
+   "reason": "He says he always writes the confluences down, displays the list on screen, and invites the group to screenshot it - and never reads it aloud. The direction decision is described as counting confluences on each side, so the list IS the decision rule. It is visually present in the source and textually absent. This is the third visual-only artifact in three sources, after the session map and the grading scale.",
+   "text": "What is on the written confluence list, and how many confluences are required?",
+   "type": "missing_target_logic"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "no_need_to_trade",
+   "priority": "medium",
+   "reason": "Month-to-date performance is used as an input to whether to trade at all. Source #6 fixes the risk percentage for a month but says nothing about stopping when a target is met, and no monthly target figure is given here. The two monthly rules operate on the same clock and are never reconciled.",
+   "text": "Does meeting a monthly objective reduce or stop trading, and at what figure?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "missed_entry",
+   "priority": "medium",
+   "reason": "A setup identified in advance, with alarms as part of the stated process, was missed through inattention. Recorded because the library holds several claims about set-and-forget operation and this is the first direct evidence of its failure mode. It is offered candidly by the source and is not a criticism.",
+   "text": "How reliable is the alarm-based process in practice?",
+   "type": "behavior_conflicts_with_instruction"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "only_worth_it_trades",
+   "priority": "medium",
+   "reason": "Selectivity is presented as a gate additional to the mechanical entry conditions, justified by an investment analogy rather than a threshold. Combined with the confluence count and the proximity tolerance, this session shows at least three discretionary filters that no instructional source states.",
+   "text": "What makes a trade 'worth the risk', in terms that could be evaluated?",
+   "type": "discretionary_management"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "one_to_four_rr",
+   "priority": "medium",
+   "reason": "Three different ratios across three sources, each offered as an observation about a particular chart rather than a rule. **Do not average them or take the minimum** - no source states a required ratio, and inferring one would invent a rule.",
+   "text": "Is there a minimum risk-to-reward, given 1:2, 1:3 and now 1:4 have all been cited?",
+   "type": "missing_target_logic"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": null,
+   "priority": "critical",
+   "reason": "SEVEN Alex G sources, `stop_rule` still 0. This one is live trade commentary covering four pairs, discussing entries, targets, a 1:4 ratio and a declined setup - and never once states where a stop goes. The single reference to 'the area where we could have the stop' describes where price might stop moving, not where an order is placed. See BACKLOG-002/A1-STOP.",
+   "text": "Where is the stop placed?",
+   "type": "missing_stop_placement"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "correlated_pairs",
+   "priority": "low",
+   "reason": "NZDUSD is preferred over NZDCAD for presenting cleaner structure. No rule is given for choosing between correlated pairs, and the risk implication of holding both is not addressed in any source.",
+   "text": "How are correlated pairs selected between, and does taking both double the risk?",
+   "type": "implied_requirement"
+  }
+ ],
+ "provenance": {
+  "canonicalReference": "https://www.youtube.com/watch?v=1JMVE4Y5U7o",
+  "channelOrPublisher": "fxalexg (https://www.youtube.com/@fxalexg__)",
+  "knownArtifacts": [
+   "Source line 1 carries the video URL and playlist parameter fused onto the first words of speech, so it is retained as text at 0:00. No excerpt is taken from line 1. Third occurrence; BACKLOG-003/H26.",
+   "The written confluence list central to the direction decision is displayed on screen and never read aloud. Third visual-only artifact in three sources, after the session volume map (source #5) and the setup grading scale (source #4)."
+  ],
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "publicationDate": null,
+  "titleVerification": {
+   "method": "youtube_oembed",
+   "note": "Publisher verified before extraction per the Stage 0 gate. Same channel as sources #3-#8, so this material shares independence group AUTHOR|ALEX_G (DECISION|MOGO|20260727|006). NOTE: unlike sources #3-#8 this is a LIVE SESSION recording, not structured instruction - the evidence here is predominantly demonstrated_behavior rather than rule_statement, which is what makes it useful for comparing taught rules against practice.",
+   "retrievedAt": "2026-07-28T04:30:00Z",
+   "status": "verified_publisher",
+   "traderAttributionConfirmed": true,
+   "verifiedTitle": "Market break down learn and earn"
+  },
+  "transcriptCompleteness": "unknown",
+  "transcriptProvider": null
+ },
+ "sections": [
+  {
+   "lines": [
+    1,
+    10
+   ],
+   "n": 1,
+   "title": "Session opening - a live 6 a.m. call with about 70 attendees",
+   "type": "introduction"
+  },
+  {
+   "lines": [
+    11,
+    56
+   ],
+   "n": 2,
+   "title": "NZDCAD - bearish, waiting for the next leg up into a prior support/resistance area",
+   "type": "trade_commentary"
+  },
+  {
+   "lines": [
+    57,
+    102
+   ],
+   "n": 3,
+   "title": "NZDUSD - the cleaner correlated pair, and the EMA as dynamic resistance",
+   "type": "trade_commentary"
+  },
+  {
+   "lines": [
+    103,
+    148
+   ],
+   "n": 4,
+   "title": "Reading the structure shift on lower timeframes, then continuing short with the trend",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    149,
+    176
+   ],
+   "n": 5,
+   "title": "Why patience beats catching the small counter-move",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    177,
+    210
+   ],
+   "n": 6,
+   "title": "Counter-trend trading, and only taking trades worth the risk",
+   "type": "answer"
+  },
+  {
+   "lines": [
+    211,
+    252
+   ],
+   "n": 7,
+   "title": "The business-investment analogy",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    253,
+    290
+   ],
+   "n": 8,
+   "title": "Counting confluences on both sides before choosing a direction",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    291,
+    310
+   ],
+   "n": 9,
+   "title": "Alarms set on every level; waiting for the retest",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    311,
+    360
+   ],
+   "n": 10,
+   "title": "GBPJPY - declining the setup because price came about 10 pips short of 86.000",
+   "type": "trade_commentary"
+  },
+  {
+   "lines": [
+    361,
+    400
+   ],
+   "n": 11,
+   "title": "The higher low with the bullish engulfing - and the entry he missed",
+   "type": "trade_commentary"
+  },
+  {
+   "lines": [
+    401,
+    414
+   ],
+   "n": 12,
+   "title": "Showing the written confluence list to the group",
+   "type": "answer"
+  },
+  {
+   "lines": [
+    415,
+    438
+   ],
+   "n": 13,
+   "title": "Remaining watchlist and session close",
+   "type": "conclusion"
+  }
+ ],
+ "slug": "alexg-live-session-market-breakdown",
+ "sourceFile": "docs/trader-intelligence/intake/pending/alexg-live-session-market-breakdown.txt",
+ "sourceFileBytes": 7924,
+ "sourceFileSha256": "5bb848bb21951c53dc239f6d6b3bb4238cff8ee8e10b303e4d637bf865d78466",
+ "sourceLineCount": 438,
+ "title": "Market break down learn and earn",
+ "traderId": "ALEX_G"
+}

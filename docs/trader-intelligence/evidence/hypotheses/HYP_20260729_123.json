@@ -1,0 +1,32 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T23:45:30Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|123",
+  "independentVariables": [
+    "stop_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260729|022"
+  ],
+  "statement": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated may be the preferred stop-placement approach, pending further evidence.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260729|001|023",
+    "EV|EVSRC|ALEX_G|20260729|001|026"
+  ],
+  "updatedAt": "2026-07-29T23:45:30Z"
+}

@@ -1,0 +1,4033 @@
+{
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "contradictions": [
+    {
+      "affectedSections": [
+        "Confirmation",
+        "exception"
+      ],
+      "conflictingClaimIds": [
+        "CLAIM|TJR|20260727|023",
+        "CLAIM|TJR|20260727|032"
+      ],
+      "contradictionRecordId": "XCONTRA|20260727|001",
+      "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+    },
+    {
+      "affectedSections": [
+        "Setup Identification",
+        "exception"
+      ],
+      "conflictingClaimIds": [
+        "CLAIM|TJR|20260727|024",
+        "CLAIM|TJR|20260727|025"
+      ],
+      "contradictionRecordId": "XCONTRA|20260727|002",
+      "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+    }
+  ],
+  "disclaimerText": "This report is research output only. Nothing in it has been validated, is executable, or carries any profitability claim. Every rule-like statement here requires replay validation and paper-trading validation before it could ever be considered for live or paper execution -- and even then, only through the existing StrategyRule promotion pipeline, never automatically from this report.",
+  "disclaimers": {
+    "noProfitabilityClaim": true,
+    "notExecutable": true,
+    "requiresPaperTradingValidation": true,
+    "requiresReplayValidation": true,
+    "researchOnly": true,
+    "unvalidated": true
+  },
+  "explicitRules": [
+    {
+      "claimId": "CLAIM|TJR|20260727|001",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.89,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|001",
+          "exactExcerpt": "I am trading US indexes such as the S&P 500 and NASDAQ."
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|002",
+          "exactExcerpt": "So it's not NASDAQ. NASDAQ made the lower low. It's the S&P 500."
+        }
+      ],
+      "normalizedClaim": "The strategy is applied to US index instruments, specifically the S&P 500 and NASDAQ."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|002",
+      "claimStatus": "pending_review",
+      "claimType": "session_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|003",
+          "exactExcerpt": "I'm always trading New York Stock Exchange open"
+        }
+      ],
+      "normalizedClaim": "Trades are always taken around the New York Stock Exchange open."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|003",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|004",
+          "exactExcerpt": "New York pre-market starts at 8:30."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|013",
+          "exactExcerpt": "because when we're explaining market open, I'm going to say, \"Hey, market opens at 9:30.\" 9:30 a.m. Eastern time."
+        }
+      ],
+      "normalizedClaim": "New York pre-market starts at 8:30."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|004",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 23.05,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|005",
+          "exactExcerpt": "we don't want to take trades on the lagging index, the index that is behind. We want to be taking trades on the leading index."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|007",
+          "exactExcerpt": "I am going to be looking to target the index that is leading in my favor."
+        }
+      ],
+      "normalizedClaim": "Trades are taken on the leading index, never on the lagging index."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|005",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|006",
+          "exactExcerpt": "So the index that is higher up or closer to towards our draw draws on liquidity or within a bullish SMT, the one that makes a higher low."
+        }
+      ],
+      "normalizedClaim": "The leading index is the one closer to the draw on liquidity, or in a bullish SMT the one that makes the higher low."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|006",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|008",
+          "exactExcerpt": "My strategy is based off of liquidity sweeps."
+        }
+      ],
+      "normalizedClaim": "The strategy is based on liquidity sweeps."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|007",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|009",
+          "exactExcerpt": "when price goes up and takes out these highs and lows, we are essentially sweeping out potential liquidity to be able to fill orders in the opposite direction"
+        }
+      ],
+      "normalizedClaim": "A liquidity sweep is price taking out a prior high or low, which fills orders in the opposite direction."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|008",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 23.5,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|010",
+          "exactExcerpt": "the first thing that I'm looking for is a liquidity sweep"
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|011",
+          "exactExcerpt": "And I'm looking for a liquidity sweep every single time."
+        }
+      ],
+      "normalizedClaim": "Step 1 of the setup is to identify a liquidity sweep."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|009",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|012",
+          "exactExcerpt": "whether that's from 1 hour highs and lows, 4hour highs and lows, or session highs and lows, that's what I'm looking for for my draws on liquidity"
+        }
+      ],
+      "normalizedClaim": "Draws on liquidity are taken from 1-hour highs and lows, 4-hour highs and lows, or session highs and lows."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|010",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|013",
+          "exactExcerpt": "The very first thing that I want to do every single day is mark out session open."
+        }
+      ],
+      "normalizedClaim": "The first daily preparation step is to mark out the session opens."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|012",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|015",
+          "exactExcerpt": "We wait for a fiveminut confirmation confluence."
+        }
+      ],
+      "normalizedClaim": "Step 2 requires a five-minute confirmation confluence after the liquidity sweep."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|013",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 23.5,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|016",
+          "exactExcerpt": "this comes in the form of breakup structure, inverse for value gap, SMT divergence, and a 79% extension closure on the Fibonacci"
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|017",
+          "exactExcerpt": "Either a fiveminut break of structure inverse for value gap, SMT divergence, or 79% extension closure underneath the Fibonacci."
+        }
+      ],
+      "normalizedClaim": "The confirmation confluences are break of structure, inverse fair value gap, SMT divergence, and a 79% Fibonacci extension closure."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|014",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 23.05,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|018",
+          "exactExcerpt": "We just need one to confirm, hey, the trend is changing."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|019",
+          "exactExcerpt": "We don't need every single one of these, but in this case, we had every single one."
+        }
+      ],
+      "normalizedClaim": "Only one confirmation confluence is required; all four are not needed."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|015",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|020",
+          "exactExcerpt": "For price to break structure to the downside, we need price to close underneath the most recent low within the uptrend."
+        }
+      ],
+      "normalizedClaim": "A break of structure to the downside is price closing underneath the most recent low within the uptrend."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|016",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|021",
+          "exactExcerpt": "An SMT divergence is when one index makes a higher high and the other index makes a lower high or when one index makes a lower low and the other index makes a higher low."
+        }
+      ],
+      "normalizedClaim": "An SMT divergence is when one index makes a higher high and the other a lower high, or one makes a lower low and the other a higher low."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|017",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|022",
+          "exactExcerpt": "we take it from the low up to the high and we just wait for a candlestick closure underneath the 79% extension"
+        }
+      ],
+      "normalizedClaim": "The 79% extension confluence is a candlestick closure beyond the 79% Fibonacci extension measured from the low to the high of the move."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|018",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 23.5,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|023",
+          "exactExcerpt": "When the liquidity sweep happens during pre-market, I am always going to wait for a low time frame manipulation."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|024",
+          "exactExcerpt": "If the liquidity sweep happens during pre-market or the previous session, we wait for a fiveman. We wait for a five-minute manipulation."
+        }
+      ],
+      "normalizedClaim": "Step 2B: when the liquidity sweep happens during pre-market, a low-timeframe manipulation is required before proceeding."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|019",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|025",
+          "exactExcerpt": "Because during pre-market, that is not market open. And when market opens, there is new money coming into the market that is going to need to manipulate price to push price in the direction that it needs to go."
+        }
+      ],
+      "normalizedClaim": "Step 2B exists because new money entering at the New York open manipulates price again after a pre-market sweep."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|020",
+      "claimStatus": "pending_review",
+      "claimType": "failure_condition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|026",
+          "exactExcerpt": "You would have been stopped out. You would have been stopped out. And that is why we need to wait for a fiveminut manipulation."
+        }
+      ],
+      "normalizedClaim": "Skipping step 2B after a pre-market sweep and entering on the continuation confluence alone would have resulted in the trade being stopped out."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|021",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|027",
+          "exactExcerpt": "if we don't get the pre-market sweep and then sell off or pre-market sweep and then push up. Okay, we'll only be looking for the confirmation confluences. We skip 2B"
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|028",
+          "exactExcerpt": "Did we get any form of manipulation to any of these lines? No. Awesome. So we are going to factor out the 2B scenario."
+        }
+      ],
+      "normalizedClaim": "When there is no pre-market sweep, step 2B is skipped and only the confirmation confluences apply."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|022",
+      "claimStatus": "pending_review",
+      "claimType": "invalidation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|029",
+          "exactExcerpt": "once we get the 5-minute manipulation, as long as we are still staying in the current trend that this confirmation confluence put us in"
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|030",
+          "exactExcerpt": "Did we close above this high? No. We made equal highs with this. And then we ended up making another high. Did we close above this high? No. We made a lower high."
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|031",
+          "exactExcerpt": "Okay, the fivem minute trend is still intact. We haven't closed underneath this low yet."
+        }
+      ],
+      "normalizedClaim": "After the five-minute manipulation the setup remains valid only while price stays in the trend established by the confirmation confluence."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|023",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|032",
+          "exactExcerpt": "we are going to be looking for a fivem minute continuation confluence via equilibrium or a fair value gap"
+        }
+      ],
+      "normalizedClaim": "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|024",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|033",
+          "exactExcerpt": "we're also going to need to understand continuation continuation confluences. And this I'm actually limiting this to just equilibrium and fair value gaps."
+        }
+      ],
+      "normalizedClaim": "Continuation confluences are limited to equilibrium and fair value gaps."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|025",
+      "claimStatus": "pending_review",
+      "claimType": "exception",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|034",
+          "exactExcerpt": "if we get 2B, we have the opportunity to use an SMT divergence as our continuation confluence as well as equilibrium warfare value gap"
+        }
+      ],
+      "normalizedClaim": "When step 2B is active, an SMT divergence may be used as the continuation confluence in addition to equilibrium and fair value gap."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|026",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|035",
+          "exactExcerpt": "because if we get a fiveminute manipulation above a high or below a low, that's the only confluence that's going to show up. There's not going to be equilibrium. There's not going to be a fair value gap for us to trade into."
+        }
+      ],
+      "normalizedClaim": "After a five-minute manipulation beyond a high or low there is no equilibrium or fair value gap left to trade into, so SMT divergence is the only continuation confluence available."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|027",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 24.39,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|036",
+          "exactExcerpt": "We want to see a one minute confirmation confluence."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|037",
+          "exactExcerpt": "And this can be seen from breakup structure inverse for value gap SMT divergence 79% extension and then once we see that we can enter"
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|038",
+          "exactExcerpt": "you guys would have entered when this candlestick broke above the 79% extension"
+        }
+      ],
+      "normalizedClaim": "Step 4 requires a one-minute confirmation confluence before entry."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|028",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|039",
+          "exactExcerpt": "You can put your stop loss underneath this low."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|040",
+          "exactExcerpt": "We enter here. We put our stops above here."
+        }
+      ],
+      "normalizedClaim": "Stops are placed beyond the swing extreme the entry is taken against -- underneath the low for a long entry, above the highs for a short entry."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|029",
+      "claimStatus": "pending_review",
+      "claimType": "target_rule",
+      "confidenceScore": 23.94,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|041",
+          "exactExcerpt": "then last but not least target previous draws on liquidity in our direction"
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|042",
+          "exactExcerpt": "And then we target the previous draws and liquidity that we had for the day."
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|043",
+          "exactExcerpt": "You guys can target these five minute highs right here. You can target Asia session highs right here. And then previous day highs right here."
+        }
+      ],
+      "normalizedClaim": "Targets are the previous draws on liquidity in the direction of the trade."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|030",
+      "claimStatus": "pending_review",
+      "claimType": "trade_management_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|044",
+          "exactExcerpt": "Take profit one gets hit, take profit two gets hit, take profit three gets hit, we miss out on take profit four, and then the rest of our position gets stopped out of break even"
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|045",
+          "exactExcerpt": "And after taking partial profits, that would probably put us at around I would like to say like a 1 to 2 point something risk-to-reward ratio."
+        }
+      ],
+      "normalizedClaim": "Profits are taken in partials across multiple take-profit levels and the remaining position is left to stop out at break even."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|031",
+      "claimStatus": "pending_review",
+      "claimType": "exception",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|046",
+          "exactExcerpt": "yo, let's redo this step two into step three. Let's just redo it."
+        }
+      ],
+      "normalizedClaim": "When the price action after the confirmation confluence looks unreliable, the step-two-into-step-three sequence is restarted instead of entering."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|032",
+      "claimStatus": "pending_review",
+      "claimType": "exception",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|047",
+          "exactExcerpt": "If price does that and we still have all of these really awesome draws and liquidity to the upside and we still have a really good risk-to-reward ratio that we can trade on this, we should still be taking that trade."
+        }
+      ],
+      "normalizedClaim": "If the stated continuation confluence is not hit but strong draws on liquidity and a good risk-to-reward remain, the trade is still taken."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|034",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|049",
+          "exactExcerpt": "the first thing that we're waiting for is a liquidity sweep, knowing that new money is going to come into the market and manipulate a high or low to push price in the direction that it wants to go"
+        }
+      ],
+      "normalizedClaim": "The liquidity sweep is expected because new money entering a session manipulates a high or low before moving price in its intended direction."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|035",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|050",
+          "exactExcerpt": "we know that when we go into these new sessions, more often than not, there's going to be some form of manipulation on the market open to push price in whatever direction that it wants to go"
+        }
+      ],
+      "normalizedClaim": "It is assumed that a new session open more often than not produces a manipulation move before price travels in its intended direction."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|036",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|051",
+          "exactExcerpt": "it gives them the opportunity to manipulate price above this high to be able to fill a bunch of their positions to end up sending price lower"
+        }
+      ],
+      "normalizedClaim": "It is assumed that market makers sweep highs and lows specifically to fill large positions in the opposite direction."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|037",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|052",
+          "exactExcerpt": "It's not because this is some magic potion that has an 80% win rate."
+        }
+      ],
+      "normalizedClaim": "TJR explicitly disclaims that the strategy carries any fixed high win rate."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|038",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|053",
+          "exactExcerpt": "I know in the past I used to talk about order blocks and breaker blocks. It's been 6 months. I I got this profit and loss statement without using order blocks and breaker blocks for the last 6 months. So, I pretty much completely removed that."
+        }
+      ],
+      "normalizedClaim": "Order blocks and breaker blocks were removed from the strategy and have not been used for the last six months."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|039",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|054",
+          "exactExcerpt": "I'm using this little indicator um that I that me and my team made. It just highlights the session highs and lows."
+        }
+      ],
+      "normalizedClaim": "A custom indicator built by TJR and his team is used to highlight session highs and lows."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|041",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|056",
+          "exactExcerpt": "The government is currently shut down. So, I've been kind of avoiding trading this week."
+        }
+      ],
+      "normalizedClaim": "TJR stopped trading during the week of the government shutdown."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|042",
+      "claimStatus": "pending_review",
+      "claimType": "performance_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|057",
+          "exactExcerpt": "In the last 6 months, I have made $1,47,984 trading."
+        }
+      ],
+      "normalizedClaim": "TJR asserts a six-month trading profit transcribed as $1,47,984 (figure as transcribed; the digit grouping is malformed and the true value is unverified)."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|043",
+      "claimStatus": "pending_review",
+      "claimType": "performance_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|058",
+          "exactExcerpt": "my monthly P&L is $491,000 just over the past month of September"
+        }
+      ],
+      "normalizedClaim": "TJR asserts a September monthly P&L of $491,000."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|044",
+      "claimStatus": "pending_review",
+      "claimType": "performance_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|059",
+          "exactExcerpt": "You can see that my average trade win was $22,000 and my average trade loss was around $11,000."
+        }
+      ],
+      "normalizedClaim": "TJR asserts an average winning trade of $22,000 against an average losing trade of $11,000 over the six-month period."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|045",
+      "claimStatus": "pending_review",
+      "claimType": "performance_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|060",
+          "exactExcerpt": "then the rest of our position gets stopped out of break even for a one two 3.63 risk-to-reward ratio"
+        }
+      ],
+      "normalizedClaim": "The demonstrated short example is described as reaching a risk-to-reward ratio transcribed as 'one two 3.63' before the remainder stopped out at break even (figure as transcribed; ambiguous)."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|046",
+      "claimStatus": "pending_review",
+      "claimType": "performance_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|061",
+          "exactExcerpt": "Boom. For a 124.27 risk-to-reward ratio."
+        }
+      ],
+      "normalizedClaim": "The demonstrated long example is described as reaching a risk-to-reward ratio transcribed as '124.27' (figure as transcribed; ambiguous)."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|047",
+      "claimStatus": "pending_review",
+      "claimType": "performance_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|062",
+          "exactExcerpt": "these numbers they will be a little they're not completely off but they are a little bit off because on my brokerage like on trade locker it doesn't subtract the fees that are taken from trades"
+        }
+      ],
+      "normalizedClaim": "TJR states that his published P&L figures are not exact because broker fees are not subtracted by the reporting dashboard."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|048",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|001",
+          "exactExcerpt": "There's technical analysis traders, which is what I am. Okay, I do the majority of my trading purely based off of what the chart is telling me, so what price is telling me."
+        }
+      ],
+      "normalizedClaim": "TJR identifies as a technical-analysis trader who trades primarily from what the chart and price show."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|049",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|002",
+          "exactExcerpt": "That's what day traders do. We are just trying to buy low, sell high, sell high, buy back low"
+        }
+      ],
+      "normalizedClaim": "Day trading as TJR frames it is buying low and selling high, or selling high and buying back low."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|050",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|003",
+          "exactExcerpt": "what is trading? is being able to predict where price wants to go with"
+        }
+      ],
+      "normalizedClaim": "TJR defines trading as predicting where price wants to go with high probability on a daily basis."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|051",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|004",
+          "exactExcerpt": "This is the I mean the only kind of charting platform that I would use for active live charting."
+        }
+      ],
+      "normalizedClaim": "TradingView is the only charting platform TJR uses for active live charting."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|052",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|005",
+          "exactExcerpt": "I personally don't use any indicators to actually take trades. Um, but I use indicators to help me mark out my"
+        }
+      ],
+      "normalizedClaim": "Indicators are never used to take trades; they are used only to mark out confluences."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|053",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|006",
+          "exactExcerpt": "So I use pretty neutral colors. I use blue and black."
+        }
+      ],
+      "normalizedClaim": "TJR uses neutral chart colours (blue and black) rather than green and red candles."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|054",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|007",
+          "exactExcerpt": "the colors of green and red negatively affect our psychology when we're trading"
+        }
+      ],
+      "normalizedClaim": "Green and red candle colours are asserted to harm trading psychology by associating candles with making and losing money."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|055",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 23.5,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|008",
+          "exactExcerpt": "Okay, we are going to set our time zone to New York time. Even if you guys are in Africa, if you guys are in Brazil, if you guys are in California, we need to be on Eastern time."
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|009",
+          "exactExcerpt": "Make sure that it's set to New York time because that's how we're going to be operating for the rest of the series."
+        }
+      ],
+      "normalizedClaim": "Charts must be set to New York (Eastern) time regardless of the trader's physical location."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|056",
+      "claimStatus": "pending_review",
+      "claimType": "causal_hypothesis",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|010",
+          "exactExcerpt": "Well, the market lives on Eastern time. So, in turn, we have to live on Eastern time."
+        }
+      ],
+      "normalizedClaim": "Charts are set to Eastern time because session opens and closes are defined in the market's own time zone."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|057",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|011",
+          "exactExcerpt": "But on the charts, market opens at 9:30 a.m."
+        }
+      ],
+      "normalizedClaim": "The New York Stock Exchange regular session opens at 9:30 a.m. Eastern time."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|059",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|014",
+          "exactExcerpt": "Japanese candlesticks are by far the most valuable because they tell us four different things about every single time frame"
+        }
+      ],
+      "normalizedClaim": "Japanese candlesticks are preferred because they convey four price points for each period."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|060",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|015",
+          "exactExcerpt": "So right now we are on the 1day time frame. That means every single one of these candles represents 24 hours worth of price action and price movement."
+        }
+      ],
+      "normalizedClaim": "The selected chart timeframe determines the period of price action each candlestick represents."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|061",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|016",
+          "exactExcerpt": "The bottom of the body of the candle is the candle open. Okay. The top of the body of the candle is the close. The top of the top wick is the high and the bottom of the bottom wick is the low."
+        }
+      ],
+      "normalizedClaim": "On an up candle the body's bottom is the open and its top is the close; the top of the upper wick is the high and the bottom of the lower wick is the low."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|062",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|017",
+          "exactExcerpt": "Now, for a down candle, it's the exact same except this up here is the open"
+        }
+      ],
+      "normalizedClaim": "On a down candle the open is the top of the body and the close is the bottom; high and low remain the wick extremes."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|063",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|018",
+          "exactExcerpt": "A high consists of a move up followed by a move down. A low consists of a move down followed by a move up."
+        }
+      ],
+      "normalizedClaim": "A high is a move up followed by a move down; a low is a move down followed by a move up."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|064",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|019",
+          "exactExcerpt": "we need an up candle followed by a down candle to create a high. We need a down candle followed by an up candle to create a low."
+        }
+      ],
+      "normalizedClaim": "A high is identified as an up candle followed by a down candle; a low as a down candle followed by an up candle."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|065",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|020",
+          "exactExcerpt": "We take the highest point of those two candlesticks."
+        }
+      ],
+      "normalizedClaim": "A high is marked at the highest wick of the two candles forming it; a low at the lowest wick of the two forming it."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|066",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|021",
+          "exactExcerpt": "There's uptrends, there's downtrends, and then there's consolidation."
+        }
+      ],
+      "normalizedClaim": "The market moves in exactly three states: uptrend, downtrend, or consolidation (sideways)."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|067",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|022",
+          "exactExcerpt": "the market will form something called an uptrend which consists of higher highs being created and higher lows being created in the market"
+        }
+      ],
+      "normalizedClaim": "An uptrend is a series of higher highs and higher lows."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|068",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|023",
+          "exactExcerpt": "When price is trending down, we are making lower highs and lower lows in the market."
+        }
+      ],
+      "normalizedClaim": "A downtrend is a series of lower highs and lower lows."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|069",
+      "claimStatus": "pending_review",
+      "claimType": "exception",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|024",
+          "exactExcerpt": "trading is not as simple as saying, hey, we're in an uptrend. I'm just going to blind blindly press buy. Because trends can break, trends can change."
+        }
+      ],
+      "normalizedClaim": "Trend direction alone is not a trade signal, because trends can break and change."
+    }
+  ],
+  "extractionStatistics": {
+    "claimCount": 69,
+    "contradictionCount": 2,
+    "evidenceCount": 86,
+    "extractionStatus": "completed",
+    "hypothesisCount": 23,
+    "observationCount": 10,
+    "sourceCount": 2,
+    "unresolvedQuestionCount": 14
+  },
+  "generatedAt": "2026-07-27T22:26:37Z",
+  "impliedOrInferredRules": [
+    {
+      "claimId": "CLAIM|TJR|20260727|011",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "indirect_implied",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|014",
+          "exactExcerpt": "if this if this high right here has already been pushed past and we haven't really gotten much of a reaction off of it, it's not necessarily going to be beneficial for us to be marking it or to for us to even be considering it as a level because it's already been taken out and there wasn't a reaction off of it"
+        }
+      ],
+      "normalizedClaim": "A session high or low that has already been swept without producing a reaction is not marked or used as a draw on liquidity."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|033",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "inferred_from_context",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|048",
+          "exactExcerpt": "And like I said before, I'm a little bit more aggressive. I would like to say that I probably would have entered right here."
+        }
+      ],
+      "normalizedClaim": "Entry timing inside the setup is discretionary; TJR describes his own entries as more aggressive than the patient version of the same rules."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|040",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "indirect_implied",
+          "evidenceId": "EV|EVSRC|TJR|20260727|001|055",
+          "exactExcerpt": "Let me make sure that there wasn't any high impact news on that day."
+        }
+      ],
+      "normalizedClaim": "The trading day is checked for high-impact news before the setup is applied."
+    },
+    {
+      "claimId": "CLAIM|TJR|20260727|058",
+      "claimStatus": "pending_review",
+      "claimType": "failure_condition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "indirect_implied",
+          "evidenceId": "EV|EVSRC|TJR|20260727|002|012",
+          "exactExcerpt": "you're on Sa Paulo time and I'm on New York time and you're like, \"Hey, the strategy doesn't work.\""
+        }
+      ],
+      "normalizedClaim": "Marking session levels with charts set to a non-Eastern time zone places them at the wrong times and makes the strategy appear not to work."
+    }
+  ],
+  "itemsRequiringHumanReview": {
+    "openReviewQueueEntries": [],
+    "openUnresolvedQuestions": [
+      {
+        "priority": "high",
+        "questionId": "EQ|20260727|002",
+        "questionText": "Stop placement is only ever given chart-relatively ('underneath this low', 'above these highs'). Which exact swing does the stop reference, and is any buffer applied?"
+      },
+      {
+        "priority": "high",
+        "questionId": "EQ|20260727|003",
+        "questionText": "The worked examples use four take-profit levels (TP1-TP4) but the transcript never defines how those four levels are chosen or sized. How is the take-profit ladder constructed?"
+      },
+      {
+        "priority": "high",
+        "questionId": "EQ|20260727|004",
+        "questionText": "The intake filename describes a 'forex session strategy', but the transcript states the instruments are US indexes (S&P 500 and NASDAQ) and no forex pair is mentioned anywhere. Is this transcript mis-filed, or is the strategy intended to be transferred to FX?"
+      },
+      {
+        "priority": "low",
+        "questionId": "EQ|20260727|005",
+        "questionText": "The six-month profit figure is transcribed as '$1,47,984', which is not a valid US digit grouping. What is the actual figure?"
+      },
+      {
+        "priority": "low",
+        "questionId": "EQ|20260727|006",
+        "questionText": "The two risk-to-reward figures are transcribed as 'one two 3.63' and '124.27'. What are the actual ratios?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|007",
+        "questionText": "TJR checks for high-impact news before applying the setup, but never states what he does when high-impact news IS present. Does news block the trade, delay it, or only change sizing?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|008",
+        "questionText": "At the long entry TJR refers to price needing 'One extra point down to hit our special little number that we wanted'. What is that number, and is it part of the entry rule?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|009",
+        "questionText": "TJR states that step ordering 'can be variable' when 2B activates. What is the exact ordering of steps 2B, 3 and 4 when 2B is active?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|012",
+        "questionText": "Claim 'CLAIM|TJR|20260727|002' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "high",
+        "questionId": "EQ|20260727|013",
+        "questionText": "Entry rule 'CLAIM|TJR|20260727|027' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|014",
+        "questionText": "Claim 'CLAIM|TJR|20260727|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|016",
+        "questionText": "Consolidation is named as one of the three market states but is never defined or given identification criteria, unlike uptrend and downtrend."
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260727|017",
+        "questionText": "The two-candle rule for identifying a high or low has no minimum-size or significance filter. Does every up-then-down candle pair qualify as a high?"
+      },
+      {
+        "priority": "high",
+        "questionId": "EQ|20260727|018",
+        "questionText": "Trends can break and change, but this source never defines what constitutes a break of trend. How is a trend break identified?"
+      }
+    ],
+    "pendingReviewClaimIds": [
+      "CLAIM|TJR|20260727|001",
+      "CLAIM|TJR|20260727|002",
+      "CLAIM|TJR|20260727|003",
+      "CLAIM|TJR|20260727|004",
+      "CLAIM|TJR|20260727|005",
+      "CLAIM|TJR|20260727|006",
+      "CLAIM|TJR|20260727|007",
+      "CLAIM|TJR|20260727|008",
+      "CLAIM|TJR|20260727|009",
+      "CLAIM|TJR|20260727|010",
+      "CLAIM|TJR|20260727|011",
+      "CLAIM|TJR|20260727|012",
+      "CLAIM|TJR|20260727|013",
+      "CLAIM|TJR|20260727|014",
+      "CLAIM|TJR|20260727|015",
+      "CLAIM|TJR|20260727|016",
+      "CLAIM|TJR|20260727|017",
+      "CLAIM|TJR|20260727|018",
+      "CLAIM|TJR|20260727|019",
+      "CLAIM|TJR|20260727|020",
+      "CLAIM|TJR|20260727|021",
+      "CLAIM|TJR|20260727|022",
+      "CLAIM|TJR|20260727|023",
+      "CLAIM|TJR|20260727|024",
+      "CLAIM|TJR|20260727|025",
+      "CLAIM|TJR|20260727|026",
+      "CLAIM|TJR|20260727|027",
+      "CLAIM|TJR|20260727|028",
+      "CLAIM|TJR|20260727|029",
+      "CLAIM|TJR|20260727|030",
+      "CLAIM|TJR|20260727|031",
+      "CLAIM|TJR|20260727|032",
+      "CLAIM|TJR|20260727|033",
+      "CLAIM|TJR|20260727|034",
+      "CLAIM|TJR|20260727|035",
+      "CLAIM|TJR|20260727|036",
+      "CLAIM|TJR|20260727|037",
+      "CLAIM|TJR|20260727|038",
+      "CLAIM|TJR|20260727|039",
+      "CLAIM|TJR|20260727|040",
+      "CLAIM|TJR|20260727|041",
+      "CLAIM|TJR|20260727|042",
+      "CLAIM|TJR|20260727|043",
+      "CLAIM|TJR|20260727|044",
+      "CLAIM|TJR|20260727|045",
+      "CLAIM|TJR|20260727|046",
+      "CLAIM|TJR|20260727|047",
+      "CLAIM|TJR|20260727|048",
+      "CLAIM|TJR|20260727|049",
+      "CLAIM|TJR|20260727|050",
+      "CLAIM|TJR|20260727|051",
+      "CLAIM|TJR|20260727|052",
+      "CLAIM|TJR|20260727|053",
+      "CLAIM|TJR|20260727|054",
+      "CLAIM|TJR|20260727|055",
+      "CLAIM|TJR|20260727|056",
+      "CLAIM|TJR|20260727|057",
+      "CLAIM|TJR|20260727|058",
+      "CLAIM|TJR|20260727|059",
+      "CLAIM|TJR|20260727|060",
+      "CLAIM|TJR|20260727|061",
+      "CLAIM|TJR|20260727|062",
+      "CLAIM|TJR|20260727|063",
+      "CLAIM|TJR|20260727|064",
+      "CLAIM|TJR|20260727|065",
+      "CLAIM|TJR|20260727|066",
+      "CLAIM|TJR|20260727|067",
+      "CLAIM|TJR|20260727|068",
+      "CLAIM|TJR|20260727|069"
+    ]
+  },
+  "knowledgeGaps": [
+    {
+      "affectedSections": [
+        "Scope",
+        "Setup Identification"
+      ],
+      "answerStatus": "partially_answered",
+      "blueprintId": "BLUEPRINT|TJR|20260727|001",
+      "category": "higher_timeframe_bias",
+      "confidence": "low",
+      "createdAt": "2026-07-27T22:15:39Z",
+      "currentBestAnswer": "Trades are taken on the leading index, never on the lagging index.",
+      "evidenceSearched": [
+        "EV|EVSRC|TJR|20260727|001|001",
+        "EV|EVSRC|TJR|20260727|001|002",
+        "EV|EVSRC|TJR|20260727|001|004",
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|006",
+        "EV|EVSRC|TJR|20260727|001|007",
+        "EV|EVSRC|TJR|20260727|001|008",
+        "EV|EVSRC|TJR|20260727|001|009",
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011",
+        "EV|EVSRC|TJR|20260727|001|012",
+        "EV|EVSRC|TJR|20260727|001|013",
+        "EV|EVSRC|TJR|20260727|001|014",
+        "EV|EVSRC|TJR|20260727|001|020",
+        "EV|EVSRC|TJR|20260727|001|021",
+        "EV|EVSRC|TJR|20260727|001|022",
+        "EV|EVSRC|TJR|20260727|001|033",
+        "EV|EVSRC|TJR|20260727|001|055",
+        "EV|EVSRC|TJR|20260727|002|002",
+        "EV|EVSRC|TJR|20260727|002|003",
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009",
+        "EV|EVSRC|TJR|20260727|002|011",
+        "EV|EVSRC|TJR|20260727|002|013",
+        "EV|EVSRC|TJR|20260727|002|014",
+        "EV|EVSRC|TJR|20260727|002|015",
+        "EV|EVSRC|TJR|20260727|002|016",
+        "EV|EVSRC|TJR|20260727|002|017",
+        "EV|EVSRC|TJR|20260727|002|018",
+        "EV|EVSRC|TJR|20260727|002|019",
+        "EV|EVSRC|TJR|20260727|002|020",
+        "EV|EVSRC|TJR|20260727|002|021",
+        "EV|EVSRC|TJR|20260727|002|022",
+        "EV|EVSRC|TJR|20260727|002|023"
+      ],
+      "gapId": "GAP|20260727|001",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": [
+          "CLAIM|TJR|20260727|001",
+          "CLAIM|TJR|20260727|003",
+          "CLAIM|TJR|20260727|004",
+          "CLAIM|TJR|20260727|005",
+          "CLAIM|TJR|20260727|006",
+          "CLAIM|TJR|20260727|007",
+          "CLAIM|TJR|20260727|008",
+          "CLAIM|TJR|20260727|009",
+          "CLAIM|TJR|20260727|010",
+          "CLAIM|TJR|20260727|011",
+          "CLAIM|TJR|20260727|015",
+          "CLAIM|TJR|20260727|016",
+          "CLAIM|TJR|20260727|017",
+          "CLAIM|TJR|20260727|024",
+          "CLAIM|TJR|20260727|040",
+          "CLAIM|TJR|20260727|049",
+          "CLAIM|TJR|20260727|050",
+          "CLAIM|TJR|20260727|055",
+          "CLAIM|TJR|20260727|057",
+          "CLAIM|TJR|20260727|059",
+          "CLAIM|TJR|20260727|060",
+          "CLAIM|TJR|20260727|061",
+          "CLAIM|TJR|20260727|062",
+          "CLAIM|TJR|20260727|063",
+          "CLAIM|TJR|20260727|064",
+          "CLAIM|TJR|20260727|065",
+          "CLAIM|TJR|20260727|066",
+          "CLAIM|TJR|20260727|067",
+          "CLAIM|TJR|20260727|068"
+        ]
+      },
+      "question": "Is a higher-timeframe bias required before taking this setup?",
+      "recommendedNextSourceType": "additional transcript on multi-timeframe analysis",
+      "researchPriority": "high",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "TJR",
+      "whyItMatters": "A missing higher-timeframe bias rule means the strategy's context requirement is unknown."
+    },
+    {
+      "affectedSections": [
+        "Entry Trigger"
+      ],
+      "answerStatus": "partially_answered",
+      "blueprintId": "BLUEPRINT|TJR|20260727|001",
+      "category": "entry_trigger",
+      "confidence": "low",
+      "createdAt": "2026-07-27T22:15:39Z",
+      "currentBestAnswer": "Step 4 requires a one-minute confirmation confluence before entry.",
+      "evidenceSearched": [
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038"
+      ],
+      "gapId": "GAP|20260727|002",
+      "proposedValidationMethod": "replay test against historical price action",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": [
+          "CLAIM|TJR|20260727|027"
+        ]
+      },
+      "question": "What exact condition triggers an entry?",
+      "recommendedNextSourceType": "additional transcript with explicit entry-rule statements",
+      "researchPriority": "critical",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "TJR",
+      "whyItMatters": "No entry condition currently reaches confident support -- the strategy cannot be entered mechanically."
+    },
+    {
+      "affectedSections": [
+        "Risk Sizing"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|TJR|20260727|001",
+      "category": "risk_percentage",
+      "confidence": "none",
+      "createdAt": "2026-07-27T22:15:39Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [],
+      "gapId": "GAP|20260727|003",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "What percentage of account equity is risked per trade?",
+      "recommendedNextSourceType": "direct question to trader",
+      "researchPriority": "critical",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "TJR",
+      "whyItMatters": "Without a stated risk percentage, position sizing cannot be determined for paper or live testing."
+    },
+    {
+      "affectedSections": [
+        "Entry Trigger",
+        "Stop Placement"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|TJR|20260727|001",
+      "category": "spread_handling",
+      "confidence": "none",
+      "createdAt": "2026-07-27T22:15:39Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|TJR|20260727|001|001",
+        "EV|EVSRC|TJR|20260727|001|002",
+        "EV|EVSRC|TJR|20260727|001|003",
+        "EV|EVSRC|TJR|20260727|001|004",
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|006",
+        "EV|EVSRC|TJR|20260727|001|007",
+        "EV|EVSRC|TJR|20260727|001|008",
+        "EV|EVSRC|TJR|20260727|001|009",
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011",
+        "EV|EVSRC|TJR|20260727|001|012",
+        "EV|EVSRC|TJR|20260727|001|013",
+        "EV|EVSRC|TJR|20260727|001|014",
+        "EV|EVSRC|TJR|20260727|001|015",
+        "EV|EVSRC|TJR|20260727|001|016",
+        "EV|EVSRC|TJR|20260727|001|017",
+        "EV|EVSRC|TJR|20260727|001|018",
+        "EV|EVSRC|TJR|20260727|001|019",
+        "EV|EVSRC|TJR|20260727|001|020",
+        "EV|EVSRC|TJR|20260727|001|021",
+        "EV|EVSRC|TJR|20260727|001|022",
+        "EV|EVSRC|TJR|20260727|001|023",
+        "EV|EVSRC|TJR|20260727|001|024",
+        "EV|EVSRC|TJR|20260727|001|025",
+        "EV|EVSRC|TJR|20260727|001|026",
+        "EV|EVSRC|TJR|20260727|001|027",
+        "EV|EVSRC|TJR|20260727|001|028",
+        "EV|EVSRC|TJR|20260727|001|029",
+        "EV|EVSRC|TJR|20260727|001|030",
+        "EV|EVSRC|TJR|20260727|001|031",
+        "EV|EVSRC|TJR|20260727|001|032",
+        "EV|EVSRC|TJR|20260727|001|033",
+        "EV|EVSRC|TJR|20260727|001|034",
+        "EV|EVSRC|TJR|20260727|001|035",
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038",
+        "EV|EVSRC|TJR|20260727|001|039",
+        "EV|EVSRC|TJR|20260727|001|040",
+        "EV|EVSRC|TJR|20260727|001|041",
+        "EV|EVSRC|TJR|20260727|001|042",
+        "EV|EVSRC|TJR|20260727|001|043",
+        "EV|EVSRC|TJR|20260727|001|044",
+        "EV|EVSRC|TJR|20260727|001|045",
+        "EV|EVSRC|TJR|20260727|001|046",
+        "EV|EVSRC|TJR|20260727|001|047",
+        "EV|EVSRC|TJR|20260727|001|048",
+        "EV|EVSRC|TJR|20260727|001|049",
+        "EV|EVSRC|TJR|20260727|001|050",
+        "EV|EVSRC|TJR|20260727|001|051",
+        "EV|EVSRC|TJR|20260727|001|052",
+        "EV|EVSRC|TJR|20260727|001|053",
+        "EV|EVSRC|TJR|20260727|001|054",
+        "EV|EVSRC|TJR|20260727|001|055",
+        "EV|EVSRC|TJR|20260727|001|056",
+        "EV|EVSRC|TJR|20260727|001|057",
+        "EV|EVSRC|TJR|20260727|001|058",
+        "EV|EVSRC|TJR|20260727|001|059",
+        "EV|EVSRC|TJR|20260727|001|060",
+        "EV|EVSRC|TJR|20260727|001|061",
+        "EV|EVSRC|TJR|20260727|001|062",
+        "EV|EVSRC|TJR|20260727|002|001",
+        "EV|EVSRC|TJR|20260727|002|002",
+        "EV|EVSRC|TJR|20260727|002|003",
+        "EV|EVSRC|TJR|20260727|002|004",
+        "EV|EVSRC|TJR|20260727|002|005",
+        "EV|EVSRC|TJR|20260727|002|006",
+        "EV|EVSRC|TJR|20260727|002|007",
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009",
+        "EV|EVSRC|TJR|20260727|002|010",
+        "EV|EVSRC|TJR|20260727|002|011",
+        "EV|EVSRC|TJR|20260727|002|012",
+        "EV|EVSRC|TJR|20260727|002|013",
+        "EV|EVSRC|TJR|20260727|002|014",
+        "EV|EVSRC|TJR|20260727|002|015",
+        "EV|EVSRC|TJR|20260727|002|016",
+        "EV|EVSRC|TJR|20260727|002|017",
+        "EV|EVSRC|TJR|20260727|002|018",
+        "EV|EVSRC|TJR|20260727|002|019",
+        "EV|EVSRC|TJR|20260727|002|020",
+        "EV|EVSRC|TJR|20260727|002|021",
+        "EV|EVSRC|TJR|20260727|002|022",
+        "EV|EVSRC|TJR|20260727|002|023",
+        "EV|EVSRC|TJR|20260727|002|024"
+      ],
+      "gapId": "GAP|20260727|004",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Does spread affect entry, stop, or target placement?",
+      "recommendedNextSourceType": "direct question to trader",
+      "researchPriority": "low",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "TJR",
+      "whyItMatters": "Wide spreads can materially change realized risk/reward versus the stated setup."
+    },
+    {
+      "affectedSections": [
+        "Scope",
+        "Entry Trigger"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|TJR|20260727|001",
+      "category": "volatility_handling",
+      "confidence": "none",
+      "createdAt": "2026-07-27T22:15:39Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|TJR|20260727|001|001",
+        "EV|EVSRC|TJR|20260727|001|002",
+        "EV|EVSRC|TJR|20260727|001|003",
+        "EV|EVSRC|TJR|20260727|001|004",
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|006",
+        "EV|EVSRC|TJR|20260727|001|007",
+        "EV|EVSRC|TJR|20260727|001|008",
+        "EV|EVSRC|TJR|20260727|001|009",
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011",
+        "EV|EVSRC|TJR|20260727|001|012",
+        "EV|EVSRC|TJR|20260727|001|013",
+        "EV|EVSRC|TJR|20260727|001|014",
+        "EV|EVSRC|TJR|20260727|001|015",
+        "EV|EVSRC|TJR|20260727|001|016",
+        "EV|EVSRC|TJR|20260727|001|017",
+        "EV|EVSRC|TJR|20260727|001|018",
+        "EV|EVSRC|TJR|20260727|001|019",
+        "EV|EVSRC|TJR|20260727|001|020",
+        "EV|EVSRC|TJR|20260727|001|021",
+        "EV|EVSRC|TJR|20260727|001|022",
+        "EV|EVSRC|TJR|20260727|001|023",
+        "EV|EVSRC|TJR|20260727|001|024",
+        "EV|EVSRC|TJR|20260727|001|025",
+        "EV|EVSRC|TJR|20260727|001|026",
+        "EV|EVSRC|TJR|20260727|001|027",
+        "EV|EVSRC|TJR|20260727|001|028",
+        "EV|EVSRC|TJR|20260727|001|029",
+        "EV|EVSRC|TJR|20260727|001|030",
+        "EV|EVSRC|TJR|20260727|001|031",
+        "EV|EVSRC|TJR|20260727|001|032",
+        "EV|EVSRC|TJR|20260727|001|033",
+        "EV|EVSRC|TJR|20260727|001|034",
+        "EV|EVSRC|TJR|20260727|001|035",
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038",
+        "EV|EVSRC|TJR|20260727|001|039",
+        "EV|EVSRC|TJR|20260727|001|040",
+        "EV|EVSRC|TJR|20260727|001|041",
+        "EV|EVSRC|TJR|20260727|001|042",
+        "EV|EVSRC|TJR|20260727|001|043",
+        "EV|EVSRC|TJR|20260727|001|044",
+        "EV|EVSRC|TJR|20260727|001|045",
+        "EV|EVSRC|TJR|20260727|001|046",
+        "EV|EVSRC|TJR|20260727|001|047",
+        "EV|EVSRC|TJR|20260727|001|048",
+        "EV|EVSRC|TJR|20260727|001|049",
+        "EV|EVSRC|TJR|20260727|001|050",
+        "EV|EVSRC|TJR|20260727|001|051",
+        "EV|EVSRC|TJR|20260727|001|052",
+        "EV|EVSRC|TJR|20260727|001|053",
+        "EV|EVSRC|TJR|20260727|001|054",
+        "EV|EVSRC|TJR|20260727|001|055",
+        "EV|EVSRC|TJR|20260727|001|056",
+        "EV|EVSRC|TJR|20260727|001|057",
+        "EV|EVSRC|TJR|20260727|001|058",
+        "EV|EVSRC|TJR|20260727|001|059",
+        "EV|EVSRC|TJR|20260727|001|060",
+        "EV|EVSRC|TJR|20260727|001|061",
+        "EV|EVSRC|TJR|20260727|001|062",
+        "EV|EVSRC|TJR|20260727|002|001",
+        "EV|EVSRC|TJR|20260727|002|002",
+        "EV|EVSRC|TJR|20260727|002|003",
+        "EV|EVSRC|TJR|20260727|002|004",
+        "EV|EVSRC|TJR|20260727|002|005",
+        "EV|EVSRC|TJR|20260727|002|006",
+        "EV|EVSRC|TJR|20260727|002|007",
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009",
+        "EV|EVSRC|TJR|20260727|002|010",
+        "EV|EVSRC|TJR|20260727|002|011",
+        "EV|EVSRC|TJR|20260727|002|012",
+        "EV|EVSRC|TJR|20260727|002|013",
+        "EV|EVSRC|TJR|20260727|002|014",
+        "EV|EVSRC|TJR|20260727|002|015",
+        "EV|EVSRC|TJR|20260727|002|016",
+        "EV|EVSRC|TJR|20260727|002|017",
+        "EV|EVSRC|TJR|20260727|002|018",
+        "EV|EVSRC|TJR|20260727|002|019",
+        "EV|EVSRC|TJR|20260727|002|020",
+        "EV|EVSRC|TJR|20260727|002|021",
+        "EV|EVSRC|TJR|20260727|002|022",
+        "EV|EVSRC|TJR|20260727|002|023",
+        "EV|EVSRC|TJR|20260727|002|024"
+      ],
+      "gapId": "GAP|20260727|005",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Does this strategy adjust for high or low volatility conditions?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "TJR",
+      "whyItMatters": "Volatility regime can change whether the same setup criteria remain valid."
+    },
+    {
+      "affectedSections": [
+        "Scope",
+        "Entry Trigger"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|TJR|20260727|001",
+      "category": "no_trade_conditions",
+      "confidence": "none",
+      "createdAt": "2026-07-27T22:15:39Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|TJR|20260727|001|001",
+        "EV|EVSRC|TJR|20260727|001|002",
+        "EV|EVSRC|TJR|20260727|001|003",
+        "EV|EVSRC|TJR|20260727|001|004",
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|006",
+        "EV|EVSRC|TJR|20260727|001|007",
+        "EV|EVSRC|TJR|20260727|001|008",
+        "EV|EVSRC|TJR|20260727|001|009",
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011",
+        "EV|EVSRC|TJR|20260727|001|012",
+        "EV|EVSRC|TJR|20260727|001|013",
+        "EV|EVSRC|TJR|20260727|001|014",
+        "EV|EVSRC|TJR|20260727|001|015",
+        "EV|EVSRC|TJR|20260727|001|016",
+        "EV|EVSRC|TJR|20260727|001|017",
+        "EV|EVSRC|TJR|20260727|001|018",
+        "EV|EVSRC|TJR|20260727|001|019",
+        "EV|EVSRC|TJR|20260727|001|020",
+        "EV|EVSRC|TJR|20260727|001|021",
+        "EV|EVSRC|TJR|20260727|001|022",
+        "EV|EVSRC|TJR|20260727|001|023",
+        "EV|EVSRC|TJR|20260727|001|024",
+        "EV|EVSRC|TJR|20260727|001|025",
+        "EV|EVSRC|TJR|20260727|001|026",
+        "EV|EVSRC|TJR|20260727|001|027",
+        "EV|EVSRC|TJR|20260727|001|028",
+        "EV|EVSRC|TJR|20260727|001|029",
+        "EV|EVSRC|TJR|20260727|001|030",
+        "EV|EVSRC|TJR|20260727|001|031",
+        "EV|EVSRC|TJR|20260727|001|032",
+        "EV|EVSRC|TJR|20260727|001|033",
+        "EV|EVSRC|TJR|20260727|001|034",
+        "EV|EVSRC|TJR|20260727|001|035",
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038",
+        "EV|EVSRC|TJR|20260727|001|039",
+        "EV|EVSRC|TJR|20260727|001|040",
+        "EV|EVSRC|TJR|20260727|001|041",
+        "EV|EVSRC|TJR|20260727|001|042",
+        "EV|EVSRC|TJR|20260727|001|043",
+        "EV|EVSRC|TJR|20260727|001|044",
+        "EV|EVSRC|TJR|20260727|001|045",
+        "EV|EVSRC|TJR|20260727|001|046",
+        "EV|EVSRC|TJR|20260727|001|047",
+        "EV|EVSRC|TJR|20260727|001|048",
+        "EV|EVSRC|TJR|20260727|001|049",
+        "EV|EVSRC|TJR|20260727|001|050",
+        "EV|EVSRC|TJR|20260727|001|051",
+        "EV|EVSRC|TJR|20260727|001|052",
+        "EV|EVSRC|TJR|20260727|001|053",
+        "EV|EVSRC|TJR|20260727|001|054",
+        "EV|EVSRC|TJR|20260727|001|055",
+        "EV|EVSRC|TJR|20260727|001|056",
+        "EV|EVSRC|TJR|20260727|001|057",
+        "EV|EVSRC|TJR|20260727|001|058",
+        "EV|EVSRC|TJR|20260727|001|059",
+        "EV|EVSRC|TJR|20260727|001|060",
+        "EV|EVSRC|TJR|20260727|001|061",
+        "EV|EVSRC|TJR|20260727|001|062",
+        "EV|EVSRC|TJR|20260727|002|001",
+        "EV|EVSRC|TJR|20260727|002|002",
+        "EV|EVSRC|TJR|20260727|002|003",
+        "EV|EVSRC|TJR|20260727|002|004",
+        "EV|EVSRC|TJR|20260727|002|005",
+        "EV|EVSRC|TJR|20260727|002|006",
+        "EV|EVSRC|TJR|20260727|002|007",
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009",
+        "EV|EVSRC|TJR|20260727|002|010",
+        "EV|EVSRC|TJR|20260727|002|011",
+        "EV|EVSRC|TJR|20260727|002|012",
+        "EV|EVSRC|TJR|20260727|002|013",
+        "EV|EVSRC|TJR|20260727|002|014",
+        "EV|EVSRC|TJR|20260727|002|015",
+        "EV|EVSRC|TJR|20260727|002|016",
+        "EV|EVSRC|TJR|20260727|002|017",
+        "EV|EVSRC|TJR|20260727|002|018",
+        "EV|EVSRC|TJR|20260727|002|019",
+        "EV|EVSRC|TJR|20260727|002|020",
+        "EV|EVSRC|TJR|20260727|002|021",
+        "EV|EVSRC|TJR|20260727|002|022",
+        "EV|EVSRC|TJR|20260727|002|023",
+        "EV|EVSRC|TJR|20260727|002|024"
+      ],
+      "gapId": "GAP|20260727|006",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Are there explicit conditions under which no trade should be taken?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "TJR",
+      "whyItMatters": "Without stated no-trade conditions, the strategy may be applied in contexts the trader would avoid."
+    }
+  ],
+  "limitations": [
+    "14 unresolved question(s) remain open for this trader.",
+    "2 contradiction(s) remain unresolved for this trader.",
+    "CLAIM|TJR|20260727|033: \"And like I said before, I'm a little bit more aggressive. I would like to say that I probably would have entered right here.\"",
+    "No risk_rule claim found -- risk sizing is unknown.",
+    "One or more claims are still pending_review and have not been confirmed by a human."
+  ],
+  "lineageSummary": {
+    "blueprintSourceLineage": {
+      "claimIds": [
+        "CLAIM|TJR|20260727|001",
+        "CLAIM|TJR|20260727|002",
+        "CLAIM|TJR|20260727|003",
+        "CLAIM|TJR|20260727|004",
+        "CLAIM|TJR|20260727|005",
+        "CLAIM|TJR|20260727|006",
+        "CLAIM|TJR|20260727|007",
+        "CLAIM|TJR|20260727|008",
+        "CLAIM|TJR|20260727|009",
+        "CLAIM|TJR|20260727|010",
+        "CLAIM|TJR|20260727|011",
+        "CLAIM|TJR|20260727|012",
+        "CLAIM|TJR|20260727|013",
+        "CLAIM|TJR|20260727|014",
+        "CLAIM|TJR|20260727|015",
+        "CLAIM|TJR|20260727|016",
+        "CLAIM|TJR|20260727|017",
+        "CLAIM|TJR|20260727|018",
+        "CLAIM|TJR|20260727|019",
+        "CLAIM|TJR|20260727|020",
+        "CLAIM|TJR|20260727|021",
+        "CLAIM|TJR|20260727|022",
+        "CLAIM|TJR|20260727|023",
+        "CLAIM|TJR|20260727|024",
+        "CLAIM|TJR|20260727|025",
+        "CLAIM|TJR|20260727|026",
+        "CLAIM|TJR|20260727|027",
+        "CLAIM|TJR|20260727|028",
+        "CLAIM|TJR|20260727|029",
+        "CLAIM|TJR|20260727|030",
+        "CLAIM|TJR|20260727|031",
+        "CLAIM|TJR|20260727|032",
+        "CLAIM|TJR|20260727|033",
+        "CLAIM|TJR|20260727|034",
+        "CLAIM|TJR|20260727|035",
+        "CLAIM|TJR|20260727|036",
+        "CLAIM|TJR|20260727|037",
+        "CLAIM|TJR|20260727|038",
+        "CLAIM|TJR|20260727|039",
+        "CLAIM|TJR|20260727|040",
+        "CLAIM|TJR|20260727|041",
+        "CLAIM|TJR|20260727|042",
+        "CLAIM|TJR|20260727|043",
+        "CLAIM|TJR|20260727|044",
+        "CLAIM|TJR|20260727|045",
+        "CLAIM|TJR|20260727|046",
+        "CLAIM|TJR|20260727|047",
+        "CLAIM|TJR|20260727|048",
+        "CLAIM|TJR|20260727|049",
+        "CLAIM|TJR|20260727|050",
+        "CLAIM|TJR|20260727|051",
+        "CLAIM|TJR|20260727|052",
+        "CLAIM|TJR|20260727|053",
+        "CLAIM|TJR|20260727|054",
+        "CLAIM|TJR|20260727|055",
+        "CLAIM|TJR|20260727|056",
+        "CLAIM|TJR|20260727|057",
+        "CLAIM|TJR|20260727|058",
+        "CLAIM|TJR|20260727|059",
+        "CLAIM|TJR|20260727|060",
+        "CLAIM|TJR|20260727|061",
+        "CLAIM|TJR|20260727|062",
+        "CLAIM|TJR|20260727|063",
+        "CLAIM|TJR|20260727|064",
+        "CLAIM|TJR|20260727|065",
+        "CLAIM|TJR|20260727|066",
+        "CLAIM|TJR|20260727|067",
+        "CLAIM|TJR|20260727|068",
+        "CLAIM|TJR|20260727|069"
+      ],
+      "evidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|001",
+        "EV|EVSRC|TJR|20260727|001|002",
+        "EV|EVSRC|TJR|20260727|001|003",
+        "EV|EVSRC|TJR|20260727|001|004",
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|006",
+        "EV|EVSRC|TJR|20260727|001|007",
+        "EV|EVSRC|TJR|20260727|001|008",
+        "EV|EVSRC|TJR|20260727|001|009",
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011",
+        "EV|EVSRC|TJR|20260727|001|012",
+        "EV|EVSRC|TJR|20260727|001|013",
+        "EV|EVSRC|TJR|20260727|001|014",
+        "EV|EVSRC|TJR|20260727|001|015",
+        "EV|EVSRC|TJR|20260727|001|016",
+        "EV|EVSRC|TJR|20260727|001|017",
+        "EV|EVSRC|TJR|20260727|001|018",
+        "EV|EVSRC|TJR|20260727|001|019",
+        "EV|EVSRC|TJR|20260727|001|020",
+        "EV|EVSRC|TJR|20260727|001|021",
+        "EV|EVSRC|TJR|20260727|001|022",
+        "EV|EVSRC|TJR|20260727|001|023",
+        "EV|EVSRC|TJR|20260727|001|024",
+        "EV|EVSRC|TJR|20260727|001|025",
+        "EV|EVSRC|TJR|20260727|001|026",
+        "EV|EVSRC|TJR|20260727|001|027",
+        "EV|EVSRC|TJR|20260727|001|028",
+        "EV|EVSRC|TJR|20260727|001|029",
+        "EV|EVSRC|TJR|20260727|001|030",
+        "EV|EVSRC|TJR|20260727|001|031",
+        "EV|EVSRC|TJR|20260727|001|032",
+        "EV|EVSRC|TJR|20260727|001|033",
+        "EV|EVSRC|TJR|20260727|001|034",
+        "EV|EVSRC|TJR|20260727|001|035",
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038",
+        "EV|EVSRC|TJR|20260727|001|039",
+        "EV|EVSRC|TJR|20260727|001|040",
+        "EV|EVSRC|TJR|20260727|001|041",
+        "EV|EVSRC|TJR|20260727|001|042",
+        "EV|EVSRC|TJR|20260727|001|043",
+        "EV|EVSRC|TJR|20260727|001|044",
+        "EV|EVSRC|TJR|20260727|001|045",
+        "EV|EVSRC|TJR|20260727|001|046",
+        "EV|EVSRC|TJR|20260727|001|047",
+        "EV|EVSRC|TJR|20260727|001|048",
+        "EV|EVSRC|TJR|20260727|001|049",
+        "EV|EVSRC|TJR|20260727|001|050",
+        "EV|EVSRC|TJR|20260727|001|051",
+        "EV|EVSRC|TJR|20260727|001|052",
+        "EV|EVSRC|TJR|20260727|001|053",
+        "EV|EVSRC|TJR|20260727|001|054",
+        "EV|EVSRC|TJR|20260727|001|055",
+        "EV|EVSRC|TJR|20260727|001|056",
+        "EV|EVSRC|TJR|20260727|001|057",
+        "EV|EVSRC|TJR|20260727|001|058",
+        "EV|EVSRC|TJR|20260727|001|059",
+        "EV|EVSRC|TJR|20260727|001|060",
+        "EV|EVSRC|TJR|20260727|001|061",
+        "EV|EVSRC|TJR|20260727|001|062",
+        "EV|EVSRC|TJR|20260727|002|001",
+        "EV|EVSRC|TJR|20260727|002|002",
+        "EV|EVSRC|TJR|20260727|002|003",
+        "EV|EVSRC|TJR|20260727|002|004",
+        "EV|EVSRC|TJR|20260727|002|005",
+        "EV|EVSRC|TJR|20260727|002|006",
+        "EV|EVSRC|TJR|20260727|002|007",
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009",
+        "EV|EVSRC|TJR|20260727|002|010",
+        "EV|EVSRC|TJR|20260727|002|011",
+        "EV|EVSRC|TJR|20260727|002|012",
+        "EV|EVSRC|TJR|20260727|002|013",
+        "EV|EVSRC|TJR|20260727|002|014",
+        "EV|EVSRC|TJR|20260727|002|015",
+        "EV|EVSRC|TJR|20260727|002|016",
+        "EV|EVSRC|TJR|20260727|002|017",
+        "EV|EVSRC|TJR|20260727|002|018",
+        "EV|EVSRC|TJR|20260727|002|019",
+        "EV|EVSRC|TJR|20260727|002|020",
+        "EV|EVSRC|TJR|20260727|002|021",
+        "EV|EVSRC|TJR|20260727|002|022",
+        "EV|EVSRC|TJR|20260727|002|023",
+        "EV|EVSRC|TJR|20260727|002|024"
+      ],
+      "segmentIds": [
+        "TSEG|INTAKE|TJR|20260727|001|001",
+        "TSEG|INTAKE|TJR|20260727|001|003",
+        "TSEG|INTAKE|TJR|20260727|001|004",
+        "TSEG|INTAKE|TJR|20260727|001|005",
+        "TSEG|INTAKE|TJR|20260727|001|006",
+        "TSEG|INTAKE|TJR|20260727|001|008",
+        "TSEG|INTAKE|TJR|20260727|001|009",
+        "TSEG|INTAKE|TJR|20260727|001|010",
+        "TSEG|INTAKE|TJR|20260727|001|011",
+        "TSEG|INTAKE|TJR|20260727|001|012",
+        "TSEG|INTAKE|TJR|20260727|001|013",
+        "TSEG|INTAKE|TJR|20260727|001|014",
+        "TSEG|INTAKE|TJR|20260727|001|015",
+        "TSEG|INTAKE|TJR|20260727|001|017",
+        "TSEG|INTAKE|TJR|20260727|001|018",
+        "TSEG|INTAKE|TJR|20260727|001|019",
+        "TSEG|INTAKE|TJR|20260727|001|020",
+        "TSEG|INTAKE|TJR|20260727|001|021",
+        "TSEG|INTAKE|TJR|20260727|001|022",
+        "TSEG|INTAKE|TJR|20260727|001|023",
+        "TSEG|INTAKE|TJR|20260727|002|001",
+        "TSEG|INTAKE|TJR|20260727|002|002",
+        "TSEG|INTAKE|TJR|20260727|002|003",
+        "TSEG|INTAKE|TJR|20260727|002|004",
+        "TSEG|INTAKE|TJR|20260727|002|005",
+        "TSEG|INTAKE|TJR|20260727|002|007",
+        "TSEG|INTAKE|TJR|20260727|002|008",
+        "TSEG|INTAKE|TJR|20260727|002|009",
+        "TSEG|INTAKE|TJR|20260727|002|010",
+        "TSEG|INTAKE|TJR|20260727|002|013",
+        "TSEG|INTAKE|TJR|20260727|002|014",
+        "TSEG|INTAKE|TJR|20260727|002|015",
+        "TSEG|INTAKE|TJR|20260727|002|016",
+        "TSEG|INTAKE|TJR|20260727|002|017",
+        "TSEG|INTAKE|TJR|20260727|002|018",
+        "TSEG|INTAKE|TJR|20260727|002|019"
+      ],
+      "sourceIds": [
+        "EVSRC|TJR|20260727|001",
+        "EVSRC|TJR|20260727|002"
+      ]
+    },
+    "profileSourceLineage": {
+      "claimIds": [
+        "CLAIM|TJR|20260727|001",
+        "CLAIM|TJR|20260727|002",
+        "CLAIM|TJR|20260727|003",
+        "CLAIM|TJR|20260727|004",
+        "CLAIM|TJR|20260727|005",
+        "CLAIM|TJR|20260727|006",
+        "CLAIM|TJR|20260727|007",
+        "CLAIM|TJR|20260727|008",
+        "CLAIM|TJR|20260727|009",
+        "CLAIM|TJR|20260727|010",
+        "CLAIM|TJR|20260727|011",
+        "CLAIM|TJR|20260727|012",
+        "CLAIM|TJR|20260727|013",
+        "CLAIM|TJR|20260727|014",
+        "CLAIM|TJR|20260727|015",
+        "CLAIM|TJR|20260727|016",
+        "CLAIM|TJR|20260727|017",
+        "CLAIM|TJR|20260727|018",
+        "CLAIM|TJR|20260727|019",
+        "CLAIM|TJR|20260727|020",
+        "CLAIM|TJR|20260727|021",
+        "CLAIM|TJR|20260727|022",
+        "CLAIM|TJR|20260727|023",
+        "CLAIM|TJR|20260727|024",
+        "CLAIM|TJR|20260727|025",
+        "CLAIM|TJR|20260727|026",
+        "CLAIM|TJR|20260727|027",
+        "CLAIM|TJR|20260727|028",
+        "CLAIM|TJR|20260727|029",
+        "CLAIM|TJR|20260727|030",
+        "CLAIM|TJR|20260727|031",
+        "CLAIM|TJR|20260727|032",
+        "CLAIM|TJR|20260727|033",
+        "CLAIM|TJR|20260727|034",
+        "CLAIM|TJR|20260727|035",
+        "CLAIM|TJR|20260727|036",
+        "CLAIM|TJR|20260727|037",
+        "CLAIM|TJR|20260727|038",
+        "CLAIM|TJR|20260727|039",
+        "CLAIM|TJR|20260727|040",
+        "CLAIM|TJR|20260727|041",
+        "CLAIM|TJR|20260727|042",
+        "CLAIM|TJR|20260727|043",
+        "CLAIM|TJR|20260727|044",
+        "CLAIM|TJR|20260727|045",
+        "CLAIM|TJR|20260727|046",
+        "CLAIM|TJR|20260727|047",
+        "CLAIM|TJR|20260727|048",
+        "CLAIM|TJR|20260727|049",
+        "CLAIM|TJR|20260727|050",
+        "CLAIM|TJR|20260727|051",
+        "CLAIM|TJR|20260727|052",
+        "CLAIM|TJR|20260727|053",
+        "CLAIM|TJR|20260727|054",
+        "CLAIM|TJR|20260727|055",
+        "CLAIM|TJR|20260727|056",
+        "CLAIM|TJR|20260727|057",
+        "CLAIM|TJR|20260727|058",
+        "CLAIM|TJR|20260727|059",
+        "CLAIM|TJR|20260727|060",
+        "CLAIM|TJR|20260727|061",
+        "CLAIM|TJR|20260727|062",
+        "CLAIM|TJR|20260727|063",
+        "CLAIM|TJR|20260727|064",
+        "CLAIM|TJR|20260727|065",
+        "CLAIM|TJR|20260727|066",
+        "CLAIM|TJR|20260727|067",
+        "CLAIM|TJR|20260727|068",
+        "CLAIM|TJR|20260727|069"
+      ],
+      "sourceIds": [
+        "EVSRC|TJR|20260727|001",
+        "EVSRC|TJR|20260727|002"
+      ]
+    }
+  },
+  "paperTradingRecommendations": [
+    "Paper-trade across varying volatility_handling conditions and compare results.",
+    "Paper-trade both interpretations and compare results.",
+    "Paper-trade both variants (with/without this condition) and compare results."
+  ],
+  "profileId": "PROFILE|TJR|20260727|001",
+  "proposedHypotheses": [
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|001",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|004"
+      ],
+      "statement": "Trades are taken on the leading index, never on the lagging index may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|007"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|002",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|006"
+      ],
+      "statement": "The strategy is based on liquidity sweeps may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|008"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|003",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|008"
+      ],
+      "statement": "Step 1 of the setup is to identify a liquidity sweep may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|004",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|009"
+      ],
+      "statement": "Draws on liquidity are taken from 1-hour highs and lows, 4-hour highs and lows, or session highs and lows may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|012"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|005",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|010"
+      ],
+      "statement": "The first daily preparation step is to mark out the session opens may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|013"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|006",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|011"
+      ],
+      "statement": "A session high or low that has already been swept without producing a reaction is not marked or used as a draw on liquidity may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|014"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|007",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|012"
+      ],
+      "statement": "Step 2 requires a five-minute confirmation confluence after the liquidity sweep may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|015"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|008",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|013"
+      ],
+      "statement": "The confirmation confluences are break of structure, inverse fair value gap, SMT divergence, and a 79% Fibonacci extension closure may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|016",
+        "EV|EVSRC|TJR|20260727|001|017"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|009",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|014"
+      ],
+      "statement": "Only one confirmation confluence is required; all four are not needed may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|018",
+        "EV|EVSRC|TJR|20260727|001|019"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|010",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|018"
+      ],
+      "statement": "Step 2B: when the liquidity sweep happens during pre-market, a low-timeframe manipulation is required before proceeding may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|023",
+        "EV|EVSRC|TJR|20260727|001|024"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|011",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|021"
+      ],
+      "statement": "When there is no pre-market sweep, step 2B is skipped and only the confirmation confluences apply may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|027",
+        "EV|EVSRC|TJR|20260727|001|028"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|012",
+      "independentVariables": [
+        "invalidation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|022"
+      ],
+      "statement": "After the five-minute manipulation the setup remains valid only while price stays in the trend established by the confirmation confluence may serve as the primary invalidation condition.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|029",
+        "EV|EVSRC|TJR|20260727|001|030",
+        "EV|EVSRC|TJR|20260727|001|031"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|013",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|023"
+      ],
+      "statement": "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|032"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|014",
+      "independentVariables": [
+        "entry_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|027"
+      ],
+      "statement": "Step 4 requires a one-minute confirmation confluence before entry may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|015",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|028"
+      ],
+      "statement": "Stops are placed beyond the swing extreme the entry is taken against -- underneath the low for a long entry, above the highs for a short entry may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|039",
+        "EV|EVSRC|TJR|20260727|001|040"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|016",
+      "independentVariables": [
+        "target_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|029"
+      ],
+      "statement": "Targets are the previous draws on liquidity in the direction of the trade may be the preferred target-selection approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|041",
+        "EV|EVSRC|TJR|20260727|001|042",
+        "EV|EVSRC|TJR|20260727|001|043"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|017",
+      "independentVariables": [
+        "trade_management_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|030"
+      ],
+      "statement": "Profits are taken in partials across multiple take-profit levels and the remaining position is left to stop out at break even may apply only in certain trade-management contexts.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|044",
+        "EV|EVSRC|TJR|20260727|001|045"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|018",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|040"
+      ],
+      "statement": "The trading day is checked for high-impact news before the setup is applied may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|055"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|019",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|055"
+      ],
+      "statement": "Charts must be set to New York (Eastern) time regardless of the trader's physical location may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|020",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|065"
+      ],
+      "statement": "A high is marked at the highest wick of the two candles forming it; a low at the lowest wick of the two forming it may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|002|020"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "Exactly one of the two conflicting claims reflects the trader's primary rule."
+      ],
+      "confidence": "contested",
+      "contradictingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|047"
+      ],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|021",
+      "independentVariables": [
+        "confirmation_rule",
+        "exception"
+      ],
+      "limitations": [
+        "Derived from an unresolved ContradictionRecord (XCONTRA|20260727|001) -- requires owner review."
+      ],
+      "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+      "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|023",
+        "CLAIM|TJR|20260727|032"
+      ],
+      "statement": "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|032).",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|032"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "Exactly one of the two conflicting claims reflects the trader's primary rule."
+      ],
+      "confidence": "contested",
+      "contradictingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|034"
+      ],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|022",
+      "independentVariables": [
+        "definition",
+        "exception"
+      ],
+      "limitations": [
+        "Derived from an unresolved ContradictionRecord (XCONTRA|20260727|002) -- requires owner review."
+      ],
+      "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+      "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|024",
+        "CLAIM|TJR|20260727|025"
+      ],
+      "statement": "Continuation confluences are limited to equilibrium and fair value gaps may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|025).",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|033"
+      ],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The knowledge gap (GAP|20260727|005) reflects a real, not merely incidental, omission."
+      ],
+      "confidence": "insufficient_evidence",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-27T22:15:39Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260727|023",
+      "independentVariables": [
+        "volatility_handling"
+      ],
+      "limitations": [
+        "Proposed from an unresolved knowledge gap (GAP|20260727|005), not from direct evidence."
+      ],
+      "proposedPaperTest": "Paper-trade across varying volatility_handling conditions and compare results.",
+      "proposedReplayTest": "Replay historical price action segmented by volatility_handling and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|TJR|20260727|027"
+      ],
+      "statement": "Volatility conditions may materially affect this strategy's setup validity.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [],
+      "updatedAt": "2026-07-27T22:15:39Z"
+    }
+  ],
+  "replayRecommendations": [
+    "Replay historical price action segmented by volatility_handling and compare outcomes.",
+    "Replay historical price action under both interpretations and compare outcomes.",
+    "Replay historical price action with and without this condition and compare outcomes.",
+    "replay test against historical price action"
+  ],
+  "reportId": "KLREPORT|TJR|20260727T222637Z",
+  "reportSchemaVersion": 1,
+  "sourceSummary": {
+    "sourceCount": 2,
+    "sources": [
+      {
+        "provenanceStatus": "partially_verified",
+        "sourceId": "EVSRC|TJR|20260727|001",
+        "sourceType": "transcript",
+        "title": "TJR -- session-based liquidity-sweep strategy walkthrough (YouTube transcript)"
+      },
+      {
+        "provenanceStatus": "partially_verified",
+        "sourceId": "EVSRC|TJR|20260727|002",
+        "sourceType": "transcript",
+        "title": "TJR — Day 3 (working title; actual YouTube title unverified)"
+      }
+    ]
+  },
+  "strategyBlueprint": {
+    "blueprintId": "BLUEPRINT|TJR|20260727|001",
+    "contradictions": [
+      {
+        "affectedSections": [
+          "Confirmation",
+          "exception"
+        ],
+        "conflictingClaimIds": [
+          "CLAIM|TJR|20260727|023",
+          "CLAIM|TJR|20260727|032"
+        ],
+        "contradictionRecordId": "XCONTRA|20260727|001",
+        "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+      },
+      {
+        "affectedSections": [
+          "Setup Identification",
+          "exception"
+        ],
+        "conflictingClaimIds": [
+          "CLAIM|TJR|20260727|024",
+          "CLAIM|TJR|20260727|025"
+        ],
+        "contradictionRecordId": "XCONTRA|20260727|002",
+        "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+      }
+    ],
+    "entryLogic": {
+      "forbiddenConditions": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|034"
+          ],
+          "statement": "When step 2B is active, an SMT divergence may be used as the continuation confluence in addition to equilibrium and fair value gap."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|046"
+          ],
+          "statement": "When the price action after the confirmation confluence looks unreliable, the step-two-into-step-three sequence is restarted instead of entering."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|047"
+          ],
+          "statement": "If the stated continuation confluence is not hit but strong draws on liquidity and a good risk-to-reward remain, the trade is still taken."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|002|024"
+          ],
+          "statement": "Trend direction alone is not a trade signal, because trends can break and change."
+        }
+      ],
+      "optionalConditions": [],
+      "preferredConditions": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|036",
+            "EV|EVSRC|TJR|20260727|001|037",
+            "EV|EVSRC|TJR|20260727|001|038"
+          ],
+          "statement": "Step 4 requires a one-minute confirmation confluence before entry."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|005",
+            "EV|EVSRC|TJR|20260727|001|007"
+          ],
+          "statement": "Trades are taken on the leading index, never on the lagging index."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|008"
+          ],
+          "statement": "The strategy is based on liquidity sweeps."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|010",
+            "EV|EVSRC|TJR|20260727|001|011"
+          ],
+          "statement": "Step 1 of the setup is to identify a liquidity sweep."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|012"
+          ],
+          "statement": "Draws on liquidity are taken from 1-hour highs and lows, 4-hour highs and lows, or session highs and lows."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|013"
+          ],
+          "statement": "The first daily preparation step is to mark out the session opens."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|014"
+          ],
+          "statement": "A session high or low that has already been swept without producing a reaction is not marked or used as a draw on liquidity."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|055"
+          ],
+          "statement": "The trading day is checked for high-impact news before the setup is applied."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|002|008",
+            "EV|EVSRC|TJR|20260727|002|009"
+          ],
+          "statement": "Charts must be set to New York (Eastern) time regardless of the trader's physical location."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|002|020"
+          ],
+          "statement": "A high is marked at the highest wick of the two candles forming it; a low at the lowest wick of the two forming it."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|015"
+          ],
+          "statement": "Step 2 requires a five-minute confirmation confluence after the liquidity sweep."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|016",
+            "EV|EVSRC|TJR|20260727|001|017"
+          ],
+          "statement": "The confirmation confluences are break of structure, inverse fair value gap, SMT divergence, and a 79% Fibonacci extension closure."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|018",
+            "EV|EVSRC|TJR|20260727|001|019"
+          ],
+          "statement": "Only one confirmation confluence is required; all four are not needed."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|023",
+            "EV|EVSRC|TJR|20260727|001|024"
+          ],
+          "statement": "Step 2B: when the liquidity sweep happens during pre-market, a low-timeframe manipulation is required before proceeding."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|027",
+            "EV|EVSRC|TJR|20260727|001|028"
+          ],
+          "statement": "When there is no pre-market sweep, step 2B is skipped and only the confirmation confluences apply."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|032"
+          ],
+          "statement": "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap."
+        }
+      ],
+      "requiredConditions": [],
+      "unresolvedConditions": []
+    },
+    "exitLogic": {
+      "breakEven": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|044",
+            "EV|EVSRC|TJR|20260727|001|045"
+          ],
+          "statement": "Profits are taken in partials across multiple take-profit levels and the remaining position is left to stop out at break even."
+        }
+      ],
+      "partials": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|044",
+            "EV|EVSRC|TJR|20260727|001|045"
+          ],
+          "statement": "Profits are taken in partials across multiple take-profit levels and the remaining position is left to stop out at break even."
+        }
+      ],
+      "profitTargets": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|041",
+            "EV|EVSRC|TJR|20260727|001|042",
+            "EV|EVSRC|TJR|20260727|001|043"
+          ],
+          "statement": "Targets are the previous draws on liquidity in the direction of the trade."
+        }
+      ],
+      "setupInvalidation": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|029",
+            "EV|EVSRC|TJR|20260727|001|030",
+            "EV|EVSRC|TJR|20260727|001|031"
+          ],
+          "statement": "After the five-minute manipulation the setup remains valid only while price stays in the trend established by the confirmation confluence."
+        }
+      ],
+      "stopPlacement": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|TJR|20260727|001|039",
+            "EV|EVSRC|TJR|20260727|001|040"
+          ],
+          "statement": "Stops are placed beyond the swing extreme the entry is taken against -- underneath the low for a long entry, above the highs for a short entry."
+        }
+      ],
+      "timeBasedExit": [],
+      "trailing": [],
+      "unknowns": [
+        "No trailing-stop rule found in evidence.",
+        "No time-based exit rule found in evidence."
+      ]
+    },
+    "generatedAt": "2026-07-27T22:15:39Z",
+    "limitations": {
+      "ambiguousDefinitions": [],
+      "discretionaryLanguage": [
+        "CLAIM|TJR|20260727|033: \"And like I said before, I'm a little bit more aggressive. I would like to say that I probably would have entered right here.\""
+      ],
+      "insufficientEvidence": [],
+      "missingInformation": [
+        "No risk_rule claim found -- risk sizing is unknown."
+      ]
+    },
+    "riskLogic": {
+      "inferredRiskRules": [],
+      "missingRiskRules": [
+        "No risk_rule claim exists in evidence -- risk-per-trade sizing is unknown."
+      ],
+      "statedRiskRules": []
+    },
+    "schemaVersion": 1,
+    "scope": {
+      "confirmationTimeframes": [
+        "5m"
+      ],
+      "executionTimeframes": [
+        "1m",
+        "5m"
+      ],
+      "higherTimeframes": [],
+      "instruments": [
+        "NASDAQ",
+        "S&P 500"
+      ],
+      "markets": [],
+      "preferredMarketConditions": [],
+      "prohibitedOrAvoidedConditions": [],
+      "sessions": [
+        "New York",
+        "New York pre-market"
+      ]
+    },
+    "sourceLineage": {
+      "claimIds": [
+        "CLAIM|TJR|20260727|001",
+        "CLAIM|TJR|20260727|002",
+        "CLAIM|TJR|20260727|003",
+        "CLAIM|TJR|20260727|004",
+        "CLAIM|TJR|20260727|005",
+        "CLAIM|TJR|20260727|006",
+        "CLAIM|TJR|20260727|007",
+        "CLAIM|TJR|20260727|008",
+        "CLAIM|TJR|20260727|009",
+        "CLAIM|TJR|20260727|010",
+        "CLAIM|TJR|20260727|011",
+        "CLAIM|TJR|20260727|012",
+        "CLAIM|TJR|20260727|013",
+        "CLAIM|TJR|20260727|014",
+        "CLAIM|TJR|20260727|015",
+        "CLAIM|TJR|20260727|016",
+        "CLAIM|TJR|20260727|017",
+        "CLAIM|TJR|20260727|018",
+        "CLAIM|TJR|20260727|019",
+        "CLAIM|TJR|20260727|020",
+        "CLAIM|TJR|20260727|021",
+        "CLAIM|TJR|20260727|022",
+        "CLAIM|TJR|20260727|023",
+        "CLAIM|TJR|20260727|024",
+        "CLAIM|TJR|20260727|025",
+        "CLAIM|TJR|20260727|026",
+        "CLAIM|TJR|20260727|027",
+        "CLAIM|TJR|20260727|028",
+        "CLAIM|TJR|20260727|029",
+        "CLAIM|TJR|20260727|030",
+        "CLAIM|TJR|20260727|031",
+        "CLAIM|TJR|20260727|032",
+        "CLAIM|TJR|20260727|033",
+        "CLAIM|TJR|20260727|034",
+        "CLAIM|TJR|20260727|035",
+        "CLAIM|TJR|20260727|036",
+        "CLAIM|TJR|20260727|037",
+        "CLAIM|TJR|20260727|038",
+        "CLAIM|TJR|20260727|039",
+        "CLAIM|TJR|20260727|040",
+        "CLAIM|TJR|20260727|041",
+        "CLAIM|TJR|20260727|042",
+        "CLAIM|TJR|20260727|043",
+        "CLAIM|TJR|20260727|044",
+        "CLAIM|TJR|20260727|045",
+        "CLAIM|TJR|20260727|046",
+        "CLAIM|TJR|20260727|047",
+        "CLAIM|TJR|20260727|048",
+        "CLAIM|TJR|20260727|049",
+        "CLAIM|TJR|20260727|050",
+        "CLAIM|TJR|20260727|051",
+        "CLAIM|TJR|20260727|052",
+        "CLAIM|TJR|20260727|053",
+        "CLAIM|TJR|20260727|054",
+        "CLAIM|TJR|20260727|055",
+        "CLAIM|TJR|20260727|056",
+        "CLAIM|TJR|20260727|057",
+        "CLAIM|TJR|20260727|058",
+        "CLAIM|TJR|20260727|059",
+        "CLAIM|TJR|20260727|060",
+        "CLAIM|TJR|20260727|061",
+        "CLAIM|TJR|20260727|062",
+        "CLAIM|TJR|20260727|063",
+        "CLAIM|TJR|20260727|064",
+        "CLAIM|TJR|20260727|065",
+        "CLAIM|TJR|20260727|066",
+        "CLAIM|TJR|20260727|067",
+        "CLAIM|TJR|20260727|068",
+        "CLAIM|TJR|20260727|069"
+      ],
+      "evidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|001",
+        "EV|EVSRC|TJR|20260727|001|002",
+        "EV|EVSRC|TJR|20260727|001|003",
+        "EV|EVSRC|TJR|20260727|001|004",
+        "EV|EVSRC|TJR|20260727|001|005",
+        "EV|EVSRC|TJR|20260727|001|006",
+        "EV|EVSRC|TJR|20260727|001|007",
+        "EV|EVSRC|TJR|20260727|001|008",
+        "EV|EVSRC|TJR|20260727|001|009",
+        "EV|EVSRC|TJR|20260727|001|010",
+        "EV|EVSRC|TJR|20260727|001|011",
+        "EV|EVSRC|TJR|20260727|001|012",
+        "EV|EVSRC|TJR|20260727|001|013",
+        "EV|EVSRC|TJR|20260727|001|014",
+        "EV|EVSRC|TJR|20260727|001|015",
+        "EV|EVSRC|TJR|20260727|001|016",
+        "EV|EVSRC|TJR|20260727|001|017",
+        "EV|EVSRC|TJR|20260727|001|018",
+        "EV|EVSRC|TJR|20260727|001|019",
+        "EV|EVSRC|TJR|20260727|001|020",
+        "EV|EVSRC|TJR|20260727|001|021",
+        "EV|EVSRC|TJR|20260727|001|022",
+        "EV|EVSRC|TJR|20260727|001|023",
+        "EV|EVSRC|TJR|20260727|001|024",
+        "EV|EVSRC|TJR|20260727|001|025",
+        "EV|EVSRC|TJR|20260727|001|026",
+        "EV|EVSRC|TJR|20260727|001|027",
+        "EV|EVSRC|TJR|20260727|001|028",
+        "EV|EVSRC|TJR|20260727|001|029",
+        "EV|EVSRC|TJR|20260727|001|030",
+        "EV|EVSRC|TJR|20260727|001|031",
+        "EV|EVSRC|TJR|20260727|001|032",
+        "EV|EVSRC|TJR|20260727|001|033",
+        "EV|EVSRC|TJR|20260727|001|034",
+        "EV|EVSRC|TJR|20260727|001|035",
+        "EV|EVSRC|TJR|20260727|001|036",
+        "EV|EVSRC|TJR|20260727|001|037",
+        "EV|EVSRC|TJR|20260727|001|038",
+        "EV|EVSRC|TJR|20260727|001|039",
+        "EV|EVSRC|TJR|20260727|001|040",
+        "EV|EVSRC|TJR|20260727|001|041",
+        "EV|EVSRC|TJR|20260727|001|042",
+        "EV|EVSRC|TJR|20260727|001|043",
+        "EV|EVSRC|TJR|20260727|001|044",
+        "EV|EVSRC|TJR|20260727|001|045",
+        "EV|EVSRC|TJR|20260727|001|046",
+        "EV|EVSRC|TJR|20260727|001|047",
+        "EV|EVSRC|TJR|20260727|001|048",
+        "EV|EVSRC|TJR|20260727|001|049",
+        "EV|EVSRC|TJR|20260727|001|050",
+        "EV|EVSRC|TJR|20260727|001|051",
+        "EV|EVSRC|TJR|20260727|001|052",
+        "EV|EVSRC|TJR|20260727|001|053",
+        "EV|EVSRC|TJR|20260727|001|054",
+        "EV|EVSRC|TJR|20260727|001|055",
+        "EV|EVSRC|TJR|20260727|001|056",
+        "EV|EVSRC|TJR|20260727|001|057",
+        "EV|EVSRC|TJR|20260727|001|058",
+        "EV|EVSRC|TJR|20260727|001|059",
+        "EV|EVSRC|TJR|20260727|001|060",
+        "EV|EVSRC|TJR|20260727|001|061",
+        "EV|EVSRC|TJR|20260727|001|062",
+        "EV|EVSRC|TJR|20260727|002|001",
+        "EV|EVSRC|TJR|20260727|002|002",
+        "EV|EVSRC|TJR|20260727|002|003",
+        "EV|EVSRC|TJR|20260727|002|004",
+        "EV|EVSRC|TJR|20260727|002|005",
+        "EV|EVSRC|TJR|20260727|002|006",
+        "EV|EVSRC|TJR|20260727|002|007",
+        "EV|EVSRC|TJR|20260727|002|008",
+        "EV|EVSRC|TJR|20260727|002|009",
+        "EV|EVSRC|TJR|20260727|002|010",
+        "EV|EVSRC|TJR|20260727|002|011",
+        "EV|EVSRC|TJR|20260727|002|012",
+        "EV|EVSRC|TJR|20260727|002|013",
+        "EV|EVSRC|TJR|20260727|002|014",
+        "EV|EVSRC|TJR|20260727|002|015",
+        "EV|EVSRC|TJR|20260727|002|016",
+        "EV|EVSRC|TJR|20260727|002|017",
+        "EV|EVSRC|TJR|20260727|002|018",
+        "EV|EVSRC|TJR|20260727|002|019",
+        "EV|EVSRC|TJR|20260727|002|020",
+        "EV|EVSRC|TJR|20260727|002|021",
+        "EV|EVSRC|TJR|20260727|002|022",
+        "EV|EVSRC|TJR|20260727|002|023",
+        "EV|EVSRC|TJR|20260727|002|024"
+      ],
+      "segmentIds": [
+        "TSEG|INTAKE|TJR|20260727|001|001",
+        "TSEG|INTAKE|TJR|20260727|001|003",
+        "TSEG|INTAKE|TJR|20260727|001|004",
+        "TSEG|INTAKE|TJR|20260727|001|005",
+        "TSEG|INTAKE|TJR|20260727|001|006",
+        "TSEG|INTAKE|TJR|20260727|001|008",
+        "TSEG|INTAKE|TJR|20260727|001|009",
+        "TSEG|INTAKE|TJR|20260727|001|010",
+        "TSEG|INTAKE|TJR|20260727|001|011",
+        "TSEG|INTAKE|TJR|20260727|001|012",
+        "TSEG|INTAKE|TJR|20260727|001|013",
+        "TSEG|INTAKE|TJR|20260727|001|014",
+        "TSEG|INTAKE|TJR|20260727|001|015",
+        "TSEG|INTAKE|TJR|20260727|001|017",
+        "TSEG|INTAKE|TJR|20260727|001|018",
+        "TSEG|INTAKE|TJR|20260727|001|019",
+        "TSEG|INTAKE|TJR|20260727|001|020",
+        "TSEG|INTAKE|TJR|20260727|001|021",
+        "TSEG|INTAKE|TJR|20260727|001|022",
+        "TSEG|INTAKE|TJR|20260727|001|023",
+        "TSEG|INTAKE|TJR|20260727|002|001",
+        "TSEG|INTAKE|TJR|20260727|002|002",
+        "TSEG|INTAKE|TJR|20260727|002|003",
+        "TSEG|INTAKE|TJR|20260727|002|004",
+        "TSEG|INTAKE|TJR|20260727|002|005",
+        "TSEG|INTAKE|TJR|20260727|002|007",
+        "TSEG|INTAKE|TJR|20260727|002|008",
+        "TSEG|INTAKE|TJR|20260727|002|009",
+        "TSEG|INTAKE|TJR|20260727|002|010",
+        "TSEG|INTAKE|TJR|20260727|002|013",
+        "TSEG|INTAKE|TJR|20260727|002|014",
+        "TSEG|INTAKE|TJR|20260727|002|015",
+        "TSEG|INTAKE|TJR|20260727|002|016",
+        "TSEG|INTAKE|TJR|20260727|002|017",
+        "TSEG|INTAKE|TJR|20260727|002|018",
+        "TSEG|INTAKE|TJR|20260727|002|019"
+      ],
+      "sourceIds": [
+        "EVSRC|TJR|20260727|001",
+        "EVSRC|TJR|20260727|002"
+      ]
+    },
+    "status": "DRAFT_RESEARCH_ONLY",
+    "strategyName": "TJR Trading Strategy (Draft)",
+    "supersedesBlueprintId": null,
+    "traderId": "TJR",
+    "validationStatus": {
+      "paperTradingStatus": "not_available",
+      "productionStatus": "not_applicable",
+      "replayStatus": "not_available",
+      "researchStatus": "draft"
+    },
+    "version": 1,
+    "workflow": [
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "A high is marked at the highest wick of the two candles forming it; a low at the lowest wick of the two forming it.",
+          "A session high or low that has already been swept without producing a reaction is not marked or used as a draw on liquidity.",
+          "Charts must be set to New York (Eastern) time regardless of the trader's physical location.",
+          "Draws on liquidity are taken from 1-hour highs and lows, 4-hour highs and lows, or session highs and lows.",
+          "Step 1 of the setup is to identify a liquidity sweep.",
+          "The first daily preparation step is to mark out the session opens.",
+          "The strategy is based on liquidity sweeps.",
+          "The trading day is checked for high-impact news before the setup is applied."
+        ],
+        "confidence": "emerging",
+        "description": "Trades are taken on the leading index, never on the lagging index.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|001",
+          "EV|EVSRC|TJR|20260727|001|002",
+          "EV|EVSRC|TJR|20260727|001|004",
+          "EV|EVSRC|TJR|20260727|001|005",
+          "EV|EVSRC|TJR|20260727|001|006",
+          "EV|EVSRC|TJR|20260727|001|007",
+          "EV|EVSRC|TJR|20260727|001|008",
+          "EV|EVSRC|TJR|20260727|001|009",
+          "EV|EVSRC|TJR|20260727|001|010",
+          "EV|EVSRC|TJR|20260727|001|011",
+          "EV|EVSRC|TJR|20260727|001|012",
+          "EV|EVSRC|TJR|20260727|001|013",
+          "EV|EVSRC|TJR|20260727|001|014",
+          "EV|EVSRC|TJR|20260727|001|020",
+          "EV|EVSRC|TJR|20260727|001|021",
+          "EV|EVSRC|TJR|20260727|001|022",
+          "EV|EVSRC|TJR|20260727|001|033",
+          "EV|EVSRC|TJR|20260727|001|055",
+          "EV|EVSRC|TJR|20260727|002|002",
+          "EV|EVSRC|TJR|20260727|002|003",
+          "EV|EVSRC|TJR|20260727|002|008",
+          "EV|EVSRC|TJR|20260727|002|009",
+          "EV|EVSRC|TJR|20260727|002|011",
+          "EV|EVSRC|TJR|20260727|002|013",
+          "EV|EVSRC|TJR|20260727|002|014",
+          "EV|EVSRC|TJR|20260727|002|015",
+          "EV|EVSRC|TJR|20260727|002|016",
+          "EV|EVSRC|TJR|20260727|002|017",
+          "EV|EVSRC|TJR|20260727|002|018",
+          "EV|EVSRC|TJR|20260727|002|019",
+          "EV|EVSRC|TJR|20260727|002|020",
+          "EV|EVSRC|TJR|20260727|002|021",
+          "EV|EVSRC|TJR|20260727|002|022",
+          "EV|EVSRC|TJR|20260727|002|023"
+        ],
+        "stageName": "Setup Identification",
+        "stageNumber": 1,
+        "unknowns": [
+          "TJR checks for high-impact news before applying the setup, but never states what he does when high-impact news IS present. Does news block the trade, delay it, or only change sizing?",
+          "The two-candle rule for identifying a high or low has no minimum-size or significance filter. Does every up-then-down candle pair qualify as a high?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [],
+        "confidence": "emerging",
+        "description": "Step 4 requires a one-minute confirmation confluence before entry.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|036",
+          "EV|EVSRC|TJR|20260727|001|037",
+          "EV|EVSRC|TJR|20260727|001|038"
+        ],
+        "stageName": "Entry Trigger",
+        "stageNumber": 2,
+        "unknowns": [
+          "At the long entry TJR refers to price needing 'One extra point down to hit our special little number that we wanted'. What is that number, and is it part of the entry rule?",
+          "Entry rule 'CLAIM|TJR|20260727|027' has no companion invalidation_rule claim in the same scope -- what invalidates this setup?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "Only one confirmation confluence is required; all four are not needed.",
+          "Step 2 requires a five-minute confirmation confluence after the liquidity sweep.",
+          "Step 2B: when the liquidity sweep happens during pre-market, a low-timeframe manipulation is required before proceeding.",
+          "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap.",
+          "When there is no pre-market sweep, step 2B is skipped and only the confirmation confluences apply."
+        ],
+        "confidence": "emerging",
+        "description": "The confirmation confluences are break of structure, inverse fair value gap, SMT divergence, and a 79% Fibonacci extension closure.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|015",
+          "EV|EVSRC|TJR|20260727|001|016",
+          "EV|EVSRC|TJR|20260727|001|017",
+          "EV|EVSRC|TJR|20260727|001|018",
+          "EV|EVSRC|TJR|20260727|001|019",
+          "EV|EVSRC|TJR|20260727|001|023",
+          "EV|EVSRC|TJR|20260727|001|024",
+          "EV|EVSRC|TJR|20260727|001|027",
+          "EV|EVSRC|TJR|20260727|001|028",
+          "EV|EVSRC|TJR|20260727|001|032"
+        ],
+        "stageName": "Confirmation",
+        "stageNumber": 3,
+        "unknowns": [
+          "TJR states that step ordering 'can be variable' when 2B activates. What is the exact ordering of steps 2B, 3 and 4 when 2B is active?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [],
+        "confidence": "emerging",
+        "description": "After the five-minute manipulation the setup remains valid only while price stays in the trend established by the confirmation confluence.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|029",
+          "EV|EVSRC|TJR|20260727|001|030",
+          "EV|EVSRC|TJR|20260727|001|031"
+        ],
+        "stageName": "Invalidation",
+        "stageNumber": 4,
+        "unknowns": []
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [],
+        "confidence": "emerging",
+        "description": "Stops are placed beyond the swing extreme the entry is taken against -- underneath the low for a long entry, above the highs for a short entry.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|039",
+          "EV|EVSRC|TJR|20260727|001|040"
+        ],
+        "stageName": "Stop Placement",
+        "stageNumber": 5,
+        "unknowns": [
+          "Stop placement is only ever given chart-relatively ('underneath this low', 'above these highs'). Which exact swing does the stop reference, and is any buffer applied?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [],
+        "confidence": "emerging",
+        "description": "Targets are the previous draws on liquidity in the direction of the trade.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|041",
+          "EV|EVSRC|TJR|20260727|001|042",
+          "EV|EVSRC|TJR|20260727|001|043"
+        ],
+        "stageName": "Target Selection",
+        "stageNumber": 6,
+        "unknowns": [
+          "Claim 'CLAIM|TJR|20260727|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "The worked examples use four take-profit levels (TP1-TP4) but the transcript never defines how those four levels are chosen or sized. How is the take-profit ladder constructed?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [],
+        "confidence": "emerging",
+        "description": "Profits are taken in partials across multiple take-profit levels and the remaining position is left to stop out at break even.",
+        "evidenceLinks": [
+          "EV|EVSRC|TJR|20260727|001|044",
+          "EV|EVSRC|TJR|20260727|001|045"
+        ],
+        "stageName": "Trade Management",
+        "stageNumber": 7,
+        "unknowns": []
+      }
+    ]
+  },
+  "traderId": "TJR",
+  "traderProfile": {
+    "aliases": [],
+    "canonicalName": "TJR",
+    "claimCount": 69,
+    "confidenceSummary": {
+      "emerging": 69
+    },
+    "confirmationConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|015"
+        ],
+        "status": "confirmed",
+        "value": "Step 2 requires a five-minute confirmation confluence after the liquidity sweep."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|016",
+          "EV|EVSRC|TJR|20260727|001|017"
+        ],
+        "status": "confirmed",
+        "value": "The confirmation confluences are break of structure, inverse fair value gap, SMT divergence, and a 79% Fibonacci extension closure."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|018",
+          "EV|EVSRC|TJR|20260727|001|019"
+        ],
+        "status": "confirmed",
+        "value": "Only one confirmation confluence is required; all four are not needed."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|023",
+          "EV|EVSRC|TJR|20260727|001|024"
+        ],
+        "status": "confirmed",
+        "value": "Step 2B: when the liquidity sweep happens during pre-market, a low-timeframe manipulation is required before proceeding."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|027",
+          "EV|EVSRC|TJR|20260727|001|028"
+        ],
+        "status": "confirmed",
+        "value": "When there is no pre-market sweep, step 2B is skipped and only the confirmation confluences apply."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|032"
+        ],
+        "status": "confirmed",
+        "value": "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap."
+      }
+    ],
+    "contradictionCount": 2,
+    "entryConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|036",
+          "EV|EVSRC|TJR|20260727|001|037",
+          "EV|EVSRC|TJR|20260727|001|038"
+        ],
+        "status": "confirmed",
+        "value": "Step 4 requires a one-minute confirmation confluence before entry."
+      }
+    ],
+    "evidenceCount": 86,
+    "extractionStatus": "completed",
+    "generatedAt": "2026-07-27T22:15:39Z",
+    "hypothesisCount": 23,
+    "instrumentsMentioned": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|001",
+          "EV|EVSRC|TJR|20260727|001|002",
+          "EV|EVSRC|TJR|20260727|001|005",
+          "EV|EVSRC|TJR|20260727|001|007"
+        ],
+        "status": "confirmed",
+        "value": "NASDAQ"
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|001",
+          "EV|EVSRC|TJR|20260727|001|002",
+          "EV|EVSRC|TJR|20260727|001|003"
+        ],
+        "status": "confirmed",
+        "value": "S&P 500"
+      }
+    ],
+    "invalidationConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|029",
+          "EV|EVSRC|TJR|20260727|001|030",
+          "EV|EVSRC|TJR|20260727|001|031"
+        ],
+        "status": "confirmed",
+        "value": "After the five-minute manipulation the setup remains valid only while price stays in the trend established by the confirmation confluence."
+      }
+    ],
+    "limitations": [
+      "14 unresolved question(s) remain open for this trader.",
+      "2 contradiction(s) remain unresolved for this trader.",
+      "One or more claims are still pending_review and have not been confirmed by a human."
+    ],
+    "marketConditionsAvoided": [],
+    "marketConditionsPreferred": [],
+    "marketsMentioned": [
+      {
+        "evidenceIds": [],
+        "status": "confirmed",
+        "value": "forex"
+      }
+    ],
+    "observationCount": 10,
+    "primaryConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|005",
+          "EV|EVSRC|TJR|20260727|001|007"
+        ],
+        "status": "confirmed",
+        "value": "Trades are taken on the leading index, never on the lagging index."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|008"
+        ],
+        "status": "confirmed",
+        "value": "The strategy is based on liquidity sweeps."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|010",
+          "EV|EVSRC|TJR|20260727|001|011"
+        ],
+        "status": "confirmed",
+        "value": "Step 1 of the setup is to identify a liquidity sweep."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|012"
+        ],
+        "status": "confirmed",
+        "value": "Draws on liquidity are taken from 1-hour highs and lows, 4-hour highs and lows, or session highs and lows."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|013"
+        ],
+        "status": "confirmed",
+        "value": "The first daily preparation step is to mark out the session opens."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|014"
+        ],
+        "status": "inferred",
+        "value": "A session high or low that has already been swept without producing a reaction is not marked or used as a draw on liquidity."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|055"
+        ],
+        "status": "inferred",
+        "value": "The trading day is checked for high-impact news before the setup is applied."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|008",
+          "EV|EVSRC|TJR|20260727|002|009"
+        ],
+        "status": "confirmed",
+        "value": "Charts must be set to New York (Eastern) time regardless of the trader's physical location."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|020"
+        ],
+        "status": "confirmed",
+        "value": "A high is marked at the highest wick of the two candles forming it; a low at the lowest wick of the two forming it."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|001",
+          "EV|EVSRC|TJR|20260727|001|002"
+        ],
+        "status": "confirmed",
+        "value": "The strategy is applied to US index instruments, specifically the S&P 500 and NASDAQ."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|004",
+          "EV|EVSRC|TJR|20260727|002|013"
+        ],
+        "status": "confirmed",
+        "value": "New York pre-market starts at 8:30."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|006"
+        ],
+        "status": "confirmed",
+        "value": "The leading index is the one closer to the draw on liquidity, or in a bullish SMT the one that makes the higher low."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|009"
+        ],
+        "status": "confirmed",
+        "value": "A liquidity sweep is price taking out a prior high or low, which fills orders in the opposite direction."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|020"
+        ],
+        "status": "confirmed",
+        "value": "A break of structure to the downside is price closing underneath the most recent low within the uptrend."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|021"
+        ],
+        "status": "confirmed",
+        "value": "An SMT divergence is when one index makes a higher high and the other a lower high, or one makes a lower low and the other a higher low."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|022"
+        ],
+        "status": "confirmed",
+        "value": "The 79% extension confluence is a candlestick closure beyond the 79% Fibonacci extension measured from the low to the high of the move."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|033"
+        ],
+        "status": "confirmed",
+        "value": "Continuation confluences are limited to equilibrium and fair value gaps."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|002"
+        ],
+        "status": "confirmed",
+        "value": "Day trading as TJR frames it is buying low and selling high, or selling high and buying back low."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|003"
+        ],
+        "status": "confirmed",
+        "value": "TJR defines trading as predicting where price wants to go with high probability on a daily basis."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|011"
+        ],
+        "status": "confirmed",
+        "value": "The New York Stock Exchange regular session opens at 9:30 a.m. Eastern time."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|014"
+        ],
+        "status": "confirmed",
+        "value": "Japanese candlesticks are preferred because they convey four price points for each period."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|015"
+        ],
+        "status": "confirmed",
+        "value": "The selected chart timeframe determines the period of price action each candlestick represents."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|016"
+        ],
+        "status": "confirmed",
+        "value": "On an up candle the body's bottom is the open and its top is the close; the top of the upper wick is the high and the bottom of the lower wick is the low."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|017"
+        ],
+        "status": "confirmed",
+        "value": "On a down candle the open is the top of the body and the close is the bottom; high and low remain the wick extremes."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|018"
+        ],
+        "status": "confirmed",
+        "value": "A high is a move up followed by a move down; a low is a move down followed by a move up."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|019"
+        ],
+        "status": "confirmed",
+        "value": "A high is identified as an up candle followed by a down candle; a low as a down candle followed by an up candle."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|021"
+        ],
+        "status": "confirmed",
+        "value": "The market moves in exactly three states: uptrend, downtrend, or consolidation (sideways)."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|022"
+        ],
+        "status": "confirmed",
+        "value": "An uptrend is a series of higher highs and higher lows."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|002|023"
+        ],
+        "status": "confirmed",
+        "value": "A downtrend is a series of lower highs and lower lows."
+      }
+    ],
+    "profileId": "PROFILE|TJR|20260727|001",
+    "reviewStatus": "pending",
+    "riskConcepts": [],
+    "schemaVersion": 1,
+    "sessionsMentioned": [
+      {
+        "evidenceIds": [],
+        "status": "confirmed",
+        "value": "Asian"
+      },
+      {
+        "evidenceIds": [],
+        "status": "confirmed",
+        "value": "London"
+      },
+      {
+        "evidenceIds": [],
+        "status": "confirmed",
+        "value": "New York"
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|004",
+          "EV|EVSRC|TJR|20260727|001|023",
+          "EV|EVSRC|TJR|20260727|001|024",
+          "EV|EVSRC|TJR|20260727|002|013"
+        ],
+        "status": "confirmed",
+        "value": "New York pre-market"
+      }
+    ],
+    "sourceCount": 2,
+    "sourceLineage": {
+      "claimIds": [
+        "CLAIM|TJR|20260727|001",
+        "CLAIM|TJR|20260727|002",
+        "CLAIM|TJR|20260727|003",
+        "CLAIM|TJR|20260727|004",
+        "CLAIM|TJR|20260727|005",
+        "CLAIM|TJR|20260727|006",
+        "CLAIM|TJR|20260727|007",
+        "CLAIM|TJR|20260727|008",
+        "CLAIM|TJR|20260727|009",
+        "CLAIM|TJR|20260727|010",
+        "CLAIM|TJR|20260727|011",
+        "CLAIM|TJR|20260727|012",
+        "CLAIM|TJR|20260727|013",
+        "CLAIM|TJR|20260727|014",
+        "CLAIM|TJR|20260727|015",
+        "CLAIM|TJR|20260727|016",
+        "CLAIM|TJR|20260727|017",
+        "CLAIM|TJR|20260727|018",
+        "CLAIM|TJR|20260727|019",
+        "CLAIM|TJR|20260727|020",
+        "CLAIM|TJR|20260727|021",
+        "CLAIM|TJR|20260727|022",
+        "CLAIM|TJR|20260727|023",
+        "CLAIM|TJR|20260727|024",
+        "CLAIM|TJR|20260727|025",
+        "CLAIM|TJR|20260727|026",
+        "CLAIM|TJR|20260727|027",
+        "CLAIM|TJR|20260727|028",
+        "CLAIM|TJR|20260727|029",
+        "CLAIM|TJR|20260727|030",
+        "CLAIM|TJR|20260727|031",
+        "CLAIM|TJR|20260727|032",
+        "CLAIM|TJR|20260727|033",
+        "CLAIM|TJR|20260727|034",
+        "CLAIM|TJR|20260727|035",
+        "CLAIM|TJR|20260727|036",
+        "CLAIM|TJR|20260727|037",
+        "CLAIM|TJR|20260727|038",
+        "CLAIM|TJR|20260727|039",
+        "CLAIM|TJR|20260727|040",
+        "CLAIM|TJR|20260727|041",
+        "CLAIM|TJR|20260727|042",
+        "CLAIM|TJR|20260727|043",
+        "CLAIM|TJR|20260727|044",
+        "CLAIM|TJR|20260727|045",
+        "CLAIM|TJR|20260727|046",
+        "CLAIM|TJR|20260727|047",
+        "CLAIM|TJR|20260727|048",
+        "CLAIM|TJR|20260727|049",
+        "CLAIM|TJR|20260727|050",
+        "CLAIM|TJR|20260727|051",
+        "CLAIM|TJR|20260727|052",
+        "CLAIM|TJR|20260727|053",
+        "CLAIM|TJR|20260727|054",
+        "CLAIM|TJR|20260727|055",
+        "CLAIM|TJR|20260727|056",
+        "CLAIM|TJR|20260727|057",
+        "CLAIM|TJR|20260727|058",
+        "CLAIM|TJR|20260727|059",
+        "CLAIM|TJR|20260727|060",
+        "CLAIM|TJR|20260727|061",
+        "CLAIM|TJR|20260727|062",
+        "CLAIM|TJR|20260727|063",
+        "CLAIM|TJR|20260727|064",
+        "CLAIM|TJR|20260727|065",
+        "CLAIM|TJR|20260727|066",
+        "CLAIM|TJR|20260727|067",
+        "CLAIM|TJR|20260727|068",
+        "CLAIM|TJR|20260727|069"
+      ],
+      "sourceIds": [
+        "EVSRC|TJR|20260727|001",
+        "EVSRC|TJR|20260727|002"
+      ]
+    },
+    "stopLossConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|039",
+          "EV|EVSRC|TJR|20260727|001|040"
+        ],
+        "status": "confirmed",
+        "value": "Stops are placed beyond the swing extreme the entry is taken against -- underneath the low for a long entry, above the highs for a short entry."
+      }
+    ],
+    "strategyTypes": [],
+    "targetConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|041",
+          "EV|EVSRC|TJR|20260727|001|042",
+          "EV|EVSRC|TJR|20260727|001|043"
+        ],
+        "status": "confirmed",
+        "value": "Targets are the previous draws on liquidity in the direction of the trade."
+      }
+    ],
+    "timeframesMentioned": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|036",
+          "EV|EVSRC|TJR|20260727|001|037",
+          "EV|EVSRC|TJR|20260727|001|038",
+          "EV|EVSRC|TJR|20260727|001|039",
+          "EV|EVSRC|TJR|20260727|001|040"
+        ],
+        "status": "confirmed",
+        "value": "1m"
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|015",
+          "EV|EVSRC|TJR|20260727|001|016",
+          "EV|EVSRC|TJR|20260727|001|017",
+          "EV|EVSRC|TJR|20260727|001|018",
+          "EV|EVSRC|TJR|20260727|001|019",
+          "EV|EVSRC|TJR|20260727|001|023",
+          "EV|EVSRC|TJR|20260727|001|024",
+          "EV|EVSRC|TJR|20260727|001|027",
+          "EV|EVSRC|TJR|20260727|001|028",
+          "EV|EVSRC|TJR|20260727|001|029",
+          "EV|EVSRC|TJR|20260727|001|030",
+          "EV|EVSRC|TJR|20260727|001|031",
+          "EV|EVSRC|TJR|20260727|001|032"
+        ],
+        "status": "confirmed",
+        "value": "5m"
+      }
+    ],
+    "tradeManagementConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|TJR|20260727|001|044",
+          "EV|EVSRC|TJR|20260727|001|045"
+        ],
+        "status": "confirmed",
+        "value": "Profits are taken in partials across multiple take-profit levels and the remaining position is left to stop out at break even."
+      }
+    ],
+    "traderId": "TJR",
+    "unresolvedQuestionCount": 14
+  }
+}

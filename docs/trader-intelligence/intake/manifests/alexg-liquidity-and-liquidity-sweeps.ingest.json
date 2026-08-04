@@ -1,0 +1,503 @@
+{
+  "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+  "annotations": [
+    {
+      "key": "liq_def",
+      "section": 2,
+      "excerpt": "liquidity is exactly what it means. It's how liquid is the market at that very point.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "definition",
+      "claim": "Liquidity is how liquid the market is at a given price point \u2014 the concentration of buy and sell orders there."
+    },
+    {
+      "key": "liq_orders",
+      "section": 3,
+      "excerpt": "liquidity is nothing other than people buying and selling the market at that specific point",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supports": "liq_def"
+    },
+    {
+      "key": "round_number",
+      "section": 2,
+      "excerpt": "there was a lot of sellers that wanted to get out at that round psychological 5,000",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "low",
+      "claimType": "causal_hypothesis",
+      "claim": "Round psychological numbers concentrate exit orders just below them, which is offered as the reason Ethereum did not reach 5,000."
+    },
+    {
+      "key": "liq_at_rejection",
+      "section": 4,
+      "excerpt": "the most places where the majority of liquidity is at is where there is a consistent amount of rejection",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Liquidity concentrates where price has repeatedly been rejected from the same area."
+    },
+    {
+      "key": "zone_synonyms",
+      "section": 5,
+      "excerpt": "liquidation zone is also known as support or resistance, supply and demand, order block, area of interest, anything that you want to call it",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Alex G treats liquidity zone, support/resistance, supply and demand, order block and area of interest as names for the same object."
+    },
+    {
+      "key": "htf_zones_stronger",
+      "section": 5,
+      "excerpt": "The higher the time frame, the stronger the rejection, the more liquidation that comes in for longer periods of time.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Higher-timeframe rejection zones are stronger and attract more liquidation than lower-timeframe ones."
+    },
+    {
+      "key": "three_taps",
+      "section": 5,
+      "excerpt": "And I like to look for multiple taps. It could be more than three taps is the most ideal.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260727|029",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR REFINEMENT. Source #1 said only 'a decent amount of rejections'; this quantifies it as more than three taps ideal, and states one tap is materially weaker. Partially answers the open question raised against that claim."
+    },
+    {
+      "key": "one_tap_weak",
+      "section": 5,
+      "excerpt": "something like this that has one rejection, one liquidation from this area could mean that there could be another liquidation, but it's not as predictable",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "setup_requirement",
+      "claim": "A zone with only one prior rejection is materially less predictable than one with several."
+    },
+    {
+      "key": "above_below_zone",
+      "section": 5,
+      "excerpt": "If we are above this zone specifically, you want to make sure you're buying because that's where the buyers are coming in.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "entry_rule",
+      "claim": "Trade in the direction the zone has historically pushed price: buy while above it, sell while below it."
+    },
+    {
+      "key": "no_bank_evidence",
+      "section": 6,
+      "excerpt": "There is no real hardcore evidence that this is a bank or an institution that has liquidated your position.",
+      "evidenceType": "opinion",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "causal_hypothesis",
+      "claim": "Alex G asserts there is no hard evidence that banks or institutions deliberately liquidate retail stop-losses, and treats the institutional-sweep narrative as unproven."
+    },
+    {
+      "key": "retail_3pct",
+      "section": 6,
+      "excerpt": "the retail trader stop- losses that only make up 3% of the market",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "Alex G states retail traders make up 3% of the market. No source is given for this figure."
+    },
+    {
+      "key": "blame_narrative",
+      "section": 6,
+      "excerpt": "I feel like this is a narrative that has been created amongst retail traders when they enter these losing streaks and they want to put the blame on something other than themselves",
+      "evidenceType": "opinion",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "low",
+      "claimType": "behavioral_observation",
+      "claim": "Alex G characterises the institutional-manipulation narrative as a psychological displacement of blame by losing traders."
+    },
+    {
+      "key": "no_sweep_strategy",
+      "section": 7,
+      "excerpt": "There's no way that you can have a specific strategy to trade solely off of these sweeps.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "failure_condition",
+      "claim": "No consistent strategy can be built on trading liquidity sweeps themselves."
+    },
+    {
+      "key": "cannot_anticipate",
+      "section": 7,
+      "excerpt": "There is no way that you can anticipate for a move like this to happen.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "failure_condition",
+      "claim": "A liquidity sweep cannot be anticipated in advance; catching or avoiding one is luck, not method."
+    },
+    {
+      "key": "sweeps_unavoidable",
+      "section": 14,
+      "excerpt": "You cannot avoid for these liquidity moves, these liquidity fake outs to happen. It's impossible.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Being caught by a liquidity sweep is unavoidable and recurring; the stated response is to take the next trade."
+    },
+    {
+      "key": "confirm_not_anticipate",
+      "section": 8,
+      "excerpt": "I go enter a position when I have a confirmation.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "Entry requires a confirmation that price is already moving in the intended direction; entering on anticipation is rejected."
+    },
+    {
+      "key": "offence_defence",
+      "section": 8,
+      "excerpt": "Waiting for a liquidity sweep to enter a position is almost like playing defense in trading. And waiting for a confirmation in trading to enter the position is playing offense.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "supports": "confirm_not_anticipate"
+    },
+    {
+      "key": "contra_move_disqualifies",
+      "section": 8,
+      "excerpt": "If there's a move that happens against my sell position, I'm not going to be interested in selling because it's clearly not going in my favor.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "invalidation_rule",
+      "claim": "A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into."
+    },
+    {
+      "key": "confirm_is_candle",
+      "section": 9,
+      "excerpt": "what would be a confirmation? A bearish candlestick confirming that it's going in that direction",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260727|031",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR RESTATEMENT and extension of the entry-signal claim from source #1."
+    },
+    {
+      "key": "named_patterns",
+      "section": 13,
+      "excerpt": "Bullish engulfing candlestick. Boom. Could have bought in just off of that alone.",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection."
+    },
+    {
+      "key": "waiting_cost",
+      "section": 13,
+      "excerpt": "Is it worth waiting for this liquidity grab to happen and miss out on every single one of these opportunities?",
+      "evidenceType": "failure_observation",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "failure_condition",
+      "claim": "In the demonstrated example price approached the zone seven times and produced a liquidity sweep once, so waiting for sweeps would have forfeited six of seven opportunities."
+    },
+    {
+      "key": "no_buy_high",
+      "section": 11,
+      "excerpt": "When a market is at a high point, you don't want to buy at the high point.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260728|011",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR RESTATEMENT of the don't-chase-the-extreme rule from source #2."
+    },
+    {
+      "key": "discount",
+      "section": 11,
+      "excerpt": "Wait for the market to give a little bit of that discount. That discount is where the sellers are going to come in.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "entry_rule",
+      "claim": "Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached."
+    },
+    {
+      "key": "still_anticipates",
+      "section": 10,
+      "excerpt": "I still make mistakes where I still enter trades on anticipations, but I know exactly what I'm doing.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "behavioral_observation",
+      "claim": "Alex G states he still enters trades on anticipation despite teaching against it, but does so knowingly and accepts the outcome."
+    }
+  ],
+  "contradictions": [
+    {
+      "a": "no_sweep_strategy",
+      "bClaimId": "CLAIM|TJR|20260727|006",
+      "type": "DIRECTIONAL",
+      "severity": "blocking",
+      "rationale": "CROSS-EDUCATOR, FOUNDATIONAL. Alex G: 'There's no way that you can have a specific strategy to trade solely off of these sweeps' \u2014 and that anyone claiming otherwise 'is 100% lying to you'. TJR: 'My strategy is based off of liquidity sweeps' and 'I'm looking for a liquidity sweep every single time'. This is not a disagreement about a parameter; one educator's entire method is the thing the other says cannot be done consistently. PARTIAL RECONCILIATION WORTH NOTING: Alex G's explicit target is ANTICIPATING a sweep before it happens, whereas TJR identifies a sweep that has already occurred and then requires a separate confirmation confluence. The two are closer in practice than the words suggest. Recorded as blocking rather than resolved because the reconciliation is MOGO's reading, not either educator's statement."
+    },
+    {
+      "a": "no_bank_evidence",
+      "bClaimId": "CLAIM|TJR|20260727|036",
+      "type": "DEFINITIONAL",
+      "severity": "material",
+      "rationale": "CROSS-EDUCATOR, MECHANISM. TJR: 'It is assumed that market makers sweep highs and lows specifically to fill large positions in the opposite direction' \u2014 the causal engine of his entire framework. Alex G: 'There is no real hardcore evidence that this is a bank or an institution that has liquidated your position', and calls the narrative 'almost a big hoax'. Both are causal hypotheses about WHY price sweeps levels, and they are incompatible. Neither educator offers evidence: TJR asserts the mechanism, Alex G asserts the absence of proof for it. Notably Alex G is the only source in the library to make an explicitly epistemic argument \u2014 he demands evidence rather than asserting a counter-mechanism."
+    }
+  ],
+  "manifestVersion": 1,
+  "normalization": {
+    "charsRemoved": 2456,
+    "lineCount": 1098,
+    "linesTransformed": 548,
+    "profile": "youtube_timestamp_lines",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "openQuestions": [
+    {
+      "claim": "no_sweep_strategy",
+      "type": "behavior_conflicts_with_instruction",
+      "priority": "critical",
+      "blocking": "blocks_promotion",
+      "text": "Alex G says no strategy can trade liquidity sweeps, yet describes his own live AUDCHF position as 'entering a trade technically after the liquidity sweep'. Is the objection to anticipating sweeps only, or to using them at all?",
+      "reason": "Same source, ~9 minutes apart. The distinction matters because it determines whether the contradiction with TJR is total or partial."
+    },
+    {
+      "claim": "retail_3pct",
+      "type": "insufficient_independent_support",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "'Retail traders only make up 3% of the market' is offered as the load-bearing premise for rejecting the institutional-sweep narrative. What is the source of the 3% figure, and 3% of what \u2014 volume, participants, notional?",
+      "reason": "An unsourced statistic carrying the weight of a mechanism argument."
+    },
+    {
+      "claim": "three_taps",
+      "type": "unclear_scope",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "'More than three taps is the most ideal' \u2014 what counts as a tap? Must price close in the zone, wick into it, or merely approach it? Over what lookback?",
+      "reason": "Quantifies source #1's vague 'decent amount of rejections' but leaves the unit undefined."
+    },
+    {
+      "claim": "confirm_not_anticipate",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "A confirmation is 'a bearish candlestick confirming that it's going in that direction', with engulfing, morning star and pin bar named. Is any candle in the intended direction sufficient, or only these named patterns? Must it close inside the zone?",
+      "reason": "The core rule of the source, stated both loosely (any directional candle) and specifically (named patterns), without reconciling the two."
+    },
+    {
+      "claim": "waiting_cost",
+      "type": "example_mismatch",
+      "priority": "medium",
+      "blocking": "non_blocking",
+      "text": "The seven-approaches-one-sweep count comes from a single hand-picked chart. Is that ratio representative?",
+      "reason": "A single retrospective example is offered as evidence for a general claim about opportunity cost. Directly testable \u2014 see RC-20."
+    },
+    {
+      "claim": null,
+      "type": "missing_stop_placement",
+      "priority": "critical",
+      "blocking": "blocks_promotion",
+      "text": "Three Alex G sources now contain zero stop-loss, take-profit, position-size or risk-percentage rules, despite this source opening with a story about a stop-loss being hit. What are they?",
+      "reason": "Third consecutive source with no risk half. This is a confirmed structural absence in the published material, not an omission."
+    }
+  ],
+  "provenance": {
+    "canonicalReference": "https://www.youtube.com/watch?v=Rua24ytuHuY",
+    "channelOrPublisher": null,
+    "language": "en",
+    "licensingStatus": "restricted_third_party",
+    "publicationDate": null,
+    "transcriptCompleteness": "unknown",
+    "transcriptProvider": "youtube_transcript_panel_copy"
+  },
+  "sections": [
+    {
+      "n": 1,
+      "lines": [
+        1,
+        49
+      ],
+      "type": "introduction",
+      "title": "The stopped-out-then-target experience and why liquidity causes it"
+    },
+    {
+      "n": 2,
+      "lines": [
+        50,
+        103
+      ],
+      "type": "instruction",
+      "title": "What liquidity is: the Ethereum 5,000 example"
+    },
+    {
+      "n": 3,
+      "lines": [
+        104,
+        161
+      ],
+      "type": "instruction",
+      "title": "Liquidity exists everywhere; supply and demand drive price"
+    },
+    {
+      "n": 4,
+      "lines": [
+        162,
+        267
+      ],
+      "type": "instruction",
+      "title": "Where liquidity concentrates: repeated rejection zones"
+    },
+    {
+      "n": 5,
+      "lines": [
+        268,
+        355
+      ],
+      "type": "instruction",
+      "title": "Zone naming, timeframe strength, and the multiple-taps criterion"
+    },
+    {
+      "n": 6,
+      "lines": [
+        356,
+        499
+      ],
+      "type": "chart_commentary",
+      "title": "Live AUDCHF example and the institutional-sweep narrative"
+    },
+    {
+      "n": 7,
+      "lines": [
+        500,
+        565
+      ],
+      "type": "instruction",
+      "title": "Liquidity sweeps cannot be anticipated or traded as a strategy"
+    },
+    {
+      "n": 8,
+      "lines": [
+        566,
+        641
+      ],
+      "type": "instruction",
+      "title": "Confirmation versus anticipation: offence and defence"
+    },
+    {
+      "n": 9,
+      "lines": [
+        642,
+        767
+      ],
+      "type": "instruction",
+      "title": "What a confirmation actually is"
+    },
+    {
+      "n": 10,
+      "lines": [
+        768,
+        811
+      ],
+      "type": "narration",
+      "title": "Time to learn, self-honesty, and blaming the market"
+    },
+    {
+      "n": 11,
+      "lines": [
+        812,
+        883
+      ],
+      "type": "instruction",
+      "title": "Practical method: don't buy the high, wait for the discount"
+    },
+    {
+      "n": 12,
+      "lines": [
+        884,
+        909
+      ],
+      "type": "instruction",
+      "title": "Wait for confirmation, not for the sweep"
+    },
+    {
+      "n": 13,
+      "lines": [
+        910,
+        967
+      ],
+      "type": "chart_commentary",
+      "title": "Seven approaches, one sweep: the cost of waiting"
+    },
+    {
+      "n": 14,
+      "lines": [
+        968,
+        1015
+      ],
+      "type": "instruction",
+      "title": "Sweeps are unavoidable; take the next trade"
+    },
+    {
+      "n": 15,
+      "lines": [
+        1016,
+        1098
+      ],
+      "type": "conclusion",
+      "title": "Mentorship promotion and close"
+    }
+  ],
+  "slug": "alexg-liquidity-and-liquidity-sweeps",
+  "sourceFile": "docs/trader-intelligence/intake/pending/alexg-liquidity-and-liquidity-sweeps.txt",
+  "sourceFileBytes": 23870,
+  "sourceFileSha256": "175af73d2094664d7e978c9526e2ebd658c3dbf6f9880f0bfb8154611abc39c2",
+  "sourceLineCount": 1098,
+  "title": "Liquidity and Liquidity Sweeps (PROVISIONAL \u2014 derived from transcript content, actual YouTube title unverified)",
+  "traderId": "ALEX_G",
+  "_sectioningNote": "Cut by hand on timestamp/topic boundaries; see BACKLOG-003/H22."
+}

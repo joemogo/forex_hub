@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|047",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|041",
+  "questionText": "Does Alex G's method permit entry on an incomplete structure point, or require confirmation first?",
+  "questionType": "self_contradiction",
+  "reason": "Directly opposite prescriptions between this source and source #5. See XCONTRA for this ingestion. Until resolved, neither the confirmation rule nor the potential-lower-high rule can be promoted, because implementing either would contradict evidenced material from the same educator.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

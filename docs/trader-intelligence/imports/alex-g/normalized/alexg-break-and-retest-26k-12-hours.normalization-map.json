@@ -1,0 +1,847 @@
+{
+  "lines": [
+    {
+      "charsRemoved": 0,
+      "normalizedText": "breaking reetus has literally made me a millionaire like I am not even kidding an actual millionaire breing reetus made me",
+      "removedDurationLabel": null,
+      "sourceLine": 1,
+      "sourceLineSha256": "7ef2cb925a2b581620d57e5c1162b0a6ce31404076e65eeae4e267baba06f882",
+      "timestamp": "0:00",
+      "transform": "no_timestamp_present__assigned_0:00_start"
+    },
+    {
+      "charsRemoved": 13,
+      "normalizedText": "$26,000 in 12 hours and in this video I'm going to show you how you can use break and retest to your advantage and have an edge on the market which break",
+      "removedDurationLabel": "7 seconds",
+      "sourceLine": 2,
+      "sourceLineSha256": "a500cd2e4e7d3541bfb36ea9cb5cc49625575da8293ca586627ba0464872d779",
+      "timestamp": "0:07",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "and retest is one of the most common patterns in the whole entire Market that's why it's made me so much money and a lot of people they try and figure it out but they simply don't get it and",
+      "removedDurationLabel": "14 seconds",
+      "sourceLine": 3,
+      "sourceLineSha256": "421a4fc3d323186c6ef2fcf6250da4ae409d2eab3b86dfe5abcd873abe39b9b8",
+      "timestamp": "0:14",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "that's what this video is about I'm going to teach you how to properly use break and retest oh and keep in mind if you really understand and you compreh",
+      "removedDurationLabel": "22 seconds",
+      "sourceLine": 4,
+      "sourceLineSha256": "0128d463a6c9bf5aea49ce98673230d83ac63e77563438307316efbac6a43955",
+      "timestamp": "0:22",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "the break and retest strategy you literally don't have to worry about anything else cuz breaking retest happens literally every single day in",
+      "removedDurationLabel": "30 seconds",
+      "sourceLine": 5,
+      "sourceLineSha256": "17082ce347ad0e9610454785272a11c2d985567f149867094c2727b82e77eb24",
+      "timestamp": "0:30",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "the market and it's so easy to comprehend because it's that simple it's literally what it is break and retest you're going to see it every single day",
+      "removedDurationLabel": "37 seconds",
+      "sourceLine": 6,
+      "sourceLineSha256": "76097d5f8095d568cb7df6763642c492491f5632db1e18f9fa66c175bed26886",
+      "timestamp": "0:37",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "in the market but it's almost so simple that a lot of people they over complicate it they try to see it further than a break and retest there's just",
+      "removedDurationLabel": "44 seconds",
+      "sourceLine": 7,
+      "sourceLineSha256": "54957eccd32c59df47e53b703dd913cfe0662877b499d93f49a94d745cb4be46",
+      "timestamp": "0:44",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "simple it's a break and retest and that's it so it's simple don't overthink it but I'm going to make it clear in this video so let's get into it but before getting into the actual charts",
+      "removedDurationLabel": "52 seconds",
+      "sourceLine": 8,
+      "sourceLineSha256": "f83a16485741172d62a21fe0180495cb3ecffa6db1f14c08bf5de5dced317be9",
+      "timestamp": "0:52",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 42,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 2: How does the pattern look like?",
+      "sourceLine": 9,
+      "sourceLineSha256": "3e57c2cc3fbee054fabb50aa1caefb2fbcf39a4b1ba3628da568aa94897724bb",
+      "timestamp": "0:52",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "let me show you what this pattern looks like and it's this right here looks simple right looks like a break and retest looks like price is breaking retesting and then heading to the upside",
+      "removedDurationLabel": "59 seconds",
+      "sourceLine": 10,
+      "sourceLineSha256": "dfd22cd77e5a46b7c1c70a3e5856ebb901c7b1261c0104e51f9a16ee4bb31e0b",
+      "timestamp": "0:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 23,
+      "normalizedText": "obviously if you flip it around price is in Breaking retest and then heading to the downside well that's pretty much it like I just said it's something very",
+      "removedDurationLabel": "1 minute, 8 seconds",
+      "sourceLine": 11,
+      "sourceLineSha256": "0cd93c3baa94a99e82d3961145257356f37fc673594937318a39c73934833e4e",
+      "timestamp": "1:08",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "simple and it happens every single day in the market it can happen across all different time frames and it can happen across all different currency pairs all",
+      "removedDurationLabel": "1 minute, 15 seconds",
+      "sourceLine": 12,
+      "sourceLineSha256": "30cf254834b93ebf56f079bc895333fc2b242bb830b427a8890af9a905c3b5f2",
+      "timestamp": "1:15",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "different Commodities Futures stocks anything because it's a break and retest the market has to move up and down and as it's moving up and down it leaves",
+      "removedDurationLabel": "1 minute, 23 seconds",
+      "sourceLine": 13,
+      "sourceLineSha256": "9f182ff994eb7060901e104fc821258948ce459fbc7cfadfc5a59e47d95ca65b",
+      "timestamp": "1:23",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "this pattern known as break and retest and what price wants to communicate to you with a break and retest is a continuation breaking retest is a",
+      "removedDurationLabel": "1 minute, 31 seconds",
+      "sourceLine": 14,
+      "sourceLineSha256": "896139406960b445c2e24c999330f3ef0931f3bc6c9e9eb4a44a2fa7064c865b",
+      "timestamp": "1:31",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "continuation pattern but price just can't continuously go up forever it has to have 1 second to then pause have a small retracement to then continue",
+      "removedDurationLabel": "1 minute, 39 seconds",
+      "sourceLine": 15,
+      "sourceLineSha256": "4da667ee9c9756f8696962fdc84c0cf46c2a3a4f7284449c3204d55f5be49f3b",
+      "timestamp": "1:39",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "heading to the upside it's almost like if you're in the gym and you want to hit multiple reps in your set in order for you to hit that next rep you have to",
+      "removedDurationLabel": "1 minute, 46 seconds",
+      "sourceLine": 16,
+      "sourceLineSha256": "746c2fd81d2c08a043c05291fa6397831be6c444569c04fa026d60a6a627a58d",
+      "timestamp": "1:46",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "take a breath you have to take a break for about a second or two and then you can go ahead and hit it again it's the same thing here with with the market just the market obviously doesn't stop",
+      "removedDurationLabel": "1 minute, 54 seconds",
+      "sourceLine": 17,
+      "sourceLineSha256": "4b7fb9a79619464980850b13b264a1e20d92698f4120fcf8f0882419910fe26f",
+      "timestamp": "1:54",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "and breathe the market is always moving but the retracement of the market coming back and retesting is its form of breathing so that it can have the next",
+      "removedDurationLabel": "2 minutes, 2 seconds",
+      "sourceLine": 18,
+      "sourceLineSha256": "e3a623a82337308314f7e7bc8fbdca354784c1b78e9e40a6c5d5364f77122c34",
+      "timestamp": "2:02",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "push and it could push the next rep to the market continue in the direction that it was originally headed to D do and breaking retest kind of works",
+      "removedDurationLabel": "2 minutes, 10 seconds",
+      "sourceLine": 19,
+      "sourceLineSha256": "713780879e39dec6c7999dbb39abe026cfa6940b2c7979df519c8d3dcca979db",
+      "timestamp": "2:10",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 39,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 3: Facts about Break and Retest",
+      "sourceLine": 20,
+      "sourceLineSha256": "4a92cf9d73d478061c1a8ddabe5ead660585a88000614e6c22d45474e74c4cf5",
+      "timestamp": "2:10",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "everywhere but not really it works best at a strong area whether it's a support and resistance supply and demand area of interest it's all the same thing it's a",
+      "removedDurationLabel": "2 minutes, 18 seconds",
+      "sourceLine": 21,
+      "sourceLineSha256": "99b0a5a45c8d627ad164a05e0c6d9dbaabc7feccc89cde546d6d41a7c2ed1cc3",
+      "timestamp": "2:18",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "price where once price breaks price can use that retracement at a point for it to hold on for about a second or two and then it continue heading to the upside",
+      "removedDurationLabel": "2 minutes, 27 seconds",
+      "sourceLine": 22,
+      "sourceLineSha256": "32a17397ac631b7f40dd15ce48529f492cc426139a524478f2feb5cfacd10faf",
+      "timestamp": "2:27",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "or continue heading to the downside now breaking retest is most effective at these zones and these zones are obviously known as support and",
+      "removedDurationLabel": "2 minutes, 35 seconds",
+      "sourceLine": 23,
+      "sourceLineSha256": "0d9c7157a54517becf1717682d71f041b2dbe3ff7566e415a63e2f9ed4357316",
+      "timestamp": "2:35",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "resistance supply and demand area of interest it's all the same thing it's a resting point for price to then create accumulation to then push to then to the next zone so now let's actually get into",
+      "removedDurationLabel": "2 minutes, 43 seconds",
+      "sourceLine": 24,
+      "sourceLineSha256": "6ec64ae1e022c109b7b0b082fc9764b91aba54ef8d4a33e8a0d31694a0a7f96f",
+      "timestamp": "2:43",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "the market so I can show you some very clear examples of how breaking ret works so as you guys can see right here this to some of you guys might look like a",
+      "removedDurationLabel": "2 minutes, 51 seconds",
+      "sourceLine": 25,
+      "sourceLineSha256": "fe80dccd08323226fdcef40ccbfbc2712ec45f3207dcd824a996a053323ae3a4",
+      "timestamp": "2:51",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 49,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 4: Looking break and retest in the charts",
+      "sourceLine": 26,
+      "sourceLineSha256": "9056f18e29fa16cd365cd91410bd4c9b5f66c0b3905d618ba6038ccb0eecc588",
+      "timestamp": "2:51",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "very messy chart or obviously a chart that goes to the upside but you can't really see it clear but little do you know there is about five to six",
+      "removedDurationLabel": "2 minutes, 59 seconds",
+      "sourceLine": 27,
+      "sourceLineSha256": "389596dfff6f691f9a79ad9eb641d78b880c036751b31269cefaec937d9a1197",
+      "timestamp": "2:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "different examples of a very clear breaking retest that happens here continuously now this chart we are on the daily time frame and I want you to",
+      "removedDurationLabel": "3 minutes, 7 seconds",
+      "sourceLine": 28,
+      "sourceLineSha256": "1b23bcb6613f7a7947bd49cb3ce0b1fee4de9fbc137364673f0e646828c71d3b",
+      "timestamp": "3:07",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "keep in mind breaking retest happens on every single time frame it could happen on the daily the weekly the one minute 2 minute doesn't matter but keep a note",
+      "removedDurationLabel": "3 minutes, 14 seconds",
+      "sourceLine": 29,
+      "sourceLineSha256": "5d6b71514f9df5b89006b8a5737f6bfd915c044307f441167815933bd8b7bf52",
+      "timestamp": "3:14",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "that the higher the time frame the more it is going to be respected so if you have a break and retest on The Daily it's going to be much more respected and",
+      "removedDurationLabel": "3 minutes, 22 seconds",
+      "sourceLine": 30,
+      "sourceLineSha256": "6c26bd548b96a323ad01b475f482597db4c21d20688dba69f93cca84eede779c",
+      "timestamp": "3:22",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "a break retest on the 5 minute I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower",
+      "removedDurationLabel": "3 minutes, 29 seconds",
+      "sourceLine": 31,
+      "sourceLineSha256": "3b665f92cc09111a813798a6a03a7fd33a5e425436c35ad3c4fc729242c28f0b",
+      "timestamp": "3:29",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "time frames but all of that is going to make sense right now so as you guys can see right here GBP nzd this is a prime",
+      "removedDurationLabel": "3 minutes, 37 seconds",
+      "sourceLine": 32,
+      "sourceLineSha256": "c525ca390cca35af12ea6ef6259164cb496724a20e795540e3aa2520f424b4ee",
+      "timestamp": "3:37",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "example of a trend continuation break and then retest and the way you mark up break and retest is simply by using this",
+      "removedDurationLabel": "3 minutes, 43 seconds",
+      "sourceLine": 33,
+      "sourceLineSha256": "08bb776d5ea0937302ab882710309ab9a09281b4408b3180a45300de4a612ad8",
+      "timestamp": "3:43",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 29,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 5: Trend continuation",
+      "sourceLine": 34,
+      "sourceLineSha256": "5112cfe4c6cb95e05c896cecdcf5815c50a76b9acf738d22d23e41dd2a0921d3",
+      "timestamp": "3:43",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "little box right here now doesn't matter the size of the box it can be this big can be this big as long as you kind of get enough room so you can get the",
+      "removedDurationLabel": "3 minutes, 51 seconds",
+      "sourceLine": 35,
+      "sourceLineSha256": "13b54a040cd92d6620ed97c7cfddeb2e310ee0e29009256bc0b1ac6cda18ee97",
+      "timestamp": "3:51",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "multiple Taps into it so a perfect example of a first break and retest is this zone right here for it to be a",
+      "removedDurationLabel": "3 minutes, 59 seconds",
+      "sourceLine": 36,
+      "sourceLineSha256": "2a86ad0269274a388443ff9515a9e7e94a8aaab67333ada523db321a1f50b4a4",
+      "timestamp": "3:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "valid level of a break and retest you need to have a minimum of one structure point for price to literally be able to",
+      "removedDurationLabel": "4 minutes, 6 seconds",
+      "sourceLine": 37,
+      "sourceLineSha256": "69581f88e0884bff419bb79413791fa0a038193845356c9119a3b1a0d4e1b665",
+      "timestamp": "4:06",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "then break the zone and then come back and then retest it so as you can tell right here this is the level of resistance price has then broken it and",
+      "removedDurationLabel": "4 minutes, 13 seconds",
+      "sourceLine": 38,
+      "sourceLineSha256": "0d13e37f5679d5196ca8a6290561f56095bc683b538e021ee7919ff15fae2864",
+      "timestamp": "4:13",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "then we have then retested it so this is a perfect example of a break and retest now that we have broken this Zone and we have retested it this right here turns",
+      "removedDurationLabel": "4 minutes, 22 seconds",
+      "sourceLine": 39,
+      "sourceLineSha256": "d8e2779e3614463a27b641d873c42c16555677d752dfa9896a48e72ca68296f9",
+      "timestamp": "4:22",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "into the next structure point that we can then have the break and retest so as you can see right here I get my trusty Zone and now this is the resistance",
+      "removedDurationLabel": "4 minutes, 30 seconds",
+      "sourceLine": 40,
+      "sourceLineSha256": "5be90fc34c0d1f32951461ddb26b7c1764a7b8bda1d4b02e23b5d1ad4d534a1f",
+      "timestamp": "4:30",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "level we Break It We retest it and then we have a simple continuation remember breaking retest is a continuation",
+      "removedDurationLabel": "4 minutes, 39 seconds",
+      "sourceLine": 41,
+      "sourceLineSha256": "942ae4bf149b6569163fd3c026a344d1337296d70eecbb1524c209ad628bbd22",
+      "timestamp": "4:39",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "pattern it so price has a break in the retest it has a breathing room it's able to now get ready to then continue",
+      "removedDurationLabel": "4 minutes, 47 seconds",
+      "sourceLine": 42,
+      "sourceLineSha256": "f5bff97b1038980ca9740830515e49144d094fd653818c9ec698f11694a0faf2",
+      "timestamp": "4:47",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "heading in that direction that's exactly what we're seeing here next we have our next Zone Z which is the next high point which is this point right here mark it",
+      "removedDurationLabel": "4 minutes, 54 seconds",
+      "sourceLine": 43,
+      "sourceLineSha256": "ceb9f51d355a9d67a2af6c43fd27b85ca2f03421eaa4d5b712505d9f56e1441a",
+      "timestamp": "4:54",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "off as a Zone and you can see how price clearly breaks and then retest it and this goes on and on and on and then you",
+      "removedDurationLabel": "5 minutes, 3 seconds",
+      "sourceLine": 44,
+      "sourceLineSha256": "61e5305352b70dd03aa6f87bedd3bc2965ede523a8e378683ab3f3cabb3b450c",
+      "timestamp": "5:03",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "can also see how it does it to now the downside so as you can see here this was marked off as a high point but then",
+      "removedDurationLabel": "5 minutes, 10 seconds",
+      "sourceLine": 45,
+      "sourceLineSha256": "a018b62a91c624e1c3e14acc53eab7dae395e3883764439467b8a0c2ec0bf0f0",
+      "timestamp": "5:10",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "price was never able to then retest this structure point right here this would have been an ideal break retest to then",
+      "removedDurationLabel": "5 minutes, 18 seconds",
+      "sourceLine": 46,
+      "sourceLineSha256": "bb345a794b4ac6e89f536091b6bf7c8a22ef8bc254e7a02bc491bf01b9990f3d",
+      "timestamp": "5:18",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "head to the upside but this is a perfect example of what didn't happen which you didn't get any entry signal you didn't get an engulfing Candlestick and all",
+      "removedDurationLabel": "5 minutes, 25 seconds",
+      "sourceLine": 47,
+      "sourceLineSha256": "0b268da8b851a7ae30d7af27357420cfaea56b1e171c95322ecaac5e790af811",
+      "timestamp": "5:25",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "that stuff you want to know more about bullish engulfing bearish engulfing and how you can use that effectively with break and retest just look at this video right here it's going to explain to you",
+      "removedDurationLabel": "5 minutes, 33 seconds",
+      "sourceLine": 48,
+      "sourceLineSha256": "a7a43021ec3193f5a43c8c5b59d611605a8d53f0642b584707a8209cca069b72",
+      "timestamp": "5:33",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "how to properly use an engulfing Candlestick with Trend continuation but with that being said this right here would have been an ideal break and retest but you didn't get that engulfing",
+      "removedDurationLabel": "5 minutes, 41 seconds",
+      "sourceLine": 49,
+      "sourceLineSha256": "492949c1201e8afbd8a6bc39c98f87085d7a43a1e43dbd5bfbd2813a9db5f11c",
+      "timestamp": "5:41",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "candles state that I'm talking about so then price completely broke under and then what did we do we broke and then retested the next structure point which",
+      "removedDurationLabel": "5 minutes, 50 seconds",
+      "sourceLine": 50,
+      "sourceLineSha256": "16cd8ab3ea5ff0af521255c5778e05f1910c34ec85578983f9119edeb4da8cdb",
+      "timestamp": "5:50",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "is this point point right here and we can just simply keep this going with every single structure point that the market presents us with for example this",
+      "removedDurationLabel": "5 minutes, 58 seconds",
+      "sourceLine": 51,
+      "sourceLineSha256": "9072c30a663f62ebe6478b974143dbdc348fcf4fdf79a5b3fb0f917821f6d389",
+      "timestamp": "5:58",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "next low right here we have simply then broke and then retested it and continue heading to the downside this very clear it's simple it's just a step price has",
+      "removedDurationLabel": "6 minutes, 6 seconds",
+      "sourceLine": 52,
+      "sourceLineSha256": "5a8dc14081f693153aeac1a92b82414d15a5c8d07e0335a8409d3f3aa80d6edb",
+      "timestamp": "6:06",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 26,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 6: Ideal timezones",
+      "sourceLine": 53,
+      "sourceLineSha256": "0b956ab17c807dfaf0ebe03646f1b8cf38914fb1fba6801c74dc67c343b75922",
+      "timestamp": "6:06",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "to have a high have to have a retracement so continue having a high and then if we're heading to the downside price has to have a low and has to have a lower high so then we continue",
+      "removedDurationLabel": "6 minutes, 15 seconds",
+      "sourceLine": 54,
+      "sourceLineSha256": "5d4ff1f4e6540cfad4866cf635203f12eaf9b678c865dcb6f1b788647837cb37",
+      "timestamp": "6:15",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "heading to the down it's a very simple pattern and ideally to use it for your day Trad you want to use it more on the 4our one hour depending on how approach",
+      "removedDurationLabel": "6 minutes, 22 seconds",
+      "sourceLine": 55,
+      "sourceLineSha256": "2f2316bfe619f58298af42cf0d493c377b957278379ad65539b6670dafd395d9",
+      "timestamp": "6:22",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "you want to take it for your Inay and swing trades you want to take it on the daily and then weekly time frame keep in mind the higher the time frame the more respected the break and retest is going",
+      "removedDurationLabel": "6 minutes, 31 seconds",
+      "sourceLine": 56,
+      "sourceLineSha256": "fcdff49f30d25eb7bc2b0c37054653491161d04a80faa942484dd8efa47b9b3e",
+      "timestamp": "6:31",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "to be so now that you understand what a break and retest looks like let's actually see how you can enter the trade put a stop loss and a take profit so the break and retest is to identify Trend",
+      "removedDurationLabel": "6 minutes, 38 seconds",
+      "sourceLine": 57,
+      "sourceLineSha256": "391fe83aa34691c36e2fc8bfaf637e284b32f68d05ce3a009161a009cc0b86a6",
+      "timestamp": "6:38",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 37,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 7: Break and retest in charts",
+      "sourceLine": 58,
+      "sourceLineSha256": "21a05d9c3415b3b85c43f97cadb47d3fcbb8f7333e6e8b376265ed973e32dc45",
+      "timestamp": "6:38",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "continuation but now the actual entry signal you have to go on the lower time frame so for this example right here we're just going to Zone this off right I'm just picking random Parts in the",
+      "removedDurationLabel": "6 minutes, 47 seconds",
+      "sourceLine": 59,
+      "sourceLineSha256": "b7879b4d2e8a20c9bb04a19c415073c4aa434662802f244db03846d5b7dfe32b",
+      "timestamp": "6:47",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "chart I didn't even pre-record this or pre-notice the zones I just popped it up I literally have this zone right here so we're just going to see all of these",
+      "removedDurationLabel": "6 minutes, 55 seconds",
+      "sourceLine": 60,
+      "sourceLineSha256": "8060f22bdca3bad74b397492c7d326632ab88c60a26a1ace27a5c535353c8e70",
+      "timestamp": "6:55",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "breaks and retests and see how we could have gotone in in every single one of these trades so for example let's just go down to the 4 Hour so if we scroll",
+      "removedDurationLabel": "7 minutes, 3 seconds",
+      "sourceLine": 61,
+      "sourceLineSha256": "11ca8fb7d704c66296bb16287fe3596c3a42b9d9f40423ec5f4b67119d230bdc",
+      "timestamp": "7:03",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "left we can see this example right here so this is a perfect example right here of our first break and retest which is this trade right here as you can see",
+      "removedDurationLabel": "7 minutes, 10 seconds",
+      "sourceLine": 62,
+      "sourceLineSha256": "626fa816272b11355b11b3c441a0ec4add0a2f42e936cfab024109fe0ce95b63",
+      "timestamp": "7:10",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "price has then broken this zone so then this is the area where we are expecting price to then come back and then retest and as we're having the retest in order",
+      "removedDurationLabel": "7 minutes, 19 seconds",
+      "sourceLine": 63,
+      "sourceLineSha256": "61118d9c6ea2a72e2cb3ab13de574dd2fceeb6ec70268922f8c32fbcbfe573ab",
+      "timestamp": "7:19",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation so if you see right here we have the retracement we're rejecting the",
+      "removedDurationLabel": "7 minutes, 28 seconds",
+      "sourceLine": 64,
+      "sourceLineSha256": "b843f4e39eb9f919593772fd7d928865fb65f23738432cd694bfdc2a471b40ab",
+      "timestamp": "7:28",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "previous structure level we're having the break and now we're having the retest so here you can see we're clearly having the break and now we're having the retest but how do you know the",
+      "removedDurationLabel": "7 minutes, 37 seconds",
+      "sourceLine": 65,
+      "sourceLineSha256": "bb97aa89f45caa4dfc0afc2ec6a06734c022a13d6c8732c63dde8c7a9b12a363",
+      "timestamp": "7:37",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+      "removedDurationLabel": "7 minutes, 44 seconds",
+      "sourceLine": 66,
+      "sourceLineSha256": "0abcad6d0351cd04505733cc3579443b3e516063f3c3ee34f4fdaedb9e3792ad",
+      "timestamp": "7:44",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "rejection candlesticks and it does not get more clear than what you're seeing right here which is actually a series of bullish engulfing Morning Star formation",
+      "removedDurationLabel": "7 minutes, 52 seconds",
+      "sourceLine": 67,
+      "sourceLineSha256": "061baa91db8a4ac8bd3769617e28566870c9021dc7e54d8665c53cbcf863a796",
+      "timestamp": "7:52",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 38,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 8: Take profit and stop loss ㅤ",
+      "sourceLine": 68,
+      "sourceLineSha256": "b8e22ede86a726b4fc6d179f4857f3818389af3935b4a91b7b9b313a36e0e0db",
+      "timestamp": "7:52",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "which you have three dogee Candlestick rejections one bullish engulfing you would have simply put your entry point right here and then you would have put",
+      "removedDurationLabel": "8 minutes, 2 seconds",
+      "sourceLine": 69,
+      "sourceLineSha256": "10b3f53874010ace21c4d4914a45029715e763ea30c152bd7a84b0f836189334",
+      "timestamp": "8:02",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "your stop loss right under this point and then your take profit would have been based off of a minimum of a 1 to two risk to reward simple look at that",
+      "removedDurationLabel": "8 minutes, 9 seconds",
+      "sourceLine": 70,
+      "sourceLineSha256": "8a967600f603fe8c8208527692aedaf2a4e9d1f9dd2bd24fc0d41d517ced00c8",
+      "timestamp": "8:09",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "how it hits the take profit perfectly does not get any more simple than that but if that's not enough we'll continue on to our next trade which would be this",
+      "removedDurationLabel": "8 minutes, 17 seconds",
+      "sourceLine": 71,
+      "sourceLineSha256": "bb1f0e13e1006c5d6fa5f0abb251e2bf870399c03a386e2b70d1c7c2af98ab48",
+      "timestamp": "8:17",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "point right here which this is the high so now we have next break and then after the next break we then have our retest",
+      "removedDurationLabel": "8 minutes, 25 seconds",
+      "sourceLine": 72,
+      "sourceLineSha256": "495e2bf191ae36dcdd4cf9bacc7e9985ebfbc971a102ef8537961460b6e24768",
+      "timestamp": "8:25",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "which would be this point right here and then we would enter our trade after this bullish engulfing we would have our entry point right there and our stop",
+      "removedDurationLabel": "8 minutes, 33 seconds",
+      "sourceLine": 73,
+      "sourceLineSha256": "3a674e02d48c45f3712705ea3e03d4cf2be8ef48b7a703ce2e98cf3d2a731565",
+      "timestamp": "8:33",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "loss point would be right here if we were to have a one to2 rward ratio we simply just scroll this to the right this example we would have simply been",
+      "removedDurationLabel": "8 minutes, 42 seconds",
+      "sourceLine": 74,
+      "sourceLineSha256": "4dda978a1259678a1b5f796d8f70dd13a8d05bee4debe8e0eb18dba1f5b9aff5",
+      "timestamp": "8:42",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop so then the next break and retest what",
+      "removedDurationLabel": "8 minutes, 50 seconds",
+      "sourceLine": 75,
+      "sourceLineSha256": "cb387e6a8efaeaae18c8813ed36c151ae7671867b7fe51baf50422c1da4395c9",
+      "timestamp": "8:50",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "happened at this point right here price then breaks retest on this break and retest right here you have that morning star formation bullish engulf and",
+      "removedDurationLabel": "8 minutes, 59 seconds",
+      "sourceLine": 76,
+      "sourceLineSha256": "ee83e9ffbc9eb91dc18f32c0725f8c10be3985da33e8a43a28c1e4e6c349baaa",
+      "timestamp": "8:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "Candlestick it's literally the same thing every single time your stop- loss is right under it you have a minimum of a 1 to two risk to reward and then this",
+      "removedDurationLabel": "9 minutes, 8 seconds",
+      "sourceLine": 77,
+      "sourceLineSha256": "ac7c6c1baf2643f6defc6161946f54a943e7bf4c749a8517cd0e94cd726edcb8",
+      "timestamp": "9:08",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "trade hit so if you notice out of the three trades you had one that you caught a minimum of a 1 to two so you let save",
+      "removedDurationLabel": "9 minutes, 16 seconds",
+      "sourceLine": 78,
+      "sourceLineSha256": "70c72702793628309a796e31c895f36b1b948b76f5e50d19c72ead53fc4004ab",
+      "timestamp": "9:16",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "you risk 1% you got 2% on this trade you lost 1% on this trade so now you're down 1% % but now plus 2% you're a net profit",
+      "removedDurationLabel": "9 minutes, 23 seconds",
+      "sourceLine": 79,
+      "sourceLineSha256": "ec98f0890fa6cc639aa2c79fdab845e02d1ee74251c7cd8335542373941fc6fa",
+      "timestamp": "9:23",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "over 3% on these three trades that could have happened in the matter of 48 Hours you multiply 3% in 48 hours and it say",
+      "removedDurationLabel": "9 minutes, 32 seconds",
+      "sourceLine": 80,
+      "sourceLineSha256": "e7781e52a477968db6eb707089de315da09448c708620b855da1d8380193d8e7",
+      "timestamp": "9:32",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "you only take that once a week you multiply that 3% that you made in one week times 4 weeks than you have in the market you can average anywhere from 9",
+      "removedDurationLabel": "9 minutes, 40 seconds",
+      "sourceLine": 81,
+      "sourceLineSha256": "8c55da1fdd65c7b4ba9fdaa87da93798652a5803da68992787bbdb585776059c",
+      "timestamp": "9:40",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "to 12% a month that's more than any single Bank any single institution with a simple break and retest strategy there's nothing that I'm doing different",
+      "removedDurationLabel": "9 minutes, 48 seconds",
+      "sourceLine": 82,
+      "sourceLineSha256": "8dc62a859c491002d55a7602c4d2eff8436a64dec7be42ca061fdaf2b732ffb3",
+      "timestamp": "9:48",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "other than just break and retest and bullish and golfing Candlestick and everything I've showed you in this video is an example of what I do with my set",
+      "removedDurationLabel": "9 minutes, 57 seconds",
+      "sourceLine": 83,
+      "sourceLineSha256": "e72b79fe71e7d46bb009ab21e7e5ecc6f37f4d73ba6d20e23b1a18ad43a814bf",
+      "timestamp": "9:57",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 26,
+      "normalizedText": "freet strategy it's something that I've been using for the last 5 and a half years and it's clearly making me money every single day I actually want to see",
+      "removedDurationLabel": "10 minutes, 5 seconds",
+      "sourceLine": 84,
+      "sourceLineSha256": "554406d7644b424fa8cdb84c7fe36918ec7c6fd5545030f5ef72db2fbd042c5c",
+      "timestamp": "10:05",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 27,
+      "normalizedText": "how I am in the trade right now as of right now in the trade we are currently about $37,000 in profit and you guys can see",
+      "removedDurationLabel": "10 minutes, 12 seconds",
+      "sourceLine": 85,
+      "sourceLineSha256": "eedb8e17907a06655199f39e0be2b92b338544554aed51f00e9ae2fa90fec751",
+      "timestamp": "10:12",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 27,
+      "normalizedText": "it happening right there live right now and these aren't my only numbers students that use my set forget strategy",
+      "removedDurationLabel": "10 minutes, 20 seconds",
+      "sourceLine": 86,
+      "sourceLineSha256": "bd490de64355722a490eb1002704cf753cd5911a802a54409a4fa097f18b7c41",
+      "timestamp": "10:20",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 27,
+      "normalizedText": "make anywhere from ,000 to $1,500 a week as a beginner set and forget Trader now if you're probably wondering what is set and forget and how you can use it and",
+      "removedDurationLabel": "10 minutes, 26 seconds",
+      "sourceLine": 87,
+      "sourceLineSha256": "1221af64d7fb8b2205366de6cd8c3dcf3b3618cb43ef3d7bca6d51ee18612de6",
+      "timestamp": "10:26",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 27,
+      "normalizedText": "make numbers like these just click the link in the description below there's a video that explains to you exactly what set and forget is and how it makes traders in the first 3 months of using",
+      "removedDurationLabel": "10 minutes, 34 seconds",
+      "sourceLine": 88,
+      "sourceLineSha256": "fa1ecb8ffc27f7f5f46f584002b05dcf3e5e1dc97426f9508356a0b65cbd6922",
+      "timestamp": "10:34",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 27,
+      "normalizedText": "set and forget to make anywhere from ,000 to $1,500 a week as a beginner set and forget Trader so you want to know more about set and forget and how you",
+      "removedDurationLabel": "10 minutes, 44 seconds",
+      "sourceLine": 89,
+      "sourceLineSha256": "ff8dd1aab174338fd154ec99a2abfca07db2d39b4fe490ea40e033f7ab76cc8e",
+      "timestamp": "10:44",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 27,
+      "normalizedText": "can use it every single day along with the breaking retest strategy so you can use a set and fra in combination with it all and make numbers like these just click the link in the description below",
+      "removedDurationLabel": "10 minutes, 52 seconds",
+      "sourceLine": 90,
+      "sourceLineSha256": "4234682a9fd1f634ad376a663d6080df17ddc72bc590808200366bf9221c4178",
+      "timestamp": "10:52",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 15,
+      "normalizedText": "I have a video there for you that's going to explain absolutely everything and I hope you guys found this video useful appreciate you guys watching this video all the way to the end and I'll",
+      "removedDurationLabel": "11 minutes",
+      "sourceLine": 91,
+      "sourceLineSha256": "b5c0ebfce4c8feeb876617a69659703b4d3935714cbff3b9e4560a599afd8765",
+      "timestamp": "11:00",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 26,
+      "normalizedText": "see you guys in the next video",
+      "removedDurationLabel": "11 minutes, 7 seconds",
+      "sourceLine": 92,
+      "sourceLineSha256": "f4b2cb694dfc2a31f2fb8a8223f3fd92baffe25c2e40c671821578f08c7a2b8d",
+      "timestamp": "11:07",
+      "transform": "stripped_duplicated_duration_label"
+    }
+  ],
+  "policy": {
+    "charsRemoved": 2258,
+    "lineCount": 92,
+    "linesTransformed": 91,
+    "profile": "youtube_duration_label",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [
+      1
+    ],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "sourceFileSha256": "7f954e14ec5cb0a6b17de28fb0e6caed6910e6cc4f2ec72c8c6cc3b3441e58d2"
+}

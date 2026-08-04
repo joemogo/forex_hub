@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|040",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|007",
+  "questionText": "TJR checks for high-impact news before applying the setup, but never states what he does when high-impact news IS present. Does news block the trade, delay it, or only change sizing?",
+  "questionType": "unruled_exception",
+  "reason": "The news check is demonstrated exactly once and no consequence is ever stated.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

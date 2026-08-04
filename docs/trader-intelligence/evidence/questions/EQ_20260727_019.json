@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|010",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|019",
+  "questionText": "Top-down analysis produces an 'overall score' across timeframes, but no scoring method, weighting or threshold is given. How is the score computed and what value constitutes alignment?",
+  "questionType": "unclear_scope",
+  "reason": "The scoring step is named as the output of the whole procedure yet left entirely unspecified.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260727|001"
+  ]
+}

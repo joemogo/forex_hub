@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|089",
+  "claimBId": "CLAIM|ALEX_G|20260728|100",
+  "contradictionId": "XCONTRA|20260728|006",
+  "contradictionType": "SCOPE_MISMATCH",
+  "detectedAt": "2026-07-28T04:42:15Z",
+  "metadata": {},
+  "rationale": "Within-source, and it concerns the numbers the video's authority rests on. The opening claims $50,000-$100,000 per day. The body asserts that 8-10% per month is the realistic, sustainable figure and that 50% per day/week/month is 'not going to happen'. At 8-10% per month, $50-100k per DAY implies an account in the tens of millions. The source's own flagship evidence is a 100K funded account returning $28,000 over 39 days. The three figures cannot describe the same trading operation. Recorded, not resolved: the daily figure may refer to gross position moves, or to accounts not described here - but the source never says so, and supplying that reading would be MOGO's reconciliation rather than the educator's.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

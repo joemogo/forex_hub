@@ -1,20 +1,31 @@
 {
-  "traderId": "ALEX_G",
-  "displayName": "ALEX G",
-  "aliases": ["alex_g_sr_v1"],
-  "sourceChannels": [],
-  "markets": ["forex"],
-  "instruments": [],
-  "sessions": [],
-  "timeframes": ["H1", "H4", "D", "W"],
-  "terminology": {},
-  "strategyFamilyIds": ["SF|ALEX_G|SUPPORT_RESISTANCE_V1"],
-  "externalResearchStatus": "not_started",
-  "repositoryModelStatus": "operational_implementation",
-  "replayStatus": "implemented",
-  "shadowStatus": "not_applicable",
-  "paperTradingStatus": "live_automatic_paper_trading",
-  "notes": "High-level profile only, per this wave's explicit scope limit -- no rule-by-rule extraction into StrategyRule records has been performed for ALEX G, and none is authorized by this wave. Confirmed operational: a zone-detection/setup-qualification engine (Break & Retest and Repeated Zone Reaction setup types), live automatic paper trading with an atomic ledger-commit/rollback transaction model, a historical replay engine (runAlexGReplay), and -- as of v12.6.0 -- real candidate-lifecycle Decision Event observability (CANDIDATE_CREATED, RULE_EVALUATED, CANDIDATE_APPROVED, CANDIDATE_REJECTED, TRADE_OPEN_REQUESTED, TRADE_OPENED, TRADE_OPEN_FAILED all genuinely emitted from live, non-protected call sites). 'operational_implementation' describes that this strategy runs and trades live paper positions today -- it does not mean every aspect of ALEX G is free of known limitations: touch-level rule-by-rule rejection detail (why a specific candidate failed a specific structural sub-check) remains unobservable today, since the relevant sub-evaluators are protected-function-on-protected-function with no safe external hook (see the PROGRAM-001 Phase 2B repository analysis). External, source-backed research material describing ALEX G's own trading methodology (as opposed to MOGO's own engineering documentation of what was built) has not yet been ingested into this framework -- ALEX G's rules today are fully specified by MOGO's own implementation and documentation (docs/adr/ADR-005-strategy-framework.md, docs/DECISION_EVENT_ARCHITECTURE.md, docs/PAPER_TRADING_AUDIT.md), not derived from an external trader's research the way TJR's future rules will be. Full StrategyRule extraction for ALEX G is deferred to a separately-authorized future milestone.",
+  "aliases": [
+    "alex_g_sr_v1"
+  ],
   "createdAt": "2026-07-25",
-  "updatedAt": "2026-07-25"
+  "displayName": "ALEX G",
+  "externalResearchStatus": "partial",
+  "instruments": [],
+  "markets": [
+    "forex"
+  ],
+  "notes": "High-level profile only, per this wave's explicit scope limit -- no rule-by-rule extraction into StrategyRule records has been performed for ALEX G, and none is authorized by this wave. Confirmed operational: a zone-detection/setup-qualification engine (Break & Retest and Repeated Zone Reaction setup types), live automatic paper trading with an atomic ledger-commit/rollback transaction model, a historical replay engine (runAlexGReplay), and -- as of v12.6.0 -- real candidate-lifecycle Decision Event observability (CANDIDATE_CREATED, RULE_EVALUATED, CANDIDATE_APPROVED, CANDIDATE_REJECTED, TRADE_OPEN_REQUESTED, TRADE_OPENED, TRADE_OPEN_FAILED all genuinely emitted from live, non-protected call sites). 'operational_implementation' describes that this strategy runs and trades live paper positions today -- it does not mean every aspect of ALEX G is free of known limitations: touch-level rule-by-rule rejection detail (why a specific candidate failed a specific structural sub-check) remains unobservable today, since the relevant sub-evaluators are protected-function-on-protected-function with no safe external hook (see the PROGRAM-001 Phase 2B repository analysis). External, source-backed research material describing ALEX G's own trading methodology (as opposed to MOGO's own engineering documentation of what was built) has not yet been ingested into this framework -- ALEX G's rules today are fully specified by MOGO's own implementation and documentation (docs/adr/ADR-005-strategy-framework.md, docs/DECISION_EVENT_ARCHITECTURE.md, docs/PAPER_TRADING_AUDIT.md), not derived from an external trader's research the way TJR's future rules will be. Full StrategyRule extraction for ALEX G is deferred to a separately-authorized future milestone. | 2026-07-27: external research is no longer 'not_started' -- 1 source(s) ingested yielding 35 claims, all at 'emerging' confidence with zero rule candidates. Set to 'partial': the material covers only part of the method and no claim has been corroborated to 'supported'. See docs/trader-intelligence/KNOWLEDGE-DASHBOARD.md.",
+  "paperTradingStatus": "live_automatic_paper_trading",
+  "replayStatus": "implemented",
+  "repositoryModelStatus": "operational_implementation",
+  "sessions": [],
+  "shadowStatus": "not_applicable",
+  "sourceChannels": [],
+  "strategyFamilyIds": [
+    "SF|ALEX_G|SUPPORT_RESISTANCE_V1"
+  ],
+  "terminology": {},
+  "timeframes": [
+    "H1",
+    "H4",
+    "D",
+    "W"
+  ],
+  "traderId": "ALEX_G",
+  "updatedAt": "2026-07-27"
 }

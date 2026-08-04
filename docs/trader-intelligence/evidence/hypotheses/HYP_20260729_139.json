@@ -1,0 +1,36 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|007|005"
+  ],
+  "createdAt": "2026-07-29T23:45:30Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|139",
+  "independentVariables": [
+    "target_rule",
+    "failure_condition"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260729|004) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|145",
+    "CLAIM|ALEX_G|20260729|023"
+  ],
+  "statement": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|145).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260729|001|024",
+    "EV|EVSRC|ALEX_G|20260729|001|029"
+  ],
+  "updatedAt": "2026-07-29T23:45:30Z"
+}

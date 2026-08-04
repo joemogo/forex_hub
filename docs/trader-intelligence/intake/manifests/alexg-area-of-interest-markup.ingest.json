@@ -1,0 +1,601 @@
+{
+ "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+ "annotations": [
+  {
+   "claim": "Alex G attributes single-day results of $60,000 on gold and $50,000 on GBP/JPY to marking areas of interest by the method taught here. No account statement, date, position size, risk or verification is offered.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "thanks to me marking off these areas of Interest the right way I was able to make 60k day on gold 50k a day on GJ",
+   "extractionCertainty": "certain",
+   "key": "perf_gold_gj",
+   "section": 1
+  },
+  {
+   "claim": "No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "I do not take any trade unless we have two time frames in sync",
+   "extractionCertainty": "certain",
+   "key": "two_tf_gate",
+   "section": 2
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "before finding any area of Interest I need to understand what is the market doing",
+   "extractionCertainty": "certain",
+   "key": "order_wdh",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|002"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "chart_example",
+   "excerpt": "the weekly time frame is clearly bearish",
+   "extractionCertainty": "certain",
+   "key": "weekly_first",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|009"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "chart_example",
+   "excerpt": "we're creating lower low lower high lower low",
+   "extractionCertainty": "certain",
+   "key": "bearish_def",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|013"
+  },
+  {
+   "claim": "A structure point that has not completed is labelled a 'potential' lower high and used in the directional read before it is confirmed.",
+   "claimType": "exception",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "now we're creating a potential lower high to create a lower low",
+   "extractionCertainty": "high",
+   "key": "potential_lh_anticipate",
+   "section": 2
+  },
+  {
+   "claim": "An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low reading.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "another way to tell how this Market shifted from bearish to bullish we had here an inverted head and shoulders",
+   "extractionCertainty": "certain",
+   "key": "ihs_shift",
+   "section": 2
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "we need a minimum of two time per is in sync to take the trade",
+   "extractionCertainty": "high",
+   "key": "two_tf_min",
+   "section": 3,
+   "supports": "two_tf_gate"
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "we understand that the majority of these time frames is to the downside",
+   "extractionCertainty": "certain",
+   "key": "majority_direction",
+   "section": 3,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|010"
+  },
+  {
+   "claim": "Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "there's no reason why you should be taking Longs obviously the majority of the market is going down",
+   "extractionCertainty": "certain",
+   "key": "no_counter_trades",
+   "section": 3
+  },
+  {
+   "claim": "Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the maximum of the scale is not stated.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "it's 10 per time frame",
+   "extractionCertainty": "moderate",
+   "key": "ten_per_tf",
+   "section": 5
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "anything lower than the four hour to me is just not strong I don't use it as a",
+   "extractionCertainty": "certain",
+   "key": "sub_4h_not_confluence",
+   "section": 5,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|011"
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "we need to sell at a weekly area of interest because again keep in mind we are bearishing the weekly",
+   "extractionCertainty": "certain",
+   "key": "sell_weekly_aoi",
+   "section": 6,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|028"
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "this is the lower high and then this would be the lower low so we understand we're only looking for areas of interest within this box",
+   "extractionCertainty": "certain",
+   "key": "box_bounds",
+   "section": 6,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|026"
+  },
+  {
+   "claim": "The region between the active lower high and lower low is drawn as an explicit box, and the search for an area of interest is confined to it.",
+   "claimType": "setup_requirement",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "a little hack that I do is I would Zone it off like this",
+   "extractionCertainty": "certain",
+   "key": "box_hack",
+   "section": 6
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "I'm looking for retracement somewhere in here",
+   "extractionCertainty": "high",
+   "key": "retrace_inside_box",
+   "section": 7,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|011"
+  },
+  {
+   "claim": "A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you break out of this box we are now bullish we're no longer looking to sell",
+   "extractionCertainty": "certain",
+   "key": "box_break_flips",
+   "section": 7
+  },
+  {
+   "claim": "A level may be a genuine and well-respected support/resistance level and still be untradeable, because price reaching it would already have invalidated the directional bias.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "this is a clean level of support resistance support resistance but if price gets to that point right there we're no longer Birch we're no longer",
+   "extractionCertainty": "high",
+   "key": "valid_sr_still_untradeable",
+   "section": 7
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "off looking for areas of interest from the bottom up and I pretty much look for whatever points have the most touches",
+   "extractionCertainty": "certain",
+   "key": "bottom_up_touches",
+   "section": 8,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|029"
+  },
+  {
+   "claim": "The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable.",
+   "claimType": "entry_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "low",
+   "evidenceType": "chart_example",
+   "excerpt": "in this case it is around psychological 66",
+   "extractionCertainty": "high",
+   "key": "psych_level",
+   "section": 8
+  },
+  {
+   "claim": "A candidate level is validated by looking left on the chart to confirm it has been respected historically.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you look left that it's a very well respected level of support and resistance",
+   "extractionCertainty": "certain",
+   "key": "look_left",
+   "section": 8
+  },
+  {
+   "claim": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+   "claimType": "trade_management_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "we just set it forget just pretty much just wait until the price gets there",
+   "extractionCertainty": "certain",
+   "key": "set_and_forget",
+   "section": 8
+  },
+  {
+   "claim": "Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you're looking to sell you need to sell at a lower high if you're looking to buy you need to buy at a higher low",
+   "extractionCertainty": "certain",
+   "key": "sell_at_lh",
+   "section": 10
+  },
+  {
+   "claim": "A lower high that has not yet completed - a 'potential' lower high - is accepted as a valid sell location.",
+   "claimType": "exception",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you need to sell at a lower high or a potential lower high",
+   "extractionCertainty": "certain",
+   "key": "potential_lh_entry",
+   "section": 10
+  },
+  {
+   "claim": "The entry-side structure point must be present on the four-hour timeframe.",
+   "claimType": "timeframe_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "this is where you would go down to the four hour and I need to have a four hour lower high to sell",
+   "extractionCertainty": "certain",
+   "key": "four_hour_lh",
+   "section": 10
+  },
+  {
+   "claim": "If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "this is where we would wait for the break of the structure which would give us a lower",
+   "extractionCertainty": "high",
+   "key": "no_lh_wait_bos",
+   "section": 11
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "chart_example",
+   "excerpt": "once we approach our area of interest for the first time",
+   "extractionCertainty": "moderate",
+   "key": "first_touch_no_entry",
+   "section": 10,
+   "supports": "no_lh_wait_bos"
+  },
+  {
+   "claim": "Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern. No EMA period is given.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "retest of 6500 read system air adventures in the weekly retest the four hour EMA reaches the neckline of the head and shoulders",
+   "extractionCertainty": "moderate",
+   "key": "confluence_stack",
+   "section": 12
+  },
+  {
+   "claim": "Waiting for the structure shift is presented as the act that produces the additional confluences, rather than the confluences being sought independently.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "have abundance of conferences by just waiting for the shift of the structure",
+   "extractionCertainty": "high",
+   "key": "confluence_from_waiting",
+   "section": 12
+  },
+  {
+   "claim": "Setups are graded on a letter scale derived from percentages. The scale itself is taught in a paid programme and is not defined in this source.",
+   "claimType": "other",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "it would be a b setup B plus you know the way we grade it in the",
+   "extractionCertainty": "moderate",
+   "key": "grade_percentage",
+   "section": 12
+  },
+  {
+   "claim": "Entry additionally waits for 'the proper session'. Which sessions qualify is not stated.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "wait for the proper session to take the train",
+   "extractionCertainty": "high",
+   "key": "proper_session",
+   "section": 13
+  }
+ ],
+ "contradictions": [
+  {
+   "a": "potential_lh_entry",
+   "bClaimId": "CLAIM|ALEX_G|20260728|028",
+   "rationale": "Within-educator. Source #5 (liquidity) states entry requires confirmation that price is ALREADY moving in the intended direction and explicitly rejects entering on anticipation. This source accepts a 'potential lower high' - a structure point that has not completed - as a valid sell location, and labels an incomplete lower high during the directional read. The two prescriptions are opposite for the same decision. Recorded, not resolved: the sources may be separated in time or address different stages, but neither states that. Note CLAIM|ALEX_G|20260728|033 already records him conceding he enters on anticipation despite teaching against it.",
+   "severity": "material",
+   "type": "DIRECTIONAL"
+  }
+ ],
+ "manifestVersion": 1,
+ "normalization": {
+  "charsRemoved": 1777,
+  "lineCount": 79,
+  "linesTransformed": 77,
+  "profile": "youtube_duration_label",
+  "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+  "reversible": true,
+  "unmatchedLines": [
+   1,
+   79
+  ],
+  "wordsAdded": 0,
+  "wordsRemoved": 0,
+  "wordsReordered": 0
+ },
+ "openQuestions": [
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "ten_per_tf",
+   "priority": "high",
+   "reason": "The caption is garbled ('we were greatest a 20 towards yourself because it's 10 per time frame'). Ten points per timeframe is legible; the denominator is not. Four timeframes are named elsewhere (weekly, daily, 4H, lower), which would imply 40, but sub-4H is excluded from directional scoring in this same passage, which would imply 30. MOGO must not pick one - that would be inventing a missing definition.",
+   "text": "What is the maximum of the timeframe-confluence scale, and is 20 a passing threshold or just the score of this example?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "two_tf_gate",
+   "priority": "high",
+   "reason": "In the worked example the weekly is bearish, the daily is bullish and the 4H is bearish, and the trade is taken bearish. So 'in sync' tolerates a disagreeing timeframe between two agreeing ones. Whether weekly+4H specifically is required, or any two of three, is never stated, and the effect of the opposing daily on the score is not given.",
+   "text": "Which two timeframes must be in sync, and does an opposing intermediate timeframe reduce the grade?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "proper_session",
+   "priority": "high",
+   "reason": "Never defined here or in any prior Alex G source. CLAIM|ALEX_G|20260728|013 names 'trading at the right times' as one of four requirements for profitability and also leaves it undefined. Four sources have now referenced session timing as necessary without once specifying it. Tracked as BACKLOG-002/A6.",
+   "text": "Which sessions are 'the proper session' for entry?",
+   "type": "missing_session"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "potential_lh_entry",
+   "priority": "critical",
+   "reason": "Directly opposite prescriptions between this source and source #5. See XCONTRA for this ingestion. Until resolved, neither the confirmation rule nor the potential-lower-high rule can be promoted, because implementing either would contradict evidenced material from the same educator.",
+   "text": "Does Alex G's method permit entry on an incomplete structure point, or require confirmation first?",
+   "type": "self_contradiction"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "perf_gold_gj",
+   "priority": "critical",
+   "reason": "No account statement, date, instrument size, risk taken, or independent record is offered, and the results are causally attributed to the technique being taught in the same breath as a watch purchase. Typed performance_hypothesis and structurally ineligible to become a rule candidate. Must never be treated as evidence-backed.",
+   "text": "Are the $60,000 and $50,000 single-day results verifiable, and were they produced by this method?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "confluence_stack",
+   "priority": "medium",
+   "reason": "This is the first reference to an indicator in any Alex G source. It is named as a confluence at the entry and its period is never stated, so it cannot be reproduced.",
+   "text": "Which EMA period is used on the four-hour chart?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "box_break_flips",
+   "priority": "medium",
+   "reason": "Sources #1 and #2 both require a candle body close beyond a structure level (CLAIM|ALEX_G|20260727|022). This source does not restate that qualifier, and the distinction changes when the bias flips. Probably consistent, but not stated here.",
+   "text": "Does 'break out of this box' require a body close, or does a wick through it suffice?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "bottom_up_touches",
+   "priority": "medium",
+   "reason": "Source #3 gives 'more than three taps' as ideal and one tap as materially weaker. This source gives no count at all, only a relative 'most touches' scan from the bottom up. The two quantifications are compatible but not identical.",
+   "text": "How many touches qualify a level, and how is 'most touches' ranked when candidates tie?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "box_bounds",
+   "priority": "medium",
+   "reason": "He states the sell must be at a weekly area of interest, which implies the weekly box, but the demonstration moves between weekly, daily and four-hour charts while marking. The bounding timeframe is never named explicitly.",
+   "text": "Which timeframe's lower high and lower low bound the box?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "grade_percentage",
+   "priority": "low",
+   "reason": "Explicitly deferred to a paid programme. Not derivable from this source and not to be reconstructed by inference.",
+   "text": "What percentage bands define the B / B+ setup grades?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": null,
+   "priority": "critical",
+   "reason": "Four Alex G sources have now produced zero stop_rule, target_rule and risk_rule claims. This source specifies entry location, bias, zone selection and confluence grading, and stops before risk. No Alex G claim can be replayed for P&L - only for trigger accuracy.",
+   "text": "Where is the stop placed, what is the target, and what is risked per trade?",
+   "type": "missing_stop_placement"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "sub_4h_not_confluence",
+   "priority": "medium",
+   "reason": "Source #2 states market structure applies to any timeframe (CLAIM|ALEX_G|20260728|001); this source excludes sub-4H from directional confluence. Reconcilable - the reading procedure can be identical while the weighting differs - but the reconciliation is MOGO's, not the educator's. This is the second source to sharpen the tension first recorded in cycle 008.",
+   "text": "Is market structure timeframe-agnostic, or do lower timeframes carry less directional weight?",
+   "type": "unclear_scope"
+  }
+ ],
+ "provenance": {
+  "canonicalReference": "https://www.youtube.com/watch?v=urX1iWvHc5g",
+  "channelOrPublisher": "fxalexg (https://www.youtube.com/@fxalexg__)",
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "publicationDate": null,
+  "titleVerification": {
+   "method": "youtube_oembed",
+   "note": "Educator identity was NOT inferred from transcript style. The publisher endpoint returns author_name 'fxalexg' for this video and for sources #3, #4 and #5, which is what establishes that this is the same educator and therefore the same independence group.",
+   "retrievedAt": "2026-07-28T02:57:22Z",
+   "status": "verified_publisher",
+   "traderAttributionConfirmed": true,
+   "verifiedTitle": "Learn How THIS Forex AOI SECRET Bought Me A $200,000 Watch"
+  },
+  "transcriptCompleteness": "unknown",
+  "transcriptProvider": null
+ },
+ "sections": [
+  {
+   "lines": [
+    1,
+    10
+   ],
+   "n": 1,
+   "title": "Cold open - performance claims and the promise of three keys",
+   "type": "introduction"
+  },
+  {
+   "lines": [
+    11,
+    18
+   ],
+   "n": 2,
+   "title": "Key 1 - establish directional bias top-down: weekly, then daily",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    19,
+    25
+   ],
+   "n": 3,
+   "title": "Key 1 continued - the four-hour, and the two-timeframes-in-sync gate",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    26,
+    30
+   ],
+   "n": 4,
+   "title": "Watch giveaway interlude and transition to Key 2",
+   "type": "promotion"
+  },
+  {
+   "lines": [
+    31,
+    33
+   ],
+   "n": 5,
+   "title": "Confluence grading - ten points per timeframe; sub-4H excluded from direction",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    34,
+    38
+   ],
+   "n": 6,
+   "title": "Key 2 - mark the lower high and lower low, and box the search area",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    39,
+    43
+   ],
+   "n": 7,
+   "title": "Confining the search to the box - and the common mistake of trading a level outside it",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    44,
+    48
+   ],
+   "n": 8,
+   "title": "Selecting the area of interest - bottom-up, most touches, look left, then wait",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    49,
+    59
+   ],
+   "n": 9,
+   "title": "Rolex gifting segment (non-technical)",
+   "type": "other"
+  },
+  {
+   "lines": [
+    60,
+    65
+   ],
+   "n": 10,
+   "title": "Key 3 - sell only at a lower high, buy only at a higher low",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    66,
+    70
+   ],
+   "n": 11,
+   "title": "Worked example - no lower high on the first approach; wait for the break of structure",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    71,
+    76
+   ],
+   "n": 12,
+   "title": "Stacking confluences and grading the setup",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    77,
+    79
+   ],
+   "n": 13,
+   "title": "Outro",
+   "type": "conclusion"
+  }
+ ],
+ "slug": "alexg-area-of-interest-markup",
+ "sourceFile": "docs/trader-intelligence/intake/pending/alexg-area-of-interest-markup.txt",
+ "sourceFileBytes": 11900,
+ "sourceFileSha256": "c4901808d9eecc7b42dea8723df43440892a91c195bc3bd836778c1f6308c8a8",
+ "sourceLineCount": 79,
+ "title": "Learn How THIS Forex AOI SECRET Bought Me A $200,000 Watch",
+ "traderId": "ALEX_G"
+}

@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260729|023",
+  "claimBId": "CLAIM|ALEX_G|20260728|145",
+  "contradictionId": "XCONTRA|20260729|004",
+  "contradictionType": "CONDITIONAL_SCOPE",
+  "detectedAt": "2026-07-29T23:45:30Z",
+  "metadata": {},
+  "rationale": "Behaviour versus stated rule, and it bears directly on trade management. This source states the take-profit is set to 'a minimum of a 1 to two risk to reward', which makes 1:2 an acceptable target. Source #8 (CLAIM|ALEX_G|20260728|145) names closing a trade that was set to 1:4 AT 1:2 as the core psychological failure - 'the exit is driven by the size of the number, not by the market'. Both cannot be applied without a rule distinguishing a target SET at the 1:2 floor from a target REVISED down to it. The distinction is never drawn in either source, and it determines whether a preset target may be reduced after entry.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

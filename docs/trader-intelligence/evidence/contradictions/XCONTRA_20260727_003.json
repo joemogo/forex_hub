@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260727|020",
+  "claimBId": "CLAIM|TJR|20260727|065",
+  "contradictionId": "XCONTRA|20260727|003",
+  "contradictionType": "DEFINITIONAL",
+  "detectedAt": "2026-07-27T22:41:09Z",
+  "metadata": {},
+  "rationale": "CROSS-EDUCATOR. Alex G marks highs and lows at candle BODIES and states explicitly 'not at the wick'. TJR (source #2) marks a high at the highest WICK of the two candles forming it. Both are describing the same operation -- locating a structure point -- and prescribe incompatible price levels. This changes every downstream value: where the level sits, whether a break has occurred, stop placement, and risk-to-reward. Recorded, not resolved.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

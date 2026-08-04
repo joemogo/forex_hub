@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|143",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|163",
+  "questionText": "What is the source for the 6.3 trillion daily turnover figure, and does it support the argument?",
+  "questionType": "ambiguous_statement",
+  "reason": "Unsourced, like '99% of traders lose money' and 'retail is 3% of the market'. The argument it supports - that individual size is insignificant - is also in tension with source #3's position that retail being 3% of the market means retail stops are not worth hunting. Both use market-scale figures to argue different things.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

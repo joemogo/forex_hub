@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|159",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|164",
+  "questionText": "Is the prescribed allocation 30/30/30/10 or 30/30/40/0?",
+  "questionType": "behavior_conflicts_with_instruction",
+  "reason": "He names the rule, tells viewers to write it down, then states he personally folds the 10% into investment. Openly stated as his own choice rather than concealed, so it is an exception rather than a contradiction - but it is the second instance in two sources of practice diverging from a stated rule, after the proximity tolerance in source #7.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

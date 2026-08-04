@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|019",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260729|002",
+  "questionText": "What makes a swing point 'major' enough to count?",
+  "questionType": "ambiguous_statement",
+  "reason": "Defined as 'sticking out like a sore thumb' - a visual criterion with no lookback, no minimum displacement and no tie-break. This is exactly the parameter ALEX_G's 'snake trick' also leaves undefined (RC-16), and now two educators have left the same parameter unspecified while giving OPPOSITE guidance about whether small swings count at all. MOGO must not pick a value.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

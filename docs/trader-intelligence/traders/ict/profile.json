@@ -1,0 +1,20 @@
+{
+  "traderId": "ICT",
+  "displayName": "ICT (Inner Circle Trader)",
+  "aliases": [],
+  "sourceChannels": [],
+  "markets": [],
+  "instruments": [],
+  "sessions": [],
+  "timeframes": [],
+  "terminology": {},
+  "strategyFamilyIds": [],
+  "externalResearchStatus": "not_started",
+  "repositoryModelStatus": "not_implemented",
+  "replayStatus": "not_started",
+  "shadowStatus": "not_started",
+  "paperTradingStatus": "not_approved",
+  "notes": "Registered under DECISION|MOGO|20260727|004, which establishes equal evidence-source standing for ICT, TJR, JVM, ALEX G, and future educators. ZERO evidenced material exists: no EvidenceSource, no claim, no acquisition candidate, no transcript. Every field above is deliberately empty rather than populated from general knowledge -- markets, instruments, sessions, timeframes, and terminology will be filled only from real ingested sources, exactly as they were for TJR. This record exists so that the absence of ICT research is explicit and queryable rather than merely a gap in the directory listing, and so acquisition has a registered target. RATIONALE FOR PRIORITISING THIS TRADER: TJR's definitional vocabulary (liquidity sweep, fair value gap, break of structure, equilibrium, order block, breaker block) sits in the ICT lineage, so a primary ICT source would plausibly corroborate 6-8 of TJR's definitional claims at once -- the most efficient available path past the single-source 'emerging' confidence ceiling -- while simultaneously establishing whether TJR's framework is an original methodology or one practitioner's variant of a widely-taught system. That distinction materially changes how much independent weight TJR's claims deserve. Recorded as an acquisition hypothesis, NOT a finding: MOGO holds no evidence for it. See docs/trader-intelligence/CROSS-STRATEGY-ANALYSIS.md sections 1 and 7. Acquisition remains blocked on the unresolved licensing posture that also affects EVSRC|TJR|20260727|001.",
+  "createdAt": "2026-07-27",
+  "updatedAt": "2026-07-27"
+}

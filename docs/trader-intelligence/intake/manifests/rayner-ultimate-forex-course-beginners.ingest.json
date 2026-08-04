@@ -1,0 +1,865 @@
+{
+ "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+ "annotations": [
+  {
+   "claim": "Session hours are given explicitly in GMT: London 07:00-16:00 and New York 12:00-21:00 during US daylight saving; London 08:00-17:00 and New York 13:00-22:00 during standard time. Four sessions are named: Sydney, Tokyo, London, New York.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "the london session right starts at 7 00 am gmt and",
+   "extractionCertainty": "certain",
+   "key": "session_hours_gmt",
+   "section": 2
+  },
+  {
+   "claim": "The London/New York overlap is identified as the most volatile period of the forex day, on the stated reasoning that both of the largest financial centres are open simultaneously.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "the most volatile session right in the forex market is during the london",
+   "extractionCertainty": "certain",
+   "key": "london_ny_overlap",
+   "section": 2
+  },
+  {
+   "claim": "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "leverage can amplify your gains and losses",
+   "extractionCertainty": "certain",
+   "key": "leverage_amplifies",
+   "section": 5
+  },
+  {
+   "claim": "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "risk management is the ability as a trader to encounter a series of losses right and not",
+   "extractionCertainty": "certain",
+   "key": "rm_definition",
+   "section": 7
+  },
+  {
+   "claim": "A profitable strategy without risk management is asserted to still produce a losing trader. Demonstrated with two traders on identical 50%-win, 1:2 strategies where the one risking 25% per trade is wiped out before the winning streak arrives.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you can have a winning trading strategy but without proper risk management right you will still end up",
+   "extractionCertainty": "certain",
+   "key": "strategy_not_enough",
+   "section": 7
+  },
+  {
+   "claim": "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "not to lose more than one percent of your trading account on each trade",
+   "extractionCertainty": "certain",
+   "key": "one_percent_rule",
+   "section": 7
+  },
+  {
+   "claim": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "position size is equals to the amount to risk right the amount of uh dollar",
+   "extractionCertainty": "certain",
+   "key": "position_size_formula",
+   "section": 7
+  },
+  {
+   "claim": "Risk-to-reward ratio is defined as reward as a multiple of the amount risked, worked through at 1:2 and 1:10.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "so this is what we call a one to two risk reward ratio your reward right it's two times your initial risk",
+   "extractionCertainty": "certain",
+   "key": "rr_definition",
+   "section": 7
+  },
+  {
+   "claim": "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering.",
+   "claimType": "stop_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "a stop loss order is in order to sell your position if the price",
+   "extractionCertainty": "certain",
+   "key": "stop_loss_purpose",
+   "section": 8
+  },
+  {
+   "claim": "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely.",
+   "claimType": "stop_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "as a trader who uses leverage in your trading i still suggest you use a stop-loss order",
+   "extractionCertainty": "certain",
+   "key": "always_use_stop",
+   "section": 8
+  },
+  {
+   "claim": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "for a buy limit order right it's an order an order to buy below the current market price",
+   "extractionCertainty": "certain",
+   "key": "buy_limit_def",
+   "section": 8
+  },
+  {
+   "claim": "The spread is the transaction cost in forex, where commission is usually not charged. Worked: one standard lot of EURUSD at a 3-pip spread costs $30 on entry.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "the higher the spread the higher your transaction cost",
+   "extractionCertainty": "certain",
+   "key": "spread_is_cost",
+   "section": 9
+  },
+  {
+   "claim": "Spread cost should be assessed as a percentage of stop-loss distance, not in absolute pips. A 1-pip spread is 20% of a 5-pip stop but 1% of a 100-pip stop, which is given as a reason to prefer higher timeframes.",
+   "claimType": "timeframe_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you trade off the higher time frame your stop-loss is usually wider",
+   "extractionCertainty": "certain",
+   "key": "spread_vs_stop",
+   "section": 9
+  },
+  {
+   "claim": "An uptrend is a series of higher highs and higher lows.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "an uptrend consists of a series of higher highs and higher low",
+   "extractionCertainty": "certain",
+   "key": "uptrend_def",
+   "section": 11
+  },
+  {
+   "claim": "A downtrend is a series of lower highs and lower lows.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "downtrend right in essence is a series of lower highs and lower low",
+   "extractionCertainty": "certain",
+   "key": "downtrend_def",
+   "section": 11
+  },
+  {
+   "claim": "A range is price contained between highs and lows, distinguished from a trend by repeated rejection at the boundary rather than a break beyond it. In a range both directions are tradeable.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "price is contained between the highs and the lows",
+   "extractionCertainty": "certain",
+   "key": "range_def",
+   "section": 11
+  },
+  {
+   "claim": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "market structure helps you to define the current market condition",
+   "extractionCertainty": "certain",
+   "key": "structure_first_question",
+   "section": 11
+  },
+  {
+   "claim": "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "for you the beginner is much easier to be trading along the path of least resistance",
+   "extractionCertainty": "certain",
+   "key": "trade_with_trend",
+   "section": 11
+  },
+  {
+   "claim": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "pay attention to the swing points the ones that really",
+   "extractionCertainty": "certain",
+   "key": "major_swings_only",
+   "section": 11
+  },
+  {
+   "claim": "Structure is read across the whole visible chart from left to right rather than from the most recent few candles.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "look from left to right left to right don't just look at the",
+   "extractionCertainty": "certain",
+   "key": "left_to_right",
+   "section": 11
+  },
+  {
+   "claim": "Structure classification is stated to be subjective: a chart he calls a range may reasonably be called an uptrend by another trader, and neither is declared wrong.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "when you deal with technical analysis there is subjectivity involved",
+   "extractionCertainty": "certain",
+   "key": "subjectivity_admitted",
+   "section": 11
+  },
+  {
+   "claim": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if it's not clear if it's conflicting information move on onto another currency pair",
+   "extractionCertainty": "certain",
+   "key": "stay_out_option",
+   "section": 11
+  },
+  {
+   "claim": "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "it tells you where to buy or sell the key word here is where",
+   "extractionCertainty": "certain",
+   "key": "aov_purpose",
+   "section": 12
+  },
+  {
+   "claim": "Support is an area where buying pressure COULD step in; resistance is an area where selling pressure COULD step in. The conditional is stated deliberately - trading is described as probabilities, never certainty.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "support is an area on your chart where buying pressure could step in",
+   "extractionCertainty": "certain",
+   "key": "support_def",
+   "section": 12
+  },
+  {
+   "claim": "Broken support tends to become resistance and broken resistance tends to become support.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "when support is broken it tends to become or it could become resistance",
+   "extractionCertainty": "certain",
+   "key": "sr_flip",
+   "section": 12
+  },
+  {
+   "claim": "Support and resistance are areas rather than exact prices. Price may overshoot, undershoot or fail to touch the level before reversing, and the level must be adjusted over time as new price action arrives.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "support resistance they are an area on your chart",
+   "extractionCertainty": "certain",
+   "key": "sr_is_area",
+   "section": 12
+  },
+  {
+   "claim": "Two tools are used to locate areas of value: support/resistance and moving averages.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "i use support resistance and moving average often",
+   "extractionCertainty": "certain",
+   "key": "ma_as_aov",
+   "section": 12
+  },
+  {
+   "claim": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when).",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "entry trigger this tells you when to buy or sell",
+   "extractionCertainty": "certain",
+   "key": "entry_trigger_purpose",
+   "section": 13
+  },
+  {
+   "claim": "Every candle carries four data points - open, close, high and low of the session - and the body/wick terminology follows from them.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "there is four data points for every candlestick pattern you have the opening price the closing",
+   "extractionCertainty": "certain",
+   "key": "four_data_points",
+   "section": 13
+  },
+  {
+   "claim": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "the technicians call it a hammer",
+   "extractionCertainty": "certain",
+   "key": "hammer_def",
+   "section": 13
+  },
+  {
+   "claim": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "it opened low and closed even higher than the previous day opening price",
+   "extractionCertainty": "certain",
+   "key": "bullish_engulfing_def",
+   "section": 13
+  },
+  {
+   "claim": "Memorising the full catalogue of candlestick names is described as unnecessary because the patterns are variations on the same idea; what matters is reading who ended the session in control.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "most of these patterns are pretty much a variation of one another",
+   "extractionCertainty": "certain",
+   "key": "pattern_name_not_important",
+   "section": 13
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "what is the market structure this would",
+   "extractionCertainty": "certain",
+   "key": "three_part_check",
+   "section": 14,
+   "supports": "structure_first_question"
+  },
+  {
+   "claim": "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing.",
+   "claimType": "setup_requirement",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "chart_example",
+   "excerpt": "the market structure is in the downtrend area of value the price is at resistance our entry trigger we have a bearish engulfing pattern",
+   "extractionCertainty": "certain",
+   "key": "example1_confluence",
+   "section": 14
+  },
+  {
+   "claim": "The teaching examples are explicitly acknowledged as cherry-picked, and the source states that real trading will not look this clean.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "this is clearly a cherry pick chart",
+   "extractionCertainty": "certain",
+   "key": "cherry_picked_admission",
+   "section": 14
+  },
+  {
+   "claim": "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on.",
+   "claimType": "stop_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "want to set your stop-loss at a level which invalidates your trading setup",
+   "extractionCertainty": "certain",
+   "key": "stop_invalidates_setup",
+   "section": 15
+  },
+  {
+   "claim": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA.",
+   "claimType": "stop_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you can use an indicator called the average true range",
+   "extractionCertainty": "certain",
+   "key": "stop_atr_method",
+   "section": 15
+  },
+  {
+   "claim": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that.",
+   "claimType": "stop_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "we don't just want to set it smack below support because",
+   "extractionCertainty": "certain",
+   "key": "stop_not_flush",
+   "section": 16
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "chart_example",
+   "excerpt": "so what i'm gonna do is take seven two dot seven two",
+   "extractionCertainty": "certain",
+   "key": "stop_worked_example",
+   "section": 15,
+   "supports": "stop_atr_method"
+  },
+  {
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "such that we don't lose more than one percent of our current of our ac",
+   "extractionCertainty": "certain",
+   "key": "position_size_worked",
+   "section": 15,
+   "supports": "position_size_formula"
+  },
+  {
+   "claim": "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "i call this uh stack areas because you have multiple factors coming together",
+   "extractionCertainty": "certain",
+   "key": "stacked_areas",
+   "section": 16
+  },
+  {
+   "claim": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price.",
+   "claimType": "target_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "we usually want to set our target profit at before right previous swing highs are low in the market",
+   "extractionCertainty": "certain",
+   "key": "target_before_swing",
+   "section": 16
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "you're making difficult for the market you know to give you a profit so be reasonable",
+   "extractionCertainty": "certain",
+   "key": "dont_be_greedy_target",
+   "section": 16,
+   "supports": "target_before_swing"
+  },
+  {
+   "claim": "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "what you can do is to use a buy limit order",
+   "extractionCertainty": "certain",
+   "key": "rr_improve_by_entry",
+   "section": 17
+  },
+  {
+   "claim": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise.",
+   "claimType": "stop_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "we don't want to mess with our stop-loss because our stop-loss is at a",
+   "extractionCertainty": "certain",
+   "key": "never_tighten_stop",
+   "section": 17
+  },
+  {
+   "claim": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice.",
+   "claimType": "target_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "don't set your target above the highs of this resistance because you are expecting the price to break above that resistance",
+   "extractionCertainty": "certain",
+   "key": "target_beyond_level_bad",
+   "section": 17
+  },
+  {
+   "claim": "A losing trade is shown deliberately: a setup meeting all three criteria with a correctly-placed stop is stopped out, and price then rallies. Stated to be a trade he took himself.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "failure_observation",
+   "excerpt": "i want to show you how a losing trade looks like",
+   "extractionCertainty": "certain",
+   "key": "losing_trade_shown",
+   "section": 18
+  },
+  {
+   "claim": "A correct setup with a correctly-placed stop will still lose, sometimes immediately before the move it predicted. Presented as a permanent feature of trading rather than an error to be engineered away.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "no matter how good a trading setup looks like no",
+   "extractionCertainty": "certain",
+   "key": "good_setups_still_lose",
+   "section": 18
+  },
+  {
+   "claim": "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "it's not near any area of value",
+   "extractionCertainty": "certain",
+   "key": "skip_no_aov",
+   "section": 19
+  },
+  {
+   "claim": "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if it's not at an area of value then really usually i don't even bother looking at the entry trigger",
+   "extractionCertainty": "certain",
+   "key": "aov_gates_trigger",
+   "section": 19
+  }
+ ],
+ "contradictions": [
+  {
+   "a": "major_swings_only",
+   "bClaimId": "CLAIM|ALEX_G|20260728|008",
+   "rationale": "CROSS-EDUCATOR, and the first contradiction in the library involving three educators' worth of context. ALEX_G states that a body close beyond a structure level counts as a shift REGARDLESS OF SIZE - 'no minimum size threshold'. RAYNER_TEO states that only major swing points are used and that minor highs and lows should be deliberately ignored, on the reasoning that including them loses the larger picture. These are opposite instructions for the same operation: deciding which highs and lows count as structure. The disagreement is directly testable and is the same parameter RC-16 was already written to sweep - see RC-29.",
+   "severity": "material",
+   "type": "CONDITIONAL_SCOPE"
+  },
+  {
+   "a": "stop_not_flush",
+   "bClaimId": "CLAIM|TJR|20260727|036",
+   "rationale": "CROSS-EDUCATOR, on WHY price spikes beyond a level before reversing. TJR attributes it to market makers deliberately filling large positions against retail stops. RAYNER_TEO treats the same phenomenon as ordinary volatility to be absorbed with an ATR buffer, offering no intent-based explanation at all. Filed MINOR because the two are not logically incompatible - one is a mechanism claim and the other declines to make one - but it is recorded because it is the THIRD position the library now holds on this phenomenon, after ALEX_G called the institutional explanation 'almost a big hoax' (XCONTRA|20260728|002). Rayner's treatment is the only one that yields a usable parameter without settling the mechanism.",
+   "severity": "minor",
+   "type": "DEFINITIONAL"
+  }
+ ],
+ "manifestVersion": 1,
+ "normalization": {
+  "charsRemoved": 8137,
+  "lineCount": 2601,
+  "linesTransformed": 1306,
+  "profile": "youtube_timestamp_lines_chaptered",
+  "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+  "reversible": true,
+  "unmatchedLines": [],
+  "wordsAdded": 0,
+  "wordsRemoved": 0,
+  "wordsReordered": 0
+ },
+ "openQuestions": [
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "stop_atr_method",
+   "priority": "high",
+   "reason": "This is the first COMPLETE, MECHANICAL stop rule in the library: low of the support area minus one 20-period ATR (SMA), explicitly not flush against the level. It is evidenced for RAYNER_TEO ONLY. **It must not be applied to ALEX_G's or TJR's setups** - eight ALEX_G sources state no stop rule at all, and borrowing one across educators would fabricate a rule and attribute it to someone who never stated it. See RC-30.",
+   "text": "Does the ATR-buffer stop rule generalise beyond this educator's setups?",
+   "type": "implied_requirement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "major_swings_only",
+   "priority": "high",
+   "reason": "Defined as 'sticking out like a sore thumb' - a visual criterion with no lookback, no minimum displacement and no tie-break. This is exactly the parameter ALEX_G's 'snake trick' also leaves undefined (RC-16), and now two educators have left the same parameter unspecified while giving OPPOSITE guidance about whether small swings count at all. MOGO must not pick a value.",
+   "text": "What makes a swing point 'major' enough to count?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "one_percent_rule",
+   "priority": "medium",
+   "reason": "Stated as a general guideline he 'usually advocates', with 2-3% noted as a choice some traders make. ALEX_G gives 0.5-1% / 1-2% / 3-5% banded by account type. The two educators broadly agree on the order of magnitude - which is the FIRST substantive cross-educator agreement on a risk parameter in the library - but neither states a hard ceiling.",
+   "text": "Is 1% a hard limit or a starting guideline?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "target_before_swing",
+   "priority": "medium",
+   "reason": "'Just before' the level, and 'be reasonable' - no distance, no ATR fraction, no percentage. The stop rule in the same source IS quantified (one ATR), so the asymmetry is notable: the risk leg is mechanical and the reward leg is discretionary.",
+   "text": "How far before the swing high should the target sit?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "session_hours_gmt",
+   "priority": "medium",
+   "reason": "RAYNER_TEO gives explicit GMT session hours - the first source in the library to state them aloud rather than show them on screen. ALEX_G's session rule (CLAIM|ALEX_G|20260728|079) displays its windows on a graphic and never speaks them. **These hours are evidenced for RAYNER_TEO only and must not be used to fill ALEX_G's gap** - that would be reconstructing one educator's unstated parameter from another's material. Recorded so the temptation is on the record.",
+   "text": "Do these session hours apply to other educators' session rules?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "ma_as_aov",
+   "priority": "medium",
+   "reason": "A 50-period moving average is used in the worked examples, but the general statement names only 'moving average'. Note this is the THIRD source in the library to use a moving average as a load-bearing area of value; ALEX_G's two references never state a period at all, and Rayner's at least demonstrates 50.",
+   "text": "Which moving average period, and on which timeframe?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "subjectivity_admitted",
+   "priority": "medium",
+   "reason": "This source states plainly that two traders may classify the same chart differently and neither is wrong. That is an honest and unusual admission - no other source in the library concedes it - and it has a direct consequence for replay: a mechanical implementation tests ONE reading, not 'the method'. Any replay result must be reported with the swing-detection parameters it assumed.",
+   "text": "If structure classification is subjective, what is being replayed when MOGO tests it?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "losing_trade_shown",
+   "priority": "low",
+   "reason": "One losing example is shown deliberately, and the cherry-picking of the rest is explicitly admitted. That is materially more honest than any other source in the library - eight ALEX_G sources show no losing trade, and TJR's material shows deviations from his own rules without labelling them. Recorded as a source-quality observation, not a claim about the market.",
+   "text": "How many of the teaching examples are losers?",
+   "type": "other"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "strategy_not_enough",
+   "priority": "low",
+   "reason": "The worked comparison is internally correct arithmetic on a hypothetical sequence, not an empirical result. It demonstrates that position sizing dominates outcome for a FIXED trade sequence; it is not evidence about real return distributions. Recorded so it is not mistaken for a performance claim - notably, this source makes **no income claims at all**, which is a first for the library.",
+   "text": "Is the John-and-Sally illustration arithmetic or evidence?",
+   "type": "insufficient_independent_support"
+  }
+ ],
+ "provenance": {
+  "canonicalReference": "https://www.youtube.com/watch?v=mEyuQVy3OHc",
+  "channelOrPublisher": "Rayner Teo (https://www.youtube.com/@tradingwithrayner)",
+  "knownArtifacts": [
+   "The video URL is appended to the final line of the transcript rather than prefixed, so line 1 is clean speech. Unlike sources #7-#10 this ingestion has no fused-URL artifact.",
+   "13 YouTube chapter headings were correctly classified as non-spoken chrome by the youtube_timestamp_lines_chaptered profile and recorded as removed.",
+   "Several numeric tables (session hours, lot sizes, pip values) are read aloud in full, which is why this source yields parameters that comparable ALEX_G sources do not."
+  ],
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "publicationDate": null,
+  "titleVerification": {
+   "method": "youtube_oembed",
+   "note": "THIRD EDUCATOR. Publisher verified before extraction per the Stage 0 gate: author_name 'Rayner Teo', channel @tradingwithrayner - a different channel, country and teaching style from both TJR and ALEX_G. This establishes a NEW independence group AUTHOR|RAYNER_TEO, which is what makes cross-educator comparison meaningful for the first time (Trader Intelligence Review #1, recommendation R3).",
+   "retrievedAt": "2026-07-28T05:30:00Z",
+   "status": "verified_publisher",
+   "traderAttributionConfirmed": true,
+   "verifiedTitle": "The Ultimate Forex Trading Course (For Beginners)"
+  },
+  "transcriptCompleteness": "unknown",
+  "transcriptProvider": null
+ },
+ "sections": [
+  {
+   "lines": [
+    1,
+    21
+   ],
+   "n": 1,
+   "title": "Course introduction and how to use it",
+   "type": "introduction"
+  },
+  {
+   "lines": [
+    22,
+    162
+   ],
+   "n": 2,
+   "title": "What forex trading is, who trades it, and the market hours",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    163,
+    281
+   ],
+   "n": 3,
+   "title": "Currency pairs - base, quote, majors, crosses, exotics",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    282,
+    374
+   ],
+   "n": 4,
+   "title": "Pips and pipettes",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    375,
+    471
+   ],
+   "n": 5,
+   "title": "Leverage and lot sizes",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    472,
+    608
+   ],
+   "n": 6,
+   "title": "Pip value and how to calculate it",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    609,
+    801
+   ],
+   "n": 7,
+   "title": "Risk management and position sizing",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    802,
+    1020
+   ],
+   "n": 8,
+   "title": "Order types - market, limit, stop, stop-loss",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    1021,
+    1177
+   ],
+   "n": 9,
+   "title": "The spread and how to reduce its cost",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    1178,
+    1236
+   ],
+   "n": 10,
+   "title": "Short, medium and long-term trader profiles",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    1237,
+    1477
+   ],
+   "n": 11,
+   "title": "Technical analysis and market structure",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    1478,
+    1640
+   ],
+   "n": 12,
+   "title": "Area of value - support and resistance",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    1641,
+    1927
+   ],
+   "n": 13,
+   "title": "Entry triggers and candlestick patterns",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    1928,
+    2000
+   ],
+   "n": 14,
+   "title": "Worked example 1 - USDZAR downtrend, resistance, bearish engulfing",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    2001,
+    2130
+   ],
+   "n": 15,
+   "title": "Worked example 2 - stop placement by ATR, and position sizing",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    2131,
+    2290
+   ],
+   "n": 16,
+   "title": "Worked example 3 - stacked areas, stop, and where to take profit",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    2291,
+    2410
+   ],
+   "n": 17,
+   "title": "Improving risk-to-reward without moving the stop",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    2411,
+    2495
+   ],
+   "n": 18,
+   "title": "Worked example 4 - a losing trade, shown deliberately",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    2496,
+    2535
+   ],
+   "n": 19,
+   "title": "Two setups deliberately skipped",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    2536,
+    2601
+   ],
+   "n": 20,
+   "title": "Book promotion and close",
+   "type": "promotion"
+  }
+ ],
+ "slug": "rayner-ultimate-forex-course-beginners",
+ "sourceFile": "docs/trader-intelligence/intake/pending/rayner-ultimate-forex-course-beginners.txt",
+ "sourceFileBytes": 150413,
+ "sourceFileSha256": "d79e7a74fe8f370f44fa374a7232f1fe78157ee6bed72af5cec58915508a3ac0",
+ "sourceLineCount": 2601,
+ "title": "The Ultimate Forex Trading Course (For Beginners)",
+ "traderId": "RAYNER_TEO"
+}

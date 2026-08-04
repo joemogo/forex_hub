@@ -1,0 +1,29 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": null,
+  "contentHash": "e91c5ea105b725fe5b2be597ad39c6b1c7035b40a06247c69944dd96657ccce2",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": "en",
+  "licensingStatus": "unknown",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "fileBytes": 59644,
+    "importId": "TJR-FOREX-SESSION-STRATEGY-001",
+    "provenanceNote": "File content and hash are verified; the upstream video identity, publication date and licensing are not."
+  },
+  "provenanceStatus": "partially_verified",
+  "registeredAt": "2026-07-27T03:56:30Z",
+  "repositoryPath": "docs/trader-intelligence/imports/tjr/tjr-forex-session-strategy-transcript.txt",
+  "schemaVersion": 1,
+  "sourceDate": null,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "sourceType": "transcript",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "TJR -- session-based liquidity-sweep strategy walkthrough (YouTube transcript)",
+  "traderId": "TJR",
+  "transcriptReference": "docs/trader-intelligence/imports/tjr/normalized/transcript-segments.json",
+  "updatedAt": "2026-07-27T03:56:30Z"
+}

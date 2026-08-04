@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|141",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|168",
+  "questionText": "Is this psychology video part 1 or part 2?",
+  "questionType": "ambiguous_statement",
+  "reason": "The published title says 'PT 2'; the spoken content says 'video number one official of the psychology series' and 'episode three' of the podcast. Second title/content discrepancy from this channel after the $1000/day vs $500/day mismatch in source #5. Both recorded; neither resolved.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

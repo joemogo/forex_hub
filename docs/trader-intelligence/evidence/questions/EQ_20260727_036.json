@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|028",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|036",
+  "questionText": "Claim 'CLAIM|ALEX_G|20260727|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+  "questionType": "missing_timeframe",
+  "reason": "claimType='entry_rule' is timeframe-sensitive and claim.timeframe is null.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|039",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|038",
+  "questionText": "What is the maximum of the timeframe-confluence scale, and is 20 a passing threshold or just the score of this example?",
+  "questionType": "ambiguous_statement",
+  "reason": "The caption is garbled ('we were greatest a 20 towards yourself because it's 10 per time frame'). Ten points per timeframe is legible; the denominator is not. Four timeframes are named elsewhere (weekly, daily, 4H, lower), which would imply 40, but sub-4H is excluded from directional scoring in this same passage, which would imply 30. MOGO must not pick one - that would be inventing a missing definition.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

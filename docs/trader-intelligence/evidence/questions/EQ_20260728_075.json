@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|079",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|075",
+  "questionText": "Which exact hours are the high-volume windows Alex G will trade?",
+  "questionType": "missing_session",
+  "reason": "This source finally makes session timing an explicit, load-bearing rule - and the windows themselves are shown only as coloured bands on an on-screen session map, never spoken. Sydney, London and New York are named; no times are given. The gap recorded since source #2 ('trading at the right times') and source #4 ('the proper session') is now DOWNGRADED but NOT CLOSED: the rule exists and is prescriptive, but its parameters remain unstated. MOGO must not supply session hours - TJR's sessions are evidenced for TJR only.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|004"
+  ]
+}

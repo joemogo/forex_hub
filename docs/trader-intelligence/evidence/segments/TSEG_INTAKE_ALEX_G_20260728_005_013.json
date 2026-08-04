@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T04:42:15Z",
+  "endTimestamp": "11:19",
+  "intakeId": "INTAKE|ALEX_G|20260728|005",
+  "language": "en",
+  "lineEnd": 648,
+  "lineStart": 613,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "certain months out of the Year and that is November December January and February and maybe March those are the months statistically that I've seen in my trading that I have the best results and that is where I decide to risk a little bit more versus is not because we all know during the summer which comes August June July markets are a little bit slower and I want to make a lot of money at the beginning of the year so when it comes to summer I don't have to take a trade and I can have lower risk management and it not bother me because I might killed it at the beginning of the year and this is something that has taken me about 5 and a half years to",
+  "schemaVersion": 1,
+  "sectionTitle": "Seasonality - 3 to 5% only in November through March",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|005|013",
+  "segmentType": "other",
+  "sequenceNumber": 13,
+  "sourceId": "EVSRC|ALEX_G|20260728|005",
+  "speaker": null,
+  "startTimestamp": "10:39",
+  "textHash": "199138d1693785033965e911bf7dd69a23bff2712c2c8ff991ff5eb5451abe9c"
+}

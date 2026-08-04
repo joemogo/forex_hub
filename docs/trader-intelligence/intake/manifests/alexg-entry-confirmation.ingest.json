@@ -1,0 +1,762 @@
+{
+ "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+ "annotations": [
+  {
+   "claim": "A $500/day outcome is presented as attainable when this confirmation is combined with a strategy. No account, sample, period, capital base or instrument is given. The published video title states $1000/day, which the spoken content does not.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "Having this confirmation alone and not having a strategy will not lead you to making $500 a day",
+   "extractionCertainty": "certain",
+   "key": "perf_500_day",
+   "section": 1
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "simply comes down to entering off of a confirmation, not an anticipation",
+   "extractionCertainty": "certain",
+   "key": "confirm_not_anticipate",
+   "section": 2,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|028"
+  },
+  {
+   "claim": "The stated rationale for waiting is informational: acting after the market reveals its direction is treated as a better-informed decision than predicting it.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "You want the market to show you its hand first",
+   "extractionCertainty": "certain",
+   "key": "market_shows_hand",
+   "section": 2
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "So that is going to consist of two types of candlesticks. Either a rejection candlestick or a engulfing candlestick",
+   "extractionCertainty": "certain",
+   "key": "two_types",
+   "section": 3,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|030"
+  },
+  {
+   "claim": "A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "as soon as that candlestick closes, it is a confirmation. One second before it closes, it is an entire anticipation",
+   "extractionCertainty": "certain",
+   "key": "close_makes_confirmation",
+   "section": 3
+  },
+  {
+   "claim": "The stated reason closure is required is that an unclosed candle can reverse entirely in its final seconds. Offered as personal observation, with no frequency.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "I've seen candlesticks in the last 5 seconds before closing completely change direction",
+   "extractionCertainty": "certain",
+   "key": "open_candle_reverses",
+   "section": 3
+  },
+  {
+   "claim": "A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count threshold is given.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you have both of these combined, they would be a lot more powerful. The more dogeis that you would have, the more powerful",
+   "extractionCertainty": "certain",
+   "key": "combined_stronger",
+   "section": 4
+  },
+  {
+   "claim": "An engulfing candle requires a body close beyond the prior candle; a close on the unfavourable side does not qualify no matter how the candle looks.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "If this candlestick is below, it is not considered an engulfing candlestick. It does not count. You need to wait for the candlestick",
+   "extractionCertainty": "certain",
+   "key": "engulf_def",
+   "section": 4
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "Even if it could be something as small as like this.",
+   "extractionCertainty": "high",
+   "key": "engulf_size_irrelevant",
+   "section": 4,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|008"
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "Obviously, the higher the time frame, [music] the stronger the confirmation",
+   "extractionCertainty": "certain",
+   "key": "htf_stronger_conf",
+   "section": 4,
+   "supportsClaimId": "CLAIM|ALEX_G|20260727|032"
+  },
+  {
+   "claim": "No trade is entered without either a rejection/doji or an engulfing candle, regardless of trade type. Stated as an absolute gate on every entry.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if I don't have either a rejection dogee candlestick or a bullish engulfing, bearish engulfing, I am not",
+   "extractionCertainty": "certain",
+   "key": "absolute_gate",
+   "section": 4
+  },
+  {
+   "claim": "A candle that looks like a rejection may instead be a 'wick fill'; the two are visually similar and are distinguished by lower-timeframe context, not by the candle itself.",
+   "claimType": "definition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "this is technically rejecting to the upside, but it can also be seen as a wick fill",
+   "extractionCertainty": "high",
+   "key": "wick_fill_distinct",
+   "section": 5
+  },
+  {
+   "claim": "A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher low forming.",
+   "claimType": "setup_requirement",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you were to cross reference that with the 4 hour, you would see that the 4 hour is",
+   "extractionCertainty": "high",
+   "key": "cross_reference_4h",
+   "section": 6
+  },
+  {
+   "claim": "The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick.",
+   "claimType": "confirmation_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "medium",
+   "evidenceType": "chart_example",
+   "excerpt": "within the same day it then shifts to bullish and after it shifts to bullish it decides to have a",
+   "extractionCertainty": "high",
+   "key": "4h_shift_same_day",
+   "section": 6
+  },
+  {
+   "claim": "Once the 4-hour higher low is identified, the subsequent wick fill and daily engulfing are described as something to anticipate.",
+   "claimType": "exception",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "Now that perfect higher low is where you can then anticipate that wick fill where then you",
+   "extractionCertainty": "certain",
+   "key": "anticipate_wick_fill",
+   "section": 6
+  },
+  {
+   "claim": "A bullish body closing with a strong downside rejection, after a same-day 4-hour bullish structure shift, is claimed to be followed by a bullish push the next day roughly 70% of the time. No sample, period, instrument or measurement definition is given.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "The day after that it is pretty much almost 70% chance",
+   "extractionCertainty": "high",
+   "key": "seventy_percent",
+   "section": 7
+  },
+  {
+   "claim": "The stated benefit of waiting for the closed confirmation is avoiding liquidity grabs and wickouts rather than improving entry price.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "has been what has led me to have many avoided losses, many",
+   "extractionCertainty": "high",
+   "key": "avoided_wickouts",
+   "section": 7
+  },
+  {
+   "claim": "Rejection and engulfing candles occur throughout any chart, so the pattern alone carries no information; taking every one is explicitly called useless.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "You will find this anywhere you go in the chart",
+   "extractionCertainty": "certain",
+   "key": "patterns_everywhere",
+   "section": 8
+  },
+  {
+   "claim": "A confirmation counts only when it occurs at a support/resistance, supply and demand zone or order block - never in the middle of the chart.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "the best way to spot these rejection candlesticks is",
+   "extractionCertainty": "moderate",
+   "key": "only_at_levels",
+   "section": 9
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "at an order block. It's all the same thing",
+   "extractionCertainty": "certain",
+   "key": "terminology_same",
+   "section": 9,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|018"
+  },
+  {
+   "claim": "Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "If it's not at a support level, you don't enter the trade and it is simply not applicable",
+   "extractionCertainty": "certain",
+   "key": "not_applicable",
+   "section": 9
+  },
+  {
+   "claim": "Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you need to apply your bearish rejection candlestick and you need to apply your bearish engulfing candlestick once",
+   "extractionCertainty": "certain",
+   "key": "side_matters",
+   "section": 9
+  },
+  {
+   "claim": "Entry on the rejection alone is permitted; waiting for the engulfing as well is optional and left to the trader.",
+   "claimType": "exception",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "You can enter off of just the rejection confirmation, but it really comes down",
+   "extractionCertainty": "certain",
+   "key": "rejection_alone_ok",
+   "section": 9
+  },
+  {
+   "claim": "The decision to require a second confirmation depends on level strength, timeframe, days remaining in the week, risk-to-reward and other confluences. None of these inputs is assigned a threshold, so the step is discretionary.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "How strong this resistance is. What time frame are we in? How many days are left in the week? What type of risk-to-reward do I have? What other",
+   "extractionCertainty": "certain",
+   "key": "discretion_inputs",
+   "section": 10
+  },
+  {
+   "claim": "Requiring additional confirmations is acknowledged to forfeit winning trades, and that cost is explicitly accepted rather than measured.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "I miss out on these winning setups. And that's totally fine because I accept that risk",
+   "extractionCertainty": "certain",
+   "key": "extra_mile_cost",
+   "section": 10
+  },
+  {
+   "claim": "Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals.",
+   "claimType": "entry_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "but they're protrend trade confirmations",
+   "extractionCertainty": "certain",
+   "key": "protrend_only",
+   "section": 11
+  },
+  {
+   "claim": "A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction.",
+   "claimType": "invalidation_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you simply don't just change your direction or change your bias overnight",
+   "extractionCertainty": "certain",
+   "key": "no_bias_flip",
+   "section": 11
+  },
+  {
+   "claim": "Directional bias is expected to persist - on intraday and swing horizons, stated as roughly the same direction for almost a month.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "The direction of the market doesn't change every day",
+   "extractionCertainty": "certain",
+   "key": "direction_persists",
+   "section": 11
+  },
+  {
+   "claim": "Entering on a candlestick pattern without a strategy behind it is characterised as gambling rather than trading.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "you would only be entering a trade off of just a candlestick and not a strategy. And that's not a strategy. That's just gambling at that point",
+   "extractionCertainty": "certain",
+   "key": "candle_alone_gambling",
+   "section": 11
+  },
+  {
+   "claim": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not to be traded.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "There are specific sessions, there are specific days that this actually is more probable of having an impact",
+   "extractionCertainty": "certain",
+   "key": "timing_matters",
+   "section": 12
+  },
+  {
+   "claim": "Tradeable windows are defined by session volume, shown on an on-screen session map. The specific hours are displayed visually and never stated aloud.",
+   "claimType": "session_rule",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "low",
+   "evidenceType": "chart_example",
+   "excerpt": "everything that is in a darker color in orange is going to be where there's the most",
+   "extractionCertainty": "moderate",
+   "key": "volume_windows",
+   "section": 12
+  },
+  {
+   "claim": "A window offering only about an hour of volume followed by roughly nine hours without is rejected as an entry time.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "You don't really want to enter a trade if you're just going to have volume for about an hour",
+   "extractionCertainty": "high",
+   "key": "low_volume_avoid",
+   "section": 12
+  },
+  {
+   "claim": "A confirmation arriving before the Sydney session is held until just before the London session - roughly eight hours - rather than entered on arrival.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if I get it right before Sydney session, I will not enter that trade until right before London session",
+   "extractionCertainty": "certain",
+   "key": "wait_for_london",
+   "section": 12
+  },
+  {
+   "claim": "Waiting for the session is acknowledged to lose trades outright when price leaves the area before the session opens.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "many times where I miss out on the trade and by the time London session comes, the trade is completely gone from the direction",
+   "extractionCertainty": "certain",
+   "key": "missed_by_waiting",
+   "section": 12
+  },
+  {
+   "claim": "Entries on this confirmation are restricted to Monday, Tuesday and Wednesday.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "it's really only going to come down to Monday, Tuesday, and",
+   "extractionCertainty": "certain",
+   "key": "mon_tue_wed",
+   "section": 13
+  },
+  {
+   "claim": "The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade.",
+   "claimType": "target_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "an average of about 80 to 90 to even 100 pips at a time of a takerit",
+   "extractionCertainty": "high",
+   "key": "tp_80_100_pips",
+   "section": 13
+  },
+  {
+   "claim": "The stated reason for the Monday-to-Wednesday restriction is that a trade opened later lacks enough remaining volume hours to travel the take-profit distance.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "simply won't have enough time for the trade to get to the takerit",
+   "extractionCertainty": "certain",
+   "key": "day_rule_rationale",
+   "section": 13
+  },
+  {
+   "claim": "The day restriction is overridden when the take-profit is shorter, the confirmation is very strong, or there is momentum. None of the three overrides is quantified.",
+   "claimType": "exception",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "exception_statement",
+   "excerpt": "Sometimes I break the rules depending if my take profit is shorter, if it's a very strong confirmation, if there's a lot of momentum",
+   "extractionCertainty": "certain",
+   "key": "day_rule_exceptions",
+   "section": 13
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "If you get the confirmation before the session, you simply wait. That's the black and white rule",
+   "extractionCertainty": "certain",
+   "key": "black_and_white",
+   "section": 13,
+   "supports": "wait_for_london"
+  },
+  {
+   "claim": "Waiting for the session is claimed to have no downside: either the direction is confirmed, the loss would have happened anyway, or the entry improves.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "The way that I look at it is that there's no negative",
+   "extractionCertainty": "certain",
+   "key": "waiting_no_downside",
+   "section": 13
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "And if I don't have my entry confirmation, I will not enter the trade. It is that simple",
+   "extractionCertainty": "certain",
+   "key": "gate_restated",
+   "section": 13,
+   "supports": "absolute_gate"
+  },
+  {
+   "claim": "The method is presented as conjunctive: every component must hold, and one failing component is said to produce unprofitability.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "If one component of the strategy is not working properly, you're going to have negative results",
+   "extractionCertainty": "certain",
+   "key": "all_components",
+   "section": 14
+  }
+ ],
+ "contradictions": [
+  {
+   "a": "waiting_no_downside",
+   "b": "missed_by_waiting",
+   "rationale": "Within-source, roughly two minutes apart. At 16:56 he states that waiting for the session sometimes loses the trade entirely - 'the trade is completely gone from the direction, gone from the area where I was interested in taking'. At 18:51 he enumerates the outcomes of waiting and concludes 'there's no negative', listing only three cases: later entry but right direction, the loss you would have taken anyway, and a better entry. The forfeited-trade case he described himself is absent from the enumeration. The claim of no downside is therefore incomplete on the source's own evidence. Recorded, not resolved.",
+   "severity": "material",
+   "type": "CONDITIONAL_SCOPE"
+  },
+  {
+   "a": "anticipate_wick_fill",
+   "b": "confirm_not_anticipate",
+   "rationale": "Within-source. The video's thesis, stated twice in the opening and again in the summary, is 'enter off of a confirmation, not an anticipation'. At 6:37 the instruction is that the 4-hour higher low 'is where you can then anticipate that wick fill'. This is the FOURTH record of the same inconsistency in Alex G's material (CLAIM|ALEX_G|20260728|033, |036, |047 and XCONTRA|20260728|003) and the first that is internal to a single source whose entire subject is the rule being broken. A possible reconciliation - that he anticipates the SETUP while still requiring a closed candle to ENTER - is coherent but is never stated by him, so applying it would be MOGO's reconciliation, not the educator's.",
+   "severity": "material",
+   "type": "DIRECTIONAL"
+  }
+ ],
+ "manifestVersion": 1,
+ "normalization": {
+  "charsRemoved": 4163,
+  "lineCount": 168,
+  "linesTransformed": 166,
+  "profile": "youtube_duration_label",
+  "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+  "reversible": true,
+  "unmatchedLines": [
+   1,
+   168
+  ],
+  "wordsAdded": 0,
+  "wordsRemoved": 0,
+  "wordsReordered": 0
+ },
+ "openQuestions": [
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "volume_windows",
+   "priority": "critical",
+   "reason": "This source finally makes session timing an explicit, load-bearing rule - and the windows themselves are shown only as coloured bands on an on-screen session map, never spoken. Sydney, London and New York are named; no times are given. The gap recorded since source #2 ('trading at the right times') and source #4 ('the proper session') is now DOWNGRADED but NOT CLOSED: the rule exists and is prescriptive, but its parameters remain unstated. MOGO must not supply session hours - TJR's sessions are evidenced for TJR only.",
+   "text": "Which exact hours are the high-volume windows Alex G will trade?",
+   "type": "missing_session"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "seventy_percent",
+   "priority": "critical",
+   "reason": "No sample size, date range, instrument, timeframe or definition of 'bullish push'. Stated in passing as 'pretty much almost 70%'. Typed performance_hypothesis and structurally ineligible to become a rule candidate. It is, however, the most precisely specified setup in the source and therefore the most testable - see RC-25.",
+   "text": "Is the ~70% next-day continuation figure measurable, and on what sample?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "perf_500_day",
+   "priority": "critical",
+   "reason": "The spoken content says $500 a day twice; the published YouTube title says $1000/day. Neither is evidenced, and no capital base, position size or sample is given. Recorded as a discrepancy between the source's own title and its content - MOGO does not choose between them.",
+   "text": "Is the daily-income figure $500 or $1000, and on what capital?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "anticipate_wick_fill",
+   "priority": "critical",
+   "reason": "Fourth record of the same inconsistency, and the first internal to a source whose whole subject is the rule being broken. See the contradiction filed in this ingestion. Until resolved, neither the confirmation rule nor any anticipation exception may be promoted.",
+   "text": "Does Alex G's method permit anticipating a setup, or require a closed candle first?",
+   "type": "self_contradiction"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "waiting_no_downside",
+   "priority": "high",
+   "reason": "He describes forfeited trades at 16:56 and then omits that case from the 'no negative' enumeration at 18:51. The claim is falsifiable and cheap to test: compare entry-on-confirmation against entry-at-next-session-open over the same signals. See RC-26.",
+   "text": "What is the cost of waiting for the session, measured rather than asserted?",
+   "type": "self_contradiction"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "tp_80_100_pips",
+   "priority": "high",
+   "reason": "Stated as 'an average of about 80 to 90 to even 100 pips'. No instrument, timeframe or method for choosing a target on a specific trade. It is nonetheless the FIRST target-shaped statement in five Alex G sources. Note also that it is expressed in PIPS - relevant to PROPOSAL-001, since MOGO is pip-native and TJR trades US indices.",
+   "text": "Is 80-100 pips a target-selection rule, or a description of past averages?",
+   "type": "missing_target_logic"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": null,
+   "priority": "critical",
+   "reason": "This source references a stop-loss repeatedly - 'where my stop loss would have been', 'more breathing room', 'better stop-loss' - and never states how it is placed. FIVE Alex G sources have now produced zero stop_rule and zero risk_rule claims, while this one names risk-to-reward as an input to a live decision. The gap is now demonstrably load-bearing rather than merely absent.",
+   "text": "Where does the stop go?",
+   "type": "missing_stop_placement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "engulf_def",
+   "priority": "high",
+   "reason": "He says the candle 'has eaten the candlestick to the left' but also requires a 'body candlestick close above'. Body-engulfs-body and body-closes-beyond-range are different detectors that fire on different bars. Consistent with his body-based structure rule (CLAIM|ALEX_G|20260727|020), but not disambiguated here.",
+   "text": "Must the engulfing candle's body engulf the prior body, or the prior candle's full range?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "combined_stronger",
+   "priority": "medium",
+   "reason": "'The more dogeis that you would have, the more powerful' gives a direction but no count and no threshold at which behaviour changes. Same shape as the unquantified touch-count in source #3.",
+   "text": "How many dojis constitute 'more powerful', and does the count change the decision?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "protrend_only",
+   "priority": "high",
+   "reason": "Pro-trend is stated as an absolute filter, but the trend's timeframe is not named here. Source #1 establishes a weekly/daily/4H hierarchy and source #4 requires two timeframes in sync; whether the pro-trend filter means the same thing is not stated.",
+   "text": "On which timeframe is the trend that the confirmation must agree with?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "discretion_inputs",
+   "priority": "medium",
+   "reason": "Level strength, timeframe, days remaining, risk-to-reward and other confluences are named as inputs to whether a second confirmation is required, with no thresholds. This step is explicitly discretionary and cannot be mechanised as stated.",
+   "text": "At what values do the five named inputs change the decision?",
+   "type": "discretionary_management"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "cross_reference_4h",
+   "priority": "medium",
+   "reason": "Presented as the way to tell a rejection from a forming higher low, but not stated as a mandatory step in the four-part summary at the end of the video.",
+   "text": "Is the 4-hour cross-reference required on every setup, or only when a daily wick is ambiguous?",
+   "type": "implied_requirement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "day_rule_exceptions",
+   "priority": "medium",
+   "reason": "Three overrides to an otherwise black-and-white day rule, none quantified. An unquantified override makes the rule it modifies unfalsifiable in practice.",
+   "text": "What counts as a 'shorter' take-profit, a 'very strong' confirmation, or 'a lot of' momentum?",
+   "type": "unruled_exception"
+  }
+ ],
+ "provenance": {
+  "canonicalReference": "https://www.youtube.com/watch?v=BcWxqfcjk9A",
+  "channelOrPublisher": "fxalexg (https://www.youtube.com/@fxalexg__)",
+  "knownArtifacts": [
+   "Source line 1 carries the video URL fused directly onto the first timestamp ('...BcWxqfcjk9A0:000 secondsThere's a specific...'), so it does not match the duration-label pattern and is retained as spoken text at 0:00. No excerpt is taken from line 1. Logged as BACKLOG-003/H26."
+  ],
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "publicationDate": null,
+  "titleVerification": {
+   "method": "youtube_oembed",
+   "note": "Publisher verified before extraction per the Stage 0 gate. author_name 'fxalexg' is the same channel as sources #3-#6, so this material shares independence group AUTHOR|ALEX_G and cannot corroborate them (DECISION|MOGO|20260727|006). NOTE: the published title claims $1000/day; the spoken content says $500/day twice. Both recorded, neither resolved.",
+   "retrievedAt": "2026-07-28T03:40:00Z",
+   "status": "verified_publisher",
+   "traderAttributionConfirmed": true,
+   "verifiedTitle": "The ONLY confirmation YOU need to make $1000/day Trading Forex"
+  },
+  "transcriptCompleteness": "unknown",
+  "transcriptProvider": null
+ },
+ "sections": [
+  {
+   "lines": [
+    1,
+    6
+   ],
+   "n": 1,
+   "title": "Cold open - the $500/day framing and the 'confirmation alone is not enough' caveat",
+   "type": "introduction"
+  },
+  {
+   "lines": [
+    7,
+    13
+   ],
+   "n": 2,
+   "title": "The backbone - enter off a confirmation, never an anticipation",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    14,
+    25
+   ],
+   "n": 3,
+   "title": "Step 1 - the two candlestick types, and why only a CLOSED candle confirms",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    26,
+    36
+   ],
+   "n": 4,
+   "title": "Combining dojis and engulfing; the engulfing definition; the absolute entry gate",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    37,
+    40
+   ],
+   "n": 5,
+   "title": "Rejection versus wick fill - the distinction",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    41,
+    52
+   ],
+   "n": 6,
+   "title": "The multi-timeframe mechanism - a daily rejection is often a 4H higher low forming",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    53,
+    62
+   ],
+   "n": 7,
+   "title": "Why the combination works, and the 70% claim",
+   "type": "chart_commentary"
+  },
+  {
+   "lines": [
+    63,
+    68
+   ],
+   "n": 8,
+   "title": "Step 2 - these patterns are everywhere, and worthless out of context",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    69,
+    76
+   ],
+   "n": 9,
+   "title": "Confirmations count only at support and resistance",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    77,
+    90
+   ],
+   "n": 10,
+   "title": "The 'extra confirmations' - discretionary trade-offs and accepted missed trades",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    91,
+    110
+   ],
+   "n": 11,
+   "title": "Step 3 - pro-trend only; a counter-signal does not flip the bias",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    111,
+    131
+   ],
+   "n": 12,
+   "title": "Step 4 - session timing; wait for the session before entering",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    132,
+    151
+   ],
+   "n": 13,
+   "title": "Day-of-week rules, the 80-100 pip take-profit, and the black-and-white rule",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    152,
+    160
+   ],
+   "n": 14,
+   "title": "Summary of the four requirements",
+   "type": "conclusion"
+  },
+  {
+   "lines": [
+    161,
+    168
+   ],
+   "n": 15,
+   "title": "Promotion and outro",
+   "type": "promotion"
+  }
+ ],
+ "slug": "alexg-entry-confirmation",
+ "sourceFile": "docs/trader-intelligence/intake/pending/alexg-entry-confirmation.txt",
+ "sourceFileBytes": 29329,
+ "sourceFileSha256": "ac65aa885212b7a367260af07732e9d1a2699162c3d697a911fb1f486d0cbbe3",
+ "sourceLineCount": 168,
+ "title": "The ONLY confirmation YOU need to make $1000/day Trading Forex",
+ "traderId": "ALEX_G"
+}

@@ -1,0 +1,31 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-27T22:15:39Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260727|006",
+  "independentVariables": [
+    "setup_requirement"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|TJR|20260727|011"
+  ],
+  "statement": "A session high or low that has already been swept without producing a reaction is not marked or used as a draw on liquidity may be required before a valid entry.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|014"
+  ],
+  "updatedAt": "2026-07-27T22:15:39Z"
+}

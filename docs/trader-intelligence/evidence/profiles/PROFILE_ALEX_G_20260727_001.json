@@ -1,0 +1,249 @@
+{
+  "aliases": [],
+  "canonicalName": "ALEX_G",
+  "claimCount": 35,
+  "confidenceSummary": {
+    "emerging": 35
+  },
+  "confirmationConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|007"
+      ],
+      "status": "confirmed",
+      "value": "When lower and higher timeframes disagree, the higher timeframe takes precedence."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|019"
+      ],
+      "status": "confirmed",
+      "value": "A break above the lower high shifts the market from bearish back to bullish."
+    }
+  ],
+  "contradictionCount": 1,
+  "entryConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|028"
+      ],
+      "status": "confirmed",
+      "value": "The area of interest must lie inside the current higher high and higher low, never outside that range."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|030"
+      ],
+      "status": "confirmed",
+      "value": "Areas of interest are drawn only on the weekly and daily timeframes."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|031"
+      ],
+      "status": "confirmed",
+      "value": "An area of interest is identified by a decent number of prior rejections or touches."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|032"
+      ],
+      "status": "confirmed",
+      "value": "Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|033"
+      ],
+      "status": "confirmed",
+      "value": "The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|034"
+      ],
+      "status": "confirmed",
+      "value": "The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|036"
+      ],
+      "status": "confirmed",
+      "value": "Buy when price is above support; sell when price is below resistance."
+    }
+  ],
+  "evidenceCount": 37,
+  "extractionStatus": "completed",
+  "generatedAt": "2026-07-27T22:41:09Z",
+  "hypothesisCount": 22,
+  "instrumentsMentioned": [],
+  "invalidationConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|017"
+      ],
+      "status": "confirmed",
+      "value": "A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|024"
+      ],
+      "status": "confirmed",
+      "value": "Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it."
+    }
+  ],
+  "limitations": [
+    "27 unresolved question(s) remain open for this trader.",
+    "1 contradiction(s) remain unresolved for this trader.",
+    "One or more claims are still pending_review and have not been confirmed by a human."
+  ],
+  "marketConditionsAvoided": [],
+  "marketConditionsPreferred": [],
+  "marketsMentioned": [],
+  "observationCount": 1,
+  "primaryConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|002"
+      ],
+      "status": "confirmed",
+      "value": "Top-down analysis is required before any trade, regardless of trading style."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|009"
+      ],
+      "status": "confirmed",
+      "value": "Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|010"
+      ],
+      "status": "confirmed",
+      "value": "Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|016",
+        "EV|EVSRC|ALEX_G|20260727|001|018"
+      ],
+      "status": "confirmed",
+      "value": "Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|021",
+        "EV|EVSRC|ALEX_G|20260727|001|022"
+      ],
+      "status": "confirmed",
+      "value": "Highs and lows are marked at candle bodies, not at wicks."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|025"
+      ],
+      "status": "confirmed",
+      "value": "The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|027"
+      ],
+      "status": "confirmed",
+      "value": "An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|003"
+      ],
+      "status": "confirmed",
+      "value": "The purpose of top-down analysis is to establish overall market direction before deciding to buy or sell."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|012"
+      ],
+      "status": "confirmed",
+      "value": "A bullish market is a series of higher highs and higher lows."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|013"
+      ],
+      "status": "confirmed",
+      "value": "A bearish market is a series of lower highs and lower lows."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|014"
+      ],
+      "status": "confirmed",
+      "value": "Bullish and bearish structure are mutually exclusive; higher-high/higher-low and lower-high/lower-low labels cannot be mixed."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|015"
+      ],
+      "status": "confirmed",
+      "value": "Price movement inside the current high and low is ordinary market structure and does not change the trend."
+    }
+  ],
+  "profileId": "PROFILE|ALEX_G|20260727|001",
+  "reviewStatus": "pending",
+  "riskConcepts": [],
+  "schemaVersion": 1,
+  "sessionsMentioned": [],
+  "sourceCount": 1,
+  "sourceLineage": {
+    "claimIds": [
+      "CLAIM|ALEX_G|20260727|001",
+      "CLAIM|ALEX_G|20260727|002",
+      "CLAIM|ALEX_G|20260727|003",
+      "CLAIM|ALEX_G|20260727|004",
+      "CLAIM|ALEX_G|20260727|005",
+      "CLAIM|ALEX_G|20260727|006",
+      "CLAIM|ALEX_G|20260727|007",
+      "CLAIM|ALEX_G|20260727|008",
+      "CLAIM|ALEX_G|20260727|009",
+      "CLAIM|ALEX_G|20260727|010",
+      "CLAIM|ALEX_G|20260727|011",
+      "CLAIM|ALEX_G|20260727|012",
+      "CLAIM|ALEX_G|20260727|013",
+      "CLAIM|ALEX_G|20260727|014",
+      "CLAIM|ALEX_G|20260727|015",
+      "CLAIM|ALEX_G|20260727|016",
+      "CLAIM|ALEX_G|20260727|017",
+      "CLAIM|ALEX_G|20260727|018",
+      "CLAIM|ALEX_G|20260727|019",
+      "CLAIM|ALEX_G|20260727|020",
+      "CLAIM|ALEX_G|20260727|021",
+      "CLAIM|ALEX_G|20260727|022",
+      "CLAIM|ALEX_G|20260727|023",
+      "CLAIM|ALEX_G|20260727|024",
+      "CLAIM|ALEX_G|20260727|025",
+      "CLAIM|ALEX_G|20260727|026",
+      "CLAIM|ALEX_G|20260727|027",
+      "CLAIM|ALEX_G|20260727|028",
+      "CLAIM|ALEX_G|20260727|029",
+      "CLAIM|ALEX_G|20260727|030",
+      "CLAIM|ALEX_G|20260727|031",
+      "CLAIM|ALEX_G|20260727|032",
+      "CLAIM|ALEX_G|20260727|033",
+      "CLAIM|ALEX_G|20260727|034",
+      "CLAIM|ALEX_G|20260727|035"
+    ],
+    "sourceIds": [
+      "EVSRC|ALEX_G|20260727|001"
+    ]
+  },
+  "stopLossConcepts": [],
+  "strategyTypes": [],
+  "targetConcepts": [],
+  "timeframesMentioned": [],
+  "tradeManagementConcepts": [],
+  "traderId": "ALEX_G",
+  "unresolvedQuestionCount": 27
+}

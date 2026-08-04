@@ -1,0 +1,31 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|026",
+  "independentVariables": [
+    "target_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|042"
+  ],
+  "statement": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice may be the preferred target-selection approach, pending further evidence.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|046"
+  ],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

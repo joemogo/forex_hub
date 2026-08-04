@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|064",
+  "claimBId": "CLAIM|ALEX_G|20260728|028",
+  "contradictionId": "XCONTRA|20260728|005",
+  "contradictionType": "DIRECTIONAL",
+  "detectedAt": "2026-07-28T04:21:55Z",
+  "metadata": {},
+  "rationale": "Within-source. The video's thesis, stated twice in the opening and again in the summary, is 'enter off of a confirmation, not an anticipation'. At 6:37 the instruction is that the 4-hour higher low 'is where you can then anticipate that wick fill'. This is the FOURTH record of the same inconsistency in Alex G's material (CLAIM|ALEX_G|20260728|033, |036, |047 and XCONTRA|20260728|003) and the first that is internal to a single source whose entire subject is the rule being broken. A possible reconciliation - that he anticipates the SETUP while still requiring a closed candle to ENTER - is coherent but is never stated by him, so applying it would be MOGO's reconciliation, not the educator's.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "INTAKE|ALEX_G|20260728|004",
+  "entityType": "INTAKE_MANIFEST",
+  "eventId": "LCEVT|INTAKE_MANIFEST|INTAKE|ALEX_G|20260728|004|004",
+  "eventType": "other",
+  "metadata": {},
+  "newStatus": null,
+  "priorStatus": null,
+  "reason": "Linked to EvidenceSource EVSRC|ALEX_G|20260728|004.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-28T04:21:55Z"
+}

@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|RAYNER_TEO|20260729|037",
+  "claimBId": "CLAIM|TJR|20260727|036",
+  "contradictionId": "XCONTRA|20260729|002",
+  "contradictionType": "DEFINITIONAL",
+  "detectedAt": "2026-07-29T00:05:09Z",
+  "metadata": {},
+  "rationale": "CROSS-EDUCATOR, on WHY price spikes beyond a level before reversing. TJR attributes it to market makers deliberately filling large positions against retail stops. RAYNER_TEO treats the same phenomenon as ordinary volatility to be absorbed with an ATR buffer, offering no intent-based explanation at all. Filed MINOR because the two are not logically incompatible - one is a mechanism claim and the other declines to make one - but it is recorded because it is the THIRD position the library now holds on this phenomenon, after ALEX_G called the institutional explanation 'almost a big hoax' (XCONTRA|20260728|002). Rayner's treatment is the only one that yields a usable parameter without settling the mechanism.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "minor",
+  "status": "open"
+}

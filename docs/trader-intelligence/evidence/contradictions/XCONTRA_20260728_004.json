@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|087",
+  "claimBId": "CLAIM|ALEX_G|20260728|082",
+  "contradictionId": "XCONTRA|20260728|004",
+  "contradictionType": "CONDITIONAL_SCOPE",
+  "detectedAt": "2026-07-28T04:21:55Z",
+  "metadata": {},
+  "rationale": "Within-source, roughly two minutes apart. At 16:56 he states that waiting for the session sometimes loses the trade entirely - 'the trade is completely gone from the direction, gone from the area where I was interested in taking'. At 18:51 he enumerates the outcomes of waiting and concludes 'there's no negative', listing only three cases: later entry but right direction, the loss you would have taken anyway, and a better entry. The forfeited-trade case he described himself is absent from the enumeration. The claim of no downside is therefore incomplete on the source's own evidence. Recorded, not resolved.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

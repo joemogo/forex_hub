@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|036",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260729|001",
+  "questionText": "Does the ATR-buffer stop rule generalise beyond this educator's setups?",
+  "questionType": "implied_requirement",
+  "reason": "This is the first COMPLETE, MECHANICAL stop rule in the library: low of the support area minus one 20-period ATR (SMA), explicitly not flush against the level. It is evidenced for RAYNER_TEO ONLY. **It must not be applied to ALEX_G's or TJR's setups** - eight ALEX_G sources state no stop rule at all, and borrowing one across educators would fabricate a rule and attribute it to someone who never stated it. See RC-30.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

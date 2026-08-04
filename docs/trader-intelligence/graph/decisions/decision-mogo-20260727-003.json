@@ -1,0 +1,36 @@
+{
+  "decisionId": "DECISION|MOGO|20260727|003",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-07-27",
+  "affectedEntityIds": [
+    "TJR",
+    "EVSRC|TJR|20260727|001",
+    "INTAKE|TJR|20260727|001",
+    "BLUEPRINT|TJR|20260727|001",
+    "PROFILE|TJR|20260727|001"
+  ],
+  "decisionType": "research",
+  "question": "Under what evidentiary conditions may an extracted claim advance beyond 'emerging' confidence, how must contradictions and provenance be handled, and is autonomous transcript processing authorized under those rules?",
+  "optionsConsidered": [
+    "Allow normal confidence progression as further evidence of any kind accumulates, resolving contradictions at extraction time",
+    "Hold every single-source claim at 'emerging'; store all extracted information as evidence with full provenance; record contradictions rather than resolving them; raise confidence only through independent corroboration, replay validation, paper trading, or historical testing; authorize autonomous processing under those rules",
+    "Halt all further processing until a second independent source is acquired"
+  ],
+  "selectedOption": "Hold every single-source claim at 'emerging'; store all extracted information as evidence with full provenance; record contradictions rather than resolving them; raise confidence only through independent corroboration, replay validation, paper trading, or historical testing; authorize autonomous processing under those rules",
+  "rationale": "Ratifies the five evidence-first standing rules approved by the owner on 2026-07-27, together with the autonomous-processing authorization that depends on them. (1) No strategy rule may be promoted to validated knowledge on the strength of a single source. (2) All extracted information is retained as evidence with complete provenance -- nothing is discarded, overwritten, or stripped of attribution. (3) Contradictions are recorded as ContradictionRecords and left open rather than resolved prematurely by an extractor's judgment. (5) Confidence increases only through independent corroboration, replay validation, paper trading, or historical testing. (6) Transcript processing may proceed autonomously under these constraints. This largely ratifies an existing structural property rather than imposing a new restriction: the confidence engine already keys independence groups on sourceId and awards ~22 points per group against a 45-point 'supported' threshold, so a single source cannot corroborate itself past that line. Recording the policy as a traceable OwnerDecision makes any future promotion attempt checkable against a real authorization, and keeps the distinction between source corroboration and empirical validation deliberate. Supersedes the proposed-but-unratified POLICY-001. Note that replayAuthorization remains false: decision (5) establishes that replay evidence COUNTS toward confidence, not that replay execution is authorized -- that requires its own decision, and is separately gated on extraction-pipeline review and on market data MOGO does not yet hold.",
+  "supportingEvidenceIds": [],
+  "dissentingEvidenceIds": [],
+  "approvalScope": "research_only",
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-07-27T00:00:00Z",
+  "updatedAt": "2026-07-27T00:00:00Z"
+}

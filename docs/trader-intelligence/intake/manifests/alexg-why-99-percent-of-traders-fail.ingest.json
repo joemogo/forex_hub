@@ -1,0 +1,653 @@
+{
+  "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+  "annotations": [
+    {
+      "key": "thesis",
+      "section": 1,
+      "excerpt": "The simple truth on why 99% of traders fail. It's because they don't know how to read the markets. They simply fail on how to do a proper topdown analysis.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "medium",
+      "claimType": "causal_hypothesis",
+      "claim": "Alex G asserts that the primary cause of trader failure is inability to read the market via top-down analysis, not entry technique or zone selection."
+    },
+    {
+      "key": "tda_required",
+      "section": 2,
+      "excerpt": "is a non-negotiable in trading. Doesn't matter if you're a scalper, you're a trader, if you're a swing trader, institutional trader, investor, doesn't matter.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Top-down analysis is required before any trade, regardless of trading style."
+    },
+    {
+      "key": "tda_purpose",
+      "section": 2,
+      "excerpt": "The most important thing is understanding what direction the market is headed.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "The purpose of top-down analysis is to establish overall market direction before deciding to buy or sell."
+    },
+    {
+      "key": "wrong_area",
+      "section": 2,
+      "excerpt": "you might be right on the direction of the trade, but it might be at the wrong area",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "failure_condition",
+      "claim": "Trading the correct direction from the wrong area is a distinct failure mode from trading the wrong direction."
+    },
+    {
+      "key": "tf_tiers",
+      "section": 3,
+      "excerpt": "I'm going to break this down in four very simple time frames. The first one is going to be the weekly time frame.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "timeframe_rule",
+      "claim": "Top-down analysis uses four timeframe tiers: weekly, daily, 4-hour, and the lower timeframes."
+    },
+    {
+      "key": "tf_lower_set",
+      "section": 4,
+      "excerpt": "Now the lower time frames are considered the two hour, the one hour, the 30 minute and the 15 minutes. Anything below is not a strong lower time frame.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "timeframe_rule",
+      "claim": "The lower timeframes are 2-hour, 1-hour, 30-minute and 15-minute; anything below 15-minute is not considered a strong timeframe."
+    },
+    {
+      "key": "htf_wins",
+      "section": 4,
+      "excerpt": "The lower time frames could be telling you one thing, but if the higher time frames are telling you another, you go based off of the higher time frames.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "confirmation_rule",
+      "claim": "When lower and higher timeframes disagree, the higher timeframe takes precedence."
+    },
+    {
+      "key": "htf_why",
+      "section": 4,
+      "excerpt": "The higher time frames are much stronger because they take a lot more time to actually make the market structure.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "causal_hypothesis",
+      "claim": "Higher timeframes are treated as stronger because their structure takes longer to form."
+    },
+    {
+      "key": "tda_order",
+      "section": 5,
+      "excerpt": "We will start from the top all the way down. So we will start we will start from the weekly time frame. Then we will work our way down to the daily.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order."
+    },
+    {
+      "key": "tda_score",
+      "section": 5,
+      "excerpt": "we will find if this market is bullish or bearish on the weekly, find if it's bullish or bearish on the daily, bullish and bearish on the 4 hour all the way down to the lowest time frame and then we will have an overall score at the end of our analysis to determine where the majority of the time frames are going.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point."
+    },
+    {
+      "key": "tda_stop_4h",
+      "section": 14,
+      "excerpt": "the reason why I pause right here after the 4 hour is because I use the lower time frames more for the entry point",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "exception",
+      "claim": "In practice Alex G stops the directional pass after the 4-hour and uses the lower timeframes for entry rather than for direction."
+    },
+    {
+      "key": "bullish_def",
+      "section": 6,
+      "excerpt": "a bullish market is created of higher highs and higher lows",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "A bullish market is a series of higher highs and higher lows."
+    },
+    {
+      "key": "bearish_def",
+      "section": 6,
+      "excerpt": "a bearish market is consisted of lower high and lower low",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "A bearish market is a series of lower highs and lower lows."
+    },
+    {
+      "key": "mutually_exclusive",
+      "section": 7,
+      "excerpt": "You can't have a higher high and a lower high or vice versa. A bullish market is only consisted of these two. A bearish market is only consisted of these two.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Bullish and bearish structure are mutually exclusive; higher-high/higher-low and lower-high/lower-low labels cannot be mixed."
+    },
+    {
+      "key": "retrace_no_change",
+      "section": 7,
+      "excerpt": "the moment the market has some type of retracement like this, this is simply just market structure. It has not broken above the previous high and it has not broken below the higher low.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Price movement inside the current high and low is ordinary market structure and does not change the trend."
+    },
+    {
+      "key": "reanchor_bull",
+      "section": 8,
+      "excerpt": "Once you have a new higher high, you must have a new higher low. So the higher low simply follows the previous structure point, you would just move this up.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point."
+    },
+    {
+      "key": "shift_bear",
+      "section": 8,
+      "excerpt": "once it breaks above below the higher low, this market becomes the new lower low. Now once you have a new lower low, you must have a new lower high.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "invalidation_rule",
+      "claim": "A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high."
+    },
+    {
+      "key": "reanchor_rule",
+      "section": 8,
+      "excerpt": "Every single time you break a lower low, you get a new lower high. Every single time you break a new higher high, you must have a new higher low.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supports": "reanchor_bull"
+    },
+    {
+      "key": "shift_bull",
+      "section": 9,
+      "excerpt": "You broke above your lower high. Now, making this market back to bullish once again.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "confirmation_rule",
+      "claim": "A break above the lower high shifts the market from bearish back to bullish."
+    },
+    {
+      "key": "where_bullish_from",
+      "section": 9,
+      "excerpt": "they could be wrong or they could even be right about it being bullish, but they're wrong about where it's bullish from. And that completely changes",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "failure_condition",
+      "claim": "Misidentifying the origin of a trend invalidates entry, risk-to-reward, take-profit, stop-loss and trade management even when the direction is correct."
+    },
+    {
+      "key": "bodies_not_wicks",
+      "section": 12,
+      "excerpt": "So, I base my highs and lows to the bodies of the candlesticks.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Highs and lows are marked at candle bodies, not at wicks."
+    },
+    {
+      "key": "bodies_demo",
+      "section": 12,
+      "excerpt": "I'm placing it at the body of that candlestick, not at the wick.",
+      "evidenceType": "demonstrated_behavior",
+      "directness": "direct_demonstrated",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supports": "bodies_not_wicks"
+    },
+    {
+      "key": "bodies_why",
+      "section": 12,
+      "excerpt": "I like to keep my market structure approach to the market as close as I can to how it is on the line chart.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "causal_hypothesis",
+      "claim": "Body-based structure is preferred because it matches what the line chart shows, avoiding discretionary interpretation."
+    },
+    {
+      "key": "body_close_invalidation",
+      "section": 13,
+      "excerpt": "We have not body candlestick closed below the higher low.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "invalidation_rule",
+      "claim": "Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it."
+    },
+    {
+      "key": "hh_in_front",
+      "section": 13,
+      "excerpt": "Is impossible to have the higher low in front of the higher high. It is impossible to have the lower high in front of the lower low.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead."
+    },
+    {
+      "key": "no_top_picking",
+      "section": 14,
+      "excerpt": "Now some people somehow have a strategy or the audacity to say, \"Okay, you know what? It's a good time to predict the top. We're going to sell.\" Now they might get lucky once, twice, maybe three times, but there's no longevity in that.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "failure_condition",
+      "claim": "Predicting tops or bottoms against the higher-timeframe direction has no longevity even when it occasionally works."
+    },
+    {
+      "key": "trend_not_entry",
+      "section": 14,
+      "excerpt": "You can't just enter based off of the overall trend. If everything's going up doesn't mean that you",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified."
+    },
+    {
+      "key": "aoi_inside",
+      "section": 15,
+      "excerpt": "the area of interest should only be found inside of the high and the low. Inside of the higher high, inside of the higher low.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "The area of interest must lie inside the current higher high and higher low, never outside that range."
+    },
+    {
+      "key": "aoi_outside_fails",
+      "section": 15,
+      "excerpt": "if you have an area of interest below the higher low, once price gets to this area, guess what? Now we're bearish.",
+      "evidenceType": "failure_observation",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "failure_condition",
+      "claim": "An area of interest placed below the higher low will only be reached after the market has already turned bearish, so the setup is invalid by the time price arrives."
+    },
+    {
+      "key": "aoi_timeframes",
+      "section": 15,
+      "excerpt": "There's only two time frames where you can find an area of interest on the weekly and the daily.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "Areas of interest are drawn only on the weekly and daily timeframes."
+    },
+    {
+      "key": "aoi_rejections",
+      "section": 15,
+      "excerpt": "So you would find an area that has a decent amount of rejections.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "An area of interest is identified by a decent number of prior rejections or touches."
+    },
+    {
+      "key": "aoi_overlap",
+      "section": 16,
+      "excerpt": "what I like to do is mark this area off as a weekly and a daily area of interest. So, now I know that this is two areas of interest strong.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger."
+    },
+    {
+      "key": "entry_signal",
+      "section": 16,
+      "excerpt": "this is where I would then wait for my rejection candlesticks which can consist of multiple dogees or an engulfing candlestick which will be my entry signal",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "entry_rule",
+      "claim": "The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle."
+    },
+    {
+      "key": "entry_tf",
+      "section": 16,
+      "excerpt": "This entry signal can happen on the lower time frame, higher time frames. Obviously the higher the stronger.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "entry_rule",
+      "claim": "The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger."
+    },
+    {
+      "key": "counter_retrace",
+      "section": 16,
+      "excerpt": "The market is going to have to go bearish so it can have the retracement to then continue going to the upside.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "causal_hypothesis",
+      "claim": "A counter-trend move on the lower timeframe is expected and necessary to deliver price into the higher-timeframe area of interest."
+    },
+    {
+      "key": "support_resistance",
+      "section": 16,
+      "excerpt": "when you're above support, you buy. When you're below resistance, you sell.",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "entry_rule",
+      "claim": "Buy when price is above support; sell when price is below resistance."
+    },
+    {
+      "key": "discretionary_wait",
+      "section": 16,
+      "excerpt": "our job is to make a decision either one wait for this market to shift bullish so we can trade with the trend or do we take the risk when the market is bearish",
+      "evidenceType": "opinion",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "low",
+      "claimType": "behavioral_observation",
+      "claim": "Whether to wait for the lower timeframe to shift with the trend or enter while it is still counter-trend is left to trader risk appetite."
+    }
+  ],
+  "contradictions": [
+    {
+      "a": "bodies_not_wicks",
+      "bClaimId": "CLAIM|TJR|20260727|065",
+      "type": "DEFINITIONAL",
+      "severity": "material",
+      "rationale": "CROSS-EDUCATOR. Alex G marks highs and lows at candle BODIES and states explicitly 'not at the wick'. TJR (source #2) marks a high at the highest WICK of the two candles forming it. Both are describing the same operation -- locating a structure point -- and prescribe incompatible price levels. This changes every downstream value: where the level sits, whether a break has occurred, stop placement, and risk-to-reward. Recorded, not resolved."
+    }
+  ],
+  "manifestVersion": 1,
+  "normalization": {
+    "charsRemoved": 1939,
+    "lineCount": 654,
+    "linesTransformed": 332,
+    "profile": "youtube_timestamp_lines_chaptered",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "openQuestions": [
+    {
+      "claim": "tda_score",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "Top-down analysis produces an 'overall score' across timeframes, but no scoring method, weighting or threshold is given. How is the score computed and what value constitutes alignment?",
+      "reason": "The scoring step is named as the output of the whole procedure yet left entirely unspecified."
+    },
+    {
+      "claim": "aoi_rejections",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "An area of interest needs 'a decent amount of rejections'. How many rejections, and what counts as a rejection?",
+      "reason": "The only stated selection criterion for the entry zone is qualitative."
+    },
+    {
+      "claim": null,
+      "type": "unclear_scope",
+      "priority": "critical",
+      "blocking": "blocks_promotion",
+      "text": "No stop-loss rule, take-profit rule, position size or risk percentage appears anywhere in this source, though stop-loss and take-profit are named as things a wrong structure read would ruin. What are Alex G's risk and exit rules?",
+      "reason": "Zero stop_rule, target_rule or risk_rule claims were extractable; the source is direction-and-entry only."
+    },
+    {
+      "claim": "tda_stop_4h",
+      "type": "self_contradiction",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "The stated procedure runs weekly through 15-minute, but in practice the directional pass stops after the 4-hour. Are the 2h/1h/30m/15m timeframes part of the directional score or not?",
+      "reason": "The taught procedure and the demonstrated procedure differ within the same source."
+    },
+    {
+      "claim": "entry_signal",
+      "type": "unclear_scope",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "'Multiple dojis' is given as an entry signal. How many dojis, and must they be consecutive?",
+      "reason": "Quantity is unspecified for one of only two named entry signals."
+    },
+    {
+      "claim": "support_resistance",
+      "type": "ambiguous_statement",
+      "priority": "medium",
+      "blocking": "non_blocking",
+      "text": "'When you're above support, you buy. When you're below resistance, you sell.' \u2014 support and resistance are not defined in this source, nor related to the higher-high/higher-low structure model it teaches. How do they relate?",
+      "reason": "Introduces a second vocabulary at the end without reconciling it with the structure model."
+    }
+  ],
+  "provenance": {
+    "canonicalReference": "https://www.youtube.com/watch?v=pD1vAUMbSjw",
+    "channelOrPublisher": null,
+    "language": "en",
+    "licensingStatus": "restricted_third_party",
+    "publicationDate": null,
+    "transcriptCompleteness": "unknown",
+    "transcriptProvider": "youtube_transcript_panel_copy"
+  },
+  "sections": [
+    {
+      "n": 1,
+      "lines": [
+        1,
+        20
+      ],
+      "type": "introduction",
+      "title": "Why 99% of traders fail: they cannot read the market"
+    },
+    {
+      "n": 2,
+      "lines": [
+        21,
+        55
+      ],
+      "type": "instruction",
+      "title": "Top-down analysis is non-negotiable for every trader type"
+    },
+    {
+      "n": 3,
+      "lines": [
+        56,
+        84
+      ],
+      "type": "instruction",
+      "title": "The four timeframe tiers and why higher timeframes win (1/2)"
+    },
+    {
+      "n": 4,
+      "lines": [
+        85,
+        114
+      ],
+      "type": "instruction",
+      "title": "The four timeframe tiers and why higher timeframes win (2/2)"
+    },
+    {
+      "n": 5,
+      "lines": [
+        115,
+        159
+      ],
+      "type": "instruction",
+      "title": "What top-down analysis actually means: weekly down to 15m"
+    },
+    {
+      "n": 6,
+      "lines": [
+        160,
+        212
+      ],
+      "type": "instruction",
+      "title": "Market structure defined: bullish and bearish (1/2)"
+    },
+    {
+      "n": 7,
+      "lines": [
+        213,
+        244
+      ],
+      "type": "instruction",
+      "title": "Market structure defined: bullish and bearish (2/2)"
+    },
+    {
+      "n": 8,
+      "lines": [
+        245,
+        295
+      ],
+      "type": "instruction",
+      "title": "How trend shifts: breaking a high or low and re-anchoring (1/3)"
+    },
+    {
+      "n": 9,
+      "lines": [
+        296,
+        329
+      ],
+      "type": "instruction",
+      "title": "How trend shifts: breaking a high or low and re-anchoring (2/3)"
+    },
+    {
+      "n": 10,
+      "lines": [
+        330,
+        367
+      ],
+      "type": "instruction",
+      "title": "How trend shifts: breaking a high or low and re-anchoring (3/3)"
+    },
+    {
+      "n": 11,
+      "lines": [
+        368,
+        372
+      ],
+      "type": "instruction",
+      "title": "Bodies versus wicks: where to mark structure (1/3)"
+    },
+    {
+      "n": 12,
+      "lines": [
+        373,
+        432
+      ],
+      "type": "instruction",
+      "title": "Bodies versus wicks: where to mark structure (2/3)"
+    },
+    {
+      "n": 13,
+      "lines": [
+        433,
+        484
+      ],
+      "type": "instruction",
+      "title": "Bodies versus wicks: where to mark structure (3/3)"
+    },
+    {
+      "n": 14,
+      "lines": [
+        485,
+        521
+      ],
+      "type": "instruction",
+      "title": "Why predicting tops and bottoms fails"
+    },
+    {
+      "n": 15,
+      "lines": [
+        522,
+        568
+      ],
+      "type": "instruction",
+      "title": "Finding the area of interest and the entry signal (1/2)"
+    },
+    {
+      "n": 16,
+      "lines": [
+        569,
+        622
+      ],
+      "type": "instruction",
+      "title": "Finding the area of interest and the entry signal (2/2)"
+    },
+    {
+      "n": 17,
+      "lines": [
+        623,
+        654
+      ],
+      "type": "conclusion",
+      "title": "Recap, execution and mentorship promotion"
+    }
+  ],
+  "slug": "alexg-why-99-percent-of-traders-fail",
+  "sourceFile": "docs/trader-intelligence/intake/pending/alexg-why-99-percent-of-traders-fail.txt",
+  "sourceFileBytes": 38330,
+  "sourceFileSha256": "c9c4193a8aeedc9aee13264dd58568a8c96f70b5db7019a7badd13fced674606",
+  "sourceLineCount": 654,
+  "title": "Why 99% of Traders Fail in Forex",
+  "traderId": "ALEX_G"
+}

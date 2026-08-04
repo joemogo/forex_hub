@@ -1,0 +1,25 @@
+{
+  "affectedSections": [
+    "Trade Management"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|ALEX_G|20260728|001",
+  "category": "trade_management",
+  "confidence": "none",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260728|009",
+  "proposedValidationMethod": "paper-trading test",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": []
+  },
+  "question": "How is the trade managed after entry (partials, break-even, trailing)?",
+  "recommendedNextSourceType": "additional transcript on in-trade management",
+  "researchPriority": "medium",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "ALEX_G",
+  "whyItMatters": "Trade management materially affects realized outcomes even when entry/exit rules are fixed."
+}

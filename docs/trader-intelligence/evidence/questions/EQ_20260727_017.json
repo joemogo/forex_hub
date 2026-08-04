@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|065",
+  "createdAt": "2026-07-27T22:15:39Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|017",
+  "questionText": "The two-candle rule for identifying a high or low has no minimum-size or significance filter. Does every up-then-down candle pair qualify as a high?",
+  "questionType": "unclear_scope",
+  "reason": "Applied literally on a low timeframe this marks a very large number of highs and lows; no filter is stated.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|002"
+  ]
+}

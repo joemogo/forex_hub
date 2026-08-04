@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "LINK|EV|EVSRC|ALEX_G|20260729|001|011|CLAIM|ALEX_G|20260729|011",
+  "entityType": "EVIDENCE_CLAIM_LINK",
+  "eventId": "LCEVT|EVIDENCE_CLAIM_LINK|LINK|EV|EVSRC|ALEX_G|20260729|001|011|CLAIM|ALEX_G|20260729|011|001",
+  "eventType": "linked",
+  "metadata": {},
+  "newStatus": "supports",
+  "priorStatus": null,
+  "reason": "Evidence linked to claim.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-29T23:31:05Z"
+}

@@ -1,0 +1,42 @@
+{
+  "affectedSections": [
+    "Scope",
+    "Entry Trigger"
+  ],
+  "answerStatus": "partially_answered",
+  "blueprintId": "BLUEPRINT|ALEX_G|20260727|001",
+  "category": "execution_timeframe",
+  "confidence": "low",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "currentBestAnswer": "The area of interest must lie inside the current higher high and higher low, never outside that range.",
+  "evidenceSearched": [
+    "EV|EVSRC|ALEX_G|20260727|001|028",
+    "EV|EVSRC|ALEX_G|20260727|001|030",
+    "EV|EVSRC|ALEX_G|20260727|001|031",
+    "EV|EVSRC|ALEX_G|20260727|001|032",
+    "EV|EVSRC|ALEX_G|20260727|001|033",
+    "EV|EVSRC|ALEX_G|20260727|001|034",
+    "EV|EVSRC|ALEX_G|20260727|001|036"
+  ],
+  "gapId": "GAP|20260727|010",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|ALEX_G|20260727|026",
+      "CLAIM|ALEX_G|20260727|028",
+      "CLAIM|ALEX_G|20260727|029",
+      "CLAIM|ALEX_G|20260727|030",
+      "CLAIM|ALEX_G|20260727|031",
+      "CLAIM|ALEX_G|20260727|032",
+      "CLAIM|ALEX_G|20260727|034"
+    ]
+  },
+  "question": "What is the execution timeframe for entries?",
+  "recommendedNextSourceType": "additional transcript or direct question to trader",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "ALEX_G",
+  "whyItMatters": "Without a stated execution timeframe, entry timing cannot be replayed or tested."
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260727|011",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|049",
+  "questionText": "Is market structure timeframe-agnostic, or do lower timeframes carry less directional weight?",
+  "questionType": "unclear_scope",
+  "reason": "Source #2 states market structure applies to any timeframe (CLAIM|ALEX_G|20260728|001); this source excludes sub-4H from directional confluence. Reconcilable - the reading procedure can be identical while the weighting differs - but the reconciliation is MOGO's, not the educator's. This is the second source to sharpen the tension first recorded in cycle 008.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

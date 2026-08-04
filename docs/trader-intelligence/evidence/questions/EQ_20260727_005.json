@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|TJR|20260727|042",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260727|005",
+  "questionText": "The six-month profit figure is transcribed as '$1,47,984', which is not a valid US digit grouping. What is the actual figure?",
+  "questionType": "ambiguous_statement",
+  "reason": "Automatic-captioning artifact in the source; the true number cannot be recovered from the text.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

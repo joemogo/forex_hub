@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": null,
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|010",
+  "questionText": "No no-trade condition is stated anywhere. TJR stopped trading during the government shutdown week but gave no rule. Under what conditions should the strategy not be traded at all?",
+  "questionType": "other",
+  "reason": "Zero claims state a no-trade condition; the one observed abstention is described as a mood, not a rule.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

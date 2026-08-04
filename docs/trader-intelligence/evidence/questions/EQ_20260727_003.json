@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|029",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|003",
+  "questionText": "The worked examples use four take-profit levels (TP1-TP4) but the transcript never defines how those four levels are chosen or sized. How is the take-profit ladder constructed?",
+  "questionType": "missing_target_logic",
+  "reason": "'take profit one/two/three/four' appear only as outcomes in a walkthrough, never as a rule.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

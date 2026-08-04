@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260729|016",
+  "createdAt": "2026-07-29T23:45:30Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260729|047",
+  "questionText": "The transcript reads 'for your Inay and swing trades'. 'Inay' is a caption artifact and the trading style it names cannot be recovered from this transcript.",
+  "questionType": "ambiguous_statement",
+  "reason": "Recorded rather than guessed. 'Intraday' is the obvious candidate but it would conflict with the immediately preceding day-trading rule, so the reading is not safe to assume.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260729|001"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "affectedSections": [
+    "Entry Trigger"
+  ],
+  "answerStatus": "partially_answered",
+  "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+  "category": "entry_trigger",
+  "confidence": "low",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "currentBestAnswer": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill.",
+  "evidenceSearched": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+    "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+    "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+    "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+    "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+  ],
+  "gapId": "GAP|20260729|005",
+  "proposedValidationMethod": "replay test against historical price action",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|RAYNER_TEO|20260729|011",
+      "CLAIM|RAYNER_TEO|20260729|018",
+      "CLAIM|RAYNER_TEO|20260729|023",
+      "CLAIM|RAYNER_TEO|20260729|027",
+      "CLAIM|RAYNER_TEO|20260729|040"
+    ]
+  },
+  "question": "What exact condition triggers an entry?",
+  "recommendedNextSourceType": "additional transcript with explicit entry-rule statements",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "RAYNER_TEO",
+  "whyItMatters": "No entry condition currently reaches confident support -- the strategy cannot be entered mechanically."
+}

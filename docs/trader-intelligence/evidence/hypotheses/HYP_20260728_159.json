@@ -1,0 +1,31 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-28T04:21:55Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|159",
+  "independentVariables": [
+    "invalidation_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|041"
+  ],
+  "statement": "A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it may serve as the primary invalidation condition.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|003|017"
+  ],
+  "updatedAt": "2026-07-28T04:21:55Z"
+}

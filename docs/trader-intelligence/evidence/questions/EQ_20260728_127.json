@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|109",
+  "createdAt": "2026-07-28T04:42:15Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|127",
+  "questionText": "Is 'only being up 60%' a transcription artifact for 6%?",
+  "questionType": "ambiguous_statement",
+  "reason": "The arithmetic as spoken is otherwise correct: five wins at 1% with 1:2 reward is +10%; two losses at 2% leaves +6%; two losses at 1% leaves +8%. '60%' is almost certainly '6%' mis-transcribed. Recorded rather than silently corrected - the archived text is what it is, and the underlying argument is sound.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|005"
+  ]
+}

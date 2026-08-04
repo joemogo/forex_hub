@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "11:46",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 92,
+  "lineStart": 82,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "a trade. So the first thing that I'm looking for is a liquidity sweep. Okay, whether that's from 1 hour highs and lows, 4hour highs and lows, or session highs and lows, that's what I'm looking for for my draws on liquidity. And I'm looking for a liquidity sweep every single time. How can we confirm that the liquidity sweep has happened? We wait for a fiveminut confirmation confluence. So again, if you guys remember our confirmation confluences, that can come in several different ways. That can come in a breakup structure. That can come in a inverse for value gap. That can come in a SMT divergence. That can come in a 79% extension. Okay. So, we're at this point in our strategy right now. Okay. So, we have boom pre-market open. And this is actually setting up a good example of a little addition to the strategy that we always require when we're looking um for trades. So, this is a perfect example for us today. And I'm actually already seeing setups. It's gorgeous. Okay, so pre-market, we have London session high.",
+  "schemaVersion": 1,
+  "sectionTitle": "Step 1 liquidity sweep and Step 2 five-minute confirmation",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|009",
+  "segmentType": "other",
+  "sequenceNumber": 9,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "10:42",
+  "textHash": "74b33c30d5b47e288eebf244540c2b09d1005856fa6bd15ff277c6a14a25b378"
+}

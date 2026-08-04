@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|028",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|002",
+  "questionText": "Stop placement is only ever given chart-relatively ('underneath this low', 'above these highs'). Which exact swing does the stop reference, and is any buffer applied?",
+  "questionType": "missing_stop_placement",
+  "reason": "Both stop excerpts point at an on-screen level rather than a stateable rule.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

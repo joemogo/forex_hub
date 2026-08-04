@@ -1,0 +1,18 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "entityId": "EV|EVSRC|TJR|20260727|001|060",
+  "entityType": "EVIDENCE_ITEM",
+  "metadata": {},
+  "priority": "high",
+  "queueEntryId": "RQ|AMBIGUOUS_EVIDENCE|20260727|002",
+  "queueType": "ambiguous_evidence",
+  "reason": "extractionCertainty='ambiguous'.",
+  "resolution": null,
+  "reviewAction": null,
+  "reviewNotes": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-27T03:56:30Z"
+}

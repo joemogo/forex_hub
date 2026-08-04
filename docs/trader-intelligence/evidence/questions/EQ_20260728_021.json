@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|031",
+  "createdAt": "2026-07-28T02:23:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|021",
+  "questionText": "The seven-approaches-one-sweep count comes from a single hand-picked chart. Is that ratio representative?",
+  "questionType": "example_mismatch",
+  "reason": "A single retrospective example is offered as evidence for a general claim about opportunity cost. Directly testable — see RC-20.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|002"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "affectedSections": [
+    "Scope",
+    "Setup Identification"
+  ],
+  "answerStatus": "partially_answered",
+  "blueprintId": "BLUEPRINT|ALEX_G|20260727|001",
+  "category": "higher_timeframe_bias",
+  "confidence": "low",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "currentBestAnswer": "Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point.",
+  "evidenceSearched": [
+    "EV|EVSRC|ALEX_G|20260727|001|002",
+    "EV|EVSRC|ALEX_G|20260727|001|003",
+    "EV|EVSRC|ALEX_G|20260727|001|009",
+    "EV|EVSRC|ALEX_G|20260727|001|010",
+    "EV|EVSRC|ALEX_G|20260727|001|012",
+    "EV|EVSRC|ALEX_G|20260727|001|013",
+    "EV|EVSRC|ALEX_G|20260727|001|014",
+    "EV|EVSRC|ALEX_G|20260727|001|015",
+    "EV|EVSRC|ALEX_G|20260727|001|016",
+    "EV|EVSRC|ALEX_G|20260727|001|018",
+    "EV|EVSRC|ALEX_G|20260727|001|021",
+    "EV|EVSRC|ALEX_G|20260727|001|022",
+    "EV|EVSRC|ALEX_G|20260727|001|025",
+    "EV|EVSRC|ALEX_G|20260727|001|027"
+  ],
+  "gapId": "GAP|20260727|009",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|ALEX_G|20260727|002",
+      "CLAIM|ALEX_G|20260727|003",
+      "CLAIM|ALEX_G|20260727|009",
+      "CLAIM|ALEX_G|20260727|010",
+      "CLAIM|ALEX_G|20260727|012",
+      "CLAIM|ALEX_G|20260727|013",
+      "CLAIM|ALEX_G|20260727|014",
+      "CLAIM|ALEX_G|20260727|015",
+      "CLAIM|ALEX_G|20260727|016",
+      "CLAIM|ALEX_G|20260727|020",
+      "CLAIM|ALEX_G|20260727|023",
+      "CLAIM|ALEX_G|20260727|025"
+    ]
+  },
+  "question": "Is a higher-timeframe bias required before taking this setup?",
+  "recommendedNextSourceType": "additional transcript on multi-timeframe analysis",
+  "researchPriority": "high",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "ALEX_G",
+  "whyItMatters": "A missing higher-timeframe bias rule means the strategy's context requirement is unknown."
+}

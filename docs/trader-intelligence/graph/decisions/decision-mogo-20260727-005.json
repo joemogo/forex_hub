@@ -1,0 +1,37 @@
+{
+  "decisionId": "DECISION|MOGO|20260727|005",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-07-27",
+  "affectedEntityIds": [
+    "EVSRC|TJR|20260727|001",
+    "INTAKE|TJR|20260727|001",
+    "TJR",
+    "ICT",
+    "ALEX_G",
+    "JVM"
+  ],
+  "decisionType": "acquisition",
+  "question": "Does the unresolved licensing status of third-party educational material block internal research, knowledge extraction, and evidence storage in MOGO's private Trader Intelligence system?",
+  "optionsConsidered": [
+    "Block all ingestion until written permission is obtained from each rights holder",
+    "Treat licensing as non-blocking for private internal research, extraction, and evidence storage, while prohibiting redistribution and public reproduction and preserving full source attribution",
+    "Treat the material as unrestricted and permit redistribution"
+  ],
+  "selectedOption": "Treat licensing as non-blocking for private internal research, extraction, and evidence storage, while prohibiting redistribution and public reproduction and preserving full source attribution",
+  "rationale": "Standing Operating Order of 2026-07-27. Licensing shall not block internal research, analysis, knowledge extraction, or evidence storage for MOGO's private Trader Intelligence system. Three constraints remain binding and are NOT relaxed by this decision. (1) Full source attribution and provenance are preserved for every artifact -- the exactExcerpt/normalizedClaim separation, the raw-copy hash chain, and the segment-to-line mapping all remain mandatory. (2) Copyrighted material must not be redistributed, and no public reproduction may be generated -- this covers publishing the repository, exporting raw transcripts or verbatim excerpts outside it, and any user-facing surface that reproduces source text rather than MOGO's own paraphrase. (3) The determination applies to PRIVATE INTERNAL RESEARCH only; it is not a grant of rights and does not represent legal advice or a licence obtained from any rights holder. Accordingly, affected sources are classified 'restricted_third_party' rather than 'permitted_third_party': MOGO has lawful access and an internal-use determination, not permission from the rights holder. Sources so classified continue to appear in the unresolved_licensing review queue at critical severity; that entry is retained deliberately as the standing machine-readable marker of the no-redistribution constraint, and should not be cleared. This decision authorizes no implementation, replay, paper, production, or live activity.",
+  "supportingEvidenceIds": [],
+  "dissentingEvidenceIds": [],
+  "approvalScope": "acquisition",
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-07-27T00:00:00Z",
+  "updatedAt": "2026-07-27T00:00:00Z"
+}

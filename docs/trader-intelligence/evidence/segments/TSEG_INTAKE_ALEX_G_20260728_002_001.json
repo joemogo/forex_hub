@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T02:23:09Z",
+  "endTimestamp": "0:49",
+  "intakeId": "INTAKE|ALEX_G|20260728|002",
+  "language": "en",
+  "lineEnd": 49,
+  "lineStart": 1,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Have you ever taken a trade in the markets where you have studied it for hours, done top- down analysis, calculate your entry points precisely, your takerit, your stop loss, perfect entry signal, and as soon as you enter the position, it goes straight to your stop-loss, takes you out, and then it goes straight to your takerit. Well, we've all been there. I've been there hundreds of times, if not thousands. And all of that is because of liquidity. And in today's video, I'm going to educate you how to best possibly avoid that and get educated on how liquidity works at these precise entry points. So, first things first, what is liquidity and why is it responsible for wicking you out of your trade and then going straight to take profit? Is it because the banks and institutions are watching your stop-loss? Is it because your stop loss is too tight? Is it just because the liquidity is low or high at that very point? Well, first things first,",
+  "schemaVersion": 1,
+  "sectionTitle": "The stopped-out-then-target experience and why liquidity causes it",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|002|001",
+  "segmentType": "other",
+  "sequenceNumber": 1,
+  "sourceId": "EVSRC|ALEX_G|20260728|002",
+  "speaker": null,
+  "startTimestamp": "0:00",
+  "textHash": "b693d1b1de63280b9fdc4430a7a02060ef2e214e0b02d86480da8f55fa614157"
+}

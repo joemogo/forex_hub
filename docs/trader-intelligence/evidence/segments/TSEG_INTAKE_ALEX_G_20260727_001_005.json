@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:41:09Z",
+  "endTimestamp": "7:50",
+  "intakeId": "INTAKE|ALEX_G|20260727|001",
+  "language": "en",
+  "lineEnd": 159,
+  "lineStart": 115,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "when it comes to the weekly, the daily and the 4hour and then the lower time frames. What does top down analysis actually mean? Because the analogy that I just gave you was pretty much the opposite. We started from the bottom up. Build the foundation of a building and then we worked our way up. Well, that was just so you would understand the importance of each time frame. But top down analysis is exactly what it means in the name topdown analysis. We will start from the top all the way down. So we will start we will start from the weekly time frame. Then we will work our way down to the daily. Then from the daily we'll go to the 4 hour, 4 hour, 2 hour, 2 hour, 1 hour, 30 minute, 15 minute all the way down our lowest time frame which will be the 15minut. Now what top down analysis actually is and how top down analytics actually works is we will find if this market is bullish or bearish on the weekly, find if it's bullish or bearish on the daily, bullish and bearish on the 4 hour all the way down to the lowest time frame and then we will have an overall score at the end of our analysis to determine where the majority of the time frames are going. All we're doing when it comes to top down analysis is literally just zooming into price in different time frames. For example, here this one single candlestick that you are seeing right here that I will box off. This one single candlestick took a total of 7 days to be created on the weekly time frame. When we go down to the daily time frame, you're going to notice that that same exact candlestick is built up of a total of five candlesticks. 1 2 3 4 5. Now, these five candlesticks, if we go down to the 4 hour, will be broken down in tens of these different candlesticks that make up those five days. All of these 4hour candlesticks when we go down to the 2hour will be built up of these 2-hour candlesticks, the 1 hour, the 30 minute. We're looking at the exact same market structure, the exact same price from the highest time frame, just broken down into details on every single time frame. And there's unique and different market structure in every single one of these time frames. And that market structure is what the top down analysis is. We're going to read that market structure, which is reading the candlesticks and reading what the price is telling us to determine where the overall time frames are going. But we're looking at the exact same market just zoomed in a little bit more every single time to determine where this market is",
+  "schemaVersion": 1,
+  "sectionTitle": "What top-down analysis actually means: weekly down to 15m",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260727|001|005",
+  "segmentType": "other",
+  "sequenceNumber": 5,
+  "sourceId": "EVSRC|ALEX_G|20260727|001",
+  "speaker": null,
+  "startTimestamp": "5:29",
+  "textHash": "be2dd12d372fcac4d58e96840e453bdf03242382990be26e342daf8f08f59109"
+}

@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "3:32",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 27,
+  "lineStart": 23,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "So, how do have I how have I built my strategy out? My strategy is based off of liquidity sweeps. Okay? So, every single day I'm looking for trades that are off of liquidity sweeps. So, liquidity sweeps are essentially when we have highs and lows within the market. Okay? So, above here is highs, down here is lows. And when price goes up and takes out these highs and lows, we are essentially sweeping out potential liquidity to be able to fill orders in the opposite direction, right? Because if we're in an uptrend and we push past a high, most people are going to want to buy. If we are in a downtrend and we go underneath a low, most people are going to want to sell, right? But that also gives the market makers the awesome",
+  "schemaVersion": 1,
+  "sectionTitle": "Core premise: liquidity sweeps defined",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|003",
+  "segmentType": "other",
+  "sequenceNumber": 3,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "3:00",
+  "textHash": "f1f2948e14056800c2398c6a678ce98a722890c05846d9d7f5a0455a4abdb106"
+}

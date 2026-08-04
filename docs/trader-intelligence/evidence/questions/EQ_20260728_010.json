@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260727|016",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|010",
+  "questionText": "Claim 'CLAIM|ALEX_G|20260727|016' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?",
+  "questionType": "missing_replay_validation",
+  "reason": "Rule-eligible claimType with confidenceState in {supported, strongly_supported} but no replay evidence producer has run yet (out of scope for Phase 1B).",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

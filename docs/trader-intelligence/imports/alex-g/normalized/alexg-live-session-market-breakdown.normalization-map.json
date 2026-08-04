@@ -1,0 +1,3959 @@
+{
+  "lines": [
+    {
+      "charsRemoved": 0,
+      "normalizedText": "https://www.youtube.com/watch?v=1JMVE4Y5U7o&list=PLi54qmfu-okqa3TmCy5Bn89fRTke7pKFFcool so i'm gonna start the recording so",
+      "removedDurationLabel": null,
+      "sourceLine": 1,
+      "sourceLineSha256": "3cc704ce0625c093685fa0880bf1296992ea691365e508bcdfe46e7c2d2fa1b8",
+      "timestamp": "0:00",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:02",
+      "sourceLine": 2,
+      "sourceLineSha256": "a6b31753a2c8132331e3657ad2184f2beb3c28f536965813b5decaeb4349aabd",
+      "timestamp": "0:02",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "we got a solid",
+      "removedDurationLabel": null,
+      "sourceLine": 3,
+      "sourceLineSha256": "c02fc76ceb4c15bd86bb5b5a50f1a8bcccff3d65f4874170077efc74a809271f",
+      "timestamp": "0:02",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:03",
+      "sourceLine": 4,
+      "sourceLineSha256": "b416ea1c67e8cc57c955318872dfdd32736d3e454baa80ef655d2f58376d6cb3",
+      "timestamp": "0:03",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "70 people on here for 6 a.m not bad",
+      "removedDurationLabel": null,
+      "sourceLine": 5,
+      "sourceLineSha256": "767b334b63effa889e87afcbdc069c46a685245ad66fd651fa110d66aadd9066",
+      "timestamp": "0:03",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:07",
+      "sourceLine": 6,
+      "sourceLineSha256": "1eeb1ab5b33bb683075c41627a4cd8595d99553b9e6749ec8c92ffa46d367b5f",
+      "timestamp": "0:07",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "oh yeah i couldn't i will wait last",
+      "removedDurationLabel": null,
+      "sourceLine": 7,
+      "sourceLineSha256": "71b143f9ee0a044b84290916876df8cbd70203ae6260e0ed8f31f27a820e0e31",
+      "timestamp": "0:07",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:10",
+      "sourceLine": 8,
+      "sourceLineSha256": "6ac52aebb25dd6adbdea5e9bbca2ae9bc556b6f384cfd66e3a4d87bc9a8cab27",
+      "timestamp": "0:10",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "training yeah",
+      "removedDurationLabel": null,
+      "sourceLine": 9,
+      "sourceLineSha256": "f5a221f1c3c2915a4dda39fbfcd78f71f9f810f5da694277036d198aae7ba1a0",
+      "timestamp": "0:10",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:11",
+      "sourceLine": 10,
+      "sourceLineSha256": "d235e7d7dd57dded25b38211fe778d9987d11f3c8c1474d22350dd53bdf6d566",
+      "timestamp": "0:11",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "all right cool so pretty much let's",
+      "removedDurationLabel": null,
+      "sourceLine": 11,
+      "sourceLineSha256": "c0f547fca4a1814118e5e2e048877e751393966616dd78bc6edb17084dc1c208",
+      "timestamp": "0:11",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:12",
+      "sourceLine": 12,
+      "sourceLineSha256": "a07e6f36a88a563ce70b2bc7cfed0665bee0669a1b40319780bae2464d3adf3f",
+      "timestamp": "0:12",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "start off with nzd",
+      "removedDurationLabel": null,
+      "sourceLine": 13,
+      "sourceLineSha256": "b514b2f46aaa010a0a1ec743bdcd00d4667c35513ba022dff6857ed174701286",
+      "timestamp": "0:12",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:14",
+      "sourceLine": 14,
+      "sourceLineSha256": "731ba4d59bbc07fd6b84b60e5c3c1235ae2ed92c1ddead0872229944cab43bc3",
+      "timestamp": "0:14",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "cad right very simple so we've confirmed",
+      "removedDurationLabel": null,
+      "sourceLine": 15,
+      "sourceLineSha256": "06709c771adfe6b85b784a9428dadebb570358e4d1cfcc4009cd7cb9942ddd5d",
+      "timestamp": "0:14",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:18",
+      "sourceLine": 16,
+      "sourceLineSha256": "2356cd74bee78077ffffc0ca0544fcfdafd8e01508e37401313cbb6d6288a299",
+      "timestamp": "0:18",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "that we are now completely bearish we",
+      "removedDurationLabel": null,
+      "sourceLine": 17,
+      "sourceLineSha256": "04aac89c60d04bab9741cccd05f3b5884648549633124b71a3d578f937a60ace",
+      "timestamp": "0:18",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:20",
+      "sourceLine": 18,
+      "sourceLineSha256": "2285a5e9976b19452c954683255dbd6056b9aa4b18c190a50787baaa9894d3b8",
+      "timestamp": "0:20",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "know this we were looking for shorts",
+      "removedDurationLabel": null,
+      "sourceLine": 19,
+      "sourceLineSha256": "5c2e9af8387056abe3865bc3938c5aa963c1b9f4311f378fb7880ed8f1138115",
+      "timestamp": "0:20",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:22",
+      "sourceLine": 20,
+      "sourceLineSha256": "c17e1e25ad08177f6b73b832872357f35a0a3d247569d36da320d596d024d870",
+      "timestamp": "0:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here",
+      "removedDurationLabel": null,
+      "sourceLine": 21,
+      "sourceLineSha256": "fcec91509759ad995c2cd14bcb26b2720993faf61c29d379b270d442d92290eb",
+      "timestamp": "0:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:22",
+      "sourceLine": 22,
+      "sourceLineSha256": "c17e1e25ad08177f6b73b832872357f35a0a3d247569d36da320d596d024d870",
+      "timestamp": "0:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and we're looking for shorts here so now",
+      "removedDurationLabel": null,
+      "sourceLine": 23,
+      "sourceLineSha256": "7e935655ca1d8a68cebfb30a16ae1416d92b7167c72e32d9aeda993caf4a8640",
+      "timestamp": "0:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:25",
+      "sourceLine": 24,
+      "sourceLineSha256": "22ee39df31eb5888e3015db9aaab6459ab76215fbb7630aa6a5fcb67a618e4c0",
+      "timestamp": "0:25",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "we're pretty much just waiting",
+      "removedDurationLabel": null,
+      "sourceLine": 25,
+      "sourceLineSha256": "91f947b34b096ad803bbb94cc5e261ed1a624b4f1b0de7f5135730c43bcd4143",
+      "timestamp": "0:25",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:26",
+      "sourceLine": 26,
+      "sourceLineSha256": "710c6c1d9e1d3691302adb1b24b98c122e322f59a525acc9a47e989ce7be058a",
+      "timestamp": "0:26",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "for that next leg up so now it's looking",
+      "removedDurationLabel": null,
+      "sourceLine": 27,
+      "sourceLineSha256": "a4a9092fc7120b81102014ab9490c6bbba3d64ec87c26e5beb88a7bd609bbd4a",
+      "timestamp": "0:26",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:29",
+      "sourceLine": 28,
+      "sourceLineSha256": "748aa4cf0ba0ee9d3236920d79b410c4154d29010569057c1cf26e9b595776dc",
+      "timestamp": "0:29",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "like we're potentially",
+      "removedDurationLabel": null,
+      "sourceLine": 29,
+      "sourceLineSha256": "4d726ad017966ae3d0fda3dbfc79ebc8f4bf6e200673d7a045118642b258597d",
+      "timestamp": "0:29",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:30",
+      "sourceLine": 30,
+      "sourceLineSha256": "fdf85b5ab0b4fba8b8bfe1bd899bfb3d98595b83f46814bf5ccff759bfeeefa2",
+      "timestamp": "0:30",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "at that area where we could have that",
+      "removedDurationLabel": null,
+      "sourceLine": 31,
+      "sourceLineSha256": "11af22a4cc611863aac56ca31efd030da1296fc720b7cb58810d90ad6d519784",
+      "timestamp": "0:30",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:32",
+      "sourceLine": 32,
+      "sourceLineSha256": "e0d1a33ee41e07a1a3fb89a8f1da8a32c736ae71d59def8aba9d6c11c19aa1a1",
+      "timestamp": "0:32",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "reverse to start having the",
+      "removedDurationLabel": null,
+      "sourceLine": 33,
+      "sourceLineSha256": "05ba694008d5501bdc2043139de6f1318f44ece94b34993386ac48dc1432053b",
+      "timestamp": "0:32",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:35",
+      "sourceLine": 34,
+      "sourceLineSha256": "743cce6ab9121e7bea0283b2b5b57e1341da3225e384cb06be6e9fde909db891",
+      "timestamp": "0:35",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "push up very simple we could have",
+      "removedDurationLabel": null,
+      "sourceLine": 35,
+      "sourceLineSha256": "8a108608e18ed987ee44936ec379eb355a540d736398094e1057dc7f3d0887e3",
+      "timestamp": "0:35",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:38",
+      "sourceLine": 36,
+      "sourceLineSha256": "d3ef1cc23c55f2223ec550f38262237cb034642328bb128343bb85d3d2aa33f3",
+      "timestamp": "0:38",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "started we could have started the",
+      "removedDurationLabel": null,
+      "sourceLine": 37,
+      "sourceLineSha256": "f4db722ea3970e7144000fe425e943983f0499e44c8642fded0dec0792bf3678",
+      "timestamp": "0:38",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:40",
+      "sourceLine": 38,
+      "sourceLineSha256": "9702c8d0a564cf77f825d890398b8e02d0f56329408e465a76f1de08897a2b93",
+      "timestamp": "0:40",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "push-up from here why because it's",
+      "removedDurationLabel": null,
+      "sourceLine": 39,
+      "sourceLineSha256": "8f315ea48ee1a844c577d911e9b497155e6e1a15d6caf354112409e8f619feef",
+      "timestamp": "0:40",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:41",
+      "sourceLine": 40,
+      "sourceLineSha256": "e9cac07c73da9d9bfe57f93a7d25bb954dc26cb1b2a3481c995814ba3fcaa280",
+      "timestamp": "0:41",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "previous",
+      "removedDurationLabel": null,
+      "sourceLine": 41,
+      "sourceLineSha256": "6da0633528deaa0144e7b058315f0b753ec0b945163a72bf96a0d18180f9de0d",
+      "timestamp": "0:41",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:43",
+      "sourceLine": 42,
+      "sourceLineSha256": "ff05f8ef379a7c6e91bb7981e89f1ad2b50c29b349e906d2707e1291d2fc7696",
+      "timestamp": "0:43",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "support here also resistance",
+      "removedDurationLabel": null,
+      "sourceLine": 43,
+      "sourceLineSha256": "227cce3e3525f87dfb4da1b4e261a0652b81de2deef315fa0305deab2d1968c7",
+      "timestamp": "0:43",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:46",
+      "sourceLine": 44,
+      "sourceLineSha256": "01eb42e3f9eed16cbedf3e45217ee423ff14fdbe4a865298ef3f0ceaf0cab7e3",
+      "timestamp": "0:46",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "support some a little choppy through",
+      "removedDurationLabel": null,
+      "sourceLine": 45,
+      "sourceLineSha256": "d655697a13e1e18cf67303ea6d6b612039a4934bd212e2450c90235e45d826b4",
+      "timestamp": "0:46",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:49",
+      "sourceLine": 46,
+      "sourceLineSha256": "a9de0f575872d0e6207061ea57419264ec97be5533753c6aed01c7ff61954c87",
+      "timestamp": "0:49",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here",
+      "removedDurationLabel": null,
+      "sourceLine": 47,
+      "sourceLineSha256": "fcec91509759ad995c2cd14bcb26b2720993faf61c29d379b270d442d92290eb",
+      "timestamp": "0:49",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:49",
+      "sourceLine": 48,
+      "sourceLineSha256": "a9de0f575872d0e6207061ea57419264ec97be5533753c6aed01c7ff61954c87",
+      "timestamp": "0:49",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and some resistance so this could be the",
+      "removedDurationLabel": null,
+      "sourceLine": 49,
+      "sourceLineSha256": "84b54d552db186bc1969def6b97556388cd5e5d23eef5a9e27a78dc8dd61bc15",
+      "timestamp": "0:49",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:51",
+      "sourceLine": 50,
+      "sourceLineSha256": "c657a6578a80c2789344a64fcebf03fb430cfbdc4da7bf2ec2d764c07bbcd003",
+      "timestamp": "0:51",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "area where we could have the stop",
+      "removedDurationLabel": null,
+      "sourceLine": 51,
+      "sourceLineSha256": "7a2f6559f3c6e8b92c07a6c9f0d326420cdbc16fb0b7800be9a0491acf3f9c57",
+      "timestamp": "0:51",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:53",
+      "sourceLine": 52,
+      "sourceLineSha256": "cf687f48649d5ff86a8ac425ec15abcff8ce462b3ec6d5d769fa36cb49282f67",
+      "timestamp": "0:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so then we get that leg up and we wait",
+      "removedDurationLabel": null,
+      "sourceLine": 53,
+      "sourceLineSha256": "d16093bcfbaac599004c0b6a23fc947a9d82a9d983fec8bc81b160e81de09092",
+      "timestamp": "0:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:55",
+      "sourceLine": 54,
+      "sourceLineSha256": "ab0b1881e96077f1249a437bbe7e9d58bbcd94b124ebfb47b54b3658051159df",
+      "timestamp": "0:55",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "for our entry signal here",
+      "removedDurationLabel": null,
+      "sourceLine": 55,
+      "sourceLineSha256": "9df4062ddcc661a94d9e596d289a0f334b9df430d17757829ef7bad4df084b1d",
+      "timestamp": "0:55",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "0:56",
+      "sourceLine": 56,
+      "sourceLineSha256": "85bb3bb75b6e1abc0a44a6f021d982fbd7cda4739dadb978fc66e9007654e33e",
+      "timestamp": "0:56",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and we take our entry sure the cleaner",
+      "removedDurationLabel": null,
+      "sourceLine": 57,
+      "sourceLineSha256": "627fa1fe6075875de695ed46f769a67764ad76af14b8c923b1a3ce249c447686",
+      "timestamp": "0:56",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:00",
+      "sourceLine": 58,
+      "sourceLineSha256": "0d3eefe364d48a95f5d0a584c3740d9ca5ad866c9559cf4dc9720290cd389fb8",
+      "timestamp": "1:00",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "trade",
+      "removedDurationLabel": null,
+      "sourceLine": 59,
+      "sourceLineSha256": "276446ba01e3aa387c83b06f54fccc5ac65bdc6099157a2a828716eac9c6fd4d",
+      "timestamp": "1:00",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:00",
+      "sourceLine": 60,
+      "sourceLineSha256": "0d3eefe364d48a95f5d0a584c3740d9ca5ad866c9559cf4dc9720290cd389fb8",
+      "timestamp": "1:00",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "would be nzdusd which is basically like",
+      "removedDurationLabel": null,
+      "sourceLine": 61,
+      "sourceLineSha256": "5fb217b5b2fd8b3a0c5c9c71484b75765492628a12a421c915cf8a05d87e1bcc",
+      "timestamp": "1:00",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:03",
+      "sourceLine": 62,
+      "sourceLineSha256": "d164fd6835b54dc3aceb3273530f03ba11e9ea11a76aa4e5d65c2030d54081a7",
+      "timestamp": "1:03",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "its",
+      "removedDurationLabel": null,
+      "sourceLine": 63,
+      "sourceLineSha256": "ea103d6cb5c3fb3d696cdc37a84bf62cd929fc5bf47e9c7250bab7d5f8d45e97",
+      "timestamp": "1:03",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:05",
+      "sourceLine": 64,
+      "sourceLineSha256": "f12fd99f26648685b6beef22871aa130236ae9255448b124dad998cf51a9e24d",
+      "timestamp": "1:05",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "cousin or brother or whatever you want",
+      "removedDurationLabel": null,
+      "sourceLine": 65,
+      "sourceLineSha256": "5866253b4fd02147b639e1f19e4141808986966ad3e76678566832dcff6b2a23",
+      "timestamp": "1:05",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:06",
+      "sourceLine": 66,
+      "sourceLineSha256": "2ca85a3a71038643e9652b05280250303f3d2d2f75dd8ab46419e6f7d827b394",
+      "timestamp": "1:06",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "to call it because they they move very",
+      "removedDurationLabel": null,
+      "sourceLine": 67,
+      "sourceLineSha256": "86dd271a365a9083a3ea019deaa384c0c3435de94e4a65a2916519ff73a5ba01",
+      "timestamp": "1:06",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:08",
+      "sourceLine": 68,
+      "sourceLineSha256": "2337b5c1d1654b84bcd3fb9bc09d4452168a667f784f6b362eaa5c0594cd16da",
+      "timestamp": "1:08",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "much the same",
+      "removedDurationLabel": null,
+      "sourceLine": 69,
+      "sourceLineSha256": "48c0d91bf653c19bca6b24e9986aeaba1c0b2ce1351e8a5e7bd4f07d37d6ec33",
+      "timestamp": "1:08",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:10",
+      "sourceLine": 70,
+      "sourceLineSha256": "b37ae13e618cd2a9af595ca5d1af15ec54f22629c7fb2550c6bf59a77f8c83c7",
+      "timestamp": "1:10",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so clearly you have the low",
+      "removedDurationLabel": null,
+      "sourceLine": 71,
+      "sourceLineSha256": "3addb938b48d93e3d327a6762c8f77c005f976b5644fba66b425f99aa2060919",
+      "timestamp": "1:10",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:13",
+      "sourceLine": 72,
+      "sourceLineSha256": "fd18287e99e3834da62e0cdaa21c2a498e14ae5ef73f9f944ca85a74455183db",
+      "timestamp": "1:13",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "high low high break through all of this",
+      "removedDurationLabel": null,
+      "sourceLine": 73,
+      "sourceLineSha256": "46e8531475deb071944f1caee30cb9d79932c0f4236ffe2746214ce7c4ffdc74",
+      "timestamp": "1:13",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:17",
+      "sourceLine": 74,
+      "sourceLineSha256": "5c70ee556e54dab34414d755f403158ae5d8ced47b6756b18e32373a2401b74e",
+      "timestamp": "1:17",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "consolidation break through all of this",
+      "removedDurationLabel": null,
+      "sourceLine": 75,
+      "sourceLineSha256": "4be2b3bc5acfff6a720d2c6b3a8de85787df8d3e124aae3206a09332be9c64fc",
+      "timestamp": "1:17",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:19",
+      "sourceLine": 76,
+      "sourceLineSha256": "d43675b995215b79c95f729563e492bd0ada4e76163dffbea71750e53b58b373",
+      "timestamp": "1:19",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "cluster even these structure points here",
+      "removedDurationLabel": null,
+      "sourceLine": 77,
+      "sourceLineSha256": "2635158f11ffcd5d0c4ab98ecfef173d28584ae954eda2a81b40ca6f8216d82f",
+      "timestamp": "1:19",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:22",
+      "sourceLine": 78,
+      "sourceLineSha256": "cbe9eb3388bddca76509abd636f0fa9a0b331df91ca11c2401dd1d658fdae7a7",
+      "timestamp": "1:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so now you're pretty much waiting for",
+      "removedDurationLabel": null,
+      "sourceLine": 79,
+      "sourceLineSha256": "4785b277b8e23f526312887c35873e8ac34685726ffaebbbe51379c1f3eed6c7",
+      "timestamp": "1:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:23",
+      "sourceLine": 80,
+      "sourceLineSha256": "8d93bab675f4c1f0bc7346230d0d3df4bb6ea7326876068a27c651b8038e70d8",
+      "timestamp": "1:23",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "that lower high",
+      "removedDurationLabel": null,
+      "sourceLine": 81,
+      "sourceLineSha256": "e3eb6860a093faf32f57dea9e97588afc2ad45874e170170a0a68dc88ce3a03b",
+      "timestamp": "1:23",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:25",
+      "sourceLine": 82,
+      "sourceLineSha256": "c7ab9fbdd14e1c29b6f185a97ee48cf50f04682a8bd9d33edd25217da1745354",
+      "timestamp": "1:25",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "a previous structure and by the time",
+      "removedDurationLabel": null,
+      "sourceLine": 83,
+      "sourceLineSha256": "aed7abcf0057604c34f497422688843df805fee3406f1e52c48557bf9b98fa46",
+      "timestamp": "1:25",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:27",
+      "sourceLine": 84,
+      "sourceLineSha256": "1b74a6d6b1c9da394791fa14c378975588128633599a620bc57fc7ddec956b1f",
+      "timestamp": "1:27",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "that this comes back up here",
+      "removedDurationLabel": null,
+      "sourceLine": 85,
+      "sourceLineSha256": "a2329c949b4f97f8bff45b4de113bea198d01b4fe9c2d19191ce4106051262f1",
+      "timestamp": "1:27",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:28",
+      "sourceLine": 86,
+      "sourceLineSha256": "b58db736e8742487d8436a54e5c705ec0d0f227da469e998be0a1a98f72c26b9",
+      "timestamp": "1:28",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "this ema would have caught up and it",
+      "removedDurationLabel": null,
+      "sourceLine": 87,
+      "sourceLineSha256": "b024e55e7dbd6035e75564c55303ee19a36f5c749db98345e2ad096ef75d2dfd",
+      "timestamp": "1:28",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:31",
+      "sourceLine": 88,
+      "sourceLineSha256": "85a82707b0072eab3c9c8a34eadb6a36344141411bf54fc8653f4da086b3f0d0",
+      "timestamp": "1:31",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "would have been acting as resistance",
+      "removedDurationLabel": null,
+      "sourceLine": 89,
+      "sourceLineSha256": "fe7f69f2f53efec09a2cd719783d49a0f7025d2727786fe2656fd9d70e300fd6",
+      "timestamp": "1:31",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:32",
+      "sourceLine": 90,
+      "sourceLineSha256": "d115cc0ca76af27ab6e198c15ce91ee2e7d1bb43f6dc51e8626882b616768f5f",
+      "timestamp": "1:32",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "because clearly when it's bullish its",
+      "removedDurationLabel": null,
+      "sourceLine": 91,
+      "sourceLineSha256": "8c655da4828302ad1ca8ccfad64433e1236021cf18dc4ffeaa0fb112bd9a3f54",
+      "timestamp": "1:32",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:36",
+      "sourceLine": 92,
+      "sourceLineSha256": "cbb3c1dfa602bf3af77a40f460d225f20a948ec60bbef5825c8fed36f7a84218",
+      "timestamp": "1:36",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "support",
+      "removedDurationLabel": null,
+      "sourceLine": 93,
+      "sourceLineSha256": "a18603086e5bdf9df88ccc9f5a083fed093e819976e87456b74dafcbd7011114",
+      "timestamp": "1:36",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:37",
+      "sourceLine": 94,
+      "sourceLineSha256": "6b7cb2cf9fa1e8248d5084bd689997b1418d80741665894dba1ba9495c5aa4a5",
+      "timestamp": "1:37",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "when it's bearish it's resistance and i",
+      "removedDurationLabel": null,
+      "sourceLine": 95,
+      "sourceLineSha256": "5c8cd25778325e35f2ecece96e371147fc70d0edc82ef93316e1f62fa5fa2709",
+      "timestamp": "1:37",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:39",
+      "sourceLine": 96,
+      "sourceLineSha256": "1159651014dca00a39b98dc401f358b9f92b54efe9461814595307a04f635bdb",
+      "timestamp": "1:39",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "know as i might be repeating myself for",
+      "removedDurationLabel": null,
+      "sourceLine": 97,
+      "sourceLineSha256": "6bdf9bd8ef1b9dec03b1e524711621c5d0f80de18d2f21ae52d342fddca3aae8",
+      "timestamp": "1:39",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:40",
+      "sourceLine": 98,
+      "sourceLineSha256": "cf24544dea494e7e7822cc558f326245b3d6c026dbda4e6dd72fbdfbf4ca4c8c",
+      "timestamp": "1:40",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "those of you that hop on every single",
+      "removedDurationLabel": null,
+      "sourceLine": 99,
+      "sourceLineSha256": "b3f7a5d0363d9f5b35a6b0c71183068e783b40c212de47dac8b235d43f5d27c5",
+      "timestamp": "1:40",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:42",
+      "sourceLine": 100,
+      "sourceLineSha256": "1d446b526abebc35f726a6a21c25ffadbdf6be216b6e6a29877c95b25c1a1f51",
+      "timestamp": "1:42",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "morning",
+      "removedDurationLabel": null,
+      "sourceLine": 101,
+      "sourceLineSha256": "c23b31a0179b550f8a18fb06bc52a26e32333540369073d646da5c84a4dc341f",
+      "timestamp": "1:42",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:43",
+      "sourceLine": 102,
+      "sourceLineSha256": "43c934f4068dacfbdee2084f7ee8d4388f4378ceedd8aa10e2634aa79f2617bd",
+      "timestamp": "1:43",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "but um this is just the simplicity if",
+      "removedDurationLabel": null,
+      "sourceLine": 103,
+      "sourceLineSha256": "f365336e617e16543cc944e25a04a071aad1596f52cd7204b995dbf1a36f888a",
+      "timestamp": "1:43",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:46",
+      "sourceLine": 104,
+      "sourceLineSha256": "7d7ae3bed43c875c968747ace98b46ea84d233ad64a8f78ab614f7cbbb6180fc",
+      "timestamp": "1:46",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "you look on the four hour like",
+      "removedDurationLabel": null,
+      "sourceLine": 105,
+      "sourceLineSha256": "7cd12f0fccac4fc8d5f31054c8649420c12197efc7e781743d51d291e0022bef",
+      "timestamp": "1:46",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:48",
+      "sourceLine": 106,
+      "sourceLineSha256": "e428624f393ef500dd9207bf05ab25f4dd4b63bdb541ed7887a9e29484a4e98f",
+      "timestamp": "1:48",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "price has literally done nothing since",
+      "removedDurationLabel": null,
+      "sourceLine": 107,
+      "sourceLineSha256": "093b8aad9a840f72a79606ee3c55b13038f7bf85cae57f5ac97fa23ecf1626d8",
+      "timestamp": "1:48",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:50",
+      "sourceLine": 108,
+      "sourceLineSha256": "25d306bc62a9915bed4c36f7b2c38fdb53b4bdb0d654fdfa0e0916251bfd2fa2",
+      "timestamp": "1:50",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "yesterday",
+      "removedDurationLabel": null,
+      "sourceLine": 109,
+      "sourceLineSha256": "9523d9fbe79bcf3ee5f9f664a8041fa3cdba4b6b8bb902cb5ec335a5bf1ca769",
+      "timestamp": "1:50",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:51",
+      "sourceLine": 110,
+      "sourceLineSha256": "471321f3a601b378ef278ff9e5ab9e68e18c76158dfaf3bef8fab230ff285cb7",
+      "timestamp": "1:51",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "it's pretty much at the same spot you",
+      "removedDurationLabel": null,
+      "sourceLine": 111,
+      "sourceLineSha256": "c0f2a026faca99be399240fbb73ef737f435dd448f9deed28201f29cc3ddbadf",
+      "timestamp": "1:51",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:53",
+      "sourceLine": 112,
+      "sourceLineSha256": "6690e9aa92d4d7076983b4b8636d82c5728f8615f2b034e260039103596ee525",
+      "timestamp": "1:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "know it's looking like it's having to",
+      "removedDurationLabel": null,
+      "sourceLine": 113,
+      "sourceLineSha256": "0f439a38dd68cffd84e203e7f03850282d3ac19fc719c5e134b9ddcefa2d4756",
+      "timestamp": "1:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:55",
+      "sourceLine": 114,
+      "sourceLineSha256": "6450f5b35daa591c26b08bc004d3bd66fb5b140b5fc384aeabe9578d74c26630",
+      "timestamp": "1:55",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "slow down",
+      "removedDurationLabel": null,
+      "sourceLine": 115,
+      "sourceLineSha256": "e4120a6471a6d36588f54cb735e1579eeb5610371c810cf05988c3ab3b47475c",
+      "timestamp": "1:55",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:56",
+      "sourceLine": 116,
+      "sourceLineSha256": "17f3b474a8ff1da8eb8ae710b430cfdce58f9b889fd8e31209f600dd4cec7d6f",
+      "timestamp": "1:56",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so it's looking like let's see if",
+      "removedDurationLabel": null,
+      "sourceLine": 117,
+      "sourceLineSha256": "7f20dbf552ce01fca3e27ca8ae8d8eec58d221949db9c1d1f1b09a5f4f4fa997",
+      "timestamp": "1:56",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:58",
+      "sourceLine": 118,
+      "sourceLineSha256": "8d2f37e2bdf040940c61a40431d3c3db07fc883fd37795db5c95fc2f4ded80ab",
+      "timestamp": "1:58",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "structure has shifted",
+      "removedDurationLabel": null,
+      "sourceLine": 119,
+      "sourceLineSha256": "47dd0167988309fb52c611c017be14e388120ea291233b16a4d6e65b2d91b5da",
+      "timestamp": "1:58",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "1:59",
+      "sourceLine": 120,
+      "sourceLineSha256": "c6e359da10d8bf9f03866aaa42e9cee2ded67431d502d083b88ef768e0d72894",
+      "timestamp": "1:59",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so you can see the the shift and",
+      "removedDurationLabel": null,
+      "sourceLine": 121,
+      "sourceLineSha256": "a092c6cde0e65e89d0891051f57980ad0e0751cab87b4af7d7329204c6f20798",
+      "timestamp": "1:59",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:01",
+      "sourceLine": 122,
+      "sourceLineSha256": "a7bf5878301b7e85697d5942caaf7e3167d98065d915414a0171202a3c29b43c",
+      "timestamp": "2:01",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "structure on the lower timeframes right",
+      "removedDurationLabel": null,
+      "sourceLine": 123,
+      "sourceLineSha256": "361b0672599130fa4cbef9f79b3c1dc9288d42ed953a1f1f94633f2ff069306f",
+      "timestamp": "2:01",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:03",
+      "sourceLine": 124,
+      "sourceLineSha256": "4f682cc3b9d60990fb2231496b8bc0a0bd25efd5d5ffe0edb6fe97b4052c9662",
+      "timestamp": "2:03",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so you can see how it's low",
+      "removedDurationLabel": null,
+      "sourceLine": 125,
+      "sourceLineSha256": "fba5456f970d80ecf18a2750f80919870ee6c7d1ba8af2845ba13cd9ffc50d9a",
+      "timestamp": "2:03",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:05",
+      "sourceLine": 126,
+      "sourceLineSha256": "71c718837afdfc51dd0fde4947616d29f790aba25c367b8221a4a92f21f2fe8e",
+      "timestamp": "2:05",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "high low high higher low",
+      "removedDurationLabel": null,
+      "sourceLine": 127,
+      "sourceLineSha256": "6230a0ad46238df0315a73292df531fb08aec0221b85c777c2d5b46db5bb8c0c",
+      "timestamp": "2:05",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:09",
+      "sourceLine": 128,
+      "sourceLineSha256": "5ec23fb1743f90d8a41661058577237993ae6a71a560761de403389ad6bd3a61",
+      "timestamp": "2:09",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "lower high higher low so this might be",
+      "removedDurationLabel": null,
+      "sourceLine": 129,
+      "sourceLineSha256": "ad7c776906a1d215e09201993cf98da66f817cbef265bd6da67bb036f5c82a07",
+      "timestamp": "2:09",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:11",
+      "sourceLine": 130,
+      "sourceLineSha256": "529710f30493956cc471e03e5233123a0006d27bd2e8ad171a8e50af6c7a550f",
+      "timestamp": "2:11",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "like the one that's going to push it up",
+      "removedDurationLabel": null,
+      "sourceLine": 131,
+      "sourceLineSha256": "648b47c93f24cfd6d9c530b69ee0779a71a3c333ac8548be73ce866ebfb353ef",
+      "timestamp": "2:11",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:14",
+      "sourceLine": 132,
+      "sourceLineSha256": "1dc932f827fc0caa9bf299d41e233dbb94728aecd99d894f7efe0b9a92a7c303",
+      "timestamp": "2:14",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "retest this ema retest structure and",
+      "removedDurationLabel": null,
+      "sourceLine": 133,
+      "sourceLineSha256": "9a0b836ae904d2e00496e2ff9f34dcdb608bcbbb05832488c4b7362a1de417a2",
+      "timestamp": "2:14",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:17",
+      "sourceLine": 134,
+      "sourceLineSha256": "04fb747d3abb68c76697f01395cf0730e14c949c661cbfc40d4f179b85b0ed24",
+      "timestamp": "2:17",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "then it's going to have",
+      "removedDurationLabel": null,
+      "sourceLine": 135,
+      "sourceLineSha256": "36669bfb70392b9209124eafbecf0d39a73d61d13f7bbccc95020c738d80cc4a",
+      "timestamp": "2:17",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:19",
+      "sourceLine": 136,
+      "sourceLineSha256": "2b14a7ea9433f9922da381bb210edca8b211874de0869326700a643c029f1a24",
+      "timestamp": "2:19",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "this bullish structure to our area of",
+      "removedDurationLabel": null,
+      "sourceLine": 137,
+      "sourceLineSha256": "6b0187480ad2edf2190784e132403390cce0f5b450025396e0254db75359f069",
+      "timestamp": "2:19",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:21",
+      "sourceLine": 138,
+      "sourceLineSha256": "d9c36066d16765d3b40baa9f317aacdd1b782b556a762af147392f483a57513d",
+      "timestamp": "2:21",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "interest",
+      "removedDurationLabel": null,
+      "sourceLine": 139,
+      "sourceLineSha256": "828408e40d4fe651488b14696b60b613c9683ab9862e03f4e72aec7c1fda7635",
+      "timestamp": "2:21",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:22",
+      "sourceLine": 140,
+      "sourceLineSha256": "fcc944f36dbe21cab0276f77cc5b07b2259e724c67407675f4bc45ce4485f654",
+      "timestamp": "2:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and then here's where we wait for the",
+      "removedDurationLabel": null,
+      "sourceLine": 141,
+      "sourceLineSha256": "1f600dc19d7b54abc83c1f2cb3fd2fb6e5c604330395acfe9344d5ac91b1885a",
+      "timestamp": "2:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:25",
+      "sourceLine": 142,
+      "sourceLineSha256": "82267357d525589ccc3b770e3a3882a6d3361929225eccfdabd4a757696faadc",
+      "timestamp": "2:25",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "breaker structure",
+      "removedDurationLabel": null,
+      "sourceLine": 143,
+      "sourceLineSha256": "21115ca81660331826e1d9d2b84089f131720337cfa0dd365c47fc7a46e5d256",
+      "timestamp": "2:25",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:26",
+      "sourceLine": 144,
+      "sourceLineSha256": "d95a7d5bb332e61278770626410e74cbe3b72f805097d3c500bd183c9eaaa3b4",
+      "timestamp": "2:26",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and then we continue shorting it down",
+      "removedDurationLabel": null,
+      "sourceLine": 145,
+      "sourceLineSha256": "4497eabfb8d3759b37f25d2f152b81e72cbbcb60b6f196efbf6456a01e3ff021",
+      "timestamp": "2:26",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:28",
+      "sourceLine": 146,
+      "sourceLineSha256": "d985c78dbf3aaabc1221ed0b8415d91c778afa30acc399eef0909d1e15fadb70",
+      "timestamp": "2:28",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "with the trend",
+      "removedDurationLabel": null,
+      "sourceLine": 147,
+      "sourceLineSha256": "cacd3ab47d3892277475f55bdd94106d94300540332792cd4cda1cc09389044d",
+      "timestamp": "2:28",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:29",
+      "sourceLine": 148,
+      "sourceLineSha256": "3db04a068176ce46437d480d2bec37cd81080532c9a61a45eb998895f6a8f91a",
+      "timestamp": "2:29",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "does that make any sense we don't really",
+      "removedDurationLabel": null,
+      "sourceLine": 149,
+      "sourceLineSha256": "001563e9517653453cd331f681c5fba5715a6662ba78ba6d9de639a398b84172",
+      "timestamp": "2:29",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:30",
+      "sourceLine": 150,
+      "sourceLineSha256": "9cc5772d3542d481a63fcb40fb9f75681b409199f674145063578aeae7c5b779",
+      "timestamp": "2:30",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "want to catch this little move up",
+      "removedDurationLabel": null,
+      "sourceLine": 151,
+      "sourceLineSha256": "5aed8b8572de9978f4addc661175bf2e687ca812a5c92eff8e19e837a0d141fe",
+      "timestamp": "2:30",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:33",
+      "sourceLine": 152,
+      "sourceLineSha256": "412a40ccf92cb105e0c1aa804f0c017b3f2af46cd4caea26b9ec2771c5758d73",
+      "timestamp": "2:33",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "because then we catch the bigger leg all",
+      "removedDurationLabel": null,
+      "sourceLine": 153,
+      "sourceLineSha256": "0bff75382b23dc7e410bdab15e965bc9fce983d0bfa827a06ccc439dc2d4510f",
+      "timestamp": "2:33",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:35",
+      "sourceLine": 154,
+      "sourceLineSha256": "a8e1d23373b2cab7ff0fe5b633a80619bcdda3c5c02b6a81fdb145cd3ba79cfe",
+      "timestamp": "2:35",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "the way down for a new lower low",
+      "removedDurationLabel": null,
+      "sourceLine": 155,
+      "sourceLineSha256": "ad530e3563a1708709597229d9ebf9e53fba5b461b9f0b006e27309ca2c23bc6",
+      "timestamp": "2:35",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:37",
+      "sourceLine": 156,
+      "sourceLineSha256": "b4c95ed10d9fa91d016f9341a0ca8ded6a5a98c5608392a4bff3de4a14ee43bb",
+      "timestamp": "2:37",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and we're going with the trend so the",
+      "removedDurationLabel": null,
+      "sourceLine": 157,
+      "sourceLineSha256": "b2c9f00e4a8742cd7d2fbc5e7bac9d42ee33c3564846dbb19e4ef1c3ef548883",
+      "timestamp": "2:37",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:39",
+      "sourceLine": 158,
+      "sourceLineSha256": "37f6c582ac4a33fd73d645cce9bc1d6babeb317f4a09610c0a33745ff9895652",
+      "timestamp": "2:39",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "odds are in our favor even more",
+      "removedDurationLabel": null,
+      "sourceLine": 159,
+      "sourceLineSha256": "16cd13bad181bc47ef6a8d416e3101455d4e2049d758e08a70194f860b6032e5",
+      "timestamp": "2:39",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:42",
+      "sourceLine": 160,
+      "sourceLineSha256": "c93050b1b9ffe92153f7f1f648d35080f5895aaa5fb17e76278113ae978b405e",
+      "timestamp": "2:42",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so that's that's the power of patience",
+      "removedDurationLabel": null,
+      "sourceLine": 161,
+      "sourceLineSha256": "c745612f207499a78621ad1361ce56da73410eadd3e60c22e7cecaa1a02440dd",
+      "timestamp": "2:42",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:44",
+      "sourceLine": 162,
+      "sourceLineSha256": "21ee02d5e2ca9c39eb97e1542ae4d8b9ab04cfcc3d1de778f1096b73767be8b6",
+      "timestamp": "2:44",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "um",
+      "removedDurationLabel": null,
+      "sourceLine": 163,
+      "sourceLineSha256": "289c90decf40c8ec15f72f6080f2a4e7cd11d4128530dd5d290fc06ebadba620",
+      "timestamp": "2:44",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:46",
+      "sourceLine": 164,
+      "sourceLineSha256": "3f4c5a60179ccfa0e98a6ec77f0e16bb5f559aff3b8852a3ba9d64567bad863c",
+      "timestamp": "2:46",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "gu same thing we've clearly broken out",
+      "removedDurationLabel": null,
+      "sourceLine": 165,
+      "sourceLineSha256": "e1a4b7eb950fcae6e52e7d085b0bd578a905f66b03a919763c04df80fb0a6c35",
+      "timestamp": "2:46",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:49",
+      "sourceLine": 166,
+      "sourceLineSha256": "70d0b3b130af92b6928cc64421cc62f136bb615d7b566c273bb9fd0cf39a60e0",
+      "timestamp": "2:49",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "of",
+      "removedDurationLabel": null,
+      "sourceLine": 167,
+      "sourceLineSha256": "28391d3bc64ec15cbb090426b04aa6b7649c3cc85f11230bb0105e02d15e3624",
+      "timestamp": "2:49",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:51",
+      "sourceLine": 168,
+      "sourceLineSha256": "a1f3474e8949aa2bdd5406939e52c972d8555076514551520344a71b344a6ed6",
+      "timestamp": "2:51",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "this cluster here and now we're having",
+      "removedDurationLabel": null,
+      "sourceLine": 169,
+      "sourceLineSha256": "048a178ed72467be398068e9fe23a0086b5ec62f073cbe31816fd5a24d4fef5f",
+      "timestamp": "2:51",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:53",
+      "sourceLine": 170,
+      "sourceLineSha256": "3990a67399e0780d5a2792abeec8d73bebbcdbed743ceaa7594870d288c0366d",
+      "timestamp": "2:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "that pullback to retest the ema with the",
+      "removedDurationLabel": null,
+      "sourceLine": 171,
+      "sourceLineSha256": "1371d7c96a8d0953dc5ac8d8d71a4875ced02586443760114d40e6422e2135fc",
+      "timestamp": "2:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:55",
+      "sourceLine": 172,
+      "sourceLineSha256": "527811625d7d74d861547fd132adbb87b3c2f5a798378425bfa9a20ec625a079",
+      "timestamp": "2:55",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "previous structure",
+      "removedDurationLabel": null,
+      "sourceLine": 173,
+      "sourceLineSha256": "28b432bfee3bce82cc64b63bb46c44dcd5a96bd916703170539e7b2a134f7ede",
+      "timestamp": "2:55",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:56",
+      "sourceLine": 174,
+      "sourceLineSha256": "aac1494a8b9bae7439c62efd59b29c6cd7a0c9756d1c996a6aeac5e9cf430755",
+      "timestamp": "2:56",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "as you can tell it looks like we're",
+      "removedDurationLabel": null,
+      "sourceLine": 175,
+      "sourceLineSha256": "a275643644ae5aace9418a62561802ee19cb37fbd3343457ba54ca0a17d78f27",
+      "timestamp": "2:56",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "2:57",
+      "sourceLine": 176,
+      "sourceLineSha256": "720b2f67ce626b08da59816f47b06d65d07e2cc152b5d0b142bf7575879a3ed2",
+      "timestamp": "2:57",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "already having that pullback do you",
+      "removedDurationLabel": null,
+      "sourceLine": 177,
+      "sourceLineSha256": "1dba758b54690c5ed81ac4081504ec9e0570b1508270ae8c8b09fdbbbe107897",
+      "timestamp": "2:57",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:00",
+      "sourceLine": 178,
+      "sourceLineSha256": "86c07a115fa50781f5b2eaeaf012235038011d035d2cfbc6466b170001773a15",
+      "timestamp": "3:00",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "ever trade the counter trend never bro",
+      "removedDurationLabel": null,
+      "sourceLine": 179,
+      "sourceLineSha256": "02f592d38fd234715211f0d2d0969b4176bf1cfee64668c4a41be751b37a529f",
+      "timestamp": "3:00",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:03",
+      "sourceLine": 180,
+      "sourceLineSha256": "1d70a30262db2b433e62de3aca4d172c526cbf2af12c21b59003b5cc223e8d63",
+      "timestamp": "3:03",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "not anymore",
+      "removedDurationLabel": null,
+      "sourceLine": 181,
+      "sourceLineSha256": "027027a88fe8e03e2447b033ac03570ee419a57dcc6d1b4e47953b1ca5f5d60e",
+      "timestamp": "3:03",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:04",
+      "sourceLine": 182,
+      "sourceLineSha256": "58e6e46ed3a92fe4ab9b2aa23538e8109c880fdd90efbe09c65c68933affd602",
+      "timestamp": "3:04",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "um that's like a that's like a rookie",
+      "removedDurationLabel": null,
+      "sourceLine": 183,
+      "sourceLineSha256": "02dbb14b9bb27d2492b19bc0019150a4ec78a1717df8f2eb4ce81c3578945b2c",
+      "timestamp": "3:04",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:07",
+      "sourceLine": 184,
+      "sourceLineSha256": "4d7a0d6cc85d6a51998641e49a46295c6e7dd64a7c6c7af72d55df3384c0f973",
+      "timestamp": "3:07",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "thing",
+      "removedDurationLabel": null,
+      "sourceLine": 185,
+      "sourceLineSha256": "5de94d691ae3039a3f5d362fea9a35964fe0cc4ae44a6a84266d3614755c69b2",
+      "timestamp": "3:07",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:07",
+      "sourceLine": 186,
+      "sourceLineSha256": "4d7a0d6cc85d6a51998641e49a46295c6e7dd64a7c6c7af72d55df3384c0f973",
+      "timestamp": "3:07",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "there's no need like i and like i said",
+      "removedDurationLabel": null,
+      "sourceLine": 187,
+      "sourceLineSha256": "5a9e19d854e576207ea04e6a8d70047b1ecdb97e5de38c70cc94d54c5f3a8f06",
+      "timestamp": "3:07",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:09",
+      "sourceLine": 188,
+      "sourceLineSha256": "c8a137fc940f018d730f5a78e900ab2f802fde169a4e3f28c1b36de571ddd4cc",
+      "timestamp": "3:09",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "like i only take trades that are worth",
+      "removedDurationLabel": null,
+      "sourceLine": 189,
+      "sourceLineSha256": "e3f2071937fcd80415a113a960ef2882eec7db24df9a5c46538a5e4b3c1a2f67",
+      "timestamp": "3:09",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:11",
+      "sourceLine": 190,
+      "sourceLineSha256": "7725e95e339a8321bb53e4526fe0d843f5d1e3a94991fed1bd954079b819dc8d",
+      "timestamp": "3:11",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "my money i don't want to put",
+      "removedDurationLabel": null,
+      "sourceLine": 191,
+      "sourceLineSha256": "5a149655f5df741c731e5fb3fe2e4a9dc0d075a245e63f263829a88f5b164bf3",
+      "timestamp": "3:11",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:13",
+      "sourceLine": 192,
+      "sourceLineSha256": "13e1215e400f34e887b7c77efb42caf285296a258e33280daf0f25c0aa375cdb",
+      "timestamp": "3:13",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "my thousands of dollars at risk for what",
+      "removedDurationLabel": null,
+      "sourceLine": 193,
+      "sourceLineSha256": "3440ed55c80b19d2207a6d5512753c8893e52ebb721b9e06d2a6fd5969155924",
+      "timestamp": "3:13",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:15",
+      "sourceLine": 194,
+      "sourceLineSha256": "24d0b018597aaa597f31c0b6e5999cfd36d0a14f25b59f27d3336f54a008555b",
+      "timestamp": "3:15",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "just to take a trade",
+      "removedDurationLabel": null,
+      "sourceLine": 195,
+      "sourceLineSha256": "9a337cfdf751800f30fc55ce49d9cf17bbe774888bf0f0a5092fb1a374ae155a",
+      "timestamp": "3:15",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:16",
+      "sourceLine": 196,
+      "sourceLineSha256": "7e11bfc646168804dc0f3e14af630cff6a047d8b0b99a4a35ca4fb6a3eb0bcb3",
+      "timestamp": "3:16",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "i'm good like i've already made money",
+      "removedDurationLabel": null,
+      "sourceLine": 197,
+      "sourceLineSha256": "f3724129ef6405d1e84e2f9c0b722d4decbfd2ed0121703bbf8b8cc01d1f60d3",
+      "timestamp": "3:16",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:19",
+      "sourceLine": 198,
+      "sourceLineSha256": "ea24a483baffe1945a4423f357397fb1d96dba9ea0a7cbff53d72152cb1cb199",
+      "timestamp": "3:19",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "for example i've already made money",
+      "removedDurationLabel": null,
+      "sourceLine": 199,
+      "sourceLineSha256": "b72cd0874842ab34f7cf534af92ea4c49dbbc38e058afb78b8cf9868a5471870",
+      "timestamp": "3:19",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:20",
+      "sourceLine": 200,
+      "sourceLineSha256": "5e833bd1215f6f5085334aa190809002b1f22b2c0a7008968ed6b37f94929aac",
+      "timestamp": "3:20",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "trading this month",
+      "removedDurationLabel": null,
+      "sourceLine": 201,
+      "sourceLineSha256": "0d201f09cadf91c493153f37199e69ce2f955a6b9b6c5be3ac43f7b1065aeded",
+      "timestamp": "3:20",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:22",
+      "sourceLine": 202,
+      "sourceLineSha256": "0da243b658236fcb8cd35f60fe75f3c4a18554b461b6e9e3d592bd0f816e450f",
+      "timestamp": "3:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so like i don't really need to take any",
+      "removedDurationLabel": null,
+      "sourceLine": 203,
+      "sourceLineSha256": "adf18dc34d955308ac946721a8cb0d47d8026d70e81a6c477cfa0d85174d6b46",
+      "timestamp": "3:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:24",
+      "sourceLine": 204,
+      "sourceLineSha256": "cab03fc0518ce8303be43c0ffaf467024705756efb029459f9b8b7c40810ff6e",
+      "timestamp": "3:24",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "trades like i don't",
+      "removedDurationLabel": null,
+      "sourceLine": 205,
+      "sourceLineSha256": "dec63e3e1966cf95f95dc97f619ac62d701525b9b47d048fe7b67f96e1b5e83d",
+      "timestamp": "3:24",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:26",
+      "sourceLine": 206,
+      "sourceLineSha256": "5e4889bf2bc8a8c0fe12139ac53f2f62142631f85a368ed2ff700658351c27d5",
+      "timestamp": "3:26",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "need to trade i only trade if it's worth",
+      "removedDurationLabel": null,
+      "sourceLine": 207,
+      "sourceLineSha256": "b33548114a2b680c8321f43b179c918e9fe01b546cec20737647b5c6e0da4b91",
+      "timestamp": "3:26",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:29",
+      "sourceLine": 208,
+      "sourceLineSha256": "ad43d5a544e847aafd547443882d5d0761ef34e261ad41891d6cbb789c2569ae",
+      "timestamp": "3:29",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "the risk why just take a trade like",
+      "removedDurationLabel": null,
+      "sourceLine": 209,
+      "sourceLineSha256": "8ecffb7975597268116b813f0922874e23c23fc4fa2200e78041087546cfd633",
+      "timestamp": "3:29",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:32",
+      "sourceLine": 210,
+      "sourceLineSha256": "29155cd16a697ad2a05bedb6c69c3a8cb4af7ebafc0327dca7cf259b1c6dae40",
+      "timestamp": "3:32",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "would you invest your money",
+      "removedDurationLabel": null,
+      "sourceLine": 211,
+      "sourceLineSha256": "244ce86b9f1ea684313d6f1f17e45e531e3813a82e82718223f6c3490d1e5b92",
+      "timestamp": "3:32",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:33",
+      "sourceLine": 212,
+      "sourceLineSha256": "b9f195d38b8363e52869230c520df690c4d63ff58fd8d7692c9f1a54b2f12898",
+      "timestamp": "3:33",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "put this in per like put this into",
+      "removedDurationLabel": null,
+      "sourceLine": 213,
+      "sourceLineSha256": "3e6122b2e5e2cb3241cda45063d5ab16cdad1b8e86d5816fc4acbd7c69bc39f4",
+      "timestamp": "3:33",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:35",
+      "sourceLine": 214,
+      "sourceLineSha256": "735adcba7c86407de7c48fddb6ad72694e2bcdf477b3c39a60031633d7070033",
+      "timestamp": "3:35",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "perspective like would you",
+      "removedDurationLabel": null,
+      "sourceLine": 215,
+      "sourceLineSha256": "98f56543fcc7b4a7acc5769fe1e2f07f9e7eafec390ee572661f14b3203593cf",
+      "timestamp": "3:35",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:36",
+      "sourceLine": 216,
+      "sourceLineSha256": "84a3590e5dcdb3d52dc4b6465f7fec44b737a235f5f5e952305b592a9dc17a8c",
+      "timestamp": "3:36",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "put money into a business just to just",
+      "removedDurationLabel": null,
+      "sourceLine": 217,
+      "sourceLineSha256": "f98facc5620a2c4b25b0522eee6b2a1bfaaa919e9bee52b234a1846a7800a9be",
+      "timestamp": "3:36",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:39",
+      "sourceLine": 218,
+      "sourceLineSha256": "6d32691b1b3046bf8e019e41908ea4446dc2207a1971079a7ce20c758a689ed3",
+      "timestamp": "3:39",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "to fund the business",
+      "removedDurationLabel": null,
+      "sourceLine": 219,
+      "sourceLineSha256": "6f41daf757835db57a09d0e9d26f83940be0fb4a17ec6a201ecd79f70e736b34",
+      "timestamp": "3:39",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:40",
+      "sourceLine": 220,
+      "sourceLineSha256": "4495c7927f96a30904bb6d664ed549e1a955375e68e5b623eb00c77c439ae076",
+      "timestamp": "3:40",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "no that makes no sense you would only",
+      "removedDurationLabel": null,
+      "sourceLine": 221,
+      "sourceLineSha256": "ea4845cf1f0905dfa621f3e38d9a647e8f3cd0be18d41f40c7f9f9524a409ae4",
+      "timestamp": "3:40",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:42",
+      "sourceLine": 222,
+      "sourceLineSha256": "8425eed8922558b388b684f4d2e47e4aea7816d7cb100b5b4ab88c805d8a6e00",
+      "timestamp": "3:42",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "invest your money into a business if",
+      "removedDurationLabel": null,
+      "sourceLine": 223,
+      "sourceLineSha256": "4bc1f407339af824bbabb2bf1b2b8053c2ed032d002b65b1dbac6aa53e0b1791",
+      "timestamp": "3:42",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:44",
+      "sourceLine": 224,
+      "sourceLineSha256": "7185ef4685a03b58d86e1f59c930224d414f909314aefe92a3ce49b457a8d94c",
+      "timestamp": "3:44",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "it's worth the investment if you think",
+      "removedDurationLabel": null,
+      "sourceLine": 225,
+      "sourceLineSha256": "aad28cf8af3c8c7e9ca10c62f8ac6d7129e0d72f5e05b6de9cba71d8fb40ef36",
+      "timestamp": "3:44",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:45",
+      "sourceLine": 226,
+      "sourceLineSha256": "4368fe93a6624296265e3dc44864485f4a236dd9709fd15c44375cad7b28e301",
+      "timestamp": "3:45",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "that",
+      "removedDurationLabel": null,
+      "sourceLine": 227,
+      "sourceLineSha256": "8e7fc0236af43df9340685fc16f1efe36543cc1707051220a103ad99cf69a2df",
+      "timestamp": "3:45",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:46",
+      "sourceLine": 228,
+      "sourceLineSha256": "670fe8792ab1555a004420da54ce83d4b26bf4d60aa4103a59be173d8ab44902",
+      "timestamp": "3:46",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "business is going to have a potential",
+      "removedDurationLabel": null,
+      "sourceLine": 229,
+      "sourceLineSha256": "eae2709f2cddb8d2a3805225c062a3aa90b826f58a092499f4ee362f7b283757",
+      "timestamp": "3:46",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:48",
+      "sourceLine": 230,
+      "sourceLineSha256": "f584edc3eec6d05df01b0e68edf4014191c834edc434dd87dc8319148d84ad8a",
+      "timestamp": "3:48",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "return or if the business is looking",
+      "removedDurationLabel": null,
+      "sourceLine": 231,
+      "sourceLineSha256": "44611a547fbde151c5ed6fe4d7864126aa032b7d98f10f5187e28d73ca1ad5e1",
+      "timestamp": "3:48",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:49",
+      "sourceLine": 232,
+      "sourceLineSha256": "e1eb749f21eb9c7e06dc0ad079b22a9344962f95e2603c72df1f6dce3c17003f",
+      "timestamp": "3:49",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "it's worth",
+      "removedDurationLabel": null,
+      "sourceLine": 233,
+      "sourceLineSha256": "a2f1c0b5a068e66fb3dd3032cd93b7c9235bce789e6c4d033a232c65c4a2ad1f",
+      "timestamp": "3:49",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:50",
+      "sourceLine": 234,
+      "sourceLineSha256": "9f5268f0448810530fe804be9ea89ab211550ff9c108573f3305a1ca3a001d1b",
+      "timestamp": "3:50",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "putting your money into just not going",
+      "removedDurationLabel": null,
+      "sourceLine": 235,
+      "sourceLineSha256": "7d5435925b59e9484d59a340d03133f41cbe9f77dd59374f56191120718f12f2",
+      "timestamp": "3:50",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:51",
+      "sourceLine": 236,
+      "sourceLineSha256": "720627be12129a03e0c87a9d3c2ac3779cf4c6e6e9efab57f2bdd916547097e1",
+      "timestamp": "3:51",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "to throw it somebody presents to you a",
+      "removedDurationLabel": null,
+      "sourceLine": 237,
+      "sourceLineSha256": "03bf7b3b83e01ae8a4817fff6ead437fb885a77b7cae73fe34536057804e22c9",
+      "timestamp": "3:51",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:53",
+      "sourceLine": 238,
+      "sourceLineSha256": "ceb61589accf1c4c34b2b97f51bd7e3e022791c5d6a1a6a3f4b3e0fc62ce8634",
+      "timestamp": "3:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "business opportunity like oh bro",
+      "removedDurationLabel": null,
+      "sourceLine": 239,
+      "sourceLineSha256": "ca36cf9fdc82196c35bd5a606a227e4801cdeab7917ce4c16d46ba0c2e8f857a",
+      "timestamp": "3:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:55",
+      "sourceLine": 240,
+      "sourceLineSha256": "b1d8fe588fb2278fc9e0daa75a5c9a38d3bb0a742d3af05b1ff816666655b767",
+      "timestamp": "3:55",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "i have um i don't know",
+      "removedDurationLabel": null,
+      "sourceLine": 241,
+      "sourceLineSha256": "eaf560cb6e0d445dc2177110e2088c7b1d769ed89aefc9c61090ad5e5bfcab64",
+      "timestamp": "3:55",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "3:58",
+      "sourceLine": 242,
+      "sourceLineSha256": "0c0035acc89a1725a6fe2a1cf662d91863c84f0ccfdb224d6bb093889ebea9a5",
+      "timestamp": "3:58",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "pens that are for that that [ __ ]",
+      "removedDurationLabel": null,
+      "sourceLine": 243,
+      "sourceLineSha256": "7482330fc9a8f1c9c2f1574c07ebe21e8c991e9eff9b680a97e2de5679032fae",
+      "timestamp": "3:58",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:01",
+      "sourceLine": 244,
+      "sourceLineSha256": "90b01ae7c83dcab1011094a6c65503ab5c1e64dfaaff62bf17a1e1aada915144",
+      "timestamp": "4:01",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "shoot water out",
+      "removedDurationLabel": null,
+      "sourceLine": 245,
+      "sourceLineSha256": "b4473dcd6630df6df27f13296135f98ee16210ea5060c8d06b400d43acc9bf62",
+      "timestamp": "4:01",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:02",
+      "sourceLine": 246,
+      "sourceLineSha256": "09dc1813b6e3598254ff9da0355679c03fc5ab2993ffa81935f8ec6b39c65482",
+      "timestamp": "4:02",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "you know are you gonna throw them money",
+      "removedDurationLabel": null,
+      "sourceLine": 247,
+      "sourceLineSha256": "c770f6570a09fde599febbb849e4a8745d191eb9b6f65a83d0a4529608f62add",
+      "timestamp": "4:02",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:03",
+      "sourceLine": 248,
+      "sourceLineSha256": "5c5ca7a9d06cb680511dbe95194f5eb82d5bc95bcde94c67ab75d7e266604605",
+      "timestamp": "4:03",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "no you're only gonna throw money if it",
+      "removedDurationLabel": null,
+      "sourceLine": 249,
+      "sourceLineSha256": "ced18734573b884ee868c7893d1f80907f40ed47d8fb6ed104ce09b0c544e711",
+      "timestamp": "4:03",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:05",
+      "sourceLine": 250,
+      "sourceLineSha256": "47a0b88423fd1cff82f0bb628a3ff5b073d6e1c5693759b27b26f19afce20cea",
+      "timestamp": "4:05",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "makes sense",
+      "removedDurationLabel": null,
+      "sourceLine": 251,
+      "sourceLineSha256": "54580e5239f5a9aebeb8846cde7005dd3cff8f86faf263ec1cb1edcbc9995f3e",
+      "timestamp": "4:05",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:07",
+      "sourceLine": 252,
+      "sourceLineSha256": "23c793c239131dc023a4addc7f07c939d53704f1d44e53d841e2a936293cc3bf",
+      "timestamp": "4:07",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "right now taking this counter trading",
+      "removedDurationLabel": null,
+      "sourceLine": 253,
+      "sourceLineSha256": "0ac792b445d8ff46be6f2c6c61623d43c1b10c5e5c65e8a575ffdd3be62cab1f",
+      "timestamp": "4:07",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:08",
+      "sourceLine": 254,
+      "sourceLineSha256": "52ec925671e504b9ce3aeb4879b10a823f7d1869de4021f5c940e87f4ef327da",
+      "timestamp": "4:08",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "trend does not make sense to me",
+      "removedDurationLabel": null,
+      "sourceLine": 255,
+      "sourceLineSha256": "a3decb1ecb62d0e50a1b57bfab097eeec785437c6f92bdc517ff5fa2275dfe82",
+      "timestamp": "4:08",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:11",
+      "sourceLine": 256,
+      "sourceLineSha256": "5ac8a477a2d969c3c2cf1ebbc17110de1631ec25e245246a58a5ebb3a7407fd3",
+      "timestamp": "4:11",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "it makes sense to me to sell it here why",
+      "removedDurationLabel": null,
+      "sourceLine": 257,
+      "sourceLineSha256": "011615b3ba869359b3a4211f642add91a0410b1226a29446a8f7a36b0f815731",
+      "timestamp": "4:11",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:14",
+      "sourceLine": 258,
+      "sourceLineSha256": "382e59a7c30d51f3617e61081bfda1dcbdad5df1660b2aed8e68040a2ebcd0b4",
+      "timestamp": "4:14",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "because of everything we always break",
+      "removedDurationLabel": null,
+      "sourceLine": 259,
+      "sourceLineSha256": "990abd15007eb2e1ff503bab772ce6291b18b272aa0d1aee48392d7bfe381d3f",
+      "timestamp": "4:14",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:16",
+      "sourceLine": 260,
+      "sourceLineSha256": "fd6df9e3530cb74f1f0795b751a43454cab281a431d0558b413e33bba83a4100",
+      "timestamp": "4:16",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "down why am i gonna wait to sell it for",
+      "removedDurationLabel": null,
+      "sourceLine": 261,
+      "sourceLineSha256": "db38513665d3a30743f838ed08e39e895dc6cf3b0593592c4fad687016081397",
+      "timestamp": "4:16",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:18",
+      "sourceLine": 262,
+      "sourceLineSha256": "2be305cca84c8648eceee01d36fa2f488fd3225ab7a87b2ea31966a6ac14e1f1",
+      "timestamp": "4:18",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here because everything i mean it makes",
+      "removedDurationLabel": null,
+      "sourceLine": 263,
+      "sourceLineSha256": "e8498c48b62635c77eb29fde650092ed6dcda9c1637ed788f1a1a7a26db8c313",
+      "timestamp": "4:18",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:20",
+      "sourceLine": 264,
+      "sourceLineSha256": "8801535c6742dc31eb9794c728546bf4be33a87814ce2cfdd2f1dfc21e9b3d3b",
+      "timestamp": "4:20",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "sense to sell it here it doesn't make",
+      "removedDurationLabel": null,
+      "sourceLine": 265,
+      "sourceLineSha256": "aecb27c59b183ba7aeb2a58dab47caa3e38b480eba372b234c231a18cefd15c6",
+      "timestamp": "4:20",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:22",
+      "sourceLine": 266,
+      "sourceLineSha256": "63bf8658696b844b19e0041a9ffed36d6867c6f5fe55a253ec14b4d29e7b11f6",
+      "timestamp": "4:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "sense to buy here if",
+      "removedDurationLabel": null,
+      "sourceLine": 267,
+      "sourceLineSha256": "9385183323c64cd31ed599ccf6637d2d0737394c06f1117dac33636180185934",
+      "timestamp": "4:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:23",
+      "sourceLine": 268,
+      "sourceLineSha256": "e9ed799ff0b39d0dbfcdf6546c4636129982110dc73cfd1f1152e07eaefa2d4b",
+      "timestamp": "4:23",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "you know how how i always write down the",
+      "removedDurationLabel": null,
+      "sourceLine": 269,
+      "sourceLineSha256": "5daed0062da0792ec1f09fd794e3803933ec3ba80ed97411683e2ade4408fd0a",
+      "timestamp": "4:23",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:25",
+      "sourceLine": 270,
+      "sourceLineSha256": "7ab32666732e62ae1d9e1ce7ac8436ab2c9f5970827fa61b68d7ea77817bf8b1",
+      "timestamp": "4:25",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "confluences like these were all the",
+      "removedDurationLabel": null,
+      "sourceLine": 271,
+      "sourceLineSha256": "adb8b076a6aa5924bb809853b2f801a3238c75b91db451f276e522a56cd82088",
+      "timestamp": "4:25",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:27",
+      "sourceLine": 272,
+      "sourceLineSha256": "e0460e33077775b70a635d97a488a3cccf9748b813e93d5a7d361670c14c9405",
+      "timestamp": "4:27",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "confluences that i went long",
+      "removedDurationLabel": null,
+      "sourceLine": 273,
+      "sourceLineSha256": "79e16b315d62bd3cd729c3a0d9dca45f9c00b87a8ece411012e3a3ce7bcf1d88",
+      "timestamp": "4:27",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:29",
+      "sourceLine": 274,
+      "sourceLineSha256": "ed72e138d63612f6d45d05da1d2b5479a6808d48ae86c3e27c0c178f964bdb0a",
+      "timestamp": "4:29",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "right on your usd find me this many",
+      "removedDurationLabel": null,
+      "sourceLine": 275,
+      "sourceLineSha256": "45f52b9e335c6877fe89c996ea14536366afb25a009a5dd8998d29f2f534def5",
+      "timestamp": "4:29",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:31",
+      "sourceLine": 276,
+      "sourceLineSha256": "ba1264efb3a6a8d6ee8561020ede9a046640a1d6b428db2f2bc3b5a5aab769b6",
+      "timestamp": "4:31",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "conferences",
+      "removedDurationLabel": null,
+      "sourceLine": 277,
+      "sourceLineSha256": "162b198d3c744ad5df75ab669dd0eb9c724492160fb0d459cd48d6af91d4390f",
+      "timestamp": "4:31",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:33",
+      "sourceLine": 278,
+      "sourceLineSha256": "d5371490d9c46ad71f4c4f14e5a768ef4fc34ea23d32e065f4d4cdf70b559bd5",
+      "timestamp": "4:33",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here to go along there won't be any",
+      "removedDurationLabel": null,
+      "sourceLine": 279,
+      "sourceLineSha256": "d789cb25bce7f82964a5a8ce69e399a34b184e6f86a88425868f5f8599a208c7",
+      "timestamp": "4:33",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:36",
+      "sourceLine": 280,
+      "sourceLineSha256": "338d0fb66ee5e95aaeca6b85aa8270128a0a61f5364a178fdfba0e6a74dcfa54",
+      "timestamp": "4:36",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "there won't be any at all to go short",
+      "removedDurationLabel": null,
+      "sourceLine": 281,
+      "sourceLineSha256": "532358c26fd57b0de2aaaaa5bec59f74af5140b75ff92933dad1be6e8c7e16a0",
+      "timestamp": "4:36",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:38",
+      "sourceLine": 282,
+      "sourceLineSha256": "a0a191532f9b73c5870cb31b8715aa9e5f18b705f9aab3ed3a52eda836079ebd",
+      "timestamp": "4:38",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here there will be",
+      "removedDurationLabel": null,
+      "sourceLine": 283,
+      "sourceLineSha256": "0922790c61bdf9d1e6d32562348a80c0fb5ca6a0e3ac37480384cdd068d1e398",
+      "timestamp": "4:38",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:40",
+      "sourceLine": 284,
+      "sourceLineSha256": "1c615c24b3fabda31266b9e9766372a158a6aba56a3159f0f2defaf93d68e457",
+      "timestamp": "4:40",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "the equal amount does that make sense",
+      "removedDurationLabel": null,
+      "sourceLine": 285,
+      "sourceLineSha256": "b4f2bd16571afa72be50209708769ca1cdf004ec9f65d09f2688f55a606ba454",
+      "timestamp": "4:40",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:42",
+      "sourceLine": 286,
+      "sourceLineSha256": "de065bc8f44876895858ded3c13a803c18395e7689e7493e398c17e5559b199e",
+      "timestamp": "4:42",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "guys",
+      "removedDurationLabel": null,
+      "sourceLine": 287,
+      "sourceLineSha256": "45b89b9654516d47ffaddad8bd5156b75b35240361e3e76b3c33e630aef178cd",
+      "timestamp": "4:42",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:45",
+      "sourceLine": 288,
+      "sourceLineSha256": "d846e8e27e2992cbb51a9a18868d15068ef16fbbf0622d15614dee00a81a951e",
+      "timestamp": "4:45",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "that's as simple as it gets",
+      "removedDurationLabel": null,
+      "sourceLine": 289,
+      "sourceLineSha256": "3106100ab8c7772ef7663d17191fa1c022324ba1d07ccf5eb89dfd5358c340bd",
+      "timestamp": "4:45",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:48",
+      "sourceLine": 290,
+      "sourceLineSha256": "abd00fa157587c56a9ffad561c7578ec93610359bd299a87729656b13d4e6854",
+      "timestamp": "4:48",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "same thing here waiting for this retest",
+      "removedDurationLabel": null,
+      "sourceLine": 291,
+      "sourceLineSha256": "8922ab95c7f0c176346b460047e44d946238706a7dcc6c2de9774d9e353edc5d",
+      "timestamp": "4:48",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:50",
+      "sourceLine": 292,
+      "sourceLineSha256": "77cf47a6fab46b36e4d5f9da1efc46e815bbeba54b091ea5c45bd217c7b83f05",
+      "timestamp": "4:50",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "i have my alarm set on all of them so",
+      "removedDurationLabel": null,
+      "sourceLine": 293,
+      "sourceLineSha256": "ae582a0bec753933eb3592e03b55938d4ecbd74cf937e991fc84b28c2ffc6628",
+      "timestamp": "4:50",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:52",
+      "sourceLine": 294,
+      "sourceLineSha256": "5b89c15119d8718a42672b40487f6907bb7ac33a67d24cc73a66ec661b5f1ff8",
+      "timestamp": "4:52",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "it's just a matter of time",
+      "removedDurationLabel": null,
+      "sourceLine": 295,
+      "sourceLineSha256": "fdf72066550f3b1d290a4f193e38b929d2364addfe2e06e3ce461bab4fd74758",
+      "timestamp": "4:52",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:53",
+      "sourceLine": 296,
+      "sourceLineSha256": "3751b2ac811e30d3b7195a9c0c13b7043fab8be4dbdd1ed4731f71d60a3642ae",
+      "timestamp": "4:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so they get hit and it's looking like",
+      "removedDurationLabel": null,
+      "sourceLine": 297,
+      "sourceLineSha256": "83e8cca67fd6ac748920e8e96cc34ac64b71154577a8bcb522a62cbaa70c1857",
+      "timestamp": "4:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:55",
+      "sourceLine": 298,
+      "sourceLineSha256": "116d9fb84567656f9d9477876ade5d3924dd51fab632636dde4791986c44b63b",
+      "timestamp": "4:55",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "today or this sometimes this week it's",
+      "removedDurationLabel": null,
+      "sourceLine": 299,
+      "sourceLineSha256": "dd56ab18ae58945d7473cc01757e178806e8a47b9e54c275747d906553178374",
+      "timestamp": "4:55",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:57",
+      "sourceLine": 300,
+      "sourceLineSha256": "4f62aab9738867e1881151109b199f22256634eb1adfe84fb2b9c47ae7b635e3",
+      "timestamp": "4:57",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "gonna get hit",
+      "removedDurationLabel": null,
+      "sourceLine": 301,
+      "sourceLineSha256": "7ab329bca23afe57d04b5bc3cf864b5686fd8a6e0d06834d6f06fe92bf158fbc",
+      "timestamp": "4:57",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "4:59",
+      "sourceLine": 302,
+      "sourceLineSha256": "5c958b3f05bca8cd4792b96fa0c8a4daf3c36bb78b89a4f67b2f9bc1d2829de0",
+      "timestamp": "4:59",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "literally you are teaching how to be",
+      "removedDurationLabel": null,
+      "sourceLine": 303,
+      "sourceLineSha256": "24b83b4b643f326b69cc53ca403504caa6e6ee7a3c3762abe564d97ac3e91a7e",
+      "timestamp": "4:59",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:00",
+      "sourceLine": 304,
+      "sourceLineSha256": "981e5c0e05c98735b2b46f2fd98398aedca2c46aa4dd8d6f2a97f95fc99f14c1",
+      "timestamp": "5:00",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "patient and wait for the right area to",
+      "removedDurationLabel": null,
+      "sourceLine": 305,
+      "sourceLineSha256": "ad8f9915739a8f163bfec347670225798a6bd632cc5f40e9b5aae19a644f3c42",
+      "timestamp": "5:00",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:02",
+      "sourceLine": 306,
+      "sourceLineSha256": "1c57a2417ef07424dc614572a011e45a8fccb19793b91bb73f882baa8a0eb42a",
+      "timestamp": "5:02",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "play",
+      "removedDurationLabel": null,
+      "sourceLine": 307,
+      "sourceLineSha256": "aba4cc9b8af82df5d4efaade764d6a77466453f3e4156bb0b4e489710516b1c3",
+      "timestamp": "5:02",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:03",
+      "sourceLine": 308,
+      "sourceLineSha256": "beb1ae37611d1427076ab4a53beb8a8707c8097a0ea70ff3da9de12e46d431df",
+      "timestamp": "5:03",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "yeah bro it's very very simple",
+      "removedDurationLabel": null,
+      "sourceLine": 309,
+      "sourceLineSha256": "e1ea82f5a9a0953b9ba5ffc08670539f6659188a8f5f1585bd7f7c6301d8127e",
+      "timestamp": "5:03",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:10",
+      "sourceLine": 310,
+      "sourceLineSha256": "308ea598a6d203bf173ef741a250c2108477ab703bb20c06ed7a7b6dad012360",
+      "timestamp": "5:10",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so pretty much um gu re-test to go short",
+      "removedDurationLabel": null,
+      "sourceLine": 311,
+      "sourceLineSha256": "c1abd69dcae2c44174a6583a2d669ba779db67fac7acfd1072a78debd5e2f365",
+      "timestamp": "5:10",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:14",
+      "sourceLine": 312,
+      "sourceLineSha256": "85c7980a4a1a23e7af2d31c6b0b5144155b58f99764a42d880b34da95e5ef743",
+      "timestamp": "5:14",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and you re-test to go short this is the",
+      "removedDurationLabel": null,
+      "sourceLine": 313,
+      "sourceLineSha256": "8758139691a642c2466b735a4309a7a19a6c07d950165773a1b7ba5026930f39",
+      "timestamp": "5:14",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:18",
+      "sourceLine": 314,
+      "sourceLineSha256": "4234ac37e99fcc88a152a1f3e7217b95801d618c86cb25c2ef1e27efb4eea26a",
+      "timestamp": "5:18",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "cad you know",
+      "removedDurationLabel": null,
+      "sourceLine": 315,
+      "sourceLineSha256": "ec66aec034daeef7ebff94158d22aad9cd8ca975dc405dc08ba340e67edbc064",
+      "timestamp": "5:18",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:21",
+      "sourceLine": 316,
+      "sourceLineSha256": "e1e674458a8a18f8e65ef9ee02264cc226f846f872963668b59c12651aaf41c0",
+      "timestamp": "5:21",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "like this kjpy i was looking to go long",
+      "removedDurationLabel": null,
+      "sourceLine": 317,
+      "sourceLineSha256": "4e857c29bdb6b96228cfafc0f94c613dd1fa7dcf07fa78741c61b25dac15dd90",
+      "timestamp": "5:21",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:25",
+      "sourceLine": 318,
+      "sourceLineSha256": "a2729bd0bb08bc397f3f1a1e627d90c7bcaec905328a870433d5c4ec61a967fe",
+      "timestamp": "5:25",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "yesterday why so pretty much we're",
+      "removedDurationLabel": null,
+      "sourceLine": 319,
+      "sourceLineSha256": "5ce7a2d5b9a9a57c60e212fdb8f2fc6a442609247db7a08a9e2599ab3fd221c2",
+      "timestamp": "5:25",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:27",
+      "sourceLine": 320,
+      "sourceLineSha256": "c74dc6e4cee6c4dcd5c3e7417c86fad1a52fcc72405ac94cb90fd7a8d27b0902",
+      "timestamp": "5:27",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "clearly bullish on the weekly is",
+      "removedDurationLabel": null,
+      "sourceLine": 321,
+      "sourceLineSha256": "85d4f1068409b85dc30ca193ca8d85c8a9e6a3c51bc166c0733d10363e467b60",
+      "timestamp": "5:27",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:29",
+      "sourceLine": 322,
+      "sourceLineSha256": "68af96935c23e866c24d3e2adbb8113e68ef8051b0cd2f2cf41b37f04fbb3e82",
+      "timestamp": "5:29",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "huge but the shop trend now we're having",
+      "removedDurationLabel": null,
+      "sourceLine": 323,
+      "sourceLineSha256": "d444f3911992241fd3e0569e7991a34089b8efc7a7e28f48f0864b88c6c77126",
+      "timestamp": "5:29",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:31",
+      "sourceLine": 324,
+      "sourceLineSha256": "3b42aa388e64fa0e06f18ff50345311c7c01d7d7ce328222fb9fa008d326dc58",
+      "timestamp": "5:31",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "the retest of",
+      "removedDurationLabel": null,
+      "sourceLine": 325,
+      "sourceLineSha256": "cc20311df82ca2120107b72a40196597fc5507ee5331bbf2b14a2036129da52c",
+      "timestamp": "5:31",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:33",
+      "sourceLine": 326,
+      "sourceLineSha256": "f70e492b19c3d62b7e7a760fa0f188271d04c56d55057458a26940f98b27831d",
+      "timestamp": "5:33",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "previous weekly structure also of 86",
+      "removedDurationLabel": null,
+      "sourceLine": 327,
+      "sourceLineSha256": "a0d2d1270cae0aec01082912043fba4228b22f72dd7ef63c7f2ad8e6c7329364",
+      "timestamp": "5:33",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:37",
+      "sourceLine": 328,
+      "sourceLineSha256": "b6b1457cc0d5fef2599623cb1eda0c78018b4baef94274f933ff5f81cbf1e55b",
+      "timestamp": "5:37",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "000 let me go down to the daily to look",
+      "removedDurationLabel": null,
+      "sourceLine": 329,
+      "sourceLineSha256": "68d5e0df6757b2ca9e599a280ed49f116e0788da3a7772e54a505e788261bc6d",
+      "timestamp": "5:37",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:39",
+      "sourceLine": 330,
+      "sourceLineSha256": "e22e2052377fae79cc54f513b617ad8eee537a093fdb5074b077b3c8fb0a0d4b",
+      "timestamp": "5:39",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "at it so you could tell it's a round",
+      "removedDurationLabel": null,
+      "sourceLine": 331,
+      "sourceLineSha256": "49e7f5982032fd5e3b325fb79cd99a1dfb453988f86af761d9adbb6cf8cf0858",
+      "timestamp": "5:39",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:40",
+      "sourceLine": 332,
+      "sourceLineSha256": "2b43905aa8889245e4e212bf8daf9666b6a4d1ccbb9a283ca1ef0060f0d6c9c5",
+      "timestamp": "5:40",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "psychological level of",
+      "removedDurationLabel": null,
+      "sourceLine": 333,
+      "sourceLineSha256": "8ba9de0e3f08d0b36e2a77b66cc766f97c56f7a0384cedcbfdc6629aff0110fc",
+      "timestamp": "5:40",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:41",
+      "sourceLine": 334,
+      "sourceLineSha256": "41562d491ad50b745f31aa4cd4803534dafabb7441907783031d7d1d8ae684f6",
+      "timestamp": "5:41",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "86 000. but i wasn't really that",
+      "removedDurationLabel": null,
+      "sourceLine": 335,
+      "sourceLineSha256": "d3367daaf2a1369802bc0bba312ef27f74f9d7a592b7ee84ff3f3445214f7a34",
+      "timestamp": "5:41",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:45",
+      "sourceLine": 336,
+      "sourceLineSha256": "81dbf50a8e1d8016724c8b25dfdcc1747dee5546fc199ee2fcdcb9aac1fafe08",
+      "timestamp": "5:45",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "convinced because we were shy",
+      "removedDurationLabel": null,
+      "sourceLine": 337,
+      "sourceLineSha256": "6d736da6e6da7fc7e07eb5551e75c8bda6197a5c817e0c66349cb0d4c45215bd",
+      "timestamp": "5:45",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:47",
+      "sourceLine": 338,
+      "sourceLineSha256": "ca625eb354618849f510e93413df5e8d7a89825f530679729aaa29e4d50b312e",
+      "timestamp": "5:47",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "about let's say",
+      "removedDurationLabel": null,
+      "sourceLine": 339,
+      "sourceLineSha256": "28a48276b56a41b8eea1bcd5936bb2253d04eea8c288b59e2bc05aa6f5ea7627",
+      "timestamp": "5:47",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:51",
+      "sourceLine": 340,
+      "sourceLineSha256": "5719786a31cf8f9e48dd8b70620a1b15a6165f25ba14b29ee1d680655a8a91cf",
+      "timestamp": "5:51",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "like 10 pips and i'm like [ __ ] you know",
+      "removedDurationLabel": null,
+      "sourceLine": 341,
+      "sourceLineSha256": "e7a23ea57e05c0c03501c5bc1ce1c6d1d8acca7b36fc99300fec6675692765ae",
+      "timestamp": "5:51",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:53",
+      "sourceLine": 342,
+      "sourceLineSha256": "1fa57c236f1466d44771bf497b09669869660aacda2f91df613c1b3e78c299ca",
+      "timestamp": "5:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "i don't really want to force this thing",
+      "removedDurationLabel": null,
+      "sourceLine": 343,
+      "sourceLineSha256": "acf3bc11aac0ea404f587aff1ee64c7730aa193e960248e94fbe95d2009c924f",
+      "timestamp": "5:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:54",
+      "sourceLine": 344,
+      "sourceLineSha256": "b043865505f6bb85c56ba6dfaae4f96453d877cd407d7fe0ff9ec2b741ea1ec8",
+      "timestamp": "5:54",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "because then [ __ ] around and then you",
+      "removedDurationLabel": null,
+      "sourceLine": 345,
+      "sourceLineSha256": "30a9680fa4b9c123fa5faaba6f962508c3c35f449e420962dc241c78228f9095",
+      "timestamp": "5:54",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:55",
+      "sourceLine": 346,
+      "sourceLineSha256": "2aa8b6abde1f1169eb08b7b013b37aef7d47b0e3fc418d8c3884e269a3d87ebd",
+      "timestamp": "5:55",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "know it has like a little",
+      "removedDurationLabel": null,
+      "sourceLine": 347,
+      "sourceLineSha256": "45a33228a80973cf922cc1a213d4d1e503b6af57e5e5d7b38110cb8cf06e5156",
+      "timestamp": "5:55",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:57",
+      "sourceLine": 348,
+      "sourceLineSha256": "d8fcb7ecf75025b6c0284560bf9ef1ca796f898a054ece754eb1e5eb17cce2a6",
+      "timestamp": "5:57",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "wick it taps it and then it goes so i'm",
+      "removedDurationLabel": null,
+      "sourceLine": 349,
+      "sourceLineSha256": "93b2227e67c4b1fb982d4ff827fb6580c4bd32bf11629a1490fc276c9e0b227a",
+      "timestamp": "5:57",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "5:59",
+      "sourceLine": 350,
+      "sourceLineSha256": "98361f26e26c379ea0a9a004dfca0fef39bff96881422917ecb65a30b8d5636d",
+      "timestamp": "5:59",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "like you know what",
+      "removedDurationLabel": null,
+      "sourceLine": 351,
+      "sourceLineSha256": "b2da745e8896689dfa2d7002313ebd16b6f2f8f72d7f1413ee2947ab93f2cd06",
+      "timestamp": "5:59",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:01",
+      "sourceLine": 352,
+      "sourceLineSha256": "1b5ed98b1a162d3fb54281f3688a727865680a005b3ef940f91b52fac7c6d8cc",
+      "timestamp": "6:01",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "let's just wait and just wait for the",
+      "removedDurationLabel": null,
+      "sourceLine": 353,
+      "sourceLineSha256": "f65dc70f109d830ddb45bb6aad85ecb985a777c2fb21a430db623a178d9df740",
+      "timestamp": "6:01",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:02",
+      "sourceLine": 354,
+      "sourceLineSha256": "ec2e3f91dbc3be68bbb5660a4388c7c45c78e14de2851545f4336121ff49045f",
+      "timestamp": "6:02",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "complete shift and structure which is",
+      "removedDurationLabel": null,
+      "sourceLine": 355,
+      "sourceLineSha256": "e63000c8106a432d195770b17b9a16060eff3d9707d1f175298f32fb7acb6783",
+      "timestamp": "6:02",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:04",
+      "sourceLine": 356,
+      "sourceLineSha256": "8d5fd521b1a3115350ecd1ed8960b193b979d5aa23b24896041b6b4e25af8a69",
+      "timestamp": "6:04",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "what i",
+      "removedDurationLabel": null,
+      "sourceLine": 357,
+      "sourceLineSha256": "efad04776a3fc447d46eb3a13ff0e748ac167cd04c4854fbd65088254bad0411",
+      "timestamp": "6:04",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:05",
+      "sourceLine": 358,
+      "sourceLineSha256": "3d4e90bbcfedc9ef05c5336c89961042981c1f8212be1fb4d24304d655d6bbcf",
+      "timestamp": "6:05",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "say so much",
+      "removedDurationLabel": null,
+      "sourceLine": 359,
+      "sourceLineSha256": "b4632ea691e5803038ff8445419117b84289ffe0b54468d15f5370c08080800d",
+      "timestamp": "6:05",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:08",
+      "sourceLine": 360,
+      "sourceLineSha256": "70cf031e85517c196bdac2ad12806b022c71d329ce43c8c0cded23542639a841",
+      "timestamp": "6:08",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "clearly you see the low high",
+      "removedDurationLabel": null,
+      "sourceLine": 361,
+      "sourceLineSha256": "92f2c9f6c44f3a13e25e8b6d13f5dd44738b5ec9ba1edd11999056379a4531bf",
+      "timestamp": "6:08",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:12",
+      "sourceLine": 362,
+      "sourceLineSha256": "c74bd0dab0c877a436043b5c2181a7fc2fe703709458a18a3c31e8ae4d07550e",
+      "timestamp": "6:12",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "low high low higher high",
+      "removedDurationLabel": null,
+      "sourceLine": 363,
+      "sourceLineSha256": "e39c101bc59446e852e51c4a4d4c3ab16deb44a20c4821a82f85614ab51b560e",
+      "timestamp": "6:12",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:15",
+      "sourceLine": 364,
+      "sourceLineSha256": "997127788672ca1b6bc5944722558b2320a2a821c8b1b66c83d25e13f5c3c937",
+      "timestamp": "6:15",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "now we wait for a higher low because now",
+      "removedDurationLabel": null,
+      "sourceLine": 365,
+      "sourceLineSha256": "a04693ec14c37cab81f29a4e07d7224a16188640b6dcffc0614d3377b7224d03",
+      "timestamp": "6:15",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:18",
+      "sourceLine": 366,
+      "sourceLineSha256": "e5fd63a39922dc181813c17c36320f8845f6ed30fa2c843b6ab1cedfa625923d",
+      "timestamp": "6:18",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "we have gotten the break of structure",
+      "removedDurationLabel": null,
+      "sourceLine": 367,
+      "sourceLineSha256": "b7f2672db2ee651ab0d6804c298c49c7e469c28b616137b15b1a751277e3cd2c",
+      "timestamp": "6:18",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:21",
+      "sourceLine": 368,
+      "sourceLineSha256": "daf409f5cb19029256f59baad2c282fbea478d5a74829370ddd97854c83e66bb",
+      "timestamp": "6:21",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here is our higher low with our bullish",
+      "removedDurationLabel": null,
+      "sourceLine": 369,
+      "sourceLineSha256": "ca517efdf5a184b8ca05298353ff3433838cfc62e95e63c79927c89d2e60a89c",
+      "timestamp": "6:21",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:24",
+      "sourceLine": 370,
+      "sourceLineSha256": "da624a0c5ac78e520e41cb502a8e2b6a085dc12e5009e9932e411ca7af2be1b5",
+      "timestamp": "6:24",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "engulfing",
+      "removedDurationLabel": null,
+      "sourceLine": 371,
+      "sourceLineSha256": "3ad67861987f7ff5cd24bbec1b524541d992b695512be6c3442c6d99ec46483d",
+      "timestamp": "6:24",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:25",
+      "sourceLine": 372,
+      "sourceLineSha256": "a5a5a284b92114c79633cf50725ff453f018bc13ccf803a3bea5d772e9f9d4db",
+      "timestamp": "6:25",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "what i repeat and repeat and repeat and",
+      "removedDurationLabel": null,
+      "sourceLine": 373,
+      "sourceLineSha256": "aa23e394f115bbe48a540376faa9016d6b08695a593ba35d0fdf3f5a734dcf53",
+      "timestamp": "6:25",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:27",
+      "sourceLine": 374,
+      "sourceLineSha256": "f5471afd495e33c216df8daadbc21df5e9fab10fc108e74cb8df3e4e04695613",
+      "timestamp": "6:27",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "repeat very",
+      "removedDurationLabel": null,
+      "sourceLine": 375,
+      "sourceLineSha256": "2b1a4b9db47cbc056b807de201a67d3863b5f4d2117a9d55cc0a349281158aaa",
+      "timestamp": "6:27",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:28",
+      "sourceLine": 376,
+      "sourceLineSha256": "c38f906a75f50dc39d9d59b9f117d5f41e43b915473c67834b838716e34eda76",
+      "timestamp": "6:28",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "very clean but um i forgot what i was",
+      "removedDurationLabel": null,
+      "sourceLine": 377,
+      "sourceLineSha256": "1fe3adab350741344090929e853d3e117fbca2d944d65f4351507919815d56a5",
+      "timestamp": "6:28",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:31",
+      "sourceLine": 378,
+      "sourceLineSha256": "55b4911c8e907cdc59cfb16223bd440f419152a0299a2b627bdf791329f2176f",
+      "timestamp": "6:31",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "doing and i wasn't able to get this and",
+      "removedDurationLabel": null,
+      "sourceLine": 379,
+      "sourceLineSha256": "95a4bf70c3ce0d3d4494d694aa237da8803195683580e0a9d2b000d6b14d21f5",
+      "timestamp": "6:31",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:32",
+      "sourceLine": 380,
+      "sourceLineSha256": "0ba294336eb8dc435c92fcff8f179a5a946f55a92d10ee3a85eeba6342af35c4",
+      "timestamp": "6:32",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "i had set my alarm to get another entry",
+      "removedDurationLabel": null,
+      "sourceLine": 381,
+      "sourceLineSha256": "ea9e06deb525ba0867be207b9393d9c1421edf49b52680110d7dc28f9528ed72",
+      "timestamp": "6:32",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:35",
+      "sourceLine": 382,
+      "sourceLineSha256": "5a2b9d31ae0fe65d910aa6a785f031b41164fa91429176a3beca9a8e43852e8f",
+      "timestamp": "6:35",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "at the next pullback",
+      "removedDurationLabel": null,
+      "sourceLine": 383,
+      "sourceLineSha256": "6818a23148a253f63a3ca1a94dc5bee9eb958dd0cd4d3a2fb21b61a87b63cc0e",
+      "timestamp": "6:35",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:36",
+      "sourceLine": 384,
+      "sourceLineSha256": "6bc7f3b02b08f375eca044fb5f2f05c7dcdd9a8b351af46e75e602f70b162acd",
+      "timestamp": "6:36",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "and then pretty much um get in here but",
+      "removedDurationLabel": null,
+      "sourceLine": 385,
+      "sourceLineSha256": "b9e5f1f7542ab3ab9e6b4dae3f7db6e87d6e18f0f52f611a5c35d767da0408b4",
+      "timestamp": "6:36",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:40",
+      "sourceLine": 386,
+      "sourceLineSha256": "552a6d353d509b8ea91ea7f0e38efaaf0061a83a5158b4d50552ec10aa72a96b",
+      "timestamp": "6:40",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "everything was there and i also still",
+      "removedDurationLabel": null,
+      "sourceLine": 387,
+      "sourceLineSha256": "b135c894a3c856b8e53edc8abfddd79450b77318d4e06705a262eb6512bd51b8",
+      "timestamp": "6:40",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:42",
+      "sourceLine": 388,
+      "sourceLineSha256": "fd3efa15a1e1fd013c557d684206a83f3c39cbd273357e9045ed7ad243868f5d",
+      "timestamp": "6:42",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "didn't like how we were shy",
+      "removedDurationLabel": null,
+      "sourceLine": 389,
+      "sourceLineSha256": "cb27fb3a44d5facfc9f02edb75b11c3198a2434ce6712dd1b902281cc2caa536",
+      "timestamp": "6:42",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:43",
+      "sourceLine": 390,
+      "sourceLineSha256": "21931083324f84818d5398fa26c3ca8a7a08455ff4b4d06ba19ab39b7f276414",
+      "timestamp": "6:43",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "this many from the 86 000",
+      "removedDurationLabel": null,
+      "sourceLine": 391,
+      "sourceLineSha256": "f46e0b8d1c20f1d7d2b481254f24467038976669a94659ea22921346b8449bba",
+      "timestamp": "6:43",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:47",
+      "sourceLine": 392,
+      "sourceLineSha256": "7d9cdb8d5a16226a3ae2d47d802c759bce0c07ac46192d1a667c0dc1e5e4b80b",
+      "timestamp": "6:47",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so now we have completely started",
+      "removedDurationLabel": null,
+      "sourceLine": 393,
+      "sourceLineSha256": "4e480d36937d7764d4cc56da01ee7ccbe17bb0d18dd498a5fe0957e8cfcba683",
+      "timestamp": "6:47",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:50",
+      "sourceLine": 394,
+      "sourceLineSha256": "b507cbc3b4b1f2d3f21a49ea37643f0b1c47f31cc1fb4ea09c348551f9d0f9be",
+      "timestamp": "6:50",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "shifting up so i'm pretty much gonna",
+      "removedDurationLabel": null,
+      "sourceLine": 395,
+      "sourceLineSha256": "3f2590be5d0f1cd64322f1be0cac4f04a7e38e0c3652f029e1c2c4269566c7fd",
+      "timestamp": "6:50",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:51",
+      "sourceLine": 396,
+      "sourceLineSha256": "55120ddb3406bf01247f11b3ba90694464514adfee026139ed2625794026a9ab",
+      "timestamp": "6:51",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "wait on the next higher low leg here",
+      "removedDurationLabel": null,
+      "sourceLine": 397,
+      "sourceLineSha256": "4a5d9a2c80b7196a9acd59c82ac64353ec277427078fa96ffe83194623b8a9d3",
+      "timestamp": "6:51",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:53",
+      "sourceLine": 398,
+      "sourceLineSha256": "bd342c15a250e789c504ec2e1da726a2d837ef6e136a81fca27a899de4f5b08a",
+      "timestamp": "6:53",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "to go long very simple very very simple",
+      "removedDurationLabel": null,
+      "sourceLine": 399,
+      "sourceLineSha256": "23d2ed0c8f65d59275b4b17b296c3ee5aa0152bf4e8e7ab37325ebf4b273bdfe",
+      "timestamp": "6:53",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:56",
+      "sourceLine": 400,
+      "sourceLineSha256": "33d78a93b3e2bcb35c00795a493e768c42faea44f1248b266b495f87a768b41d",
+      "timestamp": "6:56",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "can you show the confluence again and",
+      "removedDurationLabel": null,
+      "sourceLine": 401,
+      "sourceLineSha256": "aaefca6f66b70e30e99dee7dea99c543f1552921f2ab98b1ea251a14da7f07f8",
+      "timestamp": "6:56",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:58",
+      "sourceLine": 402,
+      "sourceLineSha256": "5d6f7da1f908839c1bb5a2c0626d981e2931a5ef76fbcf7541e7fa870de3cba3",
+      "timestamp": "6:58",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "leave it for a second so i can",
+      "removedDurationLabel": null,
+      "sourceLine": 403,
+      "sourceLineSha256": "aa8b901a1dcddf48386eb0a7d9a2c47faecaa9a93eafcfde6ce856a7bf4350aa",
+      "timestamp": "6:58",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "6:59",
+      "sourceLine": 404,
+      "sourceLineSha256": "3fb9cd96e56bf34375c421af36f296e047ac331c82eec81aff281da2cda25251",
+      "timestamp": "6:59",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "screenshot it",
+      "removedDurationLabel": null,
+      "sourceLine": 405,
+      "sourceLineSha256": "ac78a190b12a0c8167558511441491d9a0798885ddccf2099f10aaf9cf8b046b",
+      "timestamp": "6:59",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:00",
+      "sourceLine": 406,
+      "sourceLineSha256": "d36c2a837a4c39e4953f7e5a9a08b63fb545fdad3b518324c528b82cbd035c79",
+      "timestamp": "7:00",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "this is gonna be recorded so i mean if",
+      "removedDurationLabel": null,
+      "sourceLine": 407,
+      "sourceLineSha256": "7a9a5b0654d31af70db5d438b1675f79f861e229ec4ea999fe44fbf9cd62990c",
+      "timestamp": "7:00",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:02",
+      "sourceLine": 408,
+      "sourceLineSha256": "0d38f6eefaac30a6cada51a21b01ce395ccd4c9cb518f524ed622e6582f44409",
+      "timestamp": "7:02",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "you want to look at it",
+      "removedDurationLabel": null,
+      "sourceLine": 409,
+      "sourceLineSha256": "c2b20c49099ec3eca28c97c2d0ce7e49a620bdd10f77e4a7b1125cc4cbb787cb",
+      "timestamp": "7:02",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:04",
+      "sourceLine": 410,
+      "sourceLineSha256": "31989cdbf124874f5bf52e450baa00c8a36205b8008ccf925dcddf45717758e9",
+      "timestamp": "7:04",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "here go ahead screenshot it this is why",
+      "removedDurationLabel": null,
+      "sourceLine": 411,
+      "sourceLineSha256": "993eb2d20d1e8e8d9dc510c9c580bf7c78db5a9eb291c80f4e9762d9a9af3cd5",
+      "timestamp": "7:04",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:07",
+      "sourceLine": 412,
+      "sourceLineSha256": "24e8fa2b671b085bd34422eb82348c7a4f8363a78ca4d82847b73edafac6f666",
+      "timestamp": "7:07",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "we went long",
+      "removedDurationLabel": null,
+      "sourceLine": 413,
+      "sourceLineSha256": "0d9b9ccf0f93529a900719c8aa0dfea00d64df1f7dd5f1ec1bb8ab3914cf292d",
+      "timestamp": "7:07",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:12",
+      "sourceLine": 414,
+      "sourceLineSha256": "0d6236236f75c17979109c89e05c4bebfa428e1b3ef11b4d4f14487201b02b2b",
+      "timestamp": "7:12",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "cool so that is what it is this one i'm",
+      "removedDurationLabel": null,
+      "sourceLine": 415,
+      "sourceLineSha256": "18706fcd2c4860003c3ee4c0afd5384b7c0b50eca0787ab2103411c62d59f0e6",
+      "timestamp": "7:12",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:15",
+      "sourceLine": 416,
+      "sourceLineSha256": "d628b0aac4e55a0c56ef4335434894ef39b47298bd28266f63daac1eea1d2b30",
+      "timestamp": "7:15",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "potentially looking for some trades soon",
+      "removedDurationLabel": null,
+      "sourceLine": 417,
+      "sourceLineSha256": "1f7d2985e8ae02079fe3c8a37c35ae5098977f0c3efd463a420ec92d956b022b",
+      "timestamp": "7:15",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:17",
+      "sourceLine": 418,
+      "sourceLineSha256": "72f0971645661f340a185d01759183b829ba9a121f97da62291211161362cbc8",
+      "timestamp": "7:17",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so i'm going to be on the lookout for it",
+      "removedDurationLabel": null,
+      "sourceLine": 419,
+      "sourceLineSha256": "f1e300e23c91ab3e16ff49d2c7cf537d321ab2c6610c2304acb5fdf77451c474",
+      "timestamp": "7:17",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:18",
+      "sourceLine": 420,
+      "sourceLineSha256": "1b0f4c9214c2ffe3cc15f404f1b26246b7627acaef4a727bab6eba227f41f206",
+      "timestamp": "7:18",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "uh it's a nice one to four to previous",
+      "removedDurationLabel": null,
+      "sourceLine": 421,
+      "sourceLineSha256": "3f3046f1bf4505a842e9216b4d1363f03312a7866d899bf95ee12fcf4f3103b9",
+      "timestamp": "7:18",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:22",
+      "sourceLine": 422,
+      "sourceLineSha256": "b0377ae6e46d1229a6f5f1a921f28f695fd95eef1d4f3f49a2ebb77468082a72",
+      "timestamp": "7:22",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "well actually it's a nice one two four",
+      "removedDurationLabel": null,
+      "sourceLine": 423,
+      "sourceLineSha256": "ba176a227488542092b389a86e2bac2a1fed7e8bc1dbebbaef8fb8c4cd08c355",
+      "timestamp": "7:22",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:24",
+      "sourceLine": 424,
+      "sourceLineSha256": "f014c1a80b6da51bf155954f36e510463c4d4bfcb562bd65e0a85fa44b734531",
+      "timestamp": "7:24",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "yeah",
+      "removedDurationLabel": null,
+      "sourceLine": 425,
+      "sourceLineSha256": "a495a4b86c1eac64327d8cad2598044314d9176f0ac069fbea0cf0baf08b6c9b",
+      "timestamp": "7:24",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:26",
+      "sourceLine": 426,
+      "sourceLineSha256": "0feeab3b85b13ffde3ae8f3c76dfb60a831aeecfee6296b2193124e84d03663d",
+      "timestamp": "7:26",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "so shorts here shorts here and um",
+      "removedDurationLabel": null,
+      "sourceLine": 427,
+      "sourceLineSha256": "2a7979956239c0907e0e24dd174def820d329a4e6dc4a5f78ccf5bfc6aac22ff",
+      "timestamp": "7:26",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:30",
+      "sourceLine": 428,
+      "sourceLineSha256": "3a07a1a91ceb8ba5e18ed9281c69dc97dc767df531e084e327dbd8d3f7fe6996",
+      "timestamp": "7:30",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "shorts here so let's see how that plays",
+      "removedDurationLabel": null,
+      "sourceLine": 429,
+      "sourceLineSha256": "dfc3712563270d71a7c25dd0170b970953117ea210b3f57b54e217c9cd71e364",
+      "timestamp": "7:30",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:31",
+      "sourceLine": 430,
+      "sourceLineSha256": "b442e576f523eaae2c15097e41333670c0c05d3b0531c2e8e405193217dc0541",
+      "timestamp": "7:31",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "out",
+      "removedDurationLabel": null,
+      "sourceLine": 431,
+      "sourceLineSha256": "762069bc07a6e1b5df123a5ae7bd91c10daa04694fbaa17fba0cd6a8dcce8f22",
+      "timestamp": "7:31",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:33",
+      "sourceLine": 432,
+      "sourceLineSha256": "10660a55e8d34de001740be4380fd759b6bd2ee0615a36410e43fc7343314c8d",
+      "timestamp": "7:33",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "uh you guys have any questions anything",
+      "removedDurationLabel": null,
+      "sourceLine": 433,
+      "sourceLineSha256": "20acc05209f99ac09cc39d475decfec5588da2b1fce2f8277e37261370fa5a5e",
+      "timestamp": "7:33",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:34",
+      "sourceLine": 434,
+      "sourceLineSha256": "44e95a0aa51bbdb10a27eb9122356ab0ab93ba71d1322bbd57c7a663bf84b941",
+      "timestamp": "7:34",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "else you guys want to talk about",
+      "removedDurationLabel": null,
+      "sourceLine": 435,
+      "sourceLineSha256": "ecf3c6968f266bc1148c689e8c4ca2ff63100530e2a57796ce653fba61c5dd5e",
+      "timestamp": "7:34",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 4,
+      "normalizedText": "",
+      "removedDurationLabel": "7:36",
+      "sourceLine": 436,
+      "sourceLineSha256": "a2dead289e12ffa4e3ce2ada9c188c80110543d27d5468831085037c5d4ea59e",
+      "timestamp": "7:36",
+      "transform": "timestamp_marker_line"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "i'm gonna stop the recording here",
+      "removedDurationLabel": null,
+      "sourceLine": 437,
+      "sourceLineSha256": "5a6b1b3ce34293c745f2cf955973a43fa5693d18b1e909c98e3e98b03d186a21",
+      "timestamp": "7:36",
+      "transform": "timestamp_from_preceding_marker"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "",
+      "removedDurationLabel": null,
+      "sourceLine": 438,
+      "sourceLineSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "7:36",
+      "transform": "timestamp_from_preceding_marker"
+    }
+  ],
+  "policy": {
+    "charsRemoved": 872,
+    "lineCount": 438,
+    "linesTransformed": 218,
+    "profile": "youtube_timestamp_lines",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "sourceFileSha256": "5bb848bb21951c53dc239f6d6b3bb4238cff8ee8e10b303e4d637bf865d78466"
+}

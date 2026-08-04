@@ -1,0 +1,31 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|017",
+  "independentVariables": [
+    "confirmation_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|031"
+  ],
+  "statement": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse may only be required on the execution timeframe.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|031"
+  ],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|031",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|023",
+  "questionText": "'Multiple dojis' is given as an entry signal. How many dojis, and must they be consecutive?",
+  "questionType": "unclear_scope",
+  "reason": "Quantity is unspecified for one of only two named entry signals.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260727|001"
+  ]
+}

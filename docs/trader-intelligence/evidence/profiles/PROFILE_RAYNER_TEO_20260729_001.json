@@ -1,0 +1,356 @@
+{
+  "aliases": [],
+  "canonicalName": "RAYNER_TEO",
+  "claimCount": 46,
+  "confidenceSummary": {
+    "emerging": 46
+  },
+  "confirmationConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028"
+      ],
+      "status": "confirmed",
+      "value": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when)."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030"
+      ],
+      "status": "confirmed",
+      "value": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031"
+      ],
+      "status": "confirmed",
+      "value": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse."
+    }
+  ],
+  "contradictionCount": 2,
+  "entryConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011"
+      ],
+      "status": "confirmed",
+      "value": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018"
+      ],
+      "status": "confirmed",
+      "value": "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023"
+      ],
+      "status": "confirmed",
+      "value": "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027"
+      ],
+      "status": "confirmed",
+      "value": "Two tools are used to locate areas of value: support/resistance and moving averages."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+      ],
+      "status": "confirmed",
+      "value": "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop."
+    }
+  ],
+  "evidenceCount": 50,
+  "extractionStatus": "completed",
+  "generatedAt": "2026-07-29T00:05:09Z",
+  "hypothesisCount": 32,
+  "instrumentsMentioned": [],
+  "invalidationConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022"
+      ],
+      "status": "confirmed",
+      "value": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049"
+      ],
+      "status": "confirmed",
+      "value": "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing."
+    }
+  ],
+  "limitations": [
+    "40 unresolved question(s) remain open for this trader.",
+    "2 contradiction(s) remain unresolved for this trader.",
+    "One or more claims are still pending_review and have not been confirmed by a human."
+  ],
+  "marketConditionsAvoided": [],
+  "marketConditionsPreferred": [],
+  "marketsMentioned": [],
+  "observationCount": 6,
+  "primaryConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033"
+      ],
+      "status": "confirmed",
+      "value": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019"
+      ],
+      "status": "confirmed",
+      "value": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020"
+      ],
+      "status": "confirmed",
+      "value": "Structure is read across the whole visible chart from left to right rather than from the most recent few candles."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034"
+      ],
+      "status": "confirmed",
+      "value": "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041"
+      ],
+      "status": "confirmed",
+      "value": "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "status": "confirmed",
+      "value": "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008"
+      ],
+      "status": "confirmed",
+      "value": "Risk-to-reward ratio is defined as reward as a multiple of the amount risked, worked through at 1:2 and 1:10."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014"
+      ],
+      "status": "confirmed",
+      "value": "An uptrend is a series of higher highs and higher lows."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015"
+      ],
+      "status": "confirmed",
+      "value": "A downtrend is a series of lower highs and lower lows."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016"
+      ],
+      "status": "confirmed",
+      "value": "A range is price contained between highs and lows, distinguished from a trend by repeated rejection at the boundary rather than a break beyond it. In a range both directions are tradeable."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024"
+      ],
+      "status": "confirmed",
+      "value": "Support is an area where buying pressure COULD step in; resistance is an area where selling pressure COULD step in. The conditional is stated deliberately - trading is described as probabilities, never certainty."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025"
+      ],
+      "status": "confirmed",
+      "value": "Broken support tends to become resistance and broken resistance tends to become support."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026"
+      ],
+      "status": "confirmed",
+      "value": "Support and resistance are areas rather than exact prices. Price may overshoot, undershoot or fail to touch the level before reversing, and the level must be adjusted over time as new price action arrives."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029"
+      ],
+      "status": "confirmed",
+      "value": "Every candle carries four data points - open, close, high and low of the session - and the body/wick terminology follows from them."
+    }
+  ],
+  "profileId": "PROFILE|RAYNER_TEO|20260729|001",
+  "reviewStatus": "pending",
+  "riskConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003"
+      ],
+      "status": "confirmed",
+      "value": "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004"
+      ],
+      "status": "confirmed",
+      "value": "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006"
+      ],
+      "status": "confirmed",
+      "value": "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040"
+      ],
+      "status": "confirmed",
+      "value": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula."
+    }
+  ],
+  "schemaVersion": 1,
+  "sessionsMentioned": [],
+  "sourceCount": 1,
+  "sourceLineage": {
+    "claimIds": [
+      "CLAIM|RAYNER_TEO|20260729|001",
+      "CLAIM|RAYNER_TEO|20260729|002",
+      "CLAIM|RAYNER_TEO|20260729|003",
+      "CLAIM|RAYNER_TEO|20260729|004",
+      "CLAIM|RAYNER_TEO|20260729|005",
+      "CLAIM|RAYNER_TEO|20260729|006",
+      "CLAIM|RAYNER_TEO|20260729|007",
+      "CLAIM|RAYNER_TEO|20260729|008",
+      "CLAIM|RAYNER_TEO|20260729|009",
+      "CLAIM|RAYNER_TEO|20260729|010",
+      "CLAIM|RAYNER_TEO|20260729|011",
+      "CLAIM|RAYNER_TEO|20260729|012",
+      "CLAIM|RAYNER_TEO|20260729|013",
+      "CLAIM|RAYNER_TEO|20260729|014",
+      "CLAIM|RAYNER_TEO|20260729|015",
+      "CLAIM|RAYNER_TEO|20260729|016",
+      "CLAIM|RAYNER_TEO|20260729|017",
+      "CLAIM|RAYNER_TEO|20260729|018",
+      "CLAIM|RAYNER_TEO|20260729|019",
+      "CLAIM|RAYNER_TEO|20260729|020",
+      "CLAIM|RAYNER_TEO|20260729|021",
+      "CLAIM|RAYNER_TEO|20260729|022",
+      "CLAIM|RAYNER_TEO|20260729|023",
+      "CLAIM|RAYNER_TEO|20260729|024",
+      "CLAIM|RAYNER_TEO|20260729|025",
+      "CLAIM|RAYNER_TEO|20260729|026",
+      "CLAIM|RAYNER_TEO|20260729|027",
+      "CLAIM|RAYNER_TEO|20260729|028",
+      "CLAIM|RAYNER_TEO|20260729|029",
+      "CLAIM|RAYNER_TEO|20260729|030",
+      "CLAIM|RAYNER_TEO|20260729|031",
+      "CLAIM|RAYNER_TEO|20260729|032",
+      "CLAIM|RAYNER_TEO|20260729|033",
+      "CLAIM|RAYNER_TEO|20260729|034",
+      "CLAIM|RAYNER_TEO|20260729|035",
+      "CLAIM|RAYNER_TEO|20260729|036",
+      "CLAIM|RAYNER_TEO|20260729|037",
+      "CLAIM|RAYNER_TEO|20260729|038",
+      "CLAIM|RAYNER_TEO|20260729|039",
+      "CLAIM|RAYNER_TEO|20260729|040",
+      "CLAIM|RAYNER_TEO|20260729|041",
+      "CLAIM|RAYNER_TEO|20260729|042",
+      "CLAIM|RAYNER_TEO|20260729|043",
+      "CLAIM|RAYNER_TEO|20260729|044",
+      "CLAIM|RAYNER_TEO|20260729|045",
+      "CLAIM|RAYNER_TEO|20260729|046"
+    ],
+    "sourceIds": [
+      "EVSRC|RAYNER_TEO|20260729|001"
+    ]
+  },
+  "stopLossConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009"
+      ],
+      "status": "confirmed",
+      "value": "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010"
+      ],
+      "status": "confirmed",
+      "value": "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036"
+      ],
+      "status": "confirmed",
+      "value": "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039"
+      ],
+      "status": "confirmed",
+      "value": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038"
+      ],
+      "status": "confirmed",
+      "value": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045"
+      ],
+      "status": "confirmed",
+      "value": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise."
+    }
+  ],
+  "strategyTypes": [],
+  "targetConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043"
+      ],
+      "status": "confirmed",
+      "value": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046"
+      ],
+      "status": "confirmed",
+      "value": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice."
+    }
+  ],
+  "timeframesMentioned": [],
+  "tradeManagementConcepts": [],
+  "traderId": "RAYNER_TEO",
+  "unresolvedQuestionCount": 40
+}

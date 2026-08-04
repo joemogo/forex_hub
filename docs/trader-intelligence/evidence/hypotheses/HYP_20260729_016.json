@@ -1,0 +1,31 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|016",
+  "independentVariables": [
+    "confirmation_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|030"
+  ],
+  "statement": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control may only be required on the execution timeframe.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|030"
+  ],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

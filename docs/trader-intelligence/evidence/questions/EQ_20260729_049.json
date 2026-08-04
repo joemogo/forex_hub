@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260729|011",
+  "createdAt": "2026-07-29T23:45:30Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|049",
+  "questionText": "What counts as a 'structure point' for the minimum-of-one test - any candle body close beyond the level, or a swing high/low meeting some significance test? This source does not define it.",
+  "questionType": "unclear_scope",
+  "reason": "The same undefined term already gates several existing ALEX_G rules and is the subject of cross-educator contradiction XCONTRA|20260729|001 (Alex G: any body close counts; Rayner Teo: only major swings). A quantified minimum over an undefined unit is still non-deterministic.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260729|001"
+  ]
+}

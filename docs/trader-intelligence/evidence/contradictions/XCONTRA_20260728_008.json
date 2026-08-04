@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|136",
+  "claimBId": "CLAIM|ALEX_G|20260728|068",
+  "contradictionId": "XCONTRA|20260728|008",
+  "contradictionType": "CONDITIONAL_SCOPE",
+  "detectedAt": "2026-07-28T14:24:08Z",
+  "metadata": {},
+  "rationale": "Behaviour versus stated rule. Every Alex G source states the setup condition as price reaching a level - the confirmation 'has to be at a support level', and away from one the rule is 'simply not applicable'. Here a setup is declined because price came roughly 10 pips SHORT of the level, which is a different and unstated condition: a proximity tolerance. No source in the library gives a tolerance, a maximum acceptable distance, or a rule for near-misses. The taught rule is binary; the demonstrated behaviour is graded. Recorded, not resolved - MOGO must not invent the threshold.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

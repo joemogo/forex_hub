@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T02:23:09Z",
+  "endTimestamp": "1:45",
+  "intakeId": "INTAKE|ALEX_G|20260728|002",
+  "language": "en",
+  "lineEnd": 103,
+  "lineStart": 50,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "liquidity is exactly what it means. It's how liquid is the market at that very point. The perfect example for liquidity and exactly for you to understand exactly what it is, it's like Ethereum for example, right? Ethereum when Ethereum was reaching the 5,000 mark point per Ethereum, there was a lot of sellers that wanted to get out at that round psychological 5,000. So people started placing their takeprofits at 4,999 4,998 4,997. So there's a lot of liquidity, a lot of exit points at that high. So when the market reaches that point, you're going to have a lot of selling off happening in the market. So the market starts having pushes to the downside. Now, that is exactly why Ethereum did not make it all the way to 5,000 because everybody was placing their takeprofits and their executions to get out and they're liquidating their positions right before 5,000 because they know a lot of people wanted to get out at that high point. So",
+  "schemaVersion": 1,
+  "sectionTitle": "What liquidity is: the Ethereum 5,000 example",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|002|002",
+  "segmentType": "other",
+  "sequenceNumber": 2,
+  "sourceId": "EVSRC|ALEX_G|20260728|002",
+  "speaker": null,
+  "startTimestamp": "0:50",
+  "textHash": "8f06711de3bf08f8027c7a49c6ddd6b4e95c299f4c7b69a763fe718ab1c0b9a6"
+}

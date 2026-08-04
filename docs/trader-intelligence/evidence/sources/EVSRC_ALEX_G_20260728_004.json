@@ -1,0 +1,28 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": "https://www.youtube.com/watch?v=BcWxqfcjk9A",
+  "contentHash": "ac65aa885212b7a367260af07732e9d1a2699162c3d697a911fb1f486d0cbbe3",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "fileBytes": 29329,
+    "manifestPath": "docs/trader-intelligence/intake/manifests/alexg-entry-confirmation.ingest.json"
+  },
+  "provenanceStatus": "partially_verified",
+  "registeredAt": "2026-07-28T04:21:55Z",
+  "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-entry-confirmation.raw.txt",
+  "schemaVersion": 1,
+  "sourceDate": null,
+  "sourceId": "EVSRC|ALEX_G|20260728|004",
+  "sourceType": "transcript",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "The ONLY confirmation YOU need to make $1000/day Trading Forex",
+  "traderId": "ALEX_G",
+  "transcriptReference": "docs/trader-intelligence/imports/alex-g/normalized/alexg-entry-confirmation.normalization-map.json",
+  "updatedAt": "2026-07-28T04:21:55Z"
+}

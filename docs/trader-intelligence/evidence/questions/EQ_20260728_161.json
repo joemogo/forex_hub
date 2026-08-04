@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|149",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|161",
+  "questionText": "What is the evaluation pass rate, and what happens to the fee when a trader fails?",
+  "questionType": "insufficient_independent_support",
+  "reason": "A $650-700 fee is presented as convertible into a 100K account and thence into $5,000 from a single 1:2 trade. **The failure branch is absent**: no pass rate, no mention that the fee is lost on breach, no reference to the daily-loss and drawdown rules that source #6 said constrain risk banding. A specific provider is named. Recorded as a materially incomplete presentation of a paid product, not as trading knowledge.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

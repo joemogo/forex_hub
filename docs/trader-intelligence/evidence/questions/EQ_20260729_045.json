@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260729|010",
+  "createdAt": "2026-07-29T23:45:30Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260729|045",
+  "questionText": "Zone width is stated to be unconstrained ('doesn't matter the size of the box') subject to leaving 'enough room' for 'multiple Taps'. How much room, and how many touches? The same source quantifies a different requirement precisely ('a minimum of one structure point'), so the omission here is unlikely to be an oversight.",
+  "questionType": "ambiguous_statement",
+  "reason": "Bears directly on GAP-AMBIG-001 and on production rule ALEX_SR_008, whose source is recorded as giving 'no formula given' for zone tightness. This source states the non-constraint explicitly for the first time, which is evidence about the gap even though it does not close it.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260729|001"
+  ]
+}

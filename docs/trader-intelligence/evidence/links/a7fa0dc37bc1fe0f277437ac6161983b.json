@@ -1,0 +1,13 @@
+{
+  "claimId": "CLAIM|TJR|20260727|027",
+  "evidenceId": "EV|EVSRC|TJR|20260727|001|036",
+  "independenceGroup": "AUTHOR|TJR",
+  "linkId": "LINK|EV|EVSRC|TJR|20260727|001|036|CLAIM|TJR|20260727|027",
+  "linkedAt": "2026-07-27T03:56:30Z",
+  "linkedBy": "claude-research-pipeline",
+  "qualityWeight": null,
+  "rationale": null,
+  "relationshipType": "supports",
+  "relevanceWeight": 1.0,
+  "schemaVersion": 1
+}

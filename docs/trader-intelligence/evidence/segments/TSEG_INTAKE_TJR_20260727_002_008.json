@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "14:52",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 270,
+  "lineStart": 253,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "we'll go over time frames right now. If we go up to this left-hand side up here, we can see that there's a bunch of different time frames. Okay, there's the 1 second, there's the 5-second, there's the 1 minute, there's the 5 minute, there's the 1 hour, there's the 1 day, there's the 1 week, there's the one month. Okay, whatever time frame we click on. Okay, so right now we're on the daily time frame. That represents the period of time that every single one of these candles represents. So right now we are on the 1day time frame. That means every single one of these candles represents 24 hours worth of price action and price movement. Now what are the four key price points that these candles tell us about what price did within the 24 hours of the time frame that we're on.",
+  "schemaVersion": 1,
+  "sectionTitle": "Timeframes: each candle is a period of time",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|008",
+  "segmentType": "other",
+  "sequenceNumber": 8,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "13:56",
+  "textHash": "1b98d25f33b1666b08a98e75bde164c98a8d9753aca6730ed92aeeb5d4272d08"
+}

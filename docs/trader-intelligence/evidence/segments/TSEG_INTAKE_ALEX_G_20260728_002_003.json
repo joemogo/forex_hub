@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T02:23:09Z",
+  "endTimestamp": "2:43",
+  "intakeId": "INTAKE|ALEX_G|20260728|002",
+  "language": "en",
+  "lineEnd": 161,
+  "lineStart": 104,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "there's many points in the market where there is liquidity. Whether it's a currency pair that's at an all-time low, all-time high, in the middle of the market. Cryptocurrencies, uh, stock markets, every single part of any market, there is liquidity because you need for there to be a buyer on one side and there needs to be a seller on the other side. What drives the market up is people buying the market. What drives the market down is people selling the market. There's just simple supply and demand and that is how the market will always move. But it's very predictable where these market moves happen where there's the most amount of liquidity. There's points where market just passes right through and there's points where the market has a lot of struggle to break through because a lot of people liquidating their positions at that specific point. So liquidity is nothing other than people buying and selling the market at that specific point. But it's very predictable where they can sell and where you could get liquidated if you know how to read it correctly, which I'll break down right now. So diving",
+  "schemaVersion": 1,
+  "sectionTitle": "Liquidity exists everywhere; supply and demand drive price",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|002|003",
+  "segmentType": "other",
+  "sequenceNumber": 3,
+  "sourceId": "EVSRC|ALEX_G|20260728|002",
+  "speaker": null,
+  "startTimestamp": "1:48",
+  "textHash": "a187645ebefb1b481536a73837df0b120c3e1949da1530d22cfe8beed064d9aa"
+}

@@ -1,0 +1,1098 @@
+0:00	Have you ever taken a trade in the
+0:01	
+0:01	markets where you have studied it for
+0:02	
+0:02	hours, done top- down analysis,
+0:04	
+0:04	calculate your entry points precisely,
+0:06	
+0:06	your takerit, your stop loss, perfect
+0:09	
+0:09	entry signal, and as soon as you enter
+0:11	
+0:11	the position, it goes straight to your
+0:13	
+0:13	stop-loss, takes you out, and then it
+0:15	
+0:15	goes straight to your takerit. Well,
+0:17	
+0:17	we've all been there. I've been there
+0:19	
+0:19	hundreds of times, if not thousands. And
+0:21	
+0:21	all of that is because of liquidity. And
+0:23	
+0:23	in today's video, I'm going to educate
+0:25	
+0:25	you how to best possibly avoid that and
+0:28	
+0:28	get educated on how liquidity works at
+0:30	
+0:30	these precise entry points. So, first
+0:33	
+0:33	things first, what is liquidity and why
+0:35	
+0:35	is it responsible for wicking you out of
+0:38	
+0:38	your trade and then going straight to
+0:39	
+0:39	take profit? Is it because the banks and
+0:41	
+0:41	institutions are watching your
+0:43	
+0:43	stop-loss? Is it because your stop loss
+0:45	
+0:45	is too tight? Is it just because the
+0:47	
+0:47	liquidity is low or high at that very
+0:49	
+0:49	point? Well, first things first,
+0:50	
+0:50	liquidity is exactly what it means. It's
+0:54	
+0:54	how liquid is the market at that very
+0:56	
+0:56	point. The perfect example for liquidity
+0:58	
+0:58	and exactly for you to understand
+0:59	
+0:59	exactly what it is, it's like Ethereum
+1:01	
+1:01	for example, right? Ethereum when
+1:03	
+1:03	Ethereum was reaching the 5,000 mark
+1:05	
+1:05	point per Ethereum, there was a lot of
+1:08	
+1:08	sellers that wanted to get out at that
+1:09	
+1:09	round psychological 5,000. So people
+1:12	
+1:12	started placing their takeprofits at
+1:14	
+1:14	4,999
+1:16	
+1:16	4,998
+1:18	
+1:18	4,997.
+1:19	
+1:19	So there's a lot of liquidity, a lot of
+1:21	
+1:21	exit points at that high. So when the
+1:24	
+1:24	market reaches that point, you're going
+1:26	
+1:26	to have a lot of selling off happening
+1:27	
+1:27	in the market. So the market starts
+1:29	
+1:29	having pushes to the downside. Now, that
+1:31	
+1:31	is exactly why Ethereum did not make it
+1:33	
+1:33	all the way to 5,000 because everybody
+1:36	
+1:36	was placing their takeprofits and their
+1:39	
+1:39	executions to get out and they're
+1:41	
+1:41	liquidating their positions right before
+1:43	
+1:43	5,000 because they know a lot of people
+1:45	
+1:45	wanted to get out at that high point. So
+1:48	
+1:48	there's many points in the market where
+1:49	
+1:49	there is liquidity. Whether it's a
+1:51	
+1:51	currency pair that's at an all-time low,
+1:53	
+1:53	all-time high, in the middle of the
+1:54	
+1:54	market. Cryptocurrencies, uh, stock
+1:57	
+1:57	markets, every single part of any
+1:59	
+1:59	market, there is liquidity because you
+2:01	
+2:01	need for there to be a buyer on one side
+2:04	
+2:04	and there needs to be a seller on the
+2:05	
+2:05	other side. What drives the market up is
+2:08	
+2:08	people buying the market. What drives
+2:09	
+2:09	the market down is people selling the
+2:12	
+2:12	market. There's just simple supply and
+2:13	
+2:13	demand and that is how the market will
+2:15	
+2:15	always move. But it's very predictable
+2:17	
+2:17	where these market moves happen where
+2:20	
+2:20	there's the most amount of liquidity.
+2:22	
+2:22	There's points where market just passes
+2:24	
+2:24	right through and there's points where
+2:25	
+2:25	the market has a lot of struggle to
+2:27	
+2:27	break through because a lot of people
+2:29	
+2:29	liquidating their positions at that
+2:30	
+2:30	specific point. So liquidity is nothing
+2:33	
+2:33	other than people buying and selling the
+2:35	
+2:35	market at that specific point. But it's
+2:37	
+2:37	very predictable where they can sell and
+2:39	
+2:39	where you could get liquidated if you
+2:41	
+2:41	know how to read it correctly, which
+2:43	
+2:43	I'll break down right now. So diving
+2:44	
+2:44	into the markets, let's find out exactly
+2:46	
+2:46	where liquidity lies. Is liquidity at a
+2:49	
+2:49	high point? Is it at a low point? Is it
+2:51	
+2:51	in the middle? Where is it? Well,
+2:53	
+2:53	technically liquidity is at every single
+2:55	
+2:55	point. When you have a market that is
+2:57	
+2:57	moving to the upside, there's liquidity
+3:00	
+3:00	that is driving price to the upside.
+3:02	
+3:02	This is known as supply and demand,
+3:04	
+3:04	buyers, support or resistance, whatever
+3:06	
+3:06	the case is. There's a lot of buying
+3:07	
+3:07	power. Now, whenever this market has had
+3:09	
+3:09	a higher high push, the market needs a
+3:12	
+3:12	bit of a retracement to continue going
+3:14	
+3:14	to the upside. So, this means that at
+3:17	
+3:17	one point in time, the sellers were
+3:19	
+3:19	being stronger than the buyers. Probably
+3:21	
+3:21	the same people that drove the market up
+3:24	
+3:24	after they've made money on this push
+3:25	
+3:25	up, they start liquidating their
+3:27	
+3:27	positions, and that liquidation of their
+3:29	
+3:29	positions starts driving price back
+3:31	
+3:31	down. When price gets driven back down,
+3:34	
+3:34	they see it at a discounted rate. they
+3:36	
+3:36	just made money on this push, then they
+3:38	
+3:38	end up buying again, and then it ends up
+3:40	
+3:40	pushing this to the upside. So, you can
+3:42	
+3:42	have liquidity really be anywhere in the
+3:44	
+3:44	market. It could be at a high point, it
+3:46	
+3:46	could be on a retracement point, it
+3:49	
+3:49	could be at a low point, could be on a
+3:51	
+3:51	retracement point to continue to go to
+3:52	
+3:52	the downside. Really could be anywhere.
+3:55	
+3:55	But the most places where the majority
+3:57	
+3:57	of liquidity is at is where there is a
+4:00	
+4:00	consistent amount of rejection. So, for
+4:03	
+4:03	example, if I were to show you this
+4:05	
+4:05	market right here that I'm just drawing
+4:06	
+4:06	up just randomly here, this market right
+4:09	
+4:09	here, it'd be very predictable that
+4:12	
+4:12	there's a lot of liquidity at this
+4:14	
+4:14	specific zone right here. As you can
+4:16	
+4:16	tell, whenever price gets here, the
+4:18	
+4:18	liquidations come in and the market gets
+4:20	
+4:20	driven down. The market gets liquidated,
+4:22	
+4:22	gets driven down. When we're above it,
+4:24	
+4:24	price gets pushed to the upside. When
+4:27	
+4:27	it's below, it gets pushed to the
+4:28	
+4:28	downside, to the downside. And now that
+4:30	
+4:30	we're above it, it's pretty predictable
+4:32	
+4:32	based off of what we are seeing to the
+4:33	
+4:33	left that this market could continuously
+4:36	
+4:36	get pushed to the upside. So this
+4:39	
+4:39	liquidation zone is also known as
+4:41	
+4:41	support or resistance, supply and
+4:42	
+4:42	demand, order block, area of interest,
+4:45	
+4:45	anything that you want to call it. This
+4:47	
+4:47	is where there's a lot of liquidity in
+4:49	
+4:49	the market because it is very
+4:51	
+4:51	predictable based off of how the buyers
+4:54	
+4:54	and the sellers are reacting at this
+4:56	
+4:56	specific point. If we are above this
+4:59	
+4:59	zone specifically, you want to make sure
+5:01	
+5:01	you're buying because that's where the
+5:02	
+5:02	buyers are coming in. So, there's zones
+5:05	
+5:05	like these where they're very liquid and
+5:08	
+5:08	there's a lot of action coming into the
+5:10	
+5:10	market. Compared to this zone right
+5:11	
+5:11	here, it's could be a possibility that
+5:14	
+5:14	sellers can come into the market right
+5:16	
+5:16	now because last time we were here,
+5:18	
+5:18	there was a selloff from this area. So,
+5:20	
+5:20	there could be a lot of liquidity that
+5:22	
+5:22	comes into the market and pushes price
+5:24	
+5:24	to the downside. But that's really only
+5:26	
+5:26	happened one time. And this also has
+5:29	
+5:29	great significance depending on what
+5:31	
+5:31	time frame you're on. The higher the
+5:32	
+5:32	time frame, the stronger the rejection,
+5:34	
+5:34	the more liquidation that comes in for
+5:36	
+5:36	longer periods of time. And they're a
+5:38	
+5:38	lot stronger. So I personally like to
+5:41	
+5:41	look for liquidity zones, areas of
+5:43	
+5:43	interest, support, and resistance on the
+5:44	
+5:44	higher time frames. And I like to look
+5:46	
+5:46	for multiple taps. It could be more than
+5:48	
+5:48	three taps is the most ideal. Now,
+5:50	
+5:50	something like this that has one
+5:52	
+5:52	rejection, one liquidation from this
+5:54	
+5:54	area could mean that there could be
+5:56	
+5:56	another liquidation, but it's not as
+5:58	
+5:58	predictable as if it were to be a zone
+6:00	
+6:00	like this one because this zone
+6:02	
+6:02	obviously has a lot more sellers when
+6:04	
+6:04	we're below it, buyers when we're above
+6:06	
+6:06	it. So, this is how you identify a
+6:08	
+6:08	specific zone of liquidation in the
+6:10	
+6:10	market. An example of a real position
+6:12	
+6:12	that I'm actually in right now in the
+6:14	
+6:14	market is AUDCHF. this market on the
+6:17	
+6:17	weekly time frame. There's a lot of
+6:18	
+6:18	buyers that come into this market
+6:19	
+6:19	whenever we're above this support,
+6:21	
+6:21	whenever we're above, whenever we're
+6:22	
+6:22	above. Buyers just always drive price up
+6:25	
+6:25	when we're in the market. Now, this
+6:27	
+6:27	right here is what many would call a
+6:30	
+6:30	liquidity sweep, a fake out, an
+6:32	
+6:32	institutional grab, uh inst u you know,
+6:36	
+6:36	the the banks are taking out the retail
+6:38	
+6:38	stop- losses. And to me, I've been
+6:41	
+6:41	trading for the last seven years, seven
+6:42	
+6:42	and a half years now. It really is
+6:44	
+6:44	almost a big hoax. It's almost like the
+6:46	
+6:46	aliens, right? Like aliens are real or
+6:48	
+6:48	we believe them to be real, but nobody's
+6:50	
+6:50	really encountered one of them or at
+6:52	
+6:52	least it hasn't become super mainstream
+6:53	
+6:53	that aliens are real and it's not where
+6:57	
+6:57	you get to engage with one every single
+6:58	
+6:58	day. You can hear about it. You can
+7:00	
+7:00	potentially believe in it, but there's
+7:02	
+7:02	no like real hardcore evidence that
+7:05	
+7:05	there is an alien, right? There is no
+7:07	
+7:07	real hardcore evidence that this is a
+7:10	
+7:10	bank or an institution that has
+7:12	
+7:12	liquidated your position. In my personal
+7:14	
+7:14	humble opinion, it does not make any
+7:16	
+7:16	sense why an institution would move
+7:19	
+7:19	trillions of dollars to liquidate the
+7:22	
+7:22	retail trader stop- losses that only
+7:24	
+7:24	make up 3% of the market. Retail traders
+7:27	
+7:27	move the least amounts of money in the
+7:30	
+7:30	market every single day. So, it doesn't
+7:32	
+7:32	make sense that the banks and
+7:34	
+7:34	institutions are fishing for those
+7:36	
+7:36	profits in a way. It it just doesn't
+7:39	
+7:39	logically make any sense to me and
+7:41	
+7:41	there's no real evidence of it. People
+7:43	
+7:43	have said it for many years, but there's
+7:45	
+7:45	no hardcore evidence like this is proof
+7:47	
+7:47	that the banks are after the retail
+7:49	
+7:49	trader stop-lossy. I feel like this is a
+7:51	
+7:51	narrative that has been created amongst
+7:53	
+7:53	retail traders when they enter these
+7:54	
+7:54	losing streaks and they want to put the
+7:57	
+7:57	blame on something other than themselves
+7:58	
+7:58	or just the market doing whatever the
+8:00	
+8:00	market does. So, this right here, there
+8:02	
+8:02	was a lot of liquidity. This right here
+8:04	
+8:04	is not a liquidity sweep. And I'm going
+8:06	
+8:06	to get later into this video how you can
+8:08	
+8:08	potentially avoid these. And if
+8:10	
+8:10	anything, use these in your favor. But
+8:12	
+8:12	this zone right here has loads of
+8:15	
+8:15	liquidity buying power when you're
+8:17	
+8:17	above. When you're below, all the
+8:19	
+8:19	liquidity is selling to the downside.
+8:21	
+8:21	All the liquidity here is now going to
+8:23	
+8:23	potentially sell to the downside. All
+8:24	
+8:24	I'm doing is just doing what the
+8:26	
+8:26	market's done before. So, I'm in this
+8:28	
+8:28	position right now. I'm looking for big
+8:29	
+8:29	time sells to the downside simply based
+8:32	
+8:32	off of this exact same theory. Looking
+8:34	
+8:34	for liquidity. And now here, this is
+8:36	
+8:36	where this could be the liquidity sweep,
+8:38	
+8:38	liquidity grab, and these other theories
+8:40	
+8:40	behind that. And I'll break that down in
+8:41	
+8:41	just a second. So, I've just showed you
+8:42	
+8:42	an example of a current position that I
+8:44	
+8:44	am in as of right now, entering a trade
+8:47	
+8:47	technically after the liquidity sweep.
+8:50	
+8:50	So, I'm about to break down to you guys
+8:52	
+8:52	how you can use this liquidity sweep and
+8:55	
+8:55	this anticipation in your favor to
+8:57	
+8:57	either enter a position or not. Now, I
+8:59	
+8:59	want to be extremely clear. Anybody that
+9:02	
+9:02	tells you out there that they have a
+9:04	
+9:04	specific strategy or a specific approach
+9:06	
+9:06	on how to completely avoid a liquidity
+9:09	
+9:09	sweep or these massive wickouts that
+9:11	
+9:11	you're seeing right here in the market
+9:13	
+9:13	or anticipate this liquidity spike that
+9:16	
+9:16	comes into the market is 100% lying to
+9:19	
+9:19	you. There is no way that you can
+9:21	
+9:21	anticipate for a move like this to
+9:23	
+9:23	happen. There's no way that you can have
+9:26	
+9:26	a specific strategy to trade solely off
+9:29	
+9:29	of these sweeps. Can you catch a couple
+9:31	
+9:31	of them here and there? Sure. Can you
+9:32	
+9:32	get lucky where you avoid some of them
+9:34	
+9:34	here and there? Sure. But there's no
+9:37	
+9:37	consistency and something that trading
+9:40	
+9:40	is already random as it is. It's going
+9:42	
+9:42	to either go up or down. Now, if you're
+9:44	
+9:44	going to make a decision that it's going
+9:46	
+9:46	to go down, why would you wait for a
+9:49	
+9:49	confirmation for it to go up first, then
+9:52	
+9:52	before going down? That just logically
+9:54	
+9:54	doesn't make any sense to me. You want
+9:55	
+9:55	to look for every possible reason for it
+9:57	
+9:57	to continue to go down. So, the way that
+9:59	
+9:59	I use liquidity sweeps in my favor to
+10:02	
+10:02	enter a position or these liquidity
+10:03	
+10:03	grabs is by simply not paying any mind
+10:06	
+10:06	to it. I go enter a position when I have
+10:08	
+10:08	a confirmation. So, this is very simple.
+10:12	
+10:12	Waiting for a liquidity sweep to enter a
+10:15	
+10:15	position is almost like playing defense
+10:17	
+10:17	in trading. And waiting for a
+10:20	
+10:20	confirmation in trading to enter the
+10:22	
+10:22	position is playing offense. You're
+10:24	
+10:24	going in the favor. If I'm looking to
+10:26	
+10:26	sell a market, for example, let's say
+10:28	
+10:28	the same exact example right here,
+10:30	
+10:30	AUDHF. Let's say I'm looking to sell
+10:32	
+10:32	this market right here. I am not going
+10:35	
+10:35	and like let's do this before I even
+10:37	
+10:37	enter the position. I am not going to be
+10:40	
+10:40	interested in selling this market once I
+10:43	
+10:43	have a move happen opposite of what I am
+10:47	
+10:47	interested in looking for. If I'm
+10:49	
+10:49	looking to sell this market, I want to
+10:51	
+10:51	look for every possible reason to sell.
+10:54	
+10:54	If there's a move that happens against
+10:56	
+10:56	my sell position, I'm not going to be
+10:59	
+10:59	interested in selling because it's
+11:00	
+11:00	clearly not going in my favor. At no
+11:02	
+11:02	given point am I going to anticipate
+11:06	
+11:06	that that's going to be a liquidity
+11:07	
+11:07	sweep or that's going to be a liquidity
+11:09	
+11:09	grab. Why anticipate something when
+11:12	
+11:12	trading there's already enough
+11:13	
+11:13	anticipation as it is. So why am I going
+11:16	
+11:16	to anticipate something that is against
+11:18	
+11:18	my trade to enter the trade in the
+11:21	
+11:21	direction that I want to go? If I want
+11:23	
+11:23	to sell and it's giving me buy
+11:24	
+11:24	indications, why would I like to sell?
+11:27	
+11:27	Makes no sense. So in this example,
+11:29	
+11:29	we're heading to the upside. Many would
+11:31	
+11:31	look to call this a liquidity sweep. And
+11:35	
+11:35	the reason why I think people do this,
+11:36	
+11:36	and I think this is a psychological
+11:39	
+11:39	shift that traders have shifted as years
+11:42	
+11:42	have turned by, and they've normalized
+11:43	
+11:43	it. And I think that it's actually
+11:44	
+11:44	making the trader take more steps back
+11:46	
+11:46	in their journey rather than forward is
+11:49	
+11:49	they didn't get their specific
+11:51	
+11:51	entry confirmation. They say, I'm
+11:53	
+11:53	looking for bearish confirmation. They
+11:54	
+11:54	didn't get that confirmation at that
+11:56	
+11:56	given point. Now, they're finding a
+11:57	
+11:57	reason still to enter the trade off of
+11:59	
+11:59	this having a bullish push to the upside
+12:01	
+12:01	and they're calling it a potential
+12:02	
+12:02	liquidity sweep. So, they're entering a
+12:04	
+12:04	trade on an anticipation and not a real
+12:07	
+12:07	confirmation. So, this right here could
+12:10	
+12:10	be a liquidity sweep, but you're
+12:11	
+12:11	anticipating for it to be a liquidity
+12:13	
+12:13	sweep where it that this make that that
+12:16	
+12:16	makes no sense. Why would you enter off
+12:18	
+12:18	anticipation? You want to enter on a
+12:20	
+12:20	confirmation. What would a confirmation
+12:22	
+12:22	be like? Okay, it rejected. Now that
+12:26	
+12:26	this rejected this resistance that I'm
+12:28	
+12:28	looking to sell, I want a confirmation
+12:31	
+12:31	that it's actually going to the
+12:33	
+12:33	downside, which what would be a
+12:34	
+12:34	confirmation? A bearish candlestick
+12:37	
+12:37	confirming that it's going in that
+12:39	
+12:39	direction. So, I am not trading on the
+12:42	
+12:42	anticipation that this could potentially
+12:45	
+12:45	be that move. Now, I this could have had
+12:49	
+12:49	five bullish candlesticks that closed up
+12:52	
+12:52	here until I didn't get my bearish
+12:53	
+12:53	candlesticks. I was not interested in
+12:55	
+12:55	entering the position because those
+12:57	
+12:57	bullish candlesticks could have just
+12:59	
+12:59	continued to be the bullish push to the
+13:00	
+13:00	upside and then traders out there would
+13:02	
+13:02	go ahead and lose a position and be
+13:03	
+13:03	like, well, why am I losing a position?
+13:06	
+13:06	You know, this wasn't the liquidity
+13:07	
+13:07	sweep or this, you know, didn't have the
+13:09	
+13:09	move that I expected. Yeah, you're not
+13:12	
+13:12	entering on any confirmation. You're
+13:13	
+13:13	entering purely on anticipation from the
+13:16	
+13:16	market. And that by itself, if you shift
+13:19	
+13:19	that approach to the market, you're
+13:21	
+13:21	going to realize that you're going to
+13:22	
+13:22	stop chasing these trades and making
+13:25	
+13:25	them seem something like they're not.
+13:27	
+13:27	And you're simply going to be very
+13:28	
+13:28	patient and wait for the trades that are
+13:30	
+13:30	giving you the correct confirmations. It
+13:32	
+13:32	might take a little bit longer, might
+13:33	
+13:33	have to be a little bit more patient,
+13:35	
+13:35	but patience pays once you're on this
+13:37	
+13:37	side of the table. And to be completely
+13:38	
+13:38	honest, it probably took me 2 and 1/2
+13:41	
+13:41	years to really understand this and
+13:43	
+13:43	about another year to actually perfect
+13:45	
+13:45	it. At this point in my journey, I still
+13:47	
+13:47	make mistakes where I still enter trades
+13:49	
+13:49	on anticipations, but I know exactly
+13:52	
+13:52	what I'm doing. I know I'm entering a
+13:54	
+13:54	trade on anticipation, and I'm totally
+13:56	
+13:56	okay with the outcome. The trade could
+13:57	
+13:57	go straight to my stop loss, and it
+13:59	
+13:59	won't matter to me. The problem with 99%
+14:01	
+14:01	of traders is that they enter these
+14:03	
+14:03	positions, they don't know the type of
+14:04	
+14:04	positions they're entering, they're not
+14:05	
+14:05	okay with the risk, and then when they
+14:07	
+14:07	lose a position, they go and point the
+14:10	
+14:10	finger at someone else. Not only do they
+14:12	
+14:12	have the wrong reasoning to enter the
+14:14	
+14:14	trade, not only do they not even know
+14:16	
+14:16	why they're entering the trade, but then
+14:17	
+14:17	they're putting the blame on anybody but
+14:18	
+14:18	their but themselves. So, I'm going to
+14:20	
+14:20	give you right now a very simple
+14:21	
+14:21	breakdown how to use this liquidity in
+14:23	
+14:23	your advantage. Market moves very
+14:25	
+14:25	simple. As many of you guys already
+14:27	
+14:27	know, you guys should have some type of
+14:28	
+14:28	experience in the markets. You know, the
+14:30	
+14:30	market moves in highs and lows. When a
+14:32	
+14:32	market is at a high point, you don't
+14:34	
+14:34	want to buy at the high point. It's like
+14:35	
+14:35	buying Bitcoin once it's hit the highest
+14:38	
+14:38	point it's been. Why do you want to be
+14:40	
+14:40	that person? you're late into the move.
+14:42	
+14:42	Wait for the market to give a little bit
+14:43	
+14:43	of that discount. That discount is where
+14:45	
+14:45	the sellers are going to come in.
+14:46	
+14:46	They're going to liquidate their
+14:47	
+14:47	positions and that's where you're going
+14:49	
+14:49	to get your opportunity. You never want
+14:50	
+14:50	to buy at the most expensive point or at
+14:52	
+14:52	the high. That's too much anticipation
+14:54	
+14:54	for it to go to continuously the next
+14:56	
+14:56	high. So, you wait for this bit of a
+14:58	
+14:58	retracement. You wait for some people to
+14:59	
+14:59	liquidate their positions. And that's
+15:01	
+15:01	where then you will find yourself to
+15:03	
+15:03	have a liquidity zone, an area of
+15:05	
+15:05	interest, support and resistance, supply
+15:07	
+15:07	and demand zone, potato, whatever you
+15:09	
+15:09	want to call it. But you want to make
+15:11	
+15:11	sure that there is a track record of
+15:14	
+15:14	multiple time that the market has
+15:16	
+15:16	rejected from that area that there is
+15:18	
+15:18	liquidity at that zone. Very simple to
+15:21	
+15:21	what this zone is. Whenever you're above
+15:23	
+15:23	this area, it goes up. You just want to
+15:27	
+15:27	buy it again if it's above it. It's very
+15:29	
+15:29	simple. Next thing that you want to do
+15:31	
+15:31	is wait for a confirmation.
+15:34	
+15:34	Don't wait for a liquidity sweep. Don't
+15:38	
+15:38	anticipate that the market is going to
+15:40	
+15:40	do something like this because what will
+15:42	
+15:42	end up happening is that this market
+15:43	
+15:43	will then have the push to the upside
+15:45	
+15:45	and then you're going to be like, "No,
+15:46	
+15:46	you know what? That's a good
+15:47	
+15:47	confirmation, but I'm going to wait for
+15:50	
+15:50	it to have the fake out, for it to have
+15:52	
+15:52	the liquidity sweep, and then I'll enter
+15:54	
+15:54	the position after." I hope you realize
+15:56	
+15:56	if you would have done that specifically
+15:58	
+15:58	just for this market right here, every
+16:00	
+16:00	single time it approached this area, one
+16:02	
+16:02	time, two times, three times,
+16:07	
+16:07	four times
+16:09	
+16:09	right here, three times, four times,
+16:14	
+16:14	five times,
+16:17	
+16:17	six times,
+16:19	
+16:19	and seven times. right here. One time
+16:23	
+16:23	would you have only gotten the liquidity
+16:25	
+16:25	grab? Is it worth waiting for this
+16:28	
+16:28	liquidity grab to happen and miss out on
+16:31	
+16:31	every single one of these opportunities?
+16:32	
+16:32	Look at this beautiful confirmation that
+16:35	
+16:35	we are actually rejecting this area.
+16:37	
+16:37	Bullish engulfing candlestick. Boom.
+16:39	
+16:39	Could have bought in just off of that
+16:40	
+16:40	alone. You have the confirmation. You
+16:43	
+16:43	have the push of the market going in
+16:46	
+16:46	that favor, but you believe that the
+16:48	
+16:48	market was going to give you a liquidity
+16:49	
+16:49	sweep. and then you miss out on this
+16:51	
+16:51	position. Same exact thing happened
+16:53	
+16:53	again. Morning star bullish engulfing
+16:55	
+16:55	confirmation, you miss out on this
+16:56	
+16:56	position. Bullish candle rejection, you
+16:59	
+16:59	miss out on this push to the upside.
+17:01	
+17:01	Bullish pin bar rejection, you miss out
+17:03	
+17:03	on this push to the upside. Don't trade
+17:06	
+17:06	plain defense waiting for this to happen
+17:09	
+17:09	every single time. You're going to drive
+17:10	
+17:10	yourself crazy. You're going to miss out
+17:12	
+17:12	on so many opportunities. If price has
+17:15	
+17:15	come into this area and it's giving you
+17:17	
+17:17	your confirmation that it's going in the
+17:20	
+17:20	direction that you're anticipating for
+17:21	
+17:21	it to go, you have all the liquidity in
+17:23	
+17:23	your favor to continue buying in that
+17:25	
+17:25	direction. So just enter the trade. You
+17:27	
+17:27	cannot avoid for these liquidity moves,
+17:29	
+17:29	these liquidity fake outs to happen.
+17:31	
+17:31	It's impossible. Save yourself the
+17:33	
+17:33	headache. It makes no sense to just have
+17:36	
+17:36	that in the back of your mind. Will this
+17:38	
+17:38	happen to you and you will get caught at
+17:39	
+17:39	times? Yes. And you will continuously to
+17:42	
+17:42	do that as you go through your trading
+17:43	
+17:43	journey. There's no way to avoid it.
+17:46	
+17:46	Myself that I've been doing this for the
+17:47	
+17:47	last 7 years happens to me every single
+17:49	
+17:49	time and it can happen once uh every two
+17:52	
+17:52	weeks. All I do is just take the next
+17:55	
+17:55	trade and wait for the next approach. I
+17:56	
+17:56	don't let it affect my next trade. And
+17:58	
+17:58	this is probably the most important
+17:59	
+17:59	thing that I break down with my students
+18:02	
+18:02	every single Sunday. I get on a call
+18:03	
+18:03	every single Sunday with my students on
+18:05	
+18:05	Sunday swings and I break down to them
+18:08	
+18:08	the top six 8 n 10 pairs that I'm
+18:11	
+18:11	trading for that week ahead. I give them
+18:13	
+18:13	the specific markets that have the best
+18:15	
+18:15	amount of liquidity, the best buying
+18:17	
+18:17	power and why it should go in one
+18:19	
+18:19	direction versus the other. And the
+18:21	
+18:21	beauty of this is that we have weekly
+18:23	
+18:23	calls where I break down the reasonings
+18:25	
+18:25	as to why it should continue to go in
+18:27	
+18:27	that direction. I review their trade
+18:29	
+18:29	setups. There's a community aspect where
+18:30	
+18:30	you can engage with other traders. And
+18:32	
+18:32	we break this down every single day. And
+18:35	
+18:35	the biggest turning point for all of my
+18:37	
+18:37	students is trading on confirmation, not
+18:41	
+18:41	on anticipation. You want to make sure
+18:43	
+18:43	you have as many possible confirmations
+18:45	
+18:45	to have that trade continuously go in
+18:47	
+18:47	your direction. If you guys want to know
+18:48	
+18:48	more about my community, get on calls
+18:50	
+18:50	with me every single Sunday. DM me the
+18:52	
+18:52	word Sunday swings. Click the link down
+18:54	
+18:54	below. Shoot me a DM. I'll personally
+18:56	
+18:56	reply to you and see if you're a right
+18:58	
+18:58	fit for our university where we're
+19:00	
+19:00	training traders every single week to
+19:02	
+19:02	have the exact same results that I
+19:03	
+19:03	personally do by live trading, reviewing
+19:05	
+19:05	their trades, and most importantly
+19:07	
+19:07	giving them a strategy that works and
+19:09	
+19:09	that has success every single week. Hope
+19:11	
+19:11	you guys enjoyed this video. Make sure
+19:12	
+19:12	to hit that like and subscribe button
+19:14	
+19:14	and DM me the word Sunday Swings. See
+19:16	
+19:16	you guys in the nexthttps://www.youtube.com/watch?v=Rua24ytuHuY
+19:16	

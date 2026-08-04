@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|027",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|008",
+  "questionText": "At the long entry TJR refers to price needing 'One extra point down to hit our special little number that we wanted'. What is that number, and is it part of the entry rule?",
+  "questionType": "ambiguous_statement",
+  "reason": "An entry-relevant threshold is referenced but never defined anywhere in the transcript.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

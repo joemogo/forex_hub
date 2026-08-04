@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "XCONTRA|20260728|009",
+  "entityType": "CONTRADICTION_RECORD",
+  "eventId": "LCEVT|CONTRADICTION_RECORD|XCONTRA|20260728|009|001",
+  "eventType": "created",
+  "metadata": {},
+  "newStatus": "open",
+  "priorStatus": null,
+  "reason": "Contradiction recorded between two claims.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-28T20:52:12Z"
+}

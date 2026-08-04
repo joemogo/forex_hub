@@ -1,0 +1,52 @@
+{
+ "acquiredAt": null,
+ "canonicalReference": "https://www.youtube.com/watch?v=sZAE_lqdeno",
+ "contentHash": "f48d9c1c8c13f0fa85f1cb830e71ef40af7f6163d528bb8407ee29575408a6db",
+ "createdAt": "2026-07-28T01:36:32Z",
+ "externalAssetReference": null,
+ "externalReference": null,
+ "language": "en",
+ "licensingStatus": "restricted_third_party",
+ "lifecycleStatus": "registered",
+ "metadata": {
+  "fileBytes": 22106,
+  "manifestPath": "docs/trader-intelligence/intake/manifests/alexg-advanced-market-structure.ingest.json",
+  "titleVerification": {
+   "channelName": "fxalexg",
+   "channelUrl": "https://www.youtube.com/@fxalexg__",
+   "endpoint": "https://www.youtube.com/oembed?url=<canonicalReference>&format=json",
+   "method": "youtube_oembed",
+   "priorTitle": "Advanced Market Structure (PROVISIONAL — derived from transcript, actual YouTube title unverified)",
+   "priorTitleStatus": "provisional_derived",
+   "retrievedAt": "2026-07-28T02:57:22Z",
+   "retrievedBy": "claude-opus-5 (Trader Intelligence pipeline)",
+   "status": "verified_publisher",
+   "statusRationale": "provenanceStatus remains partially_verified: publisher identity is now confirmed, but transcript fidelity to the source audio is not, and that is the property every extracted excerpt depends on.",
+   "stillUnverified": [
+    "that the archived transcript text faithfully reproduces the video's spoken audio (the text was owner-pasted, not retrieved from the publisher's caption track)",
+    "publication date",
+    "licensing terms beyond the recorded restricted_third_party status"
+   ],
+   "traderAttributionConfirmed": true,
+   "verifiedScope": [
+    "title",
+    "channel/author",
+    "video identity"
+   ],
+   "verifiedTitle": "Simplifying Advanced Market Structure in 20 Minutes | Forex Trading Tutorial"
+  }
+ },
+ "provenanceStatus": "partially_verified",
+ "registeredAt": "2026-07-28T01:36:32Z",
+ "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-advanced-market-structure.raw.txt",
+ "schemaVersion": 1,
+ "sourceDate": null,
+ "sourceId": "EVSRC|ALEX_G|20260728|001",
+ "sourceType": "transcript",
+ "storageLocationType": "repository",
+ "strategyFamilyId": null,
+ "title": "Simplifying Advanced Market Structure in 20 Minutes | Forex Trading Tutorial",
+ "traderId": "ALEX_G",
+ "transcriptReference": "docs/trader-intelligence/imports/alex-g/normalized/alexg-advanced-market-structure.normalization-map.json",
+ "updatedAt": "2026-07-28T02:57:22Z"
+}

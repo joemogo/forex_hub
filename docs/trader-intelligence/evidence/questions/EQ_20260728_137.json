@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|135",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|137",
+  "questionText": "What is on the written confluence list, and how many confluences are required?",
+  "questionType": "missing_target_logic",
+  "reason": "He says he always writes the confluences down, displays the list on screen, and invites the group to screenshot it - and never reads it aloud. The direction decision is described as counting confluences on each side, so the list IS the decision rule. It is visually present in the source and textually absent. This is the third visual-only artifact in three sources, after the session map and the grading scale.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

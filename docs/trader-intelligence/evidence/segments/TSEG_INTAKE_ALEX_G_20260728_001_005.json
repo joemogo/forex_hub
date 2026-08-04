@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T01:36:32Z",
+  "endTimestamp": "4:49",
+  "intakeId": "INTAKE|ALEX_G|20260728|001",
+  "language": "en",
+  "lineEnd": 231,
+  "lineStart": 192,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "example let's say that this would be the higher high right here and that this would be the higher low right here this is the head of the snake at this point right here the snake goes it turned then it keeps going down this is the higher low we do not place the higher high or higher low at the Wicks of a certain move or at the Wicks of a certain move higher highs and higher lows are placed at the bodies of the candlestick because this is where the market structure is if I were to come into here and I would erase the candlesticks and go to the line chart you can see that the structure is at this higher low and at this higher high if we go back to the candlesticks you can see that the Wicks are just the trail of where the market went but it's not the actual Market",
+  "schemaVersion": 1,
+  "sectionTitle": "Structure points go at bodies, not wicks; the line chart as aid",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|001|005",
+  "segmentType": "other",
+  "sequenceNumber": 5,
+  "sourceId": "EVSRC|ALEX_G|20260728|001",
+  "speaker": null,
+  "startTimestamp": "4:00",
+  "textHash": "de4b43a120d7c0e3e6e762f93c593fce60a50814c2609db4dd0e9512d6fde849"
+}

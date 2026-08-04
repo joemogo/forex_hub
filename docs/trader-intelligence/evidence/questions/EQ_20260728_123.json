@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|122",
+  "createdAt": "2026-07-28T04:42:15Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|123",
+  "questionText": "What proportion of students reach $1,000-$1,500 per week, and what happens to the rest?",
+  "questionType": "insufficient_independent_support",
+  "reason": "'Hundreds of them' is asserted with no denominator, no failure rate, no account size and no verification, immediately before the call to action. A success claim without a denominator carries no information.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|005"
+  ]
+}

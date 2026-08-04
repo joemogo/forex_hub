@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "22:13",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 406,
+  "lineStart": 313,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "So again, this can be a little bit confusing. So let's walk through it. We are on the daily time frame. So that means every single 24 hours a new candle opens. Okay? So let's say boom, 24 hours is up or let's say this this candle just closed. When this candle opened, it opened at this price right here. So if we look to the right hand side, we can see the price at which it opened. [snorts] $30,241.50. That's where this candle opened. And over the course of the 24 hours, price came down. This was the lowest point that it got to during the 24 hours. So, $29,77.50. And then also at some point in time during that 24 hours price came up to this high which is at $32,227. And then at the end of the 24 hours where did price close at? It closed right here. So at the start of the 24 hours where was price at? Right here. sometime during the 24 hours. The lowest point of the 24 hours 24 hours it got to was $29,714. The highest point that it got to during those 24 hours was $32,214. And then at the end of the 24 hours, it ended right here. So this was the start of the 24 hours. This was the lowest point that price got to during the 24 hours. This was the highest point price got to during the 24 hours. And then at the end of the 24 hours, price closed right here. Now, for a down candle, it's the exact same except this up here is the open, right? Because over the course of 24 hours, if we open at a high price and we close at a lower price, what's what's that going to make this candle? It's going to make it red and it's going to be a down candle. So on a down candle, this is the open. This is still the highest point that price got to during the 24 hours. This is the lowest point that price got to during the 24 hours. And then once the 24 hours was up, this is where price was and ended up closing. Okay, so we can see on a bullish candle. Boom. Uh we can even show you guys in real time markets right now. So this is another nice thing about trading view. If you look to the right hand side, you can see the time that is left for this candle to close. So this candle is still forming. So let's do a little lesson right here. Where was the open of this candle? This is a down candle, right? So the open was right here. Okay. where the body is, where the body starts at $25,478. Where was the highest point that prices got to within the past 19 hours and 30 minutes that this candle has been open, right? Because it hasn't been a full 24 hours yet, or else this candle would be closed and wouldn't still be forming. The highest point that this candle has gotten to, look at this snail trail. Oh, price came all the way up here to $25,86. And throughout the 19 hours and 30 minutes, where was the lowest point that price has gotten to? Right here, the bottom of the wick at $25,294. And right now, at this point in time, where is price currently? Well, we can see it on the right hand side. It's at $25,391.50. Okay. So, each one of these candlesticks represents a day's worth of price action. So, we can look at yesterday. Where was the high? Where was the highest point that yesterday got to over the course of 24 hours? Right here at $25,716. Where was the open? The open was right here. So price opened at $25,683 at the start of that 24h hour time period. Where was the lowest point that price went to during that 24h hour time period? Down here at $25,429. And then at the end of the 24h hour time period, where did price close? It closed down here at $25,456. So this gives us a very good look again as we were just explaining of what price",
+  "schemaVersion": 1,
+  "sectionTitle": "Worked example: reading a daily candle",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|010",
+  "segmentType": "other",
+  "sequenceNumber": 10,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "17:12",
+  "textHash": "7bc7e644743fd3857bbec42e53fa362198052b1403b54f4adde8cde14e71c24e"
+}

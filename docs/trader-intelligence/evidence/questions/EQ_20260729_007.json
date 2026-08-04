@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|021",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|007",
+  "questionText": "If structure classification is subjective, what is being replayed when MOGO tests it?",
+  "questionType": "unclear_scope",
+  "reason": "This source states plainly that two traders may classify the same chart differently and neither is wrong. That is an honest and unusual admission - no other source in the library concedes it - and it has a direct consequence for replay: a mechanical implementation tests ONE reading, not 'the method'. Any replay result must be reported with the swing-detection parameters it assumed.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

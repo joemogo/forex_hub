@@ -1,0 +1,20 @@
+{
+  "archiveFile": "tjr-day3-tradingview-candlestick-basics.raw.txt",
+  "canonicalReference": "https://www.youtube.com/watch?v=8qwEmE1DwYw",
+  "educator": "TJR",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "licensingNote": "Internal research only per DECISION|MOGO|20260727|005. Do not redistribute or reproduce publicly.",
+  "licensingStatus": "restricted_third_party",
+  "manifestPath": "docs/trader-intelligence/intake/manifests/tjr-day3-tradingview-candlestick-basics.ingest.json",
+  "normalizationMapPath": "docs/trader-intelligence/imports/tjr/normalized/tjr-day3-tradingview-candlestick-basics.normalization-map.json",
+  "recordedAt": "2026-07-27T22:26:06Z",
+  "schemaVersion": 1,
+  "sha256": "befb81e5ed6726e046b2bd2c3e68353fee93f4e9114b19308f0016cf416cfa9d",
+  "sizeBytes": 36812,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "title": "TJR — Day 3 (working title; actual YouTube title unverified)",
+  "titleProvenance": "Derived by the operator from transcript content. The video's actual YouTube title has NOT been verified: no network access, the transcript states no title, and no repository context references video id 8qwEmE1DwYw. Left unresolved rather than invented.",
+  "titleStatus": "unverified_working_title",
+  "traderId": "TJR",
+  "youtubeVideoId": "8qwEmE1DwYw"
+}

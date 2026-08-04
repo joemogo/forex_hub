@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|005",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|008",
+  "questionText": "Structure is said to exist inside any range, however tight. At what point does a range become too small for structure to be meaningful, given that no minimum displacement applies?",
+  "questionType": "ambiguous_statement",
+  "reason": "Combined with 'any size counts', this implies structure shifts can be identified at arbitrarily small scales, which has no stated lower bound.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

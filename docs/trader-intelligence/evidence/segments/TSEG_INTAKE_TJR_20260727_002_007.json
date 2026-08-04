@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "13:56",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 252,
+  "lineStart": 223,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "going to be able to go anywhere. Okay, that's another thing. There's a bunch of different ways to read these charts. Okay, there's bar there's bar candles, there's hollow candles, there's volume candles, there's line charts, there's step line charts, there's columns, there's high lows, there's volume footprint, all of this stuff. There's hyenashi candles, there's Reno candles. Okay, all of these different types of candlesticks, but for us to be able to read the market, Japanese candlesticks are by far the most valuable because they tell us four different things about every single time frame. So, what we're going to do is I'm going to draw out a candlestick for us here. This is going to be a green candle. Okay. So this is what this is what an up candle looks like. Okay. And this is what a down candle looks like. Now, Japanese candlesticks tell us four different things about what h about what happened during during this period of time. So, every single candlestick represents a period of time, depending on what time frame we're on, and I'll explain that a little bit later, but every single candlestick represents a period of time where price went during that time where price opened and where price closed. So,",
+  "schemaVersion": 1,
+  "sectionTitle": "Chart types and why Japanese candlesticks",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|007",
+  "segmentType": "other",
+  "sequenceNumber": 7,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "11:59",
+  "textHash": "b6409e7d19af75c20928c46f9b893dc0eccac8446d3797e578275ae75d2137ca"
+}

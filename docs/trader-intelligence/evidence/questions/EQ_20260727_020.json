@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|029",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|020",
+  "questionText": "An area of interest needs 'a decent amount of rejections'. How many rejections, and what counts as a rejection?",
+  "questionType": "unclear_scope",
+  "reason": "The only stated selection criterion for the entry zone is qualitative.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260727|001"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|041",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|044",
+  "questionText": "Does 'break out of this box' require a body close, or does a wick through it suffice?",
+  "questionType": "ambiguous_statement",
+  "reason": "Sources #1 and #2 both require a candle body close beyond a structure level (CLAIM|ALEX_G|20260727|022). This source does not restate that qualifier, and the distinction changes when the bias flips. Probably consistent, but not stated here.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

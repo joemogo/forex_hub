@@ -1,0 +1,23 @@
+2026-07-27T00:00:00Z
+QUARANTINED — working copy diverged from the immutable raw archive.
+
+Detected by: scripts/trader_intelligence/ingest.py phase-1 content-hash check.
+
+  expected (raw archive + IntakeManifest.contentHash + normalization map):
+    e91c5ea105b725fe5b2be597ad39c6b1c7035b40a06247c69944dd96657ccce2   59644 bytes
+  found (working copy at imports/tjr/):
+    e5c9e25e8bc82c31bc773edab64ad7051fba48cb6c3e398719bbc608a36c13e2   59641 bytes
+
+Single difference, source line 395:
+  -  ...to grow. And I'm sure that a lot of you guys are going to find...
+  +  ...to grow. And I'm x that a lot of you guys are going to find...
+
+IMPACT ON EVIDENCE: none. All 62 evidence items derive from the raw archive via the
+normalization map, and all three recorded hashes agree on the original bytes. Line 395 falls in
+section 24 ("Mentorship promotion and closing", lines 348-397), which produced zero claims; no
+evidence item quotes the altered text.
+
+ACTION TAKEN: this altered copy retained here as a record; the working copy at
+imports/tjr/ restored byte-identically from raw/tjr-forex-session-strategy-transcript.raw.txt.
+
+The raw archive was never modified. This is the provenance chain working as designed.

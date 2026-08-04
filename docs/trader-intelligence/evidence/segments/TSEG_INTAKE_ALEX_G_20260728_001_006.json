@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T01:36:32Z",
+  "endTimestamp": "5:28",
+  "intakeId": "INTAKE|ALEX_G|20260728|001",
+  "language": "en",
+  "lineEnd": 259,
+  "lineStart": 232,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "structure so once again it is impossible to have a bullish Market without a higher high or a higher low the market will remain bullish as long as we stay in between the higher high and higher low the moment we body close above we have then created a new higher high and we must have a new higher low once we have a new higher high it is impossible to have a new higher high without a new higher low and as long as we don't body close above either one of these lines this Market will remain bullish until we close above or we close under and that",
+  "schemaVersion": 1,
+  "sectionTitle": "Recap: a new higher high forces a new higher low",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|001|006",
+  "segmentType": "other",
+  "sequenceNumber": 6,
+  "sourceId": "EVSRC|ALEX_G|20260728|001",
+  "speaker": null,
+  "startTimestamp": "4:51",
+  "textHash": "c3d1a26b5a8772e3e5717c4e0ff8314dc9ecb9141d8ce33a41a70e2dd6a0a4fe"
+}

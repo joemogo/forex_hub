@@ -1,0 +1,13 @@
+{
+  "claimId": "CLAIM|ALEX_G|20260728|017",
+  "evidenceId": "EV|EVSRC|ALEX_G|20260728|002|004",
+  "independenceGroup": "AUTHOR|ALEX_G",
+  "linkId": "LINK|EV|EVSRC|ALEX_G|20260728|002|004|CLAIM|ALEX_G|20260728|017",
+  "linkedAt": "2026-07-28T02:23:09Z",
+  "linkedBy": "ingest-cli",
+  "qualityWeight": null,
+  "rationale": null,
+  "relationshipType": "supports",
+  "relevanceWeight": 1.0,
+  "schemaVersion": 1
+}

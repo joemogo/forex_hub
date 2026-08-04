@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T14:24:08Z",
+  "endTimestamp": "0:11",
+  "intakeId": "INTAKE|ALEX_G|20260728|006",
+  "language": "en",
+  "lineEnd": 10,
+  "lineStart": 1,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "https://www.youtube.com/watch?v=1JMVE4Y5U7o&list=PLi54qmfu-okqa3TmCy5Bn89fRTke7pKFFcool so i'm gonna start the recording so we got a solid 70 people on here for 6 a.m not bad oh yeah i couldn't i will wait last training yeah",
+  "schemaVersion": 1,
+  "sectionTitle": "Session opening - a live 6 a.m. call with about 70 attendees",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|006|001",
+  "segmentType": "other",
+  "sequenceNumber": 1,
+  "sourceId": "EVSRC|ALEX_G|20260728|006",
+  "speaker": null,
+  "startTimestamp": "0:00",
+  "textHash": "6820ae5bd8c006b97b9cf18b3d82ff095eccbdf10447e01a64afa88ac0b28409"
+}

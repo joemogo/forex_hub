@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|022",
+  "claimBId": "CLAIM|TJR|20260727|036",
+  "contradictionId": "XCONTRA|20260728|002",
+  "contradictionType": "DEFINITIONAL",
+  "detectedAt": "2026-07-28T02:23:09Z",
+  "metadata": {},
+  "rationale": "CROSS-EDUCATOR, MECHANISM. TJR: 'It is assumed that market makers sweep highs and lows specifically to fill large positions in the opposite direction' — the causal engine of his entire framework. Alex G: 'There is no real hardcore evidence that this is a bank or an institution that has liquidated your position', and calls the narrative 'almost a big hoax'. Both are causal hypotheses about WHY price sweeps levels, and they are incompatible. Neither educator offers evidence: TJR asserts the mechanism, Alex G asserts the absence of proof for it. Notably Alex G is the only source in the library to make an explicitly epistemic argument — he demands evidence rather than asserting a counter-mechanism.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

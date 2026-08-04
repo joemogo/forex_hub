@@ -1,0 +1,27 @@
+{
+ "aliases": [
+  "rayner",
+  "tradingwithrayner"
+ ],
+ "createdAt": "2026-07-28",
+ "displayName": "Rayner Teo",
+ "externalResearchStatus": "partial",
+ "instruments": [],
+ "markets": [
+  "forex"
+ ],
+ "notes": "THIRD EDUCATOR, registered 2026-07-28 in response to Trader Intelligence Review #1 recommendation R3. Publisher verified before extraction: YouTube channel 'Rayner Teo' (@tradingwithrayner), Singapore-based. This is a genuinely independent educator - different channel, different country, different instruction style from both TJR and ALEX_G - which is what makes cross-educator comparison meaningful for the first time.\n\nMOGO has NO implementation of anything attributable to this trader, and none is authorized. The trader record exists solely to hold externally-sourced research claims with provenance. Unlike ALEX_G - whose repository record describes what MOGO BUILT rather than what the educator teaches (DECISION|MOGO|20260727|004) - this profile contains no implementation claims at all, so there is no risk of conflating the two.",
+ "paperTradingStatus": "not_applicable",
+ "replayStatus": "not_implemented",
+ "repositoryModelStatus": "no_implementation",
+ "sessions": [],
+ "shadowStatus": "not_applicable",
+ "sourceChannels": [
+  "https://www.youtube.com/@tradingwithrayner"
+ ],
+ "strategyFamilyIds": [],
+ "terminology": {},
+ "timeframes": [],
+ "traderId": "RAYNER_TEO",
+ "updatedAt": "2026-07-28"
+}

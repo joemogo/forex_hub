@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|156",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|166",
+  "questionText": "How does 'don't show anybody' sit alongside running a paid community and live calls?",
+  "questionType": "implied_requirement",
+  "reason": "He prescribes not showing open positions to others while operating a community in which he shows his own setups and reviews members' trades weekly. Plausibly distinguishable - showing a setup is not the same as seeking validation on an open position - but the distinction is not drawn.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

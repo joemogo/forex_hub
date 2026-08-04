@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|157",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|165",
+  "questionText": "Does the 30/30/30/10 rule apply to trading profits, to all income, or to both?",
+  "questionType": "unclear_scope",
+  "reason": "Presented as covering '100% of your income' and 'my whole entire life as a whole'. Whether trading profits enter the same allocation, and whether the 30% investment tranche can include funding the trading account itself, is not stated. **This is a personal-finance rule, not a trading rule**, and is typed 'other' so it cannot be mistaken for one.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

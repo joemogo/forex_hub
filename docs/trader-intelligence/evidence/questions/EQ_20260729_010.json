@@ -1,0 +1,17 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|001",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|010",
+  "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|001' has no session recorded -- does this rule apply in every session or only specific ones?",
+  "questionType": "missing_session",
+  "reason": "claimType='session_rule' is session-sensitive and claim.session is null.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": []
+}

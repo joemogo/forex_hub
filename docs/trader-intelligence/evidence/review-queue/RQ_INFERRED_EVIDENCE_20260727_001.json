@@ -1,0 +1,18 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "entityId": "EV|EVSRC|TJR|20260727|001|048",
+  "entityType": "EVIDENCE_ITEM",
+  "metadata": {},
+  "priority": "low",
+  "queueEntryId": "RQ|INFERRED_EVIDENCE|20260727|001",
+  "queueType": "inferred_evidence",
+  "reason": "directness='inferred_from_context' (not a direct statement/observation).",
+  "resolution": null,
+  "reviewAction": null,
+  "reviewNotes": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-27T03:56:30Z"
+}

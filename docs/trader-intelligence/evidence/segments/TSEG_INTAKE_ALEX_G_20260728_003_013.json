@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T03:24:25Z",
+  "endTimestamp": "0:00",
+  "intakeId": "INTAKE|ALEX_G|20260728|003",
+  "language": "en",
+  "lineEnd": 79,
+  "lineStart": 77,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "wait for the proper session to take the train so if you found all these tips useful but just subscribe to the channel I give away free supplies all the time make sure to subscribe and I'll see you guys in the next videohttps://www.youtube.com/watch?v=urX1iWvHc5g",
+  "schemaVersion": 1,
+  "sectionTitle": "Outro",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|003|013",
+  "segmentType": "other",
+  "sequenceNumber": 13,
+  "sourceId": "EVSRC|ALEX_G|20260728|003",
+  "speaker": null,
+  "startTimestamp": "9:03",
+  "textHash": "36c57684fe1f80c511b4c6fd0ad87f15d5577cf5d56687edcee1e2becdd965b4"
+}

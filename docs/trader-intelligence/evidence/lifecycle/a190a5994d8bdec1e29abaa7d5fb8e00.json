@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli-recovery",
+  "entityId": "CLAIM|TJR|20260727|003",
+  "entityType": "CLAIM",
+  "eventId": "LCEVT|CLAIM|CLAIM|TJR|20260727|003|002",
+  "eventType": "corrected",
+  "metadata": {},
+  "newStatus": null,
+  "priorStatus": null,
+  "reason": "RECONSTRUCTED 2026-07-27. The original event was destroyed when ingest.py --rollback of INTAKE|TJR|20260727|002 deleted CLAIM|TJR|20260727|003 in error -- the claim belonged to source 001 and had merely been cross-source linked by source 002. This event is NOT backdated: it carries the reconstruction time, so the gap in the audit trail stays visible rather than being papered over. The claim itself was rebuilt from the surviving ManualAnnotation ANNOT|INTAKE|TJR|20260727|001|004 and its confidence recomputed from surviving links. Confidence recomputed from surviving links.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-27T22:16:33Z"
+}

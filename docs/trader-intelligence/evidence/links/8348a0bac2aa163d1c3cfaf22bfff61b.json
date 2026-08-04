@@ -1,0 +1,13 @@
+{
+  "claimId": "CLAIM|RAYNER_TEO|20260729|008",
+  "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+  "independenceGroup": "AUTHOR|RAYNER_TEO",
+  "linkId": "LINK|EV|EVSRC|RAYNER_TEO|20260729|001|008|CLAIM|RAYNER_TEO|20260729|008",
+  "linkedAt": "2026-07-29T00:05:09Z",
+  "linkedBy": "ingest-cli",
+  "qualityWeight": null,
+  "rationale": null,
+  "relationshipType": "supports",
+  "relevanceWeight": 1.0,
+  "schemaVersion": 1
+}

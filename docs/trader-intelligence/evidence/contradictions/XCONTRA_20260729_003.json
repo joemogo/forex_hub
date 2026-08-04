@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260729|027",
+  "claimBId": "CLAIM|ALEX_G|20260728|100",
+  "contradictionId": "XCONTRA|20260729|003",
+  "contradictionType": "NUMERIC_THRESHOLD",
+  "detectedAt": "2026-07-29T23:45:30Z",
+  "metadata": {},
+  "rationale": "Within-educator, third distinct figure for the same quantity. This source: 9-12% a month, extrapolated from one demonstrated 3% week. Source #6 (CLAIM|ALEX_G|20260728|100): 8-10% a month, asserted as 'a fact anybody can do that'. Source #8 (CLAIM|ALEX_G|20260728|150) already records a further set, 7/12/15% then 7-10%. Filed minor because no trading decision depends on the monthly figure, but recorded because three incompatible ranges for one headline number bear on how the source's numeric claims should be weighted generally.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "minor",
+  "status": "open"
+}

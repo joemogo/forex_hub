@@ -1,0 +1,31 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The linked evidence accurately reflects the trader's actual practice."
+  ],
+  "confidence": "emerging",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|025",
+  "independentVariables": [
+    "stop_rule"
+  ],
+  "limitations": [
+    "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+  ],
+  "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+  "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|041"
+  ],
+  "statement": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise may be the preferred stop-placement approach, pending further evidence.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|045"
+  ],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260729|031",
+  "createdAt": "2026-07-29T23:45:30Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260729|048",
+  "questionText": "The lower bound of the student income claim is corrupted in the transcript, appearing as ',000' in both occurrences. The figure cannot be read.",
+  "questionType": "other",
+  "reason": "Recorded as unreadable rather than reconstructed as '$1,000'. The claim is marketing content and no rule depends on it.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260729|001"
+  ]
+}

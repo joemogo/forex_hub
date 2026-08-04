@@ -1,0 +1,35 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|047"
+  ],
+  "createdAt": "2026-07-27T22:15:39Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260727|021",
+  "independentVariables": [
+    "confirmation_rule",
+    "exception"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260727|001) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|TJR|20260727|023",
+    "CLAIM|TJR|20260727|032"
+  ],
+  "statement": "Step 3 requires a five-minute continuation confluence via equilibrium or a fair value gap may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|032).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|032"
+  ],
+  "updatedAt": "2026-07-27T22:15:39Z"
+}

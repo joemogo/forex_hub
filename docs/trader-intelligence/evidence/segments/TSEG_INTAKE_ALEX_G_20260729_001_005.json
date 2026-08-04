@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-29T23:45:30Z",
+  "endTimestamp": "4:39",
+  "intakeId": "INTAKE|ALEX_G|20260729|001",
+  "language": "en",
+  "lineEnd": 41,
+  "lineStart": 33,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "example of a trend continuation break and then retest and the way you mark up break and retest is simply by using this little box right here now doesn't matter the size of the box it can be this big can be this big as long as you kind of get enough room so you can get the multiple Taps into it so a perfect example of a first break and retest is this zone right here for it to be a valid level of a break and retest you need to have a minimum of one structure point for price to literally be able to then break the zone and then come back and then retest it so as you can tell right here this is the level of resistance price has then broken it and then we have then retested it so this is a perfect example of a break and retest now that we have broken this Zone and we have retested it this right here turns into the next structure point that we can then have the break and retest so as you can see right here I get my trusty Zone and now this is the resistance level we Break It We retest it and then we have a simple continuation remember breaking retest is a continuation",
+  "schemaVersion": 1,
+  "sectionTitle": "Zone markup: box size, the minimum-one-structure-point rule, first break and retest",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|005",
+  "segmentType": "other",
+  "sequenceNumber": 5,
+  "sourceId": "EVSRC|ALEX_G|20260729|001",
+  "speaker": null,
+  "startTimestamp": "3:43",
+  "textHash": "46a028ae31534b1450d667635184e88109ffc6a51c35b04eb4d1f38f201f97f8"
+}

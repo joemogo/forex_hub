@@ -1,0 +1,13 @@
+{
+  "actor": "independence-policy",
+  "entityId": "CLAIM|ALEX_G|20260728|073",
+  "entityType": "CLAIM",
+  "eventId": "LCEVT|CLAIM|CLAIM|ALEX_G|20260728|073|006",
+  "eventType": "confidence_recomputed",
+  "metadata": {},
+  "newStatus": "emerging",
+  "priorStatus": "emerging",
+  "reason": "score=22.00 from 1 independent supporting group(s) (support_score=0.70) vs 0 independent contradicting group(s) (contra_score=0.00); weakening_score=0.00 from 0 weakening item(s); contextual/unresolved=0 not scored directly. Same-source items beyond the first in a group are discounted to 25% weight to avoid double-counting repeated excerpts as independent confirmation.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-28T20:52:39Z"
+}

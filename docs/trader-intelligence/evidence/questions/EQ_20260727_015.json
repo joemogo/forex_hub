@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "partially_answered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-27T22:15:39Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|015",
+  "questionText": "Canonical URL supplied 2026-07-27: https://www.youtube.com/watch?v=8qwEmE1DwYw . REMAINING: the video's actual YouTube title is still unverified — the current title is a working title derived from transcript content. What is the published title?",
+  "questionType": "unclear_scope",
+  "reason": "canonicalReference is null; the source cannot be independently located, dated, or ordered within TJR's series. | 2026-07-27: canonicalReference resolved; title still unresolved (no network access, transcript states no title).",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|002"
+  ]
+}

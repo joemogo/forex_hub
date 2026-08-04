@@ -1,0 +1,25 @@
+{
+  "affectedSections": [
+    "Target Selection"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|ALEX_G|20260728|001",
+  "category": "target_selection",
+  "confidence": "none",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260728|008",
+  "proposedValidationMethod": "replay test against historical price action",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": []
+  },
+  "question": "How is the profit target selected?",
+  "recommendedNextSourceType": "additional transcript on target selection",
+  "researchPriority": "high",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "ALEX_G",
+  "whyItMatters": "Without target logic, expectancy cannot be estimated or replayed."
+}

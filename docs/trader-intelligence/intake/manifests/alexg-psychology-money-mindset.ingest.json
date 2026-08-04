@@ -1,0 +1,535 @@
+{
+ "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+ "annotations": [
+  {
+   "claim": "The source is episode three of the 'set and forget' podcast and is presented as video one of a psychology series. The published YouTube title labels it 'PT 2', which the spoken content does not match.",
+   "claimType": "other",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "this is gonna be video number one official of the psychology series",
+   "extractionCertainty": "certain",
+   "key": "series_position",
+   "section": 1
+  },
+  {
+   "claim": "Trading is argued to require a domain-specific 'money mindset' in the same way fitness requires physical conditioning and sales requires communication.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "we're in the finance space we're in the money space so you need to have the right money mindset",
+   "extractionCertainty": "certain",
+   "key": "domain_mindset",
+   "section": 2
+  },
+  {
+   "claim": "Daily forex turnover is cited as about 6.3 trillion at the time he started trading, used to argue that an individual's position size is insignificant to the market. No source is given for the figure.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "there's trillions of dollars being moved here on a daily",
+   "extractionCertainty": "certain",
+   "key": "market_scale",
+   "section": 4
+  },
+  {
+   "claim": "Traders are described as arriving with their monthly salary as an implicit reference point, typically around $5,000, and setting trading goals relative to it.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "the majority of the people are used to making a month let's say",
+   "extractionCertainty": "certain",
+   "key": "salary_anchor",
+   "section": 5
+  },
+  {
+   "claim": "The named core failure: a trade set to a 1:4 target is closed at 1:2 because the unrealised dollar figure equals what the trader normally earns in a month. The exit is driven by the size of the number, not by the market.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "failure_observation",
+   "excerpt": "you set a trade to have a take profit of a one to four risk to reward",
+   "extractionCertainty": "certain",
+   "key": "premature_close",
+   "section": 6
+  },
+  {
+   "claim": "Closing on a dollar figure rather than on the market's behaviour is characterised as impulse, and as one of the most damaging things a trader can do.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you're not taking trades logistically based off of what the market is showing",
+   "extractionCertainty": "certain",
+   "key": "impulse_not_market",
+   "section": 6
+  },
+  {
+   "claim": "The stated implication is that a target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+   "claimType": "trade_management_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "failure_observation",
+   "excerpt": "i close the trade keeps on going it could have given you 15 000",
+   "extractionCertainty": "certain",
+   "key": "target_should_stand",
+   "section": 6
+  },
+  {
+   "claim": "Receiving an unfamiliar amount of money is claimed to lead either to sporadic spending or to attempts to double it, both of which lose it.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "since you're not used to making double the amount of money once you get it you don't know how to handle it",
+   "extractionCertainty": "certain",
+   "key": "unfamiliar_money",
+   "section": 7
+  },
+  {
+   "claim": "A $650-700 evaluation fee is presented as convertible into a 100K funded account, and a 1:2 risk-to-reward trade on it as producing $5,000. The evaluation pass rate, the failure cost and the firm's rules are not mentioned. Named alongside a specific funding provider.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "forex industry with literally seven hundred dollars",
+   "extractionCertainty": "high",
+   "key": "funded_leverage",
+   "section": 8
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you just come into this with a percentage based risk",
+   "extractionCertainty": "certain",
+   "key": "pct_not_dollars_again",
+   "section": 8,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|098"
+  },
+  {
+   "claim": "A monthly return target of 7, 12 or 15 percent is named here, and 7-10 percent immediately after. Source #6 states 8-10 percent as the realistic figure.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "i wanna make seven twelve fifteen percent a month if you can make seven",
+   "extractionCertainty": "high",
+   "key": "monthly_pct_target",
+   "section": 9
+  },
+  {
+   "claim": "Percentage returns are argued to be account-size independent, illustrated with a copy trader mirroring a 10K account onto a million-dollar account.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "if you make 10 on a 10 000 account you can make 10 on a million dollar",
+   "extractionCertainty": "certain",
+   "key": "copy_trader_scale",
+   "section": 9
+  },
+  {
+   "claim": "Balances are to be treated as numbers to be moved from the platform to the bank account, with emotional attachment to the figure deliberately suppressed while trading.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "it is just numbers on a screen your goal here is to transfer",
+   "extractionCertainty": "certain",
+   "key": "numbers_on_screen",
+   "section": 10
+  },
+  {
+   "claim": "The employment mindset and the trading mindset are to be kept separate and switched between deliberately.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "you have the mindset of a job of a hard worker which",
+   "extractionCertainty": "certain",
+   "key": "separate_mindsets",
+   "section": 10
+  },
+  {
+   "claim": "Personal account: an early winning trade was closed because friends urged him to, and the move continued to what he estimates would have been $10,000-$15,000.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_demonstrated",
+   "evidenceQuality": "high",
+   "evidenceType": "failure_observation",
+   "excerpt": "i just made 3k in like a day and a half they're like",
+   "extractionCertainty": "certain",
+   "key": "closed_on_advice",
+   "section": 11
+  },
+  {
+   "claim": "The attributed cause of the loss of opportunity is deferring to someone else's judgement of what counts as a large amount of money, not the trade itself.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "i got mad at myself because i just listened to",
+   "extractionCertainty": "certain",
+   "key": "mad_at_self",
+   "section": 11
+  },
+  {
+   "claim": "The prescribed response is not to show open positions to others, on the reasoning that their reference point for a large sum will pull the trader back to a salary anchor.",
+   "claimType": "trade_management_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "don't show anybody else",
+   "extractionCertainty": "certain",
+   "key": "dont_show_anyone",
+   "section": 12
+  },
+  {
+   "claim": "The 30/30/30/10 rule for allocating income: 30% to residual expenses, 30% to savings, 30% to investment, 10% to discretionary spending. Stated as a personal-finance rule covering all income, not a trading rule.",
+   "claimType": "other",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "30 30 10 rule write this down tattoo it put",
+   "extractionCertainty": "certain",
+   "key": "rule_303030_10",
+   "section": 13
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "income needs to go to your residual expenses",
+   "extractionCertainty": "certain",
+   "key": "thirty_expenses",
+   "section": 13,
+   "supports": "rule_303030_10"
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "30 of your income you have to invest you",
+   "extractionCertainty": "certain",
+   "key": "thirty_invest",
+   "section": 13,
+   "supports": "rule_303030_10"
+  },
+  {
+   "claim": "Income that is not invested is described as effectively halved, which is the stated justification for the mandatory investment tranche.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "you're literally just cutting your income in half because you're not doing",
+   "extractionCertainty": "high",
+   "key": "invest_or_halve",
+   "section": 13
+  },
+  {
+   "claim": "He states he folds the 10% discretionary tranche into investment, so his own allocation is not the 30/30/30/10 he prescribes. The stated reason is compounding while young.",
+   "claimType": "exception",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "demonstrated_behavior",
+   "excerpt": "i personally try to not even have this i personally try to add this",
+   "extractionCertainty": "certain",
+   "key": "own_deviation",
+   "section": 14
+  },
+  {
+   "claim": "A fixed salary is argued to cap not only income but the capacity to manage larger amounts, so that exposure to trading-scale numbers produces greed and fear.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "you're just capped there's no room for you to grow",
+   "extractionCertainty": "certain",
+   "key": "salary_cap_analogy",
+   "section": 15
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "you're used to just lifting the 20 pounds so the moment that i add",
+   "extractionCertainty": "certain",
+   "key": "bench_press_analogy",
+   "section": 15,
+   "supports": "salary_cap_analogy"
+  }
+ ],
+ "contradictions": [
+  {
+   "a": "monthly_pct_target",
+   "bClaimId": "CLAIM|ALEX_G|20260728|100",
+   "rationale": "Same educator, two sources, on the figure both present as the realistic monthly return. Source #6: '8 to 10% a month ... that is a fact anybody can do that', with 50% per month explicitly unrealistic. Source #8: 'I wanna make seven twelve fifteen percent a month', then 'if you can make seven ten percent on any account'. The ranges overlap but do not match, and 15% sits outside the earlier stated ceiling. Filed MINOR: both are unevidenced performance figures that are already blocked from promotion, so the disagreement changes nothing operationally. Recorded because the library's practice is to log numeric drift rather than average it away.",
+   "severity": "minor",
+   "type": "NUMERIC_THRESHOLD"
+  }
+ ],
+ "manifestVersion": 1,
+ "normalization": {
+  "charsRemoved": 2047,
+  "lineCount": 948,
+  "linesTransformed": 473,
+  "profile": "youtube_timestamp_lines",
+  "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+  "reversible": true,
+  "unmatchedLines": [],
+  "wordsAdded": 0,
+  "wordsRemoved": 0,
+  "wordsReordered": 0
+ },
+ "openQuestions": [
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "premature_close",
+   "priority": "high",
+   "reason": "This source's central lesson is that a target should not be cut because the dollar figure feels large. It does not say whether a target may be cut for a MARKET reason - opposing structure, a session ending, a counter-signal. Source #5's 'set and forget' framing implies never; this source only rules out the emotional case. The distinction matters for any trade-management rule and is not made.",
+   "text": "Is the take-profit ever moved for a market reason, and if so on what signal?",
+   "type": "missing_target_logic"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "funded_leverage",
+   "priority": "critical",
+   "reason": "A $650-700 fee is presented as convertible into a 100K account and thence into $5,000 from a single 1:2 trade. **The failure branch is absent**: no pass rate, no mention that the fee is lost on breach, no reference to the daily-loss and drawdown rules that source #6 said constrain risk banding. A specific provider is named. Recorded as a materially incomplete presentation of a paid product, not as trading knowledge.",
+   "text": "What is the evaluation pass rate, and what happens to the fee when a trader fails?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "monthly_pct_target",
+   "priority": "high",
+   "reason": "Three overlapping ranges across two sources, none evidenced and none accompanied by a drawdown figure. See the contradiction filed in this ingestion. MOGO must not average or pick.",
+   "text": "Which monthly return figure is the claim - 7-10%, 8-10%, or 7/12/15%?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "market_scale",
+   "priority": "low",
+   "reason": "Unsourced, like '99% of traders lose money' and 'retail is 3% of the market'. The argument it supports - that individual size is insignificant - is also in tension with source #3's position that retail being 3% of the market means retail stops are not worth hunting. Both use market-scale figures to argue different things.",
+   "text": "What is the source for the 6.3 trillion daily turnover figure, and does it support the argument?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "own_deviation",
+   "priority": "medium",
+   "reason": "He names the rule, tells viewers to write it down, then states he personally folds the 10% into investment. Openly stated as his own choice rather than concealed, so it is an exception rather than a contradiction - but it is the second instance in two sources of practice diverging from a stated rule, after the proximity tolerance in source #7.",
+   "text": "Is the prescribed allocation 30/30/30/10 or 30/30/40/0?",
+   "type": "behavior_conflicts_with_instruction"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "rule_303030_10",
+   "priority": "medium",
+   "reason": "Presented as covering '100% of your income' and 'my whole entire life as a whole'. Whether trading profits enter the same allocation, and whether the 30% investment tranche can include funding the trading account itself, is not stated. **This is a personal-finance rule, not a trading rule**, and is typed 'other' so it cannot be mistaken for one.",
+   "text": "Does the 30/30/30/10 rule apply to trading profits, to all income, or to both?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "dont_show_anyone",
+   "priority": "low",
+   "reason": "He prescribes not showing open positions to others while operating a community in which he shows his own setups and reviews members' trades weekly. Plausibly distinguishable - showing a setup is not the same as seeking validation on an open position - but the distinction is not drawn.",
+   "text": "How does 'don't show anybody' sit alongside running a paid community and live calls?",
+   "type": "implied_requirement"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": null,
+   "priority": "critical",
+   "reason": "EIGHT Alex G sources, `stop_rule` still 0. This source discusses 1:4 and 1:2 risk-to-reward, a $650 risk figure and a 100K account, and never states where the stop that defines that risk is placed. See BACKLOG-002/A1-STOP.",
+   "text": "Where is the stop placed?",
+   "type": "missing_stop_placement"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "series_position",
+   "priority": "low",
+   "reason": "The published title says 'PT 2'; the spoken content says 'video number one official of the psychology series' and 'episode three' of the podcast. Second title/content discrepancy from this channel after the $1000/day vs $500/day mismatch in source #5. Both recorded; neither resolved.",
+   "text": "Is this psychology video part 1 or part 2?",
+   "type": "ambiguous_statement"
+  }
+ ],
+ "provenance": {
+  "canonicalReference": "https://www.youtube.com/watch?v=lcfyxUtYVSk",
+  "channelOrPublisher": "fxalexg (https://www.youtube.com/@fxalexg__)",
+  "knownArtifacts": [
+   "Source line 1 carries the video URL fused onto the first words of speech. No excerpt is taken from line 1. Fourth occurrence; BACKLOG-003/H26.",
+   "This is the first source in the library containing NO technical trading content - no setup, entry, exit or structure rule. It is psychology and personal finance, and is extracted as such."
+  ],
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "publicationDate": null,
+  "titleVerification": {
+   "method": "youtube_oembed",
+   "note": "Publisher verified before extraction per the Stage 0 gate. Same channel as sources #3-#9 (DECISION|MOGO|20260727|006). NOTE: the published title says 'PT 2'; the spoken content says 'video number one official of the psychology series' and 'episode three' of the podcast. Recorded, not resolved.",
+   "retrievedAt": "2026-07-28T05:00:00Z",
+   "status": "verified_publisher",
+   "traderAttributionConfirmed": true,
+   "verifiedTitle": "The best FOREX MONEY MINDSET psychology video PT 2"
+  },
+  "transcriptCompleteness": "unknown",
+  "transcriptProvider": null
+ },
+ "sections": [
+  {
+   "lines": [
+    1,
+    92
+   ],
+   "n": 1,
+   "title": "Podcast opening - the psychology series, and where this episode sits in it",
+   "type": "introduction"
+  },
+  {
+   "lines": [
+    93,
+    130
+   ],
+   "n": 2,
+   "title": "Why money mindset is domain-specific to finance",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    131,
+    188
+   ],
+   "n": 3,
+   "title": "What $5,000 means to different people, and what they want from it",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    189,
+    244
+   ],
+   "n": 4,
+   "title": "The scale argument - trillions traded daily, so your size is not significant",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    245,
+    292
+   ],
+   "n": 5,
+   "title": "Coming to the charts with a salary anchor",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    293,
+    340
+   ],
+   "n": 6,
+   "title": "The core failure - closing a 1:4 target at 1:2 because the dollar figure feels large",
+   "type": "failure_observation"
+  },
+  {
+   "lines": [
+    341,
+    380
+   ],
+   "n": 7,
+   "title": "What happens to money you are not used to handling",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    381,
+    418
+   ],
+   "n": 8,
+   "title": "Funded-account leverage - $650-700 for a 100K account",
+   "type": "promotion"
+  },
+  {
+   "lines": [
+    419,
+    478
+   ],
+   "n": 9,
+   "title": "Percentage, not dollars - the copy-trader illustration",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    479,
+    538
+   ],
+   "n": 10,
+   "title": "Numbers on a screen; separate the job mindset from the charts",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    539,
+    616
+   ],
+   "n": 11,
+   "title": "The personal anecdote - closing a winner because friends told him to",
+   "type": "failure_observation"
+  },
+  {
+   "lines": [
+    617,
+    666
+   ],
+   "n": 12,
+   "title": "Who you surround yourself with, and not showing anyone",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    667,
+    770
+   ],
+   "n": 13,
+   "title": "The 30/30/30/10 rule",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    771,
+    790
+   ],
+   "n": 14,
+   "title": "The splurge tranche, and his own deviation from the rule",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    791,
+    914
+   ],
+   "n": 15,
+   "title": "The salary-cap and bench-press analogies",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    915,
+    948
+   ],
+   "n": 16,
+   "title": "Outro and promotion",
+   "type": "promotion"
+  }
+ ],
+ "slug": "alexg-psychology-money-mindset",
+ "sourceFile": "docs/trader-intelligence/intake/pending/alexg-psychology-money-mindset.txt",
+ "sourceFileBytes": 20249,
+ "sourceFileSha256": "f48d3ff425cce672d914f0b512eb8be37f92f45c8fc118ff227689adb80a432a",
+ "sourceLineCount": 948,
+ "title": "The best FOREX MONEY MINDSET psychology video PT 2",
+ "traderId": "ALEX_G"
+}

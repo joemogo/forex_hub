@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "11:59",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 222,
+  "lineStart": 201,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "to have something that looks like this. Now, again, this can be very daunting and I don't really want to talk like about how do we even figure out where the [ __ ] price price is going to go off of this. We're going to we're going to learn that in due time over the course of these next two weeks, okay? We're going to be figuring out like, hey, price comes up, took out this high, and then went down. Why did that happen? I could explain that all to you right now, but it would be a little bit confusing. So, we're not going to talk about that right now. We're going to talk about what do each one of these candles represent? How can we identify highs and lows in the market? And then how can we identify trends in the market? Because that's the first thing that we need to do. It's the bare minimum because on these charts, every every single one of these charts, no matter what what time frame you're on, whether you're on the daily time frame, the weekly time frame, the hourly time frame, these candlesticks make up and show us every single second of price movement throughout the day, throughout the hour, throughout every single 5 minutes. And if you guys are unable to understand the cand the Japanese candlestick anatomy, okay, then we it's like we're not even",
+  "schemaVersion": 1,
+  "sectionTitle": "Framing: what today covers",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|006",
+  "segmentType": "other",
+  "sequenceNumber": 6,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "10:50",
+  "textHash": "2ef8f580d77a7d3c535045b2c63018f4c049995bc5210bc367e2423bf016d982"
+}

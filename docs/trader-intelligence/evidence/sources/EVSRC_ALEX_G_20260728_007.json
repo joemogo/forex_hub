@@ -1,0 +1,28 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": "https://www.youtube.com/watch?v=lcfyxUtYVSk",
+  "contentHash": "f48d3ff425cce672d914f0b512eb8be37f92f45c8fc118ff227689adb80a432a",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "fileBytes": 20249,
+    "manifestPath": "docs/trader-intelligence/intake/manifests/alexg-psychology-money-mindset.ingest.json"
+  },
+  "provenanceStatus": "partially_verified",
+  "registeredAt": "2026-07-28T20:52:12Z",
+  "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-psychology-money-mindset.raw.txt",
+  "schemaVersion": 1,
+  "sourceDate": null,
+  "sourceId": "EVSRC|ALEX_G|20260728|007",
+  "sourceType": "transcript",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "The best FOREX MONEY MINDSET psychology video PT 2",
+  "traderId": "ALEX_G",
+  "transcriptReference": "docs/trader-intelligence/imports/alex-g/normalized/alexg-psychology-money-mindset.normalization-map.json",
+  "updatedAt": "2026-07-28T20:52:12Z"
+}

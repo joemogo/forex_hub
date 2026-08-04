@@ -1,0 +1,36 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|001|013",
+    "EV|EVSRC|ALEX_G|20260728|004|009"
+  ],
+  "createdAt": "2026-07-29T23:45:30Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|137",
+  "independentVariables": [
+    "setup_requirement",
+    "setup_requirement"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260729|001) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|008",
+    "CLAIM|RAYNER_TEO|20260729|019"
+  ],
+  "statement": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|008).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|019"
+  ],
+  "updatedAt": "2026-07-29T23:45:30Z"
+}

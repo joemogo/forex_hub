@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|001",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|007",
+  "questionText": "This source states the timeframe does not matter for reading structure, while Alex G source #1 establishes a strict timeframe hierarchy in which higher timeframes override lower ones on conflict. Are these the same claim at different levels (reading procedure vs directional precedence), or a genuine inconsistency?",
+  "questionType": "unclear_scope",
+  "reason": "Reconcilable on a careful reading, but the two statements are close enough to be conflated by a reader. Recorded rather than resolved.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "affectedSections": [
+    "Risk Sizing"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "risk_percentage",
+  "confidence": "none",
+  "createdAt": "2026-07-27T22:15:39Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260727|003",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": []
+  },
+  "question": "What percentage of account equity is risked per trade?",
+  "recommendedNextSourceType": "direct question to trader",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "Without a stated risk percentage, position sizing cannot be determined for paper or live testing."
+}

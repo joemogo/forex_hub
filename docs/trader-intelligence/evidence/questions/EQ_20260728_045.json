@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|029",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|045",
+  "questionText": "How many touches qualify a level, and how is 'most touches' ranked when candidates tie?",
+  "questionType": "ambiguous_statement",
+  "reason": "Source #3 gives 'more than three taps' as ideal and one tap as materially weaker. This source gives no count at all, only a relative 'most touches' scan from the bottom up. The two quantifications are compatible but not identical.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

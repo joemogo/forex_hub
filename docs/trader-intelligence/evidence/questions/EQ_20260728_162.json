@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|150",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|162",
+  "questionText": "Which monthly return figure is the claim - 7-10%, 8-10%, or 7/12/15%?",
+  "questionType": "insufficient_independent_support",
+  "reason": "Three overlapping ranges across two sources, none evidenced and none accompanied by a drawdown figure. See the contradiction filed in this ingestion. MOGO must not average or pick.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

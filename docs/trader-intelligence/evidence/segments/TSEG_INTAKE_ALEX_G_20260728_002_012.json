@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T02:23:09Z",
+  "endTimestamp": "15:54",
+  "intakeId": "INTAKE|ALEX_G|20260728|002",
+  "language": "en",
+  "lineEnd": 909,
+  "lineStart": 884,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "simple. Next thing that you want to do is wait for a confirmation. Don't wait for a liquidity sweep. Don't anticipate that the market is going to do something like this because what will end up happening is that this market will then have the push to the upside and then you're going to be like, \"No, you know what? That's a good confirmation, but I'm going to wait for it to have the fake out, for it to have the liquidity sweep, and then I'll enter the position after.\" I hope you realize",
+  "schemaVersion": 1,
+  "sectionTitle": "Wait for confirmation, not for the sweep",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|002|012",
+  "segmentType": "other",
+  "sequenceNumber": 12,
+  "sourceId": "EVSRC|ALEX_G|20260728|002",
+  "speaker": null,
+  "startTimestamp": "15:29",
+  "textHash": "18d80416e81845a173139fadac46ddad0c956126fe1e2edbfb154106feecb338"
+}

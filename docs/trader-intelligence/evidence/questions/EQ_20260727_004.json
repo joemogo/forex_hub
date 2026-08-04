@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|TJR|20260727|001",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|004",
+  "questionText": "The intake filename describes a 'forex session strategy', but the transcript states the instruments are US indexes (S&P 500 and NASDAQ) and no forex pair is mentioned anywhere. Is this transcript mis-filed, or is the strategy intended to be transferred to FX?",
+  "questionType": "unclear_scope",
+  "reason": "Direct conflict between the supplied filename and the source's own instrument statement; no currency pair appears in any of the 397 transcript lines.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

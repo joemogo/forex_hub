@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "7:28",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 57,
+  "lineStart": 48,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "there, we're also going to need to understand continuation continuation confluences. And this I'm actually limiting this to just equilibrium and fair value gaps. I know in the past I used to talk about order blocks and breaker blocks. It's been 6 months. I I got this profit and loss statement without using order blocks and breaker blocks for the last 6 months. So, I pretty much completely removed that. someone like me and uh what you'll find as people get better and better at stuff stuff that they do, they tend to simplify simplify simplify and just get even more efficient at what they do. In the past, I had all of these different confluences that would signal certain things or and it it just got too much for me to where I was getting lost in my own sauce where I was like I was just looking at too many confluences on the chart and I was like, dude, this is honestly way too much for me to even be considering what price is going to do at what point in time. And it got to the point where I was like, screw this. pretty much every single time that price comes down and fills in a fair value gap or equilibrium, we're hitting the order block and breaker block anyway. So, why do why the [ __ ] do we even need to know what that is? In my personal opinion, we don't really need to know what those are, and they've pretty much become useless to me over the past year of trading. On top of that, this has been my best year of trading. And again, I'll show you guys examples of equilibrium and fair value gaps when we get into",
+  "schemaVersion": 1,
+  "sectionTitle": "Continuation confluences; order blocks and breaker blocks removed",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|006",
+  "segmentType": "other",
+  "sequenceNumber": 6,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "6:14",
+  "textHash": "42302bf3acec394538c6519d067f7e0072222a29a8ef4087808a6a4e4386c4c5"
+}

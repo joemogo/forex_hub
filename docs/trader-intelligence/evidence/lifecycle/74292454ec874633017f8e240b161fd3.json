@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "EV|EVSRC|ALEX_G|20260727|001|024",
+  "entityType": "EVIDENCE_ITEM",
+  "eventId": "LCEVT|EVIDENCE_ITEM|EV|EVSRC|ALEX_G|20260727|001|024|001",
+  "eventType": "created",
+  "metadata": {},
+  "newStatus": "active",
+  "priorStatus": null,
+  "reason": "Evidence item registered.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-27T22:41:09Z"
+}

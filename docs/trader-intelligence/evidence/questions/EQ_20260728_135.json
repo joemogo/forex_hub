@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|136",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|135",
+  "questionText": "How close must price come to a level for the setup to count?",
+  "questionType": "behavior_conflicts_with_instruction",
+  "reason": "The taught rule is binary - at the level or not applicable. The demonstrated behaviour is graded: ~10 pips short was judged too far, on a pair where 10 pips is small relative to daily range. No source gives a tolerance. This is the clearest case yet in the library of a discretionary filter operating in live trading that appears in none of the instructional sources. **MOGO must not pick a number.**",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

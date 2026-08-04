@@ -1,0 +1,28 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": "https://www.youtube.com/watch?v=1JMVE4Y5U7o",
+  "contentHash": "5bb848bb21951c53dc239f6d6b3bb4238cff8ee8e10b303e4d637bf865d78466",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "fileBytes": 7924,
+    "manifestPath": "docs/trader-intelligence/intake/manifests/alexg-live-session-market-breakdown.ingest.json"
+  },
+  "provenanceStatus": "partially_verified",
+  "registeredAt": "2026-07-28T14:24:08Z",
+  "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-live-session-market-breakdown.raw.txt",
+  "schemaVersion": 1,
+  "sourceDate": null,
+  "sourceId": "EVSRC|ALEX_G|20260728|006",
+  "sourceType": "transcript",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "Market break down learn and earn",
+  "traderId": "ALEX_G",
+  "transcriptReference": "docs/trader-intelligence/imports/alex-g/normalized/alexg-live-session-market-breakdown.normalization-map.json",
+  "updatedAt": "2026-07-28T14:24:08Z"
+}

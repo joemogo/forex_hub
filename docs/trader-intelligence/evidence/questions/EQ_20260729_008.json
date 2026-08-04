@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|043",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260729|008",
+  "questionText": "How many of the teaching examples are losers?",
+  "questionType": "other",
+  "reason": "One losing example is shown deliberately, and the cherry-picking of the rest is explicitly admitted. That is materially more honest than any other source in the library - eight ALEX_G sources show no losing trade, and TJR's material shows deviations from his own rules without labelling them. Recorded as a source-quality observation, not a claim about the market.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

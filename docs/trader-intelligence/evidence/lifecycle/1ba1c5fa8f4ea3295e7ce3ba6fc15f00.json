@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "INTAKE|ALEX_G|20260728|007",
+  "entityType": "INTAKE_MANIFEST",
+  "eventId": "LCEVT|INTAKE_MANIFEST|INTAKE|ALEX_G|20260728|007|005",
+  "eventType": "status_changed",
+  "metadata": {},
+  "newStatus": "extraction_in_progress",
+  "priorStatus": "ready_for_extraction",
+  "reason": "Beginning controlled extraction.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-28T20:52:12Z"
+}

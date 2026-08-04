@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260727|021",
+  "questionText": "No stop-loss rule, take-profit rule, position size or risk percentage appears anywhere in this source, though stop-loss and take-profit are named as things a wrong structure read would ruin. What are Alex G's risk and exit rules?",
+  "questionType": "unclear_scope",
+  "reason": "Zero stop_rule, target_rule or risk_rule claims were extractable; the source is direction-and-entry only.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260727|001"
+  ]
+}

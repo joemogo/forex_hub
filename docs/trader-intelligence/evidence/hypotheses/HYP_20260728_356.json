@@ -1,0 +1,36 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|004|019",
+    "EV|EVSRC|ALEX_G|20260728|006|003"
+  ],
+  "createdAt": "2026-07-28T14:24:08Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|356",
+  "independentVariables": [
+    "invalidation_rule",
+    "entry_rule"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260728|008) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|068",
+    "CLAIM|ALEX_G|20260728|136"
+  ],
+  "statement": "A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|068).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|006|024"
+  ],
+  "updatedAt": "2026-07-28T14:24:08Z"
+}

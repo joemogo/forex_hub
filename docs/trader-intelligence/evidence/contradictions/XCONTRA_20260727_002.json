@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|TJR|20260727|024",
+  "claimBId": "CLAIM|TJR|20260727|025",
+  "contradictionId": "XCONTRA|20260727|002",
+  "contradictionType": "DEFINITIONAL",
+  "detectedAt": "2026-07-27T03:56:30Z",
+  "metadata": {},
+  "rationale": "Continuation confluences are defined as limited to equilibrium and fair value gaps, but when 2B is active an SMT divergence is also permitted as the continuation confluence. The definition and the 2B branch disagree on the closed set.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "minor",
+  "status": "open"
+}

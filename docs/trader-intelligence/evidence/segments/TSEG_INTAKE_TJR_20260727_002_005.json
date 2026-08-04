@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "10:50",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 200,
+  "lineStart": 165,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "also want you guys to do is notice right here where it says time zone. Okay, we are going to set our time zone to New York time. Even if you guys are in Africa, if you guys are in Brazil, if you guys are in California, we need to be on Eastern time. our brains, everything just need to need to needs to be programmed to e Eastern time. Well, you're probably saying, \"Well, I live in Africa and I don't live on Eastern time.\" Well, the market lives on Eastern time. So, in turn, we have to live on Eastern time. At least our charts have to live on Eastern time because when we're explaining market open, I'm going to say, \"Hey, market opens at 9:30.\" 9:30 a.m. Eastern time. For me living in Puerto Rico, market opens at 10:30 a.m. Eastern. 10 10:30. See, I'm saying Eastern time cuz my head is so like lock just built to be on Eastern time. But for me, market opens at 10:30 a.m. Puerto Rico time. But on the charts, market opens at 9:30 a.m. Eastern time. And we just need to be on the same time time zone or time frame as the market because when we're explaining session opens, session closes, like when does the New York Stock Exchange open? When does premarket open? I don't want you guys to be on Sa Paulo time, okay? And me saying, \"Hey, market opens at 9:30.\" And for you guys to be putting a line at market open, but you're on Sa Paulo time and I'm on New York time and you're like, \"Hey, the strategy doesn't work.\" And it's like, \"Well, yeah, because you're you're you're 3 hours behind or you're 2 hours behind.\" So, we need to set this to New York time. All right. And once we've done that, okay, we're going to have Let's reset this and let's remove this. Okay. We're going",
+  "schemaVersion": 1,
+  "sectionTitle": "Chart time zone must be New York / Eastern",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|005",
+  "segmentType": "other",
+  "sequenceNumber": 5,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "8:54",
+  "textHash": "51a486cb2abff5a022e029de6aae5d6443ca29b843b17f7265b77eb4d7b6c0ef"
+}

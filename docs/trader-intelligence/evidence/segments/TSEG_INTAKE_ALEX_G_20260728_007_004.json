@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T20:52:12Z",
+  "endTimestamp": "3:54",
+  "intakeId": "INTAKE|ALEX_G|20260728|007",
+  "language": "en",
+  "lineEnd": 244,
+  "lineStart": 189,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "let's be honest guys we're in the financial industry same way how out there let's say we were to go into the fitness space and the normal in the fitness space is running a mile right i have no idea this is an example let's say the normal in the fitness space is running a mile if you run a mile you can't be holy [ __ ] yeah random number like this is what we do here right let's say you're going to go be a salesperson at a car dealership and you know you sell two cars a month you can't oh [ __ ] i sold two no like this is what you do here you're here to sell cars and you just move on it's into the trading just because you made four five thousand dollars you can't go crazy oh my god no like bro you're in the financial industry like there's trillions of dollars being moved here on a daily basis like you see just search it up how much money is traded on a daily basis in forks at the beginning when i started trading was like 6.3 trillion i think the market cares if you take 5 10 20 000 no it's not even a scratch so this leads me to",
+  "schemaVersion": 1,
+  "sectionTitle": "The scale argument - trillions traded daily, so your size is not significant",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|007|004",
+  "segmentType": "other",
+  "sequenceNumber": 4,
+  "sourceId": "EVSRC|ALEX_G|20260728|007",
+  "speaker": null,
+  "startTimestamp": "3:04",
+  "textHash": "a7153bf0a1cd06a1c379e2e102c0513a152ceec5ee4839687301f4ec3eb6cb77"
+}

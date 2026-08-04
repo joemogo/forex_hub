@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|116",
+  "claimBId": "CLAIM|ALEX_G|20260728|090",
+  "contradictionId": "XCONTRA|20260728|007",
+  "contradictionType": "TEMPORAL_DRIFT",
+  "detectedAt": "2026-07-28T04:42:15Z",
+  "metadata": {},
+  "rationale": "Within-source. The same video gives four different durations for the same career: two and a half years before making any money, profitable for about six years, predicting markets for about five years, and five and a half years to work out the seasonal pattern. Casual speech rounds numbers, so this is filed as MINOR rather than material - but it is recorded because every performance claim in this source is anchored to experience length, and no two of these figures reconcile without assumptions the source does not supply.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "minor",
+  "status": "open"
+}

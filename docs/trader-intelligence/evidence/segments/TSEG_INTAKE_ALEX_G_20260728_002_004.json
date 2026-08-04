@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T02:23:09Z",
+  "endTimestamp": "4:36",
+  "intakeId": "INTAKE|ALEX_G|20260728|002",
+  "language": "en",
+  "lineEnd": 267,
+  "lineStart": 162,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "into the markets, let's find out exactly where liquidity lies. Is liquidity at a high point? Is it at a low point? Is it in the middle? Where is it? Well, technically liquidity is at every single point. When you have a market that is moving to the upside, there's liquidity that is driving price to the upside. This is known as supply and demand, buyers, support or resistance, whatever the case is. There's a lot of buying power. Now, whenever this market has had a higher high push, the market needs a bit of a retracement to continue going to the upside. So, this means that at one point in time, the sellers were being stronger than the buyers. Probably the same people that drove the market up after they've made money on this push up, they start liquidating their positions, and that liquidation of their positions starts driving price back down. When price gets driven back down, they see it at a discounted rate. they just made money on this push, then they end up buying again, and then it ends up pushing this to the upside. So, you can have liquidity really be anywhere in the market. It could be at a high point, it could be on a retracement point, it could be at a low point, could be on a retracement point to continue to go to the downside. Really could be anywhere. But the most places where the majority of liquidity is at is where there is a consistent amount of rejection. So, for example, if I were to show you this market right here that I'm just drawing up just randomly here, this market right here, it'd be very predictable that there's a lot of liquidity at this specific zone right here. As you can tell, whenever price gets here, the liquidations come in and the market gets driven down. The market gets liquidated, gets driven down. When we're above it, price gets pushed to the upside. When it's below, it gets pushed to the downside, to the downside. And now that we're above it, it's pretty predictable based off of what we are seeing to the left that this market could continuously get pushed to the upside. So this",
+  "schemaVersion": 1,
+  "sectionTitle": "Where liquidity concentrates: repeated rejection zones",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|002|004",
+  "segmentType": "other",
+  "sequenceNumber": 4,
+  "sourceId": "EVSRC|ALEX_G|20260728|002",
+  "speaker": null,
+  "startTimestamp": "2:44",
+  "textHash": "8f19ac3fc8411dfcdb377844049f09f50a32eefdb8a0bc27b354d2671453a55e"
+}

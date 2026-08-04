@@ -1,0 +1,35 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|005|002"
+  ],
+  "createdAt": "2026-07-28T14:24:08Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|355",
+  "independentVariables": [
+    "performance_hypothesis",
+    "behavioral_observation"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260728|007) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|090",
+    "CLAIM|ALEX_G|20260728|116"
+  ],
+  "statement": "Alex G states he has been profitable for about six years. The same source also gives 'about 5 years' of market prediction and 'about 5 and a half years' to work out seasonality, alongside two and a half years before making any money may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|090).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|005|029"
+  ],
+  "updatedAt": "2026-07-28T14:24:08Z"
+}

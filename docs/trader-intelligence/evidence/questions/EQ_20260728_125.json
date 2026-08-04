@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|119",
+  "createdAt": "2026-07-28T04:42:15Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|125",
+  "questionText": "Are November-March materially better than June-August for this method?",
+  "questionType": "insufficient_independent_support",
+  "reason": "The seasonal rule is prescriptive - it changes his risk by a factor of three to five - and rests entirely on 'months statistically that I've seen in my trading', with no data shown. Unlike most performance claims in the library this one is **directly testable without a risk model**: count setup frequency and directional outcome by calendar month. See RC-27.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|005"
+  ]
+}

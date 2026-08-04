@@ -1,0 +1,37 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|002|016",
+    "EV|EVSRC|ALEX_G|20260728|002|017",
+    "EV|EVSRC|ALEX_G|20260728|004|002"
+  ],
+  "createdAt": "2026-07-28T20:52:12Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|447",
+  "independentVariables": [
+    "exception",
+    "entry_rule"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260728|005) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|028",
+    "CLAIM|ALEX_G|20260728|064"
+  ],
+  "statement": "Once the 4-hour higher low is identified, the subsequent wick fill and daily engulfing are described as something to anticipate may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|028).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|004|015"
+  ],
+  "updatedAt": "2026-07-28T20:52:12Z"
+}

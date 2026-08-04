@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|034",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|042",
+  "questionText": "Are the $60,000 and $50,000 single-day results verifiable, and were they produced by this method?",
+  "questionType": "insufficient_independent_support",
+  "reason": "No account statement, date, instrument size, risk taken, or independent record is offered, and the results are causally attributed to the technique being taught in the same breath as a watch purchase. Typed performance_hypothesis and structurally ineligible to become a rule candidate. Must never be treated as evidence-backed.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

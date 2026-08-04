@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|084",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|080",
+  "questionText": "Is 80-100 pips a target-selection rule, or a description of past averages?",
+  "questionType": "missing_target_logic",
+  "reason": "Stated as 'an average of about 80 to 90 to even 100 pips'. No instrument, timeframe or method for choosing a target on a specific trade. It is nonetheless the FIRST target-shaped statement in five Alex G sources. Note also that it is expressed in PIPS - relevant to PROPOSAL-001, since MOGO is pip-native and TJR trades US indices.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|004"
+  ]
+}

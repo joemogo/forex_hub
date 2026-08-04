@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|025",
+  "claimBId": "CLAIM|TJR|20260727|006",
+  "contradictionId": "XCONTRA|20260728|001",
+  "contradictionType": "DIRECTIONAL",
+  "detectedAt": "2026-07-28T02:23:09Z",
+  "metadata": {},
+  "rationale": "CROSS-EDUCATOR, FOUNDATIONAL. Alex G: 'There's no way that you can have a specific strategy to trade solely off of these sweeps' — and that anyone claiming otherwise 'is 100% lying to you'. TJR: 'My strategy is based off of liquidity sweeps' and 'I'm looking for a liquidity sweep every single time'. This is not a disagreement about a parameter; one educator's entire method is the thing the other says cannot be done consistently. PARTIAL RECONCILIATION WORTH NOTING: Alex G's explicit target is ANTICIPATING a sweep before it happens, whereas TJR identifies a sweep that has already occurred and then requires a separate confirmation confluence. The two are closer in practice than the words suggest. Recorded as blocking rather than resolved because the reconciliation is MOGO's reading, not either educator's statement.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "blocking",
+  "status": "open"
+}

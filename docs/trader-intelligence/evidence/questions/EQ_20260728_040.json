@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|053",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|040",
+  "questionText": "Which sessions are 'the proper session' for entry?",
+  "questionType": "missing_session",
+  "reason": "Never defined here or in any prior Alex G source. CLAIM|ALEX_G|20260728|013 names 'trading at the right times' as one of four requirements for profitability and also leaves it undefined. Four sources have now referenced session timing as necessary without once specifying it. Tracked as BACKLOG-002/A6.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "entityId": "XCONTRA|20260728|009",
+  "entityType": "CONTRADICTION_RECORD",
+  "metadata": {},
+  "priority": "high",
+  "queueEntryId": "RQ|CONTRADICTION_CANDIDATES|20260728|052",
+  "queueType": "contradiction_candidates",
+  "reason": "status='open'.",
+  "resolution": null,
+  "reviewAction": null,
+  "reviewNotes": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-28T20:52:12Z"
+}

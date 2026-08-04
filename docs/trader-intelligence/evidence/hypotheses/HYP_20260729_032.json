@@ -1,0 +1,33 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The knowledge gap (GAP|20260729|007) reflects a real, not merely incidental, omission."
+  ],
+  "confidence": "insufficient_evidence",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|032",
+  "independentVariables": [
+    "news_handling"
+  ],
+  "limitations": [
+    "Proposed from an unresolved knowledge gap (GAP|20260729|007), not from direct evidence."
+  ],
+  "proposedPaperTest": "Paper-trade across varying news_handling conditions and compare results.",
+  "proposedReplayTest": "Replay historical price action segmented by news_handling and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|011",
+    "CLAIM|RAYNER_TEO|20260729|018",
+    "CLAIM|RAYNER_TEO|20260729|023",
+    "CLAIM|RAYNER_TEO|20260729|027",
+    "CLAIM|RAYNER_TEO|20260729|040"
+  ],
+  "statement": "High-impact news events may require this strategy's setup to be skipped or delayed.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

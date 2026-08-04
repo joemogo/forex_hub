@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|026",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|046",
+  "questionText": "Which timeframe's lower high and lower low bound the box?",
+  "questionType": "unclear_scope",
+  "reason": "He states the sell must be at a weekly area of interest, which implies the weekly box, but the demonstration moves between weekly, daily and four-hour charts while marking. The bounding timeframe is never named explicitly.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

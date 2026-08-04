@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T14:24:08Z",
+  "endTimestamp": "7:12",
+  "intakeId": "INTAKE|ALEX_G|20260728|006",
+  "language": "en",
+  "lineEnd": 414,
+  "lineStart": 401,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "can you show the confluence again and leave it for a second so i can screenshot it this is gonna be recorded so i mean if you want to look at it here go ahead screenshot it this is why we went long",
+  "schemaVersion": 1,
+  "sectionTitle": "Showing the written confluence list to the group",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|006|012",
+  "segmentType": "other",
+  "sequenceNumber": 12,
+  "sourceId": "EVSRC|ALEX_G|20260728|006",
+  "speaker": null,
+  "startTimestamp": "6:56",
+  "textHash": "c86c5eb3edf1405d2c7e9d1567bf35cf9d62bb58c6d1cd718e19c474b4964888"
+}

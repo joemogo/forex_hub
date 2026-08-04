@@ -1,0 +1,25 @@
+{
+  "affectedSections": [
+    "Stop Placement"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|ALEX_G|20260727|001",
+  "category": "stop_placement",
+  "confidence": "none",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260727|012",
+  "proposedValidationMethod": "replay test against historical price action",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": []
+  },
+  "question": "Where exactly is the stop placed?",
+  "recommendedNextSourceType": "additional transcript with explicit stop-placement statements",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "ALEX_G",
+  "whyItMatters": "Without a stated stop rule, risk per trade cannot be calculated or replayed."
+}

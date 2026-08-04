@@ -1,0 +1,767 @@
+What's good, boys? Welcome to day three. This is a little bit more on like the
+0:05
+beginner side of things. This is going to be an introduction to Trading View, how to read a candlestick chart. So,
+0:12
+we're going to be going over how to understand candlestick anatomy, how to identify highs and lows in the markets,
+0:18
+and then how to identify trends in the markets. And then from this we will start delving into kind of what most
+0:25
+people are going to want to be a part of this series for which is liquidity explained, fair value gaps explained,
+0:32
+advanced liquidity concepts, inverse fair value gaps, advanced imbalance concepts, [ __ ] SMT divergences, time
+0:40
+theory, all of this stuff that actually helps us become full-time traders and actually helps us get good at trading.
+0:47
+And if you guys remember yesterday's episode, what is trading? is being able to predict where price wants to go with
+0:52
+a high probability on a daily basis. So, in order to do that, we need to actually see price. Okay, there's two different
+0:59
+types of traders, and I'll preface this before we get into looking at the chart. This is just super quick. There's two
+1:05
+different types of traders. There's technical analysis traders, which is what I am. Okay, I do the majority of my trading purely based off of what the
+1:12
+chart is telling me, so what price is telling me. And then there's fundamental analysis traders. Okay, these are people
+1:17
+who very rarely actually are looking at the chart and are more so looking at the
+1:24
+news. So, um I mean there's several good examples of this, but somebody like
+1:31
+Warren Buffett, for example, he's doing his investing off of just the global
+1:37
+news or the news around the company. You know, he's reading earnings reports, all that stuff. He's not necessarily focused
+1:42
+on like, hey, this candlestick closed this way and then this candlestick closed this way, so I'm going to look to
+1:49
+invest right now. He doesn't do any of that, okay? He focuses on the fundamental, the big macroeconomic side
+1:55
+of things. Um, and again, he's more of a long-term, you couldn't even call him
+2:00
+like a swing trader. He's just like an investor, you know, like buy and hold. Um, and you know, hopefully that you're
+2:07
+you're right over the long long period of time. Um, but for us, we are actively
+2:13
+trading price, right? That's how I explain what trading is. That's what day traders do. We are just trying to buy
+2:19
+low, sell high, sell high, buy back low, right? And that's how we're going to make money. Obviously, there's going to
+2:24
+be mistakes involved. But in order for us to do this, we have to be able to see price. And this gets us to Trading View.
+2:34
+Okay? So, this is the first time that you guys are going to be looking at a chart. What I want you guys to do,
+2:39
+whether it's during this video or after this video, whatever, you guys can follow along with me. You guys are going
+2:44
+to go to tradingview.com. This is the I mean the only kind of charting
+2:51
+platform that I would use for active live charting. Okay, there's a couple back testing softwares that we'll get
+2:57
+into much much later down the line in this series to help you guys practice this skill set. But in terms of live
+3:03
+trading and reading the live market, Trading View, by far has the cleanest UI. Everybody in Trading uses it. I I
+3:10
+literally don't know anybody that is an active day trader that doesn't look at
+3:16
+Trading View charts. So, when you guys go to tradingview.com, this it's not super overwhelming. You'll see a get
+3:22
+started for free tab right here. Um, I'm going to click this and then all my information is going to pop up. So, I'm
+3:28
+just going to put my face back over the screen real quick and then click on this. But essentially, before we before
+3:34
+we do that, you can see that you can do you can get started for free. So, I have a premium version of Trading View, but
+3:41
+that's literally just so that I can have multiple indicators on um on my chart.
+3:47
+And we'll get into the indicators that I use later down the line once we get through all the confluences. Um I
+3:53
+personally don't use any indicators to actually take trades. Um, but I use indicators to help me mark out my
+4:00
+confluences. Uh, but that's besides the point for you guys getting started. The awesome thing about Trading View, you
+4:06
+guys can get started for free. So, you guys are going to click get started for free. I'll do the same on my end. All my
+4:12
+Okay, awesome. My information hasn't popped up yet. You'll get something like this that shows up. Okay. And it says
+4:18
+free until you're ready. So, you can literally do boom. $0 forever. Sign up. No credit card needed. Um, I'm pretty
+4:25
+sure for me, I'm on one of these plans. Like, I think I'm on the plus or the premium plan. Like I said, you know, I
+4:32
+I'm doing this full-time. You guys definitely do not need to be purchasing
+4:38
+the premium plan. You guys just go ahead and sign up for free. So, you guys are going to click that,
+4:44
+sign up for free, and then this is where all my information pops up. So, I'm just going to put in
+4:51
+just so I can get a like base trading view layout. Okay, awesome. Oh,
+4:59
+oops. I signed into my actual account. Let me sign back out.
+5:04
+Sign back in. Let's do this account. This account should have nothing
+5:14
+lit. Okay, cool. So once you're signed in, it'll look
+5:19
+something like this. Okay, again, pretty overwhelming, but what you guys are going to do, you're going to click on Trading View home, and then from there,
+5:26
+there's going to be something that says launch super charts. So that's what we want to do. We're going to have a watch
+5:31
+list full of a bunch of stuff on the on the lefth hand side. We have indexes, we have forex, we got commodities, we got
+5:37
+Bitcoin to the right hand side. This can be super daunting. This can be super scary, but don't worry. We're going to
+5:43
+clean this up for you guys. All that you guys are going to do is you're going to click launch super charts and then
+5:49
+that's going to take you guys into something that looks like this. Now mine
+5:56
+my chart I actually have already programmed this to make it look this way. So I want to see if I can reset
+6:03
+this to the base.
+6:13
+So your guys's will be looking something like this. Okay? And you guys
+6:20
+will also probably have some graphs on the back.
+6:32
+You guys will have something like this. You guys will have
+6:37
+Yeah, this is pretty approximately what your guys' chart will look like.
+6:42
+again, very overwhelming, overstimulating. So, you're going to do
+6:48
+exactly what I did, and we're going to reformat these chart colors. Me personally, I do not like having green
+6:54
+and red candlesticks on my chart. If we go over to
+7:05
+Okay. Oh, oops. It switched it over. But what
+7:11
+we'll continue on this. So if we look at what my actual chart looks like, it
+7:16
+looks like this, right? And if we go to the chart settings, you guys can do one of two things. You guys can copy my
+7:22
+settings if you guys want to use the same candlestick colors as me. But I like to avoid using the green and the
+7:27
+red candlesticks for one reason. It's because it actually the colors of green
+7:32
+and red negatively affect our psychology when we're trading. Like we talked about yesterday, we need to find ways to be
+7:39
+able to disassociate our ourselves and our mental from the connection to money.
+7:46
+And unfortunately on trading, a green candle, what do we associate that with? Making money. A red candle, what do we
+7:52
+associate that with? Losing money. Even though we're going to be taking long positions, so buy positions predicting
+7:58
+that the market's going to go up and sell positions, short positions predicting that the market's going to go down. But
+8:06
+regardless, we are the the colors green and red are just known psychologically
+8:13
+to affect how we think about money. And in turn, that's not good for us psychology psychology wise. So I use
+8:21
+pretty neutral colors. I use blue and black. Um I know there's some people that will do like white and black and
+8:27
+then change the background to something like a gray. Um you guys can choose whatever colors you guys want. Okay,
+8:34
+this is how I have mine set up. I have blue and then black all the way through. And then on the back
+8:41
+I have just a solid white. No grid lines. This is what my crosshair looks like. Um, and then really everything
+8:49
+else is kind of, you know, not not really not really needed. But what I
+8:54
+also want you guys to do is notice right here where it says time zone. Okay, we are going to set our time zone to New
+9:01
+York time. Even if you guys are in Africa, if you guys are in Brazil, if
+9:06
+you guys are in California, we need to be on Eastern time. our
+9:14
+brains, everything just need to need to needs to be programmed to e Eastern time. Well, you're probably saying,
+9:20
+"Well, I live in Africa and I don't live on Eastern time." Well, the market lives
+9:26
+on Eastern time. So, in turn, we have to live on Eastern time. At least our charts have to live on Eastern time
+9:32
+because when we're explaining market open, I'm going to say, "Hey, market opens at 9:30." 9:30 a.m. Eastern time.
+9:40
+For me living in Puerto Rico, market opens at 10:30 a.m. Eastern. 10 10:30.
+9:46
+See, I'm saying Eastern time cuz my head is so like lock just built to be on Eastern time. But for me, market opens
+9:53
+at 10:30 a.m. Puerto Rico time. But on the charts, market opens at 9:30 a.m.
+9:59
+Eastern time. And we just need to be on the same time time zone or time frame as
+10:04
+the market because when we're explaining session opens, session closes, like when does the New York Stock Exchange open?
+10:11
+When does premarket open? I don't want you guys to be on Sa Paulo time, okay?
+10:17
+And me saying, "Hey, market opens at 9:30." And for you guys to be putting a line at market open, but you're on Sa
+10:25
+Paulo time and I'm on New York time and you're like, "Hey, the strategy doesn't work." And it's like, "Well, yeah,
+10:32
+because you're you're you're 3 hours behind or you're 2 hours behind." So, we
+10:37
+need to set this to New York time. All right. And once we've done that, okay,
+10:42
+we're going to have Let's reset this and let's remove this. Okay. We're going
+10:50
+to have something that looks like this. Now, again, this can be very daunting and I don't really want to talk like
+10:58
+about how do we even figure out where the [ __ ] price price is going to go off of this. We're going to we're going to learn that in due time over the course
+11:06
+of these next two weeks, okay? We're going to be figuring out like, hey, price comes up, took out this high, and
+11:12
+then went down. Why did that happen? I could explain that all to you right now, but it would be a little bit confusing.
+11:18
+So, we're not going to talk about that right now. We're going to talk about what do each one of these candles
+11:23
+represent? How can we identify highs and lows in the market? And then how can we identify trends in the market? Because
+11:29
+that's the first thing that we need to do. It's the bare minimum because on these charts, every every single one of
+11:35
+these charts, no matter what what time frame you're on, whether you're on the daily time frame, the weekly time frame,
+11:41
+the hourly time frame, these candlesticks make up and show us every single second of price movement
+11:47
+throughout the day, throughout the hour, throughout every single 5 minutes. And if you guys are unable to understand the
+11:54
+cand the Japanese candlestick anatomy, okay, then we it's like we're not even
+11:59
+going to be able to go anywhere. Okay, that's another thing. There's a bunch of different ways to read these charts.
+12:05
+Okay, there's bar there's bar candles, there's hollow candles, there's volume candles, there's line charts, there's
+12:11
+step line charts, there's columns, there's high lows, there's volume footprint, all of this stuff. There's
+12:16
+hyenashi candles, there's Reno candles. Okay, all of these different types of candlesticks, but for us to be able to
+12:24
+read the market, Japanese candlesticks are by far the most valuable because they tell us four different things about
+12:31
+every single time frame. So, what we're going to do is I'm going to draw out a candlestick for us here. This is going
+12:38
+to be a green candle. Okay. So
+12:44
+this is what
+12:58
+this is what an up candle looks like. Okay. And this is what
+13:08
+a down candle looks like.
+13:22
+Now, Japanese candlesticks tell us four different things about what h about
+13:29
+what happened during during this period of time. So,
+13:35
+every single candlestick represents a period of time, depending on what time
+13:41
+frame we're on, and I'll explain that a little bit later, but every single candlestick represents a period of time
+13:49
+where price went during that time where price opened and where price closed. So,
+13:56
+we'll go over time frames right now. If we go up to this left-hand side up here, we can see that there's a bunch of
+14:03
+different time frames. Okay, there's the 1 second, there's the 5-second, there's
+14:08
+the 1 minute, there's the 5 minute, there's the 1 hour, there's the 1 day, there's the 1 week, there's the one
+14:14
+month. Okay, whatever time frame we click on. Okay, so right now we're on the daily time
+14:20
+frame. That represents the period of time that every single one of these
+14:26
+candles represents. So right now we are on the 1day time frame. That means every
+14:32
+single one of these candles represents 24 hours worth of price action and price
+14:38
+movement. Now what are the four key price points that these candles tell us
+14:47
+about what price did within the 24 hours of the time frame that we're on.
+14:52
+So the bottom of a green candle of so this right here we see the filled
+14:59
+in this is what we call the body of the candle. Okay. So from this line up to
+15:06
+this line this is what we call the body of the candlestick. And these little lines
+15:13
+okay these are like snail trails. Okay. So imagine you're a snail. You got a
+15:20
+leaky butt. Okay. You got like booger booger semen serum coming out of your
+15:27
+butt and you scooted your butt all the way up here
+15:33
+and then you came back down. There's going to be a little snail trail showing on the mud or on whatever the concrete
+15:41
+that hey, there was a leaky butt snail that went all the way up here at some point in time.
+15:47
+Same thing with this wick down here. Okay, leaky butt snail at some point in
+15:52
+time during pretty much candles are leaky butt snails essentially, but um
+15:57
+specifically the wicks. Okay, so at some point in time during this 24 hours,
+16:03
+leaky butt snail went all the way down here and said, "Oh, I'm going to turn around and left a little snail trail on
+16:11
+the concrete showing, hey, there was a there was a snail with a leaky butt that
+16:16
+went down here at some point in time. And that's essentially what it's showing us with price. Okay, price has a leaky
+16:24
+butt. Okay, like uh if like wherever price goes,
+16:30
+this candle is going to show it. Okay, so the bottom of the body. Okay, so
+16:36
+again from here up to here is the body of the candle. This is the top wick.
+16:41
+This is the bottom wick. The bottom of the body of the candle is the candle open.
+16:50
+Okay. The top of the body of the candle is the close.
+17:00
+The top of the top wick is the high
+17:06
+and the bottom of the bottom wick is the low.
+17:12
+So again, this can be a little bit confusing. So let's walk through it. We are on the daily time frame. So that
+17:19
+means every single 24 hours a new candle opens. Okay? So let's say
+17:27
+boom, 24 hours is up or let's say this this candle just closed.
+17:33
+When this candle opened, it opened at this price right here. So if we look to the right hand side, we can see the
+17:39
+price at which it opened. [snorts] $30,241.50.
+17:46
+That's where this candle opened. And over the course of the 24 hours,
+17:53
+price came down. This was the lowest point that it got to during the 24
+17:58
+hours. So, $29,77.50.
+18:04
+And then also at some point in time during that 24 hours price came up to
+18:11
+this high which is at $32,227.
+18:17
+And then at the end of the 24 hours where did price close at? It closed
+18:23
+right here. So at the start of the 24 hours where was price at? Right here.
+18:28
+sometime during the 24 hours. The lowest point of the 24 hours 24 hours it got to
+18:35
+was $29,714. The highest point that it got to during
+18:40
+those 24 hours was $32,214. And then at the end of the 24 hours, it
+18:48
+ended right here. So this was the start of the 24 hours. This was the lowest point that price got to during the 24
+18:55
+hours. This was the highest point price got to during the 24 hours. And then at the end of the 24 hours, price closed
+19:01
+right here. Now, for a down candle, it's the exact
+19:07
+same except this up here is the open, right? Because over the course of 24
+19:13
+hours, if we open at a high price and we close at a lower price, what's what's
+19:19
+that going to make this candle? It's going to make it red and it's going to be a down candle. So on a down candle,
+19:24
+this is the open. This is still the highest point that price got to during the 24 hours. This
+19:31
+is the lowest point that price got to during the 24 hours.
+19:36
+And then once the 24 hours was up, this is where price was and ended up
+19:43
+closing. Okay, so we can see on a bullish candle.
+19:48
+Boom. Uh we can even show you guys in real time markets right now. So
+19:54
+this is another nice thing about trading view. If you look to the right hand side, you can see the time that is left
+20:00
+for this candle to close. So this candle is still forming. So let's do a little lesson right here. Where was the open of
+20:08
+this candle? This is a down candle, right? So the open was right here.
+20:15
+Okay. where the body is, where the body starts at $25,478.
+20:22
+Where was the highest point that prices got to within the past
+20:28
+19 hours and 30 minutes that this candle has been open, right? Because it hasn't been a full 24 hours yet, or else this
+20:34
+candle would be closed and wouldn't still be forming. The highest point that this candle has
+20:39
+gotten to, look at this snail trail. Oh, price came all the way up here to
+20:45
+$25,86. And throughout the 19 hours and 30
+20:51
+minutes, where was the lowest point that price has gotten to? Right here, the bottom of
+20:57
+the wick at $25,294. And right now, at this point in time,
+21:04
+where is price currently? Well, we can see it on the right hand side. It's at $25,391.50.
+21:15
+Okay. So, each one of these candlesticks represents a day's worth of price
+21:21
+action. So, we can look at yesterday. Where was the high? Where was the
+21:26
+highest point that yesterday got to over the course of 24 hours? Right here at
+21:32
+$25,716. Where was the open? The open was right
+21:38
+here. So price opened at $25,683
+21:44
+at the start of that 24h hour time period. Where was the lowest point that price went to during that 24h hour time
+21:51
+period? Down here at $25,429. And then at the end of the 24h hour time
+21:57
+period, where did price close? It closed down here at $25,456.
+22:05
+So this gives us a very good look again as we were just explaining of what price
+22:13
+did throughout 24 hours. Now let's say we want an even closer look. Well, we
+22:20
+can just go down into a lower time frame. So instead of looking at things on a 24hour scale, we can look at things
+22:29
+on a 4hour scale. Now, by me changing the time frame, what does that do? Now,
+22:35
+instead of every single candlestick representing a day's worth or 24 hours worth of price action, now every single
+22:42
+one of these candles represents 4 hours worth of price action.
+22:49
+Okay. So now with that in mind, we can say,
+22:55
+all right, we we know that every single one of these candlesticks represents four hours of price action. And then on
+23:02
+the right hand side, what can we see about this current candlestick? Well, when did it open? It opened around 2
+23:09
+hours and 30 minutes ago. Okay, because it's it has an hour and 25 minutes left
+23:15
+for it to close. If we look at the candlestick beforehand during this 4hour time period, where was
+23:22
+the highest point that this that price went during this 4 hour time per period up to here?
+23:29
+Where was the lowest point that it went to during this 4 hour time per period down here? And if we zoom in real
+23:36
+freaking close, where did price open? This is a bullish
+23:42
+candlestick or an up candle. It opened right here, right? because it closed up. It's a blue candle. So, we know that it
+23:49
+opened lower and then closed higher. So, it opened at $25,730.
+23:56
+And then where did it close? Right here. So, during the 4 hour time time period,
+24:02
+it opened right here. During the 4 hours, it got all the way down here. And then also during the 4 hours, it came
+24:09
+all the way up here. But at the end of the 4 hours, it closed right here.
+24:15
+What happens if we scale down to the 1 hour time frame? Now we can see.
+24:23
+Look at this. If we go to the 1 hour time frame, we can see that 4hour
+24:29
+candlestick. Instead of just in one candlestick, we can see it in four candlesticks. So we can see that that
+24:35
+4hour candlestick opened on this hourly candlestick. And then there's one
+24:41
+candle, two candle, three candle, four candles. So every single one of these candles,
+24:47
+it's showing us the same price movements, but now we're on the hourly time frame. So we
+24:54
+can see even a deeper look of, okay, we know exactly what price did during that
+25:00
+during those four hours. But what if what if we want to see what price did during every single hour within those
+25:06
+four hours? Well, now we can. We can say okay price opened right here during the first
+25:12
+hour of those four hours.
+25:20
+The highest point that it got during that first hour was up here. The lowest point that it got to was right here. And
+25:25
+then after the hour was up, it closed right here.
+25:31
+And we can get even lower. We can see okay over the course of that hour
+25:37
+we can see during 15 minutes. Okay so now we have four candles that are
+25:43
+showing us 15minut time intervals that happened during at that hour that we we
+25:49
+were just breaking down and you can go as low as possible. You can see 5
+25:54
+minutes. You can see one minute. Okay, where every single one of these
+26:00
+candles is showing 1 minute's worth of price movement.
+26:06
+Okay, and it's all showing us the same thing. So on the one the one minute, okay, if we look at those this one
+26:13
+minute chart, there's no difference in the price movement besides the number of candles that are on the screen, right?
+26:19
+Because if we scale this back to the 5minut, we're still seeing the same price movement but just on bigger
+26:24
+candles because they're representing larger times. If we scale back to the hour, it's still showing us the same
+26:31
+time movement, just bigger candles because each candle is representing a larger period of time. And then if we
+26:38
+scale all the way back to the daily time frame, we can see one day's worth of
+26:44
+price action encapsulated in one candle. Now, I'm going to get in deeper as this
+26:50
+series goes on on what time frames are going to be beneficial for us, what time frames we want to be looking at, all of
+26:57
+that stuff. But I don't want you guys to get overwhelmed today. I know when I was watching my first video explaining
+27:04
+candlestick anatomy and time time frames like I was freaking out. All you guys
+27:11
+are probably freaking out right now. Don't worry. Take a deep breath. It's all going to be okay. you're going to
+27:17
+understand this very soon. Um, there's no reason to get overwhelmed just yet.
+27:22
+Okay? Just yet. Just yet. There's no reason to get overwhelmed cuz I know you guys are probably thinking, "How the
+27:27
+[ __ ] am I supposed to remember all of this?" Trust me, eventually it's going to become second nature. Just like
+27:32
+basketball. Like, you learn how to dribble a basketball, you're bouncing it off your foot, you're hitting it off your knee, and you got to look down to
+27:39
+make sure that you're dribbling it correctly. But eventually, once you get good, you're not even you're not even looking, and it's just second nature.
+27:45
+You put the ball on the ground and you know exactly where it's going to come back up to your hand. You're hitting it between the legs and you don't have to
+27:50
+look down at the ball. Like you're able to do all these moves like subconsciously without even having to
+27:56
+think about it. So that's that's eventually where you guys are going to get to. Don't worry. Right now this
+28:02
+seems super overwhelming, but don't worry. We we are going to help you guys progress and get you to where you need
+28:07
+to be. All right. Now let's talk about now that we
+28:13
+understand candlestick anatomy and a little bit about time frames. We are going to talk about highs and lows in
+28:20
+the market. Now we need to understand highs and lows in the market because this is going to be very key in our
+28:28
+strategy and understanding where price wants to go and being able to predict price action with a high probability on
+28:34
+a daily basis to make us good traders. We also need to understand trends. Okay.
+28:40
+and order flow. All right, so I know all that those things sound daunting and
+28:46
+sound um scary. They're really not. It's very very simple. I'm going to explain
+28:51
+to you guys highs and lows right now. So, let's just think if you guys think about a high and a low typically what
+29:00
+does if if we if we were to make if you were to just imagine what does a high
+29:07
+consist of? Well, is it just constant moves up forever and always? Well, not
+29:15
+not really because in order to establish a high, what do we need? We need we need
+29:21
+I mean not price, but really anything to give us a peak, right? And it's the same
+29:26
+thing with trading. So, we can't just move up forever and always. There's
+29:33
+always going to be a move up and then eventually followed by a move down. And following the move
+29:40
+down, that's when we create these peaks and those are highs. [snorts] Okay? And
+29:45
+then if we think about a low in the market, it's the same thing. We can't
+29:51
+just move down forever and always. Eventually, we are going to get a move
+29:56
+up and then this looks like a low. This doesn't look like a low, right? because
+30:02
+it's like where where's the low? Where does where does it end with a move up?
+30:07
+That's all it is. Highs and lows consists of move ups, moves up or a
+30:13
+high, we'll do high first. A high consists of a move up followed by a move
+30:19
+down. A low consists of a move down followed by a move up.
+30:27
+Okay, pretty simple concept, right? It's just
+30:33
+a high is a move up followed by a move down. A low is a move down followed by a
+30:39
+move up. Congratulations. You guys know what highs and lows are in the market. I
+30:44
+know. I know. Probably the most difficult thing you've ever learned. This is this is this learning this is
+30:51
+going to help you make more money than your college educa education will ever be able to get you.
+30:56
+believe it or not. Okay, move up, then a move down, that's a
+31:01
+high. Move down, then a move up, that's a low. Now, why is this important? Because
+31:08
+highs and lows make up trends in the market. Now, this is important as well
+31:15
+because trends are what move the market, right? There's uptrends, there's
+31:20
+downtrends, and then there's consolidation. Okay? So, we're going to talk about three different ways that the
+31:26
+market can and is able to move. And it sounds dumb, but it's I mean, it's true,
+31:32
+okay? The market can move up or down. Crazy, right? Or sideways.
+31:40
+Okay? And there's three different ways to identify whether we're move or sorry,
+31:47
+there's ways to identify whether we're moving up, whether we're moving down, or whether we're moving sideways. And the
+31:53
+way that we identify that is through being able to identify highs and lows in
+31:58
+the market. Now, like I was just mentioning, a high and a
+32:05
+low consists of a move up, then a move down. A low consists of a move down, then a move up.
+32:11
+Well, how are we supposed to identify a move down then and a move up? Well, awesome. We just learned about
+32:17
+candlesticks. So, what does that mean? Well, we need
+32:23
+an up candle followed by a down candle to create a high. We need a down candle
+32:29
+followed by an up candle to create a low. So,
+32:36
+let's go on here and let's look for them. We have an up candle followed by a
+32:41
+down candle. Awesome. That's a high. We have a down
+32:46
+candle followed by an up candle. Awesome. You take the lowest point of
+32:52
+those two candlesticks. So, whichever wicks wick is lower, boom, this is a
+32:57
+low. We have an up candle followed by a down candle. We take the highest point
+33:03
+of those two candlesticks. So, this is the highest point that this candlestick got to, but this is the highest point
+33:08
+that this candlestick got to. So, this is our high. Again, I don't want you guys to get
+33:14
+overwhelmed, but what I want you guys to do is to be on your trading view and
+33:20
+mark out five different examples of a high and five different examples of a low. So, we have a move up, then a move
+33:26
+down. What do we do? We mark the highest point of those two candles. Which one has the higher wick? This first candle
+33:32
+does. Awesome. This is our high. We have a move down then a move up.
+33:39
+Lowest point of those who candlesticks. Boom. This is a low.
+33:45
+Now to be able to identify trends in the market. Now that we know how to identify
+33:52
+highs and lows in the market, we need to be able to identify a series of highs
+33:59
+and lows that form a pattern in the market. Okay. So, how do we know when
+34:06
+the market is moving up? the market will form something called an
+34:12
+uptrend which consists of higher highs being created and higher lows being
+34:19
+created in the market. So when we're moving up, the market will form an
+34:25
+uptrend. And an uptrend looks like this, where we come up, we make a high, and
+34:30
+then we come down and we make a low. And then we come up, make a higher high, come down, make a higher low, come up,
+34:38
+make a higher high, come down, make a higher low, higher high, higher low.
+34:44
+Notice how this is this is the high, and then market comes up and makes a higher high. This is the low. market comes up
+34:51
+and makes a higher low. This is an uptrend, right? If we look at
+34:57
+the S&P 500 over the course of
+35:03
+months, right? We can see that this follows a pretty pretty strict pattern
+35:10
+of an uptrend, right? That's why everybody invests in the S&P 500, right? We can see a low right here. We can see
+35:17
+a high right here. We can see a low right here. What is this? Low. Higher low. High. Higher high. Higher low.
+35:26
+Higher high. Higher low. Higher high. Higher low. We had the COVID move down,
+35:33
+but that's we'll we'll talk about what this is on a later date. Higher high,
+35:39
+higher high, higher low, higher high, higher low, higher high.
+35:46
+Okay. Okay, so the S&P 500 is just forever and always, at least on the high time frames, in an uptrend. That's why a
+35:52
+lot of people invest their money into it because over the course of a long period of time, it just keeps going up. Okay,
+36:02
+now that's an uptrend. That's when price is moving up. Okay, we know that price
+36:09
+is making higher highs and higher lows in the market. Now, what happens when price is moving down? Well, it's the
+36:15
+same thing. When price is trending down, we are making lower highs and lower lows
+36:21
+in the market. So, if we're moving down, we make a low, then we make a high, then
+36:27
+we make a lower low, then we make a lower high, then we make a lower low, then we make a lower high. So there's a
+36:33
+low, there's a high, lower low, lower high, lower low, lower high, lower low,
+36:41
+lower high. And that is a downtrend. That's how we can spot the market moving
+36:47
+down. Now, if we look
+36:54
+here, let me try and find a good example of a downtrend.
+37:01
+I mean, this is decent. It's good enough at least. Okay.
+37:07
+Don't look at any of this on this side because we'll we'll get into like how we can actually decipher all the price
+37:13
+movements and break of structure and how new trends form. But right now, I just want us to be able to spot trends.
+37:19
+We have a high right here, move up, then a move down. We have a low right here,
+37:24
+move down, then a move up. What do we go do? We come down, we make
+37:29
+a lower low, move down, then a move up. We come up, we make a lower high, move
+37:35
+up, then a move down. Come down, make a lower low, move down, then a move up.
+37:40
+Come up, make a lower high. Move up, then a move down. Come down, make a lower low, move down, then a move up.
+37:48
+Come up, make a lower high, move up, then a move down. And right now, we are in the process of putting in a lower
+37:54
+low. So this is a very distinct, very easy to tell that we are in a downtrend because we have a high, we have a low,
+38:00
+we come down, we make a lower low, we make a lower high, we make a lower low, make a lower high, make a lower low, make a lower high, make a lower, even
+38:06
+lower low. And this is how we can identify trends. Now, trading is not as simple as saying,
+38:13
+hey, we're in an uptrend. I'm just going to blind blindly press buy. Because trends can break, trends can change.
+38:20
+Okay? Just because we're in a downtrend doesn't mean, hey, I'm going to press sell right now because we're in a downtrend and price is probably going to
+38:27
+go lower. That's not the case. But in order to predict where price wants to go
+38:32
+with a high consistency and a high probability on a daily basis, cuz that's what we're here to do, we need to be
+38:37
+able to identify these market trends and be able to at least see them on the chart and be able to understand them.
+38:44
+Okay, so we learned a lot today. Um, I
+38:51
+kind of want to end this video here. Um, but you guys have homework. So, what I
+38:57
+want you guys to do is first of all, obviously, set up your guys' Trading View account. Choose some chart colors
+39:03
+that you enjoy. Make sure that it's set to New York time because that's how we're going to be operating for the rest
+39:08
+of the series. Regardless of if you live in Africa, regardless of if you live in Mexico, you need to be on New York time.
+39:14
+You need to start programming your brain. Hey, if I want to be an actual day trader, then I need to be on New York time. I need to be on ESD. Okay, at
+39:22
+least your charts do bare minimum. Okay, the second thing that I need you guys to do is once you guys set get set up on
+39:28
+Trading View, I want you guys to just literally just play around with these
+39:33
+time frames. So rotate from like the 4 hour to the 1 hour and see, okay, yeah, there's four 1 hour candles that
+39:40
+encapsulate a 4 hour candle and identify, practice identifying the open,
+39:46
+close, the open, high, low, and close of every single candlestick and being good
+39:51
+at identifying that. The next thing that I want you guys to do, do like five reps
+39:58
+if even more is even better. Okay? you know like the more the more work and the more effort that you guys put in is
+40:03
+going to be better for you guys. What what else I would like you guys to do is I would want you guys to identify
+40:13
+five highs in the market. So five up up candlesticks followed by a down candlestick and finding the highest
+40:20
+point of those candlesticks together. Five lows in the market. So move down
+40:25
+then a move up. Okay, find the lowest point of those two candlesticks. Identify five uptrends. So, a series of
+40:33
+higher highs and higher lows being formed in the market. I want you guys to spot five downtrends. So, a series of
+40:41
+lower highs and lower lows in the market. And then from there, we can go into tomorrow's video. So, with that
+40:47
+being said, love and appreciate you guys. Today was rather beginner friendly, but as we start getting deeper
+40:53
+into the series, we are going to start getting into very, very advanced stuff. So again, if you guys are brand new,
+41:00
+take your time. Don't feel rushed because we're going to very quickly start speeding things up. If you guys
+41:05
+are advanced, again, you guys probably didn't need this video, but it's always good for a little reminder. Um, and
+41:11
+yeah, I'll see you guys tomorrow.

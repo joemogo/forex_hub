@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-29T23:45:30Z",
+  "endTimestamp": "9:16",
+  "intakeId": "INTAKE|ALEX_G|20260729|001",
+  "language": "en",
+  "lineEnd": 78,
+  "lineStart": 76,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "happened at this point right here price then breaks retest on this break and retest right here you have that morning star formation bullish engulf and Candlestick it's literally the same thing every single time your stop- loss is right under it you have a minimum of a 1 to two risk to reward and then this trade hit so if you notice out of the three trades you had one that you caught a minimum of a 1 to two so you let save",
+  "schemaVersion": 1,
+  "sectionTitle": "TRADE 3 -- 'the same thing every single time'; the stop rule stated as invariant",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|011",
+  "segmentType": "other",
+  "sequenceNumber": 11,
+  "sourceId": "EVSRC|ALEX_G|20260729|001",
+  "speaker": null,
+  "startTimestamp": "8:59",
+  "textHash": "30c33e0a562d50d2fbb5a0922841e534e4d7bf8c8d428a04d3eb972f769b3dfc"
+}

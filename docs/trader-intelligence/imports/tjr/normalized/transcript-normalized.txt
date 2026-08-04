@@ -1,0 +1,397 @@
+0:00	All right, guys. I'm not here to waste your time. In the last 6 months, I have made $1,47,984
+0:08	trading. And before you guys are saying this dude's capping, let me pull up the Tradez Zella dashboard for you guys to see and go over this. So, this is from
+0:16	April 1st to October 1st. It's actually October 2nd. So, we can go ahead and update this from April 1st to October
+0:24	2nd. And as you guys can see, I actually haven't traded at all this month of October. So, I didn't trade yesterday. I didn't trade today. The government is
+0:32	currently shut down. So, I've been kind of avoiding trading this week. And because I'm coming off of an absolutely insane month of September, as you can
+0:41	see, my monthly P&L is $491,000 just over the past month of September.
+0:48	And again, you guys can fact check all of these numbers back with my trade recaps. these numbers they will be a
+0:55	little they're not completely off but they are a little bit off because on my brokerage like on trade locker it
+1:02	doesn't subtract the fees that are taken from trades. So on this day you guys will see that in the trade recap I made
+1:10	$3,000 but trade zela counts as only $1,000 made because there's fees subtracted from that. But overall, these profits and losses, you guys can fact
+1:19	check them against the trade recaps that I upload on a daily basis, where I'm literally pressing record every single day at market open, telling you guys
+1:27	when I enter, when I exit, the exact P&L, when I win the trade, when I lose the trade, and then following that, I go and post the trades with my P&Ls to my
+1:36	Instagram stories, showing you guys my daily P&L, my weekly P&L, and my monthly P&L, and it all comes out to the same exact number every single time. Now, I'm
+1:45	not sharing this with you guys to brag about my results or anything. I'm showing you this because I know what I'm talking about. And if you guys are serious about trading, you guys need to
+1:53	hear this [ __ ] And in this video, I'm going to be breaking down the exact strategy that I use to be able to hit these numbers and the mindset that you guys need to actually make it work. So, tune the [ __ ] in. Let's get into it.
+2:03	Let's jump into strategy. So, the first thing that we're going to want to look at is the charts. Okay. So, first of all, how am I making these decisions on a daily basis to be able to get these
+2:12	really crazy P&Ls on a daily basis to be able to have just be profitable in the markets, okay? I'm not going to sit here and promise you guys that you guys are
+2:21	going to be able to make a million dollars over the course of whatever 6 months within your first year of trading. I've been doing this for years
+2:28	now. But luckily, you guys are going to be able to learn from some of the mistakes that I've made and then also be able to learn from some of the expertise that I have within these markets so that
+2:36	you guys can get similar results hopefully at a quicker within a quicker fashion than what I did and what I had to go through which was pretty much
+2:45	learning the majority of this [ __ ] on my own or just spending hours in front of the chart and trying to learn all of these things. So, the first thing that we're going to go into is strategy. So,
+2:54	how do I break down my strategy? I want to say that it's simple, but you do have to understand some confluences first.
+3:00	So, how do have I how have I built my strategy out? My strategy is based off of liquidity sweeps. Okay? So, every single day I'm looking for trades that
+3:09	are off of liquidity sweeps. So, liquidity sweeps are essentially when we have highs and lows within the market.
+3:17	Okay? So, above here is highs, down here is lows. And when price goes up and takes out these highs and lows, we are essentially sweeping out potential
+3:25	liquidity to be able to fill orders in the opposite direction, right? Because if we're in an uptrend and we push past a high, most people are going to want to
+3:32	buy. If we are in a downtrend and we go underneath a low, most people are going to want to sell, right? But that also gives the market makers the awesome
+3:41	opportunity to be able to reverse price and push price in a in the opposite direction. Now something else that you guys need to understand are sessions. So
+3:51	there's three sessions within every single day. There's New York Stock Exchange open, there's London open, and
+3:58	there's Asian open. Okay, I am trading US indexes such as the S&P 500 and NASDAQ. Okay, so I'm always trading New
+4:06	York Stock Exchange open. But these other sessions are going to be super useful for us when it comes to identifying draws and liquidity cuz
+4:14	these previous sessions are going to give us session highs and session lows.
+4:19	Again, where does liquidity lie? Above highs and below lows. So, we are going to be able to utilize previous session highs and lows as very strong draws on
+4:27	liquidity for us. On top of that, we know that when we go into these new sessions, more often than not, there's
+4:34	going to be some form of manipulation on the market open to push price in whatever direction that it wants to go.
+4:40	So, just like how I was mentioning with liquidity, when we're in up when when we are in an uptrend, when we push above a high, a lot of people are going to press
+4:48	buy. But that also gives the market makers, especially if it's a market open, it gives them the opportunity to manipulate price above this high to be
+4:56	able to fill a bunch of their positions to end up sending price lower. Same thing with a downtrend. Let's say we are
+5:03	moving down, down, down. We have a low right here. And let's say that this is London sessions low and then boom, this is New York market open. What can the
+5:11	New York market makers do to be able to manipulate price in their favor? Well, they can go down, push price underneath
+5:19	this low. What is that going to cause people to do? They're going to want to enter into sells or enter into shorts.
+5:25	And then from there, what does that give them the opportunity to do? Fill their buy orders with no consequences. They'll be able to fill all of their massive buy orders right here and then cause price
+5:33	to go in the opposite direction. So, these two concepts are going to be super key when it comes to understanding our strategy. The next thing that we need to
+5:40	understand is our confirmation confluences. So the this comes in the form of breakup structure,
+5:48	inverse for value gap, SMT divergence, and a 79% extension closure on the Fibonacci. I'll go over all three of
+5:57	these and give examples of these as we're going over our strategy. But if you guys are already familiar with these, then awesome. If you guys aren't familiar with these, I have plenty of
+6:05	YouTube videos going over these, so you guys can just go and look at those super quick so you guys can understand those concepts. But I'm also going to be explaining them in this video. From
+6:14	there, we're also going to need to understand continuation continuation confluences. And this I'm actually limiting this to just equilibrium and
+6:23	fair value gaps. I know in the past I used to talk about order blocks and breaker blocks. It's been 6 months. I I got this profit and loss statement
+6:32	without using order blocks and breaker blocks for the last 6 months. So, I pretty much completely removed that.
+6:37	someone like me and uh what you'll find as people get better and better at stuff stuff that they do, they tend to simplify simplify simplify and just get
+6:46	even more efficient at what they do. In the past, I had all of these different confluences that would signal certain things or and it it just got too much
+6:55	for me to where I was getting lost in my own sauce where I was like I was just looking at too many confluences on the chart and I was like, dude, this is
+7:02	honestly way too much for me to even be considering what price is going to do at what point in time. And it got to the point where I was like, screw this.
+7:11	pretty much every single time that price comes down and fills in a fair value gap or equilibrium, we're hitting the order block and breaker block anyway. So, why
+7:19	do why the [ __ ] do we even need to know what that is? In my personal opinion, we don't really need to know what those are, and they've pretty much become useless to me over the past year of
+7:28	trading. On top of that, this has been my best year of trading. And again, I'll show you guys examples of equilibrium and fair value gaps when we get into
+7:36	examples on the chart. So, we need to understand liquidity. We need to understand our sessions, okay, with session opens and closes. We need to understand session highs and lows.
+7:46	Understand confirmation confluences like breakup structure, inverse value gap, SMT divergence, 79% extensions, and then continuation confluences like
+7:54	equilibrium and for value gaps. And that's that's truly it like and believe it or not, I know that this may seem super daunting to you. You're like,
+8:03	what's a liquidity sweep sessions? It's a lot. Confirmation confluences. Holy [ __ ] there's four of them. Continuation confluences, there's two of them. How am I even supposed to know stuff like this?
+8:13	I have so many YouTube videos that cover these in depth. And I'm also going to go into these in these videos. Go watch those videos. I have a 5 and a half hour
+8:21	long video. I also have a 9-hour long video that you guys can go watch to understand these con concepts in full.
+8:26	I'm going to briefly touch on them in this video. But if you guys already understand these, then awesome. Let's just jump straight into the charts. The very first thing that I want to do every
+8:35	single day is mark out session open.
+8:41	Okay, so again, I didn't trade today, so this will actually be pretty interesting to see if we h even had a setup today.
+8:51	There we go. To even see if we had a setup today. So, I'm using this little indicator um that I that me and my team
+8:59	made. It just highlights the session highs and lows. Uh there's a link in the description if you guys want it. It just makes my life literally a million times
+9:06	easier. It also adds like a whole bunch of these other things. Order blocks and breaker blocks, fair value gaps, order flow, breaker structure, all the
+9:13	confluences that I'm going to go over in here, but I really use the session opens and closes. So the blue lines indicate London session highs and London session
+9:21	lows. So what are we going to do? We'll go ahead and just mark these on because again, some of these lines are tend to be a little bit irrelevant, but we'll
+9:29	mark on all of them. So these are Asian session highs.
+9:33	Asian session lows and this is previous day highs. We don't need that. So we have London session highs right here.
+9:38	London session lows right here. Asia session lows right here. Awesome. Okay.
+9:43	And we can actually remove this line right here from Asia sessions high because London session already pushed past it. And if you guys remember when
+9:52	we're talking about these highs and lows within the market, we want to use them as draws on liquidity. So, if this if this high right here has already been
+9:59	pushed past and we haven't really gotten much of a reaction off of it, it's not necessarily going to be beneficial for us to be marking it or to for us to even
+10:08	be considering it as a level because it's already been taken out and there wasn't a reaction off of it. Once we've done that, I'm just going to go ahead and take this off so that it's a little
+10:16	bit simpler for us. We can see that during pre-market, we have these London session highs right here. New York pre-market starts at 8:30. Okay, so 8:30
+10:25	is right here. These are London session highs. Right when pre-market opens, we come up and sweep out these highs and then boom, we come down and we break
+10:33	five minute structure. Okay, so let's just go through the steps that I'm looking for with these confluences that I just talked about when I'm looking for
+10:42	a trade. So the first thing that I'm looking for is a liquidity sweep.
+10:47	Okay, whether that's from 1 hour highs and lows, 4hour highs and lows, or
+10:55	session highs and lows, that's what I'm looking for for my draws on liquidity.
+11:00	And I'm looking for a liquidity sweep every single time. How can we confirm that the liquidity sweep has happened?
+11:05	We wait for a fiveminut confirmation confluence. So again, if you guys remember our confirmation confluences, that can come in several different ways.
+11:16	That can come in a breakup structure.
+11:17	That can come in a inverse for value gap. That can come in a SMT divergence.
+11:23	That can come in a 79% extension. Okay. So, we're at this point in our strategy
+11:31	right now. Okay. So, we have boom pre-market open. And this is actually setting up a good example of a little
+11:39	addition to the strategy that we always require when we're looking um for trades. So, this is a perfect example for us today. And I'm actually already
+11:46	seeing setups. It's gorgeous. Okay, so pre-market, we have London session high.
+11:52	What do we do? Boom. We push. We push above it. Step one, check. Step two, what are we looking for? Either a
+12:00	fiveminut break of structure inverse for value gap, SMT divergence, or 79% extension closure underneath the
+12:07	Fibonacci. So, let's just go through all of these. For price to break structure to the downside, we need price to close
+12:14	underneath the most recent low within the uptrend. Okay, so we're in an uptrend right now, right? We close above this most recent high. Boom. This is the most recent low that we have. When do we
+12:22	break structure? Boom. On this candlestick closure. Awesome. What else can we use? We can use an inverse for value gap. So this is the lowest gap on
+12:31	this stack of gaps. We have a gap right here, gap right here, and a gap right here. When do we inverse this gap? Boom.
+12:36	On the same candlestick. Awesome. We ended up we are changing direction.
+12:40	We're getting a confirmation confluence that hey we swept liquidity and we're confirming that liquidity has been swept because the trend is changing. What else
+12:49	can we look for? An SMT divergence. An SMT divergence is when one index makes a higher high and the other index makes a
+12:58	lower high or when one index makes a lower low and the other index makes a
+13:04	higher low. Okay. Okay. So, let's see if that was the case today. I don't think it was the case, but we can check.
+13:13	It was the case. Look at that, guys. Nice.
+13:18	Oh, wait, wait, wait. No, it might not be the case. It might not be the case.
+13:23	9:15 9:05.
+13:31	Oh, no. Was it? It was the case. 905 9:15. Oo. Okay. So, this was the case.
+13:38	So, look, we'll go over the S&P 500's price action as well, but this is even more confirmations for us. Let's go
+13:46	ahead and put the put the chart lines on the S&P 500 as well while we're at it, just so we can be in tune with everything. So, we have London session
+13:53	highs right here, London session lows right here. We don't need these Asian session highs because we pushed above it and we didn't get a reaction off of it.
+14:01	or we did get a reaction off of it. But again, price moved past that and now it's New York market open. And then we also have
+14:11	Asia session lows right here. Cool. So we do have an SMT divergence. An SMT
+14:18	divergence is when one index makes a high and then a higher high while the other index makes a high and then a
+14:25	lower high. So, we see right here at 9 the S&P 500 makes a high and then at 9:15 the S&P 500 makes a lower high.
+14:36	On NASDAQ, we can see right here at 9 the S&P 500 makes a high and then at 9:15 NASDAQ makes a higher high.
+14:48	And then lastly, we had a break of structure, an inverse for value gap, an SMT divergence, and then the last thing that we can look for, which I know for a
+14:56	fact got hit because we made such a deep close, is we look for the Fibonacci extension. So, we take it from the low
+15:04	up to the high and we just wait for a candlestick closure underneath the 79% extension. And did we get that? Look at that. A candle closed underneath it.
+15:11	Yes. Beautiful. So, we got every single one of these confirmation confluences happening after this liquidity sweep.
+15:21	Liquidity sweep check. And that's the thing with this strategy. We don't need every single one of these, but in this case, we had every single one. Okay? So,
+15:30	in this case, we had every single one of them. Great. More power to us. And it was nice for us to be able to go through all of those examples. But we don't need
+15:38	every single one of them. We just need one to confirm, hey, the trend is changing.
+15:42	Cool. Once we get that, we are going to be looking for a fivem minute continuation
+15:50	confluence via equilibrium or a fair value gap.
+15:56	Pause one moment. Now, this is something that I I wanted to get into that I haven't been able to get into in any of my other YouTube videos. And this is a
+16:04	perfect time to get into it because we have a good example of it today.
+16:09	When the high time frame liquidity sweep happens during pre-market, this line right here represents market open. The liquidity sweep happened
+16:17	during pre-market. When the liquidity sweep happens during pre-market, I am always
+16:24	going to wait for a low time frame manipulation. You're probably saying,
+16:30	TJR, why are you We already had the high time frame manipulation during pre-market. Why do we need low time frame manipulation once market opens?
+16:41	Because during pre-market, that is not market open. And when market opens, there is new money coming into the
+16:47	market that is going to need to manipulate price to push price in the direction that it needs to go. So, even
+16:56	though we got this liquidity sweep happening during pre-market, and you guys are going to see so many examples of this, we're going to drill through more examples of this strategy, but you
+17:04	guys are going to see so many examples of this where we see a liquidity sweep during pre-market and then the the then whatever price gives us the confirmation
+17:13	confluence in the other direction. That is great and all, but I want to see a
+17:21	market open or once market opens a low time frame manipulation. So, we're going
+17:28	to want to see the confirmation out of it, but we'll put this as like 2B.
+17:35	If the liquidity sweep happens during pre-market or the previous session, we wait for a fiveman.
+17:47	We wait for a five-minute manipulation.
+17:50	So if that is the case, then we need to and that is the case in this trade. We need to be waiting for another form of
+17:58	five-minute manipulation. So just keep that in mind. If we see a liquidity sweep during pre-market, we are going to
+18:07	want to wait for a form of fiveminut manipulation. And again, today's price action, maybe it's not the best price to
+18:16	show an example for, but it's still valid and I can still show you guys how we can take trades off of this. So,
+18:24	let's look at this. Now we get the liquidity sweep. We get all of the confirmation confluences and then we say wait the liquidity sweep happened during pre-market.
+18:35	So what do we need to wait for? Five minute manipulation. We come all the way down. We end up taking out London session lows blah blah blah. Now look
+18:44	here. This is what I'm trying to save you guys from because this happens every single time we get a pre-market sweep or
+18:51	a previous session sweep. every single time we'll get big legs down or big legs up. And then look here. If we were to
+18:59	take the trade, if we ignored 2B here and went straight to three, we wait for the 5m minute continuation confluence.
+19:07	Oh, look at that. Price comes up and fills in this fair value gap and then we start closing bearish. So, what am I going to do? I'm going to enter short
+19:15	right here and then put my stops above these highs, right? And then target Asia session lows. You would have been stopped out.
+19:25	You would have been stopped out. And that is why we need to wait for a fiveminut manipulation. So fiveminute manipulation.
+19:33	What does that come in? Well, if we're still looking for trades to the downside, we're looking for highs to get manipulated. So we have in reality two fiveminute highs that we could look at.
+19:43	The five-minute highs that were made all the way up here during pre-market or the fiveminute highs that were just made right here. Okay. And then we can go
+19:52	over to the S&P 500 as well. And then we can mark out these other highs. So we have highs up here.
+19:58	We have highs right here. Then we also have highs right here. Now this was actually a good trading day.
+20:05	I'm kind of mad that I didn't trade today because I'm seeing this and I'm like br could have cooked. Now, once we
+20:12	get the 5-minute manipulation, as long as we are still staying in the current trend that this confirmation confluence
+20:21	put us in, right? So, we're still in a downtrend. If we zoom in here, we see this high. Did we close above this high?
+20:28	No. We made equal highs with this. And then we ended up making another high.
+20:32	Did we close above this high? No. We made a lower high. Okay. So when we fail
+20:39	to change direction then we can continue here and say okay bet liquidity sweep check confirmation confluence check we
+20:48	got the 5m minute manipulation because we just pushed above these highs here.
+20:52	Awesome. Now we're going to be looking for either five minute equilibrium or fair value gap. And then the time that
+20:59	this can be variable is when we activate 2B. I know it sounds crazy but like this
+21:06	is true or if to be happens it's SMT divergence.
+21:16	So more often than not if we don't get the pre-market sweep and then sell off or pre-market sweep and then push up.
+21:26	Okay, we'll only be looking for the confirmation confluences. We skip 2B and then we just look for the continuation confluences. equilibrium or fair value
+21:34	gap to get filled and then boom, we're looking for our entry. So, we'll scale down into the one minute time frame and we're going to get into that right now.
+21:42	But if 2B does happen, then we are looking for a 5minute manipulation either above a high or below a low.
+21:49	Again, I'll show a couple more examples um of this strategy playing out just so you guys aren't seeing this happen only
+21:56	on this, okay, within this day. We'll go over a couple days and then if we get 2B, we have the opportunity to use an
+22:03	SMT divergence as our continuation confluence as well as equilibrium warfare value gap. Because again, we got to realize that with the 5minute
+22:12	manipulation, we can push above these highs here and still be maintaining the downtrend that we're in from these
+22:19	confluences. So, we have to be able to potentially use an SMT divergence because if we get a fiveminute
+22:27	manipulation above a high or below a low, that's the only confluence that's going to show up. There's not going to be equilibrium. There's not going to be a fair value gap for us to trade into.
+22:37	The only confluence that's going to be possible for us to look for trades is going to be an SMT divergence to the downside or again to the upside. and
+22:46	we'll show more examples of this, but that's the only confluence that's going to be available to us because if we're pushing above a high, then there's no
+22:53	there's going to be no equilibrium or for val for for value gaps for us to use. So, in this case, we do end up
+23:00	making an SMT divergence. We have this high that was made at 10:05 and then we
+23:05	made this high up here at 10:25. We have this high right here at around 950.
+23:18	Okay. And then we have this high right here at around 10:25 10:30. What do we notice on the S&P 500
+23:27	high and then a lower high, but then on NASDAQ it's a high and then a higher high.
+23:34	Okay. When we have these SMT divergences, especially when it comes to entering, more often than not, I am
+23:41	going to be looking to target the index that is leading in my favor. Okay, it gives us a higher probability of being
+23:50	able to hit our draws on liquidity that are remaining such as Asia session lows right here. So, in this case, which one is leading? Which one is going more to
+23:58	the downside? Which one isn't creating new highs? Well, NASDAQ is pushing up and creating new highs up here, but the S&P 500 is making lower highs, and we
+24:07	still haven't taken out the these lows yet, right?
+24:12	So, beautiful. We got a fivem minute manipulation or let's go from the top high time frame
+24:20	manipulation and then if we want to mark out all the confluences on ES, we can.
+24:25	We get a fivem minute break of structure when this candle closes underneath this low. We don't have an inverse fair value
+24:31	yet. We do have the SMT divergence. We also have
+24:39	the 79% extension closure when this candle closes underneath it. Okay, so the only confluence that we didn't have
+24:45	was a inverse fair rally gap. Price dumps. We take out London session lows.
+24:51	We're waiting for some form of fiveminute manipulation because the manipulation happened during pre-market.
+24:56	We don't see it on the S&P 500 and that's okay. We can use both the indexes to use that that manipulation as confluence and that's why this SMT also
+25:05	works. So we see NASDAQ gives us that fiveminute manipulation. Awesome. But we also see that the S&P 500 is leading to
+25:14	the downside which is what what our targets are, right? Because we see the sweep to the upside. We see break of structure to the downside. We're favoring the downside on today's trade.
+25:23	So, we see an SMT divergence. The the S&P 500 is the leading index on this. We see a high right here and then we see a
+25:32	lower high get formed. The second that I see that and the second that we get this checked off, what am I doing? I'm
+25:40	scaling down to the one minute time frame. And on the 1 minute time frame, more often than not, especially on the
+25:47	lagging in lagging index, on the index that has these these higher highs getting made, we're going to be in a one minute uptrend. Okay. So, what do we
+25:56	want to see to show that price is going to end up continuing down? We want to
+26:03	see a one minute confirmation confluence.
+26:08	And this can be seen from breakup structure inverse for value gap SMT divergence 79%
+26:16	extension and then once we see that we can enter
+26:24	and then last but not least target previous draws on liquidity in our
+26:32	direction. Okay, so we got everything everything. Now we're on step four.
+26:38	We're looking for the confirmation confluence via a breakup structure, inverse or rally gap, SMT divergence, or 79% extension. We want to be trading on
+26:46	the S&P 500. Why? Because it's the leading index on that SMT divergence, and it's closest to our draws on liquidity. It's going to hit our draws
+26:53	on liquidity for show. Okay, we can even go ahead and mark out some other draws that we have within here.
+27:09	Cool. So, once we get this move up and once we make that SMT divergence, awesome. We're scaled down into the lower time frames.
+27:19	So beautiful. It's so freaking beautiful, guys. SMT divergence.
+27:26	we see the one minute change direction to the upside to be able to make that five-minute retrace that created the SMT
+27:34	divergence. So, right now we're in a one minute uptrend.
+27:37	What What are we waiting for? We're waiting for any form of a one minute confirmation confluence to tell us that the trend is going to change back down.
+27:47	We don't have an inverse for value gap.
+27:50	We could have an SMT divergence from this high up to this high, but it doesn't matter because it breakup structure is
+27:58	just the easiest one that we can go ahead and point out. There's no reason to go over all that other stuff. But we get a breakup structure to the downside.
+28:08	We can go ahead and target Asia session lows right here.
+28:13	Price comes down a little bit. Uh oh, we're super scared. Our stop loss might get hit. Psych. Boom. take profit one gets hit. Realistically, I probably
+28:20	would have just set my take takeprofit one to these hourly lows because it's a one to one right there. And and these are just stacked up draws on liquidity.
+28:30	Take profit one gets hit, take profit two gets hit, take profit three gets hit, we miss out on take profit four, and
+28:38	then the rest of our position gets stopped out of break even for a one two 3.63 risk-to-reward ratio. And after
+28:46	taking partial profits, that would probably put us at around I would like to say like a 1 to 2 point something
+28:54	risk-to-reward ratio. And funny enough, that is pretty much what I was averaging over the last 6 months on my trades. You
+29:02	can see that my average trade win was $22,000 and my average trade loss was around $11,000. And it's all from using just that strategy that I just explained
+29:10	to you guys. And you guys saw it in real time. I had literally I turned on the charts. I didn't map out any of this.
+29:17	This is my first time mapping out today's price action with you guys by going over this YouTube video and I just showed you guys how you guys could have made money today. I didn't even trade
+29:25	today. I haven't even seen today's price action. This is my first time going over it. And that that's how confident I am in this strategy is because I can
+29:33	literally get on here and go through a YouTube video with you guys breaking down the exact strategy on price action that I haven't even seen yet knowing
+29:41	that it will be successful because I have proof in my own product and I have confidence in myself in my own strategy and knowing that this [ __ ] works. So
+29:49	what I'm going to do now is I'm going to try and find an example to the upside for you guys. I didn't trade yesterday either. yesterday may have been a setup
+29:58	to the upside. I think it was. So, this could just be a backtoback. I mean, yeah, it's pretty obvious that it was set up to the upside, but this could just be back to freaking back boom.
+30:08	Showing you guys how to do it to the downside and then showing you guys how to do it to the upside. So, let's put our steps here.
+30:17	Dude, I already see it and it's so freaking good. Okay,
+30:24	so the indicator only shows us London and Asian of the current day. So, I'm going to have to spot it out myself.
+30:31	London session highs, London lows, Asia highs. Oh my god, bro. This is so good. I should have traded.
+30:40	I should have freaking traded. Let me leave this on so I can go mark out the S&P 500 as well.
+30:49	So good.
+30:51	So freaking good. Let me make sure that there wasn't any high impact news on that day.
+30:59	Wasn't horrible. Okay, so let's get into it. First things
+31:06	first, we're looking for our liquidity sweep from 1 hour, 4 hour session highs or session lows. So coming into London session, these are London session highs.
+31:18	We have high time frame lows right here, high time frame lows right here, London session lows right here, and then Asia session lows all the way down here. This
+31:26	one, it may get a little bit tricky, but I'm going to try and explain it to the best of my ability so you guys can fully understand the whole process here
+31:35	because this is this is beautiful price action. Right when market opens, let's actually go down to the one minute time frame so we can see exactly which one
+31:42	happened first. So boom. So freaking good guys. Right when market opens. So prior during pre-market did we get any
+31:50	sort sort of manipulation first and foremost pre-market before this line right here. Did we get any form of
+31:57	manipulation to any of these lines? No. Awesome. So we are going to factor out the 2B
+32:05	scenario. We're going to factor that one out. Okay. Because we didn't have any pre-market sweeps. Market opens. What do
+32:14	we get? Boom. Sweep. Check. Then what are we looking for? Fiveminute confirmation confluence breakup
+32:22	structure inverse value gap. S& divergence 79% extension. So let's go to the fiveminute. Well, let's see here.
+32:28	What do we get? We do get a 5minut break of structure to the upside.
+32:34	Check. We get a fivem minute SMT divergence.
+32:42	Check. We get a five minute break of structure. Check. We don't get an a
+32:49	inverse for value gap. And then I can tell you guys without even drawing it on, but we do end up closing above the
+32:56	79% extension. Take it from this high down to this low. Did we close above the 79% extension? Obviously, we have this
+33:02	big blue candle. So, we get every single one of them except for our inverse for valley gap. Okay. Which chart is the leading index?
+33:13	That's something that we need to keep in mind because again we don't want to take trades on the lagging index, the index that is behind.
+33:20	We want to be taking trades on the leading index.
+33:24	Okay? So the index that is higher up or closer to towards our draw draws on
+33:31	liquidity or within a bullish SMT, the one that makes a higher low. So it's not NASDAQ. NASDAQ made the lower low.
+33:39	It's the S&P 500.
+33:42	The S&P 500 made a higher low. So, we want to be focusing on the S&P 500. So, what I'm actually going to do because we did that
+33:51	on the S&P 500 and we know we're going to be targeting it.
+33:56	I'm going to bring these rules over here. We get a sweep. We get a break of structure, an SMT, and a 79% extension.
+34:04	Check. 2B does not apply to us. What are we looking for next? Continuation confluence. Either equilibrium or for value gap. Don't care about 2B lit.
+34:16	What do we see price do? Boom. Rip up.
+34:19	And then holy [ __ ] smokes. We come all the way down. We have this fair value gap that could get filled.
+34:29	Well, it gets filled, but it gets invalidated. So, the the fair value gap is no longer valid.
+34:37	We can draw equilibrium on here, but I'm going to be completely honest with you guys, okay? Because that's just the type of guy that I am.
+34:47	If you were to see this big leg up and then following that by this big leg down where these lows end up matching each
+34:54	other, are you really going to want to place a trade when we make this up candle that doesn't even close back up back above equilibrium? you're probably going to be a little bit spooked out.
+35:07	So, if I'm you guys, what I would do personally, and again, this is this is just being completely honest, like I
+35:16	could completely just be like just some one of these [ __ ] ass dudes that's like, "Well, we came down and we filled equilibrium and then you'll get this bottom tick entry right here because we
+35:24	filled equilibrium and then we go down into the one minute time frame and then once we're in here on the one minute time frame, we get a one minute break of
+35:32	structure right here and that's when you would have entered and then boom, you can go up and target all of these highs all the way up here and you're just going to get the best riskreward ever.
+35:41	Or I can be honest with you guys and tell you guys for a fact that I probably would have been [ __ ] spooked with this candlestick wick coming all the way
+35:49	down here. So I would have probably said something like this. Hey, let me be a little bit more patient here. Let me still stick to my rules.
+35:59	Let me still stick to my rules.
+36:02	Okay, the fivem minute trend is still intact. We haven't closed underneath this low yet.
+36:08	So, let me just wait a little bit. And we can literally just say, yo, let's redo this step two into step three.
+36:18	Let's just redo it. And there's not many times that I would say like just [ __ ] redo it. But in this case, this move down right here is pretty freaking scary. And I want to make sure that
+36:26	price is actually going to be moving in the direction that I want it to go. And after price makes this big leg down, I'm probably thinking to myself, well, gez,
+36:35	dude, I don't really know if price is going to go in my direction. So, what can we do? We can just wait for more confirmations. So, when that happens,
+36:43	what can we do? Well, it's pretty simple. We get another break structure back to the upside right here when we
+36:50	close above this high. Awesome. Then, what can we look for? a fivem minute fair value gap or fiveminute equilibrium.
+37:05	We don't have a fair value gap here.
+37:08	Oh, it's so good. We don't have a fair value gap on NASDAQ. We don't we don't really show any anything that's too
+37:16	good. And again, we want to stay away from NASDAQ. We can see that this fiveminute candle comes down. We take it from this low up to this high. We come
+37:25	down and we don't quite hit equilibrium here, but we do get the break of structure to the downside. Okay. And on
+37:33	top of that, we do get a fiveminute retrace candle. And on top of that, not only are we still in a fivem minute
+37:42	uptrend from the price coming up and breaking structure to the upside and us not breaking underneath these lows, and
+37:49	on top of that, we already got another fivem minute like move in in our direction. And on
+37:57	top of that, if we were to measure from this low up to this high right here, we can see that price does come down and fill equilibrium and give us price
+38:05	pushing out of it. So, if this is me and I'm seeing this right now and I'm saying, okay, let's say I was the patient guy and we said, "We're not
+38:14	going to enter all the way down here. We want to wait for some more confirmation." I'm a little bit more aggressive, you could say. So, I very
+38:23	well could have seen this low get put in and then this high get put in, drawn out equilibrium because I know that the the fiveminute structure was still intact
+38:31	and then been willing to enter long here once we get this one minute inverse gap.
+38:39	But let's say we didn't do that.
+38:43	This right here is pretty much our last chance from equilibrium here or sorry, from the low here up to this high right
+38:50	here. We're already in a five-minute uptrend. We've already seen five minute a fivem minute confirmation and continuation confluence get filled. This
+38:58	is our last chance. We break one minute structure to the downside right here.
+39:02	Maybe we're waiting for equilibrium. But let's say equilibrium doesn't get hit.
+39:06	But when we end up breaking one minute structure to the upside right here, this should be a dead obvious giveaway. We
+39:14	are going to go higher. So yes, it would have been slightly ideal if price could have moved. Let's see how little it was.
+39:22	One extra point down to hit our special little number that we wanted, but it didn't do that and it ended up
+39:29	pushing up higher. If price does that and we still have all of these really awesome draws and liquidity to the upside and we still have a really good
+39:36	risk-to-reward ratio that we can trade on this, we should still be taking that trade. And like I said before, I'm a little bit more aggressive. I would like
+39:45	to say that I probably would have entered right here. Definitely not all the way down here. I'm not that crazy, but I think that I probably would have
+39:52	entered right here. And if not here, I definitely would have entered up here.
+39:57	So, for your guys' sake, let's just say that you guys are being extra patient and you guys wait for this breakup structure all the way up here. Matter of fact, I don't think you guys would have had to wait for the breakup structure
+40:05	because we can also use the Fibonacci retracement. So, you guys would have entered when this candlestick broke above the 79% extension.
+40:19	You can put your stop loss underneath this low. And then what do you guys have the opportunity to do? You guys can target these five minute highs right
+40:25	here. You can target Asia session highs right here. And then previous day highs right here. Boom. For a 124.27 risk-to-reward ratio.
+40:37	Every single one of the takeprofits was hit. you probably would have gotten around like a 1:3 risk-to-reward ratio with a with the partial profits taken.
+40:47	This is backtoback days of me showing you guys literally just going down this
+40:54	stepby-step list with price action that I haven't even seen yet. This is the first time that I'm looking at price action from today and from yesterday
+41:04	because I'm not trading trading this week and this is also during a government shutdown. And our strategy is still working to absolute [ __ ]
+41:12	perfection. And we get every single take profit hit yesterday. And then we get three take profits hit with like a super extended takeprofit that barely got missed today.
+41:27	It's lit. It literally cannot be simpler than just coming into the markets with a plan, understanding how our confluences
+41:37	move off of certain price points. And when we understand how these confluences work and why we're using them, again, I
+41:45	I think out the reason why this strategy works for me. If it doesn't, if you can't understand it, then by all means,
+41:53	don't don't go through with this and don't learn this strategy because it has to make sense to you. But let me break down why this makes sense to me. What
+42:02	are we waiting for? We're waiting for a reversal in the market. Okay?
+42:08	So, we can get either the bottom of a new move or the top of a new move. When do reversals happen or when does manipulation happen? When new sessions
+42:16	come into the market, when new money comes into the market. So, the first thing that we're waiting for is a liquidity sweep, knowing that new money is going to come into the market and
+42:24	manipulate a high or low to push price in the direction that it wants to go.
+42:29	From there, we need confirmation that price is actually going to change direction. So, we wait for either a break of structure to show a trend
+42:37	change. We wait for an inverse fair for value gap to show a change in order flow. We wait for an SMT divergence to show that one index is leading leading
+42:46	in the opposite direction than the other. We wait for a 79% extension closure to show a change in order flow.
+42:52	All four of these confluences signal to us that the liquidity sweep has happened and price wants to change trend. Now, in
+43:00	order for us to protect ourselves from that, what do we also wait for? We wait for a continuation confluence by either seeing equilibrium get filled or a fair
+43:09	value gap getting filled. And then once these continuation confluences get filled, we are looking for scaling down
+43:15	on the lower time frame to see again what are these continuation confluence confluences used for? Well, we get the
+43:23	liquidity sweep, we get the break of structure.
+43:27	This shows orders have been filled, trend has changed. What do we want to make sure of before we enter into a
+43:34	trade to confirm that the trend is going to what? Continue. So we mark out these confluences or equilibrium.
+43:44	So we mark out these confluences for price to be able to go in fill the confluence and then we can scale down
+43:52	into the lower time frames to look at the lower time frame trend to see that okay the confluence was
+44:00	filled and the lower time frame trend has changed direction meaning that orders were filled within this lower time frame trend and the trend is going
+44:07	to continue. We enter here. We put our stops above here. And then we target the previous draws and liquidity that we had for the day.
+44:16	This makes sense, at least to me. Every single confluence that we use is for a reason. It's not
+44:26	because this is some magic potion that has an 80% win rate. It's not because this is some
+44:35	like five minute gold strategy that's that hits when this five minute candle.
+44:41	No, we're looking at price and we're reacting off of what price is doing and we're making a high probabil high
+44:50	probability decision off of what price is telling us. And that's how I was able to make so much freaking money over the
+44:58	past six months. And that's how you guys are seeing me on a daily basis be able to make $14,000, $28,000, $32,000,
+45:07	$426,000, $98,000, 25K, 14K, 47K, a lousy $1,000,
+45:16	okay? By using this strategy that I showed you guys today. And if you guys are someone that wants to take the next
+45:23	step with your guys' trading, if you guys are someone that wants to be able to get their personal questions answered
+45:30	on a strategy like this, or if you guys have psychology questions or risk management questions, these YouTube videos can only bring you guys so far.
+45:37	And one of the biggest issues that I had when I was a beginner trader was having to siphon through all of these YouTube videos, trying to pick out certain
+45:46	confluences that worked better with my strategy. as I was building it and trying to figure out the mistakes that I was making without really being able to
+45:54	ask somebody like, "Hey, what am I doing wrong?" And that honestly caused me to waste like six or seven six to like
+46:04	eight or really like damn near a whole month or damn near a whole year of time for me to turn profitable. It was
+46:12	because I didn't have a mentor to be able to ask and say like, "Hey, I'm making this mistake and I don't know what the solution is." And that's what I
+46:21	help every single one of my students do within the blueprint. Okay? So, my blueprint is where I teach you guys
+46:28	again super indepth like more in depth than I went in in this video of how to understand these confluences, why we use them, how to put the strategy together,
+46:37	and then also super advanced concepts and trade entries using variations of this strategy because this strategy,
+46:46	again, I just showed you guys how it works from back-to-back days, but there's certain variations of times where like, hey, price will get a liquidity sweep and then we'll sweep
+46:54	another form of liquidity. And then we'll get an SMT here, but no SMT there.
+46:58	And it's different situations. And I go over pretty much every single one of those situations within the mentorship.
+47:03	And then on top of that, you guys are going to be able to get in there and be able to get on daily coaching calls with
+47:11	me and then other profitable traders that are going to be going over your guys' specific questions. And that's the biggest thing that held me back when I was trying to learn how to trade was
+47:19	that I had specific questions for a mentor where I was watching a video such as this and I went and back tested it and I was like, "Hey, boom, this is
+47:27	awesome. This is working." And then I would run into a mistake or I would go on a little losing streak and I'll be like, "What is happening?" And then I would take like six weeks for me to
+47:36	figure out that one singular mistake that I was struggling with versus if you guys are one of my students. You guys can go directly literally that same
+47:43	exact day that you guys took that trade and made that mistake and then get on a coaching call with us and say, "Yo, I took this trade today. Where did I go
+47:51	wrong?" And we will be able to give you guys that solution instantly instead of you guys having to try and figure it out over the course of 6 months because you guys don't even know the solution.
+48:00	That's why mentorship is so important within trading and that's what I want to give to you guys within the blueprint.
+48:05	If you guys want to join the blueprint, there's going to be a link down in the description. I'm telling you guys this because it is so important and this is like something that I really want to
+48:14	emphasize for you guys. These YouTube videos, YouTube videos can get you guys a long way in trading and by all means, it may even turn you guys profitable.
+48:23	But for the people that are struggling and are still not necessarily profitable just purely off of YouTube videos and you know you guys are making mistakes,
+48:31	but you guys can't find the solutions to those mistakes, I can like literally promise you that by finding a mentor
+48:39	within the space that knows the solutions and has gone through the same mistakes as you guys have within your guys' trading journey and we already
+48:47	have those solutions in our head and you guys come to us with those problems or with those mistakes that you guys are making, we are going to be able to solve
+48:53	them instantly instead of you guys making the mistake over and over and over again attempting different
+49:01	olution, different solution, different solution and not being able to move forward in your trading journey.
+49:06	Instead, you guys are able to just get on a coaching call with us that exact same day and say, "This is a problem that I'm having. How can I solve it?"
+49:13	And then boom, we solve it on in that exact day for that exact trade. And then the very next day, you make another mistake. Boom. get solved that exact
+49:21	same day. Versus, again, two mistakes could take you guys 12 freaking weeks to find the whole solution for versus two
+49:28	mistakes with a mentor where you guys are able to get on coaching calls that get solved over the course of two days.
+49:34	If not in the same day, if you guys made two mistakes in one day, you guys can bring them both of them up on a coaching call and then boom, we solve them. So, I'm not the type of person to try and
+49:43	get you guys into a mentorship and just say, "Yeah, bro, like whatever. Here's a bunch of pre-recorded videos." Right?
+49:49	There are pre-recorded videos in there that go over super in-depth how to understand these confluences, how to master your guys' psychology, how to master your guys' ris risk management,
+49:57	how to maximize your guys' risk management so your wins can be far bigger than your losses. That's something that's super important that I
+50:05	feel like there's not enough videos on in the space where I go over exactly how you guys can dissect what your win percentage is and what your
+50:12	risk-to-reward is and how to use both of those together to be able to calculate a proper risk amount to maximize the win
+50:21	the dollar amount that you guys can be making on a a daily basis and also minimize the dollar amount that you guys are losing on a daily basis. These are
+50:29	things that are very difficult to cover because it's pretty it's like uncoverable on a YouTube video because
+50:36	this stuff is persontoperson. How am I supposed to be able to make a YouTube video covering the for like the vast majority? I'm able to make a video like
+50:43	this going over my strategy in depth for you guys, but I can't solve your individual problems. And that's what the mentorship offers. So again, if you guys
+50:51	want to join that, there's a link in in the description. If you guys are just starting your your guys' journey, by all means, use these YouTube videos to your to your advantage. Start trading with
+51:00	this strategy. Start back testing with it. Make mistakes. Understand that mistakes are good as long as you don't make them again. And use them as lessons
+51:08	to grow. And I'm sure that a lot of you guys are going to find a lot of success using this, just like how I showed you guys literally just backto-back days of
+51:15	just going through this simple step-by-step strategy in order to make money in the market. And this is proof that if I'm able to do it, then you guys
+51:24	are too. So, with that being said, I love and appreciate you guys. Subscribe if you haven't already.

@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "0:52",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 16,
+  "lineStart": 1,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "What's good, boys? Welcome to day three. This is a little bit more on like the beginner side of things. This is going to be an introduction to Trading View, how to read a candlestick chart. So, we're going to be going over how to understand candlestick anatomy, how to identify highs and lows in the markets, and then how to identify trends in the markets. And then from this we will start delving into kind of what most people are going to want to be a part of this series for which is liquidity explained, fair value gaps explained, advanced liquidity concepts, inverse fair value gaps, advanced imbalance concepts, [ __ ] SMT divergences, time theory, all of this stuff that actually helps us become full-time traders and actually helps us get good at trading. And if you guys remember yesterday's episode, what is trading? is being able to predict where price wants to go with",
+  "schemaVersion": 1,
+  "sectionTitle": "Series roadmap and what trading is",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|001",
+  "segmentType": "other",
+  "sequenceNumber": 1,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "0:00",
+  "textHash": "bda77c380c09a694b6546c058e5f1e7f39026f0429611650cce2ae4992c82c4d"
+}

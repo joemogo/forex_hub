@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|018",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|009",
+  "questionText": "TJR states that step ordering 'can be variable' when 2B activates. What is the exact ordering of steps 2B, 3 and 4 when 2B is active?",
+  "questionType": "unclear_scope",
+  "reason": "'the time that this can be variable is when we activate 2B' -- the variation itself is never specified.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

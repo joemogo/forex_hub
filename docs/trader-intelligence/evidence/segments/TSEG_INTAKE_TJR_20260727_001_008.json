@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "10:33",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 81,
+  "lineStart": 64,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "I'm going to briefly touch on them in this video. But if you guys already understand these, then awesome. Let's just jump straight into the charts. The very first thing that I want to do every single day is mark out session open. Okay, so again, I didn't trade today, so this will actually be pretty interesting to see if we h even had a setup today. There we go. To even see if we had a setup today. So, I'm using this little indicator um that I that me and my team made. It just highlights the session highs and lows. Uh there's a link in the description if you guys want it. It just makes my life literally a million times easier. It also adds like a whole bunch of these other things. Order blocks and breaker blocks, fair value gaps, order flow, breaker structure, all the confluences that I'm going to go over in here, but I really use the session opens and closes. So the blue lines indicate London session highs and London session lows. So what are we going to do? We'll go ahead and just mark these on because again, some of these lines are tend to be a little bit irrelevant, but we'll mark on all of them. So these are Asian session highs. Asian session lows and this is previous day highs. We don't need that. So we have London session highs right here. London session lows right here. Asia session lows right here. Awesome. Okay. And we can actually remove this line right here from Asia sessions high because London session already pushed past it. And if you guys remember when we're talking about these highs and lows within the market, we want to use them as draws on liquidity. So, if this if this high right here has already been pushed past and we haven't really gotten much of a reaction off of it, it's not necessarily going to be beneficial for us to be marking it or to for us to even be considering it as a level because it's already been taken out and there wasn't a reaction off of it. Once we've done that, I'm just going to go ahead and take this off so that it's a little bit simpler for us. We can see that during pre-market, we have these London session highs right here. New York pre-market starts at 8:30. Okay, so 8:30 is right here. These are London session highs. Right when pre-market opens, we come up and sweep out these highs and then boom, we come down and we break five minute structure. Okay, so let's just go through the steps that I'm looking for with these confluences that I just talked about when I'm looking for",
+  "schemaVersion": 1,
+  "sectionTitle": "Daily preparation: marking session opens, highs and lows",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|008",
+  "segmentType": "other",
+  "sequenceNumber": 8,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "8:26",
+  "textHash": "de920ac1dd4d2640b873be10a9ae8e0990f645008fa6e7716a190cb7a882a0c2"
+}

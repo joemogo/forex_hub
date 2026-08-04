@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "38:06",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 708,
+  "lineStart": 671,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "is making higher highs and higher lows in the market. Now, what happens when price is moving down? Well, it's the same thing. When price is trending down, we are making lower highs and lower lows in the market. So, if we're moving down, we make a low, then we make a high, then we make a lower low, then we make a lower high, then we make a lower low, then we make a lower high. So there's a low, there's a high, lower low, lower high, lower low, lower high, lower low, lower high. And that is a downtrend. That's how we can spot the market moving down. Now, if we look here, let me try and find a good example of a downtrend. I mean, this is decent. It's good enough at least. Okay. Don't look at any of this on this side because we'll we'll get into like how we can actually decipher all the price movements and break of structure and how new trends form. But right now, I just want us to be able to spot trends. We have a high right here, move up, then a move down. We have a low right here, move down, then a move up. What do we go do? We come down, we make a lower low, move down, then a move up. We come up, we make a lower high, move up, then a move down. Come down, make a lower low, move down, then a move up. Come up, make a lower high. Move up, then a move down. Come down, make a lower low, move down, then a move up. Come up, make a lower high, move up, then a move down. And right now, we are in the process of putting in a lower low. So this is a very distinct, very easy to tell that we are in a downtrend because we have a high, we have a low, we come down, we make a lower low, we make a lower high, we make a lower low, make a lower high, make a lower low, make a lower high, make a lower, even",
+  "schemaVersion": 1,
+  "sectionTitle": "Downtrend defined",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|017",
+  "segmentType": "other",
+  "sequenceNumber": 17,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "36:09",
+  "textHash": "57165e752b4ffd0e3f38fdcd68f4c1553fd613a4a50b77d8a30f6f94062078e2"
+}

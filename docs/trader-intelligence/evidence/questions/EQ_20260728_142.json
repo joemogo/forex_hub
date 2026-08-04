@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|142",
+  "questionText": "Where is the stop placed?",
+  "questionType": "missing_stop_placement",
+  "reason": "SEVEN Alex G sources, `stop_rule` still 0. This one is live trade commentary covering four pairs, discussing entries, targets, a 1:4 ratio and a declined setup - and never once states where a stop goes. The single reference to 'the area where we could have the stop' describes where price might stop moving, not where an order is placed. See BACKLOG-002/A1-STOP.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

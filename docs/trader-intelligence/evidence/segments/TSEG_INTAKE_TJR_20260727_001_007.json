@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "8:21",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 63,
+  "lineStart": 58,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "examples on the chart. So, we need to understand liquidity. We need to understand our sessions, okay, with session opens and closes. We need to understand session highs and lows. Understand confirmation confluences like breakup structure, inverse value gap, SMT divergence, 79% extensions, and then continuation confluences like equilibrium and for value gaps. And that's that's truly it like and believe it or not, I know that this may seem super daunting to you. You're like, what's a liquidity sweep sessions? It's a lot. Confirmation confluences. Holy [ __ ] there's four of them. Continuation confluences, there's two of them. How am I even supposed to know stuff like this? I have so many YouTube videos that cover these in depth. And I'm also going to go into these in these videos. Go watch those videos. I have a 5 and a half hour long video. I also have a 9-hour long video that you guys can go watch to understand these con concepts in full.",
+  "schemaVersion": 1,
+  "sectionTitle": "Recap of the required concept set",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|007",
+  "segmentType": "other",
+  "sequenceNumber": 7,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "7:36",
+  "textHash": "c0e2be5c12689c89050762e978982520e9048b9b0a37369052bcaf3439c7c2d1"
+}

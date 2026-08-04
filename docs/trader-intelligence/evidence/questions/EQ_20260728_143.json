@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|124",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|143",
+  "questionText": "How are correlated pairs selected between, and does taking both double the risk?",
+  "questionType": "implied_requirement",
+  "reason": "NZDUSD is preferred over NZDCAD for presenting cleaner structure. No rule is given for choosing between correlated pairs, and the risk implication of holding both is not addressed in any source.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

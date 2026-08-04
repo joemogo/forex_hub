@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|058",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|083",
+  "questionText": "How many dojis constitute 'more powerful', and does the count change the decision?",
+  "questionType": "ambiguous_statement",
+  "reason": "'The more dogeis that you would have, the more powerful' gives a direction but no count and no threshold at which behaviour changes. Same shape as the unquantified touch-count in source #3.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|004"
+  ]
+}

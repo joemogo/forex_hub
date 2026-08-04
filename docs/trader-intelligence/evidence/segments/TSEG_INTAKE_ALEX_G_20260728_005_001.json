@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T04:42:15Z",
+  "endTimestamp": "0:28",
+  "intakeId": "INTAKE|ALEX_G|20260728|005",
+  "language": "en",
+  "lineEnd": 26,
+  "lineStart": 1,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "https://www.youtube.com/watch?v=VzMlFZbWA0Ytoday I'm a seven figure Trader where I make anywhere from $50 to $100,000 every single day with realistically about 1 or 2 hours a day that I look at the charts but it really wasn't always like this it took me about 2 and 1/2 years to make any money in the market let alone be a consistently profitable Trader plus tens of thousand dollars and endless hours in front of a chart trying to figure out the secret behind how to become a profitable Trader and how to live this crazy lifestyle and even though in the",
+  "schemaVersion": 1,
+  "sectionTitle": "Cold open - the $50-100k/day claim and the 2.5-year runway",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|005|001",
+  "segmentType": "other",
+  "sequenceNumber": 1,
+  "sourceId": "EVSRC|ALEX_G|20260728|005",
+  "speaker": null,
+  "startTimestamp": "0:00",
+  "textHash": "f0090f1d67c1effb7d5d3bed2bb510982e8163636e64ea805192bf2a136a285e"
+}

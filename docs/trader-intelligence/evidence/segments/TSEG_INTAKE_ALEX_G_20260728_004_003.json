@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T04:21:55Z",
+  "endTimestamp": "3:05",
+  "intakeId": "INTAKE|ALEX_G|20260728|004",
+  "language": "en",
+  "lineEnd": 25,
+  "lineStart": 14,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "the step first is finding the proper confirmation. Waiting for the market to show you its hand. So that is going to consist of two types of candlesticks. Either a rejection candlestick or a engulfing candlestick. Now I'm sure you might have heard these types of candlesticks in the past. This is not a new unknown strategy or a new unknown confirmation that I have just discovered in the last 6 months of my trading. No, this is something that has worked statistically over years. but it's how the market gives you this confirmation. So, this right here is our perfect example of our dogee rejection candlestick and our bullish engulfing candlestick. For this example, this market is headed to the upside after having a push to the upside. We've just retested and as of right now, we are giving us this confirmation. Now, if this candlestick is currently fluctuating and moving up and down and it is yet to be closed, that is the market still anticipating this move. Up until this candlestick closes right at the end, whether it's the 1 minute, the 4 hour, the daily, the weekly, the monthly, the yearly, as soon as that candlestick closes, it is a confirmation. One second before it closes, it is an entire anticipation. I've seen candlesticks in the last 5 seconds before closing completely change direction. Literally, the candlestick could be like this and the last 5 seconds it somehow does this because it is not a confirmation. The candlestick is yet to close. So, you want to wait for the candlestick to close in order",
+  "schemaVersion": 1,
+  "sectionTitle": "Step 1 - the two candlestick types, and why only a CLOSED candle confirms",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|004|003",
+  "segmentType": "other",
+  "sequenceNumber": 3,
+  "sourceId": "EVSRC|ALEX_G|20260728|004",
+  "speaker": null,
+  "startTimestamp": "1:44",
+  "textHash": "43ccbd4fccb90dd7e7e31416be81fed7571599568779195a8d8743b19385ab6a"
+}

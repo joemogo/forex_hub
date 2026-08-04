@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260727|034",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|024",
+  "questionText": "'When you're above support, you buy. When you're below resistance, you sell.' — support and resistance are not defined in this source, nor related to the higher-high/higher-low structure model it teaches. How do they relate?",
+  "questionType": "ambiguous_statement",
+  "reason": "Introduces a second vocabulary at the end without reconciling it with the structure model.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260727|001"
+  ]
+}

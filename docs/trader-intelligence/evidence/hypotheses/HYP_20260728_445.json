@@ -1,0 +1,37 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|002|016",
+    "EV|EVSRC|ALEX_G|20260728|002|017",
+    "EV|EVSRC|ALEX_G|20260728|004|002"
+  ],
+  "createdAt": "2026-07-28T20:52:12Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|445",
+  "independentVariables": [
+    "exception",
+    "entry_rule"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260728|003) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260728|028",
+    "CLAIM|ALEX_G|20260728|047"
+  ],
+  "statement": "A lower high that has not yet completed - a 'potential' lower high - is accepted as a valid sell location may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|028).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|003|024"
+  ],
+  "updatedAt": "2026-07-28T20:52:12Z"
+}

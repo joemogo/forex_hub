@@ -1,0 +1,731 @@
+{
+  "lines": [
+    {
+      "charsRemoved": 0,
+      "normalizedText": "Music]",
+      "removedDurationLabel": null,
+      "sourceLine": 1,
+      "sourceLineSha256": "ab4a1305489e11f7aef989e0569acc5ff1e9bfba92da052cab1eade8f9a196c4",
+      "timestamp": "0:00",
+      "transform": "no_timestamp_present__assigned_0:00_start"
+    },
+    {
+      "charsRemoved": 13,
+      "normalizedText": "all right guys so if you guys asked in the last video if you guys wanted to see how I mark off my air of Interest I got a plus load of comments so if you guys haven't seen the last video make sure to",
+      "removedDurationLabel": "4 seconds",
+      "sourceLine": 2,
+      "sourceLineSha256": "136a3b8e614bf8b39b0fd7d2cdd06cf0c7359634427c9d17357382111d362163",
+      "timestamp": "0:04",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "go check it out thanks to me marking off these areas of Interest the right way I was able to make 60k day on gold 50k a day on GJ all these huge days which I",
+      "removedDurationLabel": "12 seconds",
+      "sourceLine": 3,
+      "sourceLineSha256": "cb8efda740c3bc42900b19e96dc460ecc3d269d85d9a8d6748eb32235a62c2a8",
+      "timestamp": "0:12",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "was able to buy myself another Richard Mill so shout out to TPT for hooking it up and as I'm buying the Richard Mill I'm seeing these Iced Out Rolexes and",
+      "removedDurationLabel": "20 seconds",
+      "sourceLine": 4,
+      "sourceLineSha256": "64933a7c5dc3decc4c0c9220f9a91727375d3b2294ee65692a7ee8de5cdd99a7",
+      "timestamp": "0:20",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "I'm thinking to myself shout out to Sensei this guy lent me the years for two weeks because I'm in between about buying a year sir cuddling and he's",
+      "removedDurationLabel": "29 seconds",
+      "sourceLine": 5,
+      "sourceLineSha256": "f40d4d5316f559eb1b919a19d9c47118b487fce339ea657afb51e7927b6c5b3d",
+      "timestamp": "0:29",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "always wanted an i style Rolex so I bought him a two-tone I style Rolex which is crazy I've never gifted anybody",
+      "removedDurationLabel": "36 seconds",
+      "sourceLine": 6,
+      "sourceLineSha256": "0b42c5acb942283c1695d590c1a44b7fdf607e11089cc5f143fb095963203070",
+      "timestamp": "0:36",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "anything as crazy as this so make sure you watch the video I'm going to be gifting him the Rolex in this video and I'm going to be giving you guys the three very key important tips on how to",
+      "removedDurationLabel": "44 seconds",
+      "sourceLine": 7,
+      "sourceLineSha256": "3eed7d92da5e2bebae553179cabfec52497db6e9ea7a81d7ba9bf0c43ff7c68c",
+      "timestamp": "0:44",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "find these area of Interest the correct way so check it alright guys so the first things before",
+      "removedDurationLabel": "53 seconds",
+      "sourceLine": 8,
+      "sourceLineSha256": "8d3ad88a34cd09f704c0d7050d819677d6efd4978e83da482249b38e9c0f0f5b",
+      "timestamp": "0:53",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 14,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 2: TPT",
+      "sourceLine": 9,
+      "sourceLineSha256": "4cc516afd4a92af79ec981ae9335e84ff6c5b53b6d924adad3d494a354034693",
+      "timestamp": "0:53",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 16,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 3: Key 1",
+      "sourceLine": 10,
+      "sourceLineSha256": "91877a9335f9c010bad323142b01d27039858a0077f20d82e09baaef7e0bcc1b",
+      "timestamp": "0:53",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 23,
+      "normalizedText": "you find your area of interest you need to understand whether we're bullish or bearish are we bullish on the weekly are we bearish on the weekly what is going",
+      "removedDurationLabel": "1 minute, 2 seconds",
+      "sourceLine": 11,
+      "sourceLineSha256": "f0fde94901c7c995589dcc718e38d397616387738c2c302292f499f769fb2d9f",
+      "timestamp": "1:02",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 23,
+      "normalizedText": "on with the time frame so in order for me to sell first things first before finding any area of Interest I need to understand what is the market doing and",
+      "removedDurationLabel": "1 minute, 9 seconds",
+      "sourceLine": 12,
+      "sourceLineSha256": "a0224caa4ee3b656cf0ed3714d8e177e4f53a8770f708842b5b6868b3c0d2219",
+      "timestamp": "1:09",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "I do not take any trade unless we have two time frames in sync I'm going to show you exactly what I mean by that right now as you can tell here the weekly time frame is clearly bearish",
+      "removedDurationLabel": "1 minute, 18 seconds",
+      "sourceLine": 13,
+      "sourceLineSha256": "a06f6c4ce6c5c00623c8035b6de1cc8ec0e7df7f8eee80de438518bea271bb55",
+      "timestamp": "1:18",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "we're creating lower low lower high lower low now we're creating a potential lower high to create a lower low so this",
+      "removedDurationLabel": "1 minute, 26 seconds",
+      "sourceLine": 14,
+      "sourceLineSha256": "37d7a9567c263a73c29c75633362d527453ebf45632d90417bb69dedd65cbeb1",
+      "timestamp": "1:26",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "is where we would type off the weekly time frame is bearish next would be the date this we would go to the Daily time",
+      "removedDurationLabel": "1 minute, 35 seconds",
+      "sourceLine": 15,
+      "sourceLineSha256": "c3885d2d34ba1d70285f8ff3d5f05d0ed2bd1e7e7cd5ed2846b2fbb1d6744abf",
+      "timestamp": "1:35",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "frame we understand what is the daily doing are we bullish embarrassed so in this case we understand that the daily is creating lower low lower high no no",
+      "removedDurationLabel": "1 minute, 43 seconds",
+      "sourceLine": 16,
+      "sourceLineSha256": "de6310491a209744aa75b0fbd7c583e51e703184c73cb5638c6846c0cded1cc2",
+      "timestamp": "1:43",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "then we shifted here to creating higher highs and higher lows again if you guys want to know more details about Market structure have a three-day accelerated",
+      "removedDurationLabel": "1 minute, 51 seconds",
+      "sourceLine": 17,
+      "sourceLineSha256": "0e7bde366f3079e7f82aff7df77ea18056d556d092029873d6b57ccaa8280c4f",
+      "timestamp": "1:51",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "boot camp just click the link below and another way to tell how this Market shifted from bearish to bullish we had here an inverted head and shoulders",
+      "removedDurationLabel": "1 minute, 59 seconds",
+      "sourceLine": 18,
+      "sourceLineSha256": "e2ccdb2fbbb5cfc5b1cbd2448f5a5fcd432fb2794630d1c47bb3841c5f3ebdff",
+      "timestamp": "1:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "right so now that we understand that the weekly time frame I mean the daily time frame is bullish we'll just type that up now we would go down to the four hour we",
+      "removedDurationLabel": "2 minutes, 8 seconds",
+      "sourceLine": 19,
+      "sourceLineSha256": "bb46f7dfe9638afe28019280845ce67746e99f45ed2d17c5ab1e29239144e2a7",
+      "timestamp": "2:08",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "need to know whether the weekly daily or four hour what are the trends doing so it's going to go down to the four hour and we could sell at the four hour time",
+      "removedDurationLabel": "2 minutes, 17 seconds",
+      "sourceLine": 20,
+      "sourceLineSha256": "6a909d03c07f960fc435c408db45ae26043b303bef4cbf9efbaabe8f525145b3",
+      "timestamp": "2:17",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "frame is bearish we were creating here higher highs and higher lows again I'm skipping a lot of structure here just to keep it simple uh higher low higher high",
+      "removedDurationLabel": "2 minutes, 23 seconds",
+      "sourceLine": 21,
+      "sourceLineSha256": "647c6bd127984eddd2131dbb0d44ce9c586ceae0a9686460604260666d2b9f3c",
+      "timestamp": "2:23",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "and then we've broken structure here making this time frame now bearish so now we understand that the majority of",
+      "removedDurationLabel": "2 minutes, 32 seconds",
+      "sourceLine": 22,
+      "sourceLineSha256": "baeb346b36325a6099cd710bbe0267fe1fa0fad7c1d2cb996e020ba4db40bd78",
+      "timestamp": "2:32",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "these time frames is to the downside so we add here the Confluence we have four hour Bears meaning we have two time",
+      "removedDurationLabel": "2 minutes, 40 seconds",
+      "sourceLine": 23,
+      "sourceLineSha256": "0430dd99ddb18895a128182575848a109d7bfeba6d471d4677180a1c37ef8ad9",
+      "timestamp": "2:40",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "frames in sync to the downside so now there's no reason why you should be taking Longs obviously the majority of the market is going down so this is my",
+      "removedDurationLabel": "2 minutes, 48 seconds",
+      "sourceLine": 24,
+      "sourceLineSha256": "9e8f0a43ff6bd5e5d47929caf9a17fa82f620cf4cf822a3e075625f88803745e",
+      "timestamp": "2:48",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "first point understand what is the market doing are we bullish bearish and we need a minimum of two time per is in sync to take the trade now my next point",
+      "removedDurationLabel": "2 minutes, 56 seconds",
+      "sourceLine": 25,
+      "sourceLineSha256": "78ea21a23632e53da1d0e64ff05caf7cb7330c772a25bf6ad4f3e28a93c31afa",
+      "timestamp": "2:56",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "is going to be how to find the area of Interest all right so I just got this watch right if you can guess how much this watch is worth I'll give you 100",
+      "removedDurationLabel": "3 minutes, 4 seconds",
+      "sourceLine": 26,
+      "sourceLineSha256": "3725cbf2302b0070b13eeb2a2fe6ba299c61048f55da63dd5135e7c093b3f177",
+      "timestamp": "3:04",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 29,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 4: Surprise give away",
+      "sourceLine": 27,
+      "sourceLineSha256": "ab358d1b87ae2371e6cdb75863df6b62d78172e0fa8fc24b515dced49ce52084",
+      "timestamp": "3:04",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "bucks it's G-Shock uh but it's like 20K let's say 200 huh twenty thousand sure 100",
+      "removedDurationLabel": "3 minutes, 12 seconds",
+      "sourceLine": 28,
+      "sourceLineSha256": "2f3aa31d271dcdde26fadd2d92400884ffb5ce4ab83288cff69bf3c707384d3f",
+      "timestamp": "3:12",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "all right so now in the next point is finding your air Adventure so obviously we're bearish on the weekly and bearish number four hours so we're looking to sell I'm not looking to buy because",
+      "removedDurationLabel": "3 minutes, 21 seconds",
+      "sourceLine": 29,
+      "sourceLineSha256": "e61c9257f99a867bca906e27d4550ee33925788d88dacc9b5bdb155acfc07467",
+      "timestamp": "3:21",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 16,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 5: Key 2",
+      "sourceLine": 30,
+      "sourceLineSha256": "de9bbc58f7eed7442ef60f91ea0b645bc0cb061e329a8c931ed9ca23547641e3",
+      "timestamp": "3:21",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "simply the conferences aren't that much right if I say you were to take this as a grade for me and everybody in the guide to bootcamp",
+      "removedDurationLabel": "3 minutes, 30 seconds",
+      "sourceLine": 31,
+      "sourceLineSha256": "d2977def733c604561271de944eb092871373ba774c3af4c0006200dc319bcfa",
+      "timestamp": "3:30",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "um we were greatest a 20 towards yourself because it's 10 per time frame anything lower than the four hour to me is just not strong I don't use it as a",
+      "removedDurationLabel": "3 minutes, 37 seconds",
+      "sourceLine": 32,
+      "sourceLineSha256": "926f9017421ec107cf4fdadeed6a998c38c3bb3ccf7c58d77c7698a1c6aaa375",
+      "timestamp": "3:37",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "Confluence whether to understand what we're but there's we use it for other things but that's in a completely other video um so for this case when we understand",
+      "removedDurationLabel": "3 minutes, 45 seconds",
+      "sourceLine": 33,
+      "sourceLineSha256": "bf71dc2e12b4641e5178165ea0abf97afe6e5030270bcb6afc96bbadf23cea02",
+      "timestamp": "3:45",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "that we need to sell at a weekly area of interest because again keep in mind we are bearishing the weekly so we need to",
+      "removedDurationLabel": "3 minutes, 52 seconds",
+      "sourceLine": 34,
+      "sourceLineSha256": "5b61d87c99d65b25ca0dcaf3f64f0cfed890f3270b4147ec014316dda114a9cf",
+      "timestamp": "3:52",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "sell based off of the weekly so this is where we would mark off our lower high and our lower low so this should be our",
+      "removedDurationLabel": "3 minutes, 59 seconds",
+      "sourceLine": 35,
+      "sourceLineSha256": "29dc882dce13dc2eac740d613bae9fbcd2352e6e6f76f74afc01d33ca9f08a5d",
+      "timestamp": "3:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "lower high point right here again if you guys want to do another video on lower high and lower low which is pretty simple make sure to drop a comment so",
+      "removedDurationLabel": "4 minutes, 6 seconds",
+      "sourceLine": 36,
+      "sourceLineSha256": "32ac29faa3da249e68f03cbc1e144ba0357588d6118f824ef694c464f9c6e67c",
+      "timestamp": "4:06",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "this is the lower high and then this would be the lower low so we understand we're only looking for areas of interest",
+      "removedDurationLabel": "4 minutes, 14 seconds",
+      "sourceLine": 37,
+      "sourceLineSha256": "e5df2d49713b2aa546cba9cc56f7a7756b566e218d3ce074bd50748a05310d38",
+      "timestamp": "4:14",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "within this box so a little hack that I do is I would Zone it off like this and then I know I'm looking for areas of",
+      "removedDurationLabel": "4 minutes, 20 seconds",
+      "sourceLine": 38,
+      "sourceLineSha256": "b54bbb690b3c22115b3c895ff29d5866e4228d319f62acc81fd20fa03dfc60ec",
+      "timestamp": "4:20",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "interest to sell within this box I'm looking for retracement somewhere in here to install if you break out of this",
+      "removedDurationLabel": "4 minutes, 28 seconds",
+      "sourceLine": 39,
+      "sourceLineSha256": "4ef122edfee6fe7c1fcaf28fa9d880e63681cfb76e8f3ea05a26762991d0b62c",
+      "timestamp": "4:28",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "box we are now bullish we're no longer looking to sell a big common mistake people would do they come onto the markets they'll mark this off oh yeah",
+      "removedDurationLabel": "4 minutes, 35 seconds",
+      "sourceLine": 40,
+      "sourceLineSha256": "3bfe19727d689faa7e725a6e0ec249314b232d87acec0fec545383028f65ac0a",
+      "timestamp": "4:35",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "this is a strong level of resistance so is this area right here it's used as support and resistance yes and it's a",
+      "removedDurationLabel": "4 minutes, 43 seconds",
+      "sourceLine": 41,
+      "sourceLineSha256": "fb88978a0b7b048c5abb4309562a28dfad5184343a9228528767dbc59e735954",
+      "timestamp": "4:43",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "fact this is a clean level of support resistance support resistance but if price gets to that point right there we're no longer Birch we're no longer",
+      "removedDurationLabel": "4 minutes, 51 seconds",
+      "sourceLine": 42,
+      "sourceLineSha256": "5d9cf761bfcd8adb26d61976a9ab8a8030227a5972beaaddbc9594f4db6c4bc3",
+      "timestamp": "4:51",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "looking for cells so that's what makes it in value that's why it's so important how to properly mark up these lower highs and lower lows so I would start",
+      "removedDurationLabel": "4 minutes, 59 seconds",
+      "sourceLine": 43,
+      "sourceLineSha256": "e56146751a79e61eb143e50aa159c107ee3017a320df0b0c4d93d97d8b1d8a0b",
+      "timestamp": "4:59",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "off looking for areas of interest from the bottom up and I pretty much look for whatever points have the most touches in this case it is around psychological 66",
+      "removedDurationLabel": "5 minutes, 8 seconds",
+      "sourceLine": 44,
+      "sourceLineSha256": "b24ae29a4f1f2bc31e4728190b7add238b327fa2e54b9180bfdc293ef0c7fbd6",
+      "timestamp": "5:08",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "500 and if you look left that it's a very well respected level of support and resistance so so now I know how I'm",
+      "removedDurationLabel": "5 minutes, 16 seconds",
+      "sourceLine": 45,
+      "sourceLineSha256": "b1c7afd2523d90acf70f34785c0755336a04b3a5ce2d102909b61db2e16694f0",
+      "timestamp": "5:16",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "looking to sell at this area so let's say that price wouldn't be around here I would have to wait for price to get to",
+      "removedDurationLabel": "5 minutes, 23 seconds",
+      "sourceLine": 46,
+      "sourceLineSha256": "a3c6a871fdeeae71fa883ba9467f73e71e08d24e1d390f3fbdb7fdddd7f8b27f",
+      "timestamp": "5:23",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "this area in order for me to be interested in sales so all of this time price is on the way there we're just we just set it forget just pretty much just",
+      "removedDurationLabel": "5 minutes, 30 seconds",
+      "sourceLine": 47,
+      "sourceLineSha256": "d6439504b7e8ba725f51a2e224ec560c2366157ecfba3435182bcac7e23424ef",
+      "timestamp": "5:30",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "wait until the price gets there so now on my next point is what do I do once price gets to this area of Interest which is pretty much basically how you",
+      "removedDurationLabel": "5 minutes, 38 seconds",
+      "sourceLine": 48,
+      "sourceLineSha256": "14275b7d88061b6e6d09af8f4055bb752a00958fb953db6d388bb2b881c937f8",
+      "timestamp": "5:38",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "enter the trade so stay tuned to the next Point all right so we just pulled up to census house and we're going to give him a box of shoes because he actually gave me these guccis it was random one day he was like yo here's a",
+      "removedDurationLabel": "5 minutes, 47 seconds",
+      "sourceLine": 49,
+      "sourceLineSha256": "b6a52e519826c480785e37cc032f6f10172e6ff4e4f1d9737beb04101915bc7e",
+      "timestamp": "5:47",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 6: Gifting Rolex",
+      "sourceLine": 50,
+      "sourceLineSha256": "31058af80191f6c1cecc6e477204791118d13e47a4bc71303ff747affefff070",
+      "timestamp": "5:47",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "happy shoe that I'm like okay I don't have a pair of Gucci so now we're going to give him the shoebox thinking I'm gonna give him a shoe but inside we have the uh the Rolex hitting up so let's",
+      "removedDurationLabel": "5 minutes, 55 seconds",
+      "sourceLine": 51,
+      "sourceLineSha256": "59235a0deeb61f3cef1a08e4aff804b3783c8880b50e1d8c28402a33317f8f0d",
+      "timestamp": "5:55",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "wait for him to put I remember when this guy came to Miami without knowing a single word of English and he had nothing to his name seen him build from",
+      "removedDurationLabel": "6 minutes, 4 seconds",
+      "sourceLine": 52,
+      "sourceLineSha256": "99c63a911c54e12353cc27518d3abf08a88d814b0e8e0ffd7c091925198a864c",
+      "timestamp": "6:04",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "the ground up is insanely motivational to me kind of like my story had nothing working at Duncan and we both build up great success so the fact that I'm not",
+      "removedDurationLabel": "6 minutes, 12 seconds",
+      "sourceLine": 53,
+      "sourceLineSha256": "488a79ecff66f8aa744c0cb9ea345e54946f5e7578768db8ff5ea0f20ccbe1ff",
+      "timestamp": "6:12",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "only am I able to have success myself but share with others literally means the world to me like look at the look at this reaction that he gets now when he",
+      "removedDurationLabel": "6 minutes, 19 seconds",
+      "sourceLine": 54,
+      "sourceLineSha256": "75be86fb6732bda9430c6ad4050d4cc1cf164a60eeba72b24c7c8499db50fe77",
+      "timestamp": "6:19",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "sees the watch he's always wanted so that's my goal for the rest of my life is to give back give back to all of you guys whether it's as friends advice",
+      "removedDurationLabel": "6 minutes, 27 seconds",
+      "sourceLine": 55,
+      "sourceLineSha256": "db7e4b6d412934d4d9cfc25bbc2d659f2d3aa067ffe04a6ad371963bc114e046",
+      "timestamp": "6:27",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "YouTube videos education three days it's an early boot camp guided boot camp whatever it is my goal is to give you guys transfer all of this success that I",
+      "removedDurationLabel": "6 minutes, 34 seconds",
+      "sourceLine": 56,
+      "sourceLineSha256": "17f351d0355672168c66f943708b5be34f5b4b6b14a923ac21858d2dba7600c7",
+      "timestamp": "6:34",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 20,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 7: Kinda sus",
+      "sourceLine": 57,
+      "sourceLineSha256": "7e5f0467b05366dd0a7aa0922b33d4b9d0153734cd719703f86c779887683f88",
+      "timestamp": "6:34",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "have to you guys so you guys can one day be in a position how Sensei and I are but check out how he grabs my waist right now kind of sucks all right guys now after you have marked",
+      "removedDurationLabel": "6 minutes, 43 seconds",
+      "sourceLine": 58,
+      "sourceLineSha256": "c599d3a2cffa7c403c6e828ad17ba3b0324d0c7bc5bd36d710159f0d03e329c3",
+      "timestamp": "6:43",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 16,
+      "normalizedText": "",
+      "removedDurationLabel": "Chapter 8: Key 3",
+      "sourceLine": 59,
+      "sourceLineSha256": "999d6bc62df803b8852ab8b0b0cd388d6a15bc90047fc51254aa295d5ff6b705",
+      "timestamp": "6:43",
+      "transform": "chapter_heading"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "off your area of Interest this is where you would go down to the lower time frames to enter a trade right so in order for you to sell this is super",
+      "removedDurationLabel": "6 minutes, 52 seconds",
+      "sourceLine": 60,
+      "sourceLineSha256": "13acf7d2a19d4210a497182e7a8d66cd1794b20badd857787d200de14df97183",
+      "timestamp": "6:52",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 13,
+      "normalizedText": "important and I mean they're all very important but it's probably like the key to your entry signal or entry tactic whatever you want to call it if you're",
+      "removedDurationLabel": "7 minutes",
+      "sourceLine": 61,
+      "sourceLineSha256": "fc6022299559ce21d30172f2afabed6b5a1b380dce2edb172acaf1304979e019",
+      "timestamp": "7:00",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "looking to sell you need to sell at a lower high if you're looking to buy you need to buy at a higher low do not let this go over your head again if you need",
+      "removedDurationLabel": "7 minutes, 7 seconds",
+      "sourceLine": 62,
+      "sourceLineSha256": "cfbc70e8749f9f0c04dc2bf2a005da852e5649972bb10fa3beac09cb363a5098",
+      "timestamp": "7:07",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "to sell you need to sell at a lower high or a potential lower high and if you're looking to buy you need to buy at a",
+      "removedDurationLabel": "7 minutes, 17 seconds",
+      "sourceLine": 63,
+      "sourceLineSha256": "005c5d0ef7fb1e9b6d11dcc380d5ca16aa7ba2cba818512b8713502bee7a96c2",
+      "timestamp": "7:17",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "higher low potential higher look so this is where you would go down to the four hour and I need to have a four hour",
+      "removedDurationLabel": "7 minutes, 24 seconds",
+      "sourceLine": 64,
+      "sourceLineSha256": "ab1bbce4c2e9b98bc2455ad0e6800a886e5dc47c8463600d09e20931c32fa5c6",
+      "timestamp": "7:24",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "lower high to sell so as you can tell in this case once we approach our area of interest for the first time wins we've",
+      "removedDurationLabel": "7 minutes, 32 seconds",
+      "sourceLine": 65,
+      "sourceLineSha256": "5f17ecea879d8e153d17a3ce4847b25a842a7e82e2ae04c3f6ca6e5ddce5f8d1",
+      "timestamp": "7:32",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "got here there was absolutely no lower high everything was simply higher high if you want to call this a higher low which I wouldn't so we'll just keep it",
+      "removedDurationLabel": "7 minutes, 39 seconds",
+      "sourceLine": 66,
+      "sourceLineSha256": "a6f34c83df9ecba078f15d50521e81b4617977ed45ebb651c075e2cecdae79a7",
+      "timestamp": "7:39",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "going this is a higher low this is Harlow and notice how we've broken through the area of Interest breaking through it not giving us a lower high at",
+      "removedDurationLabel": "7 minutes, 48 seconds",
+      "sourceLine": 67,
+      "sourceLineSha256": "a7ed3acdcb75f1cf70848f6d60cca7d0b73b80e788972e5bd32ed38b5b94f0e4",
+      "timestamp": "7:48",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "any point so this is where we would wait for the break of the structure which would give us a lower note so as you can",
+      "removedDurationLabel": "7 minutes, 56 seconds",
+      "sourceLine": 68,
+      "sourceLineSha256": "37b0015620b2f3d185ac42dbe6c72218d6fc4adc538d8cd6d4ad4c173d0b6a51",
+      "timestamp": "7:56",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "tell right here we've had the break of structure if we were to call this our higher low this would be a high high here we broke it giving us now a lower",
+      "removedDurationLabel": "8 minutes, 3 seconds",
+      "sourceLine": 69,
+      "sourceLineSha256": "f906fba6a4e5502c82bdf1ba64c6bf986d2a26588e2b0e2c56b0a2ea9e35ab7c",
+      "timestamp": "8:03",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "high and I say we don't take this trade for whatever reason this is where you would then wait for the next lower note",
+      "removedDurationLabel": "8 minutes, 12 seconds",
+      "sourceLine": 70,
+      "sourceLineSha256": "65bfc89d3fc5f6e73aec77b9a243b42dfc49f49cf0e175ef0b5f005b58ea7758",
+      "timestamp": "8:12",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "to happen and now is when you would wait for a lower high then you would get a retest of 6500 read system air",
+      "removedDurationLabel": "8 minutes, 19 seconds",
+      "sourceLine": 71,
+      "sourceLineSha256": "f211a0543c0a63fe6002a24103e56d9d22f6205b902bcbea05e6ed0c5d1fb796",
+      "timestamp": "8:19",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "adventures in the weekly retest the four hour EMA reaches the neckline of the head and shoulders so if you notice you",
+      "removedDurationLabel": "8 minutes, 26 seconds",
+      "sourceLine": 72,
+      "sourceLineSha256": "1fab0eedd16504bac1aab711873bb82848f1a8330a137c603b2cbcdfd7df1bd5",
+      "timestamp": "8:26",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "have abundance of conferences by just waiting for the shift of the structure this is going to make or break your",
+      "removedDurationLabel": "8 minutes, 33 seconds",
+      "sourceLine": 73,
+      "sourceLineSha256": "6e8f41dcabc009aae8a409fdb27bc4fc10a6ef617439b9e59b8e7431fabbf910",
+      "timestamp": "8:33",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "trade and for me when this trade plays out very soon it would be a b setup B plus you know the way we grade it in the",
+      "removedDurationLabel": "8 minutes, 40 seconds",
+      "sourceLine": 74,
+      "sourceLineSha256": "83797f0888d3701026481c7e398981f065170510f5e05686c2422d2782d2701d",
+      "timestamp": "8:40",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "three-day accelerated boot camp it's based off of percentages you give your trade so this right here would be a perfect prime example of what I would be",
+      "removedDurationLabel": "8 minutes, 47 seconds",
+      "sourceLine": 75,
+      "sourceLineSha256": "44e745315ecf5ae6d37bdd4bd29e3d1ed617110560dad1e1e45ac5628b578b9c",
+      "timestamp": "8:47",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "looking to sell as you can tell now we have a lower high and our area of Interest rejection from all these points so this is where you would wait now for your entry signal and then pretty much",
+      "removedDurationLabel": "8 minutes, 55 seconds",
+      "sourceLine": 76,
+      "sourceLineSha256": "cbc38a819e20636bf67bbfa43e901c5038b4d269d27531b8b64ad199241b5bc2",
+      "timestamp": "8:55",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 24,
+      "normalizedText": "wait for the proper session to take the train so if you found all these tips useful but just subscribe to the channel I give away free supplies all the time",
+      "removedDurationLabel": "9 minutes, 3 seconds",
+      "sourceLine": 77,
+      "sourceLineSha256": "a31ea639712b3b64dc1275281df5f7d6512775e1237c1728f75fb09859407db4",
+      "timestamp": "9:03",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 25,
+      "normalizedText": "make sure to subscribe and I'll see you guys in the next videohttps://www.youtube.com/watch?v=urX1iWvHc5g",
+      "removedDurationLabel": "9 minutes, 11 seconds",
+      "sourceLine": 78,
+      "sourceLineSha256": "96ade7f34c014090a44f5e7c8297a25796fa248ab8f4c260222914fc353368f0",
+      "timestamp": "9:11",
+      "transform": "stripped_duplicated_duration_label"
+    },
+    {
+      "charsRemoved": 0,
+      "normalizedText": "",
+      "removedDurationLabel": null,
+      "sourceLine": 79,
+      "sourceLineSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timestamp": "0:00",
+      "transform": "no_timestamp_present__assigned_0:00_start"
+    }
+  ],
+  "policy": {
+    "charsRemoved": 1777,
+    "lineCount": 79,
+    "linesTransformed": 77,
+    "profile": "youtube_duration_label",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [
+      1,
+      79
+    ],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "sourceFileSha256": "c4901808d9eecc7b42dea8723df43440892a91c195bc3bd836778c1f6308c8a8"
+}

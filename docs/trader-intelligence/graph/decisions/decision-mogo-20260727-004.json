@@ -1,0 +1,35 @@
+{
+  "decisionId": "DECISION|MOGO|20260727|004",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-07-27",
+  "affectedEntityIds": [
+    "TJR",
+    "ALEX_G",
+    "JVM",
+    "ICT"
+  ],
+  "decisionType": "architectural",
+  "question": "Should any trader, educator, or methodology be privileged over another as a source of trading knowledge -- in particular, should MOGO's own already-implemented strategies (JVM, ALEX G) carry more evidentiary weight than an external educator MOGO has not yet ingested?",
+  "optionsConsidered": [
+    "Privilege MOGO's implemented strategies: treat their shipped behaviour as established fact and external educators as unverified claims",
+    "Treat ICT, TJR, JVM, Alex G, and all future educators as equal evidence sources, subject to the same extraction, provenance, and confidence rules",
+    "Restrict the knowledge library to a single primary methodology and treat all others as commentary"
+  ],
+  "selectedOption": "Treat ICT, TJR, JVM, Alex G, and all future educators as equal evidence sources, subject to the same extraction, provenance, and confidence rules",
+  "rationale": "Ratifies standing decision (4) of 2026-07-27. No educator, and no methodology, receives elevated standing by virtue of already being implemented in MOGO or of having been ingested first. Every trader is represented by the same generic entities and subject to the same confidence engine. Two consequences follow that this decision makes explicit. FIRST: a repository-confirmed implementation fact is evidence about MOGO's code, NOT evidence about any trader's method. That JVM's confluence engine weights `msb` at 10 tells us what MOGO implements; it is not a claim that any trader believes structure breaks are worth 10. Under equal treatment, learning what the JVM or ALEX G methodologies actually assert requires ingesting real source material for them, exactly as it did for TJR -- their current externalResearchStatus of 'not_started' is therefore a genuine gap, not an artifact of ordering. SECOND: MOGO's own original strategy (JVM, alias 'current_strategy') is not exempt. Its rules are as unvalidated by external evidence as any educator's until corroborated. This decision creates no obligation to ingest any particular source and authorizes no implementation work; it establishes only that standing is equal and that the existing generic, trader-agnostic schema set is the correct shape for a multi-educator library.",
+  "supportingEvidenceIds": [],
+  "dissentingEvidenceIds": [],
+  "approvalScope": "architectural",
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-07-27T00:00:00Z",
+  "updatedAt": "2026-07-27T00:00:00Z"
+}

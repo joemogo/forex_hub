@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|074",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|084",
+  "questionText": "On which timeframe is the trend that the confirmation must agree with?",
+  "questionType": "unclear_scope",
+  "reason": "Pro-trend is stated as an absolute filter, but the trend's timeframe is not named here. Source #1 establishes a weekly/daily/4H hierarchy and source #4 requires two timeframes in sync; whether the pro-trend filter means the same thing is not stated.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|004"
+  ]
+}

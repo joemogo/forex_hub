@@ -1,0 +1,57 @@
+{
+ "acquiredAt": null,
+ "canonicalReference": "https://www.youtube.com/watch?v=8qwEmE1DwYw",
+ "contentHash": "befb81e5ed6726e046b2bd2c3e68353fee93f4e9114b19308f0016cf416cfa9d",
+ "createdAt": "2026-07-27T22:15:39Z",
+ "externalAssetReference": null,
+ "externalReference": "https://www.youtube.com/watch?v=8qwEmE1DwYw",
+ "language": "en",
+ "licensingStatus": "restricted_third_party",
+ "lifecycleStatus": "registered",
+ "metadata": {
+  "canonicalReferenceSuppliedAt": "2026-07-27T22:25:39Z",
+  "canonicalReferenceSuppliedBy": "owner",
+  "fileBytes": 36812,
+  "manifestPath": "docs/trader-intelligence/intake/manifests/tjr-day3-tradingview-candlestick-basics.ingest.json",
+  "titleProvenance": "Derived by the operator from transcript content ('Welcome to day three', introduction to TradingView / candlestick anatomy / highs and lows / trends). The video's actual YouTube title has NOT been verified: this environment has no network access, the transcript never states its own title, and no repository context references video id 8qwEmE1DwYw. Left unresolved rather than invented.",
+  "titleStatus": "unverified_working_title",
+  "titleVerification": {
+   "channelName": "TJR",
+   "channelUrl": "https://www.youtube.com/@TJRTrades",
+   "endpoint": "https://www.youtube.com/oembed?url=<canonicalReference>&format=json",
+   "method": "youtube_oembed",
+   "priorTitle": "TJR — Day 3 (working title; actual YouTube title unverified)",
+   "priorTitleStatus": "provisional_derived",
+   "retrievedAt": "2026-07-28T02:57:22Z",
+   "retrievedBy": "claude-opus-5 (Trader Intelligence pipeline)",
+   "status": "verified_publisher",
+   "statusRationale": "provenanceStatus remains partially_verified: publisher identity is now confirmed, but transcript fidelity to the source audio is not, and that is the property every extracted excerpt depends on.",
+   "stillUnverified": [
+    "that the archived transcript text faithfully reproduces the video's spoken audio (the text was owner-pasted, not retrieved from the publisher's caption track)",
+    "publication date",
+    "licensing terms beyond the recorded restricted_third_party status"
+   ],
+   "traderAttributionConfirmed": true,
+   "verifiedScope": [
+    "title",
+    "channel/author",
+    "video identity"
+   ],
+   "verifiedTitle": "Path to Profitability: How to Read a Candlestick Chart"
+  },
+  "youtubeVideoId": "8qwEmE1DwYw"
+ },
+ "provenanceStatus": "partially_verified",
+ "registeredAt": "2026-07-27T22:15:39Z",
+ "repositoryPath": "docs/trader-intelligence/imports/tjr/raw/tjr-day3-tradingview-candlestick-basics.raw.txt",
+ "schemaVersion": 1,
+ "sourceDate": null,
+ "sourceId": "EVSRC|TJR|20260727|002",
+ "sourceType": "transcript",
+ "storageLocationType": "repository",
+ "strategyFamilyId": null,
+ "title": "Path to Profitability: How to Read a Candlestick Chart",
+ "traderId": "TJR",
+ "transcriptReference": "docs/trader-intelligence/imports/tjr/normalized/tjr-day3-tradingview-candlestick-basics.normalization-map.json",
+ "updatedAt": "2026-07-28T02:57:22Z"
+}

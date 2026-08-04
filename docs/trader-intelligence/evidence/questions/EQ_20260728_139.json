@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|138",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|139",
+  "questionText": "How reliable is the alarm-based process in practice?",
+  "questionType": "behavior_conflicts_with_instruction",
+  "reason": "A setup identified in advance, with alarms as part of the stated process, was missed through inattention. Recorded because the library holds several claims about set-and-forget operation and this is the first direct evidence of its failure mode. It is offered candidly by the source and is not a criticism.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

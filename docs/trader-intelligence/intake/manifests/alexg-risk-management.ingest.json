@@ -1,0 +1,681 @@
+{
+ "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+ "annotations": [
+  {
+   "claim": "Alex G states he earns $50,000 to $100,000 per day working one to two hours. No account size, statement, period or verification is offered.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "make anywhere from $50 to $100,000 every single day with realistically about 1 or 2 hours a day",
+   "extractionCertainty": "certain",
+   "key": "perf_daily",
+   "section": 1
+  },
+  {
+   "claim": "Alex G states it took him about two and a half years to make any money, and longer to become consistently profitable.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "took me about 2 and 1/2 years to make any money in the market",
+   "extractionCertainty": "certain",
+   "key": "runway_2_5_years",
+   "section": 1
+  },
+  {
+   "claim": "Alex G endorses the industry framing that trading is roughly 80% psychology and 20% technical, while arguing the technical 20% is what makes scaling possible.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "80% is psychology and 20% is technical I totally agree",
+   "extractionCertainty": "certain",
+   "key": "eighty_twenty",
+   "section": 2
+  },
+  {
+   "claim": "Risk management, rather than psychology or entry technique, is identified as the change that made scaling possible.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "what actually changed my approach to the market and was able to let me scale was risk management",
+   "extractionCertainty": "certain",
+   "key": "rm_enabled_scaling",
+   "section": 2
+  },
+  {
+   "claim": "Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you're risk managing your account so you need to know that the money that you put into your trading account that is your account balance",
+   "extractionCertainty": "certain",
+   "key": "pct_of_balance",
+   "section": 3
+  },
+  {
+   "claim": "The full account balance is never risked on a trade.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "based off of your account balance you can't risk the whole entire account balance",
+   "extractionCertainty": "certain",
+   "key": "never_risk_all",
+   "section": 3
+  },
+  {
+   "claim": "The account must be funded with materially more than the intended per-trade risk, so that a loss leaves margin in the account. The worked figure is $100 risk on a $1,000 account, described as 10%.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "if you want to bet $100 per trade don't just deposit 100 bucks and risk the full hundred bucks",
+   "extractionCertainty": "certain",
+   "key": "deposit_more_than_risk",
+   "section": 3
+  },
+  {
+   "claim": "The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "you have to have a strict risk management rule that every single time you take a trade you risk the same percentage per trade",
+   "extractionCertainty": "certain",
+   "key": "same_pct_every_trade",
+   "section": 4
+  },
+  {
+   "claim": "The stated purpose of fixed-percentage risk is external: a stable P&L curve is what allows capital allocators to assess and fund a trader.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "they need to see a consistent risk management on their account nobody wants to give you money to trade if they can't see that you're",
+   "extractionCertainty": "certain",
+   "key": "investor_consistency",
+   "section": 4
+  },
+  {
+   "claim": "Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "risk management is percentage based system not dollar based system",
+   "extractionCertainty": "certain",
+   "key": "pct_not_dollars",
+   "section": 5
+  },
+  {
+   "claim": "Returns of 50% per day, week or month are described as unrealistic and unsustainable, though possible on isolated occasions.",
+   "claimType": "failure_condition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "rule_statement",
+   "excerpt": "50% a day 50% a week 50% a month those are all unrealistic numbers it's not going to happen",
+   "extractionCertainty": "certain",
+   "key": "fifty_pct_unrealistic",
+   "section": 5
+  },
+  {
+   "claim": "A monthly return of 8 to 10% is asserted to be achievable by anybody and sustainable. No evidence, sample or drawdown figure accompanies it.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "anywhere from 8 to 10% a month I'm like you know what that is a fact anybody can do that",
+   "extractionCertainty": "certain",
+   "key": "eight_to_ten_month",
+   "section": 6
+  },
+  {
+   "claim": "The percentage system is presented as producing meaningful income only on large accounts; small accounts are described as unable to make a material difference.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "the same percentage based system works but on bigger accounts and that is where it's meant to work on bigger accounts",
+   "extractionCertainty": "certain",
+   "key": "scales_with_size",
+   "section": 6
+  },
+  {
+   "claim": "A 100K funded account is claimed to have returned 27-28% over about 39 days for a $28,000 payout. Presented as the origin of his success. No statement or verification is offered, and the period is given twice as both 'a single month' and 'about 39 days'.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "got funded 100K and I made about 27 to 28% in a single month and I got my $28,000 payout",
+   "extractionCertainty": "certain",
+   "key": "funded_result",
+   "section": 7
+  },
+  {
+   "claim": "The risk percentage chosen depends on account type and objective - personal, funded, or a disposable side account.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "depending your objective what are you trying to do are you on a personal account are you on a funded account",
+   "extractionCertainty": "certain",
+   "key": "depends_on_account",
+   "section": 8
+  },
+  {
+   "claim": "Conservative risk is 0.5 to 1% of the account per trade.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "the conservative approach where it's risking anywhere from 0.5 to 1% per trade",
+   "extractionCertainty": "certain",
+   "key": "conservative_band",
+   "section": 9
+  },
+  {
+   "claim": "The conservative band is prescribed for lower-timeframe traders, on the stated reasoning that they take more trades and should not take many trades at high risk.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "this is what I personally recommend to Traders taking trades on the lower time frame",
+   "extractionCertainty": "certain",
+   "key": "conservative_for_ltf",
+   "section": 9
+  },
+  {
+   "claim": "Lower-timeframe trading is characterised as one to three trades per day, or one to three per session.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "either one to three trades a day or even one to three trades a session",
+   "extractionCertainty": "certain",
+   "key": "trade_frequency",
+   "section": 9
+  },
+  {
+   "claim": "The recommended risk, described as the industry standard, is 1 to 2% of the account per trade.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "which is anywh from risking 1 to 2% per trade",
+   "extractionCertainty": "certain",
+   "key": "standard_band",
+   "section": 10
+  },
+  {
+   "claim": "Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "once you pick the percentage you stick to it you don't go up or down when you're making money or you're losing money",
+   "extractionCertainty": "certain",
+   "key": "dont_change_after_wins",
+   "section": 10
+  },
+  {
+   "claim": "Worked arithmetic for why risk must not be raised after a winning streak: five wins at 1% with 1:2 reward gives about +10%; two subsequent losses at 2% remove 4% (40% of the gain), against 2% (20%) had risk stayed at 1%.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "explicit_statement",
+   "excerpt": "you take five wins in a row with a one to two risk reward you have now made about 10%",
+   "extractionCertainty": "certain",
+   "key": "escalation_arithmetic",
+   "section": 10
+  },
+  {
+   "claim": "A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum.",
+   "claimType": "target_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "with a one to two risk reward",
+   "extractionCertainty": "certain",
+   "key": "rr_one_to_two",
+   "section": 10
+  },
+  {
+   "claim": "The high-risk band is 3 to 5% of the account per trade.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "it can be anywhere from 3 to 5% of your account",
+   "extractionCertainty": "certain",
+   "key": "high_band",
+   "section": 11
+  },
+  {
+   "claim": "High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "the riskier approach I recommend is done on a personal account so that way you don't breach any rules on a funded account",
+   "extractionCertainty": "certain",
+   "key": "high_only_personal",
+   "section": 11
+  },
+  {
+   "claim": "A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio.",
+   "claimType": "target_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "if you risk 5% of your account and then you get a 1 to3 risk reward ratio you have just made 15% on",
+   "extractionCertainty": "certain",
+   "key": "rr_one_to_three",
+   "section": 11
+  },
+  {
+   "claim": "His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks.",
+   "claimType": "risk_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "at the beginning of every single month I risk a percentage that I'm going to to choose for the month",
+   "extractionCertainty": "certain",
+   "key": "monthly_lock",
+   "section": 12
+  },
+  {
+   "claim": "The stated reason for locking risk monthly is statistical interpretability: a fixed percentage makes the month's P&L a measurement rather than a mixture.",
+   "claimType": "causal_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "that way the p&l at the end of the month I have a stat I don't have a",
+   "extractionCertainty": "high",
+   "key": "monthly_lock_reason",
+   "section": 12
+  },
+  {
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "confident with my set and foret strategy",
+   "extractionCertainty": "high",
+   "key": "set_and_forget_named",
+   "section": 12,
+   "supportsClaimId": "CLAIM|ALEX_G|20260728|045"
+  },
+  {
+   "claim": "Alex G states he has been profitable for about six years. The same source also gives 'about 5 years' of market prediction and 'about 5 and a half years' to work out seasonality, alongside two and a half years before making any money.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "I've been profitable now for about 6 years",
+   "extractionCertainty": "certain",
+   "key": "profitable_six_years",
+   "section": 12
+  },
+  {
+   "claim": "Higher risk (3-5%) is taken only in November, December, January, February and possibly March, described as his statistically best months.",
+   "claimType": "session_rule",
+   "directness": "direct_explicit",
+   "evidenceQuality": "high",
+   "evidenceType": "rule_statement",
+   "excerpt": "certain months out of the Year and that is November December January and February and maybe March",
+   "extractionCertainty": "certain",
+   "key": "seasonal_high_risk",
+   "section": 13
+  },
+  {
+   "claim": "June, July and August are characterised as slower markets, during which risk is reduced and trading is optional.",
+   "claimType": "marketCondition",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "during the summer which comes August June July markets are a little bit slower",
+   "extractionCertainty": "certain",
+   "key": "summer_slower",
+   "section": 13
+  },
+  {
+   "claim": "The seasonal rule is justified by personal observed results. No sample, period, instrument or figures are given.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "those are the months statistically that I've seen in my trading that I have the best results",
+   "extractionCertainty": "certain",
+   "key": "seasonal_basis",
+   "section": 13
+  },
+  {
+   "claim": "The stated first objective for a beginner is to stop losing money rather than to make it.",
+   "claimType": "behavioral_observation",
+   "directness": "direct_explicit",
+   "evidenceQuality": "medium",
+   "evidenceType": "explicit_statement",
+   "excerpt": "goal as a beginner Trader is not to make money right away it's to stop losing money",
+   "extractionCertainty": "high",
+   "key": "stop_losing_first",
+   "section": 14
+  },
+  {
+   "claim": "Alex G states 99% of traders lose money. No source is given for the figure.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "99% of Traders lose money",
+   "extractionCertainty": "certain",
+   "key": "ninety_nine_pct",
+   "section": 14
+  },
+  {
+   "claim": "Students are claimed to earn roughly $1,000 to $1,500 per week within their first three months. No sample size, failure rate, account size or verification is given.",
+   "claimType": "performance_hypothesis",
+   "directness": "direct_explicit",
+   "evidenceQuality": "low",
+   "evidenceType": "explicit_statement",
+   "excerpt": "students in the first 3 months of using the set forget strategy they make anywhere from",
+   "extractionCertainty": "high",
+   "key": "students_weekly",
+   "section": 15
+  }
+ ],
+ "contradictions": [
+  {
+   "a": "perf_daily",
+   "b": "eight_to_ten_month",
+   "rationale": "Within-source, and it concerns the numbers the video's authority rests on. The opening claims $50,000-$100,000 per day. The body asserts that 8-10% per month is the realistic, sustainable figure and that 50% per day/week/month is 'not going to happen'. At 8-10% per month, $50-100k per DAY implies an account in the tens of millions. The source's own flagship evidence is a 100K funded account returning $28,000 over 39 days. The three figures cannot describe the same trading operation. Recorded, not resolved: the daily figure may refer to gross position moves, or to accounts not described here - but the source never says so, and supplying that reading would be MOGO's reconciliation rather than the educator's.",
+   "severity": "material",
+   "type": "SCOPE_MISMATCH"
+  },
+  {
+   "a": "profitable_six_years",
+   "b": "runway_2_5_years",
+   "rationale": "Within-source. The same video gives four different durations for the same career: two and a half years before making any money, profitable for about six years, predicting markets for about five years, and five and a half years to work out the seasonal pattern. Casual speech rounds numbers, so this is filed as MINOR rather than material - but it is recorded because every performance claim in this source is anchored to experience length, and no two of these figures reconcile without assumptions the source does not supply.",
+   "severity": "minor",
+   "type": "TEMPORAL_DRIFT"
+  }
+ ],
+ "manifestVersion": 1,
+ "normalization": {
+  "charsRemoved": 1690,
+  "lineCount": 738,
+  "linesTransformed": 371,
+  "profile": "youtube_timestamp_lines_chaptered",
+  "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+  "reversible": true,
+  "unmatchedLines": [],
+  "wordsAdded": 0,
+  "wordsRemoved": 0,
+  "wordsReordered": 0
+ },
+ "openQuestions": [
+  {
+   "blocking": "blocks_promotion",
+   "claim": null,
+   "priority": "critical",
+   "reason": "This is the risk-management source, and it still does not close the gap. It gives risk as a percentage of the account (0.5-1%, 1-2%, 3-5%) - which is the SIZE of the risk, not its LOCATION. Position size = risk amount / stop distance, and the stop distance is nowhere in six Alex G sources. **The gap narrows and remains open.** Every P&L-capable replay is still blocked.",
+   "text": "Where is the stop placed? Risk sizing without stop placement cannot produce a position size.",
+   "type": "missing_stop_placement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "rr_one_to_two",
+   "priority": "high",
+   "reason": "Arithmetically they would imply roughly 27-50 pips. **MOGO must not perform this inference.** Both ratios appear here only as illustrative arithmetic inside a worked example about escalating risk, not as required ratios; and the 80-100 pip figure was given as a past average, not a target-selection rule. Combining two descriptive statements from two sources into a prescriptive third would be inventing a rule and attributing it to the educator. Recorded so the temptation is on the record rather than acted on.",
+   "text": "Do the 1:2 / 1:3 ratios here and the 80-100 pip target from source #5 jointly imply a stop distance?",
+   "type": "implied_requirement"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "perf_daily",
+   "priority": "critical",
+   "reason": "No account size, statement, period or verification. It is also in direct tension with the source's own 8-10%/month benchmark and its 100K funded-account story - see the contradiction filed in this ingestion. Typed performance_hypothesis, structurally ineligible to become a rule candidate.",
+   "text": "Is the $50,000-$100,000 per day figure verifiable, and on what account size?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "funded_result",
+   "priority": "critical",
+   "reason": "Presented as the origin of his success and as the model for viewers to follow. No statement, firm name or verification. The period is given twice and inconsistently - 'a single month' and 'about 39 days'.",
+   "text": "Is the 100K / 27-28% / $28,000 payout result verifiable?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "students_weekly",
+   "priority": "critical",
+   "reason": "'Hundreds of them' is asserted with no denominator, no failure rate, no account size and no verification, immediately before the call to action. A success claim without a denominator carries no information.",
+   "text": "What proportion of students reach $1,000-$1,500 per week, and what happens to the rest?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_promotion",
+   "claim": "eight_to_ten_month",
+   "priority": "high",
+   "reason": "Asserted as something 'anybody can do'. No sample, no period, and - critically - no drawdown figure. A return target stated without its associated drawdown is not a risk-management claim at all, which is notable in a source about risk management.",
+   "text": "Is 8-10% per month sustainable, and at what drawdown?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "seasonal_basis",
+   "priority": "high",
+   "reason": "The seasonal rule is prescriptive - it changes his risk by a factor of three to five - and rests entirely on 'months statistically that I've seen in my trading', with no data shown. Unlike most performance claims in the library this one is **directly testable without a risk model**: count setup frequency and directional outcome by calendar month. See RC-27.",
+   "text": "Are November-March materially better than June-August for this method?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "ninety_nine_pct",
+   "priority": "medium",
+   "reason": "Unsourced, like the '3% of the market is retail' figure in source #3. Both are used as premises rather than as observations.",
+   "text": "What is the source for '99% of traders lose money'?",
+   "type": "insufficient_independent_support"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "escalation_arithmetic",
+   "priority": "low",
+   "reason": "The arithmetic as spoken is otherwise correct: five wins at 1% with 1:2 reward is +10%; two losses at 2% leaves +6%; two losses at 1% leaves +8%. '60%' is almost certainly '6%' mis-transcribed. Recorded rather than silently corrected - the archived text is what it is, and the underlying argument is sound.",
+   "text": "Is 'only being up 60%' a transcription artifact for 6%?",
+   "type": "ambiguous_statement"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "depends_on_account",
+   "priority": "medium",
+   "reason": "High risk is confined to personal accounts specifically to avoid breaching funded rules, but no drawdown limit, daily-loss limit or firm rule is named. The constraint that motivates the whole banding is left unspecified.",
+   "text": "Which funded-account rules constrain the risk percentage, and at what thresholds?",
+   "type": "unclear_scope"
+  },
+  {
+   "blocking": "blocks_rule_candidate",
+   "claim": "same_pct_every_trade",
+   "priority": "medium",
+   "reason": "Three rules are given that operate on different clocks: the same percentage on every trade; one percentage chosen per month and held; and 3-5% only in November-March. They are reconcilable - month-level selection with a seasonal input, held constant within the month - but the source never states the hierarchy, and the first rule is phrased as absolute.",
+   "text": "Is the fixed percentage per trade, per month, or per market season?",
+   "type": "self_contradiction"
+  },
+  {
+   "blocking": "non_blocking",
+   "claim": "rm_enabled_scaling",
+   "priority": "low",
+   "reason": "Source #3 attributes trader failure primarily to inability to read the market via top-down analysis (CLAIM|ALEX_G|20260727|001). Here the decisive factor is risk management. Not necessarily inconsistent - he may mean they are separate necessary conditions - but the two sources emphasise different single causes and neither acknowledges the other.",
+   "text": "Does this revise source #3's account of why traders fail?",
+   "type": "unclear_scope"
+  }
+ ],
+ "provenance": {
+  "canonicalReference": "https://www.youtube.com/watch?v=VzMlFZbWA0Y",
+  "channelOrPublisher": "fxalexg (https://www.youtube.com/@fxalexg__)",
+  "knownArtifacts": [
+   "Source line 1 carries the video URL fused onto the first words of speech ('...VzMlFZbWA0Ytoday I'm a seven figure Trader...'), so it is retained as text at 0:00. No excerpt is taken from line 1. Second occurrence; logged as BACKLOG-003/H26.",
+   "Six YouTube chapter headings were correctly classified as non-spoken chrome by the youtube_timestamp_lines_chaptered profile and recorded as removed."
+  ],
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "publicationDate": null,
+  "titleVerification": {
+   "method": "youtube_oembed",
+   "note": "Publisher verified before extraction per the Stage 0 gate. Same channel as sources #3-#7, so this material shares independence group AUTHOR|ALEX_G and cannot corroborate them (DECISION|MOGO|20260727|006).",
+   "retrievedAt": "2026-07-28T04:05:00Z",
+   "status": "verified_publisher",
+   "traderAttributionConfirmed": true,
+   "verifiedTitle": "Best Risk Management Strategy to Make Millions with Trading"
+  },
+  "transcriptCompleteness": "unknown",
+  "transcriptProvider": null
+ },
+ "sections": [
+  {
+   "lines": [
+    1,
+    26
+   ],
+   "n": 1,
+   "title": "Cold open - the $50-100k/day claim and the 2.5-year runway",
+   "type": "introduction"
+  },
+  {
+   "lines": [
+    27,
+    69
+   ],
+   "n": 2,
+   "title": "Psychology versus technical, and why risk management is what enabled scaling",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    70,
+    155
+   ],
+   "n": 3,
+   "title": "What risk management is - a percentage of account balance",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    156,
+    218
+   ],
+   "n": 4,
+   "title": "Why it matters - the business analogy and the investor requirement",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    219,
+    276
+   ],
+   "n": 5,
+   "title": "Mistake 1 - percentage-based, not dollar-based",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    277,
+    322
+   ],
+   "n": 6,
+   "title": "8-10% a month, and why percentage scales with account size",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    323,
+    358
+   ],
+   "n": 7,
+   "title": "The funded-account result - 100K, 27-28%, $28,000 over 39 days",
+   "type": "trade_commentary"
+  },
+  {
+   "lines": [
+    359,
+    375
+   ],
+   "n": 8,
+   "title": "The approach depends on the account type",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    376,
+    432
+   ],
+   "n": 9,
+   "title": "Conservative - 0.5 to 1% per trade, for lower-timeframe traders",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    433,
+    491
+   ],
+   "n": 10,
+   "title": "Standard - 1 to 2% per trade, and the arithmetic of raising risk after wins",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    492,
+    548
+   ],
+   "n": 11,
+   "title": "High risk - 3 to 5%, on personal or flipping accounts only",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    549,
+    612
+   ],
+   "n": 12,
+   "title": "His own approach - one percentage chosen per month and held",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    613,
+    648
+   ],
+   "n": 13,
+   "title": "Seasonality - 3 to 5% only in November through March",
+   "type": "instruction"
+  },
+  {
+   "lines": [
+    649,
+    682
+   ],
+   "n": 14,
+   "title": "The beginner's goal is to stop losing money",
+   "type": "narration"
+  },
+  {
+   "lines": [
+    683,
+    738
+   ],
+   "n": 15,
+   "title": "Promotion and outro",
+   "type": "promotion"
+  }
+ ],
+ "slug": "alexg-risk-management",
+ "sourceFile": "docs/trader-intelligence/intake/pending/alexg-risk-management.txt",
+ "sourceFileBytes": 16073,
+ "sourceFileSha256": "193966d9f5d3e19bee2bcd81ada1454ab25d649e92e1d7117cba22b5cc4618b1",
+ "sourceLineCount": 738,
+ "title": "Best Risk Management Strategy to Make Millions with Trading",
+ "traderId": "ALEX_G"
+}

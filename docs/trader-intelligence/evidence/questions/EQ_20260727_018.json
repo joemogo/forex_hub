@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|TJR|20260727|069",
+  "createdAt": "2026-07-27T22:15:39Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|018",
+  "questionText": "Trends can break and change, but this source never defines what constitutes a break of trend. How is a trend break identified?",
+  "questionType": "implied_requirement",
+  "reason": "'break of structure' is referenced in passing as future material but is not defined here.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|002"
+  ]
+}

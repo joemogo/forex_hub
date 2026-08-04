@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "36:09",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 670,
+  "lineStart": 629,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Now to be able to identify trends in the market. Now that we know how to identify highs and lows in the market, we need to be able to identify a series of highs and lows that form a pattern in the market. Okay. So, how do we know when the market is moving up? the market will form something called an uptrend which consists of higher highs being created and higher lows being created in the market. So when we're moving up, the market will form an uptrend. And an uptrend looks like this, where we come up, we make a high, and then we come down and we make a low. And then we come up, make a higher high, come down, make a higher low, come up, make a higher high, come down, make a higher low, higher high, higher low. Notice how this is this is the high, and then market comes up and makes a higher high. This is the low. market comes up and makes a higher low. This is an uptrend, right? If we look at the S&P 500 over the course of months, right? We can see that this follows a pretty pretty strict pattern of an uptrend, right? That's why everybody invests in the S&P 500, right? We can see a low right here. We can see a high right here. We can see a low right here. What is this? Low. Higher low. High. Higher high. Higher low. Higher high. Higher low. Higher high. Higher low. We had the COVID move down, but that's we'll we'll talk about what this is on a later date. Higher high, higher high, higher low, higher high, higher low, higher high. Okay. Okay, so the S&P 500 is just forever and always, at least on the high time frames, in an uptrend. That's why a lot of people invest their money into it because over the course of a long period of time, it just keeps going up. Okay, now that's an uptrend. That's when price is moving up. Okay, we know that price",
+  "schemaVersion": 1,
+  "sectionTitle": "Uptrend defined",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|016",
+  "segmentType": "other",
+  "sequenceNumber": 16,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "33:45",
+  "textHash": "edae8f63ae678d549d096f6457c388f34c66f6926fc97e66fd10cb34ddb1514b"
+}

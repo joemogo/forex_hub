@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|TJR|20260727|023",
+  "claimBId": "CLAIM|TJR|20260727|032",
+  "contradictionId": "XCONTRA|20260727|001",
+  "contradictionType": "CONDITIONAL_SCOPE",
+  "detectedAt": "2026-07-27T03:56:30Z",
+  "metadata": {},
+  "rationale": "Step 3 is stated as a required five-minute continuation confluence via equilibrium or a fair value gap, but the second worked example takes the trade explicitly after equilibrium was not hit. Whether Step 3 is mandatory or conditional is unresolved from this source alone.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

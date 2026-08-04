@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "2:24",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 46,
+  "lineStart": 17,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "a high probability on a daily basis. So, in order to do that, we need to actually see price. Okay, there's two different types of traders, and I'll preface this before we get into looking at the chart. This is just super quick. There's two different types of traders. There's technical analysis traders, which is what I am. Okay, I do the majority of my trading purely based off of what the chart is telling me, so what price is telling me. And then there's fundamental analysis traders. Okay, these are people who very rarely actually are looking at the chart and are more so looking at the news. So, um I mean there's several good examples of this, but somebody like Warren Buffett, for example, he's doing his investing off of just the global news or the news around the company. You know, he's reading earnings reports, all that stuff. He's not necessarily focused on like, hey, this candlestick closed this way and then this candlestick closed this way, so I'm going to look to invest right now. He doesn't do any of that, okay? He focuses on the fundamental, the big macroeconomic side of things. Um, and again, he's more of a long-term, you couldn't even call him like a swing trader. He's just like an investor, you know, like buy and hold. Um, and you know, hopefully that you're you're right over the long long period of time. Um, but for us, we are actively trading price, right? That's how I explain what trading is. That's what day traders do. We are just trying to buy low, sell high, sell high, buy back low, right? And that's how we're going to make money. Obviously, there's going to",
+  "schemaVersion": 1,
+  "sectionTitle": "Technical versus fundamental traders",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|002",
+  "segmentType": "other",
+  "sequenceNumber": 2,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "0:52",
+  "textHash": "c8bed6ffd171cb0e698e049e38e796ccbe32a50a415fd52ab0a60ca63f87c6de"
+}

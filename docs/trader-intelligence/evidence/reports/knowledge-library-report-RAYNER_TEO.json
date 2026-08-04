@@ -1,0 +1,3734 @@
+{
+  "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+  "contradictions": [
+    {
+      "affectedSections": [
+        "Setup Identification"
+      ],
+      "conflictingClaimIds": [
+        "CLAIM|ALEX_G|20260728|008",
+        "CLAIM|RAYNER_TEO|20260729|019"
+      ],
+      "contradictionRecordId": "XCONTRA|20260729|001",
+      "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+    },
+    {
+      "affectedSections": [
+        "Stop Placement",
+        "causal_hypothesis"
+      ],
+      "conflictingClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|037",
+        "CLAIM|TJR|20260727|036"
+      ],
+      "contradictionRecordId": "XCONTRA|20260729|002",
+      "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+    }
+  ],
+  "disclaimerText": "This report is research output only. Nothing in it has been validated, is executable, or carries any profitability claim. Every rule-like statement here requires replay validation and paper-trading validation before it could ever be considered for live or paper execution -- and even then, only through the existing StrategyRule promotion pipeline, never automatically from this report.",
+  "disclaimers": {
+    "noProfitabilityClaim": true,
+    "notExecutable": true,
+    "requiresPaperTradingValidation": true,
+    "requiresReplayValidation": true,
+    "researchOnly": true,
+    "unvalidated": true
+  },
+  "explicitRules": [
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|001",
+      "claimStatus": "pending_review",
+      "claimType": "session_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+          "exactExcerpt": "the london session right starts at 7 00 am gmt and"
+        }
+      ],
+      "normalizedClaim": "Session hours are given explicitly in GMT: London 07:00-16:00 and New York 12:00-21:00 during US daylight saving; London 08:00-17:00 and New York 13:00-22:00 during standard time. Four sessions are named: Sydney, Tokyo, London, New York."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|002",
+      "claimStatus": "pending_review",
+      "claimType": "session_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+          "exactExcerpt": "the most volatile session right in the forex market is during the london"
+        }
+      ],
+      "normalizedClaim": "The London/New York overlap is identified as the most volatile period of the forex day, on the stated reasoning that both of the largest financial centres are open simultaneously."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|003",
+      "claimStatus": "pending_review",
+      "claimType": "risk_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+          "exactExcerpt": "leverage can amplify your gains and losses"
+        }
+      ],
+      "normalizedClaim": "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|004",
+      "claimStatus": "pending_review",
+      "claimType": "risk_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+          "exactExcerpt": "risk management is the ability as a trader to encounter a series of losses right and not"
+        }
+      ],
+      "normalizedClaim": "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|005",
+      "claimStatus": "pending_review",
+      "claimType": "failure_condition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+          "exactExcerpt": "you can have a winning trading strategy but without proper risk management right you will still end up"
+        }
+      ],
+      "normalizedClaim": "A profitable strategy without risk management is asserted to still produce a losing trader. Demonstrated with two traders on identical 50%-win, 1:2 strategies where the one risking 25% per trade is wiped out before the winning streak arrives."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|006",
+      "claimStatus": "pending_review",
+      "claimType": "risk_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+          "exactExcerpt": "not to lose more than one percent of your trading account on each trade"
+        }
+      ],
+      "normalizedClaim": "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|007",
+      "claimStatus": "pending_review",
+      "claimType": "risk_rule",
+      "confidenceScore": 23.27,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+          "exactExcerpt": "position size is equals to the amount to risk right the amount of uh dollar"
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+          "exactExcerpt": "such that we don't lose more than one percent of our current of our ac"
+        }
+      ],
+      "normalizedClaim": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|008",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+          "exactExcerpt": "so this is what we call a one to two risk reward ratio your reward right it's two times your initial risk"
+        }
+      ],
+      "normalizedClaim": "Risk-to-reward ratio is defined as reward as a multiple of the amount risked, worked through at 1:2 and 1:10."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|009",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+          "exactExcerpt": "a stop loss order is in order to sell your position if the price"
+        }
+      ],
+      "normalizedClaim": "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|010",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+          "exactExcerpt": "as a trader who uses leverage in your trading i still suggest you use a stop-loss order"
+        }
+      ],
+      "normalizedClaim": "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|011",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+          "exactExcerpt": "for a buy limit order right it's an order an order to buy below the current market price"
+        }
+      ],
+      "normalizedClaim": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|012",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+          "exactExcerpt": "the higher the spread the higher your transaction cost"
+        }
+      ],
+      "normalizedClaim": "The spread is the transaction cost in forex, where commission is usually not charged. Worked: one standard lot of EURUSD at a 3-pip spread costs $30 on entry."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|013",
+      "claimStatus": "pending_review",
+      "claimType": "timeframe_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+          "exactExcerpt": "if you trade off the higher time frame your stop-loss is usually wider"
+        }
+      ],
+      "normalizedClaim": "Spread cost should be assessed as a percentage of stop-loss distance, not in absolute pips. A 1-pip spread is 20% of a 5-pip stop but 1% of a 100-pip stop, which is given as a reason to prefer higher timeframes."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|014",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+          "exactExcerpt": "an uptrend consists of a series of higher highs and higher low"
+        }
+      ],
+      "normalizedClaim": "An uptrend is a series of higher highs and higher lows."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|015",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+          "exactExcerpt": "downtrend right in essence is a series of lower highs and lower low"
+        }
+      ],
+      "normalizedClaim": "A downtrend is a series of lower highs and lower lows."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|016",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+          "exactExcerpt": "price is contained between the highs and the lows"
+        }
+      ],
+      "normalizedClaim": "A range is price contained between highs and lows, distinguished from a trend by repeated rejection at the boundary rather than a break beyond it. In a range both directions are tradeable."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|017",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 23.27,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+          "exactExcerpt": "market structure helps you to define the current market condition"
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+          "exactExcerpt": "what is the market structure this would"
+        }
+      ],
+      "normalizedClaim": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|018",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+          "exactExcerpt": "for you the beginner is much easier to be trading along the path of least resistance"
+        }
+      ],
+      "normalizedClaim": "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|019",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+          "exactExcerpt": "pay attention to the swing points the ones that really"
+        }
+      ],
+      "normalizedClaim": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|020",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+          "exactExcerpt": "look from left to right left to right don't just look at the"
+        }
+      ],
+      "normalizedClaim": "Structure is read across the whole visible chart from left to right rather than from the most recent few candles."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|021",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+          "exactExcerpt": "when you deal with technical analysis there is subjectivity involved"
+        }
+      ],
+      "normalizedClaim": "Structure classification is stated to be subjective: a chart he calls a range may reasonably be called an uptrend by another trader, and neither is declared wrong."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|022",
+      "claimStatus": "pending_review",
+      "claimType": "invalidation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+          "exactExcerpt": "if it's not clear if it's conflicting information move on onto another currency pair"
+        }
+      ],
+      "normalizedClaim": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|023",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+          "exactExcerpt": "it tells you where to buy or sell the key word here is where"
+        }
+      ],
+      "normalizedClaim": "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|024",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+          "exactExcerpt": "support is an area on your chart where buying pressure could step in"
+        }
+      ],
+      "normalizedClaim": "Support is an area where buying pressure COULD step in; resistance is an area where selling pressure COULD step in. The conditional is stated deliberately - trading is described as probabilities, never certainty."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|025",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+          "exactExcerpt": "when support is broken it tends to become or it could become resistance"
+        }
+      ],
+      "normalizedClaim": "Broken support tends to become resistance and broken resistance tends to become support."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|026",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+          "exactExcerpt": "support resistance they are an area on your chart"
+        }
+      ],
+      "normalizedClaim": "Support and resistance are areas rather than exact prices. Price may overshoot, undershoot or fail to touch the level before reversing, and the level must be adjusted over time as new price action arrives."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|027",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+          "exactExcerpt": "i use support resistance and moving average often"
+        }
+      ],
+      "normalizedClaim": "Two tools are used to locate areas of value: support/resistance and moving averages."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|028",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+          "exactExcerpt": "entry trigger this tells you when to buy or sell"
+        }
+      ],
+      "normalizedClaim": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when)."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|029",
+      "claimStatus": "pending_review",
+      "claimType": "definition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+          "exactExcerpt": "there is four data points for every candlestick pattern you have the opening price the closing"
+        }
+      ],
+      "normalizedClaim": "Every candle carries four data points - open, close, high and low of the session - and the body/wick terminology follows from them."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|030",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+          "exactExcerpt": "the technicians call it a hammer"
+        }
+      ],
+      "normalizedClaim": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|031",
+      "claimStatus": "pending_review",
+      "claimType": "confirmation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+          "exactExcerpt": "it opened low and closed even higher than the previous day opening price"
+        }
+      ],
+      "normalizedClaim": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|032",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+          "exactExcerpt": "most of these patterns are pretty much a variation of one another"
+        }
+      ],
+      "normalizedClaim": "Memorising the full catalogue of candlestick names is described as unnecessary because the patterns are variations on the same idea; what matters is reading who ended the session in control."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|033",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+          "exactExcerpt": "the market structure is in the downtrend area of value the price is at resistance our entry trigger we have a bearish engulfing pattern"
+        }
+      ],
+      "normalizedClaim": "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|034",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+          "exactExcerpt": "this is clearly a cherry pick chart"
+        }
+      ],
+      "normalizedClaim": "The teaching examples are explicitly acknowledged as cherry-picked, and the source states that real trading will not look this clean."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|035",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+          "exactExcerpt": "want to set your stop-loss at a level which invalidates your trading setup"
+        }
+      ],
+      "normalizedClaim": "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|036",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 23.2,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+          "exactExcerpt": "you can use an indicator called the average true range"
+        },
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+          "exactExcerpt": "so what i'm gonna do is take seven two dot seven two"
+        }
+      ],
+      "normalizedClaim": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|037",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+          "exactExcerpt": "we don't just want to set it smack below support because"
+        }
+      ],
+      "normalizedClaim": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|038",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+          "exactExcerpt": "i call this uh stack areas because you have multiple factors coming together"
+        }
+      ],
+      "normalizedClaim": "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|039",
+      "claimStatus": "pending_review",
+      "claimType": "target_rule",
+      "confidenceScore": 23.05,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+          "exactExcerpt": "we usually want to set our target profit at before right previous swing highs are low in the market"
+        },
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+          "exactExcerpt": "you're making difficult for the market you know to give you a profit so be reasonable"
+        }
+      ],
+      "normalizedClaim": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|040",
+      "claimStatus": "pending_review",
+      "claimType": "entry_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+          "exactExcerpt": "what you can do is to use a buy limit order"
+        }
+      ],
+      "normalizedClaim": "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|041",
+      "claimStatus": "pending_review",
+      "claimType": "stop_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+          "exactExcerpt": "we don't want to mess with our stop-loss because our stop-loss is at a"
+        }
+      ],
+      "normalizedClaim": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|042",
+      "claimStatus": "pending_review",
+      "claimType": "target_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+          "exactExcerpt": "don't set your target above the highs of this resistance because you are expecting the price to break above that resistance"
+        }
+      ],
+      "normalizedClaim": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|043",
+      "claimStatus": "pending_review",
+      "claimType": "behavioral_observation",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+          "exactExcerpt": "i want to show you how a losing trade looks like"
+        }
+      ],
+      "normalizedClaim": "A losing trade is shown deliberately: a setup meeting all three criteria with a correctly-placed stop is stopped out, and price then rallies. Stated to be a trade he took himself."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|044",
+      "claimStatus": "pending_review",
+      "claimType": "failure_condition",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+          "exactExcerpt": "no matter how good a trading setup looks like no"
+        }
+      ],
+      "normalizedClaim": "A correct setup with a correctly-placed stop will still lose, sometimes immediately before the move it predicted. Presented as a permanent feature of trading rather than an error to be engineered away."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|045",
+      "claimStatus": "pending_review",
+      "claimType": "invalidation_rule",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_demonstrated",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+          "exactExcerpt": "it's not near any area of value"
+        }
+      ],
+      "normalizedClaim": "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing."
+    },
+    {
+      "claimId": "CLAIM|RAYNER_TEO|20260729|046",
+      "claimStatus": "pending_review",
+      "claimType": "setup_requirement",
+      "confidenceScore": 22.0,
+      "confidenceState": "emerging",
+      "evidenceExcerpts": [
+        {
+          "directness": "direct_explicit",
+          "evidenceId": "EV|EVSRC|RAYNER_TEO|20260729|001|050",
+          "exactExcerpt": "if it's not at an area of value then really usually i don't even bother looking at the entry trigger"
+        }
+      ],
+      "normalizedClaim": "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated."
+    }
+  ],
+  "extractionStatistics": {
+    "claimCount": 46,
+    "contradictionCount": 2,
+    "evidenceCount": 50,
+    "extractionStatus": "completed",
+    "hypothesisCount": 32,
+    "observationCount": 6,
+    "sourceCount": 1,
+    "unresolvedQuestionCount": 40
+  },
+  "generatedAt": "2026-07-29T00:05:09Z",
+  "impliedOrInferredRules": [],
+  "itemsRequiringHumanReview": {
+    "openReviewQueueEntries": [],
+    "openUnresolvedQuestions": [
+      {
+        "priority": "high",
+        "questionId": "EQ|20260729|001",
+        "questionText": "Does the ATR-buffer stop rule generalise beyond this educator's setups?"
+      },
+      {
+        "priority": "high",
+        "questionId": "EQ|20260729|002",
+        "questionText": "What makes a swing point 'major' enough to count?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|003",
+        "questionText": "Is 1% a hard limit or a starting guideline?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|004",
+        "questionText": "How far before the swing high should the target sit?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|005",
+        "questionText": "Do these session hours apply to other educators' session rules?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|006",
+        "questionText": "Which moving average period, and on which timeframe?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|007",
+        "questionText": "If structure classification is subjective, what is being replayed when MOGO tests it?"
+      },
+      {
+        "priority": "low",
+        "questionId": "EQ|20260729|008",
+        "questionText": "How many of the teaching examples are losers?"
+      },
+      {
+        "priority": "low",
+        "questionId": "EQ|20260729|009",
+        "questionText": "Is the John-and-Sally illustration arithmetic or evidence?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|010",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|001' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|011",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|001' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|012",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|002' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|013",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|002' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|014",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|009' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|015",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|010' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|016",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|011' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|017",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|011' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|018",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|013' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|019",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|018' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|020",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|018' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|021",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|022' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|022",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|023' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|023",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|023' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|024",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|027' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|025",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|027' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|026",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|028' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|027",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|028",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|030' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|029",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|030' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|030",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|031' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|031",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|031' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|032",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|035' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|033",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|036' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|034",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|037' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|035",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|039' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|036",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|040' has no session recorded -- does this rule apply in every session or only specific ones?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|037",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|040' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|038",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|041' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|039",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|042' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      },
+      {
+        "priority": "medium",
+        "questionId": "EQ|20260729|040",
+        "questionText": "Claim 'CLAIM|RAYNER_TEO|20260729|045' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+      }
+    ],
+    "pendingReviewClaimIds": [
+      "CLAIM|RAYNER_TEO|20260729|001",
+      "CLAIM|RAYNER_TEO|20260729|002",
+      "CLAIM|RAYNER_TEO|20260729|003",
+      "CLAIM|RAYNER_TEO|20260729|004",
+      "CLAIM|RAYNER_TEO|20260729|005",
+      "CLAIM|RAYNER_TEO|20260729|006",
+      "CLAIM|RAYNER_TEO|20260729|007",
+      "CLAIM|RAYNER_TEO|20260729|008",
+      "CLAIM|RAYNER_TEO|20260729|009",
+      "CLAIM|RAYNER_TEO|20260729|010",
+      "CLAIM|RAYNER_TEO|20260729|011",
+      "CLAIM|RAYNER_TEO|20260729|012",
+      "CLAIM|RAYNER_TEO|20260729|013",
+      "CLAIM|RAYNER_TEO|20260729|014",
+      "CLAIM|RAYNER_TEO|20260729|015",
+      "CLAIM|RAYNER_TEO|20260729|016",
+      "CLAIM|RAYNER_TEO|20260729|017",
+      "CLAIM|RAYNER_TEO|20260729|018",
+      "CLAIM|RAYNER_TEO|20260729|019",
+      "CLAIM|RAYNER_TEO|20260729|020",
+      "CLAIM|RAYNER_TEO|20260729|021",
+      "CLAIM|RAYNER_TEO|20260729|022",
+      "CLAIM|RAYNER_TEO|20260729|023",
+      "CLAIM|RAYNER_TEO|20260729|024",
+      "CLAIM|RAYNER_TEO|20260729|025",
+      "CLAIM|RAYNER_TEO|20260729|026",
+      "CLAIM|RAYNER_TEO|20260729|027",
+      "CLAIM|RAYNER_TEO|20260729|028",
+      "CLAIM|RAYNER_TEO|20260729|029",
+      "CLAIM|RAYNER_TEO|20260729|030",
+      "CLAIM|RAYNER_TEO|20260729|031",
+      "CLAIM|RAYNER_TEO|20260729|032",
+      "CLAIM|RAYNER_TEO|20260729|033",
+      "CLAIM|RAYNER_TEO|20260729|034",
+      "CLAIM|RAYNER_TEO|20260729|035",
+      "CLAIM|RAYNER_TEO|20260729|036",
+      "CLAIM|RAYNER_TEO|20260729|037",
+      "CLAIM|RAYNER_TEO|20260729|038",
+      "CLAIM|RAYNER_TEO|20260729|039",
+      "CLAIM|RAYNER_TEO|20260729|040",
+      "CLAIM|RAYNER_TEO|20260729|041",
+      "CLAIM|RAYNER_TEO|20260729|042",
+      "CLAIM|RAYNER_TEO|20260729|043",
+      "CLAIM|RAYNER_TEO|20260729|044",
+      "CLAIM|RAYNER_TEO|20260729|045",
+      "CLAIM|RAYNER_TEO|20260729|046"
+    ]
+  },
+  "knowledgeGaps": [
+    {
+      "affectedSections": [
+        "Scope"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "instrument",
+      "confidence": "none",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "gapId": "GAP|20260729|001",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Which specific instrument(s) does this strategy apply to?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "high",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "Without a named instrument, the strategy cannot be scoped to a specific market for replay or paper testing."
+    },
+    {
+      "affectedSections": [
+        "Scope"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "session",
+      "confidence": "none",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "gapId": "GAP|20260729|002",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Which trading session(s) does this strategy apply to?",
+      "recommendedNextSourceType": "additional transcript covering session discussion",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "Session restrictions materially affect setup validity and volatility conditions."
+    },
+    {
+      "affectedSections": [
+        "Scope",
+        "Setup Identification"
+      ],
+      "answerStatus": "partially_answered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "higher_timeframe_bias",
+      "confidence": "low",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it.",
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "gapId": "GAP|20260729|003",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": [
+          "CLAIM|RAYNER_TEO|20260729|008",
+          "CLAIM|RAYNER_TEO|20260729|014",
+          "CLAIM|RAYNER_TEO|20260729|015",
+          "CLAIM|RAYNER_TEO|20260729|016",
+          "CLAIM|RAYNER_TEO|20260729|017",
+          "CLAIM|RAYNER_TEO|20260729|019",
+          "CLAIM|RAYNER_TEO|20260729|020",
+          "CLAIM|RAYNER_TEO|20260729|024",
+          "CLAIM|RAYNER_TEO|20260729|025",
+          "CLAIM|RAYNER_TEO|20260729|026",
+          "CLAIM|RAYNER_TEO|20260729|029",
+          "CLAIM|RAYNER_TEO|20260729|033",
+          "CLAIM|RAYNER_TEO|20260729|038",
+          "CLAIM|RAYNER_TEO|20260729|046"
+        ]
+      },
+      "question": "Is a higher-timeframe bias required before taking this setup?",
+      "recommendedNextSourceType": "additional transcript on multi-timeframe analysis",
+      "researchPriority": "high",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "A missing higher-timeframe bias rule means the strategy's context requirement is unknown."
+    },
+    {
+      "affectedSections": [
+        "Scope",
+        "Entry Trigger"
+      ],
+      "answerStatus": "partially_answered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "execution_timeframe",
+      "confidence": "low",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill.",
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+      ],
+      "gapId": "GAP|20260729|004",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": [
+          "CLAIM|RAYNER_TEO|20260729|011",
+          "CLAIM|RAYNER_TEO|20260729|018",
+          "CLAIM|RAYNER_TEO|20260729|023",
+          "CLAIM|RAYNER_TEO|20260729|027",
+          "CLAIM|RAYNER_TEO|20260729|040"
+        ]
+      },
+      "question": "What is the execution timeframe for entries?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "critical",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "Without a stated execution timeframe, entry timing cannot be replayed or tested."
+    },
+    {
+      "affectedSections": [
+        "Entry Trigger"
+      ],
+      "answerStatus": "partially_answered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "entry_trigger",
+      "confidence": "low",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill.",
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+      ],
+      "gapId": "GAP|20260729|005",
+      "proposedValidationMethod": "replay test against historical price action",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": [
+          "CLAIM|RAYNER_TEO|20260729|011",
+          "CLAIM|RAYNER_TEO|20260729|018",
+          "CLAIM|RAYNER_TEO|20260729|023",
+          "CLAIM|RAYNER_TEO|20260729|027",
+          "CLAIM|RAYNER_TEO|20260729|040"
+        ]
+      },
+      "question": "What exact condition triggers an entry?",
+      "recommendedNextSourceType": "additional transcript with explicit entry-rule statements",
+      "researchPriority": "critical",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "No entry condition currently reaches confident support -- the strategy cannot be entered mechanically."
+    },
+    {
+      "affectedSections": [
+        "Trade Management"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "trade_management",
+      "confidence": "none",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [],
+      "gapId": "GAP|20260729|006",
+      "proposedValidationMethod": "paper-trading test",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "How is the trade managed after entry (partials, break-even, trailing)?",
+      "recommendedNextSourceType": "additional transcript on in-trade management",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "Trade management materially affects realized outcomes even when entry/exit rules are fixed."
+    },
+    {
+      "affectedSections": [
+        "Entry Trigger",
+        "Invalidation"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "news_handling",
+      "confidence": "none",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "gapId": "GAP|20260729|007",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "How does this strategy handle high-impact news events?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "News events can invalidate technical setups; the absence of a stated rule leaves this ambiguous."
+    },
+    {
+      "affectedSections": [
+        "Scope",
+        "Entry Trigger"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "no_trade_conditions",
+      "confidence": "none",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "gapId": "GAP|20260729|008",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Are there explicit conditions under which no trade should be taken?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "Without stated no-trade conditions, the strategy may be applied in contexts the trader would avoid."
+    },
+    {
+      "affectedSections": [
+        "Entry Trigger",
+        "Invalidation"
+      ],
+      "answerStatus": "unanswered",
+      "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+      "category": "exception_handling",
+      "confidence": "none",
+      "createdAt": "2026-07-29T00:05:09Z",
+      "currentBestAnswer": null,
+      "evidenceSearched": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "gapId": "GAP|20260729|009",
+      "proposedValidationMethod": "direct question to trader",
+      "provenance": {
+        "evidenceQuestionId": null,
+        "relatedClaimIds": []
+      },
+      "question": "Are there known exceptions to the stated rules?",
+      "recommendedNextSourceType": "additional transcript or direct question to trader",
+      "researchPriority": "medium",
+      "resolvedAt": null,
+      "schemaVersion": 1,
+      "traderId": "RAYNER_TEO",
+      "whyItMatters": "Without documented exceptions, edge cases may be silently mishandled by any future automation."
+    }
+  ],
+  "limitations": [
+    "2 contradiction(s) remain unresolved for this trader.",
+    "40 unresolved question(s) remain open for this trader.",
+    "CLAIM|RAYNER_TEO|20260729|044: 'no matter how good a trading setup looks like no'",
+    "No trade_management_rule claim found -- trade management is unknown.",
+    "One or more claims are still pending_review and have not been confirmed by a human."
+  ],
+  "lineageSummary": {
+    "blueprintSourceLineage": {
+      "claimIds": [
+        "CLAIM|RAYNER_TEO|20260729|001",
+        "CLAIM|RAYNER_TEO|20260729|002",
+        "CLAIM|RAYNER_TEO|20260729|003",
+        "CLAIM|RAYNER_TEO|20260729|004",
+        "CLAIM|RAYNER_TEO|20260729|005",
+        "CLAIM|RAYNER_TEO|20260729|006",
+        "CLAIM|RAYNER_TEO|20260729|007",
+        "CLAIM|RAYNER_TEO|20260729|008",
+        "CLAIM|RAYNER_TEO|20260729|009",
+        "CLAIM|RAYNER_TEO|20260729|010",
+        "CLAIM|RAYNER_TEO|20260729|011",
+        "CLAIM|RAYNER_TEO|20260729|012",
+        "CLAIM|RAYNER_TEO|20260729|013",
+        "CLAIM|RAYNER_TEO|20260729|014",
+        "CLAIM|RAYNER_TEO|20260729|015",
+        "CLAIM|RAYNER_TEO|20260729|016",
+        "CLAIM|RAYNER_TEO|20260729|017",
+        "CLAIM|RAYNER_TEO|20260729|018",
+        "CLAIM|RAYNER_TEO|20260729|019",
+        "CLAIM|RAYNER_TEO|20260729|020",
+        "CLAIM|RAYNER_TEO|20260729|021",
+        "CLAIM|RAYNER_TEO|20260729|022",
+        "CLAIM|RAYNER_TEO|20260729|023",
+        "CLAIM|RAYNER_TEO|20260729|024",
+        "CLAIM|RAYNER_TEO|20260729|025",
+        "CLAIM|RAYNER_TEO|20260729|026",
+        "CLAIM|RAYNER_TEO|20260729|027",
+        "CLAIM|RAYNER_TEO|20260729|028",
+        "CLAIM|RAYNER_TEO|20260729|029",
+        "CLAIM|RAYNER_TEO|20260729|030",
+        "CLAIM|RAYNER_TEO|20260729|031",
+        "CLAIM|RAYNER_TEO|20260729|032",
+        "CLAIM|RAYNER_TEO|20260729|033",
+        "CLAIM|RAYNER_TEO|20260729|034",
+        "CLAIM|RAYNER_TEO|20260729|035",
+        "CLAIM|RAYNER_TEO|20260729|036",
+        "CLAIM|RAYNER_TEO|20260729|037",
+        "CLAIM|RAYNER_TEO|20260729|038",
+        "CLAIM|RAYNER_TEO|20260729|039",
+        "CLAIM|RAYNER_TEO|20260729|040",
+        "CLAIM|RAYNER_TEO|20260729|041",
+        "CLAIM|RAYNER_TEO|20260729|042",
+        "CLAIM|RAYNER_TEO|20260729|043",
+        "CLAIM|RAYNER_TEO|20260729|044",
+        "CLAIM|RAYNER_TEO|20260729|045",
+        "CLAIM|RAYNER_TEO|20260729|046"
+      ],
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "segmentIds": [
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|002",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|005",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|007",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|008",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|009",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|011",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|012",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|013",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|014",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|015",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|016",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|017",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|018",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|019"
+      ],
+      "sourceIds": [
+        "EVSRC|RAYNER_TEO|20260729|001"
+      ]
+    },
+    "profileSourceLineage": {
+      "claimIds": [
+        "CLAIM|RAYNER_TEO|20260729|001",
+        "CLAIM|RAYNER_TEO|20260729|002",
+        "CLAIM|RAYNER_TEO|20260729|003",
+        "CLAIM|RAYNER_TEO|20260729|004",
+        "CLAIM|RAYNER_TEO|20260729|005",
+        "CLAIM|RAYNER_TEO|20260729|006",
+        "CLAIM|RAYNER_TEO|20260729|007",
+        "CLAIM|RAYNER_TEO|20260729|008",
+        "CLAIM|RAYNER_TEO|20260729|009",
+        "CLAIM|RAYNER_TEO|20260729|010",
+        "CLAIM|RAYNER_TEO|20260729|011",
+        "CLAIM|RAYNER_TEO|20260729|012",
+        "CLAIM|RAYNER_TEO|20260729|013",
+        "CLAIM|RAYNER_TEO|20260729|014",
+        "CLAIM|RAYNER_TEO|20260729|015",
+        "CLAIM|RAYNER_TEO|20260729|016",
+        "CLAIM|RAYNER_TEO|20260729|017",
+        "CLAIM|RAYNER_TEO|20260729|018",
+        "CLAIM|RAYNER_TEO|20260729|019",
+        "CLAIM|RAYNER_TEO|20260729|020",
+        "CLAIM|RAYNER_TEO|20260729|021",
+        "CLAIM|RAYNER_TEO|20260729|022",
+        "CLAIM|RAYNER_TEO|20260729|023",
+        "CLAIM|RAYNER_TEO|20260729|024",
+        "CLAIM|RAYNER_TEO|20260729|025",
+        "CLAIM|RAYNER_TEO|20260729|026",
+        "CLAIM|RAYNER_TEO|20260729|027",
+        "CLAIM|RAYNER_TEO|20260729|028",
+        "CLAIM|RAYNER_TEO|20260729|029",
+        "CLAIM|RAYNER_TEO|20260729|030",
+        "CLAIM|RAYNER_TEO|20260729|031",
+        "CLAIM|RAYNER_TEO|20260729|032",
+        "CLAIM|RAYNER_TEO|20260729|033",
+        "CLAIM|RAYNER_TEO|20260729|034",
+        "CLAIM|RAYNER_TEO|20260729|035",
+        "CLAIM|RAYNER_TEO|20260729|036",
+        "CLAIM|RAYNER_TEO|20260729|037",
+        "CLAIM|RAYNER_TEO|20260729|038",
+        "CLAIM|RAYNER_TEO|20260729|039",
+        "CLAIM|RAYNER_TEO|20260729|040",
+        "CLAIM|RAYNER_TEO|20260729|041",
+        "CLAIM|RAYNER_TEO|20260729|042",
+        "CLAIM|RAYNER_TEO|20260729|043",
+        "CLAIM|RAYNER_TEO|20260729|044",
+        "CLAIM|RAYNER_TEO|20260729|045",
+        "CLAIM|RAYNER_TEO|20260729|046"
+      ],
+      "sourceIds": [
+        "EVSRC|RAYNER_TEO|20260729|001"
+      ]
+    }
+  },
+  "paperTradingRecommendations": [
+    "Paper-trade across varying news_handling conditions and compare results.",
+    "Paper-trade across varying session conditions and compare results.",
+    "Paper-trade both interpretations and compare results.",
+    "Paper-trade both variants (with/without this condition) and compare results.",
+    "paper-trading test"
+  ],
+  "profileId": "PROFILE|RAYNER_TEO|20260729|001",
+  "proposedHypotheses": [
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|001",
+      "independentVariables": [
+        "risk_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|003"
+      ],
+      "statement": "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital may be the trader's default risk rule, pending further confirmation.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|002",
+      "independentVariables": [
+        "risk_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|004"
+      ],
+      "statement": "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row may be the trader's default risk rule, pending further confirmation.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|003",
+      "independentVariables": [
+        "risk_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|006"
+      ],
+      "statement": "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make may be the trader's default risk rule, pending further confirmation.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|004",
+      "independentVariables": [
+        "risk_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|007"
+      ],
+      "statement": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula may be the trader's default risk rule, pending further confirmation.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|005",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|009"
+      ],
+      "statement": "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|006",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|010"
+      ],
+      "statement": "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|007",
+      "independentVariables": [
+        "entry_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|011"
+      ],
+      "statement": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|008",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|017"
+      ],
+      "statement": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|009",
+      "independentVariables": [
+        "entry_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|018"
+      ],
+      "statement": "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|010",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|019"
+      ],
+      "statement": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|011",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|020"
+      ],
+      "statement": "Structure is read across the whole visible chart from left to right rather than from the most recent few candles may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|012",
+      "independentVariables": [
+        "invalidation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|022"
+      ],
+      "statement": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide may serve as the primary invalidation condition.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|013",
+      "independentVariables": [
+        "entry_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|023"
+      ],
+      "statement": "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|014",
+      "independentVariables": [
+        "entry_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|027"
+      ],
+      "statement": "Two tools are used to locate areas of value: support/resistance and moving averages may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|015",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|028"
+      ],
+      "statement": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when) may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|016",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|030"
+      ],
+      "statement": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|017",
+      "independentVariables": [
+        "confirmation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|031"
+      ],
+      "statement": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse may only be required on the execution timeframe.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|018",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|033"
+      ],
+      "statement": "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|019",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|035"
+      ],
+      "statement": "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|020",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|036"
+      ],
+      "statement": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|021",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|037"
+      ],
+      "statement": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|022",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|038"
+      ],
+      "statement": "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|023",
+      "independentVariables": [
+        "target_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|039"
+      ],
+      "statement": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price may be the preferred target-selection approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|024",
+      "independentVariables": [
+        "entry_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|040"
+      ],
+      "statement": "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|025",
+      "independentVariables": [
+        "stop_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|041"
+      ],
+      "statement": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise may be the preferred stop-placement approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|026",
+      "independentVariables": [
+        "target_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|042"
+      ],
+      "statement": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice may be the preferred target-selection approach, pending further evidence.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|027",
+      "independentVariables": [
+        "invalidation_rule"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|045"
+      ],
+      "statement": "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing may serve as the primary invalidation condition.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The linked evidence accurately reflects the trader's actual practice."
+      ],
+      "confidence": "emerging",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|028",
+      "independentVariables": [
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Based on a single claim at confidenceState='emerging' -- not yet independently corroborated."
+      ],
+      "proposedPaperTest": "Paper-trade both variants (with/without this condition) and compare results.",
+      "proposedReplayTest": "Replay historical price action with and without this condition and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|046"
+      ],
+      "statement": "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated may be required before a valid entry.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "Exactly one of the two conflicting claims reflects the trader's primary rule."
+      ],
+      "confidence": "contested",
+      "contradictingEvidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|013",
+        "EV|EVSRC|ALEX_G|20260728|004|009"
+      ],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|029",
+      "independentVariables": [
+        "setup_requirement",
+        "setup_requirement"
+      ],
+      "limitations": [
+        "Derived from an unresolved ContradictionRecord (XCONTRA|20260729|001) -- requires owner review."
+      ],
+      "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+      "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|ALEX_G|20260728|008",
+        "CLAIM|RAYNER_TEO|20260729|019"
+      ],
+      "statement": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|008).",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "Exactly one of the two conflicting claims reflects the trader's primary rule."
+      ],
+      "confidence": "contested",
+      "contradictingEvidenceIds": [
+        "EV|EVSRC|TJR|20260727|001|051"
+      ],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|030",
+      "independentVariables": [
+        "stop_rule",
+        "causal_hypothesis"
+      ],
+      "limitations": [
+        "Derived from an unresolved ContradictionRecord (XCONTRA|20260729|002) -- requires owner review."
+      ],
+      "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+      "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|037",
+        "CLAIM|TJR|20260727|036"
+      ],
+      "statement": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|036).",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038"
+      ],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The knowledge gap (GAP|20260729|002) reflects a real, not merely incidental, omission."
+      ],
+      "confidence": "insufficient_evidence",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|031",
+      "independentVariables": [
+        "session"
+      ],
+      "limitations": [
+        "Proposed from an unresolved knowledge gap (GAP|20260729|002), not from direct evidence."
+      ],
+      "proposedPaperTest": "Paper-trade across varying session conditions and compare results.",
+      "proposedReplayTest": "Replay historical price action segmented by session and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|011",
+        "CLAIM|RAYNER_TEO|20260729|018",
+        "CLAIM|RAYNER_TEO|20260729|023",
+        "CLAIM|RAYNER_TEO|20260729|027",
+        "CLAIM|RAYNER_TEO|20260729|040"
+      ],
+      "statement": "Session restrictions may materially affect this strategy's setup validity.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    },
+    {
+      "applicableMarketConditions": [],
+      "assumptions": [
+        "The knowledge gap (GAP|20260729|007) reflects a real, not merely incidental, omission."
+      ],
+      "confidence": "insufficient_evidence",
+      "contradictingEvidenceIds": [],
+      "createdAt": "2026-07-29T00:05:09Z",
+      "dependentVariables": [
+        "setup validity"
+      ],
+      "hypothesisId": "HYP|20260729|032",
+      "independentVariables": [
+        "news_handling"
+      ],
+      "limitations": [
+        "Proposed from an unresolved knowledge gap (GAP|20260729|007), not from direct evidence."
+      ],
+      "proposedPaperTest": "Paper-trade across varying news_handling conditions and compare results.",
+      "proposedReplayTest": "Replay historical price action segmented by news_handling and compare outcomes.",
+      "schemaVersion": 1,
+      "sourceClaimIds": [
+        "CLAIM|RAYNER_TEO|20260729|011",
+        "CLAIM|RAYNER_TEO|20260729|018",
+        "CLAIM|RAYNER_TEO|20260729|023",
+        "CLAIM|RAYNER_TEO|20260729|027",
+        "CLAIM|RAYNER_TEO|20260729|040"
+      ],
+      "statement": "High-impact news events may require this strategy's setup to be skipped or delayed.",
+      "status": "PROPOSED_UNVALIDATED",
+      "supportingEvidenceIds": [],
+      "updatedAt": "2026-07-29T00:05:09Z"
+    }
+  ],
+  "replayRecommendations": [
+    "Replay historical price action segmented by news_handling and compare outcomes.",
+    "Replay historical price action segmented by session and compare outcomes.",
+    "Replay historical price action under both interpretations and compare outcomes.",
+    "Replay historical price action with and without this condition and compare outcomes.",
+    "replay test against historical price action"
+  ],
+  "reportId": "KLREPORT|RAYNER_TEO|20260729T000509Z",
+  "reportSchemaVersion": 1,
+  "sourceSummary": {
+    "sourceCount": 1,
+    "sources": [
+      {
+        "provenanceStatus": "partially_verified",
+        "sourceId": "EVSRC|RAYNER_TEO|20260729|001",
+        "sourceType": "transcript",
+        "title": "The Ultimate Forex Trading Course (For Beginners)"
+      }
+    ]
+  },
+  "strategyBlueprint": {
+    "blueprintId": "BLUEPRINT|RAYNER_TEO|20260729|001",
+    "contradictions": [
+      {
+        "affectedSections": [
+          "Setup Identification"
+        ],
+        "conflictingClaimIds": [
+          "CLAIM|ALEX_G|20260728|008",
+          "CLAIM|RAYNER_TEO|20260729|019"
+        ],
+        "contradictionRecordId": "XCONTRA|20260729|001",
+        "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+      },
+      {
+        "affectedSections": [
+          "Stop Placement",
+          "causal_hypothesis"
+        ],
+        "conflictingClaimIds": [
+          "CLAIM|RAYNER_TEO|20260729|037",
+          "CLAIM|TJR|20260727|036"
+        ],
+        "contradictionRecordId": "XCONTRA|20260729|002",
+        "currentHandling": "Unresolved -- requires owner review before any related rule is considered."
+      }
+    ],
+    "entryLogic": {
+      "forbiddenConditions": [],
+      "optionalConditions": [],
+      "preferredConditions": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|011"
+          ],
+          "statement": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|018"
+          ],
+          "statement": "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|023"
+          ],
+          "statement": "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|027"
+          ],
+          "statement": "Two tools are used to locate areas of value: support/resistance and moving averages."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+          ],
+          "statement": "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+            "EV|EVSRC|RAYNER_TEO|20260729|001|033"
+          ],
+          "statement": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|019"
+          ],
+          "statement": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|020"
+          ],
+          "statement": "Structure is read across the whole visible chart from left to right rather than from the most recent few candles."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|034"
+          ],
+          "statement": "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|041"
+          ],
+          "statement": "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+          ],
+          "statement": "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|028"
+          ],
+          "statement": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when)."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|030"
+          ],
+          "statement": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|031"
+          ],
+          "statement": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse."
+        }
+      ],
+      "requiredConditions": [],
+      "unresolvedConditions": []
+    },
+    "exitLogic": {
+      "breakEven": [],
+      "partials": [],
+      "profitTargets": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+            "EV|EVSRC|RAYNER_TEO|20260729|001|043"
+          ],
+          "statement": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|046"
+          ],
+          "statement": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice."
+        }
+      ],
+      "setupInvalidation": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|022"
+          ],
+          "statement": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|049"
+          ],
+          "statement": "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing."
+        }
+      ],
+      "stopPlacement": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|009"
+          ],
+          "statement": "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|010"
+          ],
+          "statement": "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|036"
+          ],
+          "statement": "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+            "EV|EVSRC|RAYNER_TEO|20260729|001|039"
+          ],
+          "statement": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|038"
+          ],
+          "statement": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|045"
+          ],
+          "statement": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise."
+        }
+      ],
+      "timeBasedExit": [],
+      "trailing": [],
+      "unknowns": [
+        "No partial-profit-taking rule found in evidence.",
+        "No break-even rule found in evidence.",
+        "No trailing-stop rule found in evidence.",
+        "No time-based exit rule found in evidence."
+      ]
+    },
+    "generatedAt": "2026-07-29T00:05:09Z",
+    "limitations": {
+      "ambiguousDefinitions": [],
+      "discretionaryLanguage": [
+        "CLAIM|RAYNER_TEO|20260729|044: 'no matter how good a trading setup looks like no'"
+      ],
+      "insufficientEvidence": [],
+      "missingInformation": [
+        "No trade_management_rule claim found -- trade management is unknown."
+      ]
+    },
+    "riskLogic": {
+      "inferredRiskRules": [],
+      "missingRiskRules": [],
+      "statedRiskRules": [
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|003"
+          ],
+          "statement": "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|004"
+          ],
+          "statement": "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|006"
+          ],
+          "statement": "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make."
+        },
+        {
+          "confidence": "emerging",
+          "evidenceIds": [
+            "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+            "EV|EVSRC|RAYNER_TEO|20260729|001|040"
+          ],
+          "statement": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula."
+        }
+      ]
+    },
+    "schemaVersion": 1,
+    "scope": {
+      "confirmationTimeframes": [],
+      "executionTimeframes": [],
+      "higherTimeframes": [],
+      "instruments": [],
+      "markets": [],
+      "preferredMarketConditions": [],
+      "prohibitedOrAvoidedConditions": [],
+      "sessions": []
+    },
+    "sourceLineage": {
+      "claimIds": [
+        "CLAIM|RAYNER_TEO|20260729|001",
+        "CLAIM|RAYNER_TEO|20260729|002",
+        "CLAIM|RAYNER_TEO|20260729|003",
+        "CLAIM|RAYNER_TEO|20260729|004",
+        "CLAIM|RAYNER_TEO|20260729|005",
+        "CLAIM|RAYNER_TEO|20260729|006",
+        "CLAIM|RAYNER_TEO|20260729|007",
+        "CLAIM|RAYNER_TEO|20260729|008",
+        "CLAIM|RAYNER_TEO|20260729|009",
+        "CLAIM|RAYNER_TEO|20260729|010",
+        "CLAIM|RAYNER_TEO|20260729|011",
+        "CLAIM|RAYNER_TEO|20260729|012",
+        "CLAIM|RAYNER_TEO|20260729|013",
+        "CLAIM|RAYNER_TEO|20260729|014",
+        "CLAIM|RAYNER_TEO|20260729|015",
+        "CLAIM|RAYNER_TEO|20260729|016",
+        "CLAIM|RAYNER_TEO|20260729|017",
+        "CLAIM|RAYNER_TEO|20260729|018",
+        "CLAIM|RAYNER_TEO|20260729|019",
+        "CLAIM|RAYNER_TEO|20260729|020",
+        "CLAIM|RAYNER_TEO|20260729|021",
+        "CLAIM|RAYNER_TEO|20260729|022",
+        "CLAIM|RAYNER_TEO|20260729|023",
+        "CLAIM|RAYNER_TEO|20260729|024",
+        "CLAIM|RAYNER_TEO|20260729|025",
+        "CLAIM|RAYNER_TEO|20260729|026",
+        "CLAIM|RAYNER_TEO|20260729|027",
+        "CLAIM|RAYNER_TEO|20260729|028",
+        "CLAIM|RAYNER_TEO|20260729|029",
+        "CLAIM|RAYNER_TEO|20260729|030",
+        "CLAIM|RAYNER_TEO|20260729|031",
+        "CLAIM|RAYNER_TEO|20260729|032",
+        "CLAIM|RAYNER_TEO|20260729|033",
+        "CLAIM|RAYNER_TEO|20260729|034",
+        "CLAIM|RAYNER_TEO|20260729|035",
+        "CLAIM|RAYNER_TEO|20260729|036",
+        "CLAIM|RAYNER_TEO|20260729|037",
+        "CLAIM|RAYNER_TEO|20260729|038",
+        "CLAIM|RAYNER_TEO|20260729|039",
+        "CLAIM|RAYNER_TEO|20260729|040",
+        "CLAIM|RAYNER_TEO|20260729|041",
+        "CLAIM|RAYNER_TEO|20260729|042",
+        "CLAIM|RAYNER_TEO|20260729|043",
+        "CLAIM|RAYNER_TEO|20260729|044",
+        "CLAIM|RAYNER_TEO|20260729|045",
+        "CLAIM|RAYNER_TEO|20260729|046"
+      ],
+      "evidenceIds": [
+        "EV|EVSRC|RAYNER_TEO|20260729|001|001",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|002",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|005",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|012",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|013",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|021",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|031",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|032",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|035",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|040",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|044",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|045",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|046",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|047",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|048",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|049",
+        "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+      ],
+      "segmentIds": [
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|002",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|005",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|007",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|008",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|009",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|011",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|012",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|013",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|014",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|015",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|016",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|017",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|018",
+        "TSEG|INTAKE|RAYNER_TEO|20260729|001|019"
+      ],
+      "sourceIds": [
+        "EVSRC|RAYNER_TEO|20260729|001"
+      ]
+    },
+    "status": "DRAFT_RESEARCH_ONLY",
+    "strategyName": "RAYNER_TEO Trading Strategy (Draft)",
+    "supersedesBlueprintId": null,
+    "traderId": "RAYNER_TEO",
+    "validationStatus": {
+      "paperTradingStatus": "not_available",
+      "productionStatus": "not_applicable",
+      "replayStatus": "not_available",
+      "researchStatus": "draft"
+    },
+    "version": 1,
+    "workflow": [
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing.",
+          "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture.",
+          "Structure is read across the whole visible chart from left to right rather than from the most recent few candles.",
+          "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated.",
+          "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone."
+        ],
+        "confidence": "emerging",
+        "description": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it.",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|008",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|014",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|015",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|016",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|019",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|020",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|024",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|025",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|026",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|029",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|033",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|034",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|041",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+        ],
+        "stageName": "Setup Identification",
+        "stageNumber": 1,
+        "unknowns": [
+          "What makes a swing point 'major' enough to count?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter.",
+          "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners.",
+          "Two tools are used to locate areas of value: support/resistance and moving averages.",
+          "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop."
+        ],
+        "confidence": "emerging",
+        "description": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill.",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|011",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|018",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|023",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|027",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+        ],
+        "stageName": "Entry Trigger",
+        "stageNumber": 2,
+        "unknowns": [
+          "Claim 'CLAIM|RAYNER_TEO|20260729|011' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|011' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|018' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|018' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|023' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|023' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|027' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|027' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|040' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|040' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Which moving average period, and on which timeframe?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse.",
+          "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control."
+        ],
+        "confidence": "emerging",
+        "description": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when).",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|028",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|030",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|031"
+        ],
+        "stageName": "Confirmation",
+        "stageNumber": 3,
+        "unknowns": [
+          "Claim 'CLAIM|RAYNER_TEO|20260729|028' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|030' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|030' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|031' has no session recorded -- does this rule apply in every session or only specific ones?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|031' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing."
+        ],
+        "confidence": "emerging",
+        "description": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide.",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|022",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|049"
+        ],
+        "stageName": "Invalidation",
+        "stageNumber": 4,
+        "unknowns": [
+          "Claim 'CLAIM|RAYNER_TEO|20260729|022' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|045' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely.",
+          "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering.",
+          "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that.",
+          "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on.",
+          "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise."
+        ],
+        "confidence": "emerging",
+        "description": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA.",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|009",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|010",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|036",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|038",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|039",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|045"
+        ],
+        "stageName": "Stop Placement",
+        "stageNumber": 5,
+        "unknowns": [
+          "Claim 'CLAIM|RAYNER_TEO|20260729|009' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|010' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|035' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|036' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|037' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|041' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Does the ATR-buffer stop rule generalise beyond this educator's setups?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice."
+        ],
+        "confidence": "emerging",
+        "description": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price.",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|043",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|046"
+        ],
+        "stageName": "Target Selection",
+        "stageNumber": 6,
+        "unknowns": [
+          "Claim 'CLAIM|RAYNER_TEO|20260729|039' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "Claim 'CLAIM|RAYNER_TEO|20260729|042' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
+          "How far before the swing high should the target sit?"
+        ]
+      },
+      {
+        "classification": "preferred",
+        "competingInterpretations": [
+          "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital.",
+          "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row.",
+          "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make."
+        ],
+        "confidence": "emerging",
+        "description": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula.",
+        "evidenceLinks": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|003",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|004",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|006",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|040"
+        ],
+        "stageName": "Risk Sizing",
+        "stageNumber": 7,
+        "unknowns": [
+          "Is 1% a hard limit or a starting guideline?"
+        ]
+      }
+    ]
+  },
+  "traderId": "RAYNER_TEO",
+  "traderProfile": {
+    "aliases": [],
+    "canonicalName": "RAYNER_TEO",
+    "claimCount": 46,
+    "confidenceSummary": {
+      "emerging": 46
+    },
+    "confirmationConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|028"
+        ],
+        "status": "confirmed",
+        "value": "The entry trigger answers WHEN to enter, completing a three-part framework: structure (what), area of value (where), entry trigger (when)."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|030"
+        ],
+        "status": "confirmed",
+        "value": "The hammer: sellers push price to the lows of the session, buyers reclaim it and close near the highs. Read as buyers taking control."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|031"
+        ],
+        "status": "confirmed",
+        "value": "Bullish engulfing: a down candle followed by an up candle that opens lower and closes beyond the prior candle's opening price, read as buyers overwhelming the prior session's sellers. The bearish version is the inverse."
+      }
+    ],
+    "contradictionCount": 2,
+    "entryConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|011"
+        ],
+        "status": "confirmed",
+        "value": "A buy limit order enters below the current market price and fills only if price reaches that level; the acknowledged cost is that it may never fill."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|018"
+        ],
+        "status": "confirmed",
+        "value": "Trade in the direction of the trend. Counter-trend trading is acknowledged as a valid specialisation for some traders, but is not recommended for beginners."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|023"
+        ],
+        "status": "confirmed",
+        "value": "Area of value answers WHERE to trade, as distinct from market structure which answers WHAT to do. Being in a trend is explicitly not a reason to enter."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|027"
+        ],
+        "status": "confirmed",
+        "value": "Two tools are used to locate areas of value: support/resistance and moving averages."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|044"
+        ],
+        "status": "confirmed",
+        "value": "When risk-to-reward is unattractive, the prescribed fix is to improve the ENTRY using a buy limit order, not to move the stop."
+      }
+    ],
+    "evidenceCount": 50,
+    "extractionStatus": "completed",
+    "generatedAt": "2026-07-29T00:05:09Z",
+    "hypothesisCount": 32,
+    "instrumentsMentioned": [],
+    "invalidationConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|022"
+        ],
+        "status": "confirmed",
+        "value": "When a chart is ambiguous the prescribed action is to skip it and look at another instrument. Staying out is treated as a valid decision rather than a failure to decide."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|049"
+        ],
+        "status": "confirmed",
+        "value": "A trade with correct structure but no area of value is skipped. Demonstrated twice - including one case with a valid entry trigger present, which is still skipped because the area of value is missing."
+      }
+    ],
+    "limitations": [
+      "40 unresolved question(s) remain open for this trader.",
+      "2 contradiction(s) remain unresolved for this trader.",
+      "One or more claims are still pending_review and have not been confirmed by a human."
+    ],
+    "marketConditionsAvoided": [],
+    "marketConditionsPreferred": [],
+    "marketsMentioned": [],
+    "observationCount": 6,
+    "primaryConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|017",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|033"
+        ],
+        "status": "confirmed",
+        "value": "Market structure is the first question to answer on any chart - buy, sell, or stay out - and everything else is secondary to it."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|019"
+        ],
+        "status": "confirmed",
+        "value": "Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|020"
+        ],
+        "status": "confirmed",
+        "value": "Structure is read across the whole visible chart from left to right rather than from the most recent few candles."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|034"
+        ],
+        "status": "confirmed",
+        "value": "A valid setup requires all three components to align: structure, area of value, and entry trigger. Demonstrated on USDZAR - downtrend, price at resistance, bearish engulfing."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|041"
+        ],
+        "status": "confirmed",
+        "value": "Where two independent areas of value coincide - here a 50-period moving average and a prior resistance-turned-support - the confluence is named a 'stacked area' and treated as stronger than either alone."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|050"
+        ],
+        "status": "confirmed",
+        "value": "The three components are ordered and gated: without an area of value the entry trigger is not even evaluated."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|008"
+        ],
+        "status": "confirmed",
+        "value": "Risk-to-reward ratio is defined as reward as a multiple of the amount risked, worked through at 1:2 and 1:10."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|014"
+        ],
+        "status": "confirmed",
+        "value": "An uptrend is a series of higher highs and higher lows."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|015"
+        ],
+        "status": "confirmed",
+        "value": "A downtrend is a series of lower highs and lower lows."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|016"
+        ],
+        "status": "confirmed",
+        "value": "A range is price contained between highs and lows, distinguished from a trend by repeated rejection at the boundary rather than a break beyond it. In a range both directions are tradeable."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|024"
+        ],
+        "status": "confirmed",
+        "value": "Support is an area where buying pressure COULD step in; resistance is an area where selling pressure COULD step in. The conditional is stated deliberately - trading is described as probabilities, never certainty."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|025"
+        ],
+        "status": "confirmed",
+        "value": "Broken support tends to become resistance and broken resistance tends to become support."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|026"
+        ],
+        "status": "confirmed",
+        "value": "Support and resistance are areas rather than exact prices. Price may overshoot, undershoot or fail to touch the level before reversing, and the level must be adjusted over time as new price action arrives."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|029"
+        ],
+        "status": "confirmed",
+        "value": "Every candle carries four data points - open, close, high and low of the session - and the body/wick terminology follows from them."
+      }
+    ],
+    "profileId": "PROFILE|RAYNER_TEO|20260729|001",
+    "reviewStatus": "pending",
+    "riskConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|003"
+        ],
+        "status": "confirmed",
+        "value": "Leverage amplifies gains and losses symmetrically. The worked example: a 1:10 leveraged position turns a 10% adverse move into a 100% loss of capital."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|004"
+        ],
+        "status": "confirmed",
+        "value": "Risk management is defined as the ability to survive a series of consecutive losses with the account substantially intact - the worked benchmark is ten losses in a row."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|006"
+        ],
+        "status": "confirmed",
+        "value": "The stated general guideline is to risk no more than 1% of the account per trade, with 2-3% noted as a choice some traders make."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|007",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|040"
+        ],
+        "status": "confirmed",
+        "value": "Position size = amount to risk / (stop-loss distance x value per pip). A complete, mechanical sizing formula."
+      }
+    ],
+    "schemaVersion": 1,
+    "sessionsMentioned": [],
+    "sourceCount": 1,
+    "sourceLineage": {
+      "claimIds": [
+        "CLAIM|RAYNER_TEO|20260729|001",
+        "CLAIM|RAYNER_TEO|20260729|002",
+        "CLAIM|RAYNER_TEO|20260729|003",
+        "CLAIM|RAYNER_TEO|20260729|004",
+        "CLAIM|RAYNER_TEO|20260729|005",
+        "CLAIM|RAYNER_TEO|20260729|006",
+        "CLAIM|RAYNER_TEO|20260729|007",
+        "CLAIM|RAYNER_TEO|20260729|008",
+        "CLAIM|RAYNER_TEO|20260729|009",
+        "CLAIM|RAYNER_TEO|20260729|010",
+        "CLAIM|RAYNER_TEO|20260729|011",
+        "CLAIM|RAYNER_TEO|20260729|012",
+        "CLAIM|RAYNER_TEO|20260729|013",
+        "CLAIM|RAYNER_TEO|20260729|014",
+        "CLAIM|RAYNER_TEO|20260729|015",
+        "CLAIM|RAYNER_TEO|20260729|016",
+        "CLAIM|RAYNER_TEO|20260729|017",
+        "CLAIM|RAYNER_TEO|20260729|018",
+        "CLAIM|RAYNER_TEO|20260729|019",
+        "CLAIM|RAYNER_TEO|20260729|020",
+        "CLAIM|RAYNER_TEO|20260729|021",
+        "CLAIM|RAYNER_TEO|20260729|022",
+        "CLAIM|RAYNER_TEO|20260729|023",
+        "CLAIM|RAYNER_TEO|20260729|024",
+        "CLAIM|RAYNER_TEO|20260729|025",
+        "CLAIM|RAYNER_TEO|20260729|026",
+        "CLAIM|RAYNER_TEO|20260729|027",
+        "CLAIM|RAYNER_TEO|20260729|028",
+        "CLAIM|RAYNER_TEO|20260729|029",
+        "CLAIM|RAYNER_TEO|20260729|030",
+        "CLAIM|RAYNER_TEO|20260729|031",
+        "CLAIM|RAYNER_TEO|20260729|032",
+        "CLAIM|RAYNER_TEO|20260729|033",
+        "CLAIM|RAYNER_TEO|20260729|034",
+        "CLAIM|RAYNER_TEO|20260729|035",
+        "CLAIM|RAYNER_TEO|20260729|036",
+        "CLAIM|RAYNER_TEO|20260729|037",
+        "CLAIM|RAYNER_TEO|20260729|038",
+        "CLAIM|RAYNER_TEO|20260729|039",
+        "CLAIM|RAYNER_TEO|20260729|040",
+        "CLAIM|RAYNER_TEO|20260729|041",
+        "CLAIM|RAYNER_TEO|20260729|042",
+        "CLAIM|RAYNER_TEO|20260729|043",
+        "CLAIM|RAYNER_TEO|20260729|044",
+        "CLAIM|RAYNER_TEO|20260729|045",
+        "CLAIM|RAYNER_TEO|20260729|046"
+      ],
+      "sourceIds": [
+        "EVSRC|RAYNER_TEO|20260729|001"
+      ]
+    },
+    "stopLossConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|009"
+        ],
+        "status": "confirmed",
+        "value": "A stop-loss order exits the position when price reaches a specified level against the trade. It is the only one of the four order types whose function is exiting rather than entering."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|010"
+        ],
+        "status": "confirmed",
+        "value": "A stop-loss is recommended on every trade for a leveraged trader, with the acknowledged cost that it will sometimes stop a trade out prematurely."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|036"
+        ],
+        "status": "confirmed",
+        "value": "The stop is placed at the level that would invalidate the trade's premise - for a buy-at-support setup, below the support area, because a break there falsifies the hypothesis the trade was based on."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|037",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|039"
+        ],
+        "status": "confirmed",
+        "value": "The stop distance is set objectively as: the low of the support area minus one ATR. The stated ATR setting is a 20-period ATR using SMA."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|038"
+        ],
+        "status": "confirmed",
+        "value": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|045"
+        ],
+        "status": "confirmed",
+        "value": "The stop must not be tightened to improve risk-to-reward, because it is placed where the setup is invalidated and exiting before that point is not coherent with the trade's premise."
+      }
+    ],
+    "strategyTypes": [],
+    "targetConcepts": [
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|042",
+          "EV|EVSRC|RAYNER_TEO|20260729|001|043"
+        ],
+        "status": "confirmed",
+        "value": "The target is set just BEFORE the nearest opposing swing high or low, not at it, because that level is where opposing pressure is expected and because the level is an area rather than a price."
+      },
+      {
+        "evidenceIds": [
+          "EV|EVSRC|RAYNER_TEO|20260729|001|046"
+        ],
+        "status": "confirmed",
+        "value": "The target must not be moved beyond an opposing level merely to make risk-to-reward look acceptable. In a range this is called a very bad idea; in a trend, extending the target past a prior swing high is described as a defensible but lower-probability choice."
+      }
+    ],
+    "timeframesMentioned": [],
+    "tradeManagementConcepts": [],
+    "traderId": "RAYNER_TEO",
+    "unresolvedQuestionCount": 40
+  }
+}

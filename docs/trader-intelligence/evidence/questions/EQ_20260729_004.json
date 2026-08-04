@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|039",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|004",
+  "questionText": "How far before the swing high should the target sit?",
+  "questionType": "ambiguous_statement",
+  "reason": "'Just before' the level, and 'be reasonable' - no distance, no ATR fraction, no percentage. The stop rule in the same source IS quantified (one ATR), so the asymmetry is notable: the risk leg is mechanical and the reward leg is discretionary.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

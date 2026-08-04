@@ -1,0 +1,28 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+  "contentHash": "7f954e14ec5cb0a6b17de28fb0e6caed6910e6cc4f2ec72c8c6cc3b3441e58d2",
+  "createdAt": "2026-07-29T23:45:30Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "fileBytes": 15232,
+    "manifestPath": "docs/trader-intelligence/intake/manifests/alexg-break-and-retest-26k-12-hours.ingest.json"
+  },
+  "provenanceStatus": "partially_verified",
+  "registeredAt": "2026-07-29T23:45:30Z",
+  "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-break-and-retest-26k-12-hours.raw.txt",
+  "schemaVersion": 1,
+  "sourceDate": null,
+  "sourceId": "EVSRC|ALEX_G|20260729|001",
+  "sourceType": "transcript",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+  "traderId": "ALEX_G",
+  "transcriptReference": "docs/trader-intelligence/imports/alex-g/normalized/alexg-break-and-retest-26k-12-hours.normalization-map.json",
+  "updatedAt": "2026-07-29T23:45:30Z"
+}

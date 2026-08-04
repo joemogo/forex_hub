@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|145",
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|160",
+  "questionText": "Is the take-profit ever moved for a market reason, and if so on what signal?",
+  "questionType": "missing_target_logic",
+  "reason": "This source's central lesson is that a target should not be cut because the dollar figure feels large. It does not say whether a target may be cut for a MARKET reason - opposing structure, a session ending, a counter-signal. Source #5's 'set and forget' framing implies never; this source only rules out the emotional case. The distinction matters for any trade-management rule and is not made.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

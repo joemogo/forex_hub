@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "12:36",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 99,
+  "lineStart": 93,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "What do we do? Boom. We push. We push above it. Step one, check. Step two, what are we looking for? Either a fiveminut break of structure inverse for value gap, SMT divergence, or 79% extension closure underneath the Fibonacci. So, let's just go through all of these. For price to break structure to the downside, we need price to close underneath the most recent low within the uptrend. Okay, so we're in an uptrend right now, right? We close above this most recent high. Boom. This is the most recent low that we have. When do we break structure? Boom. On this candlestick closure. Awesome. What else can we use? We can use an inverse for value gap. So this is the lowest gap on this stack of gaps. We have a gap right here, gap right here, and a gap right here. When do we inverse this gap? Boom. On the same candlestick. Awesome. We ended up we are changing direction.",
+  "schemaVersion": 1,
+  "sectionTitle": "Break of structure and inverse fair value gap defined",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|010",
+  "segmentType": "other",
+  "sequenceNumber": 10,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "11:52",
+  "textHash": "797084e41996f11b482e380870a1f63a8cec9fb88a8b313eb78ee10f9d11a86c"
+}

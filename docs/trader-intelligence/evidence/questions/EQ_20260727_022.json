@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260727|011",
+  "createdAt": "2026-07-27T22:41:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260727|022",
+  "questionText": "The stated procedure runs weekly through 15-minute, but in practice the directional pass stops after the 4-hour. Are the 2h/1h/30m/15m timeframes part of the directional score or not?",
+  "questionType": "self_contradiction",
+  "reason": "The taught procedure and the demonstrated procedure differ within the same source.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260727|001"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|025",
+  "createdAt": "2026-07-28T02:23:09Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|017",
+  "questionText": "Alex G says no strategy can trade liquidity sweeps, yet describes his own live AUDCHF position as 'entering a trade technically after the liquidity sweep'. Is the objection to anticipating sweeps only, or to using them at all?",
+  "questionType": "behavior_conflicts_with_instruction",
+  "reason": "Same source, ~9 minutes apart. The distinction matters because it determines whether the contradiction with TJR is total or partial.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|002"
+  ]
+}

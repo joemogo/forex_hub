@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|023",
+  "createdAt": "2026-07-28T02:23:09Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|018",
+  "questionText": "'Retail traders only make up 3% of the market' is offered as the load-bearing premise for rejecting the institutional-sweep narrative. What is the source of the 3% figure, and 3% of what — volume, participants, notional?",
+  "questionType": "insufficient_independent_support",
+  "reason": "An unsourced statistic carrying the weight of a mechanism argument.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|002"
+  ]
+}

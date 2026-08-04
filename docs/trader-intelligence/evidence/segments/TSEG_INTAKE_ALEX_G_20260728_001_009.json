@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T01:36:32Z",
+  "endTimestamp": "9:13",
+  "intakeId": "INTAKE|ALEX_G|20260728|001",
+  "language": "en",
+  "lineEnd": 437,
+  "lineStart": 372,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "since this has now created a new lower low this becomes the new lower low and you must need a new lower high it is impossible to have a new lower low without a new lower high so if we were to implement the exact same snake trick you get the head of the snake right here you follow the body here and as soon as the movement turns this now becomes the new lower high that is where the snake has shifted that is the last lower high that the market has left now exactly the same as when the market was bullish this Market can do absolutely whatever it wants inside of here as long as we don't body Candlestick close above or below the lower high or lower low we will remain bearish if we decide from this point right here to then do this we have created a new lower low meaning we must need a new lower high and a new lower high is identified by getting the head of the snake following it back and as soon as you get the turn that is where the new lower high is placed it is very easy and very straightforward now same exact thing happens the the moment the body Candlestick closes above we have now shifted and now this is a new higher high this becomes a higher high it is impossible to have a higher high without a higher low so then this higher low will then shift to then this new point",
+  "schemaVersion": 1,
+  "sectionTitle": "Bearish mirror rules and the snake trick for the lower high",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|001|009",
+  "segmentType": "other",
+  "sequenceNumber": 9,
+  "sourceId": "EVSRC|ALEX_G|20260728|001",
+  "speaker": null,
+  "startTimestamp": "7:42",
+  "textHash": "e61319dd381825775ae8a6ed550614d57b33f00d3368bbc9b298c539c41068cd"
+}

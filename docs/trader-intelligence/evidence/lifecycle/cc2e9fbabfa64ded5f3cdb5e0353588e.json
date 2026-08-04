@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "INTAKE|ALEX_G|20260727|001",
+  "entityType": "INTAKE_MANIFEST",
+  "eventId": "LCEVT|INTAKE_MANIFEST|INTAKE|ALEX_G|20260727|001|001",
+  "eventType": "created",
+  "metadata": {},
+  "newStatus": "registered",
+  "priorStatus": null,
+  "reason": "Intake manifest registered.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-27T22:41:09Z"
+}

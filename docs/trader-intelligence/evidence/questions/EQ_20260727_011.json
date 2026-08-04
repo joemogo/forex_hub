@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260727|011",
+  "questionText": "Every claim in the TJR Knowledge Library currently derives from this single transcript, so no claim can exceed 'emerging' confidence. What second independent source should be acquired?",
+  "questionType": "insufficient_independent_support",
+  "reason": "One EvidenceSource means one independence group; the confidence engine caps single-source claims by design.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

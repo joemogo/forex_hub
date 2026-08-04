@@ -1,0 +1,35 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "Exactly one of the two conflicting claims reflects the trader's primary rule."
+  ],
+  "confidence": "contested",
+  "contradictingEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|051"
+  ],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|030",
+  "independentVariables": [
+    "stop_rule",
+    "causal_hypothesis"
+  ],
+  "limitations": [
+    "Derived from an unresolved ContradictionRecord (XCONTRA|20260729|002) -- requires owner review."
+  ],
+  "proposedPaperTest": "Paper-trade both interpretations and compare results.",
+  "proposedReplayTest": "Replay historical price action under both interpretations and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|037",
+    "CLAIM|TJR|20260727|036"
+  ],
+  "statement": "The stop is deliberately NOT placed immediately below support, on the stated reasoning that price frequently spikes just beyond the level before continuing. The ATR buffer exists to absorb that may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|036).",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [
+    "EV|EVSRC|RAYNER_TEO|20260729|001|038"
+  ],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

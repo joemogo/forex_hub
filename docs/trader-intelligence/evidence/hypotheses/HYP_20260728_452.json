@@ -1,0 +1,48 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The knowledge gap (GAP|20260728|067) reflects a real, not merely incidental, omission."
+  ],
+  "confidence": "insufficient_evidence",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-28T20:52:12Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260728|452",
+  "independentVariables": [
+    "session"
+  ],
+  "limitations": [
+    "Proposed from an unresolved knowledge gap (GAP|20260728|067), not from direct evidence."
+  ],
+  "proposedPaperTest": "Paper-trade across varying session conditions and compare results.",
+  "proposedReplayTest": "Replay historical price action segmented by session and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|ALEX_G|20260727|026",
+    "CLAIM|ALEX_G|20260727|028",
+    "CLAIM|ALEX_G|20260727|029",
+    "CLAIM|ALEX_G|20260727|030",
+    "CLAIM|ALEX_G|20260727|031",
+    "CLAIM|ALEX_G|20260727|032",
+    "CLAIM|ALEX_G|20260727|034",
+    "CLAIM|ALEX_G|20260728|011",
+    "CLAIM|ALEX_G|20260728|021",
+    "CLAIM|ALEX_G|20260728|028",
+    "CLAIM|ALEX_G|20260728|030",
+    "CLAIM|ALEX_G|20260728|032",
+    "CLAIM|ALEX_G|20260728|043",
+    "CLAIM|ALEX_G|20260728|046",
+    "CLAIM|ALEX_G|20260728|049",
+    "CLAIM|ALEX_G|20260728|068",
+    "CLAIM|ALEX_G|20260728|070",
+    "CLAIM|ALEX_G|20260728|074",
+    "CLAIM|ALEX_G|20260728|126",
+    "CLAIM|ALEX_G|20260728|128"
+  ],
+  "statement": "Session restrictions may materially affect this strategy's setup validity.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [],
+  "updatedAt": "2026-07-28T20:52:12Z"
+}

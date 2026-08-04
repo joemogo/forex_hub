@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "15:50",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 124,
+  "lineStart": 120,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "Liquidity sweep check. And that's the thing with this strategy. We don't need every single one of these, but in this case, we had every single one. Okay? So, in this case, we had every single one of them. Great. More power to us. And it was nice for us to be able to go through all of those examples. But we don't need every single one of them. We just need one to confirm, hey, the trend is changing. Cool. Once we get that, we are going to be looking for a fivem minute continuation confluence via equilibrium or a fair value gap.",
+  "schemaVersion": 1,
+  "sectionTitle": "Only one confirmation confluence is required; Step 3 introduced",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|012",
+  "segmentType": "other",
+  "sequenceNumber": 12,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "15:21",
+  "textHash": "c5be1a2d60f735598bc6af766e859e224b43e0200436f851e24d3c660b77bf56"
+}

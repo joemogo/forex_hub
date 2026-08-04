@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|TJR|20260727|045",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260727|006",
+  "questionText": "The two risk-to-reward figures are transcribed as 'one two 3.63' and '124.27'. What are the actual ratios?",
+  "questionType": "ambiguous_statement",
+  "reason": "Automatic-captioning artifacts; both are almost certainly '1:x' forms but the source text cannot settle which.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ]
+}

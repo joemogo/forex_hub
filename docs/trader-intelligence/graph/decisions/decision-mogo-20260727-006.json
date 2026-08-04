@@ -1,0 +1,36 @@
+{
+  "decisionId": "DECISION|MOGO|20260727|006",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-07-27",
+  "affectedEntityIds": [
+    "TJR",
+    "ALEX_G",
+    "ICT",
+    "JVM"
+  ],
+  "decisionType": "research",
+  "decisionScopeNote": "Applies retroactively to every existing link and to all future ingestion.",
+  "question": "Does a second source by the SAME educator constitute independent confirmation of a claim, and may it therefore raise that claim's confidence?",
+  "optionsConsidered": [
+    "Treat every registered source as an independent group, so two videos by one educator can carry a claim from 'emerging' to 'supported'",
+    "Collapse all sources by the same educator into a single independence group, so repetition by one person never raises confidence on its own",
+    "Apply a partial discount to same-educator sources rather than collapsing them entirely"
+  ],
+  "selectedOption": "Collapse all sources by the same educator into a single independence group, so repetition by one person never raises confidence on its own",
+  "rationale": "Owner directive of 2026-07-27: 'Do not treat repetition by the same educator as independent confirmation.' The confidence engine keys independence groups on sourceId by default, so before this decision a second Alex G video would have created a second group and could have carried shared claims from 'emerging' (22 points) to 'supported' (45) purely because one person said the same thing twice. That is consistency, not corroboration. POLICY-001 section G1 identified this exact lever and recommended deciding it BEFORE a second same-educator intake; this decision does so, one ingestion ahead of the case that would have triggered it. IMPLEMENTATION: EvidenceClaimLink.independenceGroup is set to 'AUTHOR|{traderId}' for every link, overriding the sourceId default already honoured by evidence_confidence._independence_groups(). No engine change was required. Applied retroactively to all 123 existing links across 104 claims; every affected claim's confidence was recomputed, and none changed state (all remain 'emerging'), confirming the policy tightens a ceiling rather than lowering existing scores. CONSEQUENCE THE OWNER SHOULD SEE: combined with the existing property that trader-scoped claims never merge (compute_claim_fingerprint includes traderId, so agreement BETWEEN educators also does not raise confidence), replay validation is now the ONLY remaining route by which any claim can reach 'supported'. That is a coherent and defensible position -- a trader restating himself, and a second trader agreeing, are both weaker than a test -- but it should be an explicit choice rather than an emergent one. If the owner wants cross-educator agreement to count, the recommended mechanism is a separate Concept-level consensus count (see CROSS-STRATEGY-ANALYSIS.md section 8 D2), not a relaxation of this decision.",
+  "supportingEvidenceIds": [],
+  "dissentingEvidenceIds": [],
+  "approvalScope": "research_only",
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-07-27T00:00:00Z",
+  "updatedAt": "2026-07-27T00:00:00Z"
+}

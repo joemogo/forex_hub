@@ -1,0 +1,33 @@
+{
+  "applicableMarketConditions": [],
+  "assumptions": [
+    "The knowledge gap (GAP|20260729|002) reflects a real, not merely incidental, omission."
+  ],
+  "confidence": "insufficient_evidence",
+  "contradictingEvidenceIds": [],
+  "createdAt": "2026-07-29T00:05:09Z",
+  "dependentVariables": [
+    "setup validity"
+  ],
+  "hypothesisId": "HYP|20260729|031",
+  "independentVariables": [
+    "session"
+  ],
+  "limitations": [
+    "Proposed from an unresolved knowledge gap (GAP|20260729|002), not from direct evidence."
+  ],
+  "proposedPaperTest": "Paper-trade across varying session conditions and compare results.",
+  "proposedReplayTest": "Replay historical price action segmented by session and compare outcomes.",
+  "schemaVersion": 1,
+  "sourceClaimIds": [
+    "CLAIM|RAYNER_TEO|20260729|011",
+    "CLAIM|RAYNER_TEO|20260729|018",
+    "CLAIM|RAYNER_TEO|20260729|023",
+    "CLAIM|RAYNER_TEO|20260729|027",
+    "CLAIM|RAYNER_TEO|20260729|040"
+  ],
+  "statement": "Session restrictions may materially affect this strategy's setup validity.",
+  "status": "PROPOSED_UNVALIDATED",
+  "supportingEvidenceIds": [],
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

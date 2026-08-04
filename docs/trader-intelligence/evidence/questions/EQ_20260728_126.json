@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|121",
+  "createdAt": "2026-07-28T04:42:15Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|126",
+  "questionText": "What is the source for '99% of traders lose money'?",
+  "questionType": "insufficient_independent_support",
+  "reason": "Unsourced, like the '3% of the market is retail' figure in source #3. Both are used as premises rather than as observations.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|005"
+  ]
+}

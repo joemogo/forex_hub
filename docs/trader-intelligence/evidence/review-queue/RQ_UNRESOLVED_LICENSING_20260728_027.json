@@ -1,0 +1,18 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "entityId": "INTAKE|ALEX_G|20260728|006",
+  "entityType": "INTAKE_MANIFEST",
+  "metadata": {},
+  "priority": "critical",
+  "queueEntryId": "RQ|UNRESOLVED_LICENSING|20260728|027",
+  "queueType": "unresolved_licensing",
+  "reason": "licensingStatus='restricted_third_party'.",
+  "resolution": null,
+  "reviewAction": null,
+  "reviewNotes": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-28T14:24:08Z"
+}

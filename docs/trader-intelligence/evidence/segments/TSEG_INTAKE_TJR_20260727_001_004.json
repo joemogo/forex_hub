@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "5:33",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 43,
+  "lineStart": 28,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "opportunity to be able to reverse price and push price in a in the opposite direction. Now something else that you guys need to understand are sessions. So there's three sessions within every single day. There's New York Stock Exchange open, there's London open, and there's Asian open. Okay, I am trading US indexes such as the S&P 500 and NASDAQ. Okay, so I'm always trading New York Stock Exchange open. But these other sessions are going to be super useful for us when it comes to identifying draws and liquidity cuz these previous sessions are going to give us session highs and session lows. Again, where does liquidity lie? Above highs and below lows. So, we are going to be able to utilize previous session highs and lows as very strong draws on liquidity for us. On top of that, we know that when we go into these new sessions, more often than not, there's going to be some form of manipulation on the market open to push price in whatever direction that it wants to go. So, just like how I was mentioning with liquidity, when we're in up when when we are in an uptrend, when we push above a high, a lot of people are going to press buy. But that also gives the market makers, especially if it's a market open, it gives them the opportunity to manipulate price above this high to be able to fill a bunch of their positions to end up sending price lower. Same thing with a downtrend. Let's say we are moving down, down, down. We have a low right here. And let's say that this is London sessions low and then boom, this is New York market open. What can the New York market makers do to be able to manipulate price in their favor? Well, they can go down, push price underneath this low. What is that going to cause people to do? They're going to want to enter into sells or enter into shorts. And then from there, what does that give them the opportunity to do? Fill their buy orders with no consequences. They'll be able to fill all of their massive buy orders right here and then cause price to go in the opposite direction. So, these two concepts are going to be super key when it comes to understanding our strategy. The next thing that we need to",
+  "schemaVersion": 1,
+  "sectionTitle": "Sessions, session highs/lows, and market-open manipulation",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|004",
+  "segmentType": "other",
+  "sequenceNumber": 4,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "3:41",
+  "textHash": "9a0bbdf2d41b9a090e30c28afeb4051c7fbf9de110f67c6f81f114b0b2523b1f"
+}

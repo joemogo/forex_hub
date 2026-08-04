@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T14:24:08Z",
+  "endTimestamp": "4:07",
+  "intakeId": "INTAKE|ALEX_G|20260728|006",
+  "language": "en",
+  "lineEnd": 252,
+  "lineStart": 211,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "would you invest your money put this in per like put this into perspective like would you put money into a business just to just to fund the business no that makes no sense you would only invest your money into a business if it's worth the investment if you think that business is going to have a potential return or if the business is looking it's worth putting your money into just not going to throw it somebody presents to you a business opportunity like oh bro i have um i don't know pens that are for that that [ __ ] shoot water out you know are you gonna throw them money no you're only gonna throw money if it makes sense",
+  "schemaVersion": 1,
+  "sectionTitle": "The business-investment analogy",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|006|007",
+  "segmentType": "other",
+  "sequenceNumber": 7,
+  "sourceId": "EVSRC|ALEX_G|20260728|006",
+  "speaker": null,
+  "startTimestamp": "3:32",
+  "textHash": "5a491a5a25d21861ca93484496576f1554be6a7721089ad19b2864b3ad201f8e"
+}

@@ -1,0 +1,489 @@
+{
+  "_instructions": "1) Retitle and re-cut `sections` so no quotable statement spans a boundary. 2) Fill `annotations`: each needs key, section, excerpt (VERBATIM substring of that section's text), evidenceType, directness, extractionCertainty, evidenceQuality, and either claimType+claim (new claim) or supports=<earlier key> (corroborating evidence). 3) Add `contradictions` [{a,b,type,severity,rationale}] and `openQuestions` [{claim|null,type,priority,blocking,text,reason}]. 4) Run: ingest.py --apply <this file> --dry-run, then without --dry-run. See docs/trader-intelligence/STANDARDS-extraction.md.",
+  "annotations": [
+    {
+      "key": "agnostic",
+      "section": 1,
+      "excerpt": "it does not matter what currency pair you have what stock pair you have what crypto markets in front of you binaries anything that has a chart has Market structure",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Market structure applies to any instrument and any timeframe; the reading procedure does not depend on which market or timeframe is displayed."
+    },
+    {
+      "key": "tf_agnostic",
+      "section": 1,
+      "excerpt": "the advanced way on how to look at Market structure and not care about the time frame and not care about the markets behind the market structure",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "supports": "agnostic"
+    },
+    {
+      "key": "bull_restate",
+      "section": 2,
+      "excerpt": "if a market is bullish a market is consisted of higher highs and higher lows it is impossible",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260727|012",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR RESTATEMENT of Alex G source #1. Under DECISION|MOGO|20260727|006 this shares independence group AUTHOR|ALEX_G and therefore does not raise confidence."
+    },
+    {
+      "key": "hl_is_last",
+      "section": 2,
+      "excerpt": "the last higher low is the last higher low not the highest low or the most low low",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "The active higher low is the most recent higher low, not the lowest low in the move."
+    },
+    {
+      "key": "trend_from_structure",
+      "section": 8,
+      "excerpt": "the trend is identified by the market structure without Market structure you cannot identify the trend",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Trend is determined by market structure; it cannot be identified without it."
+    },
+    {
+      "key": "slope_not_trend",
+      "section": 7,
+      "excerpt": "they just pull up to a chart and because they see the overall movement heading up or the overall movement heading down they think a market is bullish or a market is bearish and that cannot be further from the truth",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "failure_condition",
+      "claim": "Judging trend from the visual slope of price rather than from market structure is a primary trader error."
+    },
+    {
+      "key": "structure_in_range",
+      "section": 10,
+      "excerpt": "sure it could be an a ranging Market but inside of a ranging Market there is Market structure",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "definition",
+      "claim": "Market structure exists inside consolidation and ranging conditions; a range is still classifiable as bullish or bearish."
+    },
+    {
+      "key": "shift_on_body_close",
+      "section": 3,
+      "excerpt": "the market will remain bullish as long as we stay in between this higher high and higher low the moment we body close above or under this line is when we will have a shift in the market",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260727|022",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR RESTATEMENT of the body-close invalidation rule from Alex G source #1."
+    },
+    {
+      "key": "wicks_not_structure",
+      "section": 5,
+      "excerpt": "the Wicks are just the trail of where the market went but it's not the actual Market",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260727|020",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR RESTATEMENT of the bodies-not-wicks rule. That claim carries the cross-educator contradiction XCONTRA|20260727|003 against TJR."
+    },
+    {
+      "key": "hh_forces_hl",
+      "section": 6,
+      "excerpt": "the moment we body close above we have then created a new higher high and we must have a new higher low",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "supportsClaimId": "CLAIM|ALEX_G|20260727|016",
+      "relationshipType": "supports",
+      "notes": "SAME-EDUCATOR RESTATEMENT of the higher-low reassignment rule."
+    },
+    {
+      "key": "ll_forces_lh",
+      "section": 9,
+      "excerpt": "since this has now created a new lower low this becomes the new lower low and you must need a new lower high it is impossible to have a new lower low without a new lower high",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Every new lower low forces reassignment of the active lower high to the most recent turn."
+    },
+    {
+      "key": "range_freedom",
+      "section": 9,
+      "excerpt": "this Market can do absolutely whatever it wants inside of here as long as we don't body Candlestick close above or below the lower high or lower low we will remain bearish",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "invalidation_rule",
+      "claim": "Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state."
+    },
+    {
+      "key": "any_size_counts",
+      "section": 11,
+      "excerpt": "yes something as small as that counts as a shift of structure because the market simply did shift structure",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "A body close beyond a structure level counts as a shift regardless of how small the displacement is; no minimum size threshold applies."
+    },
+    {
+      "key": "snake_trick",
+      "section": 4,
+      "excerpt": "I like using my snake trick where I simply get this body of the snake and at the moment that the snake has a sharp turn that is the most higher low",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "setup_requirement",
+      "claim": "The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick')."
+    },
+    {
+      "key": "snake_bearish",
+      "section": 9,
+      "excerpt": "a new lower high is identified by getting the head of the snake following it back and as soon as you get the turn that is where the new lower high is placed",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "supports": "snake_trick"
+    },
+    {
+      "key": "line_chart_aid",
+      "section": 5,
+      "excerpt": "if I were to come into here and I would erase the candlesticks and go to the line chart you can see that the structure is at this higher low and at this higher high",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "setup_requirement",
+      "claim": "The line chart is used as a visual aid to locate body-based structure points before returning to the candlestick chart."
+    },
+    {
+      "key": "no_chasing",
+      "section": 15,
+      "excerpt": "should I go and chase this market and continue buying with it or is the market at too much of a high price or too much at a low price and wait for a retracement so then I can execute the trade",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "claimType": "entry_rule",
+      "claim": "At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option."
+    },
+    {
+      "key": "retrace_better_rate",
+      "section": 16,
+      "excerpt": "when we have this retracement now I'm getting a better rate on the investment that I'm making it makes more of a logical sense so then I have a greater return",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "medium",
+      "supports": "no_chasing"
+    },
+    {
+      "key": "tf_detail_sltp",
+      "section": 14,
+      "excerpt": "we're looking at the exact same Market structure just more details of it so we have a better understanding of how much more can this move go how long can we have on our stop-loss on a takeprofit",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "moderate",
+      "evidenceQuality": "medium",
+      "claimType": "definition",
+      "claim": "Lower timeframes provide the detail used to judge how far a move may run and how much room a stop-loss and take-profit require."
+    },
+    {
+      "key": "only_fifty_percent",
+      "section": 17,
+      "excerpt": "Market structure is only 50% of the problem now how you do that together with top analysis entry signal and trading at the the right times is where you actually make the money",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "certain",
+      "evidenceQuality": "high",
+      "claimType": "setup_requirement",
+      "claim": "Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required."
+    },
+    {
+      "key": "accuracy_claim",
+      "section": 16,
+      "excerpt": "which the majority of the time is going to give you anywhere from a 60 to 75% accuracy on every single one of your trades",
+      "evidenceType": "explicit_statement",
+      "directness": "direct_explicit",
+      "extractionCertainty": "high",
+      "evidenceQuality": "low",
+      "claimType": "performance_hypothesis",
+      "claim": "Alex G asserts that correctly reading market structure yields 60-75% trade accuracy. No sample, period, instrument, methodology or verifiable record is given."
+    }
+  ],
+  "contradictions": [],
+  "manifestVersion": 1,
+  "normalization": {
+    "charsRemoved": 2275,
+    "lineCount": 1006,
+    "linesTransformed": 502,
+    "profile": "youtube_timestamp_lines",
+    "reversibilityProof": "Reassembly of the recorded parts equals the source line; asserted for every transformed line at generation time.",
+    "reversible": true,
+    "unmatchedLines": [],
+    "wordsAdded": 0,
+    "wordsRemoved": 0,
+    "wordsReordered": 0
+  },
+  "openQuestions": [
+    {
+      "claim": "snake_trick",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "The 'snake trick' locates a structure point at 'a sharp turn'. What quantitatively counts as a turn? No pivot strength, minimum swing size, lookback window or bar count is given, so the procedure is discretionary rather than algorithmic.",
+      "reason": "The only stated method for placing the active HL/LH depends on an undefined visual judgement."
+    },
+    {
+      "claim": "any_size_counts",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "Any body close beyond a structure level counts as a shift regardless of size. How are false breaks, noise and immediate reversals handled? No minimum displacement, ATR filter or confirmation-bar requirement is stated.",
+      "reason": "The source explicitly rules OUT a size threshold, which resolves one ambiguity but leaves false-break handling entirely unaddressed."
+    },
+    {
+      "claim": "accuracy_claim",
+      "type": "insufficient_independent_support",
+      "priority": "critical",
+      "blocking": "blocks_promotion",
+      "text": "The 60-75% accuracy claim has no supporting evidence: no sample size, date range, instrument, timeframe, trade log, or definition of what 'accuracy' measures. What verifiable record supports it?",
+      "reason": "Stated once, in passing, immediately before a promotional close. Recorded as performance_hypothesis at low evidence quality and must never be treated as evidence-backed."
+    },
+    {
+      "claim": "only_fifty_percent",
+      "type": "unclear_scope",
+      "priority": "high",
+      "blocking": "blocks_rule_candidate",
+      "text": "'Trading at the right times' is named as one of the four requirements for profitability but is never defined anywhere in either Alex G source. What are the right times?",
+      "reason": "A stated requirement of the method with no content attached to it."
+    },
+    {
+      "claim": "tf_detail_sltp",
+      "type": "missing_stop_placement",
+      "priority": "critical",
+      "blocking": "blocks_promotion",
+      "text": "Lower timeframes are said to inform 'how long can we have on our stop-loss on a takeprofit', but no stop rule, target rule, risk percentage or position sizing appears in either Alex G source. What are the actual rules?",
+      "reason": "Second Alex G source, still zero stop_rule / target_rule / risk_rule claims. This is now a confirmed structural gap in his published material rather than an omission from one video."
+    },
+    {
+      "claim": "no_chasing",
+      "type": "unclear_scope",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "A retracement is preferred over chasing an extreme, but no retracement depth, measurement method or invalidation point is given. How far back must price come, and what invalidates the wait?",
+      "reason": "The execution preference is stated qualitatively with no measurable trigger."
+    },
+    {
+      "claim": "agnostic",
+      "type": "unclear_scope",
+      "priority": "medium",
+      "blocking": "non_blocking",
+      "text": "This source states the timeframe does not matter for reading structure, while Alex G source #1 establishes a strict timeframe hierarchy in which higher timeframes override lower ones on conflict. Are these the same claim at different levels (reading procedure vs directional precedence), or a genuine inconsistency?",
+      "reason": "Reconcilable on a careful reading, but the two statements are close enough to be conflated by a reader. Recorded rather than resolved."
+    },
+    {
+      "claim": "structure_in_range",
+      "type": "ambiguous_statement",
+      "priority": "medium",
+      "blocking": "blocks_rule_candidate",
+      "text": "Structure is said to exist inside any range, however tight. At what point does a range become too small for structure to be meaningful, given that no minimum displacement applies?",
+      "reason": "Combined with 'any size counts', this implies structure shifts can be identified at arbitrarily small scales, which has no stated lower bound."
+    }
+  ],
+  "provenance": {
+    "canonicalReference": "https://www.youtube.com/watch?v=sZAE_lqdeno",
+    "channelOrPublisher": null,
+    "language": "en",
+    "licensingStatus": "restricted_third_party",
+    "publicationDate": null,
+    "transcriptCompleteness": "unknown",
+    "transcriptProvider": "youtube_transcript_panel_copy"
+  },
+  "sections": [
+    {
+      "n": 1,
+      "lines": [
+        1,
+        89
+      ],
+      "type": "instruction",
+      "title": "Market structure is instrument- and timeframe-agnostic"
+    },
+    {
+      "n": 2,
+      "lines": [
+        90,
+        129
+      ],
+      "type": "instruction",
+      "title": "Higher highs and higher lows define a bullish market"
+    },
+    {
+      "n": 3,
+      "lines": [
+        130,
+        147
+      ],
+      "type": "instruction",
+      "title": "The market stays bullish between the HH and HL; a body close shifts it"
+    },
+    {
+      "n": 4,
+      "lines": [
+        148,
+        191
+      ],
+      "type": "instruction",
+      "title": "The snake trick: tracing back to the last higher low"
+    },
+    {
+      "n": 5,
+      "lines": [
+        192,
+        231
+      ],
+      "type": "instruction",
+      "title": "Structure points go at bodies, not wicks; the line chart as aid"
+    },
+    {
+      "n": 6,
+      "lines": [
+        232,
+        259
+      ],
+      "type": "instruction",
+      "title": "Recap: a new higher high forces a new higher low"
+    },
+    {
+      "n": 7,
+      "lines": [
+        260,
+        315
+      ],
+      "type": "instruction",
+      "title": "Visual slope is not trend: the hunter analogy"
+    },
+    {
+      "n": 8,
+      "lines": [
+        316,
+        371
+      ],
+      "type": "chart_commentary",
+      "title": "Worked shift: bullish to bearish, and the trend follows structure"
+    },
+    {
+      "n": 9,
+      "lines": [
+        372,
+        437
+      ],
+      "type": "instruction",
+      "title": "Bearish mirror rules and the snake trick for the lower high"
+    },
+    {
+      "n": 10,
+      "lines": [
+        438,
+        481
+      ],
+      "type": "instruction",
+      "title": "Structure exists inside consolidation and ranging markets"
+    },
+    {
+      "n": 11,
+      "lines": [
+        482,
+        613
+      ],
+      "type": "chart_commentary",
+      "title": "Quiz 1: structure inside consolidation; a tiny body close counts"
+    },
+    {
+      "n": 12,
+      "lines": [
+        614,
+        713
+      ],
+      "type": "chart_commentary",
+      "title": "Quiz 2: bearish range with the timeframe concealed"
+    },
+    {
+      "n": 13,
+      "lines": [
+        714,
+        759
+      ],
+      "type": "chart_commentary",
+      "title": "Quiz 3: a bullish-to-bearish shift"
+    },
+    {
+      "n": 14,
+      "lines": [
+        760,
+        835
+      ],
+      "type": "instruction",
+      "title": "Timeframes add detail for stop-loss and take-profit sizing"
+    },
+    {
+      "n": 15,
+      "lines": [
+        836,
+        913
+      ],
+      "type": "instruction",
+      "title": "Chase the extreme or wait for a retracement"
+    },
+    {
+      "n": 16,
+      "lines": [
+        914,
+        963
+      ],
+      "type": "chart_commentary",
+      "title": "The 60-75% accuracy claim and a worked example"
+    },
+    {
+      "n": 17,
+      "lines": [
+        964,
+        1006
+      ],
+      "type": "conclusion",
+      "title": "Market structure is only 50%; promotion and close"
+    }
+  ],
+  "slug": "alexg-advanced-market-structure",
+  "sourceFile": "docs/trader-intelligence/intake/pending/alexg-advanced-market-structure.txt",
+  "sourceFileBytes": 22106,
+  "sourceFileSha256": "f48d9c1c8c13f0fa85f1cb830e71ef40af7f6163d528bb8407ee29575408a6db",
+  "sourceLineCount": 1006,
+  "title": "Advanced Market Structure (PROVISIONAL \u2014 derived from transcript, actual YouTube title unverified)",
+  "traderId": "ALEX_G",
+  "_sectioningNote": "Sections cut by hand on topic/timestamp boundaries. The automatic proposer produced a single section because it splits only on lines ending in sentence punctuation, and these auto-captions carry almost none. Recorded as BACKLOG-003/H22."
+}

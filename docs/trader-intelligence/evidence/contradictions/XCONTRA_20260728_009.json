@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|ALEX_G|20260728|150",
+  "claimBId": "CLAIM|ALEX_G|20260728|100",
+  "contradictionId": "XCONTRA|20260728|009",
+  "contradictionType": "NUMERIC_THRESHOLD",
+  "detectedAt": "2026-07-28T20:52:12Z",
+  "metadata": {},
+  "rationale": "Same educator, two sources, on the figure both present as the realistic monthly return. Source #6: '8 to 10% a month ... that is a fact anybody can do that', with 50% per month explicitly unrealistic. Source #8: 'I wanna make seven twelve fifteen percent a month', then 'if you can make seven ten percent on any account'. The ranges overlap but do not match, and 15% sits outside the earlier stated ceiling. Filed MINOR: both are unevidenced performance figures that are already blocked from promotion, so the disagreement changes nothing operationally. Recorded because the library's practice is to log numeric drift rather than average it away.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "minor",
+  "status": "open"
+}

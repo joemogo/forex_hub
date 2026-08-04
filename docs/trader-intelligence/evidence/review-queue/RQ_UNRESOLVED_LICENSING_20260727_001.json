@@ -1,0 +1,18 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-27T03:56:30Z",
+  "entityId": "INTAKE|TJR|20260727|001",
+  "entityType": "INTAKE_MANIFEST",
+  "metadata": {},
+  "priority": "critical",
+  "queueEntryId": "RQ|UNRESOLVED_LICENSING|20260727|001",
+  "queueType": "unresolved_licensing",
+  "reason": "licensingStatus='unknown'.",
+  "resolution": null,
+  "reviewAction": null,
+  "reviewNotes": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-27T03:56:30Z"
+}

@@ -1,0 +1,876 @@
+# Knowledge Library Report: ALEX_G
+
+_Generated 2026-07-29T23:45:30Z. reportSchemaVersion=1._
+
+> **This report is research output only. Nothing in it has been validated, is executable, or carries any profitability claim. Every rule-like statement here requires replay validation and paper-trading validation before it could ever be considered for live or paper execution -- and even then, only through the existing StrategyRule promotion pipeline, never automatically from this report.**
+
+## 1. Source Summary
+- EVSRC|ALEX_G|20260727|001 (transcript): Best Top Down Analysis Strategy for 2026 | Forex Trading Guide
+- EVSRC|ALEX_G|20260728|001 (transcript): Simplifying Advanced Market Structure in 20 Minutes | Forex Trading Tutorial
+- EVSRC|ALEX_G|20260728|002 (transcript): How to Master Liquidity in Trading (Advanced Guide)
+- EVSRC|ALEX_G|20260728|003 (transcript): Learn How THIS Forex AOI SECRET Bought Me A $200,000 Watch
+- EVSRC|ALEX_G|20260728|004 (transcript): The ONLY confirmation YOU need to make $1000/day Trading Forex
+- EVSRC|ALEX_G|20260728|005 (transcript): Best Risk Management Strategy to Make Millions with Trading
+- EVSRC|ALEX_G|20260728|006 (transcript): Market break down learn and earn
+- EVSRC|ALEX_G|20260728|007 (transcript): The best FOREX MONEY MINDSET psychology video PT 2
+- EVSRC|ALEX_G|20260729|001 (transcript): This Trading Strategy Made Me $26,000 in Just 12 Hours
+
+## 2. Extraction Statistics
+- Evidence: 280, Observations: 37, Claims: 226
+- Contradictions: 13, Unresolved questions: 216, Hypotheses: 587
+- Sources: 9, Extraction status: completed
+
+## 3. Trader Profile
+- Canonical name: ALEX_G (traderId=ALEX_G)
+- Profile ID: PROFILE|ALEX_G|20260729|001, schemaVersion=1
+- Review status: pending
+
+## 4. Draft Strategy Blueprint
+- Blueprint ID: BLUEPRINT|ALEX_G|20260729|001, status=DRAFT_RESEARCH_ONLY (research-only, never executable)
+- Strategy name: ALEX_G Trading Strategy (Draft)
+- Validation status: research=draft, replay=not_available, paperTrading=not_available, production=not_applicable
+
+## 5. Explicit Rules
+- [CLAIM|ALEX_G|20260727|001] Alex G asserts that the primary cause of trader failure is inability to read the market via top-down analysis, not entry technique or zone selection. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|002] Top-down analysis is required before any trade, regardless of trading style. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|003] The purpose of top-down analysis is to establish overall market direction before deciding to buy or sell. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|004] Trading the correct direction from the wrong area is a distinct failure mode from trading the wrong direction. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|005] Top-down analysis uses four timeframe tiers: weekly, daily, 4-hour, and the lower timeframes. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|006] The lower timeframes are 2-hour, 1-hour, 30-minute and 15-minute; anything below 15-minute is not considered a strong timeframe. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|007] When lower and higher timeframes disagree, the higher timeframe takes precedence. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|008] Higher timeframes are treated as stronger because their structure takes longer to form. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|009] Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|010] Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|011] In practice Alex G stops the directional pass after the 4-hour and uses the lower timeframes for entry rather than for direction. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|012] A bullish market is a series of higher highs and higher lows. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|013] A bearish market is a series of lower highs and lower lows. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|014] Bullish and bearish structure are mutually exclusive; higher-high/higher-low and lower-high/lower-low labels cannot be mixed. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|015] Price movement inside the current high and low is ordinary market structure and does not change the trend. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|016] Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|017] A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|018] A break above the lower high shifts the market from bearish back to bullish. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|019] Misidentifying the origin of a trend invalidates entry, risk-to-reward, take-profit, stop-loss and trade management even when the direction is correct. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|020] Highs and lows are marked at candle bodies, not at wicks. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|021] Body-based structure is preferred because it matches what the line chart shows, avoiding discretionary interpretation. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|022] Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|023] The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|024] Predicting tops or bottoms against the higher-timeframe direction has no longevity even when it occasionally works. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|025] An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|026] The area of interest must lie inside the current higher high and higher low, never outside that range. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|027] An area of interest placed below the higher low will only be reached after the market has already turned bearish, so the setup is invalid by the time price arrives. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|028] Areas of interest are drawn only on the weekly and daily timeframes. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|029] An area of interest is identified by a decent number of prior rejections or touches. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|030] Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|031] The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|032] The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|033] A counter-trend move on the lower timeframe is expected and necessary to deliver price into the higher-timeframe area of interest. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|034] Buy when price is above support; sell when price is below resistance. (confidence=emerging)
+- [CLAIM|ALEX_G|20260727|035] Whether to wait for the lower timeframe to shift with the trend or enter while it is still counter-trend is left to trader risk appetite. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|001] Market structure applies to any instrument and any timeframe; the reading procedure does not depend on which market or timeframe is displayed. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|002] The active higher low is the most recent higher low, not the lowest low in the move. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|003] Trend is determined by market structure; it cannot be identified without it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|004] Judging trend from the visual slope of price rather than from market structure is a primary trader error. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|005] Market structure exists inside consolidation and ranging conditions; a range is still classifiable as bullish or bearish. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|006] Every new lower low forces reassignment of the active lower high to the most recent turn. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|007] Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|008] A body close beyond a structure level counts as a shift regardless of how small the displacement is; no minimum size threshold applies. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|009] The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick'). (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|010] The line chart is used as a visual aid to locate body-based structure points before returning to the candlestick chart. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|011] At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|012] Lower timeframes provide the detail used to judge how far a move may run and how much room a stop-loss and take-profit require. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|013] Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|014] Alex G asserts that correctly reading market structure yields 60-75% trade accuracy. No sample, period, instrument, methodology or verifiable record is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|015] Liquidity is how liquid the market is at a given price point — the concentration of buy and sell orders there. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|016] Round psychological numbers concentrate exit orders just below them, which is offered as the reason Ethereum did not reach 5,000. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|017] Liquidity concentrates where price has repeatedly been rejected from the same area. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|018] Alex G treats liquidity zone, support/resistance, supply and demand, order block and area of interest as names for the same object. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|019] Higher-timeframe rejection zones are stronger and attract more liquidation than lower-timeframe ones. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|020] A zone with only one prior rejection is materially less predictable than one with several. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|021] Trade in the direction the zone has historically pushed price: buy while above it, sell while below it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|022] Alex G asserts there is no hard evidence that banks or institutions deliberately liquidate retail stop-losses, and treats the institutional-sweep narrative as unproven. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|023] Alex G states retail traders make up 3% of the market. No source is given for this figure. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|024] Alex G characterises the institutional-manipulation narrative as a psychological displacement of blame by losing traders. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|025] No consistent strategy can be built on trading liquidity sweeps themselves. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|026] A liquidity sweep cannot be anticipated in advance; catching or avoiding one is luck, not method. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|027] Being caught by a liquidity sweep is unavoidable and recurring; the stated response is to take the next trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|028] Entry requires a confirmation that price is already moving in the intended direction; entering on anticipation is rejected. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|029] A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|030] Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|031] In the demonstrated example price approached the zone seven times and produced a liquidity sweep once, so waiting for sweeps would have forfeited six of seven opportunities. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|032] Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|033] Alex G states he still enters trades on anticipation despite teaching against it, but does so knowingly and accepts the outcome. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|034] Alex G attributes single-day results of $60,000 on gold and $50,000 on GBP/JPY to marking areas of interest by the method taught here. No account statement, date, position size, risk or verification is offered. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|035] No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|036] A structure point that has not completed is labelled a 'potential' lower high and used in the directional read before it is confirmed. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|037] An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low reading. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|038] Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|039] Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the maximum of the scale is not stated. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|040] The region between the active lower high and lower low is drawn as an explicit box, and the search for an area of interest is confined to it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|041] A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|042] A level may be a genuine and well-respected support/resistance level and still be untradeable, because price reaching it would already have invalidated the directional bias. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|043] The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|044] A candidate level is validated by looking left on the chart to confirm it has been respected historically. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|045] No action is taken while price travels toward the area of interest; the setup is left alone until price arrives. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|046] Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|047] A lower high that has not yet completed - a 'potential' lower high - is accepted as a valid sell location. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|048] The entry-side structure point must be present on the four-hour timeframe. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|049] If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|050] Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern. No EMA period is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|051] Waiting for the structure shift is presented as the act that produces the additional confluences, rather than the confluences being sought independently. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|052] Setups are graded on a letter scale derived from percentages. The scale itself is taught in a paid programme and is not defined in this source. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|053] Entry additionally waits for 'the proper session'. Which sessions qualify is not stated. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|054] A $500/day outcome is presented as attainable when this confirmation is combined with a strategy. No account, sample, period, capital base or instrument is given. The published video title states $1000/day, which the spoken content does not. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|055] The stated rationale for waiting is informational: acting after the market reveals its direction is treated as a better-informed decision than predicting it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|056] A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|057] The stated reason closure is required is that an unclosed candle can reverse entirely in its final seconds. Offered as personal observation, with no frequency. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|058] A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count threshold is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|059] An engulfing candle requires a body close beyond the prior candle; a close on the unfavourable side does not qualify no matter how the candle looks. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|060] No trade is entered without either a rejection/doji or an engulfing candle, regardless of trade type. Stated as an absolute gate on every entry. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|061] A candle that looks like a rejection may instead be a 'wick fill'; the two are visually similar and are distinguished by lower-timeframe context, not by the candle itself. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|062] A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher low forming. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|063] The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|064] Once the 4-hour higher low is identified, the subsequent wick fill and daily engulfing are described as something to anticipate. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|065] A bullish body closing with a strong downside rejection, after a same-day 4-hour bullish structure shift, is claimed to be followed by a bullish push the next day roughly 70% of the time. No sample, period, instrument or measurement definition is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|066] The stated benefit of waiting for the closed confirmation is avoiding liquidity grabs and wickouts rather than improving entry price. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|067] Rejection and engulfing candles occur throughout any chart, so the pattern alone carries no information; taking every one is explicitly called useless. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|068] A confirmation counts only when it occurs at a support/resistance, supply and demand zone or order block - never in the middle of the chart. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|069] Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|070] Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|071] Entry on the rejection alone is permitted; waiting for the engulfing as well is optional and left to the trader. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|072] The decision to require a second confirmation depends on level strength, timeframe, days remaining in the week, risk-to-reward and other confluences. None of these inputs is assigned a threshold, so the step is discretionary. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|073] Requiring additional confirmations is acknowledged to forfeit winning trades, and that cost is explicitly accepted rather than measured. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|074] Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|075] A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|076] Directional bias is expected to persist - on intraday and swing horizons, stated as roughly the same direction for almost a month. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|077] Entering on a candlestick pattern without a strategy behind it is characterised as gambling rather than trading. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|078] Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not to be traded. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|079] Tradeable windows are defined by session volume, shown on an on-screen session map. The specific hours are displayed visually and never stated aloud. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|080] A window offering only about an hour of volume followed by roughly nine hours without is rejected as an entry time. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|081] A confirmation arriving before the Sydney session is held until just before the London session - roughly eight hours - rather than entered on arrival. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|082] Waiting for the session is acknowledged to lose trades outright when price leaves the area before the session opens. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|083] Entries on this confirmation are restricted to Monday, Tuesday and Wednesday. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|084] The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|085] The stated reason for the Monday-to-Wednesday restriction is that a trade opened later lacks enough remaining volume hours to travel the take-profit distance. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|086] The day restriction is overridden when the take-profit is shorter, the confirmation is very strong, or there is momentum. None of the three overrides is quantified. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|087] Waiting for the session is claimed to have no downside: either the direction is confirmed, the loss would have happened anyway, or the entry improves. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|088] The method is presented as conjunctive: every component must hold, and one failing component is said to produce unprofitability. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|089] Alex G states he earns $50,000 to $100,000 per day working one to two hours. No account size, statement, period or verification is offered. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|090] Alex G states it took him about two and a half years to make any money, and longer to become consistently profitable. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|091] Alex G endorses the industry framing that trading is roughly 80% psychology and 20% technical, while arguing the technical 20% is what makes scaling possible. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|092] Risk management, rather than psychology or entry technique, is identified as the change that made scaling possible. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|093] Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|094] The full account balance is never risked on a trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|095] The account must be funded with materially more than the intended per-trade risk, so that a loss leaves margin in the account. The worked figure is $100 risk on a $1,000 account, described as 10%. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|096] The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|097] The stated purpose of fixed-percentage risk is external: a stable P&L curve is what allows capital allocators to assess and fund a trader. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|098] Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|099] Returns of 50% per day, week or month are described as unrealistic and unsustainable, though possible on isolated occasions. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|100] A monthly return of 8 to 10% is asserted to be achievable by anybody and sustainable. No evidence, sample or drawdown figure accompanies it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|101] The percentage system is presented as producing meaningful income only on large accounts; small accounts are described as unable to make a material difference. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|102] A 100K funded account is claimed to have returned 27-28% over about 39 days for a $28,000 payout. Presented as the origin of his success. No statement or verification is offered, and the period is given twice as both 'a single month' and 'about 39 days'. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|103] The risk percentage chosen depends on account type and objective - personal, funded, or a disposable side account. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|104] Conservative risk is 0.5 to 1% of the account per trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|105] The conservative band is prescribed for lower-timeframe traders, on the stated reasoning that they take more trades and should not take many trades at high risk. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|106] Lower-timeframe trading is characterised as one to three trades per day, or one to three per session. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|107] The recommended risk, described as the industry standard, is 1 to 2% of the account per trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|108] Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|109] Worked arithmetic for why risk must not be raised after a winning streak: five wins at 1% with 1:2 reward gives about +10%; two subsequent losses at 2% remove 4% (40% of the gain), against 2% (20%) had risk stayed at 1%. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|110] A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|111] The high-risk band is 3 to 5% of the account per trade. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|112] High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|113] A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|114] His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|115] The stated reason for locking risk monthly is statistical interpretability: a fixed percentage makes the month's P&L a measurement rather than a mixture. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|116] Alex G states he has been profitable for about six years. The same source also gives 'about 5 years' of market prediction and 'about 5 and a half years' to work out seasonality, alongside two and a half years before making any money. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|117] Higher risk (3-5%) is taken only in November, December, January, February and possibly March, described as his statistically best months. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|118] June, July and August are characterised as slower markets, during which risk is reduced and trading is optional. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|119] The seasonal rule is justified by personal observed results. No sample, period, instrument or figures are given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|120] The stated first objective for a beginner is to stop losing money rather than to make it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|121] Alex G states 99% of traders lose money. No source is given for the figure. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|122] Students are claimed to earn roughly $1,000 to $1,500 per week within their first three months. No sample size, failure rate, account size or verification is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|123] The source is a live recorded morning session with roughly 70 attendees, held at 6 a.m. It is trade commentary and Q&A rather than structured instruction. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|124] Correlated pairs are compared and the one presenting the cleaner structure is preferred. NZDUSD and NZDCAD are treated as moving very similarly. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|125] The EMA is used as dynamic support or resistance: support while bullish and resistance while bearish. Its period is still not stated. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|126] The entry zone is where the EMA and a prior structure point converge on the same retracement, rather than either alone. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|127] The expected path is projected forward - a pullback into the zone, then a resumption - while the entry itself is still deferred to a confirmation at the level. The setup is anticipated; the entry is not. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|128] The counter-trend leg is deliberately forgone in order to take the larger continuation leg that follows it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|129] Trading with the trend is asserted to improve the odds. No figure is attached. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|130] Counter-trend trading is characterised as a beginner error he has stopped making. The phrasing 'not anymore' indicates he previously did it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|131] Trades are taken only when judged worth the capital risked. Selectivity is presented as a gate in its own right, separate from the mechanical entry conditions. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|132] Having already met his objective for the month is given as a reason not to take further trades. Month-to-date performance is treated as an input to trade selection. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|133] The stated rationale for selectivity is an investment analogy: capital is deployed only when the expected return justifies it, never to be active. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|134] Direction is chosen by counting the confluences available for each side and taking the side with materially more. The comparison is explicitly two-sided. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|135] Confluences are written down per trade as a recorded list. The list is displayed on screen in this session and its contents are never read aloud. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|136] A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|137] Where a level is approached but not reached, the stated response is to wait rather than to enter on the near-miss. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|138] A valid setup he had identified in advance was missed through inattention, despite alarms being part of his stated process. Recorded from the source's own account. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|139] After missing an entry, the stated response is to set an alarm for the next pullback rather than to chase the move. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|140] A 1:4 risk-to-reward is described for one watchlist setup. Stated as an observation about that chart, not as a required minimum. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|141] The source is episode three of the 'set and forget' podcast and is presented as video one of a psychology series. The published YouTube title labels it 'PT 2', which the spoken content does not match. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|142] Trading is argued to require a domain-specific 'money mindset' in the same way fitness requires physical conditioning and sales requires communication. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|143] Daily forex turnover is cited as about 6.3 trillion at the time he started trading, used to argue that an individual's position size is insignificant to the market. No source is given for the figure. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|144] Traders are described as arriving with their monthly salary as an implicit reference point, typically around $5,000, and setting trading goals relative to it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|145] The named core failure: a trade set to a 1:4 target is closed at 1:2 because the unrealised dollar figure equals what the trader normally earns in a month. The exit is driven by the size of the number, not by the market. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|146] Closing on a dollar figure rather than on the market's behaviour is characterised as impulse, and as one of the most damaging things a trader can do. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|147] The stated implication is that a target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|148] Receiving an unfamiliar amount of money is claimed to lead either to sporadic spending or to attempts to double it, both of which lose it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|149] A $650-700 evaluation fee is presented as convertible into a 100K funded account, and a 1:2 risk-to-reward trade on it as producing $5,000. The evaluation pass rate, the failure cost and the firm's rules are not mentioned. Named alongside a specific funding provider. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|150] A monthly return target of 7, 12 or 15 percent is named here, and 7-10 percent immediately after. Source #6 states 8-10 percent as the realistic figure. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|151] Percentage returns are argued to be account-size independent, illustrated with a copy trader mirroring a 10K account onto a million-dollar account. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|152] Balances are to be treated as numbers to be moved from the platform to the bank account, with emotional attachment to the figure deliberately suppressed while trading. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|153] The employment mindset and the trading mindset are to be kept separate and switched between deliberately. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|154] Personal account: an early winning trade was closed because friends urged him to, and the move continued to what he estimates would have been $10,000-$15,000. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|155] The attributed cause of the loss of opportunity is deferring to someone else's judgement of what counts as a large amount of money, not the trade itself. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|156] The prescribed response is not to show open positions to others, on the reasoning that their reference point for a large sum will pull the trader back to a salary anchor. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|157] The 30/30/30/10 rule for allocating income: 30% to residual expenses, 30% to savings, 30% to investment, 10% to discretionary spending. Stated as a personal-finance rule covering all income, not a trading rule. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|158] Income that is not invested is described as effectively halved, which is the stated justification for the mandatory investment tranche. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|159] He states he folds the 10% discretionary tranche into investment, so his own allocation is not the 30/30/30/10 he prescribes. The stated reason is compounding while young. (confidence=emerging)
+- [CLAIM|ALEX_G|20260728|160] A fixed salary is argued to cap not only income but the capacity to manage larger amounts, so that exposure to trading-scale numbers produces greed and fear. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|001] Alex G attributes $26,000 of profit in 12 hours to the break-and-retest pattern. No account statement, instrument, date, position size or risk figure accompanies it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|002] Alex G states the break-and-retest pattern made him a millionaire. Unverified and unquantified. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|003] Break-and-retest is asserted to occur every day in the market, and is offered as the reason no other pattern needs to be studied. No frequency measurement is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|004] Break-and-retest is defined as a CONTINUATION pattern: the retest is a pause that precedes further movement in the direction price was already travelling. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|005] The pattern is asserted to apply on every timeframe and to every instrument class - currencies, commodities, futures and stocks. No instrument-specific qualification is given. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|006] Alex G states explicitly that support and resistance, supply and demand, and area of interest are the same concept under different names. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|007] Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|008] A break-and-retest on a higher timeframe is asserted to be more reliable than one on a lower timeframe. Comparative only - no ranking, weighting or threshold is stated. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|009] His own practice is to identify break-and-retest continuation on the 4-hour and daily and to take entries on lower timeframes. Framed as personal preference ('I personally like'), not as a requirement. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|010] Zone width is stated to be unconstrained - 'doesn't matter the size of the box' - subject only to leaving 'enough room' to contain multiple touches. Neither the room nor the number of touches is quantified, so zone construction remains non-deterministic. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|011] A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|012] Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively up (or down) the chart. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|013] A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|014] A continuing downtrend is defined as a sequence of lows with lower highs between them; the mirror of the uptrend high-plus-retracement sequence stated immediately before. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|015] For day trading, break-and-retest is to be read on the 4-hour and 1-hour. Qualified immediately by 'depending on how approach you want to take it', so it is a default rather than a constraint. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|016] For swing trades, break-and-retest is to be read on the daily and weekly. The preceding word in the transcript ('Inay') is garbled and the second trading style it names cannot be recovered from this transcript - recorded as an open question, not guessed. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|017] Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|018] A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have'). (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|019] The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|020] The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|021] Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|022] The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|023] The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|024] A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|025] Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|026] Worked arithmetic across the three demonstrated trades: 1% risked per trade, one win at 1:2 (+2%), one loss (-1%), one win (+2%), netting about +3%. The 1% is the figure used in the arithmetic; it is not restated here as the required risk percentage. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|027] A monthly return of 9 to 12% is presented as an achievable average, extrapolated from one 3% week repeated four times, and asserted to beat 'any single Bank any single institution'. The extrapolation assumes every week reproduces the demonstrated week. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|028] Alex G identifies the method demonstrated in this video - break-and-retest plus engulfing confirmation, fixed stop and preset minimum 1:2 target - as his 'set and forget' strategy. This is the first source that ties the named strategy to a specific mechanical procedure rather than using the phrase as a format or brand label. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|029] Alex G states he has used this method for five and a half years. No track record accompanies it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|030] An open position is described on screen as roughly $37,000 in unrealised profit. No instrument, entry, size, account size or verification accompanies it. (confidence=emerging)
+- [CLAIM|ALEX_G|20260729|031] Students are claimed to earn between an unreadable lower bound and $1,500 per week as beginners. The lower bound is corrupted in the transcript (',000') and is NOT reconstructed here. Repeated verbatim later in the same source alongside a 'first 3 months' framing. No sample size, failure rate or verification. (confidence=emerging)
+
+## 6. Implied or Inferred Rules
+_None._
+
+## 7. Contradictions
+- XCONTRA|20260727|003: CLAIM|ALEX_G|20260727|020 vs CLAIM|TJR|20260727|065 (sections: Setup Identification)
+- XCONTRA|20260728|001: CLAIM|ALEX_G|20260728|025 vs CLAIM|TJR|20260727|006 (sections: Setup Identification, failure_condition)
+- XCONTRA|20260728|002: CLAIM|ALEX_G|20260728|022 vs CLAIM|TJR|20260727|036 (sections: causal_hypothesis)
+- XCONTRA|20260728|003: CLAIM|ALEX_G|20260728|028 vs CLAIM|ALEX_G|20260728|047 (sections: Entry Trigger, exception)
+- XCONTRA|20260728|004: CLAIM|ALEX_G|20260728|082 vs CLAIM|ALEX_G|20260728|087 (sections: causal_hypothesis, failure_condition)
+- XCONTRA|20260728|005: CLAIM|ALEX_G|20260728|028 vs CLAIM|ALEX_G|20260728|064 (sections: Entry Trigger, exception)
+- XCONTRA|20260728|006: CLAIM|ALEX_G|20260728|089 vs CLAIM|ALEX_G|20260728|100 (sections: performance_hypothesis)
+- XCONTRA|20260728|007: CLAIM|ALEX_G|20260728|090 vs CLAIM|ALEX_G|20260728|116 (sections: behavioral_observation, performance_hypothesis)
+- XCONTRA|20260728|008: CLAIM|ALEX_G|20260728|068 vs CLAIM|ALEX_G|20260728|136 (sections: Entry Trigger, Invalidation)
+- XCONTRA|20260728|009: CLAIM|ALEX_G|20260728|100 vs CLAIM|ALEX_G|20260728|150 (sections: performance_hypothesis)
+- XCONTRA|20260729|001: CLAIM|ALEX_G|20260728|008 vs CLAIM|RAYNER_TEO|20260729|019 (sections: Setup Identification)
+- XCONTRA|20260729|003: CLAIM|ALEX_G|20260728|100 vs CLAIM|ALEX_G|20260729|027 (sections: performance_hypothesis)
+- XCONTRA|20260729|004: CLAIM|ALEX_G|20260728|145 vs CLAIM|ALEX_G|20260729|023 (sections: Target Selection, failure_condition)
+
+## 8. Knowledge Gaps
+- [instrument/high] Which specific instrument(s) does this strategy apply to? -> unanswered (answer: unanswered)
+- [session/medium] Which trading session(s) does this strategy apply to? -> unanswered (answer: unanswered)
+- [higher_timeframe_bias/high] Is a higher-timeframe bias required before taking this setup? -> Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order. (answer: partially_answered)
+- [execution_timeframe/critical] What is the execution timeframe for entries? -> At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option. (answer: partially_answered)
+- [entry_trigger/critical] What exact condition triggers an entry? -> At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option. (answer: partially_answered)
+- [news_handling/medium] How does this strategy handle high-impact news events? -> unanswered (answer: unanswered)
+- [spread_handling/low] Does spread affect entry, stop, or target placement? -> unanswered (answer: unanswered)
+- [volatility_handling/medium] Does this strategy adjust for high or low volatility conditions? -> unanswered (answer: unanswered)
+
+## 9. Proposed Hypotheses
+- [PROPOSED_UNVALIDATED/emerging] Top-down analysis is required before any trade, regardless of trading style may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] When lower and higher timeframes disagree, the higher timeframe takes precedence may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] A break above the lower high shifts the market from bearish back to bullish may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] Highs and lows are marked at candle bodies, not at wicks may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The area of interest must lie inside the current higher high and higher low, never outside that range may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Areas of interest are drawn only on the weekly and daily timeframes may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] An area of interest is identified by a decent number of prior rejections or touches may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Buy when price is above support; sell when price is below resistance may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Every new lower low forces reassignment of the active lower high to the most recent turn may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] A body close beyond a structure level counts as a shift regardless of how small the displacement is; no minimum size threshold applies may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick') may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The line chart is used as a visual aid to locate body-based structure points before returning to the candlestick chart may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Liquidity concentrates where price has repeatedly been rejected from the same area may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Higher-timeframe rejection zones are stronger and attract more liquidation than lower-timeframe ones may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A zone with only one prior rejection is materially less predictable than one with several may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Trade in the direction the zone has historically pushed price: buy while above it, sell while below it may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Entry requires a confirmation that price is already moving in the intended direction; entering on anticipation is rejected may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low reading may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the maximum of the scale is not stated may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The region between the active lower high and lower low is drawn as an explicit box, and the search for an area of interest is confined to it may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A candidate level is validated by looking left on the chart to confirm it has been respected historically may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] No action is taken while price travels toward the area of interest; the setup is left alone until price arrives may apply only in certain trade-management contexts.
+- [PROPOSED_UNVALIDATED/emerging] Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern. No EMA period is given may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count threshold is given may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] No trade is entered without either a rejection/doji or an engulfing candle, regardless of trade type. Stated as an absolute gate on every entry may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher low forming may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] A confirmation counts only when it occurs at a support/resistance, supply and demand zone or order block - never in the middle of the chart may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade may be the preferred target-selection approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/emerging] Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] The full account balance is never risked on a trade may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] The account must be funded with materially more than the intended per-trade risk, so that a loss leaves margin in the account. The worked figure is $100 risk on a $1,000 account, described as 10% may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] The risk percentage chosen depends on account type and objective - personal, funded, or a disposable side account may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] Conservative risk is 0.5 to 1% of the account per trade may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] The conservative band is prescribed for lower-timeframe traders, on the stated reasoning that they take more trades and should not take many trades at high risk may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] The recommended risk, described as the industry standard, is 1 to 2% of the account per trade may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum may be the preferred target-selection approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/emerging] The high-risk band is 3 to 5% of the account per trade may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio may be the preferred target-selection approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/emerging] His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks may be the trader's default risk rule, pending further confirmation.
+- [PROPOSED_UNVALIDATED/emerging] Correlated pairs are compared and the one presenting the cleaner structure is preferred. NZDUSD and NZDCAD are treated as moving very similarly may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The EMA is used as dynamic support or resistance: support while bullish and resistance while bearish. Its period is still not stated may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] The entry zone is where the EMA and a prior structure point converge on the same retracement, rather than either alone may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The counter-trend leg is deliberately forgone in order to take the larger continuation leg that follows it may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Trades are taken only when judged worth the capital risked. Selectivity is presented as a gate in its own right, separate from the mechanical entry conditions may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] Direction is chosen by counting the confluences available for each side and taking the side with materially more. The comparison is explicitly two-sided may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] After missing an entry, the stated response is to set an alarm for the next pullback rather than to chase the move may apply only in certain trade-management contexts.
+- [PROPOSED_UNVALIDATED/emerging] A 1:4 risk-to-reward is described for one watchlist setup. Stated as an observation about that chart, not as a required minimum may be the preferred target-selection approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/emerging] The stated implication is that a target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant may apply only in certain trade-management contexts.
+- [PROPOSED_UNVALIDATED/emerging] The prescribed response is not to show open positions to others, on the reasoning that their reference point for a large sum will pull the trader back to a salary anchor may apply only in certain trade-management contexts.
+- [PROPOSED_UNVALIDATED/emerging] Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry may serve as the primary invalidation condition.
+- [PROPOSED_UNVALIDATED/emerging] Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have') may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number may only be required on the execution timeframe.
+- [PROPOSED_UNVALIDATED/emerging] Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named may be required before a valid entry.
+- [PROPOSED_UNVALIDATED/emerging] The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated may be the preferred stop-placement approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/emerging] The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target may be the preferred target-selection approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/emerging] A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit may apply only in certain trade-management contexts.
+- [PROPOSED_UNVALIDATED/emerging] Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere may be the preferred stop-placement approach, pending further evidence.
+- [PROPOSED_UNVALIDATED/contested] Highs and lows are marked at candle bodies, not at wicks may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|065).
+- [PROPOSED_UNVALIDATED/contested] No consistent strategy can be built on trading liquidity sweeps themselves may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|006).
+- [PROPOSED_UNVALIDATED/contested] Alex G asserts there is no hard evidence that banks or institutions deliberately liquidate retail stop-losses, and treats the institutional-sweep narrative as unproven may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|TJR|20260727|036).
+- [PROPOSED_UNVALIDATED/contested] A lower high that has not yet completed - a 'potential' lower high - is accepted as a valid sell location may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|028).
+- [PROPOSED_UNVALIDATED/contested] Waiting for the session is claimed to have no downside: either the direction is confirmed, the loss would have happened anyway, or the entry improves may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|082).
+- [PROPOSED_UNVALIDATED/contested] Once the 4-hour higher low is identified, the subsequent wick fill and daily engulfing are described as something to anticipate may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|028).
+- [PROPOSED_UNVALIDATED/contested] Alex G states he earns $50,000 to $100,000 per day working one to two hours. No account size, statement, period or verification is offered may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|100).
+- [PROPOSED_UNVALIDATED/contested] Alex G states he has been profitable for about six years. The same source also gives 'about 5 years' of market prediction and 'about 5 and a half years' to work out seasonality, alongside two and a half years before making any money may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|090).
+- [PROPOSED_UNVALIDATED/contested] A setup was declined because price stopped roughly 10 pips short of the target level. No tolerance threshold is stated in any source; the judgement is made in the moment may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|068).
+- [PROPOSED_UNVALIDATED/contested] A monthly return target of 7, 12 or 15 percent is named here, and 7-10 percent immediately after. Source #6 states 8-10 percent as the realistic figure may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|100).
+- [PROPOSED_UNVALIDATED/contested] Only major swing points - those that visibly stand out - are used to identify structure. Minor highs and lows are deliberately ignored on the stated reasoning that including them loses the larger picture may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|008).
+- [PROPOSED_UNVALIDATED/contested] A monthly return of 9 to 12% is presented as an achievable average, extrapolated from one 3% week repeated four times, and asserted to beat 'any single Bank any single institution'. The extrapolation assumes every week reproduces the demonstrated week may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|100).
+- [PROPOSED_UNVALIDATED/contested] The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target may be preferred rather than mandatory, given conflicting evidence from a contradicting claim (CLAIM|ALEX_G|20260728|145).
+- [PROPOSED_UNVALIDATED/insufficient_evidence] Session restrictions may materially affect this strategy's setup validity.
+- [PROPOSED_UNVALIDATED/insufficient_evidence] High-impact news events may require this strategy's setup to be skipped or delayed.
+- [PROPOSED_UNVALIDATED/insufficient_evidence] Volatility conditions may materially affect this strategy's setup validity.
+
+## 10. Items Requiring Human Review
+- Claim pending review: CLAIM|ALEX_G|20260727|001
+- Claim pending review: CLAIM|ALEX_G|20260727|002
+- Claim pending review: CLAIM|ALEX_G|20260727|003
+- Claim pending review: CLAIM|ALEX_G|20260727|004
+- Claim pending review: CLAIM|ALEX_G|20260727|005
+- Claim pending review: CLAIM|ALEX_G|20260727|006
+- Claim pending review: CLAIM|ALEX_G|20260727|007
+- Claim pending review: CLAIM|ALEX_G|20260727|008
+- Claim pending review: CLAIM|ALEX_G|20260727|009
+- Claim pending review: CLAIM|ALEX_G|20260727|010
+- Claim pending review: CLAIM|ALEX_G|20260727|011
+- Claim pending review: CLAIM|ALEX_G|20260727|012
+- Claim pending review: CLAIM|ALEX_G|20260727|013
+- Claim pending review: CLAIM|ALEX_G|20260727|014
+- Claim pending review: CLAIM|ALEX_G|20260727|015
+- Claim pending review: CLAIM|ALEX_G|20260727|016
+- Claim pending review: CLAIM|ALEX_G|20260727|017
+- Claim pending review: CLAIM|ALEX_G|20260727|018
+- Claim pending review: CLAIM|ALEX_G|20260727|019
+- Claim pending review: CLAIM|ALEX_G|20260727|020
+- Claim pending review: CLAIM|ALEX_G|20260727|021
+- Claim pending review: CLAIM|ALEX_G|20260727|022
+- Claim pending review: CLAIM|ALEX_G|20260727|023
+- Claim pending review: CLAIM|ALEX_G|20260727|024
+- Claim pending review: CLAIM|ALEX_G|20260727|025
+- Claim pending review: CLAIM|ALEX_G|20260727|026
+- Claim pending review: CLAIM|ALEX_G|20260727|027
+- Claim pending review: CLAIM|ALEX_G|20260727|028
+- Claim pending review: CLAIM|ALEX_G|20260727|029
+- Claim pending review: CLAIM|ALEX_G|20260727|030
+- Claim pending review: CLAIM|ALEX_G|20260727|031
+- Claim pending review: CLAIM|ALEX_G|20260727|032
+- Claim pending review: CLAIM|ALEX_G|20260727|033
+- Claim pending review: CLAIM|ALEX_G|20260727|034
+- Claim pending review: CLAIM|ALEX_G|20260727|035
+- Claim pending review: CLAIM|ALEX_G|20260728|001
+- Claim pending review: CLAIM|ALEX_G|20260728|002
+- Claim pending review: CLAIM|ALEX_G|20260728|003
+- Claim pending review: CLAIM|ALEX_G|20260728|004
+- Claim pending review: CLAIM|ALEX_G|20260728|005
+- Claim pending review: CLAIM|ALEX_G|20260728|006
+- Claim pending review: CLAIM|ALEX_G|20260728|007
+- Claim pending review: CLAIM|ALEX_G|20260728|008
+- Claim pending review: CLAIM|ALEX_G|20260728|009
+- Claim pending review: CLAIM|ALEX_G|20260728|010
+- Claim pending review: CLAIM|ALEX_G|20260728|011
+- Claim pending review: CLAIM|ALEX_G|20260728|012
+- Claim pending review: CLAIM|ALEX_G|20260728|013
+- Claim pending review: CLAIM|ALEX_G|20260728|014
+- Claim pending review: CLAIM|ALEX_G|20260728|015
+- Claim pending review: CLAIM|ALEX_G|20260728|016
+- Claim pending review: CLAIM|ALEX_G|20260728|017
+- Claim pending review: CLAIM|ALEX_G|20260728|018
+- Claim pending review: CLAIM|ALEX_G|20260728|019
+- Claim pending review: CLAIM|ALEX_G|20260728|020
+- Claim pending review: CLAIM|ALEX_G|20260728|021
+- Claim pending review: CLAIM|ALEX_G|20260728|022
+- Claim pending review: CLAIM|ALEX_G|20260728|023
+- Claim pending review: CLAIM|ALEX_G|20260728|024
+- Claim pending review: CLAIM|ALEX_G|20260728|025
+- Claim pending review: CLAIM|ALEX_G|20260728|026
+- Claim pending review: CLAIM|ALEX_G|20260728|027
+- Claim pending review: CLAIM|ALEX_G|20260728|028
+- Claim pending review: CLAIM|ALEX_G|20260728|029
+- Claim pending review: CLAIM|ALEX_G|20260728|030
+- Claim pending review: CLAIM|ALEX_G|20260728|031
+- Claim pending review: CLAIM|ALEX_G|20260728|032
+- Claim pending review: CLAIM|ALEX_G|20260728|033
+- Claim pending review: CLAIM|ALEX_G|20260728|034
+- Claim pending review: CLAIM|ALEX_G|20260728|035
+- Claim pending review: CLAIM|ALEX_G|20260728|036
+- Claim pending review: CLAIM|ALEX_G|20260728|037
+- Claim pending review: CLAIM|ALEX_G|20260728|038
+- Claim pending review: CLAIM|ALEX_G|20260728|039
+- Claim pending review: CLAIM|ALEX_G|20260728|040
+- Claim pending review: CLAIM|ALEX_G|20260728|041
+- Claim pending review: CLAIM|ALEX_G|20260728|042
+- Claim pending review: CLAIM|ALEX_G|20260728|043
+- Claim pending review: CLAIM|ALEX_G|20260728|044
+- Claim pending review: CLAIM|ALEX_G|20260728|045
+- Claim pending review: CLAIM|ALEX_G|20260728|046
+- Claim pending review: CLAIM|ALEX_G|20260728|047
+- Claim pending review: CLAIM|ALEX_G|20260728|048
+- Claim pending review: CLAIM|ALEX_G|20260728|049
+- Claim pending review: CLAIM|ALEX_G|20260728|050
+- Claim pending review: CLAIM|ALEX_G|20260728|051
+- Claim pending review: CLAIM|ALEX_G|20260728|052
+- Claim pending review: CLAIM|ALEX_G|20260728|053
+- Claim pending review: CLAIM|ALEX_G|20260728|054
+- Claim pending review: CLAIM|ALEX_G|20260728|055
+- Claim pending review: CLAIM|ALEX_G|20260728|056
+- Claim pending review: CLAIM|ALEX_G|20260728|057
+- Claim pending review: CLAIM|ALEX_G|20260728|058
+- Claim pending review: CLAIM|ALEX_G|20260728|059
+- Claim pending review: CLAIM|ALEX_G|20260728|060
+- Claim pending review: CLAIM|ALEX_G|20260728|061
+- Claim pending review: CLAIM|ALEX_G|20260728|062
+- Claim pending review: CLAIM|ALEX_G|20260728|063
+- Claim pending review: CLAIM|ALEX_G|20260728|064
+- Claim pending review: CLAIM|ALEX_G|20260728|065
+- Claim pending review: CLAIM|ALEX_G|20260728|066
+- Claim pending review: CLAIM|ALEX_G|20260728|067
+- Claim pending review: CLAIM|ALEX_G|20260728|068
+- Claim pending review: CLAIM|ALEX_G|20260728|069
+- Claim pending review: CLAIM|ALEX_G|20260728|070
+- Claim pending review: CLAIM|ALEX_G|20260728|071
+- Claim pending review: CLAIM|ALEX_G|20260728|072
+- Claim pending review: CLAIM|ALEX_G|20260728|073
+- Claim pending review: CLAIM|ALEX_G|20260728|074
+- Claim pending review: CLAIM|ALEX_G|20260728|075
+- Claim pending review: CLAIM|ALEX_G|20260728|076
+- Claim pending review: CLAIM|ALEX_G|20260728|077
+- Claim pending review: CLAIM|ALEX_G|20260728|078
+- Claim pending review: CLAIM|ALEX_G|20260728|079
+- Claim pending review: CLAIM|ALEX_G|20260728|080
+- Claim pending review: CLAIM|ALEX_G|20260728|081
+- Claim pending review: CLAIM|ALEX_G|20260728|082
+- Claim pending review: CLAIM|ALEX_G|20260728|083
+- Claim pending review: CLAIM|ALEX_G|20260728|084
+- Claim pending review: CLAIM|ALEX_G|20260728|085
+- Claim pending review: CLAIM|ALEX_G|20260728|086
+- Claim pending review: CLAIM|ALEX_G|20260728|087
+- Claim pending review: CLAIM|ALEX_G|20260728|088
+- Claim pending review: CLAIM|ALEX_G|20260728|089
+- Claim pending review: CLAIM|ALEX_G|20260728|090
+- Claim pending review: CLAIM|ALEX_G|20260728|091
+- Claim pending review: CLAIM|ALEX_G|20260728|092
+- Claim pending review: CLAIM|ALEX_G|20260728|093
+- Claim pending review: CLAIM|ALEX_G|20260728|094
+- Claim pending review: CLAIM|ALEX_G|20260728|095
+- Claim pending review: CLAIM|ALEX_G|20260728|096
+- Claim pending review: CLAIM|ALEX_G|20260728|097
+- Claim pending review: CLAIM|ALEX_G|20260728|098
+- Claim pending review: CLAIM|ALEX_G|20260728|099
+- Claim pending review: CLAIM|ALEX_G|20260728|100
+- Claim pending review: CLAIM|ALEX_G|20260728|101
+- Claim pending review: CLAIM|ALEX_G|20260728|102
+- Claim pending review: CLAIM|ALEX_G|20260728|103
+- Claim pending review: CLAIM|ALEX_G|20260728|104
+- Claim pending review: CLAIM|ALEX_G|20260728|105
+- Claim pending review: CLAIM|ALEX_G|20260728|106
+- Claim pending review: CLAIM|ALEX_G|20260728|107
+- Claim pending review: CLAIM|ALEX_G|20260728|108
+- Claim pending review: CLAIM|ALEX_G|20260728|109
+- Claim pending review: CLAIM|ALEX_G|20260728|110
+- Claim pending review: CLAIM|ALEX_G|20260728|111
+- Claim pending review: CLAIM|ALEX_G|20260728|112
+- Claim pending review: CLAIM|ALEX_G|20260728|113
+- Claim pending review: CLAIM|ALEX_G|20260728|114
+- Claim pending review: CLAIM|ALEX_G|20260728|115
+- Claim pending review: CLAIM|ALEX_G|20260728|116
+- Claim pending review: CLAIM|ALEX_G|20260728|117
+- Claim pending review: CLAIM|ALEX_G|20260728|118
+- Claim pending review: CLAIM|ALEX_G|20260728|119
+- Claim pending review: CLAIM|ALEX_G|20260728|120
+- Claim pending review: CLAIM|ALEX_G|20260728|121
+- Claim pending review: CLAIM|ALEX_G|20260728|122
+- Claim pending review: CLAIM|ALEX_G|20260728|123
+- Claim pending review: CLAIM|ALEX_G|20260728|124
+- Claim pending review: CLAIM|ALEX_G|20260728|125
+- Claim pending review: CLAIM|ALEX_G|20260728|126
+- Claim pending review: CLAIM|ALEX_G|20260728|127
+- Claim pending review: CLAIM|ALEX_G|20260728|128
+- Claim pending review: CLAIM|ALEX_G|20260728|129
+- Claim pending review: CLAIM|ALEX_G|20260728|130
+- Claim pending review: CLAIM|ALEX_G|20260728|131
+- Claim pending review: CLAIM|ALEX_G|20260728|132
+- Claim pending review: CLAIM|ALEX_G|20260728|133
+- Claim pending review: CLAIM|ALEX_G|20260728|134
+- Claim pending review: CLAIM|ALEX_G|20260728|135
+- Claim pending review: CLAIM|ALEX_G|20260728|136
+- Claim pending review: CLAIM|ALEX_G|20260728|137
+- Claim pending review: CLAIM|ALEX_G|20260728|138
+- Claim pending review: CLAIM|ALEX_G|20260728|139
+- Claim pending review: CLAIM|ALEX_G|20260728|140
+- Claim pending review: CLAIM|ALEX_G|20260728|141
+- Claim pending review: CLAIM|ALEX_G|20260728|142
+- Claim pending review: CLAIM|ALEX_G|20260728|143
+- Claim pending review: CLAIM|ALEX_G|20260728|144
+- Claim pending review: CLAIM|ALEX_G|20260728|145
+- Claim pending review: CLAIM|ALEX_G|20260728|146
+- Claim pending review: CLAIM|ALEX_G|20260728|147
+- Claim pending review: CLAIM|ALEX_G|20260728|148
+- Claim pending review: CLAIM|ALEX_G|20260728|149
+- Claim pending review: CLAIM|ALEX_G|20260728|150
+- Claim pending review: CLAIM|ALEX_G|20260728|151
+- Claim pending review: CLAIM|ALEX_G|20260728|152
+- Claim pending review: CLAIM|ALEX_G|20260728|153
+- Claim pending review: CLAIM|ALEX_G|20260728|154
+- Claim pending review: CLAIM|ALEX_G|20260728|155
+- Claim pending review: CLAIM|ALEX_G|20260728|156
+- Claim pending review: CLAIM|ALEX_G|20260728|157
+- Claim pending review: CLAIM|ALEX_G|20260728|158
+- Claim pending review: CLAIM|ALEX_G|20260728|159
+- Claim pending review: CLAIM|ALEX_G|20260728|160
+- Claim pending review: CLAIM|ALEX_G|20260729|001
+- Claim pending review: CLAIM|ALEX_G|20260729|002
+- Claim pending review: CLAIM|ALEX_G|20260729|003
+- Claim pending review: CLAIM|ALEX_G|20260729|004
+- Claim pending review: CLAIM|ALEX_G|20260729|005
+- Claim pending review: CLAIM|ALEX_G|20260729|006
+- Claim pending review: CLAIM|ALEX_G|20260729|007
+- Claim pending review: CLAIM|ALEX_G|20260729|008
+- Claim pending review: CLAIM|ALEX_G|20260729|009
+- Claim pending review: CLAIM|ALEX_G|20260729|010
+- Claim pending review: CLAIM|ALEX_G|20260729|011
+- Claim pending review: CLAIM|ALEX_G|20260729|012
+- Claim pending review: CLAIM|ALEX_G|20260729|013
+- Claim pending review: CLAIM|ALEX_G|20260729|014
+- Claim pending review: CLAIM|ALEX_G|20260729|015
+- Claim pending review: CLAIM|ALEX_G|20260729|016
+- Claim pending review: CLAIM|ALEX_G|20260729|017
+- Claim pending review: CLAIM|ALEX_G|20260729|018
+- Claim pending review: CLAIM|ALEX_G|20260729|019
+- Claim pending review: CLAIM|ALEX_G|20260729|020
+- Claim pending review: CLAIM|ALEX_G|20260729|021
+- Claim pending review: CLAIM|ALEX_G|20260729|022
+- Claim pending review: CLAIM|ALEX_G|20260729|023
+- Claim pending review: CLAIM|ALEX_G|20260729|024
+- Claim pending review: CLAIM|ALEX_G|20260729|025
+- Claim pending review: CLAIM|ALEX_G|20260729|026
+- Claim pending review: CLAIM|ALEX_G|20260729|027
+- Claim pending review: CLAIM|ALEX_G|20260729|028
+- Claim pending review: CLAIM|ALEX_G|20260729|029
+- Claim pending review: CLAIM|ALEX_G|20260729|030
+- Claim pending review: CLAIM|ALEX_G|20260729|031
+- Open question [high]: Top-down analysis produces an 'overall score' across timeframes, but no scoring method, weighting or threshold is given. How is the score computed and what value constitutes alignment?
+- Open question [high]: An area of interest needs 'a decent amount of rejections'. How many rejections, and what counts as a rejection?
+- Open question [medium]: The stated procedure runs weekly through 15-minute, but in practice the directional pass stops after the 4-hour. Are the 2h/1h/30m/15m timeframes part of the directional score or not?
+- Open question [medium]: 'Multiple dojis' is given as an entry signal. How many dojis, and must they be consecutive?
+- Open question [medium]: 'When you're above support, you buy. When you're below resistance, you sell.' — support and resistance are not defined in this source, nor related to the higher-high/higher-low structure model it teaches. How do they relate?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|005' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|006' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|007' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|007' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|017' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|018' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|018' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|022' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|026' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|026' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|028' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|029' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|030' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|030' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|031' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|031' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|032' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|032' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|034' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|034' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [high]: The 'snake trick' locates a structure point at 'a sharp turn'. What quantitatively counts as a turn? No pivot strength, minimum swing size, lookback window or bar count is given, so the procedure is discretionary rather than algorithmic.
+- Open question [high]: Any body close beyond a structure level counts as a shift regardless of size. How are false breaks, noise and immediate reversals handled? No minimum displacement, ATR filter or confirmation-bar requirement is stated.
+- Open question [critical]: The 60-75% accuracy claim has no supporting evidence: no sample size, date range, instrument, timeframe, trade log, or definition of what 'accuracy' measures. What verifiable record supports it?
+- Open question [high]: 'Trading at the right times' is named as one of the four requirements for profitability but is never defined anywhere in either Alex G source. What are the right times?
+- Open question [critical]: Lower timeframes are said to inform 'how long can we have on our stop-loss on a takeprofit', but no stop rule, target rule, risk percentage or position sizing appears in either Alex G source. What are the actual rules?
+- Open question [medium]: A retracement is preferred over chasing an extreme, but no retracement depth, measurement method or invalidation point is given. How far back must price come, and what invalidates the wait?
+- Open question [medium]: This source states the timeframe does not matter for reading structure, while Alex G source #1 establishes a strict timeframe hierarchy in which higher timeframes override lower ones on conflict. Are these the same claim at different levels (reading procedure vs directional precedence), or a genuine inconsistency?
+- Open question [medium]: Structure is said to exist inside any range, however tight. At what point does a range become too small for structure to be meaningful, given that no minimum displacement applies?
+- Open question [low]: Claim 'CLAIM|ALEX_G|20260727|016' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?
+- Open question [low]: Claim 'CLAIM|ALEX_G|20260727|016' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?
+- Open question [low]: Claim 'CLAIM|ALEX_G|20260727|020' looks well-supported by evidence but has no paper-trading validation yet -- has it been tested live without capital risk?
+- Open question [low]: Claim 'CLAIM|ALEX_G|20260727|020' looks well-supported by evidence but has no replay validation yet -- does it hold up against historical price action?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|022' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|007' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|011' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|011' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [critical]: Alex G says no strategy can trade liquidity sweeps, yet describes his own live AUDCHF position as 'entering a trade technically after the liquidity sweep'. Is the objection to anticipating sweeps only, or to using them at all?
+- Open question [high]: 'Retail traders only make up 3% of the market' is offered as the load-bearing premise for rejecting the institutional-sweep narrative. What is the source of the 3% figure, and 3% of what — volume, participants, notional?
+- Open question [medium]: 'More than three taps is the most ideal' — what counts as a tap? Must price close in the zone, wick into it, or merely approach it? Over what lookback?
+- Open question [high]: A confirmation is 'a bearish candlestick confirming that it's going in that direction', with engulfing, morning star and pin bar named. Is any candle in the intended direction sufficient, or only these named patterns? Must it close inside the zone?
+- Open question [medium]: The seven-approaches-one-sweep count comes from a single hand-picked chart. Is that ratio representative?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|029' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|031' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|031' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|011' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|011' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|021' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|021' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|028' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|030' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|030' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|032' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|032' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [high]: What is the maximum of the timeframe-confluence scale, and is 20 a passing threshold or just the score of this example?
+- Open question [high]: Which two timeframes must be in sync, and does an opposing intermediate timeframe reduce the grade?
+- Open question [high]: Which sessions are 'the proper session' for entry?
+- Open question [critical]: Does Alex G's method permit entry on an incomplete structure point, or require confirmation first?
+- Open question [critical]: Are the $60,000 and $50,000 single-day results verifiable, and were they produced by this method?
+- Open question [medium]: Which EMA period is used on the four-hour chart?
+- Open question [medium]: Does 'break out of this box' require a body close, or does a wick through it suffice?
+- Open question [medium]: How many touches qualify a level, and how is 'most touches' ranked when candidates tie?
+- Open question [medium]: Which timeframe's lower high and lower low bound the box?
+- Open question [low]: What percentage bands define the B / B+ setup grades?
+- Open question [medium]: Is market structure timeframe-agnostic, or do lower timeframes carry less directional weight?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|026' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|026' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|028' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|029' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|011' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|011' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|037' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|037' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|038' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|041' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|043' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|043' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|044' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|044' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|046' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|046' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|048' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|049' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|049' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|050' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|050' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|053' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|053' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [critical]: Which exact hours are the high-volume windows Alex G will trade?
+- Open question [critical]: Is the ~70% next-day continuation figure measurable, and on what sample?
+- Open question [critical]: Is the daily-income figure $500 or $1000, and on what capital?
+- Open question [critical]: Does Alex G's method permit anticipating a setup, or require a closed candle first?
+- Open question [high]: What is the cost of waiting for the session, measured rather than asserted?
+- Open question [high]: Is 80-100 pips a target-selection rule, or a description of past averages?
+- Open question [high]: Must the engulfing candle's body engulf the prior body, or the prior candle's full range?
+- Open question [medium]: How many dojis constitute 'more powerful', and does the count change the decision?
+- Open question [high]: On which timeframe is the trend that the confirmation must agree with?
+- Open question [medium]: At what values do the five named inputs change the decision?
+- Open question [medium]: Is the 4-hour cross-reference required on every setup, or only when a daily wick is ambiguous?
+- Open question [medium]: What counts as a 'shorter' take-profit, a 'very strong' confirmation, or 'a lot of' momentum?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|032' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260727|032' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|028' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|028' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|030' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|030' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|056' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|056' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|058' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|058' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|063' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|063' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|068' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|068' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|069' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|070' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|070' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|074' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|074' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|075' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|078' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|078' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|079' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|079' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|080' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|080' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|081' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|081' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|083' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|083' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|084' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [high]: Do the 1:2 / 1:3 ratios here and the 80-100 pip target from source #5 jointly imply a stop distance?
+- Open question [critical]: Is the $50,000-$100,000 per day figure verifiable, and on what account size?
+- Open question [critical]: Is the 100K / 27-28% / $28,000 payout result verifiable?
+- Open question [critical]: What proportion of students reach $1,000-$1,500 per week, and what happens to the rest?
+- Open question [high]: Is 8-10% per month sustainable, and at what drawdown?
+- Open question [high]: Are November-March materially better than June-August for this method?
+- Open question [medium]: What is the source for '99% of traders lose money'?
+- Open question [low]: Is 'only being up 60%' a transcription artifact for 6%?
+- Open question [medium]: Which funded-account rules constrain the risk percentage, and at what thresholds?
+- Open question [medium]: Is the fixed percentage per trade, per month, or per market season?
+- Open question [low]: Does this revise source #3's account of why traders fail?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|110' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|113' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|117' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|117' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [high]: How close must price come to a level for the setup to count?
+- Open question [high]: Which EMA period is used, and on which timeframe?
+- Open question [high]: What is on the written confluence list, and how many confluences are required?
+- Open question [medium]: Does meeting a monthly objective reduce or stop trading, and at what figure?
+- Open question [medium]: How reliable is the alarm-based process in practice?
+- Open question [medium]: What makes a trade 'worth the risk', in terms that could be evaluated?
+- Open question [medium]: Is there a minimum risk-to-reward, given 1:2, 1:3 and now 1:4 have all been cited?
+- Open question [low]: How are correlated pairs selected between, and does taking both double the risk?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|046' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|046' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|049' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|049' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|068' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|068' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|074' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|074' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|125' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|125' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|126' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|126' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|128' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|128' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|136' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260728|140' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [high]: Is the take-profit ever moved for a market reason, and if so on what signal?
+- Open question [critical]: What is the evaluation pass rate, and what happens to the fee when a trader fails?
+- Open question [high]: Which monthly return figure is the claim - 7-10%, 8-10%, or 7/12/15%?
+- Open question [low]: What is the source for the 6.3 trillion daily turnover figure, and does it support the argument?
+- Open question [medium]: Is the prescribed allocation 30/30/30/10 or 30/30/40/0?
+- Open question [medium]: Does the 30/30/30/10 rule apply to trading profits, to all income, or to both?
+- Open question [low]: How does 'don't show anybody' sit alongside running a paid community and live calls?
+- Open question [low]: Is this psychology video part 1 or part 2?
+- Open question [critical]: How far beyond the rejection structure is the stop placed? The rule is stated as invariant ('the same thing every single time your stop-loss is right under it') but no buffer is given in any unit - no pips, no ATR multiple, no percentage, and no statement that it sits flush against the structure. Position size = risk / stop distance, so the sizing rules remain non-computable without this number.
+- Open question [high]: What exactly is 'it' / 'this point'? Three readings are each consistent with the words and the chart narration: (a) the low of the final rejection/engulfing candle, (b) the low of the whole Morning Star formation, (c) the far boundary of the retested zone. The three give materially different stop distances on the same setup.
+- Open question [medium]: Is the short-side mirror ever stated? All three demonstrations are longs and the phrasing is always 'right under'. The symmetric 'right above' for a short is never spoken or shown in this source.
+- Open question [high]: 1:2 is stated as a MINIMUM. How is the actual target chosen when structure would allow more? Existing ALEX_G sources record 1:3 and 1:4 as observations and an 80-100 pip personal average, none as a selection procedure.
+- Open question [high]: Zone width is stated to be unconstrained ('doesn't matter the size of the box') subject to leaving 'enough room' for 'multiple Taps'. How much room, and how many touches? The same source quantifies a different requirement precisely ('a minimum of one structure point'), so the omission here is unlikely to be an oversight.
+- Open question [medium]: Is the confirmation specifically a bullish engulfing candle, or any rejection formation? The requirement is stated as 'a bullish engulfing Candlestick confirmation', but the demonstrations show a Morning Star (three doji plus one engulfing) and the narration also accepts 'rejection candlesticks' generally.
+- Open question [low]: The transcript reads 'for your Inay and swing trades'. 'Inay' is a caption artifact and the trading style it names cannot be recovered from this transcript.
+- Open question [low]: The lower bound of the student income claim is corrupted in the transcript, appearing as ',000' in both occurrences. The figure cannot be read.
+- Open question [medium]: What counts as a 'structure point' for the minimum-of-one test - any candle body close beyond the level, or a swing high/low meeting some significance test? This source does not define it.
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|008' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|009' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|013' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|015' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|016' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|017' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|017' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|018' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|018' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|019' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|019' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|020' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|020' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|021' has no session recorded -- does this rule apply in every session or only specific ones?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|021' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|022' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|023' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+- Open question [medium]: Claim 'CLAIM|ALEX_G|20260729|025' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?
+
+## 11. Replay Recommendations
+- Replay historical price action segmented by news_handling and compare outcomes.
+- Replay historical price action segmented by session and compare outcomes.
+- Replay historical price action segmented by volatility_handling and compare outcomes.
+- Replay historical price action under both interpretations and compare outcomes.
+- Replay historical price action with and without this condition and compare outcomes.
+- replay test against historical price action
+
+## 12. Paper-Trading Recommendations
+- Paper-trade across varying news_handling conditions and compare results.
+- Paper-trade across varying session conditions and compare results.
+- Paper-trade across varying volatility_handling conditions and compare results.
+- Paper-trade both interpretations and compare results.
+- Paper-trade both variants (with/without this condition) and compare results.
+
+## 13. Limitations
+- 13 contradiction(s) remain unresolved for this trader.
+- 216 unresolved question(s) remain open for this trader.
+- CLAIM|ALEX_G|20260727|021: 'I like to keep my market structure approach to the market as close as I can to how it is on the line chart.'
+- CLAIM|ALEX_G|20260728|072: 'How strong this resistance is. What time frame are we in? How many days are left in the week? What type of risk-to-reward do I have? What other'
+- CLAIM|ALEX_G|20260728|086: "Sometimes I break the rules depending if my take profit is shorter, if it's a very strong confirmation, if there's a lot of momentum"
+- CLAIM|ALEX_G|20260728|157: '30 30 10 rule write this down tattoo it put'
+- CLAIM|ALEX_G|20260728|159: 'i personally try to not even have this i personally try to add this'
+- One or more claims are still pending_review and have not been confirmed by a human.
+
+## 14. Full Lineage Summary
+- Profile sources: EVSRC|ALEX_G|20260727|001, EVSRC|ALEX_G|20260728|001, EVSRC|ALEX_G|20260728|002, EVSRC|ALEX_G|20260728|003, EVSRC|ALEX_G|20260728|004, EVSRC|ALEX_G|20260728|005, EVSRC|ALEX_G|20260728|006, EVSRC|ALEX_G|20260728|007, EVSRC|ALEX_G|20260729|001
+- Profile claims: CLAIM|ALEX_G|20260727|001, CLAIM|ALEX_G|20260727|002, CLAIM|ALEX_G|20260727|003, CLAIM|ALEX_G|20260727|004, CLAIM|ALEX_G|20260727|005, CLAIM|ALEX_G|20260727|006, CLAIM|ALEX_G|20260727|007, CLAIM|ALEX_G|20260727|008, CLAIM|ALEX_G|20260727|009, CLAIM|ALEX_G|20260727|010, CLAIM|ALEX_G|20260727|011, CLAIM|ALEX_G|20260727|012, CLAIM|ALEX_G|20260727|013, CLAIM|ALEX_G|20260727|014, CLAIM|ALEX_G|20260727|015, CLAIM|ALEX_G|20260727|016, CLAIM|ALEX_G|20260727|017, CLAIM|ALEX_G|20260727|018, CLAIM|ALEX_G|20260727|019, CLAIM|ALEX_G|20260727|020, CLAIM|ALEX_G|20260727|021, CLAIM|ALEX_G|20260727|022, CLAIM|ALEX_G|20260727|023, CLAIM|ALEX_G|20260727|024, CLAIM|ALEX_G|20260727|025, CLAIM|ALEX_G|20260727|026, CLAIM|ALEX_G|20260727|027, CLAIM|ALEX_G|20260727|028, CLAIM|ALEX_G|20260727|029, CLAIM|ALEX_G|20260727|030, CLAIM|ALEX_G|20260727|031, CLAIM|ALEX_G|20260727|032, CLAIM|ALEX_G|20260727|033, CLAIM|ALEX_G|20260727|034, CLAIM|ALEX_G|20260727|035, CLAIM|ALEX_G|20260728|001, CLAIM|ALEX_G|20260728|002, CLAIM|ALEX_G|20260728|003, CLAIM|ALEX_G|20260728|004, CLAIM|ALEX_G|20260728|005, CLAIM|ALEX_G|20260728|006, CLAIM|ALEX_G|20260728|007, CLAIM|ALEX_G|20260728|008, CLAIM|ALEX_G|20260728|009, CLAIM|ALEX_G|20260728|010, CLAIM|ALEX_G|20260728|011, CLAIM|ALEX_G|20260728|012, CLAIM|ALEX_G|20260728|013, CLAIM|ALEX_G|20260728|014, CLAIM|ALEX_G|20260728|015, CLAIM|ALEX_G|20260728|016, CLAIM|ALEX_G|20260728|017, CLAIM|ALEX_G|20260728|018, CLAIM|ALEX_G|20260728|019, CLAIM|ALEX_G|20260728|020, CLAIM|ALEX_G|20260728|021, CLAIM|ALEX_G|20260728|022, CLAIM|ALEX_G|20260728|023, CLAIM|ALEX_G|20260728|024, CLAIM|ALEX_G|20260728|025, CLAIM|ALEX_G|20260728|026, CLAIM|ALEX_G|20260728|027, CLAIM|ALEX_G|20260728|028, CLAIM|ALEX_G|20260728|029, CLAIM|ALEX_G|20260728|030, CLAIM|ALEX_G|20260728|031, CLAIM|ALEX_G|20260728|032, CLAIM|ALEX_G|20260728|033, CLAIM|ALEX_G|20260728|034, CLAIM|ALEX_G|20260728|035, CLAIM|ALEX_G|20260728|036, CLAIM|ALEX_G|20260728|037, CLAIM|ALEX_G|20260728|038, CLAIM|ALEX_G|20260728|039, CLAIM|ALEX_G|20260728|040, CLAIM|ALEX_G|20260728|041, CLAIM|ALEX_G|20260728|042, CLAIM|ALEX_G|20260728|043, CLAIM|ALEX_G|20260728|044, CLAIM|ALEX_G|20260728|045, CLAIM|ALEX_G|20260728|046, CLAIM|ALEX_G|20260728|047, CLAIM|ALEX_G|20260728|048, CLAIM|ALEX_G|20260728|049, CLAIM|ALEX_G|20260728|050, CLAIM|ALEX_G|20260728|051, CLAIM|ALEX_G|20260728|052, CLAIM|ALEX_G|20260728|053, CLAIM|ALEX_G|20260728|054, CLAIM|ALEX_G|20260728|055, CLAIM|ALEX_G|20260728|056, CLAIM|ALEX_G|20260728|057, CLAIM|ALEX_G|20260728|058, CLAIM|ALEX_G|20260728|059, CLAIM|ALEX_G|20260728|060, CLAIM|ALEX_G|20260728|061, CLAIM|ALEX_G|20260728|062, CLAIM|ALEX_G|20260728|063, CLAIM|ALEX_G|20260728|064, CLAIM|ALEX_G|20260728|065, CLAIM|ALEX_G|20260728|066, CLAIM|ALEX_G|20260728|067, CLAIM|ALEX_G|20260728|068, CLAIM|ALEX_G|20260728|069, CLAIM|ALEX_G|20260728|070, CLAIM|ALEX_G|20260728|071, CLAIM|ALEX_G|20260728|072, CLAIM|ALEX_G|20260728|073, CLAIM|ALEX_G|20260728|074, CLAIM|ALEX_G|20260728|075, CLAIM|ALEX_G|20260728|076, CLAIM|ALEX_G|20260728|077, CLAIM|ALEX_G|20260728|078, CLAIM|ALEX_G|20260728|079, CLAIM|ALEX_G|20260728|080, CLAIM|ALEX_G|20260728|081, CLAIM|ALEX_G|20260728|082, CLAIM|ALEX_G|20260728|083, CLAIM|ALEX_G|20260728|084, CLAIM|ALEX_G|20260728|085, CLAIM|ALEX_G|20260728|086, CLAIM|ALEX_G|20260728|087, CLAIM|ALEX_G|20260728|088, CLAIM|ALEX_G|20260728|089, CLAIM|ALEX_G|20260728|090, CLAIM|ALEX_G|20260728|091, CLAIM|ALEX_G|20260728|092, CLAIM|ALEX_G|20260728|093, CLAIM|ALEX_G|20260728|094, CLAIM|ALEX_G|20260728|095, CLAIM|ALEX_G|20260728|096, CLAIM|ALEX_G|20260728|097, CLAIM|ALEX_G|20260728|098, CLAIM|ALEX_G|20260728|099, CLAIM|ALEX_G|20260728|100, CLAIM|ALEX_G|20260728|101, CLAIM|ALEX_G|20260728|102, CLAIM|ALEX_G|20260728|103, CLAIM|ALEX_G|20260728|104, CLAIM|ALEX_G|20260728|105, CLAIM|ALEX_G|20260728|106, CLAIM|ALEX_G|20260728|107, CLAIM|ALEX_G|20260728|108, CLAIM|ALEX_G|20260728|109, CLAIM|ALEX_G|20260728|110, CLAIM|ALEX_G|20260728|111, CLAIM|ALEX_G|20260728|112, CLAIM|ALEX_G|20260728|113, CLAIM|ALEX_G|20260728|114, CLAIM|ALEX_G|20260728|115, CLAIM|ALEX_G|20260728|116, CLAIM|ALEX_G|20260728|117, CLAIM|ALEX_G|20260728|118, CLAIM|ALEX_G|20260728|119, CLAIM|ALEX_G|20260728|120, CLAIM|ALEX_G|20260728|121, CLAIM|ALEX_G|20260728|122, CLAIM|ALEX_G|20260728|123, CLAIM|ALEX_G|20260728|124, CLAIM|ALEX_G|20260728|125, CLAIM|ALEX_G|20260728|126, CLAIM|ALEX_G|20260728|127, CLAIM|ALEX_G|20260728|128, CLAIM|ALEX_G|20260728|129, CLAIM|ALEX_G|20260728|130, CLAIM|ALEX_G|20260728|131, CLAIM|ALEX_G|20260728|132, CLAIM|ALEX_G|20260728|133, CLAIM|ALEX_G|20260728|134, CLAIM|ALEX_G|20260728|135, CLAIM|ALEX_G|20260728|136, CLAIM|ALEX_G|20260728|137, CLAIM|ALEX_G|20260728|138, CLAIM|ALEX_G|20260728|139, CLAIM|ALEX_G|20260728|140, CLAIM|ALEX_G|20260728|141, CLAIM|ALEX_G|20260728|142, CLAIM|ALEX_G|20260728|143, CLAIM|ALEX_G|20260728|144, CLAIM|ALEX_G|20260728|145, CLAIM|ALEX_G|20260728|146, CLAIM|ALEX_G|20260728|147, CLAIM|ALEX_G|20260728|148, CLAIM|ALEX_G|20260728|149, CLAIM|ALEX_G|20260728|150, CLAIM|ALEX_G|20260728|151, CLAIM|ALEX_G|20260728|152, CLAIM|ALEX_G|20260728|153, CLAIM|ALEX_G|20260728|154, CLAIM|ALEX_G|20260728|155, CLAIM|ALEX_G|20260728|156, CLAIM|ALEX_G|20260728|157, CLAIM|ALEX_G|20260728|158, CLAIM|ALEX_G|20260728|159, CLAIM|ALEX_G|20260728|160, CLAIM|ALEX_G|20260729|001, CLAIM|ALEX_G|20260729|002, CLAIM|ALEX_G|20260729|003, CLAIM|ALEX_G|20260729|004, CLAIM|ALEX_G|20260729|005, CLAIM|ALEX_G|20260729|006, CLAIM|ALEX_G|20260729|007, CLAIM|ALEX_G|20260729|008, CLAIM|ALEX_G|20260729|009, CLAIM|ALEX_G|20260729|010, CLAIM|ALEX_G|20260729|011, CLAIM|ALEX_G|20260729|012, CLAIM|ALEX_G|20260729|013, CLAIM|ALEX_G|20260729|014, CLAIM|ALEX_G|20260729|015, CLAIM|ALEX_G|20260729|016, CLAIM|ALEX_G|20260729|017, CLAIM|ALEX_G|20260729|018, CLAIM|ALEX_G|20260729|019, CLAIM|ALEX_G|20260729|020, CLAIM|ALEX_G|20260729|021, CLAIM|ALEX_G|20260729|022, CLAIM|ALEX_G|20260729|023, CLAIM|ALEX_G|20260729|024, CLAIM|ALEX_G|20260729|025, CLAIM|ALEX_G|20260729|026, CLAIM|ALEX_G|20260729|027, CLAIM|ALEX_G|20260729|028, CLAIM|ALEX_G|20260729|029, CLAIM|ALEX_G|20260729|030, CLAIM|ALEX_G|20260729|031
+- Blueprint sources: EVSRC|ALEX_G|20260727|001, EVSRC|ALEX_G|20260728|001, EVSRC|ALEX_G|20260728|002, EVSRC|ALEX_G|20260728|003, EVSRC|ALEX_G|20260728|004, EVSRC|ALEX_G|20260728|005, EVSRC|ALEX_G|20260728|006, EVSRC|ALEX_G|20260728|007, EVSRC|ALEX_G|20260729|001
+- Blueprint segments: TSEG|INTAKE|ALEX_G|20260727|001|001, TSEG|INTAKE|ALEX_G|20260727|001|002, TSEG|INTAKE|ALEX_G|20260727|001|003, TSEG|INTAKE|ALEX_G|20260727|001|004, TSEG|INTAKE|ALEX_G|20260727|001|005, TSEG|INTAKE|ALEX_G|20260727|001|006, TSEG|INTAKE|ALEX_G|20260727|001|007, TSEG|INTAKE|ALEX_G|20260727|001|008, TSEG|INTAKE|ALEX_G|20260727|001|009, TSEG|INTAKE|ALEX_G|20260727|001|012, TSEG|INTAKE|ALEX_G|20260727|001|013, TSEG|INTAKE|ALEX_G|20260727|001|014, TSEG|INTAKE|ALEX_G|20260727|001|015, TSEG|INTAKE|ALEX_G|20260727|001|016, TSEG|INTAKE|ALEX_G|20260728|001|001, TSEG|INTAKE|ALEX_G|20260728|001|002, TSEG|INTAKE|ALEX_G|20260728|001|003, TSEG|INTAKE|ALEX_G|20260728|001|004, TSEG|INTAKE|ALEX_G|20260728|001|005, TSEG|INTAKE|ALEX_G|20260728|001|006, TSEG|INTAKE|ALEX_G|20260728|001|007, TSEG|INTAKE|ALEX_G|20260728|001|008, TSEG|INTAKE|ALEX_G|20260728|001|009, TSEG|INTAKE|ALEX_G|20260728|001|010, TSEG|INTAKE|ALEX_G|20260728|001|011, TSEG|INTAKE|ALEX_G|20260728|001|014, TSEG|INTAKE|ALEX_G|20260728|001|015, TSEG|INTAKE|ALEX_G|20260728|001|016, TSEG|INTAKE|ALEX_G|20260728|001|017, TSEG|INTAKE|ALEX_G|20260728|002|002, TSEG|INTAKE|ALEX_G|20260728|002|003, TSEG|INTAKE|ALEX_G|20260728|002|004, TSEG|INTAKE|ALEX_G|20260728|002|005, TSEG|INTAKE|ALEX_G|20260728|002|006, TSEG|INTAKE|ALEX_G|20260728|002|007, TSEG|INTAKE|ALEX_G|20260728|002|008, TSEG|INTAKE|ALEX_G|20260728|002|009, TSEG|INTAKE|ALEX_G|20260728|002|010, TSEG|INTAKE|ALEX_G|20260728|002|011, TSEG|INTAKE|ALEX_G|20260728|002|013, TSEG|INTAKE|ALEX_G|20260728|002|014, TSEG|INTAKE|ALEX_G|20260728|003|001, TSEG|INTAKE|ALEX_G|20260728|003|002, TSEG|INTAKE|ALEX_G|20260728|003|003, TSEG|INTAKE|ALEX_G|20260728|003|005, TSEG|INTAKE|ALEX_G|20260728|003|006, TSEG|INTAKE|ALEX_G|20260728|003|007, TSEG|INTAKE|ALEX_G|20260728|003|008, TSEG|INTAKE|ALEX_G|20260728|003|010, TSEG|INTAKE|ALEX_G|20260728|003|011, TSEG|INTAKE|ALEX_G|20260728|003|012, TSEG|INTAKE|ALEX_G|20260728|003|013, TSEG|INTAKE|ALEX_G|20260728|004|001, TSEG|INTAKE|ALEX_G|20260728|004|002, TSEG|INTAKE|ALEX_G|20260728|004|003, TSEG|INTAKE|ALEX_G|20260728|004|004, TSEG|INTAKE|ALEX_G|20260728|004|005, TSEG|INTAKE|ALEX_G|20260728|004|006, TSEG|INTAKE|ALEX_G|20260728|004|007, TSEG|INTAKE|ALEX_G|20260728|004|008, TSEG|INTAKE|ALEX_G|20260728|004|009, TSEG|INTAKE|ALEX_G|20260728|004|010, TSEG|INTAKE|ALEX_G|20260728|004|011, TSEG|INTAKE|ALEX_G|20260728|004|012, TSEG|INTAKE|ALEX_G|20260728|004|013, TSEG|INTAKE|ALEX_G|20260728|004|014, TSEG|INTAKE|ALEX_G|20260728|005|001, TSEG|INTAKE|ALEX_G|20260728|005|002, TSEG|INTAKE|ALEX_G|20260728|005|003, TSEG|INTAKE|ALEX_G|20260728|005|004, TSEG|INTAKE|ALEX_G|20260728|005|005, TSEG|INTAKE|ALEX_G|20260728|005|006, TSEG|INTAKE|ALEX_G|20260728|005|007, TSEG|INTAKE|ALEX_G|20260728|005|008, TSEG|INTAKE|ALEX_G|20260728|005|009, TSEG|INTAKE|ALEX_G|20260728|005|010, TSEG|INTAKE|ALEX_G|20260728|005|011, TSEG|INTAKE|ALEX_G|20260728|005|012, TSEG|INTAKE|ALEX_G|20260728|005|013, TSEG|INTAKE|ALEX_G|20260728|005|014, TSEG|INTAKE|ALEX_G|20260728|005|015, TSEG|INTAKE|ALEX_G|20260728|006|001, TSEG|INTAKE|ALEX_G|20260728|006|002, TSEG|INTAKE|ALEX_G|20260728|006|003, TSEG|INTAKE|ALEX_G|20260728|006|004, TSEG|INTAKE|ALEX_G|20260728|006|005, TSEG|INTAKE|ALEX_G|20260728|006|006, TSEG|INTAKE|ALEX_G|20260728|006|007, TSEG|INTAKE|ALEX_G|20260728|006|008, TSEG|INTAKE|ALEX_G|20260728|006|009, TSEG|INTAKE|ALEX_G|20260728|006|010, TSEG|INTAKE|ALEX_G|20260728|006|011, TSEG|INTAKE|ALEX_G|20260728|006|013, TSEG|INTAKE|ALEX_G|20260728|007|001, TSEG|INTAKE|ALEX_G|20260728|007|002, TSEG|INTAKE|ALEX_G|20260728|007|004, TSEG|INTAKE|ALEX_G|20260728|007|005, TSEG|INTAKE|ALEX_G|20260728|007|006, TSEG|INTAKE|ALEX_G|20260728|007|007, TSEG|INTAKE|ALEX_G|20260728|007|008, TSEG|INTAKE|ALEX_G|20260728|007|009, TSEG|INTAKE|ALEX_G|20260728|007|010, TSEG|INTAKE|ALEX_G|20260728|007|011, TSEG|INTAKE|ALEX_G|20260728|007|012, TSEG|INTAKE|ALEX_G|20260728|007|013, TSEG|INTAKE|ALEX_G|20260728|007|014, TSEG|INTAKE|ALEX_G|20260728|007|015, TSEG|INTAKE|ALEX_G|20260729|001|001, TSEG|INTAKE|ALEX_G|20260729|001|002, TSEG|INTAKE|ALEX_G|20260729|001|003, TSEG|INTAKE|ALEX_G|20260729|001|004, TSEG|INTAKE|ALEX_G|20260729|001|005, TSEG|INTAKE|ALEX_G|20260729|001|006, TSEG|INTAKE|ALEX_G|20260729|001|007, TSEG|INTAKE|ALEX_G|20260729|001|008, TSEG|INTAKE|ALEX_G|20260729|001|009, TSEG|INTAKE|ALEX_G|20260729|001|010, TSEG|INTAKE|ALEX_G|20260729|001|011, TSEG|INTAKE|ALEX_G|20260729|001|012, TSEG|INTAKE|ALEX_G|20260729|001|013
+- Blueprint evidence: EV|EVSRC|ALEX_G|20260727|001|001, EV|EVSRC|ALEX_G|20260727|001|002, EV|EVSRC|ALEX_G|20260727|001|003, EV|EVSRC|ALEX_G|20260727|001|004, EV|EVSRC|ALEX_G|20260727|001|005, EV|EVSRC|ALEX_G|20260727|001|006, EV|EVSRC|ALEX_G|20260727|001|007, EV|EVSRC|ALEX_G|20260727|001|008, EV|EVSRC|ALEX_G|20260727|001|009, EV|EVSRC|ALEX_G|20260727|001|010, EV|EVSRC|ALEX_G|20260727|001|011, EV|EVSRC|ALEX_G|20260727|001|012, EV|EVSRC|ALEX_G|20260727|001|013, EV|EVSRC|ALEX_G|20260727|001|014, EV|EVSRC|ALEX_G|20260727|001|015, EV|EVSRC|ALEX_G|20260727|001|016, EV|EVSRC|ALEX_G|20260727|001|017, EV|EVSRC|ALEX_G|20260727|001|018, EV|EVSRC|ALEX_G|20260727|001|019, EV|EVSRC|ALEX_G|20260727|001|020, EV|EVSRC|ALEX_G|20260727|001|021, EV|EVSRC|ALEX_G|20260727|001|022, EV|EVSRC|ALEX_G|20260727|001|023, EV|EVSRC|ALEX_G|20260727|001|024, EV|EVSRC|ALEX_G|20260727|001|025, EV|EVSRC|ALEX_G|20260727|001|026, EV|EVSRC|ALEX_G|20260727|001|027, EV|EVSRC|ALEX_G|20260727|001|028, EV|EVSRC|ALEX_G|20260727|001|029, EV|EVSRC|ALEX_G|20260727|001|030, EV|EVSRC|ALEX_G|20260727|001|031, EV|EVSRC|ALEX_G|20260727|001|032, EV|EVSRC|ALEX_G|20260727|001|033, EV|EVSRC|ALEX_G|20260727|001|034, EV|EVSRC|ALEX_G|20260727|001|035, EV|EVSRC|ALEX_G|20260727|001|036, EV|EVSRC|ALEX_G|20260727|001|037, EV|EVSRC|ALEX_G|20260728|001|001, EV|EVSRC|ALEX_G|20260728|001|002, EV|EVSRC|ALEX_G|20260728|001|003, EV|EVSRC|ALEX_G|20260728|001|004, EV|EVSRC|ALEX_G|20260728|001|005, EV|EVSRC|ALEX_G|20260728|001|006, EV|EVSRC|ALEX_G|20260728|001|007, EV|EVSRC|ALEX_G|20260728|001|008, EV|EVSRC|ALEX_G|20260728|001|009, EV|EVSRC|ALEX_G|20260728|001|010, EV|EVSRC|ALEX_G|20260728|001|011, EV|EVSRC|ALEX_G|20260728|001|012, EV|EVSRC|ALEX_G|20260728|001|013, EV|EVSRC|ALEX_G|20260728|001|014, EV|EVSRC|ALEX_G|20260728|001|015, EV|EVSRC|ALEX_G|20260728|001|016, EV|EVSRC|ALEX_G|20260728|001|017, EV|EVSRC|ALEX_G|20260728|001|018, EV|EVSRC|ALEX_G|20260728|001|019, EV|EVSRC|ALEX_G|20260728|001|020, EV|EVSRC|ALEX_G|20260728|001|021, EV|EVSRC|ALEX_G|20260728|002|001, EV|EVSRC|ALEX_G|20260728|002|002, EV|EVSRC|ALEX_G|20260728|002|003, EV|EVSRC|ALEX_G|20260728|002|004, EV|EVSRC|ALEX_G|20260728|002|005, EV|EVSRC|ALEX_G|20260728|002|006, EV|EVSRC|ALEX_G|20260728|002|007, EV|EVSRC|ALEX_G|20260728|002|008, EV|EVSRC|ALEX_G|20260728|002|009, EV|EVSRC|ALEX_G|20260728|002|010, EV|EVSRC|ALEX_G|20260728|002|011, EV|EVSRC|ALEX_G|20260728|002|012, EV|EVSRC|ALEX_G|20260728|002|013, EV|EVSRC|ALEX_G|20260728|002|014, EV|EVSRC|ALEX_G|20260728|002|015, EV|EVSRC|ALEX_G|20260728|002|016, EV|EVSRC|ALEX_G|20260728|002|017, EV|EVSRC|ALEX_G|20260728|002|018, EV|EVSRC|ALEX_G|20260728|002|019, EV|EVSRC|ALEX_G|20260728|002|020, EV|EVSRC|ALEX_G|20260728|002|021, EV|EVSRC|ALEX_G|20260728|002|022, EV|EVSRC|ALEX_G|20260728|002|023, EV|EVSRC|ALEX_G|20260728|002|024, EV|EVSRC|ALEX_G|20260728|003|001, EV|EVSRC|ALEX_G|20260728|003|002, EV|EVSRC|ALEX_G|20260728|003|003, EV|EVSRC|ALEX_G|20260728|003|004, EV|EVSRC|ALEX_G|20260728|003|005, EV|EVSRC|ALEX_G|20260728|003|006, EV|EVSRC|ALEX_G|20260728|003|007, EV|EVSRC|ALEX_G|20260728|003|008, EV|EVSRC|ALEX_G|20260728|003|009, EV|EVSRC|ALEX_G|20260728|003|010, EV|EVSRC|ALEX_G|20260728|003|011, EV|EVSRC|ALEX_G|20260728|003|012, EV|EVSRC|ALEX_G|20260728|003|013, EV|EVSRC|ALEX_G|20260728|003|014, EV|EVSRC|ALEX_G|20260728|003|015, EV|EVSRC|ALEX_G|20260728|003|016, EV|EVSRC|ALEX_G|20260728|003|017, EV|EVSRC|ALEX_G|20260728|003|018, EV|EVSRC|ALEX_G|20260728|003|019, EV|EVSRC|ALEX_G|20260728|003|020, EV|EVSRC|ALEX_G|20260728|003|021, EV|EVSRC|ALEX_G|20260728|003|022, EV|EVSRC|ALEX_G|20260728|003|023, EV|EVSRC|ALEX_G|20260728|003|024, EV|EVSRC|ALEX_G|20260728|003|025, EV|EVSRC|ALEX_G|20260728|003|026, EV|EVSRC|ALEX_G|20260728|003|027, EV|EVSRC|ALEX_G|20260728|003|028, EV|EVSRC|ALEX_G|20260728|003|029, EV|EVSRC|ALEX_G|20260728|003|030, EV|EVSRC|ALEX_G|20260728|003|031, EV|EVSRC|ALEX_G|20260728|004|001, EV|EVSRC|ALEX_G|20260728|004|002, EV|EVSRC|ALEX_G|20260728|004|003, EV|EVSRC|ALEX_G|20260728|004|004, EV|EVSRC|ALEX_G|20260728|004|005, EV|EVSRC|ALEX_G|20260728|004|006, EV|EVSRC|ALEX_G|20260728|004|007, EV|EVSRC|ALEX_G|20260728|004|008, EV|EVSRC|ALEX_G|20260728|004|009, EV|EVSRC|ALEX_G|20260728|004|010, EV|EVSRC|ALEX_G|20260728|004|011, EV|EVSRC|ALEX_G|20260728|004|012, EV|EVSRC|ALEX_G|20260728|004|013, EV|EVSRC|ALEX_G|20260728|004|014, EV|EVSRC|ALEX_G|20260728|004|015, EV|EVSRC|ALEX_G|20260728|004|016, EV|EVSRC|ALEX_G|20260728|004|017, EV|EVSRC|ALEX_G|20260728|004|018, EV|EVSRC|ALEX_G|20260728|004|019, EV|EVSRC|ALEX_G|20260728|004|020, EV|EVSRC|ALEX_G|20260728|004|021, EV|EVSRC|ALEX_G|20260728|004|022, EV|EVSRC|ALEX_G|20260728|004|023, EV|EVSRC|ALEX_G|20260728|004|024, EV|EVSRC|ALEX_G|20260728|004|025, EV|EVSRC|ALEX_G|20260728|004|026, EV|EVSRC|ALEX_G|20260728|004|027, EV|EVSRC|ALEX_G|20260728|004|028, EV|EVSRC|ALEX_G|20260728|004|029, EV|EVSRC|ALEX_G|20260728|004|030, EV|EVSRC|ALEX_G|20260728|004|031, EV|EVSRC|ALEX_G|20260728|004|032, EV|EVSRC|ALEX_G|20260728|004|033, EV|EVSRC|ALEX_G|20260728|004|034, EV|EVSRC|ALEX_G|20260728|004|035, EV|EVSRC|ALEX_G|20260728|004|036, EV|EVSRC|ALEX_G|20260728|004|037, EV|EVSRC|ALEX_G|20260728|004|038, EV|EVSRC|ALEX_G|20260728|004|039, EV|EVSRC|ALEX_G|20260728|004|040, EV|EVSRC|ALEX_G|20260728|004|041, EV|EVSRC|ALEX_G|20260728|004|042, EV|EVSRC|ALEX_G|20260728|005|001, EV|EVSRC|ALEX_G|20260728|005|002, EV|EVSRC|ALEX_G|20260728|005|003, EV|EVSRC|ALEX_G|20260728|005|004, EV|EVSRC|ALEX_G|20260728|005|005, EV|EVSRC|ALEX_G|20260728|005|006, EV|EVSRC|ALEX_G|20260728|005|007, EV|EVSRC|ALEX_G|20260728|005|008, EV|EVSRC|ALEX_G|20260728|005|009, EV|EVSRC|ALEX_G|20260728|005|010, EV|EVSRC|ALEX_G|20260728|005|011, EV|EVSRC|ALEX_G|20260728|005|012, EV|EVSRC|ALEX_G|20260728|005|013, EV|EVSRC|ALEX_G|20260728|005|014, EV|EVSRC|ALEX_G|20260728|005|015, EV|EVSRC|ALEX_G|20260728|005|016, EV|EVSRC|ALEX_G|20260728|005|017, EV|EVSRC|ALEX_G|20260728|005|018, EV|EVSRC|ALEX_G|20260728|005|019, EV|EVSRC|ALEX_G|20260728|005|020, EV|EVSRC|ALEX_G|20260728|005|021, EV|EVSRC|ALEX_G|20260728|005|022, EV|EVSRC|ALEX_G|20260728|005|023, EV|EVSRC|ALEX_G|20260728|005|024, EV|EVSRC|ALEX_G|20260728|005|025, EV|EVSRC|ALEX_G|20260728|005|026, EV|EVSRC|ALEX_G|20260728|005|027, EV|EVSRC|ALEX_G|20260728|005|028, EV|EVSRC|ALEX_G|20260728|005|029, EV|EVSRC|ALEX_G|20260728|005|030, EV|EVSRC|ALEX_G|20260728|005|031, EV|EVSRC|ALEX_G|20260728|005|032, EV|EVSRC|ALEX_G|20260728|005|033, EV|EVSRC|ALEX_G|20260728|005|034, EV|EVSRC|ALEX_G|20260728|005|035, EV|EVSRC|ALEX_G|20260728|006|001, EV|EVSRC|ALEX_G|20260728|006|002, EV|EVSRC|ALEX_G|20260728|006|003, EV|EVSRC|ALEX_G|20260728|006|004, EV|EVSRC|ALEX_G|20260728|006|005, EV|EVSRC|ALEX_G|20260728|006|006, EV|EVSRC|ALEX_G|20260728|006|007, EV|EVSRC|ALEX_G|20260728|006|008, EV|EVSRC|ALEX_G|20260728|006|009, EV|EVSRC|ALEX_G|20260728|006|010, EV|EVSRC|ALEX_G|20260728|006|011, EV|EVSRC|ALEX_G|20260728|006|012, EV|EVSRC|ALEX_G|20260728|006|013, EV|EVSRC|ALEX_G|20260728|006|014, EV|EVSRC|ALEX_G|20260728|006|015, EV|EVSRC|ALEX_G|20260728|006|016, EV|EVSRC|ALEX_G|20260728|006|017, EV|EVSRC|ALEX_G|20260728|006|018, EV|EVSRC|ALEX_G|20260728|006|019, EV|EVSRC|ALEX_G|20260728|006|020, EV|EVSRC|ALEX_G|20260728|006|021, EV|EVSRC|ALEX_G|20260728|006|022, EV|EVSRC|ALEX_G|20260728|006|023, EV|EVSRC|ALEX_G|20260728|006|024, EV|EVSRC|ALEX_G|20260728|006|025, EV|EVSRC|ALEX_G|20260728|006|026, EV|EVSRC|ALEX_G|20260728|006|027, EV|EVSRC|ALEX_G|20260728|006|028, EV|EVSRC|ALEX_G|20260728|006|029, EV|EVSRC|ALEX_G|20260728|006|030, EV|EVSRC|ALEX_G|20260728|007|001, EV|EVSRC|ALEX_G|20260728|007|002, EV|EVSRC|ALEX_G|20260728|007|003, EV|EVSRC|ALEX_G|20260728|007|004, EV|EVSRC|ALEX_G|20260728|007|005, EV|EVSRC|ALEX_G|20260728|007|006, EV|EVSRC|ALEX_G|20260728|007|007, EV|EVSRC|ALEX_G|20260728|007|008, EV|EVSRC|ALEX_G|20260728|007|009, EV|EVSRC|ALEX_G|20260728|007|010, EV|EVSRC|ALEX_G|20260728|007|011, EV|EVSRC|ALEX_G|20260728|007|012, EV|EVSRC|ALEX_G|20260728|007|013, EV|EVSRC|ALEX_G|20260728|007|014, EV|EVSRC|ALEX_G|20260728|007|015, EV|EVSRC|ALEX_G|20260728|007|016, EV|EVSRC|ALEX_G|20260728|007|017, EV|EVSRC|ALEX_G|20260728|007|018, EV|EVSRC|ALEX_G|20260728|007|019, EV|EVSRC|ALEX_G|20260728|007|020, EV|EVSRC|ALEX_G|20260728|007|021, EV|EVSRC|ALEX_G|20260728|007|022, EV|EVSRC|ALEX_G|20260728|007|023, EV|EVSRC|ALEX_G|20260728|007|024, EV|EVSRC|ALEX_G|20260729|001|001, EV|EVSRC|ALEX_G|20260729|001|002, EV|EVSRC|ALEX_G|20260729|001|003, EV|EVSRC|ALEX_G|20260729|001|004, EV|EVSRC|ALEX_G|20260729|001|005, EV|EVSRC|ALEX_G|20260729|001|006, EV|EVSRC|ALEX_G|20260729|001|007, EV|EVSRC|ALEX_G|20260729|001|008, EV|EVSRC|ALEX_G|20260729|001|009, EV|EVSRC|ALEX_G|20260729|001|010, EV|EVSRC|ALEX_G|20260729|001|011, EV|EVSRC|ALEX_G|20260729|001|012, EV|EVSRC|ALEX_G|20260729|001|013, EV|EVSRC|ALEX_G|20260729|001|014, EV|EVSRC|ALEX_G|20260729|001|015, EV|EVSRC|ALEX_G|20260729|001|016, EV|EVSRC|ALEX_G|20260729|001|017, EV|EVSRC|ALEX_G|20260729|001|018, EV|EVSRC|ALEX_G|20260729|001|019, EV|EVSRC|ALEX_G|20260729|001|020, EV|EVSRC|ALEX_G|20260729|001|021, EV|EVSRC|ALEX_G|20260729|001|022, EV|EVSRC|ALEX_G|20260729|001|023, EV|EVSRC|ALEX_G|20260729|001|024, EV|EVSRC|ALEX_G|20260729|001|025, EV|EVSRC|ALEX_G|20260729|001|026, EV|EVSRC|ALEX_G|20260729|001|027, EV|EVSRC|ALEX_G|20260729|001|028, EV|EVSRC|ALEX_G|20260729|001|029, EV|EVSRC|ALEX_G|20260729|001|030, EV|EVSRC|ALEX_G|20260729|001|031, EV|EVSRC|ALEX_G|20260729|001|032, EV|EVSRC|ALEX_G|20260729|001|033, EV|EVSRC|ALEX_G|20260729|001|034, EV|EVSRC|ALEX_G|20260729|001|035, EV|EVSRC|ALEX_G|20260729|001|036
+- Blueprint claims: CLAIM|ALEX_G|20260727|001, CLAIM|ALEX_G|20260727|002, CLAIM|ALEX_G|20260727|003, CLAIM|ALEX_G|20260727|004, CLAIM|ALEX_G|20260727|005, CLAIM|ALEX_G|20260727|006, CLAIM|ALEX_G|20260727|007, CLAIM|ALEX_G|20260727|008, CLAIM|ALEX_G|20260727|009, CLAIM|ALEX_G|20260727|010, CLAIM|ALEX_G|20260727|011, CLAIM|ALEX_G|20260727|012, CLAIM|ALEX_G|20260727|013, CLAIM|ALEX_G|20260727|014, CLAIM|ALEX_G|20260727|015, CLAIM|ALEX_G|20260727|016, CLAIM|ALEX_G|20260727|017, CLAIM|ALEX_G|20260727|018, CLAIM|ALEX_G|20260727|019, CLAIM|ALEX_G|20260727|020, CLAIM|ALEX_G|20260727|021, CLAIM|ALEX_G|20260727|022, CLAIM|ALEX_G|20260727|023, CLAIM|ALEX_G|20260727|024, CLAIM|ALEX_G|20260727|025, CLAIM|ALEX_G|20260727|026, CLAIM|ALEX_G|20260727|027, CLAIM|ALEX_G|20260727|028, CLAIM|ALEX_G|20260727|029, CLAIM|ALEX_G|20260727|030, CLAIM|ALEX_G|20260727|031, CLAIM|ALEX_G|20260727|032, CLAIM|ALEX_G|20260727|033, CLAIM|ALEX_G|20260727|034, CLAIM|ALEX_G|20260727|035, CLAIM|ALEX_G|20260728|001, CLAIM|ALEX_G|20260728|002, CLAIM|ALEX_G|20260728|003, CLAIM|ALEX_G|20260728|004, CLAIM|ALEX_G|20260728|005, CLAIM|ALEX_G|20260728|006, CLAIM|ALEX_G|20260728|007, CLAIM|ALEX_G|20260728|008, CLAIM|ALEX_G|20260728|009, CLAIM|ALEX_G|20260728|010, CLAIM|ALEX_G|20260728|011, CLAIM|ALEX_G|20260728|012, CLAIM|ALEX_G|20260728|013, CLAIM|ALEX_G|20260728|014, CLAIM|ALEX_G|20260728|015, CLAIM|ALEX_G|20260728|016, CLAIM|ALEX_G|20260728|017, CLAIM|ALEX_G|20260728|018, CLAIM|ALEX_G|20260728|019, CLAIM|ALEX_G|20260728|020, CLAIM|ALEX_G|20260728|021, CLAIM|ALEX_G|20260728|022, CLAIM|ALEX_G|20260728|023, CLAIM|ALEX_G|20260728|024, CLAIM|ALEX_G|20260728|025, CLAIM|ALEX_G|20260728|026, CLAIM|ALEX_G|20260728|027, CLAIM|ALEX_G|20260728|028, CLAIM|ALEX_G|20260728|029, CLAIM|ALEX_G|20260728|030, CLAIM|ALEX_G|20260728|031, CLAIM|ALEX_G|20260728|032, CLAIM|ALEX_G|20260728|033, CLAIM|ALEX_G|20260728|034, CLAIM|ALEX_G|20260728|035, CLAIM|ALEX_G|20260728|036, CLAIM|ALEX_G|20260728|037, CLAIM|ALEX_G|20260728|038, CLAIM|ALEX_G|20260728|039, CLAIM|ALEX_G|20260728|040, CLAIM|ALEX_G|20260728|041, CLAIM|ALEX_G|20260728|042, CLAIM|ALEX_G|20260728|043, CLAIM|ALEX_G|20260728|044, CLAIM|ALEX_G|20260728|045, CLAIM|ALEX_G|20260728|046, CLAIM|ALEX_G|20260728|047, CLAIM|ALEX_G|20260728|048, CLAIM|ALEX_G|20260728|049, CLAIM|ALEX_G|20260728|050, CLAIM|ALEX_G|20260728|051, CLAIM|ALEX_G|20260728|052, CLAIM|ALEX_G|20260728|053, CLAIM|ALEX_G|20260728|054, CLAIM|ALEX_G|20260728|055, CLAIM|ALEX_G|20260728|056, CLAIM|ALEX_G|20260728|057, CLAIM|ALEX_G|20260728|058, CLAIM|ALEX_G|20260728|059, CLAIM|ALEX_G|20260728|060, CLAIM|ALEX_G|20260728|061, CLAIM|ALEX_G|20260728|062, CLAIM|ALEX_G|20260728|063, CLAIM|ALEX_G|20260728|064, CLAIM|ALEX_G|20260728|065, CLAIM|ALEX_G|20260728|066, CLAIM|ALEX_G|20260728|067, CLAIM|ALEX_G|20260728|068, CLAIM|ALEX_G|20260728|069, CLAIM|ALEX_G|20260728|070, CLAIM|ALEX_G|20260728|071, CLAIM|ALEX_G|20260728|072, CLAIM|ALEX_G|20260728|073, CLAIM|ALEX_G|20260728|074, CLAIM|ALEX_G|20260728|075, CLAIM|ALEX_G|20260728|076, CLAIM|ALEX_G|20260728|077, CLAIM|ALEX_G|20260728|078, CLAIM|ALEX_G|20260728|079, CLAIM|ALEX_G|20260728|080, CLAIM|ALEX_G|20260728|081, CLAIM|ALEX_G|20260728|082, CLAIM|ALEX_G|20260728|083, CLAIM|ALEX_G|20260728|084, CLAIM|ALEX_G|20260728|085, CLAIM|ALEX_G|20260728|086, CLAIM|ALEX_G|20260728|087, CLAIM|ALEX_G|20260728|088, CLAIM|ALEX_G|20260728|089, CLAIM|ALEX_G|20260728|090, CLAIM|ALEX_G|20260728|091, CLAIM|ALEX_G|20260728|092, CLAIM|ALEX_G|20260728|093, CLAIM|ALEX_G|20260728|094, CLAIM|ALEX_G|20260728|095, CLAIM|ALEX_G|20260728|096, CLAIM|ALEX_G|20260728|097, CLAIM|ALEX_G|20260728|098, CLAIM|ALEX_G|20260728|099, CLAIM|ALEX_G|20260728|100, CLAIM|ALEX_G|20260728|101, CLAIM|ALEX_G|20260728|102, CLAIM|ALEX_G|20260728|103, CLAIM|ALEX_G|20260728|104, CLAIM|ALEX_G|20260728|105, CLAIM|ALEX_G|20260728|106, CLAIM|ALEX_G|20260728|107, CLAIM|ALEX_G|20260728|108, CLAIM|ALEX_G|20260728|109, CLAIM|ALEX_G|20260728|110, CLAIM|ALEX_G|20260728|111, CLAIM|ALEX_G|20260728|112, CLAIM|ALEX_G|20260728|113, CLAIM|ALEX_G|20260728|114, CLAIM|ALEX_G|20260728|115, CLAIM|ALEX_G|20260728|116, CLAIM|ALEX_G|20260728|117, CLAIM|ALEX_G|20260728|118, CLAIM|ALEX_G|20260728|119, CLAIM|ALEX_G|20260728|120, CLAIM|ALEX_G|20260728|121, CLAIM|ALEX_G|20260728|122, CLAIM|ALEX_G|20260728|123, CLAIM|ALEX_G|20260728|124, CLAIM|ALEX_G|20260728|125, CLAIM|ALEX_G|20260728|126, CLAIM|ALEX_G|20260728|127, CLAIM|ALEX_G|20260728|128, CLAIM|ALEX_G|20260728|129, CLAIM|ALEX_G|20260728|130, CLAIM|ALEX_G|20260728|131, CLAIM|ALEX_G|20260728|132, CLAIM|ALEX_G|20260728|133, CLAIM|ALEX_G|20260728|134, CLAIM|ALEX_G|20260728|135, CLAIM|ALEX_G|20260728|136, CLAIM|ALEX_G|20260728|137, CLAIM|ALEX_G|20260728|138, CLAIM|ALEX_G|20260728|139, CLAIM|ALEX_G|20260728|140, CLAIM|ALEX_G|20260728|141, CLAIM|ALEX_G|20260728|142, CLAIM|ALEX_G|20260728|143, CLAIM|ALEX_G|20260728|144, CLAIM|ALEX_G|20260728|145, CLAIM|ALEX_G|20260728|146, CLAIM|ALEX_G|20260728|147, CLAIM|ALEX_G|20260728|148, CLAIM|ALEX_G|20260728|149, CLAIM|ALEX_G|20260728|150, CLAIM|ALEX_G|20260728|151, CLAIM|ALEX_G|20260728|152, CLAIM|ALEX_G|20260728|153, CLAIM|ALEX_G|20260728|154, CLAIM|ALEX_G|20260728|155, CLAIM|ALEX_G|20260728|156, CLAIM|ALEX_G|20260728|157, CLAIM|ALEX_G|20260728|158, CLAIM|ALEX_G|20260728|159, CLAIM|ALEX_G|20260728|160, CLAIM|ALEX_G|20260729|001, CLAIM|ALEX_G|20260729|002, CLAIM|ALEX_G|20260729|003, CLAIM|ALEX_G|20260729|004, CLAIM|ALEX_G|20260729|005, CLAIM|ALEX_G|20260729|006, CLAIM|ALEX_G|20260729|007, CLAIM|ALEX_G|20260729|008, CLAIM|ALEX_G|20260729|009, CLAIM|ALEX_G|20260729|010, CLAIM|ALEX_G|20260729|011, CLAIM|ALEX_G|20260729|012, CLAIM|ALEX_G|20260729|013, CLAIM|ALEX_G|20260729|014, CLAIM|ALEX_G|20260729|015, CLAIM|ALEX_G|20260729|016, CLAIM|ALEX_G|20260729|017, CLAIM|ALEX_G|20260729|018, CLAIM|ALEX_G|20260729|019, CLAIM|ALEX_G|20260729|020, CLAIM|ALEX_G|20260729|021, CLAIM|ALEX_G|20260729|022, CLAIM|ALEX_G|20260729|023, CLAIM|ALEX_G|20260729|024, CLAIM|ALEX_G|20260729|025, CLAIM|ALEX_G|20260729|026, CLAIM|ALEX_G|20260729|027, CLAIM|ALEX_G|20260729|028, CLAIM|ALEX_G|20260729|029, CLAIM|ALEX_G|20260729|030, CLAIM|ALEX_G|20260729|031

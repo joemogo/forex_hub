@@ -1,0 +1,54 @@
+{
+ "acquiredAt": null,
+ "canonicalReference": "https://www.youtube.com/watch?v=pD1vAUMbSjw",
+ "contentHash": "c9c4193a8aeedc9aee13264dd58568a8c96f70b5db7019a7badd13fced674606",
+ "createdAt": "2026-07-27T22:41:09Z",
+ "externalAssetReference": null,
+ "externalReference": null,
+ "language": "en",
+ "licensingStatus": "restricted_third_party",
+ "lifecycleStatus": "registered",
+ "metadata": {
+  "fileBytes": 38330,
+  "manifestPath": "docs/trader-intelligence/intake/manifests/alexg-why-99-percent-of-traders-fail.ingest.json",
+  "titleVerification": {
+   "channelName": "fxalexg",
+   "channelUrl": "https://www.youtube.com/@fxalexg__",
+   "endpoint": "https://www.youtube.com/oembed?url=<canonicalReference>&format=json",
+   "method": "youtube_oembed",
+   "note": "MISMATCH: the owner supplied 'Why 99% of Traders Fail in Forex'; the published title at verification time is different. Both retained. The video may have been retitled, or the owner-supplied string may refer to a different upload. Not silently overwritten.",
+   "ownerSuppliedTitle": "Why 99% of Traders Fail in Forex",
+   "priorTitle": "Why 99% of Traders Fail in Forex",
+   "priorTitleStatus": "owner_supplied",
+   "retrievedAt": "2026-07-28T02:57:22Z",
+   "retrievedBy": "claude-opus-5 (Trader Intelligence pipeline)",
+   "status": "verified_publisher",
+   "statusRationale": "provenanceStatus remains partially_verified: publisher identity is now confirmed, but transcript fidelity to the source audio is not, and that is the property every extracted excerpt depends on.",
+   "stillUnverified": [
+    "that the archived transcript text faithfully reproduces the video's spoken audio (the text was owner-pasted, not retrieved from the publisher's caption track)",
+    "publication date",
+    "licensing terms beyond the recorded restricted_third_party status"
+   ],
+   "traderAttributionConfirmed": true,
+   "verifiedScope": [
+    "title",
+    "channel/author",
+    "video identity"
+   ],
+   "verifiedTitle": "Best Top Down Analysis Strategy for 2026 | Forex Trading Guide"
+  }
+ },
+ "provenanceStatus": "partially_verified",
+ "registeredAt": "2026-07-27T22:41:09Z",
+ "repositoryPath": "docs/trader-intelligence/imports/alex-g/raw/alexg-why-99-percent-of-traders-fail.raw.txt",
+ "schemaVersion": 1,
+ "sourceDate": null,
+ "sourceId": "EVSRC|ALEX_G|20260727|001",
+ "sourceType": "transcript",
+ "storageLocationType": "repository",
+ "strategyFamilyId": null,
+ "title": "Best Top Down Analysis Strategy for 2026 | Forex Trading Guide",
+ "traderId": "ALEX_G",
+ "transcriptReference": "docs/trader-intelligence/imports/alex-g/normalized/alexg-why-99-percent-of-traders-fail.normalization-map.json",
+ "updatedAt": "2026-07-28T02:57:22Z"
+}

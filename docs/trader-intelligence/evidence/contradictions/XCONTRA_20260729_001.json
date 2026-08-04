@@ -1,0 +1,15 @@
+{
+  "claimAId": "CLAIM|RAYNER_TEO|20260729|019",
+  "claimBId": "CLAIM|ALEX_G|20260728|008",
+  "contradictionId": "XCONTRA|20260729|001",
+  "contradictionType": "CONDITIONAL_SCOPE",
+  "detectedAt": "2026-07-29T00:05:09Z",
+  "metadata": {},
+  "rationale": "CROSS-EDUCATOR, and the first contradiction in the library involving three educators' worth of context. ALEX_G states that a body close beyond a structure level counts as a shift REGARDLESS OF SIZE - 'no minimum size threshold'. RAYNER_TEO states that only major swing points are used and that minor highs and lows should be deliberately ignored, on the reasoning that including them loses the larger picture. These are opposite instructions for the same operation: deciding which highs and lows count as structure. The disagreement is directly testable and is the same parameter RC-16 was already written to sweep - see RC-29.",
+  "resolution": null,
+  "reviewedAt": null,
+  "schemaVersion": 1,
+  "scopeOverlap": "unknown",
+  "severity": "material",
+  "status": "open"
+}

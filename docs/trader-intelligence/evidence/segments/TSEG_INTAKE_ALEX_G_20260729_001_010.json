@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-29T23:45:30Z",
+  "endTimestamp": "8:50",
+  "intakeId": "INTAKE|ALEX_G|20260729|001",
+  "language": "en",
+  "lineEnd": 75,
+  "lineStart": 72,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "point right here which this is the high so now we have next break and then after the next break we then have our retest which would be this point right here and then we would enter our trade after this bullish engulfing we would have our entry point right there and our stop loss point would be right here if we were to have a one to2 rward ratio we simply just scroll this to the right this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop so then the next break and retest what",
+  "schemaVersion": 1,
+  "sectionTitle": "TRADE 2 -- same construction, stopped out by fluctuation",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|010",
+  "segmentType": "other",
+  "sequenceNumber": 10,
+  "sourceId": "EVSRC|ALEX_G|20260729|001",
+  "speaker": null,
+  "startTimestamp": "8:25",
+  "textHash": "ba636b690f6850d7b46779a122184068586e8a4abf447943e243d0a28f85259c"
+}

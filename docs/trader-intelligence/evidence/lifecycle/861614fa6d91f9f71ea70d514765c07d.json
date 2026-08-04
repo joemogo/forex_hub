@@ -1,0 +1,13 @@
+{
+  "actor": "provenance-patch",
+  "entityId": "EVSRC|TJR|20260727|002",
+  "entityType": "EVIDENCE_SOURCE",
+  "eventId": "LCEVT|EVIDENCE_SOURCE|EVSRC|TJR|20260727|002|002",
+  "eventType": "corrected",
+  "metadata": {},
+  "newStatus": null,
+  "priorStatus": null,
+  "reason": "Provenance patch 2026-07-27: canonicalReference supplied by owner (https://www.youtube.com/watch?v=8qwEmE1DwYw). Title remains UNVERIFIED and is explicitly marked as a working title. contentHash unchanged, so the evidence chain is unaffected.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-27T22:25:39Z"
+}

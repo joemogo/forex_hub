@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|014",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|003",
+  "questionText": "The 60-75% accuracy claim has no supporting evidence: no sample size, date range, instrument, timeframe, trade log, or definition of what 'accuracy' measures. What verifiable record supports it?",
+  "questionType": "insufficient_independent_support",
+  "reason": "Stated once, in passing, immediately before a promotional close. Recorded as performance_hypothesis at low evidence quality and must never be treated as evidence-backed.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

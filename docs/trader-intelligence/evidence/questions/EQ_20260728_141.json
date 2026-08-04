@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|140",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|141",
+  "questionText": "Is there a minimum risk-to-reward, given 1:2, 1:3 and now 1:4 have all been cited?",
+  "questionType": "missing_target_logic",
+  "reason": "Three different ratios across three sources, each offered as an observation about a particular chart rather than a rule. **Do not average them or take the minimum** - no source states a required ratio, and inferring one would invent a rule.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

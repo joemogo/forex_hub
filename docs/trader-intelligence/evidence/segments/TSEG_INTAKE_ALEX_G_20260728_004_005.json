@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T04:21:55Z",
+  "endTimestamp": "5:07",
+  "intakeId": "INTAKE|ALEX_G|20260728|004",
+  "language": "en",
+  "lineEnd": 40,
+  "lineStart": 37,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "rejection candlestick, [music] which is something like this, where it consists of a very small body and then a long wick, a long rejection, a long tail, whatever you want to call it, and then a wick fill. You [music] also have a candlestick that could be something like this where this is technically rejecting to the upside, but it can also be seen as a wick fill. Now, this is very powerful if you understand how to use this correctly. So, let [music] me break down what this actually looks like on the lower time frames, quote unquote, and how this can actually be useful for the higher time frames and be considered not a rejection, but a wick fill. So,",
+  "schemaVersion": 1,
+  "sectionTitle": "Rejection versus wick fill - the distinction",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|004|005",
+  "segmentType": "other",
+  "sequenceNumber": 5,
+  "sourceId": "EVSRC|ALEX_G|20260728|004",
+  "speaker": null,
+  "startTimestamp": "4:42",
+  "textHash": "1d14265239337e6fbe4471c18f24f4285a24667100def9ec0f62613b27837433"
+}

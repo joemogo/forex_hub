@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|001",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|005",
+  "questionText": "Do these session hours apply to other educators' session rules?",
+  "questionType": "unclear_scope",
+  "reason": "RAYNER_TEO gives explicit GMT session hours - the first source in the library to state them aloud rather than show them on screen. ALEX_G's session rule (CLAIM|ALEX_G|20260728|079) displays its windows on a graphic and never speaks them. **These hours are evidenced for RAYNER_TEO only and must not be used to fill ALEX_G's gap** - that would be reconstructing one educator's unstated parameter from another's material. Recorded so the temptation is on the record.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

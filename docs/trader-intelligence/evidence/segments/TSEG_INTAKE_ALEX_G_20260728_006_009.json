@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T14:24:08Z",
+  "endTimestamp": "5:10",
+  "intakeId": "INTAKE|ALEX_G|20260728|006",
+  "language": "en",
+  "lineEnd": 310,
+  "lineStart": 291,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "same thing here waiting for this retest i have my alarm set on all of them so it's just a matter of time so they get hit and it's looking like today or this sometimes this week it's gonna get hit literally you are teaching how to be patient and wait for the right area to play yeah bro it's very very simple",
+  "schemaVersion": 1,
+  "sectionTitle": "Alarms set on every level; waiting for the retest",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|006|009",
+  "segmentType": "other",
+  "sequenceNumber": 9,
+  "sourceId": "EVSRC|ALEX_G|20260728|006",
+  "speaker": null,
+  "startTimestamp": "4:48",
+  "textHash": "00787b20fd904e01bf2a9172552da837abad38c716075dd8d70e246691952276"
+}

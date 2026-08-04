@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|027",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|006",
+  "questionText": "Which moving average period, and on which timeframe?",
+  "questionType": "ambiguous_statement",
+  "reason": "A 50-period moving average is used in the worked examples, but the general statement names only 'moving average'. Note this is the THIRD source in the library to use a moving average as a load-bearing area of value; ALEX_G's two references never state a period at all, and Rayner's at least demonstrates 50.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

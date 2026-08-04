@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-28T02:23:09Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|022",
+  "questionText": "Three Alex G sources now contain zero stop-loss, take-profit, position-size or risk-percentage rules, despite this source opening with a story about a stop-loss being hit. What are they?",
+  "questionType": "missing_stop_placement",
+  "reason": "Third consecutive source with no risk half. This is a confirmed structural absence in the published material, not an omission.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|002"
+  ]
+}

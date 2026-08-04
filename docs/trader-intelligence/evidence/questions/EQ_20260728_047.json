@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|052",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|047",
+  "questionText": "What percentage bands define the B / B+ setup grades?",
+  "questionType": "ambiguous_statement",
+  "reason": "Explicitly deferred to a paid programme. Not derivable from this source and not to be reconstructed by inference.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|005",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260729|009",
+  "questionText": "Is the John-and-Sally illustration arithmetic or evidence?",
+  "questionType": "insufficient_independent_support",
+  "reason": "The worked comparison is internally correct arithmetic on a hypothetical sequence, not an empirical result. It demonstrates that position sizing dominates outcome for a FIXED trade sequence; it is not evidence about real return distributions. Recorded so it is not mistaken for a performance claim - notably, this source makes **no income claims at all**, which is a first for the library.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

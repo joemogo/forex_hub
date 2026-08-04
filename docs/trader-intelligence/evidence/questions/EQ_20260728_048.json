@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|048",
+  "questionText": "Where is the stop placed, what is the target, and what is risked per trade?",
+  "questionType": "missing_stop_placement",
+  "reason": "Four Alex G sources have now produced zero stop_rule, target_rule and risk_rule claims. This source specifies entry location, bias, zone selection and confluence grading, and stops before risk. No Alex G claim can be replayed for P&L - only for trigger accuracy.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-29T23:45:30Z",
+  "endTimestamp": "9:48",
+  "intakeId": "INTAKE|ALEX_G|20260729|001",
+  "language": "en",
+  "lineEnd": 82,
+  "lineStart": 79,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "you risk 1% you got 2% on this trade you lost 1% on this trade so now you're down 1% % but now plus 2% you're a net profit over 3% on these three trades that could have happened in the matter of 48 Hours you multiply 3% in 48 hours and it say you only take that once a week you multiply that 3% that you made in one week times 4 weeks than you have in the market you can average anywhere from 9 to 12% a month that's more than any single Bank any single institution with a simple break and retest strategy there's nothing that I'm doing different",
+  "schemaVersion": 1,
+  "sectionTitle": "Worked 1% arithmetic across the three trades and the 9-12% monthly figure",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|012",
+  "segmentType": "other",
+  "sequenceNumber": 12,
+  "sourceId": "EVSRC|ALEX_G|20260729|001",
+  "speaker": null,
+  "startTimestamp": "9:23",
+  "textHash": "1caced773583cee3d11e1c03d7100f739fb12491b71425b0f4060f32d294053b"
+}

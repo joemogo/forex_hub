@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T01:36:32Z",
+  "endTimestamp": "2:52",
+  "intakeId": "INTAKE|ALEX_G|20260728|001",
+  "language": "en",
+  "lineEnd": 147,
+  "lineStart": 130,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "that this is the higher high and this is the higher low the market will remain bullish as long as we stay in between this higher high and higher low the moment we body close above or under this line is when we will have a shift in the market if we close Above This higher high that means we've created a new higher high and the higher low has to be",
+  "schemaVersion": 1,
+  "sectionTitle": "The market stays bullish between the HH and HL; a body close shifts it",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|001|003",
+  "segmentType": "other",
+  "sequenceNumber": 3,
+  "sourceId": "EVSRC|ALEX_G|20260728|001",
+  "speaker": null,
+  "startTimestamp": "2:32",
+  "textHash": "990b25b83adaac6242048cc316ce99c792fa95552cfe1dc1fc68831faea42c32"
+}

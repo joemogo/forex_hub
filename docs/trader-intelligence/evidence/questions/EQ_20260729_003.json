@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|RAYNER_TEO|20260729|006",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|003",
+  "questionText": "Is 1% a hard limit or a starting guideline?",
+  "questionType": "unclear_scope",
+  "reason": "Stated as a general guideline he 'usually advocates', with 2-3% noted as a choice some traders make. ALEX_G gives 0.5-1% / 1-2% / 3-5% banded by account type. The two educators broadly agree on the order of magnitude - which is the FIRST substantive cross-educator agreement on a risk parameter in the library - but neither states a hard ceiling.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|RAYNER_TEO|20260729|001"
+  ]
+}

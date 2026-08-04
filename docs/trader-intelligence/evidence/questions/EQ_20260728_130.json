@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "non_blocking",
+  "claimId": "CLAIM|ALEX_G|20260728|092",
+  "createdAt": "2026-07-28T04:42:15Z",
+  "evidenceIds": [],
+  "priority": "low",
+  "questionId": "EQ|20260728|130",
+  "questionText": "Does this revise source #3's account of why traders fail?",
+  "questionType": "unclear_scope",
+  "reason": "Source #3 attributes trader failure primarily to inability to read the market via top-down analysis (CLAIM|ALEX_G|20260727|001). Here the decisive factor is risk management. Not necessarily inconsistent - he may mean they are separate necessary conditions - but the two sources emphasise different single causes and neither acknowledges the other.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|005"
+  ]
+}

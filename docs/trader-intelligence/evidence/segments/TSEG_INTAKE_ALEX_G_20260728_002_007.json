@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-28T02:23:09Z",
+  "endTimestamp": "9:55",
+  "intakeId": "INTAKE|ALEX_G|20260728|002",
+  "language": "en",
+  "lineEnd": 565,
+  "lineStart": 500,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "just a second. So, I've just showed you an example of a current position that I am in as of right now, entering a trade technically after the liquidity sweep. So, I'm about to break down to you guys how you can use this liquidity sweep and this anticipation in your favor to either enter a position or not. Now, I want to be extremely clear. Anybody that tells you out there that they have a specific strategy or a specific approach on how to completely avoid a liquidity sweep or these massive wickouts that you're seeing right here in the market or anticipate this liquidity spike that comes into the market is 100% lying to you. There is no way that you can anticipate for a move like this to happen. There's no way that you can have a specific strategy to trade solely off of these sweeps. Can you catch a couple of them here and there? Sure. Can you get lucky where you avoid some of them here and there? Sure. But there's no consistency and something that trading is already random as it is. It's going to either go up or down. Now, if you're going to make a decision that it's going to go down, why would you wait for a confirmation for it to go up first, then before going down? That just logically doesn't make any sense to me. You want to look for every possible reason for it",
+  "schemaVersion": 1,
+  "sectionTitle": "Liquidity sweeps cannot be anticipated or traded as a strategy",
+  "segmentId": "TSEG|INTAKE|ALEX_G|20260728|002|007",
+  "segmentType": "other",
+  "sequenceNumber": 7,
+  "sourceId": "EVSRC|ALEX_G|20260728|002",
+  "speaker": null,
+  "startTimestamp": "8:41",
+  "textHash": "60503793bc6376be039df05201397f581f042577ec6dbd7aeaea41a529d62e85"
+}

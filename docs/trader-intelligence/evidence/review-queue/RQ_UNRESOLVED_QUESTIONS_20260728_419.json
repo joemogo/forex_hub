@@ -1,0 +1,18 @@
+{
+  "blockingStatus": "non_blocking",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "entityId": "EQ|20260728|108",
+  "entityType": "EVIDENCE_QUESTION",
+  "metadata": {},
+  "priority": "medium",
+  "queueEntryId": "RQ|UNRESOLVED_QUESTIONS|20260728|419",
+  "queueType": "unresolved_questions",
+  "reason": "researchStatus='open'.",
+  "resolution": null,
+  "reviewAction": null,
+  "reviewNotes": null,
+  "reviewStatus": "open",
+  "reviewer": null,
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-28T04:21:55Z"
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|132",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|138",
+  "questionText": "Does meeting a monthly objective reduce or stop trading, and at what figure?",
+  "questionType": "unclear_scope",
+  "reason": "Month-to-date performance is used as an input to whether to trade at all. Source #6 fixes the risk percentage for a month but says nothing about stopping when a target is met, and no monthly target figure is given here. The two monthly rules operate on the same clock and are never reconciled.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

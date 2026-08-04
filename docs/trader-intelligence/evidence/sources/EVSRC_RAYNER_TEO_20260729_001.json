@@ -1,0 +1,28 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": "https://www.youtube.com/watch?v=mEyuQVy3OHc",
+  "contentHash": "d79e7a74fe8f370f44fa374a7232f1fe78157ee6bed72af5cec58915508a3ac0",
+  "createdAt": "2026-07-29T00:05:09Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": "en",
+  "licensingStatus": "restricted_third_party",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "fileBytes": 150413,
+    "manifestPath": "docs/trader-intelligence/intake/manifests/rayner-ultimate-forex-course-beginners.ingest.json"
+  },
+  "provenanceStatus": "partially_verified",
+  "registeredAt": "2026-07-29T00:05:09Z",
+  "repositoryPath": "docs/trader-intelligence/imports/rayner-teo/raw/rayner-ultimate-forex-course-beginners.raw.txt",
+  "schemaVersion": 1,
+  "sourceDate": null,
+  "sourceId": "EVSRC|RAYNER_TEO|20260729|001",
+  "sourceType": "transcript",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "The Ultimate Forex Trading Course (For Beginners)",
+  "traderId": "RAYNER_TEO",
+  "transcriptReference": "docs/trader-intelligence/imports/rayner-teo/normalized/rayner-ultimate-forex-course-beginners.normalization-map.json",
+  "updatedAt": "2026-07-29T00:05:09Z"
+}

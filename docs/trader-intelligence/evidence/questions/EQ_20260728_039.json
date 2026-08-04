@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|035",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|039",
+  "questionText": "Which two timeframes must be in sync, and does an opposing intermediate timeframe reduce the grade?",
+  "questionType": "unclear_scope",
+  "reason": "In the worked example the weekly is bearish, the daily is bullish and the 4H is bearish, and the trade is taken bearish. So 'in sync' tolerates a disagreeing timeframe between two agreeing ones. Whether weekly+4H specifically is required, or any two of three, is never stated, and the effect of the opposing daily on the score is not given.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

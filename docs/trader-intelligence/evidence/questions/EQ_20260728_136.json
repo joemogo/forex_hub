@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|125",
+  "createdAt": "2026-07-28T14:24:08Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|136",
+  "questionText": "Which EMA period is used, and on which timeframe?",
+  "questionType": "ambiguous_statement",
+  "reason": "Second source to use the EMA as a load-bearing confluence and the second to omit its period (see CLAIM|ALEX_G|20260728|050). Here its ROLE is finally stated - dynamic support while bullish, resistance while bearish - which is genuinely new. The parameter is still missing, so the rule remains non-reproducible.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|006"
+  ]
+}

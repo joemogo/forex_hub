@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T22:15:39Z",
+  "endTimestamp": "38:51",
+  "intakeId": "INTAKE|TJR|20260727|002",
+  "language": "en",
+  "lineEnd": 722,
+  "lineStart": 709,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "lower low. And this is how we can identify trends. Now, trading is not as simple as saying, hey, we're in an uptrend. I'm just going to blind blindly press buy. Because trends can break, trends can change. Okay? Just because we're in a downtrend doesn't mean, hey, I'm going to press sell right now because we're in a downtrend and price is probably going to go lower. That's not the case. But in order to predict where price wants to go with a high consistency and a high probability on a daily basis, cuz that's what we're here to do, we need to be able to identify these market trends and be able to at least see them on the chart and be able to understand them. Okay, so we learned a lot today. Um, I",
+  "schemaVersion": 1,
+  "sectionTitle": "Trends can break: the caveat",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|002|018",
+  "segmentType": "other",
+  "sequenceNumber": 18,
+  "sourceId": "EVSRC|TJR|20260727|002",
+  "speaker": null,
+  "startTimestamp": "38:06",
+  "textHash": "8a4220707da67ba8f37e23aff63963c314d8bf8d7003859792b4d2dbfd9db168"
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|059",
+  "createdAt": "2026-07-28T04:21:55Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|082",
+  "questionText": "Must the engulfing candle's body engulf the prior body, or the prior candle's full range?",
+  "questionType": "ambiguous_statement",
+  "reason": "He says the candle 'has eaten the candlestick to the left' but also requires a 'body candlestick close above'. Body-engulfs-body and body-closes-beyond-range are different detectors that fire on different bars. Consistent with his body-based structure rule (CLAIM|ALEX_G|20260727|020), but not disambiguated here.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|004"
+  ]
+}

@@ -1,0 +1,849 @@
+{
+  "aliases": [],
+  "canonicalName": "ALEX_G",
+  "claimCount": 157,
+  "confidenceSummary": {
+    "emerging": 157
+  },
+  "confirmationConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|007"
+      ],
+      "status": "confirmed",
+      "value": "When lower and higher timeframes disagree, the higher timeframe takes precedence."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|019"
+      ],
+      "status": "confirmed",
+      "value": "A break above the lower high shifts the market from bearish back to bullish."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|007"
+      ],
+      "status": "confirmed",
+      "value": "An inverted head and shoulders is used as a corroborating signal that structure has shifted from bearish to bullish, alongside the higher-high/higher-low reading."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|021"
+      ],
+      "status": "confirmed",
+      "value": "A candidate level is validated by looking left on the chart to confirm it has been respected historically."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|028"
+      ],
+      "status": "confirmed",
+      "value": "Additional confluences named at the entry: a retest of the level, the weekly area of interest, a four-hour EMA, and the neckline of a head-and-shoulders pattern. No EMA period is given."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|005"
+      ],
+      "status": "confirmed",
+      "value": "A candlestick is a confirmation only once it has closed. Before close it counts as anticipation, on any timeframe from 1-minute to yearly."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|007"
+      ],
+      "status": "confirmed",
+      "value": "A rejection and an engulfing together are treated as a stronger confirmation than either alone, and more dojis are treated as stronger than fewer. No count threshold is given."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|014"
+      ],
+      "status": "confirmed",
+      "value": "The pattern sought is: the 4-hour goes bearish into the area, then shifts bullish within the same day, then retests - which produces the daily rejection wick."
+    }
+  ],
+  "contradictionCount": 8,
+  "entryConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|028",
+        "EV|EVSRC|ALEX_G|20260728|003|014"
+      ],
+      "status": "confirmed",
+      "value": "The area of interest must lie inside the current higher high and higher low, never outside that range."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|030",
+        "EV|EVSRC|ALEX_G|20260728|003|013"
+      ],
+      "status": "confirmed",
+      "value": "Areas of interest are drawn only on the weekly and daily timeframes."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|031",
+        "EV|EVSRC|ALEX_G|20260728|002|007",
+        "EV|EVSRC|ALEX_G|20260728|003|019"
+      ],
+      "status": "confirmed",
+      "value": "An area of interest is identified by a decent number of prior rejections or touches."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|032"
+      ],
+      "status": "confirmed",
+      "value": "Where the weekly and daily areas of interest overlap, the resulting zone is treated as stronger."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|033",
+        "EV|EVSRC|ALEX_G|20260728|002|019"
+      ],
+      "status": "confirmed",
+      "value": "The entry signal is a rejection candlestick at the area of interest: multiple dojis or an engulfing candle."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|034",
+        "EV|EVSRC|ALEX_G|20260728|004|010"
+      ],
+      "status": "confirmed",
+      "value": "The entry signal may occur on any timeframe; a higher-timeframe signal is treated as stronger."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|036"
+      ],
+      "status": "confirmed",
+      "value": "Buy when price is above support; sell when price is below resistance."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|017",
+        "EV|EVSRC|ALEX_G|20260728|001|018",
+        "EV|EVSRC|ALEX_G|20260728|002|022",
+        "EV|EVSRC|ALEX_G|20260728|003|016"
+      ],
+      "status": "confirmed",
+      "value": "At a newly formed extreme the choice is to chase or to wait for a retracement; waiting is presented as the more logical option."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|009"
+      ],
+      "status": "confirmed",
+      "value": "Trade in the direction the zone has historically pushed price: buy while above it, sell while below it."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|016",
+        "EV|EVSRC|ALEX_G|20260728|002|017",
+        "EV|EVSRC|ALEX_G|20260728|004|002"
+      ],
+      "status": "confirmed",
+      "value": "Entry requires a confirmation that price is already moving in the intended direction; entering on anticipation is rejected."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|020",
+        "EV|EVSRC|ALEX_G|20260728|004|004"
+      ],
+      "status": "confirmed",
+      "value": "Named confirmation patterns demonstrated at the zone: bullish engulfing candle, morning star, bullish candle rejection and bullish pin bar rejection."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|023"
+      ],
+      "status": "confirmed",
+      "value": "Entry is taken after price retraces to a discount, where prior participants liquidate and the zone is reached."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|020"
+      ],
+      "status": "confirmed",
+      "value": "The selected area of interest in the worked example sits at a round psychological number, offered as part of what makes the level notable."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|023"
+      ],
+      "status": "confirmed",
+      "value": "Entry location is fixed by structure: sells are taken at a lower high and buys at a higher low."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|026",
+        "EV|EVSRC|ALEX_G|20260728|003|027"
+      ],
+      "status": "confirmed",
+      "value": "If the first approach to the area of interest produces no lower high, no trade is taken; the requirement is to wait for a break of structure that creates one."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|019"
+      ],
+      "status": "confirmed",
+      "value": "A confirmation counts only when it occurs at a support/resistance, supply and demand zone or order block - never in the middle of the chart."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|022"
+      ],
+      "status": "confirmed",
+      "value": "Bullish confirmations are used only at support and bearish confirmations only at resistance; the pattern and the level type must match the trade direction."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|026"
+      ],
+      "status": "confirmed",
+      "value": "Confirmations are only acted on in the direction of the prevailing trend; they are not direction-generating signals."
+    }
+  ],
+  "evidenceCount": 190,
+  "extractionStatus": "completed",
+  "generatedAt": "2026-07-28T04:42:15Z",
+  "hypothesisCount": 289,
+  "instrumentsMentioned": [],
+  "invalidationConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|017"
+      ],
+      "status": "confirmed",
+      "value": "A break below the higher low shifts the market from bullish to bearish, establishing a new lower low and a re-anchored lower high."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|024",
+        "EV|EVSRC|ALEX_G|20260728|001|008"
+      ],
+      "status": "confirmed",
+      "value": "Trend invalidation requires a candle BODY close beyond the structure level, not merely a wick through it."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|012"
+      ],
+      "status": "confirmed",
+      "value": "Price may move freely between the active structure levels; only a body close beyond one of them changes the structure state."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|018"
+      ],
+      "status": "confirmed",
+      "value": "A move against the intended direction disqualifies the setup rather than signalling a sweep to trade into."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|010"
+      ],
+      "status": "confirmed",
+      "value": "Once the timeframe majority is directional, trades in the opposing direction are ruled out for that analysis cycle."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|017"
+      ],
+      "status": "confirmed",
+      "value": "A break out of the lower-high/lower-low box flips the bias to bullish and cancels all sell setups derived from it."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|021"
+      ],
+      "status": "confirmed",
+      "value": "Away from a level the confirmation rule is declared not applicable - the setup is skipped rather than downgraded."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|027"
+      ],
+      "status": "confirmed",
+      "value": "A counter-direction engulfing appearing after a valid setup does not reverse the bias; the trade is skipped rather than taken in the new direction."
+    }
+  ],
+  "limitations": [
+    "157 unresolved question(s) remain open for this trader.",
+    "8 contradiction(s) remain unresolved for this trader.",
+    "One or more claims are still pending_review and have not been confirmed by a human."
+  ],
+  "marketConditionsAvoided": [],
+  "marketConditionsPreferred": [],
+  "marketsMentioned": [],
+  "observationCount": 11,
+  "primaryConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|002",
+        "EV|EVSRC|ALEX_G|20260728|003|003"
+      ],
+      "status": "confirmed",
+      "value": "Top-down analysis is required before any trade, regardless of trading style."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|009",
+        "EV|EVSRC|ALEX_G|20260728|003|004"
+      ],
+      "status": "confirmed",
+      "value": "Top-down analysis proceeds from the weekly timeframe downward through daily, 4-hour and the lower timeframes in order."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|010",
+        "EV|EVSRC|ALEX_G|20260728|003|009"
+      ],
+      "status": "confirmed",
+      "value": "Each timeframe is classified bullish or bearish and the results are combined into an overall score showing where the majority of timeframes point."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|016",
+        "EV|EVSRC|ALEX_G|20260727|001|018",
+        "EV|EVSRC|ALEX_G|20260728|001|010"
+      ],
+      "status": "confirmed",
+      "value": "Every time a new higher high forms, the higher low must be re-anchored to the preceding structure point."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|021",
+        "EV|EVSRC|ALEX_G|20260727|001|022",
+        "EV|EVSRC|ALEX_G|20260728|001|009"
+      ],
+      "status": "confirmed",
+      "value": "Highs and lows are marked at candle bodies, not at wicks."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|025"
+      ],
+      "status": "confirmed",
+      "value": "The higher high always leads a bullish structure and the lower low always leads a bearish structure; the paired higher low or lower high is always behind it in time, never ahead."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|027"
+      ],
+      "status": "confirmed",
+      "value": "An aligned higher-timeframe trend is not itself an entry trigger; a specific area must still be identified."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|011"
+      ],
+      "status": "confirmed",
+      "value": "Every new lower low forces reassignment of the active lower high to the most recent turn."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|013",
+        "EV|EVSRC|ALEX_G|20260728|004|009"
+      ],
+      "status": "confirmed",
+      "value": "A body close beyond a structure level counts as a shift regardless of how small the displacement is; no minimum size threshold applies."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|014",
+        "EV|EVSRC|ALEX_G|20260728|001|015"
+      ],
+      "status": "confirmed",
+      "value": "The active higher low is located by tracing back from the leading high until price makes a sharp turn (the 'snake trick')."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|016"
+      ],
+      "status": "confirmed",
+      "value": "The line chart is used as a visual aid to locate body-based structure points before returning to the candlestick chart."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|020"
+      ],
+      "status": "confirmed",
+      "value": "Market structure alone is not a complete trading system; top-down analysis, an entry signal and trading at the right times are also required."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|004"
+      ],
+      "status": "confirmed",
+      "value": "Liquidity concentrates where price has repeatedly been rejected from the same area."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|006"
+      ],
+      "status": "confirmed",
+      "value": "Higher-timeframe rejection zones are stronger and attract more liquidation than lower-timeframe ones."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|008"
+      ],
+      "status": "confirmed",
+      "value": "A zone with only one prior rejection is materially less predictable than one with several."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|002",
+        "EV|EVSRC|ALEX_G|20260728|003|008"
+      ],
+      "status": "confirmed",
+      "value": "No trade is taken unless at least two analysed timeframes agree on direction. Stated as an absolute personal gate."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|011"
+      ],
+      "status": "confirmed",
+      "value": "Timeframe agreement is scored numerically at 10 points per aligned timeframe, and the worked example is graded 20 on that scale. The caption is garbled and the maximum of the scale is not stated."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|015"
+      ],
+      "status": "confirmed",
+      "value": "The region between the active lower high and lower low is drawn as an explicit box, and the search for an area of interest is confined to it."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|011",
+        "EV|EVSRC|ALEX_G|20260728|004|041"
+      ],
+      "status": "confirmed",
+      "value": "No trade is entered without either a rejection/doji or an engulfing candle, regardless of trade type. Stated as an absolute gate on every entry."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|013"
+      ],
+      "status": "confirmed",
+      "value": "A daily candle that looks like a rejection must be cross-referenced against the 4-hour within the same day to determine whether it is a rejection or a higher low forming."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|003"
+      ],
+      "status": "confirmed",
+      "value": "The purpose of top-down analysis is to establish overall market direction before deciding to buy or sell."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|012",
+        "EV|EVSRC|ALEX_G|20260728|001|003"
+      ],
+      "status": "confirmed",
+      "value": "A bullish market is a series of higher highs and higher lows."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|013",
+        "EV|EVSRC|ALEX_G|20260728|003|005"
+      ],
+      "status": "confirmed",
+      "value": "A bearish market is a series of lower highs and lower lows."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|014"
+      ],
+      "status": "confirmed",
+      "value": "Bullish and bearish structure are mutually exclusive; higher-high/higher-low and lower-high/lower-low labels cannot be mixed."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260727|001|015"
+      ],
+      "status": "confirmed",
+      "value": "Price movement inside the current high and low is ordinary market structure and does not change the trend."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|001",
+        "EV|EVSRC|ALEX_G|20260728|001|002"
+      ],
+      "status": "confirmed",
+      "value": "Market structure applies to any instrument and any timeframe; the reading procedure does not depend on which market or timeframe is displayed."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|004"
+      ],
+      "status": "confirmed",
+      "value": "The active higher low is the most recent higher low, not the lowest low in the move."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|005"
+      ],
+      "status": "confirmed",
+      "value": "Trend is determined by market structure; it cannot be identified without it."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|007"
+      ],
+      "status": "confirmed",
+      "value": "Market structure exists inside consolidation and ranging conditions; a range is still classifiable as bullish or bearish."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|001|019"
+      ],
+      "status": "confirmed",
+      "value": "Lower timeframes provide the detail used to judge how far a move may run and how much room a stop-loss and take-profit require."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|001",
+        "EV|EVSRC|ALEX_G|20260728|002|002"
+      ],
+      "status": "confirmed",
+      "value": "Liquidity is how liquid the market is at a given price point — the concentration of buy and sell orders there."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|005",
+        "EV|EVSRC|ALEX_G|20260728|004|020"
+      ],
+      "status": "confirmed",
+      "value": "Alex G treats liquidity zone, support/resistance, supply and demand, order block and area of interest as names for the same object."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|002|015"
+      ],
+      "status": "confirmed",
+      "value": "Being caught by a liquidity sweep is unavoidable and recurring; the stated response is to take the next trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|008"
+      ],
+      "status": "confirmed",
+      "value": "An engulfing candle requires a body close beyond the prior candle; a close on the unfavourable side does not qualify no matter how the candle looks."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|012"
+      ],
+      "status": "confirmed",
+      "value": "A candle that looks like a rejection may instead be a 'wick fill'; the two are visually similar and are distinguished by lower-timeframe context, not by the candle itself."
+    }
+  ],
+  "profileId": "PROFILE|ALEX_G|20260728|005",
+  "reviewStatus": "pending",
+  "riskConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|005"
+      ],
+      "status": "confirmed",
+      "value": "Risk is defined and managed as a proportion of the deposited account balance, which is the reference quantity for every trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|006"
+      ],
+      "status": "confirmed",
+      "value": "The full account balance is never risked on a trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|007"
+      ],
+      "status": "confirmed",
+      "value": "The account must be funded with materially more than the intended per-trade risk, so that a loss leaves margin in the account. The worked figure is $100 risk on a $1,000 account, described as 10%."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|008"
+      ],
+      "status": "confirmed",
+      "value": "The same percentage must be risked on every trade. Varying risk between trades is explicitly named as not being risk management."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|010"
+      ],
+      "status": "confirmed",
+      "value": "Risk is sized as a percentage of the account, never as a fixed monetary amount. Named as the single biggest mistake traders make."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|015"
+      ],
+      "status": "confirmed",
+      "value": "The risk percentage chosen depends on account type and objective - personal, funded, or a disposable side account."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|016"
+      ],
+      "status": "confirmed",
+      "value": "Conservative risk is 0.5 to 1% of the account per trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|017"
+      ],
+      "status": "confirmed",
+      "value": "The conservative band is prescribed for lower-timeframe traders, on the stated reasoning that they take more trades and should not take many trades at high risk."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|019"
+      ],
+      "status": "confirmed",
+      "value": "The recommended risk, described as the industry standard, is 1 to 2% of the account per trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|020"
+      ],
+      "status": "confirmed",
+      "value": "Once chosen, the risk percentage is not raised after winning trades or lowered after losing trades."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|023"
+      ],
+      "status": "confirmed",
+      "value": "The high-risk band is 3 to 5% of the account per trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|024"
+      ],
+      "status": "confirmed",
+      "value": "High risk is confined to a personal or disposable flipping account, explicitly to avoid breaching funded-account rules."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|026"
+      ],
+      "status": "confirmed",
+      "value": "His own practice: one risk percentage is chosen at the start of each month and held for the whole month regardless of winning or losing streaks."
+    }
+  ],
+  "schemaVersion": 1,
+  "sessionsMentioned": [],
+  "sourceCount": 6,
+  "sourceLineage": {
+    "claimIds": [
+      "CLAIM|ALEX_G|20260727|001",
+      "CLAIM|ALEX_G|20260727|002",
+      "CLAIM|ALEX_G|20260727|003",
+      "CLAIM|ALEX_G|20260727|004",
+      "CLAIM|ALEX_G|20260727|005",
+      "CLAIM|ALEX_G|20260727|006",
+      "CLAIM|ALEX_G|20260727|007",
+      "CLAIM|ALEX_G|20260727|008",
+      "CLAIM|ALEX_G|20260727|009",
+      "CLAIM|ALEX_G|20260727|010",
+      "CLAIM|ALEX_G|20260727|011",
+      "CLAIM|ALEX_G|20260727|012",
+      "CLAIM|ALEX_G|20260727|013",
+      "CLAIM|ALEX_G|20260727|014",
+      "CLAIM|ALEX_G|20260727|015",
+      "CLAIM|ALEX_G|20260727|016",
+      "CLAIM|ALEX_G|20260727|017",
+      "CLAIM|ALEX_G|20260727|018",
+      "CLAIM|ALEX_G|20260727|019",
+      "CLAIM|ALEX_G|20260727|020",
+      "CLAIM|ALEX_G|20260727|021",
+      "CLAIM|ALEX_G|20260727|022",
+      "CLAIM|ALEX_G|20260727|023",
+      "CLAIM|ALEX_G|20260727|024",
+      "CLAIM|ALEX_G|20260727|025",
+      "CLAIM|ALEX_G|20260727|026",
+      "CLAIM|ALEX_G|20260727|027",
+      "CLAIM|ALEX_G|20260727|028",
+      "CLAIM|ALEX_G|20260727|029",
+      "CLAIM|ALEX_G|20260727|030",
+      "CLAIM|ALEX_G|20260727|031",
+      "CLAIM|ALEX_G|20260727|032",
+      "CLAIM|ALEX_G|20260727|033",
+      "CLAIM|ALEX_G|20260727|034",
+      "CLAIM|ALEX_G|20260727|035",
+      "CLAIM|ALEX_G|20260728|001",
+      "CLAIM|ALEX_G|20260728|002",
+      "CLAIM|ALEX_G|20260728|003",
+      "CLAIM|ALEX_G|20260728|004",
+      "CLAIM|ALEX_G|20260728|005",
+      "CLAIM|ALEX_G|20260728|006",
+      "CLAIM|ALEX_G|20260728|007",
+      "CLAIM|ALEX_G|20260728|008",
+      "CLAIM|ALEX_G|20260728|009",
+      "CLAIM|ALEX_G|20260728|010",
+      "CLAIM|ALEX_G|20260728|011",
+      "CLAIM|ALEX_G|20260728|012",
+      "CLAIM|ALEX_G|20260728|013",
+      "CLAIM|ALEX_G|20260728|014",
+      "CLAIM|ALEX_G|20260728|015",
+      "CLAIM|ALEX_G|20260728|016",
+      "CLAIM|ALEX_G|20260728|017",
+      "CLAIM|ALEX_G|20260728|018",
+      "CLAIM|ALEX_G|20260728|019",
+      "CLAIM|ALEX_G|20260728|020",
+      "CLAIM|ALEX_G|20260728|021",
+      "CLAIM|ALEX_G|20260728|022",
+      "CLAIM|ALEX_G|20260728|023",
+      "CLAIM|ALEX_G|20260728|024",
+      "CLAIM|ALEX_G|20260728|025",
+      "CLAIM|ALEX_G|20260728|026",
+      "CLAIM|ALEX_G|20260728|027",
+      "CLAIM|ALEX_G|20260728|028",
+      "CLAIM|ALEX_G|20260728|029",
+      "CLAIM|ALEX_G|20260728|030",
+      "CLAIM|ALEX_G|20260728|031",
+      "CLAIM|ALEX_G|20260728|032",
+      "CLAIM|ALEX_G|20260728|033",
+      "CLAIM|ALEX_G|20260728|034",
+      "CLAIM|ALEX_G|20260728|035",
+      "CLAIM|ALEX_G|20260728|036",
+      "CLAIM|ALEX_G|20260728|037",
+      "CLAIM|ALEX_G|20260728|038",
+      "CLAIM|ALEX_G|20260728|039",
+      "CLAIM|ALEX_G|20260728|040",
+      "CLAIM|ALEX_G|20260728|041",
+      "CLAIM|ALEX_G|20260728|042",
+      "CLAIM|ALEX_G|20260728|043",
+      "CLAIM|ALEX_G|20260728|044",
+      "CLAIM|ALEX_G|20260728|045",
+      "CLAIM|ALEX_G|20260728|046",
+      "CLAIM|ALEX_G|20260728|047",
+      "CLAIM|ALEX_G|20260728|048",
+      "CLAIM|ALEX_G|20260728|049",
+      "CLAIM|ALEX_G|20260728|050",
+      "CLAIM|ALEX_G|20260728|051",
+      "CLAIM|ALEX_G|20260728|052",
+      "CLAIM|ALEX_G|20260728|053",
+      "CLAIM|ALEX_G|20260728|054",
+      "CLAIM|ALEX_G|20260728|055",
+      "CLAIM|ALEX_G|20260728|056",
+      "CLAIM|ALEX_G|20260728|057",
+      "CLAIM|ALEX_G|20260728|058",
+      "CLAIM|ALEX_G|20260728|059",
+      "CLAIM|ALEX_G|20260728|060",
+      "CLAIM|ALEX_G|20260728|061",
+      "CLAIM|ALEX_G|20260728|062",
+      "CLAIM|ALEX_G|20260728|063",
+      "CLAIM|ALEX_G|20260728|064",
+      "CLAIM|ALEX_G|20260728|065",
+      "CLAIM|ALEX_G|20260728|066",
+      "CLAIM|ALEX_G|20260728|067",
+      "CLAIM|ALEX_G|20260728|068",
+      "CLAIM|ALEX_G|20260728|069",
+      "CLAIM|ALEX_G|20260728|070",
+      "CLAIM|ALEX_G|20260728|071",
+      "CLAIM|ALEX_G|20260728|072",
+      "CLAIM|ALEX_G|20260728|073",
+      "CLAIM|ALEX_G|20260728|074",
+      "CLAIM|ALEX_G|20260728|075",
+      "CLAIM|ALEX_G|20260728|076",
+      "CLAIM|ALEX_G|20260728|077",
+      "CLAIM|ALEX_G|20260728|078",
+      "CLAIM|ALEX_G|20260728|079",
+      "CLAIM|ALEX_G|20260728|080",
+      "CLAIM|ALEX_G|20260728|081",
+      "CLAIM|ALEX_G|20260728|082",
+      "CLAIM|ALEX_G|20260728|083",
+      "CLAIM|ALEX_G|20260728|084",
+      "CLAIM|ALEX_G|20260728|085",
+      "CLAIM|ALEX_G|20260728|086",
+      "CLAIM|ALEX_G|20260728|087",
+      "CLAIM|ALEX_G|20260728|088",
+      "CLAIM|ALEX_G|20260728|089",
+      "CLAIM|ALEX_G|20260728|090",
+      "CLAIM|ALEX_G|20260728|091",
+      "CLAIM|ALEX_G|20260728|092",
+      "CLAIM|ALEX_G|20260728|093",
+      "CLAIM|ALEX_G|20260728|094",
+      "CLAIM|ALEX_G|20260728|095",
+      "CLAIM|ALEX_G|20260728|096",
+      "CLAIM|ALEX_G|20260728|097",
+      "CLAIM|ALEX_G|20260728|098",
+      "CLAIM|ALEX_G|20260728|099",
+      "CLAIM|ALEX_G|20260728|100",
+      "CLAIM|ALEX_G|20260728|101",
+      "CLAIM|ALEX_G|20260728|102",
+      "CLAIM|ALEX_G|20260728|103",
+      "CLAIM|ALEX_G|20260728|104",
+      "CLAIM|ALEX_G|20260728|105",
+      "CLAIM|ALEX_G|20260728|106",
+      "CLAIM|ALEX_G|20260728|107",
+      "CLAIM|ALEX_G|20260728|108",
+      "CLAIM|ALEX_G|20260728|109",
+      "CLAIM|ALEX_G|20260728|110",
+      "CLAIM|ALEX_G|20260728|111",
+      "CLAIM|ALEX_G|20260728|112",
+      "CLAIM|ALEX_G|20260728|113",
+      "CLAIM|ALEX_G|20260728|114",
+      "CLAIM|ALEX_G|20260728|115",
+      "CLAIM|ALEX_G|20260728|116",
+      "CLAIM|ALEX_G|20260728|117",
+      "CLAIM|ALEX_G|20260728|118",
+      "CLAIM|ALEX_G|20260728|119",
+      "CLAIM|ALEX_G|20260728|120",
+      "CLAIM|ALEX_G|20260728|121",
+      "CLAIM|ALEX_G|20260728|122"
+    ],
+    "sourceIds": [
+      "EVSRC|ALEX_G|20260727|001",
+      "EVSRC|ALEX_G|20260728|001",
+      "EVSRC|ALEX_G|20260728|002",
+      "EVSRC|ALEX_G|20260728|003",
+      "EVSRC|ALEX_G|20260728|004",
+      "EVSRC|ALEX_G|20260728|005"
+    ]
+  },
+  "stopLossConcepts": [],
+  "strategyTypes": [],
+  "targetConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|004|036"
+      ],
+      "status": "confirmed",
+      "value": "The stated average take-profit distance is roughly 80 to 100 pips. Given as a personal average, not as a rule for selecting a target on a given trade."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|022"
+      ],
+      "status": "confirmed",
+      "value": "A 1:2 risk-to-reward ratio is used as the worked example. It is illustrative arithmetic, not stated as a required minimum."
+    },
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|005|025"
+      ],
+      "status": "confirmed",
+      "value": "A second worked ratio: 5% risk at 1:3 reward produces 15% on a single trade. Again illustrative, not stated as a required ratio."
+    }
+  ],
+  "timeframesMentioned": [],
+  "tradeManagementConcepts": [
+    {
+      "evidenceIds": [
+        "EV|EVSRC|ALEX_G|20260728|003|022",
+        "EV|EVSRC|ALEX_G|20260728|005|028"
+      ],
+      "status": "confirmed",
+      "value": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives."
+    }
+  ],
+  "traderId": "ALEX_G",
+  "unresolvedQuestionCount": 157
+}

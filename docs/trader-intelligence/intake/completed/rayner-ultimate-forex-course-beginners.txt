@@ -1,0 +1,2600 @@
+hey hey what's up my friends so welcome to the ultimate forex trading course for beginners so this is a comprehensive
+0:07
+trading course that will teach you everything from a to z right to becoming a proficient forex trader so the cost is
+0:12
+structured in a step-by-step manner so this is really for you if you have no forex trading experience or very little forex trading experience so
+0:19
+the course is structured in such a way where the earlier lessons right builds on the last so you can't just you know
+0:24
+maybe let's say skip to the last section because it might not make sense to you especially if you have no forex trading experience so my suggestion is to go
+0:31
+through this program step by step as the techniques the strategies the concepts right builds on the foundation that you have
+0:36
+learned earlier at the same time some of you watching this might be an experienced trader if that's the case
+0:42
+right i will put the timestamps in the description you can see you know which part of this training video
+0:47
+might interest you which topic right and just go to the relevant section of this video so without further
+0:52
+ado let's get started
+0:58
+so in this section you will learn number one what is forex trading who are the biggest players in forex
+What is Forex trading
+1:04
+trading the advantages of forex trading over the other markets like stocks and what are the forex
+1:09
+market hours so let's get started so first and foremost what is forex trading well forex
+1:14
+stands for foreign exchange in case you haven't you know realized it yet it is simply an exchange of one currency
+1:20
+for another and you might be thinking why do i want to you know exchange currencies right now very simple let's say for example you
+1:26
+want to go on a vacation and let's say you're in the u.s and you want to come to singapore for holiday
+1:31
+well guess what if you bring your us dollars into singapore and buy a bowl of noodles the lady will give you the
+1:37
+you know like what you're trying to do man so clearly right you can't use us dollars in singapore so what you need to do is to go to a money changer maybe
+1:44
+in the us and what you'll do is sell your us dollars in exchange for singapore dollars and then you can you know come
+1:49
+to singapore have a nice holiday have a bowl of noodles rice and you know have fun so that's pretty much you know one
+1:54
+example of uh forex trading or rather you know the exchange of currency and what the purpose is for
+2:00
+on the other hand for corporations let's say a company like toyota who produces car let's say they need to
+2:06
+buy some rubber for their tires for example okay and you know uh you know they in japan right maybe
+2:12
+they are not a producer of rubber and they need to go to india to buy some rubber for their cars
+2:18
+so what do toyoto toyota cooperation do what they do is they will sell their yen in exchange for indian
+2:24
+rupee so they can use that indian rupee go to india and buy some rubber for their tires make sense so that's another
+2:31
+example of forex trading one is from a retail perspective and one is from a corporation perspective and this is a six point six
+2:38
+trillion dollar market the forex market is a six point six trillion dollar market look at the number of zeros my man it has
+2:44
+more the number of zeros is even more than the the hair i have on my head so that's a huge huge market so who are the players
+2:52
+of forex trading so let me just you know give you a very simple chart right to kind of you know break down who trades the forex market
+2:59
+so you can see over here primarily the forex markets are traded by you know the major banks this could be due to you know hedging their portfolios
+3:05
+feeling they are you know uh meeting their requirements of their clients like commercial companies which i'll
+3:10
+explain shortly uh this could a forex market is also you know traded by hedge funds for you know speculative
+3:16
+purposes maybe to hit their portfolios and done by commercial companies for example like toyota as i've mentioned earlier
+3:22
+so for example how does commercial companies and bank work hand in hand so very simple so let's say you know a company like
+3:27
+again toyota they know they need let's say they want to buy rubber from india they can't use
+3:32
+yen in india because you know the indians might think you know what is this piece of paper right am i supposed to make a paper plane out of this
+3:38
+no so what toyota will do is they might go to a bank and say hey i need to exchange you know x number of yens right in exchange for
+3:45
+indian rupee so commercial bank will go to i mean a commercial company will go to the bank right and you'll settle this uh this transaction so this
+3:52
+is how they kind of work interrelated together and of course banks can you know trade them within uh among one another to hate
+3:59
+their portfolio and stuff like that and finally at the bottom of the food chain you have the retail traders like us who you know go into this for maybe uh
+4:07
+speculative purposes could be you know going for vacation you need to change a bit of currencies so yeah this is uh largely
+4:12
+you know what what are the players in the forex markets do so advantageous of forex trading so
+4:19
+what are the advantages number one right it is low barrier to entry so you can start with you know as little as 100 so unlike you know
+4:26
+futures or stocks where you probably would have to start with a larger amount for forex trading right to open an account
+4:31
+100 right is i'll say enough right to open an account it has high liquidity so you can enter
+4:37
+and exit your trades easily so if you trade forex and you want to buy let's say a currency pair like euro dollar you can
+4:43
+pretty much get at the price right that you see on your screen unlike you know certain markets like let's say penny stock sometimes uh market is moving quickly or
+4:50
+market is illiquid when you thought you buy it hundred dollars and end up you buy the stock 105 dollars due to you know slippages and stuff like
+4:56
+that so in forex trading you still have slippages but i would say it's lesser compared to the stock markets
+5:02
+then uh the market is open 245 for forex right you can trade pretty much any time you want unlike the stock markets which is you know just open for a fixed number
+5:08
+of hours in a day so what are the forex market hours so as mentioned right forex
+5:14
+is open 24 hours five days a week so it's open from sunday to friday right depending on
+5:20
+where you are in the world if you're like me in singapore it's open from monday to friday if i mean monday to saturday if
+5:26
+you're in us then you'll be from sunday to friday because of the uh hours in the forex market because of your time zone so what are the forex
+5:32
+market hours okay so let me just break this down so you can understand this chart so first one over here is the daylight
+5:38
+saving time so this refers to the summer months in u.s okay in the overseas in other
+5:43
+countries in singapore we don't have daylight saving time so this is a bit uh new to you if you are in asia and the
+5:50
+time that we use to depict the hours we use gmt over here okay so for example let's say uh london
+5:56
+market right for summer period the london session right starts at 7 00 am gmt and
+6:03
+ends at 4 00 p.m gmt so 1600 is in essence at 4 pm if you convert it okay for new
+6:10
+york it starts at 12 p.m gmt the new york session and it ends at 9 pm
+6:17
+gmt new york session so you can see how this uh this uh table right breaks down the different forex sessions and their
+6:24
+open and closing hours so this is for daylight savings time during the summer period
+6:30
+and for standard time right during the winter period right the hours right are slightly different they are different by an hour so if you look now
+6:36
+at london again now we open at 8 am whereas previously it opened at 7 00 am okay so previously 7 am here
+6:46
+so during winter months right it starts at 8am and ends at 5pm for new york it starts
+6:51
+at 1 pm and close it or ends at 10pm so you can see this table here i would say it's useful right to to know
+6:59
+what time a certain forex market session opens or closed in your particular time zone
+7:04
+and some of you might be wondering hey ray how do i know whether is it a winter or summer period simple just google
+7:09
+if you google right then you know whether hey is it now standard time or is it daylight savings time so i'm not going to put that down here because
+7:15
+it really depends on the time of the year so let's do a quick recap number one forex trading is simply an
+7:21
+exchange of one currency for another it's traded by banks corporations brokers and retail traders like you and
+7:26
+me forex trading has a low barrier to entry high liquidity and the market is open 24 5. and finally the forex market hours
+7:33
+are broken down into four different sessions the sydney session the tokyo london and new york and one thing to add
+7:38
+right a bonus thing is that uh the most volatile session right in the forex market is during the london
+7:44
+and new york overlap so it's actually during this few hours from here to here because both the london and the
+7:50
+new york session are open and these are kind of like the biggest financial markets in the world so a lot of transactions are going on
+7:55
+during this forex market hours and if you look at the forex charts like the 15 minutes or one hour time frame
+8:01
+you can see that during this period right the candles are moving a lot a lot more during this a few hours of the day so this is just one additional
+8:08
+thing to share with you okay so we have done the recap so that's pretty much it now moving on
+Currency pair explained
+8:15
+right you will learn what is a currency pair what is the base and code currency what
+8:21
+are the different types of currency pairs so let's get started number one what is a currency
+8:27
+pair so one thing to note is that you trade currency in pairs not as a standalone so just like you know when
+8:32
+you go to a supermarket to buy an orange you don't say hey i want to buy some orange they will tell you yeah you want
+8:38
+to buy some orange right but you have to you know exchange right your money for an orange so same thing for
+8:43
+currency pairs right when you want to trade currencies you have to exchange one currency for another currency you can't just say
+8:48
+i want to buy some euros then the other person on the or the other party will be thinking
+8:54
+sure you're gonna buy some euros so what are you giving me in exchange so this is why currency pairs or rather
+9:00
+why currencies right trade in pairs not as a standalone so in essence right
+9:05
+currency pairs help you measure a currency's value against another currency
+9:11
+so for example let me explain right euro against the dollar so when you let's say buy the euro dollar in essence
+9:17
+what you're doing is you're buying the euro currency all right and you're selling the us dollar so in essence right when
+9:23
+you are buying the euro you're giving the other party us dollars in exchange for the euro currency so just like you're
+9:29
+buying an apple from the supermarket you're giving your money in exchange for that apple so it works in pair likewise for dollar
+9:37
+against the yen you are buying the us dollar and in return right you give the other party
+9:42
+japanese yen make sense moving on what is a base currency or what is a
+9:48
+base currency so let me explain the base currency is in essence right the first currency that appears in a currency pair
+9:54
+so this will illustrate so for example euro against the dollar the first currency of the pair is called
+10:00
+a base currency and i'll explain why shortly so what is a code currency so the code
+10:06
+currency is the second currency that appears in the currency pair and for the euro dollar example the us
+10:12
+dollar is the quote currency and now you might be wondering hey wayne and what's the purpose purpose
+10:18
+of all this man so let me explain the purpose of all this is to tell you how much it cost in one
+10:26
+in code currency to buy one base currency i know that sounds like a technical full so i'll break it down
+10:32
+very simply which i've actually done earlier so for example euro dollar at 1.3500 what it means
+10:40
+is you know that euro is the base currency right let's call it b base and the
+10:47
+dollar as mentioned is the quote currency that's pretty cute so this tells you how much it costs in code
+10:53
+currency to buy one based currency so in essence what this tells you is that for one euro dollar it will cost you
+11:01
+one dollar and 35 cents usd so let's say you go to a money
+11:07
+changer hey i'm gonna buy one euro man and the guy said sure my man give me one dollar and 35 cents
+11:14
+usd and i'll give you one euro that's how it works right and that's how you kind of interpret this right okay it tells you
+11:20
+how much it costs in code currency to buy one base currency and i think that should be a pretty
+11:26
+self-explanatory if you don't understand this just rewind this video and i'm pretty sure you'll get it
+11:32
+so when you're trading currencies right there are different types of currency pairs and i'll explain what are the three different types of
+11:38
+currency pairs that you'll encounter number one is what we call the major currency pairs number two we have cross
+11:44
+currency pairs and number three exotic currency pairs so let me explain
+11:49
+major currency pairs these are in essence right or rather they refer to the most traded currency pairs in the world
+11:54
+so these are the seven most traded currency pairs in the world they're all uh dollar denominated like you know the euro against the dollar
+12:00
+the pound against the dollar dollar against the canadian etc so if you are new to forex trading right now these are
+12:06
+i would say the seven currency pairs that you might want to consider starting i mean to trade first because they are
+12:12
+usually uh i'll say their transaction costs are lower due to lower spreads and you know you get less slippages when
+12:17
+trading this uh most seven most popular currency pairs so these are the major currency pairs
+12:23
+the next one cross currency pairs this refers to currency pairs which are non-usd which doesn't have the
+12:28
+usd you know denomination in it so for example let's say you have the euro crosses euro crosses simply means
+12:34
+that their currency pairs that has the euro currency in it like the euro against the british pound euro against
+12:40
+the aussie dollar euro against the new zealand dollar then you have the pound crosses like pound yen pound against the aussie
+12:45
+dollar pound against the new zealand dollar etc pretty pretty simple stuff and finally the last type of currency
+12:51
+parents that we have is the exotic currency pairs this is when one may when one major currency pair
+12:56
+is paired with a developing country's currency so for example
+13:02
+us dollar against the mexican peso us dollar is a major currency pair and mexican
+13:08
+that's all right this is a developing country's currency so again this meets the requirement right one major currency is paired with a
+13:15
+developing country's currency next one the euro against the turkish lira euro is a major currency turkish
+13:20
+lira is a developing country's currency and finally the indian rupee against the british pound
+13:25
+again so this is what we mean by exotic currency pairs so one thing to note right is that when
+13:31
+you trade exotic currency pairs the spread tends to be wider so if you don't understand what the spread means right
+13:37
+don't worry as you progress on your trading journey you understand but in essence right the transaction cost to trade exotic currency pairs they are more
+13:43
+expensive compared to the major currency pairs so a quick recap number one currencies they are traded in
+13:49
+pairs not as a standalone the base currency is the first currency in the pair the code currency is the
+13:54
+second currency in a pair and then there are three types of currency pairs major cross and exotics
+14:00
+so with that said let's move on so moving on in this section you will
+What is a pip
+14:06
+learn number one what is a bit number two what is a paypal and number three how to read a currency pair
+14:12
+code so let's get started so first and foremost right what is a pip a pip stands for percentage in
+14:18
+point in essence right what it's trying to do is to measure it's a measure right of a change in value in the currency pair
+14:24
+don't worry we'll get to that later so a pip right remember it's the fourth decimal place in the currency pair code
+14:31
+so let me explain right let me give an example so let's see let's say right euro against the us dollar moves from 1.3500
+14:38
+to 1.3505 now let me ask you where is where
+14:44
+is the number to look at when you want to find out what is the the p value change so remember pip is the fourth decimal place so this
+14:50
+is basically the fourth number after this dot so one two three four you're looking at this number here so you're comparing the difference
+14:56
+between this number here and this number here okay so quiz time
+15:01
+how many pips difference is this so let's find out an answer is quite straightforward this is actually an increase right of five
+15:08
+pips from 1.3500 to 1.3505 it's a difference of five pips so you
+15:14
+can see right the last digit the fourth decimal placing digit right it has moved from zero
+15:19
+to five that's an increase of five pips let's do another example let's say this
+15:24
+time around the euro against the dollar moves from 1.3400 to 1.3350 now how many pips
+15:33
+is this right let's uh give you five seconds to figure this out one two three four five okay so the
+15:39
+answer is a decrease of 50 pips so in essence right this uh euro against the dollar it has dropped
+15:46
+50 pips from 1.3400 to 1.3350 so quick tip that i have for you that if
+15:51
+you have difficulty you you know using your fingers counting and stuff like that you just take a calculator take this last four digit minus this
+15:58
+last four digit and you'll get 50. okay that's another way to go about it
+16:03
+so moving on one thing to share is that the yen pairs they are special they are not like you know the other currency
+16:09
+pairs where the pip right is at the fourth decimal place for yen pairs like you know the dollar against the japanese year and the pound
+16:15
+against the japanese yen the pip value is the second decimal place so bear this in mind only for yen
+16:20
+pairs the pit value or under the the peak check the the peak when you look at the currency
+16:26
+code right is at the second decimal place so let me give you an example let's say
+16:31
+the dollar against the japanese yen moves from 100.10 to 100.15
+16:37
+how many pips is that how many uh how much pips did this pair move
+16:44
+again very simple you can just remember second decimal place is where you look at for the pit for en pair so you just take
+16:54
+15 minus 10 and the answer is an increase of 5 pips next one another example
+17:02
+let's say the dollar against the japanese yen moves from 100.25 to 100.1 how many pips difference is this again
+17:09
+very simple take the uh 1 0 which is 10 minus 25 and you get
+17:16
+a decrease of 15 pips and this is in essence right how you you are measure right how many pips a
+17:23
+currency pair has moved and to take things a step further because the forex got you know like to make your life a bit more
+17:29
+difficult there's another thing called a pipette and in essence right a pipe is simply
+17:35
+known as fractional pips they are 110 the value of a pit
+17:40
+confusing don't worry an example usually solves your pain so and one thing to bear in mind is that
+17:46
+a pipette is the fifth decimal place for most currency pairs for the yen pairs
+17:51
+it's the third decimal place so an example would ease your pain let's say euro
+17:57
+against the dollar moves from one three five zero zero five which this one here is the pipette to
+18:03
+1.3505 seven this seven here is the pipette value so how many pips movement is this
+18:11
+so again you just do a simple math you will realize that this is an increase of 5.2 pips makes sense i know
+18:18
+it makes sense right so let's do a quick recap number one a pip is a measure of a
+18:23
+change in value right in the currency pair it's the fourth decimal place for most currency pairs except the yen which is
+18:29
+the third decimal place if you want to be a little bit more you know particular there's something called the pipette which is in essence 110 of a pip
+18:46
+so in this section what will you learn you will learn number one what is leverage number two
+18:52
+how leverage affects your trading and finally what are the different types of forex
+18:57
+lot sizes so let's get started what is leverage how leverage affects your trading and
+The truth about leverage
+19:04
+what are the different types of forex lot sizes so let's begin so what is leverage so intuitively i
+19:10
+know you know what leverage means but let's explain this when it comes to the forex markets
+19:16
+so leverage is in essence right the ability to trade a larger amount of money relative to
+19:22
+your account size and leverage is a double h so and i'll explain
+19:27
+more so let me give you an example let's say you have a thousand dollars in your trading account and you buy
+19:32
+10 000 worth of euro usd this means you borrow the extra nine
+19:38
+thousand dollars to trade and if you want to measure the leverage this is a leverage of one to
+19:44
+ten why is this a one to ten you take the ten thousand dollars that is worth of the euro usd divided by
+19:50
+the initial capital that you have in your account and you get 10 so this is a leverage of 1 to 10.
+19:56
+now the question is what if euro usd goes up how does leverage impact your trading so recall you have a
+20:02
+thousand dollars account and you buy 10 dollars worth of euro usd your ten thousand dollars is now worth
+20:09
+eleven thousand dollars why eleven thousand dollars very simple you just take ten thousand dollars
+20:14
+and you multiply by one point one because you actually earn 10 because this currency pair went
+20:21
+up 10 so 10 000 minus or rather multiplied by 1.1 is equal to 11 000 or if you look at it
+20:27
+another way 10 of 10 000 is one thousand one thousand plus ten thousand equals to eleven thousand that's another way to to do it
+20:34
+next you return the nine thousand dollars that you owe what you're left with is the two thousand dollars and remember the two thousand dollars
+20:41
+right what you had initially at the start was a thousand dollars so in other words your profit is
+20:47
+one thousand dollars all right two thousand dollars minus your original capital that you started with you made a profit of
+20:52
+a thousand dollars on this particular trade and i know man this looks easy man i'm gonna be the
+20:57
+next market wizard millionaire trader well not so far as my young part padawan because what if
+21:03
+euro usd goes down 10 and how would this change so now recall you have a thousand dollars account and you buy ten thousand
+21:09
+dollars worth of euro usd your ten thousand dollars is now worth nine thousand why is that because ten thousand okay if
+21:16
+you lose ten percent of your capital now it's worth nine thousand dollars you return the nine thousand dollars that
+21:22
+you owe you're left with zero dollars in fact i have no idea why there's four zeros here but zero is zero is zero okay and your
+21:29
+original capital is a thousand dollars so this means your loss is a thousand dollars because you started off with a thousand dollars and
+21:35
+you're left with zero zero zero zero so in other words you lost a thousand dollars
+21:40
+so the key thing to point out is that leverage can amplify your gains and losses so if you think about this if
+21:47
+without leverage this right would have been a 10 loss to you but because you used leverage
+21:52
+you lost 100 instead of 10 so likewise when you had a gain earlier
+21:58
+when you had a profit when the market went up ten percent if you didn't use leverage that would be a profit of ten percent for you but
+22:04
+because you use a one to ten leverage it is amplified ten times you made a profit of a hundred percent so in this case it's a thousand
+22:11
+dollars but in percentage term is 100 okay so this is uh pretty much the key thing that i want to point across is
+22:16
+that leverage it can amplify your gains and losses and for this case in this example you lost
+22:21
+100 of your capital because uh you use a 1 to 10 leverage if you didn't use leverage at all there
+22:26
+would be a 10 loss of your capital moving on right i want to talk about forex lot sizes so
+22:32
+what are the different types of forex slot size out there number one we have a standard lot which is
+22:38
+equivalent to a hundred thousand units so when you key in a hundred thousand units to buy in your forex
+22:43
+broker you are essentially buying one standard lot then below that we have a mini lot which is
+22:49
+10 000 units followed by micro lot which is a thousand units and smaller than micro lot we even
+22:57
+have nano lot which is a hundred units so one thing to point out is that you
+23:02
+can trade fractional lot sizes it doesn't mean that you only can trade one standard lot one mini lot or five standard lots you can you know
+23:08
+break it up and trade something like 1.3 standard lot you can trade 2.5 mini lots
+23:13
+3.7 mini lots 2.6 standard lot 1.5 micro lots it is all possible right
+23:20
+when trading the forex market so in a way you can you know better manage your risk as i will explain
+23:25
+how that will work in the later section so let's do a quick recap number one
+23:31
+leverage is the ability right to trade a larger amount of money relative to your account size and yes you have seen right leverage is a double
+23:37
+double h so it can amplify your gains or losses and finally we talk about you know the different types of load sizes in the
+23:43
+forex market standard lot micro lot mini lot and nano lots okay so in this section you will learn
+What is pip value and how to calculate it
+23:50
+what is a pip value and how to calculate a pip value so what is a pip value so a pip value in essence
+23:57
+is trying to answer the question how much is one pip worth and to find that out right you need to answer two questions
+24:03
+number one the lot size that you're trading and number two the code currency of the currency pair so let me explain
+24:09
+number one the lot size so as you know right in the forex market there are different lot sizes you know
+24:14
+standard lot mini lot etc so one standard lot right is actually equivalent to a hundred thousand units
+24:20
+and it's worth ten dollars per pip one mini lot is ten thousand units and
+24:26
+it's worth a dollar a pip and one micro lot is a one thousand units which is 10 cent per pip or 0.1
+24:32
+dollars a pip and one thing to point out is 10 mini lots is actually equivalent to
+24:38
+one standard lot because if you look at this 10 000 units you multiply by 10 is 100 000 units so in other words 10 mini lot
+24:44
+is one standard lot so needless to say 10 micro lots is equals to one mini lot right a thousand units you multiply by 10
+24:51
+gives you 10 000 units so 10 micro lots 10 micro lots is one mini lot as well
+24:57
+okay so so bear this in mind and this holds true only if your code
+25:02
+currency is in us dollar like euro dollar aussie dollar new zealand dollar etc
+25:08
+so clearly right what if your code currency is not in u.s dollar so this is why we need to look at the second thing
+25:14
+which is your code currency so let's say for example if the code currency is in euro
+25:19
+then one standard lot clearly is 10 euro a bit one mini lot is one euro a pip
+25:26
+and one micro lot is 0.1 euro per bit makes sense all right so far so good so
+25:31
+let's have a look at an example you trade euro usd and buy 2.3 standard
+25:36
+lots how much is the value per pip so if you just you know look at this you know that 2.3 standard lot
+25:44
+is equals to two standard lot and three mini log that's one way to look at it or
+25:49
+you can look at it as 23 mini lot that is the same thing so depending how you want to look at this let's say let's treat it as 23 mini lot
+25:57
+we know one mini lot is worth one dollar per bit okay so clearly 23 mini lot
+26:03
+means it's 23 per pip and there you have it moving on next
+26:09
+example let's say you trade the pound against the aussie dollar and by 5.5
+26:14
+mini lots how much is the value per pip so again just remember the two things i shared with you number one
+26:20
+what is the lot size trader 5.5 mini lots okay great next thing what is the code currency
+26:25
+aussie dollar great you know one mini lot is worth one dollar 5.5 mini lots means it's 5.5 dollars
+26:34
+so what is the currency the code currency this is aussie dollar so it's 5.5 aussie dollar per pay
+26:42
+okay great so that should be the answer so if you look at the answer it's 5.5 how do i know this because i
+26:49
+did these slides and and uh clearly i don't know what's the answer so yeah there you have it that's the answer
+26:54
+so all this actually would be useful to you if right let's say your let's say right now your account currency is in australian
+27:01
+dollar and yeah 5.5 aussie dollar per that would make sense but of course as you know there is no guarantee that the code
+27:07
+currency will be the same currency as your account funding maybe you could find it in us dollar you could find it in singapore dollars
+27:13
+it could be different so how do you actually translate this value into your own account currency
+27:18
+if your own account currency is different from the code currency so this is where we can take things a step further and to find out the pip
+27:25
+value in your accounts currency if the currency is different from the code currency so again you need a few things number
+27:31
+one the lot size number two is the code currency and number three is the exchange rate between the code currency
+27:36
+and your accounts currency so let me give you an example because example is your pay
+27:41
+number one let's say you buy one standard lot of euro usd your account currency is in singapore
+27:48
+dollars the exchange rate between the usd and sgd is 1.3
+27:53
+how much is the value per pip so let's again right do this a simple exercise you know one standard lot is
+27:58
+100 000 units reynolds say one standalone is worth 10 per bit okay 10 per bit
+28:05
+then you realize that your account currency is different from the
+28:12
+code currency so what now so what you need to do is to to convert right usd into sgd as you
+28:18
+know right now one usd is worth 1.3 sgd so this means
+28:23
+one us dollar is worth one dollar 30 cents singapore dollar so if you want to convert this 10 us dollars into singapore
+28:29
+dollars i just take this multiplied by 1.3 and i have a figure of 13 singapore
+28:35
+dollars sgd okay and that's the answer right the value profit will be 13
+28:40
+singapore dollars per bit and there you have it right in case you want to know the kind of like the math breakdown is 10
+28:47
+usd per bit multiplied by 1.3 because it's the exchange rate between us and singapore dollars and you get 13 singapore dollars per pip
+28:55
+another example shall we to really hammer home this concept you buy two standard lots of pound
+29:01
+against the new zealand dollar your account currency is in canadian dollars the exchange rate for new
+29:07
+zealand canadian is 1.5 how much is the value per pick so i'm going to give you
+29:12
+five seconds to do this i'm just kidding five seconds too fast i'm gonna do this together with you and let's find this out but you know
+29:18
+kind of like you know pause this video and do it on your own if you wish to if not i'm gonna walk you through how to do this step by step so again first
+29:24
+thing first is the number of lots we are trading two standard lots you know that's equals to
+29:29
+20 new zealand dollar per pip okay if you do not know why it's 20 go
+29:36
+and look back at the earlier slide so it makes sense your account currency is in canadian dollar exchange rate between new zealand
+29:42
+and canadian canadian dollar is 1.5 so what i need to do is for to find out how much is 20 new zealand dollar worth
+29:49
+in canadian dollars how much is that very simple just multiplied by the exchange rate this prevailing exchange rate
+29:55
+of course this is not a real number i just came up with this if you just look at the normal forex website you will have you can find out what's the prevailing
+30:00
+exchange rate so 20 i multiply by 1.5 it will give me right how much 20 or rather 20
+30:06
+new zealand dollars is worth in canadian dollars an answer is 30. 30 canadian dollars
+30:13
+per pip okay so let's have a look tada okay so so yeah so with that
+30:21
+said right let's do a quick recap number one your pip value depends on a few things
+30:26
+the lot size the code currency and finally right the exchange rate between the code currency and your account
+30:32
+currency if they are different if they are the same then you just need the first two things and you can find out what is the pip
+30:37
+value so in this section you will learn number
+How to manage your risk like a professional trader
+30:44
+one what is risk management and why it matters number two what is position sizing and finally how to calculate your
+30:51
+position size such that you never blow up blow up another trading account so this topic that i'm about to share with you
+30:58
+is very important right so pay close attention so first and foremost what is risk management so
+31:04
+if you ask me risk management is the ability as a trader to encounter a series of losses right and not
+31:10
+blow up your trading account so for example even if you sustain a series of 10 losses in a row your trading account should be pretty
+31:17
+much still intact yes you have a bit of a losses along the way but that account right should still have
+31:22
+still have most of the money intact so that's what risk management is all about so it's important because you can have a
+31:29
+winning trading strategy but without proper risk management right you will still end up
+31:34
+a losing trader i can guarantee it so let me share with you an example so you know what i mean so let's say for example there are two
+31:40
+traders john and sally and they both have a 1 000 trading account to start with
+31:46
+their trading strategy has a 50 winning rate so this means they win half the time and a one to two
+31:52
+risk reward ratio so let me explain what risk reward ratio is so let's say for example you risk
+31:59
+a hundred dollars on a trade okay that's the amount of money that you're willing to lose on a particular trade
+32:05
+and the outcome for you is favorable instead of losing hundred dollars right the market went in your favor and you made a profit of 200
+32:12
+so in other words this 200 right is two times the amount that you had intended to risk initially so this is what we
+32:18
+call a one to two risk reward ratio your reward right it's two times your initial risk so another example
+32:24
+let's say you have a 500 risk on the trade and instead of you know
+32:30
+losing the 500 market went in your favor and you made five thousand dollars in state what
+32:35
+is the risk to reward ratio on this trade this is a risk to reward ratio of a one to ten you were risking at five hundred
+32:41
+dollars and you made five thousand dollars at the end of it so this is a risk reward ratio of one to ten
+32:48
+next john risks 250 per trade and sally risk twenty dollars per trade
+32:56
+let's say the outcome of the trades for both of them is in this sequence right l stands for losing right
+33:01
+lose lose lose lose then win win win win so now what is the outcome for both traders let's
+33:08
+look at john you can see for john he loses 250 because the first trade is
+33:13
+a loser loses another 250 another 250 another 250 and then he blew up so before he could even smell the winner
+33:20
+he lost his entire trading account on the other hand let's have a look at sally
+33:26
+as you can see sally goes through the same losing streak right she loses 20 dollars lose 20 lose 20 lose 20 and then she
+33:32
+made 40 40 40 and 40 because this was a string of winners at the end but why forty dollars again because we
+33:39
+have a one to two risk reward ratio right for their trading strategy so if sally risk twenty dollars on each trade and if
+33:46
+the market or rather if she achieves a one to two risk reward ratio this means a profit is two times the initial risk so two
+33:52
+times of 20 is forty dollars so this is how we get forty dollars and at the end of it sally made
+33:58
+a total return of eighty dollars so that's about eight percent gain on her account whereas you look at john
+34:04
+he actually lost 100 of his account so hopefully right using this simple example you can see
+34:10
+the importance of risk management right in this case both traders they are trading with a winning strategy
+34:15
+but because of risk management one of them loses his entire account and the other one is actually you know making some money
+34:22
+right from trading the markets so this is important so now the question you might be thinking okay right now i get it right
+34:27
+risk management is important but how do i manage my risk you know how do i make sure that every time i put on a trade
+34:33
+right i don't lose everything and more so this is where the next topic comes into play
+34:38
+position sizing so what is position sizing so position sizing is simply right trading the right number of
+34:43
+units right such that even if a trade ends up being a loser it's only a fraction of your trading
+34:49
+account okay let me repeat once again right position sizing is knowing right how many units you should
+34:56
+trade such that if that trade goes against you you only lose a fraction of your trading
+35:01
+account and as a general guideline i usually advocate right not to lose more than one percent of
+35:06
+your trading account on each trade so for example let's say if your account is like a ten thousand dollars trading account one
+35:12
+percent of ten thousand is a hundred dollars so this means every trade you put on you should not lose more than 100 on
+35:18
+each trade and now brings us to the question right how do we you know calculate that in such a manner where
+35:24
+you know you know you will lose more than 100 on each trade so to do that you need to know a few things okay so
+35:30
+this is kind of like the secret formula right so position size is equals to the amount to risk right the amount of uh dollar
+35:37
+that you're willing to risk divided by a stop loss multiplied by value per pip so amount to risk is usually i recommend one percent risk on each trade
+35:44
+some some traders will go with two or three percent uh that's pretty much you know up to an individual trader and after which you
+35:49
+divide it by your stop-loss multiplied by your value per bit so i'm going to share with you a very simple uh way to do this okay you don't
+35:57
+have to so i'll just go with you a manual way and then after which i show you how to do with a faster way so let's say you're risking 100
+36:04
+you're willing to raise 100 and let's say you know your stop loss is let's say 100 pips okay so you put 100
+36:09
+and your value per pip right let's say you're trading euro usd is uh 10 per bit for a standard lot so you
+36:14
+put your 10 okay you plug in the numbers you get 100 divide by a thousand
+36:20
+and if you do it you end up with 0.1 standard lot which is equivalent to one
+36:26
+mini lot so the trouble with this is that your value per bit is constantly changing it really depends
+36:32
+on the code currency it depends on the account funding that you have funded with with your account
+36:37
+so you can see that you know things can get really cumbersome right so one thing i suggest is to use a position
+36:43
+sizing calculator to make your life really easy and i'm going to show you how to do this step by step so you can google you know position
+36:49
+sizing calculator and this is one that i've found you can you know use it it's free so let's say you're trading again euro
+36:54
+usd your account currency let's say it's in us dollar let's say your account size is like what i said earlier ten thousand
+36:59
+dollars and your risk on each trade let's say it's one percent you can put your one percent in this case you ever switch to you know
+37:05
+dollar terms let's say you want to risk a hundred dollars which is also one percent that is fine as well but in this case let's go with
+37:11
+the percentage let's say one percent let's say your stop loss in pips right is 100 pips put in hundred
+37:16
+contract size let's leave it at hundred thousand which is equal to one standard lot you click calculate and there you have
+37:22
+it right tells you the lots to trade is 0.1 which is equals to 0.1 standard lot or one mini lot can you
+37:28
+see how fast this is let's do another example let's say this time around you're not trading euro usd you're trading pound against the aussie
+37:34
+let's say your account currency is in new zealand dollars okay and let's say this time you're a baller your account
+37:39
+size is hundred thousand dollars and you're a baller and you still risk
+37:44
+one percent on this trade well done and let's say your stop-loss this time around is 350 pips contract size again hundred thousand you
+37:51
+click calculate it will tell you how many units to trade right such that if even if the trade hits your
+37:57
+stop loss you will only lose one percent of your account so you click calculate and in this case it tells you that you
+38:02
+can trade 0.263 standard lot which is about 26 uh sorry uh
+38:08
+2.63 mini lots make sense so again this is very useful so again let's you know interpret this
+38:14
+together so this means right for this particular pound or z trade and let's say your account is in new zealand dollars
+38:19
+and you're risking one percent of this hundred thousand dollars this means right if the trade goes against you right with a
+38:25
+stop loss of 350 pips right you will lose right a thousand dollars
+38:30
+thousand new zealand dollars right in your trading account which is the one percent that we have defined over here right and this is the position
+38:36
+size that you should be trading with 2.6 mini lots okay it makes sense
+38:42
+so this is how you use a position sizing calculator so okay let's do one more example so you really understand this
+38:47
+big time so let's say this timer we do something simple like aussie dollar you want to trade the aussie against the us dollar
+38:52
+let's say your account currency is in aussie how about that same uh just put aussie dollar let's say
+38:58
+your account size this time around is five thousand dollars and let's say you are risking a little bit more two percent risk on each trade
+39:04
+which is still about uh hundred dollars so your stop loss this time around let's say it's only 50
+39:09
+pips okay contract size again hundred thousand units so now the question is how many units right should you be trading such
+39:16
+that if this trade goes against you and hit your 50 pip loss the loss of on this trade is only two percent of your account two percent of
+39:22
+this five thousand dollars five thousand aussie dollars click calculate and it tells you that you should only be trading 1.53
+39:30
+mini lots make sense okay so don't worry i'll share with you uh uh we'll talk more about you know position sizing risk management with
+39:36
+chart examples later on but for now i just want you to to know how to use this very useful calculator just click google there are
+39:42
+many free available ones and just pick whichever that you know you're comfortable with so let's do a quick
+39:48
+recap number one position sizing is the tool to manage your risk and use a position a position sizing
+39:55
+calculator right to make your life easier i don't expect you to manually you know calculate it most brokers usually have an inbuilt
+40:01
+calculator function if it doesn't have right then just you know you go to any of the free website via google and you can use the
+40:07
+calculator to help you calculate the number of units to trade such that you know even if the trade is a losing trade
+40:12
+right you only lose a fraction of your account now moving on let's talk about the
+Types of Forex orders
+40:18
+different types of forex orders right so in this section it's all about you know learning the different types of forex orders and one
+40:24
+thing to point out is that uh there are many more different types of orders that you can use especially when you're using professional trading
+40:30
+platforms but the ones that i'm about to share with you right now is i would say the ones that you are likely to use right most of the time
+40:36
+okay so let's get started first one market order second one is a limit order
+40:41
+third one is a stock order and finally a stop loss order so let me explain each one of them step by step
+40:46
+first one is a market order so let's say it's a buy market order order because it could also be a sell market
+40:53
+or the concept is the same but in this case let's go with let's let's say a buy market order this is in essence right
+40:58
+you're trying to you know buy at the current market price right now no matter what so this is like you
+41:04
+know sending an order to your brokerage platform and say hey i want to enter euro usd right now no matter what now so your
+41:11
+broker will fill you at a trade at the current prevailing price so the pros to it is that you know
+41:18
+you're guaranteed to enter a trade there is no what if but or whatsoever you're guaranteed to enter a trade but the
+41:23
+downside to this is you might get sleep page right during fast moving markets and you might be thinking
+41:29
+right now what is slippage man so here's the thing right in the forex market yes it's liquid
+41:34
+most of the time but when it when there's a big piece of news coming up like let's say you know nfp non-farm payrolls or fomc meetings
+41:41
+right let's say euro usd is currently trading at one three zero zero zero right but during fast moving markets
+41:47
+you if you hit market order right you could get slippage right where you thought hey i'm gonna buy a 1.3 but you end up you
+41:52
+know buying actually at one three zero let's say two zero you had end up paying 20 pips more than expected so
+41:58
+this is kind of like the downside to using market order because of this uh slippages so instead of you know buying at one point three zero zero zero you
+42:04
+end up buying at one point three zero two zero a slippage of 20 pips so in other words you're paying 20 pips more than
+42:10
+you expected okay so this is a market order the other type of market order right is
+42:15
+limit order so again let's talk about buy limit order sell limit order is just the opposite so for a buy limit order right it's an
+42:22
+order an order to buy below the current market price so let me
+42:27
+give you an example so let's say market is in a range between these highs and this lows it
+42:33
+goes up comes down goes up and now it's in the middle and you think to yourself ah man price right now
+42:39
+is in the middle right i want to buy i want to be a cheapskate i want to buy the best price and it seems like the best price
+42:44
+is near this lows over here and let's say this is zero usd this lows is around one point
+42:50
+five okay so what you can do is you can place a buy limit order at one point five zero zero zero so such
+42:57
+that if the market comes down into this level you will get filled on that buy trade but of
+43:04
+course if the market doesn't come down you won't get fuel so that is kind of like the pros and cons to using a buy limit order so let me
+43:10
+give you a chart example you can so you can see what i mean so this is uh for example pound canadian
+43:17
+let's say you're looking at this chart maybe on the eight hour time frame okay and you zoom out a little bit and you realize oh this
+43:23
+this market right this seems like a good place to buy this is an area of support don't worry if you're not familiar with
+43:29
+this technical term i'll explain more in the later section but let's say hey you want to buy around 172 right this
+43:34
+looks like a good place to buy because the market has bounced once twice you know and three times over here this
+43:39
+looks like a good place to buy but the current market price is at this point over here which is almost near 1735 so what can you do you can
+43:47
+place a buy limit order over here a buy limit at 1.72 so this means only if the market comes
+43:54
+down low enough into this 1.72 level only then will you get filled if not you
+44:00
+won't be in this trade so this is what a buy limit order means so of course all right
+44:06
+the good thing about it is that you get to buy at the price you want the downside is you might not get filled
+44:11
+on the trade so maybe you're waiting for that level but the market doesn't come to the level and instead you know if it continues you know going
+44:17
+up higher then clearly right you wouldn't you know be in the trade so vice versa right for a
+44:22
+sell limit order the concept is just the opposite so moving on the third type of
+44:27
+order is a stop order so again let's talk about buy stock order so this in essence right is to in order to buy
+44:34
+only if the market moves above a specific price level so you might be thinking what does that mean
+44:39
+so again i can give you an example let's say market is uh let's say it's trending higher it goes up pulls back goes up
+44:46
+pulls back and it's starting to go up and you tell yourself i'm looking at this chart and it would make sense right that
+44:53
+i want to buy only if the price can breaks above this highs because if you can breaks above this highs
+44:58
+then there's a good chance that this market could continue higher so you want to tell yourself i will only buy if the price can breaks above this
+45:05
+high if it doesn't break above this high i will not you know enter a trade so what you can do is to use a
+45:11
+buy stop order so an example is this one here if you look at this chart dollar against
+45:17
+the chinese yuan this is the eight hour time frame so again you can look at this and say hmm at this point right right now i have no
+45:22
+idea when the price might go up and come back down you know and again i don't want to enter right now because you know this could
+45:28
+happen and then you're thinking to yourself i feel more confident if the price can break above this highs only then i
+45:34
+would be willing to buy so if that's your thought process what you can do is you can use a buy stop order you can place a buy stop order at
+45:41
+this price around six dollars and 59 cents around this price point which is somewhere about here so you can
+45:47
+place a buy stock order here let's call it bs buy stop not not not bs that you're familiar with but
+45:53
+buy stop order at 6.59 so such that if the price goes up and breaks above
+45:58
+6.59 this is an order that would automatically you know get you into this trade right because it broke
+46:05
+it broke about broke above this key level 659 that you have you know uh put into your broker platform
+46:11
+so it's in order to buy if the price moves above a specific price level so this is useful right with your
+46:17
+trading breakouts this order is you know absolutely useful because in breakout trading the price will break out
+46:22
+of a specific level and then you'll continue with the momentum right to hit higher so if you have a buy stop order you
+46:28
+are you know kind of like assured to enter right if the price could break out of a level the downside to this is that it might be
+46:34
+a false breakout so again what could happen is that let's say pound the dollar against the chinese yen
+46:39
+so this is the highest price could go up break out and then boom reverse right this is possible as
+46:45
+well anything can happen in the market so this is a one possibility that could happen right if you're
+46:50
+you know using buy stock order to enter a trade so the next type of order right will be
+46:56
+uh stop loss order so the first three orders that i shared with you right those are orders right to get you into a trade
+47:02
+so for stop loss order is the opposite because this is an order to get you out of a trade so so let's say we are
+47:09
+going with a long entry okay so a stop loss order is in order to sell your position if the price
+47:15
+exceeds a specific level so for example let's say you market this in a range up down up
+47:22
+down they start to go up okay and this is the area of support and you start to buy over here okay and what happens is that you know
+47:29
+as you know in trading nothing is certain there's a possibility that this market could continue to reverse down lower
+47:35
+and lower and if you don't bail out of your trade in time right you could you know lose a lot of money so this is where you can use a stop-loss
+47:41
+order and say you know hey you can tell your broker hey you know what if the market you know breaks below this level in rate
+47:47
+okay if the market reaches this level in rate i want to get out of that trade so to tell that you will tell your broker to set a stop loss
+47:54
+order at this particular price let's say this price is at two dollars right and you will exit your
+47:59
+trade so this is what we mean by a stop loss order is in order to sell your position if the market moves against you
+48:05
+and reaches a specific price level so a chart example would help so let's say
+48:11
+you look at dollar against usd against the singapore dollars so you can look at this right market right now
+48:17
+looks a little bit bullish right this area of support and it's starting to hit higher but of course as you know market could possibly
+48:23
+you know reverse down and break lower so to protect your downside what you can do is to set
+48:28
+a stop-loss order okay so this is the area of support and what i would say a proper stop-loss order could possibly be
+48:35
+at one thirty three six level around here so this means i can tell that broker and say
+48:40
+hey you know i i am long usd against the singapore dollars but i
+48:46
+know the trade could go against me so i'm going to set a stop loss order at 1.336 so if the market let's say reverse down
+48:53
+lower and hit my stop loss level which is this one over here the stop loss level i will want to
+48:59
+sell the position that i have to protect my downside so i can leave to fight another day so this is how
+49:04
+a stop-loss order works is to protect your downside okay and of course right the downside to
+49:11
+using a stop-loss order is that you might get stopped out of your trade prematurely so what could happen also
+49:16
+is that okay let's say you set your stop loss at this level here there's no
+49:23
+there is you know nothing to stop the market from coming down lower when you hit your stop loss and then reverse up higher that could also happen
+49:30
+so this is kind of like the downside downside to using a stop-loss order but as a forex trader
+49:35
+as a trader who uses leverage in your trading i still suggest you use a stop-loss order sometimes yes this could happen it sucks
+49:41
+but in the grand scheme of things right you will likely right have a longevity in your trading career because your losses
+49:47
+right or are always kept small and that's achieved by using proper risk management and position sizing and again
+49:52
+those are things that you have learned earlier and we'll revisit them later with chart examples but for now i
+49:57
+just want you to be familiar with a stop-loss order okay and the opposite for stop-loss or
+50:03
+the right is can be used for both the long trade and a short trade the concept is the same just you know the inverse so let's
+50:09
+say for example you are in a short trade let's say market comes up into this area of resistance and you
+50:15
+sell right you can put your stop-loss order above this high so if the market breaks out higher you would exit this trade if the market
+50:21
+hits your stop-loss at this particular price point so it's just the inverse right of a long entry [Music]
+50:27
+so let's do a quick recap right of the four market orders you have just learned number one market order gets you into a trade immediately no matter what
+50:34
+a limit order gets you into a trade only if it comes to a specific price level that you have dictated a
+50:40
+stop order gets you into a trade if the market exceeds a certain price level for example let's say buying
+50:46
+breakout only if let's say breaks above let's say a hundred dollars will you be entering the breakout trade so that's
+50:51
+what a stop order a buy stop order can do for you and finally a stop-loss order right would get you out of a trade if
+50:57
+the market you know exit a certain price levels to protect your downside
+51:03
+now moving on in this section you will learn the two prices in the financial markets
+The spread explained
+51:09
+not just the forex markets what is the spread and why it matters and how to reduce the spread okay so let's get
+51:16
+started the two prices in the market so here's the thing right when you are trading the forex market the stock market
+51:22
+or any of the financial markets there is always two prices so they are number one the bid the bid
+51:28
+is the price which you can sell at and the ask this is the price
+51:33
+which you can buy at so this concept is the same as you know going to a money changer whenever you let's say for example you
+51:39
+want to you know buy and sell a certain currency let's say euro against the usd you are always being
+51:44
+quoted two prices to beat and ask and it's the same concept over here so let me
+51:51
+share with you you know and explain what this means so the bid right let's say for example if you look at a chart i'm
+51:56
+going to bring up my charts over here you see this is the dollar
+52:02
+the usd against the singapore dollar this over here is the bid and this is the ask so as of
+52:08
+right now if i want to sell the us dollar against the singapore dollar i can sell it at 1.34101 and if i want
+52:18
+to buy u.s dollar against the singapore dollar right now i will look at this blue box and i can buy it at one three four one
+52:25
+one five make sense so there's always two prices right which is being quoted
+52:30
+in the forex market the bid and the ask and depending you know what you're trying to do if you're trying to buy
+52:36
+then of course you will pay attention and see what's the asking price if you're looking to sell if you're
+52:42
+looking to short a currency pair you will pay attention to what is the bid price
+52:48
+what is the spread well the spread very simply is this is the difference between the bid and
+52:54
+the ask so let's say for example euro usd is trading at
+52:59
+one three five zero zero this is the b and the ask is trading at one three
+53:06
+five zero one this is the ask so the difference right between the bit and ask in this case is
+53:12
+one pip so this is the spread on euro usd
+53:18
+and now you might be wondering hey right now you know why does the spread matter as many what has it got to do with me well a lot right he has to do a lot with
+53:25
+you and your own trading and here's why spread right if you look at it right you
+53:30
+can look at it in the form of transaction cost in forex trading most of you probably don't pay commission to
+53:36
+your broker so your transaction cost is in the form of a spread so let me explain how this works
+53:42
+so the higher the spread the higher your transaction cost and likewise the lower the spread the lower your transaction costs and i'm
+53:48
+going to give you an example so you can see what i mean so let's say you buy one standard lot of euro usd
+53:54
+and the spread is three pips how much does a spread cost you in in dollar
+53:59
+terms so you know as we have you know discussed earlier one standard lot is 100 000
+54:05
+units 100 000 units and the value per pip is 10 dollars
+54:11
+so if your spread is three pips this means right the moment you put on a
+54:16
+trade when you trade one standard lot of euro this should be usd it's not sure why it's i okay when you
+54:22
+buy one a standalone of euro usd you are immediately down 30 on this trade that is
+54:28
+the cost of the spread in terms of us dollar to you so if you think about this right what if
+54:36
+the spread now is one pip can you see how much of a difference this make if the spread now is one pip the cost to
+54:43
+you is just ten dollars see see what i mean by having a wide spread and a tight spread
+54:50
+the higher the spread the more expensive your transaction cost is going to be the lower the spread the cheaper your transaction cost is going
+54:57
+to be so now the question is how can you reduce the cost of the spread so one thing to point out
+55:03
+is that it's near impossible to you know tell your broker to give you a tight spread right because it's pretty
+55:09
+much fixed and there's nothing you can do about it but what you can do on your end is just focus on major currency pairs so
+55:16
+as mentioned earlier major currency pairs these are the most popular currency pairs that are actively traded in the world and if you look at
+55:21
+their spread right they are usually right smaller tighter than the other currency pairs like the exotic or
+55:27
+even the uh the uh cross currency pair so let me share this with you and you can see over
+55:32
+here i'm going to pull up trading view if you look at our daily time frame and in case you guys are wondering right
+55:38
+this platform is trading view it provides uh charting services in case if you need it so if you look at euro usd you can see
+55:44
+what is the spread right now so for example the difference between the bit and us is actually shown over here in this middle
+55:49
+the spread on euro usd right now is 0.2 pips if you look at pound dollar
+55:54
+the spread now is about 0.3 it's moving you know up and down just pay attention to this
+56:00
+portion here about 0.5 and if you look at aussie against the dollar it's about 0.23
+56:05
+0.2 right now but what if you look at other currency pairs maybe you look at you know something like the cross currency pair like
+56:11
+pound new zealand the spread here is now 1.2 if you look at something exotic like
+56:16
+dollar against the turkish lira is 66.3 pip so you can see right if you want to have you know lower
+56:22
+transaction costs all right focus on major currency pairs the spreads are usually tighter usually lower and
+56:29
+another thing that you can do is to trade the higher time frame so the cost of your spread is lower in terms of percentage so let me explain what this
+56:36
+means so let's say you have one pip spread
+56:41
+with a five pips stop loss if you think about it right your spread is 20 right of the size of your
+56:48
+stop-loss so let's say if your stop-loss is five pips your spread is one pip right the spread as a function of your stop-loss
+56:55
+eats up about 20 of it so this means right in essence your stop-loss is only four pips if the market moves four peeps
+57:01
+against you you are going to get stopped out of your trade on the other hand if you have a one-pip
+57:06
+spread but your stop-loss is 100 pips and the reason why you can afford a hundred pip stop loss is
+57:12
+because you're trading off the higher time frame you have a wider stop-loss right because you're trading on a higher time frame in this case the one pip spread is only one
+57:19
+percent of the size of your stop-loss so in terms of cost it's only one percent
+57:24
+of the size of your stop loss so you can see that in the way right your spread right you're paying or rather a
+57:30
+percentage of your stop-loss is smaller when you have a wider stop-loss and to have a wider stop-loss is usually
+57:36
+because you are trading off the higher timeframe and if you think about this if you trade on a five minutes chart on the 15 minute chart
+57:41
+the price action right the way the candle moves up and down right the range is usually smaller compared to trading off the
+57:47
+daily time frame where the range is much larger so when you are trading off the higher time frame with a larger range it
+57:52
+makes sense to have a wider stop-loss to accommodate right the largest swings on that time frame so
+57:57
+this is why if you trade off the higher time frame your stop-loss is usually wider and if your stop-loss is
+58:02
+wider you will realize that this spread right as a function of your stop-loss right in terms of percentage is usually lower compared to
+58:09
+you know let's say you trade off the one minute or five minutes time frame the spread as a function of your stop-loss right is usually
+58:15
+wider and you're gonna you know end up pay more in transaction costs so let's do a quick recap number one the
+58:22
+spread is the difference between the beat and ask the bid is the price that you can sell it the ask is the price that you can
+58:29
+buy at number two the lower the spread the lower your transaction cost and finally if you
+58:34
+want to reduce the cost of the spread what you can do is to focus on the major currency pairs or trade off the higher time frames
+58:41
+hey hey what's up my friend man i miss saying that because you know these videos actually they're all done
+58:47
+separately and then stitch up together because if i were to say hey hey at the start of every section right you're gonna get
+58:53
+irritated by me so anyway welcome back uh in this section you will learn the different types of forex traders
+Types of Forex traders
+59:01
+and you know let me explain so there are different types of forex traders out there you can classify them as short-term
+59:07
+traders medium-term traders and long-term traders so let's analyze you know uh what are the differences right
+59:12
+between these type of traders number one short-term traders so for term traders right your time
+59:18
+frame it's usually below the one hour time frame you will likely operate on the five minutes 15 minutes time frame
+59:24
+your potential target in terms of pips right you're usually aiming anywhere between five to 50 pips and your holding time it's
+59:30
+usually less than three days and one thing to to share is that whatever i'm sharing with you is just general guidelines it's not really cast
+59:37
+in stone because short-term traders there are some really really short-term traders like scalpers who can be in a trade for just
+59:42
+a few minutes and then you have some short-term traders traders which are slightly longer which could be under day traders
+59:48
+where they could hold their trade for a day or two so what i'm sharing here is just uh a general guideline right to to take
+59:53
+into consideration next one medium term traders so these are the type of traders who trade between the one
+59:59
+and four hour time frame their potential target is usually anywhere between 50 to 200 pips and they can hold their
+1:00:05
+trades anywhere between three to 10 days and finally you have the long-term trader
+1:00:10
+who trades right the four-hour time frame and above could be the four hour eight hour daily or even the weekly time frame then their
+1:00:17
+potential target is usually you know more than 200 pips on each trade that they are aiming for and they can hold their trades you know
+1:00:23
+for 10 days or more weeks or even months so a super quick recap this is a
+1:00:29
+fast section right so you have short term traders medium term traders and long term traders and personally for me i'm a
+1:00:35
+medium to long term trader so the key here right to share with you is to get you to understand the different type of
+1:00:41
+trading time frames that you can be on and to find a type of trading style that suits you are you more towards
+1:00:46
+short-term trading medium-term trading or long-term long-term trading and the only way to find out is to through trial and error
+1:00:52
+right you know trading across the different time frames to see what works for you and also another thing is time commitment
+1:00:57
+plays a part because if you have a full-time job it's unlikely that you can be a short-term trader because you just can't afford to be glued in
+1:01:03
+front of the screen right all day to watch the markets while having a full-time job so probably i'll say medium term to
+1:01:08
+long-term trading would suit you best but on the other hand let's say you are a someone who is very free
+1:01:13
+uh you have a lot of time and you have you know interest in short-term day trading then hey you know maybe that
+1:01:18
+is something for you but ultimately you have to explore experiment trial and error to see which type of trading approach
+1:01:24
+would suit you best
+1:01:30
+boom boom shakalaka hi my name is raynor pleased to meet you all right stop stop
+1:01:36
+messing around so in this section right you will learn number one what is technical analysis what is market structure
+1:01:41
+what is an area of value what is an entry trigger and more importantly how do you use technical analysis in
+Technical analysis and market structure
+1:01:48
+your trading so let's get started so first thing first what is technical analysis so i define technical analysis
+1:01:54
+as using past data to help you make your trading decisions and this past data could be
+1:01:59
+things like volume indicators chart patterns candlestick patterns etc and of course right technical analysis
+1:02:05
+is not the only way to treat the markets because you also have things like fundamental analysis sentiment analysis but me primarily i'm
+1:02:12
+a technical trader so this is why in this video i would focus more on technical analysis and i want to share with you
+1:02:17
+the three things right that you should focus on right when you kick-start this trading career of yours so technical
+1:02:23
+analysis all right i would say there are three components which is very important to master the first component here
+1:02:28
+is what i call market structure so here's the thing right when you look at the price chart
+1:02:33
+the the first thing that comes to your mind should be no hmm should i be buying should i be
+1:02:39
+selling or should i stay out of the market that's really the first thing that should come to your mind you shouldn't you know look at the chat and say oh let me buy now oh let me sell now
+1:02:45
+no you should first ask yourself is this the type of price action is this chart telling me that i should be
+1:02:50
+looking for buying opportunities or selling opportunities or maybe i should stay out completely of this market this is the first
+1:02:56
+question right that you must answer and everything else right is secondary so the way to do that right is market
+1:03:02
+structure helps you to answer this question it tells you what to do so market structure helps you to define
+1:03:07
+the current market condition so you know whether to be buying selling or staying out of the market so let's dive
+1:03:13
+a little bit deeper into market structure so market structure there are different types of market structure but for this video i will share with you
+1:03:19
+three broad categories of market structure number one being an uptrend if you know a stock or sorry
+1:03:25
+a market is in an uptrend not necessarily stock can be currency pairs etc you want to look for buying opportunities so let me explain
+1:03:32
+to you what an uptrend is so in the grand scheme of things grand scheme of things an uptrend
+1:03:37
+forms a series of higher highs and higher lows so it looks something like this market goes up but as you know market
+1:03:43
+doesn't go up you want straight line he goes up he needs to take a breather it needs to pause and then he makes a pullback then once the pullback ends he will
+1:03:50
+continue up higher breaking above this previous swing high this previous high if you want to call it and goes up again
+1:03:56
+it doesn't go up in one straight line you need to take a breather pause once it pause once it rests
+1:04:01
+finished and then it continues up higher breaking out above the previous swing high again and then the pattern rings repeat itself
+1:04:07
+so when you look at this you will notice that an uptrend consists of a series of higher highs and higher low
+1:04:12
+look at this high another higher high a cluster disc as one and another higher high
+1:04:18
+if you look at the lows it's a higher low higher low high low okay had to do that
+1:04:25
+so this is what i mean by an uptrend a series of higher highs and higher lows and if you see a market has this
+1:04:32
+market structure this currency pair has this market structure then what you want to do well you want to look for buying
+1:04:37
+opportunities because the market is in an uptrend the path of least resistance is higher so this is why you want to be
+1:04:42
+looking for buying opportunities so if you see a chart that looks like this tell yourself promise me you will only
+1:04:48
+look for buying opportunities right you don't want to look for selling opportunities not they can be done they are traders who specialize in
+1:04:53
+counter trend trading but for you the beginner is much easier to be trading along the path of least resistance
+1:04:59
+trading in the direction of the trend then against it okay so uptrend look for buying opportunities
+1:05:05
+next one downtrend this is just a reverse you want to look for selling opportunities so downtrend right in essence is a
+1:05:11
+series of lower highs and lower low so market hits down lower makes a pullback
+1:05:16
+heads down lower again breaking below the previous low makes a pullback heads down lower breaking the previous low
+1:05:22
+sometimes it could consolidate and then break down lower once again breaking below the previous swing low so if you look at it
+1:05:30
+you will notice a series of lower high lower high lower high and lower low
+1:05:37
+lower low lower low so if you see a market is in a downtrend
+1:05:42
+then what should you be doing buying or selling well the path of least resistance is towards the downside so promise me when
+1:05:49
+you see a chart that's in a downtrend you only think of selling opportunities okay that's the path of least
+1:05:56
+resistance and finally you have what we call a range market and in this market condition you can know be both a buyer
+1:06:02
+or seller so a range market looks something like this price is contained between the highs and
+1:06:09
+the lows so when a market is in a range right you can look for both buying and selling opportunity and one thing to point out
+1:06:15
+is again how do you know a market is in range is where you see the the highs of the range right the price just keep testing it right but
+1:06:21
+unable to break out higher compared to an uptrend the price is able to break above the previous swing high it's able to break above the highs
+1:06:27
+but in the range it's just you know getting rejected at the highs consistently over here same for the the
+1:06:33
+lows of the range it just cannot break down lower it's just you know contain uh above the
+1:06:38
+lows of the range so you can think like the price right it's being trapped like in a in a big giant box just can't
+1:06:43
+get out of it so with that said let's have a look at a few chart examples so you know how this
+1:06:48
+looks like because one thing to to know is the theory is one thing but when you
+1:06:54
+look at the live charts the market it can look completely different out of whack like one is in in uh one is in heaven
+1:07:01
+and one is on earth so it's going to be quite different so i want to walk through with you right when you look at the chart so if you look at this
+1:07:07
+chart new zealand against the swiss franc this is the daily time frame as you can see over here on the daily chart what market structure
+1:07:13
+is this well if you notice this this market in the grand scheme of things is forming a series of higher highs
+1:07:19
+and higher lows higher high higher high higher high higher high higher high and higher low
+1:07:26
+higher low higher low high low high yeah low there's another minor one over here
+1:07:31
+okay so yeah so we can see that in the grand scheme of things in a big picture if you look from left
+1:07:37
+left to right this market is heading higher it's in a uptrend and if a currency pair if a market is in an
+1:07:43
+uptrend what should you be doing looking for buying opportunities or selling opportunities
+1:07:48
+i'm sure you got the answer okay so let's have a look at another one dollar against canadian
+1:07:55
+okay so if you look at this again this pair just identify the highs and lows on the chart this is the highs
+1:08:00
+the highs the highs highs highs the highs the highs and the low the low low low
+1:08:06
+low low and low so you look from left to right where is this currency pair heading over time it's heading down
+1:08:13
+lower so in other words you can see that the us dollar is depreciating against the canadian dollar
+1:08:18
+over you know over the last there's a number of months over here that you see at the bottom okay so this is in the downtrend and one
+1:08:24
+thing to also share is that when you look at a chart right there are many swing points what i call a swing
+1:08:30
+point is the heights and lows on the chart that kind of stick out like a sore thumb which is very obvious like you know this is a swing high
+1:08:35
+this is a swing high i wouldn't consider this a swing high because this isn't as obvious this isn't as in your face kind of thing so when you
+1:08:42
+want to identify the series of higher highs and higher lows on the chart pay attention to the swing points the ones that really
+1:08:47
+stick out like a sore thumb right the minor ones you can just pretty much ignore it because if you try to pay attention to every single
+1:08:54
+minor highs and lows on the chart you will get confused right and lose the big picture so for example let's say you
+1:08:59
+look at this over here you might look it's oh it rainer the price you know broke out of the
+1:09:04
+the uh there's high man you know this looks like an uptrend so i know it sounds silly but you know
+1:09:10
+sometimes when you get too fixated on trading in the now you might actually think along those lines so just remember
+1:09:16
+pay attention to the major swing points if you're unsure and look from left to right left to right don't just look at the
+1:09:22
+last five six candle loops look from look at the big picture perspective bird eyes view that is important okay so dollar against the canadian we
+1:09:28
+can both agree that this is in the downtrend moving on british pound against canadian dollar in this case i'll go to the
+1:09:34
+weekly time frame okay and you can see over here what is this market condition and oh yeah before i
+1:09:40
+continue dollar against the canadian daily time frame okay in this current market structure
+1:09:46
+what do you want to be doing buying or selling i'm sure you want to look for selling opportunities that's the path of
+1:09:52
+lease resistance next one pound against canadian so if you look at this one
+1:09:58
+again what is this market structure well you can see that this one's a little bit different it's a bit different from the earlier
+1:10:03
+ones this market seems to be contained between this highs and this lows we'll talk more about this
+1:10:10
+exact highs and lows what is the terminology and how we can use them in your trading later on but for now just pay attention
+1:10:16
+that this market is kind of contained in in a box stuck between the highest and the lows and this is what we
+1:10:21
+call a range market and in a range market you can look to buy low and sell high buy near this low
+1:10:26
+or sell near this high but personally for me i like to trade trends okay but i still want to share with you what the range market looks
+1:10:32
+like because hey some of you might go on to be you know pro range traders in future but for me personally i simply like to trade trends
+1:10:38
+buy in uptrend and sell in downtrend so but nonetheless this is what we call a range market you can look to buy
+1:10:45
+near the lows and sell near the highs and one a couple of more examples you
+1:10:51
+can see is on british pound against the us dollar what is this market structure so again if you look at this this
+1:10:58
+overall seems to be in an uptrend right series of higher highs higher highs
+1:11:03
+higher highs and higher lows higher low higher low higher low higher low
+1:11:09
+and possibly this higher low so you can see that you know this right if you are again too fixated
+1:11:15
+in the now you might think that ah rainer this looks like you know a a downtrend man look rainer
+1:11:20
+this market has made a lower high and a lower low this market is in the downtrend yes i get it right if you look at just
+1:11:27
+those few candles right you uh you can think that it's a downtrend but you let's take a step back and look
+1:11:33
+from left to right again you want to make sure that you are taking a bird eyes view and not just looking at
+1:11:38
+an individual tree and missing the forest this is a mistake that i want you to make so if you look from left to
+1:11:43
+right you can see that this market overall is in an uptrend okay so this will be a swing the next or rather the swing low
+1:11:51
+that is pretty much still intact if the market right can break below this low and this low over here then hey then
+1:11:57
+maybe you know you can see that this up trend is getting weak right maybe the trend is starting to reverse but again i don't you know take things too far out of hand because
+1:12:04
+that is where we go into more advanced technical analysis but for now looking at the big picture i would say the pound against the us dollar looking
+1:12:11
+from left to right this market is in an uptrend and i'm looking for buying opportunities and don't worry you know about you know
+1:12:16
+hey where to buy how much to buy when to buy we'll cover all that stuff later on now just focus on this market structure
+1:12:24
+and what's one last final example is euro against the us dollar so if you look at this
+1:12:29
+this market is it in an uptrend or is it in a
+1:12:34
+range so you can see that you know this chart i purposely picked this one up because
+1:12:40
+when you deal with technical analysis there is subjectivity involved and if you say this is an uptrend some traders are going to say this in a range i won't say
+1:12:47
+anyone is right or wrong because it's kind of like in between the it's kind of like in between okay so personally i'll say
+1:12:52
+that this market is more towards the range right given this uh price chart that i'm looking at right now this would be the lows of the range
+1:13:00
+and this is the high even though this high is just tested one time some might argue not right now this is an uptrend or higher high high low
+1:13:06
+fine that's your point of view so this is why as a discretionary trader as a technical trader there is always you know someone with an
+1:13:11
+opposing view of your so and one thing to also point out is that if a chart doesn't speak up to you if
+1:13:17
+the chat right makes you feel confused and frustrated and you do not know what to do remember you always have the option to
+1:13:22
+stay out of the markets move on on to something else no one is pointing a gun in your head hey everybody put on a damn trick man
+1:13:28
+no no one is doing that so if it's not clear if it's conflicting information move on onto another currency pair does
+1:13:35
+it make sense now moving on number two area of value so you've learned right what is market
+Area of value and support and resistance
+1:13:41
+structure earlier if the market is in an uptrend you want to look for buying opportunities but here's the thing just
+1:13:46
+because a market is in an uptrend doesn't mean you blindly hit the buy button no because the trend right could be about to make a
+1:13:53
+reversal it could could be about to make a pullback so this is why you want to look for this next second thing an area of value so this is like
+1:13:59
+you know going on a date with a girl for the first time doesn't mean you go on a date once you're gonna marry her because you don't not know what type of person is she does
+1:14:05
+she really like you do you really like her you know you need more confirmation and it's the same for trading we're looking for more confirmation to give us
+1:14:12
+clue that this is a good time to enter into an uptrend okay so the second thing
+1:14:18
+is what i call an area of value so this in essence right tell you tells you right where to buy or sell so
+1:14:25
+market structure previously it tells you what to do should you be looking for buying opportunities or selling opportunities
+1:14:30
+but it doesn't mean hit the buy button no you are only looking for opportunities whether to buy or sell for this one it
+1:14:37
+tells you where to buy or sell the key word here is where where on the chart to buy yourself so area of value
+1:14:44
+really is about this to help you pinpoint the area on your charts to look for trading opportunities and to to look for
+1:14:51
+areas of value on your chart there are numerous tools that you can use but for me personally i use support resistance and moving
+1:14:57
+average often and so this is the two things the two tools that i want to share more with you so support and resistance
+1:15:03
+otherwise known as sr so what is support and resistance so here's my definition of it so support is
+1:15:09
+an area on your chart where buying pressure could step in i didn't say mass right
+1:15:14
+because in trading nothing is guaranteed trading is all about probabilities never a certainty so it's an
+1:15:19
+area on your chart where buying pressure could maybe come in to push the price higher so it
+1:15:25
+looks something like this let's say market is in the range so support is at near the lows of this
+1:15:31
+range this is what we call support right where buying pressure came in and pushed the price up higher buying pressure came in push the price
+1:15:37
+up higher support this year buying buyers came in and pushed the price up higher so let's say now price is at support
+1:15:43
+what's gonna happen go up no it could also go down okay so this is why i say that
+1:15:48
+it's an area on your chart where buying pressure could step it so next resistance this is an area on
+1:15:56
+your chart where selling pressure could step in so again this is an
+1:16:01
+area of resistance over here where the price came up hit down lower went up kept down lower
+1:16:06
+went up and what happens came down lower so again anything can happen in markets it can go up it can break out
+1:16:13
+of resistance or it can face selling pressure resistance and then reverse down lower once again so this is why
+1:16:18
+the word is could could step in so now that you understand what is support and resistance
+1:16:23
+so in essence right support is where buyers could come in and push the price up higher resistance is an area on your chart
+1:16:29
+where sellers could come in and push the price down lower and another thing to add is that
+1:16:35
+when support is broken it tends to become or it could become resistance so let's say this is a
+1:16:40
+port okay so support support support right previous support could now become resistance right where
+1:16:47
+fights where price could face selling pressure and then continue lower down for from here and vice versa
+1:16:53
+if resistance is broken that area could now become support let's say this is resistance up
+1:16:59
+down up down up down up break out come back previous resistance resistance
+1:17:05
+resistance could become support and the price could possibly heat up higher from here so let
+1:17:11
+me share with you a few charts so you can kind of like let this concept sink in to your head so
+1:17:16
+first one here is pound canadian so if you look at this uh weekly time
+1:17:21
+frame chart which i've marked you can see where is your support and resistance area support right tested once twice
+1:17:27
+three times four times the resistance that's the ones over here and this is why i said it's an area on
+1:17:32
+your chart if you look at this over here the price didn't respect this level to the peak in fact you break out people thought it's a breakout and
+1:17:38
+then came back collapsed back into the range once again okay so if another one over here almost touching almost
+1:17:45
+touching it broke out went back in the range again and then this was almost near to the pit and then went back into the range again so this
+1:17:52
+is why we are dealing with an area but the reason why i draw support resistance as lines is because
+1:17:57
+it's my habit it's something that i've been so used to doing but if you don't want to uh to to face this problem of you
+1:18:05
+know treating this as a a line or whatsoever you can use a tool right i think it's called the
+1:18:10
+rectangle tool to make your life easier this one over here so what you can do is just you know
+1:18:16
+treat this as a box and area you can just draw it like this like an area if that makes your life easier same for this one over
+1:18:22
+here right draw it like this to kind of know better interpret it but again as i've said right my preference is to
+1:18:28
+use a line but if you think a box method would make more sense for you feel free to go ahead
+1:18:33
+next one platinum so in this one i want to share with you the eight hour time frame so you can see over here the concept that i've shared earlier
+1:18:40
+resistance right tested once tested twice almost three times fourth time here fifth time then price breaks out
+1:18:46
+if price breaks out of resistance what could possibly happen previous resistance could become
+1:18:52
+support buyers could possibly step in here right to push the price up higher in this case it did happen one more example or rather a
+1:19:00
+second last example this one here is euro against the aussie dollar this is an area of support tested once
+1:19:06
+tested twice came back here consolidate a little breakdown re-test previous support becomes resistance
+1:19:13
+head down lower re-test this same area of resistance and then continue to grind kind of lower
+1:19:19
+around here so again this is how support resistance looks like on your chart and again i didn't draw the full thing i just wanted
+1:19:24
+to point out the obvious one to share with you the concepts that i've mentioned but really if you want to draw another one
+1:19:29
+i'll say this would be another level that you could look at this heist over here okay and one final example this one here
+1:19:36
+is a bitcoin just to illustrate to you that you know hey the concepts that i'm sharing with you are can be applied to uh
+1:19:42
+different markets as well so if you look at this one over here can you see this area of support okay
+1:19:49
+tested almost here almost the first time second third fourth fifth then what happened
+1:19:54
+price broke below support okay broke down great so as you know right if price breaks
+1:20:01
+below support what could happen previous support could become resistance
+1:20:07
+which happened over here previous support price breakdown became resistance and again support
+1:20:12
+resistance they are an area on your chart so this is why you shouldn't expect the price to reach
+1:20:17
+a particular dollar amount or exact same right and reverse from there no it's an area it could exit by a lot it could exit by
+1:20:24
+a little bit or you can undershoot it right doesn't even touch it and then reverse from there okay so you can see what happened next right for bitcoin price continues down
+1:20:30
+lower and it retains right it's going to retest this area of resistance and watch what happens it didn't respect
+1:20:38
+this this area that we had drawn out earlier in fact it went deeper right to re-test almost this
+1:20:43
+highs over here so you can see i just pulled it back out okay so now so at this point right support resistance it's kind of fluid
+1:20:49
+it's dynamic you have to make adjustments to it from time to time so if i want to look at this chart right now okay i wouldn't leave my line on my area
+1:20:56
+of resistance here i might shift it up higher right to take into account right the recent price move so this one now would
+1:21:02
+make more sense because they tested this one here once and twice over here so let's see what happens next then price i'm going to zoom out a little bit
+1:21:09
+price then re-test this for a third time over here and then it
+1:21:15
+finally broke out so price has broke out of resistance so as you know if price breaks out of resistance
+1:21:20
+what could possibly happen previous resistance could become support right previous resistance could
+1:21:27
+now become support buyers could possibly step in could step in
+1:21:32
+and push the price up higher which he did in this case and of course all these charts are cherry picked right just to you know
+1:21:37
+make sure that the teachings the concepts that i'm teaching you right are crystal clear in the real world of trading right there are
+1:21:42
+things that often things will not go away and you know you have to be prepared for it [Music]
+Entry triggers and candlestick patterns
+1:21:49
+okay so in this section right it's about entry trigger so let's do a quick recap what you've learned so far so so far you
+1:21:56
+have learned about market structure it tells you what to do should you be looking for buying opportunities selling opportunities or to stay out of the
+1:22:02
+markets there we covered about area of value there are two things we covered in area of value support resistance and moving average
+1:22:08
+and these are tools that you can use right to tell you know where to buy or sell so market structure tells you what to do
+1:22:15
+area of value tells you where to buy or sell and now we're moving to the third component entry
+1:22:20
+trigger this tells you when to buy or sell okay so
+1:22:26
+entry trigger there are many ways you know you can use the many tools out there to help you
+1:22:31
+time the market but what i find personally to be very useful is candlestick patterns and i want to dive deeper into
+1:22:36
+this section since i find it so useful so what is candlestick pattern so
+1:22:42
+candlestick patterns is a method of reading a price chart of course it's not the only way you have bar chart you have
+1:22:47
+line chart of all the different types of chart out there so candlestick pattern is just one of the methods to read the price chart and
+1:22:52
+it's obviously one of the more popular approaches so how do you actually read a candlestick pattern one thing to
+1:22:57
+understand is that there is four data points for every candlestick pattern you have the opening price the closing
+1:23:04
+price and the high and low of the session so if your candlestick pattern is let's say on the
+1:23:10
+one hour time frame then what you'll see is that the highest price point over the over the last one
+1:23:15
+hour and the low is the lowest price point over the past one hour so a little bit more about
+1:23:20
+candlestick patterns is that you can use it to trade different time frames so for
+1:23:26
+example if you see a candlestick pattern on the one hour time frame it simply means that on a one hour time frame
+1:23:31
+every one hour a new candle is formed if it's on the four hour time frame every new candle is formed
+1:23:36
+every four hours and if you're on the daily time frame one candle is formed every single day same for the weekly monthly same concept
+1:23:43
+so now let me explain you know how to actually read a candlestick pattern so you'll see
+1:23:48
+primarily two types of candlestick pattern one is green and one is red but let's talk about the green one first
+1:23:54
+so remember i said that there are four data points so how do you actually know
+1:23:59
+know where the four data points so very simple for green candle it simply means right that the price has closed
+1:24:05
+above right the opening price so let's say this is like a one hour candle okay let's say this is a one hour candle
+1:24:10
+so what it tells you that the price right has closed right higher than where it was one hour
+1:24:16
+ago so that's why it's great right he has closed higher you know compared to where it was at the
+1:24:21
+opening price one hour ago so that's why it's great so the opening price will be at here and the closing price
+1:24:28
+will be here this is the only way for the closing price to be above the opening price the closing price has to be higher than it so that's why it's
+1:24:33
+green it's bullish so the opening price was once again over here at this line
+1:24:38
+and over here is the closing price we'll add in some numbers later on so you can see how it all makes sense so what about here this simply means is
+1:24:45
+the highest price point over the last one hour if you're on the one hour time frame and this is the lowest price the market
+1:24:51
+has win right during the past one one hour right is the lowest price point so this is the
+1:24:57
+high highest price point over the past one hour and the lowest price point over the past one hour of course if we change this to
+1:25:03
+a different time frame to the eight hour time frame the daily timeframe concept is the same so let's say we try the weekly time frame
+1:25:10
+let's take another one hour the weekly time frame so what does it mean it means that at this price point of the candle that is the highest price point right
+1:25:18
+over the week over the past one week and this is the lowest price point over the past one week over here
+1:25:23
+and this is the opening price of the week and this is the closing price of the week so same same concept
+1:25:29
+so now what about great candle so this is just the inverse so if you recall this over here was the closing and this
+1:25:35
+is the opening so the closing price is higher than the opening price that's why it's bullish that's why it's green but for a rate candle it simply means
+1:25:41
+that the closing price is below the opening price i repeat right the closing price is below
+1:25:47
+the opening price for a rate bearish candle so your closing price has to be here see and over here is your opening price
+1:25:54
+that's the only way right for this candle to close lower is if the closing price is below the opening price and likewise over here
+1:26:01
+is the highest and this is the lows exactly the same concept so if i do you know piece all
+1:26:06
+this together you will have a chart that looks like this okay this is what i just said earlier so
+1:26:12
+a little bit more uh so-called technical definition if you want so we call this color thing the body
+1:26:18
+and this this line over here we call this the upper wick or upper shadow whichever you
+1:26:23
+know whichever term that you prefer there's no right or wrong over here and this is what we call the lower wick
+1:26:29
+or lower shadow okay so this is how you read a candlestick pattern now moving on let's let me
+1:26:37
+let me share with you how it looks like right on a real chart and how you interpret it
+1:26:43
+so i'm going to look at this uh currency pair let's look at the daily time frame this is aussie against the
+1:26:49
+japanese here and i'm going to zoom in so you can see what so we are on the same page so you can see over here i am going to
+1:26:55
+i want you to pay attention to these numbers over here right this is the opening price this is the highest price point over the
+1:27:01
+last one day this is the lowest price point over the past one day and this is the closing price and is the percentage change right in
+1:27:08
+pips so this number will move right depending where my mom's cursor is so pay attention so let's look at the most recent one
+1:27:13
+this candle here how do we interpret this so let's interpret this together one by one so for this candle it tells
+1:27:19
+you that this market opened at 83 589 so it opened at this price point 83 589 the highest price point for the
+1:27:27
+day is 83.788 which is over here 83.78
+1:27:33
+the low of the day is 83.036 which is here the low of the day 83.036 and the closing price for this
+1:27:40
+this uh this market for this day is 83.529 which is at this price
+1:27:46
+point over here does it make sense so let's do one more example how about the dollar against the
+1:27:51
+japanese yen okay now we have a green candle so same same thing right for this market
+1:27:56
+the opening price what does it say 109.248 this is the opening price 109
+1:28:02
+248 where is the highest price point for the day 109.96 109.96
+1:28:08
+where is the lowest price point for the day 109.193 over here 109.193 and where is the
+1:28:16
+closing price for the day 109.614 109.614 and along the ways you will
+1:28:23
+probably see some candles where they are missing a body man the candle is weird right now where's the body
+1:28:28
+so this is usually when you're opening and closing price are too near one another where you get a very
+1:28:33
+almost a non-existent body kind of like this one here look at this right almost a non-existent body so yeah it happens
+1:28:39
+especially when the opening price and the closing price are very near each other so if you have a look at this right
+1:28:44
+let me just see what the numbers are so you don't freak out so for this candle the opening price
+1:28:51
+uh opening price for this is 103.76 and the closing price is 103.75 okay so
+1:28:57
+this is why you can see they are just like a three pipette different 0.3 pips different so that's why their body
+1:29:05
+is almost non-existent so this is how you actually read a japanese candlestick chart so moving on right so now you know
+1:29:12
+the basics right how do you actually you know or rather how do you use it to time your entries so to do that right you want to
+1:29:18
+focus or learn a few patterns right to help you do so and there are two patterns or maybe four patterns i want to share
+1:29:24
+with you so first let's talk about the bullish reversal candlestick pattern and understand you know what is it how it
+1:29:29
+works and the story behind it so the first pattern i want to share with you is what we call a hammer so different candlestick
+1:29:36
+patterns they have different names they have hammer harami engulfing you know dark cloud cover and stuff like that so that's really really really a lot out
+1:29:42
+there but i'm not gonna teach you everything because it's not needed right as you progress and learn and grow as a trader you realize that hey
+1:29:48
+most of these patterns are pretty much a variation of one another so i'm going to share with you the most common variations the most useful ones and
+1:29:53
+after which you can go on and explore the other you know patterns out there and of course the basics i've already taught you so
+1:29:58
+you can just you know stack upon what you've learned and to to learn even more so first one is what i call ornate i
+1:30:05
+call it right people you know others out there the technicians call it a hammer so let's understand what
+1:30:11
+hammer is about so again where is the opening price price open over here where is the closing price for green
+1:30:17
+candle the closing price has to be above the opening price so it's here where is the high of the day
+1:30:23
+over here so let's assume that this is the daily candle right the high of the day is here and the low of the day is over here so
+1:30:29
+what's the story of this hammer so it's quite interesting right you can imagine like that for when the market opened over here the sellers they were in
+1:30:36
+control like out of the gate right here like barbara's you know running out the gates and they pushed the market they pushed the price down near the lows
+1:30:43
+of the day then when all the buyers they all defeated all right then somehow rather there's like one tour one captain
+1:30:48
+america from the middle of nowhere shelter vengers assemble and then they all unite and you know push the price up all the
+1:30:54
+way up higher finally closing near the highest of the day so you can imagine that this kind of tuck of four between the buyers and sellers right
+1:31:00
+when market open sellers came in with smash and you know uh push the price all the way down suddenly sometimes in the middle of the
+1:31:06
+day the buyers they woke up right they assemble the united and they push the market all the way up to close near the highs of the day so this tells you
+1:31:13
+that hey you know the buyers are now in control that's why they managed to push the price right push the price all the way near the highs of the day and this is
+1:31:19
+what we call a hammer because you kind of look like a hammer okay so another another pattern that's
+1:31:25
+worth learning is what we call a bullish engulfing pattern so the story is very similar but this time around it's
+1:31:30
+expressed right using two candles so for this one over here this is a rate bearish candle so you can see that the sellers took control and closed the
+1:31:38
+price right near the lows of the day so the buyers were all defeated ah you know injured already painful the next day right somehow the
+1:31:44
+the buyers they got revived right they grew stronger right maybe they put you know a little bit too much steroids in their body or or whatsoever it takes a magic potion
+1:31:50
+and they they push the price right to close near the highest of the day once again so they pretty much just overwhelm right
+1:31:56
+the selling pressure of the previous day how do i know that because you can see that the range of the candle or the range of the body
+1:32:02
+over here was previous previously from this opening price to this closing price but the next day
+1:32:08
+it opened low and closed even higher than the previous day opening price so you can see that the buyers has even overwhelmed right
+1:32:14
+the the sellers right by a lit even a little bit more so this is what we call a bullish engulfing pattern so next one the
+1:32:22
+opposite of uh bullish candlestick patterns right this is what we call the bearish reversal candlestick pattern so there are two
+1:32:28
+as well this one is called a shooting star so this is actually the inverse of a hammer i'll just explain the story behind this
+1:32:34
+so since you know it's a red color candle opening price is here closing price is here so what
+1:32:40
+happened right so you can see that when the day started right let's say this is a daily candle buyers push the
+1:32:45
+price all the way up this higher and mark this highs for the day and then suddenly the sellers came in you know
+1:32:51
+took control and push the price near the lows of the day finally closing near the lows
+1:32:57
+of the day i saw the buyers so you know when the market just opened oh i'm really excited you know let's push the price up higher
+1:33:03
+then somehow middle of the day you know things got depressed you know maybe you know he got reminded of his ex-girlfriend item this ex-sweater let me throw this
+1:33:10
+sweater let me sell sell everything and then the market collapsed and sell sold off and nearly pretty much closed near the lows of the day so you can see
+1:33:16
+that initially buyers they had the upper hand but they were overwhelmed by the sellers right towards the end of the day so this
+1:33:21
+is where you get a shooting star so for this bearish engulfing pattern right it's
+1:33:27
+pretty much uh same uh similar story so we can see for the first candle
+1:33:32
+it is bullish right buyers are happy woohoo i celebrate right they have closed near the highs of the day but for the second day right the sellers
+1:33:38
+took control and pushed the price right all the way down lower exceeding even below the lows of the
+1:33:44
+previous day and the and even the opening price of the previous day they closed near the lows over here so we can see that the
+1:33:50
+buyers once again they were defeated ah i know you know injured hospitalized and they'll never i won't i don't want to say
+1:33:55
+never to recover because in the market it always always goes up goes down so for now i would say the sellers has temporarily
+1:34:01
+won the war okay for now so let me share with you a a few uh charts all right so you know
+1:34:08
+how this looks like on the chart and you can see that you know all the different variations of it out there so let me point out to you the first one
+1:34:14
+let's have a look at how about dollar against the japanese yen so you
+1:34:21
+can see over here this one looks something like a in between a shooting star and a bearish
+1:34:28
+engulfing pattern then we have this one as well
+1:34:33
+more of a shooting star if you look at other example like euro against the usd
+1:34:40
+you can see over here this is similar to shooting star but the difference is the body of the candle is green so
+1:34:46
+again when you trade the markets right it doesn't mean that it has to be a textbook example it has to be rate to be red color sometimes it can be green as well
+1:34:52
+but the meaning is pretty much the same because if you look at this right this is the price rejection that you have seen right the buyers tried to push
+1:34:57
+the price up higher but got overwhelmed by the sellers and finally close right near the lows near the opening opening price of the day
+1:35:05
+over here you have a bearish engulfing pattern right look at how this range of the candle has you know
+1:35:10
+overcome right the body of the previous day and uh this is a bullish engulfing
+1:35:16
+pattern notice how the body of this candle has you know uh is larger right and close right even
+1:35:22
+above the highs and the opening price of the previous day this is a bullish engulfing pattern
+1:35:28
+and then this is another bearish engulfing pattern and yeah so later we'll look at some chart examples uh you know in terms of
+1:35:35
+the uh the market structure area value entry trigger and stuff like that but for now let's do a quick
+1:35:42
+recap so i know i've covered a lot so number one remember market structure it tells you what to do should you be looking for
+1:35:48
+buying opportunities selling opportunities or to stay out of the markets then we have area of value which tells you know where to enter a
+1:35:55
+trade you know where and finally the thing that we just covered entry trigger tells you when to enter a trade
+1:36:02
+and by the way if you're enjoying this training so far smash the thumbs up button if you are not then hit subscribe and
+1:36:08
+then smash the thumbs up button now moving on let's look at some real world trading examples and to combine the
+Real trading examples
+1:36:16
+trading strategies techniques and concepts that you have learned right and see how we can apply it to the real world of trading using real
+1:36:23
+chatting examples so this is the chart of dollar against the south african rent as
+1:36:30
+you can see over here on this is on the daily time frame so first and foremost let's ask ourselves what is the market structure
+1:36:37
+so when we are trading the markets this is the first question that we want to ask ourselves what is the market structure this would
+1:36:42
+tell us you know what to do whether to be a buyer seller or to stay out of the markets so if you look at this market structure we see a
+1:36:48
+series of lower highs lower highs lower high and lower low lower low lower low so we can see that this market
+1:36:54
+the market structure is in a downtrend second thing the area of value
+1:37:00
+let's put it aov is there an area of value over here so you know area of value could be things like moving average
+1:37:06
+support resistance so from what i'm seeing over here there is an area of value over here i can just
+1:37:11
+use it this tool over here and to draw this area of resistance over here
+1:37:17
+i'll just change this to black color okay so now we have an area of value over here so do we have a valid entry
+1:37:24
+trigger so remember the candlestick module or section that we just covered this over here looks like a
+1:37:31
+bearish engulfing pattern all right so let's call it a bearish engulfing pattern so
+1:37:38
+from the looks of it right we have a numerous factor right working in our favor number one the market structure is in the
+1:37:43
+downtrend area of value the price is at resistance our entry trigger we have a bearish engulfing pattern that's being
+1:37:50
+formed so in this case we can look for a short trade right to shop this market in expectation of lower prices and of course right this is
+1:37:56
+clearly a cherry pick chart in this case the price you know did when in our favor
+1:38:03
+okay so now moving on let's look at another trading example right using the market structure area of value and
+1:38:09
+candlestick patterns that you've just learned and you know use it to help you make a trading decision to to know whether to buy
+1:38:14
+or sell so again let's revisit right what we have learned number one ask ourselves what is the market structure
+1:38:21
+of this currency pair this currency pair is new zealand yen on the eight hour time frame so market
+1:38:26
+structure as you can see this market structure is in an uptrend price forming a series of higher highs and higher lows here
+1:38:32
+higher low higher low higher high higher high okay what about area of value can you
+1:38:37
+see it being near any area of value so from what i'm seeing over here the price has retested this area of support right
+1:38:45
+support support and support and also previously this was actually resistant so price broke out of this swing high
+1:38:52
+resistance it became support now what about entry trigger is there any like signal entry trigger that tells
+1:38:58
+us hey it's time to enter a trade so if you look at this candlestick pattern right this over here
+1:39:03
+what does it look like to you this right i would say it's close to a bullish engulfing pattern but as per the
+1:39:09
+definition of bullish engulfing pattern this isn't quite one because this green candle didn't cover the body right
+1:39:14
+of this red candle but that isn't going to stop us and say hey you know this is not a bullish signal it's not time to enter because if you read the candlestick pattern if
+1:39:21
+you read the price section it's telling you that the buyers they did right close higher for the day
+1:39:26
+and they did show you signs of strength right closing near the highest of the day and almost right the previous day opening price so it
+1:39:32
+closed pretty strongly so this few reasons right the market structure the area of value and the entry trigger
+1:39:38
+right is uh the story is telling you that hey you can now look for a buying opportunity so what you can do
+1:39:44
+is you can enter on the next day open let's say on this candle here the next day open which is on
+1:39:49
+this candle here okay so now what about stop loss now you know where to enter which is very simple the next day open but stop loss
+1:39:55
+is something that i've not covered and i want to talk about in this uh this example here since it's quite straightforward so when it comes to stop-loss right you
+1:40:02
+want to set your stop-loss at a level which invalidates your trading setup so what i mean by this so
+1:40:07
+for this particular trading setup that you're trading you're trading is you know in the direction of the trend uptrend and
+1:40:13
+buying near an area of support so this means that if the price breaks below the pawn then it means your
+1:40:20
+so-called hypothesis right is wrong right because this is the area of support that you expect the price to hold if the price breaks
+1:40:27
+below this area of support and clearly this so-called theory this hypothesis that he had that this trade could hit
+1:40:33
+move higher is clearly wrong and you want to exit your trade so to do this right it's a very simple what you want to do is to set your stop
+1:40:39
+loss at a level right which will so-called break support so if you look at this right clearly you know anywhere from you
+1:40:45
+know 72 50 or below right at this level clearly clearly if the price breaks down and he
+1:40:51
+hit this level this area of support is broken and you want to exit your trade but so is there a objective way
+1:40:57
+you know to set your stop loss instead of just blindly you know putting it at some level that looks like you know far away
+1:41:02
+from support and the answer is of course yes right and to do that you can use an indicator called the average true range
+1:41:08
+so over here i've shown you this indicator below but i'll show you where to get it just go to indicator tab search atr average
+1:41:15
+to range it will come out as this one over here the settings i like to use is 20 period atr using sma so this is just my
+1:41:22
+preference over here and as you can see right now the atr value is about 0.32 about 32 pips so
+1:41:28
+what this tells you is that on this time frame for new zealand yen on the eight hour time frame over the last
+1:41:34
+20 candles right this currency pair moves an average of about 32 pips on average i'm not saying every
+1:41:40
+single cannon but every single candle but on average over the last 20 candles or so this currency pair has moved about 32
+1:41:46
+pips so what this means is that you can actually use this value right and give it some buffer right to
+1:41:52
+set your stop loss below support so let's say for example the lows of support is at this level over here what you can do is take this level and
+1:41:59
+minus let's say this level is x right and you minus this atr value this one atr value
+1:42:06
+okay so one atr is equal to 32 pips right and let's say you get the value of y so let's say y is somewhere about here
+1:42:11
+this right can be your stop-loss and it's an objective way to set your stop-loss based on the volatility of the market since atr
+1:42:18
+indicator you know takes into account the volatility of the market so let me walk you through how to actually set your stop-loss so what you
+1:42:24
+want to do is to find out what is this low of support so in this case at the low of support the value is on this
+1:42:30
+candle here and the value is about from what i'm seeing over here it's
+1:42:36
+72 and 72.72 so you just look at this l value which is the low of the candle and
+1:42:41
+you can see it's about seven seven two dot seven two so what i'm gonna do is take seven two dot seven two
+1:42:47
+minus thirty two pips sorry seven two dot seven two and a minus thirty two pips which is
+1:42:53
+zero point three two that is going to give me a value of about 72.4
+1:43:00
+am i right okay so what i'll do is i will set my stop loss at this level at 72.4 change this to rate so you can
+1:43:08
+see it better and your stop loss will be at 72.4
+1:43:13
+okay so as you can see over here i will show you where your entry point entry point is on the next day open the candle
+1:43:19
+i'll put it in green so you can see it green okay and there
+1:43:24
+you have it right so this is this candle here this candle here the opening price is where you
+1:43:29
+look to buy this rate level here is your stop loss so now let's take things a step further right if you have a 10
+1:43:36
+000 trading account and you want to raise one percent risk on each trade how many units of new
+1:43:43
+zealand yen can you buy aha okay so now what we need to do is to again revisit the concepts that you've
+1:43:48
+learned so what you'll do is first and foremost measure the the uh your entry price to your
+1:43:54
+stop-loss so your entry price let's say let's make this more precise let's say your entry price is at this
+1:43:59
+opening price of this candle which is about 73.31 okay so i'm going to change this to 73.31 and
+1:44:06
+your stop loss is 72.4 so you take 72.31 672.31
+1:44:14
+minus 72.4 that gives me a 91 pip stop loss 91 pips
+1:44:19
+okay so what do we do with this information so how do i get 73.31 again
+1:44:24
+the entry price on this candle over here the opening price is 73.31 stop loss at 72.4 which is this level
+1:44:30
+here minus one atr and it gives us 72.4 as our stop loss and we take the entry price
+1:44:36
+minus your stop loss right and this is your distance right in pips right for stop loss so in other
+1:44:42
+words from your entry price here all the way down to here is 91
+1:44:48
+pips so now the question is how many units of new zealand can we buy
+1:44:55
+such that we don't lose more than one percent of our current of our account so time to revisit your position sizing
+1:45:01
+so let's go to this so let's say currency pair is new zealand type in new zealand yen
+1:45:07
+account currency let's keep it you know as usd let's say your account size is ten thousand dollars
+1:45:13
+risking one percent on each trade your stop loss as mentioned earlier is about 91 pips click calculate it tells you
+1:45:20
+that you can buy 0.121 lot which is about 1.2
+1:45:25
+mini lots okay so if you're going to trade this you know i hope it's a demo account right you can buy 0.121
+1:45:33
+law okay which is about 1.2 million lot does it make sense so you
+1:45:38
+can see that we have you know used a number of you know concepts that you have learned earlier the market structure area of value entry trigger
+1:45:45
+then we learn how to set our stock loss we learn how to calculate calculate the optimal position size right such that we don't
+1:45:50
+lose more than one percent of our trading account as shown in this position sizing calculator over here
+1:45:57
+okay so how are you feeling do you feel overwhelmed ah there's so much to cover well don't be
+1:46:03
+because you know if this is your first time you know watching this video or you're new to forex trading yes it's perfectly
+1:46:08
+normal to feel overwhelmed and confused but this is nothing you know new this is actually all the topics
+1:46:14
+that we have covered in the earlier part of the video if you're unsure you can know just go back watch through the videos and to clarify you know on any
+1:46:21
+concepts or techniques right that is unclear to you so i'm going to go through another example because this is so important
+1:46:26
+right understanding the the position sizing the risk management as
+1:46:32
+well you know how to analyze a chart and you know how to combine all this together and place a trade so that you don't blow up your trading
+1:46:38
+account so let's have a look at another one using the same framework so number one ask ourselves market structure what is the market structure
+1:46:44
+of this currency pair so this is dollar against the japanese yen eight hour time frame market structure is
+1:46:50
+down i'm just kidding it's up right higher highs and higher lows higher highs sorry sorry higher low higher low higher low market structure
+1:46:57
+is up and then you have higher high higher high higher high area of value is the price near an area
+1:47:04
+of value as you can see over here it is at this previous resistance resistance which became support and yes
+1:47:10
+this is an area of value and not just then right we also have if you pull out your 50 period moving
+1:47:16
+average right this 50 period moving average also serves as an area of value we tested once twice
+1:47:22
+three times and then fourth time over here so this is what we mean by when we have like support and the 50
+1:47:28
+period moving average coming together you know from two separate area of value coming together at a
+1:47:33
+at a similar area i call this uh stack areas because you have multiple factors coming together to work in your favor so
+1:47:39
+this is a stack area you have the aerial value of the 50 period moving average as well as previous resistance which
+1:47:45
+became support the third thing right do you have an entry trigger so from the looks of things when you studied the bullish reversal
+1:47:52
+candlestick patterns earlier this isn't actually any of the candlestick pattern which you have learned but again the
+1:47:59
+memorizing of the candlestick pattern the name is not important what's important is that you can see right buyers stepping in right to push and close higher it breaks and close
+1:48:06
+above the 50 period moving average looking at the range of this candle is pretty nice and large as well and the
+1:48:11
+price is closed near the highs so this tells you know the buyers are in control right and managed to close right near the highs of this eight hour
+1:48:17
+time frame so what we can do is again uh to me this is a valid trading setup and you can look to
+1:48:23
+buy so let's say you buy on the next day's open opening price of this candle over here
+1:48:29
+so now what about stop loss so again stop loss we want to set it at a level which invalidates our trading
+1:48:35
+setup so our area of value is over here this previous previous resistance which became
+1:48:40
+support okay we want to set our stop loss right a distance below support we don't just want to set it smack below support because
+1:48:47
+like for example this is directly over here because the price will just come down spike rate and then continue higher so if you set your stop loss just below it
+1:48:53
+this could happen to you right pretty often and it sucks so this is why i recommend right finding the low of support right and
+1:49:00
+then just minusing off one atr for it so in this case one atr it tells you it's about 34 pips so what's left for you to do right now
+1:49:06
+is to find out what's the low of support the low of support is again right let me look at this candle as the low
+1:49:11
+it's about one zero eight let's make it one zero nine as shown over here right is the low the
+1:49:16
+low support is about one zero nine so i'm going to take one zero nine minus thirty four pips again
+1:49:22
+using my trusty calculator one zero nine minus 34 pip it gives me 108.66 so this tells me it
+1:49:29
+might stop more so it should be at 108.66 i'm going to change this to rain i am going to also change the
+1:49:36
+coordinates to 108.66 okay this is my stop-loss level
+1:49:45
+great so now i want to take things a step further right you know how to set
+1:49:51
+your stop-loss you know your entry is at this this price over here okay let me just change this to green about here
+1:49:58
+entry price is like this candle open which is about 109.88 okay let me just change this to
+1:50:06
+109.88 so another thing to to talk about is your target so so far
+1:50:11
+so far we have talked about the trading setup right market structure area of value entry trigger to know when exactly to enter a trade
+1:50:17
+i shared with you how to set a proper stop-loss so you don't get stopped out too early and the final component that i want to add as well is to
+1:50:23
+where to take profits right if the market moves in your favor so coming from let's say a swing trading perspective
+1:50:28
+and bear in mind there are many ways to take profits i'm going to share with you one method which is what we call swing trading which is
+1:50:34
+in essence right just capturing one swing in the market so this is like one swing right from this retracement
+1:50:39
+then we pull up one swing this is one swing this is uh another swing so
+1:50:44
+basically one move in the market i'm going to share with you how to do that so to capture one swing in the market we usually want to set our target profit
+1:50:52
+at before right previous swing highs are low in the market so you know what is swing right this is our swing point
+1:50:57
+swing high swing high swing low swing low so if you are long right you want to exit right before the nearest swing high because this is
+1:51:04
+where potential selling pressure could come in you know and you know push the price lower so you're gonna set your target
+1:51:09
+before it so in terms of target i would say a reasonable target could be at this price point over here before this
+1:51:16
+remember this over here is an area on your chart not a line so don't set your
+1:51:22
+target right just you know one bit below this heist because remember it's an area the price may not get to that high right
+1:51:27
+before it starts to reverse it could just you know come close into that area doesn't hit the highs doesn't hit these highs over
+1:51:34
+here and then starts to collapse so if you're too like you know greedy if you take profit you set it at these highs over here
+1:51:39
+or even over here you know you're making difficult for the market you know to give you a profit so be reasonable
+1:51:45
+with your targets so my recommendation is to set it before the swing high so let's say we set it
+1:51:50
+somewhere about here right this i would say it's reasonable and let's change this to blue
+1:51:55
+color okay so let's say our target is at let's put it at a number that is easy to
+1:52:01
+understand 107 dot let's say seven three seven two okay
+1:52:06
+okay so now if you look at this right now you can see that where is your entry price which is this
+1:52:12
+green line over here where is your stop loss this red line over here where is your target which is this blue line over here
+1:52:19
+so now again let's revisit you know position sizing since that is so important right that is what keeps your account intact let's find out
+1:52:26
+right the size of our stop loss so basically from entry price to your stop loss right
+1:52:31
+what is this distance over here so again just take the entry price minus the stop loss so what you can do is you
+1:52:36
+can pause this video and do the math with me and see whether you get the answer correct so i'm going to take 109.88
+1:52:43
+minus 108.66
+1:52:48
+all right so basically i'm thinking this green number minus this rate number it gives me about
+1:52:55
+122 pips okay that's the distance of my stop-loss
+1:53:01
+so in essence from here to here is 122 pips so now let's use this number and find
+1:53:06
+out how many units of dollar against the japanese yen can we buy such that you know we uh we can you know still adhere to
+1:53:14
+our risk management so to do that just go to look for dollar yen this is the currency pair you're trading okay let's say your
+1:53:21
+account currency is funded in us dollar as well account size let's say now you're a baller right hundred thousand units your trade i mean your account size is
+1:53:27
+hundred thousand dollars and let's say you are still the same you know prudent trader you still risk one
+1:53:32
+percent on that trade well done stop losses 122 pips as we have
+1:53:37
+mentioned earlier things about one two two if i'm not wrong here it is then you're just gonna click calculate
+1:53:43
+and it tells you that you can buy now zero point eight nine nine standard lot this is equivalent to about eight point
+1:53:50
+nine i would say nine mini lots right you just rounded up it's about nine mini lots or 0.9 standard lot so
+1:53:56
+in other words okay if you have a hundred thousand dollars account and you're risking one percent of that account let's say one percent is
+1:54:02
+a thousand dollars of your account and you're trading this currency pair dollar against the japanese yen
+1:54:07
+your stop-loss is 122 pips okay how many units of this currency can you
+1:54:14
+buy and according to that uh risk risk management or rather position sizing calculator you saw earlier it's about 0.9
+1:54:21
+standard lot or nine mini lots it's actually 0.899 i just rounded up to make my life easier
+1:54:26
+so that's how you you know combine all these different uh elements together this concept strategies like to make sense right out
+1:54:33
+of your forex trading career so let's now take things one step even
+1:54:39
+further okay so this is actually stuff we've covered earlier i'm just revising it so we're going to take things a step further because
+1:54:45
+one thing that you might not notice if you look at this hey rayner this is my entry price this is my
+1:54:51
+stop-loss and this is my target it seems that my stop-loss over here okay let's call it sl stop-loss is kind
+1:54:59
+of smaller than my profit target right if i just pull it out let's call it tb target profit my stop-loss is wider than
+1:55:05
+my target profit then if you are thinking along those lines you are absolutely correct you can actually use a tool
+1:55:11
+like this over here okay just use the long position one to help you access right your risk to reward ratio so just
+1:55:16
+pull this tool out right just click this one choose long and if you're going to click let's say click on this green line this
+1:55:22
+thing will come out so the way we're going to do it is that we're going to adjust this thing right such that this level here is at our stop
+1:55:27
+loss okay and this one over here is at our target the blue line and this over here
+1:55:35
+is smack at our entry point which is fine and you can see something very interesting what it's telling you how you actually made use of this tool
+1:55:41
+is that is that you can see you are risking 122.2 pips right which is your
+1:55:47
+stop-loss 122 pips and this over here 84.7
+1:55:53
+is your target profit what you have targeted which is about 84 pips so in other words if you look from a risk to reward standpoint
+1:55:59
+you are risking one dollar to potentially make back 69 cents as shown over here 69 cents
+1:56:07
+how do i know 69 you can see over here risk to reward ratio 0.69 you're risking one dollar
+1:56:12
+to make 69 cents so it's not exactly very favorable and most traders will say uh that's not really a trade i want to
+1:56:19
+take and i can perfectly understand that so what can you do to make this risk to reward on your
+1:56:24
+trade more attractive so now there are a few things that you can do number one you can of course shift your target
+1:56:30
+up higher okay to to a point where you know okay you're risking a dollar and make a
+1:56:35
+dollar 37 cents back in return but you know to put your target over here it's a bit of a i won't say it's a
+1:56:41
+stretch right since this is a trending market but what has to happen is that the market right has to break above this
+1:56:46
+highs to get to your target so that's like kind of like a little bit more work right for the
+1:56:51
+market to go through to reach your target and i'll say that's a lower probability right since the market has to break
+1:56:56
+through above this swing high but again right in the context of this price action that we are seeing i wouldn't say that it's impossible because we are after all in an uptrend
+1:57:03
+but if it's a range market right i would say clearly a very bad decision so let's say we don't touch the
+1:57:08
+target right let's keep the target the same let's say around this level over here okay this is our target
+1:57:14
+right so what else can we do to make the risk to reward more favorable what we can do is again
+1:57:19
+we can shift our stop loss we can make it tighter right shift it up higher but again we don't want to mess with our stop-loss because our stop-loss is at a
+1:57:25
+level where it reaches right it will invalidate our trading setup you don't want to exit the trade
+1:57:31
+while the setup is still there it doesn't quite make sense right you want to be buying and support and support is not broken but you already exit your
+1:57:36
+trade that's that's not very you know uh wise so the last thing that you can still do is to
+1:57:41
+adjust right your entry point so you know your entry point right now is about 109.88 which is this green line over
+1:57:48
+here this is your entry point what you can do is to use a buy limit order see this is one of the orders that we
+1:57:54
+have mentioned earlier to use a buy leave in order to enter at a more favorable price so what if we
+1:58:01
+shift right our entry price to somewhere about here at let's say 109.5 okay so let me just
+1:58:09
+just just double click this let's say our entry price now is at 109.5 our take profit level the price we keep
+1:58:16
+it unchanged our stop-loss level will keep it unchanged as well and we click ok so now if you look
+1:58:23
+at your risk to reward right now you can see now you're risking a dollar
+1:58:28
+to potentially make 1.45 cents as shown over here one dollar and 45
+1:58:35
+cents now your risk to reward right let me just put it one over here your risk reward right has been now
+1:58:40
+improved by using a buy limit order of course everything has its pros and cons so let me share with you the downside to
+1:58:46
+using this method if you go with a buy limit order your order might not get filled and you know
+1:58:51
+if the market continues higher you would have you know missed the trade but in this case right uh of course it's a cherry pick chart you would have you
+1:58:57
+know gotten filled and entered you know at a more favorable price as you can see this market did deep down lower and
+1:59:03
+giving you a better entry price and now it's starting to kind of you know hit higher so this is another technique that you can use in your own trading if
+1:59:09
+at as of right now right if you're looking at your entry stops and target the risk to reward doesn't quite make sense you can consider using a buy limit order to get
+1:59:16
+in at a better price but a few things that i would caution you is to not adjust your original stop-loss because that is
+1:59:23
+at a level right that is plan right to set right where if the price reaches it it will invalidate your trading setup
+1:59:28
+and you want to get out of it don't make it too tight because sometimes a slight spike right might get you stopped out of your trade if your
+1:59:34
+stop-loss is too tight as for target this there's some discretion over here since as you've seen right this is a trending market
+1:59:40
+it's not far-fetched to say that hey maybe i can move my target up slightly higher somewhere about here since it's a trending market the price
+1:59:45
+tends to break above the previous high that is fair enough for that i would say it's a fair call but one thing to to note that if if
+1:59:51
+right if the market right now is in the range market all right and you buy let's say somewhere over here and your risk to
+1:59:57
+reward is not very good don't set your target above the highs of this resistance because you are expecting the price to break above that resistance
+2:00:04
+to give you this target that you have over here just so your risk to reward makes sense and this is really a very bad idea if you're going to shift
+2:00:10
+your target to even above resistance but for this context that we are talking about here in this uptrend i would say that is a perfectly you know fair
+2:00:17
+call okay so are you still with me right i hope so and if you want to smash
+2:00:23
+the thumbs up button but if your mind your soul is wandering elsewhere then hit the subscribe button okay so now let's have a look at another
+2:00:30
+example this is aussie against the swiss franc as you can see over here and this is the
+2:00:35
+eight hour time frame as well so you know you should be a pro already by now if you even know what i'm going to say first thing first
+2:00:41
+market structure what is this market structure from the looks of things this market is
+2:00:46
+in an uptrend higher high and higher low higher high higher high higher high higher high
+2:00:52
+and higher low higher low higher low higher low so what about area of value so clearly
+2:00:58
+this one here you can see that this market is at this area of support entry trigger do we have any
+2:01:05
+valid entry trigger to enter a trade while we have this nice bullish engulfing pattern okay so this
+2:01:11
+this candle has reversed and closed above the previous day closing or rather the highs of the
+2:01:17
+previous day closing now near the highs of this day so this is bullish great so what we
+2:01:22
+can do is that we have a you know number of factors working in our favor uh market structure is up trading from
+2:01:28
+an area of value and a valid entry trigger to go long let's see we overlay for 50 ma
+2:01:33
+okay not too bad as well we even have the 50 period moving average you know in our favor tested once twice and now here for third time again
+2:01:40
+so now where can we enter a trade the next day open so now next day looking pretty good as well we enter on the next stage
+2:01:45
+open okay so what about stop loss i pull out the atr indicator you can see the stop loss all right the
+2:01:52
+atr value is about 0.003 which is about 30 pips so again though to way to read this
+2:01:58
+stop-loss indicator is the same as you're reading a pip right you know a fourth decimal place same concept over
+2:02:03
+here so now let's find out what is the low of this support right so we can set a proper stop loss level
+2:02:08
+so the low over here is about 0.6818 so 0.6818
+2:02:16
+minus 30 that gives us about 0.6788
+2:02:23
+okay so our stop-loss will be at 0.6788 changes to rate 6788
+2:02:30
+great entry price pretty straightforward we enter on this uh opening price of this candle which is
+2:02:36
+about here i'll change this to green so we can mark as the entry price that we enter
+2:02:41
+so now i am not going to go through the position sizing because you should be a
+2:02:46
+pro by now already as for target it's going to be quite straightforward your target could set it just before this swing high
+2:02:53
+so let's say somewhere about here okay i'll change this to blue okay and that's a potential
+2:02:59
+level right where you can use to set your target profit so as of right now if you just eyeball you can
+2:03:05
+see that your risk to reward you're probably risking a dollar to make like 80 cents or so and as you know you can use a buy limit
+2:03:10
+order to improve your risk to reward on the trade and you know to manage your risk you can
+2:03:15
+use a position sizing calculator to know how many units of currency you should buy right such that
+2:03:20
+you risk like for example one percent of your account so that is something that we have done through previously as well so one thing to point
+2:03:27
+out is that uh for this particular example i want to show you how a losing trade looks like in this
+2:03:32
+case the market you know did went in our favor a little bit you can see that it goes up
+2:03:37
+here halfway through to our target over here before it starts to reverse and then stop us out for a loss
+2:03:44
+of this trade so this trade clearly is a losing trade it hits our stop loss and only after that right you can see
+2:03:49
+this trade continue to rally and break out higher so this will happen right in your trading career
+2:03:54
+i assure you i guarantee you a confirm plus chop right no matter how good a trading setup looks like no
+2:04:00
+matter how proper stop-loss how good of a stop-loss that you have set now below the the price structure below support the
+2:04:05
+market right sometimes will just you know play tricks on you you will still hit your stop-loss all right and to make you feel the anguish the pain only to reverse
+2:04:13
+back and you know go so much in your favor right and and to you know make you feel like a loser so that will
+2:04:18
+happen be prepared for it and this example is really clearly one that it and how do i know that it's because this is a
+2:04:24
+it's a trait i took right and it happened to me okay so moving on right let's have a
+2:04:31
+look at a few trading examples and this time around it will be a little bit different it will
+2:04:36
+be traits that i will not want to trade and again we will use the same formula we will use the same
+2:04:43
+uh concepts that we have talked about earlier we have a look at the market structure area of value and the entry trigger so
+2:04:50
+first one aussie against the japanese yen so if you look at this chart on this time frame the daily timeframe
+2:04:55
+you can see that the market structure is up great so what will we do we look for buying opportunities second thing where
+2:05:02
+is the area of value so on this chart and on this time frame i see that the area of value is around the 82
+2:05:09
+price point somewhere here so right now the price is kind of like in the middle of i would say nowhere so it's not near any
+2:05:15
+area of value i'll give it a cross entry trigger is there any valid entry trigger at this point in time
+2:05:20
+well since it's not even at an area of value i wouldn't really care if it's there's an entry trigger or not because i'm not trading
+2:05:27
+from an area of value and right now the price the market is still open it's not closed yet so again uh entry trigger is pretty much i'll say
+2:05:33
+no as well since this market is currently still uh moving and not closed yet so as you can see this is clearly a
+2:05:40
+trade that i don't want to trade yes market structure is up it's in an uptrend but
+2:05:45
+it's not from an area of value and there is no valid entry trigger for me to pull a trade second one dollar
+2:05:52
+against the norwegian chrono so same same thing let's have a look at this market structure you can see that this
+2:05:58
+one here is in the downtrend series of lower highs and lower lows downtrend
+2:06:03
+area of value is there is it near any area of value so again area value i would say somewhere around the 8.70
+2:06:10
+price point somewhere here price is over here at this point in time so i'll say no entry trigger wise if it's not at an
+2:06:16
+area of value then really usually i don't even bother looking at the entry trigger but for the sake of let's say this training we look at the entry
+2:06:22
+trigger we see there was a shooting start on the previous day right so there is an entry trigger
+2:06:27
+but because again it's not from an area of value i would choose to skip this trade altogether so hopefully by now you can
+2:06:33
+understand how market structure area of value and the entry trigger give you a good idea to hey you know whether should i be
+2:06:39
+taking a trade or not okay so at this point i'm sure you know you have learned
+2:06:45
+a fun right you covered forex trading basics risk management some simple numbers to run through and the final
+2:06:50
+section was actually more of a price action trading right learning about market structure area of value
+2:06:55
+support resistance candlestick patterns and stuff like that and if you're enjoying the training or if you've enjoyed it so far smash the thumbs up
+2:07:00
+button if not then hit the subscribe and yeah so for those of you who wants to learn more about price section
+2:07:06
+trading so basically the stuff that we have just covered right the chart analysis the support resistance the candlestick
+2:07:11
+patterns and whatnot if you want to dive deeper into it then i've actually got this book over here that will meet your needs it's called price
+2:07:18
+action trading secrets you can get it on this link over here i'll put this link below and what is price action trading secret
+2:07:24
+so this is actually a physical color trading book right that will be shipped out to you and in
+2:07:29
+this book right you'll learn more about price action trading you'll learn how to you know draw support resistance how to tell when support
+2:07:34
+resistance will break we dive deep into candlestick patterns chart analysis how to trade reversals how to trade
+2:07:39
+breakout and much much more so this book over here you can get a copy here today
+2:07:45
+and if you get a copy today today i'll share with you a few bonuses i'll give you a few bonuses for free for free
+2:07:52
+first bonus is the digital edition of price action trading secrets this is actually a pdf version so when you purchase the book today uh
+2:07:59
+i'll also send you a pdf version so you don't have to wait for your book to arrive right you can start reading immediately
+2:08:05
+the second bonus i'll give you is this position sizing calculator so you can manage your risk and never blow up
+2:08:10
+another trading account so just put in the numbers into this excel spreadsheet and it will tell you how many units right you should trade whether is it the
+2:08:16
+forex or the stock markets and then i also give you this third bonus part-time trading secrets
+2:08:23
+right this is a webinar right that will show you how you can actually trade part-time and become a consistently profitable trader without
+2:08:29
+quitting your full-time job and one special thing as you can see on this page over here i'm giving away three bonuses but for you the one
+2:08:36
+watching right now i'll throw in a special unannounced bonus and the bonus that i'm gonna give you give you the fourth bonus it's actually
+2:08:42
+the slides right off my presentation so all these slides this slides over here this one this entire slide i will
+2:08:48
+give it to you so this way as you're watching this video and if you want to take notes at least you have all this powerpoint slides with you you don't have to you
+2:08:54
+know manually take notes you know to find out what you've learned always in the slides you can have a copy of the slides and they'll help you with your further
+2:09:00
+revision or you know offer the learning right in the days to come so all this right will be given to you
+2:09:05
+for free when you invest in price action trading secrets today and if you're wondering right well hey rayner what if i don't
+2:09:11
+like price action trading secrets no worries because we have a money back guarantee right as long as you
+2:09:16
+let us know this for whatever reason within the first 60 days that hey everyone you know i didn't see any value in this book whatsoever we'll gladly
+2:09:22
+refund you in full so just go to this website price action trading secrets dot com
+2:09:28
+click on it right you'll be brought to this uh checkout page over here so just go to the page right you see all these blue buttons along the
+2:09:34
+page click on this blue button you'll be brought to this checkout page at the bottom just fill in your
+2:09:39
+name your address so we know where to ship the book to you and this book is like what 1290 for those of you who are living in the united states for those of
+2:09:45
+you outside of the united states it's like 18 90 cents and that includes the cost of printing of the book and the shipping
+2:09:51
+fee that's it so go to price action trading secrets.com right get your copy of it with that's it i wish you good luck good
+2:09:57
+trading i will talk to you soonhttps://www.youtube.com/watch?v=mEyuQVy3OHc

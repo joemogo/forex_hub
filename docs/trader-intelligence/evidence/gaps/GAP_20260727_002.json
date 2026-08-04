@@ -1,0 +1,31 @@
+{
+  "affectedSections": [
+    "Entry Trigger"
+  ],
+  "answerStatus": "partially_answered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "entry_trigger",
+  "confidence": "low",
+  "createdAt": "2026-07-27T22:15:39Z",
+  "currentBestAnswer": "Step 4 requires a one-minute confirmation confluence before entry.",
+  "evidenceSearched": [
+    "EV|EVSRC|TJR|20260727|001|036",
+    "EV|EVSRC|TJR|20260727|001|037",
+    "EV|EVSRC|TJR|20260727|001|038"
+  ],
+  "gapId": "GAP|20260727|002",
+  "proposedValidationMethod": "replay test against historical price action",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|TJR|20260727|027"
+    ]
+  },
+  "question": "What exact condition triggers an entry?",
+  "recommendedNextSourceType": "additional transcript with explicit entry-rule statements",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "No entry condition currently reaches confident support -- the strategy cannot be entered mechanically."
+}

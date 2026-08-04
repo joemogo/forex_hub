@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|013",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|004",
+  "questionText": "'Trading at the right times' is named as one of the four requirements for profitability but is never defined anywhere in either Alex G source. What are the right times?",
+  "questionType": "unclear_scope",
+  "reason": "A stated requirement of the method with no content attached to it.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

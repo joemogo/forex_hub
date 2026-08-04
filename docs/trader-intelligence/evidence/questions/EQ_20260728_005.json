@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": "CLAIM|ALEX_G|20260728|012",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|005",
+  "questionText": "Lower timeframes are said to inform 'how long can we have on our stop-loss on a takeprofit', but no stop rule, target rule, risk percentage or position sizing appears in either Alex G source. What are the actual rules?",
+  "questionType": "missing_stop_placement",
+  "reason": "Second Alex G source, still zero stop_rule / target_rule / risk_rule claims. This is now a confirmed structural gap in his published material rather than an omission from one video.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

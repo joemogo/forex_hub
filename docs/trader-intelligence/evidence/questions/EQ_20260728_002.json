@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|008",
+  "createdAt": "2026-07-28T01:36:32Z",
+  "evidenceIds": [],
+  "priority": "high",
+  "questionId": "EQ|20260728|002",
+  "questionText": "Any body close beyond a structure level counts as a shift regardless of size. How are false breaks, noise and immediate reversals handled? No minimum displacement, ATR filter or confirmation-bar requirement is stated.",
+  "questionType": "unclear_scope",
+  "reason": "The source explicitly rules OUT a size threshold, which resolves one ambiguity but leaves false-break handling entirely unaddressed.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|001"
+  ]
+}

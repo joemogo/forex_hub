@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_promotion",
+  "claimId": null,
+  "createdAt": "2026-07-28T20:52:12Z",
+  "evidenceIds": [],
+  "priority": "critical",
+  "questionId": "EQ|20260728|167",
+  "questionText": "Where is the stop placed?",
+  "questionType": "missing_stop_placement",
+  "reason": "EIGHT Alex G sources, `stop_rule` still 0. This source discusses 1:4 and 1:2 risk-to-reward, a $650 risk figure and a 100K account, and never states where the stop that defines that risk is placed. See BACKLOG-002/A1-STOP.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|007"
+  ]
+}

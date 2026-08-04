@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260729|025",
+  "createdAt": "2026-07-29T23:45:30Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260729|043",
+  "questionText": "Is the short-side mirror ever stated? All three demonstrations are longs and the phrasing is always 'right under'. The symmetric 'right above' for a short is never spoken or shown in this source.",
+  "questionType": "unclear_scope",
+  "reason": "The pattern is stated to work in both directions, but the stop rule is only ever articulated for one. Recorded rather than assumed symmetric.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260729|001"
+  ]
+}

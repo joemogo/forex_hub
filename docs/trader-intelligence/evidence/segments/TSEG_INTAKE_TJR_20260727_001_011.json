@@ -1,0 +1,20 @@
+{
+  "createdAt": "2026-07-27T03:56:30Z",
+  "endTimestamp": "15:11",
+  "intakeId": "INTAKE|TJR|20260727|001",
+  "language": "en",
+  "lineEnd": 119,
+  "lineStart": 100,
+  "metadata": {},
+  "normalizedText": null,
+  "rawText": "We're getting a confirmation confluence that hey we swept liquidity and we're confirming that liquidity has been swept because the trend is changing. What else can we look for? An SMT divergence. An SMT divergence is when one index makes a higher high and the other index makes a lower high or when one index makes a lower low and the other index makes a higher low. Okay. Okay. So, let's see if that was the case today. I don't think it was the case, but we can check. It was the case. Look at that, guys. Nice. Oh, wait, wait, wait. No, it might not be the case. It might not be the case. 9:15 9:05. Oh, no. Was it? It was the case. 905 9:15. Oo. Okay. So, this was the case. So, look, we'll go over the S&P 500's price action as well, but this is even more confirmations for us. Let's go ahead and put the put the chart lines on the S&P 500 as well while we're at it, just so we can be in tune with everything. So, we have London session highs right here, London session lows right here. We don't need these Asian session highs because we pushed above it and we didn't get a reaction off of it. or we did get a reaction off of it. But again, price moved past that and now it's New York market open. And then we also have Asia session lows right here. Cool. So we do have an SMT divergence. An SMT divergence is when one index makes a high and then a higher high while the other index makes a high and then a lower high. So, we see right here at 9 the S&P 500 makes a high and then at 9:15 the S&P 500 makes a lower high. On NASDAQ, we can see right here at 9 the S&P 500 makes a high and then at 9:15 NASDAQ makes a higher high. And then lastly, we had a break of structure, an inverse for value gap, an SMT divergence, and then the last thing that we can look for, which I know for a fact got hit because we made such a deep close, is we look for the Fibonacci extension. So, we take it from the low up to the high and we just wait for a candlestick closure underneath the 79% extension. And did we get that? Look at that. A candle closed underneath it. Yes. Beautiful. So, we got every single one of these confirmation confluences happening after this liquidity sweep.",
+  "schemaVersion": 1,
+  "sectionTitle": "SMT divergence and 79% Fibonacci extension defined",
+  "segmentId": "TSEG|INTAKE|TJR|20260727|001|011",
+  "segmentType": "other",
+  "sequenceNumber": 11,
+  "sourceId": "EVSRC|TJR|20260727|001",
+  "speaker": null,
+  "startTimestamp": "12:40",
+  "textHash": "e28361b8205557ec942ad33a49c72754478ae1e8284793a17665aa935bc79223"
+}

@@ -1,0 +1,19 @@
+{
+  "answerEvidenceIds": [],
+  "answerStatus": "unanswered",
+  "blockingStatus": "blocks_rule_candidate",
+  "claimId": "CLAIM|ALEX_G|20260728|050",
+  "createdAt": "2026-07-28T03:24:25Z",
+  "evidenceIds": [],
+  "priority": "medium",
+  "questionId": "EQ|20260728|043",
+  "questionText": "Which EMA period is used on the four-hour chart?",
+  "questionType": "ambiguous_statement",
+  "reason": "This is the first reference to an indicator in any Alex G source. It is named as a confluence at the entry and its period is never stated, so it cannot be reproduced.",
+  "researchStatus": "open",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "sourceIds": [
+    "EVSRC|ALEX_G|20260728|003"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "actor": "ingest-cli",
+  "entityId": "EVSRC|RAYNER_TEO|20260729|001",
+  "entityType": "EVIDENCE_SOURCE",
+  "eventId": "LCEVT|EVIDENCE_SOURCE|EVSRC|RAYNER_TEO|20260729|001|001",
+  "eventType": "created",
+  "metadata": {},
+  "newStatus": "registered",
+  "priorStatus": null,
+  "reason": "Source registered.",
+  "schemaVersion": 1,
+  "timestamp": "2026-07-29T00:05:09Z"
+}
