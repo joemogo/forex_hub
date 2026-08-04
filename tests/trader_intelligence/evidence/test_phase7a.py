@@ -58,12 +58,19 @@ class TempKnowledgeLibraryRepo:
         self.graph_root = os.path.join(self.ti_root, "graph")
         shutil.copytree(TI_ROOT, self.ti_root)
         self.evidence_root = os.path.join(self.ti_root, "evidence")
+        # The copied evidence/ tree is SCRATCH. That was only implicitly true
+        # while production evidence/ was empty; once a real transcript intake
+        # exists on disk, copytree would seed this fixture with production
+        # records and silently invalidate every assertion below. Emptying each
+        # record collection makes the scratch guarantee explicit.
         for name in ("sources", "items", "claims", "links", "contradictions", "lifecycle",
-                     "questions", "profiles", "blueprints", "gaps", "hypotheses",
-                     "intake", "segments", "annotations"):
+                     "questions", "proposals", "review-queue", "profiles", "blueprints",
+                     "gaps", "hypotheses", "intake", "segments", "annotations", "reports"):
             d = os.path.join(self.evidence_root, name)
+            if os.path.isdir(d):
+                shutil.rmtree(d)
             os.makedirs(d, exist_ok=True)
-            setattr(self, name + "_dir", d)
+            setattr(self, name.replace("-", "_") + "_dir", d)
 
     def cleanup(self):
         shutil.rmtree(self.root, ignore_errors=True)

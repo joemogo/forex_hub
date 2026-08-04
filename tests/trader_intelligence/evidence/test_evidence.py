@@ -129,6 +129,30 @@ class TempEvidenceRepo:
             json.dump(record, f)
 
 
+# Every evidence/ record collection that a *scratch* copy of the tree must
+# start empty. evidence/schema/ is structural, not data, so it is kept. See
+# tests/trader_intelligence/test_graph.py for the same guarantee.
+_SCRATCH_EVIDENCE_COLLECTIONS = (
+    "sources", "items", "claims", "links", "contradictions", "lifecycle", "questions",
+    "proposals", "review-queue", "intake", "segments", "annotations",
+    "profiles", "blueprints", "gaps", "hypotheses", "reports",
+)
+
+
+def _clear_scratch_evidence_tree(ti_root):
+    """A copied docs/trader-intelligence tree is used as a SCRATCH evidence
+    tree here. That held only while production evidence/ was empty; once a
+    real transcript intake exists on disk, copytree would silently seed every
+    fixture with production records. Emptying each record collection on copy
+    makes the scratch guarantee explicit instead of accidental."""
+    evidence_root = os.path.join(ti_root, "evidence")
+    for name in _SCRATCH_EVIDENCE_COLLECTIONS:
+        d = os.path.join(evidence_root, name)
+        if os.path.isdir(d):
+            shutil.rmtree(d)
+        os.makedirs(d, exist_ok=True)
+
+
 class TempGraphRepo:
     """A throwaway copy of the whole docs/trader-intelligence tree (mirrors
     test_graph.py's TempRepo) so evidence<->Knowledge-Graph integration can be
@@ -139,6 +163,7 @@ class TempGraphRepo:
         self.ti_root = os.path.join(self.root, "docs", "trader-intelligence")
         self.graph_root = os.path.join(self.ti_root, "graph")
         shutil.copytree(TI_ROOT, self.ti_root)
+        _clear_scratch_evidence_tree(self.ti_root)
         self.evidence_root = os.path.join(self.ti_root, "evidence")
 
     def cleanup(self):

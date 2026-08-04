@@ -38,6 +38,30 @@ def _copy_fixture(name, dest_dir, dest_filename=None):
     shutil.copy(os.path.join(FIXTURES_DIR, name), os.path.join(dest_dir, dest_filename or os.path.basename(name)))
 
 
+# Every evidence/ record collection that a *scratch* copy of the tree must
+# start empty. evidence/schema/ is structural, not data, so it is kept.
+SCRATCH_EVIDENCE_COLLECTIONS = (
+    "sources", "items", "claims", "links", "contradictions", "lifecycle", "questions",
+    "proposals", "review-queue", "intake", "segments", "annotations",
+    "profiles", "blueprints", "gaps", "hypotheses", "reports",
+)
+
+
+def clear_scratch_evidence_tree(ti_root):
+    """A copied docs/trader-intelligence tree is used by these fixtures as a
+    SCRATCH evidence tree. That was implicitly true only while production
+    evidence/ was empty; once a real transcript intake exists on disk,
+    copytree would silently seed every fixture with production records and
+    quietly invalidate their assertions. Emptying each record collection on
+    copy makes the scratch guarantee explicit instead of accidental."""
+    evidence_root = os.path.join(ti_root, "evidence")
+    for name in SCRATCH_EVIDENCE_COLLECTIONS:
+        d = os.path.join(evidence_root, name)
+        if os.path.isdir(d):
+            shutil.rmtree(d)
+        os.makedirs(d, exist_ok=True)
+
+
 class TempRepo:
     """Builds a throwaway copy of docs/trader-intelligence so tests can add
     synthetic data and run destructive scenarios (duplicates, broken refs)
@@ -48,6 +72,7 @@ class TempRepo:
         self.ti_root = os.path.join(self.root, "docs", "trader-intelligence")
         self.graph_root = os.path.join(self.ti_root, "graph")
         shutil.copytree(TI_ROOT, self.ti_root)
+        clear_scratch_evidence_tree(self.ti_root)
 
     def tjr_dir(self, sub):
         d = os.path.join(self.ti_root, "traders", "tjr", sub)
