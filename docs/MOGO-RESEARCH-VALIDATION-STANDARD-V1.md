@@ -133,12 +133,17 @@ Every item must **PASS** before a strategy enters replay. Any **FAIL** blocks.
 | **R7** | 🟡 **PARTIAL** | Candle timestamps are UTC-derived; `getSession()` and `isPreferredTradingDay()` are UTC. **But:** the v1.1 Mon–Wed gate lives in the *live* path (`alexGEvaluatePairForLiveSetups`) and **is not applied by the replay path** — see §3.3 |
 | **R8** | ❌ **FAIL** | `alexGConstructTrade` threads spread/slippage but the comment states they *"deliberately have ZERO effect on entry/stop/target/outcome math in this v1"* (`index.html:3634-3642`). Commission does not exist. Candles are fetched `price=M` — **mid only** (`index.html:5563`) |
 | **R9** | 🟡 **PARTIAL** | Source verified: OANDA v3 `/instruments/{pair}/candles`, `granularity`, `price=M`, `complete` candles only. **But** a code comment records *"a hard ceiling around ~48 days of available OANDA practice history"* (`index.html:2008`) against a UI offering up to **365 days** |
-| **R10** | ❌ **FAIL** | Documented open defect: `alexGProcessTimeframeCandle`'s role fallback makes it *"structurally impossible for the frozen zone engine to ever produce a validated, never-broken resistance-role zone, or a genuine `brokenDirection='upThroughResistance'`"* (`APP_VERSION_LOG` v4.0, verified empirically). **This biases the entire long/short distribution of any replay** |
+| **R10** | ✅ **PASS** — *corrected 2026-08-04, see §3.5* | The defect this row originally cited was **already superseded when this document was written** and has since been **empirically falsified**. Corrected rather than retained. |
 | **R11** | 🟡 **PARTIAL** | `alexGRunSetupReplay` returns a `rejected[]` array with reasons (`index.html:3790`). **But** it is session-only and captures only rejections at trade-construction stage — not rule-level detail |
 | **R12** | ❌ **FAIL** | No run record exists. `runAlexGReplay` returns a plain object (`index.html:3926`) with **no run ID, no commit hash, no config snapshot, no timestamp** |
 | **R13** | ✅ **PASS** | Still-open trades are explicit: `result='Still open'`, `exitBarIndex = candles.length-1`, excluded from `decided` statistics and counted separately (`stillOpenCount`) |
 
 ### 3.3 Gate verdict
+
+> ### ⚠️ SUPERSEDED — 2026-08-04. The verdict below was recorded against HEAD `a332d04` / engine
+> 12.7.0 and **two of its four blocking items no longer hold**. See §3.5 for the current position.
+> The original text is preserved unedited, because a gate verdict that quietly changes is worthless
+> as a record.
 
 # ❌ **FAIL — 4 blocking, 3 partial, 6 pass**
 
@@ -160,6 +165,63 @@ strategies**, and any comparison between them would be invalid.
 
 📐 **PROPOSED:** replay must apply the identical eligibility rule set as live, or the run record must
 declare which rules were not applied.
+
+### 3.5 ✅ Correction — R10 / B1 struck, 2026-08-04
+
+**This section corrects an error in this document. It is not a re-adjudication of the gate.**
+
+**What R10 and B1 asserted.** Both cited the `APP_VERSION_LOG` v4.0 discovery that
+`alexGProcessTimeframeCandle`'s role fallback made it *"structurally impossible for the frozen zone
+engine to ever produce a validated, never-broken resistance-role zone, or a genuine
+`brokenDirection='upThroughResistance'`."* R10 rated this the **most serious** of four blocking
+items, on the reasoning that it biases the long/short distribution of any replay.
+
+**Why it is wrong — two independent grounds.**
+
+1. **It was already fixed before this document was written.** v4.0.1, the *Alex G S&R zone-role
+   correction release*, replaced the `role = zone.lastKnownRole || 'support'` default with the
+   deterministic, stateless `alexGInferPriorZoneRole(zone, candles, currentBarIndex)`, which searches
+   strictly backward for the most recent completed close outside the zone, returns
+   `support` / `resistance` / `unknown`, never defaults, and skips break detection entirely when no
+   prior role can be established rather than guessing. **v4.0.1 predates engine 12.7.0**, the version
+   this document was written against. The quoted limitation did not hold at the time of writing.
+
+2. **It has since been falsified empirically.** Verified replay **RUN-001** (engine 12.9.0,
+   `runId 3d7c3dc1af7f`) produced **8 validated never-broken resistance zones** and **3 Break & Retest
+   BUY trades** carrying `brokenDirection: upThroughResistance` — packages `…20260518|1`,
+   `…20260507|1`, `…20260617|2`. The capability the row calls impossible is directly observable in
+   hash-verified evidence.
+
+**Consequence for the gate.** R10 is **PASS**. B1 is **struck**, not downgraded — it describes a
+defect that does not exist. `MOGO-003-CLOSEOUT.md` §4 recorded this as an outstanding stale claim;
+this section closes it.
+
+**What this correction does NOT do.**
+
+- **It does not authorize any replay.** Authorization is a separate, explicit instruction from the
+  Engineering Authority. This document is still marked *proposed, awaiting approval*, and an
+  unapproved standard neither permits nor forbids a run.
+- **It does not clear R4 or R8**, which were independently re-verified against engine 12.18.0 on
+  2026-08-03 and **still hold**:
+  - **R4** — `alexGConstructTrade` calls `pipValuePerLot()` (`index.html:3802` → `15031`), which reads
+    live `pairData`. Money-space position size and P&L remain non-reproducible; **R-space is
+    unaffected**.
+  - **R8** — spread and slippage are threaded but *"deliberately have ZERO effect"*
+    (`index.html:3755`); commission does not exist; a gap through a stop still fills at the exact stop
+    price.
+- **It does not clear §3.4**, which stands: replay does not apply the v1.1 Mon–Wed gate, so replay and
+  live remain different rule sets and must never be compared without saying so.
+- **R12 is separately closed** by MOGO-003's replay run identity (v12.9.0), which this document
+  predates.
+
+**Resulting scope of validity, not a pass/fail.** Replay evidence from this engine is valid for
+**R-space comparisons** — expectancy in R, net R, win rate, MAE/MFE, drawdown in R — and is **not
+valid** for money-space figures, for expectancy claims near zero where unmodelled costs of roughly
+3–10% of risk per round turn could move the sign, or for any statement about live v1.1 behaviour.
+
+**Correction basis.** `docs/MOGO-003-VERIFIED-REPLAY-RECORD.md` §RUN-001 ·
+`docs/strategy-fidelity/ALEX-BREAK-RETEST-LOSS-FORENSICS-2026-07.md` §1.1 (corrected 2026-08-03) ·
+`APP_VERSION_LOG` v4.0.1 · `docs/reports/MOGO-003-CLOSEOUT.md` §4.
 
 ---
 
@@ -630,7 +692,7 @@ straddling a live H1 boundary · a code change mid-run · **any citation of mone
 
 | # | Requirement | Status | Evidence | Severity | Blocks replay? | Milestone |
 |---|---|---|---|---|---|---|
-| B1 | Resistance-role zones can form | ❌ **BROKEN** | `APP_VERSION_LOG` v4.0 — *"structurally impossible… to ever produce a validated, never-broken resistance-role zone"*; verified empirically | **CRITICAL** | **YES** | MOGO-004 |
+| ~~B1~~ | ~~Resistance-role zones can form~~ | ✅ **NOT A DEFECT** — *struck 2026-08-04, see §3.5* | Fixed by v4.0.1 before this document was written; falsified empirically by RUN-001 (8 validated never-broken resistance zones, 3 `upThroughResistance` breaks) | — | **NO** | — |
 | B2 | Explicit date range | ❌ | `fetchCandlesRange` walks back from now; no `from` | **CRITICAL** | **YES** | MOGO-004 |
 | B3 | Replay-run ID + run record | ❌ | `runAlexGReplay` returns a bare object | **CRITICAL** | **YES** | MOGO-004 |
 | B4 | Result persistence | ❌ | `alexGReplayTrades` session-only (`index.html:2137`) | **CRITICAL** | **YES** | MOGO-004 |
