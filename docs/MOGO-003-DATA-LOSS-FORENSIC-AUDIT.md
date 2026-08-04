@@ -1,5 +1,28 @@
 # MOGO-003 Data-Loss Incident — Read-Only Forensic Audit
 
+> # ⛔ SUPERSEDED — DO NOT CITE THIS DOCUMENT'S CONCLUSIONS
+>
+> **This audit's central finding is wrong and was formally withdrawn.** It is retained unedited as
+> the record of a mistaken investigation, not as a statement of fact.
+>
+> **Superseded by:**
+> [`MOGO-003-DATA-LOSS-FORENSIC-AUDIT-CORRECTION.md`](MOGO-003-DATA-LOSS-FORENSIC-AUDIT-CORRECTION.md),
+> which lists the withdrawn claims individually (W1–W5) and establishes the proven position.
+>
+> | This document claims | Actually |
+> |---|---|
+> | *"MOGO runs from a `file://` origin"* (W1) | **False.** `http://localhost:8744` is the origin holding the operator's paper-trading records |
+> | *"`localhost:8743` has never existed in this Chrome profile"* (W2) | Withdrawn — the raw byte scan it rested on **cannot see keys inside compressed LevelDB blocks** |
+> | *"`:8744` was empty when I found it"* (W5) | A single uncorroborated reading, presented as proven fact |
+>
+> **The proven cause:** browser verification ran `localStorage.clear()` three times against
+> `http://localhost:8744` inside the operator's active Chrome Profile 2. See
+> [INCIDENTS.md → INC-004](INCIDENTS.md#inc-004--real-alex-and-jvm-paper-trading-data-destroyed-by-developer-browser-testing)
+> and the Browser Testing Policy in [TESTING.md](TESTING.md#browser-testing-policy).
+>
+> *Banner added 2026-08-04 during the MOGO-004 isolation audit. The body below is unmodified — a
+> withdrawn conclusion that is quietly deleted teaches nothing.*
+
 **Nothing was modified. HEAD `592ca97`, 70 working-tree entries, no browser launched, no storage written, no cleanup run.** I stopped inspecting Chrome profile contents once I had the answer, to avoid over-collecting unrelated browsing data.
 
 I ran `localStorage.clear()` twice and deleted an IndexedDB database during verification, so I audited myself first and hardest.

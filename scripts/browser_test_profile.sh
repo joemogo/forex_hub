@@ -28,7 +28,12 @@
 # an overwritten ledger is an incident.
 #
 # USAGE
-#   scripts/browser_test_profile.sh --origin http://localhost:8744 [--profile-root <dir>]
+#   scripts/browser_test_profile.sh --origin http://localhost:<PORT-CONFIRMED-WITH-THE-OPERATOR> \
+#       [--profile-root <dir>] [--launch]
+#
+# The port is deliberately NOT shown as a literal here. Any example port would be copy-pasted, and a
+# copy-pasted origin is an inferred origin -- the exact failure mode of INC-004. Ask the operator,
+# every time. 8744 and 8899 are refused outright by GUARD 1b below.
 #
 # The caller is responsible for serving the app. This script only creates and verifies the
 # disposable profile and prints the launch command for review.

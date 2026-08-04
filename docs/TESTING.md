@@ -322,7 +322,7 @@ an overwritten ledger is an incident.
 | Origin | What it is | Evidence |
 |---|---|---|
 | `http://localhost:8744` | **The operator's live MOGO origin.** | INC-004 — data destroyed here, and it reappeared here after a Time Machine restore |
-| `http://localhost:8899` | **A contaminated test origin.** Holds the INC-005 hand-seeded record `AGT\|MANUAL-B\|1`; its ALEX account reads `balance 10200`. Quarantined from every statistic but never corrected | [INC-005](INCIDENTS.md#inc-005) · [MOGO-003-CLOSEOUT.md](reports/MOGO-003-CLOSEOUT.md) §4 |
+| `http://localhost:8899` | **A contaminated test origin.** Holds the INC-005 hand-seeded record `AGT\|MANUAL-B\|1`; its ALEX account reads `balance 10200`. Quarantined from every statistic but never corrected | [INC-005](INCIDENTS.md#inc-005--a-hand-seeded-record-counted-as-a-real-alex-paper-trade) · [MOGO-003-CLOSEOUT.md](reports/MOGO-003-CLOSEOUT.md) §4 |
 
 > ⚠️ **The absence of a port from this table proves nothing.** It does not mean the port is free,
 > empty, disposable, or safe. **INC-004 happened on exactly that reasoning** — 8744 was assumed

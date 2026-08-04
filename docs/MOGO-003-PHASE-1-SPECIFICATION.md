@@ -124,8 +124,14 @@ Three mechanisms, in descending order of strength.
 
 The first programmatic download prompts *"Allow this site to download multiple files?"*. **Once the
 operator allows it, subsequent exports write to the downloads directory with no further
-interaction.** The app is served from `http://localhost:8743` (per `.claude/launch.json`) — a secure
-context, so this is available.
+interaction.** The app is served from a `http://localhost:<port>` origin — a secure context, so this
+is available.
+
+> **Corrected 2026-08-04.** This paragraph originally read *"served from `http://localhost:8743` (per
+> `.claude/launch.json`)"*. **Nothing has ever served on 8743**, and reading the origin out of
+> `launch.json` is the proven root cause of INC-004. The substantive claim is unaffected: **every**
+> `http://localhost:<port>` origin is a secure context regardless of port. See
+> [TESTING.md → Known non-disposable origins](TESTING.md#known-non-disposable-origins--a-denylist-never-an-approval).
 
 **Trigger policy:** on every trade close · on a rolling cadence when ≥ N new packages are pending ·
 on `visibilitychange → hidden` (tab close / navigate away).
@@ -429,9 +435,13 @@ concatenated into a filename** (Minor 1).
 
 ## 5.4 When Web Crypto is unavailable — the honest degraded path
 
-`crypto.subtle` requires a secure context. `http://localhost:8743` (per `.claude/launch.json`) **is**
-one. But `index.html` can also be opened directly from disk over `file://`, where `crypto.subtle` is
-`undefined`. `evidenceHashAvailable()` detects this once.
+`crypto.subtle` requires a secure context. Any `http://localhost:<port>` origin **is** one — the port
+is irrelevant. But `index.html` can also be opened directly from disk over `file://`, where
+`crypto.subtle` is `undefined`. `evidenceHashAvailable()` detects this once.
+
+> **Corrected 2026-08-04**, same reason as §5.3: this cited `http://localhost:8743` *"per
+> `.claude/launch.json`"*, a port nothing has ever served, sourced from the file INC-004 proved must
+> never be trusted for an origin. The secure-context conclusion is unchanged.
 
 **Policy — evidence preservation wins, but the claim degrades honestly:**
 
