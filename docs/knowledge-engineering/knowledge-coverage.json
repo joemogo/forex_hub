@@ -1,26 +1,26 @@
 {
   "claimsByCategory": {
-    "DEFINITION": 15,
+    "DEFINITION": 22,
     "DISCRETIONARY_GUIDANCE": 7,
-    "EDUCATIONAL_COMMENTARY": 34,
-    "ENTRY": 29,
+    "EDUCATIONAL_COMMENTARY": 35,
+    "ENTRY": 34,
     "EXAMPLE": 2,
-    "INVALIDATION": 9,
-    "MARKETING": 14,
-    "MARKET_CONTEXT": 1,
+    "INVALIDATION": 10,
+    "MARKETING": 20,
+    "MARKET_CONTEXT": 2,
     "NO_TRADE_CONDITION": 16,
     "PSYCHOLOGY": 13,
-    "RISK": 13,
+    "RISK": 15,
     "SESSION": 7,
-    "TIMEFRAME": 3,
-    "TRADE_MANAGEMENT": 8,
-    "TRADING_RULE": 23,
+    "TIMEFRAME": 7,
+    "TRADE_MANAGEMENT": 10,
+    "TRADING_RULE": 25,
     "UNKNOWN": 1
   },
   "claimsByExplicitness": {
     "DISCRETIONARY": 7,
-    "EXPLICIT": 122,
-    "UNRESOLVED": 66
+    "EXPLICIT": 139,
+    "UNRESOLVED": 80
   },
   "claimsBySource": {
     "EVSRC|ALEX_G|20260727|001": 30,
@@ -30,35 +30,36 @@
     "EVSRC|ALEX_G|20260728|004": 37,
     "EVSRC|ALEX_G|20260728|005": 33,
     "EVSRC|ALEX_G|20260728|006": 21,
-    "EVSRC|ALEX_G|20260728|007": 21
+    "EVSRC|ALEX_G|20260728|007": 21,
+    "EVSRC|ALEX_G|20260729|001": 31
   },
   "claimsByStrategyDomain": {
-    "DISCRETIONARY_ELEMENTS": 39,
-    "ENTRY": 29,
-    "INVALIDATION": 9,
+    "DISCRETIONARY_ELEMENTS": 40,
+    "ENTRY": 34,
+    "INVALIDATION": 10,
     "LIQUIDITY": 5,
-    "MARKET_CONDITIONS": 18,
-    "MARKET_STRUCTURE": 12,
+    "MARKET_CONDITIONS": 19,
+    "MARKET_STRUCTURE": 19,
     "NO_TRADE_CONDITIONS": 14,
-    "RISK": 13,
+    "RISK": 15,
     "SESSION_RESTRICTIONS": 7,
-    "SETUP": 23,
-    "TIMEFRAMES": 3,
-    "TRADE_MANAGEMENT": 8,
-    "UNRESOLVED_QUESTIONS": 15
+    "SETUP": 25,
+    "TIMEFRAMES": 7,
+    "TRADE_MANAGEMENT": 10,
+    "UNRESOLVED_QUESTIONS": 21
   },
   "confidenceDistribution": {
     "claims": {
-      "LOW": 195
+      "LOW": 226
     },
     "normalizedRules": {
-      "LOW": 70,
-      "MEDIUM": 41
+      "LOW": 84,
+      "MEDIUM": 43
     }
   },
   "coverageByDomain": [
     {
-      "claims": 18,
+      "claims": 19,
       "confidenceLevel": "NONE",
       "coverageLevel": "CLAIMS_ONLY_NO_RULES",
       "deterministic": "0 / 0 rules",
@@ -66,12 +67,12 @@
       "normalizedRules": "0 / 0 candidates"
     },
     {
-      "claims": 3,
+      "claims": 7,
       "confidenceLevel": "LOW",
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
-      "deterministic": "0 / 3 rules",
+      "deterministic": "0 / 7 rules",
       "domain": "TIMEFRAMES",
-      "normalizedRules": "3 / 3 candidates"
+      "normalizedRules": "7 / 7 candidates"
     },
     {
       "claims": 0,
@@ -82,7 +83,7 @@
       "normalizedRules": "0 / 0 candidates"
     },
     {
-      "claims": 12,
+      "claims": 19,
       "confidenceLevel": "NONE",
       "coverageLevel": "CLAIMS_ONLY_NO_RULES",
       "deterministic": "0 / 0 rules",
@@ -98,44 +99,44 @@
       "normalizedRules": "2 / 2 candidates"
     },
     {
-      "claims": 23,
+      "claims": 25,
       "confidenceLevel": "MEDIUM",
       "coverageLevel": "PARTIAL",
-      "deterministic": "13 / 21 rules",
+      "deterministic": "14 / 23 rules",
       "domain": "SETUP",
-      "normalizedRules": "21 / 23 candidates"
+      "normalizedRules": "23 / 25 candidates"
     },
     {
-      "claims": 29,
+      "claims": 34,
       "confidenceLevel": "LOW",
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
-      "deterministic": "0 / 27 rules",
+      "deterministic": "0 / 32 rules",
       "domain": "ENTRY",
-      "normalizedRules": "27 / 29 candidates"
+      "normalizedRules": "32 / 34 candidates"
     },
     {
-      "claims": 9,
+      "claims": 10,
       "confidenceLevel": "LOW",
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
-      "deterministic": "0 / 9 rules",
+      "deterministic": "0 / 10 rules",
       "domain": "INVALIDATION",
-      "normalizedRules": "9 / 9 candidates"
+      "normalizedRules": "10 / 10 candidates"
     },
     {
-      "claims": 13,
+      "claims": 15,
       "confidenceLevel": "MEDIUM",
       "coverageLevel": "PARTIAL",
-      "deterministic": "11 / 13 rules",
+      "deterministic": "11 / 15 rules",
       "domain": "RISK",
-      "normalizedRules": "13 / 13 candidates"
+      "normalizedRules": "15 / 15 candidates"
     },
     {
-      "claims": 8,
+      "claims": 10,
       "confidenceLevel": "MEDIUM",
       "coverageLevel": "PARTIAL",
-      "deterministic": "4 / 8 rules",
+      "deterministic": "5 / 10 rules",
       "domain": "TRADE_MANAGEMENT",
-      "normalizedRules": "8 / 8 candidates"
+      "normalizedRules": "10 / 10 candidates"
     },
     {
       "claims": 0,
@@ -162,7 +163,7 @@
       "normalizedRules": "14 / 14 candidates"
     },
     {
-      "claims": 39,
+      "claims": 40,
       "confidenceLevel": "LOW",
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
       "deterministic": "0 / 7 rules",
@@ -170,7 +171,7 @@
       "normalizedRules": "7 / 7 candidates"
     },
     {
-      "claims": 15,
+      "claims": 21,
       "confidenceLevel": "NONE",
       "coverageLevel": "CLAIMS_ONLY_NO_RULES",
       "deterministic": "0 / 0 rules",
@@ -196,48 +197,48 @@
   ],
   "sourceTraceability": {
     "claimsWithSourceReference": {
-      "n": 195,
-      "of": 195
+      "n": 226,
+      "of": 226
     },
     "rulesWithSourceMapping": {
-      "n": 111,
-      "of": 111
+      "n": 127,
+      "of": 127
     },
     "rulesWithVerbatimExcerpt": {
-      "n": 111,
-      "of": 111
+      "n": 127,
+      "of": 127
     }
   },
   "totals": {
     "approvedRules": {
       "n": 0,
       "note": "MOGO-002.6 may not approve any rule (OD-1 mod. 6).",
-      "of": 111
+      "of": 127
     },
     "candidateRuleEligibleClaims": {
-      "n": 115,
-      "of": 195
+      "n": 131,
+      "of": 226
     },
-    "candidateRules": 115,
-    "claims": 195,
-    "contradictions": 11,
+    "candidateRules": 131,
+    "claims": 226,
+    "contradictions": 13,
     "deferredCandidates": 4,
     "draftRules": {
-      "n": 111,
-      "of": 111
+      "n": 127,
+      "of": 127
     },
     "duplicateGroups": 4,
-    "normalizedRules": 111,
-    "sourceArtifacts": 8
+    "normalizedRules": 127,
+    "sourceArtifacts": 9
   },
   "unresolvedItems": {
     "nonDeterministicRules": {
-      "n": 70,
-      "of": 111
+      "n": 84,
+      "of": 127
     },
     "rulesWithUnresolvedElements": {
-      "n": 66,
-      "of": 111
+      "n": 80,
+      "of": 127
     }
   }
 }

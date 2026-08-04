@@ -776,6 +776,118 @@
       "relationship": "primary",
       "ruleId": "KERULE|ALEX_G|115",
       "sourceId": "EVSRC|ALEX_G|20260728|007"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|007",
+      "exactExcerpt": "now breaking retest is most effective at these zones",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|116",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|008",
+      "exactExcerpt": "the higher the time frame the more it is going to be respected",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|117",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|009",
+      "exactExcerpt": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|118",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|011",
+      "exactExcerpt": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|119",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|013",
+      "exactExcerpt": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|120",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|015",
+      "exactExcerpt": "for your day Trad you want to use it more on the 4our one hour",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|121",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|016",
+      "exactExcerpt": "swing trades you want to take it on the daily and then weekly time frame",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|122",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|017",
+      "exactExcerpt": "but now the actual entry signal you have to go on the lower time frame",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|123",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|018",
+      "exactExcerpt": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|124",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|019",
+      "exactExcerpt": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|125",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|020",
+      "exactExcerpt": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|126",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|021",
+      "exactExcerpt": "you would have simply put your entry point right here",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|127",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|022",
+      "exactExcerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|128",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|023",
+      "exactExcerpt": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|129",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|024",
+      "exactExcerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|130",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
+    },
+    {
+      "claimId": "CLAIM|ALEX_G|20260729|025",
+      "exactExcerpt": "it's literally the same thing every single time your stop- loss is right under it",
+      "relationship": "primary",
+      "ruleId": "KERULE|ALEX_G|131",
+      "sourceId": "EVSRC|ALEX_G|20260729|001"
     }
   ]
 }

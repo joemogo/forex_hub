@@ -2159,7 +2159,7 @@
       ],
       "claimsExcluded": [],
       "confidence": "LOW",
-      "contradictionHandling": "No contradictions.",
+      "contradictionHandling": "Carries 1 contradiction reference(s), recorded and left open.",
       "decisionId": "KEDEC|ALEX_G|111",
       "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
       "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
@@ -2249,6 +2249,339 @@
         "CLAIM|ALEX_G|20260728|159"
       ],
       "unresolvedElements": []
+    },
+    {
+      "assumptionsAvoided": [
+        "No parameters were required beyond those the source states."
+      ],
+      "claimsExcluded": [],
+      "confidence": "MEDIUM",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|116",
+      "determinismRationale": "Deterministic: explicitly stated, no unresolved parameter, no contradiction.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType setup_requirement expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|116",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|007"
+      ],
+      "unresolvedElements": []
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|117",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType timeframe_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|117",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|008"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|118",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType timeframe_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|118",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|009"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|119",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType setup_requirement expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|119",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|011"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|120",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType invalidation_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|120",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|013"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|121",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType timeframe_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|121",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|015"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|122",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType timeframe_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|122",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|016"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|123",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType entry_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|123",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|017"
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|124",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType confirmation_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|124",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|018"
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|125",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType confirmation_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|125",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|019"
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|126",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType confirmation_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|126",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|020"
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|127",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType entry_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|127",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|021"
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|128",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType stop_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|128",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|022"
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "Carries 1 contradiction reference(s), recorded and left open.",
+      "decisionId": "KEDEC|ALEX_G|129",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Optional: originating claimType target_rule does not express an obligation.",
+      "ruleId": "KERULE|ALEX_G|129",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|023"
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ]
+    },
+    {
+      "assumptionsAvoided": [
+        "No parameters were required beyond those the source states."
+      ],
+      "claimsExcluded": [],
+      "confidence": "MEDIUM",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|130",
+      "determinismRationale": "Deterministic: explicitly stated, no unresolved parameter, no contradiction.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Optional: originating claimType trade_management_rule does not express an obligation.",
+      "ruleId": "KERULE|ALEX_G|130",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|024"
+      ],
+      "unresolvedElements": []
+    },
+    {
+      "assumptionsAvoided": [
+        "No numeric threshold, session window, timeframe or indicator setting was supplied where the source omitted one."
+      ],
+      "claimsExcluded": [],
+      "confidence": "LOW",
+      "contradictionHandling": "No contradictions.",
+      "decisionId": "KEDEC|ALEX_G|131",
+      "determinismRationale": "NOT deterministic: explicitness is UNRESOLVED.",
+      "draftRationale": "Remains DRAFT/NEEDS_REVIEW: OD-1 modification 6 forbids any rule in this milestone exceeding NEEDS_REVIEW, and the originating claim is at confidence state 'emerging' with no independent corroboration.",
+      "duplicateHandling": "No duplicate group; single claim.",
+      "exactMeaningRetained": "Canonical statement is the evidence store's own normalizedClaim, unchanged. The educator's verbatim excerpt is preserved in the source mappings.",
+      "requirementRationale": "Required: originating claimType stop_rule expresses an obligation.",
+      "ruleId": "KERULE|ALEX_G|131",
+      "sourceClaimsUsed": [
+        "CLAIM|ALEX_G|20260729|025"
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ]
     }
   ],
   "deferred": [

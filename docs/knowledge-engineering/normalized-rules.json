@@ -1,5 +1,5 @@
 {
-  "count": 111,
+  "count": 127,
   "rules": [
     {
       "approvalReference": null,
@@ -3444,7 +3444,9 @@
       "classification": "UNRESOLVED",
       "conditions": [],
       "confidence": "LOW",
-      "contradictionReferences": [],
+      "contradictionReferences": [
+        "KECON|20260729|004"
+      ],
       "dependencies": [],
       "deterministic": false,
       "educatorId": "ALEX_G",
@@ -3590,6 +3592,533 @@
         }
       ],
       "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory.",
+      "category": "SETUP",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|116",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|007",
+          "exactExcerpt": "now breaking retest is most effective at these zones",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|116",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A break-and-retest on a higher timeframe is asserted to be more reliable than one on a lower timeframe. Comparative only - no ranking, weighting or threshold is stated.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|117",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|008",
+          "exactExcerpt": "the higher the time frame the more it is going to be respected",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|117",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "His own practice is to identify break-and-retest continuation on the 4-hour and daily and to take entries on lower timeframes. Framed as personal preference ('I personally like'), not as a requirement.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|118",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|009",
+          "exactExcerpt": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|118",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum.",
+      "category": "SETUP",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|119",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|011",
+          "exactExcerpt": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|119",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry.",
+      "category": "INVALIDATION",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|120",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|013",
+          "exactExcerpt": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|120",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "For day trading, break-and-retest is to be read on the 4-hour and 1-hour. Qualified immediately by 'depending on how approach you want to take it', so it is a default rather than a constraint.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|121",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|015",
+          "exactExcerpt": "for your day Trad you want to use it more on the 4our one hour",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|121",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "For swing trades, break-and-retest is to be read on the daily and weekly. The preceding word in the transcript ('Inay') is garbled and the second trading style it names cannot be recovered from this transcript - recorded as an open question, not guessed.",
+      "category": "TIMEFRAMES",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|122",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|016",
+          "exactExcerpt": "swing trades you want to take it on the daily and then weekly time frame",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|122",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|123",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|017",
+          "exactExcerpt": "but now the actual entry signal you have to go on the lower time frame",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|123",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have').",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|124",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|018",
+          "exactExcerpt": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|124",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "3 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|125",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|019",
+          "exactExcerpt": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|125",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|126",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|020",
+          "exactExcerpt": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|126",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)",
+        "the source states the rule but withholds its parameter"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named.",
+      "category": "ENTRY",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|127",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|021",
+          "exactExcerpt": "you would have simply put your entry point right here",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|127",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated.",
+      "category": "RISK",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|128",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|022",
+          "exactExcerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|128",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "1 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [
+        "KECON|20260729|004"
+      ],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|129",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|023",
+          "exactExcerpt": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|129",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "2 blocking open question(s)"
+      ],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit.",
+      "category": "TRADE_MANAGEMENT",
+      "classification": "EXPLICIT",
+      "conditions": [],
+      "confidence": "MEDIUM",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": true,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": false,
+      "ruleId": "KERULE|ALEX_G|130",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|024",
+          "exactExcerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|130",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [],
+      "validationStatus": "UNVALIDATED",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "approvalReference": null,
+      "approvalStatus": "NEEDS_REVIEW",
+      "canonicalStatement": "Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere.",
+      "category": "RISK",
+      "classification": "UNRESOLVED",
+      "conditions": [],
+      "confidence": "LOW",
+      "contradictionReferences": [],
+      "dependencies": [],
+      "deterministic": false,
+      "educatorId": "ALEX_G",
+      "exclusions": [],
+      "maturity": "NORMALIZED",
+      "notes": null,
+      "outputs": [],
+      "required": true,
+      "ruleId": "KERULE|ALEX_G|131",
+      "sourceMappings": [
+        {
+          "claimId": "CLAIM|ALEX_G|20260729|025",
+          "exactExcerpt": "it's literally the same thing every single time your stop- loss is right under it",
+          "relationship": "primary",
+          "ruleId": "KERULE|ALEX_G|131",
+          "sourceId": "EVSRC|ALEX_G|20260729|001"
+        }
+      ],
+      "unresolvedElements": [
+        "4 blocking open question(s)"
+      ],
       "validationStatus": "UNVALIDATED",
       "version": "v2.0.0-draft"
     }

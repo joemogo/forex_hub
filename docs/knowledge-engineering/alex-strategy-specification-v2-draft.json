@@ -4,7 +4,7 @@
   "domainReports": [
     {
       "candidateRules": 0,
-      "claimsReviewed": 18,
+      "claimsReviewed": 19,
       "confidenceLevel": "NONE",
       "contradictions": 0,
       "coverageLevel": "CLAIMS_ONLY_NO_RULES",
@@ -13,21 +13,21 @@
       "missingSourceEvidence": [],
       "normalizedRules": 0,
       "rulesWithUnresolvedElements": 0,
-      "unresolvedClaims": 18
+      "unresolvedClaims": 19
     },
     {
-      "candidateRules": 3,
-      "claimsReviewed": 3,
+      "candidateRules": 7,
+      "claimsReviewed": 7,
       "confidenceLevel": "LOW",
       "contradictions": 0,
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
       "deterministicRules": 0,
       "domain": "TIMEFRAMES",
       "missingSourceEvidence": [
-        "3 of 3 rules carry an unresolved parameter the source never states."
+        "7 of 7 rules carry an unresolved parameter the source never states."
       ],
-      "normalizedRules": 3,
-      "rulesWithUnresolvedElements": 3,
+      "normalizedRules": 7,
+      "rulesWithUnresolvedElements": 7,
       "unresolvedClaims": 0
     },
     {
@@ -47,7 +47,7 @@
     },
     {
       "candidateRules": 0,
-      "claimsReviewed": 12,
+      "claimsReviewed": 19,
       "confidenceLevel": "NONE",
       "contradictions": 2,
       "coverageLevel": "CLAIMS_ONLY_NO_RULES",
@@ -56,7 +56,7 @@
       "missingSourceEvidence": [],
       "normalizedRules": 0,
       "rulesWithUnresolvedElements": 0,
-      "unresolvedClaims": 12
+      "unresolvedClaims": 19
     },
     {
       "candidateRules": 2,
@@ -74,79 +74,79 @@
       "unresolvedClaims": 3
     },
     {
-      "candidateRules": 23,
-      "claimsReviewed": 23,
+      "candidateRules": 25,
+      "claimsReviewed": 25,
       "confidenceLevel": "MEDIUM",
-      "contradictions": 3,
+      "contradictions": 4,
       "coverageLevel": "PARTIAL",
-      "deterministicRules": 13,
+      "deterministicRules": 14,
       "domain": "SETUP",
       "missingSourceEvidence": [
-        "8 of 21 rules carry an unresolved parameter the source never states."
+        "9 of 23 rules carry an unresolved parameter the source never states."
       ],
-      "normalizedRules": 21,
-      "rulesWithUnresolvedElements": 8,
+      "normalizedRules": 23,
+      "rulesWithUnresolvedElements": 9,
       "unresolvedClaims": 0
     },
     {
-      "candidateRules": 29,
-      "claimsReviewed": 29,
+      "candidateRules": 34,
+      "claimsReviewed": 34,
       "confidenceLevel": "LOW",
       "contradictions": 3,
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
       "deterministicRules": 0,
       "domain": "ENTRY",
       "missingSourceEvidence": [
-        "27 of 27 rules carry an unresolved parameter the source never states."
+        "32 of 32 rules carry an unresolved parameter the source never states."
       ],
-      "normalizedRules": 27,
-      "rulesWithUnresolvedElements": 27,
+      "normalizedRules": 32,
+      "rulesWithUnresolvedElements": 32,
       "unresolvedClaims": 0
     },
     {
-      "candidateRules": 9,
-      "claimsReviewed": 9,
+      "candidateRules": 10,
+      "claimsReviewed": 10,
       "confidenceLevel": "LOW",
       "contradictions": 0,
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
       "deterministicRules": 0,
       "domain": "INVALIDATION",
       "missingSourceEvidence": [
-        "9 of 9 rules carry an unresolved parameter the source never states."
+        "10 of 10 rules carry an unresolved parameter the source never states."
       ],
-      "normalizedRules": 9,
-      "rulesWithUnresolvedElements": 9,
+      "normalizedRules": 10,
+      "rulesWithUnresolvedElements": 10,
       "unresolvedClaims": 0
     },
     {
-      "candidateRules": 13,
-      "claimsReviewed": 13,
+      "candidateRules": 15,
+      "claimsReviewed": 15,
       "confidenceLevel": "MEDIUM",
-      "contradictions": 1,
+      "contradictions": 2,
       "coverageLevel": "PARTIAL",
       "deterministicRules": 11,
       "domain": "RISK",
       "missingSourceEvidence": [
-        "2 of 13 rules carry an unresolved parameter the source never states.",
+        "4 of 15 rules carry an unresolved parameter the source never states.",
         "Risk SIZING is present; STOP PLACEMENT is absent -- position size cannot be computed from these rules alone."
       ],
-      "normalizedRules": 13,
-      "rulesWithUnresolvedElements": 2,
+      "normalizedRules": 15,
+      "rulesWithUnresolvedElements": 4,
       "unresolvedClaims": 0
     },
     {
-      "candidateRules": 8,
-      "claimsReviewed": 8,
+      "candidateRules": 10,
+      "claimsReviewed": 10,
       "confidenceLevel": "MEDIUM",
       "contradictions": 0,
       "coverageLevel": "PARTIAL",
-      "deterministicRules": 4,
+      "deterministicRules": 5,
       "domain": "TRADE_MANAGEMENT",
       "missingSourceEvidence": [
-        "4 of 8 rules carry an unresolved parameter the source never states."
+        "5 of 10 rules carry an unresolved parameter the source never states."
       ],
-      "normalizedRules": 8,
-      "rulesWithUnresolvedElements": 4,
+      "normalizedRules": 10,
+      "rulesWithUnresolvedElements": 5,
       "unresolvedClaims": 0
     },
     {
@@ -197,7 +197,7 @@
     },
     {
       "candidateRules": 7,
-      "claimsReviewed": 39,
+      "claimsReviewed": 40,
       "confidenceLevel": "LOW",
       "contradictions": 0,
       "coverageLevel": "RULES_BUT_NONE_DETERMINISTIC",
@@ -208,11 +208,11 @@
       ],
       "normalizedRules": 7,
       "rulesWithUnresolvedElements": 4,
-      "unresolvedClaims": 32
+      "unresolvedClaims": 33
     },
     {
       "candidateRules": 0,
-      "claimsReviewed": 15,
+      "claimsReviewed": 21,
       "confidenceLevel": "NONE",
       "contradictions": 2,
       "coverageLevel": "CLAIMS_ONLY_NO_RULES",
@@ -221,14 +221,14 @@
       "missingSourceEvidence": [],
       "normalizedRules": 0,
       "rulesWithUnresolvedElements": 0,
-      "unresolvedClaims": 15
+      "unresolvedClaims": 21
     }
   ],
-  "draftRuleSetHash": "1ff9772292df9577bb4f3b1322725ac2c195030fad97a46782bac944c7001a13",
+  "draftRuleSetHash": "28c80a7492ca39ad50c6a1dab80e428d0f294b2af76ed37e3e7330348e2f860a",
   "draftVersion": "v2.0.0-draft",
   "modelVersion": "mogo.knowledge-engineering.v1",
   "provenanceNote": "Derived from the ALEX_G educator claim library (195 claims, 8 source artifacts) under Engineering Authority decision OD-1 (approved with modification). This draft is SEPARATE from and does NOT modify alex_g_sr_v1, which remains the production specification. Every rule references normalized rules by id rather than copying them, and every normalized rule carries its originating claim and verbatim excerpt.",
-  "ruleReferenceCount": 111,
+  "ruleReferenceCount": 127,
   "ruleReferences": [
     {
       "domain": "TIMEFRAMES",
@@ -243,6 +243,26 @@
     {
       "domain": "TIMEFRAMES",
       "ruleId": "KERULE|ALEX_G|057",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|117",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|118",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|121",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TIMEFRAMES",
+      "ruleId": "KERULE|ALEX_G|122",
       "version": "v2.0.0-draft"
     },
     {
@@ -358,6 +378,16 @@
     {
       "domain": "SETUP",
       "ruleId": "KERULE|ALEX_G|107",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|116",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "SETUP",
+      "ruleId": "KERULE|ALEX_G|119",
       "version": "v2.0.0-draft"
     },
     {
@@ -496,6 +526,31 @@
       "version": "v2.0.0-draft"
     },
     {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|123",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|124",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|125",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|126",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "ENTRY",
+      "ruleId": "KERULE|ALEX_G|127",
+      "version": "v2.0.0-draft"
+    },
+    {
       "domain": "INVALIDATION",
       "ruleId": "KERULE|ALEX_G|010",
       "version": "v2.0.0-draft"
@@ -538,6 +593,11 @@
     {
       "domain": "INVALIDATION",
       "ruleId": "KERULE|ALEX_G|108",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "INVALIDATION",
+      "ruleId": "KERULE|ALEX_G|120",
       "version": "v2.0.0-draft"
     },
     {
@@ -606,6 +666,16 @@
       "version": "v2.0.0-draft"
     },
     {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|128",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "RISK",
+      "ruleId": "KERULE|ALEX_G|131",
+      "version": "v2.0.0-draft"
+    },
+    {
       "domain": "TRADE_MANAGEMENT",
       "ruleId": "KERULE|ALEX_G|054",
       "version": "v2.0.0-draft"
@@ -643,6 +713,16 @@
     {
       "domain": "TRADE_MANAGEMENT",
       "ruleId": "KERULE|ALEX_G|114",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|129",
+      "version": "v2.0.0-draft"
+    },
+    {
+      "domain": "TRADE_MANAGEMENT",
+      "ruleId": "KERULE|ALEX_G|130",
       "version": "v2.0.0-draft"
     },
     {

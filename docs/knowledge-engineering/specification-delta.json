@@ -1,5 +1,5 @@
 {
-  "draftRuleCount": 111,
+  "draftRuleCount": 127,
   "draftSpecification": "alex_g_educator_v2_draft",
   "educatorSupportedAdditions": [
     {
@@ -9,12 +9,12 @@
     },
     {
       "domain": "ENTRY",
-      "draftRules": 27,
+      "draftRules": 32,
       "note": "The educator library covers this domain; the production specification has no rule in it."
     },
     {
       "domain": "INVALIDATION",
-      "draftRules": 9,
+      "draftRules": 10,
       "note": "The educator library covers this domain; the production specification has no rule in it."
     },
     {
@@ -24,7 +24,7 @@
     },
     {
       "domain": "RISK",
-      "draftRules": 13,
+      "draftRules": 15,
       "note": "The educator library covers this domain; the production specification has no rule in it."
     },
     {
@@ -34,7 +34,7 @@
     },
     {
       "domain": "TRADE_MANAGEMENT",
-      "draftRules": 8,
+      "draftRules": 10,
       "note": "The educator library covers this domain; the production specification has no rule in it."
     }
   ],
@@ -69,9 +69,9 @@
   "productionSpecification": "alex_g_sr_v1",
   "productionSpecificationAvailable": true,
   "riskGap": {
-    "draftRiskRules": 13,
-    "draftStopPlacementRules": 0,
-    "finding": "The educator library supplies 13 RISK rules -- all of them SIZING. Stop PLACEMENT rules: 0. The production specification supplies 0 risk rules. Neither body of knowledge states where the stop goes, so the MOGO-002.5 finding GAP-RISK-001 is NOT closed by this draft.",
+    "draftRiskRules": 15,
+    "draftStopPlacementRules": 2,
+    "finding": "The educator library supplies 15 RISK rules -- all of them SIZING. Stop PLACEMENT rules: 2. The production specification supplies 0 risk rules. Neither body of knowledge states where the stop goes, so the MOGO-002.5 finding GAP-RISK-001 is NOT closed by this draft.",
     "productionRiskRules": 0
   },
   "sharedDomains": [
@@ -82,18 +82,18 @@
     },
     {
       "domain": "SETUP",
-      "draftRules": 21,
+      "draftRules": 23,
       "productionRules": 7
     },
     {
       "domain": "TIMEFRAMES",
-      "draftRules": 3,
+      "draftRules": 7,
       "productionRules": 2
     }
   ],
   "tradeManagementGap": {
-    "draftRules": 8,
-    "finding": "The educator library supplies 8 trade-management rules against 0 in production. This is the one domain where the draft adds materially.",
+    "draftRules": 10,
+    "finding": "The educator library supplies 10 trade-management rules against 0 in production. This is the one domain where the draft adds materially.",
     "productionRules": 0
   }
 }

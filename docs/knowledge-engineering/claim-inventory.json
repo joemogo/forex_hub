@@ -1,6 +1,6 @@
 {
   "inventory": {
-    "claimCount": 195,
+    "claimCount": 226,
     "claims": [
       {
         "category": "MARKET_CONDITIONS",
@@ -4057,6 +4057,7 @@
         "context": null,
         "contradictions": [
           "XCONTRA|20260728|009",
+          "XCONTRA|20260729|003",
           "XCONTRA|20260728|006"
         ],
         "dependencies": [],
@@ -5328,7 +5329,9 @@
         "classification": "NO_TRADE_CONDITION",
         "confidence": "LOW",
         "context": null,
-        "contradictions": [],
+        "contradictions": [
+          "XCONTRA|20260729|004"
+        ],
         "dependencies": [],
         "educatorId": "ALEX_G",
         "explicitness": "UNRESOLVED",
@@ -5788,6 +5791,908 @@
           }
         ],
         "sourceText": "you're used to just lifting the 20 pounds so the moment that i add",
+        "timeframeReferences": []
+      },
+      {
+        "category": "UNRESOLVED_QUESTIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|001",
+        "classification": "MARKETING",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Alex G attributes $26,000 of profit in 12 hours to the break-and-retest pattern. No account statement, instrument, date, position size or risk figure accompanies it.",
+        "notes": null,
+        "originClaimType": "performance_hypothesis",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|001",
+            "exactExcerpt": "breing reetus made me $26,000 in 12 hours",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|001",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "breing reetus made me $26,000 in 12 hours",
+        "timeframeReferences": []
+      },
+      {
+        "category": "UNRESOLVED_QUESTIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|002",
+        "classification": "MARKETING",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Alex G states the break-and-retest pattern made him a millionaire. Unverified and unquantified.",
+        "notes": null,
+        "originClaimType": "performance_hypothesis",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|002",
+            "exactExcerpt": "breaking reetus has literally made me a millionaire",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|001",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "breaking reetus has literally made me a millionaire",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_CONDITIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|003",
+        "classification": "MARKET_CONTEXT",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Break-and-retest is asserted to occur every day in the market, and is offered as the reason no other pattern needs to be studied. No frequency measurement is given.",
+        "notes": null,
+        "originClaimType": "marketCondition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|003",
+            "exactExcerpt": "breaking retest happens literally every single day in the market",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|001",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "breaking retest happens literally every single day in the market",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|004",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Break-and-retest is defined as a CONTINUATION pattern: the retest is a pause that precedes further movement in the direction price was already travelling.",
+        "notes": null,
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|004",
+            "exactExcerpt": "what price wants to communicate to you with a break and retest is a continuation breaking retest is a continuation pattern",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|002",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "what price wants to communicate to you with a break and retest is a continuation breaking retest is a continuation pattern",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|005",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "The pattern is asserted to apply on every timeframe and to every instrument class - currencies, commodities, futures and stocks. No instrument-specific qualification is given.",
+        "notes": null,
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|005",
+            "exactExcerpt": "it can happen across all different time frames and it can happen across all different currency pairs all different Commodities Futures stocks anything",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|002",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "it can happen across all different time frames and it can happen across all different currency pairs all different Commodities Futures stocks anything",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|006",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Alex G states explicitly that support and resistance, supply and demand, and area of interest are the same concept under different names.",
+        "notes": null,
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|006",
+            "exactExcerpt": "support and resistance supply and demand area of interest it's all the same thing",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|003",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "support and resistance supply and demand area of interest it's all the same thing",
+        "timeframeReferences": []
+      },
+      {
+        "category": "SETUP",
+        "claimId": "CLAIM|ALEX_G|20260729|007",
+        "classification": "TRADING_RULE",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Break-and-retest is stated to be MOST EFFECTIVE at a pre-existing zone rather than anywhere on the chart. Phrased comparatively ('most effective', 'works best'), not as a hard requirement, so it is not established that a zone is mandatory.",
+        "notes": null,
+        "originClaimType": "setup_requirement",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|007",
+            "exactExcerpt": "now breaking retest is most effective at these zones",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|003",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "now breaking retest is most effective at these zones",
+        "timeframeReferences": []
+      },
+      {
+        "category": "TIMEFRAMES",
+        "claimId": "CLAIM|ALEX_G|20260729|008",
+        "classification": "TIMEFRAME",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A break-and-retest on a higher timeframe is asserted to be more reliable than one on a lower timeframe. Comparative only - no ranking, weighting or threshold is stated.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "timeframe_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|008",
+            "exactExcerpt": "the higher the time frame the more it is going to be respected",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|004",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "the higher the time frame the more it is going to be respected",
+        "timeframeReferences": []
+      },
+      {
+        "category": "TIMEFRAMES",
+        "claimId": "CLAIM|ALEX_G|20260729|009",
+        "classification": "TIMEFRAME",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "His own practice is to identify break-and-retest continuation on the 4-hour and daily and to take entries on lower timeframes. Framed as personal preference ('I personally like'), not as a requirement.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "timeframe_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|009",
+            "exactExcerpt": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|004",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "I personally like using my break and retest on The 4our Daily to continuation trades and then for entries on the lower time frames",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|010",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Zone width is stated to be unconstrained - 'doesn't matter the size of the box' - subject only to leaving 'enough room' to contain multiple touches. Neither the room nor the number of touches is quantified, so zone construction remains non-deterministic.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|010",
+            "exactExcerpt": "doesn't matter the size of the box it can be this big can be this big as long as you kind of get enough room so you can get the multiple Taps into it",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|005",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "doesn't matter the size of the box it can be this big can be this big as long as you kind of get enough room so you can get the multiple Taps into it",
+        "timeframeReferences": []
+      },
+      {
+        "category": "SETUP",
+        "claimId": "CLAIM|ALEX_G|20260729|011",
+        "classification": "TRADING_RULE",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point. Stated as a validity requirement with an explicit numeric minimum.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "setup_requirement",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|011",
+            "exactExcerpt": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|005",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "for it to be a valid level of a break and retest you need to have a minimum of one structure point",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|012",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively up (or down) the chart.",
+        "notes": null,
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|012",
+            "exactExcerpt": "now that we have broken this Zone and we have retested it this right here turns into the next structure point that we can then have the break and retest",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|005",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "now that we have broken this Zone and we have retested it this right here turns into the next structure point that we can then have the break and retest",
+        "timeframeReferences": []
+      },
+      {
+        "category": "INVALIDATION",
+        "claimId": "CLAIM|ALEX_G|20260729|013",
+        "classification": "INVALIDATION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A structurally ideal break-and-retest was NOT taken because the engulfing candlestick confirmation never appeared. Demonstrates that the confirmation is binding rather than advisory: structure alone does not produce an entry.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "invalidation_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|014",
+            "exactExcerpt": "you didn't get any entry signal you didn't get an engulfing Candlestick",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|006",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          },
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|013",
+            "exactExcerpt": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|006",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "this right here would have been an ideal break and retest but you didn't get that engulfing candles state that I'm talking about",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|014",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A continuing downtrend is defined as a sequence of lows with lower highs between them; the mirror of the uptrend high-plus-retracement sequence stated immediately before.",
+        "notes": null,
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|015",
+            "exactExcerpt": "if we're heading to the downside price has to have a low and has to have a lower high so then we continue heading to the down",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|007",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "if we're heading to the downside price has to have a low and has to have a lower high so then we continue heading to the down",
+        "timeframeReferences": []
+      },
+      {
+        "category": "TIMEFRAMES",
+        "claimId": "CLAIM|ALEX_G|20260729|015",
+        "classification": "TIMEFRAME",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "For day trading, break-and-retest is to be read on the 4-hour and 1-hour. Qualified immediately by 'depending on how approach you want to take it', so it is a default rather than a constraint.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "timeframe_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|016",
+            "exactExcerpt": "for your day Trad you want to use it more on the 4our one hour",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|007",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "for your day Trad you want to use it more on the 4our one hour",
+        "timeframeReferences": []
+      },
+      {
+        "category": "TIMEFRAMES",
+        "claimId": "CLAIM|ALEX_G|20260729|016",
+        "classification": "TIMEFRAME",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "For swing trades, break-and-retest is to be read on the daily and weekly. The preceding word in the transcript ('Inay') is garbled and the second trading style it names cannot be recovered from this transcript - recorded as an open question, not guessed.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "timeframe_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|017",
+            "exactExcerpt": "swing trades you want to take it on the daily and then weekly time frame",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|007",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "swing trades you want to take it on the daily and then weekly time frame",
+        "timeframeReferences": []
+      },
+      {
+        "category": "ENTRY",
+        "claimId": "CLAIM|ALEX_G|20260729|017",
+        "classification": "ENTRY",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Structure and continuation are identified on the higher timeframe; the entry signal must be taken on a lower timeframe. Stated as a requirement ('you have to'). Which lower timeframe is not specified here - the worked example uses the 4-hour.",
+        "notes": "2 blocking open question(s)",
+        "originClaimType": "entry_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|018",
+            "exactExcerpt": "but now the actual entry signal you have to go on the lower time frame",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|008",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "but now the actual entry signal you have to go on the lower time frame",
+        "timeframeReferences": []
+      },
+      {
+        "category": "ENTRY",
+        "claimId": "CLAIM|ALEX_G|20260729|018",
+        "classification": "ENTRY",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken. Stated as a necessary condition ('in order for us to take a trade we need to have').",
+        "notes": "3 blocking open question(s)",
+        "originClaimType": "confirmation_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|019",
+            "exactExcerpt": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|008",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          },
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|025",
+            "exactExcerpt": "we would enter our trade after this bullish engulfing",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|010",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "in order for us to take a trade trade we need to have a bullish engulfing Candlestick confirmation",
+        "timeframeReferences": []
+      },
+      {
+        "category": "ENTRY",
+        "claimId": "CLAIM|ALEX_G|20260729|019",
+        "classification": "ENTRY",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "The question of when the retest is complete is answered by the appearance of rejection candlesticks - the retest is not timed or measured, it is confirmed by candle pattern.",
+        "notes": "2 blocking open question(s)",
+        "originClaimType": "confirmation_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|020",
+            "exactExcerpt": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|008",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "how do you know the retest is done how do you know that this is the area where you're now going to reject from and now have a higher high move well very simple because you have",
+        "timeframeReferences": []
+      },
+      {
+        "category": "ENTRY",
+        "claimId": "CLAIM|ALEX_G|20260729|020",
+        "classification": "ENTRY",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "The confirmation shown is a Morning Star formation composed of three doji rejection candles followed by one bullish engulfing candle. Described for this instance; the three-doji count is not stated as a required number.",
+        "notes": "2 blocking open question(s)",
+        "originClaimType": "confirmation_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|021",
+            "exactExcerpt": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|009",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          },
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|030",
+            "exactExcerpt": "you have that morning star formation bullish engulf and Candlestick",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|011",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "which is actually a series of bullish engulfing Morning Star formation which you have three dogee Candlestick rejections one bullish engulfing",
+        "timeframeReferences": []
+      },
+      {
+        "category": "ENTRY",
+        "claimId": "CLAIM|ALEX_G|20260729|021",
+        "classification": "ENTRY",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Entry is taken at the confirmation candle of the retest. The exact price within that candle (close, next open, or mid) is indicated on the chart and never named.",
+        "notes": "2 blocking open question(s)",
+        "originClaimType": "entry_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|022",
+            "exactExcerpt": "you would have simply put your entry point right here",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|009",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "you would have simply put your entry point right here",
+        "timeframeReferences": []
+      },
+      {
+        "category": "RISK",
+        "claimId": "CLAIM|ALEX_G|20260729|022",
+        "classification": "RISK",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "The stop-loss is placed immediately BEYOND the rejection structure that produced the entry - 'right under this point' for a long. The anchor is indicated on the chart rather than named, and NO buffer distance (pips, ATR, percentage) is stated.",
+        "notes": "1 blocking open question(s)",
+        "originClaimType": "stop_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|023",
+            "exactExcerpt": "you would have put your stop loss right under this point",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|009",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          },
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|026",
+            "exactExcerpt": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|010",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "our stop loss point would be right here if we were to have a one to2 rward ratio",
+        "timeframeReferences": []
+      },
+      {
+        "category": "TRADE_MANAGEMENT",
+        "claimId": "CLAIM|ALEX_G|20260729|023",
+        "classification": "TRADE_MANAGEMENT",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [
+          "XCONTRA|20260729|004"
+        ],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward. Stated as a floor ('a minimum of'), not as a fixed ratio, and not accompanied by any rule for choosing a larger target.",
+        "notes": "2 blocking open question(s)",
+        "originClaimType": "target_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|024",
+            "exactExcerpt": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|009",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          },
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|029",
+            "exactExcerpt": "you have a minimum of a 1 to two risk to reward",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|011",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "your take profit would have been based off of a minimum of a 1 to two risk to reward",
+        "timeframeReferences": []
+      },
+      {
+        "category": "TRADE_MANAGEMENT",
+        "claimId": "CLAIM|ALEX_G|20260729|024",
+        "classification": "TRADE_MANAGEMENT",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A losing trade is allowed to reach its stop without intervention, and the loss is accepted as normal variance. No adjustment, no early exit and no re-entry is described. This is the first ALEX_G evidence of what happens to a position between entry and exit.",
+        "notes": null,
+        "originClaimType": "trade_management_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|027",
+            "exactExcerpt": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|010",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "this example we would have simply been Wicked out simply because the market had fluctuation it is what it is it happens but we keep it going we don't stop",
+        "timeframeReferences": []
+      },
+      {
+        "category": "RISK",
+        "claimId": "CLAIM|ALEX_G|20260729|025",
+        "classification": "RISK",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "UNRESOLVED",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Stated as INVARIANT: on every break-and-retest trade the stop-loss goes immediately beyond the rejection formation at the retest ('right under it' for a long). This is the first ALEX_G statement in nine sources that generalises stop placement into a rule rather than showing one instance. The anchor is still deictic and no buffer distance is stated anywhere.",
+        "notes": "4 blocking open question(s)",
+        "originClaimType": "stop_rule",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|028",
+            "exactExcerpt": "it's literally the same thing every single time your stop- loss is right under it",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|011",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "it's literally the same thing every single time your stop- loss is right under it",
+        "timeframeReferences": []
+      },
+      {
+        "category": "UNRESOLVED_QUESTIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|026",
+        "classification": "MARKETING",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Worked arithmetic across the three demonstrated trades: 1% risked per trade, one win at 1:2 (+2%), one loss (-1%), one win (+2%), netting about +3%. The 1% is the figure used in the arithmetic; it is not restated here as the required risk percentage.",
+        "notes": null,
+        "originClaimType": "performance_hypothesis",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|031",
+            "exactExcerpt": "you risk 1% you got 2% on this trade you lost 1% on this trade",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|012",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "you risk 1% you got 2% on this trade you lost 1% on this trade",
+        "timeframeReferences": []
+      },
+      {
+        "category": "UNRESOLVED_QUESTIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|027",
+        "classification": "MARKETING",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [
+          "XCONTRA|20260729|003"
+        ],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "A monthly return of 9 to 12% is presented as an achievable average, extrapolated from one 3% week repeated four times, and asserted to beat 'any single Bank any single institution'. The extrapolation assumes every week reproduces the demonstrated week.",
+        "notes": null,
+        "originClaimType": "performance_hypothesis",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|032",
+            "exactExcerpt": "you can average anywhere from 9 to 12% a month",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|012",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "you can average anywhere from 9 to 12% a month",
+        "timeframeReferences": []
+      },
+      {
+        "category": "MARKET_STRUCTURE",
+        "claimId": "CLAIM|ALEX_G|20260729|028",
+        "classification": "DEFINITION",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Alex G identifies the method demonstrated in this video - break-and-retest plus engulfing confirmation, fixed stop and preset minimum 1:2 target - as his 'set and forget' strategy. This is the first source that ties the named strategy to a specific mechanical procedure rather than using the phrase as a format or brand label.",
+        "notes": null,
+        "originClaimType": "definition",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|033",
+            "exactExcerpt": "everything I've showed you in this video is an example of what I do with my set",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|013",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "everything I've showed you in this video is an example of what I do with my set",
+        "timeframeReferences": []
+      },
+      {
+        "category": "DISCRETIONARY_ELEMENTS",
+        "claimId": "CLAIM|ALEX_G|20260729|029",
+        "classification": "EDUCATIONAL_COMMENTARY",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Alex G states he has used this method for five and a half years. No track record accompanies it.",
+        "notes": null,
+        "originClaimType": "behavioral_observation",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|034",
+            "exactExcerpt": "it's something that I've been using for the last 5 and a half years",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|013",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "it's something that I've been using for the last 5 and a half years",
+        "timeframeReferences": []
+      },
+      {
+        "category": "UNRESOLVED_QUESTIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|030",
+        "classification": "MARKETING",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "An open position is described on screen as roughly $37,000 in unrealised profit. No instrument, entry, size, account size or verification accompanies it.",
+        "notes": null,
+        "originClaimType": "performance_hypothesis",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|035",
+            "exactExcerpt": "we are currently about $37,000 in profit",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|013",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "we are currently about $37,000 in profit",
+        "timeframeReferences": []
+      },
+      {
+        "category": "UNRESOLVED_QUESTIONS",
+        "claimId": "CLAIM|ALEX_G|20260729|031",
+        "classification": "MARKETING",
+        "confidence": "LOW",
+        "context": null,
+        "contradictions": [],
+        "dependencies": [],
+        "educatorId": "ALEX_G",
+        "explicitness": "EXPLICIT",
+        "instrumentReferences": [],
+        "normalizedParaphrase": "Students are claimed to earn between an unreadable lower bound and $1,500 per week as beginners. The lower bound is corrupted in the transcript (',000') and is NOT reconstructed here. Repeated verbatim later in the same source alongside a 'first 3 months' framing. No sample size, failure rate or verification.",
+        "notes": null,
+        "originClaimType": "performance_hypothesis",
+        "originConfidenceState": "emerging",
+        "reviewStatus": "NOT_REVIEWED",
+        "sessionReferences": [],
+        "sourceReferences": [
+          {
+            "evidenceId": "EV|EVSRC|ALEX_G|20260729|001|036",
+            "exactExcerpt": "students that use my set forget strategy make anywhere from ,000 to $1,500 a week as a beginner set and forget Trader",
+            "segmentId": "TSEG|INTAKE|ALEX_G|20260729|001|013",
+            "sourceId": "EVSRC|ALEX_G|20260729|001"
+          }
+        ],
+        "sourceText": "students that use my set forget strategy make anywhere from ,000 to $1,500 a week as a beginner set and forget Trader",
         "timeframeReferences": []
       }
     ],
@@ -8420,12 +9325,432 @@
         ],
         "explicitness": "EXPLICIT",
         "rationale": "Not promoted to candidate-rule status: claimType causal_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified PSYCHOLOGY, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|001",
+        "classification": "MARKETING",
+        "derivedFrom": [
+          "claimType=performance_hypothesis",
+          "lexical:marketing",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=lexical_marketing"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType performance_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified MARKETING, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|002",
+        "classification": "MARKETING",
+        "derivedFrom": [
+          "claimType=performance_hypothesis",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType performance_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified MARKETING, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|003",
+        "classification": "MARKET_CONTEXT",
+        "derivedFrom": [
+          "claimType=marketCondition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType marketCondition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|004",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|005",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|006",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|007",
+        "classification": "TRADING_RULE",
+        "derivedFrom": [
+          "claimType=setup_requirement",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Rule-shaped claimType setup_requirement, explicitness EXPLICIT; eligible to become a candidate rule. No blocking questions."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|008",
+        "classification": "TIMEFRAME",
+        "derivedFrom": [
+          "claimType=timeframe_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType timeframe_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|009",
+        "classification": "TIMEFRAME",
+        "derivedFrom": [
+          "claimType=timeframe_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType timeframe_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|010",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|011",
+        "classification": "TRADING_RULE",
+        "derivedFrom": [
+          "claimType=setup_requirement",
+          "directness=direct_explicit",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType setup_requirement, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|012",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|013",
+        "classification": "INVALIDATION",
+        "derivedFrom": [
+          "claimType=invalidation_rule",
+          "directness=direct_demonstrated",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType invalidation_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|014",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|015",
+        "classification": "TIMEFRAME",
+        "derivedFrom": [
+          "claimType=timeframe_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType timeframe_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|016",
+        "classification": "TIMEFRAME",
+        "derivedFrom": [
+          "claimType=timeframe_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType timeframe_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|017",
+        "classification": "ENTRY",
+        "derivedFrom": [
+          "claimType=entry_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=2 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType entry_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 2 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|018",
+        "classification": "ENTRY",
+        "derivedFrom": [
+          "claimType=confirmation_rule",
+          "directness=direct_demonstrated,direct_explicit",
+          "blockingQuestions=3 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType confirmation_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 3 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|019",
+        "classification": "ENTRY",
+        "derivedFrom": [
+          "claimType=confirmation_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=2 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType confirmation_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 2 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|020",
+        "classification": "ENTRY",
+        "derivedFrom": [
+          "claimType=confirmation_rule",
+          "directness=direct_demonstrated",
+          "blockingQuestions=2 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType confirmation_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 2 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|021",
+        "classification": "ENTRY",
+        "derivedFrom": [
+          "claimType=entry_rule",
+          "directness=direct_demonstrated",
+          "blockingQuestions=2 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType entry_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 2 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|022",
+        "classification": "RISK",
+        "derivedFrom": [
+          "claimType=stop_rule",
+          "directness=direct_demonstrated",
+          "blockingQuestions=1 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType stop_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 1 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|023",
+        "classification": "TRADE_MANAGEMENT",
+        "derivedFrom": [
+          "claimType=target_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=2 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType target_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 2 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|024",
+        "classification": "TRADE_MANAGEMENT",
+        "derivedFrom": [
+          "claimType=trade_management_rule",
+          "directness=direct_demonstrated",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Rule-shaped claimType trade_management_rule, explicitness EXPLICIT; eligible to become a candidate rule. No blocking questions."
+      },
+      {
+        "candidateRuleEligible": true,
+        "claimId": "CLAIM|ALEX_G|20260729|025",
+        "classification": "RISK",
+        "derivedFrom": [
+          "claimType=stop_rule",
+          "directness=direct_explicit",
+          "blockingQuestions=4 -> UNRESOLVED",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "UNRESOLVED",
+        "rationale": "Rule-shaped claimType stop_rule, explicitness UNRESOLVED; eligible to become a candidate rule. Carries 4 blocking open question(s): candidacy stands, but the unresolved parameter must survive normalization and blocks determinism."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|026",
+        "classification": "MARKETING",
+        "derivedFrom": [
+          "claimType=performance_hypothesis",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType performance_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified MARKETING, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|027",
+        "classification": "MARKETING",
+        "derivedFrom": [
+          "claimType=performance_hypothesis",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType performance_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified MARKETING, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|028",
+        "classification": "DEFINITION",
+        "derivedFrom": [
+          "claimType=definition",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType definition is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|029",
+        "classification": "EDUCATIONAL_COMMENTARY",
+        "derivedFrom": [
+          "claimType=behavioral_observation",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=type_map"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType behavioral_observation is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified EDUCATIONAL_COMMENTARY, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|030",
+        "classification": "MARKETING",
+        "derivedFrom": [
+          "claimType=performance_hypothesis",
+          "lexical:marketing",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=lexical_marketing"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType performance_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified MARKETING, which describes the educator or the reader rather than a market decision."
+      },
+      {
+        "candidateRuleEligible": false,
+        "claimId": "CLAIM|ALEX_G|20260729|031",
+        "classification": "MARKETING",
+        "derivedFrom": [
+          "claimType=performance_hypothesis",
+          "lexical:marketing",
+          "directness=direct_explicit",
+          "confidenceState=emerging",
+          "derivationRule=lexical_marketing"
+        ],
+        "explicitness": "EXPLICIT",
+        "rationale": "Not promoted to candidate-rule status: claimType performance_hypothesis is not in RULE_CANDIDATE_ELIGIBLE_CLAIM_TYPES; classified MARKETING, which describes the educator or the reader rather than a market decision."
       }
     ],
     "educatorId": "ALEX_G",
     "generatorVersion": "1.0.0",
     "modelVersion": "mogo.knowledge-engineering.v1",
-    "sourceArtifactCount": 8,
+    "sourceArtifactCount": 9,
     "sourceArtifacts": [
       {
         "contentHash": "c9c4193a8aeedc9aee13264dd58568a8c96f70b5db7019a7badd13fced674606",
@@ -8546,42 +9871,55 @@
         "sourceType": "transcript",
         "title": "The best FOREX MONEY MINDSET psychology video PT 2",
         "transcriptVersion": "docs/trader-intelligence/imports/alex-g/normalized/alexg-psychology-money-mindset.normalization-map.json"
+      },
+      {
+        "contentHash": "7f954e14ec5cb0a6b17de28fb0e6caed6910e6cc4f2ec72c8c6cc3b3441e58d2",
+        "educatorId": "ALEX_G",
+        "ingestionDate": "2026-07-29T23:45:30Z",
+        "provenanceStatus": "partially_verified",
+        "publicationDate": null,
+        "reference": "https://www.youtube.com/watch?v=kg-rOo9_xjU",
+        "sourceId": "EVSRC|ALEX_G|20260729|001",
+        "sourceQualityNotes": [],
+        "sourceType": "transcript",
+        "title": "This Trading Strategy Made Me $26,000 in Just 12 Hours",
+        "transcriptVersion": "docs/trader-intelligence/imports/alex-g/normalized/alexg-break-and-retest-26k-12-hours.normalization-map.json"
       }
     ]
   },
   "totals": {
     "byCandidateRuleEligibility": {
-      "ELIGIBLE": 115,
-      "NOT_ELIGIBLE": 80
+      "ELIGIBLE": 131,
+      "NOT_ELIGIBLE": 95
     },
     "byClassification": {
-      "DEFINITION": 15,
+      "DEFINITION": 22,
       "DISCRETIONARY_GUIDANCE": 7,
-      "EDUCATIONAL_COMMENTARY": 34,
-      "ENTRY": 29,
+      "EDUCATIONAL_COMMENTARY": 35,
+      "ENTRY": 34,
       "EXAMPLE": 2,
-      "INVALIDATION": 9,
-      "MARKETING": 14,
-      "MARKET_CONTEXT": 1,
+      "INVALIDATION": 10,
+      "MARKETING": 20,
+      "MARKET_CONTEXT": 2,
       "NO_TRADE_CONDITION": 16,
       "PSYCHOLOGY": 13,
-      "RISK": 13,
+      "RISK": 15,
       "SESSION": 7,
-      "TIMEFRAME": 3,
-      "TRADE_MANAGEMENT": 8,
-      "TRADING_RULE": 23,
+      "TIMEFRAME": 7,
+      "TRADE_MANAGEMENT": 10,
+      "TRADING_RULE": 25,
       "UNKNOWN": 1
     },
     "byConfidence": {
-      "LOW": 195
+      "LOW": 226
     },
     "byExplicitness": {
       "DISCRETIONARY": 7,
-      "EXPLICIT": 122,
-      "UNRESOLVED": 66
+      "EXPLICIT": 139,
+      "UNRESOLVED": 80
     },
     "byReviewStatus": {
-      "NOT_REVIEWED": 195
+      "NOT_REVIEWED": 226
     },
     "bySource": {
       "EVSRC|ALEX_G|20260727|001": 30,
@@ -8591,23 +9929,24 @@
       "EVSRC|ALEX_G|20260728|004": 37,
       "EVSRC|ALEX_G|20260728|005": 33,
       "EVSRC|ALEX_G|20260728|006": 21,
-      "EVSRC|ALEX_G|20260728|007": 21
+      "EVSRC|ALEX_G|20260728|007": 21,
+      "EVSRC|ALEX_G|20260729|001": 31
     },
     "byStrategyDomain": {
-      "DISCRETIONARY_ELEMENTS": 39,
-      "ENTRY": 29,
-      "INVALIDATION": 9,
+      "DISCRETIONARY_ELEMENTS": 40,
+      "ENTRY": 34,
+      "INVALIDATION": 10,
       "LIQUIDITY": 5,
-      "MARKET_CONDITIONS": 18,
-      "MARKET_STRUCTURE": 12,
+      "MARKET_CONDITIONS": 19,
+      "MARKET_STRUCTURE": 19,
       "NO_TRADE_CONDITIONS": 14,
-      "RISK": 13,
+      "RISK": 15,
       "SESSION_RESTRICTIONS": 7,
-      "SETUP": 23,
-      "TIMEFRAMES": 3,
-      "TRADE_MANAGEMENT": 8,
-      "UNRESOLVED_QUESTIONS": 15
+      "SETUP": 25,
+      "TIMEFRAMES": 7,
+      "TRADE_MANAGEMENT": 10,
+      "UNRESOLVED_QUESTIONS": 21
     },
-    "total": 195
+    "total": 226
   }
 }

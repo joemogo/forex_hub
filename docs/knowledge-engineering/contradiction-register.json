@@ -266,7 +266,57 @@
         "20260728",
         "20260729"
       ]
+    },
+    {
+      "affectedCategory": "RISK",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260728|100",
+        "CLAIM|ALEX_G|20260729|027"
+      ],
+      "conflictType": "NUMERIC_THRESHOLD",
+      "contradictionId": "KECON|20260729|003",
+      "furtherSourceAcquisitionRequired": false,
+      "normalizedIssueStatement": "Within-educator, third distinct figure for the same quantity. This source: 9-12% a month, extrapolated from one demonstrated 3% week. Source #6 (CLAIM|ALEX_G|20260728|100): 8-10% a month, asserted as 'a fact anybody can do that'. Source #8 (CLAIM|ALEX_G|20260728|150) already records a further set, 7/12/15% then 7-10%. Filed minor because no trading decision depends on the monthly figure, but recorded because three incompatible ranges for one headline number bear on how the source's numeric claims should be weighted generally.",
+      "originRecord": "XCONTRA|20260729|003",
+      "possibleInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "recommendedCompletionPath": "Replay can settle this empirically once authorized.",
+      "replayCouldHelp": true,
+      "resolutionStatus": "OPEN",
+      "severity": "minor",
+      "sourceChronology": [
+        "20260728",
+        "20260729"
+      ]
+    },
+    {
+      "affectedCategory": "SETUP",
+      "claimIds": [
+        "CLAIM|ALEX_G|20260728|145",
+        "CLAIM|ALEX_G|20260729|023"
+      ],
+      "conflictType": "CONDITIONAL_SCOPE",
+      "contradictionId": "KECON|20260729|004",
+      "furtherSourceAcquisitionRequired": false,
+      "normalizedIssueStatement": "Behaviour versus stated rule, and it bears directly on trade management. This source states the take-profit is set to 'a minimum of a 1 to two risk to reward', which makes 1:2 an acceptable target. Source #8 (CLAIM|ALEX_G|20260728|145) names closing a trade that was set to 1:4 AT 1:2 as the core psychological failure - 'the exit is driven by the size of the number, not by the market'. Both cannot be applied without a rule distinguishing a target SET at the 1:2 floor from a target REVISED down to it. The distinction is never drawn in either source, and it determines whether a preset target may ",
+      "originRecord": "XCONTRA|20260729|004",
+      "possibleInterpretations": [
+        "Interpretation A: the first claim states the educator's operative rule and the second is a lapse, a simplification, or context-specific.",
+        "Interpretation B: the second claim states the operative rule and the first is the lapse or simplification.",
+        "Interpretation C: both hold under conditions the source never distinguished, and the missing distinction is itself the knowledge gap."
+      ],
+      "recommendedCompletionPath": "Replay can settle this empirically once authorized.",
+      "replayCouldHelp": true,
+      "resolutionStatus": "OPEN",
+      "severity": "material",
+      "sourceChronology": [
+        "20260728",
+        "20260729"
+      ]
     }
   ],
-  "count": 11
+  "count": 13
 }
