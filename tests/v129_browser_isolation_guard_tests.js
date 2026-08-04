@@ -248,6 +248,19 @@ function runBrowserIsolationGuardFixtures(g){
     ok(SHELL.indexOf('launch.json')!==-1,'the launcher must name the config file that must NOT be trusted');
   });
 
+  t('G6b the launcher REFUSES known non-disposable origins, and says a denylist cannot approve',function(){
+    // Guard 1 makes the origin explicit; it cannot make it correct. This asserts the second half:
+    // the two origins proven to hold operator or contaminated data are refused outright.
+    ok(/NON_DISPOSABLE_PORTS=/.test(SHELL),'the launcher must define a non-disposable port denylist');
+    ok(/8744/.test(SHELL),'it must refuse 8744 -- the operator live origin proven by INC-004');
+    ok(/8899/.test(SHELL),'it must refuse 8899 -- the contaminated INC-005 origin');
+    ok(/known non-disposable origin/.test(SHELL),'refusal must name why the origin was rejected');
+    // The most important assertion here. A denylist that reads as an allowlist recreates INC-004's
+    // reasoning exactly: "not the listed one, therefore safe". The script must say otherwise.
+    ok(/absence of a port from this list proves\s+NOTHING/i.test(SHELL)||/can refuse an origin; it can never approve one/i.test(SHELL),
+      'the launcher must state that an unlisted port is NOT thereby proven safe');
+  });
+
   t('G7 the launcher records the four required pre-test facts',function(){
     ['test_profile_path','test_origin','is_operator_profile','pre_clear_inventory'].forEach(function(k){
       ok(SHELL.indexOf(k)!==-1,'the isolation manifest must record '+k);

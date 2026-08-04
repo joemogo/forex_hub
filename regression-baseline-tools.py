@@ -102,7 +102,7 @@ FIXTURE_COUNTS = {
     "run_v1231_tests.js (Strategy Workspace Framework + dedicated TJR workspace)": 31,
     "run_v127_alex_v11_release_tests.js (MOGO-002.8A/002.8B -- ALEX v1.1 release + setup execution policy)": 88,
     "run_v128_evidence_platform_tests.js (MOGO-003 Evidence Platform + EXP-001 + DoD #10 + replay identity)": 96,
-    "run_v129_browser_isolation_guard_tests.js (INC-001 load integrity + INC-004 isolation guards)": 26,
+    "run_v129_browser_isolation_guard_tests.js (INC-001 load integrity + INC-004 isolation guards)": 27,
     "run_v130_candle_completeness_regression_tests.js (ADR-011 market data completeness contract)": 14,
 }
 

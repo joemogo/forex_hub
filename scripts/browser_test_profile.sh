@@ -58,6 +58,32 @@ case "$ORIGIN" in
   *) fail "origin '$ORIGIN' is not a local test origin." ;;
 esac
 
+# ── GUARD 1b: refuse origins known to hold real or contaminated operator data. ────────────────
+#
+# This is a DENYLIST and only a denylist. It can refuse an origin; it can never approve one.
+#
+# READ THIS BEFORE USING IT FOR ANYTHING ELSE: the absence of a port from this list proves
+# NOTHING. It does not mean the port is free, empty, disposable or safe. INC-004 happened because
+# 8744 was assumed isolated on exactly that reasoning -- "not the one in the config, therefore a
+# different origin, therefore safe." The origin must still be confirmed with the operator every
+# time. This guard exists solely to make the two known-bad answers impossible to give by accident.
+#
+#   8744  the operator's LIVE MOGO origin. Proven by INC-004: paper-trading data was destroyed
+#         at this origin and reappeared at it after a Time Machine restore.
+#   8899  a CONTAMINATED test origin. Holds the INC-005 hand-seeded record AGT|MANUAL-B|1, whose
+#         ALEX account reads balance 10200. Quarantined from every statistic but never corrected,
+#         so any evidence captured here would be measured against a known-false stored balance.
+#
+# A port is added here when it is proven to hold operator or contaminated data -- never on
+# suspicion, and never removed merely because a port looks unused today.
+NON_DISPOSABLE_PORTS="8744 8899"
+for _port in $NON_DISPOSABLE_PORTS; do
+  case "$ORIGIN" in
+    *:"$_port"|*:"$_port"/*)
+      fail "origin '$ORIGIN' is a known non-disposable origin (port $_port). Serve the test build on a port confirmed with the operator." ;;
+  esac
+done
+
 # ── GUARD 2: the profile root must never resolve inside the operator's Chrome data. ───────────
 OPERATOR_CHROME="$HOME/Library/Application Support/Google/Chrome"
 case "$PROFILE_ROOT" in

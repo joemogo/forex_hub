@@ -1,4 +1,14 @@
 {
+  "_comment": [
+    "CONVENIENCE LAUNCHER ONLY. This file is NOT a statement about which origin is live, and",
+    "must never be read to decide where it is safe to test.",
+    "Reading an origin out of this file is the proven root cause of INC-004: 8743 was read from",
+    "here, 8744 was assumed isolated because it differed, and 8744 was the operator's live MOGO",
+    "origin. Nothing has ever served on 8743.",
+    "The test origin is confirmed with the operator every time -- docs/TESTING.md, Browser Testing",
+    "Policy, Rule 0. Known non-disposable origins are refused by scripts/browser_test_profile.sh,",
+    "which is a denylist: it can refuse an origin and can never approve one."
+  ],
   "version": "0.0.1",
   "configurations": [
     {
