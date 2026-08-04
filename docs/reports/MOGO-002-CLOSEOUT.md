@@ -2,8 +2,8 @@
 
 **Milestone:** MOGO-002 — ALEX Strategy Validation
 **Date:** 2026-07-30 · **Engine:** `APP_VERSION` 12.7.1 · **Strategy:** `alex_g_sr_v1_1`
-**Commit hash:** ⏸️ **PENDING — commit not created; see §12**
-**Release tag:** ⏸️ **PENDING — tag not created; see §12**
+**Commit hash:** `592ca97`
+**Release tag:** `mogo-002-complete` (annotated)
 
 > This record does not rewrite or replace any prior audit document. All MOGO-002.x review packages
 > remain authoritative for their own findings.
@@ -177,7 +177,7 @@ partitioning; no source-candle references).
 **MOGO-002 engineering work is COMPLETE and verified.** All deliverables produced; all tests passing;
 zero drift.
 
-**Formal closure additionally requires the commit and tag in §12.**
+**Formal closure achieved** — see §12.5 for the release identity.
 
 ## 12. Release commit scope — Engineering Authority decision E5
 
@@ -267,14 +267,19 @@ they cannot be re-acquired without the operator. **They have no version-control 
 
 | | |
 |---|---|
-| **Commit hash** | ⏸️ __COMMIT_SHORT__ |
+| **Commit hash** | **`592ca97`** |
 | **Tag** | **`mogo-002-complete`** (annotated) |
 | Branch | `main` |
 | Pushed | **No** |
 
 ### 12.6 Full commit reference
 
-__COMMIT_FULL__
+`592ca97812818c48cb3712d27985cda31f0ee30c`
+
+> **Note:** this section was completed AFTER the release commit, so this hash line itself is an
+> uncommitted working-tree edit. A second commit was explicitly prohibited by the authorising
+> directive, and `--amend` is a prohibited destructive operation. The commit and tag are correct as
+> created; only this back-reference is unversioned.
 
 ---
 

@@ -1,0 +1,1573 @@
+{
+ "schemaVersion": "mogo.hypothesis-registry.v1",
+ "milestone": "MOGO-004 M1 -- Evidence Expansion & Research Governance",
+ "allowedStatuses": [
+  "UNSUPPORTED",
+  "COLLECTING",
+  "SUPPORTED",
+  "REJECTED",
+  "UNRESOLVED"
+ ],
+ "statusDefinitions": {
+  "UNSUPPORTED": "No evidence supports this hypothesis: either MOGO does not implement the rule, or the rule is MOGO-authored with no educator support, or no observation exists.",
+  "COLLECTING": "Evidence exists and is accumulating, but the minimum operational sample has not been reached in both comparison arms.",
+  "SUPPORTED": "Minimum sample reached in both arms, predeclared metric measured, comparison completed, and the promotion threshold satisfied.",
+  "REJECTED": "Minimum sample reached in both arms and the rejection threshold satisfied.",
+  "UNRESOLVED": "The hypothesis cannot be resolved by the evidence class available -- for example a live-execution-only rule that no replay can ever exercise."
+ },
+ "promotionGate": [
+  "minimumOperationalSampleReachedInBothArms",
+  "predeclaredMetricMeasured",
+  "comparisonCompleted",
+  "confidenceThresholdSatisfied"
+ ],
+ "promotionThreshold": {
+  "metric": "MET_EXPECTANCY_R",
+  "supportedWhen": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+  "rejectedWhen": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+  "declaredInAdvance": true
+ },
+ "minimumOperationalSample": 30,
+ "recommendedStatisticalSample": 100,
+ "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+ "metricRegistry": {
+  "MET_WIN_RATE": {
+   "name": "Win rate",
+   "unit": "percent",
+   "formula": "wins / (wins + losses) * 100",
+   "sourceFields": [
+    "objects.outcomes[].exitReasonCode"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_NET_R": {
+   "name": "Net R",
+   "unit": "R",
+   "formula": "sum(recordedResultR) over resolved trades",
+   "sourceFields": [
+    "objects.outcomes[].recordedResultR"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_EXPECTANCY_R": {
+   "name": "Expectancy per trade",
+   "unit": "R",
+   "formula": "netR / resolved trade count",
+   "sourceFields": [
+    "objects.outcomes[].recordedResultR"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_PROFIT_FACTOR": {
+   "name": "Profit factor",
+   "unit": "ratio",
+   "formula": "gross positive R / abs(gross negative R)",
+   "sourceFields": [
+    "objects.outcomes[].recordedResultR"
+   ],
+   "betterWhen": "higher"
+  },
+  "MET_MAE_PIPS": {
+   "name": "Maximum adverse excursion",
+   "unit": "pips",
+   "formula": "mean(maePips) over resolved trades",
+   "sourceFields": [
+    "objects.outcomes[].maePips"
+   ],
+   "betterWhen": "lower"
+  },
+  "MET_MFE_PIPS": {
+   "name": "Maximum favourable excursion",
+   "unit": "pips",
+   "formula": "mean(mfePips) over resolved trades",
+   "sourceFields": [
+    "objects.outcomes[].mfePips"
+   ],
+   "betterWhen": "higher"
+  }
+ },
+ "scopeNote": "Structured hypotheses exist only for ALEX_G, the only educator with a canonical rule register, a fidelity matrix and trade-level evidence. Other educators appear in the coverage matrix, not here.",
+ "statusCounts": {
+  "COLLECTING": 12,
+  "UNSUPPORTED": 19,
+  "UNRESOLVED": 10
+ },
+ "hypotheses": [
+  {
+   "hypothesisId": "HYP|AXR-001",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Support is where price has previously held; resistance is where price has previously been rejected. Support/resistance, supply/demand and 'area of interest' are the same concept under three names.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-002",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "A continuing downtrend is a sequence of lows with lower highs between them; the uptrend mirror is highs with retracements.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-003",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "B_breakRetest",
+   "condition": "A body close beyond a structure level counts as a structural shift, with no stated minimum size.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 8,
+   "shortfallToOperationalSample": 22,
+   "shortfallToStatisticalSample": 92,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-004",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "B_breakRetest",
+   "condition": "Break-and-retest is a CONTINUATION pattern: price breaks a structure point, returns to retest it, then continues in the original direction.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 8,
+   "shortfallToOperationalSample": 22,
+   "shortfallToStatisticalSample": 92,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-005",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "A_repeatedReaction",
+   "condition": "A level qualifies as a break-and-retest level only if it carries a MINIMUM OF ONE structure point.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 16,
+   "shortfallToOperationalSample": 14,
+   "shortfallToStatisticalSample": 84,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-006",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Once a zone is broken and retested it becomes the next structure point, so the pattern chains recursively.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-007",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Break-and-retest is MOST EFFECTIVE at a pre-existing zone.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-008",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Zone width is unconstrained -- 'doesn't matter the size of the box' -- subject only to leaving enough room to contain multiple touches.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "no evidence field carries this rule's output; it cannot be observed yet",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNRESOLVED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-010",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Structure and continuation are read on the higher timeframe; the entry signal must be taken on a lower timeframe.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-011",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "A bullish engulfing candlestick confirmation is REQUIRED before a long break-and-retest trade is taken.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-012",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "The confirmation demonstrated is a Morning Star: three doji rejection candles followed by one bullish engulfing candle.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-013",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "The retest is complete when rejection candlesticks appear -- it is not timed or measured.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "no evidence field carries this rule's output; it cannot be observed yet",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNRESOLVED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-014",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Entry is taken at the confirmation candle of the retest.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "implementation is on the live-execution path; no replay can exercise it",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_EXERCISED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-015",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "A structurally ideal break-and-retest is NOT taken when the engulfing confirmation does not appear.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-020",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "On every break-and-retest trade the stop-loss is placed immediately BEYOND the rejection formation at the retest ('right under it' for a long).",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "implementation is on the live-execution path; no replay can exercise it",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_EXERCISED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-021",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] The distance between the stop and the rejection structure.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-022",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] The short-side stop placement.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-030",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "The take-profit is set to a MINIMUM of 1:2 risk-to-reward.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-031",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] How the target level is chosen when structure allows more than 1:2.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "no evidence field carries this rule's output; it cannot be observed yet",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNRESOLVED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-040",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Risk is sized as a percentage of the account balance, never as a fixed monetary amount, and the same percentage is risked on every trade.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "no evidence field carries this rule's output; it cannot be observed yet",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNRESOLVED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-041",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Three risk bands: conservative 0.5-1%, recommended/industry-standard 1-2%, high 3-5%.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-042",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "The high band (3-5%) is confined to a personal or disposable account, and to the months November-March.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-043",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Once chosen, the risk percentage is not raised after wins or lowered after losses; his own practice fixes one percentage per calendar month.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-050",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "A losing trade is allowed to reach its stop without intervention; the loss is accepted as normal variance.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "implementation is on the live-execution path; no replay can exercise it",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_EXERCISED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-051",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "No action is taken while price travels toward the area of interest; the setup is left alone until price arrives.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-052",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "A target set in advance should be allowed to run rather than cut when the unrealised figure becomes emotionally significant.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "implementation is on the live-execution path; no replay can exercise it",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_EXERCISED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-053",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "After missing an entry, set an alarm for the next pullback rather than chase.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-060",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] Whether the stop is ever moved to break-even.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-061",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] Whether any portion of a position is closed before the full target.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-062",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] Whether a position is ever added to or reduced after entry.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-063",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] Whether the stop is ever trailed.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-070",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "A break-and-retest on a higher timeframe is more respected than one on a lower timeframe.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "no evidence field carries this rule's output; it cannot be observed yet",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNRESOLVED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-071",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Top-down analysis uses four tiers: weekly, daily, 4-hour, and the lower timeframes (2H/1H/30m/15m; below 15m is not a strong timeframe).",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-072",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Day trading reads break-and-retest on 4H/1H; swing trading on daily/weekly.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-080",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Entry timing is governed by session and day-of-week; a valid confirmation at the wrong time is not traded. Entries are restricted to Monday-Wednesday.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-081",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[PARAMETER ABSENT] The exact hours of the tradeable session windows.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNRESOLVED",
+   "statusReason": "no evidence field carries this rule's output; it cannot be observed yet",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNRESOLVED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-090",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "The pattern applies to all timeframes and all instrument classes -- currencies, commodities, futures, stocks.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "COLLECTING",
+   "statusReason": "evidence exists but is below the minimum operational sample",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "LINKED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-091",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] Any market-condition filter (volatility, ranging vs trending, spread) gating whether to trade at all.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "UNSUPPORTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-092",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "[NO RULE EXISTS] Any news or economic-calendar filter.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-093",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Alex G rejects the institutional-stop-hunt narrative as unproven and states no strategy can trade liquidity sweeps alone.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  },
+  {
+   "hypothesisId": "HYP|AXR-100",
+   "educator": "ALEX_G",
+   "strategy": "alex_g_sr_v1",
+   "setup": "ALL_SETUPS",
+   "condition": "Several gates are explicitly judgement calls: whether a second confirmation is needed depends on level strength, timeframe, days left in the week and R:R, with no threshold assigned to any input.",
+   "measurableOutcome": {
+    "primaryMetricId": "MET_EXPECTANCY_R",
+    "secondaryMetricIds": [
+     "MET_WIN_RATE",
+     "MET_NET_R",
+     "MET_MAE_PIPS",
+     "MET_MFE_PIPS"
+    ]
+   },
+   "comparisonGroup": {
+    "armA": "resolved trades where the rule's condition held",
+    "armB": "resolved trades where it did not",
+    "basis": "same strategy, same engine version, same dataset hash"
+   },
+   "minimumOperationalSample": 30,
+   "recommendedStatisticalSample": 100,
+   "sampleBasis": "Both figures are DECLARED IN ADVANCE, not derived from observed results. At 30 resolved trades per arm a 0.25R expectancy difference remains within sampling noise for a 2R/-1R system; 100 per arm is where it becomes reliably resolvable. Stating them up front is what stops either being rationalised downward after a result.",
+   "promotionThreshold": "armA expectancy exceeds armB expectancy by >= 0.25R with the confidence interval excluding zero",
+   "rejectionThreshold": "the difference is < 0.25R, or favours armB, with both arms at or above the minimum operational sample",
+   "currentStatus": "UNSUPPORTED",
+   "statusReason": "MOGO does not implement this rule, or it is MOGO-authored",
+   "observedResolvedTrades": 24,
+   "shortfallToOperationalSample": 6,
+   "shortfallToStatisticalSample": 76,
+   "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+   "evidenceRunIds": [
+    "3d7c3dc1af7fea769af06fda26f08da73a4c605d931bbde0947021f3aa5ab806"
+   ],
+   "joinStatus": "NOT_IMPLEMENTED"
+  }
+ ]
+}

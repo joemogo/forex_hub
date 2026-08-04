@@ -145,6 +145,34 @@ untouched.
   computed on demand from `completedLessonIds`, never separately cached — the same read-only
   derived-value principle as [ADR-004](adr/ADR-004-read-only-analytics-principle.md).
 
+## Trader Intelligence (research subsystem, outside the application)
+
+`docs/trader-intelligence/` plus `scripts/trader_intelligence/` form a research system that turns
+trader material (transcripts, and later replay and paper-trading results) into structured,
+provenance-tracked, confidence-rated data. **It is not part of the application.** It never runs in
+the browser, is never loaded by `index.html`, has no localStorage key, and cannot place, modify, or
+close a trade. Every module is pure Python standard library with no network capability and no LLM
+call — both properties are enforced structurally by tests, not merely by convention.
+
+The boundary is deliberate and one-directional: the research subsystem may read `index.html` (the
+regression baseline tooling does), but nothing in the application reads the research subsystem. A
+`StrategyRule` becoming well-evidenced there authorizes no code change by itself — promotion runs
+through an 18-stage `PromotionState` gate (`graph/schema/promotion-state.schema.json`) where every
+transition past `DISCOVERED` requires a traceable `OwnerDecision`, and the final step from an
+approved rule candidate to real execution logic is deliberately outside all automation
+([ADR-008](adr/ADR-008-evidence-intelligence-engine.md) §9–10).
+
+Three layers: **acquisition** (what to ingest next), **evidence** (what we know and how well —
+intake manifests, transcript segments, annotations, evidence items, claims, links, contradictions,
+questions, trader profiles, draft blueprints, knowledge gaps, hypotheses), and the **Knowledge
+Graph** (a deterministic build over every authoritative record, with integrity validation). Claim
+confidence is always computed from stored evidence links, never authored — and because independence
+groups key on source, a single source structurally cannot corroborate itself into a promotable rule.
+
+Start at [`docs/trader-intelligence/README.md`](trader-intelligence/README.md); the ingestion
+runbook is [`OPERATOR-PLAYBOOK.md`](trader-intelligence/OPERATOR-PLAYBOOK.md). Testing is covered by
+[TESTING.md](TESTING.md) §4.
+
 ## Evidence Platform (v12.8.0, MOGO-003 Phase 1)
 
 MOGO now has **two browser storage media, not one**. `localStorage` is a bounded **working buffer**;

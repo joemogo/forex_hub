@@ -1,0 +1,159 @@
+# Provenance Specification
+
+**Status:** Normative. Describes the chain that must hold for every extracted item, the invariants
+at each hop, and how to audit them.
+
+> **The property this guarantees.** For any statement anywhere in the Trader Intelligence system —
+> a claim, a blueprint stage, a knowledge gap, a hypothesis, a graph node — it must be possible to
+> mechanically walk back to the exact bytes of the source file that produced it, and to verify
+> those bytes are unchanged. Nothing may exist that cannot be walked back.
+
+---
+
+## 1. The chain
+
+```
+StrategyRule            (none exist; the chain ends at proposals until a human authors one)
+   ↑ originatingClaimIds
+RuleCandidateProposal   ← blocked while any touching contradiction is open
+   ↑ originatingClaimIds
+Claim                   normalizedClaim + normalizedFingerprint + scope
+   ↑ claimId
+EvidenceClaimLink       relationshipType, relevanceWeight, independenceGroup
+   ↑ evidenceId
+EvidenceItem            exactExcerpt (verbatim) + contentHash + sourceLocator
+   ↑ sourceLocator = "TSEG|…"                    ↑ sourceId
+TranscriptSegment       rawText + textHash        EvidenceSource   contentHash
+   ↑ intakeId                                        ↑ sourceId
+IntakeManifest          contentHash + sourceMetadata (bytes, sha256, import timestamp)
+   ↓ sourceMetadata.rawCopyPath / normalizationMapPath
+normalization-map.json  per-line: sourceLine, sourceLineSha256, removed text, transform
+   ↓
+raw/{file}.raw.txt + .sha256   ← byte-identical copy
+   ↓
+{file}  the original, never modified after Stage 1
+```
+
+Derived artifacts hang off `Claim` and inherit its lineage: `StrategyBlueprint.sourceLineage`
+(sourceIds / segmentIds / evidenceIds / claimIds), `TraderProfile.sourceLineage`,
+`KnowledgeGap.provenance`, `Hypothesis.sourceClaimIds`.
+
+---
+
+## 2. Invariants
+
+Each is stated as a property that must hold, with what enforces it today.
+
+| # | Invariant | Enforced by |
+|---|---|---|
+| **P1** | The original file is never modified after Stage 1 | Convention + raw-copy hash comparison |
+| **P2** | The raw copy is byte-identical to the original | Asserted at copy time; `.sha256` sidecar |
+| **P3** | Normalization removes only a named artifact class and changes no word | Reversibility assertion (below) |
+| **P4** | Normalization is reversible: `timestamp + removedLabel + normalizedText == source line` | Asserted per line at generation; run aborts on failure |
+| **P5** | Every source line belongs to exactly one section | Coverage assertion at sectioning time |
+| **P6** | `exactExcerpt` is a literal substring of its segment's `rawText` | **`register_annotation()` raises** — machine-enforced |
+| **P7** | Every EvidenceItem names the segment it came from | `sourceLocator` set from `segment["segmentId"]` by `apply_annotation()` |
+| **P8** | Every EvidenceItem names its source | `sourceId` required; `register_evidence_item()` rejects unknown ids |
+| **P9** | Evidence cannot exist before its source | `apply_annotation()` requires the intake to have a linked `sourceId` |
+| **P10** | Every Claim reaches evidence through a Link | `link_evidence_to_claim()` validates both ends exist |
+| **P11** | Records are immutable; corrections supersede rather than edit | `supersedesEvidenceId` / `supersedesProposalId`; no update API |
+| **P12** | Every state change is recorded | `lifecycle/` events — 243 for the first intake |
+| **P13** | Confidence is derived, never authored | `recompute_claim_confidence()` on every link write |
+| **P14** | Claim identity includes scope | `compute_claim_fingerprint()` hashes text **and** scope tuple |
+| **P15** | Content integrity is checkable at every level | `contentHash` on source/intake/evidence; `textHash` on segments |
+
+### Gaps in enforcement (honest accounting)
+
+| Gap | Which invariant | Status |
+|---|---|---|
+| ~~G-a~~ | P1/P2 — nothing re-verifies the raw copy after ingestion day | ✅ **CLOSED** 2026-07-27: `ingest.py --verify-provenance` re-checks every raw archive, working copy, normalization map and excerpt. **Its first run found a real drift** — see below. |
+| **G-b** | P13 — a hand-edited `confidenceState` persists until the next recompute | Proposed check `CLAIM_CONFIDENCE_NOT_RECOMPUTABLE` (POLICY-001 §E1) |
+| **G-c** | P3/P4 — reversibility is asserted at generation time, not re-checkable later | Proposed check re-running the map against the raw copy (BACKLOG-003/H4) |
+| **G-d** | P11 — immutability is a convention plus absence of an update API, not a validator | Proposed content-hash re-verification (BACKLOG-003/H4) |
+
+G-b through G-d become material once ingestion is routine and multiple operators are involved.
+
+> **G-a was not hypothetical.** The first run of `--verify-provenance` found that the working copy
+> of the TJR transcript had been altered after ingestion — source line 395, `"And I'm sure that"` →
+> `"And I'm x that"`, 59,644 → 59,641 bytes. The raw archive was untouched and still hashed to
+> `e91c5ea1…`, as did `IntakeManifest.contentHash` and the normalization map, so **no evidence was
+> affected**: everything derives from the archive, and line 395 sits in a promotional section that
+> produced zero claims. The altered copy is quarantined in `intake/rejected/` with a full record,
+> and the working copy was restored byte-identically from the archive.
+>
+> The lesson is the one this specification exists to make true: **the archive, not the working
+> copy, is the source of truth** — and a check that is only run once is not a guarantee. Run
+> `--verify-provenance` periodically, not just at ingestion.
+
+---
+
+## 3. Auditing a single claim
+
+To answer *"where did this claim come from?"*:
+
+```python
+import query_evidence as qe
+idx = qe.EvidenceIndex.load("docs/trader-intelligence/evidence")
+
+claim = idx.claims["CLAIM|TJR|20260727|023"]
+for link in idx.links_for_claim(claim["claimId"]):
+    item = idx.items[link["evidenceId"]]
+    print(link["relationshipType"], item["sourceLocator"], repr(item["exactExcerpt"]))
+    seg = idx.segments[item["sourceLocator"]]
+    print("  lines %s-%s @ %s" % (seg["lineStart"], seg["lineEnd"], seg["startTimestamp"]))
+```
+
+Then map segment lines back to raw lines via `normalization-map.json`, and verify the raw copy
+still hashes to the value recorded in `IntakeManifest.contentHash`.
+
+`evidence_explain.explain_claim_by_id(idx, claimId)` produces the human-readable version of the
+same walk, including the confidence derivation.
+
+---
+
+## 4. Auditing the whole library
+
+```bash
+python3 scripts/trader_intelligence/validate_evidence.py   # zero findings expected
+python3 scripts/trader_intelligence/build_graph.py         # zero ERROR/FATAL expected
+```
+
+The graph makes the chain queryable: `DERIVED_FROM` (evidence→source),
+`EVIDENCE_FROM_SEGMENT` (evidence→segment), `SEGMENT_OF` (segment→intake), `SUPPORTS`
+(evidence→claim), `BLUEPRINT_DERIVED_FROM_CLAIM`, `RAISES_QUESTION`, `CLAIM_SUPPORTS_HYPOTHESIS`.
+
+**An orphan is a provenance failure, not a cosmetic issue.** A claim with no link, an evidence item
+with no segment, or a segment with no intake means something entered the library outside the
+pipeline.
+
+---
+
+## 5. Provenance for non-transcript evidence
+
+The chain generalizes. Replay and paper-trading evidence (`replay_result`, `paper_trade_result`)
+will enter as `EvidenceItem`s under their own `EvidenceSource`, with `sourceLocator` naming the
+replay run rather than a segment.
+
+**Two requirements when that arrives** (currently unbuilt — see `BACKLOG-001`):
+
+1. A replay run must be its own `EvidenceSource` with a `contentHash` over its inputs — data range,
+   instrument, rule version, parameters — so a result can never be silently re-attributed to a
+   different run.
+2. Replay evidence must be a **distinct independence group** from transcript evidence. This is what
+   makes POLICY-001 route (B) meaningful: replay corroboration must count as genuinely independent
+   of what the trader said.
+
+---
+
+## 6. What provenance does *not* establish
+
+Worth stating plainly, because the chain's rigour invites over-reading:
+
+- **Not truth.** Perfect provenance to a trader's exact words says nothing about whether the rule
+  works. That is what replay validation is for.
+- **Not authority.** `contentHash` proves the file has not changed since ingestion. It does not
+  prove the file is an authentic recording of the person it claims, nor that it is licensed.
+  Those are `authenticityStatus` and `licensingStatus`, and both are currently `unverified` /
+  `unknown` for the only source in the library.
+- **Not completeness.** `transcriptCompleteness: unknown` means the chain is sound over what was
+  ingested, while whether anything was missing upstream remains unestablished.

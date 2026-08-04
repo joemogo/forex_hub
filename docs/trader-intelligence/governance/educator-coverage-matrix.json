@@ -1,0 +1,144 @@
+{
+ "schemaVersion": "mogo.educator-coverage-matrix.v1",
+ "educators": [
+  {
+   "educator": "ALEX_G",
+   "profilePresent": true,
+   "sources": 9,
+   "claims": 226,
+   "hypothesesInCorpus": 587,
+   "implementedRules": 41,
+   "implementedEvidence": 24,
+   "verifiedReplayRuns": 1,
+   "missingImplementation": [],
+   "missingEvidence": [],
+   "missingHypotheses": null,
+   "facts": {
+    "engineStrategyId": "alex_g_sr_v1",
+    "registeredInEngine": true,
+    "canonicalRuleRegister": true,
+    "fidelityMatrix": true,
+    "ruleEvidenceJoin": true,
+    "replayCapable": true,
+    "verifiedReplayRuns": 1,
+    "evidencePackages": 24,
+    "paperTradingImplemented": true
+   }
+  },
+  {
+   "educator": "TJR",
+   "profilePresent": true,
+   "sources": 2,
+   "claims": 69,
+   "hypothesesInCorpus": 23,
+   "implementedRules": 0,
+   "implementedEvidence": 0,
+   "verifiedReplayRuns": 0,
+   "missingImplementation": [
+    "setup detection",
+    "trade construction",
+    "replay",
+    "paper trading"
+   ],
+   "missingEvidence": [
+    "all trade-level evidence"
+   ],
+   "missingHypotheses": "structured hypotheses exist only for ALEX_G",
+   "facts": {
+    "engineStrategyId": "tjr_session_v1",
+    "registeredInEngine": true,
+    "canonicalRuleRegister": false,
+    "fidelityMatrix": false,
+    "ruleEvidenceJoin": false,
+    "replayCapable": false,
+    "verifiedReplayRuns": 0,
+    "evidencePackages": 0,
+    "paperTradingImplemented": false
+   }
+  },
+  {
+   "educator": "RAYNER_TEO",
+   "profilePresent": true,
+   "sources": 1,
+   "claims": 46,
+   "hypothesesInCorpus": 31,
+   "implementedRules": 0,
+   "implementedEvidence": 0,
+   "verifiedReplayRuns": 0,
+   "missingImplementation": [
+    "everything -- no engine strategy exists"
+   ],
+   "missingEvidence": [
+    "all trade-level evidence"
+   ],
+   "missingHypotheses": "structured hypotheses exist only for ALEX_G",
+   "facts": {
+    "engineStrategyId": null,
+    "registeredInEngine": false,
+    "canonicalRuleRegister": false,
+    "fidelityMatrix": false,
+    "ruleEvidenceJoin": false,
+    "replayCapable": false,
+    "verifiedReplayRuns": 0,
+    "evidencePackages": 0,
+    "paperTradingImplemented": false
+   }
+  },
+  {
+   "educator": "ICT",
+   "profilePresent": true,
+   "sources": 0,
+   "claims": 0,
+   "hypothesesInCorpus": 0,
+   "implementedRules": 0,
+   "implementedEvidence": 0,
+   "verifiedReplayRuns": 0,
+   "missingImplementation": [
+    "everything -- no engine strategy exists"
+   ],
+   "missingEvidence": [
+    "all trade-level evidence"
+   ],
+   "missingHypotheses": "structured hypotheses exist only for ALEX_G",
+   "facts": {
+    "engineStrategyId": null,
+    "registeredInEngine": false,
+    "canonicalRuleRegister": false,
+    "fidelityMatrix": false,
+    "ruleEvidenceJoin": false,
+    "replayCapable": false,
+    "verifiedReplayRuns": 0,
+    "evidencePackages": 0,
+    "paperTradingImplemented": false
+   }
+  },
+  {
+   "educator": "CRT",
+   "profilePresent": false,
+   "sources": 0,
+   "claims": 0,
+   "hypothesesInCorpus": 0,
+   "implementedRules": 0,
+   "implementedEvidence": 0,
+   "verifiedReplayRuns": 0,
+   "missingImplementation": [
+    "everything -- no engine strategy exists"
+   ],
+   "missingEvidence": [
+    "all trade-level evidence"
+   ],
+   "missingHypotheses": "structured hypotheses exist only for ALEX_G",
+   "facts": {
+    "engineStrategyId": null,
+    "registeredInEngine": false,
+    "canonicalRuleRegister": false,
+    "fidelityMatrix": false,
+    "ruleEvidenceJoin": false,
+    "replayCapable": false,
+    "verifiedReplayRuns": 0,
+    "evidencePackages": 0,
+    "paperTradingImplemented": false
+   }
+  }
+ ]
+}

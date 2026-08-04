@@ -1,0 +1,553 @@
+{
+ "schemaVersion": "mogo.evidence-gap-matrix.v1",
+ "rows": [
+  {
+   "hypothesisId": "HYP|AXR-001",
+   "ruleId": "AXR-001",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-002",
+   "ruleId": "AXR-002",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-003",
+   "ruleId": "AXR-003",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "8 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "22 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-004",
+   "ruleId": "AXR-004",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "8 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "22 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-005",
+   "ruleId": "AXR-005",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "16 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "14 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-006",
+   "ruleId": "AXR-006",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-007",
+   "ruleId": "AXR-007",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-008",
+   "ruleId": "AXR-008",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "an Evidence Package field carrying this rule's output (schema change -- out of MOGO-004 scope)"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-010",
+   "ruleId": "AXR-010",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-011",
+   "ruleId": "AXR-011",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-012",
+   "ruleId": "AXR-012",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-013",
+   "ruleId": "AXR-013",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "an Evidence Package field carrying this rule's output (schema change -- out of MOGO-004 scope)"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-014",
+   "ruleId": "AXR-014",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "live paper trades exercising it; replay cannot produce them"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": [
+    "this implementation runs only on the live paper path"
+   ]
+  },
+  {
+   "hypothesisId": "HYP|AXR-015",
+   "ruleId": "AXR-015",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-020",
+   "ruleId": "AXR-020",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "live paper trades exercising it; replay cannot produce them"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": [
+    "this implementation runs only on the live paper path"
+   ]
+  },
+  {
+   "hypothesisId": "HYP|AXR-021",
+   "ruleId": "AXR-021",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-022",
+   "ruleId": "AXR-022",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-030",
+   "ruleId": "AXR-030",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-031",
+   "ruleId": "AXR-031",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "a fidelity verdict asserting an implementation"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-040",
+   "ruleId": "AXR-040",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "an Evidence Package field carrying this rule's output (schema change -- out of MOGO-004 scope)"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-041",
+   "ruleId": "AXR-041",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-042",
+   "ruleId": "AXR-042",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-043",
+   "ruleId": "AXR-043",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-050",
+   "ruleId": "AXR-050",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "live paper trades exercising it; replay cannot produce them"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": [
+    "this implementation runs only on the live paper path"
+   ]
+  },
+  {
+   "hypothesisId": "HYP|AXR-051",
+   "ruleId": "AXR-051",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-052",
+   "ruleId": "AXR-052",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "live paper trades exercising it; replay cannot produce them"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": [
+    "this implementation runs only on the live paper path"
+   ]
+  },
+  {
+   "hypothesisId": "HYP|AXR-053",
+   "ruleId": "AXR-053",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-060",
+   "ruleId": "AXR-060",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-061",
+   "ruleId": "AXR-061",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-062",
+   "ruleId": "AXR-062",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-063",
+   "ruleId": "AXR-063",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-070",
+   "ruleId": "AXR-070",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "an Evidence Package field carrying this rule's output (schema change -- out of MOGO-004 scope)"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-071",
+   "ruleId": "AXR-071",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-072",
+   "ruleId": "AXR-072",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-080",
+   "ruleId": "AXR-080",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-081",
+   "ruleId": "AXR-081",
+   "currentStatus": "UNRESOLVED",
+   "currentEvidence": [],
+   "missingEvidence": [
+    "a fidelity verdict asserting an implementation"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-090",
+   "ruleId": "AXR-090",
+   "currentStatus": "COLLECTING",
+   "currentEvidence": [
+    "24 RUN-001 packages carry the declared field(s)"
+   ],
+   "missingEvidence": [
+    "6 more resolved trades per arm to reach the operational sample"
+   ],
+   "impossibleEvidence": [],
+   "replayOnlyEvidence": [
+    "condition-level attribution (triggeredConditions) -- RUN-001 predates Unit B"
+   ],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-091",
+   "ruleId": "AXR-091",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO-authored behaviour with no educator support; there is no educator claim to validate"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-092",
+   "ruleId": "AXR-092",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-093",
+   "ruleId": "AXR-093",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  },
+  {
+   "hypothesisId": "HYP|AXR-100",
+   "ruleId": "AXR-100",
+   "currentStatus": "UNSUPPORTED",
+   "currentEvidence": [],
+   "missingEvidence": [],
+   "impossibleEvidence": [
+    "MOGO does not implement the rule; no observation can exist without an implementation decision, which is out of research scope"
+   ],
+   "replayOnlyEvidence": [],
+   "liveOnlyEvidence": []
+  }
+ ]
+}
