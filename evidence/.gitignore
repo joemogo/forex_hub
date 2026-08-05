@@ -1,0 +1,11 @@
+# Campaign evidence capture directory (MOGO-005 B-3).
+#
+# scripts/mogo_evidence_receiver.js writes captured evidence here by default. Evidence is
+# CAPTURED here and then PRESERVED deliberately -- it must never be committed as a side effect
+# of a routine `git add`. A replay package is an observation, not source code, and committing
+# one by accident would put an un-reviewed artifact into the repository's history permanently.
+#
+# This file ignores everything in this directory except itself, which also keeps the directory
+# present in a fresh clone so the receiver's default output path exists before first use.
+*
+!.gitignore

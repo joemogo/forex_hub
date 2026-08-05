@@ -397,6 +397,48 @@ actually prove what you're checking:
 unchanged. Any deviation from that is the exception, requires explicit authorization for that
 specific instance, and must satisfy every bullet above.
 
+### Evidence egress — getting evidence OUT of a disposable profile
+
+Rule 0 mandates a profile that is disposable by construction. That is the point, and it has a
+consequence that must be planned for rather than discovered: **anything captured inside that
+profile dies with it.** `browser_test_profile.sh` creates the isolation; it does not provide a way
+back out.
+
+**Do not rely on the browser's export/download path.** During the MOGO-004 Step 1 pilot an export
+produced no file *and no error*: Chrome's `downloads` table for the test profile held **zero rows**
+and its Preferences carried no download keys. Nothing distinguished "export succeeded" from
+"export never happened", and fifty evidence packages sat in IndexedDB for a day while the run was
+believed to have produced nothing. That defect is unfixed — see `docs/KNOWN_ISSUES.md`.
+
+**The supported path is the receiver:**
+
+```bash
+node scripts/mogo_evidence_receiver.js            # defaults: port 8752, output <repo>/evidence/
+node scripts/mogo_evidence_receiver.js --selftest # verify byte-exact fidelity before trusting it
+```
+
+It accepts a POSTed body and writes those bytes verbatim — no parsing, no re-encoding, no
+re-hashing. Package `contentHash` values are computed inside the browser before transmission, so
+the receiver only ever handles an opaque buffer. `evidence/` is git-ignored: evidence is captured
+there and then preserved deliberately, never committed as a side effect.
+
+**⚠️ POST to `http://127.0.0.1:<PORT>`, never `http://localhost:<PORT>`.** The receiver binds IPv4
+`127.0.0.1`, and Chrome resolves `localhost` to `::1` on this platform — the app's own access log
+records every browser hit as `::1`. A POST to `localhost` is refused; a POST to `127.0.0.1`
+succeeds. This is a documented constraint rather than a code change, because the receiver is
+adopted verbatim from the artifact that already moved ~2.7 MB of pilot evidence with byte-exact
+fidelity.
+
+**Capture after every run, before the next one begins.** Some state survives exactly one run —
+`alexGReplayRejected` (`index.html:4119`) is reassigned on each replay and is never persisted, so a
+second run destroys the first run's rejection record permanently. That is not hypothetical: it is
+how the pilot's first run lost its record. For a multi-run campaign, batching captures until the
+end means keeping one record and losing the rest.
+
+There is no `tests/run_*_tests.js` suite for the receiver: this runner invokes every such file
+under `osascript -l JavaScript`, which cannot run a Node HTTP server. `--selftest` is the
+verification, and it round-trips real bytes through the real server rather than a stub.
+
 ## 3. The durable regression baseline
 
 [`regression-baseline-tools.py`](../regression-baseline-tools.py) exists specifically to catch an

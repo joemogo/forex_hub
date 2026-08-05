@@ -136,6 +136,38 @@ than no guard — it converts a known risk into an assumed-safe one.
 
 ---
 
+## Browser evidence export fails silently — no file, no error (EXP-001)
+
+**Status:** Open defect, disclosed. A supported workaround exists; the underlying failure is unfixed.
+
+During the MOGO-004 Step 1 pilot, an evidence export from a disposable test profile produced **no
+file and no error**. The run had in fact succeeded: fifty packages were captured to IndexedDB and
+every one of them later hash-verified. But nothing reached disk, nothing surfaced to the operator,
+and the run was believed to have produced no artifacts at all for roughly a day.
+
+**The evidence for what happened, rather than a theory about it:** Chrome's `downloads` table for
+that profile contained **zero rows**, and the profile's `Preferences` carried no download keys.
+The export did not fail partway and it was not interrupted — **no download was ever registered
+with the browser**. The precise mechanism is not established, and it is recorded that way rather
+than guessed at.
+
+**What is NOT the defect.** The v12.8.0 design is correct and behaved correctly: a package is
+marked exported only after the write resolves *and* re-verification passes, so nothing was ever
+falsely marked as exported, and the unexported count stayed honest. The gap is narrower and
+nastier — **silence was indistinguishable from success.** There was no failure surface at all.
+
+**Workaround, and the current supported path:**
+[`scripts/mogo_evidence_receiver.js`](../scripts/mogo_evidence_receiver.js) — see *Evidence egress*
+in [TESTING.md](TESTING.md). It writes POSTed bytes verbatim, so it cannot alter evidence, and
+`--selftest` proves that byte-for-byte before a run depends on it.
+
+**Consequence while this is open:** the download path must not be relied on for any campaign run.
+Combined with `alexGReplayRejected` being memory-only and surviving exactly one replay
+(`index.html:4119`), an unnoticed export failure between runs destroys the earlier run's rejection
+record permanently — which is exactly what happened to the pilot's first run.
+
+---
+
 ## Diagnostics: "Paper trading engine (sizing + auto-close)" self-test failing
 
 Discovered during v12.0.0 (Strategy Framework Foundation, Release 1) live verification, this is
