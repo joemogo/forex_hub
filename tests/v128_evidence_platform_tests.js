@@ -691,6 +691,9 @@ function runEvidencePlatformFixtures(g){
   }
   const RUN={runId:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
     datasetHash:'0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f',
+    // v12.19.0 MOGO-004 L2: the run identity has always carried these two; they are now persisted.
+    configHash:'1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c',
+    paramsHash:'2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p2p',
     strategyId:'alex_g_sr_v1',
     range:{requestedDays:90,fromUTC:'2026-02-01T00:00:00.000Z',toUTC:'2026-05-01T00:00:00.000Z'}};
 
@@ -724,7 +727,10 @@ function runEvidencePlatformFixtures(g){
     const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
     const pkg=g.evidenceBuildPackageFromTrade(n,{packageId:'PKG|alex_g_sr_v1|20260501|1',
       strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN',
-      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range});
+      // v12.19.0 MOGO-004 L2: a REPLAY package now requires all four per-run identity hashes
+      // (PRE-REG-001 §8.1), so this fixture supplies the two that were previously dropped.
+      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range,
+      configHash:RUN.configHash,paramsHash:RUN.paramsHash});
     eq(pkg.identity.mode,'REPLAY');
     eq(pkg.identity.runId,RUN.runId);
     eq(pkg.identity.datasetHash,RUN.datasetHash);
@@ -738,13 +744,66 @@ function runEvidencePlatformFixtures(g){
     const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
     const rep=g.evidenceBuildPackageFromTrade(n,{packageId:'PKG|alex_g_sr_v1|20260501|1',
       strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN',
-      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range});
+      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range,
+      configHash:RUN.configHash,paramsHash:RUN.paramsHash});
     eq(rep.packageSchemaVersion,live.packageSchemaVersion,'same schema version');
     eq(Object.keys(rep).sort().join(','),Object.keys(live).sort().join(','),'same top-level keys');
     eq(Object.keys(rep.identity).sort().join(','),Object.keys(live.identity).sort().join(','),
       'identity key sets must match — the additive keys are always present, null for live');
     eq(live.identity.mode,'LIVE_PAPER'); eq(live.identity.runId,null);
     eq(live.identity.datasetHash,null); eq(live.identity.replayDateRange,null);
+    // v12.19.0 MOGO-004 L2: required-and-present for LIVE_PAPER evidence, carrying null because a
+    // live trade has no replay config or parameter set. The KEY is mandatory; the VALUE is honest.
+    ok('configHash' in live.identity,'LIVE_PAPER evidence must carry the configHash key');
+    ok('paramsHash' in live.identity,'LIVE_PAPER evidence must carry the paramsHash key');
+    eq(live.identity.configHash,null); eq(live.identity.paramsHash,null);
+  });
+
+  t('R5b MOGO-004 L2 — a REPLAY package persists configHash and paramsHash',function(){
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    const rep=g.evidenceBuildPackageFromTrade(n,{packageId:'PKG|alex_g_sr_v1|20260501|1',
+      strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN',
+      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range,
+      configHash:RUN.configHash,paramsHash:RUN.paramsHash});
+    // PRE-REG-001 §8.1 requires all four per-run identity hashes. Before v12.19.0 only two of them
+    // reached the package, and the other two were unrecoverable once the run returned.
+    eq(rep.identity.runId,RUN.runId);
+    eq(rep.identity.datasetHash,RUN.datasetHash);
+    eq(rep.identity.configHash,RUN.configHash,'configHash must be persisted verbatim');
+    eq(rep.identity.paramsHash,RUN.paramsHash,'paramsHash must be persisted verbatim');
+    ok(g.evidenceValidatePackage(rep).valid,'a fully identified replay package must validate');
+  });
+
+  t('R5c MOGO-004 L2 — the two hashes are recorded, never recomputed, and runId is unaffected',function(){
+    // The persistence change must not touch how any hash is DERIVED. runId is still the content
+    // hash built by alexGBuildReplayRunIdentity, and the package must not re-derive anything.
+    const src=String(g.evidenceBuildPackageFromTrade);
+    eq(/evidenceContentHash\s*\(/.test(src),false,'the package builder must never compute a hash');
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    const rep=g.evidenceBuildPackageFromTrade(n,{packageId:'PKG|alex_g_sr_v1|20260501|1',
+      strategyId:'alex_g_sr_v1',captureBasis:'REPLAY_RUN',
+      mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,replayDateRange:RUN.range,
+      configHash:RUN.configHash,paramsHash:RUN.paramsHash});
+    eq(rep.identity.runId,RUN.runId,'runId is carried through unchanged, not rebuilt');
+  });
+
+  t('R5d MOGO-004 L2 — legacy packages still validate; a regressed REPLAY package does not',function(){
+    const n=g.evidenceNormalizeReplayTrade(replayTrade(),RUN);
+    const base={packageId:'PKG|alex_g_sr_v1|20260501|1',strategyId:'alex_g_sr_v1',
+      captureBasis:'REPLAY_RUN',mode:'REPLAY',runId:RUN.runId,datasetHash:RUN.datasetHash,
+      replayDateRange:RUN.range,configHash:RUN.configHash,paramsHash:RUN.paramsHash};
+    // A package captured before v12.19.0 omits both keys entirely. RUN-001 (24 packages) and the
+    // MOGO-004 pilot (50 packages) are exactly this shape and are already hash-verified.
+    const legacy=g.evidenceBuildPackageFromTrade(n,base);
+    delete legacy.identity.configHash; delete legacy.identity.paramsHash;
+    ok(g.evidenceValidatePackage(legacy).valid,
+      'omitting the keys must stay valid -- 74 verified packages depend on this');
+    // But a REPLAY package that carries the key and nulls it could only be a capture regression.
+    const regressed=g.evidenceBuildPackageFromTrade(n,base);
+    regressed.identity.configHash=null;
+    const v=g.evidenceValidatePackage(regressed);
+    eq(v.valid,false,'a null configHash on a REPLAY package must fail validation');
+    ok(v.errors.join(';').indexOf('configHash')!==-1,'the error must name the field');
   });
 
   t('R6 replay completeness honestly flags money-space non-determinism',function(){
