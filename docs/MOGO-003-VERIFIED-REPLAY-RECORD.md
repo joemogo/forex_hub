@@ -184,3 +184,99 @@ still requires the source code plus a dataset matching `datasetHash`. See
 | Run | Date | Strategy | Instrument | Window | runId (12) | Packages | Status |
 |---|---|---|---|---|---|---|---|
 | RUN-001 | 2026-08-03 | `alex_g_sr_v1` | EUR_USD | 2026-03-25 → 2026-08-03 | `3d7c3dc1af7f` | 24 | Verified · authoritative |
+| MOGO-004 pilot | 2026-08-04 | `alex_g_sr_v1` | EUR_USD | 2026-03-27 → 2026-08-04 | `2d5004cba59b` | 25 | Verified · pilot of record |
+| C1-01 | 2026-08-06 | `alex_g_sr_v1` | GBP_USD | 2026-03-31 → 2026-08-06 | `f230a04976d4` | 24 | Verified |
+| C1-02 | 2026-08-06 | `alex_g_sr_v1` | GBP_JPY | 2026-03-31 → 2026-08-06 | `915bc83f587d` | 12 | Verified |
+| C1-03 | 2026-08-06 | `alex_g_sr_v1` | AUD_USD | 2026-03-31 → 2026-08-06 | `88d924c0be04` | 20 | Verified |
+| C1-04 | 2026-08-06 | `alex_g_sr_v1` | USD_JPY | 2026-03-31 → 2026-08-06 | `4689c3d17f80` | 24 | Verified |
+| C1-05 | 2026-08-06 | `alex_g_sr_v1` | GBP_CHF | 2026-03-31 → 2026-08-06 | `ff5dd403ea8d` | 24 | Verified |
+| C1-06 | 2026-08-06 | `alex_g_sr_v1` | GBP_CAD | 2026-03-31 → 2026-08-06 | `ca6c0038a27b` | 24 | Verified |
+| C1-07 | 2026-08-06 | `alex_g_sr_v1` | NZD_USD | 2026-03-31 → 2026-08-06 | `80a17b22e3f8` | 17 | Verified |
+| C1-08 | 2026-08-06 | `alex_g_sr_v1` | AUD_JPY | 2026-03-31 → 2026-08-06 | `3b36727d5694` | 17 | Verified |
+| C1-09 | 2026-08-06 | `alex_g_sr_v1` | EUR_JPY | 2026-03-31 → 2026-08-06 | `8f70d403fae1` | 21 | Verified |
+| C1-10 | 2026-08-06 | `alex_g_sr_v1` | USD_CAD | 2026-03-31 → 2026-08-06 | `367dd27fd6b8` | 19 | Verified |
+| C1-11 | 2026-08-06 | `alex_g_sr_v1` | USD_CHF | 2026-03-31 → 2026-08-06 | `81b566549f6a` | 19 | Verified |
+
+---
+
+## Campaign C1 — completion entry (PREREG-001 §8 item 7)
+
+**This section records completion of the declared runs. It adjudicates nothing.** PREREG-001 §7
+permits adjudication once, after the declared runs complete; that step has not begun and no result,
+interpretation or conclusion about strategy performance appears anywhere in this entry.
+
+| | |
+|---|---|
+| Campaign | `CAMP\|ALEX\|C1\|2026-08-05` (PREREG-002) |
+| Declared runs | 11 · **executed 11** · in the pre-registered order, no substitutions |
+| Completed | 2026-08-06 |
+| Engine | `APP_VERSION` **12.19.0** on all 221 packages |
+| Repository commit | `f7f0c40` |
+| Strategy | `alex_g_sr_v1`, unmodified throughout |
+
+### Campaign-level verification
+
+| Property | Result |
+|---|---|
+| Campaign packages (`mode == REPLAY`) | **221** |
+| Hash verification | **221 / 221 PASS**, 0 FAIL — independent re-canonicalization under `mogo.evidence-canon.v1` (K1–K8) and SHA-256 recomputation |
+| Distinct `runId`s | **11** — one per declared run, no duplicates, no commingling |
+| Distinct `configHash` | **1** — `dbbb29b690f6…62c5adb`, matches PREREG-002 §2 |
+| Distinct `paramsHash` | **1** — `8fe841e602be…21c6cae5`, matches PREREG-002 §2 |
+| `datasetHash` | 11 distinct, one per instrument, as expected |
+| ADR-011 completeness | `COMPLETE` on W/D/H4/H1 for all 11 runs |
+| Gate fields | `triggeredConditions`, `timeToMFE`, `timeToMAE`, market context populated on **216 / 221**; the 5 exceptions are explained below |
+| Rejection records (§9) | Captured for **all 11** runs, every record carrying a reason |
+
+The single `configHash` and single `paramsHash` across 221 observations and eleven instruments is the
+pre-registration's central control: every package is verifiably the same configuration and the same
+replay parameters, declared in advance and confirmed against the live engine before the first run.
+
+### Censoring (PREREG-001 §9)
+
+| | |
+|---|---|
+| Trades created | 226 |
+| Suppressed | 128 — all `EXISTING_OPEN_TRADE_SAME_PAIR_TIMEFRAME` |
+| Considered | 354 |
+| **Campaign suppression rate** | **36.2%** (per-run range 24.2% – 58.6%) |
+
+**The 221 observations are a biased draw from 354, not a smaller unbiased sample.** Any figure
+computed on this evidence must state its suppression rate.
+
+### Explained nulls — 5 of 221 (2.3%)
+
+Five packages carry a null excursion-timing field. In every case the recomputation returned
+`AGREES` with `matchesEngineExtremes: true` and no data-quality flag, and the null is present because
+the excursion itself was zero — not because capture failed.
+
+| Run | Field | Cause | Outcome |
+|---|---|---|---|
+| C1-03 | `timeToMFE` | `mfePips` 0 | Loss — no favourable movement |
+| C1-04 | `timeToMFE` | `mfePips` 0 | Loss — no favourable movement |
+| C1-07 | `timeToMFE` | `mfePips` 0 | Loss — no favourable movement |
+| C1-11 | `timeToMFE` | `mfePips` 0 | Loss — no favourable movement |
+| C1-06 | `timeToMAE` | `maePips` 0 | Win — no adverse movement |
+
+These are nulls because the event did not occur, and must not be treated as missing data.
+
+### Evidence set
+
+| | |
+|---|---|
+| Location | `<repo>/evidence/` (git-ignored; evidence is never committed) |
+| Artifacts | 33 — eleven runs × `PACKAGES` / `REJECTED` / `HARVEST` |
+| Backup | `~/Desktop/MOGO-Evidence-C1/` with `MANIFEST.txt` and the receiver transcript; all 33 verified byte-identical by SHA-256 manifest comparison |
+
+**One handling note for anyone analysing this set:** `C1-01-GBP_USD-PACKAGES.json` contains **25**
+packages — 24 campaign packages plus one `LIVE_CLOSE` package, `PKG|current_strategy|20260806|1`,
+written by the paper engine into the same profile. C1-01's capture posted the whole store; every
+capture from C1-02 onward posted only the isolated run. **Filter `mode == "REPLAY"` on that file.**
+The package is recorded rather than deleted, and is excluded from every figure above.
+
+### Open items
+
+- **§8 item 4** — `commitHash` is `null`/`UNAVAILABLE` in every package (limitation L5). Satisfied
+  externally: the repository commit for all eleven runs is `f7f0c40`.
+- **§8 item 5** — export-verification by re-import (limitation L6) remains **not performed** for any
+  campaign run.
