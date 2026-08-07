@@ -1,0 +1,253 @@
+{
+ "adjudication": "CAMP|ALEX|C1|2026-08-05",
+ "protocolVersion": "1.0",
+ "adjudicatedAtUTC": "2026-08-07T00:57:23Z",
+ "frozenCommit": "39ca46fc58e1daaaf97c8047e234415c2a05893e",
+ "frozenTag": "campaign-c1-pre-adjudication-frozen",
+ "hashes": {
+  "protocol": "4ff3bd5e1dd110d0aad2132fade4a8a28bd3bab09d7492cf28bb7244dbefdad3",
+  "prereg001": "16e29f645f1e1252f3d2aebc6af011ba767c47dcea4ac33969ffb34392836da1",
+  "prereg002": "42d543c4dd7d4651694e7842379977f699d69874c3930d08e002f2cf5b6981b1",
+  "registryAtAdjudicationInput": "956b75b0ab30889cbbb3923e67a0123e1956c522cdbaa0cad0f940997ff96c6b"
+ },
+ "evidenceManifestVerification": {
+  "artifacts": 33,
+  "matched": 33,
+  "failures": 0
+ },
+ "environment": {
+  "engine": "12.19.0",
+  "node": "v24.18.0",
+  "python": "3.14.6",
+  "os": "Darwin 21.6.0"
+ },
+ "campaign": {
+  "replayPackages": 221,
+  "distinctRunIds": 11,
+  "instruments": 11,
+  "configHash": "dbbb29b690f6692ae4d44a6833876193435ad66cc13c6e7226031e5f462c5adb",
+  "paramsHash": "8fe841e602be86cd335c9aa6804a8f30c76c57cac229a50b349194d821c6cae5",
+  "excludedNonCampaignPackages": [
+   "PKG|current_strategy|20260806|1"
+  ],
+  "triggeredConditionsTotal": 1142,
+  "triggeredConditionsUnsatisfied": 0
+ },
+ "suppression": {
+  "campaignRatePct": 36.2,
+  "basis": "trades created",
+  "suppressed": 128,
+  "considered": 354,
+  "byScopePackagesBasis": {
+   "ALL_SETUPS": {
+    "suppressed": 128,
+    "considered": 349,
+    "ratePct": 36.7
+   },
+   "A_repeatedReaction": {
+    "suppressed": 99,
+    "considered": 234,
+    "ratePct": 42.3
+   },
+   "B_breakRetest": {
+    "suppressed": 29,
+    "considered": 115,
+    "ratePct": 25.2
+   }
+  },
+  "differentialCensoringNoted": true
+ },
+ "stepsExecuted": [
+  "0 freeze/verify",
+  "1 trade table",
+  "2 arm cardinality gate"
+ ],
+ "stepsNotExecuted": [
+  "3 metrics",
+  "4 intervals",
+  "5 effect size",
+  "6 multiplicity",
+  "7 gates"
+ ],
+ "inferentialStatisticsCalculated": false,
+ "bootstrapSeedDeclared": 20260806,
+ "bootstrapExecuted": false,
+ "hypotheses": [
+  {
+   "hypothesisId": "HYP|AXR-001",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "DEFINITIONAL",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is definitional rather than a per-trade predicate, so no trade can fall in armB. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-002",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-003",
+   "scope": "B_breakRetest",
+   "inScope": 86,
+   "armA": 86,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=86, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope B_breakRetest: 25.2%.",
+   "observedResolvedTrades": 86,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-004",
+   "scope": "B_breakRetest",
+   "inScope": 86,
+   "armA": 86,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=86, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope B_breakRetest: 25.2%.",
+   "observedResolvedTrades": 86,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-005",
+   "scope": "A_repeatedReaction",
+   "inScope": 135,
+   "armA": 135,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=135, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope A_repeatedReaction: 42.3%.",
+   "observedResolvedTrades": 135,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-007",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-030",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "CONFIGURATION_CONSTANT",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is a configuration constant identical across every campaign trade, so no contrast exists. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-041",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "CONFIGURATION_CONSTANT",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is a configuration constant identical across every campaign trade, so no contrast exists. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-043",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "CONFIGURATION_CONSTANT",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is a configuration constant identical across every campaign trade, so no contrast exists. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-051",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-071",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "QUALIFICATION_GATE",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is an engine qualification gate: a setup failing it never becomes a trade, so armB cannot be populated. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  },
+  {
+   "hypothesisId": "HYP|AXR-090",
+   "scope": "ALL_SETUPS",
+   "inScope": 221,
+   "armA": 221,
+   "armB": 0,
+   "gateReached": "Step 2 cardinality gate",
+   "metricsPermitted": false,
+   "haltReasonCategory": "DEFINITIONAL",
+   "status": "COLLECTING",
+   "statusReason": "Campaign C1 (CAMP|ALEX|C1|2026-08-05, 221 packages, engine 12.19.0, commit 39ca46f): armA=221, armB=0; minimum operational sample of 30 not reached in both arms. armB is empty by construction -- the condition is definitional rather than a per-trade predicate, so no trade can fall in armB. Adjudicated under PRE_ADJUDICATION_PROTOCOL v1.0 R1/R9/R10; halted at Step 2 cardinality gate; no metric computed. Suppression for scope ALL_SETUPS: 36.7%.",
+   "observedResolvedTrades": 221,
+   "evidenceRunIdCount": 12
+  }
+ ],
+ "outcome": {
+  "supported": 0,
+  "rejected": 0,
+  "collecting": 12,
+  "promotionCeiling": "REPLAY_EVIDENCE_ONLY",
+  "rulesPromoted": 0,
+  "rulesRejected": 0
+ }
+}
