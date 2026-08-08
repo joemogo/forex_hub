@@ -30,45 +30,111 @@ ONE EVENT PER TRANSACTION
     and would force batch fields into a committed MOGO-010 envelope. Instead
     every multi-event sequence is resumable, which is why recovery has a rule
     for each intermediate point rather than an all-or-nothing boundary.
+
+MOGO-011 STEP 2 -- WHAT CHANGED, AND WHY EACH WAS A DEFECT RATHER THAN A DESIGN
+    * _fail_task() stopped at `failed`, which is NOT terminal. Step 1 was
+      explicit that retry and dead-letter were out of scope, but the result was
+      a task that never reached a visible terminal outcome -- Constitution
+      section 6.5. Step 2 closes it: every failure now resolves to
+      retry_scheduled or dead_lettered.
+    * recover() reclaimed EVERY task in claimed/running unconditionally, on the
+      assumption that single-writer implies the previous holder is gone. The
+      assumption is true, and Constitution section 11 requires recovery to
+      resume from a VERIFIED checkpoint, "never from an assumed one". The lease
+      predicate replaces the assumption with a check over recorded facts.
+    * run_once() drove only requested/policy_check/queued. It now also drives
+      `failed` and ELIGIBLE `retry_scheduled` -- and deliberately not ineligible
+      retry_scheduled, or the loop would select the same task forever.
+
+    The write protocol, the single append site, the guarded UPDATE, the
+    log-is-authoritative rule and the worker boundary are all UNCHANGED. Step 2
+    adds no new transaction shape; every new fact rides inside the existing
+    transaction of the event that implies it.
 """
 
+import json
 import os
 import uuid as _uuid
-from datetime import datetime, timezone
 
 from ..contracts import command as command_contract  # noqa: E402
+from ..contracts import errors as contract_errors  # noqa: E402
 from ..contracts import ids  # noqa: E402
 from ..contracts import task_states  # noqa: E402
+from . import clock as clock_module  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
 from . import event_log as event_log_module  # noqa: E402
+from . import lease as lease_module  # noqa: E402
 from . import paths as paths_module  # noqa: E402
 from . import projection  # noqa: E402
 from . import registry  # noqa: E402
+from . import retry as retry_module  # noqa: E402
 from . import schema as schema_module  # noqa: E402
 from . import store  # noqa: E402
 from . import worker as worker_module  # noqa: E402
 from .capabilities import echo as echo_capability  # noqa: E402
+from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
 
 PRODUCER_ORCHESTRATOR = "orchestrator"
 PRODUCER_POLICY_GATE = "policyGate"
-PRODUCER_WORKER = "worker:" + echo_capability.CAPABILITY_ID
 PRODUCER_VERSION = "1.0.0"
 EVENT_VERSION = 1
 
 CRASH_SIM_ENV = "MOGO_RUNTIME_ALLOW_CRASH_SIM"
+CLOCK_OVERRIDE_ENV = "MOGO_RUNTIME_ALLOW_CLOCK_OVERRIDE"
 
-# The capabilities this build registers at init. One, deliberately.
-BUILTIN_CAPABILITIES = (echo_capability.MANIFEST,)
-CAPABILITY_CALLABLES = {echo_capability.CAPABILITY_ID: echo_capability.execute}
+# The capabilities this build registers at init. Two, deliberately: one pure
+# capability that always succeeds and one that fails a declared retryable
+# failure until a declared attempt. Both are effectClass `pure` -- registration
+# of an effectful capability is mechanically refused (risk A-5, decision B-4).
+BUILTIN_CAPABILITIES = (echo_capability.MANIFEST,
+                        fail_then_succeed_capability.MANIFEST)
+CAPABILITY_CALLABLES = {
+    echo_capability.CAPABILITY_ID: echo_capability.execute,
+    fail_then_succeed_capability.CAPABILITY_ID: fail_then_succeed_capability.execute,
+}
 
-NON_TERMINAL_RESUMABLE = ("requested", "policy_check", "queued")
+NON_TERMINAL_RESUMABLE = ("requested", "policy_check", "queued", "failed")
+
+# Crash-simulation boundaries added by Step 2, all refused unless the crash-sim
+# environment variable is set to 1, exactly as in Step 1.
+STEP_2_CRASH_BOUNDARIES = (
+    "after_failure_append", "inside_failure_transaction",
+    "after_retry_schedule_append", "before_retry_projection",
+    "after_retry_release_append", "after_lease_claim", "after_lease_expiry",
+    "before_requeue", "during_retry_execution", "before_dead_letter_apply",
+    "after_dead_letter_append",
+)
 
 
+def producer_for(capability_id):
+    """The producer string for a worker acting on behalf of one capability."""
+    return "worker:" + capability_id
+
+
+# Retained under its Step 1 name because the CLI and the demonstration command
+# builder call it. It now delegates to the one module permitted to read a clock,
+# so there is exactly one real clock read in platform/**.
 def utc_now():
     """ISO-8601 UTC at millisecond precision -- the Catalog conventions format."""
-    moment = datetime.now(timezone.utc)
-    return "%s.%03dZ" % (moment.strftime("%Y-%m-%dT%H:%M:%S"),
-                         moment.microsecond // 1000)
+    return clock_module.SystemClock().now_iso()
+
+
+class _CallableClock(clock_module.Clock):
+    """Adapts a Step 1 bare `clock()` callable to the Step 2 Clock protocol.
+
+    Present so that a caller holding the older constructor contract keeps
+    working rather than failing obscurely. now_ms() is derived from the same
+    string the callable produced, so the two readings cannot disagree.
+    """
+
+    def __init__(self, callable_):
+        self._callable = callable_
+
+    def now_iso(self):
+        return self._callable()
+
+    def now_ms(self):
+        return clock_module.parse_iso8601_ms(self.now_iso(), "now")
 
 
 class SubmitOutcome(object):
@@ -88,10 +154,15 @@ class SubmitOutcome(object):
 class Orchestrator(object):
     """One-process, one-shot orchestration kernel."""
 
-    def __init__(self, paths=None, clock=utc_now, uuid_factory=None,
+    def __init__(self, paths=None, clock=None, uuid_factory=None,
                  crash_at=None, create=True):
         self.paths = paths or paths_module.default_paths()
-        self._clock = clock
+        if clock is None:
+            self._clock = clock_module.SystemClock()
+        elif isinstance(clock, clock_module.Clock):
+            self._clock = clock
+        else:
+            self._clock = _CallableClock(clock)
         self._uuid_factory = uuid_factory or _uuid.uuid4
         self._crash_at = crash_at
         self._create = create
@@ -99,6 +170,12 @@ class Orchestrator(object):
         self.connection = None
         self._lock = None
         self.trace = []
+        # Minted once per run. Not a PID (reused, and meaningless after a
+        # reboot) and not a hostname (single-host by construction). Recorded in
+        # every TaskClaimed payload, so replay reproduces the holder exactly.
+        self.run_id = ids.new_uuid4(uuid_factory=self._uuid_factory)
+        self.lease_holder = lease_module.holder_for_run(self.run_id)
+        self._floor = clock_module.MonotonicFloor()
 
     # -- lifecycle -----------------------------------------------------------
 
@@ -114,13 +191,81 @@ class Orchestrator(object):
             return self
         create = self._create if create is None else create
         paths_module.ensure_state_root(self.paths)
-        self._lock = store.ProcessLock(self.paths).acquire()
+        self._lock = store.ProcessLock(self.paths).acquire()          # R1
         self.connection = store.open_database(self.paths, create=create)
-        schema_module.initialize(self.connection, self._clock())
+        schema_module.initialize(self.connection, self._clock.now_iso())
+        self._load_monotonic_floor()                                  # R1b
+        self._record_run_start()
         return self
+
+    def _assert_clock_not_rolled_back(self, phase):
+        """R1b -- refuse to ACT on a clock that has gone backwards.
+
+        The append-time guard in _emit() is not sufficient on its own. Recovery
+        and release both make DECISIONS from `now` before they append anything:
+        with a rolled-back clock, `reclaim_reason` would find an expired lease
+        live and simply decline to reclaim it, and the runtime would appear to
+        work while silently reasoning from a time that never happened.
+
+        So the clock is checked before either phase begins, and a refusal is
+        recorded rather than merely raised -- Constitution section 6.6: a path
+        that can end without a recorded outcome is a defect.
+        """
+        now = self._clock.now_iso()
+        try:
+            self._floor.check(now)
+        except runtime_errors.ClockRollbackError as exc:
+            # detected_at carries the value the clock ACTUALLY returned. It is
+            # the wrong time, and that is precisely the fact being recorded;
+            # substituting the floor here would be the runtime writing a
+            # timestamp of its own invention into its own audit trail.
+            with store.immediate_transaction(self.connection):
+                self.connection.execute(
+                    "INSERT INTO recovery_actions "
+                    "(detected_at, action, subject, detail) VALUES (?,?,?,?)",
+                    (now, "clock_rollback_refused", phase, str(exc)))
+            raise
+        return now
+
+    def _load_monotonic_floor(self):
+        """Raise the append-time floor to the highest timestamp already recorded.
+
+        Read from the index rather than the log because the index is present
+        before replay and the log is scanned later in recovery; R3 then observes
+        every replayed event's recordedAt as well, so a torn or unindexed tail
+        cannot leave the floor too low.
+        """
+        row = self.connection.execute(
+            "SELECT MAX(recorded_at) AS highest FROM event_index").fetchone()
+        if row is not None and row["highest"]:
+            self._floor.observe(row["highest"])
+
+    def _record_run_start(self):
+        """Record this run in the `runs` table -- a LOCAL OBSERVATION.
+
+        Which run held which lease is useful for audit and meaningless to
+        replay, so it is stored here rather than derived from the log, and is
+        named as non-replayable alongside command_submissions and
+        transition_anomalies.
+        """
+        with store.immediate_transaction(self.connection):
+            self.connection.execute(
+                "INSERT OR REPLACE INTO runs (run_id, started_at, ended_at, pid) "
+                "VALUES (?,?,NULL,?)",
+                (self.run_id, self._clock.now_iso(), os.getpid()))
 
     def close(self):
         if self.connection is not None:
+            try:
+                with store.immediate_transaction(self.connection):
+                    self.connection.execute(
+                        "UPDATE runs SET ended_at = ? WHERE run_id = ?",
+                        (self._clock.now_iso(), self.run_id))
+            except Exception:  # noqa: BLE001 - closing must never fail the run
+                # The run's work is already durable in the log. A failure to
+                # stamp an audit-only end time must not turn a successful run
+                # into a failed one.
+                pass
             self.connection.close()
             self.connection = None
         if self._lock is not None:
@@ -139,7 +284,7 @@ class Orchestrator(object):
         with store.immediate_transaction(self.connection):
             for manifest in BUILTIN_CAPABILITIES:
                 outcomes[manifest["capabilityId"]] = registry.register(
-                    self.connection, manifest, self._clock())
+                    self.connection, manifest, self._clock.now_iso())
         return outcomes
 
     # -- induced interruption (test-only) ------------------------------------
@@ -174,7 +319,12 @@ class Orchestrator(object):
               subject_refs=None, execution_result=None, error_class=None,
               policy_context=None, crash_after_append=None):
         """Append one event, then apply it. The only write path in the runtime."""
-        now = self._clock()
+        now = self._clock.now_iso()
+        # The monotonic guard, BEFORE the append. A clock that went backwards
+        # aborts the operation with nothing written, rather than stamping an
+        # event earlier than the one it follows. No skew tolerance and no
+        # forward clamp: both would record a time the clock never produced.
+        self._floor.accept(now)
         envelope = {
             "eventId": ids.new_uuid4(uuid_factory=self._uuid_factory),
             "eventType": event_type,
@@ -222,7 +372,6 @@ class Orchestrator(object):
             "SELECT * FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
         if row is None:
             return
-        import json
         target = self.paths.task_projection_file(row["state"], task_id)
         self.paths.assert_inside_state_root(target, purpose="project task")
         os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -251,10 +400,14 @@ class Orchestrator(object):
         second time.
         """
         report = {"quarantined": None, "replayed": 0, "reclaimed": [],
-                  "resumed_commands": []}
+                  "resumed_commands": [], "reclaim_reasons": {},
+                  "live_leases_kept": []}
+
+        # R1b -- the clock, before anything reasons from it.
+        self._assert_clock_not_rolled_back("recover")
 
         # R2 -- torn tail. A fragment is not an event; quarantine then truncate.
-        quarantined = self.log.repair_torn_tail(self._clock())
+        quarantined = self.log.repair_torn_tail(self._clock.now_iso())
         if quarantined:
             report["quarantined"] = quarantined
             self._record_recovery("torn_tail_quarantined", quarantined, None)
@@ -266,22 +419,54 @@ class Orchestrator(object):
         if replayed["applied"]:
             self._note("RECOVERY replayed %d event(s) into the index"
                        % (replayed["applied"],))
+        self._load_monotonic_floor()
 
-        # R4 -- reclaim tasks stranded mid-flight. Single-writer means the
-        # previous holder is gone, so there is nothing to wait for.
+        # R4 -- reclaim tasks stranded mid-flight, BY VERIFIED PREDICATE.
+        #
+        # Step 1 reclaimed every task in claimed/running unconditionally,
+        # justified by "single-writer, so the previous holder is gone". That is
+        # true, and it is an ASSUMPTION; Constitution section 11 requires
+        # recovery to resume from a verified checkpoint, "never from an assumed
+        # one". The lease turns it into a check over recorded facts, and a task
+        # whose lease is genuinely live is LEFT ALONE rather than swept up.
+        now_ms = self._clock.now_ms()
         stranded = self.connection.execute(
-            "SELECT task_id, workflow_id, correlation_id, state FROM tasks "
-            "WHERE state IN (?, ?)", projection.RECLAIMABLE_STATES).fetchall()
+            "SELECT task_id, workflow_id, correlation_id, state, attempt,"
+            "       lease_holder, lease_generation, lease_expires_at "
+            "FROM tasks WHERE state IN (?, ?)",
+            projection.RECLAIMABLE_STATES).fetchall()
         for row in stranded:
+            expires_ms = (None if not row["lease_expires_at"]
+                          else clock_module.parse_iso8601_ms(
+                              row["lease_expires_at"], "leaseExpiresAt"))
+            reason = lease_module.reclaim_reason(
+                row["lease_holder"], expires_ms, now_ms, self.lease_holder)
+            if reason is None:
+                # Our own lease, still live. Refusing to reclaim it is the whole
+                # point of the predicate -- this is the case Step 1 could not
+                # express.
+                report["live_leases_kept"].append(row["task_id"])
+                self._record_recovery("live_lease_not_reclaimed", row["task_id"],
+                                      row["lease_expires_at"])
+                continue
+            self._crash_point("after_lease_expiry")
             self._emit(
                 "TaskReclaimed", row["workflow_id"], row["correlation_id"],
                 row["task_id"],
                 {"reclaimedFrom": row["state"],
-                 "reason": "runtime restarted while the task was in flight"},
+                 "reason": reason,
+                 "previousLeaseHolder": row["lease_holder"],
+                 "previousLeaseGeneration": row["lease_generation"],
+                 "leaseExpiresAt": row["lease_expires_at"],
+                 "observedAtUtc": self._clock.now_iso(),
+                 "attempt": row["attempt"]},
                 task_id=row["task_id"], producer=PRODUCER_ORCHESTRATOR,
+                crash_after_append="before_requeue",
             )
             report["reclaimed"].append(row["task_id"])
-            self._record_recovery("task_reclaimed", row["task_id"], row["state"])
+            report["reclaim_reasons"][row["task_id"]] = reason
+            self._record_recovery("task_reclaimed", row["task_id"],
+                                  "%s (%s)" % (row["state"], reason))
 
         # R5 -- resume command lifecycles interrupted before task creation.
         orphans = self.connection.execute(
@@ -297,7 +482,23 @@ class Orchestrator(object):
         with store.immediate_transaction(self.connection):
             self.connection.execute(
                 "INSERT INTO recovery_actions (detected_at, action, subject, detail) "
-                "VALUES (?,?,?,?)", (self._clock(), action, subject, detail))
+                "VALUES (?,?,?,?)",
+                (self._clock.now_iso(), action, subject, detail))
+
+    def _record_capability_violation(self, capability_id, task_id, violation,
+                                     detail):
+        """Constitution section 7: a worker may not emit what it has not declared.
+
+        Recorded rather than raised: the task still reaches a terminal outcome,
+        under a non-retryable class, and the violation is visible to an operator
+        instead of being inferred from an odd error message.
+        """
+        with store.immediate_transaction(self.connection):
+            self.connection.execute(
+                "INSERT INTO capability_violations "
+                "(detected_at, capability_id, task_id, violation, detail) "
+                "VALUES (?,?,?,?,?)",
+                (self._clock.now_iso(), capability_id, task_id, violation, detail))
 
     def _resume_command(self, command_id):
         """Crash boundary 3: a command was accepted but its task never created.
@@ -323,9 +524,31 @@ class Orchestrator(object):
         nothing and appends nothing -- the append-only submissions table carries
         the fact instead, because no approved event names a suppressed duplicate.
         """
-        submitted_at = self._clock()
+        submitted_at = self._clock.now_iso()
         try:
             validated = command_contract.validate_command(envelope, payload=payload)
+        except runtime_errors.PlatformError as exc:
+            return self._reject(envelope, payload, submitted_at, str(exc),
+                                type(exc).__name__)
+
+        # Constitution section 11 requires retry to be BOUNDED. Catalog section
+        # A validates attemptLimit >= 1 and sets no upper bound, so the ceiling
+        # is enforced here (decision B-5) and the refusal is recorded rather
+        # than silent -- a rejected command is still a visible fact.
+        if "attemptLimit" in validated \
+                and validated["attemptLimit"] > retry_module.MAX_ATTEMPT_LIMIT:
+            return self._reject(
+                envelope, payload, submitted_at,
+                "attemptLimit %d exceeds the runtime ceiling of %d"
+                % (validated["attemptLimit"], retry_module.MAX_ATTEMPT_LIMIT),
+                "RetryPolicyError")
+
+        # Resolve the attempt limit HERE, where it is still known whether the
+        # command declared one or merely inherited the Catalog default. Once the
+        # command is projected that distinction is gone, and a stored default
+        # would silently outrank a capability's own declared limit.
+        try:
+            resolved_limit = self._resolve_attempt_limit(validated)
         except runtime_errors.PlatformError as exc:
             return self._reject(envelope, payload, submitted_at, str(exc),
                                 type(exc).__name__)
@@ -368,6 +591,7 @@ class Orchestrator(object):
             "issuedBy": validated["issuedBy"],
             "payloadHash": validated["payloadHash"],
             "commandPayload": ids.as_plain(payload),
+            "attemptLimit": resolved_limit,
         }
         self._emit("CommandAccepted", workflow_id, correlation_id,
                    validated["commandId"], accepted_payload,
@@ -387,6 +611,23 @@ class Orchestrator(object):
         return SubmitOutcome("accepted", command_id=validated["commandId"],
                              task_id=task_id, workflow_id=workflow_id,
                              idempotency_key=idempotency_key)
+
+    def _resolve_attempt_limit(self, validated):
+        """Command override, else the capability's declared policy, else the
+        committed Catalog default -- in that order, decided once.
+
+        The command wins only when it actually declared a limit. A default that
+        merely looks like a declaration would silently outrank a capability's
+        own bound, which is the kind of precedence bug that is invisible until
+        the two values differ.
+        """
+        capability_row = registry.lookup(self.connection,
+                                         validated["targetCapability"])
+        declared = (registry.declared_retry_policy(capability_row)
+                    if capability_row is not None else None)
+        override = validated["attemptLimit"] if "attemptLimit" in validated else None
+        return retry_module.resolve_policy(
+            declared or None, attempt_limit_override=override)["attemptLimit"]
 
     def _reject(self, envelope, payload, submitted_at, reason, rejection_class):
         """Record a rejection without echoing the rejected content into the log.
@@ -435,12 +676,27 @@ class Orchestrator(object):
                                          command_row["target_capability"])
         capability_id = (capability_row["capability_id"] if capability_row is not None
                          else command_row["target_capability"])
+
+        # Resolve the retry policy ONCE, here, and record it in the event.
+        # Precedence: the command's attemptLimit, else the capability's declared
+        # policy, else the committed contract default. Recording the RESOLVED
+        # policy at task creation is what makes tasks.attempt_limit rebuildable
+        # and what stops a later change to a capability's declared defaults from
+        # retroactively altering the schedule of a task already in flight.
+        declared = (registry.declared_retry_policy(capability_row)
+                    if capability_row is not None else None)
+        policy = retry_module.resolve_policy(
+            declared or None,
+            attempt_limit_override=command_row["attempt_limit"])
+
         self._emit(
             "TaskRequested", command_row["workflow_id"],
             command_row["correlation_id"], command_row["command_id"],
             {"commandId": command_row["command_id"],
              "capabilityId": capability_id,
-             "idempotencyKey": command_row["idempotency_key"]},
+             "idempotencyKey": command_row["idempotency_key"],
+             "attemptLimit": policy["attemptLimit"],
+             "retryPolicy": dict(policy)},
             task_id=task_id,
         )
         return task_id
@@ -448,11 +704,31 @@ class Orchestrator(object):
     # -- execution -----------------------------------------------------------
 
     def run_once(self):
-        """Drive every non-terminal task as far as it can go. Returns a report."""
-        report = {"advanced": [], "succeeded": [], "failed": []}
+        """Drive every non-terminal task as far as it can go. Returns a report.
+
+        R6 -- releasing retries whose backoff has elapsed -- lives HERE and not
+        in recover(), deliberately. recover() repairs the past; run_once() makes
+        forward progress. A release inside recovery would mean `submit`, which
+        calls recover(), silently advanced retries -- a side effect the operator
+        did not ask for.
+
+        TERMINATION. The loop adds `failed` and ELIGIBLE `retry_scheduled` to
+        the drivable set, and must not add ineligible retry_scheduled or it
+        would select the same task forever. Every iteration either advances a
+        task's state or removes it from the drivable set: a task that fails and
+        reschedules with a non-zero backoff leaves immediately, and a task with
+        a zero backoff re-enters but consumes an attempt each time. Termination
+        is therefore bounded by MAX_ATTEMPT_LIMIT x tasks.
+        """
+        report = {"advanced": [], "succeeded": [], "failed": [], "retried": [],
+                  "dead_lettered": [], "released": [], "abandoned": []}
+        # A release decision is made from `now` before anything is appended, so
+        # the clock is checked before the first one rather than at the append.
+        self._assert_clock_not_rolled_back("run")
         while True:
+            report["released"].extend(self._release_eligible_retries())
             row = self.connection.execute(
-                "SELECT * FROM tasks WHERE terminal = 0 AND state IN (?,?,?) "
+                "SELECT * FROM tasks WHERE terminal = 0 AND state IN (?,?,?,?) "
                 "ORDER BY created_log_sequence LIMIT 1",
                 NON_TERMINAL_RESUMABLE).fetchone()
             if row is None:
@@ -463,6 +739,12 @@ class Orchestrator(object):
                 report["succeeded"].append(row["task_id"])
             elif outcome == "failed":
                 report["failed"].append(row["task_id"])
+            elif outcome == "retried":
+                report["retried"].append(row["task_id"])
+            elif outcome == "dead_lettered":
+                report["dead_lettered"].append(row["task_id"])
+            elif outcome == "abandoned":
+                report["abandoned"].append(row["task_id"])
         return report
 
     def _advance(self, task_row):
@@ -483,7 +765,179 @@ class Orchestrator(object):
         if state == "queued":
             return self._claim_and_execute(task_row)
 
+        if state == "failed":
+            return self._resolve_failed_task(task_row)
+
         return "advanced"
+
+    # -- retry scheduling and release ----------------------------------------
+
+    def _resolve_failed_task(self, task_row):
+        """`failed` is not terminal. Resolve it to a retry or to a dead letter.
+
+        The decision is made from RECORDED state -- error class, attempt,
+        attempt limit -- so a crash between the failure and this decision
+        changes nothing: recovery replays the failure and the decision is
+        reached again, identically.
+        """
+        task_id = task_row["task_id"]
+        error_class = task_row["error_class"]
+        attempt = task_row["attempt"]
+        attempt_limit = task_row["attempt_limit"]
+        decision = retry_module.classify_failure(error_class, attempt,
+                                                 attempt_limit)
+
+        if decision.retry:
+            return self._schedule_retry(task_row, decision)
+        return self._dead_letter(task_row, decision)
+
+    def _task_policy(self, task_row):
+        """The retry policy RESOLVED at this task's creation, from its own row.
+
+        Read from the task rather than from the capability, so that a change to
+        a capability's declared defaults cannot alter the schedule of a task
+        that is already in flight.
+        """
+        declared = json.loads(task_row["retry_policy"] or "{}")
+        return retry_module.resolve_policy(
+            declared or None, attempt_limit_override=task_row["attempt_limit"])
+
+    def _schedule_retry(self, task_row, decision):
+        task_id = task_row["task_id"]
+        attempt = task_row["attempt"]
+        policy = self._task_policy(task_row)
+        delay_ms = retry_module.backoff_ms(attempt, policy)
+        now_ms = self._clock.now_ms()
+        eligible_ms = retry_module.next_eligible_at_ms(now_ms, delay_ms)
+
+        self._emit(
+            "TaskRetryScheduled", task_row["workflow_id"],
+            task_row["correlation_id"], task_id,
+            {"attempt": attempt,
+             "attemptLimit": task_row["attempt_limit"],
+             "errorClass": task_row["error_class"],
+             "decisionReason": decision.reason,
+             "backoffMs": delay_ms,
+             # Computed ONCE, here, and copied from this payload forever after.
+             # Recomputing it during projection would be a NEW deadline, which
+             # would make a crash visible in the rebuilt state.
+             "eligibleAtUtc": clock_module.format_ms(eligible_ms),
+             "scheduledAtUtc": clock_module.format_ms(now_ms),
+             # The policy in force, in full, so the schedule is verifiable from
+             # the log alone without knowing which build produced it.
+             "retryPolicy": {key: policy[key] for key in
+                             ("backoffBaseMs", "backoffMultiplier",
+                              "backoffCapMs", "jitterMs")}},
+            task_id=task_id, producer=PRODUCER_ORCHESTRATOR,
+            crash_after_append="after_retry_schedule_append",
+        )
+        self._crash_point("before_retry_projection")
+        return "retried"
+
+    def _release_eligible_retries(self):
+        """Release every scheduled retry whose backoff has elapsed. R6.
+
+        ISO-8601 UTC at fixed width and millisecond precision sorts and
+        compares lexicographically in the same order as chronologically, so the
+        SQL filter and the Python predicate cannot disagree -- and the predicate
+        is re-applied anyway, because "cannot disagree" is a claim worth
+        checking rather than trusting.
+        """
+        released = []
+        now_iso = self._clock.now_iso()
+        now_ms = self._clock.now_ms()
+        rows = self.connection.execute(
+            "SELECT * FROM tasks WHERE state = 'retry_scheduled' AND terminal = 0 "
+            "AND retry_eligible_at IS NOT NULL AND retry_eligible_at <= ? "
+            "ORDER BY retry_eligible_at, created_log_sequence", (now_iso,)
+        ).fetchall()
+
+        for row in rows:
+            eligible_ms = clock_module.parse_iso8601_ms(row["retry_eligible_at"],
+                                                        "retryEligibleAt")
+            if not retry_module.is_eligible(eligible_ms, now_ms):
+                continue
+            backoff = row["backoff_ms"] or 0
+            scheduled_ms = eligible_ms - backoff
+            caused_by = self.connection.execute(
+                "SELECT MAX(log_sequence) AS sequence FROM event_index "
+                "WHERE task_id = ? AND event_type = 'TaskRetryScheduled'",
+                (row["task_id"],)).fetchone()
+            self._emit(
+                "TaskRetryReleased", row["workflow_id"], row["correlation_id"],
+                row["task_id"],
+                {"attempt": row["attempt"],
+                 "attemptLimit": row["attempt_limit"],
+                 "scheduledEligibleAtUtc": row["retry_eligible_at"],
+                 "observedAtUtc": now_iso,
+                 "waitedMs": now_ms - scheduled_ms,
+                 "scheduledBackoffMs": backoff,
+                 # Points at the schedule that created the obligation, so the
+                 # pair is checkable without matching on timestamps.
+                 "causedByLogSequence": (caused_by["sequence"]
+                                         if caused_by is not None else None)},
+                task_id=row["task_id"], producer=PRODUCER_ORCHESTRATOR,
+                crash_after_append="after_retry_release_append",
+            )
+            released.append(row["task_id"])
+        return released
+
+    # -- dead letter ---------------------------------------------------------
+
+    def _attempt_history(self, task_id):
+        """Every recorded failed attempt for one task, oldest first."""
+        rows = self.connection.execute(
+            "SELECT attempt, error_class, finished_at, finished_log_sequence,"
+            "       lease_generation FROM task_attempts "
+            "WHERE task_id = ? AND outcome = 'failed' ORDER BY attempt",
+            (task_id,)).fetchall()
+        return [{"attempt": row["attempt"],
+                 "errorClass": row["error_class"],
+                 "failedAtUtc": row["finished_at"],
+                 "logSequence": row["finished_log_sequence"],
+                 "leaseGeneration": row["lease_generation"]} for row in rows]
+
+    def _dead_letter(self, task_row, decision):
+        """Terminal, visible, and self-contained.
+
+        One event answers "what failed, how often, why, and under which lease",
+        so Constitution section 13 is satisfied without following references.
+        The history is a SECOND copy of a fact, so a test re-derives it
+        independently from the log and compares -- a second copy that is never
+        compared is a place for drift to hide.
+        """
+        task_id = task_row["task_id"]
+        observed_class = task_row["error_class"]
+        # The ENVELOPE's errorClass is constrained to Catalog section K by the
+        # committed contract, so a class the index somehow holds unrecognised
+        # cannot go there. The payload's finalErrorClass is free-form and
+        # records what was actually observed -- the envelope carries a valid
+        # classification, the payload carries the truth, and neither is lost.
+        envelope_class = (observed_class
+                          if observed_class in contract_errors.ERROR_CLASS_NAMES
+                          else worker_module.FALLBACK_ERROR_CLASS)
+        self._crash_point("before_dead_letter_apply")
+        self._emit(
+            "TaskDeadLettered", task_row["workflow_id"],
+            task_row["correlation_id"], task_id,
+            {"reason": decision.reason,
+             "finalErrorClass": observed_class,
+             "attempts": task_row["attempt"],
+             "attemptLimit": task_row["attempt_limit"],
+             "capabilityId": task_row["capability_id"],
+             "reviewGateRequired": (decision.reason
+                                    == retry_module.REASON_REQUIRES_REVIEW_NO_GATE),
+             "attemptHistory": self._attempt_history(task_id)},
+            task_id=task_id, execution_result="failure",
+            error_class=envelope_class,
+            producer=PRODUCER_ORCHESTRATOR,
+            crash_after_append="after_dead_letter_append",
+        )
+        self._emit("WorkflowFailed", task_row["workflow_id"],
+                   task_row["correlation_id"], task_id,
+                   {"taskId": task_id, "errorClass": observed_class,
+                    "deadLetterReason": decision.reason})
+        return "dead_lettered"
 
     def _evaluate_policy(self, task_row):
         """Apply policy only to the extent authorized (plan section 10).
@@ -516,6 +970,79 @@ class Orchestrator(object):
                   else "operation class %r is indeterminate" % (operation_class,))
         return self._fail_task(task_row, "policy_blocked", detail)
 
+    def _acquire_lease(self, task_row, capability_row):
+        """Claim the task and take the lease in ONE guarded UPDATE.
+
+        Not a read-then-write and not advisory locking -- the same primitive
+        Step 1 proved, with additional SET clauses and a compare-and-set on the
+        generation (Architecture section 18.1). The lease commits with the
+        claim or not at all, so there is no window in which a lease exists but
+        the claim does not.
+
+        Returns the claimed generation, which the caller carries in memory for
+        the whole execution. That is what makes the later holder check
+        meaningful: it compares against the generation THIS execution claimed
+        with, not merely against "some current generation", so a reclaim that
+        bumped the generation mid-flight is detected.
+        """
+        limits = json.loads(capability_row["resource_limits"])
+        ttl_ms = lease_module.lease_ttl_ms(limits.get("wallClockMs"))
+        acquired_ms = self._clock.now_ms()
+        expires_ms = lease_module.lease_expiry_ms(acquired_ms, ttl_ms)
+        generation = task_row["lease_generation"] + 1
+
+        self._emit(
+            "TaskClaimed", task_row["workflow_id"], task_row["correlation_id"],
+            task_row["task_id"],
+            {"capabilityId": capability_row["capability_id"],
+             "claimMode": "compare_and_set_lease",
+             "leaseHolder": self.lease_holder,
+             "leaseGeneration": generation,
+             "leaseAcquiredAt": clock_module.format_ms(acquired_ms),
+             "leaseExpiresAt": clock_module.format_ms(expires_ms),
+             "leaseTtlMs": ttl_ms,
+             # The value BEFORE the increment, so the payload states which
+             # attempt this claim is for.
+             "attempt": task_row["attempt"]},
+            task_id=task_row["task_id"],
+            producer=producer_for(capability_row["capability_id"]),
+            crash_after_append="after_claim",
+        )
+        self._crash_point("after_lease_claim")
+        return generation
+
+    def _holds_lease(self, task_id, generation):
+        """Architecture section 24, implemented rather than documented."""
+        row = self.connection.execute(
+            "SELECT lease_holder, lease_generation FROM tasks WHERE task_id = ?",
+            (task_id,)).fetchone()
+        if row is None:
+            return False
+        return lease_module.is_held_by(row["lease_holder"], row["lease_generation"],
+                                       self.lease_holder, generation)
+
+    def _refuse_result_without_lease(self, task_row, generation, outcome):
+        """Discard a result the runtime cannot vouch for the authority of.
+
+        No result event is appended. The anomaly is recorded and the task is
+        left for recovery to reclaim. Constitution section 11's "never pick a
+        winner", applied to authority rather than to output: recording a result
+        under a lease we no longer hold would attribute work to an authority
+        that had already been superseded.
+        """
+        with store.immediate_transaction(self.connection):
+            self.connection.execute(
+                "INSERT INTO transition_anomalies "
+                "(detected_at, log_sequence, task_id, from_state, to_state, reason) "
+                "VALUES (?,?,?,?,?,?)",
+                (self._clock.now_iso(), task_row["last_log_sequence"],
+                 task_row["task_id"], "running", outcome,
+                 "result_written_without_lease: generation %d is no longer held "
+                 "by %s" % (generation, self.lease_holder)))
+        self._note("REFUSED %s for task %s -- lease generation %d no longer held"
+                   % (outcome, task_row["task_id"], generation))
+        return "abandoned"
+
     def _claim_and_execute(self, task_row):
         task_id = task_row["task_id"]
         workflow_id = task_row["workflow_id"]
@@ -532,32 +1059,63 @@ class Orchestrator(object):
         except runtime_errors.CapabilityNotDispatchableError as exc:
             return self._fail_task(task_row, "validation", str(exc))
 
-        self._emit("TaskClaimed", workflow_id, correlation_id, task_id,
-                   {"capabilityId": capability_row["capability_id"],
-                    "claimMode": "compare_and_set_single_writer"},
-                   task_id=task_id, producer=PRODUCER_WORKER,
-                   crash_after_append="after_claim")
+        generation = self._acquire_lease(task_row, capability_row)
+        attempt = task_row["attempt"] + 1
 
-        self._emit("TaskStarted", workflow_id, correlation_id, task_id,
-                   {"capabilityId": capability_row["capability_id"]},
-                   task_id=task_id, producer=PRODUCER_WORKER)
+        started = self._emit(
+            "TaskStarted", workflow_id, correlation_id, task_id,
+            {"capabilityId": capability_row["capability_id"],
+             # The value AFTER the increment the guarded UPDATE performs.
+             "attempt": attempt,
+             "leaseGeneration": generation},
+            task_id=task_id,
+            producer=producer_for(capability_row["capability_id"]))
+        execution = {"startedAtUtc": started.event["recordedAt"],
+                     "startedLogSequence": started.log_sequence,
+                     "attempt": attempt,
+                     "leaseGeneration": generation}
 
         self._crash_point("mid_execution")
-        import json
+        self._crash_point("during_retry_execution")
         payload = json.loads(command_row["payload_json"])
         callable_ = CAPABILITY_CALLABLES.get(capability_row["capability_id"])
         if callable_ is None:
             return self._fail_task(
                 task_row, "validation",
                 "capability %s is registered but this build provides no "
-                "implementation" % (capability_row["capability_id"],))
+                "implementation" % (capability_row["capability_id"],),
+                state="running", execution=execution)
 
-        result = worker_module.execute_task(callable_, payload)
+        # The execution context is handed only to a capability that declared it
+        # needs one, is not part of the command payload, and is therefore never
+        # part of the idempotency key -- Constitution section 11: keys are never
+        # derived from timestamps or attempt numbers.
+        context = ({"attempt": attempt, "taskId": task_id,
+                    "leaseGeneration": generation}
+                   if capability_row["requires_execution_context"] else None)
+        result = worker_module.execute_task(
+            callable_, payload, context=context,
+            declared_failure_classes=registry.declared_failure_classes(
+                capability_row))
         self._crash_point("after_execution")
 
+        if result.violation is not None:
+            self._record_capability_violation(
+                capability_row["capability_id"], task_id, result.violation[0],
+                str(result.violation[1]))
+
         if not result.succeeded:
+            if not self._holds_lease(task_id, generation):
+                return self._refuse_result_without_lease(task_row, generation,
+                                                         "failed")
             return self._fail_task(task_row, result.error_class,
-                                   result.error_message, state="running")
+                                   result.error_message, state="running",
+                                   execution=execution,
+                                   declared=result.declared_by_capability)
+
+        if not self._holds_lease(task_id, generation):
+            return self._refuse_result_without_lease(task_row, generation,
+                                                     "succeeded")
 
         self._crash_point("before_success_append")
         self._emit(
@@ -565,7 +1123,11 @@ class Orchestrator(object):
             {"resultHash": result.result["contentHash"],
              "byteLength": result.result["byteLength"],
              "capabilityId": result.result["capabilityId"],
-             "capabilityVersion": result.result["capabilityVersion"]},
+             "capabilityVersion": result.result["capabilityVersion"],
+             "attempt": attempt,
+             "leaseGeneration": generation,
+             "startedAtUtc": execution["startedAtUtc"],
+             "startedLogSequence": execution["startedLogSequence"]},
             task_id=task_id, execution_result="success",
             crash_after_append="after_success_append",
         )
@@ -573,50 +1135,101 @@ class Orchestrator(object):
                    {"taskId": task_id, "outcome": "succeeded"})
         return "succeeded"
 
-    def _fail_task(self, task_row, error_class, message, state=None):
-        """Record a failure. Retry and dead-letter are out of Step 1 scope.
+    def _fail_task(self, task_row, error_class, message, state=None,
+                   execution=None, declared=False):
+        """Record a failure, and stop there.
 
-        The task stops at `failed` and is reported. Constitution section 6.6:
-        the path ends with an event, never silently.
+        `failed` is NOT terminal, and this method deliberately does not resolve
+        it: run_once() decides retry versus dead-letter on the next iteration,
+        from recorded state. That separation is what makes crash boundary 12 --
+        interrupted between the failure and the decision -- recover to the same
+        answer rather than to a re-guessed one.
         """
         task_id = task_row["task_id"]
+
+        # An error class that is not a Catalog section K name CANNOT be
+        # recorded: the committed event contract restricts errorClass to that
+        # vocabulary, so appending one would be refused by validate_event and
+        # the failure would vanish -- which Constitution section 6.6 forbids.
+        #
+        # It is therefore normalized here, fail-closed, to the non-retryable
+        # class, and the substitution is RECORDED rather than silent. The
+        # worker already refuses an unknown class at its own boundary; this is
+        # the second, independent guard, and it is the one that keeps the log
+        # valid. `unknown_error_class` survives as a live branch in
+        # classify_failure for the remaining case: a class that reached the
+        # index some other way, for example through a corrupted row.
+        if error_class not in contract_errors.ERROR_CLASS_NAMES:
+            self._record_capability_violation(
+                task_row["capability_id"], task_id,
+                worker_module.UNDECLARED_FAILURE_CLASS,
+                "error class %r is not a Contract Catalog section K class; "
+                "recorded as %r, which is not retryable"
+                % (error_class, worker_module.FALLBACK_ERROR_CLASS))
+            message = ("%s (original error class %r is not an approved class)"
+                       % (message, error_class))
+            error_class = worker_module.FALLBACK_ERROR_CLASS
+
         current = state or task_row["state"]
         if current != "running":
             # TaskFailed is defined as running -> failed. Reach `running`
             # legitimately first rather than inventing an unapproved edge.
-            if current == "queued":
-                self._emit("TaskClaimed", task_row["workflow_id"],
-                           task_row["correlation_id"], task_id,
-                           {"capabilityId": task_row["capability_id"],
-                            "claimMode": "compare_and_set_single_writer"},
-                           task_id=task_id, producer=PRODUCER_WORKER)
-                current = "claimed"
-            if current == "claimed":
-                self._emit("TaskStarted", task_row["workflow_id"],
-                           task_row["correlation_id"], task_id,
-                           {"capabilityId": task_row["capability_id"]},
-                           task_id=task_id, producer=PRODUCER_WORKER)
-            elif current == "policy_check":
+            if current == "policy_check":
                 self._emit("PolicyEvaluated", task_row["workflow_id"],
                            task_row["correlation_id"], task_id,
                            {"decision": "not_applicable",
                             "operationClass": None,
                             "reason": "routed to failure"},
                            task_id=task_id, producer=PRODUCER_POLICY_GATE)
+                current = "queued"
+            if current == "queued":
                 self._emit("TaskClaimed", task_row["workflow_id"],
                            task_row["correlation_id"], task_id,
                            {"capabilityId": task_row["capability_id"],
-                            "claimMode": "compare_and_set_single_writer"},
-                           task_id=task_id, producer=PRODUCER_WORKER)
-                self._emit("TaskStarted", task_row["workflow_id"],
-                           task_row["correlation_id"], task_id,
-                           {"capabilityId": task_row["capability_id"]},
-                           task_id=task_id, producer=PRODUCER_WORKER)
+                            "claimMode": "compare_and_set_lease",
+                            "leaseHolder": self.lease_holder,
+                            "leaseGeneration": task_row["lease_generation"] + 1,
+                            "leaseAcquiredAt": self._clock.now_iso(),
+                            "leaseExpiresAt": clock_module.format_ms(
+                                lease_module.lease_expiry_ms(
+                                    self._clock.now_ms(),
+                                    lease_module.LEASE_TTL_FLOOR_MS)),
+                            "leaseTtlMs": lease_module.LEASE_TTL_FLOOR_MS,
+                            "attempt": task_row["attempt"]},
+                           task_id=task_id,
+                           producer=producer_for(task_row["capability_id"]))
+                current = "claimed"
+            if current == "claimed":
+                started = self._emit(
+                    "TaskStarted", task_row["workflow_id"],
+                    task_row["correlation_id"], task_id,
+                    {"capabilityId": task_row["capability_id"],
+                     "attempt": task_row["attempt"] + 1,
+                     "leaseGeneration": task_row["lease_generation"] + 1},
+                    task_id=task_id,
+                    producer=producer_for(task_row["capability_id"]))
+                execution = {"startedAtUtc": started.event["recordedAt"],
+                             "startedLogSequence": started.log_sequence,
+                             "attempt": task_row["attempt"] + 1,
+                             "leaseGeneration": task_row["lease_generation"] + 1}
 
+        execution = execution or {}
         self._emit("TaskFailed", task_row["workflow_id"], task_row["correlation_id"],
-                   task_id, {"reason": message}, task_id=task_id,
-                   execution_result="failure", error_class=error_class)
-        self._emit("WorkflowFailed", task_row["workflow_id"],
-                   task_row["correlation_id"], task_id,
-                   {"taskId": task_id, "errorClass": error_class})
+                   task_id,
+                   {"reason": message,
+                    "attempt": execution.get("attempt"),
+                    "attemptLimit": task_row["attempt_limit"],
+                    "leaseGeneration": execution.get("leaseGeneration"),
+                    "capabilityId": task_row["capability_id"],
+                    # Distinguishes a failure the capability DECLARED from one
+                    # the worker classified because the capability escaped
+                    # unclassified -- a distinction an operator needs and
+                    # cannot otherwise see.
+                    "declaredByCapability": bool(declared),
+                    "startedAtUtc": execution.get("startedAtUtc"),
+                    "startedLogSequence": execution.get("startedLogSequence")},
+                   task_id=task_id, execution_result="failure",
+                   error_class=error_class,
+                   crash_after_append="after_failure_append")
+        self._crash_point("inside_failure_transaction")
         return "failed"

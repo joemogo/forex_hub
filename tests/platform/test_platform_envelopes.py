@@ -47,17 +47,22 @@ EXPECTED_COMMAND_TYPES = (
 )
 
 # ---------------------------------------------------------------------------
-# Independently transcribed -- Catalog section J (34) + MOGO-011 extension (5)
+# Independently transcribed -- Catalog section J (34) + MOGO-011 extensions
+# (5 in Step 1, 1 in Step 2) = 40
 # ---------------------------------------------------------------------------
 
-# MOGO-011 additive extension (5), approved 2026-08-07, transcribed
-# independently of the implementation exactly as the 34 originals were.
+# MOGO-011 Step 1 additive extension (5), approved 2026-08-07, and Step 2
+# additive extension (1), approved 2026-08-08 as decision B-1 -- both
+# transcribed independently of the implementation exactly as the 34 originals
+# were. TaskRetryReleased carries the Catalog section L edge
+# `retry_scheduled -> queued`, for which section J names no event.
 EXPECTED_EVENT_TYPES = (
     "CommandAccepted",
     "CommandRejected",
     "TaskRequested",
     "TaskPolicyCheckRequested",
     "TaskStarted",
+    "TaskRetryReleased",
     "SourceDiscoveryRequested", "SourceDiscovered", "SourceRegistered",
     "PolicyEvaluated", "AcquisitionAuthorized", "AcquisitionDenied",
     "ArtifactAcquisitionRequested", "ArtifactAcquired",
@@ -205,7 +210,7 @@ class TestVocabularyMatchesTheCatalog(unittest.TestCase):
 
     def test_event_types_exactly(self):
         self.assertEqual(tuple(vocabulary.EVENT_TYPES), EXPECTED_EVENT_TYPES)
-        self.assertEqual(len(vocabulary.EVENT_TYPES), 39)
+        self.assertEqual(len(vocabulary.EVENT_TYPES), 40)
 
     def test_no_duplicate_names(self):
         self.assertEqual(len(set(vocabulary.COMMAND_TYPES)),

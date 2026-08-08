@@ -31,6 +31,7 @@ EXACTLY-ONCE WITHOUT BOOKKEEPING
 
 import json
 
+from ..contracts import command as command_contract  # noqa: E402
 from ..contracts import task_states  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
 from . import schema as schema_module  # noqa: E402
@@ -64,11 +65,42 @@ TRANSITIONS = {
     "TaskStarted":              ("claimed", "running"),
     "TaskSucceeded":            ("running", "succeeded"),
     "TaskFailed":               ("running", "failed"),
+    "TaskRetryScheduled":       ("failed", "retry_scheduled"),
+    "TaskRetryReleased":        ("retry_scheduled", "queued"),
+    "TaskDeadLettered":         ("failed", "dead_lettered"),
     "TaskReclaimed":            (None, "queued"),   # from claimed OR running
 }
 
 RECLAIMABLE_STATES = ("claimed", "running")
 TERMINAL_FLAG = {state: 1 for state in task_states.TERMINAL_STATES}
+
+# Every column below is COPIED from an event payload, never computed while
+# applying one. That single rule is what makes the whole index rebuildable:
+# rebuild it a year later, with the clock advanced, and every row is
+# byte-identical, because nothing on this path can ask what time it is.
+#
+# The two exceptions are increments, and both are deterministic by
+# construction. `attempt = attempt + 1` rides inside the guarded UPDATE of the
+# claimed -> running transition, so "increments exactly once per execution" and
+# "replay does not increment" are the same property of one statement rather
+# than two behaviours a caller must remember to coordinate. lease_generation is
+# copied from the payload AND compare-and-set against its predecessor, so the
+# increment and the record cannot silently diverge.
+
+_LEASE_COLUMNS = ("lease_holder", "lease_generation", "lease_acquired_at",
+                  "lease_expires_at", "lease_ttl_ms")
+
+
+def _clear_lease():
+    """Release the lease, PRESERVING the generation.
+
+    The generation is never reset -- it only increases, which is what makes it
+    a valid compare-and-set token across reclaims. Resetting it would let a
+    stale execution's generation match a fresh lease and defeat the
+    holder verification in Architecture section 24.
+    """
+    return [("lease_holder", None), ("lease_acquired_at", None),
+            ("lease_expires_at", None), ("lease_ttl_ms", None)]
 
 
 def index_event(connection, record):
@@ -104,8 +136,22 @@ def _record_anomaly(connection, record, from_state, to_state, reason):
     )
 
 
-def apply_transition(connection, record, from_state, to_state):
-    """Apply one task-state transition. The guarded UPDATE described above."""
+def apply_transition(connection, record, from_state, to_state,
+                     assignments=None, expressions=None, guards=None):
+    """Apply one task-state transition. The guarded UPDATE described above.
+
+    `assignments`  -- (column, value) pairs bound as parameters. Every one is a
+                      value COPIED from the event payload.
+    `expressions`  -- (column, sql) pairs, for the two deterministic increments.
+    `guards`       -- (column, value) pairs appended to the WHERE clause, which
+                      is how Architecture section 18.1's compare-and-set on
+                      (taskId, leaseGeneration) is expressed.
+
+    All three ride INSIDE the one guarded statement rather than following it.
+    That is the whole point: a separate UPDATE could be applied when the guard
+    did not match, and then "applied exactly once" would be a convention rather
+    than a property of the statement.
+    """
     task_id = record.event.get("taskId")
     if not task_id:
         runtime_errors.fail(
@@ -148,11 +194,24 @@ def apply_transition(connection, record, from_state, to_state):
     # Legality is decided by the MOGO-010 contract, never re-implemented here.
     task_states.assert_legal_transition(effective_from, to_state)
 
+    set_clauses = ["state = ?", "terminal = ?", "last_log_sequence = ?"]
+    parameters = [to_state, TERMINAL_FLAG.get(to_state, 0), record.log_sequence]
+    for column, value in (assignments or ()):
+        set_clauses.append("%s = ?" % (column,))
+        parameters.append(value)
+    for column, expression in (expressions or ()):
+        set_clauses.append("%s = %s" % (column, expression))
+
+    where_clauses = ["task_id = ?", "state = ?", "last_log_sequence < ?"]
+    where_parameters = [task_id, effective_from, record.log_sequence]
+    for column, value in (guards or ()):
+        where_clauses.append("%s = ?" % (column,))
+        where_parameters.append(value)
+
     cursor = connection.execute(
-        "UPDATE tasks SET state = ?, terminal = ?, last_log_sequence = ? "
-        " WHERE task_id = ? AND state = ? AND last_log_sequence < ?",
-        (to_state, TERMINAL_FLAG.get(to_state, 0), record.log_sequence,
-         task_id, effective_from, record.log_sequence),
+        "UPDATE tasks SET %s WHERE %s"
+        % (", ".join(set_clauses), " AND ".join(where_clauses)),
+        tuple(parameters + where_parameters),
     )
     if cursor.rowcount != 1:
         runtime_errors.fail(
@@ -163,21 +222,34 @@ def apply_transition(connection, record, from_state, to_state):
     return ApplyOutcome(APPLIED, "%s -> %s" % (effective_from, to_state))
 
 
+def _default_attempt_limit():
+    """The committed Catalog section A default, read rather than re-declared.
+
+    A Step 1 CommandAccepted or TaskRequested event carries no attemptLimit,
+    because the field did not exist when it was written. Falling back to the
+    CONTRACT's default -- not to a literal 3 typed here -- is what keeps a v1
+    log replaying into a v2 schema with the same value the contract would have
+    given it, rather than with a number that merely happens to match today.
+    """
+    return command_contract.COMMAND_DEFAULTS["attemptLimit"]
+
+
 def _apply_command_accepted(connection, record):
     payload = record.event["payload"]
     connection.execute(
         "INSERT OR IGNORE INTO commands ("
         " command_id, command_type, command_version, workflow_id, correlation_id,"
         " idempotency_key, target_capability, issued_at, issued_by, payload_hash,"
-        " payload_json, accepted_log_sequence, task_id"
-        ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL)",
+        " payload_json, accepted_log_sequence, task_id, attempt_limit"
+        ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?)",
         (payload["commandId"], payload["commandType"], payload["commandVersion"],
          record.event["workflowId"], record.event["correlationId"],
          payload["idempotencyKey"], payload["targetCapability"],
          payload["issuedAt"], payload["issuedBy"], payload["payloadHash"],
          json.dumps(payload["commandPayload"], sort_keys=True,
                     separators=(",", ":"), ensure_ascii=False),
-         record.log_sequence),
+         record.log_sequence,
+         payload.get("attemptLimit", _default_attempt_limit())),
     )
 
 
@@ -195,11 +267,18 @@ def _apply_task_requested(connection, record):
         "INSERT OR IGNORE INTO tasks ("
         " task_id, workflow_id, correlation_id, command_id, capability_id,"
         " idempotency_key, state, attempt, created_log_sequence,"
-        " last_log_sequence, terminal"
-        ") VALUES (?,?,?,?,?,?,?,?,?,?,0)",
+        " last_log_sequence, terminal, attempt_limit, retry_policy,"
+        " lease_generation"
+        ") VALUES (?,?,?,?,?,?,?,?,?,?,0,?,?,0)",
         (task_id, record.event["workflowId"], record.event["correlationId"],
          payload["commandId"], payload["capabilityId"], payload["idempotencyKey"],
-         "requested", 0, record.log_sequence, record.log_sequence),
+         "requested", 0, record.log_sequence, record.log_sequence,
+         payload.get("attemptLimit", _default_attempt_limit()),
+         # The policy RESOLVED at task creation, recorded so that a later change
+         # to a capability's declared defaults cannot retroactively alter the
+         # schedule of a task that is already running.
+         json.dumps(payload.get("retryPolicy", {}), sort_keys=True,
+                    separators=(",", ":"))),
     )
     connection.execute(
         "UPDATE commands SET task_id = ? WHERE command_id = ? AND task_id IS NULL",
@@ -215,6 +294,93 @@ def _apply_task_result(connection, record, to_state):
         (payload.get("resultHash"), record.event.get("errorClass"),
          record.event["taskId"]),
     )
+    _record_attempt(connection, record, to_state)
+
+
+def _record_attempt(connection, record, to_state):
+    """One row per completed execution, inserted whole, exactly once.
+
+    Every value is copied from the outcome event's payload or envelope. The
+    start values travel IN the outcome payload rather than being looked up,
+    which keeps the row a pure function of one durable event and keeps the
+    UNIQUE (task_id, attempt) constraint meaningful: it can only ever be
+    violated by an attempt genuinely being recorded twice.
+
+    A Step 1 event carries none of these fields, so a v1 log replayed into a v2
+    schema records no attempt history -- correct, because none existed. `audit`
+    labels such tasks explicitly rather than reporting a misleading zero.
+    """
+    payload = record.event["payload"]
+    attempt = payload.get("attempt")
+    started_at = payload.get("startedAtUtc")
+    started_sequence = payload.get("startedLogSequence")
+    if attempt is None or started_at is None or started_sequence is None:
+        return False
+    connection.execute(
+        "INSERT INTO task_attempts ("
+        " task_id, attempt, lease_generation, started_log_sequence,"
+        " finished_log_sequence, outcome, error_class, result_hash,"
+        " started_at, finished_at"
+        ") VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (record.event["taskId"], attempt, payload.get("leaseGeneration", 0),
+         started_sequence, record.log_sequence,
+         "succeeded" if to_state == "succeeded" else "failed",
+         record.event.get("errorClass"), payload.get("resultHash"),
+         started_at, record.event["recordedAt"]),
+    )
+    return True
+
+
+def _transition_effects(event_type, record):
+    """The extra SET/WHERE clauses one event contributes to its own transition.
+
+    Returns (assignments, expressions, guards). Everything here rides inside
+    the single guarded UPDATE, so a state fact an event implies commits with
+    that event or not at all -- there is no window in which a lease exists but
+    its claim does not.
+    """
+    payload = record.event["payload"]
+
+    if event_type == "TaskClaimed":
+        generation = payload.get("leaseGeneration")
+        if generation is None:                       # a Step 1 claim: no lease
+            return ([], [], [])
+        return (
+            [("lease_holder", payload.get("leaseHolder")),
+             ("lease_generation", generation),
+             ("lease_acquired_at", payload.get("leaseAcquiredAt")),
+             ("lease_expires_at", payload.get("leaseExpiresAt")),
+             ("lease_ttl_ms", payload.get("leaseTtlMs"))],
+            [],
+            # Architecture section 18.1: compare-and-set on
+            # (taskId, leaseGeneration). The claim applies only against the
+            # generation it was minted from, so a lease cannot be granted twice
+            # from one predecessor even if the state guard were somehow passed.
+            [("lease_generation", generation - 1)],
+        )
+
+    if event_type == "TaskStarted":
+        # The increment, and the ONLY statement in the runtime that touches
+        # tasks.attempt. Applied once -> incremented once. Replayed ->
+        # last_log_sequence guard fails -> not incremented. Late or illegal ->
+        # state guard fails -> not incremented.
+        return ([], [("attempt", "attempt + 1")], [])
+
+    if event_type == "TaskRetryScheduled":
+        return ([("retry_eligible_at", payload.get("eligibleAtUtc")),
+                 ("backoff_ms", payload.get("backoffMs"))], [], [])
+
+    if event_type == "TaskRetryReleased":
+        return ([("retry_eligible_at", None), ("backoff_ms", None)], [], [])
+
+    if event_type == "TaskDeadLettered":
+        return ([("dead_letter_reason", payload.get("reason"))]
+                + _clear_lease(), [], [])
+
+    if event_type in ("TaskSucceeded", "TaskFailed"):
+        return (_clear_lease(), [], [])
+
+    return ([], [], [])
 
 
 def apply_event(connection, record):
@@ -240,12 +406,16 @@ def apply_event(connection, record):
         row = connection.execute(
             "SELECT state FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
         if row is not None and row["state"] in RECLAIMABLE_STATES:
-            outcome = apply_transition(connection, record, row["state"], "queued")
+            outcome = apply_transition(connection, record, row["state"], "queued",
+                                       assignments=_clear_lease())
         else:
             outcome = ApplyOutcome(ALREADY_APPLIED, "nothing to reclaim")
     elif event_type in TRANSITIONS:
         from_state, to_state = TRANSITIONS[event_type]
-        outcome = apply_transition(connection, record, from_state, to_state)
+        assignments, expressions, guards = _transition_effects(event_type, record)
+        outcome = apply_transition(connection, record, from_state, to_state,
+                                   assignments=assignments,
+                                   expressions=expressions, guards=guards)
         if outcome.status == APPLIED and event_type in ("TaskSucceeded", "TaskFailed"):
             _apply_task_result(connection, record, to_state)
 
@@ -312,7 +482,19 @@ def rebuild(connection, log, now):
         for table in schema_module.APPEND_ONLY_TABLES:
             connection.execute("DROP TRIGGER IF EXISTS %s_no_update" % (table,))
             connection.execute("DROP TRIGGER IF EXISTS %s_no_delete" % (table,))
-        for table in ("event_index", "tasks", "commands", "transition_anomalies"):
+        # task_attempts joins the rebuildable set: every row in it is derived
+        # from an outcome event and must be reconstructed, not preserved.
+        # runs, capabilities, command_submissions, recovery_actions and
+        # capability_violations are NOT deleted -- they are local observations,
+        # and destroying them would lose history the log cannot restore.
+        #
+        # ORDER MATTERS: task_attempts references tasks, and tasks references
+        # commands, so children are deleted before their parents. The pragmas
+        # enable foreign keys, so getting this wrong is an IntegrityError
+        # rather than a silent orphan -- which is the correct direction, and is
+        # how this order was established.
+        for table in ("event_index", "task_attempts", "tasks", "commands",
+                      "transition_anomalies"):
             connection.execute("DELETE FROM %s" % (table,))
         connection.execute(
             "UPDATE log_cursor SET last_log_sequence = 0, last_byte_offset = 0, "

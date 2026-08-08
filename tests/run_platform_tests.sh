@@ -31,6 +31,9 @@ SUITES=(
   tests.platform.test_runtime_projection
   tests.platform.test_runtime_orchestrator
   tests.platform.test_runtime_capability
+  tests.platform.test_runtime_retry
+  tests.platform.test_runtime_lease
+  tests.platform.test_runtime_dead_letter
   tests.platform.test_runtime_recovery
   tests.platform.test_runtime_end_to_end
 )

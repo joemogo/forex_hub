@@ -792,14 +792,112 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
                 with self.subTest(module=relative, banned=banned):
                     self.assertNotIn(banned, imported)
 
-    def test_the_runtime_registers_exactly_one_capability(self):
+    def test_the_runtime_registers_exactly_two_capabilities(self):
+        """Two, and every one of them harmless -- asserted per capability.
+
+        Replaces the Step 1 "exactly one". The count is not the property worth
+        protecting; what each capability is ALLOWED to do is. Every manifest
+        must need no connector, no secret, no permission, must be
+        non-acquisition, and must be effectClass `pure` -- because the A-5
+        argument that makes crash boundary 8 safe holds only for pure
+        capabilities.
+        """
         from mogo_platform.runtime import orchestrator as orchestrator_module
-        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 1)
-        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 1)
-        manifest = orchestrator_module.BUILTIN_CAPABILITIES[0]
-        self.assertEqual(manifest["requiredConnectors"], [])
-        self.assertEqual(manifest["requiredSecretReferences"], [])
-        self.assertEqual(manifest["operationClass"], "non_acquisition")
+        from mogo_platform.runtime import registry
+        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 2)
+        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 2)
+        for manifest in orchestrator_module.BUILTIN_CAPABILITIES:
+            with self.subTest(capability=manifest["capabilityId"]):
+                self.assertEqual(manifest["requiredConnectors"], [])
+                self.assertEqual(manifest["requiredSecretReferences"], [])
+                self.assertEqual(manifest["requiredPermissions"], [])
+                self.assertEqual(manifest["operationClass"], "non_acquisition")
+                self.assertEqual(
+                    manifest.get("effectClass", registry.DEFAULT_EFFECT_CLASS),
+                    "pure")
+        self.assertEqual(
+            {m["capabilityId"] for m in orchestrator_module.BUILTIN_CAPABILITIES},
+            set(orchestrator_module.CAPABILITY_CALLABLES))
+
+    def test_no_random_or_secrets_import_anywhere(self):
+        """Decision B-2, enforced structurally rather than by convention.
+
+        Deterministic backoff is not a rule a future edit could quietly break:
+        randomness is an import that will not pass this test.
+        """
+        for name in ("random", "secrets"):
+            with self.subTest(module=name):
+                self.assertIn(name, boundaries.BANNED_RUNTIME_IMPORTS)
+        offenders = [
+            (relative, imported)
+            for relative, _source, tree in parse_platform_modules()
+            for imported in imported_module_names(tree)
+            if imported.split(".")[0] in ("random", "secrets")
+        ]
+        self.assertEqual(offenders, [])
+
+    def test_clock_is_read_only_in_clock_py(self):
+        """Exactly one module in platform/** may ask what time it is.
+
+        Every other module takes `now` as an argument, which is what makes
+        every retry and lease decision a pure function of recorded values --
+        and therefore what makes replay reproduce byte-identical rows.
+        """
+        readers = {}
+        for relative, _source, tree in parse_platform_modules():
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                func = node.func
+                if not isinstance(func, ast.Attribute):
+                    continue
+                if func.attr not in ("now", "time", "monotonic",
+                                     "perf_counter", "utcnow", "today"):
+                    continue
+                readers.setdefault(os.path.basename(relative), set()).add(func.attr)
+        self.assertEqual(sorted(readers), ["clock.py"], readers)
+
+    def test_no_naive_datetime_now_call_exists(self):
+        """`datetime.now()` with no tzinfo is the local-time path. It must not
+        exist anywhere, so timezone ambiguity is impossible rather than
+        merely discouraged."""
+        offenders = []
+        for relative, _source, tree in parse_platform_modules():
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                func = node.func
+                if not (isinstance(func, ast.Attribute) and func.attr == "now"):
+                    continue
+                if not node.args and not node.keywords:
+                    offenders.append((relative, node.lineno))
+        self.assertEqual(offenders, [])
+
+    def test_capability_modules_read_no_clock_and_no_randomness(self):
+        """Purity, statically -- the layer that applies whether or not a
+        manifest DECLARES anything.
+
+        This is the enforcement; the manifest's effectClass is documentation. A
+        capability that lied about being pure would be caught here.
+        """
+        capabilities_dir = os.path.join(RUNTIME_DIR, "capabilities")
+        checked = 0
+        for relative, absolute in platform_python_files():
+            if not os.path.abspath(absolute).startswith(capabilities_dir + os.sep):
+                continue
+            checked += 1
+            tree = ast.parse(read_source(absolute))
+            with self.subTest(module=relative):
+                for imported in imported_module_names(tree):
+                    root = imported.split(".")[0]
+                    self.assertNotIn(root, ("random", "secrets", "time",
+                                            "datetime", "os", "sys", "socket"))
+                for kind, name, _lineno, _node in called_names(tree):
+                    self.assertNotIn(name, ("open",) + boundaries.BANNED_MUTATION_CALLS)
+                    self.assertNotIn(name, ("now", "time", "monotonic", "random",
+                                            "randint", "choice", "token_hex"))
+        # echo.py, fail_then_succeed.py and the package marker.
+        self.assertGreaterEqual(checked, 3)
 
 
 if __name__ == "__main__":

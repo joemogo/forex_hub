@@ -27,12 +27,19 @@ from mogo_platform.runtime import paths as paths_module  # noqa: E402
 from mogo_platform.runtime import registry  # noqa: E402
 from mogo_platform.runtime import store  # noqa: E402
 from mogo_platform.runtime.capabilities import echo as echo_capability  # noqa: E402
+from mogo_platform.runtime.capabilities import (  # noqa: E402
+    fail_then_succeed as fail_then_succeed_capability)
 
 # Independently transcribed from the Step 1 plan section 11.
 EXPECTED_CAPABILITY_ID = "CAP|research|runtime-echo"
 EXPECTED_CAPABILITY_NAME = "research.runtime.echo.v1"
 EXPECTED_ACCEPTED_COMMANDS = ["NormalizeArtifact"]
 EXPECTED_DISPATCHABLE_LIFECYCLE = ("approved", "production")
+
+# Independently transcribed from the Step 2 plan section 16.
+EXPECTED_RETRY_CAPABILITY_ID = "CAP|research|runtime-fail-then-succeed"
+EXPECTED_RETRY_CAPABILITY_NAME = "research.runtime.fail-then-succeed.v1"
+EXPECTED_CAPABILITY_IDS = (EXPECTED_CAPABILITY_ID, EXPECTED_RETRY_CAPABILITY_ID)
 
 
 class CapabilityCase(unittest.TestCase):
@@ -86,9 +93,10 @@ class TestRegistration(CapabilityCase):
     def test_registration_is_idempotent(self):
         outcomes = self.runtime.register_builtin_capabilities()
         self.assertEqual(outcomes[EXPECTED_CAPABILITY_ID], "unchanged")
+        self.assertEqual(outcomes[EXPECTED_RETRY_CAPABILITY_ID], "unchanged")
         count = self.runtime.connection.execute(
             "SELECT COUNT(*) FROM capabilities").fetchone()[0]
-        self.assertEqual(count, 1)
+        self.assertEqual(count, len(EXPECTED_CAPABILITY_IDS))
 
     def test_manifest_hash_is_recorded(self):
         self.assertEqual(self.row()["manifest_hash"],
@@ -164,10 +172,14 @@ class TestDispatchEligibility(CapabilityCase):
         outcome = self.runtime.submit(envelope, payload)
         self.runtime.run_once()
         row = self.runtime.connection.execute(
-            "SELECT state, error_class, result_hash FROM tasks WHERE task_id = ?",
-            (outcome.task_id,)).fetchone()
-        self.assertEqual(row["state"], "failed")
+            "SELECT state, error_class, result_hash, dead_letter_reason "
+            "FROM tasks WHERE task_id = ?", (outcome.task_id,)).fetchone()
+        # A disabled capability is a `validation` failure, which Catalog
+        # section K marks non-retryable and terminal -- so the task
+        # dead-letters rather than stranding in `failed`. Nothing executed.
+        self.assertEqual(row["state"], "dead_lettered")
         self.assertEqual(row["error_class"], "validation")
+        self.assertEqual(row["dead_letter_reason"], "non_retryable_error_class")
         self.assertIsNone(row["result_hash"])
 
 
@@ -251,19 +263,31 @@ class TestCapabilityDeterminism(CapabilityCase):
 
 
 class TestOnlyTheRegisteredCapabilityExecutes(CapabilityCase):
-    def test_exactly_one_capability_is_registered(self):
+    def test_exactly_the_two_approved_capabilities_are_registered(self):
         rows = registry.all_capabilities(self.runtime.connection)
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["capability_id"], EXPECTED_CAPABILITY_ID)
+        self.assertEqual([row["capability_id"] for row in rows],
+                         sorted(EXPECTED_CAPABILITY_IDS))
 
-    def test_exactly_one_callable_is_wired(self):
+    def test_exactly_the_two_approved_callables_are_wired(self):
         self.assertEqual(set(orchestrator_module.CAPABILITY_CALLABLES),
-                         {EXPECTED_CAPABILITY_ID})
+                         set(EXPECTED_CAPABILITY_IDS))
         self.assertIs(
             orchestrator_module.CAPABILITY_CALLABLES[EXPECTED_CAPABILITY_ID],
             echo_capability.execute)
+        self.assertIs(
+            orchestrator_module.CAPABILITY_CALLABLES[
+                EXPECTED_RETRY_CAPABILITY_ID],
+            fail_then_succeed_capability.execute)
 
     def test_a_registered_capability_with_no_implementation_fails_closed(self):
+        """No implementation is a `validation` failure, which is NOT retryable.
+
+        Step 1 asserted this task stopped at `failed`. `failed` is not terminal,
+        and Constitution section 6.5 requires every task to reach a visible
+        terminal outcome -- so under Step 2 the same non-retryable failure now
+        resolves to `dead_lettered`, with the reason recorded. The failure class
+        is unchanged; what changed is that the task no longer strands.
+        """
         manifest = dict(echo_capability.MANIFEST)
         manifest["capabilityId"] = "CAP|research|ghost"
         manifest["name"] = "research.runtime.ghost.v1"
@@ -274,10 +298,223 @@ class TestOnlyTheRegisteredCapabilityExecutes(CapabilityCase):
         outcome = self.runtime.submit(envelope, payload)
         self.runtime.run_once()
         row = self.runtime.connection.execute(
-            "SELECT state, error_class FROM tasks WHERE task_id = ?",
-            (outcome.task_id,)).fetchone()
-        self.assertEqual(row["state"], "failed")
+            "SELECT state, error_class, terminal, dead_letter_reason FROM tasks "
+            "WHERE task_id = ?", (outcome.task_id,)).fetchone()
+        self.assertEqual(row["state"], "dead_lettered")
         self.assertEqual(row["error_class"], "validation")
+        self.assertEqual(row["terminal"], 1)
+        self.assertEqual(row["dead_letter_reason"], "non_retryable_error_class")
+
+
+class TestTheSecondCapability(CapabilityCase):
+    """research.runtime.fail-then-succeed.v1 -- MOGO-011 Step 2."""
+
+    def retry_row(self):
+        return registry.lookup(self.runtime.connection,
+                               EXPECTED_RETRY_CAPABILITY_ID)
+
+    def test_the_second_capability_is_registered(self):
+        row = self.retry_row()
+        self.assertIsNotNone(row)
+        self.assertEqual(row["name"], EXPECTED_RETRY_CAPABILITY_NAME)
+        self.assertEqual(row["operation_class"], "non_acquisition")
+        self.assertEqual(row["effect_class"], "pure")
+        self.assertEqual(row["requires_execution_context"], 1)
+
+    def test_it_exercises_the_second_dispatchable_lifecycle_state(self):
+        """echo is `production`; this one is `approved`.
+
+        Both are dispatchable, and Step 1 only ever exercised one of them.
+        Declaring this capability honestly as approved-not-production gains the
+        coverage for free.
+        """
+        self.assertEqual(self.retry_row()["lifecycle_status"], "approved")
+        self.assertIn("approved", EXPECTED_DISPATCHABLE_LIFECYCLE)
+        registry.assert_dispatchable(self.retry_row(), "NormalizeArtifact", 1,
+                                     EXPECTED_RETRY_CAPABILITY_ID)
+
+    def test_it_declares_exactly_the_failure_class_it_raises(self):
+        self.assertEqual(registry.declared_failure_classes(self.retry_row()),
+                         ("transient",))
+
+    def test_its_failure_behaviour_is_deterministic(self):
+        """100 invocations, identical outcome each time."""
+        payload = {"note": "determinism", "failUntilAttempt": 3}
+        for attempt in (1, 2, 3):
+            for _ in range(100):
+                with self.assertRaises(runtime_errors.CapabilityFailure) as caught:
+                    fail_then_succeed_capability.execute(payload,
+                                                         {"attempt": attempt})
+                self.assertEqual(caught.exception.error_class, "transient")
+
+    def test_its_success_behaviour_is_deterministic(self):
+        payload = {"note": "determinism", "failUntilAttempt": 1}
+        hashes = {fail_then_succeed_capability.execute(
+            payload, {"attempt": 2})["contentHash"] for _ in range(100)}
+        self.assertEqual(len(hashes), 1)
+
+    def test_the_success_result_is_identical_for_every_attempt_that_succeeds(self):
+        """The invariant the whole design rests on.
+
+        The DECISION to fail depends on the attempt; the RESULT CONTENT does
+        not. If it did, a crash between execution and recording success would
+        become visible in the output and the crash-boundary-8 argument would
+        collapse.
+        """
+        payload = {"note": "attempt-invariant", "failUntilAttempt": 1}
+        results = [fail_then_succeed_capability.execute(payload, {"attempt": n})
+                   for n in range(2, 11)]
+        self.assertEqual(len({r["contentHash"] for r in results}), 1)
+        self.assertEqual(len({r["byteLength"] for r in results}), 1)
+        for result in results:
+            self.assertNotIn("failUntilAttempt", result["normalizedPayload"])
+            self.assertNotIn("attempt", result["normalizedPayload"])
+
+    def test_the_threshold_is_validated_fail_closed(self):
+        for bad in (-1, 1.5, "2", True, None):
+            with self.subTest(failUntilAttempt=bad):
+                with self.assertRaises(runtime_errors.ContractValidationError):
+                    fail_then_succeed_capability.execute(
+                        {"failUntilAttempt": bad}, {"attempt": 1})
+
+    def test_a_pure_capability_remains_safe_at_crash_boundary_8(self):
+        """Re-execution is indistinguishable from never having been interrupted.
+
+        This is the property -- and the ONLY property -- that makes boundary 8
+        safe. It belongs to the capability, not to the kernel, which is why
+        risk A-5 stays open at severity High.
+        """
+        payload = {"note": "boundary-8", "failUntilAttempt": 0}
+        first = fail_then_succeed_capability.execute(payload, {"attempt": 1})
+        second = fail_then_succeed_capability.execute(payload, {"attempt": 1})
+        self.assertEqual(first, second)
+
+
+class TestEffectClassificationAndTheA5Gate(CapabilityCase):
+    def test_every_a5_gate_precondition_is_false_in_this_build(self):
+        """The gate is closed BY DATA, and opening it is loud.
+
+        A future step that builds the result store must flip a flag here, which
+        fails this test -- forcing a conscious governance decision at exactly
+        the moment the gate opens. That is the property worth having.
+        """
+        self.assertEqual(len(registry.A5_EFFECTFUL_GATE), 4)
+        for name, satisfied in registry.A5_EFFECTFUL_GATE.items():
+            with self.subTest(precondition=name):
+                self.assertIs(satisfied, False)
+        self.assertEqual(sorted(registry.unmet_a5_preconditions()),
+                         ["duplicateEffectPrevention",
+                          "idempotencyKeyedResultStore",
+                          "outputVerificationByRehash",
+                          "postExecutionRecoveryRule"])
+
+    def test_the_gate_table_is_read_only(self):
+        with self.assertRaises(TypeError):
+            registry.A5_EFFECTFUL_GATE["idempotencyKeyedResultStore"] = True
+
+    def test_registering_an_effectful_capability_is_refused_and_names_every_missing_precondition(self):
+        manifest = dict(echo_capability.MANIFEST)
+        manifest["capabilityId"] = "CAP|research|effectful-probe"
+        manifest["name"] = "research.runtime.effectful-probe.v1"
+        manifest["effectClass"] = "effectful"
+        with self.assertRaises(runtime_errors.EffectClassRefusedError) as caught:
+            registry.validate_manifest(manifest)
+        message = str(caught.exception)
+        for precondition in registry.A5_EFFECTFUL_GATE:
+            with self.subTest(precondition=precondition):
+                self.assertIn(precondition, message)
+
+    def test_effect_classification_is_enforced(self):
+        manifest = dict(echo_capability.MANIFEST)
+        manifest["capabilityId"] = "CAP|research|odd-effect"
+        manifest["name"] = "research.runtime.odd-effect.v1"
+        for value in ("PURE", "impure", "", None, 1, "side_effecting"):
+            manifest["effectClass"] = value
+            with self.subTest(effectClass=value):
+                with self.assertRaises(runtime_errors.ContractValidationError):
+                    registry.validate_manifest(manifest)
+
+    def test_an_absent_effect_class_defaults_to_the_restrictive_value(self):
+        """`pure` grants nothing; `effectful` is the permissive value and must
+        be declared explicitly -- and is then refused."""
+        manifest = dict(echo_capability.MANIFEST)
+        self.assertNotIn("effectClass", manifest)
+        registry.validate_manifest(manifest)
+        self.assertEqual(registry.DEFAULT_EFFECT_CLASS, "pure")
+        self.assertEqual(self.row()["effect_class"], "pure")
+
+    def test_a_review_routing_failure_class_is_refused_at_registration(self):
+        for name in ("source_mutated", "human_review_required"):
+            manifest = dict(echo_capability.MANIFEST)
+            manifest["capabilityId"] = "CAP|research|review-probe"
+            manifest["name"] = "research.runtime.review-probe.v1"
+            manifest["failureClasses"] = [name]
+            with self.subTest(failure_class=name):
+                with self.assertRaises(runtime_errors.ContractValidationError) as c:
+                    registry.validate_manifest(manifest)
+                self.assertIn("review", str(c.exception))
+
+    def test_an_unapproved_failure_class_is_refused_at_registration(self):
+        manifest = dict(echo_capability.MANIFEST)
+        manifest["capabilityId"] = "CAP|research|bad-class"
+        manifest["name"] = "research.runtime.bad-class.v1"
+        manifest["failureClasses"] = ["flaky"]
+        with self.assertRaises(runtime_errors.ContractValidationError):
+            registry.validate_manifest(manifest)
+
+    def test_an_unbounded_retry_policy_is_refused_at_registration(self):
+        manifest = dict(echo_capability.MANIFEST)
+        manifest["capabilityId"] = "CAP|research|unbounded"
+        manifest["name"] = "research.runtime.unbounded.v1"
+        manifest["retryPolicy"] = {"attemptLimit": 1000}
+        with self.assertRaises(runtime_errors.RetryPolicyError):
+            registry.validate_manifest(manifest)
+
+    def test_the_connector_gates_are_declared_and_all_unmet(self):
+        """Constitution section 13, applied to the gate itself.
+
+        The most important thing an operator can know about this platform is
+        what it is not yet allowed to do, and why -- so the gates are data, and
+        `status` prints them.
+        """
+        self.assertEqual(len(registry.CONNECTOR_GATES), 4)
+        for gate in registry.CONNECTOR_GATES:
+            with self.subTest(gate=gate["gate"]):
+                self.assertIs(gate["satisfied"], False)
+                self.assertTrue(gate["authority"].strip())
+                self.assertTrue(gate["requires"].strip())
+
+
+class TestTheFirstCapabilityIsUnchanged(CapabilityCase):
+    """echo is pinned. A changed manifest would break registration on every
+    existing Step 1 state root, because register() refuses a changed manifest
+    under an unchanged capabilityId -- so it is caught here, not in the field."""
+
+    ECHO_MANIFEST_HASH = (
+        "55a298289a3daaca6d2370c5a006b534c8e4b90fe0440763161eb033971ef82b")
+    ECHO_RESULT_HASH = (
+        "4a45c52fd69e19841fe5f8b10be04cfbb85031fc516cff13308bab3b192dad5e")
+
+    def test_the_echo_manifest_hash_is_unchanged(self):
+        self.assertEqual(registry.manifest_hash(echo_capability.MANIFEST),
+                         self.ECHO_MANIFEST_HASH)
+
+    def test_the_echo_result_hash_is_unchanged(self):
+        result = echo_capability.execute(cli_module.DEMO_PAYLOAD)
+        self.assertEqual(result["contentHash"], self.ECHO_RESULT_HASH)
+
+    def test_the_echo_manifest_declares_no_step_2_field(self):
+        """Not one Step 2 field is required, which is what keeps this hash
+        stable and every existing state root upgradable."""
+        for field in ("effectClass", "failureClasses", "requiresExecutionContext",
+                      "retryPolicy"):
+            with self.subTest(field=field):
+                self.assertNotIn(field, echo_capability.MANIFEST)
+
+    def test_echo_takes_no_execution_context(self):
+        import inspect
+        self.assertEqual(list(inspect.signature(echo_capability.execute).parameters),
+                         ["payload"])
 
 
 if __name__ == "__main__":

@@ -76,13 +76,23 @@ platform/
         schema.py               DDL, append-only triggers, migrations
         event_log.py            THE AUTHORITATIVE append-only JSONL log
         projection.py           log → derived index, idempotently
-        registry.py             capability registry and dispatch eligibility
+        registry.py             capability registry, dispatch eligibility, A-5 gate
+        clock.py                THE ONLY MODULE PERMITTED TO READ A CLOCK
+        retry.py                retry decision, backoff, eligibility — pure
+        lease.py                lease predicates and reclaim reasons — pure
         worker.py               execution; reports, never transitions
         orchestrator.py         receipt, transitions, dispatch — the only writer
         audit.py                operator reports and integrity verification
         cli.py                  argparse subcommands
-        capabilities/echo.py    research.runtime.echo.v1 — pure, deterministic
+        capabilities/
+          echo.py                       research.runtime.echo.v1
+          fail_then_succeed.py          research.runtime.fail-then-succeed.v1
 ```
+
+`retry.py` and `lease.py` are separate modules rather than orchestrator methods for one reason:
+every decision they make is a **pure function of recorded values**, so they can be unit-tested
+exhaustively without a database, a log or a process — and mutation-tested precisely. `task_states.py`
+(pure) against `projection.py` (writes) is the same split, one layer down.
 
 ## Two layers, two different rules
 
@@ -98,15 +108,58 @@ MOGO-010 applied the absolute no-I/O rule to all of `platform/**`. That was corr
 
 ## The runtime, in one paragraph
 
-The **JSONL event log is the source of truth**; SQLite is a derived index and read model that can always be rebuilt from it (`reset --rebuild-index` proves this, and a test asserts the rebuild reproduces the database). Every state change is appended to the log and fsynced **before** it is applied to the index — so a crash between the two leaves the index merely behind, and replay converges, whereas the reverse order could commit a state change with no event. One process at a time, enforced by an exclusive `fcntl.flock`, which is why **no time-based lease is needed**. Task state is written only by the orchestrator; the worker reports.
+The **JSONL event log is the source of truth**; SQLite is a derived index and read model that can always be rebuilt from it (`reset --rebuild-index` proves this, and a test asserts the rebuild reproduces the database). Every state change is appended to the log and fsynced **before** it is applied to the index — so a crash between the two leaves the index merely behind, and replay converges, whereas the reverse order could commit a state change with no event. One process at a time, enforced by an exclusive `fcntl.flock`. Task state is written only by the orchestrator; the worker reports.
+
+**Failure is a first-class outcome.** A failing task never stops at `failed`, which is not terminal:
+it is either scheduled for retry under a deterministic backoff or dead-lettered with a complete,
+self-verifying history — Constitution §6.5, "every task reaches a visible terminal outcome". A
+scheduled retry is released only once its recorded eligibility has provably elapsed, and `verify`
+re-derives that check **from the log alone**, so the evidence survives the deletion of every
+in-process assertion.
 
 ```bash
 python3 platform/mogo_runtime.py demo        # the full end-to-end demonstration
-python3 platform/mogo_runtime.py status      # health snapshot
+python3 platform/mogo_runtime.py status      # health snapshot, attempts, leases, gates
 python3 platform/mogo_runtime.py audit       # complete ordered activity record
+python3 platform/mogo_runtime.py failures    # what failed, when, and why
 python3 platform/mogo_runtime.py verify      # integrity checks; non-zero on failure
 python3 platform/mogo_runtime.py reset --rebuild-index   # proves the log is the truth
 ```
+
+`init` is the **only** command that migrates a state root, because it is the only one that takes the
+single-writer lock. A report command run against an older schema refuses and says so, rather than
+migrating without the lock or reading tables that do not exist there.
+
+### The lease, and why it is not ceremonial
+
+`flock` provides mutual exclusion, and it does it better than a lease would. The lease earns its
+place by doing two jobs `flock` cannot:
+
+1. **It turns an assumption into a verified fact.** Recovery used to reclaim every in-flight task on
+   the reasoning "single-writer, so the previous holder is gone" — true, and an *assumption*.
+   Constitution §11 requires recovery to resume from a **verified** checkpoint, "never from an
+   assumed one". A task is now reclaimable only if its lease is held by a **provably absent** owner
+   or has **provably expired**; a live lease is left alone.
+2. **It makes writing a result without authority impossible rather than unlikely.** Architecture §24
+   — *only the lease holder may write results* — is a check immediately before the result append,
+   against the generation *this* execution claimed with. A reclaim that bumped the generation
+   mid-flight is detected, and the result is discarded rather than recorded under an authority the
+   runtime cannot vouch for.
+
+### Clock discipline
+
+Exactly one module reads a clock, and a boundary test proves it. Everything else takes `now` as an
+argument, which is what makes every retry and lease decision a pure function of recorded values.
+
+**The clock is consulted only when producing a new event — never when applying an old one.** Every
+time value in the index is *copied* from a payload written once, never derived during projection, so
+rebuilding the index a year later reproduces byte-identical rows. A clock that goes backwards is
+refused outright, with no tolerance window and no forward clamp: both would record a time the clock
+never produced.
+
+Backoff is integer arithmetic throughout, and `jitterMs` is **0** by governed decision — `random`
+and `secrets` are structurally unimportable across `platform/**`, so determinism is not a convention
+a future edit could quietly break.
 
 **Runtime state lives in `platform/runtime/` and is git-ignored** by a nested self-ignoring `.gitignore`, of which only the `.gitignore` itself is committed (ADR-012 D-06). Deleting the whole directory loses nothing but demonstration data.
 
@@ -130,8 +183,12 @@ Each is declared in the relevant module docstring, and none is simulated:
 
 | Deferred | Blocked on |
 |---|---|
-| Retry, backoff, dead-letter execution | a later, separately approved step |
-| Time-based leases | a daemon or a second worker; unnecessary while single-writer |
+| **Effectful capabilities** | **the A-5 gate: an idempotency-keyed result store, output verification by re-hash, duplicate-effect prevention, and a post-execution recovery rule. All four are declared as data, all four are `False`, and registration of an effectful capability is refused naming every one of them.** |
+| Lease renewal / heartbeat | any execution that can exceed `leaseTtlMs / 2` — a long-running acquisition, an out-of-process worker, or a daemon |
+| Deterministic jitter | a concurrent claimer; and it will be derived from the task identifier, not from `random` |
+| `awaiting_review` routing | the review gate. Two Catalog §K classes route to review and have no legal destination, so they are refused at registration and dead-lettered fail-closed at runtime rather than stranding a task |
+| Capability-lifecycle events | a capability actually changing lifecycle state |
+| Cancellation (`any non-terminal → cancelled`) | an operator needing to stop a task; Catalog §L already permits it |
 | **Policy gate** (Architecture §32 item 5) | **required before any connector** |
 | Connectors of every kind, acquisition, transcripts | the policy gate |
 | Evidence candidates, hypothesis promotion, scientific writes | governance, and never automatic |
@@ -164,17 +221,15 @@ It must also never reuse `mogo.evidence-canon.v1`, `mogo.evidence-package.v1`, `
 bash tests/run_platform_tests.sh
 ```
 
-or directly:
+or a single suite directly:
 
 ```bash
-python3 -m unittest \
-  tests.platform.test_platform_identifiers \
-  tests.platform.test_platform_envelopes \
-  tests.platform.test_platform_task_states \
-  tests.platform.test_platform_boundaries
+python3 -m unittest tests.platform.test_runtime_retry
+python3 -m unittest tests.platform.test_runtime_lease
+python3 -m unittest tests.platform.test_runtime_dead_letter
 ```
 
-All suites are standard-library `unittest`, fully offline, deterministic, and repeatable. They require no network, no credentials, and no fixture copied from the repository tree.
+All suites are standard-library `unittest`, fully offline, deterministic, and repeatable. They require no network, no credentials, and no fixture copied from the repository tree. **No test sleeps** — the runtime never waits, so a test that wants to observe a retry release advances an injected clock and calls `run` again. What that removes is the waiting, not the check.
 
 `tests/run_all.sh` is **deliberately unmodified**: repository-wide runner integration is separately governed (ADR-012 D-12, Specification §33). Until that authorization lands, the platform suites run through their own runner.
 

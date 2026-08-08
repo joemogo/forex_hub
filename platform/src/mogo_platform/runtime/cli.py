@@ -12,14 +12,29 @@ CONVENTION
     driven from a shell script and a failure cannot be mistaken for success.
 
 SUBCOMMANDS
-    init     create the state root and database, register capabilities
-    submit   accept one command (--demo builds the canonical demonstration one)
-    run      recover, then drive every non-terminal task to a terminal state
-    status   health snapshot
-    audit    complete ordered activity record
-    verify   integrity checks alone; non-zero exit on any finding
-    reset    delete runtime state, or rebuild the index from the log alone
-    demo     the full end-to-end demonstration required by MOGO-011
+    init      create the state root and database, register capabilities, and
+              migrate an older state root -- the ONE command that migrates,
+              because it is the one that takes the single-writer lock
+    submit    accept one command (--demo, or --demo-retry N for the
+              fail-then-succeed demonstration)
+    run       recover, release eligible retries, then drive every non-terminal
+              task to a terminal state
+    status    health snapshot, including attempts, retries, leases and gates
+    audit     complete ordered activity record
+    failures  what failed, when, and why -- Architecture section 23's operator
+              view, plus the A-5 and connector gates
+    verify    integrity checks alone; non-zero exit on any finding
+    reset     delete runtime state, or rebuild the index from the log alone
+    demo      the end-to-end demonstration required by MOGO-011
+
+EXIT CODES
+    0 success · 2 rejected · 3 a task reached a TERMINAL failure (dead-letter)
+    4 integrity findings · 5 another runtime holds the lock · 6 refused
+
+    A task that failed and was rescheduled has NOT failed the run. Treating an
+    intermediate `failed` as a run failure would report every successful retry
+    as an error, and the exit code is a signal an operator has to be able to
+    trust.
 """
 
 import argparse
@@ -30,14 +45,19 @@ import sys
 
 from ..contracts import ids  # noqa: E402
 from . import audit as audit_module  # noqa: E402
+from . import clock as clock_module  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
 from . import event_log as event_log_module  # noqa: E402
 from . import orchestrator as orchestrator_module  # noqa: E402
 from . import paths as paths_module  # noqa: E402
 from . import projection  # noqa: E402
+from . import registry  # noqa: E402
 from . import schema as schema_module  # noqa: E402
 from . import store  # noqa: E402
 from .capabilities import echo as echo_capability  # noqa: E402
+from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
+
+CLOCK_OVERRIDE_ENV = orchestrator_module.CLOCK_OVERRIDE_ENV
 
 DEMO_PAYLOAD = {
     "note": "MOGO-011 Step 1 runtime kernel demonstration",
@@ -82,15 +102,106 @@ def build_demo_command(payload=None, uuid_factory=None, clock=None):
     return envelope, payload
 
 
+def build_retry_demo_command(fail_until_attempt, note, uuid_factory=None,
+                             clock=None):
+    """A demonstration command for the fail-then-succeed capability.
+
+    `failUntilAttempt` is part of the SEMANTIC payload, so it participates in
+    the idempotency key -- which is why the retry demonstration and the
+    dead-letter demonstration are naturally different tasks with different
+    keys, rather than one task with a mode flag.
+    """
+    clock = clock or orchestrator_module.utc_now
+    mint = (lambda: ids.new_uuid4(uuid_factory=uuid_factory))
+    payload = {"note": note, "failUntilAttempt": fail_until_attempt}
+    correlation_id = mint()
+    key = ids.idempotency_key("transformation", {
+        "inputHash": ids.content_hash_of(payload),
+        "transformationId": "XF|runtime-fail-then-succeed",
+        "transformationVersion": fail_then_succeed_capability.CAPABILITY_VERSION,
+    })
+    envelope = {
+        "commandId": mint(),
+        "commandType": "NormalizeArtifact",
+        "commandVersion": 1,
+        "workflowId": mint(),
+        "correlationId": correlation_id,
+        "causationId": correlation_id,
+        "idempotencyKey": key,
+        "issuedAt": clock(),
+        "issuedBy": "operator:mogo",
+        "targetCapability": fail_then_succeed_capability.CAPABILITY_ID,
+        "inputRefs": ["XF|runtime-fail-then-succeed"],
+        "policyContext": {"authorizationId": None, "policyVersion": "0",
+                          "permittedOperations": []},
+        "payloadHash": ids.content_hash_of(payload),
+    }
+    return envelope, payload
+
+
 def _paths_from(args):
     root = getattr(args, "state_root", None)
     return paths_module.RuntimePaths(root) if root else paths_module.default_paths()
+
+
+def _clock_from(args):
+    """A manual clock when --now was given and explicitly permitted.
+
+    Gated by an environment variable for the same reason crash simulation is:
+    an operator tool that can rewrite what time the runtime believes it is must
+    not be reachable by accident. With the gate unset the flag is refused
+    rather than ignored -- ignoring it would silently produce a run stamped
+    with a different time than the operator asked for.
+    """
+    now = getattr(args, "now", None)
+    if not now:
+        return None
+    if os.environ.get(CLOCK_OVERRIDE_ENV) != "1":
+        runtime_errors.fail(
+            "--now was given but %s is not set to 1; the runtime refuses to "
+            "operate on an overridden clock unless that is explicit"
+            % (CLOCK_OVERRIDE_ENV,),
+            runtime_errors.RuntimeError_,
+        )
+    return clock_module.ManualClock(now)
+
+
+def _open_readonly(args):
+    """A connection for a report command, refused unless the schema is current.
+
+    status, audit, verify and failures deliberately do NOT take the process
+    lock, so they must not migrate: a migration outside the single-writer lock
+    could run concurrently with a live runtime. Reading a pre-v2 database
+    instead would mean querying tables that do not exist there.
+
+    So the read commands FAIL CLOSED with an actionable message, in the same
+    shape `open_database` already uses for an absent database. `init` takes the
+    lock and migrates; these commands do not pretend to.
+    """
+    paths = _paths_from(args)
+    connection = store.open_database(paths, create=False)
+    try:
+        version = schema_module.current_version(connection)
+    except Exception:
+        connection.close()
+        raise
+    if version < schema_module.SCHEMA_VERSION:
+        connection.close()
+        runtime_errors.fail(
+            "runtime state at %s is schema version %d; this build reads version "
+            "%d. Run `init` to migrate it -- that path takes the single-writer "
+            "lock, which a report command deliberately does not."
+            % (paths.root, version, schema_module.SCHEMA_VERSION),
+            runtime_errors.SchemaVersionError,
+        )
+    return paths, connection
 
 
 def _open(args, create=True):
     """An UNOPENED runtime. The caller's `with` opens and closes it exactly once."""
     return orchestrator_module.Orchestrator(
         paths=_paths_from(args),
+        clock=_clock_from(args),
         crash_at=getattr(args, "simulate_crash_at", None),
         create=create)
 
@@ -100,15 +211,28 @@ def cmd_init(args):
         outcomes = runtime.register_builtin_capabilities()
         print("initialized state root : %s" % runtime.paths.root)
         print("schema version         : %d" % schema_module.SCHEMA_VERSION)
-        for capability_id, outcome in sorted(outcomes.items()):
-            print("capability %-28s %s" % (capability_id, outcome))
+        for manifest in orchestrator_module.BUILTIN_CAPABILITIES:
+            capability_id = manifest["capabilityId"]
+            policy = registry.resolve_retry_policy(manifest)
+            print("capability %-46s %-11s effect=%s  retry=base%dms x%d "
+                  "cap%dms jitter%dms limit%d"
+                  % (capability_id, outcomes.get(capability_id, "unknown"),
+                     manifest.get("effectClass", registry.DEFAULT_EFFECT_CLASS),
+                     policy["backoffBaseMs"], policy["backoffMultiplier"],
+                     policy["backoffCapMs"], policy["jitterMs"],
+                     policy["attemptLimit"]))
     return 0
 
 
 def cmd_submit(args):
     with _open(args) as runtime:
         runtime.recover()
-        if args.demo:
+        if getattr(args, "demo_retry", None) is not None:
+            envelope, payload = build_retry_demo_command(
+                args.demo_retry,
+                "MOGO-011 Step 2 retry demonstration, failUntilAttempt=%d"
+                % (args.demo_retry,))
+        elif args.demo:
             envelope, payload = build_demo_command()
         else:
             with open(args.command_file, "r", encoding="utf-8") as handle:
@@ -140,22 +264,77 @@ def cmd_run(args):
             print("RECOVERED replayed %d event(s)" % recovery["replayed"])
         if recovery["reclaimed"]:
             print("RECOVERED reclaimed %d task(s): %s"
-                  % (len(recovery["reclaimed"]), ", ".join(recovery["reclaimed"])))
+                  % (len(recovery["reclaimed"]),
+                     ", ".join("%s (%s)"
+                               % (task_id,
+                                  recovery["reclaim_reasons"].get(task_id, "?"))
+                               for task_id in recovery["reclaimed"])))
+        if recovery["live_leases_kept"]:
+            print("RECOVERED left %d task(s) alone -- lease still live"
+                  % len(recovery["live_leases_kept"]))
         if recovery["resumed_commands"]:
             print("RECOVERED resumed %d command(s) with no task"
                   % len(recovery["resumed_commands"]))
         report = runtime.run_once()
         for line in runtime.trace:
             print("  " + line)
-        print("advanced=%d succeeded=%d failed=%d"
+        pending = _pending_retries(runtime.connection)
+        for task_id, eligible_at, remaining in pending:
+            print("  RETRY NOT RELEASED task %s eligible at %s (%d ms remaining)"
+                  % (task_id, eligible_at, remaining))
+        print("advanced=%d succeeded=%d failed=%d retried=%d released=%d "
+              "deadLettered=%d"
               % (len(report["advanced"]), len(report["succeeded"]),
-                 len(report["failed"])))
-        return 0 if not report["failed"] else 3
+                 len(report["failed"]), len(report["retried"]),
+                 len(report["released"]), len(report["dead_lettered"])))
+        # The exit code reflects TERMINAL failure only. A task that failed and
+        # was rescheduled has not failed the run -- treating an intermediate
+        # `failed` as a run failure would report every successful retry as an
+        # error, which is exactly the signal an operator must be able to trust.
+        return 0 if not report["dead_lettered"] else 3
+
+
+def _pending_retries(connection):
+    """Scheduled retries not yet eligible, with the time still to wait.
+
+    Printed so that the backoff being ENFORCED is visible in ordinary operator
+    output rather than only in a test assertion.
+    """
+    now_ms = clock_module.SystemClock().now_ms()
+    rows = connection.execute(
+        "SELECT task_id, retry_eligible_at FROM tasks "
+        "WHERE state = 'retry_scheduled' AND terminal = 0 "
+        "AND retry_eligible_at IS NOT NULL ORDER BY retry_eligible_at").fetchall()
+    pending = []
+    for row in rows:
+        eligible_ms = clock_module.parse_iso8601_ms(row["retry_eligible_at"],
+                                                    "retryEligibleAt")
+        pending.append((row["task_id"], row["retry_eligible_at"],
+                        max(0, eligible_ms - now_ms)))
+    return pending
+
+
+def cmd_failures(args):
+    """Architecture section 23's Failures view: what failed, when, and why.
+
+    Constitution section 13 requires an operator to answer that WITHOUT READING
+    CODE. This is the command that has to meet the bar.
+    """
+    paths, connection = _open_readonly(args)
+    try:
+        log = event_log_module.EventLog(paths)
+        report = audit_module.failures_report(connection, log)
+        if getattr(args, "json", False):
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            print(audit_module.render_failures(report))
+        return 0
+    finally:
+        connection.close()
 
 
 def cmd_status(args):
-    paths = _paths_from(args)
-    connection = store.open_database(paths, create=False)
+    paths, connection = _open_readonly(args)
     try:
         log = event_log_module.EventLog(paths)
         print(audit_module.render_status(
@@ -166,8 +345,7 @@ def cmd_status(args):
 
 
 def cmd_audit(args):
-    paths = _paths_from(args)
-    connection = store.open_database(paths, create=False)
+    paths, connection = _open_readonly(args)
     try:
         log = event_log_module.EventLog(paths)
         report = audit_module.audit_report(connection, log, args.workflow, args.task)
@@ -182,8 +360,7 @@ def cmd_audit(args):
 
 
 def cmd_verify(args):
-    paths = _paths_from(args)
-    connection = store.open_database(paths, create=False)
+    paths, connection = _open_readonly(args)
     try:
         log = event_log_module.EventLog(paths)
         findings = audit_module.verify_integrity(connection, log)
@@ -224,36 +401,117 @@ def cmd_reset(args):
     return 0
 
 
+def _submit_args(args, demo=False, demo_retry=None):
+    return argparse.Namespace(
+        demo=demo, demo_retry=demo_retry, command_file=None,
+        state_root=getattr(args, "state_root", None),
+        simulate_crash_at=None, now=None)
+
+
+def _run_args(args):
+    return argparse.Namespace(state_root=getattr(args, "state_root", None),
+                              simulate_crash_at=None, now=None)
+
+
+def _scenario_step_1(args):
+    """Retryable failure, backoff, release, success on a later attempt."""
+    print("\n-- SCENARIO 1: retryable failure -> retry -> success on attempt 2 --")
+    rc = cmd_submit(_submit_args(args, demo_retry=1))
+    return rc or cmd_run(_run_args(args))
+
+
+def _scenario_step_2(args):
+    """Attempts exhausted -> dead-letter, with a complete history."""
+    print("\n-- SCENARIO 2: attempts exhausted -> dead-letter --")
+    rc = cmd_submit(_submit_args(args, demo_retry=9))
+    if rc:
+        return rc
+    # A dead-lettered task is a TERMINAL FAILURE and `run` reports it as one,
+    # so a non-zero exit here is the correct outcome of the scenario rather
+    # than a fault in it.
+    cmd_run(_run_args(args))
+    return 0
+
+
+def _scenario_step_3(args):
+    """The same semantic command must still duplicate nothing.
+
+    Submitted, driven to completion, then submitted AGAIN. The second
+    submission carries fresh identifiers and an identical semantic payload, so
+    its idempotency key is identical -- which is the property Step 2 must not
+    have weakened, because the key is computed from the payload alone and
+    never from an attempt number or a timestamp.
+    """
+    print("\n-- SCENARIO 3: re-running a semantic command duplicates nothing --")
+    rc = cmd_submit(_submit_args(args, demo=True))
+    if rc:
+        return rc
+    rc = cmd_run(_run_args(args))
+    if rc:
+        return rc
+    print("   ... now submitting the identical semantic command a second time:")
+    return cmd_submit(_submit_args(args, demo=True))
+
+
+def _scenario_step_4(args):
+    """The log is the truth: throw the index away and rebuild it."""
+    print("\n-- SCENARIO 4: the log is the truth --")
+    rc = cmd_reset(argparse.Namespace(
+        state_root=getattr(args, "state_root", None),
+        confirm=False, rebuild_index=True))
+    if rc:
+        return rc
+    return cmd_verify(argparse.Namespace(
+        state_root=getattr(args, "state_root", None)))
+
+
+def _scenario_step_5(args):
+    """What failed, when, and why -- without reading code."""
+    print("\n-- OPERATOR VIEW: failures, leases and gates --")
+    return cmd_failures(argparse.Namespace(
+        state_root=getattr(args, "state_root", None), json=False))
+
+
+DEMO_SCENARIOS = {
+    "retry": (_scenario_step_1,),
+    "dead-letter": (_scenario_step_2,),
+    "all": (_scenario_step_1, _scenario_step_2, _scenario_step_3,
+            _scenario_step_4, _scenario_step_5),
+}
+
+
 def cmd_demo(args):
-    """The twelve MOGO-011 outcomes, in order, in one command."""
+    """The MOGO-011 Step 2 outcomes, in order, in one command."""
+    scenario = getattr(args, "scenario", None) or "all"
     print("=" * 72)
-    print("MOGO-011 Step 1 -- runtime kernel end-to-end demonstration")
+    print("MOGO-011 Step 2 -- retry, lease and dead-letter demonstration")
     print("=" * 72)
     rc = cmd_init(args)
     if rc:
         return rc
-    print("\n-- 1..9  submit, validate, create, policy, claim, execute, succeed --")
-    rc = cmd_submit(argparse.Namespace(demo=True, command_file=None,
-                                       state_root=getattr(args, "state_root", None),
-                                       simulate_crash_at=None))
-    if rc:
-        return rc
-    rc = cmd_run(argparse.Namespace(state_root=getattr(args, "state_root", None),
-                                    simulate_crash_at=None))
-    if rc:
-        return rc
-    print("\n-- 10  re-running the same semantic command must duplicate nothing --")
-    rc = cmd_submit(argparse.Namespace(demo=True, command_file=None,
-                                       state_root=getattr(args, "state_root", None),
-                                       simulate_crash_at=None))
-    if rc:
-        return rc
-    print("\n-- 12  audit --")
-    rc = cmd_audit(argparse.Namespace(workflow=None, task=None, json=False,
-                                      state_root=getattr(args, "state_root", None)))
-    print("\n(outcome 11, restart after induced interruption, is exercised by "
-          "tests/platform/test_runtime_recovery.py and by "
-          "`run --simulate-crash-at`)")
+    for step in DEMO_SCENARIOS[scenario]:
+        rc = step(args)
+        if rc:
+            return rc
+    if scenario == "all":
+        print("\n-- AUDIT --")
+        rc = cmd_audit(argparse.Namespace(
+            workflow=None, task=None, json=False,
+            state_root=getattr(args, "state_root", None)))
+        print(
+            "\nNOT SHOWN HERE, AND WHY:"
+            "\n  * Restart after an induced interruption is exercised by "
+            "tests/platform/test_runtime_recovery.py and by "
+            "`run --simulate-crash-at <boundary>`."
+            "\n  * A retry being WITHHELD until its backoff elapses cannot be "
+            "shown by this demonstration: the fail-then-succeed capability "
+            "declares backoffBaseMs=0 by design, so that the demonstration "
+            "needs no clock manipulation, and a zero backoff is eligible at "
+            "once. Registering a third capability solely to make the demo "
+            "print a wait would be inventing a capability to satisfy a "
+            "demonstration. The rule is proved instead against a non-zero "
+            "backoff with an injected clock, in "
+            "tests/platform/test_runtime_retry.py.")
     return rc
 
 
@@ -270,6 +528,9 @@ def build_parser():
     group = submit.add_mutually_exclusive_group(required=True)
     group.add_argument("--demo", action="store_true",
                        help="submit the canonical demonstration command")
+    group.add_argument("--demo-retry", type=int, metavar="FAIL_UNTIL_ATTEMPT",
+                       help="submit a fail-then-succeed command that fails every "
+                            "attempt up to and including this one")
     group.add_argument("--command-file",
                        help="JSON file with {\"command\": ..., \"payload\": ...}")
     submit.add_argument("--simulate-crash-at",
@@ -278,6 +539,9 @@ def build_parser():
     run = subparsers.add_parser("run", help="recover, then drive tasks to terminal")
     run.add_argument("--simulate-crash-at",
                      help="test-only induced interruption boundary")
+    run.add_argument("--now", metavar="ISO8601",
+                     help="test-only clock override; requires %s=1"
+                          % (CLOCK_OVERRIDE_ENV,))
 
     subparsers.add_parser("status", help="health snapshot")
 
@@ -286,6 +550,10 @@ def build_parser():
     audit_parser.add_argument("--task")
     audit_parser.add_argument("--json", action="store_true")
 
+    failures = subparsers.add_parser(
+        "failures", help="what failed, when, and why -- plus leases and gates")
+    failures.add_argument("--json", action="store_true")
+
     subparsers.add_parser("verify", help="integrity checks only")
 
     reset = subparsers.add_parser("reset", help="delete state, or rebuild the index")
@@ -293,13 +561,16 @@ def build_parser():
     reset.add_argument("--rebuild-index", action="store_true",
                        help="drop the derived index and rebuild it from the log")
 
-    subparsers.add_parser("demo", help="run the full end-to-end demonstration")
+    demo = subparsers.add_parser("demo", help="run the full end-to-end demonstration")
+    demo.add_argument("--scenario", choices=sorted(DEMO_SCENARIOS),
+                      default="all")
     return parser
 
 
 HANDLERS = {
     "init": cmd_init, "submit": cmd_submit, "run": cmd_run, "status": cmd_status,
     "audit": cmd_audit, "verify": cmd_verify, "reset": cmd_reset, "demo": cmd_demo,
+    "failures": cmd_failures,
 }
 
 

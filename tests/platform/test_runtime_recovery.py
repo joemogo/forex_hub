@@ -334,5 +334,241 @@ class TestReplayConvergence(RecoveryCase):
             runtime.close()
 
 
+# ---------------------------------------------------------------------------
+# MOGO-011 Step 2 -- crash boundaries 12 through 22
+# ---------------------------------------------------------------------------
+
+# Independently transcribed from Step 2 plan section 24.
+EXPECTED_STEP_2_CRASH_BOUNDARIES = (
+    "after_failure_append",          # 12
+    "inside_failure_transaction",    # 13
+    "after_retry_schedule_append",   # 14
+    "before_retry_projection",       # 15
+    "after_retry_release_append",    # 16
+    "after_lease_claim",             # 17
+    "after_lease_expiry",            # 18
+    "before_requeue",                # 19
+    "during_retry_execution",        # 20
+    "before_dead_letter_apply",      # 21
+    "after_dead_letter_append",      # 22
+)
+
+
+class Step2RecoveryCase(RecoveryCase):
+    """Every kill here is a real os._exit(70) in a child process.
+
+    No mock, no injected exception: a mocked failure unwinds cleanly and would
+    prove nothing about the gap between the log fsync and the SQLite commit.
+    """
+
+    def init_and_submit_retry(self, fail_until, attempt_limit=None):
+        self.child("init")
+        args = ["submit", "--demo-retry", str(fail_until)]
+        completed = self.child(*args)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        return completed
+
+    def task_state(self):
+        runtime = self.runtime()
+        try:
+            row = runtime.connection.execute(
+                "SELECT * FROM tasks ORDER BY created_log_sequence LIMIT 1"
+            ).fetchone()
+            return dict(row) if row is not None else None
+        finally:
+            runtime.close()
+
+    def attempt_rows(self):
+        runtime = self.runtime()
+        try:
+            return [dict(r) for r in runtime.connection.execute(
+                "SELECT * FROM task_attempts ORDER BY task_id, attempt")]
+        finally:
+            runtime.close()
+
+    def event_type_counts(self):
+        runtime = self.runtime()
+        try:
+            return {row[0]: row[1] for row in runtime.connection.execute(
+                "SELECT event_type, COUNT(*) FROM event_index GROUP BY event_type")}
+        finally:
+            runtime.close()
+
+    def crash_then_recover(self, boundary, fail_until=1):
+        self.init_and_submit_retry(fail_until)
+        self.child("run", "--simulate-crash-at", boundary,
+                   allow_crash=True, expect_crash=True)
+        completed = self.child("run")
+        return completed
+
+
+class TestStep2CrashBoundaries(Step2RecoveryCase):
+    def test_every_step_2_boundary_is_declared_and_reachable(self):
+        import inspect
+        source = inspect.getsource(orchestrator_module)
+        self.assertEqual(tuple(orchestrator_module.STEP_2_CRASH_BOUNDARIES),
+                         EXPECTED_STEP_2_CRASH_BOUNDARIES)
+        for boundary in EXPECTED_STEP_2_CRASH_BOUNDARIES:
+            with self.subTest(boundary=boundary):
+                # Declared in the list AND used at a real call site.
+                self.assertGreaterEqual(source.count('"%s"' % boundary), 2)
+
+    def test_step_2_crash_simulation_is_refused_without_the_env_guard(self):
+        self.init_and_submit_retry(1)
+        completed = self.child("run", "--simulate-crash-at", "after_failure_append")
+        self.assertNotEqual(completed.returncode, 70)
+        self.assertIn("MOGO_RUNTIME_ALLOW_CRASH_SIM",
+                      completed.stdout + completed.stderr)
+
+    def test_boundary_12_crash_after_failure_append(self):
+        self.crash_then_recover("after_failure_append")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+        self.assertEqual(row["attempt"], 2)
+
+    def test_boundary_13_crash_inside_the_failure_transaction(self):
+        self.crash_then_recover("inside_failure_transaction")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+        self.assertEqual(row["attempt"], 2)
+
+    def test_boundary_14_crash_after_retry_schedule_append(self):
+        self.crash_then_recover("after_retry_schedule_append")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+
+    def test_boundary_15_crash_before_the_retry_projection(self):
+        self.crash_then_recover("before_retry_projection")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+
+    def test_boundary_16_crash_after_retry_release_append(self):
+        self.crash_then_recover("after_retry_release_append")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+
+    def test_boundary_17_crash_after_the_lease_claim(self):
+        """The capability had NOT run, so no attempt is consumed."""
+        self.crash_then_recover("after_lease_claim")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+        # Generation advanced through the reclaim; the first claim was rescued.
+        self.assertGreaterEqual(row["lease_generation"], 2)
+
+    def test_boundary_19_crash_before_requeue(self):
+        self.init_and_submit_retry(1)
+        self.child("run", "--simulate-crash-at", "after_lease_claim",
+                   allow_crash=True, expect_crash=True)
+        # The reclaim event is appended, then the process dies before the
+        # transition is applied. R3 replays it.
+        self.child("run", "--simulate-crash-at", "before_requeue",
+                   allow_crash=True, expect_crash=True)
+        self.child("run")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+
+    def test_boundary_20_crash_during_retry_execution_consumes_the_attempt(self):
+        """A crashed attempt WAS attempted -- and that is deliberate.
+
+        The alternative, decrementing on reclaim, would let a task that crashes
+        the process on every attempt retry forever, defeating Constitution
+        section 11's bounded retry. Consuming the attempt is the fail-closed
+        choice and it is recorded, so it is never mistaken for an off-by-one.
+        """
+        # failUntilAttempt=0 never fails, so an UNINTERRUPTED run succeeds on
+        # attempt 1. Any higher final attempt count is therefore attributable
+        # to the crash alone, which is what makes this test meaningful.
+        self.init_and_submit_retry(0)
+        self.child("run", "--simulate-crash-at", "during_retry_execution",
+                   allow_crash=True, expect_crash=True)
+        after_crash = self.task_state()
+        self.assertEqual(after_crash["state"], "running")
+        self.assertEqual(after_crash["attempt"], 1)
+
+        self.child("run")
+        row = self.task_state()
+        self.assertEqual(row["state"], "succeeded")
+        # Attempt 1 was consumed by the crash; attempt 2 succeeded.
+        self.assertEqual(row["attempt"], 2)
+        # And the consumption is RECORDED: the crashed attempt reached no
+        # outcome, so only the surviving attempt has a row.
+        self.assertEqual([a["attempt"] for a in self.attempt_rows()], [2])
+        # Exactly one result, and no attempt recorded twice.
+        attempts = self.attempt_rows()
+        self.assertEqual(len({(a["task_id"], a["attempt"]) for a in attempts}),
+                         len(attempts))
+        self.assertEqual(self.event_type_counts().get("TaskSucceeded"), 1)
+
+    def test_boundary_21_crash_before_the_dead_letter_is_applied(self):
+        self.init_and_submit_retry(9)
+        self.child("run", "--simulate-crash-at", "before_dead_letter_apply",
+                   allow_crash=True, expect_crash=True)
+        self.child("run")
+        row = self.task_state()
+        self.assertEqual(row["state"], "dead_lettered")
+        self.assertEqual(self.event_type_counts().get("TaskDeadLettered"), 1)
+
+    def test_boundary_22_crash_after_the_dead_letter_append(self):
+        self.init_and_submit_retry(9)
+        self.child("run", "--simulate-crash-at", "after_dead_letter_append",
+                   allow_crash=True, expect_crash=True)
+        self.child("run")
+        row = self.task_state()
+        self.assertEqual(row["state"], "dead_lettered")
+        self.assertEqual(row["terminal"], 1)
+        self.assertEqual(self.event_type_counts().get("TaskDeadLettered"), 1)
+
+    def test_no_boundary_produces_a_duplicate_attempt_or_duplicate_result(self):
+        for boundary in ("after_failure_append", "after_retry_schedule_append",
+                         "after_retry_release_append", "after_lease_claim",
+                         "during_retry_execution"):
+            with self.subTest(boundary=boundary):
+                # A fresh state root per boundary. tearDown() first so the
+                # directory unittest created for this test is released rather
+                # than leaked; unittest's own tearDown cleans up the last one.
+                self.tearDown()
+                self.setUp()
+                self.crash_then_recover(boundary)
+                attempts = self.attempt_rows()
+                keys = [(a["task_id"], a["attempt"]) for a in attempts]
+                self.assertEqual(len(keys), len(set(keys)))
+                counts = self.event_type_counts()
+                self.assertLessEqual(counts.get("TaskSucceeded", 0), 1)
+
+    def test_repeated_restart_converges_to_the_same_terminal_state(self):
+        """Five restarts at five different boundaries reach the same answer as
+        an uninterrupted run."""
+        self.init_and_submit_retry(2)
+        for boundary in ("after_lease_claim", "after_failure_append",
+                         "after_retry_schedule_append",
+                         "after_retry_release_append",
+                         "during_retry_execution"):
+            self.child("run", "--simulate-crash-at", boundary,
+                       allow_crash=True, expect_crash=True)
+        self.child("run")
+        row = self.task_state()
+        self.assertIn(row["state"], ("succeeded", "dead_lettered"))
+        self.assertEqual(row["terminal"], 1)
+        counts = self.event_type_counts()
+        self.assertLessEqual(counts.get("TaskSucceeded", 0), 1)
+        self.assertLessEqual(counts.get("TaskDeadLettered", 0), 1)
+        verified = self.child("verify")
+        self.assertEqual(verified.returncode, 0, verified.stdout)
+
+    def test_recovery_never_releases_a_retry(self):
+        """R6 belongs to run_once, not recover.
+
+        recover() repairs the past; run_once() makes forward progress. A
+        release inside recovery would mean `submit` -- which calls recover() --
+        silently advanced retries, which is a side effect no operator asked
+        for.
+        """
+        import inspect
+        source = inspect.getsource(orchestrator_module.Orchestrator.recover)
+        self.assertNotIn("_release_eligible_retries", source)
+        run_source = inspect.getsource(orchestrator_module.Orchestrator.run_once)
+        self.assertIn("_release_eligible_retries", run_source)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

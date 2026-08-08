@@ -38,6 +38,12 @@ EXPECTED_TRANSITIONS = {
     "TaskStarted":              ("claimed", "running"),
     "TaskSucceeded":            ("running", "succeeded"),
     "TaskFailed":               ("running", "failed"),
+    # MOGO-011 Step 2. Every one of the three already exists in the committed
+    # Catalog section L table with authority `orchestrator`; none widens the
+    # state machine, and contracts/task_states.py is not modified.
+    "TaskRetryScheduled":       ("failed", "retry_scheduled"),
+    "TaskRetryReleased":        ("retry_scheduled", "queued"),
+    "TaskDeadLettered":         ("failed", "dead_lettered"),
     "TaskReclaimed":            (None, "queued"),
 }
 

@@ -30,10 +30,11 @@ MIGRATIONS
 from . import errors as runtime_errors  # noqa: E402
 from . import store  # noqa: E402
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Tables whose contents may never be updated or deleted, enforced by trigger.
-APPEND_ONLY_TABLES = ("event_index", "command_submissions", "transition_anomalies")
+APPEND_ONLY_TABLES = ("event_index", "command_submissions", "transition_anomalies",
+                      "capability_violations")
 
 # DDL as explicit statements, not one script.
 # sqlite3.executescript() issues an implicit COMMIT before running, which would
@@ -187,10 +188,20 @@ def append_only_trigger_statements(table):
     return tuple(template % {"table": table} for template in _TRIGGER_TEMPLATES)
 
 
+# The append-only tables that exist AT v1. Deliberately not APPEND_ONLY_TABLES:
+# that tuple names every append-only table in the CURRENT schema, and a
+# migration must create only the triggers for tables that exist at its own
+# version. Reusing the current list here would make v1 creation fail the moment
+# a later version added an append-only table -- a migration reaching forward
+# into a schema it predates.
+_V1_APPEND_ONLY_TABLES = ("event_index", "command_submissions",
+                          "transition_anomalies")
+
+
 def _create_v1(connection):
     for statement in _CREATE_V1_STATEMENTS:
         connection.execute(statement)
-    for table in APPEND_ONLY_TABLES:
+    for table in _V1_APPEND_ONLY_TABLES:
         for statement in append_only_trigger_statements(table):
             connection.execute(statement)
     connection.execute(
@@ -199,7 +210,112 @@ def _create_v1(connection):
     )
 
 
-MIGRATIONS = ((1, _create_v1),)
+# ---------------------------------------------------------------------------
+# v2 -- MOGO-011 Step 2: retry, lease and dead-letter
+# ---------------------------------------------------------------------------
+# ADDITIVE ONLY. Every change below is an `ALTER TABLE ... ADD COLUMN` with a
+# constant DEFAULT (supported, O(1) on this SQLite, preserves every existing
+# row) or a fresh CREATE. Nothing is dropped, renamed or retyped, so a v1 state
+# root upgrades in place and a v1 log replays into a v2 schema unchanged.
+#
+# NO DOWN-MIGRATION IS PROVIDED, DELIBERATELY. The correct rollback for a
+# DERIVED index is not to un-migrate it -- it is to delete it and rebuild it
+# from the authoritative log under the older build. That is stronger than a
+# down-migration because it cannot half-apply, and it is the executable proof
+# of ADR-012 D-05 that already exists as `reset --rebuild-index`. A
+# down-migration would additionally have to drop columns, which is the one
+# SQLite operation most likely to lose data on a partial failure.
+
+_MIGRATE_V2_STATEMENTS = (
+    # Catalog section C field names adopted verbatim where the Catalog names
+    # them (leaseHolder, leaseExpiresAt) and Architecture section 18.1 where it
+    # does (leaseGeneration). lease_acquired_at and lease_ttl_ms are added so
+    # an auditor can verify an expiry decision from the log alone, without
+    # knowing which build's TTL default was in force.
+    "ALTER TABLE tasks ADD COLUMN attempt_limit    INTEGER NOT NULL DEFAULT 3",
+    "ALTER TABLE tasks ADD COLUMN retry_policy     TEXT    NOT NULL DEFAULT '{}'",
+    "ALTER TABLE tasks ADD COLUMN retry_eligible_at TEXT",
+    "ALTER TABLE tasks ADD COLUMN backoff_ms       INTEGER",
+    "ALTER TABLE tasks ADD COLUMN lease_holder     TEXT",
+    "ALTER TABLE tasks ADD COLUMN lease_generation INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE tasks ADD COLUMN lease_acquired_at TEXT",
+    "ALTER TABLE tasks ADD COLUMN lease_expires_at TEXT",
+    "ALTER TABLE tasks ADD COLUMN lease_ttl_ms     INTEGER",
+    "ALTER TABLE tasks ADD COLUMN dead_letter_reason TEXT",
+
+    "ALTER TABLE commands ADD COLUMN attempt_limit INTEGER NOT NULL DEFAULT 3",
+
+    # Restrictive defaults, so echo's committed manifest stays valid and
+    # byte-identical: `pure` grants nothing, an empty failure-class list grants
+    # no retryability, and no execution context means the capability receives
+    # LESS information rather than more. Making any of these required would
+    # change echo's manifest hash and break upgrade of every existing state root.
+    "ALTER TABLE capabilities ADD COLUMN effect_class    TEXT NOT NULL DEFAULT 'pure'",
+    "ALTER TABLE capabilities ADD COLUMN failure_classes TEXT NOT NULL DEFAULT '[]'",
+    "ALTER TABLE capabilities ADD COLUMN requires_execution_context "
+    "                                                    INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE capabilities ADD COLUMN retry_policy    TEXT NOT NULL DEFAULT '{}'",
+
+    # DERIVED and rebuildable: one row per completed execution, inserted whole
+    # when the outcome event is applied. UNIQUE (task_id, attempt) is not
+    # decoration -- it is a second, INDEPENDENT guard against an attempt being
+    # recorded twice, so a double count cannot be silent even if its test were
+    # removed.
+    """CREATE TABLE task_attempts (
+        attempt_id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id               TEXT    NOT NULL REFERENCES tasks (task_id),
+        attempt               INTEGER NOT NULL,
+        lease_generation      INTEGER NOT NULL,
+        started_log_sequence  INTEGER NOT NULL,
+        finished_log_sequence INTEGER NOT NULL,
+        outcome               TEXT    NOT NULL
+            CHECK (outcome IN ('succeeded', 'failed')),
+        error_class           TEXT,
+        result_hash           TEXT,
+        started_at            TEXT    NOT NULL,
+        finished_at           TEXT    NOT NULL,
+        UNIQUE (task_id, attempt)
+    )""",
+
+    # LOCAL OBSERVATION, not replayable truth: which run held which lease.
+    # Useful for audit, meaningless to replay. Named here rather than quietly
+    # counted as rebuildable -- a table holding non-rebuildable truth while the
+    # design claimed full rebuildability is exactly the drift ADR-012 D-05
+    # exists to prevent.
+    """CREATE TABLE runs (
+        run_id     TEXT PRIMARY KEY,
+        started_at TEXT NOT NULL,
+        ended_at   TEXT,
+        pid        INTEGER NOT NULL
+    )""",
+
+    # APPEND-ONLY local observation. Constitution section 7: a worker may not
+    # emit an event it has not declared. A capability raising an undeclared
+    # failure class is recorded here and the task fails non-retryably.
+    """CREATE TABLE capability_violations (
+        violation_id  INTEGER PRIMARY KEY AUTOINCREMENT,
+        detected_at   TEXT NOT NULL,
+        capability_id TEXT NOT NULL,
+        task_id       TEXT,
+        violation     TEXT NOT NULL,
+        detail        TEXT
+    )""",
+
+    "CREATE INDEX idx_tasks_retry    ON tasks (state, retry_eligible_at)",
+    "CREATE INDEX idx_tasks_lease    ON tasks (lease_expires_at)",
+    "CREATE INDEX idx_attempts_task  ON task_attempts (task_id, attempt)",
+    "CREATE INDEX idx_attempts_error ON task_attempts (error_class, attempt_id)",
+)
+
+
+def _migrate_v2(connection):
+    for statement in _MIGRATE_V2_STATEMENTS:
+        connection.execute(statement)
+    for statement in append_only_trigger_statements("capability_violations"):
+        connection.execute(statement)
+
+
+MIGRATIONS = ((1, _create_v1), (2, _migrate_v2))
 
 
 def current_version(connection):

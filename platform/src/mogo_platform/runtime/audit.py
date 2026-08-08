@@ -45,14 +45,38 @@ def status_report(connection, log, paths):
         "WHERE terminal = 0 ORDER BY created_log_sequence LIMIT 1").fetchone()
     events = connection.execute("SELECT COUNT(*) AS count FROM event_index").fetchone()
     capabilities = _rows(connection,
-                         "SELECT capability_id, name, lifecycle_status, enabled_state "
-                         "FROM capabilities ORDER BY capability_id")
+                         "SELECT * FROM capabilities ORDER BY capability_id")
     version = connection.execute(
         "SELECT value FROM schema_meta WHERE key = 'schema_version'").fetchone()
     submissions = _rows(connection,
                         "SELECT outcome, COUNT(*) AS count FROM command_submissions "
                         "GROUP BY outcome ORDER BY outcome")
     cursor_sequence, cursor_offset, _cursor_event = projection.cursor_position(connection)
+
+    from . import registry
+
+    attempts = connection.execute(
+        "SELECT COUNT(*) AS total,"
+        " SUM(CASE WHEN outcome = 'failed' THEN 1 ELSE 0 END) AS failed "
+        "FROM task_attempts").fetchone()
+    retries_scheduled = connection.execute(
+        "SELECT COUNT(*) AS count FROM event_index "
+        "WHERE event_type = 'TaskRetryScheduled'").fetchone()
+    retries_released = connection.execute(
+        "SELECT COUNT(*) AS count FROM event_index "
+        "WHERE event_type = 'TaskRetryReleased'").fetchone()
+    dead_letters = _rows(connection,
+                         "SELECT dead_letter_reason AS reason, COUNT(*) AS count "
+                         "FROM tasks WHERE state = 'dead_lettered' "
+                         "GROUP BY dead_letter_reason ORDER BY reason")
+    oldest_retry = connection.execute(
+        "SELECT task_id, retry_eligible_at FROM tasks "
+        "WHERE state = 'retry_scheduled' AND retry_eligible_at IS NOT NULL "
+        "ORDER BY retry_eligible_at LIMIT 1").fetchone()
+    held = _rows(connection,
+                 "SELECT task_id, lease_holder, lease_generation, lease_expires_at "
+                 "FROM tasks WHERE lease_holder IS NOT NULL "
+                 "ORDER BY lease_expires_at")
 
     return {
         "schemaVersion": version["value"] if version else None,
@@ -70,9 +94,191 @@ def status_report(connection, log, paths):
         "capabilities": [
             {"capabilityId": row["capability_id"], "name": row["name"],
              "lifecycleStatus": row["lifecycle_status"],
-             "enabled": bool(row["enabled_state"])}
+             "enabled": bool(row["enabled_state"]),
+             "effectClass": row["effect_class"],
+             "failureClasses": list(registry.declared_failure_classes(row)),
+             "retryPolicy": registry.declared_retry_policy(row)}
             for row in capabilities],
+        "attemptsRecorded": (attempts["total"] if attempts else 0) or 0,
+        "attemptsFailed": (attempts["failed"] if attempts else 0) or 0,
+        "retriesScheduled": retries_scheduled["count"] if retries_scheduled else 0,
+        "retriesReleased": retries_released["count"] if retries_released else 0,
+        "deadLettersByReason": [(row["reason"], row["count"]) for row in dead_letters],
+        "oldestScheduledRetry": (
+            None if oldest_retry is None
+            else {"taskId": oldest_retry["task_id"],
+                  "eligibleAt": oldest_retry["retry_eligible_at"]}),
+        "leasesHeld": [
+            {"taskId": row["task_id"], "holder": row["lease_holder"],
+             "generation": row["lease_generation"],
+             "expiresAt": row["lease_expires_at"]} for row in held],
+        "a5GateOpen": not registry.unmet_a5_preconditions(),
+        "a5GateUnmet": list(registry.unmet_a5_preconditions()),
+        "connectorGatesUnmet": [gate["gate"] for gate in registry.CONNECTOR_GATES
+                                if not gate["satisfied"]],
     }
+
+
+def failures_report(connection, log):
+    """Architecture section 23's Failures view, as data.
+
+    Constitution section 13: an operator must be able to answer "what failed,
+    when, and why" WITHOUT READING CODE. Everything needed to answer it is
+    here, and so is the thing an operator most needs to know about this
+    platform -- what it is not yet allowed to do, and why.
+    """
+    from ..contracts import errors as contract_errors
+    from . import registry
+
+    by_class = _rows(connection,
+                     "SELECT error_class, COUNT(*) AS count,"
+                     "       MAX(finished_at) AS last_at "
+                     "FROM task_attempts WHERE outcome = 'failed' "
+                     "GROUP BY error_class ORDER BY count DESC, error_class")
+    failures = []
+    for row in by_class:
+        last = connection.execute(
+            "SELECT task_id, attempt FROM task_attempts "
+            "WHERE outcome = 'failed' AND error_class IS ? "
+            "ORDER BY finished_at DESC, attempt_id DESC LIMIT 1",
+            (row["error_class"],)).fetchone()
+        record = contract_errors.ERROR_CLASSES.get(row["error_class"])
+        failures.append({
+            "errorClass": row["error_class"],
+            "count": row["count"],
+            "retryable": None if record is None else bool(record["retryable"]),
+            "lastOccurrence": row["last_at"],
+            "lastTaskId": None if last is None else last["task_id"],
+            "lastAttempt": None if last is None else last["attempt"],
+        })
+
+    dead_letters = [
+        {"taskId": row["task_id"], "reason": row["dead_letter_reason"],
+         "attempts": row["attempt"], "attemptLimit": row["attempt_limit"],
+         "finalErrorClass": row["error_class"]}
+        for row in _rows(connection,
+                         "SELECT task_id, dead_letter_reason, attempt,"
+                         "       attempt_limit, error_class FROM tasks "
+                         "WHERE state = 'dead_lettered' "
+                         "ORDER BY created_log_sequence")]
+
+    attempts = [{k: row[k] for k in row.keys()}
+                for row in _rows(connection,
+                                 "SELECT * FROM task_attempts "
+                                 "ORDER BY task_id, attempt")]
+
+    leases = [
+        {"taskId": row["task_id"], "holder": row["lease_holder"],
+         "generation": row["lease_generation"],
+         "acquiredAt": row["lease_acquired_at"],
+         "expiresAt": row["lease_expires_at"], "state": row["state"]}
+        for row in _rows(connection,
+                         "SELECT task_id, lease_holder, lease_generation,"
+                         "       lease_acquired_at, lease_expires_at, state "
+                         "FROM tasks WHERE lease_holder IS NOT NULL "
+                         "ORDER BY lease_expires_at")]
+
+    retries = [
+        {"taskId": row["task_id"], "attempt": row["attempt"],
+         "attemptLimit": row["attempt_limit"],
+         "eligibleAt": row["retry_eligible_at"], "backoffMs": row["backoff_ms"]}
+        for row in _rows(connection,
+                         "SELECT task_id, attempt, attempt_limit,"
+                         "       retry_eligible_at, backoff_ms FROM tasks "
+                         "WHERE state = 'retry_scheduled' "
+                         "ORDER BY retry_eligible_at")]
+
+    violations = [{k: row[k] for k in row.keys()}
+                  for row in _rows(connection,
+                                   "SELECT * FROM capability_violations "
+                                   "ORDER BY violation_id")]
+
+    return {
+        "failuresByErrorClass": failures,
+        "deadLetters": dead_letters,
+        "attempts": attempts,
+        "leases": leases,
+        "scheduledRetries": retries,
+        "capabilityViolations": violations,
+        "a5Gate": {"open": not registry.unmet_a5_preconditions(),
+                   "unmet": list(registry.unmet_a5_preconditions())},
+        "connectorGates": [dict(gate) for gate in registry.CONNECTOR_GATES],
+    }
+
+
+def render_failures(report):
+    lines = ["FAILURES BY ERROR CLASS",
+             "  %-24s %6s %10s  %-24s %s"
+             % ("errorClass", "count", "retryable", "last occurrence",
+                "last task")]
+    if not report["failuresByErrorClass"]:
+        lines.append("  (none)")
+    for entry in report["failuresByErrorClass"]:
+        lines.append("  %-24s %6d %10s  %-24s %s"
+                     % (entry["errorClass"] or "(unclassified)", entry["count"],
+                        "-" if entry["retryable"] is None
+                        else ("yes" if entry["retryable"] else "no"),
+                        entry["lastOccurrence"] or "-",
+                        entry["lastTaskId"] or "-"))
+
+    lines += ["", "DEAD LETTERS",
+              "  %-38s %-28s %-9s %s"
+              % ("taskId", "reason", "attempts", "finalClass")]
+    if not report["deadLetters"]:
+        lines.append("  (none)")
+    for entry in report["deadLetters"]:
+        lines.append("  %-38s %-28s %-9s %s"
+                     % (entry["taskId"], entry["reason"] or "-",
+                        "%s/%s" % (entry["attempts"], entry["attemptLimit"]),
+                        entry["finalErrorClass"] or "-"))
+
+    lines += ["", "ATTEMPT HISTORY",
+              "  %-38s %7s %6s %-10s %-24s %s"
+              % ("taskId", "attempt", "lease", "outcome", "started", "errorClass")]
+    if not report["attempts"]:
+        lines.append("  (none recorded)")
+    for row in report["attempts"]:
+        lines.append("  %-38s %7d %6d %-10s %-24s %s"
+                     % (row["task_id"], row["attempt"], row["lease_generation"],
+                        row["outcome"], row["started_at"],
+                        row["error_class"] or "-"))
+
+    lines += ["", "SCHEDULED RETRIES (waiting out their backoff)"]
+    if not report["scheduledRetries"]:
+        lines.append("  (none)")
+    for entry in report["scheduledRetries"]:
+        lines.append("  %-38s attempt %s/%s  eligible at %s  (backoff %s ms)"
+                     % (entry["taskId"], entry["attempt"], entry["attemptLimit"],
+                        entry["eligibleAt"], entry["backoffMs"]))
+
+    lines += ["", "LEASES"]
+    if not report["leases"]:
+        lines.append("  (none held)")
+    for entry in report["leases"]:
+        lines.append("  %-38s %-46s gen %-4d %-12s expires %s"
+                     % (entry["taskId"], entry["holder"], entry["generation"],
+                        entry["state"], entry["expiresAt"]))
+
+    if report["capabilityViolations"]:
+        lines += ["", "CAPABILITY VIOLATIONS (declared-contract breaches)"]
+        for row in report["capabilityViolations"]:
+            lines.append("  %-24s %-46s %s %s"
+                         % (row["detected_at"], row["capability_id"],
+                            row["violation"], row["detail"] or ""))
+
+    lines += ["", "GATES"]
+    gate = report["a5Gate"]
+    lines.append("  A-5 effectful-capability gate   %s   %s"
+                 % ("OPEN" if gate["open"] else "CLOSED",
+                    ", ".join(gate["unmet"]) or "-"))
+    unmet = [g for g in report["connectorGates"] if not g["satisfied"]]
+    lines.append("  connector gates                 %d UNMET"
+                 % (len(unmet),))
+    for entry in unmet:
+        lines.append("      %-34s %s" % (entry["gate"], entry["requires"]))
+    lines.append("  no effectful capability may register, and no connector may "
+                 "exist, until these are met")
+    return "\n".join(lines)
 
 
 def verify_integrity(connection, log):
@@ -146,8 +352,144 @@ def verify_integrity(connection, log):
                 "finding": "task %s is in unapproved state %r"
                            % (row["task_id"], row["state"])})
 
+    findings.extend(_verify_step_2_invariants(connection, scanned.records))
+
     findings.sort(key=lambda f: SEVERITY_ORDER.get(f["severity"], 9))
     return findings
+
+
+def _verify_step_2_invariants(connection, records):
+    """Four checks re-derived FROM THE LOG, not from the code that wrote it.
+
+    Every one of these could be asserted in-process at the moment the event is
+    produced, and every one of those assertions could be deleted by a future
+    edit. Deriving them from the durable log instead means the evidence
+    survives the deletion of the code that created it -- which is the whole
+    reason `verify` reads the log rather than asking the index to confirm
+    itself.
+    """
+    findings = []
+    from ..contracts import task_states
+
+    # 1. No release precedes its eligibility. The single check that proves
+    #    backoff is ENFORCED rather than skipped, and it holds even if every
+    #    in-process assertion were removed.
+    scheduled = {}
+    for record in records:
+        event = record.event
+        task_id = event.get("taskId")
+        if event["eventType"] == "TaskRetryScheduled":
+            scheduled.setdefault(task_id, []).append(
+                (record.log_sequence, event["payload"].get("eligibleAtUtc")))
+        elif event["eventType"] == "TaskRetryReleased":
+            payload = event["payload"]
+            observed = payload.get("observedAtUtc")
+            eligible = payload.get("scheduledEligibleAtUtc")
+            if observed is None or eligible is None:
+                findings.append({
+                    "severity": "ERROR",
+                    "finding": "log_sequence %d: a retry release records no "
+                               "eligibility, so it cannot be shown to have "
+                               "waited" % (record.log_sequence,)})
+                continue
+            if observed < eligible:
+                findings.append({
+                    "severity": "FATAL",
+                    "finding": "log_sequence %d: retry for task %s released at "
+                               "%s, before its eligibility at %s"
+                               % (record.log_sequence, task_id, observed,
+                                  eligible)})
+            known = [value for _sequence, value in scheduled.get(task_id, [])]
+            if eligible not in known:
+                findings.append({
+                    "severity": "FATAL",
+                    "finding": "log_sequence %d: retry for task %s claims "
+                               "eligibility %s, which no TaskRetryScheduled "
+                               "for that task recorded"
+                               % (record.log_sequence, task_id, eligible)})
+            # A forward clock jump is not an error -- it can only make a
+            # backoff elapse earlier than intended -- but a large one is worth
+            # seeing, so it is reported as INFO rather than hidden.
+            backoff = payload.get("scheduledBackoffMs") or 0
+            waited = payload.get("waitedMs")
+            if backoff and isinstance(waited, int) and waited > 10 * backoff:
+                findings.append({
+                    "severity": "INFO",
+                    "finding": "log_sequence %d: retry for task %s waited %d ms "
+                               "against a scheduled backoff of %d ms; the clock "
+                               "may have jumped forward"
+                               % (record.log_sequence, task_id, waited, backoff)})
+
+    # 2. No attempt is recorded twice. The schema's UNIQUE (task_id, attempt)
+    #    catches it at write time; this catches it in history.
+    seen_attempts = set()
+    for record in records:
+        event = record.event
+        if event["eventType"] not in ("TaskSucceeded", "TaskFailed"):
+            continue
+        attempt = event["payload"].get("attempt")
+        if attempt is None:
+            continue                       # a Step 1 event: no attempt recorded
+        key = (event.get("taskId"), attempt)
+        if key in seen_attempts:
+            findings.append({
+                "severity": "FATAL",
+                "finding": "log_sequence %d: attempt %d of task %s reaches an "
+                           "outcome twice"
+                           % (record.log_sequence, attempt, event.get("taskId"))})
+        seen_attempts.add(key)
+
+    # 3. Lease generations are monotonic per task. A reset generation would let
+    #    a stale execution's generation match a fresh lease and defeat the
+    #    holder verification entirely.
+    highest_generation = {}
+    for record in records:
+        event = record.event
+        if event["eventType"] != "TaskClaimed":
+            continue
+        generation = event["payload"].get("leaseGeneration")
+        if generation is None:
+            continue                       # a Step 1 claim: no lease
+        task_id = event.get("taskId")
+        previous = highest_generation.get(task_id)
+        if previous is not None and generation <= previous:
+            findings.append({
+                "severity": "FATAL",
+                "finding": "log_sequence %d: task %s claimed at lease "
+                           "generation %d, which does not exceed the previous "
+                           "%d" % (record.log_sequence, task_id, generation,
+                                   previous)})
+        highest_generation[task_id] = generation
+
+    # 4. Every terminal task reached its terminal state through an event.
+    #    Constitution section 6.5 and 6.6 together: a task that is terminal in
+    #    the index but has no terminal event in the log is a state change the
+    #    log cannot reproduce.
+    terminal_events = {}
+    for record in records:
+        event = record.event
+        transition = TERMINAL_EVENT_STATES.get(event["eventType"])
+        if transition is not None:
+            terminal_events.setdefault(event.get("taskId"), set()).add(transition)
+    for row in _rows(connection,
+                     "SELECT task_id, state, terminal FROM tasks WHERE terminal = 1"):
+        reached = terminal_events.get(row["task_id"], set())
+        if row["state"] in task_states.TERMINAL_STATES and row["state"] not in reached:
+            findings.append({
+                "severity": "FATAL",
+                "finding": "task %s is terminal in state %r but no event in the "
+                           "log carries that transition"
+                           % (row["task_id"], row["state"])})
+
+    return findings
+
+
+# Events that carry a task into a terminal state. Used by the verify check
+# above; kept beside it so the two cannot drift apart.
+TERMINAL_EVENT_STATES = {
+    "TaskSucceeded": "succeeded",
+    "TaskDeadLettered": "dead_lettered",
+}
 
 
 def audit_report(connection, log, workflow_id=None, task_id=None):
@@ -158,7 +500,9 @@ def audit_report(connection, log, workflow_id=None, task_id=None):
         # Report what can still be read from the derived index, and let the
         # integrity section carry the verdict.
         return {"events": [], "timeline": [], "submissions": [], "anomalies": [],
-                "recoveryActions": [], "tasks": [], "tornFragmentPresent": False,
+                "recoveryActions": [], "tasks": [], "attempts": [],
+                "capabilityViolations": [], "runs": [],
+                "tornFragmentPresent": False,
                 "integrity": verify_integrity(connection, log)}
     records = scanned.records
     if workflow_id:
@@ -200,6 +544,11 @@ def audit_report(connection, log, workflow_id=None, task_id=None):
     recoveries = _rows(connection,
                        "SELECT * FROM recovery_actions ORDER BY action_id")
     tasks = _rows(connection, "SELECT * FROM tasks ORDER BY created_log_sequence")
+    attempts = _rows(connection,
+                     "SELECT * FROM task_attempts ORDER BY task_id, attempt")
+    violations = _rows(connection,
+                       "SELECT * FROM capability_violations ORDER BY violation_id")
+    runs = _rows(connection, "SELECT * FROM runs ORDER BY started_at")
 
     return {
         "events": events,
@@ -208,6 +557,10 @@ def audit_report(connection, log, workflow_id=None, task_id=None):
         "anomalies": [{k: row[k] for k in row.keys()} for row in anomalies],
         "recoveryActions": [{k: row[k] for k in row.keys()} for row in recoveries],
         "tasks": [{k: row[k] for k in row.keys()} for row in tasks],
+        "attempts": [{k: row[k] for k in row.keys()} for row in attempts],
+        "capabilityViolations": [{k: row[k] for k in row.keys()}
+                                 for row in violations],
+        "runs": [{k: row[k] for k in row.keys()} for row in runs],
         "tornFragmentPresent": scanned.torn_fragment is not None,
         "integrity": verify_integrity(connection, log),
     }
@@ -229,12 +582,41 @@ def render_status(report):
     oldest = report["oldestNonTerminalTask"]
     lines.append("  oldest open     : %s" % (
         "none" if oldest is None else "%s (%s)" % (oldest["taskId"], oldest["state"])))
+    lines.append("  attempts        : %d recorded, %d failed"
+                 % (report["attemptsRecorded"], report["attemptsFailed"]))
+    lines.append("  retries         : %d scheduled, %d released"
+                 % (report["retriesScheduled"], report["retriesReleased"]))
+    lines.append("  dead letters    : %s" % (
+        ", ".join("%s=%d" % (reason or "unrecorded", count)
+                  for reason, count in report["deadLettersByReason"]) or "none"))
+    pending = report["oldestScheduledRetry"]
+    lines.append("  oldest retry    : %s" % (
+        "none" if pending is None
+        else "%s eligible at %s" % (pending["taskId"], pending["eligibleAt"])))
+    lines.append("  leases held     : %s" % (
+        ", ".join("%s gen %d expires %s"
+                  % (entry["taskId"], entry["generation"], entry["expiresAt"])
+                  for entry in report["leasesHeld"]) or "none"))
     lines.append("  capabilities    :")
     for capability in report["capabilities"]:
-        lines.append("      %s  %s  %s  %s"
+        lines.append("      %s  %s  %s  %s  effect=%s  failureClasses=%s"
                      % (capability["capabilityId"], capability["name"],
                         capability["lifecycleStatus"],
-                        "enabled" if capability["enabled"] else "DISABLED"))
+                        "enabled" if capability["enabled"] else "DISABLED",
+                        capability["effectClass"],
+                        ",".join(capability["failureClasses"]) or "none"))
+    # Printed in the ordinary health snapshot, deliberately. What the platform
+    # is not yet allowed to do is health information, not a footnote.
+    lines.append("  A-5 gate        : %s%s"
+                 % ("OPEN" if report["a5GateOpen"] else "CLOSED",
+                    "" if report["a5GateOpen"]
+                    else " (%d preconditions unmet: %s)"
+                         % (len(report["a5GateUnmet"]),
+                            ", ".join(report["a5GateUnmet"]))))
+    lines.append("  connector gates : %d unmet%s"
+                 % (len(report["connectorGatesUnmet"]),
+                    (" -- " + ", ".join(report["connectorGatesUnmet"]))
+                    if report["connectorGatesUnmet"] else ""))
     return "\n".join(lines)
 
 
@@ -262,9 +644,31 @@ def render_audit(report):
 
     lines += ["", "TASKS"]
     for row in report["tasks"]:
-        lines.append("  %s  state=%-12s terminal=%s result=%s error=%s"
+        lines.append("  %s  state=%-16s terminal=%-5s attempt=%s/%s result=%s "
+                     "error=%s%s"
                      % (row["task_id"], row["state"], bool(row["terminal"]),
-                        row["result_hash"] or "-", row["error_class"] or "-"))
+                        row["attempt"], row["attempt_limit"],
+                        row["result_hash"] or "-", row["error_class"] or "-",
+                        "" if not row["dead_letter_reason"]
+                        else " deadLetter=%s" % (row["dead_letter_reason"],)))
+
+    lines += ["", "ATTEMPTS"]
+    if not report["attempts"]:
+        # A task created before schema v2 has no attempt history, and saying so
+        # is better than printing a zero that would read as "never tried".
+        lines.append("  none recorded (a pre-v2 task records no attempt history)")
+    for row in report["attempts"]:
+        lines.append("  %s  attempt=%-3d lease=%-3d %-10s %-24s -> %-24s %s"
+                     % (row["task_id"], row["attempt"], row["lease_generation"],
+                        row["outcome"], row["started_at"], row["finished_at"],
+                        row["error_class"] or row["result_hash"] or "-"))
+
+    if report["capabilityViolations"]:
+        lines += ["", "CAPABILITY VIOLATIONS"]
+        for row in report["capabilityViolations"]:
+            lines.append("  %-24s %-46s %s %s"
+                         % (row["detected_at"], row["capability_id"],
+                            row["violation"], row["detail"] or ""))
 
     if report["anomalies"]:
         lines += ["", "TRANSITION ANOMALIES (recorded, not applied)"]

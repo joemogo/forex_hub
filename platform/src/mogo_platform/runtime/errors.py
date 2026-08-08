@@ -100,6 +100,70 @@ class CapabilityNotDispatchableError(RuntimeError_):
     """
 
 
+class CapabilityFailure(RuntimeError_):
+    """A capability reported a DECLARED, classified operational failure.
+
+    Distinct from every other error here: it is not a defect and not a refusal,
+    it is a capability telling the runtime that its work failed in a way the
+    capability anticipated and declared in its manifest. The error_class must be
+    a Catalog section K name AND must appear in the manifest's failureClasses --
+    Constitution section 7 ("a worker may not emit an event it has not
+    declared"), applied to failure classes.
+
+    An undeclared class is a violation, not a failure: it is recorded in
+    capability_violations and the task fails as `deterministic_processing`,
+    which is non-retryable. Accepting an undeclared class would let a capability
+    grant itself retryability it was never approved for.
+    """
+
+    def __init__(self, error_class, message):
+        RuntimeError_.__init__(self, message)
+        self.error_class = error_class
+        self.message = message
+
+
+class ClockRollbackError(RuntimeError_):
+    """The clock returned a value earlier than the highest recorded timestamp.
+
+    FAIL CLOSED, WITH NO TOLERANCE WINDOW AND NO CLAMP. A skew tolerance is an
+    unaudited lie about when something happened, and Constitution section 4.20
+    requires every governed decision to record when it was made. Clamping
+    forward (max(now, floor)) was considered and rejected for the same reason:
+    it would write a timestamp the clock never produced.
+
+    Nothing is appended when this is raised -- the check precedes the append.
+    The remedy is to fix the clock; the runtime provides no override, because an
+    override that forges timestamps is worse than a refusal.
+    """
+
+
+class EffectClassRefusedError(RuntimeError_):
+    """Registration of an effectful capability was refused -- risk A-5.
+
+    Crash boundary 8 (interrupted between execution and recording success) is
+    safe ONLY because every registered capability is pure: re-execution produces
+    a byte-identical result, so it is indistinguishable from never having been
+    interrupted. That is a property of the CAPABILITY, not of the kernel.
+
+    An effectful capability therefore requires output verification by re-hash,
+    an idempotency-keyed result store, duplicate-effect prevention and a
+    post-execution recovery rule BEFORE it may be registered. None of the four
+    exists in this build, so registration is refused and the message names every
+    missing precondition. See registry.A5_EFFECTFUL_GATE.
+    """
+
+
+class RetryPolicyError(RuntimeError_):
+    """A declared retry policy is outside what the runtime will honour.
+
+    Covers a non-integer or negative parameter, a backoffMultiplier below 1
+    (which would shrink rather than grow the delay), and an attemptLimit above
+    MAX_ATTEMPT_LIMIT. Constitution section 11 requires retry to be BOUNDED;
+    Catalog section A sets no upper bound, so the ceiling is a runtime rule and
+    every refusal under it is recorded rather than silent.
+    """
+
+
 class SimulatedCrash(BaseException):
     """Test-only induced interruption.
 
@@ -113,3 +177,13 @@ class SimulatedCrash(BaseException):
 def fail(message, error_cls=RuntimeError_):
     """Raise `error_cls` with `message`. The single raise site for the runtime."""
     raise error_cls(message)
+
+
+def fail_capability(error_class, message):
+    """Raise a DECLARED capability failure. The single raise site for one.
+
+    Separate from fail() because the argument order is genuinely different: a
+    capability failure leads with its Catalog section K classification, and the
+    classification is the part the runtime acts on.
+    """
+    raise CapabilityFailure(error_class, message)

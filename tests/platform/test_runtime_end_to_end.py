@@ -334,5 +334,248 @@ class TestRuntimeStateIsIsolated(EndToEndCase):
         self.assertEqual(document["state"], "succeeded")
 
 
+# ---------------------------------------------------------------------------
+# MOGO-011 Step 2 -- the fifteen Primary Outcomes, through the CLI
+# ---------------------------------------------------------------------------
+
+
+class Step2EndToEndCase(EndToEndCase):
+    """Driven through the real CLI in child processes, as an operator would."""
+
+    def full_step_2_run(self):
+        self.assertEqual(self.cli("init").returncode, 0)
+        self.assertEqual(self.cli("submit", "--demo-retry", "1").returncode, 0)
+        self.assertEqual(self.cli("submit", "--demo-retry", "9").returncode, 0)
+        ran = self.cli("run")
+        # A dead-lettered task is a terminal failure and `run` reports one.
+        self.assertEqual(ran.returncode, 3, ran.stdout)
+        return ran
+
+    def tasks(self):
+        runtime = orchestrator_module.Orchestrator(paths=self.paths,
+                                                   create=False).open()
+        try:
+            return [dict(r) for r in runtime.connection.execute(
+                "SELECT * FROM tasks ORDER BY created_log_sequence")]
+        finally:
+            runtime.close()
+
+    def log_records(self):
+        return event_log_module.EventLog(self.paths).scan(verify=True).records
+
+
+class TestStep2PrimaryOutcomes(Step2EndToEndCase):
+    def test_primary_outcome_02_a_capability_fails_with_a_retryable_error(self):
+        self.full_step_2_run()
+        classes = {r.event.get("errorClass") for r in self.log_records()
+                   if r.event["eventType"] == "TaskFailed"}
+        self.assertEqual(classes, {"transient"})
+
+    def test_primary_outcome_03_the_orchestrator_records_the_failure(self):
+        self.full_step_2_run()
+        failures = [r for r in self.log_records()
+                    if r.event["eventType"] == "TaskFailed"]
+        self.assertTrue(failures)
+        for record in failures:
+            payload = record.event["payload"]
+            self.assertTrue(payload["declaredByCapability"])
+            self.assertIsInstance(payload["attempt"], int)
+            self.assertIsInstance(payload["leaseGeneration"], int)
+
+    def test_primary_outcome_05_the_full_transition_sequence_occurs(self):
+        self.full_step_2_run()
+        succeeded = [t for t in self.tasks() if t["state"] == "succeeded"][0]
+        types = [r.event["eventType"] for r in self.log_records()
+                 if r.event.get("taskId") == succeeded["task_id"]]
+        for expected in ("TaskFailed", "TaskRetryScheduled", "TaskRetryReleased",
+                         "TaskClaimed", "TaskStarted", "TaskSucceeded"):
+            self.assertIn(expected, types)
+
+    def test_primary_outcome_06_no_release_precedes_its_eligibility(self):
+        """Re-derived from the log alone, so it survives the deletion of every
+        in-process assertion."""
+        self.full_step_2_run()
+        scheduled, releases = {}, 0
+        for record in self.log_records():
+            event = record.event
+            task_id = event.get("taskId")
+            if event["eventType"] == "TaskRetryScheduled":
+                scheduled.setdefault(task_id, []).append(
+                    event["payload"]["eligibleAtUtc"])
+            elif event["eventType"] == "TaskRetryReleased":
+                releases += 1
+                payload = event["payload"]
+                self.assertGreaterEqual(payload["observedAtUtc"],
+                                        payload["scheduledEligibleAtUtc"])
+                self.assertIn(payload["scheduledEligibleAtUtc"],
+                              scheduled.get(task_id, []))
+        self.assertGreater(releases, 0)
+
+    def test_primary_outcome_07_each_claim_takes_a_fresh_lease(self):
+        self.full_step_2_run()
+        by_task = {}
+        for record in self.log_records():
+            if record.event["eventType"] != "TaskClaimed":
+                continue
+            payload = record.event["payload"]
+            by_task.setdefault(record.event["taskId"], []).append(
+                payload["leaseGeneration"])
+            self.assertEqual(payload["claimMode"], "compare_and_set_lease")
+        self.assertTrue(by_task)
+        for task_id, generations in by_task.items():
+            with self.subTest(task=task_id):
+                self.assertEqual(generations, sorted(set(generations)))
+                self.assertEqual(generations[0], 1)
+
+    def test_primary_outcome_08_it_succeeds_on_a_later_attempt(self):
+        self.full_step_2_run()
+        succeeded = [t for t in self.tasks() if t["state"] == "succeeded"][0]
+        self.assertEqual(succeeded["attempt"], 2)
+
+    def test_primary_outcome_09_events_are_ordered_and_auditable(self):
+        self.full_step_2_run()
+        by_workflow = {}
+        for record in self.log_records():
+            by_workflow.setdefault(record.event["workflowId"], []).append(
+                record.event["sequence"])
+        for workflow_id, sequences in by_workflow.items():
+            with self.subTest(workflow=workflow_id):
+                self.assertEqual(sequences, list(range(len(sequences))))
+
+    def test_primary_outcome_11_and_12_exhaustion_reaches_dead_letter(self):
+        self.full_step_2_run()
+        dead = [t for t in self.tasks() if t["state"] == "dead_lettered"]
+        self.assertEqual(len(dead), 1)
+        self.assertEqual(dead[0]["attempt"], 3)
+        self.assertEqual(dead[0]["dead_letter_reason"], "attempts_exhausted")
+        payload = [r.event["payload"] for r in self.log_records()
+                   if r.event["eventType"] == "TaskDeadLettered"][0]
+        self.assertEqual(len(payload["attemptHistory"]), 3)
+
+    def test_primary_outcome_13_a_repeated_semantic_command_duplicates_nothing(self):
+        self.full_step_2_run()
+        before = len(self.tasks())
+        repeated = self.cli("submit", "--demo-retry", "1")
+        self.assertEqual(repeated.returncode, 0)
+        self.assertIn("DUPLICATE SUPPRESSED", repeated.stdout)
+        self.assertEqual(len(self.tasks()), before)
+
+    def test_primary_outcome_14_the_index_is_rebuildable_from_the_log(self):
+        self.full_step_2_run()
+        before = self.tasks()
+        rebuilt = self.cli("reset", "--rebuild-index")
+        self.assertEqual(rebuilt.returncode, 0, rebuilt.stderr)
+        self.assertEqual(self.tasks(), before)
+        self.assertEqual(self.cli("verify").returncode, 0)
+
+    def test_the_failures_view_answers_what_failed_when_and_why(self):
+        self.full_step_2_run()
+        failures = self.cli("failures")
+        self.assertEqual(failures.returncode, 0, failures.stderr)
+        for heading in ("FAILURES BY ERROR CLASS", "DEAD LETTERS",
+                        "ATTEMPT HISTORY", "LEASES", "GATES"):
+            self.assertIn(heading, failures.stdout)
+        self.assertIn("transient", failures.stdout)
+        self.assertIn("attempts_exhausted", failures.stdout)
+        self.assertIn("CLOSED", failures.stdout)
+
+    def test_the_status_view_reports_the_step_2_signals(self):
+        self.full_step_2_run()
+        status = self.cli("status")
+        self.assertEqual(status.returncode, 0, status.stderr)
+        for line in ("attempts", "retries", "dead letters", "A-5 gate",
+                     "connector gates"):
+            self.assertIn(line, status.stdout)
+        self.assertIn("schema version  : 2", status.stdout)
+
+    def test_verify_passes_every_step_2_invariant(self):
+        self.full_step_2_run()
+        verified = self.cli("verify")
+        self.assertEqual(verified.returncode, 0, verified.stdout)
+        self.assertIn("INTEGRITY OK", verified.stdout)
+
+    def test_the_demo_runs_end_to_end_and_leaves_a_clean_state_root(self):
+        demo = self.cli("demo")
+        self.assertEqual(demo.returncode, 0, demo.stderr)
+        self.assertIn("SCENARIO 1", demo.stdout)
+        self.assertIn("SCENARIO 2", demo.stdout)
+        self.assertIn("DUPLICATE SUPPRESSED", demo.stdout)
+        self.assertIn("REBUILT", demo.stdout)
+        self.assertIn("INTEGRITY OK", demo.stdout)
+        # Nothing is left non-terminal.
+        self.assertEqual([t for t in self.tasks() if not t["terminal"]], [])
+
+    def test_a_pre_v2_state_root_is_refused_by_a_report_command_then_migrated(self):
+        """The upgrade path, through the CLI, exactly as an operator meets it.
+
+        A report command takes no process lock, so it must not migrate -- and
+        it must not read v2 tables out of a v1 database either. It refuses,
+        names the versions, and says which command does migrate. `init` then
+        does, under the lock.
+        """
+        from mogo_platform.runtime import schema as schema_module
+        from mogo_platform.runtime import store as store_module
+
+        # A GENUINE v1 database: built by running the shipped v1 migration
+        # exactly as it stands, not by removing pieces from a v2 one. A
+        # hand-degraded v2 database would still carry the v2 COLUMNS and would
+        # therefore test a state root that has never existed.
+        paths_module.ensure_state_root(self.paths)
+        connection = store_module.open_database(self.paths, create=True)
+        try:
+            with store_module.immediate_transaction(connection):
+                schema_module._create_v1(connection)
+                connection.execute(
+                    "INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?,?)",
+                    ("schema_version", "1"))
+                connection.execute(
+                    "INSERT INTO commands (command_id, command_type,"
+                    " command_version, workflow_id, correlation_id,"
+                    " idempotency_key, target_capability, issued_at, issued_by,"
+                    " payload_hash, payload_json, accepted_log_sequence) VALUES "
+                    "('c1','NormalizeArtifact',1,'w','r','k',"
+                    "'CAP|research|runtime-echo','2026-08-07T00:00:00.000Z',"
+                    "'operator:x','h','{}',1)")
+                connection.execute(
+                    "INSERT INTO tasks (task_id, workflow_id, correlation_id,"
+                    " command_id, capability_id, idempotency_key, state, attempt,"
+                    " created_log_sequence, last_log_sequence, terminal) VALUES "
+                    "('t1','w','r','c1','CAP|research|runtime-echo','k',"
+                    "'succeeded',1,1,1,1)")
+        finally:
+            connection.close()
+
+        refused = self.cli("status")
+        self.assertNotEqual(refused.returncode, 0)
+        combined = refused.stdout + refused.stderr
+        self.assertIn("schema version 1", combined)
+        self.assertIn("init", combined)
+
+        migrated = self.cli("init")
+        self.assertEqual(migrated.returncode, 0, migrated.stderr)
+        self.assertIn("schema version         : %d" % schema_module.SCHEMA_VERSION,
+                      migrated.stdout)
+        self.assertEqual(self.cli("status").returncode, 0)
+        self.assertEqual(self.cli("failures").returncode, 0)
+        # The pre-existing v1 task survived the migration untouched, and gained
+        # the restrictive defaults rather than being rewritten.
+        tasks = self.tasks()
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0]["task_id"], "t1")
+        self.assertEqual(tasks[0]["state"], "succeeded")
+        self.assertEqual(tasks[0]["attempt"], 1)
+        self.assertEqual(tasks[0]["attempt_limit"], 3)
+        self.assertEqual(tasks[0]["lease_generation"], 0)
+        self.assertIsNone(tasks[0]["lease_holder"])
+        self.assertIsNone(tasks[0]["retry_eligible_at"])
+
+    def test_a_clock_override_is_refused_without_its_env_guard(self):
+        self.cli("init")
+        refused = self.cli("run", "--now", "2026-08-08T12:00:00.000Z")
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("MOGO_RUNTIME_ALLOW_CLOCK_OVERRIDE",
+                      refused.stdout + refused.stderr)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

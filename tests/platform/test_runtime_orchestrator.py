@@ -246,7 +246,15 @@ class TestOnlyOrchestratorWritesState(OrchestratorCase):
         import inspect
         from mogo_platform.runtime import worker as worker_module
         signature = inspect.signature(worker_module.execute_task)
-        self.assertEqual(list(signature.parameters), ["capability_callable", "payload"])
+        # The worker gained an execution context and the capability's DECLARED
+        # failure classes. Neither is a connection and neither is a log: the
+        # context is a plain mapping of recorded values, and the class list is
+        # read-only data used to refuse a class the capability never declared.
+        # The boundary is that nothing here can write; the parameter list is
+        # asserted exactly so that a connection could not be added quietly.
+        self.assertEqual(list(signature.parameters),
+                         ["capability_callable", "payload", "context",
+                          "declared_failure_classes"])
         # AST, not a substring scan: the module docstring legitimately contains
         # the word "connection" while explaining that it never holds one.
         import ast

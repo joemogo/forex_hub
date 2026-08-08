@@ -134,7 +134,28 @@ BANNED_EXECUTION_IMPORTS = (
     "shelve",
 )
 
-BANNED_RUNTIME_IMPORTS = BANNED_NETWORK_IMPORTS + BANNED_EXECUTION_IMPORTS
+# MOGO-011 Step 2, decision B-2 (approved 2026-08-08). Backoff is deterministic
+# and jitterMs is 0. That is a governed decision, and a governed decision
+# enforced only by convention is the one most likely to break under time
+# pressure (Constitution section 16), so it is enforced one layer below the
+# code that would break it: a future edit reaching for randomness does not
+# merely violate a rule, it fails a boundary test.
+#
+# The reason jitter is unnecessary here, recorded so the ban is not mistaken
+# for dogma: jitter decorrelates CONCURRENT retriers, and Step 2 has one
+# process holding an exclusive lock with one task in flight -- there is no herd
+# to decorrelate. When a concurrent claimer does exist, the approved extension
+# is DETERMINISTIC jitter derived from the task identifier, which decorrelates
+# without randomness and remains replayable. It is not this.
+BANNED_NONDETERMINISM_IMPORTS = (
+    "random",
+    "secrets",
+)
+
+BANNED_RUNTIME_IMPORTS = (
+    BANNED_NETWORK_IMPORTS + BANNED_EXECUTION_IMPORTS
+    + BANNED_NONDETERMINISM_IMPORTS
+)
 
 # ---------------------------------------------------------------------------
 # Banned mutation call names (matched on the called attribute or name)

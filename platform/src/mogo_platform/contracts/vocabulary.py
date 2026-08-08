@@ -71,21 +71,39 @@ COMMAND_TYPES = (
 )
 
 # ---------------------------------------------------------------------------
-# Contract Catalog section J -- events (34) + MOGO-011 extension (5) = 39
+# Contract Catalog section J -- events (34) + MOGO-011 extensions (5 + 1) = 40
 # ---------------------------------------------------------------------------
 
-# MOGO-011 additive extension, approved 2026-08-07. Five names were added
-# because the MOGO-009 set could not express four approved task transitions or
-# two command-lifecycle facts, and Constitution section 6.6 with Architecture
-# section 18.1 require an event for every transition -- otherwise task state
-# cannot be derived from the log as ADR-012 D-05 requires. Additive only:
-# nothing was renamed, removed or repurposed (Architecture section 11).
+# MOGO-011 Step 1 additive extension, approved 2026-08-07. Five names were
+# added because the MOGO-009 set could not express four approved task
+# transitions or two command-lifecycle facts, and Constitution section 6.6 with
+# Architecture section 18.1 require an event for every transition -- otherwise
+# task state cannot be derived from the log as ADR-012 D-05 requires. Additive
+# only: nothing was renamed, removed or repurposed (Architecture section 11).
 #
 #   CommandAccepted            command validated, idempotency key claimed
 #   CommandRejected            command failed validation
 #   TaskRequested              task created in `requested`
 #   TaskPolicyCheckRequested   requested -> policy_check
 #   TaskStarted                claimed -> running
+#
+# MOGO-011 Step 2 additive extension, approved 2026-08-08 (decision B-1). ONE
+# name was added, for the same reason and under the same provision:
+#
+#   TaskRetryReleased          retry_scheduled -> queued
+#
+# Catalog section L declares that edge with authority `orchestrator` and
+# condition "backoff elapsed"; Catalog section J names no event for it. The
+# only other approved event landing in `queued` is TaskReclaimed, whose meaning
+# is "an abandoned claim was recovered" -- overloading it would make a retry
+# indistinguishable from an abandonment, which Constitution section 4.18
+# forbids by requiring retries to remain visible. Modelling eligibility with no
+# event at all was rejected outright: task state would then be a function of
+# the wall clock rather than of the log, and rebuild() would produce different
+# states at different times, breaking ADR-012 D-05.
+#
+# The name follows the section J past-participle convention. `TaskRequeued` was
+# rejected as ambiguous with TaskReclaimed, which also results in `queued`.
 
 EVENT_TYPES = (
     "CommandAccepted",
@@ -93,6 +111,7 @@ EVENT_TYPES = (
     "TaskRequested",
     "TaskPolicyCheckRequested",
     "TaskStarted",
+    "TaskRetryReleased",
     "SourceDiscoveryRequested",
     "SourceDiscovered",
     "SourceRegistered",

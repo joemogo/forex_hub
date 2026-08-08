@@ -30,8 +30,12 @@ MANIFESTS ARE IMMUTABLE ONCE REGISTERED
     was performed by different code.
 """
 
+from types import MappingProxyType
+
+from ..contracts import errors as contract_errors  # noqa: E402
 from ..contracts import ids  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
+from . import retry as retry_module  # noqa: E402
 
 DISPATCHABLE_LIFECYCLE_STATES = ("approved", "production")
 
@@ -40,6 +44,138 @@ _MANIFEST_REQUIRED_FIELDS = (
     "emittedEvents", "resourceLimits", "lifecycleStatus", "enabledState",
     "compatibility", "operationClass",
 )
+
+# ---------------------------------------------------------------------------
+# Risk A-5 -- the gate that cannot be opened by accident
+# ---------------------------------------------------------------------------
+# Crash boundary 8 -- interrupted between execution and recording success -- is
+# safe ONLY because every registered capability is pure. Re-execution after an
+# interrupted run produces a byte-identical result, so it is indistinguishable
+# from never having been interrupted. THAT IS A PROPERTY OF THE CAPABILITY, NOT
+# OF THE KERNEL. The moment a capability performs an external effect, the
+# argument fails, and an effectful capability therefore requires output
+# verification and an idempotency-keyed result store BEFORE it may register.
+#
+# MOGO-011 Step 2 resolves A-5 as Option A (ratified 2026-08-08, decision B-4):
+# pure capabilities only, effectful registration MECHANICALLY prohibited.
+#
+# The gate is a declared table of preconditions, not a comment and not a
+# convention. All four are False, and a test asserts they are all False -- so a
+# future step that builds the result store BREAKS A TEST NAMED AFTER THE GATE,
+# forcing a conscious governance decision at exactly the moment the gate opens.
+# That is the property worth having: the gate is closed by data, and opening it
+# is loud.
+#
+# What this does NOT claim: Step 2 adds no output verification, no result store
+# and no duplicate-effect prevention, because it registers nothing that needs
+# them. A-5 is closed by PROHIBITION, not by construction, and the underlying
+# hazard is unchanged.
+
+A5_EFFECTFUL_GATE = MappingProxyType({
+    "idempotencyKeyedResultStore": False,   # Constitution s11, Catalog section I
+    "outputVerificationByRehash":  False,   # Constitution s11, Architecture s19
+    "duplicateEffectPrevention":   False,   # Constitution s11 "never pick a winner"
+    "postExecutionRecoveryRule":   False,   # the boundary-8 rule when effectful
+})
+
+EFFECT_CLASSES = ("pure", "effectful")
+DEFAULT_EFFECT_CLASS = "pure"
+
+# Architecture section 32 item 5: the policy gate precedes ANY connector.
+# Declared as data and printed by `status` so an operator can see what stands
+# between this platform and its first acquisition WITHOUT READING CODE
+# (Constitution section 13, applied to the gate itself). The most important
+# thing an operator can know about this platform is what it is not yet allowed
+# to do, and why.
+CONNECTOR_GATES = (
+    MappingProxyType({
+        "gate": "policy_gate",
+        "authority": "Architecture section 32 item 5 -- before any connector",
+        "requires": "classification, authorization records, enforcement tests",
+        "satisfied": False,
+    }),
+    MappingProxyType({
+        "gate": "a5_result_store",
+        "authority": "Constitution section 11; risk A-5",
+        "requires": ("idempotency-keyed result store, output verification by "
+                     "re-hash, duplicate-effect prevention, post-execution "
+                     "recovery rule"),
+        "satisfied": False,
+    }),
+    MappingProxyType({
+        "gate": "first_connector_authorization",
+        "authority": "ADR-012 D-15 (approved in principle)",
+        "requires": "implementation authorization, not yet granted",
+        "satisfied": False,
+    }),
+    MappingProxyType({
+        "gate": "acquisition_authorization_record",
+        "authority": "Constitution section 5.1; Catalog section M",
+        "requires": "one authorization record per source; none exists",
+        "satisfied": False,
+    }),
+)
+
+
+def unmet_a5_preconditions():
+    """Every A-5 precondition this build does not satisfy. Currently all four."""
+    return tuple(name for name, satisfied in sorted(A5_EFFECTFUL_GATE.items())
+                 if not satisfied)
+
+
+def assert_effect_class_permitted(effect_class, capability_id):
+    """Refuse an effectful capability, naming every missing precondition."""
+    if effect_class == DEFAULT_EFFECT_CLASS:
+        return effect_class
+    missing = unmet_a5_preconditions()
+    runtime_errors.fail(
+        "capability %s declares effectClass=%r; risk A-5 requires %s before an "
+        "effectful capability may be registered, and none of them exists in "
+        "this build. Crash boundary 8 is safe only because every registered "
+        "capability is pure."
+        % (capability_id, effect_class, list(missing)),
+        runtime_errors.EffectClassRefusedError,
+    )
+
+
+def _validate_failure_classes(manifest, capability_id):
+    """Every declared failure class must be a Catalog section K name that the
+    runtime can actually resolve to a terminal outcome.
+
+    `source_mutated` and `human_review_required` are refused (decision B-3):
+    both are retryable=False, terminal=False, routesToReview=True, and there is
+    no `failed -> awaiting_review` edge in the committed contract -- so a task
+    failing with either could neither retry nor reach review, and would strand
+    in `failed` forever against Constitution section 6.5. A capability may not
+    declare a failure the runtime has no legal way to resolve.
+    """
+    declared = manifest.get("failureClasses", [])
+    if not isinstance(declared, (list, tuple)):
+        runtime_errors.fail(
+            "capability %s declares failureClasses as %s; an array is required"
+            % (capability_id, type(declared).__name__),
+            runtime_errors.ContractValidationError,
+        )
+    for name in declared:
+        if name not in contract_errors.ERROR_CLASS_NAMES:
+            runtime_errors.fail(
+                "capability %s declares failure class %r, which is not a "
+                "Contract Catalog section K class"
+                % (capability_id, name),
+                runtime_errors.ContractValidationError,
+            )
+        if retry_module.requires_review_gate(name):
+            runtime_errors.fail(
+                "capability %s declares failure class %r, which routes to human "
+                "review and is not terminal. No `failed -> awaiting_review` "
+                "transition exists in the committed contract and no review gate "
+                "exists behind one, so the runtime could not resolve such a "
+                "failure to a terminal outcome (Constitution section 6.5). "
+                "Refused at registration rather than stranded at runtime."
+                % (capability_id, name),
+                runtime_errors.ContractValidationError,
+            )
+    return tuple(declared)
 
 
 def manifest_hash(manifest):
@@ -68,7 +204,38 @@ def validate_manifest(manifest):
             % (manifest["lifecycleStatus"],),
             runtime_errors.ContractValidationError,
         )
+
+    # The four Step 2 fields are OPTIONAL with restrictive defaults, and that
+    # is load-bearing rather than lenient. Making any of them required would
+    # invalidate the committed echo manifest, change its hash, and break
+    # registration on every existing Step 1 state root -- and `register()`
+    # refuses a changed manifest under an unchanged capabilityId by design.
+    #
+    # Each default grants LESS, never more:
+    #   effectClass absent              -> pure   (effectful is the permissive
+    #                                              value and must be declared,
+    #                                              and is then refused)
+    #   failureClasses absent           -> ()     (no declared class, so any
+    #                                              raised class is a violation)
+    #   requiresExecutionContext absent -> False  (receives less information)
+    #   retryPolicy absent              -> build defaults: bounded, capped
+    capability_id = manifest["capabilityId"]
+    effect_class = manifest.get("effectClass", DEFAULT_EFFECT_CLASS)
+    if effect_class not in EFFECT_CLASSES:
+        runtime_errors.fail(
+            "capability %s declares effectClass=%r; the approved values are %s"
+            % (capability_id, effect_class, list(EFFECT_CLASSES)),
+            runtime_errors.ContractValidationError,
+        )
+    assert_effect_class_permitted(effect_class, capability_id)
+    _validate_failure_classes(manifest, capability_id)
+    resolve_retry_policy(manifest)
     return manifest
+
+
+def resolve_retry_policy(manifest):
+    """The retry policy in force for a capability, validated and complete."""
+    return retry_module.resolve_policy(manifest.get("retryPolicy"))
 
 
 def register(connection, manifest, now):
@@ -98,16 +265,33 @@ def register(connection, manifest, now):
         "INSERT INTO capabilities ("
         " capability_id, name, version, owner, accepted_commands, emitted_events,"
         " lifecycle_status, enabled_state, compatibility, operation_class,"
-        " resource_limits, manifest_hash, registered_at"
-        ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        " resource_limits, manifest_hash, registered_at,"
+        " effect_class, failure_classes, requires_execution_context, retry_policy"
+        ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (capability_id, manifest["name"], manifest["version"], manifest["owner"],
          _canonical(manifest["acceptedCommands"]),
          _canonical(manifest["emittedEvents"]),
          manifest["lifecycleStatus"], 1 if manifest["enabledState"] else 0,
          _canonical(manifest["compatibility"]), manifest["operationClass"],
-         _canonical(manifest["resourceLimits"]), digest, now),
+         _canonical(manifest["resourceLimits"]), digest, now,
+         manifest.get("effectClass", DEFAULT_EFFECT_CLASS),
+         _canonical(list(manifest.get("failureClasses", []))),
+         1 if manifest.get("requiresExecutionContext", False) else 0,
+         _canonical(resolve_retry_policy(manifest))),
     )
     return "registered"
+
+
+def declared_failure_classes(row):
+    """The Catalog section K classes a registered capability may report."""
+    import json
+    return tuple(json.loads(row["failure_classes"]))
+
+
+def declared_retry_policy(row):
+    """The validated retry policy a registered capability declared."""
+    import json
+    return json.loads(row["retry_policy"])
 
 
 def lookup(connection, reference):

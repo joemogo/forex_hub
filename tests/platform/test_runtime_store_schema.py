@@ -25,17 +25,22 @@ from mogo_platform.runtime import schema as schema_module  # noqa: E402
 from mogo_platform.runtime import store  # noqa: E402
 
 # Independently transcribed from the Step 1 plan section 8.2.
+# Transcribed independently of schema.py, as the Step 1 lists were. Schema v2
+# (MOGO-011 Step 2) adds task_attempts, runs and capability_violations.
 EXPECTED_TABLES = (
-    "capabilities", "command_submissions", "commands", "event_index",
-    "log_cursor", "recovery_actions", "schema_meta", "tasks",
-    "transition_anomalies",
+    "capabilities", "capability_violations", "command_submissions", "commands",
+    "event_index", "log_cursor", "recovery_actions", "runs", "schema_meta",
+    "task_attempts", "tasks", "transition_anomalies",
 )
 EXPECTED_APPEND_ONLY_TABLES = ("event_index", "command_submissions",
-                               "transition_anomalies")
+                               "transition_anomalies", "capability_violations")
 EXPECTED_INDEXES = (
-    "idx_commands_idem", "idx_event_task", "idx_event_type", "idx_event_workflow",
-    "idx_submissions_idem", "idx_tasks_state",
+    "idx_attempts_error", "idx_attempts_task", "idx_commands_idem",
+    "idx_event_task", "idx_event_type", "idx_event_workflow",
+    "idx_submissions_idem", "idx_tasks_lease", "idx_tasks_retry",
+    "idx_tasks_state",
 )
+EXPECTED_SCHEMA_VERSION = 2
 
 
 class RuntimeStateCase(unittest.TestCase):
@@ -83,12 +88,13 @@ class TestDatabaseCreation(RuntimeStateCase):
             "SELECT value FROM schema_meta WHERE key='schema_version'").fetchone()[0]
         connection.close()
         self.assertEqual(int(value), schema_module.SCHEMA_VERSION)
-        self.assertEqual(schema_module.SCHEMA_VERSION, 1)
+        self.assertEqual(schema_module.SCHEMA_VERSION, EXPECTED_SCHEMA_VERSION)
 
     def test_initialize_is_idempotent(self):
         connection = self.open()
         before, after = schema_module.initialize(connection, "2026-08-07T00:00:00.000Z")
-        self.assertEqual((before, after), (1, 1))
+        self.assertEqual((before, after),
+                         (EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_VERSION))
         count = connection.execute("SELECT COUNT(*) FROM log_cursor").fetchone()[0]
         connection.close()
         self.assertEqual(count, 1)
@@ -276,6 +282,137 @@ class TestPathConfinement(RuntimeStateCase):
                 del os.environ[paths_module.STATE_ROOT_ENV]
             else:
                 os.environ[paths_module.STATE_ROOT_ENV] = previous
+
+
+class TestSchemaV2Migration(RuntimeStateCase):
+    """v1 -> v2, exercised against a GENUINE v1 database.
+
+    Not a v2 database with columns removed: the v1 creation path is run as it
+    stands in the shipped migration tuple, so the upgrade under test is the one
+    an existing Step 1 state root will actually take.
+    """
+
+    def open_at_v1(self):
+        connection = store.open_database(self.paths)
+        with store.immediate_transaction(connection):
+            schema_module._create_v1(connection)
+            connection.execute(
+                "INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?,?)",
+                ("schema_version", "1"))
+        return connection
+
+    def test_migrations_are_ordered_contiguous_and_start_at_one(self):
+        versions = [version for version, _migrate in schema_module.MIGRATIONS]
+        self.assertEqual(versions, [1, 2])
+        self.assertEqual(versions, sorted(versions))
+        self.assertEqual(versions[-1], schema_module.SCHEMA_VERSION)
+        self.assertEqual(len(set(versions)), len(versions))
+
+    def test_a_step_1_state_root_upgrades_in_place(self):
+        connection = self.open_at_v1()
+        self.assertEqual(schema_module.current_version(connection), 1)
+        # A v1 task row, written before any Step 2 column existed.
+        with store.immediate_transaction(connection):
+            connection.execute(
+                "INSERT INTO commands (command_id, command_type, command_version,"
+                " workflow_id, correlation_id, idempotency_key, target_capability,"
+                " issued_at, issued_by, payload_hash, payload_json,"
+                " accepted_log_sequence) VALUES "
+                "('c1','NormalizeArtifact',1,'w','r','k','CAP|research|runtime-echo',"
+                "'2026-08-07T00:00:00.000Z','operator:x','h','{}',1)")
+            connection.execute(
+                "INSERT INTO tasks (task_id, workflow_id, correlation_id,"
+                " command_id, capability_id, idempotency_key, state, attempt,"
+                " created_log_sequence, last_log_sequence, terminal) VALUES "
+                "('t1','w','r','c1','CAP|research|runtime-echo','k','claimed',"
+                "1,1,1,0)")
+
+        before, after = schema_module.initialize(connection,
+                                                 "2026-08-08T00:00:00.000Z")
+        self.assertEqual((before, after), (1, 2))
+
+        row = connection.execute("SELECT * FROM tasks WHERE task_id='t1'").fetchone()
+        # Existing rows survive, and gain the restrictive defaults.
+        self.assertEqual(row["state"], "claimed")
+        self.assertEqual(row["attempt"], 1)
+        self.assertEqual(row["attempt_limit"], 3)
+        self.assertEqual(row["lease_generation"], 0)
+        self.assertIsNone(row["lease_holder"])
+        self.assertIsNone(row["retry_eligible_at"])
+        names = sorted(r[0] for r in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name NOT LIKE 'sqlite_%'"))
+        self.assertEqual(tuple(names), EXPECTED_TABLES)
+        connection.close()
+
+    def test_a_pre_step_2_claimed_task_has_no_lease_and_is_reclaimable(self):
+        """The upgrade path is a first-class reclaim case, not an afterthought."""
+        from mogo_platform.runtime import lease
+        connection = self.open_at_v1()
+        with store.immediate_transaction(connection):
+            connection.execute(
+                "INSERT INTO commands (command_id, command_type, command_version,"
+                " workflow_id, correlation_id, idempotency_key, target_capability,"
+                " issued_at, issued_by, payload_hash, payload_json,"
+                " accepted_log_sequence) VALUES "
+                "('c1','NormalizeArtifact',1,'w','r','k','CAP|research|runtime-echo',"
+                "'2026-08-07T00:00:00.000Z','operator:x','h','{}',1)")
+            connection.execute(
+                "INSERT INTO tasks (task_id, workflow_id, correlation_id,"
+                " command_id, capability_id, idempotency_key, state, attempt,"
+                " created_log_sequence, last_log_sequence, terminal) VALUES "
+                "('t1','w','r','c1','CAP|research|runtime-echo','k','running',"
+                "1,1,1,0)")
+        schema_module.initialize(connection, "2026-08-08T00:00:00.000Z")
+        row = connection.execute("SELECT * FROM tasks WHERE task_id='t1'").fetchone()
+        self.assertEqual(
+            lease.reclaim_reason(row["lease_holder"], None, 1, "runner:x"),
+            "no_lease")
+        connection.close()
+
+    def test_a_future_schema_is_refused_without_modifying_the_database(self):
+        """The refusal must not touch the file at all.
+
+        A refusal that had already written something would leave a database
+        neither build could be sure of, which is the situation the version
+        check exists to prevent.
+        """
+        import hashlib
+        connection = self.open()
+        connection.execute(
+            "UPDATE schema_meta SET value='3' WHERE key='schema_version'")
+        connection.close()
+
+        def digest():
+            with open(self.paths.database, "rb") as handle:
+                return hashlib.sha256(handle.read()).hexdigest()
+
+        before = digest()
+        connection = store.open_database(self.paths)
+        try:
+            with self.assertRaises(runtime_errors.SchemaVersionError):
+                schema_module.initialize(connection, "2026-08-08T00:00:00.000Z")
+        finally:
+            connection.close()
+        self.assertEqual(digest(), before)
+
+    def test_the_v1_trigger_list_does_not_reach_forward(self):
+        """A migration must create triggers only for tables that exist at its
+        own version. Reusing the CURRENT append-only list inside _create_v1
+        would break v1 creation the moment v2 added an append-only table."""
+        self.assertNotIn("capability_violations",
+                         schema_module._V1_APPEND_ONLY_TABLES)
+        self.assertIn("capability_violations", schema_module.APPEND_ONLY_TABLES)
+
+    def test_the_v2_migration_is_additive_only(self):
+        """No DROP, no RENAME, no column retype anywhere in the migration."""
+        for statement in schema_module._MIGRATE_V2_STATEMENTS:
+            upper = statement.upper()
+            with self.subTest(statement=statement.split("\n")[0]):
+                self.assertNotIn("DROP", upper)
+                self.assertNotIn("RENAME", upper)
+                if upper.startswith("ALTER"):
+                    self.assertIn("ADD COLUMN", upper)
 
 
 if __name__ == "__main__":
