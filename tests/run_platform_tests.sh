@@ -26,6 +26,13 @@ SUITES=(
   tests.platform.test_platform_envelopes
   tests.platform.test_platform_task_states
   tests.platform.test_platform_boundaries
+  tests.platform.test_runtime_store_schema
+  tests.platform.test_runtime_event_log
+  tests.platform.test_runtime_projection
+  tests.platform.test_runtime_orchestrator
+  tests.platform.test_runtime_capability
+  tests.platform.test_runtime_recovery
+  tests.platform.test_runtime_end_to_end
 )
 
 echo "================================================================"

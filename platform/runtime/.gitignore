@@ -1,0 +1,13 @@
+# MOGO Automation Platform runtime state (MOGO-011 Step 1).
+#
+# The operational event log, the derived SQLite index, the task projection, the
+# process lock and any quarantined fragment are written here. Runtime state is
+# an observation of execution, not source code, and must never be committed as
+# a side effect of a routine `git add` -- the same reasoning that governs
+# `evidence/` (ADR-012 D-06).
+#
+# This file ignores everything in this directory except itself, which also keeps
+# the directory present in a fresh clone so the runtime's default state root
+# exists before first use.
+*
+!.gitignore

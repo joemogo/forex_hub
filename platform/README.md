@@ -1,6 +1,6 @@
 # MOGO Automation Platform
 
-**Milestone:** MOGO-010 Step 1 (corrected) · **Status:** contracts only — nothing executable
+**Milestone:** MOGO-011 Step 1 · **Status:** contracts + runtime kernel — one executable demonstration
 **Governing document:** [`AUTOMATION_PLATFORM_CONSTITUTION.md`](../docs/governance/AUTOMATION_PLATFORM_CONSTITUTION.md) v1.0 — senior to everything here
 **Architecture:** [MOGO-009 specification](../docs/architecture/MOGO-009-AUTOMATION-PLATFORM-ARCHITECTURE.md) · [Contract Catalog](../docs/architecture/MOGO-009-CONTRACT-CATALOG.md) · [ADR-012](../docs/adr/ADR-012-automation-platform-architecture.md)
 
@@ -61,22 +61,54 @@ The single `sys.path` insert is a bridge until a package manifest exists (ADR-01
 ```
 platform/
   README.md
+  mogo_runtime.py               operator launcher (the sys.path bridge)
+  runtime/                      RUNTIME STATE — git-ignored, disposable
   src/
     mogo_platform/
-      __init__.py                 docstring only — no imports, no side effects
-      contracts/
-        __init__.py               docstring only
-        ids.py                    identifier model, canonicalization,
-                                  idempotency keys, JSON-shape validation
-        errors.py                 error taxonomy + inert Catalog §K table
-        vocabulary.py             closed vocabularies (Catalog §J, §M, §O)
-        command.py                command envelope contract (Catalog §A)
-        event.py                  operational event envelope (Catalog §B)
-        task_states.py            task states and transitions (Catalog §L)
-        boundaries.py             protected-boundary declarations (Spec §7)
+      __init__.py               docstring only — no imports, no side effects
+      contracts/                MOGO-010 — pure, no I/O, ever
+        ids.py · errors.py · vocabulary.py · command.py
+        event.py · task_states.py · boundaries.py
+      runtime/                  MOGO-011 — the execution kernel
+        paths.py                state locations + the write-confinement guard
+        errors.py               runtime error taxonomy
+        store.py                SQLite connection, transactions, process lock
+        schema.py               DDL, append-only triggers, migrations
+        event_log.py            THE AUTHORITATIVE append-only JSONL log
+        projection.py           log → derived index, idempotently
+        registry.py             capability registry and dispatch eligibility
+        worker.py               execution; reports, never transitions
+        orchestrator.py         receipt, transitions, dispatch — the only writer
+        audit.py                operator reports and integrity verification
+        cli.py                  argparse subcommands
+        capabilities/echo.py    research.runtime.echo.v1 — pure, deterministic
 ```
 
-**This is contracts only.** There is no runtime, orchestrator, worker, connector, event store, queue, registry, adapter, or acquisition path. Step 1 performs **no I/O of any kind** — no file is opened even for reading, no socket is created, no subprocess is spawned. Those code paths do not exist rather than being disabled.
+## Two layers, two different rules
+
+| | contracts/ | runtime/ |
+|---|---|---|
+| I/O | **none, ever** — no `open()` even for reading | permitted, but **confined to the state root** |
+| Purity | pure functions only | orchestrator writes; worker is pure; capability is pure |
+| Enforcement | absolute no-I/O test | every write site calls `paths.assert_inside_state_root()` |
+| Writes to the six §7 targets | prohibited | prohibited |
+| Network / subprocess | prohibited | prohibited |
+
+MOGO-010 applied the absolute no-I/O rule to all of `platform/**`. That was correct while the platform was contracts-only, but stricter than the architecture requires — Architecture §7 forbids writing to six named targets, not writing in general. MOGO-011 narrowed the absolute rule to the layer it belongs to and gave the runtime a **confinement** rule it did not previously have, so coverage increased.
+
+## The runtime, in one paragraph
+
+The **JSONL event log is the source of truth**; SQLite is a derived index and read model that can always be rebuilt from it (`reset --rebuild-index` proves this, and a test asserts the rebuild reproduces the database). Every state change is appended to the log and fsynced **before** it is applied to the index — so a crash between the two leaves the index merely behind, and replay converges, whereas the reverse order could commit a state change with no event. One process at a time, enforced by an exclusive `fcntl.flock`, which is why **no time-based lease is needed**. Task state is written only by the orchestrator; the worker reports.
+
+```bash
+python3 platform/mogo_runtime.py demo        # the full end-to-end demonstration
+python3 platform/mogo_runtime.py status      # health snapshot
+python3 platform/mogo_runtime.py audit       # complete ordered activity record
+python3 platform/mogo_runtime.py verify      # integrity checks; non-zero on failure
+python3 platform/mogo_runtime.py reset --rebuild-index   # proves the log is the truth
+```
+
+**Runtime state lives in `platform/runtime/` and is git-ignored** by a nested self-ignoring `.gitignore`, of which only the `.gitignore` itself is committed (ADR-012 D-06). Deleting the whole directory loses nothing but demonstration data.
 
 ## Contract guarantees
 
@@ -96,16 +128,18 @@ Every envelope returned by `validate_command()` or `validate_event()` is:
 
 Each is declared in the relevant module docstring, and none is simulated:
 
-| Deferred | Why it cannot be done in Step 1 |
+| Deferred | Blocked on |
 |---|---|
-| Opaque-identifier uniqueness check | requires the operational event log |
-| Command rejection **events** | requires an event store |
-| Event persistence, ordering, `sequence` monotonicity, chain replay | requires the event log |
-| Capability **registration** verification | requires the Capability Registry (ADR-012 D-16) |
-| Licensing **evaluation** | requires the policy gate |
-| Task-state **application** | requires the orchestrator |
-| Late-transition **logging** | requires the event log |
-| Review routing, retry, backoff, dead-letter execution | later, separately approved steps |
+| Retry, backoff, dead-letter execution | a later, separately approved step |
+| Time-based leases | a daemon or a second worker; unnecessary while single-writer |
+| **Policy gate** (Architecture §32 item 5) | **required before any connector** |
+| Connectors of every kind, acquisition, transcripts | the policy gate |
+| Evidence candidates, hypothesis promotion, scientific writes | governance, and never automatic |
+| Review workflow | a later step |
+| Package manifest (ADR-012 D-01) | a genuine runtime dependency |
+| `tests/run_all.sh` integration (ADR-012 D-12) | separate governance authorization |
+
+An **acquisition-class** operation is refused rather than guessed: `classify_policy_check` returns `requires_policy_gate` and the orchestrator declines to dispatch, because no policy gate exists. Fail-closed, by construction.
 
 ## Prohibited boundaries
 

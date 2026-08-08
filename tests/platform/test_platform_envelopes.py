@@ -47,10 +47,17 @@ EXPECTED_COMMAND_TYPES = (
 )
 
 # ---------------------------------------------------------------------------
-# Independently transcribed -- Contract Catalog section J, events (34)
+# Independently transcribed -- Catalog section J (34) + MOGO-011 extension (5)
 # ---------------------------------------------------------------------------
 
+# MOGO-011 additive extension (5), approved 2026-08-07, transcribed
+# independently of the implementation exactly as the 34 originals were.
 EXPECTED_EVENT_TYPES = (
+    "CommandAccepted",
+    "CommandRejected",
+    "TaskRequested",
+    "TaskPolicyCheckRequested",
+    "TaskStarted",
     "SourceDiscoveryRequested", "SourceDiscovered", "SourceRegistered",
     "PolicyEvaluated", "AcquisitionAuthorized", "AcquisitionDenied",
     "ArtifactAcquisitionRequested", "ArtifactAcquired",
@@ -198,7 +205,7 @@ class TestVocabularyMatchesTheCatalog(unittest.TestCase):
 
     def test_event_types_exactly(self):
         self.assertEqual(tuple(vocabulary.EVENT_TYPES), EXPECTED_EVENT_TYPES)
-        self.assertEqual(len(vocabulary.EVENT_TYPES), 34)
+        self.assertEqual(len(vocabulary.EVENT_TYPES), 39)
 
     def test_no_duplicate_names(self):
         self.assertEqual(len(set(vocabulary.COMMAND_TYPES)),

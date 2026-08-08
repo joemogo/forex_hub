@@ -71,10 +71,28 @@ COMMAND_TYPES = (
 )
 
 # ---------------------------------------------------------------------------
-# Contract Catalog section J -- events (34)
+# Contract Catalog section J -- events (34) + MOGO-011 extension (5) = 39
 # ---------------------------------------------------------------------------
 
+# MOGO-011 additive extension, approved 2026-08-07. Five names were added
+# because the MOGO-009 set could not express four approved task transitions or
+# two command-lifecycle facts, and Constitution section 6.6 with Architecture
+# section 18.1 require an event for every transition -- otherwise task state
+# cannot be derived from the log as ADR-012 D-05 requires. Additive only:
+# nothing was renamed, removed or repurposed (Architecture section 11).
+#
+#   CommandAccepted            command validated, idempotency key claimed
+#   CommandRejected            command failed validation
+#   TaskRequested              task created in `requested`
+#   TaskPolicyCheckRequested   requested -> policy_check
+#   TaskStarted                claimed -> running
+
 EVENT_TYPES = (
+    "CommandAccepted",
+    "CommandRejected",
+    "TaskRequested",
+    "TaskPolicyCheckRequested",
+    "TaskStarted",
     "SourceDiscoveryRequested",
     "SourceDiscovered",
     "SourceRegistered",

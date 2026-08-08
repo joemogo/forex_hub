@@ -119,6 +119,22 @@ def platform_python_files():
     return sorted(found)
 
 
+CONTRACTS_DIR = os.path.join(PACKAGE_DIR, "contracts")
+RUNTIME_DIR = os.path.join(PACKAGE_DIR, "runtime")
+
+
+def contracts_python_files():
+    """Only the contracts layer, where the no-I/O rule remains ABSOLUTE."""
+    return [(rel, abs_) for rel, abs_ in platform_python_files()
+            if os.path.abspath(abs_).startswith(CONTRACTS_DIR + os.sep)]
+
+
+def runtime_python_files():
+    """Only the runtime layer, where writes are permitted but CONFINED."""
+    return [(rel, abs_) for rel, abs_ in platform_python_files()
+            if os.path.abspath(abs_).startswith(RUNTIME_DIR + os.sep)]
+
+
 def read_source(path):
     with open(path, "r", encoding="utf-8") as handle:
         return handle.read()
@@ -271,9 +287,10 @@ class TestNoProhibitedLiteralOutsideTheDeclarationModule(unittest.TestCase):
 class TestNoWritePathInPlatform(unittest.TestCase):
     """AST checks -- applied to EVERY platform module, declaration included."""
 
-    def test_no_write_capable_open_call(self):
+    def test_contracts_layer_has_no_write_capable_open_call(self):
         offenders = []
-        for relative, _source, tree in parse_platform_modules():
+        for relative, absolute in contracts_python_files():
+            tree = ast.parse(read_source(absolute))
             for _kind, name, lineno, node in called_names(tree):
                 if name != "open":
                     continue
@@ -292,24 +309,78 @@ class TestNoWritePathInPlatform(unittest.TestCase):
                     offenders.append((relative, lineno, mode))
         self.assertEqual(offenders, [])
 
-    def test_no_open_call_at_all_in_step_1(self):
-        # Step 1 performs no I/O whatsoever. Even a read is out of scope, so
-        # this is stricter than the write check above and states the fact.
+    def test_contracts_layer_has_no_open_call_at_all(self):
+        """The contracts layer performs no I/O, and that rule stays ABSOLUTE.
+
+        MOGO-010 applied this to all of platform/**, which was correct while the
+        platform was contracts-only but stricter than the architecture requires:
+        Architecture section 7 forbids writing to six named targets, not writing
+        in general. MOGO-011 narrowed the absolute rule to the layer it belongs
+        to and gave the runtime layer a CONFINEMENT rule instead (below), so
+        total coverage increased rather than decreased.
+        """
         offenders = [
             (relative, lineno)
-            for relative, _source, tree in parse_platform_modules()
+            for relative, _source, tree in [(r, s, t) for r, s, t
+                                            in parse_platform_modules()
+                                            if os.path.abspath(
+                                                os.path.join(REPO_ROOT, r)).startswith(
+                                                    CONTRACTS_DIR + os.sep)]
             for _kind, name, lineno, _node in called_names(tree)
             if name == "open"
         ]
         self.assertEqual(offenders, [])
 
-    def test_no_filesystem_mutation_call(self):
+    def test_contracts_layer_has_no_filesystem_mutation_call(self):
         offenders = [
-            (relative, name, lineno)
-            for relative, _source, tree in parse_platform_modules()
-            for _kind, name, lineno, _node in called_names(tree)
+            (relative, name)
+            for relative, absolute in contracts_python_files()
+            for _kind, name, _lineno, _node in called_names(
+                ast.parse(read_source(absolute)))
             if name in boundaries.BANNED_MUTATION_CALLS
         ]
+        self.assertEqual(offenders, [])
+
+    def test_every_runtime_write_site_is_guarded_by_runtime_paths(self):
+        """Runtime writes are permitted, but only inside the state root.
+
+        Statically: a module that performs any write-capable call must also
+        reference the path guard. Dynamically: TestRuntimeWriteConfinement below
+        proves the guard actually refuses an outside path.
+        """
+        offenders = []
+        for relative, absolute in runtime_python_files():
+            source = read_source(absolute)
+            tree = ast.parse(source)
+            writes = [name for _kind, name, _lineno, _node in called_names(tree)
+                      if name == "open" or name in boundaries.BANNED_MUTATION_CALLS]
+            if not writes:
+                continue
+            if "assert_inside_state_root" not in source:
+                offenders.append((relative, sorted(set(writes))))
+        self.assertEqual(offenders, [])
+
+    def test_runtime_declares_no_absolute_path_literal(self):
+        """No runtime module may hard-code a path outside the state root."""
+        offenders = []
+        for relative, absolute in runtime_python_files():
+            for node in ast.walk(ast.parse(read_source(absolute))):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    value = node.value
+                    if value.startswith("/") and len(value) > 1:
+                        offenders.append((relative, node.lineno, value))
+        self.assertEqual(offenders, [])
+
+    def test_no_prohibited_target_is_ever_a_write_argument(self):
+        """The section 7 rule, unchanged and still global across platform/**."""
+        offenders = []
+        for relative, source, tree in parse_platform_modules():
+            if os.path.basename(relative) == DECLARATION_MODULE:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    if boundaries.prohibited_reference_reason(node.value):
+                        offenders.append((relative, node.lineno, node.value))
         self.assertEqual(offenders, [])
 
     def test_no_dangerous_builtin_call(self):
@@ -374,10 +445,15 @@ class TestNoNetworkOrExecutionCapability(unittest.TestCase):
                     self.assertNotIn(banned, imported)
 
     def test_the_only_imports_are_stdlib_or_sibling_contract_modules(self):
+        # Contracts stay minimal; the runtime additionally needs persistence,
+        # locking and a CLI. Every name below is standard library -- verified
+        # against sys.stdlib_module_names, not a hand-maintained belief.
         allowed_stdlib = {
             "hashlib", "json", "re", "uuid", "datetime", "types", "math", "os",
-            "sys", "unittest", "ast",
+            "sys", "unittest", "ast", "sqlite3", "fcntl", "argparse", "shutil",
         }
+        for name in allowed_stdlib:
+            self.assertIn(name, sys.stdlib_module_names, name)
         offenders = []
         for relative, _source, tree in parse_platform_modules():
             for imported in imported_module_names(tree):
@@ -395,8 +471,9 @@ class TestNoNetworkOrExecutionCapability(unittest.TestCase):
         # allowance above would be dead and the old style could creep back.
         relative_users = {
             os.path.basename(relative)
-            for relative, _source, tree in parse_platform_modules()
-            if any(name.startswith(".") for name in imported_module_names(tree))
+            for relative, absolute in contracts_python_files()
+            if any(name.startswith(".")
+                   for name in imported_module_names(ast.parse(read_source(absolute))))
         }
         # Exactly the four modules that depend on a sibling. errors.py,
         # vocabulary.py and boundaries.py are leaves with no platform imports,
@@ -443,13 +520,21 @@ class TestNoPipelineOrScientificCoupling(unittest.TestCase):
         # There is no write path at all, so a scientific write cannot be
         # expressed. Both previous checks combine to prove it; this asserts the
         # conclusion directly so the intent is visible in the failure output.
-        write_calls = [
+        # Contracts: no write call of any kind exists.
+        contracts_writes = [
             (relative, name)
-            for relative, _source, tree in parse_platform_modules()
-            for _kind, name, _lineno, _node in called_names(tree)
+            for relative, absolute in contracts_python_files()
+            for _kind, name, _lineno, _node in called_names(
+                ast.parse(read_source(absolute)))
             if name in ("open",) + boundaries.BANNED_MUTATION_CALLS
         ]
-        self.assertEqual(write_calls, [])
+        self.assertEqual(contracts_writes, [])
+        # Runtime: writes exist, but no prohibited target is expressible -- the
+        # path guard confines them and no section 7 literal appears at all.
+        for relative, absolute in runtime_python_files():
+            source = read_source(absolute)
+            for literal in FORBIDDEN_LITERALS:
+                self.assertNotIn(literal, source, relative)
 
 
 class TestEnvelopesRejectProhibitedTargets(unittest.TestCase):
@@ -623,6 +708,98 @@ class TestNoManifestOrDependencyIntroduced(unittest.TestCase):
                 candidate = os.path.join(directory, name)
                 with self.subTest(candidate=candidate):
                     self.assertFalse(os.path.exists(candidate))
+
+
+class TestRuntimeWriteConfinement(unittest.TestCase):
+    """The confinement rule, exercised rather than merely inspected."""
+
+    def setUp(self):
+        import tempfile
+        from mogo_platform.runtime import paths as paths_module
+        self._tmp = tempfile.TemporaryDirectory()
+        self.paths = paths_module.ensure_state_root(
+            paths_module.RuntimePaths(os.path.join(self._tmp.name, "state")))
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_a_write_outside_the_state_root_is_refused(self):
+        from mogo_platform.runtime import errors as runtime_errors
+        for candidate in (os.path.join(REPO_ROOT, "index.html"),
+                          os.path.join(REPO_ROOT, "evidence", "x.json"),
+                          "/tmp/escape.txt", REPO_ROOT):
+            with self.subTest(candidate=candidate):
+                with self.assertRaises(runtime_errors.PathEscapeError):
+                    self.paths.assert_inside_state_root(candidate)
+
+    def test_every_prohibited_section_7_target_is_outside_the_state_root(self):
+        for entry in boundaries.PROHIBITED_WRITE_PATHS:
+            probe = os.path.join(REPO_ROOT, entry["declared"].replace("*", "x"))
+            with self.subTest(target=entry["declared"]):
+                self.assertFalse(self.paths.is_inside_state_root(probe))
+
+    def test_runtime_state_root_is_git_ignored(self):
+        """Runtime state must never be committable, by construction."""
+        marker = os.path.join(REPO_ROOT, "platform", "runtime", ".gitignore")
+        self.assertTrue(os.path.isfile(marker))
+        with open(marker, "r", encoding="utf-8") as handle:
+            body = handle.read()
+        self.assertIn("*", body)
+        self.assertIn("!.gitignore", body)
+
+    def test_runtime_package_markers_are_docstring_only(self):
+        for marker in (os.path.join(RUNTIME_DIR, "__init__.py"),
+                       os.path.join(RUNTIME_DIR, "capabilities", "__init__.py")):
+            relative = os.path.relpath(marker, REPO_ROOT)
+            with self.subTest(marker=relative):
+                tree = ast.parse(read_source(marker), filename=marker)
+                self.assertEqual(len(tree.body), 1)
+                self.assertIsInstance(tree.body[0], ast.Expr)
+                self.assertIsInstance(tree.body[0].value, ast.Constant)
+                self.assertEqual(imported_module_names(tree), set())
+
+
+class TestNoAutomationEscapeHatch(unittest.TestCase):
+    """No trading, replay, acquisition or model-call path exists anywhere."""
+
+    FORBIDDEN_MARKERS = (
+        "oanda", "paper_trade", "papertrade", "live_trade", "livetrade",
+        "place_order", "replay_engine", "yt_dlp", "youtube", "openai",
+        "anthropic", "webdriver", "selenium", "beautifulsoup",
+    )
+
+    def test_no_trading_acquisition_or_model_marker_appears(self):
+        """boundaries.py is exempt: it must NAME what it forbids.
+
+        The same declaration-module principle the literal scan uses. `yt_dlp`
+        appears in BANNED_NETWORK_IMPORTS precisely so that no other module may
+        import it; flagging the ban as a violation would be self-defeating.
+        """
+        offenders = []
+        for relative, absolute in platform_python_files():
+            if os.path.basename(relative) == DECLARATION_MODULE:
+                continue
+            lowered = read_source(absolute).lower()
+            for marker in self.FORBIDDEN_MARKERS:
+                if marker in lowered:
+                    offenders.append((relative, marker))
+        self.assertEqual(offenders, [])
+
+    def test_no_module_can_reach_the_network_or_a_subprocess(self):
+        for relative, absolute in platform_python_files():
+            imported = imported_module_names(ast.parse(read_source(absolute)))
+            for banned in REQUIRED_BANNED_IMPORTS:
+                with self.subTest(module=relative, banned=banned):
+                    self.assertNotIn(banned, imported)
+
+    def test_the_runtime_registers_exactly_one_capability(self):
+        from mogo_platform.runtime import orchestrator as orchestrator_module
+        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 1)
+        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 1)
+        manifest = orchestrator_module.BUILTIN_CAPABILITIES[0]
+        self.assertEqual(manifest["requiredConnectors"], [])
+        self.assertEqual(manifest["requiredSecretReferences"], [])
+        self.assertEqual(manifest["operationClass"], "non_acquisition")
 
 
 if __name__ == "__main__":
