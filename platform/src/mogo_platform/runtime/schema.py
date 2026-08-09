@@ -30,11 +30,11 @@ MIGRATIONS
 from . import errors as runtime_errors  # noqa: E402
 from . import store  # noqa: E402
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Tables whose contents may never be updated or deleted, enforced by trigger.
 APPEND_ONLY_TABLES = ("event_index", "command_submissions", "transition_anomalies",
-                      "capability_violations")
+                      "capability_violations", "acquisition_authorizations")
 
 # DDL as explicit statements, not one script.
 # sqlite3.executescript() issues an implicit COMMIT before running, which would
@@ -315,7 +315,105 @@ def _migrate_v2(connection):
         connection.execute(statement)
 
 
-MIGRATIONS = ((1, _create_v1), (2, _migrate_v2))
+# ---------------------------------------------------------------------------
+# v3 -- MOGO-011 Step 3: the policy gate
+# ---------------------------------------------------------------------------
+# ADDITIVE ONLY, on the same terms as v2. Every task column below is COPIED
+# from an event payload, never computed at projection time, so the whole index
+# stays rebuildable from the log alone.
+#
+# acquisition_authorizations is the one exception, and it is named rather than
+# hidden: it holds governance INPUT, not platform history, so it is a LOCAL
+# OBSERVATION alongside `capabilities` and `runs`. Replay determinism is
+# preserved by recording the DECISION -- every gate decision event carries the
+# authorization's identity, status, policy version, authority and content hash
+# as they stood at decision time, so a later edit cannot rewrite history.
+
+_MIGRATE_V3_STATEMENTS = (
+    # The gate's verdict, as recorded. `policy_decision` is the value the
+    # dispatch guard reads before an acquisition-class task may be claimed, so
+    # a hand-corrupted index row still cannot execute unauthorized acquisition.
+    "ALTER TABLE tasks ADD COLUMN policy_decision   TEXT",
+    "ALTER TABLE tasks ADD COLUMN policy_reason     TEXT",
+    "ALTER TABLE tasks ADD COLUMN policy_status     TEXT",
+    "ALTER TABLE tasks ADD COLUMN policy_version    TEXT",
+    "ALTER TABLE tasks ADD COLUMN authorization_id  TEXT",
+    "ALTER TABLE tasks ADD COLUMN operation_class   TEXT",
+    "ALTER TABLE tasks ADD COLUMN subject_source_id TEXT",
+    "ALTER TABLE tasks ADD COLUMN review_decision   TEXT",
+    "ALTER TABLE tasks ADD COLUMN review_reason     TEXT",
+    "ALTER TABLE tasks ADD COLUMN reviewer_identity TEXT",
+
+    # Catalog section A: inputRefs carries identifiers only, "never inline
+    # payloads". The policy gate resolves the subject source from here, so it
+    # must be projected rather than re-read from the log on every decision.
+    "ALTER TABLE commands ADD COLUMN input_refs_json TEXT NOT NULL DEFAULT '[]'",
+
+    # Restrictive default: a capability that declares no acquisition operations
+    # can acquire nothing, which is the safe direction for every manifest that
+    # predates this column.
+    "ALTER TABLE capabilities ADD COLUMN acquisition_operations "
+    "                                              TEXT NOT NULL DEFAULT '[]'",
+
+    # APPEND-ONLY. Governance input. Never updated, never deleted: a correction
+    # is a NEW record naming the one it replaces, which is Constitution section
+    # 6.7's discipline. Supersession is DERIVED by query, never stamped, which
+    # is what lets this table stay append-only while still expressing
+    # replacement.
+    """CREATE TABLE acquisition_authorizations (
+        authorization_id           TEXT PRIMARY KEY,
+        source_id                  TEXT NOT NULL,
+        policy_status              TEXT NOT NULL,
+        policy_version             TEXT NOT NULL,
+        decision_authority         TEXT NOT NULL,
+        decided_at                 TEXT NOT NULL,
+        permitted_operations       TEXT NOT NULL,
+        expires_at                 TEXT,
+        supersedes_authorization_id TEXT,
+        record_json                TEXT NOT NULL,
+        record_hash                TEXT NOT NULL,
+        recorded_at                TEXT NOT NULL
+    )""",
+
+    # DERIVED and rebuildable: one row per gate decision, reconstructed from
+    # PolicyEvaluated events. This is what lets an operator answer "what was
+    # blocked, when, and under which policy version" without reading the log by
+    # hand -- Constitution section 13.
+    """CREATE TABLE policy_decisions (
+        decision_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id          TEXT    NOT NULL REFERENCES tasks (task_id),
+        log_sequence     INTEGER NOT NULL,
+        decided_at       TEXT    NOT NULL,
+        decision         TEXT    NOT NULL
+            CHECK (decision IN ('permit', 'not_applicable', 'deny')),
+        reason           TEXT    NOT NULL,
+        operation_class  TEXT,
+        requested_operations TEXT,
+        subject_source_id TEXT,
+        authorization_id TEXT,
+        policy_status    TEXT,
+        policy_version   TEXT,
+        record_hash      TEXT,
+        UNIQUE (task_id, log_sequence)
+    )""",
+
+    "CREATE INDEX idx_authorizations_source ON acquisition_authorizations (source_id)",
+    "CREATE INDEX idx_authorizations_super  ON acquisition_authorizations "
+    "                                          (supersedes_authorization_id)",
+    "CREATE INDEX idx_policy_decisions_task ON policy_decisions (task_id, log_sequence)",
+    "CREATE INDEX idx_policy_decisions_kind ON policy_decisions (decision, reason)",
+    "CREATE INDEX idx_tasks_policy          ON tasks (policy_decision, state)",
+)
+
+
+def _migrate_v3(connection):
+    for statement in _MIGRATE_V3_STATEMENTS:
+        connection.execute(statement)
+    for statement in append_only_trigger_statements("acquisition_authorizations"):
+        connection.execute(statement)
+
+
+MIGRATIONS = ((1, _create_v1), (2, _migrate_v2), (3, _migrate_v3))
 
 
 def current_version(connection):

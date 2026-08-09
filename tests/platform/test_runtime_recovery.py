@@ -572,3 +572,453 @@ class TestStep2CrashBoundaries(Step2RecoveryCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+# ---------------------------------------------------------------------------
+# MOGO-011 Step 3 -- crash boundaries 23 through 26, across the policy gate
+# ---------------------------------------------------------------------------
+
+# Independently transcribed from the Step 3 implementation report.
+EXPECTED_STEP_3_CRASH_BOUNDARIES = (
+    "after_policy_decision_append",   # 23
+    "after_policy_denial",            # 24
+    "after_review_required_append",   # 25
+    "after_review_decision_append",   # 26
+)
+
+# What a crash must never be able to manufacture. Every test in this section
+# asserts the whole list, because the interesting failure is not "the task is in
+# the wrong state" -- it is "the log now claims something that never happened".
+FABRICATION_EVENTS = ("TaskClaimed", "TaskStarted", "TaskSucceeded",
+                      "TaskFailed", "AcquisitionAuthorized")
+
+
+class Step3RecoveryCase(RecoveryCase):
+    """Real os._exit(70) kills across the authorization layer.
+
+    The gate is the control every future connector must pass through, so its
+    crash behaviour is proved rather than argued. Each test kills the runtime at
+    one boundary and then asserts, from the durable log and the rebuilt index,
+    that the interruption could not fabricate an authorization, fabricate a
+    claim or an execution, bypass the gate, produce an illegal transition,
+    contradict the append-only history, or let unauthorized work run.
+    """
+
+    SOURCE_LABEL = "crash"
+
+    def init_and_submit_policy(self, label=None):
+        """An acquisition-class task, and the subject source it concerns."""
+        self.child("init")
+        completed = self.child("submit", "--demo-policy", label or self.SOURCE_LABEL)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        source_id = None
+        for line in completed.stdout.splitlines():
+            if line.startswith("sourceId="):
+                source_id = line.split("=", 1)[1].strip()
+        self.assertIsNotNone(source_id)
+        return source_id
+
+    def authorize(self, source_id, status="PERMITTED_PUBLIC_METADATA",
+                  operations=("metadata",)):
+        """Record a governance-supplied authorization through the CLI."""
+        import json as _json
+        import uuid as _uuid
+        record = {
+            "authorizationId": str(_uuid.uuid4()),
+            "sourceId": source_id,
+            "policyStatus": status,
+            "policyVersion": "1.0",
+            "decisionAuthority": "governance:mogo-legal",
+            "decidedAt": "2026-08-08T11:00:00.000Z",
+            "permittedOperations": list(operations),
+        }
+        path = os.path.join(self._tmp.name, "authorization.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            _json.dump(record, handle)
+        completed = self.child("authorize", "--file", path)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        return record
+
+    def task_row(self):
+        runtime = self.runtime()
+        try:
+            row = runtime.connection.execute(
+                "SELECT * FROM tasks ORDER BY created_log_sequence LIMIT 1"
+            ).fetchone()
+            return dict(row) if row is not None else None
+        finally:
+            runtime.close()
+
+    def log_events(self):
+        """Event types straight from the AUTHORITATIVE log, not the index."""
+        runtime = self.runtime()
+        try:
+            return [r.event["eventType"]
+                    for r in runtime.log.scan(verify=True).records]
+        finally:
+            runtime.close()
+
+    def assert_nothing_was_fabricated(self, expect_execution=False):
+        """The core assertion. A crash may lose progress; it may never invent it."""
+        events = self.log_events()
+        if not expect_execution:
+            for name in FABRICATION_EVENTS:
+                self.assertNotIn(name, events,
+                                 "crash fabricated a %s event" % (name,))
+        row = self.task_row()
+        if not expect_execution:
+            self.assertEqual(row["attempt"], 0,
+                             "crash fabricated an execution attempt")
+        runtime = self.runtime()
+        try:
+            attempts = runtime.connection.execute(
+                "SELECT COUNT(*) FROM task_attempts").fetchone()[0]
+            if not expect_execution:
+                self.assertEqual(attempts, 0)
+            # No authorization may exist that governance did not supply.
+            authorizations = runtime.connection.execute(
+                "SELECT COUNT(*) FROM acquisition_authorizations").fetchone()[0]
+            return authorizations
+        finally:
+            runtime.close()
+
+    def assert_recovery_is_clean(self):
+        """Deterministic and auditable: rebuild from the log, then verify."""
+        rebuilt = self.child("reset", "--rebuild-index")
+        self.assertEqual(rebuilt.returncode, 0, rebuilt.stderr)
+        verified = self.child("verify")
+        self.assertEqual(verified.returncode, 0, verified.stdout)
+        self.assertIn("INTEGRITY OK", verified.stdout)
+
+    def assert_states_are_legal(self):
+        """Every recorded transition is an approved Catalog section L edge."""
+        from mogo_platform.contracts import task_states
+        runtime = self.runtime()
+        try:
+            report = None
+            from mogo_platform.runtime import audit as audit_module
+            report = audit_module.audit_report(runtime.connection, runtime.log)
+            for step in report["timeline"]:
+                if step["from"] is None:
+                    continue
+                with self.subTest(edge=(step["from"], step["to"])):
+                    self.assertTrue(
+                        task_states.is_legal_transition(step["from"], step["to"]),
+                        "illegal transition %s -> %s"
+                        % (step["from"], step["to"]))
+            for row in runtime.connection.execute("SELECT state FROM tasks"):
+                self.assertIn(row["state"], task_states.TASK_STATES)
+        finally:
+            runtime.close()
+
+
+class TestStep3CrashBoundaries(Step3RecoveryCase):
+    def test_every_step_3_boundary_is_declared_and_reachable(self):
+        import inspect
+        source = inspect.getsource(orchestrator_module)
+        self.assertEqual(tuple(orchestrator_module.STEP_3_CRASH_BOUNDARIES),
+                         EXPECTED_STEP_3_CRASH_BOUNDARIES)
+        for boundary in EXPECTED_STEP_3_CRASH_BOUNDARIES:
+            with self.subTest(boundary=boundary):
+                self.assertGreaterEqual(source.count('"%s"' % boundary), 2)
+
+    def test_step_3_crash_simulation_is_refused_without_the_env_guard(self):
+        self.init_and_submit_policy()
+        completed = self.child("run", "--simulate-crash-at",
+                               "after_policy_decision_append")
+        self.assertNotEqual(completed.returncode, 70)
+        self.assertIn("MOGO_RUNTIME_ALLOW_CRASH_SIM",
+                      completed.stdout + completed.stderr)
+
+    # -- boundary 23 ---------------------------------------------------------
+
+    def test_boundary_23_crash_after_a_policy_DENIAL_is_appended(self):
+        """The decision is durable; the index is behind. Replay converges."""
+        self.init_and_submit_policy("b23-deny")
+        self.child("run", "--simulate-crash-at", "after_policy_decision_append",
+                   allow_crash=True, expect_crash=True)
+
+        # The decision survived the kill, and nothing else was invented.
+        self.assertIn("PolicyEvaluated", self.log_events())
+        self.assert_nothing_was_fabricated()
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "awaiting_review")
+        self.assertEqual(row["policy_decision"], "deny")
+        self.assertEqual(row["policy_reason"], "no_authorization_record")
+        self.assert_nothing_was_fabricated()
+        self.assert_states_are_legal()
+        self.assert_recovery_is_clean()
+
+    def test_boundary_23_crash_after_a_policy_PERMIT_is_appended(self):
+        """A crash must not lose a permit, nor let one be assumed."""
+        source_id = self.init_and_submit_policy("b23-permit")
+        self.authorize(source_id)
+        self.child("run", "--simulate-crash-at", "after_policy_decision_append",
+                   allow_crash=True, expect_crash=True)
+
+        # The permit is durable in the log but not yet applied: nothing ran.
+        self.assert_nothing_was_fabricated()
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "succeeded")
+        self.assertEqual(row["policy_decision"], "permit")
+        self.assertEqual(row["policy_status"], "PERMITTED_PUBLIC_METADATA")
+        # Exactly one decision, one claim, one execution -- no duplicates.
+        events = self.log_events()
+        self.assertEqual(events.count("PolicyEvaluated"), 1)
+        self.assertEqual(events.count("TaskClaimed"), 1)
+        self.assertEqual(events.count("TaskSucceeded"), 1)
+        self.assert_states_are_legal()
+        self.assert_recovery_is_clean()
+
+    def test_boundary_23_does_not_let_a_second_decision_be_made(self):
+        """Replay RE-APPLIES the recorded decision; it never makes a new one.
+
+        The authorization is recorded AFTER the crash. If recovery re-decided,
+        the task would come back permitted -- and the log would then contain a
+        decision that contradicts the one already durable in it.
+        """
+        source_id = self.init_and_submit_policy("b23-no-redecide")
+        self.child("run", "--simulate-crash-at", "after_policy_decision_append",
+                   allow_crash=True, expect_crash=True)
+        self.authorize(source_id)          # governance acts after the crash
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["policy_decision"], "deny",
+                         "recovery re-decided instead of re-applying")
+        self.assertEqual(row["state"], "awaiting_review")
+        self.assertEqual(self.log_events().count("PolicyEvaluated"), 1)
+        self.assert_nothing_was_fabricated()
+
+    # -- boundary 24 ---------------------------------------------------------
+
+    def test_boundary_24_crash_between_the_denial_and_the_review_request(self):
+        """The regression for the stranding defect this suite found.
+
+        Before it was fixed, a task interrupted here sat in `blocked` -- not
+        terminal, not drivable, with no route out at all, which is the
+        Constitution section 6.5 defect Step 2 eliminated for failures.
+        """
+        self.init_and_submit_policy("b24")
+        self.child("run", "--simulate-crash-at", "after_policy_denial",
+                   allow_crash=True, expect_crash=True)
+
+        interrupted = self.task_row()
+        self.assertEqual(interrupted["state"], "blocked")
+        self.assertEqual(interrupted["terminal"], 0)
+        self.assertEqual(interrupted["policy_decision"], "deny")
+        self.assert_nothing_was_fabricated()
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "awaiting_review",
+                         "a task interrupted between the denial and the review "
+                         "request must not strand in `blocked`")
+        self.assertEqual(self.log_events().count("HumanReviewRequired"), 1)
+        self.assert_nothing_was_fabricated()
+        self.assert_states_are_legal()
+        self.assert_recovery_is_clean()
+
+    def test_boundary_24_recovery_restates_the_decision_it_does_not_remake_it(self):
+        source_id = self.init_and_submit_policy("b24-restate")
+        self.child("run", "--simulate-crash-at", "after_policy_denial",
+                   allow_crash=True, expect_crash=True)
+        self.authorize(source_id)          # governance acts after the crash
+
+        self.child("run")
+        row = self.task_row()
+        # The review request restates the DURABLE denial; it does not re-decide.
+        self.assertEqual(row["policy_decision"], "deny")
+        self.assertEqual(row["state"], "awaiting_review")
+        self.assertEqual(self.log_events().count("PolicyEvaluated"), 1)
+
+    # -- boundary 25 ---------------------------------------------------------
+
+    def test_boundary_25_crash_after_the_review_request_is_appended(self):
+        self.init_and_submit_policy("b25")
+        self.child("run", "--simulate-crash-at", "after_review_required_append",
+                   allow_crash=True, expect_crash=True)
+
+        self.assertIn("HumanReviewRequired", self.log_events())
+        self.assert_nothing_was_fabricated()
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "awaiting_review")
+        self.assertEqual(self.log_events().count("HumanReviewRequired"), 1)
+        self.assert_nothing_was_fabricated()
+        self.assert_states_are_legal()
+        self.assert_recovery_is_clean()
+
+    # -- boundary 26 ---------------------------------------------------------
+
+    def test_boundary_26_crash_after_a_REJECTION_is_appended(self):
+        self.init_and_submit_policy("b26-reject")
+        self.child("run")
+        self.assertEqual(self.task_row()["state"], "awaiting_review")
+
+        task_id = self.task_row()["task_id"]
+        self.child("review", "--task", task_id, "--decision", "rejected",
+                   "--reason", "source terms prohibit acquisition",
+                   "--reviewer", "operator:joe",
+                   "--simulate-crash-at", "after_review_decision_append",
+                   allow_crash=True, expect_crash=True)
+
+        self.assertIn("HumanReviewCompleted", self.log_events())
+        self.assert_nothing_was_fabricated()
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "suppressed")
+        self.assertEqual(row["terminal"], 1)
+        self.assertEqual(row["review_decision"], "rejected")
+        self.assert_nothing_was_fabricated()
+        self.assert_states_are_legal()
+        self.assert_recovery_is_clean()
+
+    def test_boundary_26_crash_after_an_APPROVAL_is_appended(self):
+        """The most dangerous of the four: the event that releases a task.
+
+        A crash here must neither lose the release nor let the task execute
+        without the gate's re-evaluated permit travelling with it.
+        """
+        source_id = self.init_and_submit_policy("b26-approve")
+        self.child("run")
+        self.assertEqual(self.task_row()["state"], "awaiting_review")
+        self.authorize(source_id)
+
+        task_id = self.task_row()["task_id"]
+        self.child("review", "--task", task_id, "--decision", "approved",
+                   "--reason", "authorization recorded by governance",
+                   "--reviewer", "governance:mogo-legal",
+                   "--simulate-crash-at", "after_review_decision_append",
+                   allow_crash=True, expect_crash=True)
+
+        # The release is durable but unapplied; nothing has executed.
+        self.assertIn("HumanReviewCompleted", self.log_events())
+        self.assert_nothing_was_fabricated()
+
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "succeeded")
+        # The permit that allowed dispatch is the GATE's, carried through the
+        # crash in the durable event payload.
+        self.assertEqual(row["policy_decision"], "permit")
+        self.assertEqual(row["policy_status"], "PERMITTED_PUBLIC_METADATA")
+        self.assertEqual(row["review_decision"], "approved")
+        events = self.log_events()
+        self.assertEqual(events.count("HumanReviewCompleted"), 1)
+        self.assertEqual(events.count("TaskSucceeded"), 1)
+        self.assert_states_are_legal()
+        self.assert_recovery_is_clean()
+
+    # -- properties that must hold at EVERY boundary -------------------------
+
+    def test_no_boundary_can_fabricate_an_authorization(self):
+        """A crash may lose progress. It may never create permission."""
+        for boundary in EXPECTED_STEP_3_CRASH_BOUNDARIES[:3]:
+            with self.subTest(boundary=boundary):
+                self.tearDown()
+                self.setUp()
+                self.init_and_submit_policy("no-auth-%s" % (boundary,))
+                self.child("run", "--simulate-crash-at", boundary,
+                           allow_crash=True, expect_crash=True)
+                self.child("run")
+                runtime = self.runtime()
+                try:
+                    count = runtime.connection.execute(
+                        "SELECT COUNT(*) FROM acquisition_authorizations"
+                    ).fetchone()[0]
+                finally:
+                    runtime.close()
+                self.assertEqual(count, 0,
+                                 "a crash created an authorization record")
+                row = self.task_row()
+                self.assertEqual(row["policy_decision"], "deny")
+                self.assertIn(row["state"], ("blocked", "awaiting_review"))
+
+    def test_no_boundary_lets_unauthorized_work_execute(self):
+        for boundary in EXPECTED_STEP_3_CRASH_BOUNDARIES[:3]:
+            with self.subTest(boundary=boundary):
+                self.tearDown()
+                self.setUp()
+                self.init_and_submit_policy("no-exec-%s" % (boundary,))
+                self.child("run", "--simulate-crash-at", boundary,
+                           allow_crash=True, expect_crash=True)
+                self.child("run")
+                self.child("run")          # and again, to be sure
+                events = self.log_events()
+                for name in FABRICATION_EVENTS:
+                    self.assertNotIn(name, events)
+                self.assertEqual(self.task_row()["attempt"], 0)
+
+    def test_repeated_restart_across_the_gate_converges(self):
+        """Five kills in sequence reach the same answer as an uninterrupted run."""
+        self.init_and_submit_policy("converge")
+        for boundary in ("after_policy_decision_append", "after_policy_denial",
+                         "after_review_required_append",
+                         "after_policy_decision_append", "after_policy_denial"):
+            self.child("run", "--simulate-crash-at", boundary,
+                       allow_crash=True, expect_crash=False)
+        self.child("run")
+        row = self.task_row()
+        self.assertEqual(row["state"], "awaiting_review")
+        self.assertEqual(row["policy_decision"], "deny")
+        events = self.log_events()
+        self.assertEqual(events.count("PolicyEvaluated"), 1)
+        self.assertEqual(events.count("HumanReviewRequired"), 1)
+        self.assert_nothing_was_fabricated()
+        self.assert_recovery_is_clean()
+
+    # The two kinds of boundary behave differently BEFORE recovery, and the
+    # difference is a property worth asserting rather than papering over.
+    #
+    #   append boundaries      fire INSIDE _emit, between the log fsync and the
+    #                          SQLite commit, so the index is legitimately
+    #                          BEHIND the log and `verify` must SAY SO
+    #   between-event boundaries
+    #                          fire between two COMPLETE emits, so everything
+    #                          appended has also been applied and `verify` is
+    #                          clean -- the task is simply mid-sequence
+    #
+    # Neither is a contradiction. What would be a contradiction is a FATAL
+    # finding, or an index that claims history the log does not have.
+    APPEND_BOUNDARIES = ("after_policy_decision_append",
+                         "after_review_required_append")
+    BETWEEN_EVENT_BOUNDARIES = ("after_policy_denial",)
+
+    def test_the_append_only_history_is_never_contradicted(self):
+        """After every kill the history is intact, and any gap is REPORTED."""
+        for boundary in self.APPEND_BOUNDARIES + self.BETWEEN_EVENT_BOUNDARIES:
+            with self.subTest(boundary=boundary):
+                self.tearDown()
+                self.setUp()
+                self.init_and_submit_policy("history-%s" % (boundary,))
+                self.child("run", "--simulate-crash-at", boundary,
+                           allow_crash=True, expect_crash=True)
+
+                mid = self.child("verify")
+                if boundary in self.APPEND_BOUNDARIES:
+                    # The index is behind. The runtime must report it rather
+                    # than hide it -- a silent pass would mean the index and
+                    # the log disagreed unnoticed.
+                    self.assertNotEqual(mid.returncode, 0)
+                    self.assertIn("in the log but not in the index", mid.stdout)
+                    self.assertIn("recover", mid.stdout)
+                else:
+                    # Everything appended was applied; nothing is outstanding.
+                    self.assertEqual(mid.returncode, 0, mid.stdout)
+
+                # In BOTH cases the history itself is intact: a recoverable gap
+                # is an ERROR, never a FATAL, and the index never claims
+                # history the log does not have.
+                self.assertNotIn("FATAL", mid.stdout)
+                self.assertNotIn("indexed but absent from the log", mid.stdout)
+
+                # AFTER recovery, the log and the index agree exactly.
+                self.child("run")
+                self.assert_recovery_is_clean()

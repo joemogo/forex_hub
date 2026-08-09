@@ -77,6 +77,8 @@ platform/
         event_log.py            THE AUTHORITATIVE append-only JSONL log
         projection.py           log → derived index, idempotently
         registry.py             capability registry, dispatch eligibility, A-5 gate
+        policy.py               THE POLICY GATE -- the authorization decision
+        authorizations.py       Acquisition Authorization Records (governance input)
         clock.py                THE ONLY MODULE PERMITTED TO READ A CLOCK
         retry.py                retry decision, backoff, eligibility — pure
         lease.py                lease predicates and reclaim reasons — pure
@@ -87,6 +89,7 @@ platform/
         capabilities/
           echo.py                       research.runtime.echo.v1
           fail_then_succeed.py          research.runtime.fail-then-succeed.v1
+          policy_probe.py               research.policy.probe.v1
 ```
 
 `retry.py` and `lease.py` are separate modules rather than orchestrator methods for one reason:
@@ -122,6 +125,10 @@ python3 platform/mogo_runtime.py demo        # the full end-to-end demonstration
 python3 platform/mogo_runtime.py status      # health snapshot, attempts, leases, gates
 python3 platform/mogo_runtime.py audit       # complete ordered activity record
 python3 platform/mogo_runtime.py failures    # what failed, when, and why
+python3 platform/mogo_runtime.py policy      # what was blocked, and by which policy
+python3 platform/mogo_runtime.py authorize --file <record.json>   # governance input
+python3 platform/mogo_runtime.py review --task <id> --decision approved \
+        --reason "..." --reviewer operator:<id>   # audited disposition
 python3 platform/mogo_runtime.py verify      # integrity checks; non-zero on failure
 python3 platform/mogo_runtime.py reset --rebuild-index   # proves the log is the truth
 ```
@@ -145,6 +152,37 @@ place by doing two jobs `flock` cannot:
    against the generation *this* execution claimed with. A reclaim that bumped the generation
    mid-flight is detected, and the result is discarded rather than recorded under an authority the
    runtime cannot vouch for.
+
+### The policy gate
+
+**No work executes without passing through it.** Every task -- acquisition or not --
+transitions through `policy_check`, which is what makes *"was this checked?"* answerable from
+the log for **all** tasks rather than only the ones someone remembered to route.
+
+- **Non-acquisition work** is a recorded no-op: `PolicyEvaluated(not_applicable)` → `queued`.
+- **Acquisition-class work** requires an **Acquisition Authorization Record** supplied by
+  governance or legal review. The platform *records and enforces* those decisions; it never
+  makes one (Constitution §5.9). A denial reaches `blocked` → `awaiting_review`, and only an
+  audited human decision releases it to `queued` or suppresses it terminally.
+- **`UNKNOWN` behaves exactly as `PROHIBITED`** (Constitution §5.2), guarded twice: once by the
+  committed Catalog §M table and once by a check made before that table is consulted.
+- **`AS_RECORDED` is not an allowance.** `PERMITTED_EXPLICIT_LICENSE` and
+  `PERMITTED_DOCUMENTED_POLICY` mark every operation `AS_RECORDED`, which means *whatever the
+  licence says*. Without a referenced licence the gate denies — otherwise the two most nuanced
+  statuses would become the most permissive ones.
+- **A human may un-block a task; only the gate may authorize the acquisition.** An approval
+  re-evaluates the gate and is refused while it still denies, so approval can never stand in
+  for an authorization record.
+
+**Bypass is structurally impossible**, not discouraged. `requested → queued` is not a legal
+Catalog §L edge; `policy_check` is the only entry to `queued` for a new task; the decision has
+exactly two named call sites and no other runtime module may consult it; the gate takes no
+override argument and reads no environment variable; and an acquisition-class task is checked
+again against its own recorded permit immediately before it is claimed.
+
+**A denial is a state, not a failure.** The `policy_blocked` error class is reserved for a
+capability or connector attempting an operation outside its authorization at runtime — a
+distinct fact from the gate refusing to authorize in the first place.
 
 ### Clock discipline
 

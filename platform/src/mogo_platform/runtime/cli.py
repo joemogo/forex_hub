@@ -51,11 +51,14 @@ from . import event_log as event_log_module  # noqa: E402
 from . import orchestrator as orchestrator_module  # noqa: E402
 from . import paths as paths_module  # noqa: E402
 from . import projection  # noqa: E402
+from . import authorizations as authorizations_module  # noqa: E402
+from . import policy as policy_module  # noqa: E402
 from . import registry  # noqa: E402
 from . import schema as schema_module  # noqa: E402
 from . import store  # noqa: E402
 from .capabilities import echo as echo_capability  # noqa: E402
 from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
+from .capabilities import policy_probe as policy_probe_capability  # noqa: E402
 
 CLOCK_OVERRIDE_ENV = orchestrator_module.CLOCK_OVERRIDE_ENV
 
@@ -132,6 +135,40 @@ def build_retry_demo_command(fail_until_attempt, note, uuid_factory=None,
         "issuedBy": "operator:mogo",
         "targetCapability": fail_then_succeed_capability.CAPABILITY_ID,
         "inputRefs": ["XF|runtime-fail-then-succeed"],
+        "policyContext": {"authorizationId": None, "policyVersion": "0",
+                          "permittedOperations": []},
+        "payloadHash": ids.content_hash_of(payload),
+    }
+    return envelope, payload
+
+
+def build_policy_demo_command(source_id, note, uuid_factory=None, clock=None):
+    """A demonstration command for the policy-gate probe.
+
+    `inputRefs` carries the subject source as an identifier -- Catalog section A:
+    references only, never inline payloads. The gate resolves the authorization
+    for exactly this source.
+    """
+    clock = clock or orchestrator_module.utc_now
+    mint = (lambda: ids.new_uuid4(uuid_factory=uuid_factory))
+    payload = {"note": note, "sourceId": source_id}
+    correlation_id = mint()
+    key = ids.idempotency_key("metadata_acquisition", {
+        "sourceId": source_id,
+        "connectorVersion": policy_probe_capability.CAPABILITY_VERSION,
+    })
+    envelope = {
+        "commandId": mint(),
+        "commandType": "AcquireSourceMetadata",
+        "commandVersion": 1,
+        "workflowId": mint(),
+        "correlationId": correlation_id,
+        "causationId": correlation_id,
+        "idempotencyKey": key,
+        "issuedAt": clock(),
+        "issuedBy": "operator:mogo",
+        "targetCapability": policy_probe_capability.CAPABILITY_ID,
+        "inputRefs": [source_id],
         "policyContext": {"authorizationId": None, "policyVersion": "0",
                           "permittedOperations": []},
         "payloadHash": ids.content_hash_of(payload),
@@ -227,7 +264,13 @@ def cmd_init(args):
 def cmd_submit(args):
     with _open(args) as runtime:
         runtime.recover()
-        if getattr(args, "demo_retry", None) is not None:
+        if getattr(args, "demo_policy", None):
+            source_id = ids.make_source_id(
+                "example", "https://example.test/%s" % (args.demo_policy,))
+            envelope, payload = build_policy_demo_command(
+                source_id, "policy-gate demonstration: %s" % (args.demo_policy,))
+            print("sourceId=%s" % (source_id,))
+        elif getattr(args, "demo_retry", None) is not None:
             envelope, payload = build_retry_demo_command(
                 args.demo_retry,
                 "MOGO-011 Step 2 retry demonstration, failUntilAttempt=%d"
@@ -312,6 +355,60 @@ def _pending_retries(connection):
         pending.append((row["task_id"], row["retry_eligible_at"],
                         max(0, eligible_ms - now_ms)))
     return pending
+
+
+def cmd_authorize(args):
+    """Record one governance-supplied Acquisition Authorization Record.
+
+    The platform records and enforces decisions supplied by governance or legal
+    review; it never makes one (Constitution section 5.9). This command is the
+    only way a record enters the runtime.
+    """
+    with open(args.file, "r", encoding="utf-8") as handle:
+        record = json.load(handle)
+    with _open(args, create=False) as runtime:
+        outcome = runtime.record_authorization(record)
+        print("AUTHORIZATION %s  %s  %s  status=%s  operations=%s"
+              % (outcome.upper(), record.get("authorizationId"),
+                 record.get("sourceId"), record.get("policyStatus"),
+                 ",".join(record.get("permittedOperations") or []) or "none"))
+    return 0
+
+
+def cmd_review(args):
+    """The audited operator decision that disposes of a policy-blocked task.
+
+    Constitution section 9: reviewer identity, decision, reason, timestamp and
+    policy version are all recorded, and a bare approval is refused.
+    """
+    with _open(args, create=False) as runtime:
+        runtime.recover()
+        runtime.record_review_decision(args.task, args.decision, args.reason,
+                                       args.reviewer, args.policy_version)
+        for line in runtime.trace:
+            print("  " + line)
+        row = runtime.connection.execute(
+            "SELECT state, terminal FROM tasks WHERE task_id = ?",
+            (args.task,)).fetchone()
+        print("REVIEW %s task=%s -> state=%s terminal=%s by %s"
+              % (args.decision.upper(), args.task, row["state"],
+                 bool(row["terminal"]), args.reviewer))
+    return 0
+
+
+def cmd_policy(args):
+    """What the policy gate decided, what is authorized, and what is blocked."""
+    paths, connection = _open_readonly(args)
+    try:
+        log = event_log_module.EventLog(paths)
+        report = audit_module.policy_report(connection, log)
+        if getattr(args, "json", False):
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            print(audit_module.render_policy(report))
+        return 0
+    finally:
+        connection.close()
 
 
 def cmd_failures(args):
@@ -401,10 +498,10 @@ def cmd_reset(args):
     return 0
 
 
-def _submit_args(args, demo=False, demo_retry=None):
+def _submit_args(args, demo=False, demo_retry=None, demo_policy=None):
     return argparse.Namespace(
-        demo=demo, demo_retry=demo_retry, command_file=None,
-        state_root=getattr(args, "state_root", None),
+        demo=demo, demo_retry=demo_retry, demo_policy=demo_policy,
+        command_file=None, state_root=getattr(args, "state_root", None),
         simulate_crash_at=None, now=None)
 
 
@@ -453,9 +550,56 @@ def _scenario_step_3(args):
     return cmd_submit(_submit_args(args, demo=True))
 
 
+def _scenario_step_policy(args):
+    """The policy gate: denied, blocked, disposed of by an audited human."""
+    print("\n-- SCENARIO 4: acquisition is IMPOSSIBLE without authorization --")
+    source = ids.make_source_id("example", "https://example.test/mogo-011-step-3")
+    envelope, payload = build_policy_demo_command(
+        source, "MOGO-011 Step 3 policy gate demonstration")
+    root = getattr(args, "state_root", None)
+
+    with orchestrator_module.Orchestrator(paths=_paths_from(args),
+                                          create=False) as runtime:
+        runtime.recover()
+        outcome = runtime.submit(envelope, payload)
+        runtime.run_once()
+        for line in runtime.trace:
+            print("  " + line)
+        row = runtime.connection.execute(
+            "SELECT state, policy_decision, policy_reason FROM tasks "
+            "WHERE task_id = ?", (outcome.task_id,)).fetchone()
+        print("  DENIED  state=%s  reason=%s" % (row["state"], row["policy_reason"]))
+        print("          nothing was claimed, nothing executed, nothing acquired")
+
+    print("\n-- SCENARIO 5: governance authorizes, a human releases, work runs --")
+    with orchestrator_module.Orchestrator(paths=_paths_from(args),
+                                          create=False) as runtime:
+        runtime.record_authorization({
+            "authorizationId": ids.new_uuid4(),
+            "sourceId": source,
+            "policyStatus": "PERMITTED_PUBLIC_METADATA",
+            "policyVersion": "1.0",
+            "decisionAuthority": "governance:mogo-legal",
+            "decidedAt": orchestrator_module.utc_now(),
+            "permittedOperations": ["metadata"],
+        })
+        runtime.record_review_decision(
+            outcome.task_id, "approved",
+            "authorization recorded by governance after review", "operator:mogo")
+        runtime.run_once()
+        for line in runtime.trace:
+            print("  " + line)
+        row = runtime.connection.execute(
+            "SELECT state, policy_decision, policy_status FROM tasks "
+            "WHERE task_id = ?", (outcome.task_id,)).fetchone()
+        print("  RELEASED state=%s  policy=%s  status=%s"
+              % (row["state"], row["policy_decision"], row["policy_status"]))
+    return 0
+
+
 def _scenario_step_4(args):
     """The log is the truth: throw the index away and rebuild it."""
-    print("\n-- SCENARIO 4: the log is the truth --")
+    print("\n-- SCENARIO 6: the log is the truth --")
     rc = cmd_reset(argparse.Namespace(
         state_root=getattr(args, "state_root", None),
         confirm=False, rebuild_index=True))
@@ -467,6 +611,9 @@ def _scenario_step_4(args):
 
 def _scenario_step_5(args):
     """What failed, when, and why -- without reading code."""
+    print("\n-- OPERATOR VIEW: policy decisions, authorizations and gates --")
+    cmd_policy(argparse.Namespace(state_root=getattr(args, "state_root", None),
+                                  json=False))
     print("\n-- OPERATOR VIEW: failures, leases and gates --")
     return cmd_failures(argparse.Namespace(
         state_root=getattr(args, "state_root", None), json=False))
@@ -475,8 +622,9 @@ def _scenario_step_5(args):
 DEMO_SCENARIOS = {
     "retry": (_scenario_step_1,),
     "dead-letter": (_scenario_step_2,),
+    "policy": (_scenario_step_policy,),
     "all": (_scenario_step_1, _scenario_step_2, _scenario_step_3,
-            _scenario_step_4, _scenario_step_5),
+            _scenario_step_policy, _scenario_step_4, _scenario_step_5),
 }
 
 
@@ -531,6 +679,10 @@ def build_parser():
     group.add_argument("--demo-retry", type=int, metavar="FAIL_UNTIL_ATTEMPT",
                        help="submit a fail-then-succeed command that fails every "
                             "attempt up to and including this one")
+    group.add_argument("--demo-policy", metavar="LABEL",
+                       help="submit an acquisition-class command for the policy "
+                            "gate; the subject source is derived from LABEL and "
+                            "printed as sourceId=")
     group.add_argument("--command-file",
                        help="JSON file with {\"command\": ..., \"payload\": ...}")
     submit.add_argument("--simulate-crash-at",
@@ -554,6 +706,29 @@ def build_parser():
         "failures", help="what failed, when, and why -- plus leases and gates")
     failures.add_argument("--json", action="store_true")
 
+    authorize = subparsers.add_parser(
+        "authorize",
+        help="record a governance-supplied Acquisition Authorization Record")
+    authorize.add_argument("--file", required=True,
+                           help="JSON file holding one authorization record")
+
+    review = subparsers.add_parser(
+        "review", help="audited operator disposition of a policy-blocked task")
+    review.add_argument("--task", required=True)
+    review.add_argument("--decision", required=True,
+                        choices=("approved", "rejected"))
+    review.add_argument("--reason", required=True,
+                        help="required -- a decision without a reason is invalid")
+    review.add_argument("--reviewer", required=True,
+                        help="operator:<id> | governance:<role> | legal:<role>")
+    review.add_argument("--policy-version", dest="policy_version")
+    review.add_argument("--simulate-crash-at",
+                        help="test-only induced interruption boundary")
+
+    policy_parser = subparsers.add_parser(
+        "policy", help="policy decisions, authorizations, and what is blocked")
+    policy_parser.add_argument("--json", action="store_true")
+
     subparsers.add_parser("verify", help="integrity checks only")
 
     reset = subparsers.add_parser("reset", help="delete state, or rebuild the index")
@@ -570,7 +745,8 @@ def build_parser():
 HANDLERS = {
     "init": cmd_init, "submit": cmd_submit, "run": cmd_run, "status": cmd_status,
     "audit": cmd_audit, "verify": cmd_verify, "reset": cmd_reset, "demo": cmd_demo,
-    "failures": cmd_failures,
+    "failures": cmd_failures, "authorize": cmd_authorize, "review": cmd_review,
+    "policy": cmd_policy,
 }
 
 

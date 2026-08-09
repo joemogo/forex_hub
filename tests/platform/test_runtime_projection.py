@@ -41,6 +41,10 @@ EXPECTED_TRANSITIONS = {
     # MOGO-011 Step 2. Every one of the three already exists in the committed
     # Catalog section L table with authority `orchestrator`; none widens the
     # state machine, and contracts/task_states.py is not modified.
+    # MOGO-011 Step 3. Both were approved Catalog section L edges that no
+    # event had ever carried; the gate and its disposition path use them now.
+    "HumanReviewRequired":      ("blocked", "awaiting_review"),
+    "HumanReviewCompleted":     ("awaiting_review", "queued"),
     "TaskRetryScheduled":       ("failed", "retry_scheduled"),
     "TaskRetryReleased":        ("retry_scheduled", "queued"),
     "TaskDeadLettered":         ("failed", "dead_lettered"),

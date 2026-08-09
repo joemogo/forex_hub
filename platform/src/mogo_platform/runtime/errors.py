@@ -164,6 +164,46 @@ class RetryPolicyError(RuntimeError_):
     """
 
 
+class PolicyGateError(RuntimeError_):
+    """The policy gate could not reach a decision it is able to route.
+
+    Distinct from a DENIAL, which is a normal, recorded outcome and not an
+    error. This is raised only when the gate produces something the runtime
+    cannot act on -- and it fails closed: the task does not proceed.
+
+    Constitution section 5.1 makes authorization a PRECONDITION of acquisition,
+    so "the gate malfunctioned" and "the gate permitted" must never be the same
+    observable outcome.
+    """
+
+
+class AuthorizationRefusedError(RuntimeError_):
+    """An Acquisition Authorization Record was refused before it was stored.
+
+    Covers: an authority that names automation rather than a human or a
+    governance role; a changed record presented under an existing
+    authorizationId; a supersession naming a record that does not exist or
+    belongs to a different source.
+
+    Constitution section 5.9: the platform records and enforces decisions
+    supplied by governance. A record it cannot attribute to a governing
+    authority is not a decision, and is refused rather than stored.
+    """
+
+
+class ReviewDecisionError(RuntimeError_):
+    """An operator disposition of a blocked task was refused.
+
+    Constitution section 9: every review record preserves reviewer identity,
+    decision, reason, timestamp and policy version, and "a decision without a
+    reason is invalid". A bare approval is therefore refused, not accepted with
+    an empty reason.
+
+    Catalog section N: the reviewer is "a human or governance role -- never a
+    worker". No worker may approve its own governed output.
+    """
+
+
 class SimulatedCrash(BaseException):
     """Test-only induced interruption.
 

@@ -486,7 +486,9 @@ class TestStep2PrimaryOutcomes(Step2EndToEndCase):
         for line in ("attempts", "retries", "dead letters", "A-5 gate",
                      "connector gates"):
             self.assertIn(line, status.stdout)
-        self.assertIn("schema version  : 2", status.stdout)
+        self.assertIn("schema version  : 3", status.stdout)
+        for line in ("policy", "awaiting review", "authorizations"):
+            self.assertIn(line, status.stdout)
 
     def test_verify_passes_every_step_2_invariant(self):
         self.full_step_2_run()

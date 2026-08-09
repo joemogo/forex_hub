@@ -35,6 +35,7 @@ from types import MappingProxyType
 from ..contracts import errors as contract_errors  # noqa: E402
 from ..contracts import ids  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
+from . import policy as policy_module  # noqa: E402
 from . import retry as retry_module  # noqa: E402
 
 DISPATCHABLE_LIFECYCLE_STATES = ("approved", "production")
@@ -88,11 +89,18 @@ DEFAULT_EFFECT_CLASS = "pure"
 # thing an operator can know about this platform is what it is not yet allowed
 # to do, and why.
 CONNECTOR_GATES = (
+    # MOGO-011 Step 3 built this one. Classification is enforced from the
+    # committed Catalog section M table, authorization records are validated,
+    # stored append-only and resolved per source, and the enforcement tests
+    # exist. Flipping it to True is a claim, so it is made only because all
+    # three named requirements are delivered -- and the three gates below
+    # remain unmet, which is what still stands between this platform and its
+    # first acquisition.
     MappingProxyType({
         "gate": "policy_gate",
         "authority": "Architecture section 32 item 5 -- before any connector",
         "requires": "classification, authorization records, enforcement tests",
-        "satisfied": False,
+        "satisfied": True,
     }),
     MappingProxyType({
         "gate": "a5_result_store",
@@ -111,7 +119,8 @@ CONNECTOR_GATES = (
     MappingProxyType({
         "gate": "acquisition_authorization_record",
         "authority": "Constitution section 5.1; Catalog section M",
-        "requires": "one authorization record per source; none exists",
+        "requires": ("one governance-supplied authorization record per real "
+                     "source; the mechanism exists, the records do not"),
         "satisfied": False,
     }),
 )
@@ -229,8 +238,66 @@ def validate_manifest(manifest):
         )
     assert_effect_class_permitted(effect_class, capability_id)
     _validate_failure_classes(manifest, capability_id)
+    _validate_operation_class(manifest, capability_id)
     resolve_retry_policy(manifest)
     return manifest
+
+
+def _validate_operation_class(manifest, capability_id):
+    """The operation class and its acquisition operations must agree.
+
+    Catalog section L footnote 2 makes the operation class the input the policy
+    gate routes on, so a manifest that declares it incoherently would produce a
+    gate decision about something nobody meant. Refused at registration, and
+    the gate ALSO fails closed on an unrecognised class -- two independent
+    guards, because this value decides whether authorization is required at all.
+    """
+    operation_class = manifest.get("operationClass")
+    if operation_class not in policy_module.OPERATION_CLASSES:
+        runtime_errors.fail(
+            "capability %s declares operationClass=%r; the approved classes are "
+            "%s. An unrecognised class is treated as acquisition-class and "
+            "blocked at the gate, so it is refused here rather than registered "
+            "into a permanent denial"
+            % (capability_id, operation_class,
+               list(policy_module.OPERATION_CLASSES)),
+            runtime_errors.ContractValidationError,
+        )
+
+    declared = manifest.get("acquisitionOperations", [])
+    if not isinstance(declared, (list, tuple)):
+        runtime_errors.fail(
+            "capability %s declares acquisitionOperations as %s; an array is "
+            "required" % (capability_id, type(declared).__name__),
+            runtime_errors.ContractValidationError,
+        )
+    for operation in declared:
+        if operation not in policy_module.ACQUISITION_OPERATIONS:
+            runtime_errors.fail(
+                "capability %s declares acquisition operation %r, which is not "
+                "one of %s" % (capability_id, operation,
+                               list(policy_module.ACQUISITION_OPERATIONS)),
+                runtime_errors.ContractValidationError,
+            )
+
+    if operation_class == policy_module.OPERATION_CLASS_NON_ACQUISITION and declared:
+        runtime_errors.fail(
+            "capability %s declares operationClass=non_acquisition but also "
+            "declares acquisition operations %s. A capability is one or the "
+            "other; the contradiction is refused rather than resolved by "
+            "guessing" % (capability_id, list(declared)),
+            runtime_errors.ContractValidationError,
+        )
+
+    if operation_class == policy_module.OPERATION_CLASS_ACQUISITION and not declared:
+        runtime_errors.fail(
+            "capability %s declares operationClass=acquisition but no "
+            "acquisitionOperations. Such a capability could never be authorized "
+            "for anything, so it is refused at registration rather than blocked "
+            "on every task" % (capability_id,),
+            runtime_errors.ContractValidationError,
+        )
+    return tuple(declared)
 
 
 def resolve_retry_policy(manifest):
@@ -266,8 +333,9 @@ def register(connection, manifest, now):
         " capability_id, name, version, owner, accepted_commands, emitted_events,"
         " lifecycle_status, enabled_state, compatibility, operation_class,"
         " resource_limits, manifest_hash, registered_at,"
-        " effect_class, failure_classes, requires_execution_context, retry_policy"
-        ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        " effect_class, failure_classes, requires_execution_context, retry_policy,"
+        " acquisition_operations"
+        ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (capability_id, manifest["name"], manifest["version"], manifest["owner"],
          _canonical(manifest["acceptedCommands"]),
          _canonical(manifest["emittedEvents"]),
@@ -277,7 +345,8 @@ def register(connection, manifest, now):
          manifest.get("effectClass", DEFAULT_EFFECT_CLASS),
          _canonical(list(manifest.get("failureClasses", []))),
          1 if manifest.get("requiresExecutionContext", False) else 0,
-         _canonical(resolve_retry_policy(manifest))),
+         _canonical(resolve_retry_policy(manifest)),
+         _canonical(list(manifest.get("acquisitionOperations", [])))),
     )
     return "registered"
 
@@ -292,6 +361,18 @@ def declared_retry_policy(row):
     """The validated retry policy a registered capability declared."""
     import json
     return json.loads(row["retry_policy"])
+
+
+def declared_acquisition_operations(row):
+    """The acquisition operations a registered capability may be authorized for.
+
+    Empty for every non-acquisition capability, which is what makes the gate a
+    recorded no-op for them rather than a decision about nothing.
+    """
+    import json
+    if row is None:
+        return ()
+    return tuple(json.loads(row["acquisition_operations"]))
 
 
 def lookup(connection, reference):

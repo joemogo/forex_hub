@@ -792,29 +792,40 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
                 with self.subTest(module=relative, banned=banned):
                     self.assertNotIn(banned, imported)
 
-    def test_the_runtime_registers_exactly_two_capabilities(self):
-        """Two, and every one of them harmless -- asserted per capability.
+    def test_the_runtime_registers_exactly_three_capabilities(self):
+        """Three, and every one of them harmless -- asserted per capability.
 
-        Replaces the Step 1 "exactly one". The count is not the property worth
-        protecting; what each capability is ALLOWED to do is. Every manifest
-        must need no connector, no secret, no permission, must be
-        non-acquisition, and must be effectClass `pure` -- because the A-5
+        The count is not the property worth protecting; what each capability is
+        ALLOWED to do is. Every manifest must need no connector, no secret and
+        no permission, and must be effectClass `pure` -- because the A-5
         argument that makes crash boundary 8 safe holds only for pure
         capabilities.
+
+        MOGO-011 Step 3 adds ONE capability declaring `operationClass:
+        acquisition`. That declaration is a statement about what governance
+        must approve before it may run, NOT about what it does: it acquires
+        nothing, and the network, subprocess and write-confinement tests in this
+        suite continue to prove that no acquisition path exists anywhere.
         """
         from mogo_platform.runtime import orchestrator as orchestrator_module
         from mogo_platform.runtime import registry
-        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 2)
-        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 2)
+        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 3)
+        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 3)
+        acquisition_class = 0
         for manifest in orchestrator_module.BUILTIN_CAPABILITIES:
             with self.subTest(capability=manifest["capabilityId"]):
                 self.assertEqual(manifest["requiredConnectors"], [])
                 self.assertEqual(manifest["requiredSecretReferences"], [])
                 self.assertEqual(manifest["requiredPermissions"], [])
-                self.assertEqual(manifest["operationClass"], "non_acquisition")
+                self.assertIn(manifest["operationClass"],
+                              ("acquisition", "non_acquisition"))
                 self.assertEqual(
                     manifest.get("effectClass", registry.DEFAULT_EFFECT_CLASS),
                     "pure")
+                if manifest["operationClass"] == "acquisition":
+                    acquisition_class += 1
+        # Exactly one, and it exists to be GOVERNED rather than to acquire.
+        self.assertEqual(acquisition_class, 1)
         self.assertEqual(
             {m["capabilityId"] for m in orchestrator_module.BUILTIN_CAPABILITIES},
             set(orchestrator_module.CAPABILITY_CALLABLES))

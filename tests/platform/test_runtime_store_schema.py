@@ -28,19 +28,22 @@ from mogo_platform.runtime import store  # noqa: E402
 # Transcribed independently of schema.py, as the Step 1 lists were. Schema v2
 # (MOGO-011 Step 2) adds task_attempts, runs and capability_violations.
 EXPECTED_TABLES = (
-    "capabilities", "capability_violations", "command_submissions", "commands",
-    "event_index", "log_cursor", "recovery_actions", "runs", "schema_meta",
+    "acquisition_authorizations", "capabilities", "capability_violations",
+    "command_submissions", "commands", "event_index", "log_cursor",
+    "policy_decisions", "recovery_actions", "runs", "schema_meta",
     "task_attempts", "tasks", "transition_anomalies",
 )
 EXPECTED_APPEND_ONLY_TABLES = ("event_index", "command_submissions",
-                               "transition_anomalies", "capability_violations")
+                               "transition_anomalies", "capability_violations",
+                               "acquisition_authorizations")
 EXPECTED_INDEXES = (
-    "idx_attempts_error", "idx_attempts_task", "idx_commands_idem",
-    "idx_event_task", "idx_event_type", "idx_event_workflow",
-    "idx_submissions_idem", "idx_tasks_lease", "idx_tasks_retry",
-    "idx_tasks_state",
+    "idx_attempts_error", "idx_attempts_task", "idx_authorizations_source",
+    "idx_authorizations_super", "idx_commands_idem", "idx_event_task",
+    "idx_event_type", "idx_event_workflow", "idx_policy_decisions_kind",
+    "idx_policy_decisions_task", "idx_submissions_idem", "idx_tasks_lease",
+    "idx_tasks_policy", "idx_tasks_retry", "idx_tasks_state",
 )
-EXPECTED_SCHEMA_VERSION = 2
+EXPECTED_SCHEMA_VERSION = 3
 
 
 class RuntimeStateCase(unittest.TestCase):
@@ -303,7 +306,7 @@ class TestSchemaV2Migration(RuntimeStateCase):
 
     def test_migrations_are_ordered_contiguous_and_start_at_one(self):
         versions = [version for version, _migrate in schema_module.MIGRATIONS]
-        self.assertEqual(versions, [1, 2])
+        self.assertEqual(versions, [1, 2, 3])
         self.assertEqual(versions, sorted(versions))
         self.assertEqual(versions[-1], schema_module.SCHEMA_VERSION)
         self.assertEqual(len(set(versions)), len(versions))
@@ -329,7 +332,7 @@ class TestSchemaV2Migration(RuntimeStateCase):
 
         before, after = schema_module.initialize(connection,
                                                  "2026-08-08T00:00:00.000Z")
-        self.assertEqual((before, after), (1, 2))
+        self.assertEqual((before, after), (1, EXPECTED_SCHEMA_VERSION))
 
         row = connection.execute("SELECT * FROM tasks WHERE task_id='t1'").fetchone()
         # Existing rows survive, and gain the restrictive defaults.
@@ -380,7 +383,7 @@ class TestSchemaV2Migration(RuntimeStateCase):
         import hashlib
         connection = self.open()
         connection.execute(
-            "UPDATE schema_meta SET value='3' WHERE key='schema_version'")
+            "UPDATE schema_meta SET value='99' WHERE key='schema_version'")
         connection.close()
 
         def digest():
@@ -406,7 +409,8 @@ class TestSchemaV2Migration(RuntimeStateCase):
 
     def test_the_v2_migration_is_additive_only(self):
         """No DROP, no RENAME, no column retype anywhere in the migration."""
-        for statement in schema_module._MIGRATE_V2_STATEMENTS:
+        for statement in (schema_module._MIGRATE_V2_STATEMENTS
+                          + schema_module._MIGRATE_V3_STATEMENTS):
             upper = statement.upper()
             with self.subTest(statement=statement.split("\n")[0]):
                 self.assertNotIn("DROP", upper)

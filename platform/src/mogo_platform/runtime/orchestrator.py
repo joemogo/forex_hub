@@ -64,7 +64,9 @@ from . import clock as clock_module  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
 from . import event_log as event_log_module  # noqa: E402
 from . import lease as lease_module  # noqa: E402
+from . import authorizations  # noqa: E402
 from . import paths as paths_module  # noqa: E402
+from . import policy  # noqa: E402
 from . import projection  # noqa: E402
 from . import registry  # noqa: E402
 from . import retry as retry_module  # noqa: E402
@@ -73,9 +75,15 @@ from . import store  # noqa: E402
 from . import worker as worker_module  # noqa: E402
 from .capabilities import echo as echo_capability  # noqa: E402
 from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
+from .capabilities import policy_probe as policy_probe_capability  # noqa: E402
 
 PRODUCER_ORCHESTRATOR = "orchestrator"
 PRODUCER_POLICY_GATE = "policyGate"
+# Catalog section B names `reviewGate` as an approved producer. The disposition
+# of a blocked task is issued under that authority, never under the
+# orchestrator's own, so the audit trail distinguishes a decision the platform
+# made from one a human made.
+PRODUCER_REVIEW_GATE = "reviewGate"
 PRODUCER_VERSION = "1.0.0"
 EVENT_VERSION = 1
 
@@ -87,13 +95,23 @@ CLOCK_OVERRIDE_ENV = "MOGO_RUNTIME_ALLOW_CLOCK_OVERRIDE"
 # failure until a declared attempt. Both are effectClass `pure` -- registration
 # of an effectful capability is mechanically refused (risk A-5, decision B-4).
 BUILTIN_CAPABILITIES = (echo_capability.MANIFEST,
-                        fail_then_succeed_capability.MANIFEST)
+                        fail_then_succeed_capability.MANIFEST,
+                        policy_probe_capability.MANIFEST)
 CAPABILITY_CALLABLES = {
     echo_capability.CAPABILITY_ID: echo_capability.execute,
     fail_then_succeed_capability.CAPABILITY_ID: fail_then_succeed_capability.execute,
+    policy_probe_capability.CAPABILITY_ID: policy_probe_capability.execute,
 }
 
-NON_TERMINAL_RESUMABLE = ("requested", "policy_check", "queued", "failed")
+# `blocked` is drivable, and that is a crash-recovery requirement rather than a
+# convenience. A denial emits AcquisitionDenied and then HumanReviewRequired as
+# two events; a crash between them leaves the task in `blocked`, which is NOT
+# terminal. Without `blocked` in the drivable set such a task has no route out
+# at all -- it can neither be reviewed nor reach a terminal outcome, which is
+# exactly the Constitution section 6.5 stranding defect Step 2 eliminated for
+# failures. Driving it completes the approved `blocked -> awaiting_review` edge.
+NON_TERMINAL_RESUMABLE = ("requested", "policy_check", "queued", "failed",
+                          "blocked")
 
 # Crash-simulation boundaries added by Step 2, all refused unless the crash-sim
 # environment variable is set to 1, exactly as in Step 1.
@@ -103,6 +121,14 @@ STEP_2_CRASH_BOUNDARIES = (
     "after_retry_release_append", "after_lease_claim", "after_lease_expiry",
     "before_requeue", "during_retry_execution", "before_dead_letter_apply",
     "after_dead_letter_append",
+)
+
+# Crash-simulation boundaries added by Step 3, across the gate and the operator
+# disposition path. Refused unless the crash-sim environment variable is set,
+# exactly as in Steps 1 and 2.
+STEP_3_CRASH_BOUNDARIES = (
+    "after_policy_decision_append", "after_policy_denial",
+    "after_review_required_append", "after_review_decision_append",
 )
 
 
@@ -592,6 +618,10 @@ class Orchestrator(object):
             "payloadHash": validated["payloadHash"],
             "commandPayload": ids.as_plain(payload),
             "attemptLimit": resolved_limit,
+            # Identifiers only. The policy gate resolves an acquisition's
+            # subject source from these, so they must be in the authoritative
+            # log rather than only in the submitted envelope.
+            "inputRefs": list(validated["inputRefs"]),
         }
         self._emit("CommandAccepted", workflow_id, correlation_id,
                    validated["commandId"], accepted_payload,
@@ -721,16 +751,29 @@ class Orchestrator(object):
         is therefore bounded by MAX_ATTEMPT_LIMIT x tasks.
         """
         report = {"advanced": [], "succeeded": [], "failed": [], "retried": [],
-                  "dead_lettered": [], "released": [], "abandoned": []}
+                  "dead_lettered": [], "released": [], "abandoned": [],
+                  "blocked": []}
         # A release decision is made from `now` before anything is appended, so
         # the clock is checked before the first one rather than at the append.
         self._assert_clock_not_rolled_back("run")
+        # A task the dispatch guard refuses stays in `queued` -- it is a
+        # corruption case, and moving it would be inventing a transition nobody
+        # authorized. It must therefore be excluded from re-selection, or the
+        # loop would offer the same task forever. Tracked in memory rather than
+        # written, because the refusal is already recorded as an anomaly and the
+        # exclusion lasts only for this run.
+        refused = set()
         while True:
             report["released"].extend(self._release_eligible_retries())
-            row = self.connection.execute(
-                "SELECT * FROM tasks WHERE terminal = 0 AND state IN (?,?,?,?) "
-                "ORDER BY created_log_sequence LIMIT 1",
-                NON_TERMINAL_RESUMABLE).fetchone()
+            row = None
+            for candidate in self.connection.execute(
+                    "SELECT * FROM tasks WHERE terminal = 0 AND state IN (%s) "
+                    "ORDER BY created_log_sequence"
+                    % (",".join("?" * len(NON_TERMINAL_RESUMABLE)),),
+                    NON_TERMINAL_RESUMABLE):
+                if candidate["task_id"] not in refused:
+                    row = candidate
+                    break
             if row is None:
                 break
             outcome = self._advance(row)
@@ -745,6 +788,11 @@ class Orchestrator(object):
                 report["dead_lettered"].append(row["task_id"])
             elif outcome == "abandoned":
                 report["abandoned"].append(row["task_id"])
+            elif outcome == "blocked":
+                report["blocked"].append(row["task_id"])
+            elif outcome == "unauthorized":
+                report["abandoned"].append(row["task_id"])
+                refused.add(row["task_id"])
         return report
 
     def _advance(self, task_row):
@@ -764,6 +812,12 @@ class Orchestrator(object):
 
         if state == "queued":
             return self._claim_and_execute(task_row)
+
+        if state == "blocked":
+            # Reached only after a crash between the denial and the request for
+            # review. The decision itself is already durable and is NOT
+            # re-made: this completes the transition the crash interrupted.
+            return self._request_review(task_row)
 
         if state == "failed":
             return self._resolve_failed_task(task_row)
@@ -939,36 +993,345 @@ class Orchestrator(object):
                     "deadLetterReason": decision.reason})
         return "dead_lettered"
 
-    def _evaluate_policy(self, task_row):
-        """Apply policy only to the extent authorized (plan section 10).
+    def _subject_source(self, task_row):
+        """The source an acquisition task concerns, from the command's inputRefs.
 
-        A non-acquisition operation proceeds with a recorded no-op. An
-        acquisition-class operation CANNOT be decided here, because no policy
-        gate exists in Step 1, so it is refused rather than guessed. An
-        indeterminate class is blocked -- the fail-closed default.
+        Identifiers only -- Catalog section A: `inputRefs` carries references,
+        "never inline payloads". The gate resolves an authorization for this
+        source and for no other; a task that names none is denied, because an
+        acquisition with no identified subject cannot be authorized.
+        """
+        row = self.connection.execute(
+            "SELECT input_refs_json FROM commands WHERE command_id = ?",
+            (task_row["command_id"],)).fetchone()
+        if row is None or not row["input_refs_json"]:
+            return None
+        sources = [ref for ref in json.loads(row["input_refs_json"])
+                   if isinstance(ref, str) and ref.startswith("SRC|")]
+        # More than one subject is ambiguous, and ambiguity denies rather than
+        # picking one: two sources under one authorization decision is a
+        # conflict a machine must not resolve.
+        return sources[0] if len(sources) == 1 else None
+
+    def _evaluate_policy(self, task_row):
+        """THE POLICY GATE. Constitution section 5.1, Architecture section 20.
+
+        Every task passes through here, and the decision is recorded truthfully
+        whichever way it goes. A permit reaches `queued`; a denial reaches
+        `blocked` and is routed to human review, which is the only authority
+        that can release it.
+
+        WHAT THIS REPLACED, AND WHY. Before Step 3 this method recorded
+        `decision: "not_applicable"` for an acquisition-class task -- the
+        opposite of what happened -- with a null operation class, and then
+        emitted TaskClaimed and TaskStarted for an execution that never
+        occurred, in order to reach `running` so that a TaskFailed could be
+        appended. The outcome was fail-closed; the record of it was a
+        fabrication. Constitution section 4.20 requires every governed decision
+        to be auditable -- who, what, when, why, under which policy version --
+        and an audit trail that misstates the decision is worse than a missing
+        one, because it will be believed.
         """
         capability = registry.lookup(self.connection, task_row["capability_id"])
         operation_class = (capability["operation_class"] if capability is not None
                            else None)
-        next_state, reason = task_states.classify_policy_check(operation_class)
+        operations = registry.declared_acquisition_operations(capability)
 
-        if next_state == "queued":
-            self._emit(
-                "PolicyEvaluated", task_row["workflow_id"],
-                task_row["correlation_id"], task_row["task_id"],
-                {"decision": "not_applicable", "operationClass": operation_class,
-                 "reason": reason},
-                task_id=task_row["task_id"], producer=PRODUCER_POLICY_GATE,
-                policy_context={"authorizationId": None, "policyVersion": "0",
-                                "permittedOperations": []},
-            )
+        subject_source = None
+        authorization = None
+        problem = None
+        if operation_class != policy.OPERATION_CLASS_NON_ACQUISITION:
+            subject_source = self._subject_source(task_row)
+            authorization, problem = authorizations.resolve(self.connection,
+                                                            subject_source)
+
+        decision = policy.assert_decision_is_recognised(
+            policy.evaluate(operation_class, operations, authorization,
+                            self._clock.now_ms(), resolution_problem=problem))
+
+        payload = {
+            "decision": decision.decision,
+            "reason": decision.reason,
+            "operationClass": operation_class,
+            "requestedOperations": list(operations),
+            "subjectSourceId": subject_source,
+            # Constitution section 5.6: the deciding authority and the policy
+            # version in force are recorded, or the decision is not auditable.
+            "authorizationId": (authorization or {}).get("authorizationId"),
+            "policyStatus": (authorization or {}).get("policyStatus"),
+            "policyVersion": (authorization or {}).get("policyVersion"),
+            "decisionAuthority": (authorization or {}).get("decisionAuthority"),
+            "permittedOperations": list(
+                (authorization or {}).get("permittedOperations") or []),
+            # The record's content hash AS IT STOOD when the decision was made.
+            # A later edit is therefore detectable and inert: the decision stays
+            # attributable to the bytes actually in force. Constitution section
+            # 5.7 -- a policy change never retroactively legitimises a past
+            # acquisition, and never silently invalidates one.
+            "authorizationRecordHash": (authorization or {}).get("recordHash"),
+        }
+        policy_context = {
+            "authorizationId": payload["authorizationId"],
+            "policyVersion": payload["policyVersion"] or "0",
+            "permittedOperations": payload["permittedOperations"],
+        }
+
+        self._emit("PolicyEvaluated", task_row["workflow_id"],
+                   task_row["correlation_id"], task_row["task_id"], payload,
+                   task_id=task_row["task_id"], producer=PRODUCER_POLICY_GATE,
+                   policy_context=policy_context,
+                   crash_after_append="after_policy_decision_append")
+
+        if decision.permitted:
+            if operation_class == policy.OPERATION_CLASS_ACQUISITION:
+                self._emit("AcquisitionAuthorized", task_row["workflow_id"],
+                           task_row["correlation_id"], task_row["task_id"],
+                           dict(payload), task_id=task_row["task_id"],
+                           producer=PRODUCER_POLICY_GATE,
+                           policy_context=policy_context)
             return "advanced"
 
-        detail = ("acquisition-class operations require the policy gate, which is "
-                  "not implemented in Step 1"
-                  if reason == task_states.REQUIRES_POLICY_GATE
-                  else "operation class %r is indeterminate" % (operation_class,))
-        return self._fail_task(task_row, "policy_blocked", detail)
+        # Every denial concerns acquisition-class or indeterminate work, because
+        # non-acquisition work always permits. Constitution section 4.18:
+        # rejections remain visible -- silence is a defect.
+        self._emit("AcquisitionDenied", task_row["workflow_id"],
+                   task_row["correlation_id"], task_row["task_id"], dict(payload),
+                   task_id=task_row["task_id"], producer=PRODUCER_POLICY_GATE,
+                   policy_context=policy_context)
+        self._crash_point("after_policy_denial")
+        return self._request_review(task_row, decision.reason, operation_class,
+                                    subject_source, operations,
+                                    payload["policyStatus"],
+                                    payload["policyVersion"])
+
+    def _request_review(self, task_row, reason=None, operation_class=None,
+                        subject_source=None, operations=None,
+                        policy_status=None, policy_version=None):
+        """`blocked -> awaiting_review`. Catalog section L, authority orchestrator.
+
+        Called both inline after a denial and, after a crash between the two
+        events, from the drivable set. It RE-STATES a decision already durable
+        in the log; it never re-makes one, which is why every field falls back
+        to the recorded task row rather than being recomputed.
+        """
+        self._emit("HumanReviewRequired", task_row["workflow_id"],
+                   task_row["correlation_id"], task_row["task_id"],
+                   {"reviewType": "acquisition_policy",
+                    "reason": reason or task_row["policy_reason"],
+                    "operationClass": (operation_class
+                                       or task_row["operation_class"]),
+                    "subjectSourceId": (subject_source
+                                        or task_row["subject_source_id"]),
+                    "requestedOperations": list(operations or []),
+                    "policyStatus": policy_status or task_row["policy_status"],
+                    "policyVersion": policy_version or task_row["policy_version"],
+                    "blockedAtUtc": self._clock.now_iso()},
+                   task_id=task_row["task_id"], producer=PRODUCER_ORCHESTRATOR,
+                   crash_after_append="after_review_required_append")
+        return "blocked"
+
+    def _refuse_unauthorized_dispatch(self, task_row, recorded_decision):
+        """An acquisition-class task reached dispatch without a recorded permit.
+
+        This is not reachable through the normal path -- policy_check is the
+        only entry to `queued`, and it records its decision before the
+        transition commits. It is reachable through index corruption or a future
+        code path that forgot the gate, which is exactly what a defence-in-depth
+        guard is for.
+
+        Nothing executes, nothing is claimed, and the refusal is recorded rather
+        than raised, because Constitution section 6.6 forbids a path that ends
+        without a recorded outcome.
+        """
+        with store.immediate_transaction(self.connection):
+            self.connection.execute(
+                "INSERT INTO transition_anomalies "
+                "(detected_at, log_sequence, task_id, from_state, to_state, reason) "
+                "VALUES (?,?,?,?,?,?)",
+                (self._clock.now_iso(), task_row["last_log_sequence"],
+                 task_row["task_id"], "queued", "claimed",
+                 "dispatch_without_policy_permit: acquisition-class task carries "
+                 "recorded policy decision %r, not %r"
+                 % (recorded_decision, policy.DECISION_PERMIT)))
+        self._note("REFUSED dispatch of task %s -- no recorded policy permit"
+                   % (task_row["task_id"],))
+        return "unauthorized"
+
+    # -- operator disposition of a blocked task ------------------------------
+
+    def record_review_decision(self, task_id, decision, reason, reviewer_identity,
+                               policy_version=None):
+        """The audited operator decision that disposes of a blocked task.
+
+        Governance decision C-1. This is NOT a review system: there is no queue,
+        no assignment, no notification and no workflow. It is the one audited
+        action that lets a human release or suppress a task the gate blocked,
+        which is what keeps Constitution section 6.5 true -- every task reaches
+        a visible terminal outcome, or is explicitly released.
+
+        The committed contract fixes the path. `legal_successors("blocked")` is
+        ('awaiting_review', 'cancelled'): there is no `blocked -> queued` and no
+        `blocked -> suppressed` edge, so the decision acts on `awaiting_review`,
+        under `review_gate` authority, exactly as Catalog section L assigns it.
+
+        Constitution section 9 is enforced, not documented: reviewer identity,
+        decision, REASON, timestamp and policy version are all required, and a
+        bare approval is refused.
+        """
+        if decision not in projection.REVIEW_DECISION_TARGET:
+            runtime_errors.fail(
+                "review decision %r is not one of %s"
+                % (decision, sorted(projection.REVIEW_DECISION_TARGET)),
+                runtime_errors.ReviewDecisionError,
+            )
+        if not isinstance(reason, str) or not reason.strip():
+            runtime_errors.fail(
+                "a review decision requires a reason. Constitution section 9: "
+                "'a decision without a reason is invalid' -- a bare approval is "
+                "refused rather than recorded with an empty justification",
+                runtime_errors.ReviewDecisionError,
+            )
+        self._assert_reviewer_is_human(reviewer_identity)
+
+        row = self.connection.execute(
+            "SELECT * FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
+        if row is None:
+            runtime_errors.fail("no such task %s" % (task_id,),
+                                runtime_errors.ReviewDecisionError)
+        if row["state"] != "awaiting_review":
+            runtime_errors.fail(
+                "task %s is %s, not awaiting_review; only a task awaiting review "
+                "may be disposed of" % (task_id, row["state"]),
+                runtime_errors.ReviewDecisionError,
+            )
+
+        payload = {"decision": decision,
+                   "reason": reason,
+                   "reviewerIdentity": reviewer_identity,
+                   "decidedAtUtc": self._clock.now_iso(),
+                   "policyVersion": policy_version or row["policy_version"] or "0",
+                   "reviewType": "acquisition_policy",
+                   "subjectSourceId": row["subject_source_id"],
+                   "priorPolicyReason": row["policy_reason"]}
+
+        if decision == "approved":
+            # A HUMAN MAY UN-BLOCK A TASK. ONLY THE GATE MAY AUTHORIZE THE
+            # ACQUISITION. Constitution section 5.1 admits no exception: no
+            # fetch without an Acquisition Authorization Record, and a reviewer
+            # is not a substitute for one.
+            #
+            # So an approval RE-EVALUATES the gate against whatever governance
+            # has recorded since the block, and is refused outright if the
+            # answer is still a denial. Releasing the task anyway would produce
+            # a task that could never dispatch -- approval that cannot lead to
+            # execution is not approval, it is a misleading state change.
+            fresh = self._re_evaluate_for_review(row)
+            if not fresh.permitted:
+                runtime_errors.fail(
+                    "task %s cannot be approved: the policy gate still denies it "
+                    "(%s). A review decision releases a task; it does not "
+                    "authorize an acquisition. Record the governance-supplied "
+                    "authorization first, or reject the task."
+                    % (task_id, fresh.reason),
+                    runtime_errors.ReviewDecisionError,
+                )
+            payload.update(self._policy_payload_for(row, fresh))
+
+        self._emit("HumanReviewCompleted", row["workflow_id"],
+                   row["correlation_id"], task_id, payload,
+                   task_id=task_id, producer=PRODUCER_REVIEW_GATE,
+                   crash_after_append="after_review_decision_append")
+        return decision
+
+    def _re_evaluate_for_review(self, task_row):
+        """Ask the gate again, with today's recorded authorizations.
+
+        The second and last call site of the decision. It exists because an
+        approval is only meaningful if the situation that caused the block has
+        actually changed, and only the gate may say whether it has.
+        """
+        capability = registry.lookup(self.connection, task_row["capability_id"])
+        operation_class = (capability["operation_class"] if capability is not None
+                           else None)
+        operations = registry.declared_acquisition_operations(capability)
+        authorization, problem = authorizations.resolve(
+            self.connection, task_row["subject_source_id"])
+        return policy.assert_decision_is_recognised(
+            policy.evaluate(operation_class, operations, authorization,
+                            self._clock.now_ms(), resolution_problem=problem))
+
+    def _policy_payload_for(self, task_row, decision):
+        """The re-evaluated decision, in the same recorded shape the gate uses.
+
+        Carried in the HumanReviewCompleted payload and copied into the task
+        row, so the permit that allows dispatch is the gate's, recorded with its
+        authority and policy version -- never the reviewer's say-so.
+        """
+        capability = registry.lookup(self.connection, task_row["capability_id"])
+        operations = registry.declared_acquisition_operations(capability)
+        authorization, _problem = authorizations.resolve(
+            self.connection, task_row["subject_source_id"])
+        authorization = authorization or {}
+        return {
+            "policyDecision": decision.decision,
+            "policyReason": decision.reason,
+            "policyStatus": authorization.get("policyStatus"),
+            "reEvaluatedPolicyVersion": authorization.get("policyVersion"),
+            "authorizationId": authorization.get("authorizationId"),
+            "decisionAuthority": authorization.get("decisionAuthority"),
+            "permittedOperations": list(
+                authorization.get("permittedOperations") or []),
+            "requestedOperations": list(operations),
+            "authorizationRecordHash": authorization.get("recordHash"),
+        }
+
+    def _assert_reviewer_is_human(self, reviewer_identity):
+        """Catalog section N: a reviewer is a human or a governance role, never
+        a worker. Constitution section 7: no worker may approve its own governed
+        output -- a capability that could release its own blocked task would
+        make the gate ornamental."""
+        if not isinstance(reviewer_identity, str) or not reviewer_identity.strip():
+            runtime_errors.fail(
+                "a review decision requires a reviewer identity "
+                "(Constitution section 9)",
+                runtime_errors.ReviewDecisionError,
+            )
+        for prefix in authorizations.PROHIBITED_AUTHORITY_PREFIXES:
+            if reviewer_identity.startswith(prefix) or prefix in reviewer_identity:
+                runtime_errors.fail(
+                    "reviewer identity %r names automation. A review decision "
+                    "may be made only by a human or a governance role -- no "
+                    "worker may approve its own governed output (Constitution "
+                    "section 7, Catalog section N)" % (reviewer_identity,),
+                    runtime_errors.ReviewDecisionError,
+                )
+        if not any(reviewer_identity.startswith(prefix)
+                   for prefix in authorizations.AUTHORITY_PREFIXES):
+            runtime_errors.fail(
+                "reviewer identity %r must begin with one of %s so that the "
+                "deciding authority is unambiguous in the audit trail"
+                % (reviewer_identity, list(authorizations.AUTHORITY_PREFIXES)),
+                runtime_errors.ReviewDecisionError,
+            )
+        return reviewer_identity
+
+    # -- governance input ----------------------------------------------------
+
+    def record_authorization(self, record):
+        """Store one governance-supplied Acquisition Authorization Record.
+
+        The platform records and enforces decisions supplied by governance or
+        legal review; it never makes one (Constitution section 5.9). This method
+        is the only way a record enters the runtime, and it validates before it
+        stores.
+        """
+        with store.immediate_transaction(self.connection):
+            outcome = authorizations.register(self.connection, record,
+                                              self._clock.now_iso())
+        self._note("AUTHORIZATION %s %s for %s"
+                   % (outcome, record.get("authorizationId"),
+                      record.get("sourceId")))
+        return outcome
 
     def _acquire_lease(self, task_row, capability_row):
         """Claim the task and take the lease in ONE guarded UPDATE.
@@ -1058,6 +1421,24 @@ class Orchestrator(object):
                 command_row["command_version"], task_row["capability_id"])
         except runtime_errors.CapabilityNotDispatchableError as exc:
             return self._fail_task(task_row, "validation", str(exc))
+
+        # THE DISPATCH GUARD. Defence in depth for Constitution section 5.5:
+        # "No connector may bypass the policy gate, by configuration, flag,
+        # argument, or code path." Reaching `queued` already requires a permit,
+        # because policy_check is the only entry path -- but an acquisition-class
+        # task is checked AGAIN against its own recorded decision immediately
+        # before it is claimed, so even a hand-corrupted index row cannot
+        # execute unauthorized acquisition.
+        #
+        # The guard applies to acquisition-class capabilities only. A
+        # non-acquisition task's recorded decision is `not_applicable`, and a
+        # task created before this schema version has no recorded decision at
+        # all; requiring one of those to carry a permit would strand every
+        # pre-existing task on upgrade without protecting anything.
+        if capability_row["operation_class"] == policy.OPERATION_CLASS_ACQUISITION:
+            recorded = task_row["policy_decision"]
+            if recorded != policy.DECISION_PERMIT:
+                return self._refuse_unauthorized_dispatch(task_row, recorded)
 
         generation = self._acquire_lease(task_row, capability_row)
         attempt = task_row["attempt"] + 1

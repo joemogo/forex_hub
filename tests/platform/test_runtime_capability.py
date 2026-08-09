@@ -29,6 +29,8 @@ from mogo_platform.runtime import store  # noqa: E402
 from mogo_platform.runtime.capabilities import echo as echo_capability  # noqa: E402
 from mogo_platform.runtime.capabilities import (  # noqa: E402
     fail_then_succeed as fail_then_succeed_capability)
+from mogo_platform.runtime.capabilities import (  # noqa: E402
+    policy_probe as policy_probe_capability)
 
 # Independently transcribed from the Step 1 plan section 11.
 EXPECTED_CAPABILITY_ID = "CAP|research|runtime-echo"
@@ -39,7 +41,11 @@ EXPECTED_DISPATCHABLE_LIFECYCLE = ("approved", "production")
 # Independently transcribed from the Step 2 plan section 16.
 EXPECTED_RETRY_CAPABILITY_ID = "CAP|research|runtime-fail-then-succeed"
 EXPECTED_RETRY_CAPABILITY_NAME = "research.runtime.fail-then-succeed.v1"
-EXPECTED_CAPABILITY_IDS = (EXPECTED_CAPABILITY_ID, EXPECTED_RETRY_CAPABILITY_ID)
+# Independently transcribed from the Step 3 plan section 4 / decision C-2.
+EXPECTED_POLICY_CAPABILITY_ID = "CAP|research|policy-probe"
+EXPECTED_POLICY_CAPABILITY_NAME = "research.policy.probe.v1"
+EXPECTED_CAPABILITY_IDS = (EXPECTED_CAPABILITY_ID, EXPECTED_RETRY_CAPABILITY_ID,
+                           EXPECTED_POLICY_CAPABILITY_ID)
 
 
 class CapabilityCase(unittest.TestCase):
@@ -92,8 +98,8 @@ class TestManifest(CapabilityCase):
 class TestRegistration(CapabilityCase):
     def test_registration_is_idempotent(self):
         outcomes = self.runtime.register_builtin_capabilities()
-        self.assertEqual(outcomes[EXPECTED_CAPABILITY_ID], "unchanged")
-        self.assertEqual(outcomes[EXPECTED_RETRY_CAPABILITY_ID], "unchanged")
+        for capability_id in EXPECTED_CAPABILITY_IDS:
+            self.assertEqual(outcomes[capability_id], "unchanged")
         count = self.runtime.connection.execute(
             "SELECT COUNT(*) FROM capabilities").fetchone()[0]
         self.assertEqual(count, len(EXPECTED_CAPABILITY_IDS))
@@ -263,12 +269,12 @@ class TestCapabilityDeterminism(CapabilityCase):
 
 
 class TestOnlyTheRegisteredCapabilityExecutes(CapabilityCase):
-    def test_exactly_the_two_approved_capabilities_are_registered(self):
+    def test_exactly_the_approved_capabilities_are_registered(self):
         rows = registry.all_capabilities(self.runtime.connection)
         self.assertEqual([row["capability_id"] for row in rows],
                          sorted(EXPECTED_CAPABILITY_IDS))
 
-    def test_exactly_the_two_approved_callables_are_wired(self):
+    def test_exactly_the_approved_callables_are_wired(self):
         self.assertEqual(set(orchestrator_module.CAPABILITY_CALLABLES),
                          set(EXPECTED_CAPABILITY_IDS))
         self.assertIs(
@@ -278,6 +284,10 @@ class TestOnlyTheRegisteredCapabilityExecutes(CapabilityCase):
             orchestrator_module.CAPABILITY_CALLABLES[
                 EXPECTED_RETRY_CAPABILITY_ID],
             fail_then_succeed_capability.execute)
+        self.assertIs(
+            orchestrator_module.CAPABILITY_CALLABLES[
+                EXPECTED_POLICY_CAPABILITY_ID],
+            policy_probe_capability.execute)
 
     def test_a_registered_capability_with_no_implementation_fails_closed(self):
         """No implementation is a `validation` failure, which is NOT retryable.
@@ -470,17 +480,28 @@ class TestEffectClassificationAndTheA5Gate(CapabilityCase):
         with self.assertRaises(runtime_errors.RetryPolicyError):
             registry.validate_manifest(manifest)
 
-    def test_the_connector_gates_are_declared_and_all_unmet(self):
+    def test_the_connector_gates_are_declared_and_only_the_policy_gate_is_met(self):
         """Constitution section 13, applied to the gate itself.
 
         The most important thing an operator can know about this platform is
         what it is not yet allowed to do, and why -- so the gates are data, and
         `status` prints them.
+
+        MOGO-011 Step 3 BUILT the policy gate, so its entry flips to satisfied.
+        That is a claim, and it is asserted here by name rather than by count,
+        so that a future step cannot quietly mark another gate met: three
+        remain unmet, and they are exactly the three that still stand between
+        this platform and its first acquisition.
         """
         self.assertEqual(len(registry.CONNECTOR_GATES), 4)
+        by_name = {gate["gate"]: gate for gate in registry.CONNECTOR_GATES}
+        self.assertIs(by_name["policy_gate"]["satisfied"], True)
+        for name in ("a5_result_store", "first_connector_authorization",
+                     "acquisition_authorization_record"):
+            with self.subTest(gate=name):
+                self.assertIs(by_name[name]["satisfied"], False)
         for gate in registry.CONNECTOR_GATES:
             with self.subTest(gate=gate["gate"]):
-                self.assertIs(gate["satisfied"], False)
                 self.assertTrue(gate["authority"].strip())
                 self.assertTrue(gate["requires"].strip())
 

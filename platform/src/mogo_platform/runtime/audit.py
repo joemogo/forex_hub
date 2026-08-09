@@ -24,6 +24,8 @@ VERIFICATION IS INDEPENDENT OF THE INDEX
     resolved silently in either direction.
 """
 
+import json  # noqa: E402
+
 from ..contracts import ids  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
 from . import projection  # noqa: E402
@@ -78,7 +80,21 @@ def status_report(connection, log, paths):
                  "FROM tasks WHERE lease_holder IS NOT NULL "
                  "ORDER BY lease_expires_at")
 
+    policy_counts = _rows(connection,
+                          "SELECT decision, COUNT(*) AS count FROM policy_decisions "
+                          "GROUP BY decision ORDER BY decision")
+    blocked_now = connection.execute(
+        "SELECT COUNT(*) AS count FROM tasks "
+        "WHERE state IN ('blocked', 'awaiting_review')").fetchone()
+    authorization_count = connection.execute(
+        "SELECT COUNT(*) AS count FROM acquisition_authorizations").fetchone()
+
     return {
+        "policyDecisionsByOutcome": [(row["decision"], row["count"])
+                                     for row in policy_counts],
+        "tasksAwaitingDisposition": blocked_now["count"] if blocked_now else 0,
+        "authorizationsRecorded": (authorization_count["count"]
+                                   if authorization_count else 0),
         "schemaVersion": version["value"] if version else None,
         "stateRoot": paths.root,
         "eventLogPath": log.path,
@@ -117,6 +133,121 @@ def status_report(connection, log, paths):
         "connectorGatesUnmet": [gate["gate"] for gate in registry.CONNECTOR_GATES
                                 if not gate["satisfied"]],
     }
+
+
+def policy_report(connection, log):
+    """The policy gate's own operator view.
+
+    Constitution section 13: an operator must be able to answer "what was
+    blocked, when, and why" without reading code. Everything the gate decided
+    is here, together with the authorizations in force and the tasks a human
+    now has to dispose of.
+    """
+    from . import authorizations as authorizations_module
+    from . import registry
+
+    decisions = _rows(connection,
+                      "SELECT decision, reason, COUNT(*) AS count "
+                      "FROM policy_decisions GROUP BY decision, reason "
+                      "ORDER BY decision, count DESC, reason")
+
+    blocked = [
+        {"taskId": row["task_id"], "state": row["state"],
+         "reason": row["policy_reason"], "operationClass": row["operation_class"],
+         "subjectSourceId": row["subject_source_id"],
+         "policyStatus": row["policy_status"],
+         "policyVersion": row["policy_version"],
+         "authorizationId": row["authorization_id"]}
+        for row in _rows(connection,
+                         "SELECT * FROM tasks WHERE policy_decision = 'deny' "
+                         "ORDER BY created_log_sequence")]
+
+    awaiting = [entry for entry in blocked
+                if entry["state"] in ("blocked", "awaiting_review")]
+
+    disposed = [
+        {"taskId": row["task_id"], "state": row["state"],
+         "decision": row["review_decision"], "reason": row["review_reason"],
+         "reviewer": row["reviewer_identity"]}
+        for row in _rows(connection,
+                         "SELECT * FROM tasks WHERE review_decision IS NOT NULL "
+                         "ORDER BY created_log_sequence")]
+
+    superseded = authorizations_module.superseded_ids(connection)
+    records = [
+        {"authorizationId": row["authorization_id"], "sourceId": row["source_id"],
+         "policyStatus": row["policy_status"], "policyVersion": row["policy_version"],
+         "decisionAuthority": row["decision_authority"],
+         "decidedAt": row["decided_at"], "expiresAt": row["expires_at"],
+         "permittedOperations": json.loads(row["permitted_operations"]),
+         "supersededBy": row["authorization_id"] in superseded,
+         "recordHash": row["record_hash"]}
+        for row in authorizations_module.all_authorizations(connection)]
+
+    return {
+        "decisionsByOutcome": [(row["decision"], row["reason"], row["count"])
+                               for row in decisions],
+        "blockedTasks": blocked,
+        "awaitingDisposition": awaiting,
+        "disposedTasks": disposed,
+        "authorizations": records,
+        "connectorGates": [dict(gate) for gate in registry.CONNECTOR_GATES],
+    }
+
+
+def render_policy(report):
+    lines = ["POLICY DECISIONS",
+             "  %-16s %-36s %s" % ("decision", "reason", "count")]
+    if not report["decisionsByOutcome"]:
+        lines.append("  (none)")
+    for decision, reason, count in report["decisionsByOutcome"]:
+        lines.append("  %-16s %-36s %d" % (decision, reason, count))
+
+    lines += ["", "ACQUISITION AUTHORIZATIONS (governance input; never minted here)",
+              "  %-38s %-28s %-12s %-24s %s"
+              % ("sourceId", "policyStatus", "operations", "authority", "state")]
+    if not report["authorizations"]:
+        lines.append("  (none recorded)")
+    for entry in report["authorizations"]:
+        lines.append("  %-38s %-28s %-12s %-24s %s"
+                     % (entry["sourceId"], entry["policyStatus"],
+                        ",".join(entry["permittedOperations"]) or "-",
+                        entry["decisionAuthority"],
+                        "SUPERSEDED" if entry["supersededBy"] else "in force"))
+
+    lines += ["", "BLOCKED BY POLICY",
+              "  %-38s %-16s %-34s %s"
+              % ("taskId", "state", "reason", "subjectSource")]
+    if not report["blockedTasks"]:
+        lines.append("  (none)")
+    for entry in report["blockedTasks"]:
+        lines.append("  %-38s %-16s %-34s %s"
+                     % (entry["taskId"], entry["state"], entry["reason"] or "-",
+                        entry["subjectSourceId"] or "-"))
+
+    lines += ["", "AWAITING OPERATOR DISPOSITION"]
+    if not report["awaitingDisposition"]:
+        lines.append("  (none)")
+    for entry in report["awaitingDisposition"]:
+        lines.append("  %s  %s  -- a human decision is required to release or "
+                     "suppress this task" % (entry["taskId"], entry["reason"]))
+
+    if report["disposedTasks"]:
+        lines += ["", "DISPOSED BY REVIEW"]
+        for entry in report["disposedTasks"]:
+            lines.append("  %-38s %-12s %-24s %s"
+                         % (entry["taskId"], entry["decision"], entry["reviewer"],
+                            entry["reason"]))
+
+    lines += ["", "CONNECTOR GATES"]
+    for gate in report["connectorGates"]:
+        lines.append("  %-34s %s   %s"
+                     % (gate["gate"], "MET   " if gate["satisfied"] else "UNMET ",
+                        gate["requires"]))
+    unmet = [g for g in report["connectorGates"] if not g["satisfied"]]
+    lines.append("  %d gate(s) still unmet -- no connector may exist until they are"
+                 % (len(unmet),))
+    return "\n".join(lines)
 
 
 def failures_report(connection, log):
@@ -465,12 +596,20 @@ def _verify_step_2_invariants(connection, records):
     #    Constitution section 6.5 and 6.6 together: a task that is terminal in
     #    the index but has no terminal event in the log is a state change the
     #    log cannot reproduce.
+    # RESOLVED, not looked up in a static map. A terminal state can be reached
+    # by a PAYLOAD-DEPENDENT transition -- HumanReviewCompleted(rejected)
+    # carries awaiting_review -> suppressed -- and a static map silently omits
+    # those, which made `verify` report a FALSE FATAL for every suppressed task
+    # in ordinary operation. Asking the projection which edge an event actually
+    # carries is the same fix, and the same reasoning, as the audit timeline.
     terminal_events = {}
     for record in records:
-        event = record.event
-        transition = TERMINAL_EVENT_STATES.get(event["eventType"])
-        if transition is not None:
-            terminal_events.setdefault(event.get("taskId"), set()).add(transition)
+        transition = projection.resolved_transition(record)
+        if transition is None:
+            continue
+        target = transition[1]
+        if target in task_states.TERMINAL_STATES:
+            terminal_events.setdefault(record.event.get("taskId"), set()).add(target)
     for row in _rows(connection,
                      "SELECT task_id, state, terminal FROM tasks WHERE terminal = 1"):
         reached = terminal_events.get(row["task_id"], set())
@@ -484,11 +623,14 @@ def _verify_step_2_invariants(connection, records):
     return findings
 
 
-# Events that carry a task into a terminal state. Used by the verify check
-# above; kept beside it so the two cannot drift apart.
+# Retained for reference and for callers that want the STATIC mapping. The
+# verify check above deliberately does NOT use it: a terminal state can also be
+# reached by a payload-dependent transition, and a static list of event names
+# cannot express that. See the comment at the check itself.
 TERMINAL_EVENT_STATES = {
     "TaskSucceeded": "succeeded",
     "TaskDeadLettered": "dead_lettered",
+    "HumanReviewCompleted": "suppressed",   # when the payload records a rejection
 }
 
 
@@ -524,7 +666,11 @@ def audit_report(connection, log, workflow_id=None, task_id=None):
 
     timeline = []
     for r in records:
-        transition = projection.TRANSITIONS.get(r.event["eventType"])
+        # The RESOLVED edge, not the table's default one. A PolicyEvaluated
+        # denial carries policy_check -> blocked, and reporting the table's
+        # `-> queued` instead would put a transition in the operator's timeline
+        # that never happened.
+        transition = projection.resolved_transition(r)
         if transition is None:
             continue
         from_state, to_state = transition
@@ -582,6 +728,14 @@ def render_status(report):
     oldest = report["oldestNonTerminalTask"]
     lines.append("  oldest open     : %s" % (
         "none" if oldest is None else "%s (%s)" % (oldest["taskId"], oldest["state"])))
+    lines.append("  policy          : %s"
+                 % (", ".join("%s=%d" % pair
+                              for pair in report["policyDecisionsByOutcome"])
+                    or "no decisions yet"))
+    lines.append("  awaiting review : %d task(s) blocked by policy"
+                 % (report["tasksAwaitingDisposition"],))
+    lines.append("  authorizations  : %d recorded"
+                 % (report["authorizationsRecorded"],))
     lines.append("  attempts        : %d recorded, %d failed"
                  % (report["attemptsRecorded"], report["attemptsFailed"]))
     lines.append("  retries         : %d scheduled, %d released"
