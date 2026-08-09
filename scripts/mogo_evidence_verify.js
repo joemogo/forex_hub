@@ -480,8 +480,67 @@ function reconcileManifest(manifestPath, byIdentity) {
                                         : (e.packageId != null ? 'pkg:' + String(e.packageId) : '')));
   for (const key of byIdentity.keys()) if (!listed.has(key)) unlisted.push(key);
 
-  return { manifestPath: path.resolve(manifestPath), manifestEntries: entries.length,
-           present: present.length, missing, unlisted, hashDisagreements };
+  // ── Browser-side facts, derived from the manifest rather than from any banner ────────────────
+  const browserTrades = new Set(entries.map(e => e.sourceTradeId).filter(v => v != null).map(String));
+  const browserPkgIds = new Set(entries.map(e => e.packageId).filter(v => v != null).map(String));
+  const browserPkgCollisions = [];
+  {
+    const byPid = new Map();
+    for (const e of entries) {
+      if (e.packageId == null) continue;
+      const k = String(e.packageId);
+      if (!byPid.has(k)) byPid.set(k, new Set());
+      byPid.get(k).add(String(e.sourceTradeId));
+    }
+    for (const [pid, trades] of byPid) {
+      if (trades.size > 1) browserPkgCollisions.push({ packageId: pid, sourceTradeIds: Array.from(trades) });
+    }
+  }
+
+  // ── Export-attempt and confirmation state discrepancies ─────────────────────────────────────
+  // The manifest records what the STORE believes. Each disk copy carries an export block that was
+  // a snapshot at write time. Where they disagree, that is a finding, not something to reconcile
+  // away -- Step 4A found 31 of 79 disk packages carrying no attempt record at all.
+  const exportStateDiscrepancies = [], confirmationDiscrepancies = [];
+  for (const e of entries) {
+    const st = e.sourceTradeId == null ? null : String(e.sourceTradeId);
+    const key = st != null ? 'trade:' + st : null;
+    if (key == null || !byIdentity.has(key)) continue;
+    const rows = byIdentity.get(key);
+    const diskAttempted = rows.some(r => r.exportBlock && r.exportBlock.exportAttemptedAt);
+    const browserAttempted = e.exportAttemptedAt != null;
+    if (diskAttempted !== browserAttempted) {
+      exportStateDiscrepancies.push({ identity: key, browserAttempted, diskFileRecordsAttempt: diskAttempted });
+    }
+    const diskConfirmed = rows.some(r => r.exportBlock && r.exportBlock.exportedAt);
+    const browserConfirmed = e.exportedAt != null;
+    if (diskConfirmed !== browserConfirmed) {
+      confirmationDiscrepancies.push({ identity: key, browserConfirmed, diskFileRecordsConfirmation: diskConfirmed });
+    }
+  }
+
+  const noHashInBrowser = entries.filter(e => e.contentHash == null)
+    .map(e => ({ sourceTradeId: e.sourceTradeId, packageId: e.packageId,
+                 provenance: e.contentHashProvenance || null }));
+
+  return {
+    manifestPath: path.resolve(manifestPath), manifestEntries: entries.length,
+    present: present.length, missing, unlisted, hashDisagreements,
+    browser: {
+      storedPackages: entries.length,
+      uniqueSourceTradeIds: browserTrades.size,
+      uniquePackageIds: browserPkgIds.size,
+      identitiesLostIfCountingByPackageId: browserTrades.size - browserPkgIds.size,
+      packageIdCollisions: browserPkgCollisions,
+      confirmedExported: entries.filter(e => e.exportedAt != null).length,
+      attemptedNotConfirmed: entries.filter(e => e.exportedAt == null && e.exportAttemptedAt != null).length,
+      neverAttempted: entries.filter(e => e.exportedAt == null && e.exportAttemptedAt == null).length,
+      withoutContentHash: noHashInBrowser.length,
+      noHashDetail: noHashInBrowser,
+    },
+    exportStateDiscrepancies,
+    confirmationDiscrepancies,
+  };
 }
 
 // ══ Report assembly ══════════════════════════════════════════════════════════════════════════
@@ -602,6 +661,44 @@ function buildReport(opts) {
       detail: idy.duplicates,
     },
     manifestReconciliation: manifest,
+    // The twelve-point reconciliation required by MOGO-011 Step 4B. Null until a browser manifest
+    // is supplied, because none of it can be answered from disk alone -- and answering it from the
+    // UI banner instead is exactly what Step 4B forbids.
+    reconciliation: !manifest ? null : {
+      '1_authoritativeBrowserPackageCount': manifest.browser.storedPackages,
+      '2_authoritativeBrowserUniqueIdentities': manifest.browser.uniqueSourceTradeIds,
+      '3_diskUniqueIdentities': uniqueIdentities,
+      '4_identitiesInBoth': manifest.present,
+      '5_browserIdentitiesMissingFromDisk': manifest.missing.length,
+      '6_diskIdentitiesAbsentFromBrowser': manifest.unlisted.length,
+      '7_duplicatePhysicalDiskCopies': idy.packages.length - uniqueIdentities,
+      '8_packageIdCollisions': {
+        onDisk: idy.collisions.length,
+        inBrowser: manifest.browser.packageIdCollisions.length,
+        identitiesLostIfCountingByPackageIdOnDisk: uniqueIdentities - idy.distinctPackageIds,
+        identitiesLostIfCountingByPackageIdInBrowser: manifest.browser.identitiesLostIfCountingByPackageId,
+      },
+      '9_contentHashMismatches': {
+        diskRecomputation: byStatus.HASH_MISMATCH || 0,
+        diskVsManifest: manifest.hashDisagreements.length,
+      },
+      '10_noHashLegacySyntheticUndetermined': {
+        noHashOnDisk: byStatus.NO_HASH || 0,
+        noHashInBrowser: manifest.browser.withoutContentHash,
+        syntheticOnDisk: classCounts.SYNTHETIC,
+        undeterminedOnDisk: classCounts.UNDETERMINED,
+      },
+      '11_exportAttemptStateDiscrepancies': manifest.exportStateDiscrepancies.length,
+      '12_confirmationStateDiscrepancies': manifest.confirmationDiscrepancies.length,
+      detail: {
+        browserIdentitiesMissingFromDisk: manifest.missing,
+        diskIdentitiesAbsentFromBrowser: manifest.unlisted,
+        exportStateDiscrepancies: manifest.exportStateDiscrepancies,
+        confirmationDiscrepancies: manifest.confirmationDiscrepancies,
+      },
+      identityKey: 'sourceTradeId — packageId is NEVER treated as authoritative identity, because ' +
+                   'Step 4A demonstrated real collisions in both populations',
+    },
     storedPackageGap: {
       expectedStoredTotal: expectedTotal,
       expectedTotalProvenance: expectedTotal == null ? 'NOT_SUPPLIED'
@@ -642,7 +739,12 @@ function buildReport(opts) {
     report.counts.notCanonicalizable + report.counts.unsupportedAlgorithm +
     report.identity.packageIdCollisionCount + report.identity.sourceTradeIdSplits.length +
     report.readOnlyProof.mutationsDetected +
-    (manifest ? manifest.missing.length + manifest.hashDisagreements.length : 0);
+    // A browser/disk state disagreement is a genuine inconsistency in the evidence record, not a
+    // presentational detail: it means one of the two populations is describing a fact the other
+    // denies. It fails the run. `unlisted` deliberately does NOT -- Step 4A established that
+    // legitimate cross-profile evidence exists on disk that the current store never held.
+    (manifest ? manifest.missing.length + manifest.hashDisagreements.length +
+                manifest.exportStateDiscrepancies.length + manifest.confirmationDiscrepancies.length : 0);
 
   report.outcome = {
     problems,
@@ -710,15 +812,27 @@ function renderHuman(r) {
   L.push('    agreeing on contentHash        : ' + r.duplicates.agreeingOnContentHash + '  (benign — export block differs only)');
   L.push('    CONFLICTING on contentHash     : ' + r.duplicates.conflictingOnContentHash);
   L.push('');
-  if (r.manifestReconciliation) {
-    const m = r.manifestReconciliation;
-    L.push('MANIFEST RECONCILIATION');
-    L.push('  manifest                : ' + m.manifestPath);
-    L.push('  entries                 : ' + m.manifestEntries);
-    L.push('  present on disk         : ' + m.present);
-    L.push('  STORED BUT NOT FOUND    : ' + m.missing.length);
-    L.push('  on disk but not listed  : ' + m.unlisted.length);
-    L.push('  hash disagreements      : ' + m.hashDisagreements.length);
+  if (r.reconciliation) {
+    const q = r.reconciliation;
+    L.push('BROWSER ↔ DISK RECONCILIATION  (manifest: ' + r.manifestReconciliation.manifestPath + ')');
+    L.push('   1  authoritative browser package count      : ' + q['1_authoritativeBrowserPackageCount']);
+    L.push('   2  authoritative browser unique identities  : ' + q['2_authoritativeBrowserUniqueIdentities']);
+    L.push('   3  disk unique identities                   : ' + q['3_diskUniqueIdentities']);
+    L.push('   4  identities present in BOTH               : ' + q['4_identitiesInBoth']);
+    L.push('   5  browser identities MISSING from disk     : ' + q['5_browserIdentitiesMissingFromDisk']);
+    L.push('   6  disk identities ABSENT from browser      : ' + q['6_diskIdentitiesAbsentFromBrowser']);
+    L.push('   7  duplicate physical disk copies           : ' + q['7_duplicatePhysicalDiskCopies']);
+    L.push('   8  packageId collisions                     : disk ' + q['8_packageIdCollisions'].onDisk +
+           ', browser ' + q['8_packageIdCollisions'].inBrowser);
+    L.push('   9  contentHash mismatches                   : recomputation ' + q['9_contentHashMismatches'].diskRecomputation +
+           ', disk-vs-manifest ' + q['9_contentHashMismatches'].diskVsManifest);
+    L.push('  10  no-hash / synthetic / undetermined       : no-hash disk ' + q['10_noHashLegacySyntheticUndetermined'].noHashOnDisk +
+           ', browser ' + q['10_noHashLegacySyntheticUndetermined'].noHashInBrowser +
+           ', synthetic ' + q['10_noHashLegacySyntheticUndetermined'].syntheticOnDisk +
+           ', undetermined ' + q['10_noHashLegacySyntheticUndetermined'].undeterminedOnDisk);
+    L.push('  11  export-attempt state discrepancies       : ' + q['11_exportAttemptStateDiscrepancies']);
+    L.push('  12  confirmation state discrepancies         : ' + q['12_confirmationStateDiscrepancies']);
+    L.push('      identity key: ' + q.identityKey);
     L.push('');
   }
   const cl = r.classification;

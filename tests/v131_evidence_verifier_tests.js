@@ -335,6 +335,97 @@ console.log('--- MOGO-011 Step 4A evidence verifier fixtures ---');
   });
 })();
 
+// ══ GROUP 9 — Step 4B: browser↔disk reconciliation ═══════════════════════════════════════════
+(function () {
+  withTmp(dir => {
+    // Disk holds A (twice) and B. The browser holds A, C and D — so C and D are stored-but-not-found
+    // and B is on disk but absent from the browser.
+    const A = makePackage({ sourceTradeId: 'AGT|EUR_USD|1', packageId: 'PKG|s|20260501|1' });
+    const B = makePackage({ sourceTradeId: 'AGT|EUR_USD|2', packageId: 'PKG|s|20260501|2' });
+    write(dir, 'a1.json', A);
+    write(dir, 'a2.json', Object.assign({}, A, { export: { exportedAt: null, exportAttemptedAt: '2026-08-09T00:00:00Z' } }));
+    write(dir, 'b.json', B);
+
+    const mf = path.join(dir, '..', path.basename(dir) + '-mf.json');
+    fs.writeFileSync(mf, JSON.stringify({ packages: [
+      // A: the browser records an attempt, and so does the disk copy — no discrepancy.
+      { sourceTradeId: 'AGT|EUR_USD|1', packageId: 'PKG|s|20260501|1', contentHash: A.contentHash,
+        exportedAt: null, exportAttemptedAt: '2026-08-09T00:00:00Z' },
+      // C and D: stored in the browser, never found on disk. They also COLLIDE on packageId.
+      { sourceTradeId: 'AGT|GBP_USD|1', packageId: 'PKG|s|20260502|1', contentHash: 'aa'.repeat(32),
+        exportedAt: null, exportAttemptedAt: null },
+      { sourceTradeId: 'AGT|GBP_USD|2', packageId: 'PKG|s|20260502|1', contentHash: null,
+        exportedAt: '2026-08-09T01:00:00Z', exportAttemptedAt: '2026-08-09T00:30:00Z' },
+    ] }));
+
+    try {
+      const r = V.buildReport({ scanDirs: [dir], appPath: APP, manifestPath: mf,
+                                expectedTotal: null, outFile: null });
+      const q = r.reconciliation;
+      ok(!!q, 'V49 a twelve-point reconciliation is produced when a manifest is supplied');
+      eq(q['1_authoritativeBrowserPackageCount'], 3, 'V50 authoritative browser package count comes from the manifest');
+      eq(q['2_authoritativeBrowserUniqueIdentities'], 3, 'V51 browser unique identities');
+      eq(q['3_diskUniqueIdentities'], 2, 'V52 disk unique identities');
+      eq(q['4_identitiesInBoth'], 1, 'V53 identities present in both');
+      eq(q['5_browserIdentitiesMissingFromDisk'], 2, 'V54 BROWSER IDENTITIES MISSING FROM DISK');
+      eq(q['6_diskIdentitiesAbsentFromBrowser'], 1, 'V55 disk identities absent from the browser');
+      eq(q['7_duplicatePhysicalDiskCopies'], 1, 'V56 duplicate physical disk copies');
+      eq(q['8_packageIdCollisions'].inBrowser, 1, 'V57 a packageId collision INSIDE the browser store is detected');
+      eq(q['8_packageIdCollisions'].identitiesLostIfCountingByPackageIdInBrowser, 1,
+         'V58 and the identities packageId-counting would lose are quantified');
+      eq(q['10_noHashLegacySyntheticUndetermined'].noHashInBrowser, 1, 'V59 a browser package with no hash is reported');
+      eq(q['12_confirmationStateDiscrepancies'], 0, 'V60 no confirmation discrepancy where neither side claims one');
+
+      // A browser package marked confirmed whose disk copy shows no confirmation IS a discrepancy.
+      fs.writeFileSync(mf, JSON.stringify({ packages: [
+        { sourceTradeId: 'AGT|EUR_USD|1', packageId: 'PKG|s|20260501|1', contentHash: A.contentHash,
+          exportedAt: '2026-08-09T02:00:00Z', exportAttemptedAt: '2026-08-09T00:00:00Z' },
+      ] }));
+      const r2 = V.buildReport({ scanDirs: [dir], appPath: APP, manifestPath: mf,
+                                 expectedTotal: null, outFile: null });
+      eq(r2.reconciliation['12_confirmationStateDiscrepancies'], 1,
+         'V61 CONFIRMATION-STATE DISCREPANCY detected when the browser claims a confirmation the file does not show');
+      ok(r2.outcome.pass === false, 'V62 an unreconciled corpus does not pass');
+    } finally { fs.rmSync(mf, { force: true }); }
+  });
+
+  // Reconciliation must never be attempted from disk alone.
+  withTmp(dir => {
+    write(dir, 'a.json', makePackage());
+    const r = V.buildReport({ scanDirs: [dir], appPath: APP, manifestPath: null,
+                              expectedTotal: 222, outFile: null });
+    eq(r.reconciliation, null, 'V63 with no manifest the reconciliation is NULL, never guessed');
+    eq(r.storedPackageGap.storedButNotFound, null, 'V64 and stored-but-not-found stays UNDETERMINABLE');
+  });
+})();
+
+// ══ GROUP 10 — Step 4B: the browser manifest snippet is observational ════════════════════════
+// The snippet cannot be executed here (no IndexedDB, no MOGO). What CAN be proven, and what
+// matters most, is that its source contains no mutating call and no download.
+(function () {
+  const snip = path.join(REPO, 'scripts', 'mogo_evidence_browser_manifest.js');
+  ok(fs.existsSync(snip), 'V65 the browser manifest snippet exists');
+  const src = fs.readFileSync(snip, 'utf8');
+  // Strip the header comment and the snippet's own banned-list literal, then assert the LOGIC is clean.
+  const logic = src.slice(src.indexOf('const banned'));
+  const afterList = logic.slice(logic.indexOf('];'));
+  const mutators = ['readwrite', '.put(', '.add(', '.delete(', '.clear(',
+                    'evidenceUpdateExportState', 'evidenceExportPackage', 'evidenceExportPending',
+                    'evidenceExportAll', 'evidenceImportPackageObject', 'evidencePutPackage',
+                    'evidenceAllocateSequence', 'downloadTextFile'];
+  const hits = mutators.filter(m => afterList.indexOf(m) !== -1);
+  eq(hits.length, 0, 'V66 THE SNIPPET LOGIC CONTAINS NO MUTATING CALL' + (hits.length ? ': ' + hits.join(',') : ''));
+  ok(afterList.indexOf("'readonly'") !== -1, 'V67 it uses a readonly transaction');
+  ok(/indexedDB\.open\(DB_NAME\)/.test(afterList), 'V68 it opens WITHOUT a version, so no upgrade can fire');
+  ok(afterList.indexOf('onupgradeneeded') !== -1 && /REFUSING/.test(afterList),
+     'V69 and it refuses outright if an upgrade is somehow requested');
+  ok(/REFUSING TO EMIT/.test(afterList), 'V70 it refuses to emit a manifest if the store changed while reading');
+  ok(afterList.indexOf('createObjectURL') === -1 && afterList.indexOf('download') === -1,
+     'V71 it never triggers a download — the mechanism EXP-001 showed cannot be trusted');
+  ok(/DERIVED FROM THE STORE ITSELF/.test(src) && /bannerCounts/.test(src),
+     'V72 counts are derived from the store, with the banner recorded separately for comparison');
+})();
+
 console.log('---');
 console.log(fail === 0
   ? 'ALL MOGO-011 STEP 4A VERIFIER FIXTURES PASSED (' + pass + ' executed)'
