@@ -1,6 +1,7 @@
 # MOGO-016 — Bounded Scheduled Autonomous Research Collection
 
 **Date:** 2026-08-11 · **Starting HEAD:** `28b838fb76014dc3ff59d0a5886b5e843a8f67ca`
+**Implementation commit:** `60b116e39f8882adaa37b070597f62b1fddd590c` — pushed to `origin/mogo-main`
 **PAPER TRADING ONLY — live-money trading remains unauthorized.**
 
 ---
