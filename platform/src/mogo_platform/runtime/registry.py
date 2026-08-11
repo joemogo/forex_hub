@@ -134,7 +134,16 @@ CONNECTOR_GATES = (
         "gate": "first_connector_authorization",
         "authority": "ADR-012 D-15 (approved in principle)",
         "requires": "implementation authorization, not yet granted",
-        "satisfied": False,
+        # MOGO-015 Step 4. Flipped only after ALL of: the connector
+        # authorization gate exists and is fail-closed (Step 2, 22 tests); the
+        # bounded transport exists and is subordinate to it (Step 3, 20 tests);
+        # research.acquire.approved-source-metadata.v1 is REGISTERED and
+        # DISPATCHABLE by the runtime; an acquisition authorization record
+        # exists for the one approved source; and two governed end-to-end live
+        # acquisitions completed through policy -> authorize -> claim ->
+        # execute -> transport -> ingest -> audit. Code existing was never
+        # sufficient, and was deliberately not treated as sufficient.
+        "satisfied": True,
     }),
     MappingProxyType({
         "gate": "acquisition_authorization_record",

@@ -789,7 +789,11 @@ class TestRuntimeWriteConfinement(unittest.TestCase):
 
 # MOGO-014: capability modules authorized to perform effects. Named
 # explicitly so adding a second effectful capability is a visible edit here.
-EFFECTFUL_CAPABILITY_MODULES = ("ingest_local_artifact.py",)
+EFFECTFUL_CAPABILITY_MODULES = ("ingest_local_artifact.py",
+                                "acquire_approved_source_metadata.py")
+# Capabilities permitted to reach the network -- and ONLY via connector_transport.
+NETWORK_REACHING_CAPABILITIES = ("acquire_approved_source_metadata.py",)
+NETWORK_REACHING_CAPABILITY_IDS = ("CAP|research|acquire-approved-source-metadata",)
 # MOGO-015: the connector AUTHORIZATION gate necessarily names the external
 # host it authorizes -- an allow-list that cannot name a host authorizes
 # nothing. It contains no transport (asserted in
@@ -814,7 +818,8 @@ CONNECTOR_POLICY_MODULES = ("connector_authorization.py",)
 # Adding a second entry here would mean a second module can open a socket, and
 # that must be a visible, argued edit -- never a convenience.
 NETWORK_AUTHORIZED_MODULES = ("connector_transport.py",)
-EFFECTFUL_CAPABILITY_IDS = ("CAP|research|ingest-local-artifact",)
+EFFECTFUL_CAPABILITY_IDS = ("CAP|research|ingest-local-artifact",
+                            "CAP|research|acquire-approved-source-metadata")
 
 
 class TestNoAutomationEscapeHatch(unittest.TestCase):
@@ -879,12 +884,19 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
         """
         from mogo_platform.runtime import orchestrator as orchestrator_module
         from mogo_platform.runtime import registry
-        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 4)
-        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 4)
+        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 5)
+        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 5)
         acquisition_class = 0
         for manifest in orchestrator_module.BUILTIN_CAPABILITIES:
             with self.subTest(capability=manifest["capabilityId"]):
-                self.assertEqual(manifest["requiredConnectors"], [])
+                # MOGO-015: the acquisition capability names its connector on
+                # purpose -- that declaration is what makes the connector-scoped
+                # gate apply to it. Every other capability must still name none.
+                self.assertEqual(
+                    manifest["requiredConnectors"],
+                    ["CONN|research|approved-source-metadata"]
+                    if manifest["capabilityId"] in NETWORK_REACHING_CAPABILITY_IDS
+                    else [])
                 self.assertEqual(manifest["requiredSecretReferences"], [])
                 self.assertEqual(manifest["requiredPermissions"], [])
                 self.assertIn(manifest["operationClass"],
@@ -898,7 +910,7 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
         # Exactly one, and it exists to be GOVERNED rather than to acquire.
         # MOGO-014 adds a second acquisition-class capability: local artifact
         # ingestion. Both are governed by the policy gate, which is the point.
-        self.assertEqual(acquisition_class, 2)
+        self.assertEqual(acquisition_class, 3)
         self.assertEqual(
             {m["capabilityId"] for m in orchestrator_module.BUILTIN_CAPABILITIES},
             set(orchestrator_module.CAPABILITY_CALLABLES))
@@ -972,6 +984,21 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
             if os.path.basename(absolute) not in EFFECTFUL_CAPABILITY_MODULES:
                 continue
             checked += 1
+            # MOGO-015: the acquisition capability is permitted to reach the
+            # network, but ONLY through connector_transport. It imports no
+            # network client of its own -- asserted below by requiring the
+            # transport import and forbidding every direct client -- so the
+            # gate cannot be sidestepped from inside a capability.
+            if os.path.basename(absolute) in NETWORK_REACHING_CAPABILITIES:
+                source = read_source(absolute)
+                self.assertIn("connector_transport", source)
+                for direct in ("import socket", "import ssl", "import urllib",
+                               "import requests", "import httpx",
+                               "import http.client", "import subprocess"):
+                    self.assertNotIn(direct, source,
+                                     "a capability must reach the network only "
+                                     "through the authorized transport")
+                continue
             source = read_source(absolute)
             tree = ast.parse(source)
             with self.subTest(module=relative):

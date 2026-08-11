@@ -275,3 +275,92 @@ No governed capability wraps the transport yet — the live proof called `acquir
 ## Step 4 recommendation
 
 `research.acquire.approved-source-metadata.v1` as a **registered capability**: manifest declaring the connector, dispatch through the orchestrator (policy → authorize → claim → execute → transport), a connector authorization record, then flip `first_connector_authorization`. Write the raw bytes to the governed intake area and hand off to **`research.ingest.local-artifact.v1`** — no second ingestion path. Distinguish *same request* from *same content*: a URL returning changed metadata is **new content**, not a duplicate.
+
+---
+---
+
+# STEP 4 — GOVERNED RUNTIME ACQUISITION + EXISTING INGESTION
+
+**Status: ✅ COMPLETE.** The governed automation runtime dispatched a real external acquisition end to end and fed it through the MOGO-014 ingestion pipeline.
+
+## Lifecycle actually observed
+
+```
+TaskPolicyCheckRequested → PolicyEvaluated → queued → AcquisitionAuthorized
+→ TaskClaimed → TaskStarted → [connector gate → permit → transport → raw bytes
+→ intake/acquired/ → research.ingest.local-artifact.v1] → TaskSucceeded
+→ WorkflowCompleted
+```
+
+`advanced=3 succeeded=1`. **The operator did not call `acquire()`** — the runtime dispatched it.
+
+## What was built
+
+`capabilities/acquire_approved_source_metadata.py` — `effectClass: effectful`, `operationClass: acquisition`, `acquisitionOperations: ["metadata"]`, **`requiredConnectors: [CONN|research|approved-source-metadata]`**. Naming the connector is the point: it makes `uses_connector()` true so the connector-scoped gate applies. Registered in `BUILTIN_CAPABILITIES` and `CAPABILITY_CALLABLES`; `AcquireSourceMetadata` already existed in the vocabulary, so no vocabulary change was needed.
+
+It accepts **no URL** — a source identity and a resource id only — and imports **no network client**, reaching the network solely through `connector_transport`. A new boundary test asserts exactly that.
+
+## Authorization
+
+`docs/trader-intelligence/authorizations/AUTH-fxalexg-metadata.json` — `96fc2793-b13b-467a-89a8-f31a76ec6d4c`, `operator:joemogollon`, `PERMITTED_PUBLIC_METADATA`, operations `["metadata"]`, bound in its audit history to the connector and to the repository-verified channel record. **Transcript and artifact operations are explicitly not authorized.**
+
+The source id was corrected to repository-native composite form — `SRC|youtube|c785970cc458` (12-char hash of the channel URL) — because `ids.require_composite_id` rightly rejected the channelId form.
+
+## Live proof — two governed runs
+
+| | |
+|---|---|
+| Run 1 | **succeeded** · HTTP 200 · `application/json` · **794 bytes** |
+| Raw content hash | `b668d4209abbf2b8718cea2fa84eacd3985cbb4d1fc352dd1720f64bebb92a00` |
+| Raw artifact | `intake/acquired/b668d420….json` (content-addressed, raw bytes verbatim) |
+| Research artifact | **`RART|d4e4ec829fe80b576a1304f46405f76a`** |
+| Data | *"How to Start Trading with Just $50"* — author `fxalexg`, `author_url` matching the recorded channel |
+| Run 2 (same command) | **DUPLICATE SUPPRESSED** — no second acquisition |
+| Run 2b (new request identity, same content) | acquisition **ran**, artifact **not duplicated** |
+
+**Artifacts on disk: 2 research artifacts (one from MOGO-014, one from this), 1 raw acquisition.**
+
+## Same request ≠ same content — proven in both directions
+
+Two identity layers, deliberately distinct. **Request identity** = the command's idempotency key: re-submitting the same command is suppressed by the runtime. **Content identity** = SHA-256 of the returned bytes: this decides whether a research artifact is new.
+
+Run 2 proved the first (suppressed at the command layer). Run 2b proved the second — a *new* request identity carrying *identical* content executed the acquisition and recorded it, while creating **no** second artifact. Changed bytes from the same source would produce a new content hash and therefore a new artifact.
+
+## Provenance chain — unbroken
+
+```
+research artifact RART|d4e4ec82…
+  → intakeRef acquired/b668d420….json
+    → acquisition record (status, content type, bytes, connector decision)
+      → connector permit (permit / connector_destination_permitted)
+        → sourceId SRC|youtube|c785970cc458
+          → authorization 96fc2793-…
+```
+
+`lane: RESEARCH` · `promotionStatus: NOT_A_TRADING_RULE`. The source never becomes anonymous.
+
+## `first_connector_authorization` — now SATISFIED
+
+Flipped only after **all** of: the gate exists and is fail-closed (22 tests); the transport is subordinate to it (20 tests); the capability is registered and dispatchable; an authorization record exists; and two governed live acquisitions completed. **Code existing was never treated as sufficient.** One connector gate remains unmet: `acquisition_authorization_record`.
+
+## Integrity
+
+Platform **0 failures** · canonical gate **1,113 passed / 0 failed** · drift **0** · C1 **33/33 · 0 mismatched** · corpus **220 · 0 mismatched** · forward lane **0 evidence packages** — no research data in the trading lane.
+
+## ⚠️ Unexpected condition — the forward page reloaded, not by this work
+
+`performance.timeOrigin` moved from `14:57:16.607Z` to **`21:02:21.298Z`**. Nothing in Step 4 touches the browser. `pmset` shows `Maintenance Sleep` at 16:10:55 ET and `Wake … EC.LidOpen/UserActivity` at 17:01:43 ET, so a host sleep/wake is the likely context.
+
+**The campaign survived intact:** ALEX **ON**, polling active, cutoff **`2026-08-11T02:43:57.894Z` unchanged**, $10,000.00, 0/0, credentials present, **2,350 durable observations** (up from 1,695), 250 polls, last poll `21:17:11Z`.
+
+**MOGO-013 did exactly what it was built for** — observations survived a reload that the pre-013 architecture would have erased silently. The recorded **max polling gap is 127 minutes**, consistent with the sleep window, and it is now *measured* rather than inferred. This is MOGO-012-INC-001's decision rule producing evidence.
+
+## Scheduling readiness
+
+Unchanged and confirmed: **there is no scheduler.** The smallest next change is a `launchd` agent invoking `mogo_runtime submit --command-file <fixed> && mogo_runtime run` on an interval — no new architecture, since idempotency, lease and retry already make repeated invocation safe. **Not built.**
+
+## MOGO-015 stop condition
+
+> *"STOP after ONE external connector has successfully acquired genuine external research data and passed it through the governed research pipeline."*
+
+**Satisfied.**

@@ -68,7 +68,10 @@ ARTIFACT_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence",
                              "research-artifacts")
 
 MAX_ARTIFACT_BYTES = 2_000_000        # matches acquisition_common's Phase 1 cap
-ALLOWED_EXTENSIONS = (".txt", ".md")  # text only in this capability
+ALLOWED_EXTENSIONS = (".txt", ".md", ".json")
+# .json added by MOGO-015 Step 4 for raw acquisition artifacts written into
+# intake/acquired/ by the acquisition capability. Still text-only and still
+# UTF-8 validated -- the boundary widened by one extension, not by a class.
 
 ARTIFACT_SCHEMA_VERSION = "mogo.research-artifact.v1"
 

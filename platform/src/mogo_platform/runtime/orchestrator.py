@@ -77,6 +77,7 @@ from .capabilities import echo as echo_capability  # noqa: E402
 from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
 from .capabilities import policy_probe as policy_probe_capability
 from .capabilities import ingest_local_artifact as ingest_local_artifact_capability
+from .capabilities import acquire_approved_source_metadata as acquire_metadata_capability
 from . import result_store as result_store_module  # noqa: E402
 
 PRODUCER_ORCHESTRATOR = "orchestrator"
@@ -103,12 +104,17 @@ BUILTIN_CAPABILITIES = (echo_capability.MANIFEST,
                         # is permitted because runtime/result_store.py satisfies
                         # every A-5 condition; it is still gated by the policy
                         # gate, which demands a real authorization record.
-                        ingest_local_artifact_capability.MANIFEST)
+                        ingest_local_artifact_capability.MANIFEST,
+                        # MOGO-015 Step 4: the first capability that can reach
+                        # outside this machine. It names its connector, so the
+                        # connector-scoped gate applies to it.
+                        acquire_metadata_capability.MANIFEST)
 CAPABILITY_CALLABLES = {
     echo_capability.CAPABILITY_ID: echo_capability.execute,
     fail_then_succeed_capability.CAPABILITY_ID: fail_then_succeed_capability.execute,
     policy_probe_capability.CAPABILITY_ID: policy_probe_capability.execute,
     ingest_local_artifact_capability.CAPABILITY_ID: ingest_local_artifact_capability.execute,
+    acquire_metadata_capability.CAPABILITY_ID: acquire_metadata_capability.execute,
 }
 
 # `blocked` is drivable, and that is a crash-recovery requirement rather than a

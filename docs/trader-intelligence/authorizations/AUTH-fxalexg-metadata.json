@@ -1,0 +1,18 @@
+{
+  "auditHistory": [
+    "2026-08-11 operator:joemogollon authorized METADATA-ONLY acquisition from the repository-verified fxalexg channel (channelId UCgPeeHdxYRal0HTNeAkjqLg, authenticityStatus channel_verified, https://www.youtube.com/@fxalexg__) via the public oEmbed metadata API. Transcript and artifact operations are NOT authorized. Bound to connector CONN|research|approved-source-metadata v1.0.0."
+  ],
+  "authorizationId": "96fc2793-b13b-467a-89a8-f31a76ec6d4c",
+  "decidedAt": "2026-08-11T00:00:00.000Z",
+  "decisionAuthority": "operator:joemogollon",
+  "modelTrainingRestrictions": "Not for external model training.",
+  "permittedOperations": [
+    "metadata"
+  ],
+  "policyStatus": "PERMITTED_PUBLIC_METADATA",
+  "policyVersion": "1.0",
+  "redistributionRestrictions": "No redistribution outside this repository.",
+  "retentionRestrictions": "Research corpus only; no redistribution.",
+  "sourceId": "SRC|youtube|c785970cc458",
+  "sourceTermsSnapshotRef": "docs/strategy-fidelity/audit/alex-channel-catalogue.json"
+}

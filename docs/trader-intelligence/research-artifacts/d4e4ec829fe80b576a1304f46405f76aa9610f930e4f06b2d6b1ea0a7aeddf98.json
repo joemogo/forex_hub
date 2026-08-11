@@ -1,0 +1,24 @@
+{
+  "artifactId": "RART|d4e4ec829fe80b576a1304f46405f76a",
+  "byteLength": 2632,
+  "characterLength": 2632,
+  "contentHash": "d4e4ec829fe80b576a1304f46405f76aa9610f930e4f06b2d6b1ea0a7aeddf98",
+  "contentHashAlgorithm": "SHA-256",
+  "lane": "RESEARCH",
+  "promotionPath": "RESEARCH ARTIFACT -> STRUCTURED CLAIM -> HYPOTHESIS -> PREREGISTRATION -> TEST -> VERIFICATION -> ADJUDICATION -> CANDIDATE -> separately governed forward authorization",
+  "promotionStatus": "NOT_A_TRADING_RULE",
+  "provenance": {
+    "acquisitionPerformed": false,
+    "authorizationId": "96fc2793-b13b-467a-89a8-f31a76ec6d4c",
+    "capabilityVersion": "1.0.0",
+    "claimedSourceId": "SRC|youtube|c785970cc458",
+    "claimedSourceTitle": "fxalexg \u2014 channel metadata",
+    "claimedSourceUrl": "https://www.youtube.com/oembed?url=https://www.youtube.com/watch%3Fv%3Dhb7ot1_szWI&format=json",
+    "intakeRef": "acquired/b668d4209abbf2b8718cea2fa84eacd3985cbb4d1fc352dd1720f64bebb92a00.json",
+    "networkAccessPerformed": false,
+    "note": "Ingested from the governed local intake area. MOGO did not fetch this artifact; an operator supplied it. The source attribution is the operator's CLAIM and has not been independently verified by this capability.",
+    "originClass": "OPERATOR_SUPPLIED_LOCAL_INTAKE",
+    "processedByCapability": "CAP|research|ingest-local-artifact"
+  },
+  "schemaVersion": "mogo.research-artifact.v1"
+}

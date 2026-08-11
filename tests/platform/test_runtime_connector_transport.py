@@ -20,7 +20,7 @@ from mogo_platform.runtime import connector_authorization as ca   # noqa: E402
 from mogo_platform.runtime import connector_transport as ct       # noqa: E402
 from mogo_platform.runtime import errors as runtime_errors        # noqa: E402
 
-APPROVED_SOURCE = "SRC|youtube-channel|UCgPeeHdxYRal0HTNeAkjqLg"
+APPROVED_SOURCE = "SRC|youtube|c785970cc458"
 GOOD_AUTH = "9e24aa04-c7b5-4438-acaf-c709cd8796b5"
 GOOD_VIDEO = "hb7ot1_szWI"
 BODY = json.dumps({"title": "x", "author_name": "fxalexg "}).encode("utf-8")

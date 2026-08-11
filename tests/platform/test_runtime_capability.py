@@ -47,6 +47,7 @@ EXPECTED_POLICY_CAPABILITY_NAME = "research.policy.probe.v1"
 EXPECTED_CAPABILITY_IDS = (EXPECTED_CAPABILITY_ID, EXPECTED_RETRY_CAPABILITY_ID,
                            EXPECTED_POLICY_CAPABILITY_ID,
     "CAP|research|ingest-local-artifact",
+    "CAP|research|acquire-approved-source-metadata",
 )
 
 
@@ -546,8 +547,10 @@ class TestEffectClassificationAndTheA5Gate(CapabilityCase):
         # two that remain are exactly the two that still stand between this
         # platform and its first NETWORK acquisition.
         self.assertIs(by_name["a5_result_store"]["satisfied"], True)
-        for name in ("first_connector_authorization",
-                     "acquisition_authorization_record"):
+        # MOGO-015 Step 4 registered a real, dispatchable, governed connector
+        # and proved it end to end, so this flips too. One gate remains.
+        self.assertIs(by_name["first_connector_authorization"]["satisfied"], True)
+        for name in ("acquisition_authorization_record",):
             with self.subTest(gate=name):
                 self.assertIs(by_name[name]["satisfied"], False)
         for gate in registry.CONNECTOR_GATES:

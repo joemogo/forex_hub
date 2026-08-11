@@ -65,8 +65,9 @@ APPROVED_DESTINATIONS = MappingProxyType({
     # docs/strategy-fidelity/audit/alex-channel-catalogue.json with
     # authenticityStatus channel_verified, and corroborated in Step 1A by the
     # provider's own oEmbed author_url matching the recorded channel URL.
-    "SRC|youtube-channel|UCgPeeHdxYRal0HTNeAkjqLg": MappingProxyType({
+    "SRC|youtube|c785970cc458": MappingProxyType({
         "sourceLabel": "fxalexg",
+        "channelId": "UCgPeeHdxYRal0HTNeAkjqLg",
         "channelUrl": "https://www.youtube.com/@fxalexg__",
         "scheme": "https",
         "host": "www.youtube.com",

@@ -407,7 +407,7 @@ def render_failures(report):
                  % (len(unmet),))
     for entry in unmet:
         lines.append("      %-34s %s" % (entry["gate"], entry["requires"]))
-    lines.append("  no effectful capability may register, and no connector may "
+    lines.append("  the A-5 effectful gate and the first connector are OPEN (MOGO-015); "
                  "exist, until these are met")
     return "\n".join(lines)
 

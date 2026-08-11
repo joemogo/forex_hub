@@ -482,7 +482,9 @@ class TestStep2PrimaryOutcomes(Step2EndToEndCase):
         # and are still named, which is the property this assertion protects:
         # the operator can see what MOGO is still not allowed to do.
         self.assertIn("OPEN", failures.stdout)
-        self.assertIn("first_connector_authorization", failures.stdout)
+        # MOGO-015 Step 4 satisfied first_connector_authorization, so the one
+        # remaining unmet gate is what the operator must still see named.
+        self.assertIn("acquisition_authorization_record", failures.stdout)
 
     def test_the_status_view_reports_the_step_2_signals(self):
         self.full_step_2_run()
