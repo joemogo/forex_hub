@@ -1,6 +1,8 @@
 # MOGO-013 — Durable Forward Observation Ledger
 
-**Status:** ✅ **BUILT AND VALIDATED OFFLINE** · ⏸️ **NOT ACTIVATED — awaiting MOGO-013 ACTIVATION AUTHORIZATION**
+**Status:** ✅ **COMPLETE — DURABLE FORWARD OBSERVATION ACTIVE**
+**Commit:** `c4616770ceb52d28e2406dc72facaaf6d71e1135` · pushed to `origin/mogo-main`
+**POST-MOGO-013 durable-observation era begins:** **`2026-08-11T14:59:03.962Z`** (observation `seq 1`)
 **Date:** 2026-08-11 · **Campaign:** ALEX forward paper trading, running and untouched
 **PAPER TRADING ONLY — live-money trading is not authorized**
 
@@ -205,70 +207,182 @@ PASS  duplicate reported, count NOT inflated
 
 ---
 
-## 6. 🛑 ACTIVATION DECISION PACKAGE
+## 6. ACTIVATION — executed and verified
 
-### Does activation require a page reload? **Yes.**
+### Sequence
 
-Proven directly against the live page: it reports `EVIDENCE_DB_VERSION: 1` and `evidenceRecordForwardObservations: undefined`. It loaded its JavaScript at `2026-08-11T02:34:44Z` and will not use the new code without a reload.
+| Step | Result |
+|---|---|
+| 1 · Pre-commit verification | intended files only; recovery artifact unchanged; gate 1,113/1,113; drift 0; C1 33/33; corpus 220/0 ✅ |
+| 2 · Commit and push | **`c4616770ceb52d28e2406dc72facaaf6d71e1135`** → `origin/mogo-main`, trees identical, 0 ahead / 0 behind ✅ |
+| 3 · Pre-activation capture | recorded below; evidence store already checkpointed (rollup unchanged) ✅ |
+| 4 · Controlled reload | `2026-08-11T14:57:16Z` ✅ |
+| 5 · Schema activation | v1 → **v2**, `observations` created, `packages`/`meta` intact ✅ |
+| — · Credential restoration | performed **by the operator** through the normal MOGO connect interface ✅ |
+| 6 · ALEX restoration | enabled, polling, **original cutoff intact** ✅ |
+| 7 · First live observations | **609 durable observations written** ✅ |
+| 8 · Read-back and integrity | 609/609 valid, zero defects ✅ |
+| 9 · Post-activation health | **GREEN** ✅ |
 
-### Expected campaign interruption
+### Pre-activation state — recorded `2026-08-11T14:56:42Z`
+
+ALEX enabled `true` · activated `2026-08-11T02:43:57.894Z` · balance **$10,000.00** · 0 open / 0 closed / 0 journal · 0 wins / 0 losses · **0 evidence packages** · polling active · 300 in-memory statuses · 12 cursors · 0 write failures · `alex_g_sr_v1` / 12.19.0 · loaded code `EVIDENCE_DB_VERSION: 1`, ledger absent.
+
+### The activation cutoff is INTACT — the critical scientific check
 
 | | |
 |---|---|
-| Market monitoring | **stops from reload until credentials are re-entered** |
-| Evaluation cadence | hourly, on the H1 boundary — a reload between boundaries costs no evaluation if credentials are restored before the next hour |
-| Lost on reload | the ~300 in-memory statuses **(already preserved)**, the 12 per-pair cursors, the Decision Event ring |
-| Survives | `activatedAt` and enabled state, paper account, journal, **all IndexedDB evidence**, Campaign C1, checkpoints |
-| Paper account | **untouched** — $10,000.00, 0 open, 0 closed |
+| Before reload | `1786416237894` = `2026-08-11T02:43:57.894Z` |
+| **After reload** | **`1786416237894` = `2026-08-11T02:43:57.894Z`** |
 
-### Credential implications
+**Byte-identical.** The campaign's activation boundary was preserved through the reload, restored from `fxhub_alexg_auto` rather than re-stamped. The operator confirms ALEX was **not** manually toggled and the account was **not** reset. The frozen forward sample is continuous across activation.
 
-Broker credentials are **memory-only** — no credential key exists in `localStorage`. **They must be re-entered by hand after the reload**, and polling does not resume until they are. This is the single largest cost of activation and the reason it is not automatic.
+Strategy identity unchanged: `alex_g_sr_v1` / APP_VERSION 12.19.0. Balance **$10,000.00**, 0 open / 0 closed / 0 journal — reconciles exactly with pre-activation.
 
-### Risks of activation
+### A moment worth recording
 
-| Risk | Severity | Mitigation |
+Immediately after the reload the page reported `alexEnabled: false` and `activatedAt: null`, which looked like the campaign had been lost. It had not: MOGO was sitting on its connect screen and had not yet loaded stored ALEX state, while `localStorage.fxhub_alexg_auto` still held `{"enabled":true,"activatedAt":1786416237894}`. Checking the durable value before reporting is what distinguished "state lost" from "state not yet loaded" — and is why the activation procedure requires verification rather than inference.
+
+---
+
+## 7. First live durable observations — the decisive test
+
+**609 observations written from genuine live forward activity**, within ~10 minutes of activation, with **zero write failures**.
+
+| | |
+|---|---|
+| POLL | **9** — all `outcome: OK`, 12/12 instruments |
+| EVALUATION | **600** — 598 `IGNORED — BEFORE ACTIVATION`, **2 `IGNORED — STALE SIGNAL`** |
+| RETENTION | 0 (cap 200,000 nowhere near) |
+| Poll continuity | last successful `15:07:04.164Z`, expected interval 60,000 ms, max gap 81,200 ms, **0 missed intervals**, 0 gaps |
+
+**First durable observation — `seq 1`, the start of the POST-MOGO-013 era:**
+
+```
+observationId  OBS|1|POLL|SCAN|1786460343962-3
+occurredAt     2026-08-11T14:59:03.962Z    recordedAt 2026-08-11T14:59:19.744Z
+outcome        OK      durationMs 15782    expectedIntervalMs 60000
+instruments    12 attempted, 12 evaluated (all pairs)
+captureOrigin  http://localhost:8751       provenance FORWARD_LIVE_OBSERVATION
+```
+
+**The observation that proves the point — MOGO-012-INC-001's AUD_JPY signal, now durable:**
+
+```
+signalId        AGL|alex_g_sr_v1|AUD_JPY|H1|...|1786428000000
+setupId         AGS|alex_g_sr_v1|AUD_JPY|H1|...   zoneId AGZ|...  touch 4
+pair/timeframe  AUD_JPY / H1        setupType A_repeatedReaction
+qualifiedAt     2026-08-11T06:00:00.000Z
+firstEvaluated  2026-08-11T15:00:38.512Z    age 540.64 min
+status          IGNORED — STALE SIGNAL
+reason          SIGNAL_TOO_OLD_AT_FIRST_EVALUATION
+ruleAttribution ALEX_SIGNAL_STALENESS       derivedActivationCutoffPassed true
+strategyVersion alex_g_sr_v1   engineVersion 12.19.0   scanId SCAN|1786460403966-776
+seq 392
+```
+
+This is the same signal the morning audit could only read from volatile memory, and whose earlier readings no longer exist anywhere in the system. **It is now on disk with full identity and provenance** — and its age climbing from 361 → 421 → 540 minutes across successive hours captures, durably and for the first time, the hourly re-creation behaviour MOGO-012 discovered. No trade or setup was manufactured; these are ordinary rejected evaluations, which is exactly what was needed.
+
+`configHash` / `paramsHash` are `null` on these records. That is correct, not a gap: those fields are REPLAY-only by design and are null for `LIVE_PAPER` in the committed schema.
+
+---
+
+## 8. Read-back and integrity verification
+
+Every observation was read back from IndexedDB and checked:
+
+| Check | Result |
+|---|---|
+| Total read back | **609** |
+| Unique `seq` | **609** — range 1…609, **no gaps, no duplicates** |
+| Unique `naturalKey` | **609** — zero collisions |
+| Ordering | monotonic ✅ |
+| Wrong/missing `schemaVersion` | **0** |
+| Missing `provenance` | **0** |
+| Missing `captureOrigin` | **0** |
+| Missing `observationId` | **0** |
+| Distinct origins | **1** — `http://localhost:8751` |
+
+**WRITE → READ BACK → IDENTITY/INTEGRITY → DURABLE STORE: proven on live data.** No additional reload was performed; offline testing already proved reload survival, and interrupting the campaign again to re-prove it would have been gratuitous.
+
+---
+
+## 9. Post-activation health — 🟢 GREEN
+
+| Component | Status |
+|---|---|
+| Polling active | 🟢 9/9 polls OK |
+| Broker / API healthy | 🟢 no failures, no errors |
+| Instruments healthy | 🟢 **12 of 12** |
+| Evidence capture armed | 🟢 store live, 0 packages (no trades yet) |
+| **Observation ledger active** | 🟢 **609 observations, 0 failures** |
+| Evidence write failures | 🟢 0 |
+| Ledger write failures | 🟢 0 |
+| Campaign C1 | 🟢 **33/33 · 0 mismatched** |
+| Legacy corpus | 🟢 **220 re-derived · 0 mismatched** |
+| Recovery artifact | 🟢 `91abd1da…1a26a9` unchanged |
+| Protected-function drift | 🟢 **0** |
+| Repository | 🟢 `c461677`, clean, 0 ahead / 0 behind |
+| Strategy unchanged | 🟢 `alex_g_sr_v1` / 12.19.0, cutoff intact |
+
+**No stop condition was triggered at any point.** No migration failure, no evidence lost, no integrity change, no drift, no unexpected balance or position change, no interference with polling or evaluation — poll durations ran 1 ms when idle and 15.8 s during full evaluation, with the ledger never awaited on the trading path.
+
+---
+
+## 10. The scientific boundary
+
+| Era | Record |
+|---|---|
+| **PRE-MOGO-013** | `MOGO-013-PRE-LEDGER-EPHEMERAL-RECOVERY.json` — recovered ephemeral observations, after the fact, from runtime memory, **completeness explicitly unguaranteed** |
+| **POST-MOGO-013** | Durable observations under `mogo.observation.v1`, beginning **`2026-08-11T14:59:03.962Z`** |
+
+**Nothing was backfilled.** The ledger contains only observations captured live after activation. The recovery artifact remains a separate, hashed, clearly-labelled salvage and is not merged into the store.
+
+**MOGO-012-INC-001 is preserved exactly.** Its historical unknown interval was not rewritten and remains unknown. MOGO-013 provides future observability and manufactures no retroactive certainty — from now on, a gap of that kind would be *measured*, not inferred.
+
+---
+
+## 11. Completion conditions
+
+| # | Condition | |
 |---|---|---|
-| Credentials not re-entered promptly → extended monitoring gap | **Medium** | Reload only with credentials to hand |
-| IndexedDB v1→v2 upgrade fails on the live store | **Low** | Upgrade is additive and was exercised on a real profile; `packages`/`meta` verified intact |
-| Ledger write volume affects the tab | **Low** | Fire-and-forget, never awaited; ~300 records/hour |
-| Reload lands mid-hour and skips an evaluation | **Low** | Reload just *after* an hourly evaluation |
-| A new defect in ledger code affects trading | **Low** | Never awaited, return value never read, own `try`; drift 0; L15/L16 assert isolation |
+| 1 | Code committed and pushed | ✅ `c461677` |
+| 2 | Durable profile schema activated | ✅ v2, observations store |
+| 3 | Credentials safely restored | ✅ by operator, normal interface |
+| 4 | ALEX resumed forward polling | ✅ 9/9 polls, 12/12 instruments |
+| 5 | Live forward observations written durably | ✅ 609 |
+| 6 | Observations read back and verified | ✅ 609/609, zero defects |
+| 7 | Existing trade evidence intact | ✅ 0 → 0, none lost |
+| 8 | Campaign C1 intact | ✅ 33/33 |
+| 9 | Legacy corpus intact | ✅ 220, 0 mismatched |
+| 10 | Protected-function drift zero | ✅ 0 |
+| 11 | Repository synchronized | ✅ 0 ahead / 0 behind |
+| 12 | POST-MOGO-013 start timestamp recorded | ✅ `2026-08-11T14:59:03.962Z` |
 
-### Recommended safest activation window
-
-> **Shortly after an hourly evaluation completes (a few minutes past the hour), with broker credentials to hand, on AC power with the tab foregrounded.**
-
-The current campaign has produced **zero trades and zero evidence packages**, so the reload costs no trade evidence — only in-memory observations that are already preserved. **This is the cheapest activation window the campaign will ever have**, and it gets cheaper never: once trades exist, a reload carries more risk.
-
----
-
-## 7. Remaining limitations
-
-- **The ledger does not retroactively explain MOGO-012-INC-001.** It makes *future* continuity measurable. The historical unknown interval stays unknown.
-- **The recovery artifact is not the campaign's history** — one hour's re-derivation, captured after the fact, completeness explicitly unguaranteed.
-- **Credentials remain memory-only.** MOGO-013 does not make the campaign survive a restart unattended; that is a separate milestone with its own security governance.
-- **Retention rollover has been unit- and plan-tested but never triggered at the 200,000 cap** in a live store. At ~300 records/hour that is roughly a month away.
-- **The ledger records what the frozen strategy does, including the hourly re-creation.** Any proposal to change that behaviour is a separately governed strategy decision, not a MOGO-013 concern.
+**All twelve pass.**
 
 ---
 
-## 8. Backlog — preserved, not implemented
+## 12. Remaining limitations
+
+- The ledger does not retroactively explain MOGO-012-INC-001; the historical unknown interval stays unknown.
+- The recovery artifact is not the campaign's history — one hour's re-derivation, captured after the fact.
+- **Credentials remain memory-only.** MOGO-013 does not make the campaign survive a restart unattended; a reload still requires manual reconnection. That is a separate milestone with its own security governance.
+- Retention rollover is unit- and plan-tested but has never triggered at the 200,000 cap — roughly a month away at ~600 observations/hour.
+- The ledger records the frozen strategy's hourly re-creation behaviour faithfully. Changing that behaviour would be a separately governed strategy decision.
+
+---
+
+## 13. Backlog — preserved, not implemented
 
 **MOGO-012-BL-001 — Audible notification on confirmed paper execution only.** Sound must fire only after a **confirmed successful paper trade execution/opening**; watching, scanning, monitoring or evaluating a pair must not trigger it. *Not implemented.*
 
-**Phase II follow-on:** once durable forward observation is operational, autonomous research acquisition returns to the critical path — connecting the governed automation runtime (31 modules, **zero effectful capabilities registered**) to the 34 existing research scripts.
+---
+
+## 14. Next milestone
+
+**MOGO-014 — connect the governed automation runtime to real research acquisition.** With durable forward observation solved, autonomous research returns to the critical path: the runtime has 31 modules and **zero effectful capabilities registered**, while 34 research scripts run only by hand. Registering the first effectful acquire→ingest capability with a scheduled trigger turns both halves into one autonomous loop.
 
 ---
 
-## 9. Next action
-
-# ⏸️ REQUESTING: MOGO-013 ACTIVATION AUTHORIZATION
-
-Built, validated, and **not activated**. The campaign is running untouched on the old code. On your authorization I will reload the durable MOGO page at a moment you choose, confirm the v1→v2 upgrade succeeded with all evidence intact, and verify the ledger begins recording — after which you re-enter broker credentials to resume monitoring.
-
-**Nothing is committed.** Say the word and I will commit and push first, or activate first, in whichever order you prefer.
-
----
-
-*Built and validated offline. The running forward campaign was not modified, reloaded, or interrupted at any point.*
+*Activated, verified, and complete. The forward campaign is running with durable observation active.*
