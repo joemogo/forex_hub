@@ -14150,6 +14150,110 @@ async function evidenceImportFile(file){
   return evidenceImportPackageObject(parsed);
 }
 
+// ══ M-3 -- BATCH RE-IMPORT (D-3) ═════════════════════════════════════════════════════════════
+// Confirming the corpus meant 220 separate file picks, so it never happened: 0 of 220 packages
+// were confirmed despite 220 export attempts. This removes the arithmetic and NOTHING ELSE.
+//
+// THE TRUST MODEL IS UNCHANGED, DELIBERATELY AND VISIBLY.
+//
+// evidenceImportFiles opens no shortcut. It calls evidenceImportFile() once per file -- exactly
+// what a human clicking 220 times would cause -- so every package is still read back from disk,
+// re-parsed, re-validated, re-hashed with SHA-256, and routed through the unchanged
+// evidenceEvaluateExportReimport() decision. There is no bulk digest, no manifest to trust, no
+// receipt to forge, and no path by which a package can be confirmed without its own bytes being
+// read. A batch is a loop, not a new kind of proof.
+//
+// SEQUENTIAL ON PURPOSE. Concurrency would race the IndexedDB sequence allocator and reorder
+// write-backs for no operator-visible gain. 220 files is not a performance problem.
+//
+// A folder selection sweeps in whatever else lives in the directory -- .DS_Store, manifests,
+// notes. Those are REPORTED AS SKIPPED, never silently dropped: silence indistinguishable from
+// success is the EXP-001 defect, and it will not be reintroduced here.
+function evidenceIsImportableName(name){
+  return typeof name==='string'&&/\.json$/i.test(name);
+}
+// PURE and synchronous, so the reporting rule is testable offline without files or IndexedDB --
+// the same pattern as evidenceEvaluateExportReimport and evidenceMergeExportState.
+function evidenceSummarizeImportResults(entries){
+  const out={total:0,imported:0,exportVerified:0,duplicateNoOp:0,rejected:0,skippedNotJson:0,
+    byReason:{},failures:[]};
+  (Array.isArray(entries)?entries:[]).forEach(function(e){
+    out.total++;
+    const name=(e&&e.name)?String(e.name):'(unnamed)';
+    if(e&&e.skipped){
+      out.skippedNotJson++;
+      out.byReason.SKIPPED_NOT_JSON=(out.byReason.SKIPPED_NOT_JSON||0)+1;
+      return;
+    }
+    const r=(e&&e.result&&typeof e.result==='object')?e.result:{ok:false,reason:'NO_RESULT'};
+    const reason=r.reason||'UNKNOWN';
+    out.byReason[reason]=(out.byReason[reason]||0)+1;
+    if(!r.ok){
+      out.rejected++;
+      if(out.failures.length<50) out.failures.push({name:name,reason:reason});
+      return;
+    }
+    // An export confirmation and a first-time import are different events and are never merged.
+    if(r.exportVerified) out.exportVerified++;
+    else if(r.imported) out.imported++;
+    else out.duplicateNoOp++;
+  });
+  return out;
+}
+// PURE. Every category is printed even when zero -- an absent line reads as "did not happen",
+// and the operator must be able to see that 0 were confirmed.
+function evidenceImportSummaryText(s){
+  const lines=[
+    'Evidence import complete.',
+    '',
+    'Files selected:            '+s.total,
+    'Export CONFIRMED by re-import: '+s.exportVerified,
+    'Newly imported:            '+s.imported,
+    'Already held (no change):  '+s.duplicateNoOp,
+    'Rejected:                  '+s.rejected,
+    'Skipped (not .json):       '+s.skippedNotJson,
+  ];
+  const reasons=Object.keys(s.byReason||{}).sort();
+  if(reasons.length){
+    lines.push('','Outcomes by reason:');
+    reasons.forEach(function(k){ lines.push('  '+k+': '+s.byReason[k]); });
+  }
+  if(s.failures&&s.failures.length){
+    lines.push('','Rejected files (first '+s.failures.length+'):');
+    s.failures.forEach(function(f){ lines.push('  '+f.name+' — '+f.reason); });
+  }
+  lines.push('','No stored package was overwritten. A rejected file changed nothing.');
+  return lines.join('\n');
+}
+// PURE and synchronous. Deciding WHAT the batch will process is separated from processing it, so
+// the selection rule is executable offline -- this harness can neither resolve a real await nor
+// reach IndexedDB, and a rule that can only be asserted from source text is weaker than one that
+// can be run. The mutation protocol is what forced this split: a batch silently truncated to its
+// first file survived a source-text-only fixture. NO SILENT CAPS -- every selected file appears in
+// the plan, importable or not.
+function evidencePlanImportSelection(fileList){
+  const files=fileList?Array.prototype.slice.call(fileList):[];
+  return files.map(function(f){
+    const name=(f&&f.name)?String(f.name):'(unnamed)';
+    return{file:f,name:name,importable:evidenceIsImportableName(name)};
+  });
+}
+async function evidenceImportFiles(fileList){
+  const plan=evidencePlanImportSelection(fileList);
+  const entries=[];
+  for(const item of plan){
+    if(!item.importable){ entries.push({name:item.name,skipped:true}); continue; }
+    let result;
+    try{ result=await evidenceImportFile(item.file); }
+    catch(e){
+      evidenceRecordWriteFailure('import-batch',e,{name:item.name});
+      result={ok:false,reason:'IMPORT_THREW'};
+    }
+    entries.push({name:item.name,result:result});
+  }
+  return{entries:entries,summary:evidenceSummarizeImportResults(entries)};
+}
+
 // ══ Historical backfill (spec 10) ════════════════════════════════════════════════════════════
 // One-time, idempotent, and READ-ONLY over every existing store. No existing record is modified,
 // moved or deleted; the journal and ledger are only read. Nothing is inferred or fabricated --
@@ -14207,14 +14311,25 @@ function evidenceBannerHtml(){
         (evidenceAttemptedUnverifiedCount>0
           ? ' <br><strong>'+evidenceAttemptedUnverifiedCount+' download(s) were attempted but are NOT yet confirmed.</strong> '+
             'A browser cannot tell MOGO whether a download actually reached your disk, so these still count as unexported. '+
-            'To confirm: use <em>Import package…</em> in Diagnostics to re-import the downloaded file — MOGO verifies its hash '+
-            'and content against the stored package, and only then clears this warning.'
+            'To confirm: use <em>Import package(s)…</em> below to re-import the downloaded file — MOGO verifies its hash '+
+            'and content against the stored package, and only then clears this warning. '+
+            '<em>Import folder…</em> confirms an entire exported corpus in one selection.'
           : '')+
         (blocking?' <strong style="color:var(--red)">More than '+EVIDENCE_UNEXPORTED_BLOCKING_THRESHOLD+' packages are unexported — export before enabling live paper trading.</strong>':'')+
         (evidenceUnverifiableCount>0?' <br>'+evidenceUnverifiableCount+' package(s) have no integrity hash (Web Crypto unavailable when they were captured) and cannot be verified.':'')+
       '</div>'+
+      // ── M-2 (D-1): the confirmation control lives in the SAME surface that instructs its use. ──
+      // It previously lived only in the Developer-Mode diagnostics card while this banner -- which
+      // is ungated -- told the operator to go and use it. An operator following the instruction
+      // exactly would find nothing there, which is why 0 of 220 packages were ever confirmed.
+      // These inputs carry their own ids: the diagnostics card renders its own input, and two
+      // elements sharing an id would make getElementById return whichever rendered first.
       '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+
         '<button class="primary" onclick="evidenceExportPending(\'MANUAL\')">Export now</button>'+
+        '<input type="file" id="evidenceImportInputBanner" accept="application/json" multiple style="display:none" onchange="evidenceHandleImportInputMulti(this)">'+
+        '<input type="file" id="evidenceImportFolderBanner" webkitdirectory directory multiple style="display:none" onchange="evidenceHandleImportInputMulti(this)">'+
+        '<button class="secondary" onclick="document.getElementById(\'evidenceImportInputBanner\').click()">Import package(s)…</button>'+
+        '<button class="secondary" onclick="document.getElementById(\'evidenceImportFolderBanner\').click()">Import folder…</button>'+
         '<button class="secondary" onclick="evidenceSetAutoExport('+(evidenceAutoExportEnabled?'false':'true')+')">'+
           (evidenceAutoExportEnabled?'Disable automatic export':'Enable automatic export')+'</button>'+
       '</div></div>');
@@ -14279,8 +14394,10 @@ function renderEvidencePlatformDiagnostics(){
       '<button class="secondary" onclick="evidenceExportPending(\'MANUAL\')">Export unexported</button>'+
       '<button class="secondary" onclick="evidenceExportAll(\'MANUAL\')">Export all</button>'+
       '<button class="secondary" onclick="evidenceRunBackfill()">Backfill history (read-only)</button>'+
-      '<input type="file" id="evidenceImportInput" accept="application/json" style="display:none" onchange="evidenceHandleImportInput(this)">'+
-      '<button class="secondary" onclick="document.getElementById(\'evidenceImportInput\').click()">Import package…</button>'+
+      '<input type="file" id="evidenceImportInput" accept="application/json" multiple style="display:none" onchange="evidenceHandleImportInputMulti(this)">'+
+      '<input type="file" id="evidenceImportFolder" webkitdirectory directory multiple style="display:none" onchange="evidenceHandleImportInputMulti(this)">'+
+      '<button class="secondary" onclick="document.getElementById(\'evidenceImportInput\').click()">Import package(s)…</button>'+
+      '<button class="secondary" onclick="document.getElementById(\'evidenceImportFolder\').click()">Import folder…</button>'+
     '</div>'+
   '</div>';
 }
@@ -14304,6 +14421,18 @@ function evidenceHandleImportInput(input){
     input.value='';
     evidenceRefreshDiagnostics();
   }).catch(function(e){ evidenceRecordWriteFailure('import',e); input.value=''; });
+}
+// M-3: the handler every import control now uses -- one file or two hundred, one code path.
+// Both surfaces (the ungated banner and the Developer-Mode card) route here, so there is exactly
+// one confirmation path and no surface can acquire a weaker one by drifting.
+function evidenceHandleImportInputMulti(input){
+  const files=input&&input.files;
+  if(!files||!files.length) return;
+  evidenceImportFiles(files).then(function(r){
+    try{ alert(evidenceImportSummaryText(r.summary)); }catch(e){}
+    input.value='';
+    evidenceRefreshDiagnostics();
+  }).catch(function(e){ evidenceRecordWriteFailure('import-batch',e); input.value=''; });
 }
 
 // ── Startup + tab-hide export trigger. The visibilitychange listener is new surface; there is no

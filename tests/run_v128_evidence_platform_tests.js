@@ -228,6 +228,16 @@ const wrapped = new Function('g',
   'g.countUnexportedLike=evidenceSummarizePackages;' +                   // the REAL counting rule
   'g.evidenceImportPackageObject=evidenceImportPackageObject;' +
   'g.evidenceImportFile=evidenceImportFile;' +
+  // ── M-2 / M-3: reachable confirmation control and batch re-import ──
+  'g.evidenceImportFiles=evidenceImportFiles;' +
+  'g.evidenceSummarizeImportResults=evidenceSummarizeImportResults;' +   // pure
+  'g.evidenceImportSummaryText=evidenceImportSummaryText;' +             // pure
+  'g.evidenceIsImportableName=evidenceIsImportableName;' +
+  'g.evidencePlanImportSelection=evidencePlanImportSelection;' +               // pure               // pure
+  'g.evidenceBannerHtml=evidenceBannerHtml;' +
+  'g.renderEvidencePlatformDiagnostics=renderEvidencePlatformDiagnostics;' +
+  'g.evidenceHandleImportInputMulti=evidenceHandleImportInputMulti;' +
+  'g.setEvidenceBannerCounts=function(u,a,v){evidenceUnexportedCount=u;evidenceAttemptedUnverifiedCount=a;evidenceUnverifiableCount=v;};' +
   'g.evidenceBackfillFromLocalStorage=evidenceBackfillFromLocalStorage;' +
   // ── store contract ──
   'g.evidenceOpenDb=evidenceOpenDb;' +

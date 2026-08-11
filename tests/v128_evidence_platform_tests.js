@@ -730,6 +730,227 @@ function runEvidencePlatformFixtures(g){
       '(saw: '+BASELINE.origin+')');
   });
 
+  // ══ GROUP 6F — M-2 (D-1): A BANNER MAY NOT NAME A CONTROL ITS OWN POLICY HIDES ════════════
+  // The defect, stated exactly: evidenceBannerHtml() is UNGATED and told the operator to use
+  // "Import package… in Diagnostics". renderEvidencePlatformDiagnostics() begins with
+  // `if(!developerModeEnabled){ el.innerHTML=''; return; }`. An operator following the instruction
+  // exactly would find nothing there. That is why 0 of 220 packages were confirmed despite 220
+  // export attempts -- the confirmation path existed and was unreachable.
+  //
+  // The general rule, which is what these fixtures actually enforce: NO OPERATOR-FACING SURFACE
+  // MAY INSTRUCT THE USE OF A CONTROL THAT ITS OWN VISIBILITY POLICY HIDES.
+  const BANNER_CONTROL_IDS=['evidenceImportInputBanner','evidenceImportFolderBanner'];
+  function bannerWithAttempts(){
+    g.setEvidenceBannerCounts(220,220,0);
+    const html=g.evidenceBannerHtml();
+    g.setEvidenceBannerCounts(0,0,0);
+    return html;
+  }
+  t('CR1 the banner that instructs confirmation CARRIES the confirmation control',function(){
+    const html=bannerWithAttempts();
+    ok(html.indexOf('Import package(s)')!==-1,
+      'the ungated banner must offer the control it names, not point at another surface');
+    BANNER_CONTROL_IDS.forEach(function(id){
+      ok(html.indexOf(id)!==-1,'the banner must render its own input '+id);
+    });
+  });
+  t('CR2 the banner never sends the operator to a Developer-Mode-only surface',function(){
+    const html=bannerWithAttempts();
+    eq(/in\s+Diagnostics/i.test(html),false,
+      'the banner must not direct the operator to the Developer-Mode diagnostics card (D-1)');
+  });
+  t('CR3 the banner control is NOT gated on developerModeEnabled',function(){
+    const src=String(g.evidenceBannerHtml);
+    eq(src.indexOf('developerModeEnabled'),-1,
+      'the banner must contain no developer-mode gate of any kind');
+    // and the diagnostics card demonstrably IS gated -- so the two really are different policies
+    ok(String(g.renderEvidencePlatformDiagnostics).indexOf('developerModeEnabled')!==-1,
+      'the diagnostics card is developer-mode gated, which is exactly why the banner needed its own control');
+  });
+  t('CR4 every control the banner names routes to the real confirmation handler',function(){
+    const html=bannerWithAttempts();
+    BANNER_CONTROL_IDS.forEach(function(id){
+      const m=html.match(new RegExp('id="'+id+'"[^>]*'));
+      ok(!!m,'input '+id+' must exist');
+      ok(m&&/onchange="evidenceHandleImportInputMulti\(this\)"/.test(m[0]),
+        id+' must route to evidenceHandleImportInputMulti, never a private or weaker path');
+    });
+  });
+  t('CR5 the two surfaces use DISTINCT element ids',function(){
+    // Two elements sharing an id makes getElementById return whichever rendered first, so one
+    // button would silently drive the other surface's input.
+    const banner=bannerWithAttempts();
+    ok(banner.indexOf('id="evidenceImportInput"')===-1,
+      'the banner must not reuse the diagnostics card id evidenceImportInput');
+    const ids=(banner.match(/id="[^"]+"/g)||[]);
+    eq(new Set(ids).size,ids.length,'no id may repeat within the banner itself');
+  });
+  t('CR6 the banner offers no confirmation control when there is nothing to confirm',function(){
+    g.setEvidenceBannerCounts(0,0,0);
+    const html=g.evidenceBannerHtml();
+    // NOTE: this asserts the absence of the CONTROL, not an empty string. The separate storage
+    // banner is legitimately present in this harness -- osascript has no IndexedDB, so
+    // evidenceStorageBanner is set, which is the honest degraded behaviour several other fixtures
+    // rely on. An earlier draft asserted html==='' and failed for that reason: the fixture was
+    // wrong, not the code.
+    BANNER_CONTROL_IDS.forEach(function(id){
+      eq(html.indexOf(id),-1,'with nothing unexported the banner must not offer '+id);
+    });
+    eq(html.indexOf('Import package(s)'),-1,'nor name the control -- it never nags');
+  });
+
+  // ══ GROUP 6G — M-3 (D-3): BATCH IMPORT IS A LOOP, NOT A NEW KIND OF PROOF ═════════════════
+  // The whole risk of batch import is that it becomes a SHORTCUT -- a bulk digest, a manifest
+  // taken on trust, a receipt that confirms packages without reading their bytes. These fixtures
+  // exist to prove it did not.
+  //
+  // DISCLOSED LIMITATION, consistent with this suite's existing offline/live split: the async
+  // loop inside evidenceImportFiles() cannot be executed here, because this harness has neither
+  // IndexedDB nor the ability to resolve a real await -- the same permanent limitation already
+  // documented for the async layer. So the loop's BEHAVIOUR is proven three ways that do execute:
+  // the reporting rule is a pure function exercised directly (BI2-BI8), the delegation and the
+  // absence of any shortcut are asserted against the real source text (BI1, BI9), and the wiring
+  // from both surfaces is asserted against the rendered markup and the real handler (BI10).
+  // What is NOT claimed is an end-to-end offline execution of 220 real file reads.
+  t('BI1 batch import calls the SAME per-file path a human clicking would',function(){
+    const src=String(g.evidenceImportFiles);
+    // This fixture was WEAKER than it looked and the mutation protocol caught it. It first read
+    // `src.indexOf('evidenceImportFile')!==-1`, which is true no matter what the body does --
+    // the function's own NAME, evidenceImportFiles, contains that substring. Replacing the real
+    // call with a fabricated confirmation left it green. A test that passes because of the name
+    // it is testing is not evidence of anything; the same trap M9 documents.
+    //
+    // It now pins the CALL, and separately forbids the batch from ever minting a confirmation
+    // itself -- which is the whole shortcut class, stated directly.
+    ok(/await\s+evidenceImportFile\s*\(/.test(src),
+      'the batch must AWAIT the single-file import per file, so every file is re-read and re-hashed');
+    eq(/EXPORT_VERIFIED_BY_REIMPORT|exportVerified\s*:\s*true/.test(src),false,
+      'the batch must never mint a confirmation of its own -- only the per-file path may return one');
+    eq(/manifest|bulkHash|trustList|receipt/i.test(src),false,
+      'and it must introduce no bulk digest, manifest or receipt -- there is no weaker path');
+  });
+  t('BI1b NO SILENT CAPS -- every selected file reaches the plan, however many there are',function(){
+    // This fixture exists because the mutation protocol found a real gap: a batch silently
+    // truncated to its first file SURVIVED, since the only guard was source text. Selection is now
+    // a pure function, so truncation is caught by running it rather than by reading it.
+    const many=[];
+    for(let i=0;i<220;i++) many.push({name:'pkg-'+i+'.json'});
+    const plan=g.evidencePlanImportSelection(many);
+    eq(plan.length,220,'a 220-file selection must plan 220 files -- no cap, no sampling');
+    eq(plan.filter(function(p){return p.importable;}).length,220,'all of them importable');
+    eq(plan[219].name,'pkg-219.json','including the last one');
+    const mixed=g.evidencePlanImportSelection([{name:'a.json'},{name:'.DS_Store'},{name:'b.json'}]);
+    eq(mixed.length,3,'non-importable files stay IN the plan so they can be reported');
+    eq(mixed[1].importable,false,'flagged, not dropped');
+    eq(g.evidencePlanImportSelection(null).length,0,'a null selection plans nothing and cannot throw');
+  });
+  t('BI2 the summary counts a confirmation and a first import as DIFFERENT events',function(){
+    const s=g.evidenceSummarizeImportResults([
+      {name:'a.json',result:{ok:true,reason:'EXPORT_VERIFIED_BY_REIMPORT',imported:false,exportVerified:true}},
+      {name:'b.json',result:{ok:true,reason:'VERIFIED',imported:true}},
+      {name:'c.json',result:{ok:true,reason:'DUPLICATE_IDENTICAL_UNVERIFIABLE',imported:false,exportVerified:false}}
+    ]);
+    eq(s.exportVerified,1,'a re-import confirmation is counted as a confirmation');
+    eq(s.imported,1,'a first-time import is counted separately');
+    eq(s.duplicateNoOp,1,'and a no-op duplicate is neither');
+    eq(s.rejected,0);
+  });
+  t('BI3 every rejection class FAILS CLOSED and is reported, never absorbed',function(){
+    const s=g.evidenceSummarizeImportResults([
+      {name:'malformed.json',result:{ok:false,reason:'MALFORMED_JSON'}},
+      {name:'altered.json',result:{ok:false,reason:'HASH_MISMATCH'}},
+      {name:'conflict.json',result:{ok:false,reason:'DUPLICATE_CONFLICTING_HASH'}},
+      {name:'invalid.json',result:{ok:false,reason:'INVALID_PACKAGE'}},
+      {name:'newer.json',result:{ok:false,reason:'NEWER_SCHEMA_READ_ONLY'}},
+      {name:'alg.json',result:{ok:false,reason:'UNSUPPORTED_ALGORITHM'}}
+    ]);
+    eq(s.rejected,6,'every invalid package is rejected');
+    eq(s.exportVerified,0,'and none of them confirms anything');
+    eq(s.imported,0);
+    eq(s.failures.length,6,'each rejection is named so none is silently absorbed');
+    eq(s.byReason.HASH_MISMATCH,1,'and the reason is preserved');
+  });
+  t('BI4 a missing or malformed result is treated as a REJECTION, never a success',function(){
+    const s=g.evidenceSummarizeImportResults([{name:'x.json'},{name:'y.json',result:null},{name:'z.json',result:'nonsense'}]);
+    eq(s.rejected,3,'an absent result cannot count as an import');
+    eq(s.byReason.NO_RESULT,3);
+    eq(s.exportVerified,0);
+  });
+  t('BI5 non-JSON files are SKIPPED and REPORTED, never silently dropped',function(){
+    eq(g.evidenceIsImportableName('.DS_Store'),false);
+    eq(g.evidenceIsImportableName('notes.txt'),false);
+    eq(g.evidenceIsImportableName('pkg.json'),true);
+    eq(g.evidenceIsImportableName('PKG.JSON'),true,'the extension test is case-insensitive');
+    const s=g.evidenceSummarizeImportResults([
+      {name:'.DS_Store',skipped:true},{name:'a.json',result:{ok:true,reason:'VERIFIED',imported:true}}
+    ]);
+    eq(s.skippedNotJson,1,'a folder selection sweeps in other files and must say so');
+    eq(s.byReason.SKIPPED_NOT_JSON,1,'silence indistinguishable from success is the EXP-001 defect');
+    eq(s.total,2,'and the skipped file still counts toward the total selected');
+  });
+  t('BI6 an empty selection summarises to zero of everything, not to success',function(){
+    const s=g.evidenceSummarizeImportResults([]);
+    eq(s.total,0); eq(s.exportVerified,0); eq(s.imported,0); eq(s.rejected,0);
+    eq(g.evidenceSummarizeImportResults(null).total,0,'a malformed argument cannot throw');
+  });
+  t('BI7 the summary is ORDER-INDEPENDENT and equals the sum of individual imports',function(){
+    // The claim M-3 has to earn: a batch of N produces exactly what N individual imports produce.
+    const results=[
+      {name:'a.json',result:{ok:true,reason:'EXPORT_VERIFIED_BY_REIMPORT',exportVerified:true}},
+      {name:'b.json',result:{ok:false,reason:'HASH_MISMATCH'}},
+      {name:'c.json',result:{ok:true,reason:'VERIFIED',imported:true}},
+      {name:'d.json',skipped:true}
+    ];
+    const batch=g.evidenceSummarizeImportResults(results);
+    // the same entries, imported one at a time, then added up
+    const singles=results.map(function(r){ return g.evidenceSummarizeImportResults([r]); });
+    const summed=singles.reduce(function(a,s){
+      return{total:a.total+s.total,imported:a.imported+s.imported,exportVerified:a.exportVerified+s.exportVerified,
+        duplicateNoOp:a.duplicateNoOp+s.duplicateNoOp,rejected:a.rejected+s.rejected,skippedNotJson:a.skippedNotJson+s.skippedNotJson};
+    },{total:0,imported:0,exportVerified:0,duplicateNoOp:0,rejected:0,skippedNotJson:0});
+    eq(batch.total,summed.total,'total');
+    eq(batch.exportVerified,summed.exportVerified,'confirmations');
+    eq(batch.imported,summed.imported,'imports');
+    eq(batch.rejected,summed.rejected,'rejections');
+    eq(batch.skippedNotJson,summed.skippedNotJson,'skips');
+    const reversed=g.evidenceSummarizeImportResults(results.slice().reverse());
+    eq(reversed.exportVerified,batch.exportVerified,'and order cannot change the outcome');
+    eq(reversed.rejected,batch.rejected);
+  });
+  t('BI8 the operator-facing summary prints every category, including the zeroes',function(){
+    const txt=g.evidenceImportSummaryText(g.evidenceSummarizeImportResults([
+      {name:'a.json',result:{ok:false,reason:'HASH_MISMATCH'}}
+    ]));
+    ok(txt.indexOf('Export CONFIRMED by re-import: 0')!==-1,
+      'zero confirmations must be VISIBLE -- an omitted line reads as "did not happen"');
+    ok(txt.indexOf('Rejected:                  1')!==-1,'and rejections are shown');
+    ok(txt.indexOf('HASH_MISMATCH')!==-1,'with the reason');
+    ok(txt.indexOf('a.json')!==-1,'and the offending filename');
+    ok(txt.indexOf('No stored package was overwritten')!==-1,
+      'and the operator is told explicitly that a rejection changed nothing');
+  });
+  t('BI9 batch import never bypasses the EXP-001 decision function',function(){
+    // The confirmation decision still lives in exactly one place, reached through the per-file path.
+    const src=String(g.evidenceImportPackageObject);
+    ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,
+      'the single-file path -- which the batch calls -- still routes duplicates through the decision');
+    eq(/evidenceEvaluateExportReimport/.test(String(g.evidenceImportFiles)),false,
+      'and the batch does NOT reimplement or shortcut that decision itself');
+  });
+  t('BI10 both import surfaces share ONE handler, so neither can drift to a weaker path',function(){
+    const banner=bannerWithAttempts();
+    const bannerHandlers=(banner.match(/onchange="([^"]+)"/g)||[]);
+    ok(bannerHandlers.length>0,'the banner has import inputs');
+    bannerHandlers.forEach(function(h){
+      ok(h.indexOf('evidenceHandleImportInputMulti')!==-1,'banner input uses the shared handler: '+h);
+    });
+    const card=String(g.renderEvidencePlatformDiagnostics);
+    ok(card.indexOf('evidenceHandleImportInputMulti')!==-1,
+      'the diagnostics card uses the same shared handler');
+    ok(String(g.evidenceHandleImportInputMulti).indexOf('evidenceImportFiles')!==-1,
+      'and that handler delegates to the batch, which delegates to the per-file path');
+  });
+
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){
     const src=String(g.evidenceImportPackageObject);
     ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,'a duplicate must go through the decision');

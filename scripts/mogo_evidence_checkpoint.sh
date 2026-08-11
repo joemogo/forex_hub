@@ -148,9 +148,21 @@ if [ "$VERIFY_ONLY" = "1" ]; then
 fi
 
 # ── Take the checkpoint. ─────────────────────────────────────────────────────────────────────
+# Checkpoint directories are named by UTC timestamp at ONE-SECOND resolution, so two checkpoints
+# taken inside the same second collide. Overwriting is never acceptable -- a checkpoint is the only
+# copy of something irreplaceable -- but neither is failing, because the launcher refuses to start
+# when its pre-launch checkpoint fails (GUARD 8). A hard failure here would block an evidence run
+# over a naming detail. So a free name is found instead; the existing checkpoint is never touched.
+# (Found by this script's own selftest, which began failing once the machine was fast enough to
+# complete two checkpoints within the same second.)
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 DEST="$ROOT/$STAMP"
-[ -e "$DEST" ] && fail "checkpoint directory already exists — refusing to overwrite: $DEST"
+if [ -e "$DEST" ]; then
+  _n=2
+  while [ -e "$ROOT/$STAMP-$_n" ] && [ "$_n" -lt 100 ]; do _n=$((_n+1)); done
+  [ -e "$ROOT/$STAMP-$_n" ] && fail "cannot find a free checkpoint name under $ROOT/$STAMP"
+  DEST="$ROOT/$STAMP-$_n"
+fi
 mkdir -p "$DEST" || fail "cannot create checkpoint directory: $DEST"
 
 cp -R "$SRC" "$DEST/IndexedDB" || fail "copy failed into $DEST"
