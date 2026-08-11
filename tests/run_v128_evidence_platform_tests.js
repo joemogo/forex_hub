@@ -219,6 +219,21 @@ const wrapped = new Function('g',
   'g.EVIDENCE_DB_VERSION=EVIDENCE_DB_VERSION;' +
   'g.EVIDENCE_STORE_PACKAGES=EVIDENCE_STORE_PACKAGES;' +
   'g.EVIDENCE_STORE_META=EVIDENCE_STORE_META;' +
+  // ── MOGO-013: durable forward observation ledger ──
+  'g.EVIDENCE_STORE_OBSERVATIONS=EVIDENCE_STORE_OBSERVATIONS;' +
+  'g.EVIDENCE_OBSERVATION_SCHEMA_VERSION=EVIDENCE_OBSERVATION_SCHEMA_VERSION;' +
+  'g.EVIDENCE_OBSERVATION_MAX=EVIDENCE_OBSERVATION_MAX;' +
+  'g.EVIDENCE_POLL_EXPECTED_INTERVAL_MS=EVIDENCE_POLL_EXPECTED_INTERVAL_MS;' +
+  'g.evidenceObservationNaturalKey=evidenceObservationNaturalKey;' +          // pure
+  'g.evidenceBuildPollObservation=evidenceBuildPollObservation;' +            // pure
+  'g.evidenceBuildEvaluationObservation=evidenceBuildEvaluationObservation;' +// pure
+  'g.evidenceBuildPipelineObservation=evidenceBuildPipelineObservation;' +    // pure
+  'g.evidenceSummarizeObservations=evidenceSummarizeObservations;' +          // pure
+  'g.evidencePlanRetention=evidencePlanRetention;' +                          // pure
+  'g.evidenceEnforceObservationRetention=evidenceEnforceObservationRetention;' +
+  'g.evidencePutObservation=evidencePutObservation;' +
+  'g.evidenceRecordForwardObservations=evidenceRecordForwardObservations;' +
+  'g.alexGLivePollTick=alexGLivePollTick;' +
   'g.EVIDENCE_CANON_VERSION=EVIDENCE_CANON_VERSION;' +
   // M-7: the committed evidence hash baseline, as text. The fixtures parse it themselves so that a
   // missing or unparseable baseline FAILS visibly rather than skipping a group.

@@ -637,11 +637,15 @@ function runEvidencePlatformFixtures(g){
   t('SI1 the evidence database identity is exactly what the corpus was written with',function(){
     eq(g.EVIDENCE_DB_NAME,'mogo_evidence',
       'the checkpoint metadata reads `mogo_evidence` -- never `mogo_evidence_v1` (D-16 was a misreading)');
-    eq(g.EVIDENCE_DB_VERSION,1,'and version 1');
+    // MOGO-013 bumped this to 2 to add the `observations` store. Pinning it is the point: a
+    // schema change must be a visible, reviewed edit here, never something the gate tolerates
+    // silently. The upgrade is additive -- `packages` and `meta` are untouched.
+    eq(g.EVIDENCE_DB_VERSION,2,'and version 2 (MOGO-013 added the observations store)');
   });
   t('SI2 the object store names match the preserved store',function(){
     eq(g.EVIDENCE_STORE_PACKAGES,'packages','the checkpoint carries exactly one store named packages');
     eq(g.EVIDENCE_STORE_META,'meta','and one named meta');
+    eq(g.EVIDENCE_STORE_OBSERVATIONS,'observations','and, from MOGO-013, one named observations');
   });
   t('SI3 the package schema and canonicalization identifiers are pinned',function(){
     eq(g.EVIDENCE_PACKAGE_SCHEMA_VERSION,'mogo.evidence-package.v1',
@@ -1350,6 +1354,240 @@ function runEvidencePlatformFixtures(g){
     ok(codes(v).indexOf('CAMPAIGN_C1')!==-1);
   });
 
+  // ══ GROUP 6K — MOGO-013: THE DURABLE FORWARD OBSERVATION LEDGER ══════════════════════════
+  // Financial outcomes were durable while scientific observations were not. These fixtures pin
+  // the ledger's contract: what counts as the same observation, what must never be lost, and
+  // that retention can never quietly delete history.
+  //
+  // DISCLOSED, consistent with this suite: IndexedDB does not exist here, so persistence and
+  // reload survival are proven in a REAL disposable browser profile (see the milestone report),
+  // never against the running campaign. What executes here is every pure rule the ledger obeys.
+  function stat(over){
+    return Object.assign({signalId:'AGL|alex_g_sr_v1|AUD_JPY|H1|...|1786428000000',setupId:'S1',
+      pair:'AUD_JPY',timeframe:'H1',setupType:'A_repeatedReaction',direction:null,
+      qualificationTimestamp:1786428000000,firstLiveEvaluationTimestamp:1786453262086,
+      signalAgeMinutesAtEvaluation:421.03,status:'IGNORED — STALE SIGNAL',
+      reason:'SIGNAL_TOO_OLD_AT_FIRST_EVALUATION',liveEvaluationFinal:true,
+      zoneId:'Z1',zoneTouchNumber:4},over||{});
+  }
+  t('L1 a SUCCESSFUL poll is recorded as an operational observation',function(){
+    const p=g.evidenceBuildPollObservation({tickId:'SCAN-1',startedAt:'2026-08-11T13:00:00.000Z',
+      finishedAt:'2026-08-11T13:00:02.000Z',outcome:'OK',tradingEnabled:true,evaluationAdvanced:true,
+      instrumentsAttempted:12,instrumentsEvaluated:['AUD_JPY','GBP_USD']});
+    eq(p.kind,'POLL'); eq(p.outcome,'OK'); eq(p.durationMs,2000);
+    eq(p.expectedIntervalMs,g.EVIDENCE_POLL_EXPECTED_INTERVAL_MS,'the expectation is STORED, not assumed later');
+    eq(p.schemaVersion,g.EVIDENCE_OBSERVATION_SCHEMA_VERSION);
+    ok(p.occurredAt&&p.recordedAt,'occurredAt and recordedAt are distinct fields');
+  });
+  t('L2 a FAILED poll is recorded too -- gaps are the point',function(){
+    const p=g.evidenceBuildPollObservation({tickId:'SCAN-2',startedAt:'2026-08-11T13:01:00.000Z',
+      finishedAt:'2026-08-11T13:01:01.000Z',outcome:'ERROR',errorText:'network down',
+      instrumentsAttempted:12,instrumentsEvaluated:[]});
+    eq(p.outcome,'ERROR'); eq(p.errorText,'network down');
+    // and the seam records it from a finally block, so a throwing poll still lands
+    const src=String(g.alexGLivePollTick);
+    ok(/finally\s*\{/.test(src),'the poll seam must record from finally');
+    ok(src.indexOf('evidenceRecordForwardObservations')!==-1,'and must call the ledger');
+    ok(/throw e;/.test(src),'while still rethrowing the real error -- observation never swallows it');
+  });
+  t('L3 a REJECTED setup persists with its reason and rule attribution',function(){
+    const e=g.evidenceBuildEvaluationObservation(stat({status:'IGNORED — BEFORE ACTIVATION',
+      reason:'CONFIG_BEFORE_ACTIVATION',signalAgeMinutesAtEvaluation:5}),{});
+    eq(e.kind,'EVALUATION'); eq(e.status,'IGNORED — BEFORE ACTIVATION');
+    eq(e.reason,'CONFIG_BEFORE_ACTIVATION');
+    eq(e.derivedActivationCutoffPassed,false);
+    eq(e.ruleAttribution,'ALEX_ACTIVATION_CUTOFF');
+    eq(e.derivedQualifying,false,'an ignored setup is not qualifying');
+  });
+  t('L4 a QUALIFYING setup persists and is distinguishable from a rejection',function(){
+    const e=g.evidenceBuildEvaluationObservation(stat({status:'QUALIFIED',reason:null,
+      liveEvaluationFinal:false}),{});
+    eq(e.derivedQualifying,true); eq(e.derivedActivationCutoffPassed,true);
+    eq(e.derivedStale,false); eq(e.ruleAttribution,null,'no rejection rule fired');
+  });
+  t('L5 a STALE setup persists with its age and staleness attribution',function(){
+    const e=g.evidenceBuildEvaluationObservation(stat(),{});
+    eq(e.derivedStale,true); eq(e.ruleAttribution,'ALEX_SIGNAL_STALENESS');
+    eq(e.signalAgeMinutesAtEvaluation,421.03,'the age is recorded exactly as the strategy computed it');
+    eq(e.qualificationTimestamp,1786428000000);
+    eq(e.firstLiveEvaluationTimestamp,1786453262086);
+    ok(e.qualificationAt&&e.firstLiveEvaluationAt,'and both are also stored human-readable');
+  });
+  t('L6 the HOURLY RE-CREATION MOGO-012 discovered is preserved, not deduped away',function(){
+    // The same underlying setup re-recorded an hour later under a new first-evaluation time is a
+    // DISTINCT observation of a real, repeated behaviour. Collapsing them would erase exactly the
+    // phenomenon the ledger exists to record.
+    const a=g.evidenceBuildEvaluationObservation(stat({firstLiveEvaluationTimestamp:1786449662086,
+      signalAgeMinutesAtEvaluation:361.10}),{});
+    const b=g.evidenceBuildEvaluationObservation(stat({firstLiveEvaluationTimestamp:1786453262086,
+      signalAgeMinutesAtEvaluation:421.03}),{});
+    const ka=g.evidenceObservationNaturalKey(a),kb=g.evidenceObservationNaturalKey(b);
+    ok(ka!==kb,'an hourly re-evaluation must produce a DISTINCT natural key');
+    ok(ka.indexOf('EVAL|')===0&&kb.indexOf('EVAL|')===0);
+    // ...while a genuine repeat of the SAME observation must collapse
+    eq(g.evidenceObservationNaturalKey(a),
+       g.evidenceObservationNaturalKey(g.evidenceBuildEvaluationObservation(stat({
+         firstLiveEvaluationTimestamp:1786449662086,signalAgeMinutesAtEvaluation:361.10}),{})),
+       'the identical observation written twice collapses to one key');
+  });
+  t('L7 natural keys are deterministic per kind and cannot be null-collided',function(){
+    eq(g.evidenceObservationNaturalKey({kind:'POLL',tickId:'T1'}),'POLL|T1');
+    eq(g.evidenceObservationNaturalKey({kind:'RETENTION',evictedSeqFrom:1,evictedSeqTo:9}),'RETN|1|9');
+    eq(g.evidenceObservationNaturalKey(null),null);
+    eq(g.evidenceObservationNaturalKey({kind:'NONSENSE'}),null,'an unknown kind has no key and cannot be written');
+    // a record with no key is refused by the writer rather than stored unkeyed
+    ok(String(g.evidencePutObservation).indexOf('NO_NATURAL_KEY')!==-1);
+  });
+  t('L8 duplicate protection is STRUCTURAL, not remembered',function(){
+    const src=String(g.evidencePutObservation);
+    ok(/\.add\(/.test(src),'observations are add()ed, never put() -- put would overwrite history');
+    eq(/\.put\(/.test(src),false,'no put() on the observation store');
+    ok(src.indexOf('DUPLICATE_ALREADY_RECORDED')!==-1,
+      'a rejected duplicate is reported as already-recorded, not as a failure');
+    ok(String(g.evidenceRecordForwardObservations).indexOf('evidencePutObservation')!==-1);
+  });
+  t('L9 ordering is deterministic and monotonic',function(){
+    const src=String(g.evidencePutObservation);
+    ok(src.indexOf('evidenceAllocateObservationSeq')!==-1,'every observation takes a sequence number');
+    ok(/seq:seq/.test(src),'which is stored on the record');
+    // the summarizer orders by seq, never by insertion order or wall clock
+    ok(/sort\(function\(a,b\)\{return \(a\.seq\|\|0\)-\(b\.seq\|\|0\);\}\)/.test(String(g.evidenceSummarizeObservations)),
+      'poll continuity is computed in seq order');
+  });
+  t('L10 polling GAPS and missed intervals are derivable from stored records',function(){
+    const mk=function(id,at,outcome){ return{kind:'POLL',seq:id,tickId:'T'+id,startedAt:at,
+      outcome:outcome||'OK',instrumentsEvaluated:[],failures:[]}; };
+    const s=g.evidenceSummarizeObservations([
+      mk(1,'2026-08-11T13:00:00.000Z'),
+      mk(2,'2026-08-11T13:01:00.000Z'),
+      mk(3,'2026-08-11T19:01:00.000Z')          // a six-hour gap, exactly the INC-001 shape
+    ]);
+    eq(s.polls,3); eq(s.pollsOk,3);
+    eq(s.maxGapMs,6*3600000,'the six-hour gap is measured, not inferred');
+    eq(s.missedIntervals,359,'and the missed 60s intervals are counted');
+    eq(s.gapsWithFailures.length,1,'the gap is reported with its surrounding context');
+    eq(s.gapsWithFailures[0].from,'2026-08-11T13:01:00.000Z');
+    eq(s.lastSuccessfulPollAt,'2026-08-11T19:01:00.000Z');
+  });
+  t('L11 API/data failures are associated with the period they occurred in',function(){
+    const s=g.evidenceSummarizeObservations([
+      {kind:'POLL',seq:1,startedAt:'2026-08-11T13:00:00.000Z',outcome:'ERROR',
+       errorText:'broker 503',failures:[{pair:'AUD_JPY',kind:'FETCH'}],instrumentsEvaluated:[]},
+      {kind:'POLL',seq:2,startedAt:'2026-08-11T14:00:00.000Z',outcome:'OK',
+       failures:[],instrumentsEvaluated:['AUD_JPY']}
+    ]);
+    eq(s.pollsFailed,1);
+    eq(s.gapsWithFailures.length,1,'the gap after a failed poll is surfaced');
+    eq(s.gapsWithFailures[0].priorOutcome,'ERROR','with the failing poll attributed to it');
+    eq(s.gapsWithFailures[0].priorError,'broker 503');
+    eq(s.instrumentsSeen.AUD_JPY,1);
+  });
+  t('L12 evaluation statistics are derivable for the operations report',function(){
+    const s=g.evidenceSummarizeObservations([
+      g.evidenceBuildEvaluationObservation(stat(),{}),
+      g.evidenceBuildEvaluationObservation(stat({status:'IGNORED — BEFORE ACTIVATION',
+        reason:'CONFIG_BEFORE_ACTIVATION',firstLiveEvaluationTimestamp:1}),{}),
+      g.evidenceBuildEvaluationObservation(stat({status:'QUALIFIED',reason:null,
+        firstLiveEvaluationTimestamp:2}),{})
+    ]);
+    eq(s.evaluations,3); eq(s.staleEvaluations,1); eq(s.qualifyingEvaluations,1);
+    eq(s.evaluationsByReason.SIGNAL_TOO_OLD_AT_FIRST_EVALUATION,1);
+    eq(s.evaluationsByReason.CONFIG_BEFORE_ACTIVATION,1);
+  });
+  t('L13 RETENTION never silently deletes -- the marker is written FIRST',function(){
+    const src=String(g.evidenceEnforceObservationRetention);
+    const markerIdx=src.indexOf('evidencePutObservation(marker)');
+    const deleteIdx=src.indexOf('.delete(');
+    ok(markerIdx!==-1,'a RETENTION marker must be written');
+    ok(deleteIdx!==-1,'and something must actually be evicted');
+    ok(markerIdx<deleteIdx,
+      'the marker must be recorded BEFORE the eviction, so a crash between them loses nothing silently');
+    ok(/evictedSeqFrom/.test(src)&&/evictedSeqTo/.test(src)&&/evictedCount/.test(src),
+      'and it must name exactly what was removed');
+    ok(/evictedByKind/.test(src),'broken down by kind');
+    ok(src.indexOf('NOT recoverable from this store')!==-1,
+      'and state plainly that the evicted range is not recoverable here');
+    // Mutation-driven: hardcoding the plan to {evict:true} survived, because L14 tests the PLANNER
+    // while nothing asserted the enforcer OBEYS it. A planner nobody consults is decoration.
+    ok(/const\s+plan\s*=\s*evidencePlanRetention\(/.test(src),
+      'the enforcer must obtain its plan from evidencePlanRetention, never invent one');
+    ok(/if\(!plan\.evict\)\s*return/.test(src),
+      'and must return without evicting when the plan says not to');
+  });
+  t('L14 retention is a PLAN before it is an action, and is inspectable',function(){
+    eq(g.evidencePlanRetention(10,100,5).evict,false,'under the cap nothing is evicted');
+    eq(g.evidencePlanRetention(10,100,5).reason,'UNDER_CAP');
+    const p=g.evidencePlanRetention(150,100,5);
+    eq(p.evict,true); eq(p.reason,'CAP_EXCEEDED'); ok(p.evictCount>0);
+    eq(g.evidencePlanRetention(null).evict,false,'a malformed count cannot trigger eviction');
+    eq(g.evidencePlanRetention(undefined).evict,false);
+    ok(g.EVIDENCE_OBSERVATION_MAX>=100000,'the cap is generous enough that rollover is rare');
+  });
+  t('L15 the ledger OBSERVES -- it can never alter a trading decision',function(){
+    const seam=String(g.alexGLivePollTick);
+    // the ledger call's return value is never read, and it is wrapped so it cannot throw outward
+    ok(/try\{\s*evidenceRecordForwardObservations/.test(seam.replace(/\n\s*/g,' ')),
+      'the seam call must be wrapped in its own try');
+    eq(/=\s*evidenceRecordForwardObservations/.test(seam),false,
+      'its return value must never be assigned or consulted');
+    eq(/await\s+evidenceRecordForwardObservations/.test(seam),false,
+      'and never awaited -- the trading path must not wait on the ledger');
+    const rec=String(g.evidenceRecordForwardObservations);
+    ok(/catch\(e\)\{/.test(rec),'the recorder swallows its own failures');
+    ok(rec.indexOf('evidenceRecordWriteFailure')!==-1,'into the existing write-failure channel');
+  });
+  t('L15b the seam actually FEEDS the real status ledger, not an empty list',function(){
+    // Mutation-driven. Replacing the seam's `statuses:` argument with `[]` silently disabled every
+    // evaluation observation -- the ledger's entire scientific purpose -- and SURVIVED every other
+    // fixture, because they all test the builders rather than the wiring. A ledger that is wired
+    // to nothing passes a builder test perfectly.
+    const seam=String(g.alexGLivePollTick).replace(/\n\s*/g,' ');
+    const m=seam.match(/statuses\s*:\s*([^}]+?)\}\)/);
+    ok(!!m,'the seam must pass a statuses argument');
+    const arg=m?m[1]:'';
+    ok(arg.indexOf('alexGLiveSetupStatuses')!==-1,
+      'the seam must pass the REAL status array the strategy recorded (saw: '+arg.trim().slice(0,80)+')');
+    eq(/statuses\s*:\s*\[\s*\]/.test(seam),false,'and must never pass an empty list unconditionally');
+    // NO SILENT CAPS at the seam either. A truncated feed loses observations exactly as invisibly
+    // as an empty one, and it survived a mutation until this was added.
+    eq(/\.slice\(|\.splice\(|\.filter\(/.test(arg),false,
+      'the status feed must not be sliced, spliced or filtered on its way to the ledger (saw: '+arg.trim().slice(0,80)+')');
+  });
+  t('L16 protected strategy functions are NOT referenced by the ledger',function(){
+    const all=String(g.evidenceRecordForwardObservations)+String(g.evidenceBuildEvaluationObservation)+
+      String(g.evidenceBuildPollObservation)+String(g.evidenceSummarizeObservations);
+    ['alexGRecordLiveSetupStatus','alexGIsSetupSignalStale','alexGRunSetupEngine'].forEach(function(fn){
+      eq(all.indexOf(fn),-1,'the ledger must not call the protected function '+fn);
+    });
+  });
+  t('L17 pipeline observations REFERENCE authoritative records rather than copying them',function(){
+    const p=g.evidenceBuildPipelineObservation({stage:'OPENED',pair:'AUD_JPY',
+      sourceTradeId:'AGT|1',tradeId:'T1',packageId:'PKG|x|20260811|1',occurredAt:'2026-08-11T13:00:00.000Z'});
+    eq(p.kind,'PIPELINE'); eq(p.stage,'OPENED');
+    eq(p.sourceTradeId,'AGT|1'); eq(p.packageId,'PKG|x|20260811|1');
+    eq(p.entryPrice,undefined,'no price is copied -- the account and package remain authoritative');
+    eq(p.balance,undefined,'no balance is copied');
+  });
+  t('L18 every observation carries provenance and origin',function(){
+    [g.evidenceBuildPollObservation({tickId:'T'}),
+     g.evidenceBuildEvaluationObservation(stat(),{}),
+     g.evidenceBuildPipelineObservation({stage:'OPENED'})].forEach(function(o){
+      eq(o.provenance,'FORWARD_LIVE_OBSERVATION','provenance is explicit');
+      eq(o.schemaVersion,g.EVIDENCE_OBSERVATION_SCHEMA_VERSION,'schema version is stamped');
+      ok('captureOrigin' in o,'origin is recorded (null offline, real in the browser)');
+      ok('appVersion' in o&&'strategyId' in o,'engine and strategy identity are stamped');
+    });
+  });
+  t('L19 malformed input can never throw into the trading path',function(){
+    g.evidenceBuildPollObservation(null);
+    g.evidenceBuildPollObservation(undefined);
+    g.evidenceBuildEvaluationObservation(null,null);
+    g.evidenceBuildPipelineObservation(null);
+    eq(g.evidenceSummarizeObservations(null).total,0);
+    eq(g.evidenceSummarizeObservations([null,undefined,'x']).total,3,'malformed entries are counted, not skipped');
+    ok(true,'no builder threw');
+  });
+
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){
     const src=String(g.evidenceImportPackageObject);
     ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,'a duplicate must go through the decision');
@@ -1881,9 +2119,35 @@ function runEvidencePlatformFixtures(g){
   });
   t('D2 tier-(b) packages are NEVER automatically deleted (ruling C4)',function(){
     const layer=LAYER;
-    eq(layer.indexOf('.delete('),-1,'no evidence code path may delete a stored package');
     eq(layer.indexOf('.clear()'),-1,'no evidence code path may clear the package store');
     eq(layer.indexOf('deleteDatabase'),-1,'no evidence code path may drop the database');
+    // ── MOGO-013 re-expression, and the change is deliberate rather than convenient. ──
+    // This previously asserted `layer.indexOf('.delete(') === -1` -- NO deletion anywhere in the
+    // evidence layer. MOGO-013 introduces authorized bounded retention on the OBSERVATIONS store,
+    // so a blanket ban is no longer the real policy. The real policy, which is what is asserted
+    // now, is narrower where it matters and broader where it counts:
+    //
+    //   1. a PACKAGE may still never be deleted -- unchanged, and now checked by store rather
+    //      than by the mere absence of a substring, so an aliased store handle cannot slip past;
+    //   2. the ONLY function permitted to delete anything is the observation-retention function;
+    //   3. that function must reference the observations store and must NOT reference the
+    //      packages store; and
+    //   4. it must write its RETENTION marker BEFORE it deletes -- see BR4.
+    //
+    // A bare `.delete(` appearing in any other evidence function fails this fixture.
+    const deleteFns=[];
+    const fnRe=/(?:async\s+)?function\s+(evidence[A-Za-z0-9_]*)\s*\(/g;
+    let fm,bounds=[];
+    while((fm=fnRe.exec(layer))!==null) bounds.push({name:fm[1],start:fm.index});
+    bounds.forEach(function(b,i){
+      const end=(i+1<bounds.length)?bounds[i+1].start:layer.length;
+      if(layer.slice(b.start,end).indexOf('.delete(')!==-1) deleteFns.push(b.name);
+    });
+    eq(deleteFns.filter(function(n){ return n!=='evidenceEnforceObservationRetention'; }).length,0,
+      'only evidenceEnforceObservationRetention may delete anything (saw: '+deleteFns.join(',')+')');
+    const ret=String(g.evidenceEnforceObservationRetention);
+    ok(ret.indexOf('EVIDENCE_STORE_OBSERVATIONS')!==-1,'retention must operate on the observations store');
+    eq(ret.indexOf('EVIDENCE_STORE_PACKAGES'),-1,'retention must never reference the package store');
     // The only write-back permitted on an existing package is recording an export outcome.
     // Re-expressed for D-2: this previously pinned the literal `existing.export=exportState`, which
     // asserted the wholesale ASSIGNMENT that was itself the defect. The intent -- "no field other

@@ -4920,12 +4920,22 @@ function stopAlexGLivePollingIfDone(){
 // calls at the boundaries. No protected rule logic is instrumented.
 async function alexGLivePollTick(){
   const __scanId=generateDecisionEventId('SCAN');
+  // ── MOGO-013: observation seam. Purely additive local bookkeeping -- these three variables are
+  // read only by the ledger call at the end and never influence a single trading decision. ──
+  const __obsStartedAt=new Date().toISOString();
+  const __obsEvaluated=[];
+  let __obsAdvanced=false,__obsOutcome='OK',__obsError=null;
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
   try{
     await alexGCheckLivePositions(); // always monitor/close existing positions first
     stopAlexGLivePollingIfDone();
     if(!alexGAutoTrading.enabled){ // do not look for new setups while OFF
       emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
+      // A poll that correctly did nothing is still an operational observation, and recording it
+      // is what makes "MOGO was running but disabled" distinguishable from "MOGO was not running".
+      evidenceRecordForwardObservations({scanId:__scanId,poll:{tickId:__scanId,startedAt:__obsStartedAt,
+        finishedAt:new Date().toISOString(),outcome:'SKIPPED_DISABLED',tradingEnabled:false,
+        evaluationAdvanced:false,instrumentsAttempted:0,instrumentsEvaluated:[]}});
       return;
     }
     // Strategy evaluation only advances when a new completed H1 candle exists --
@@ -4936,12 +4946,29 @@ async function alexGLivePollTick(){
       const oPair=pair.replace('/','_');
       const lastEval=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1)||0;
       if(currentH1Boundary<=lastEval) continue;
+      __obsAdvanced=true; __obsEvaluated.push(oPair);
       await alexGEvaluatePairForLiveSetups(oPair,__scanId);
     }
     emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
   }catch(e){
+    __obsOutcome='ERROR'; __obsError=(e&&e.message)?e.message:String(e);
     emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',reasonCode:'SYSTEM_UNEXPECTED_ERROR',reasonText:(e&&e.message)?e.message:'Unknown error',severity:'ERROR',evidenceCompleteness:'MINIMAL'});
     throw e; // preserve existing error propagation exactly -- never swallow a real error
+  }finally{
+    // MOGO-013. In `finally` so a FAILED poll is recorded too -- a ledger that only remembers
+    // successful polls would hide exactly the gaps it exists to expose. The rethrow above still
+    // happens: this observes the failure, it does not swallow it.
+    try{
+      evidenceRecordForwardObservations({scanId:__scanId,
+        poll:{tickId:__scanId,startedAt:__obsStartedAt,finishedAt:new Date().toISOString(),
+          outcome:__obsOutcome,tradingEnabled:!!alexGAutoTrading.enabled,evaluationAdvanced:__obsAdvanced,
+          instrumentsAttempted:__obsEvaluated.length,instrumentsEvaluated:__obsEvaluated,
+          errorText:__obsError},
+        // The status ledger the protected recorder already produced, recorded verbatim. Duplicate
+        // protection means only genuinely new observations are written; the hourly re-creation
+        // MOGO-012 discovered produces new natural keys and is therefore preserved as it happens.
+        statuses:__obsAdvanced?(alexGLiveSetupStatuses||[]):[]});
+    }catch(e){ /* never allow observation to affect the trading path */ }
   }
 }
 
@@ -12145,9 +12172,57 @@ const EVIDENCE_HASH_ALGORITHM='SHA-256';
 const EVIDENCE_HASH_SCOPE='INTEGRITY_ONLY_NOT_AUTHENTICITY';
 const EVIDENCE_HASH_CLAIM_TEXT='Content integrity verified (SHA-256). This detects alteration only -- it is not authenticity, not identity verification, and not protection against an attacker able to replace both the package and its hash.';
 const EVIDENCE_DB_NAME='mogo_evidence';
-const EVIDENCE_DB_VERSION=1;
+// v2 (MOGO-013): adds the `observations` store. The bump is deliberate and is the reason
+// fixture SI1 pins 2 rather than 1 -- a schema change must be visible in the pinned identity,
+// not silently tolerated by it. The upgrade is purely ADDITIVE: `packages` and `meta` are
+// untouched, so every existing package survives the upgrade unchanged.
+const EVIDENCE_DB_VERSION=2;
 const EVIDENCE_STORE_PACKAGES='packages';
 const EVIDENCE_STORE_META='meta';
+const EVIDENCE_STORE_OBSERVATIONS='observations';
+
+// ══ MOGO-013 -- DURABLE FORWARD OBSERVATION LEDGER ═══════════════════════════════════════════
+//
+// WHY THIS EXISTS
+//
+// Financial outcomes were durable while scientific observations were not. Every setup ALEX
+// evaluated, every rejection, every stale signal and every poll lived in memory only:
+// alexGLiveSetupStatuses has no persistence path, and the Decision Event bus is a 500-entry ring
+// holding roughly two minutes. MOGO-012 measured the consequence -- the array is not merely
+// ephemeral, it is REBUILT hourly, so observations were being created and destroyed continuously,
+// and MOGO-012-INC-001 could not be reconstructed because no durable telemetry existed.
+//
+// That is the wrong persistence hierarchy for a research instrument. A trade is evidence; a
+// REJECTED setup is evidence; a stale signal is evidence; a decision NOT to trade is
+// scientifically important. This ledger preserves the decision history required to study whether
+// ALEX has a real edge.
+//
+// IT OBSERVES. IT DOES NOT DECIDE.
+//
+// Nothing here participates in signal generation, qualification, entry, stop, target, risk, pair
+// selection, staleness or execution. It reads what the frozen strategy already recorded and
+// writes it down. Every write is fire-and-forget: no return value is consulted by the trading
+// path, and a ledger failure can never alter, delay or prevent a trading decision. The protected
+// functions alexGRecordLiveSetupStatus, alexGIsSetupSignalStale and alexGRunSetupEngine are not
+// touched -- attachment is at the non-protected alexGLivePollTick seam, the same seam the
+// Decision Event bus has used since v12.5.0 with zero drift.
+//
+// FAITHFULNESS OVER TIDINESS. The hourly re-creation of the same underlying setup under a new
+// signal identity, with a steadily increasing age, is recorded AS IT HAPPENS. It is not deduped
+// away, normalised or corrected. The ledger's job is to record what the frozen strategy actually
+// does, including behaviour a future milestone may decide to change.
+const EVIDENCE_OBSERVATION_SCHEMA_VERSION='mogo.observation.v1';
+const EVIDENCE_OBSERVATION_KINDS=Object.freeze(['POLL','EVALUATION','PIPELINE','RETENTION']);
+// The nominal cadence of alexGLivePollTick's setInterval. Recorded on every poll observation so
+// that "was a poll missed?" is answered against a stored expectation rather than a live constant
+// that may since have changed.
+const EVIDENCE_POLL_EXPECTED_INTERVAL_MS=60000;
+// Bounded storage, with EXPLICIT rollover. At roughly 300 evaluation records per hourly
+// re-derivation this is on the order of a month of continuous forward operation.
+const EVIDENCE_OBSERVATION_MAX=200000;
+// How many are evicted once the cap is exceeded. Evicting in batches keeps the write path cheap
+// and, more importantly, keeps each RETENTION record a meaningful summary rather than noise.
+const EVIDENCE_OBSERVATION_EVICT_BATCH=5000;
 // K2: these top-level keys are removed before canonicalization, so marking a package exported
 // can never change its hash, and the hash can never cover itself.
 const EVIDENCE_HASH_EXCLUDED_FIELDS=Object.freeze(['contentHash','contentHashAlgorithm','contentHashCanonicalization','contentHashProvenance','contentHashScope','export']);
@@ -12349,6 +12424,16 @@ function evidenceOpenDb(){
       }
       if(!db.objectStoreNames.contains(EVIDENCE_STORE_META)){
         db.createObjectStore(EVIDENCE_STORE_META,{keyPath:'key'});
+      }
+      // MOGO-013. ADDITIVE ONLY -- no existing store is altered, so a v1 database upgrades to v2
+      // with every package intact. `naturalKey` is UNIQUE, which is what makes duplicate
+      // protection structural rather than a thing this code has to remember to do.
+      if(!db.objectStoreNames.contains(EVIDENCE_STORE_OBSERVATIONS)){
+        const obs=db.createObjectStore(EVIDENCE_STORE_OBSERVATIONS,{keyPath:'observationId'});
+        obs.createIndex('byNaturalKey','naturalKey',{unique:true});
+        obs.createIndex('bySeq','seq',{unique:true});
+        obs.createIndex('byKind','kind',{unique:false});
+        obs.createIndex('byOccurredAt','occurredAt',{unique:false});
       }
     };
     req.onsuccess=function(){ evidenceDbHandle=req.result; evidenceDbUnavailableReason=null; resolve(evidenceDbHandle); };
@@ -12805,6 +12890,284 @@ async function evidenceForwardPaperPreflight(overrides){
     if('namedExceptions' in overrides) facts.namedExceptions=overrides.namedExceptions;
   }
   return{verdict:evidenceEvaluateForwardPaperGate(facts),facts:facts};
+}
+
+// ══ MOGO-013 -- observation construction (PURE) ══════════════════════════════════════════════
+// Every builder below is pure and synchronous, so the ledger's rules are executable offline
+// without IndexedDB -- the same pattern evidenceEvaluateExportReimport and
+// evidenceMergeExportState already follow, and the reason those contracts are testable at all.
+
+// DETERMINISTIC IDENTITY. The natural key is what the store enforces uniqueness on, so it decides
+// what counts as "the same observation". It is deliberately built from the facts that make an
+// observation distinct rather than from a timestamp of when it was written -- writing the same
+// observation twice must collapse, while a genuinely new observation must not.
+//
+// For EVALUATION the key includes firstLiveEvaluationTimestamp ON PURPOSE. MOGO-012 established
+// that the frozen strategy re-creates the same underlying setup hourly under a new signal
+// identity with an increasing age. Those are DISTINCT observations of a real, repeated behaviour,
+// and collapsing them would erase exactly the phenomenon the ledger exists to record.
+function evidenceObservationNaturalKey(o){
+  const s=function(v){ return (v===undefined||v===null)?'':String(v); };
+  if(!o||typeof o!=='object') return null;
+  if(o.kind==='POLL') return 'POLL|'+s(o.tickId);
+  if(o.kind==='EVALUATION') return 'EVAL|'+s(o.signalId)+'|'+s(o.firstLiveEvaluationTimestamp);
+  if(o.kind==='PIPELINE') return 'PIPE|'+s(o.stage)+'|'+s(o.sourceTradeId||o.tradeId||o.setupId)+'|'+s(o.occurredAt);
+  if(o.kind==='RETENTION') return 'RETN|'+s(o.evictedSeqFrom)+'|'+s(o.evictedSeqTo);
+  return null;
+}
+function evidenceObservationBase(kind,occurredAt){
+  return{
+    schemaVersion:EVIDENCE_OBSERVATION_SCHEMA_VERSION,
+    kind:kind,
+    occurredAt:occurredAt||new Date().toISOString(),
+    recordedAt:new Date().toISOString(),          // when the ledger wrote it -- never the same field
+    captureOrigin:evidenceCurrentOrigin(),
+    appVersion:(typeof APP_VERSION!=='undefined')?APP_VERSION:null,
+    strategyId:(typeof RULES_ALEXG!=='undefined'&&RULES_ALEXG.ruleVersion)?RULES_ALEXG.ruleVersion:null,
+    provenance:'FORWARD_LIVE_OBSERVATION'
+  };
+}
+function evidenceBuildPollObservation(i){
+  const o=i||{};
+  const rec=evidenceObservationBase('POLL',o.startedAt);
+  rec.tickId=o.tickId||null;
+  rec.startedAt=o.startedAt||null;
+  rec.finishedAt=o.finishedAt||null;
+  rec.durationMs=(o.startedAt&&o.finishedAt)?(Date.parse(o.finishedAt)-Date.parse(o.startedAt)):null;
+  rec.outcome=o.outcome||'UNKNOWN';                       // OK | ERROR | SKIPPED_DISABLED | UNKNOWN
+  rec.expectedIntervalMs=EVIDENCE_POLL_EXPECTED_INTERVAL_MS;
+  rec.tradingEnabled=!!o.tradingEnabled;
+  rec.evaluationAdvanced=!!o.evaluationAdvanced;          // did a new H1 boundary exist this tick
+  rec.instrumentsAttempted=(typeof o.instrumentsAttempted==='number')?o.instrumentsAttempted:null;
+  rec.instrumentsEvaluated=Array.isArray(o.instrumentsEvaluated)?o.instrumentsEvaluated.slice():[];
+  rec.failures=Array.isArray(o.failures)?o.failures.slice(0,20):[];
+  rec.errorText=o.errorText||null;
+  return rec;
+}
+// Built FROM the status entry the protected recorder already produced. Nothing is recomputed,
+// re-decided or corrected here -- a field absent upstream stays null rather than being inferred.
+function evidenceBuildEvaluationObservation(status,ctx){
+  const s=status||{},c=ctx||{};
+  const first=(typeof s.firstLiveEvaluationTimestamp==='number')?s.firstLiveEvaluationTimestamp:null;
+  const rec=evidenceObservationBase('EVALUATION',first?new Date(first).toISOString():null);
+  rec.signalId=s.signalId||null;
+  rec.setupId=s.setupId||null;
+  rec.pair=s.pair||null;
+  rec.timeframe=s.timeframe||null;
+  rec.setupType=s.setupType||null;
+  rec.direction=(s.direction===undefined)?null:s.direction;
+  rec.qualificationTimestamp=(typeof s.qualificationTimestamp==='number')?s.qualificationTimestamp:null;
+  rec.qualificationAt=rec.qualificationTimestamp?new Date(rec.qualificationTimestamp).toISOString():null;
+  rec.firstLiveEvaluationTimestamp=first;
+  rec.firstLiveEvaluationAt=first?new Date(first).toISOString():null;
+  rec.signalAgeMinutesAtEvaluation=(typeof s.signalAgeMinutesAtEvaluation==='number')?s.signalAgeMinutesAtEvaluation:null;
+  rec.status=s.status||null;
+  rec.reason=s.reason||null;
+  rec.liveEvaluationFinal=(s.liveEvaluationFinal===undefined)?null:!!s.liveEvaluationFinal;
+  rec.zoneId=s.zoneId||null;
+  rec.zoneTouchNumber=(s.zoneTouchNumber===undefined)?null:s.zoneTouchNumber;
+  // Derived CLASSIFICATIONS, clearly named as such: they restate the recorded status, they do not
+  // re-decide it. A future reader must be able to tell an observation from an interpretation.
+  rec.derivedActivationCutoffPassed=/BEFORE ACTIVATION/.test(String(s.status||''))?false:true;
+  rec.derivedStale=/STALE/.test(String(s.status||''))||/TOO_OLD/.test(String(s.reason||''));
+  rec.derivedQualifying=!/IGNORED|BLOCKED|REJECT/i.test(String(s.status||''));
+  rec.ruleAttribution=rec.derivedStale?'ALEX_SIGNAL_STALENESS'
+    :(rec.derivedActivationCutoffPassed?null:'ALEX_ACTIVATION_CUTOFF');
+  // Strategy/config identity, supplied by the caller from authoritative runtime values.
+  rec.strategyVersion=c.strategyVersion||null;
+  rec.engineVersion=c.engineVersion||null;
+  rec.configHash=(c.configHash===undefined)?null:c.configHash;
+  rec.paramsHash=(c.paramsHash===undefined)?null:c.paramsHash;
+  rec.scanId=c.scanId||null;
+  return rec;
+}
+function evidenceBuildPipelineObservation(i){
+  const o=i||{};
+  const rec=evidenceObservationBase('PIPELINE',o.occurredAt);
+  rec.stage=o.stage||null;            // CANDIDATE | REQUESTED | REQUEST_FAILED | OPENED | CLOSED
+  rec.pair=o.pair||null;
+  rec.timeframe=o.timeframe||null;
+  rec.setupId=o.setupId||null;
+  rec.signalId=o.signalId||null;
+  rec.status=o.status||null;
+  rec.reason=o.reason||null;
+  // REFERENCES ONLY. The authoritative financial and evidence records live in the account,
+  // journal and package store; duplicating them here would create a second source of truth.
+  rec.sourceTradeId=o.sourceTradeId||null;
+  rec.tradeId=(o.tradeId===undefined)?null:o.tradeId;
+  rec.packageId=o.packageId||null;
+  return rec;
+}
+// PURE. Poll continuity, derived from stored records rather than from live memory -- which is the
+// whole point: after MOGO-013 these questions are answered by arithmetic on durable data.
+function evidenceSummarizeObservations(list){
+  const all=Array.isArray(list)?list.slice():[];
+  const polls=all.filter(function(o){return o&&o.kind==='POLL';})
+    .sort(function(a,b){return (a.seq||0)-(b.seq||0);});
+  const evals=all.filter(function(o){return o&&o.kind==='EVALUATION';});
+  const out={
+    total:all.length,byKind:{},
+    polls:polls.length,pollsOk:0,pollsFailed:0,
+    lastSuccessfulPollAt:null,expectedIntervalMs:EVIDENCE_POLL_EXPECTED_INTERVAL_MS,
+    observedIntervalsMs:[],maxGapMs:null,maxGapBetween:null,missedIntervals:0,
+    gapsWithFailures:[],evaluations:evals.length,
+    evaluationsByStatus:{},evaluationsByReason:{},staleEvaluations:0,qualifyingEvaluations:0,
+    instrumentsSeen:{},retentionEvents:0,evictedTotal:0
+  };
+  all.forEach(function(o){ if(o&&o.kind) out.byKind[o.kind]=(out.byKind[o.kind]||0)+1; });
+  let prev=null;
+  polls.forEach(function(p){
+    if(p.outcome==='OK'){ out.pollsOk++; if(!out.lastSuccessfulPollAt||p.startedAt>out.lastSuccessfulPollAt) out.lastSuccessfulPollAt=p.startedAt; }
+    else if(p.outcome==='ERROR') out.pollsFailed++;
+    (p.instrumentsEvaluated||[]).forEach(function(x){ out.instrumentsSeen[x]=(out.instrumentsSeen[x]||0)+1; });
+    if(prev&&prev.startedAt&&p.startedAt){
+      const gap=Date.parse(p.startedAt)-Date.parse(prev.startedAt);
+      out.observedIntervalsMs.push(gap);
+      if(out.maxGapMs===null||gap>out.maxGapMs){ out.maxGapMs=gap; out.maxGapBetween={from:prev.startedAt,to:p.startedAt}; }
+      // A gap wider than one expected interval means intervals were MISSED, and the count is
+      // reported rather than the gap merely being noted.
+      const missed=Math.max(0,Math.round(gap/EVIDENCE_POLL_EXPECTED_INTERVAL_MS)-1);
+      out.missedIntervals+=missed;
+      if(missed>0){
+        out.gapsWithFailures.push({from:prev.startedAt,to:p.startedAt,missedIntervals:missed,
+          priorOutcome:prev.outcome,priorFailures:(prev.failures||[]).length,priorError:prev.errorText||null});
+      }
+    }
+    prev=p;
+  });
+  evals.forEach(function(e){
+    out.evaluationsByStatus[e.status||'(none)']=(out.evaluationsByStatus[e.status||'(none)']||0)+1;
+    if(e.reason) out.evaluationsByReason[e.reason]=(out.evaluationsByReason[e.reason]||0)+1;
+    if(e.derivedStale) out.staleEvaluations++;
+    if(e.derivedQualifying) out.qualifyingEvaluations++;
+  });
+  all.filter(function(o){return o&&o.kind==='RETENTION';}).forEach(function(r){
+    out.retentionEvents++; out.evictedTotal+=(r.evictedCount||0);
+  });
+  return out;
+}
+// PURE. Retention is a PLAN before it is an action, so what would be removed is inspectable and
+// testable without touching a store. Nothing is ever evicted without a RETENTION record naming it.
+function evidencePlanRetention(totalCount,max,batch){
+  const m=(typeof max==='number'&&max>0)?max:EVIDENCE_OBSERVATION_MAX;
+  const b=(typeof batch==='number'&&batch>0)?batch:EVIDENCE_OBSERVATION_EVICT_BATCH;
+  if(!(typeof totalCount==='number')||totalCount<=m) return{evict:false,evictCount:0,reason:'UNDER_CAP'};
+  return{evict:true,evictCount:Math.min(b,totalCount-m+b),reason:'CAP_EXCEEDED',cap:m,batch:b};
+}
+
+// ══ MOGO-013 -- observation persistence (async) ══════════════════════════════════════════════
+// Monotonic, gap-free ordering from the existing meta store -- the same mechanism package
+// sequence numbers use, under its own key so package semantics are untouched.
+async function evidenceAllocateObservationSeq(){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_META],'readwrite');
+  const store=tx.objectStore(EVIDENCE_STORE_META);
+  const existing=await evidenceReq(store.get('obsSeq'));
+  const next=(existing&&typeof existing.value==='number'?existing.value:0)+1;
+  await evidenceReq(store.put({key:'obsSeq',value:next}));
+  await evidenceTxDone(tx);
+  return next;
+}
+// Writes one observation. add() -- never put() -- so the UNIQUE naturalKey index REJECTS a
+// duplicate instead of silently overwriting a recorded observation. A rejected duplicate is a
+// success from the caller's point of view: the observation is already durably recorded.
+async function evidencePutObservation(rec){
+  const key=evidenceObservationNaturalKey(rec);
+  if(!key) return{ok:false,reason:'NO_NATURAL_KEY'};
+  const seq=await evidenceAllocateObservationSeq();
+  const stored=Object.assign({},rec,{naturalKey:key,seq:seq,
+    observationId:'OBS|'+String(seq)+'|'+key.slice(0,120)});
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_OBSERVATIONS],'readwrite');
+  try{
+    await evidenceReq(tx.objectStore(EVIDENCE_STORE_OBSERVATIONS).add(stored));
+    await evidenceTxDone(tx);
+    return{ok:true,seq:seq,observationId:stored.observationId};
+  }catch(e){
+    if(evidenceClassifyStorageError(e)==='CONSTRAINT') return{ok:true,reason:'DUPLICATE_ALREADY_RECORDED',duplicate:true};
+    throw e;
+  }
+}
+async function evidenceListObservations(){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_OBSERVATIONS],'readonly');
+  const all=await evidenceReq(tx.objectStore(EVIDENCE_STORE_OBSERVATIONS).getAll());
+  await evidenceTxDone(tx);
+  return all||[];
+}
+async function evidenceCountObservations(){
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_OBSERVATIONS],'readonly');
+  const n=await evidenceReq(tx.objectStore(EVIDENCE_STORE_OBSERVATIONS).count());
+  await evidenceTxDone(tx);
+  return n;
+}
+// EXPLICIT, OBSERVABLE ROLLOVER. Silent deletion of scientific history is prohibited: the
+// RETENTION record is written FIRST, naming exactly what is about to go, so a ledger that has
+// rolled over says so and can never look like one that never filled up.
+async function evidenceEnforceObservationRetention(){
+  const count=await evidenceCountObservations();
+  const plan=evidencePlanRetention(count,EVIDENCE_OBSERVATION_MAX,EVIDENCE_OBSERVATION_EVICT_BATCH);
+  if(!plan.evict) return{evicted:0,plan:plan};
+  const db=await evidenceDbReady();
+  const tx=db.transaction([EVIDENCE_STORE_OBSERVATIONS],'readonly');
+  const oldest=await evidenceReq(tx.objectStore(EVIDENCE_STORE_OBSERVATIONS).index('bySeq')
+    .getAll(IDBKeyRange.lowerBound(0),plan.evictCount));
+  await evidenceTxDone(tx);
+  if(!oldest.length) return{evicted:0,plan:plan};
+  const marker=evidenceObservationBase('RETENTION',new Date().toISOString());
+  marker.evictedCount=oldest.length;
+  marker.evictedSeqFrom=oldest[0].seq;
+  marker.evictedSeqTo=oldest[oldest.length-1].seq;
+  marker.evictedOccurredFrom=oldest[0].occurredAt||null;
+  marker.evictedOccurredTo=oldest[oldest.length-1].occurredAt||null;
+  marker.evictedByKind=oldest.reduce(function(a,o){ a[o.kind]=(a[o.kind]||0)+1; return a; },{});
+  marker.cap=EVIDENCE_OBSERVATION_MAX;
+  marker.retentionReason='CAP_EXCEEDED';
+  marker.note='Observations in this seq range were evicted from the live store by bounded retention. '+
+    'They are NOT recoverable from this store and must be read from an exported/checkpointed copy.';
+  await evidencePutObservation(marker);          // recorded BEFORE anything is removed
+  const tx2=db.transaction([EVIDENCE_STORE_OBSERVATIONS],'readwrite');
+  const st2=tx2.objectStore(EVIDENCE_STORE_OBSERVATIONS);
+  for(const o of oldest) await evidenceReq(st2.delete(o.observationId));
+  await evidenceTxDone(tx2);
+  return{evicted:oldest.length,plan:plan,marker:marker.evictedSeqFrom+'..'+marker.evictedSeqTo};
+}
+// The seam entry point. FIRE-AND-FORGET BY CONSTRUCTION: it awaits nothing the caller depends on,
+// returns nothing the trading path reads, and swallows its own failures into the existing
+// write-failure channel. A broken ledger must never be able to stop ALEX from trading.
+function evidenceRecordForwardObservations(input){
+  try{
+    const o=input||{};
+    const ctx={
+      strategyVersion:(typeof RULES_ALEXG!=='undefined'&&RULES_ALEXG.ruleVersion)?RULES_ALEXG.ruleVersion:null,
+      engineVersion:(typeof APP_VERSION!=='undefined')?APP_VERSION:null,
+      configHash:(o.configHash===undefined)?null:o.configHash,
+      paramsHash:(o.paramsHash===undefined)?null:o.paramsHash,
+      scanId:o.scanId||null
+    };
+    const records=[evidenceBuildPollObservation(o.poll||{})];
+    (Array.isArray(o.statuses)?o.statuses:[]).forEach(function(s){
+      records.push(evidenceBuildEvaluationObservation(s,ctx));
+    });
+    (Array.isArray(o.pipeline)?o.pipeline:[]).forEach(function(p){
+      records.push(evidenceBuildPipelineObservation(p));
+    });
+    (async function(){
+      let written=0,duplicates=0;
+      for(const r of records){
+        try{
+          const res=await evidencePutObservation(r);
+          if(res&&res.duplicate) duplicates++; else if(res&&res.ok) written++;
+        }catch(e){ evidenceRecordWriteFailure('observation-write',e,{kind:r.kind}); }
+      }
+      try{ await evidenceEnforceObservationRetention(); }
+      catch(e){ evidenceRecordWriteFailure('observation-retention',e); }
+      void written; void duplicates;
+    })().catch(function(e){ try{ evidenceRecordWriteFailure('observation-batch',e); }catch(e2){} });
+  }catch(e){
+    try{ evidenceRecordWriteFailure('observation-record',e); }catch(e2){}
+  }
 }
 
 // ══ Evidence Package v1 construction ═════════════════════════════════════════════════════════
