@@ -478,13 +478,17 @@ class TestStep2PrimaryOutcomes(Step2EndToEndCase):
         self.assertIn("transient", failures.stdout)
         self.assertIn("attempts_exhausted", failures.stdout)
         # MOGO-014 Step 2 opened the A-5 gate under explicit authorization, so
-        # the failures view now reports OPEN. The connector gates remain unmet
-        # and are still named, which is the property this assertion protects:
-        # the operator can see what MOGO is still not allowed to do.
+        # the failures view reports OPEN.
         self.assertIn("OPEN", failures.stdout)
-        # MOGO-015 Step 4 satisfied first_connector_authorization, so the one
-        # remaining unmet gate is what the operator must still see named.
-        self.assertIn("acquisition_authorization_record", failures.stdout)
+        # MOGO-016 satisfied the last connector gate, so this view no longer has
+        # an unmet gate to name. The property being protected is unchanged and
+        # is what actually matters: the operator can still read the state of
+        # every gate here WITHOUT READING CODE, and is told plainly that all
+        # gates being met does not make authorization optional.
+        self.assertIn("connector gates", failures.stdout)
+        self.assertIn("0 UNMET", failures.stdout)
+        self.assertIn("every declared connector gate is met", failures.stdout)
+        self.assertIn("an unauthorized source is still denied", failures.stdout)
 
     def test_the_status_view_reports_the_step_2_signals(self):
         self.full_step_2_run()

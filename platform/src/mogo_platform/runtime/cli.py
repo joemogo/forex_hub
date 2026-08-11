@@ -17,6 +17,10 @@ SUBCOMMANDS
               because it is the one that takes the single-writer lock
     submit    accept one command (--demo, or --demo-retry N for the
               fail-then-succeed demonstration)
+    collect   MOGO-016: submit AND run the ONE fixed approved scheduled
+              collection, in a single process lock. The only subcommand a host
+              schedule is permitted to invoke; it takes no source, URL or
+              capability argument, so there is nothing to inject
     run       recover, release eligible retries, then drive every non-terminal
               task to a terminal state
     status    health snapshot, including attempts, retries, leases and gates
@@ -55,6 +59,7 @@ from . import authorizations as authorizations_module  # noqa: E402
 from . import policy as policy_module  # noqa: E402
 from . import registry  # noqa: E402
 from . import schema as schema_module  # noqa: E402
+from . import scheduled_collection  # noqa: E402
 from . import store  # noqa: E402
 from .capabilities import echo as echo_capability  # noqa: E402
 from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
@@ -355,6 +360,87 @@ def _pending_retries(connection):
         pending.append((row["task_id"], row["retry_eligible_at"],
                         max(0, eligible_ms - now_ms)))
     return pending
+
+
+# ---------------------------------------------------------------------------
+# MOGO-016 -- the one command a host schedule is permitted to invoke
+# ---------------------------------------------------------------------------
+# Resolved from this file's own location, never from an absolute literal, an
+# argument or an environment variable. A scheduled job therefore cannot be
+# pointed at a different spec by editing a plist.
+_CLI_DIR = os.path.dirname(os.path.abspath(__file__))
+APPROVED_COLLECTION_SPEC = os.path.join(
+    _CLI_DIR, "..", "..", "..", "scheduling", "approved-collection.json")
+
+
+def load_approved_collection_spec():
+    """The fixed approved collection spec, validated. Read-only."""
+    with open(os.path.abspath(APPROVED_COLLECTION_SPEC), "r",
+              encoding="utf-8") as handle:
+        spec = json.load(handle)
+    return scheduled_collection.validate_spec(spec)
+
+
+def cmd_collect(args):
+    """One bounded, scheduled, governed research collection.
+
+    THE ENTIRE SURFACE A HOST SCHEDULE TOUCHES. It takes no source, no URL, no
+    resource and no capability -- there is nothing to pass, so there is nothing
+    to inject. The spec is the committed file above and the destination is
+    derived by the connector gate from the source identity in it.
+
+    Submit and run share ONE process lock rather than taking it twice, which
+    closes the window in which a second scheduled invocation could slip between
+    an accepted command and its execution.
+
+    `--dry-run` builds and validates the command and prints its identity WITHOUT
+    submitting anything and WITHOUT touching the network -- the safe way for an
+    operator to inspect what the schedule will do.
+    """
+    spec = load_approved_collection_spec()
+    clock = _clock_from(args) or clock_module.SystemClock()
+    envelope, payload, window = scheduled_collection.build_command(
+        spec, clock.now_ms(), clock.now_iso())
+
+    print("COLLECT source=%s resource=%s operation=%s"
+          % (spec["sourceId"], spec["resourceId"], spec["operation"]))
+    print("        capability=%s" % (spec["capabilityId"],))
+    print("        window=%s (%d s)" % (window, spec["collectionWindowSeconds"]))
+    print("        idempotencyKey=%s" % (envelope["idempotencyKey"],))
+    print("        issuedBy=%s issuedAt=%s"
+          % (envelope["issuedBy"], envelope["issuedAt"]))
+
+    if getattr(args, "dry_run", False):
+        print("DRY RUN -- nothing was submitted, nothing was acquired")
+        return 0
+
+    with _open(args, create=False) as runtime:
+        runtime.recover()
+        outcome = runtime.submit(envelope, payload)
+        for line in runtime.trace:
+            print("  " + line)
+        if outcome.status == "duplicate_suppressed":
+            # The window did its job: a catch-up run after wake, a second
+            # firing, or a manual kickstart inside one collection occasion is
+            # the SAME REQUEST, and the source is not contacted again.
+            print("DUPLICATE SUPPRESSED existing command=%s task=%s"
+                  % (outcome.command_id, outcome.task_id))
+            print("        same collection window -- no acquisition performed")
+            return 0
+        if outcome.status != "accepted":
+            print("REJECTED %s" % outcome.reason)
+            return 2
+        print("ACCEPTED command=%s workflow=%s task=%s"
+              % (outcome.command_id, outcome.workflow_id, outcome.task_id))
+        report = runtime.run_once()
+        for line in runtime.trace:
+            print("  " + line)
+        print("advanced=%d succeeded=%d failed=%d retried=%d released=%d "
+              "deadLettered=%d"
+              % (len(report["advanced"]), len(report["succeeded"]),
+                 len(report["failed"]), len(report["retried"]),
+                 len(report["released"]), len(report["dead_lettered"])))
+        return 0 if not report["dead_lettered"] else 3
 
 
 def cmd_authorize(args):
@@ -706,6 +792,17 @@ def build_parser():
         "failures", help="what failed, when, and why -- plus leases and gates")
     failures.add_argument("--json", action="store_true")
 
+    collect = subparsers.add_parser(
+        "collect",
+        help="one bounded scheduled governed collection from the FIXED approved "
+             "source; takes no source, URL or capability argument")
+    collect.add_argument("--dry-run", action="store_true",
+                         help="build and validate the command, print its "
+                              "identity, submit nothing and acquire nothing")
+    collect.add_argument("--now", metavar="ISO8601",
+                         help="test-only clock override; requires %s=1"
+                              % (CLOCK_OVERRIDE_ENV,))
+
     authorize = subparsers.add_parser(
         "authorize",
         help="record a governance-supplied Acquisition Authorization Record")
@@ -746,7 +843,7 @@ HANDLERS = {
     "init": cmd_init, "submit": cmd_submit, "run": cmd_run, "status": cmd_status,
     "audit": cmd_audit, "verify": cmd_verify, "reset": cmd_reset, "demo": cmd_demo,
     "failures": cmd_failures, "authorize": cmd_authorize, "review": cmd_review,
-    "policy": cmd_policy,
+    "policy": cmd_policy, "collect": cmd_collect,
 }
 
 

@@ -524,6 +524,49 @@ IDEMPOTENCY_KEY_COMPOSITION = MappingProxyType({
 
 IDEMPOTENCY_OPERATIONS = tuple(IDEMPOTENCY_KEY_COMPOSITION.keys())
 
+# ---------------------------------------------------------------------------
+# MOGO-016 -- declared EXTENSIONS, kept OUT of the Catalog transcription above
+# ---------------------------------------------------------------------------
+# The table above is a verbatim transcription of Catalog section I and must stay
+# that way, so an operation the Catalog does not contain is declared HERE
+# instead of being smuggled into it. The separation is the point: a reader can
+# still diff the Catalog against the code, and every departure from it is in one
+# short, named, justified list.
+#
+# WHY THIS ONE EXISTS. Catalog section I keys metadata acquisition on
+# `(sourceId, connectorVersion)`. Both parts are constant for one approved
+# source, so a SCHEDULED collector re-submitting that command produces the same
+# key forever and is suppressed as a duplicate after its first run -- correct
+# for section I's "return cached" duplicate rule, and useless as a recurring
+# collector. The semantic input that distinguishes one scheduled collection from
+# the next is the COLLECTION OCCASION.
+#
+# `collectionWindow` is a bounded window BUCKET, not an execution timestamp and
+# not an attempt number, so Constitution section 11 is satisfied rather than
+# worked around -- and the Catalog itself already treats a `window` as a
+# legitimate semantic key part in `source_discovery`. Two runs inside one window
+# are the same request by construction, which is exactly what collapses a
+# post-wake catch-up into a single acquisition.
+#
+# `resourceId` is included because this composition addresses metadata for ONE
+# RESOURCE. Section I's row addresses a source as a whole and therefore omits
+# it; reusing that row for a resource-scoped fetch would make two different
+# videos collide on one key.
+IDEMPOTENCY_KEY_EXTENSIONS = MappingProxyType({
+    "scheduled_metadata_acquisition": ("sourceId", "resourceId",
+                                       "connectorVersion", "collectionWindow"),
+})
+
+ALL_IDEMPOTENCY_OPERATIONS = tuple(IDEMPOTENCY_OPERATIONS) + tuple(
+    IDEMPOTENCY_KEY_EXTENSIONS.keys())
+
+
+def _declared_parts(operation):
+    """The parts for a Catalog operation or a declared extension, or None."""
+    if operation in IDEMPOTENCY_KEY_COMPOSITION:
+        return IDEMPOTENCY_KEY_COMPOSITION[operation]
+    return IDEMPOTENCY_KEY_EXTENSIONS.get(operation)
+
 
 def idempotency_key(operation, parts):
     """Compose a deterministic idempotency key.
@@ -535,11 +578,11 @@ def idempotency_key(operation, parts):
     The key is the SHA-256 of the canonical serialization of the operation
     together with its parts, making it stable across retries by construction.
     """
-    if operation not in IDEMPOTENCY_KEY_COMPOSITION:
+    declared = _declared_parts(operation)
+    if declared is None:
         errors.fail(
             "unknown idempotency operation %r" % (operation,), errors.IdentifierError
         )
-    declared = IDEMPOTENCY_KEY_COMPOSITION[operation]
     errors.require_mapping(parts, "parts", errors.IdentifierError)
     supplied = set(parts.keys())
     missing = [name for name in declared if name not in supplied]

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "mogo.scheduled-collection.v1",
+  "note": "MOGO-016. The ONE approved scheduled collection. Every field is pinned by tests and re-validated against the connector's approved-destination registry at build time. There is deliberately no field for a URL, a host or a scheme -- an unknown field is refused, so this file cannot become a fetch primitive. Changing sourceId or resourceId is a visible, reviewed edit; it is not configuration.",
+  "capabilityId": "CAP|research|acquire-approved-source-metadata",
+  "commandType": "AcquireSourceMetadata",
+  "commandVersion": 1,
+  "sourceId": "SRC|youtube|c785970cc458",
+  "resourceId": "hb7ot1_szWI",
+  "authorizationId": "96fc2793-b13b-467a-89a8-f31a76ec6d4c",
+  "operation": "metadata",
+  "connectorId": "CONN|research|approved-source-metadata",
+  "connectorVersion": "1.0.0",
+  "policyVersion": "1.0",
+  "collectionWindowSeconds": 21600
+}

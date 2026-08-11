@@ -149,8 +149,30 @@ CONNECTOR_GATES = (
         "gate": "acquisition_authorization_record",
         "authority": "Constitution section 5.1; Catalog section M",
         "requires": ("one governance-supplied authorization record per real "
-                     "source; the mechanism exists, the records do not"),
-        "satisfied": False,
+                     "source, decided by a human or governance role, recorded "
+                     "append-only and resolved by the gate before any fetch"),
+        # MOGO-016 Step 2. This gate was NOT flipped to make a dashboard green;
+        # it was flipped because its previous text -- "the mechanism exists, the
+        # records do not" -- became FALSE at MOGO-015 Step 4 and stayed false
+        # for a whole milestone. The record it said did not exist is
+        # docs/trader-intelligence/authorizations/AUTH-fxalexg-metadata.json,
+        # authority operator:joemogollon, and it is the record that authorized
+        # MOGO's first real external acquisition.
+        #
+        # A disclosure table an operator is told to trust must not assert a fact
+        # the repository disproves, and that is the whole reason this table is
+        # data rather than a comment. The `requires` text above was rewritten at
+        # the same time: it now states the standing obligation this gate
+        # enforces, not a one-off milestone that has already happened.
+        #
+        # What flipping this does NOT do: it changes no enforcement whatsoever.
+        # CONNECTOR_GATES is consumed only by runtime/audit.py's three report
+        # builders. Authorization is enforced by policy.evaluate(),
+        # authorizations.resolve() and connector_authorization.evaluate(), and
+        # every one of them still denies exactly as before -- which is asserted
+        # by tests/platform/test_runtime_scheduled_collection.py rather than
+        # assumed here.
+        "satisfied": True,
     }),
 )
 

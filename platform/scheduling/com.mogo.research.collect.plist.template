@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  MOGO-016 -- bounded scheduled autonomous research collection.
+
+  TEMPLATE. mogo_schedule.sh substitutes @@PYTHON@@, @@REPO@@, @@LOGDIR@@ and
+  @@CALENDAR@@ and writes the result to ~/Library/LaunchAgents/. Do not hand-edit
+  the installed copy: reinstall instead, so the schedule always has a committed
+  origin rather than being an undocumented machine setting.
+
+  WHAT THIS JOB IS ALLOWED TO DO
+    Run `mogo_runtime collect`, and nothing else. That subcommand takes no
+    source, no URL, no resource and no capability argument -- the acquisition
+    target lives in the committed approved-collection.json and the destination
+    is DERIVED by the connector authorization gate from the source identity.
+    There is therefore no argument in this file that could become a fetch
+    target, and adding one would not help: the gate refuses any source outside
+    its approved-destination registry.
+
+  StartCalendarInterval, NOT StartInterval -- deliberately. From launchd.plist(5):
+    StartInterval          "If the system is asleep during the time of the next
+                            scheduled interval firing, that interval will be
+                            missed" -- no catch-up at all.
+    StartCalendarInterval  "launchd will start the job the next time the
+                            computer wakes up. If multiple intervals transpire
+                            before the computer is woken, those events will be
+                            coalesced into one event upon wake from sleep."
+    One coalesced catch-up run after a sleep is exactly the behaviour a bounded
+    collector wants: continuity without a wake-up storm. Any residual duplicate
+    is absorbed by the collection window, which makes two runs in one window the
+    same request.
+
+  NO SECRETS. This connector needs none -- the metadata endpoint is public and
+  unauthenticated -- and none may ever be added here. PATH is stated explicitly
+  rather than inherited, and the interpreter is named absolutely, because the
+  platform requires Python >= 3.14 and launchd's default PATH would find the
+  3.9 system interpreter first.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.mogo.research.collect</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>@@PYTHON@@</string>
+        <string>@@REPO@@/platform/mogo_runtime.py</string>
+        <string>collect</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>@@REPO@@</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>@@LOGDIR@@/scheduled-collection.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>@@LOGDIR@@/scheduled-collection.err.log</string>
+
+    <key>StartCalendarInterval</key>
+    <array>
+@@CALENDAR@@
+    </array>
+
+    <!-- Never at load: a job that fires the moment it is installed makes
+         "the scheduler triggered this" unprovable. -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Not a long-running daemon. One bounded run, then exit. -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <!-- A run that somehow hangs must not hold the runtime lock forever. The
+         acquisition capability's own wallClockMs limit is 45 s; this is the
+         outer host-level bound. -->
+    <key>ExitTimeOut</key>
+    <integer>120</integer>
+</dict>
+</plist>

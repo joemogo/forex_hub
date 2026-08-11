@@ -38,6 +38,7 @@ SUITES=(
   tests.platform.test_runtime_authorization
   tests.platform.test_runtime_connector_authorization
   tests.platform.test_runtime_connector_transport
+  tests.platform.test_runtime_scheduled_collection
   tests.platform.test_runtime_review_disposition
   tests.platform.test_runtime_recovery
   tests.platform.test_runtime_end_to_end

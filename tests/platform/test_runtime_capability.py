@@ -534,25 +534,35 @@ class TestEffectClassificationAndTheA5Gate(CapabilityCase):
         what it is not yet allowed to do, and why -- so the gates are data, and
         `status` prints them.
 
-        MOGO-011 Step 3 BUILT the policy gate, so its entry flips to satisfied.
-        That is a claim, and it is asserted here by name rather than by count,
-        so that a future step cannot quietly mark another gate met: three
-        remain unmet, and they are exactly the three that still stand between
-        this platform and its first acquisition.
+        Each flip is asserted BY NAME rather than by a count of satisfied
+        entries, so a future step cannot quietly mark another gate met: the
+        assertion has to be edited, in a commit, with a reason.
+
+        MOGO-011 Step 3 built the policy gate. MOGO-014 Step 2 built the result
+        store. MOGO-015 Step 4 registered a real, dispatchable, governed
+        connector and proved it end to end.
+
+        MOGO-016 flipped the last one, and NOT because all four being green
+        looks better. Its text asserted that no governance authorization record
+        existed for any real source; MOGO-015 Step 4 created exactly such a
+        record and used it, so the gate had been stating a falsehood to the
+        operator for a whole milestone. The enforcement it describes is proved
+        -- not assumed -- in tests/platform/test_runtime_scheduled_collection.py,
+        which asserts a missing record still denies, an unauthorized operation
+        still denies, and the record was decided by a human.
+
+        WHAT THIS TABLE IS NOT: an enforcement point. It is consumed only by
+        runtime/audit.py's report builders. Nothing dispatches differently
+        because of it, which is precisely why its honesty is the only thing it
+        has.
         """
         self.assertEqual(len(registry.CONNECTOR_GATES), 4)
         by_name = {gate["gate"]: gate for gate in registry.CONNECTOR_GATES}
         self.assertIs(by_name["policy_gate"]["satisfied"], True)
-        # MOGO-014 Step 2 built the result store, so its entry flips too. The
-        # two that remain are exactly the two that still stand between this
-        # platform and its first NETWORK acquisition.
         self.assertIs(by_name["a5_result_store"]["satisfied"], True)
-        # MOGO-015 Step 4 registered a real, dispatchable, governed connector
-        # and proved it end to end, so this flips too. One gate remains.
         self.assertIs(by_name["first_connector_authorization"]["satisfied"], True)
-        for name in ("acquisition_authorization_record",):
-            with self.subTest(gate=name):
-                self.assertIs(by_name[name]["satisfied"], False)
+        self.assertIs(
+            by_name["acquisition_authorization_record"]["satisfied"], True)
         for gate in registry.CONNECTOR_GATES:
             with self.subTest(gate=gate["gate"]):
                 self.assertTrue(gate["authority"].strip())

@@ -407,8 +407,20 @@ def render_failures(report):
                  % (len(unmet),))
     for entry in unmet:
         lines.append("      %-34s %s" % (entry["gate"], entry["requires"]))
-    lines.append("  the A-5 effectful gate and the first connector are OPEN (MOGO-015); "
-                 "exist, until these are met")
+    # The sentence has to be true in BOTH states. Until MOGO-016 it named the
+    # gates still standing between this platform and an acquisition, which read
+    # as nonsense once none remained -- so what it says now depends on what is
+    # actually the case, and an operator reading zero unmet gates is told what
+    # that means rather than left with a sentence about gates that are not there.
+    if unmet:
+        lines.append("  the gate(s) above still stand between this platform and "
+                     "the acquisition they govern")
+    else:
+        lines.append("  every declared connector gate is met. This is a "
+                     "DISCLOSURE table, not an enforcement point: authorization "
+                     "is still enforced per task by the policy gate, the "
+                     "authorization record and the connector gate, and an "
+                     "unauthorized source is still denied.")
     return "\n".join(lines)
 
 
