@@ -615,6 +615,59 @@ function runEvidencePlatformFixtures(g){
       'a re-export does not push a confirmed package back into the unexported count');
   });
 
+  // ══ GROUP 6D — M-6 (D-16): THE STORE IDENTITY IS PINNED ═══════════════════════════════════
+  // WHY THIS GROUP EXISTS, and it is worth stating plainly because it corrects a finding.
+  //
+  // Step 4 recorded D-16: "the running build is not the committed index.html", on the strength of
+  // a live on-screen reading that the 8751 origin's database was named `mogo_evidence_v1` -- a
+  // name that appears nowhere in this repository. That reading was WRONG. Read directly out of the
+  // preservation checkpoint's IndexedDB metadata, the database name is exactly `mogo_evidence`,
+  // appearing once, with object stores `packages` and `meta` -- precisely what the constants below
+  // declare. What the observer almost certainly saw was `alex_g_sr_v1`, ALEX's strategy id, which
+  // is embedded in every single packageId (`PKG|alex_g_sr_v1|<date>|<n>`) and appears 1,798 times
+  // in the store. There was no second build. D-16 was a misreading, not a divergence.
+  //
+  // The lesson is the one this milestone keeps relearning: a value read off a screen and retyped
+  // into a report is not a measurement. So the identity is pinned here, in the canonical gate,
+  // where a genuine future divergence FAILS rather than waiting to be discovered forensically.
+  //
+  // These are the values the preserved 222-package corpus was actually written with, confirmed by
+  // independently re-deriving 220 of its content hashes with this repository's own canonicalizer:
+  // 220 verified, 0 mismatched.
+  t('SI1 the evidence database identity is exactly what the corpus was written with',function(){
+    eq(g.EVIDENCE_DB_NAME,'mogo_evidence',
+      'the checkpoint metadata reads `mogo_evidence` -- never `mogo_evidence_v1` (D-16 was a misreading)');
+    eq(g.EVIDENCE_DB_VERSION,1,'and version 1');
+  });
+  t('SI2 the object store names match the preserved store',function(){
+    eq(g.EVIDENCE_STORE_PACKAGES,'packages','the checkpoint carries exactly one store named packages');
+    eq(g.EVIDENCE_STORE_META,'meta','and one named meta');
+  });
+  t('SI3 the package schema and canonicalization identifiers are pinned',function(){
+    eq(g.EVIDENCE_PACKAGE_SCHEMA_VERSION,'mogo.evidence-package.v1',
+      'every recovered package declares this schema');
+    eq(g.EVIDENCE_CANON_VERSION,'mogo.evidence-canon.v1',
+      'and this canonicalization -- the one that reproduced 220 stored hashes exactly');
+  });
+  t('SI4 the hash algorithm is pinned, and is never silently weakened',function(){
+    eq(g.getEvidenceHashAlgorithm(),'SHA-256','the corpus was written under SHA-256');
+  });
+  t('SI5 renaming the database would strand every existing package',function(){
+    // Not a style rule. IndexedDB has no rename: a changed name opens a DIFFERENT, EMPTY database,
+    // and the 220-package corpus becomes unreachable in place while the app reports zero packages
+    // and cheerfully starts over. That failure is silent, which is exactly the class EXP-001 named.
+    //
+    // The assertion is deliberately made against the REAL open path, which is exported for this
+    // purpose. An earlier draft of this fixture read a function that was never exported, so
+    // String(undefined) made it pass while asserting nothing -- the same trap M9 documents. A
+    // fixture that cannot fail is not a guard.
+    const src=String(g.evidenceOpenDb);
+    ok(src.length>50,'the real open path must be under test, not an absent binding');
+    ok(/indexedDB\.open\(\s*EVIDENCE_DB_NAME\s*,\s*EVIDENCE_DB_VERSION\s*\)/.test(src),
+      'the open path must reference the pinned constants, never an inline literal (saw: '+
+      (src.match(/indexedDB\.open\([^)]*\)/)||['none'])[0]+')');
+  });
+
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){
     const src=String(g.evidenceImportPackageObject);
     ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,'a duplicate must go through the decision');

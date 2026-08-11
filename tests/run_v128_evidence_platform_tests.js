@@ -205,6 +205,14 @@ const wrapped = new Function('g',
   'g.EVIDENCE_REALIZED_R_PROVENANCE=EVIDENCE_REALIZED_R_PROVENANCE;' +
   'g.EVIDENCE_FIELD_PROVENANCE=EVIDENCE_FIELD_PROVENANCE;' +
   'g.EVIDENCE_PACKAGE_SCHEMA_VERSION=EVIDENCE_PACKAGE_SCHEMA_VERSION;' +
+  // ── M-6 (D-16): store identity, so a build divergence fails the gate rather than
+  //    surfacing months later in a forensic audit ──
+  'g.EVIDENCE_DB_NAME=EVIDENCE_DB_NAME;' +
+  'g.EVIDENCE_DB_VERSION=EVIDENCE_DB_VERSION;' +
+  'g.EVIDENCE_STORE_PACKAGES=EVIDENCE_STORE_PACKAGES;' +
+  'g.EVIDENCE_STORE_META=EVIDENCE_STORE_META;' +
+  'g.EVIDENCE_CANON_VERSION=EVIDENCE_CANON_VERSION;' +
+  'g.evidenceOpenDb=evidenceOpenDb;' +
   'g.EVIDENCE_REPLAY_RELEASE_GATES=EVIDENCE_REPLAY_RELEASE_GATES;' +
   'g.runAlexGReplay=runAlexGReplay;' +
   'g.runAlexGReplayUI=runAlexGReplayUI;' +
