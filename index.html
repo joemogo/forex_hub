@@ -12388,15 +12388,50 @@ async function evidencePutPackage(pkg){
   await p; await evidenceTxDone(tx);
   return pkg.packageId;
 }
+// ── D-2 CORRECTION ────────────────────────────────────────────────────────────────────────────
+// PURE and synchronous, so the monotonicity rule is testable offline without IndexedDB, exactly
+// like the EXP-001 decision function.
+//
+// evidenceExportPackage proposes exportedAt:null on EVERY attempt, and that is correct: a browser
+// download can never prove disk persistence, so an attempt must never stamp a confirmation
+// (EXP-001). But proposing null must not be able to ERASE a stamp that a verified re-import has
+// already earned -- and it could, because the export block was previously replaced wholesale.
+// `evidenceExportAll` walks every package, so a single later click silently un-confirmed every
+// package already confirmed.
+//
+// The rule is one-directional: CONFIRMATION ADVANCES, IT NEVER SILENTLY RETREATS. Revoking a
+// confirmation would need its own explicit, audited operation; no such operation exists, and an
+// export attempt is emphatically not one.
+function evidenceMergeExportState(prev,next){
+  const p=(prev&&typeof prev==='object')?prev:{};
+  const n=(next&&typeof next==='object')?next:{};
+  const out={};
+  Object.keys(n).forEach(function(k){ out[k]=n[k]; });
+  // A previously earned confirmation survives an attempt that does not carry one.
+  if(p.exportedAt&&!n.exportedAt){
+    out.exportedAt=p.exportedAt;
+    out.exportVerified=true;
+    out.exportVerificationMethod=n.exportVerificationMethod||p.exportVerificationMethod||null;
+    if(out.exportFilename==null) out.exportFilename=p.exportFilename||null;
+  }
+  // Attempt history accumulates; it never rewinds.
+  const pc=(typeof p.exportAttemptCount==='number')?p.exportAttemptCount:0;
+  const nc=(typeof n.exportAttemptCount==='number')?n.exportAttemptCount:0;
+  out.exportAttemptCount=Math.max(pc,nc);
+  if(out.exportAttemptedAt==null&&p.exportAttemptedAt) out.exportAttemptedAt=p.exportAttemptedAt;
+  return out;
+}
 // The ONLY function permitted to write back to an existing package, and only to record the
 // outcome of an export. The hash excludes the export block, so this never invalidates integrity.
+// The write is merged rather than assigned, so no caller -- present or future -- can regress a
+// confirmation by handing in a fresh state object.
 async function evidenceUpdateExportState(packageId,exportState){
   const db=await evidenceDbReady();
   const tx=db.transaction([EVIDENCE_STORE_PACKAGES],'readwrite');
   const store=tx.objectStore(EVIDENCE_STORE_PACKAGES);
   const existing=await evidenceReq(store.get(packageId));
   if(!existing){ await evidenceTxDone(tx); return false; }
-  existing.export=exportState;
+  existing.export=evidenceMergeExportState(existing.export,exportState);
   await evidenceReq(store.put(existing));
   await evidenceTxDone(tx);
   return true;

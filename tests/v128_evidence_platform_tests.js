@@ -514,6 +514,107 @@ function runEvidencePlatformFixtures(g){
       'it must depend on the hash verdict and the canonical content only');
   });
 
+  // ══ GROUP 6C — D-2: A RE-EXPORT MAY NEVER REVOKE A CONFIRMATION ═══════════════════════════
+  // Every fixture calls the REAL, pure evidenceMergeExportState(), so the monotonicity contract is
+  // genuinely executed offline rather than asserted from source text.
+  //
+  // The defect: evidenceExportPackage proposes exportedAt:null on every attempt (correct -- a
+  // download cannot prove disk persistence), and the export block was previously REPLACED with
+  // that proposal. evidenceExportAll walks every package, so one later click silently un-confirmed
+  // every package already confirmed by a verified re-import.
+  const CONFIRMED={exportedAt:'2026-08-01T00:00:00.000Z',exportAttemptedAt:'2026-07-31T00:00:00.000Z',
+    exportMechanism:'MANUAL',exportFilename:'pkg.json',exportVerified:true,
+    exportVerificationMethod:'REIMPORT_VERIFIED',exportAttemptCount:2};
+  // exactly what evidenceExportPackage hands in on a fresh attempt
+  function attempt(count){
+    return{exportedAt:null,exportAttemptedAt:'2026-08-09T00:00:00.000Z',exportMechanism:'MANUAL',
+      exportFilename:'pkg.json',exportVerified:false,exportVerificationMethod:null,
+      exportAttemptCount:count};
+  }
+
+  t('M1 a re-export CANNOT clear an earned exportedAt',function(){
+    const m=g.evidenceMergeExportState(CONFIRMED,attempt(3));
+    eq(m.exportedAt,'2026-08-01T00:00:00.000Z','the confirmation timestamp survives the attempt');
+    eq(m.exportVerified,true,'and the package stays verified');
+    eq(m.exportVerificationMethod,'REIMPORT_VERIFIED','with its verification method intact');
+  });
+  t('M2 the attempt is still recorded -- history is not suppressed to protect the stamp',function(){
+    const m=g.evidenceMergeExportState(CONFIRMED,attempt(3));
+    eq(m.exportAttemptedAt,'2026-08-09T00:00:00.000Z','the newer attempt timestamp is kept');
+    eq(m.exportAttemptCount,3,'and the attempt count advances');
+  });
+  t('M3 exportAttemptCount can never decrease',function(){
+    eq(g.evidenceMergeExportState(CONFIRMED,attempt(1)).exportAttemptCount,2,'a lower count cannot rewind it');
+    eq(g.evidenceMergeExportState({exportAttemptCount:9},attempt(0)).exportAttemptCount,9);
+    eq(g.evidenceMergeExportState({},attempt(1)).exportAttemptCount,1,'a first attempt still counts');
+  });
+  t('M4 an UNconfirmed package is unaffected -- an attempt stays an attempt',function(){
+    const prev={exportedAt:null,exportAttemptedAt:'2026-08-08T00:00:00.000Z',exportVerified:false,exportAttemptCount:1};
+    const m=g.evidenceMergeExportState(prev,attempt(2));
+    eq(m.exportedAt,null,'nothing fabricates a confirmation that was never earned');
+    eq(m.exportVerified,false);
+    eq(m.exportAttemptCount,2);
+  });
+  t('M5 a verified re-import may still SET exportedAt -- advancing is always allowed',function(){
+    const prev={exportedAt:null,exportAttemptedAt:'2026-08-08T00:00:00.000Z',exportVerified:false,exportAttemptCount:1};
+    const verified=g.evidenceBuildVerifiedExportState({export:prev},'pkg.json');
+    const m=g.evidenceMergeExportState(prev,verified);
+    ok(!!m.exportedAt,'the confirmation is applied');
+    eq(m.exportVerified,true);
+    eq(m.exportVerificationMethod,'REIMPORT_VERIFIED');
+  });
+  t('M6 re-confirmation keeps the NEWER confirmation, not the older one',function(){
+    const newer=Object.assign({},CONFIRMED,{exportedAt:'2026-08-09T12:00:00.000Z'});
+    eq(g.evidenceMergeExportState(CONFIRMED,newer).exportedAt,'2026-08-09T12:00:00.000Z');
+  });
+  t('M7 monotonicity holds over an arbitrary sequence of attempts',function(){
+    // the real hazard: Export all, repeatedly, long after a confirmation was earned
+    let s=CONFIRMED;
+    for(let i=3;i<=12;i++) s=g.evidenceMergeExportState(s,attempt(i));
+    eq(s.exportedAt,'2026-08-01T00:00:00.000Z','ten re-exports later the confirmation still stands');
+    eq(s.exportVerified,true);
+    eq(s.exportAttemptCount,12,'and every attempt was counted');
+  });
+  t('M8 malformed or absent prior state cannot throw or fabricate',function(){
+    eq(g.evidenceMergeExportState(null,attempt(1)).exportedAt,null);
+    eq(g.evidenceMergeExportState(undefined,attempt(1)).exportAttemptCount,1);
+    eq(g.evidenceMergeExportState('nonsense',attempt(1)).exportedAt,null);
+    eq(g.evidenceMergeExportState(CONFIRMED,null).exportedAt,'2026-08-01T00:00:00.000Z',
+      'even a null proposal cannot erase a confirmation');
+  });
+  // M9 IS THE INTEGRATION GUARD, and it carries that weight alone on purpose.
+  // M1-M8 and M11 exercise the merge contract directly, so they still pass if the store stops
+  // CALLING the merge -- proven by mutation: reverting the call site left every one of them green
+  // and only this fixture red. A test that passes because a different guard fired is not evidence
+  // of the guard it names, so this one pins the wiring itself: the assigned value must BE the
+  // merge, which no wholesale form can satisfy.
+  // Asserted from source text because the offline harness has no IndexedDB (see the header note);
+  // this is the same disclosed offline/live split the async layer already carries.
+  t('M9 the store write-back routes through the merge, so no caller can bypass it',function(){
+    const src=String(g.evidenceUpdateExportState);
+    const m=src.match(/existing\.export\s*=\s*([^;]+);/);
+    ok(!!m,'the export block must be assigned exactly once');
+    const rhs=m?m[1].trim():'';
+    ok(/^evidenceMergeExportState\(\s*existing\.export\s*,\s*exportState\s*\)$/.test(rhs),
+      'the assigned value must be the MERGE of prior and proposed state, never the proposal itself '+
+      '(saw: '+rhs+')');
+  });
+  t('M10 the export path still refuses to stamp exportedAt itself (EXP-001 intact)',function(){
+    const src=String(g.evidenceExportPackage);
+    ok(/exportedAt:null/.test(src),'an attempt still proposes null -- a download proves nothing');
+    ok(!/exportedAt:new Date\(\)/.test(src),'and never stamps a confirmation of its own');
+  });
+  t('M11 the counting rule is unchanged: only a real exportedAt clears the warning',function(){
+    const confirmed={export:CONFIRMED};
+    const attempted={export:attempt(1)};
+    eq(g.countUnexportedLike([confirmed]).unexported,0,'a confirmed package is not unexported');
+    eq(g.countUnexportedLike([attempted]).unexported,1,'an attempted one still is');
+    // and the merge cannot flip that classification
+    const after={export:g.evidenceMergeExportState(CONFIRMED,attempt(5))};
+    eq(g.countUnexportedLike([after]).unexported,0,
+      'a re-export does not push a confirmed package back into the unexported count');
+  });
+
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){
     const src=String(g.evidenceImportPackageObject);
     ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,'a duplicate must go through the decision');
@@ -1049,7 +1150,16 @@ function runEvidencePlatformFixtures(g){
     eq(layer.indexOf('.clear()'),-1,'no evidence code path may clear the package store');
     eq(layer.indexOf('deleteDatabase'),-1,'no evidence code path may drop the database');
     // The only write-back permitted on an existing package is recording an export outcome.
-    ok(String(g.evidenceUpdateExportState).indexOf('existing.export=exportState')!==-1);
+    // Re-expressed for D-2: this previously pinned the literal `existing.export=exportState`, which
+    // asserted the wholesale ASSIGNMENT that was itself the defect. The intent -- "no field other
+    // than export may be written" -- is now asserted directly and independently of how the value is
+    // computed, which makes it strictly stronger than the string it replaced.
+    const upd=String(g.evidenceUpdateExportState);
+    ok(/existing\.export\s*=/.test(upd),'the export block must be the thing written back');
+    const written=(upd.match(/existing\.([A-Za-z_$][A-Za-z0-9_$]*)\s*=/g)||[])
+      .map(function(m){ return m.replace(/^existing\./,'').replace(/\s*=$/,''); });
+    eq(written.filter(function(f){ return f!=='export'; }).length,0,
+      'no field other than export may be written on an existing package (saw: '+written.join(',')+')');
   });
 
   // ══ GROUP 11 — v12.10.0 UNIT A (CORR-2/3/4/8) ══════════════════════════════════════════

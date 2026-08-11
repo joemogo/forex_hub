@@ -132,6 +132,7 @@ const wrapped = new Function('g',
   'g.evidenceExportPackage=evidenceExportPackage;' +
   'g.evidencePutPackage=evidencePutPackage;' +
   'g.evidenceUpdateExportState=evidenceUpdateExportState;' +
+  'g.evidenceMergeExportState=evidenceMergeExportState;' +   // D-2 (pure)
   // ── DoD #10: JVM / current_strategy (real, unmodified) ──
   // ── v12.9.0 replay run identity + capture (real, unmodified) ──
   'g.evidenceNormalizeReplayTrade=evidenceNormalizeReplayTrade;' +
