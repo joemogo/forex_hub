@@ -462,3 +462,92 @@ Ingests only what a human placed in intake — **not self-directed**. No schedul
 ## Next step
 
 **One capability, then stop:** a scheduled trigger, or the connector authorization for network acquisition. Both are separate milestones.
+
+---
+---
+
+# MOGO-014 — MILESTONE CLOSEOUT
+
+**Closeout date:** 2026-08-11 · **Documentation only — no functionality added**
+**Every figure below was re-verified at closeout, not carried forward from earlier sections.**
+
+## 1. Implementation commit
+
+`194c091cdec32bd633c9e443e1c60c3331f2a37f` — *MOGO-014: first effectful autonomous research capability*
+
+## 2. First real capability
+
+**`research.ingest.local-artifact.v1`** — `CAP|research|ingest-local-artifact`, `effectClass: effectful`, `operationClass: acquisition`, `acquisitionOperations: ["artifact"]`, `requiredConnectors: []`.
+
+MOGO's first capability that is not a demonstration.
+
+## 3. Successful real artifact
+
+`docs/trader-intelligence/intake/completed/alexg-risk-management.txt` → **`RART|193966d9f5d3e19bee2bcd81ada1454a`**
+Content hash `193966d9f5d3e19bee2bcd81ada1454ab25d649e92e1d7117cba22b5cc4618b1` · 16,073 bytes.
+
+## 4. Confirmed behaviours
+
+| # | Behaviour | Confirmed |
+|---|---|---|
+| 1 | Governed runtime performed dispatch | ✅ `TaskClaimed → TaskStarted → TaskSucceeded → WorkflowCompleted`; no operator ran the research script |
+| 2 | Authorization was enforced | ✅ policy gate evaluated every task; `AcquisitionAuthorized` recorded on the permitted run |
+| 3 | **Initial incorrect authorization denied BEFORE effect** | ✅ `PolicyEvaluated → blocked`, `AcquisitionDenied`, `HumanReviewRequired`, reason `no_subject_source` — **no file was read or written** |
+| 4 | Corrected explicit authorization permitted execution | ✅ record `9e24aa04-c7b5-4438-acaf-c709cd8796b5`, `operator:joemogollon`, `PERMITTED_EXPLICIT_LICENSE`, operations `artifact` |
+| 5 | Validation succeeded | ✅ existence, extension, UTF-8, non-empty, size within the 2 MB cap |
+| 6 | Deterministic content hashing succeeded | ✅ SHA-256 of the real bytes; **independently re-derived from the source file and matched** |
+| 7 | Provenance preserved | ✅ origin class, intake ref, claimed source id/title/url, authorization id, capability + version, `acquisitionPerformed: false`, `networkAccessPerformed: false`, and an explicit note that source attribution is the operator's **claim**, not verified |
+| 8 | Durable result stored | ✅ artifact written content-addressed and **re-read and re-hashed after writing**; runtime result recorded under the command's idempotency key |
+| 9 | Duplicate second run suppressed | ✅ `DUPLICATE SUPPRESSED` |
+| 10 | **Only one scientific artifact exists** | ✅ **1** file in `research-artifacts/`, re-counted at closeout |
+| 11 | Research lane / firewall preserved | ✅ `lane: RESEARCH`, `promotionStatus: NOT_A_TRADING_RULE`, and the promotion path recorded **on the artifact itself** |
+
+## 5. Final integrity state — re-verified at closeout
+
+| Check | Result |
+|---|---|
+| Platform suite | **0 failures** |
+| Canonical gate | **1,113 passed · 0 failed** |
+| Protected ALEX drift | **0** — 63 functions, 4 constants byte-identical |
+| Campaign C1 | **33 / 33 · 0 missing · 0 mismatched · 0 unlisted** |
+| Legacy corpus | **220 re-derived · 0 mismatched**, rollup matches |
+
+## 6. Forward-campaign isolation — re-verified at closeout
+
+| | |
+|---|---|
+| ALEX | **ON**, polling active |
+| Activation cutoff | **`2026-08-11T02:43:57.894Z` — unchanged** |
+| Paper balance | **$10,000.00**, 0 open / 0 closed |
+| MOGO-014 artifact in the forward lane | **None.** Forward evidence packages: 0; the research artifact lives only in the research corpus |
+| Durable observations | **977 and accumulating normally** |
+| Browser reload | **None** — page continuous since `2026-08-11T14:57:16.607Z` (the MOGO-013 activation) |
+| Browser storage | **Untouched** |
+
+## 7. Limitation — stated plainly
+
+> **MOGO is now capable of governed automatic research ingestion, but external research acquisition remains unavailable because no authorized network acquisition connector exists.**
+
+MOGO ingests what a human places in the governed intake area. It cannot fetch. No research script imports a network client, the connector gates `first_connector_authorization` and `acquisition_authorization_record` remain **UNMET and enforced**, and `uses_connector()` fails closed. This is governed and automatic — **not self-directed**.
+
+## 8. Recommended next milestone
+
+### MOGO-015 — Governed External Research Acquisition
+
+**Objective:** connect ONE bounded, explicitly authorized external research source to the MOGO-014 ingestion pipeline.
+
+```
+APPROVED SOURCE → CONNECTOR AUTHORIZATION → NETWORK ACQUISITION → SOURCE PROVENANCE
+→ CONTENT HASH → VALIDATION → DUPLICATE CHECK → EXISTING RESEARCH INGESTION
+→ DURABLE STORAGE → AUDIT → REPORT
+```
+
+**Reuse, do not recreate:** `research.ingest.local-artifact.v1`, the result store, the policy gate, `authorizations.py`, retry/lease/dead-letter, audit and event log. MOGO-015 should add a *connector* and let the proven ingestion path do the rest.
+
+Prefer a known approved trading-research/educator source. **No unrestricted internet discovery.** Scheduling comes only after the bounded connector is proven, as the smallest step that lets acquisition fire without manual submission.
+
+One constraint already on record: captions are server-blocked (HTTP 200 / 0 bytes), while `curl` with a User-Agent does yield the channel catalogue, descriptions and publish dates — so metadata acquisition is the realistic first connector target, not transcripts.
+
+---
+
+# MOGO-014 STATUS: COMPLETE
