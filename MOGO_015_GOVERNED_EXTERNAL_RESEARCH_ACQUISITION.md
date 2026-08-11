@@ -206,3 +206,72 @@ Build `research.acquire.approved-source-metadata.v1`:
 4. **Adapter into `research.ingest.local-artifact.v1`** — smallest possible; no second ingestion path.
 5. **Distinguish request identity from content identity**: same URL returning changed metadata is **new content**, not a duplicate.
 6. Prove: approved succeeds · unauthorized fails closed · redirect fails closed · transient retries · permanent does not · oversized rejected · duplicate content handled. Then the two-run live proof.
+
+---
+---
+
+# STEP 3 — BOUNDED EXTERNAL NETWORK TRANSPORT
+
+**Status: ✅ COMPLETE.** MOGO contacted an approved external source itself and retrieved genuine research data through the governed gate.
+
+## Architecture — subordinate, not adjacent
+
+`platform/src/mogo_platform/runtime/connector_transport.py` is **the only module in MOGO that opens an outbound socket**, and it cannot be asked to fetch anything. `acquire(request)` takes a *source identity and resource id*, calls the Step 2 gate, and connects only on a permit — fetching **the URL the permit carries**.
+
+**There is deliberately no function that accepts a URL.** Adding one would create the generic fetch primitive the design exists to prevent, so the absence is the safety property and a test asserts it. An AST test additionally pins that the **first executable statement of `acquire()` is the gate call**.
+
+## Boundaries enforced, all from the permit
+
+https only · destination derived from the permit · **redirects refused by a handler that raises** rather than follows · final-URL re-checked after the fact · 10 s timeout (30 s hard max, validated) · read **stops at** 65,536 bytes rather than reading then measuring · `application/json` required · status allow-list `(200)` · bounded honest User-Agent · JSON parsed to reject malformed bodies.
+
+**TLS verification is explicit and never disabled.** This Python build ships no CA bundle, so the transport points at the system store (`/etc/ssl/cert.pem`); if no trust store exists it **fails** rather than falling back to an unverified connection. `ssl._create_unverified_context` appears nowhere.
+
+## Retry classification
+
+**Transient** (retryable): connection failure, timeout, 429, 5xx.
+**Permanent** (never retried): authorization denial, 4xx other than 429, oversized, wrong content type, malformed body, redirect attempt.
+
+## Focused tests — 20, all passing, all with doubles
+
+No permit → **zero transport calls** across eight denied shapes · valid permit reaches transport · no public function accepts a URL · fetched URL equals the derived one · moved final URL rejected · redirect raises · timeout bounded and validated · oversized rejected · four wrong content types rejected · four malformed bodies rejected · six 4xx permanent · five 5xx/429 transient · connection/timeout transient · transient-then-success in exactly two attempts · raw bytes and SHA-256 preserved · **identical bytes hash identically regardless of time; changed content is new content**.
+
+## Controlled live acquisition — one request
+
+| | |
+|---|---|
+| Source | `SRC|youtube-channel|UCgPeeHdxYRal0HTNeAkjqLg` (fxalexg) |
+| Authorization | `9e24aa04-c7b5-4438-acaf-c709cd8796b5` |
+| Connector | `CONN|research|approved-source-metadata` |
+| Gate decision | **permit** · `connector_destination_permitted` |
+| URL | `https://www.youtube.com/oembed?url=…%3Fv%3Dhb7ot1_szWI&format=json` |
+| HTTP status | **200** · `application/json` · **794 bytes** |
+| **Content hash** | **`b668d4209abbf2b8718cea2fa84eacd3985cbb4d1fc352dd1720f64bebb92a00`** |
+| Acquired at | 2026-08-11T18:12Z |
+
+**Genuine data returned:** `title: "How to Start Trading with Just $50"` · `author_name: "fxalexg "` · `author_url: "https://www.youtube.com/@fxalexg__"` · `provider_name: "YouTube"`.
+
+The `author_url` matches the repository's recorded channel URL — the provider independently corroborates the source identity, again.
+
+**One honest note:** the first live attempt **failed** with `CERTIFICATE_VERIFY_FAILED`, correctly classified `transient/connection_failed`. That was a real environment gap (no CA bundle in this Python build), fixed by wiring verification explicitly rather than by disabling it.
+
+## Boundary tests narrowed — the most deliberate exemption in the project
+
+`connector_transport.py` is now the **single** entry in `NETWORK_AUTHORIZED_MODULES`. It is permitted to import a network client **only because** it is subordinate to the gate — proven by the AST gate-first test, the no-URL-parameter test, and the zero-transport-calls-on-denial test. Adding a second entry would mean a second module can open a socket, and that must be a visible, argued edit.
+
+The policy-gate bypass test was **narrowed to the policy gate specifically**. It previously matched any `.evaluate(` call and so flagged the unrelated *connector* gate that the transport is **required** to call — calling it is the safety property, not a bypass. Matching the receiver keeps the real rule ("only the orchestrator may consult policy") exact.
+
+## Connector registration — deliberately NOT flipped
+
+**`first_connector_authorization` remains UNMET.** The transport exists and works, but the gate should flip only when a real connector is registered as a governed capability with its own authorization record — not merely because code exists. That is Step 4's job.
+
+## Integrity
+
+Platform suite **0 failures** · canonical gate **1,113 passed / 0 failed** · drift **0** · C1 **33/33 · 0 mismatched** · corpus **220 · 0 mismatched** · forward campaign ALEX **ON**, cutoff `2026-08-11T02:43:57.894Z`, $10,000.00, **1,695 observations**, page continuous, **0 forward evidence packages** — no research data in the trading lane.
+
+## Limitations
+
+No governed capability wraps the transport yet — the live proof called `acquire()` directly from a script, so the **runtime did not dispatch it**. Nothing is ingested. One source, one endpoint, one resource id per call. No scheduling.
+
+## Step 4 recommendation
+
+`research.acquire.approved-source-metadata.v1` as a **registered capability**: manifest declaring the connector, dispatch through the orchestrator (policy → authorize → claim → execute → transport), a connector authorization record, then flip `first_connector_authorization`. Write the raw bytes to the governed intake area and hand off to **`research.ingest.local-artifact.v1`** — no second ingestion path. Distinguish *same request* from *same content*: a URL returning changed metadata is **new content**, not a duplicate.

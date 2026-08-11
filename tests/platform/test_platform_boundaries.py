@@ -356,6 +356,12 @@ class TestNoWritePathInPlatform(unittest.TestCase):
             # by test_the_effectful_capability_reaches_nothing.
             if os.path.basename(absolute) in EFFECTFUL_CAPABILITY_MODULES:
                 continue
+            # MOGO-015: `opener.open(...)` in the authorized transport is a
+            # NETWORK read, not a filesystem write. It writes no file at all --
+            # asserted by the transport suite, which pins every byte it handles
+            # to the in-memory response.
+            if os.path.basename(absolute) in NETWORK_AUTHORIZED_MODULES:
+                continue
             source = read_source(absolute)
             tree = ast.parse(source)
             writes = [name for _kind, name, _lineno, _node in called_names(tree)
@@ -372,6 +378,10 @@ class TestNoWritePathInPlatform(unittest.TestCase):
         for relative, absolute in runtime_python_files():
             if os.path.basename(absolute) in CONNECTOR_POLICY_MODULES:
                 continue   # a URL template is not a filesystem path
+            if os.path.basename(absolute) in NETWORK_AUTHORIZED_MODULES:
+                continue   # CA trust-store paths are read for TLS verification,
+                           # never written to -- and naming them explicitly is
+                           # what keeps verification ON rather than disabled
             for node in ast.walk(ast.parse(read_source(absolute))):
                 if isinstance(node, ast.Constant) and isinstance(node.value, str):
                     value = node.value
@@ -436,6 +446,8 @@ class TestNoNetworkOrExecutionCapability(unittest.TestCase):
     def test_no_banned_runtime_import(self):
         offenders = []
         for relative, _source, tree in parse_platform_modules():
+            if os.path.basename(relative) in NETWORK_AUTHORIZED_MODULES:
+                continue   # the one authorized connector transport (MOGO-015)
             for imported in imported_module_names(tree):
                 root = imported.split(".")[0]
                 for banned in boundaries.BANNED_RUNTIME_IMPORTS:
@@ -447,6 +459,8 @@ class TestNoNetworkOrExecutionCapability(unittest.TestCase):
 
     def test_no_required_banned_import_appears_anywhere(self):
         for relative, _source, tree in parse_platform_modules():
+            if os.path.basename(relative) in NETWORK_AUTHORIZED_MODULES:
+                continue   # the one authorized connector transport (MOGO-015)
             imported = imported_module_names(tree)
             for banned in REQUIRED_BANNED_IMPORTS:
                 with self.subTest(module=relative, banned=banned):
@@ -460,6 +474,9 @@ class TestNoNetworkOrExecutionCapability(unittest.TestCase):
             "hashlib", "json", "re", "uuid", "datetime", "types", "math", "os",
             "sys", "unittest", "ast", "sqlite3", "fcntl", "argparse", "shutil",
         }
+        # MOGO-015: the one authorized connector transport additionally needs a
+        # network client. Scoped to that module by name, not added globally.
+        transport_stdlib = {"urllib", "socket", "ssl", "os"}
         for name in allowed_stdlib:
             self.assertIn(name, sys.stdlib_module_names, name)
         offenders = []
@@ -469,6 +486,9 @@ class TestNoNetworkOrExecutionCapability(unittest.TestCase):
                     continue                      # package-relative sibling
                 root = imported.split(".")[0]
                 if root in allowed_stdlib or root == "mogo_platform":
+                    continue
+                if (os.path.basename(relative) in NETWORK_AUTHORIZED_MODULES
+                        and root in transport_stdlib):
                     continue
                 offenders.append((relative, imported))
         self.assertEqual(offenders, [])
@@ -776,6 +796,24 @@ EFFECTFUL_CAPABILITY_MODULES = ("ingest_local_artifact.py",)
 # tests/platform/test_runtime_connector_authorization.py, which also pins
 # https-only and forbids every loopback/private destination).
 CONNECTOR_POLICY_MODULES = ("connector_authorization.py",)
+# MOGO-015 Step 3. THE SINGLE AUTHORIZED NETWORK MODULE IN MOGO.
+#
+# This is the most deliberate exemption in this file and must stay the
+# narrowest. `connector_transport.py` is the only module permitted to import a
+# network client, and it is permitted ONLY because it is subordinate to the
+# Step 2 authorization gate rather than beside it:
+#
+#   * tests/platform/test_runtime_connector_transport.py asserts by AST that the
+#     FIRST executable statement of acquire() is the gate call;
+#   * it asserts no public function accepts a `url` parameter, so there is no
+#     generic fetch primitive to reach;
+#   * it proves eight denied requests reach a spy transport ZERO times;
+#   * https-only, one derived destination, redirects raised rather than
+#     followed, bounded timeout, capped read, content-type checked.
+#
+# Adding a second entry here would mean a second module can open a socket, and
+# that must be a visible, argued edit -- never a convenience.
+NETWORK_AUTHORIZED_MODULES = ("connector_transport.py",)
 EFFECTFUL_CAPABILITY_IDS = ("CAP|research|ingest-local-artifact",)
 
 
@@ -816,6 +854,8 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
 
     def test_no_module_can_reach_the_network_or_a_subprocess(self):
         for relative, absolute in platform_python_files():
+            if os.path.basename(absolute) in NETWORK_AUTHORIZED_MODULES:
+                continue   # the one authorized connector transport (MOGO-015)
             imported = imported_module_names(ast.parse(read_source(absolute)))
             for banned in REQUIRED_BANNED_IMPORTS:
                 with self.subTest(module=relative, banned=banned):

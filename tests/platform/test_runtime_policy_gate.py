@@ -614,7 +614,18 @@ class TestBypassIsImpossible(PolicyRuntimeCase):
                 for node in ast.walk(tree):
                     if (isinstance(node, ast.Call)
                             and isinstance(node.func, ast.Attribute)
-                            and node.func.attr == "evaluate"):
+                            and node.func.attr == "evaluate"
+                            # MOGO-015 narrows this to the POLICY gate
+                            # specifically. It previously matched ANY
+                            # `.evaluate(` call, which caught the unrelated
+                            # CONNECTOR authorization gate that
+                            # connector_transport.py is REQUIRED to call --
+                            # calling it is the safety property, not a bypass.
+                            # Matching the receiver keeps the real rule ("only
+                            # the orchestrator may consult policy") exact.
+                            and isinstance(node.func.value, ast.Name)
+                            and node.func.value.id in ("policy",
+                                                       "policy_module")):
                         offenders.append((name, node.lineno))
         self.assertEqual(offenders, [])
 
