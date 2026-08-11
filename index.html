@@ -12581,6 +12581,86 @@ function evidenceSummarizePackages(list){
 // no exceptions, which is the correct default.
 const EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS=Object.freeze([]);   // [{sourceTradeId, reason}]
 
+// ── Campaign C1 integrity, supplied from the repository (Phase A) ────────────────────────────
+//
+// The browser holds no copy of Campaign C1 and therefore CANNOT establish its integrity. Any C1
+// verdict computed in-page would be a fabrication, so the gatherer reports false and the gate
+// blocks -- which is why it has never passed. The fact must come from the only place that can
+// establish it: the repository, via `scripts/mogo_evidence_verify.js --campaign-c1-attest`, which
+// re-hashes all 33 artifacts against their manifest and writes an ATTESTATION.
+//
+// THE ATTESTATION IS A RECORD, NOT A PROOF, and this is stated rather than implied. It is not
+// signed; MOGO has no key management and inventing one here would be scope nobody asked for. Its
+// integrity rests on two auditable things: it is produced by committed code, and it names the
+// SHA-256 of the exact manifest it verified. THAT HASH IS PINNED HERE, in committed source, so an
+// attestation describing a different manifest is REFUSED rather than believed. Swapping in a
+// friendlier manifest therefore requires editing this line, in a diff, under review.
+//
+// If Campaign C1 is ever legitimately re-frozen, this constant changes in the same commit as the
+// manifest -- and that is exactly the review moment it exists to force.
+const EVIDENCE_C1_ATTESTATION_VERSION='mogo.c1-attestation.v1';
+const EVIDENCE_C1_MANIFEST_SHA256='c23e72e070e4e6e841e9e9cb77952a426743e666600e010c9bb14ca27fcee666';
+const EVIDENCE_C1_ATTESTATION_URL='docs/campaigns/C1/C1_INTEGRITY_ATTESTATION.json';
+// A stale attestation is not evidence about the corpus as it stands NOW. Twenty-four hours is
+// short enough that C1 cannot have drifted unnoticed and long enough that a normal session does
+// not have to re-run the verifier mid-flight.
+const EVIDENCE_C1_ATTESTATION_MAX_AGE_MS=24*60*60*1000;
+// Clocks disagree. A small tolerance avoids refusing a genuine attestation over skew, while an
+// attestation dated meaningfully in the future is refused -- that is a broken or forged clock,
+// and it is the direction that could otherwise buy unlimited freshness.
+const EVIDENCE_C1_ATTESTATION_FUTURE_SKEW_MS=5*60*1000;
+
+// PURE and synchronous. FAILS CLOSED on every path: a missing, malformed, stale, contradictory or
+// failed attestation all yield intact:false with a stated reason. There is no path through this
+// function that returns true without every condition being positively satisfied.
+function evidenceEvaluateCampaignC1Attestation(att,nowMs){
+  const reasons=[];
+  const now=(typeof nowMs==='number'&&isFinite(nowMs))?nowMs:Date.now();
+  if(!att||typeof att!=='object'||Array.isArray(att)){
+    return{intact:false,reasons:['NO_ATTESTATION'],attestation:null};
+  }
+  if(att.attestationVersion!==EVIDENCE_C1_ATTESTATION_VERSION) reasons.push('UNSUPPORTED_ATTESTATION_VERSION');
+  if(att.manifestSha256!==EVIDENCE_C1_MANIFEST_SHA256) reasons.push('MANIFEST_MISMATCH');
+  if(att.verdict!=='VERIFIED') reasons.push('VERDICT_NOT_VERIFIED');
+  const a=(att.artifacts&&typeof att.artifacts==='object')?att.artifacts:null;
+  if(!a) reasons.push('NO_ARTIFACT_COUNTS');
+  else{
+    // Every count must be a real number. An absent count is not a zero.
+    ['total','verified','missing','mismatched','unlisted'].forEach(function(k){
+      if(typeof a[k]!=='number'||!isFinite(a[k])) reasons.push('MALFORMED_COUNT_'+k.toUpperCase());
+    });
+    if(a.total===0) reasons.push('EMPTY_MANIFEST');
+    if(a.verified!==a.total) reasons.push('INCOMPLETE_VERIFICATION');
+    if(a.missing!==0) reasons.push('MISSING_ARTIFACTS');
+    if(a.mismatched!==0) reasons.push('MISMATCHED_ARTIFACTS');
+    if(a.unlisted!==0) reasons.push('UNLISTED_ARTIFACTS');
+  }
+  // A VERIFIED verdict that contradicts its own detail lists is self-inconsistent, and the
+  // contradiction is trusted less than either side of it.
+  if(Array.isArray(att.missingFiles)&&att.missingFiles.length) reasons.push('CONTRADICTORY_MISSING_LIST');
+  if(Array.isArray(att.mismatchedFiles)&&att.mismatchedFiles.length) reasons.push('CONTRADICTORY_MISMATCH_LIST');
+  if(Array.isArray(att.unlistedFiles)&&att.unlistedFiles.length) reasons.push('CONTRADICTORY_UNLISTED_LIST');
+  const t=att.generatedAt?Date.parse(att.generatedAt):NaN;
+  if(isNaN(t)) reasons.push('MALFORMED_TIMESTAMP');
+  else{
+    if(now-t>EVIDENCE_C1_ATTESTATION_MAX_AGE_MS) reasons.push('STALE_ATTESTATION');
+    if(t-now>EVIDENCE_C1_ATTESTATION_FUTURE_SKEW_MS) reasons.push('FUTURE_DATED_ATTESTATION');
+  }
+  return{intact:reasons.length===0,reasons:reasons,
+    attestation:{generatedAt:att.generatedAt||null,manifestSha256:att.manifestSha256||null,
+      verified:a?a.verified:null,total:a?a.total:null,tool:att.tool||null}};
+}
+// Loads the attestation from the serving origin. Every failure yields null, which the evaluator
+// turns into intact:false -- a fetch that did not happen is never a fact that did.
+async function evidenceLoadCampaignC1Attestation(){
+  try{
+    if(typeof fetch!=='function') return null;
+    const res=await fetch(EVIDENCE_C1_ATTESTATION_URL,{cache:'no-store'});
+    if(!res||!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
+}
+
 // PURE and synchronous: the POLICY, executable offline against the real code. It evaluates FACTS
 // it is handed; it never gathers them, so it cannot be fooled by a caller that skipped a check --
 // a missing fact is a BLOCKER, not a pass.
@@ -12610,7 +12690,19 @@ function evidenceEvaluateForwardPaperGate(facts){
   };
 
   if(r){
-    if(r.uniqueSourceTrades===0) add('NO_EVIDENCE','There is no evidence to gate on. An empty corpus is not a clean one.');
+    // ── An EMPTY store is legitimate; an UNREAD one is not. ──
+    // This distinction was corrected after Phase B testing demonstrated a deadlock. The blocker
+    // here was originally "uniqueSourceTrades===0 blocks", on the reasoning that a gate passing
+    // because it is looking at nothing proves nothing. The real hazard in that reasoning is a
+    // FAILED READ returning an empty list, which is indistinguishable from a genuinely empty
+    // store -- but forbidding an empty corpus outright makes forward paper trading IMPOSSIBLE:
+    // the durable evidence profile starts empty, no evidence can exist until a trade closes, and
+    // no trade can open until the gate passes. That is a deadlock, not a safeguard.
+    //
+    // So the hazard is addressed directly instead: the gatherer must positively assert that the
+    // store READ SUCCEEDED. A genuinely empty store then passes, and a failed or unattempted read
+    // blocks -- which is the case the original blocker was really aiming at.
+    if(f.storeRead!=='OK') add('STORE_READ_UNCONFIRMED','The evidence store read was not positively confirmed, so an empty result cannot be distinguished from a failed one.');
     // Identity must be unambiguous BEFORE anything is counted -- these are D-8/D-12 directly.
     if((r.missingIdentity||[]).length) add('MISSING_IDENTITY',(r.missingIdentity||[]).length+' package(s) carry no sourceTradeId, so they cannot be reconciled.');
     if((r.ambiguousIdentity||[]).length) add('AMBIGUOUS_IDENTITY',(r.ambiguousIdentity||[]).length+' sourceTradeId(s) map to conflicting content.');
@@ -12678,6 +12770,9 @@ async function evidenceGatherForwardPaperFacts(){
   let all=null;
   try{ all=await evidenceListPackages(); }
   catch(e){ evidenceRecordWriteFailure('preflight-list',e); return facts; }   // no reconciliation -> blocked
+  // The read demonstrably succeeded: evidenceListPackages() returned without throwing. This is
+  // asserted only HERE, after the await, so a failed or unattempted read can never carry it.
+  facts.storeRead='OK';
   facts.reconciliation=evidenceReconcileByIdentity(all);
   // Independent recomputation, package by package. Counted by unique sourceTradeId so a duplicate
   // physical copy cannot inflate the verified total (D-8).
@@ -12691,11 +12786,16 @@ async function evidenceGatherForwardPaperFacts(){
     else if(check&&check.status==='MISMATCH') mismatched++;
   }
   facts.hashVerification={verified:Object.keys(verifiedIds).length,mismatched:mismatched,physical:all.length};
-  // Campaign C1 integrity is asserted by the repository gate, not by the browser -- the browser
-  // holds no copy of it. It is therefore reported honestly as NOT positively confirmed here, which
-  // the pure gate treats as a blocker unless a caller supplies the fact from a context that can
-  // actually establish it.
-  facts.campaignC1Intact=false;
+  // Campaign C1 integrity is established by the REPOSITORY, never by the browser -- the browser
+  // holds no copy of it, so a verdict computed here would be a fabrication. What the browser can
+  // legitimately do is READ the repository's attestation and refuse it unless every condition
+  // holds: right version, the PINNED manifest hash, a VERIFIED verdict, complete and non-
+  // contradictory counts, and a timestamp that is neither stale nor future-dated.
+  let c1=null;
+  try{ c1=await evidenceLoadCampaignC1Attestation(); }catch(e){ c1=null; }
+  const c1Eval=evidenceEvaluateCampaignC1Attestation(c1);
+  facts.campaignC1=c1Eval;                 // provenance, kept for the operator and the record
+  facts.campaignC1Intact=c1Eval.intact;    // false unless positively established
   return facts;
 }
 async function evidenceForwardPaperPreflight(overrides){

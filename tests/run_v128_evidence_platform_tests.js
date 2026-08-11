@@ -27,6 +27,10 @@ const testCode=readFile('./tests/v128_evidence_platform_tests.js');
 // it themselves -- a missing or unparseable baseline must be a visible FAILURE, never a silently
 // skipped group. Fail closed.
 const evidenceBaselineText=readFile('./docs/evidence/EVIDENCE_BASELINE.json');
+// Phase A: the REAL committed Campaign C1 attestation. Read as text and handed to the fixtures so
+// the actual repository artifact is checked against the actual browser evaluator -- not a copy of
+// its shape. A missing or unparseable attestation must FAIL visibly.
+const c1AttestationText=readFile('./docs/campaigns/C1/C1_INTEGRITY_ATTESTATION.json');
 
 const elMap={};
 function makeClassList(){
@@ -242,7 +246,13 @@ const wrapped = new Function('g',
   'g.evidenceGatherForwardPaperFacts=evidenceGatherForwardPaperFacts;' +
   'g.evidenceForwardPaperPreflight=evidenceForwardPaperPreflight;' +
   'g.toggleAlexGLiveTrading=toggleAlexGLiveTrading;' +
-  'g.EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS=EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS;' +               // pure
+  'g.EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS=EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS;' +
+  // ── Phase A: Campaign C1 attestation ──
+  'g.evidenceEvaluateCampaignC1Attestation=evidenceEvaluateCampaignC1Attestation;' +  // pure
+  'g.evidenceLoadCampaignC1Attestation=evidenceLoadCampaignC1Attestation;' +
+  'g.EVIDENCE_C1_MANIFEST_SHA256=EVIDENCE_C1_MANIFEST_SHA256;' +
+  'g.EVIDENCE_C1_ATTESTATION_MAX_AGE_MS=EVIDENCE_C1_ATTESTATION_MAX_AGE_MS;' +
+  'g.__C1_ATTESTATION_TEXT__=' + JSON.stringify(c1AttestationText===null?'':c1AttestationText) + ';' +               // pure
   'g.evidenceBannerHtml=evidenceBannerHtml;' +
   'g.renderEvidencePlatformDiagnostics=renderEvidencePlatformDiagnostics;' +
   'g.evidenceHandleImportInputMulti=evidenceHandleImportInputMulti;' +

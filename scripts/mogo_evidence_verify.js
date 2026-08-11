@@ -88,6 +88,8 @@ function parseArgs(argv) {
     else if (a === '--out') out.outFile = argv[++i];
     else if (a === '--app') out.app = argv[++i];
     else if (a === '--json') out.json = true;
+    else if (a === '--campaign-c1-attest') out.c1Attest = true;
+    else if (a === '--campaign-c1-out') out.c1Out = argv[++i];
     else if (a === '--selftest') out.selftest = true;
     else if (a === '--help' || a === '-h') out.help = true;
     else throw new Error('unknown argument: ' + a);
@@ -1052,6 +1054,90 @@ function selftest() {
 }
 
 // ══ Entry point ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// CAMPAIGN C1 INTEGRITY ATTESTATION (MOGO-011 Phase A)
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS EXISTS
+//
+// The forward-paper preflight requires Campaign C1 to be positively confirmed intact. The BROWSER
+// cannot establish that: it holds no copy of C1, so any C1 verdict computed in-page would be a
+// fabrication. The preflight therefore reports campaignC1Intact=false from the browser and blocks,
+// which is correct and is why it has never passed.
+//
+// The fact has to come from the only place that can actually establish it -- this repository,
+// where the artifacts and their manifest both live. Until now that verification was performed ad
+// hoc, by hand, every time it was quoted. A number retyped from a terminal into a report is not a
+// measurement, which is the same lesson D-16 taught. So it is committed here, and it emits an
+// ATTESTATION: a machine-readable record of what was verified, over which manifest, when, and by
+// what tool.
+//
+// WHAT THE ATTESTATION IS AND IS NOT
+//
+// It is a RECORD of an independent verification, not a proof. It is not signed and does not claim
+// to be -- MOGO has no key management, and inventing one here would be scope no one asked for.
+// Its integrity rests on two things that are both auditable: it is produced by committed code, and
+// it names the SHA-256 of the exact manifest it verified. The browser pins that manifest hash in
+// committed source, so an attestation describing a DIFFERENT manifest is rejected rather than
+// believed. That is the anti-substitution link, and it is deliberately visible in both places.
+//
+// READ-ONLY over evidence: it opens artifacts with readFileSync and writes only its own output.
+function verifyCampaignC1(manifestPath, evidenceDir) {
+  const raw = fs.readFileSync(manifestPath, 'utf8');
+  const manifestSha256 = sha256Hex(Buffer.from(raw, 'utf8'));
+  // Rows are `| n | `FILE` | TYPE | RUN | PAIR | BYTES | MODIFIED | `SHA256` |`
+  const rowRe = /^\|\s*(\d+)\s*\|\s*`([^`]+)`\s*\|.*?\|\s*([\d,]+)\s*\|\s*\S+\s*\|\s*`([0-9a-f]{64})`\s*\|/gm;
+  const rows = [];
+  let m;
+  while ((m = rowRe.exec(raw)) !== null) {
+    rows.push({ index: Number(m[1]), file: m[2], bytes: Number(m[3].replace(/,/g, '')), sha256: m[4] });
+  }
+  const verified = [], missing = [], mismatched = [];
+  let totalBytes = 0;
+  for (const r of rows) {
+    const p = path.join(evidenceDir, r.file);
+    if (!fs.existsSync(p)) { missing.push(r.file); continue; }
+    const buf = fs.readFileSync(p);
+    totalBytes += buf.length;
+    const h = sha256Hex(buf);
+    if (h !== r.sha256 || buf.length !== r.bytes) {
+      mismatched.push({ file: r.file, expectedSha256: r.sha256, actualSha256: h,
+                        expectedBytes: r.bytes, actualBytes: buf.length });
+    } else verified.push(r.file);
+  }
+  // An artifact present in evidence/ but absent from the manifest is a discrepancy in the other
+  // direction and is reported rather than ignored.
+  const listed = new Set(rows.map(r => r.file));
+  let unlisted = [];
+  try {
+    unlisted = fs.readdirSync(evidenceDir)
+      .filter(f => /^C1-/.test(f) && !listed.has(f));
+  } catch (e) { unlisted = []; }
+
+  const pass = rows.length > 0 && missing.length === 0 && mismatched.length === 0 &&
+               unlisted.length === 0 && verified.length === rows.length;
+  return {
+    attestationVersion: 'mogo.c1-attestation.v1',
+    tool: TOOL_VERSION,
+    generatedAt: new Date().toISOString(),
+    manifestPath: path.relative(REPO_ROOT, path.resolve(manifestPath)),
+    manifestSha256,
+    artifacts: {
+      total: rows.length,
+      verified: verified.length,
+      missing: missing.length,
+      mismatched: mismatched.length,
+      unlisted: unlisted.length
+    },
+    totalBytes,
+    missingFiles: missing,
+    mismatchedFiles: mismatched,
+    unlistedFiles: unlisted,
+    verdict: pass ? 'VERIFIED' : 'FAILED'
+  };
+}
+
 function main() {
   let args;
   try { args = parseArgs(process.argv.slice(2)); }
@@ -1063,6 +1149,23 @@ function main() {
     process.exit(0);
   }
   if (args.selftest) process.exit(selftest());
+
+  if (args.c1Attest) {
+    const manifestPath = args.manifest || path.join(REPO_ROOT, 'docs', 'campaigns', 'C1', 'CAMPAIGN_C1_EVIDENCE_MANIFEST.md');
+    const evidenceDir = path.join(REPO_ROOT, 'evidence');
+    let att;
+    try { att = verifyCampaignC1(manifestPath, evidenceDir); }
+    catch (e) { console.error('FAIL: ' + (e && e.message ? e.message : e)); process.exit(2); }
+    const outPath = path.resolve(args.c1Out || path.join(REPO_ROOT, 'docs', 'campaigns', 'C1', 'C1_INTEGRITY_ATTESTATION.json'));
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, JSON.stringify(att, null, 2) + '\n');
+    console.log(JSON.stringify(att, null, 2));
+    console.log('\nattestation written to ' + outPath);
+    // FAIL CLOSED: a failed verification still writes its record -- an attestation that says
+    // FAILED is exactly what the browser must be able to read and refuse on -- but the exit
+    // status is nonzero so no automation mistakes it for success.
+    process.exit(att.verdict === 'VERIFIED' ? 0 : 1);
+  }
 
   if (!args.scan.length) { console.error('FAIL: at least one --scan <DIR> is required (or --selftest)'); process.exit(2); }
 
@@ -1089,7 +1192,7 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { loadCanonicalizer, sha256Hex, buildReport, buildInventory, analyzeIdentity,
+module.exports = { loadCanonicalizer, sha256Hex, buildReport, verifyCampaignC1, buildInventory, analyzeIdentity,
                    fingerprintAll, diffFingerprints, assertOutPathAllowed, listCandidateFiles,
                    classifyArtifact, reconcileManifest, TIMEFRAME_BAR_MS, MIN_PLAUSIBLE_HOLD_MS,
                    REPO_ROOT, PROTECTED_WRITE_DIRS, TOOL_VERSION };

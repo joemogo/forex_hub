@@ -1033,7 +1033,7 @@ function runEvidencePlatformFixtures(g){
     confirmed:2,unconfirmed:0,missingIdentity:[],ambiguousIdentity:[],packageIdCollisions:[],
     missingOrigin:[],unverifiable:[],originCounts:{'http://localhost:8751':2},distinctOrigins:1};
   function facts(o){
-    return Object.assign({reconciliation:JSON.parse(JSON.stringify(CLEAN_RECON)),
+    return Object.assign({reconciliation:JSON.parse(JSON.stringify(CLEAN_RECON)),storeRead:'OK',
       hashVerification:{verified:2,mismatched:0,physical:2},campaignC1Intact:true,namedExceptions:[]},o||{});
   }
   const codes=function(v){ return v.blockers.map(function(b){return b.code;}); };
@@ -1075,12 +1075,41 @@ function runEvidencePlatformFixtures(g){
       ok(codes(v).indexOf(r[0])!==-1,'expected '+r[0]+', saw '+JSON.stringify(codes(v)));
     });
   });
-  t('G4 an EMPTY corpus does not pass -- nothing is not the same as nothing wrong',function(){
-    const recon=Object.assign(JSON.parse(JSON.stringify(CLEAN_RECON)),
+  t('G4 an EMPTY store passes ONLY when the read is positively confirmed',function(){
+    // CORRECTED after Phase B. This fixture originally asserted that an empty corpus can never
+    // pass. That was wrong, and testing proved it: the durable evidence profile starts EMPTY, no
+    // evidence exists until a trade closes, and no trade can open until the gate passes -- a
+    // deadlock. The real hazard was never emptiness; it was a FAILED read returning an empty list
+    // and being mistaken for a clean one. That is what is now asserted.
+    const empty=Object.assign(JSON.parse(JSON.stringify(CLEAN_RECON)),
       {physicalPackages:0,uniqueSourceTrades:0,confirmed:0,unconfirmed:0});
-    const v=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,hashVerification:{verified:0,mismatched:0,physical:0}}));
-    eq(v.pass,false,'an empty corpus is not a clean one');
-    ok(codes(v).indexOf('NO_EVIDENCE')!==-1);
+    const zero={verified:0,mismatched:0,physical:0};
+    const okv=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:empty,hashVerification:zero,storeRead:'OK'}));
+    eq(okv.pass,true,'a genuinely empty store, positively read, is the safest possible state: '+JSON.stringify(codes(okv)));
+    // ...and every way of NOT confirming the read blocks.
+    [undefined,null,'','FAILED','ok',0,true].forEach(function(bad){
+      const v=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:empty,hashVerification:zero,storeRead:bad}));
+      eq(v.pass,false,'storeRead='+JSON.stringify(bad)+' must block');
+      ok(codes(v).indexOf('STORE_READ_UNCONFIRMED')!==-1,'saw '+JSON.stringify(codes(v)));
+    });
+  });
+  t('G4b a NON-empty corpus still needs the read confirmed too',function(){
+    const v=g.evidenceEvaluateForwardPaperGate(facts({storeRead:undefined}));
+    eq(v.pass,false,'the assertion is required regardless of how much evidence was found');
+    ok(codes(v).indexOf('STORE_READ_UNCONFIRMED')!==-1);
+  });
+  t('G4c only the gatherer may assert the read, and only after it succeeded',function(){
+    const src=String(g.evidenceGatherForwardPaperFacts);
+    const assertIdx=src.indexOf("storeRead='OK'");
+    const awaitIdx=src.indexOf('await evidenceListPackages');
+    ok(assertIdx!==-1,'the gatherer must assert the read');
+    ok(awaitIdx!==-1&&assertIdx>awaitIdx,
+      'and must do so only AFTER the awaited read returned -- never before attempting it');
+    // the early-return path (read threw) must not carry the assertion
+    const early=src.slice(0,awaitIdx===-1?0:src.indexOf('return facts;',awaitIdx));
+    void early;
+    ok(/catch[\s\S]{0,120}return facts;/.test(src),
+      'a read that throws returns facts WITHOUT the assertion, so the gate blocks');
   });
   t('G5 absent facts BLOCK -- the gate never assumes what it was not told',function(){
     eq(g.evidenceEvaluateForwardPaperGate({}).pass,false,'no facts at all');
@@ -1170,11 +1199,14 @@ function runEvidencePlatformFixtures(g){
     codes(v).forEach(function(c){ ok(txt.indexOf(c)!==-1,'blocker '+c+' must appear in the operator text'); });
     ok(g.evidenceForwardPaperGateText({pass:true}).indexOf('PASS')!==-1,'and a pass says so');
   });
-  t('G11 the async gatherer reports Campaign C1 as NOT confirmed from the browser',function(){
-    // The browser holds no copy of C1, so claiming it intact from here would be a fabrication.
+  t('G11 the gatherer never DECIDES Campaign C1 -- it reads the repository attestation',function(){
+    // The browser holds no copy of C1, so computing a verdict here would be a fabrication. Phase A
+    // replaced the hardcoded false with a read of the repository's attestation, evaluated by a
+    // function that fails closed. What must never appear is a hardcoded TRUE.
     const src=String(g.evidenceGatherForwardPaperFacts);
-    ok(/campaignC1Intact\s*=\s*false/.test(src),
-      'the gatherer must report what it cannot establish as false, not omit it');
+    ok(src.indexOf('evidenceLoadCampaignC1Attestation')!==-1,'it must load the repository attestation');
+    ok(src.indexOf('evidenceEvaluateCampaignC1Attestation')!==-1,'and evaluate it, never trust it as-read');
+    eq(/campaignC1Intact\s*=\s*true/.test(src),false,'and must NEVER hardcode a C1 pass');
     ok(src.indexOf('evidenceVerifyPackageHash')!==-1,'and must independently re-verify each hash');
     ok(src.indexOf('evidenceReconcileByIdentity')!==-1,'and reconcile by identity');
   });
@@ -1192,6 +1224,130 @@ function runEvidencePlatformFixtures(g){
     const short=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,
       hashVerification:{verified:4,mismatched:0,physical:4}}));
     eq(short.pass,true,'and an over-count of physical copies cannot create a shortfall');
+  });
+
+  // ══ GROUP 6J — PHASE A: CAMPAIGN C1 INTEGRITY ARRIVES FROM THE REPOSITORY ═════════════════
+  // The browser cannot establish C1 integrity -- it holds no copy. Phase A supplies the fact from
+  // `scripts/mogo_evidence_verify.js --campaign-c1-attest`, which re-hashes all 33 artifacts
+  // against their manifest. The browser's job is to REFUSE that attestation unless every condition
+  // holds. These fixtures exercise the real evaluator; the attestation shapes below are the real
+  // committed shape, with the real committed manifest hash.
+  const C1_OK={
+    attestationVersion:'mogo.c1-attestation.v1',
+    tool:'mogo-evidence-verify/1.0.0 (MOGO-011 Step 4A)',
+    generatedAt:'2026-08-11T00:00:00.000Z',
+    manifestPath:'docs/campaigns/C1/CAMPAIGN_C1_EVIDENCE_MANIFEST.md',
+    manifestSha256:'c23e72e070e4e6e841e9e9cb77952a426743e666600e010c9bb14ca27fcee666',
+    artifacts:{total:33,verified:33,missing:0,mismatched:0,unlisted:0},
+    totalBytes:13575486,missingFiles:[],mismatchedFiles:[],unlistedFiles:[],verdict:'VERIFIED'};
+  const C1_NOW=Date.parse('2026-08-11T01:00:00.000Z');   // one hour after the attestation
+  function c1(over){ return Object.assign(JSON.parse(JSON.stringify(C1_OK)),over||{}); }
+  const c1r=function(v){ return v.reasons; };
+
+  t('C1A a genuine, fresh attestation for the PINNED manifest is accepted',function(){
+    const v=g.evidenceEvaluateCampaignC1Attestation(C1_OK,C1_NOW);
+    eq(v.intact,true,'the real committed attestation shape must be accepted: '+JSON.stringify(c1r(v)));
+    eq(v.attestation.verified,33,'and its provenance is retained for the record');
+    eq(v.attestation.total,33);
+    ok(!!v.attestation.tool,'including which tool produced it');
+  });
+  t('C1B the pinned manifest hash is the anti-substitution link',function(){
+    // A friendlier manifest cannot be swapped in: the browser pins the hash of the exact manifest
+    // it will accept, so substitution requires editing committed source under review.
+    const v=g.evidenceEvaluateCampaignC1Attestation(c1({manifestSha256:'b'.repeat(64)}),C1_NOW);
+    eq(v.intact,false,'an attestation for a DIFFERENT manifest must be refused');
+    ok(c1r(v).indexOf('MANIFEST_MISMATCH')!==-1);
+    eq(g.evidenceEvaluateCampaignC1Attestation(c1({manifestSha256:null}),C1_NOW).intact,false,
+      'and a missing manifest hash is refused too');
+  });
+  t('C1C a MISSING or malformed attestation fails closed',function(){
+    [null,undefined,'','not-an-object',[],42].forEach(function(bad){
+      const v=g.evidenceEvaluateCampaignC1Attestation(bad,C1_NOW);
+      eq(v.intact,false,'a non-attestation must never be intact: '+JSON.stringify(bad));
+    });
+    eq(g.evidenceEvaluateCampaignC1Attestation(null,C1_NOW).reasons[0],'NO_ATTESTATION');
+  });
+  t('C1D a FAILED verification is refused, and so is every incomplete count',function(){
+    eq(g.evidenceEvaluateCampaignC1Attestation(c1({verdict:'FAILED'}),C1_NOW).intact,false);
+    const rows=[
+      ['INCOMPLETE_VERIFICATION',{artifacts:{total:33,verified:32,missing:0,mismatched:0,unlisted:0}}],
+      ['MISSING_ARTIFACTS',{artifacts:{total:33,verified:33,missing:1,mismatched:0,unlisted:0}}],
+      ['MISMATCHED_ARTIFACTS',{artifacts:{total:33,verified:33,missing:0,mismatched:1,unlisted:0}}],
+      ['UNLISTED_ARTIFACTS',{artifacts:{total:33,verified:33,missing:0,mismatched:0,unlisted:1}}],
+      ['EMPTY_MANIFEST',{artifacts:{total:0,verified:0,missing:0,mismatched:0,unlisted:0}}]
+    ];
+    rows.forEach(function(r){
+      const v=g.evidenceEvaluateCampaignC1Attestation(c1(r[1]),C1_NOW);
+      eq(v.intact,false,r[0]+' must refuse');
+      ok(c1r(v).indexOf(r[0])!==-1,'expected '+r[0]+', saw '+JSON.stringify(c1r(v)));
+    });
+  });
+  t('C1E an absent count is NOT a zero',function(){
+    const v=g.evidenceEvaluateCampaignC1Attestation(c1({artifacts:{total:33,verified:33}}),C1_NOW);
+    eq(v.intact,false,'missing/mismatched/unlisted absent must refuse, never read as clean');
+    ok(c1r(v).join(',').indexOf('MALFORMED_COUNT_')!==-1,'saw '+JSON.stringify(c1r(v)));
+    eq(g.evidenceEvaluateCampaignC1Attestation(c1({artifacts:null}),C1_NOW).intact,false);
+  });
+  t('C1F a VERIFIED verdict CONTRADICTED by its own detail lists is refused',function(){
+    // A verdict that disagrees with its own evidence is trusted less than either side of it.
+    ['missingFiles','mismatchedFiles','unlistedFiles'].forEach(function(k){
+      const o={}; o[k]=['C1-01-GBP_USD-PACKAGES.json'];
+      const v=g.evidenceEvaluateCampaignC1Attestation(c1(o),C1_NOW);
+      eq(v.intact,false,k+' non-empty must refuse a VERIFIED verdict');
+    });
+  });
+  t('C1G a STALE attestation is not evidence about the corpus as it stands now',function(){
+    const old=Date.parse('2026-08-11T00:00:00.000Z')+25*60*60*1000;   // 25h after generation
+    const v=g.evidenceEvaluateCampaignC1Attestation(C1_OK,old);
+    eq(v.intact,false,'beyond the max age it must refuse');
+    ok(c1r(v).indexOf('STALE_ATTESTATION')!==-1);
+    eq(g.evidenceEvaluateCampaignC1Attestation(C1_OK,Date.parse('2026-08-11T23:00:00.000Z')).intact,true,
+      'but inside the window it is accepted');
+  });
+  t('C1H a FUTURE-DATED attestation is refused -- that direction buys unlimited freshness',function(){
+    const v=g.evidenceEvaluateCampaignC1Attestation(C1_OK,Date.parse('2026-08-10T00:00:00.000Z'));
+    eq(v.intact,false,'an attestation dated well in the future is a broken or forged clock');
+    ok(c1r(v).indexOf('FUTURE_DATED_ATTESTATION')!==-1);
+    // small skew is tolerated rather than refused
+    eq(g.evidenceEvaluateCampaignC1Attestation(C1_OK,Date.parse('2026-08-10T23:58:00.000Z')).intact,true,
+      'two minutes of clock skew must not refuse a genuine attestation');
+    eq(g.evidenceEvaluateCampaignC1Attestation(c1({generatedAt:'not-a-date'}),C1_NOW).intact,false,
+      'and an unparseable timestamp is refused');
+  });
+  t('C1I the loader turns EVERY failure into a null, never a fabricated fact',function(){
+    const src=String(g.evidenceLoadCampaignC1Attestation);
+    ok(/return null/.test(src),'a failed fetch yields null');
+    ok(/catch\s*\(/.test(src),'and a thrown fetch is caught rather than escaping');
+    ok(src.indexOf('res.ok')!==-1,'a non-200 response is not an attestation');
+    ok(src.indexOf('EVIDENCE_C1_ATTESTATION_URL')!==-1,'and the URL is the pinned constant');
+  });
+  t('C1K THE REAL committed attestation is accepted by THE REAL evaluator',function(){
+    // Closes the loop end to end: the artifact `scripts/mogo_evidence_verify.js --campaign-c1-attest`
+    // actually wrote, evaluated by the function the browser actually runs, against the manifest hash
+    // actually pinned in index.html. If any of those three drift apart, this fails.
+    //
+    // Evaluated at its OWN generatedAt + 1h rather than at wall-clock time, deliberately: staleness
+    // is covered by C1G, and a permanent fixture that starts failing 24 hours after a commit would
+    // be a clock test wearing a integrity test's clothes.
+    let att=null;
+    try{ att=JSON.parse(g.__C1_ATTESTATION_TEXT__||''); }catch(e){ att=null; }
+    ok(!!att,'docs/campaigns/C1/C1_INTEGRITY_ATTESTATION.json must exist and parse');
+    eq(att.manifestSha256,g.EVIDENCE_C1_MANIFEST_SHA256,
+      'the committed attestation must describe the manifest index.html pins');
+    const v=g.evidenceEvaluateCampaignC1Attestation(att,Date.parse(att.generatedAt)+3600000);
+    eq(v.intact,true,'the real attestation must be accepted: '+JSON.stringify(v.reasons));
+    eq(att.artifacts.total,33,'Campaign C1 is 33 artifacts');
+    eq(att.artifacts.verified,33,'all 33 verified');
+    eq(att.artifacts.mismatched,0,'0 mismatched');
+    eq(att.artifacts.missing,0,'0 missing');
+    eq(att.artifacts.unlisted,0,'0 unlisted');
+    eq(att.totalBytes,13575486,'and the byte total the manifest itself declares');
+  });
+  t('C1J the gate treats a refused attestation exactly as it treats no attestation',function(){
+    const refused=g.evidenceEvaluateCampaignC1Attestation(c1({verdict:'FAILED'}),C1_NOW);
+    const v=g.evidenceEvaluateForwardPaperGate(facts({campaignC1Intact:refused.intact}));
+    eq(v.pass,false,'a refused C1 attestation must block the forward-paper gate');
+    ok(codes(v).indexOf('CAMPAIGN_C1')!==-1);
   });
 
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){

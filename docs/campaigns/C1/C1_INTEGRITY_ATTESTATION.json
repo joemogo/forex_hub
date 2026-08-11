@@ -1,0 +1,19 @@
+{
+  "attestationVersion": "mogo.c1-attestation.v1",
+  "tool": "mogo-evidence-verify/1.0.0 (MOGO-011 Step 4A)",
+  "generatedAt": "2026-08-11T01:53:43.653Z",
+  "manifestPath": "docs/campaigns/C1/CAMPAIGN_C1_EVIDENCE_MANIFEST.md",
+  "manifestSha256": "c23e72e070e4e6e841e9e9cb77952a426743e666600e010c9bb14ca27fcee666",
+  "artifacts": {
+    "total": 33,
+    "verified": 33,
+    "missing": 0,
+    "mismatched": 0,
+    "unlisted": 0
+  },
+  "totalBytes": 13575486,
+  "missingFiles": [],
+  "mismatchedFiles": [],
+  "unlistedFiles": [],
+  "verdict": "VERIFIED"
+}
