@@ -233,7 +233,16 @@ const wrapped = new Function('g',
   'g.evidenceSummarizeImportResults=evidenceSummarizeImportResults;' +   // pure
   'g.evidenceImportSummaryText=evidenceImportSummaryText;' +             // pure
   'g.evidenceIsImportableName=evidenceIsImportableName;' +
-  'g.evidencePlanImportSelection=evidencePlanImportSelection;' +               // pure               // pure
+  'g.evidencePlanImportSelection=evidencePlanImportSelection;' +               // pure
+  // ── M-5 / M-8: identity reconciliation, origin provenance and the forward-paper gate ──
+  'g.evidenceReconcileByIdentity=evidenceReconcileByIdentity;' +               // pure
+  'g.evidenceEvaluateForwardPaperGate=evidenceEvaluateForwardPaperGate;' +     // pure
+  'g.evidenceForwardPaperGateText=evidenceForwardPaperGateText;' +             // pure
+  'g.evidenceCurrentOrigin=evidenceCurrentOrigin;' +
+  'g.evidenceGatherForwardPaperFacts=evidenceGatherForwardPaperFacts;' +
+  'g.evidenceForwardPaperPreflight=evidenceForwardPaperPreflight;' +
+  'g.toggleAlexGLiveTrading=toggleAlexGLiveTrading;' +
+  'g.EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS=EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS;' +               // pure
   'g.evidenceBannerHtml=evidenceBannerHtml;' +
   'g.renderEvidencePlatformDiagnostics=renderEvidencePlatformDiagnostics;' +
   'g.evidenceHandleImportInputMulti=evidenceHandleImportInputMulti;' +

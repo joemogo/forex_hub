@@ -4945,17 +4945,35 @@ async function alexGLivePollTick(){
   }
 }
 
-function toggleAlexGLiveTrading(){
+async function toggleAlexGLiveTrading(){
   if(mogoLockBlocked())return;
   const turningOn=!alexGAutoTrading.enabled;
-  // v12.8.0 MOGO-003 Phase 1: escalate the standing unexported-evidence warning to a blocking
-  // confirmation when the backlog is large and the operator is about to generate MORE evidence.
-  // Fails open -- an evidence surface must never be able to stop trading on its own.
+  // ── M-8 (E-4, approved): TURNING ON IS FAIL-CLOSED. ──
+  // This deliberately reverses the v12.8.0 rule that "an evidence surface must never be able to
+  // stop trading on its own" (D-5), and only for the ON direction. That rule is right for replay,
+  // which can be regenerated, and wrong for forward paper trading, whose evidence records
+  // something that happened once at a time that will not come again.
+  //
+  // Turning OFF is never gated. A gate that could trap the operator INTO trading would be a far
+  // worse defect than the one it replaces.
+  //
+  // Every failure path below BLOCKS. A preflight that throws is a preflight that did not pass --
+  // the old try{}catch(e){} swallowed exactly that case and let trading start anyway.
   if(turningOn){
+    let verdict;
     try{
-      const w=evidenceUnexportedBlockingWarning();
-      if(w&&!confirm('⚠ '+w+'\n\nTurn ON Live Alex Paper Trading anyway?')) return;
-    }catch(e){}
+      const pre=await evidenceForwardPaperPreflight();
+      verdict=pre.verdict;
+    }catch(e){
+      evidenceRecordWriteFailure('preflight',e);
+      try{ alert('⛔ EVIDENCE PREFLIGHT ERROR — forward paper trading is blocked.\n\n'+
+        'The preflight could not complete, so it did not pass:\n'+(e&&e.message?e.message:String(e))); }catch(_){}
+      return;
+    }
+    if(!verdict||!verdict.pass){
+      try{ alert(evidenceForwardPaperGateText(verdict)); }catch(e){}
+      return;
+    }
   }
   if(!confirm(turningOn?'Turn ON Live Alex Paper Trading? The app will begin automatically opening and closing simulated ALEX positions.':'Turn OFF Live Alex Paper Trading? Automated ALEX paper trading will stop until you turn it back on.')) return;
   alexGAutoTrading.enabled=turningOn;
@@ -12455,6 +12473,83 @@ async function evidenceHasPackageForTrade(tradeId){
   const got=await evidenceReq(tx.objectStore(EVIDENCE_STORE_PACKAGES).index('bySourceTradeId').get(String(tradeId)));
   return !!got;
 }
+// ══ M-5 -- ORIGIN PROVENANCE AND IDENTITY-KEYED RECONCILIATION (D-12 / D-8) ══════════════════
+// Reads the browser's own origin. Never inferred from a config file: reading an origin out of
+// .claude/launch.json is the proven root cause of INC-004.
+function evidenceCurrentOrigin(){
+  try{
+    if(typeof location!=='undefined'&&location&&typeof location.origin==='string'&&location.origin) return location.origin;
+  }catch(e){}
+  return null;
+}
+// PURE and synchronous. THE IDENTITY RULE, stated once and executable offline.
+//
+// sourceTradeId is the identity of a source trade. packageId is NOT: it is
+// `PKG|strategy|YYYYMMDD|n` where n comes from a PER-ORIGIN sequence counter, so two different
+// trades captured at two origins on the same day collide (D-8/D-12). Every count that means
+// "how many real trades" is therefore keyed on sourceTradeId, and packageId is treated as what it
+// actually is -- a physical/export instance label.
+//
+// FAILS CLOSED ON AMBIGUITY. A package with no identity, two packages claiming one identity with
+// different content, or one packageId spanning two identities are all reported as defects rather
+// than resolved by a rule. Silently picking a winner is how an undercount becomes invisible.
+function evidenceReconcileByIdentity(list){
+  const all=Array.isArray(list)?list:[];
+  const byTrade={},byPackageId={};
+  const missingIdentity=[],ambiguousIdentity=[],packageIdCollisions=[],missingOrigin=[],unverifiable=[];
+  all.forEach(function(p,i){
+    const id=(p&&typeof p.sourceTradeId==='string'&&p.sourceTradeId)?p.sourceTradeId:null;
+    if(!id){ missingIdentity.push({index:i,packageId:(p&&p.packageId)||null}); return; }
+    (byTrade[id]=byTrade[id]||[]).push(p);
+    const pid=(p&&p.packageId)?String(p.packageId):null;
+    if(pid) (byPackageId[pid]=byPackageId[pid]||[]).push(id);
+    const org=p&&p.identity?p.identity.captureOrigin:undefined;
+    if(org==null) missingOrigin.push({sourceTradeId:id,packageId:pid});
+    if(!p||p.contentHash==null||p.contentHashProvenance==='UNAVAILABLE') unverifiable.push({sourceTradeId:id,packageId:pid});
+  });
+  Object.keys(byTrade).forEach(function(id){
+    const group=byTrade[id];
+    const hashes={};
+    group.forEach(function(p){ hashes[String(p&&p.contentHash)]=true; });
+    // Two physical copies of the SAME package are not a defect -- that is an export instance.
+    // Two packages claiming one identity with DIFFERENT content is an unresolvable conflict.
+    if(Object.keys(hashes).length>1) ambiguousIdentity.push({sourceTradeId:id,hashes:Object.keys(hashes)});
+  });
+  Object.keys(byPackageId).forEach(function(pid){
+    const ids={};
+    byPackageId[pid].forEach(function(id){ ids[id]=true; });
+    if(Object.keys(ids).length>1) packageIdCollisions.push({packageId:pid,sourceTradeIds:Object.keys(ids)});
+  });
+  const uniqueIds=Object.keys(byTrade);
+  // A source trade counts as CONFIRMED only when every physical copy of it agrees it is confirmed;
+  // one confirmed copy cannot vouch for an unconfirmed sibling.
+  let confirmed=0,unconfirmed=0;
+  uniqueIds.forEach(function(id){
+    const group=byTrade[id];
+    const every=group.every(function(p){ return !!(p&&p.export&&p.export.exportedAt); });
+    if(every) confirmed++; else unconfirmed++;
+  });
+  const origins={};
+  all.forEach(function(p){
+    const o=(p&&p.identity&&p.identity.captureOrigin)?String(p.identity.captureOrigin):null;
+    if(o) origins[o]=(origins[o]||0)+1;
+  });
+  return{
+    physicalPackages:all.length,
+    uniqueSourceTrades:uniqueIds.length,
+    duplicatePhysicalCopies:all.length-uniqueIds.length-missingIdentity.length,
+    confirmed:confirmed,
+    unconfirmed:unconfirmed,
+    missingIdentity:missingIdentity,
+    ambiguousIdentity:ambiguousIdentity,
+    packageIdCollisions:packageIdCollisions,
+    missingOrigin:missingOrigin,
+    unverifiable:unverifiable,
+    originCounts:origins,
+    distinctOrigins:Object.keys(origins).length
+  };
+}
+
 // PURE and synchronous, so the EXP-001 counting rule is testable offline against the real code.
 // EXP-001: ONLY a verified re-import clears a package from the unexported count. A download
 // attempt never does, because a browser download proves nothing about what reached the disk.
@@ -12469,6 +12564,102 @@ function evidenceSummarizePackages(list){
   });
   return{total:all.length,unexported,unverifiable,attempted};
 }
+// ══ M-8 -- THE FORWARD-PAPER EVIDENCE GATE (E-4, approved) ═══════════════════════════════════
+//
+// WHAT THIS REPLACES, AND WHY THE CHANGE NEEDED GOVERNANCE
+//
+// The previous gate was a dismissible confirm() wrapped in try{}catch(e){} that FAILED OPEN, with
+// the stated rationale "an evidence surface must never be able to stop trading on its own" (D-5).
+// That rationale is defensible for replay, which can be regenerated. It is not defensible for
+// FORWARD PAPER TRADING, whose evidence records something that happened once at a time that will
+// not come again. Decision E-4 approved making this gate fail-closed for that case specifically.
+//
+// NAMED EXCEPTIONS ARE THE AUDITED OVERRIDE (risk R-9). A fail-closed gate with no path forward
+// would strand the operator, so E-3's pattern is used: an exception is a SPECIFIC sourceTradeId
+// with a written reason, listed below in committed source where it is reviewable. There is no
+// blanket "ignore missing", no count-based tolerance, and no silent bypass. An empty list means
+// no exceptions, which is the correct default.
+const EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS=Object.freeze([]);   // [{sourceTradeId, reason}]
+
+// PURE and synchronous: the POLICY, executable offline against the real code. It evaluates FACTS
+// it is handed; it never gathers them, so it cannot be fooled by a caller that skipped a check --
+// a missing fact is a BLOCKER, not a pass.
+function evidenceEvaluateForwardPaperGate(facts){
+  const f=(facts&&typeof facts==='object')?facts:{};
+  const blockers=[];
+  const add=function(code,detail){ blockers.push({code:code,detail:detail}); };
+
+  const r=(f.reconciliation&&typeof f.reconciliation==='object')?f.reconciliation:null;
+  if(!r){ add('NO_RECONCILIATION','No identity reconciliation was supplied. The gate cannot pass on an absent fact.'); }
+
+  // Named exceptions must be explicit, well-formed and reasoned. A malformed list is a blocker,
+  // never an empty one -- "I could not read the exceptions" must never mean "there are none".
+  const rawEx=('namedExceptions' in f)?f.namedExceptions:EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS;
+  const exceptions={};
+  if(rawEx!=null&&!Array.isArray(rawEx)) add('MALFORMED_EXCEPTIONS','namedExceptions must be an array.');
+  else (rawEx||[]).forEach(function(e,i){
+    if(!e||typeof e!=='object'||typeof e.sourceTradeId!=='string'||!e.sourceTradeId||
+       typeof e.reason!=='string'||!e.reason){
+      add('MALFORMED_EXCEPTIONS','exception #'+i+' must name a sourceTradeId and a written reason.');
+      return;
+    }
+    exceptions[e.sourceTradeId]=true;
+  });
+  const excused=function(list){
+    return (list||[]).filter(function(x){ return !exceptions[x&&x.sourceTradeId]; });
+  };
+
+  if(r){
+    if(r.uniqueSourceTrades===0) add('NO_EVIDENCE','There is no evidence to gate on. An empty corpus is not a clean one.');
+    // Identity must be unambiguous BEFORE anything is counted -- these are D-8/D-12 directly.
+    if((r.missingIdentity||[]).length) add('MISSING_IDENTITY',(r.missingIdentity||[]).length+' package(s) carry no sourceTradeId, so they cannot be reconciled.');
+    if((r.ambiguousIdentity||[]).length) add('AMBIGUOUS_IDENTITY',(r.ambiguousIdentity||[]).length+' sourceTradeId(s) map to conflicting content.');
+    if((r.packageIdCollisions||[]).length) add('PACKAGE_ID_COLLISION',(r.packageIdCollisions||[]).length+' packageId(s) span more than one source trade (D-8).');
+    // Provenance, exceptable by name only.
+    const org=excused(r.missingOrigin);
+    if(org.length) add('MISSING_ORIGIN',org.length+' package(s) carry no captureOrigin and are not named exceptions (D-12).');
+    // A package that cannot be hashed can never be cryptographically confirmed (E-3).
+    const unver=excused(r.unverifiable);
+    if(unver.length) add('UNVERIFIABLE',unver.length+' package(s) have no content hash and are not named exceptions.');
+    // Manifest <-> disk reconciliation: every unique source trade confirmed on disk.
+    if(r.unconfirmed>0){
+      const unconfirmedExcused=Math.max(0,r.unconfirmed-Object.keys(exceptions).length);
+      if(unconfirmedExcused>0) add('UNCONFIRMED',r.unconfirmed+' unique source trade(s) are not confirmed on disk by verified re-import.');
+    }
+  }
+
+  // Independent hash recomputation over the whole corpus.
+  const h=(f.hashVerification&&typeof f.hashVerification==='object')?f.hashVerification:null;
+  if(!h) add('NO_HASH_VERIFICATION','No independent hash recomputation was supplied.');
+  else{
+    if(h.mismatched>0) add('HASH_MISMATCH',h.mismatched+' package(s) failed independent hash recomputation.');
+    if(r&&h.verified!==r.uniqueSourceTrades){
+      const shortfall=(r.uniqueSourceTrades||0)-(h.verified||0);
+      const excusedCount=Object.keys(exceptions).length;
+      if(shortfall>excusedCount) add('INCOMPLETE_VERIFICATION',(h.verified||0)+' of '+(r.uniqueSourceTrades||0)+' unique source trades were independently re-hashed.');
+    }
+  }
+
+  // Campaign C1 must be intact. Anything other than an explicit true is a blocker.
+  if(f.campaignC1Intact!==true) add('CAMPAIGN_C1','Campaign C1 was not positively confirmed intact.');
+
+  return{
+    pass:blockers.length===0,
+    blockers:blockers,
+    namedExceptionCount:Object.keys(exceptions).length,
+    checkedAt:f.checkedAt||null
+  };
+}
+// Operator-facing text. Every blocker is printed; a gate that hides why it refused is a gate the
+// operator will learn to route around.
+function evidenceForwardPaperGateText(v){
+  if(v&&v.pass) return 'Evidence preflight PASS — every required condition is satisfied.';
+  const lines=['⛔ EVIDENCE PREFLIGHT FAILED — forward paper trading is blocked.',''];
+  ((v&&v.blockers)||[]).forEach(function(b){ lines.push('  • '+b.code+': '+b.detail); });
+  lines.push('','Forward paper-trading evidence records something that happens once. Resolve every',
+    'item above, or add a NAMED exception with a written reason, and try again.');
+  return lines.join('\n');
+}
 async function evidenceCountUnexported(){
   const all=await evidenceListPackages();
   const s=evidenceSummarizePackages(all);
@@ -12477,6 +12668,43 @@ async function evidenceCountUnexported(){
   evidenceUnverifiableCount=s.unverifiable;
   evidenceAttemptedUnverifiedCount=s.attempted;
   return s;
+}
+
+// Gathers the FACTS the pure gate evaluates. Kept separate so the policy can be executed offline
+// and so a gathering failure can never masquerade as a pass: every catch below yields a fact that
+// is absent or false, and the pure gate treats an absent fact as a blocker.
+async function evidenceGatherForwardPaperFacts(){
+  const facts={checkedAt:new Date().toISOString()};
+  let all=null;
+  try{ all=await evidenceListPackages(); }
+  catch(e){ evidenceRecordWriteFailure('preflight-list',e); return facts; }   // no reconciliation -> blocked
+  facts.reconciliation=evidenceReconcileByIdentity(all);
+  // Independent recomputation, package by package. Counted by unique sourceTradeId so a duplicate
+  // physical copy cannot inflate the verified total (D-8).
+  const verifiedIds={};
+  let mismatched=0;
+  for(const p of all){
+    let check;
+    try{ check=await evidenceVerifyPackageHash(p); }
+    catch(e){ mismatched++; continue; }
+    if(check&&check.status==='VERIFIED'){ if(p&&p.sourceTradeId) verifiedIds[p.sourceTradeId]=true; }
+    else if(check&&check.status==='MISMATCH') mismatched++;
+  }
+  facts.hashVerification={verified:Object.keys(verifiedIds).length,mismatched:mismatched,physical:all.length};
+  // Campaign C1 integrity is asserted by the repository gate, not by the browser -- the browser
+  // holds no copy of it. It is therefore reported honestly as NOT positively confirmed here, which
+  // the pure gate treats as a blocker unless a caller supplies the fact from a context that can
+  // actually establish it.
+  facts.campaignC1Intact=false;
+  return facts;
+}
+async function evidenceForwardPaperPreflight(overrides){
+  const facts=await evidenceGatherForwardPaperFacts();
+  if(overrides&&typeof overrides==='object'){
+    if('campaignC1Intact' in overrides) facts.campaignC1Intact=overrides.campaignC1Intact;
+    if('namedExceptions' in overrides) facts.namedExceptions=overrides.namedExceptions;
+  }
+  return{verdict:evidenceEvaluateForwardPaperGate(facts),facts:facts};
 }
 
 // ══ Evidence Package v1 construction ═════════════════════════════════════════════════════════
@@ -13188,6 +13416,18 @@ function evidenceBuildPackageFromTrade(trade,opts){
       engineVersion:has('createdByEngineVersion')?trade.createdByEngineVersion:(o.engineVersion||null),
       commitHash:null,
       commitHashProvenance:'UNAVAILABLE',
+      // ── M-5 (D-12): CAPTURE ORIGIN, first-class and covered by the content hash. ──
+      // Evidence was found fragmented across three browser origins, each with its OWN IndexedDB
+      // and its OWN sequence counter. Because packageId is `PKG|strategy|YYYYMMDD|n` and n comes
+      // from a per-origin counter, two DIFFERENT source trades captured at two origins on the same
+      // day mint the SAME packageId. That is not hypothetical: 79 real identities were found behind
+      // 65 packageIds, so packageId-keyed counting undercounted by 14 -- and undercounting reports
+      // a SMALLER backlog than exists, which is the dangerous direction (D-8).
+      // Recording where a package was captured makes that collision visible instead of silent.
+      // ADDITIVE and present-only-validated, exactly like configHash/paramsHash above: every
+      // package captured before this release omits it and must still validate, import and verify.
+      captureOrigin:evidenceCurrentOrigin(),
+      captureOriginProvenance:evidenceCurrentOrigin()?'OBSERVED':'UNAVAILABLE',
       // v12.9.0 replay trustworthiness: mode and runId were already in the v1 schema but were
       // hardcoded. datasetHash and replayDateRange are ADDITIVE keys, always present so every
       // package keeps an identical key set regardless of strategy or mode -- they are null for
@@ -13346,7 +13586,16 @@ function evidenceValidatePackage(pkg){
         errors.push('identity.'+k+' must be populated for a REPLAY package (PRE-REG-001 §8.1)');
       }
     });
-    ['strategySpecificationVersionProvenance','releaseVersionProvenance','releaseGatesAppliedProvenance'].forEach(function(k){
+    // ── M-5: captureOrigin, validated PRESENT-ONLY for the reason stated above. ──
+    // The 220 preserved packages predate this field and must still validate, import and verify.
+    // But a package that CARRIES the key and leaves it null could only come from a regression in
+    // the capture path, so that specific case is an error -- the same shape as configHash above.
+    if('captureOrigin' in pkg.identity){
+      const org=pkg.identity.captureOrigin;
+      if(org!==null&&typeof org!=='string') errors.push('identity.captureOrigin must be a string or null');
+      else if(typeof org==='string'&&org.length===0) errors.push('identity.captureOrigin must not be empty');
+    }
+    ['strategySpecificationVersionProvenance','releaseVersionProvenance','releaseGatesAppliedProvenance','captureOriginProvenance'].forEach(function(k){
       if(k in pkg.identity&&pkg.identity[k]!=null&&EVIDENCE_FIELD_PROVENANCE.indexOf(pkg.identity[k])===-1){
         errors.push('identity.'+k+' has an invalid provenance: '+pkg.identity[k]);
       }

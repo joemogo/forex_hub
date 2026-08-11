@@ -951,6 +951,249 @@ function runEvidencePlatformFixtures(g){
       'and that handler delegates to the batch, which delegates to the per-file path');
   });
 
+  // ══ GROUP 6H — M-5 (D-12 / D-8): IDENTITY IS sourceTradeId, NEVER packageId ═══════════════
+  // packageId is `PKG|strategy|YYYYMMDD|n` and n comes from a PER-ORIGIN sequence counter. Two
+  // different trades captured at two origins on the same day therefore mint the SAME packageId.
+  // That is measured, not theoretical: 79 real identities were found behind 65 packageIds, so
+  // packageId-keyed counting undercounted by 14 -- and an undercount reports a SMALLER backlog
+  // than exists, which is the dangerous direction.
+  function pkg(o){
+    return Object.assign({packageId:'PKG|alex_g_sr_v1|20260724|1',sourceTradeId:'AGT|A',
+      contentHash:'a'.repeat(64),contentHashProvenance:'OBSERVED',
+      identity:{captureOrigin:'http://localhost:8751'},export:{}},o||{});
+  }
+  function confirmedPkg(o){
+    const p=pkg(o); p.export={exportedAt:'2026-08-01T00:00:00.000Z'}; return p;
+  }
+  t('ID1 two ORIGINS minting the same packageId are two trades, not one',function(){
+    const r=g.evidenceReconcileByIdentity([
+      pkg({sourceTradeId:'AGT|A',identity:{captureOrigin:'http://localhost:8751'}}),
+      pkg({sourceTradeId:'AGT|B',contentHash:'b'.repeat(64),identity:{captureOrigin:'http://localhost:8744'}})
+    ]);
+    eq(r.uniqueSourceTrades,2,'identity is sourceTradeId -- the shared packageId must not merge them');
+    eq(r.packageIdCollisions.length,1,'and the collision itself is REPORTED, not silently resolved');
+    eq(r.packageIdCollisions[0].sourceTradeIds.length,2);
+    eq(r.distinctOrigins,2,'both origins are recorded (D-12)');
+  });
+  t('ID2 duplicate PHYSICAL copies cannot inflate the unique-trade count',function(){
+    const same=pkg();
+    const r=g.evidenceReconcileByIdentity([same,pkg(),pkg()]);
+    eq(r.physicalPackages,3,'three physical packages');
+    eq(r.uniqueSourceTrades,1,'but ONE source trade');
+    eq(r.duplicatePhysicalCopies,2,'and the duplication is stated explicitly');
+    eq(r.ambiguousIdentity.length,0,'identical copies are an export instance, not a conflict');
+  });
+  t('ID3 one identity with CONFLICTING content is ambiguous and fails closed',function(){
+    const r=g.evidenceReconcileByIdentity([pkg(),pkg({contentHash:'c'.repeat(64)})]);
+    eq(r.ambiguousIdentity.length,1,'two different contents cannot both be this trade');
+    eq(r.ambiguousIdentity[0].sourceTradeId,'AGT|A');
+    eq(r.uniqueSourceTrades,1,'the identity is still one identity -- the conflict is reported, not resolved');
+  });
+  t('ID4 a package with NO identity is reported, never silently counted',function(){
+    const r=g.evidenceReconcileByIdentity([pkg(),pkg({sourceTradeId:null}),pkg({sourceTradeId:''})]);
+    eq(r.missingIdentity.length,2,'both unidentified packages are named');
+    eq(r.uniqueSourceTrades,1,'and neither is counted as a trade');
+  });
+  t('ID5 a source trade is CONFIRMED only when every physical copy agrees',function(){
+    eq(g.evidenceReconcileByIdentity([confirmedPkg()]).confirmed,1,'one confirmed copy, confirmed');
+    const mixed=g.evidenceReconcileByIdentity([confirmedPkg(),pkg()]);
+    eq(mixed.confirmed,0,'a confirmed copy cannot vouch for an unconfirmed sibling');
+    eq(mixed.unconfirmed,1);
+  });
+  t('ID6 captureOrigin is first-class, and its absence is visible',function(){
+    const r=g.evidenceReconcileByIdentity([pkg(),pkg({sourceTradeId:'AGT|B',contentHash:'b'.repeat(64),identity:{}})]);
+    eq(r.missingOrigin.length,1,'a package with no captureOrigin is reported (D-12)');
+    eq(r.missingOrigin[0].sourceTradeId,'AGT|B');
+  });
+  t('ID7 legacy packages without captureOrigin still VALIDATE (compatibility)',function(){
+    // The 220 preserved packages predate the field. Requiring it outright would retroactively
+    // invalidate every one of them, which is exactly what must not happen.
+    const base=builtPackage();
+    delete base.identity.captureOrigin;
+    delete base.identity.captureOriginProvenance;
+    eq(g.evidenceValidatePackage(base).valid,true,'a package with no captureOrigin key must still validate');
+    const withNull=builtPackage();
+    withNull.identity.captureOrigin=null;
+    eq(g.evidenceValidatePackage(withNull).valid,true,'and an explicit null is tolerated');
+    withNull.identity.captureOrigin=42;
+    eq(g.evidenceValidatePackage(withNull).valid,false,'but a non-string is an error');
+    withNull.identity.captureOrigin='';
+    eq(g.evidenceValidatePackage(withNull).valid,false,'and so is an empty string');
+  });
+  t('ID8 reconciliation cannot throw on malformed input',function(){
+    eq(g.evidenceReconcileByIdentity(null).uniqueSourceTrades,0);
+    eq(g.evidenceReconcileByIdentity([null,undefined,'x']).missingIdentity.length,3,
+      'malformed entries are counted as unidentified, never skipped');
+  });
+
+  // ══ GROUP 6I — M-8 (E-4): THE FORWARD-PAPER GATE IS FAIL-CLOSED ══════════════════════════
+  // The gate it replaces was a dismissible confirm() wrapped in try{}catch(e){} that FAILED OPEN.
+  // These fixtures exist to prove the replacement cannot be talked into passing.
+  const CLEAN_RECON={physicalPackages:2,uniqueSourceTrades:2,duplicatePhysicalCopies:0,
+    confirmed:2,unconfirmed:0,missingIdentity:[],ambiguousIdentity:[],packageIdCollisions:[],
+    missingOrigin:[],unverifiable:[],originCounts:{'http://localhost:8751':2},distinctOrigins:1};
+  function facts(o){
+    return Object.assign({reconciliation:JSON.parse(JSON.stringify(CLEAN_RECON)),
+      hashVerification:{verified:2,mismatched:0,physical:2},campaignC1Intact:true,namedExceptions:[]},o||{});
+  }
+  const codes=function(v){ return v.blockers.map(function(b){return b.code;}); };
+
+  t('G1 the fully clean state PASSES -- the gate is not merely always-false',function(){
+    const v=g.evidenceEvaluateForwardPaperGate(facts());
+    eq(v.pass,true,'a gate that can never pass proves nothing: '+JSON.stringify(codes(v)));
+    eq(v.blockers.length,0);
+  });
+  t('G2 EVERY required condition is genuinely required',function(){
+    // Each row removes exactly one condition from an otherwise-clean state.
+    const cases=[
+      ['NO_RECONCILIATION',{reconciliation:null}],
+      ['NO_HASH_VERIFICATION',{hashVerification:null}],
+      ['CAMPAIGN_C1',{campaignC1Intact:false}],
+      ['CAMPAIGN_C1',{campaignC1Intact:'yes'}],
+      ['HASH_MISMATCH',{hashVerification:{verified:2,mismatched:1,physical:2}}],
+      ['INCOMPLETE_VERIFICATION',{hashVerification:{verified:1,mismatched:0,physical:2}}]
+    ];
+    cases.forEach(function(c){
+      const v=g.evidenceEvaluateForwardPaperGate(facts(c[1]));
+      eq(v.pass,false,c[0]+' must block');
+      ok(codes(v).indexOf(c[0])!==-1,'expected blocker '+c[0]+', saw '+JSON.stringify(codes(v)));
+    });
+  });
+  t('G3 every M-5 identity defect BLOCKS the gate',function(){
+    const rows=[
+      ['MISSING_IDENTITY',{missingIdentity:[{index:0,packageId:'PKG|x'}]}],
+      ['AMBIGUOUS_IDENTITY',{ambiguousIdentity:[{sourceTradeId:'AGT|A',hashes:['a','b']}]}],
+      ['PACKAGE_ID_COLLISION',{packageIdCollisions:[{packageId:'PKG|x',sourceTradeIds:['AGT|A','AGT|B']}]}],
+      ['MISSING_ORIGIN',{missingOrigin:[{sourceTradeId:'AGT|A'}]}],
+      ['UNVERIFIABLE',{unverifiable:[{sourceTradeId:'AGT|A'}]}],
+      ['UNCONFIRMED',{unconfirmed:1,confirmed:1}]
+    ];
+    rows.forEach(function(r){
+      const recon=Object.assign(JSON.parse(JSON.stringify(CLEAN_RECON)),r[1]);
+      const v=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon}));
+      eq(v.pass,false,r[0]+' must block the gate');
+      ok(codes(v).indexOf(r[0])!==-1,'expected '+r[0]+', saw '+JSON.stringify(codes(v)));
+    });
+  });
+  t('G4 an EMPTY corpus does not pass -- nothing is not the same as nothing wrong',function(){
+    const recon=Object.assign(JSON.parse(JSON.stringify(CLEAN_RECON)),
+      {physicalPackages:0,uniqueSourceTrades:0,confirmed:0,unconfirmed:0});
+    const v=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,hashVerification:{verified:0,mismatched:0,physical:0}}));
+    eq(v.pass,false,'an empty corpus is not a clean one');
+    ok(codes(v).indexOf('NO_EVIDENCE')!==-1);
+  });
+  t('G5 absent facts BLOCK -- the gate never assumes what it was not told',function(){
+    eq(g.evidenceEvaluateForwardPaperGate({}).pass,false,'no facts at all');
+    eq(g.evidenceEvaluateForwardPaperGate(null).pass,false,'a null fact set');
+    eq(g.evidenceEvaluateForwardPaperGate(undefined).pass,false,'an undefined fact set');
+    const v=g.evidenceEvaluateForwardPaperGate({});
+    ok(codes(v).indexOf('NO_RECONCILIATION')!==-1&&codes(v).indexOf('NO_HASH_VERIFICATION')!==-1
+       &&codes(v).indexOf('CAMPAIGN_C1')!==-1,'and it names every missing fact');
+  });
+  t('G6 a named exception must be SPECIFIC and REASONED, never a blanket bypass',function(){
+    const recon=Object.assign(JSON.parse(JSON.stringify(CLEAN_RECON)),{unverifiable:[{sourceTradeId:'AGT|A'}]});
+    // a properly named exception excuses exactly its own identity
+    const okv=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,
+      namedExceptions:[{sourceTradeId:'AGT|A',reason:'captured on a non-secure origin; can never be hashed (D-14)'}]}));
+    eq(okv.pass,true,'a specific, reasoned exception is honoured: '+JSON.stringify(codes(okv)));
+    eq(okv.namedExceptionCount,1);
+    // the WRONG identity does not excuse it
+    const wrong=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,
+      namedExceptions:[{sourceTradeId:'AGT|SOMETHING_ELSE',reason:'unrelated'}]}));
+    eq(wrong.pass,false,'an exception for a different trade excuses nothing');
+    // malformed exceptions BLOCK rather than being treated as none
+    [[{sourceTradeId:'AGT|A'}],[{reason:'no id'}],['AGT|A'],[{sourceTradeId:'',reason:'x'}],'not-an-array'].forEach(function(bad){
+      const v=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,namedExceptions:bad}));
+      eq(v.pass,false,'a malformed exception list must BLOCK, never silently mean "no exceptions"');
+      ok(codes(v).indexOf('MALFORMED_EXCEPTIONS')!==-1,'saw '+JSON.stringify(codes(v)));
+    });
+  });
+  t('G7 the committed exception list is EMPTY by default',function(){
+    eq(Array.isArray(g.EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS),true);
+    eq(g.EVIDENCE_PREFLIGHT_NAMED_EXCEPTIONS.length,0,
+      'no exception ships pre-approved -- each one must be added deliberately and reviewably');
+  });
+  t('G8 turning ON is gated; turning OFF is NEVER gated',function(){
+    const src=String(g.toggleAlexGLiveTrading);
+    ok(/turningOn/.test(src)&&src.indexOf('evidenceForwardPaperPreflight')!==-1,
+      'the ON path must run the preflight');
+    const gateIdx=src.indexOf('evidenceForwardPaperPreflight');
+    const guard=src.slice(0,gateIdx);
+    ok(/if\s*\(\s*turningOn\s*\)/.test(guard),
+      'the preflight must sit behind an if(turningOn) guard -- a gate that could trap the operator '+
+      'INTO trading would be worse than the one it replaces');
+  });
+  // Extracts the BALANCED brace block that follows an index. An earlier draft of G9 read a fixed
+  // 400-character window instead, which was too wide: it ran past the end of the catch and found
+  // the `return;` belonging to the NEXT guard, so deleting the catch's own return left the fixture
+  // green. The mutation protocol caught that. A window is not a block.
+  function blockAfter(src,from){
+    const open=src.indexOf('{',from);
+    if(open===-1) return '';
+    let d=0;
+    for(let i=open;i<src.length;i++){
+      if(src[i]==='{') d++;
+      else if(src[i]==='}'){ d--; if(d===0) return src.slice(open,i+1); }
+    }
+    return '';
+  }
+  t('G9 a preflight that THROWS blocks -- the old code swallowed exactly this',function(){
+    const src=String(g.toggleAlexGLiveTrading);
+    // The replaced gate was `try{ ...confirm... }catch(e){}` -- an exception meant trading started.
+    const i=src.indexOf('evidenceForwardPaperPreflight');
+    ok(i!==-1,'the preflight must be called');
+    const c=src.indexOf('catch',i);
+    ok(c!==-1,'the preflight call must be wrapped in an explicit catch');
+    const block=blockAfter(src,c);
+    ok(block.length>0,'the catch must have a body');
+    ok(/return\s*;/.test(block),
+      'the catch body ITSELF must RETURN, never fall through into enabling trading -- the replaced '+
+      'gate swallowed its exception and started trading anyway (saw: '+block.slice(0,120)+')');
+  });
+  t('G9b a FAILING verdict blocks -- the refusal is acted on, not merely computed',function(){
+    // Mutation-driven: neutering the verdict guard to if(false) previously survived every fixture,
+    // because nothing asserted that the computed verdict was actually OBEYED.
+    const src=String(g.toggleAlexGLiveTrading);
+    const m=src.match(/if\s*\(\s*!verdict\s*\|\|\s*!verdict\.pass\s*\)/);
+    ok(!!m,'the toggle must test the verdict itself -- both a missing verdict and a failing one');
+    const block=blockAfter(src,src.indexOf(m[0]));
+    ok(/return\s*;/.test(block),'and must RETURN when it does not pass (saw: '+block.slice(0,120)+')');
+    // The enabling assignment must come after the guard, and must not be inside it.
+    const enable=src.indexOf('alexGAutoTrading.enabled=turningOn');
+    ok(enable>src.indexOf(m[0]),'trading is enabled only after the verdict has been obeyed');
+    eq(block.indexOf('alexGAutoTrading.enabled'),-1,'and never from inside the refusal branch');
+  });
+  t('G10 the operator is told exactly why the gate refused',function(){
+    const v=g.evidenceEvaluateForwardPaperGate({});
+    const txt=g.evidenceForwardPaperGateText(v);
+    ok(txt.indexOf('BLOCKED')!==-1||txt.indexOf('blocked')!==-1,'the refusal is explicit');
+    codes(v).forEach(function(c){ ok(txt.indexOf(c)!==-1,'blocker '+c+' must appear in the operator text'); });
+    ok(g.evidenceForwardPaperGateText({pass:true}).indexOf('PASS')!==-1,'and a pass says so');
+  });
+  t('G11 the async gatherer reports Campaign C1 as NOT confirmed from the browser',function(){
+    // The browser holds no copy of C1, so claiming it intact from here would be a fabrication.
+    const src=String(g.evidenceGatherForwardPaperFacts);
+    ok(/campaignC1Intact\s*=\s*false/.test(src),
+      'the gatherer must report what it cannot establish as false, not omit it');
+    ok(src.indexOf('evidenceVerifyPackageHash')!==-1,'and must independently re-verify each hash');
+    ok(src.indexOf('evidenceReconcileByIdentity')!==-1,'and reconcile by identity');
+  });
+  t('G12 the verified count is keyed on sourceTradeId, so duplicates cannot satisfy the gate',function(){
+    // The D-8 failure mode applied to the gate: 2 physical copies of ONE trade must not verify 2.
+    const src=String(g.evidenceGatherForwardPaperFacts);
+    ok(/verifiedIds\[p\.sourceTradeId\]/.test(src),
+      'verification must be keyed on sourceTradeId, never on packageId or a physical count');
+    // and the policy compares against uniqueSourceTrades, not physicalPackages
+    const recon=Object.assign(JSON.parse(JSON.stringify(CLEAN_RECON)),
+      {physicalPackages:4,uniqueSourceTrades:2,duplicatePhysicalCopies:2});
+    const v=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,
+      hashVerification:{verified:2,mismatched:0,physical:4}}));
+    eq(v.pass,true,'two unique trades verified by four physical copies is complete');
+    const short=g.evidenceEvaluateForwardPaperGate(facts({reconciliation:recon,
+      hashVerification:{verified:4,mismatched:0,physical:4}}));
+    eq(short.pass,true,'and an over-count of physical copies cannot create a shortfall');
+  });
+
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){
     const src=String(g.evidenceImportPackageObject);
     ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,'a duplicate must go through the decision');
