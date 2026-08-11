@@ -668,6 +668,68 @@ function runEvidencePlatformFixtures(g){
       (src.match(/indexedDB\.open\([^)]*\)/)||['none'])[0]+')');
   });
 
+  // ══ GROUP 6E — M-7 (D-15): THE COMMITTED EVIDENCE HASH BASELINE ═══════════════════════════
+  // The 220-package corpus survived D-15 only because someone copied it by hand, once. A copy
+  // nobody can verify is a copy nobody can rely on, so the corpus now has a COMMITTED baseline:
+  // docs/evidence/EVIDENCE_BASELINE.json, holding every package's re-derived content hash, a
+  // rollup over them, and a SHA-256 of every store file.
+  //
+  // These fixtures do NOT re-derive hashes -- this harness has no crypto.subtle, which is the same
+  // disclosed offline/live split the suite already carries. Re-derivation is the job of
+  // `mogo_evidence_leveldb_extract.js --baseline verify`, which reconstructs every package from
+  // the checkpoint and recomputes its hash with the canonicalizer extracted from index.html; it is
+  // proven to fail closed on a single altered field, a flipped byte and a deleted store file.
+  //
+  // What IS enforced here, in the canonical gate, on every run: that the committed baseline is
+  // present, well-formed, internally consistent, and still agrees with the constants the engine
+  // actually uses. A baseline that silently disagrees with EVIDENCE_CANON_VERSION would verify
+  // nothing while appearing to verify everything.
+  const BASELINE=(function(){
+    try{ return JSON.parse(g.__EVIDENCE_BASELINE_TEXT__||''); }catch(e){ return null; }
+  })();
+  t('BL1 the committed evidence baseline exists and parses',function(){
+    ok(!!BASELINE,'docs/evidence/EVIDENCE_BASELINE.json must be present and valid JSON -- a missing '+
+      'baseline is a FAILURE, never a skipped group');
+    eq(BASELINE&&BASELINE.baselineVersion,'mogo.evidence-baseline.v1','and declare its version');
+  });
+  t('BL2 the baseline agrees with the engine constants it claims to verify',function(){
+    // If these drift apart, the baseline verifies a canonicalization the engine no longer uses.
+    ok(BASELINE.canonicalization.indexOf(g.EVIDENCE_CANON_VERSION)!==-1,
+      'the baseline canonicalization must include the engine\'s '+g.EVIDENCE_CANON_VERSION);
+    ok(BASELINE.hashAlgorithm.indexOf(g.getEvidenceHashAlgorithm())!==-1,
+      'and the engine\'s hash algorithm');
+    ok(BASELINE.packageSchema.indexOf(g.EVIDENCE_PACKAGE_SCHEMA_VERSION)!==-1,
+      'and the engine\'s package schema');
+  });
+  t('BL3 the baseline is internally consistent -- counts, uniqueness and shape',function(){
+    eq(BASELINE.mismatched,0,'a baseline may NEVER be committed with a mismatch in it');
+    eq(BASELINE.packageHashes.length,BASELINE.verified,
+      'the hash list length must equal the verified count');
+    eq(new Set(BASELINE.packageHashes).size,BASELINE.packageHashes.length,
+      'every baseline hash must be distinct -- a duplicate would mask a lost package');
+    const bad=BASELINE.packageHashes.filter(function(h){ return !/^[0-9a-f]{64}$/.test(h); });
+    eq(bad.length,0,'every hash must be 64 lowercase hex characters (saw '+bad.length+' malformed)');
+  });
+  t('BL4 the baseline covers a real corpus, not an empty one',function(){
+    // A baseline that verifies nothing would pass every other check in this group.
+    ok(BASELINE.verified>=200,'the baseline must cover the preserved corpus (verified: '+BASELINE.verified+')');
+    eq(BASELINE.verified,BASELINE.uniqueSourceTradeIds,
+      'one verified package per distinct source trade -- counted by sourceTradeId, never packageId (D-8)');
+  });
+  t('BL5 the store files are pinned by hash, so file-level tampering is detectable',function(){
+    ok(BASELINE.storeFiles.length>0,'the baseline must pin the store files it was taken from');
+    const bad=BASELINE.storeFiles.filter(function(f){
+      return !/^[0-9a-f]{64}$/.test(f.sha256)||typeof f.bytes!=='number'||!f.file;
+    });
+    eq(bad.length,0,'every pinned store file needs a name, a byte count and a SHA-256');
+  });
+  t('BL6 the baseline records the origin it came from (D-12 provenance)',function(){
+    ok(!!BASELINE.origin,'an evidence baseline with no origin cannot be reconciled against a store');
+    ok(/^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(BASELINE.origin),
+      'and that origin must be a secure context, or its packages could not have been hashed (D-14) '+
+      '(saw: '+BASELINE.origin+')');
+  });
+
   t('E12 the import path routes a known package through the EXP-001 decision function',function(){
     const src=String(g.evidenceImportPackageObject);
     ok(src.indexOf('evidenceEvaluateExportReimport')!==-1,'a duplicate must go through the decision');

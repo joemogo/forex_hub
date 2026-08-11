@@ -23,6 +23,10 @@ function extractScriptBody(html){
 const html=readFile('./index.html');
 const appCode=extractScriptBody(html);
 const testCode=readFile('./tests/v128_evidence_platform_tests.js');
+// M-7: the committed evidence hash baseline. Read as TEXT and handed to the fixtures, which parse
+// it themselves -- a missing or unparseable baseline must be a visible FAILURE, never a silently
+// skipped group. Fail closed.
+const evidenceBaselineText=readFile('./docs/evidence/EVIDENCE_BASELINE.json');
 
 const elMap={};
 function makeClassList(){
@@ -212,7 +216,9 @@ const wrapped = new Function('g',
   'g.EVIDENCE_STORE_PACKAGES=EVIDENCE_STORE_PACKAGES;' +
   'g.EVIDENCE_STORE_META=EVIDENCE_STORE_META;' +
   'g.EVIDENCE_CANON_VERSION=EVIDENCE_CANON_VERSION;' +
-  'g.evidenceOpenDb=evidenceOpenDb;' +
+  // M-7: the committed evidence hash baseline, as text. The fixtures parse it themselves so that a
+  // missing or unparseable baseline FAILS visibly rather than skipping a group.
+  'g.__EVIDENCE_BASELINE_TEXT__=' + JSON.stringify(evidenceBaselineText === null ? '' : evidenceBaselineText) + ';' +
   'g.EVIDENCE_REPLAY_RELEASE_GATES=EVIDENCE_REPLAY_RELEASE_GATES;' +
   'g.runAlexGReplay=runAlexGReplay;' +
   'g.runAlexGReplayUI=runAlexGReplayUI;' +

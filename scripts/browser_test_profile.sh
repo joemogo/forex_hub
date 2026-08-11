@@ -37,6 +37,20 @@
 #
 # The caller is responsible for serving the app. This script only creates and verifies the
 # disposable profile and prints the launch command for review.
+#
+# ── THIS SCRIPT IS FOR TESTING ONLY. IT IS NOT FOR EVIDENCE-BEARING RUNS. (M-7 / D-15) ────────
+#
+# Everything below is deliberately DISPOSABLE: a fresh profile under a temporary directory, thrown
+# away after use. That is correct for testing and catastrophic for evidence. 222 evidence packages
+# accumulated inside one of these profiles and macOS purged the directory; the corpus survived only
+# because it had been hand-copied days earlier. See D-15.
+#
+# For forward paper trading, campaigns, or anything else that CAPTURES EVIDENCE, use:
+#
+#     scripts/mogo_evidence_profile.sh --origin http://localhost:<PORT> --launch
+#
+# which refuses temporary directories, pins one origin, checkpoints before every launch, and keeps
+# its profile under $HOME where it survives reboots and temp purges.
 
 set -euo pipefail
 
@@ -133,6 +147,11 @@ CMD="\"$CHROME\" --user-data-dir=\"$PROFILE_DIR\" --no-first-run --no-default-br
 
 echo "ISOLATION VERIFIED"
 cat "$MANIFEST"
+echo ""
+echo "DISPOSABLE PROFILE — FOR TESTING ONLY."
+echo "  This directory lives under a temporary path and WILL be purged. Do not capture evidence"
+echo "  here (D-15). For forward paper trading or any evidence-bearing run, use:"
+echo "    scripts/mogo_evidence_profile.sh --origin <ORIGIN> --launch"
 echo ""
 echo "launch command:"
 echo "  $CMD"

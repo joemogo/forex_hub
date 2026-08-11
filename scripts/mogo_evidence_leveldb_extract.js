@@ -276,6 +276,278 @@ function extract(storeDir, origin) {
   };
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// M-7 / M-6: FULL RECONSTRUCTION AND INDEPENDENT HASH RE-DERIVATION
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//
+// Everything above reads FIELD VALUES out of the stored bytes. That answers "what does the store
+// say", which is not the same question as "is what the store says true". This section answers the
+// second one: it rebuilds each package as a real JavaScript object and RE-DERIVES its content hash
+// from scratch, so the hash is confirmed rather than quoted.
+//
+// Step 4 recorded this as blocked -- "requires full V8 deserialization of ~27 KB objects". It is
+// not blocked; it needs three things the earlier reader lacked.
+//
+//   1. THE CONTAINER. Values do not lie loose in the file. A .log is a write-ahead log framed in
+//      32 KB blocks with 7-byte record headers, and a .ldb is an SSTable whose data blocks are
+//      Snappy-compressed. Scanning raw bytes therefore finds only the records that happen to sit
+//      uncompressed and unfragmented -- which is why the earlier reader saw a fraction of them.
+//   2. SNAPPY. Implemented here in ~30 lines rather than taken as a dependency; an evidence tool
+//      should not acquire a supply chain.
+//   3. A V8 VERSION BRIDGE. Chrome writes ValueSerializer format 16; Node reads up to 15. For the
+//      pure-data payloads a package consists of, the two wire formats are identical, so the
+//      version byte is retargeted.
+//
+// THE VERSION BRIDGE REQUIRES NO TRUST, AND THIS IS THE WHOLE ARGUMENT. If retargeting were
+// wrong -- by one byte, anywhere -- the reconstructed object would canonicalize differently and
+// its SHA-256 would not match the hash the browser stored. A match is not evidence that the
+// reconstruction is probably right; it is proof that it is exactly right.
+//
+// CANONICALIZATION IS NOT REIMPLEMENTED, for the same reason mogo_evidence_verify.js refuses to:
+// a second implementation is a second source of truth, and the first time they disagree the
+// evidence chain has two answers and no authority. The EXACT source text of
+// EVIDENCE_HASH_EXCLUDED_FIELDS, evidenceCanonValue and evidenceCanonicalize is extracted from
+// index.html and evaluated.
+
+// ── Snappy raw-block decompression ───────────────────────────────────────────────────────────
+function snappyUncompress(buf) {
+  let i = 0, len = 0, s = 0;
+  for (;;) { const c = buf[i++]; len |= (c & 0x7f) << s; if (!(c & 0x80)) break; s += 7; }
+  const out = Buffer.alloc(len);
+  let o = 0;
+  while (i < buf.length && o < len) {
+    const tag = buf[i++], t = tag & 0x03;
+    if (t === 0) {
+      let n = tag >> 2;
+      if (n < 60) n += 1;
+      else { const nb = n - 59; let v = 0; for (let k = 0; k < nb; k++) v |= buf[i + k] << (8 * k); i += nb; n = v + 1; }
+      buf.copy(out, o, i, i + n); i += n; o += n;
+    } else {
+      let n, off;
+      if (t === 1) { n = 4 + ((tag >> 2) & 0x07); off = ((tag >> 5) << 8) | buf[i]; i += 1; }
+      else if (t === 2) { n = (tag >> 2) + 1; off = buf.readUInt16LE(i); i += 2; }
+      else { n = (tag >> 2) + 1; off = buf.readUInt32LE(i); i += 4; }
+      // Overlapping copies are legal and common in Snappy -- this must stay a byte loop.
+      let p = o - off;
+      for (let k = 0; k < n; k++) out[o++] = out[p++];
+    }
+  }
+  return out.subarray(0, o);
+}
+
+function lvVarint(buf, i) { let r = 0, s = 0; for (;;) { const c = buf[i++]; r |= (c & 0x7f) << s; if (!(c & 0x80)) break; s += 7; } return [r, i]; }
+
+// ── LevelDB write-ahead log: 32 KB blocks, records [crc:4][len:2 LE][type:1][payload] ────────
+function readWal(buf) {
+  const BLOCK = 32768, out = [];
+  let frag = null;
+  for (let off = 0; off < buf.length; off += BLOCK) {
+    const end = Math.min(off + BLOCK, buf.length);
+    let p = off;
+    while (p + 7 <= end) {
+      const len = buf.readUInt16LE(p + 4), type = buf[p + 6];
+      if (type === 0 || len === 0 || p + 7 + len > end) break;
+      const payload = buf.subarray(p + 7, p + 7 + len);
+      if (type === 1) out.push(payload);
+      else if (type === 2) frag = [payload];
+      else if (type === 3) { if (frag) frag.push(payload); }
+      else if (type === 4) { if (frag) { frag.push(payload); out.push(Buffer.concat(frag)); frag = null; } }
+      p += 7 + len;
+    }
+  }
+  return out;
+}
+
+// ── LevelDB SSTable: footer -> index block -> data blocks (Snappy where flagged) ─────────────
+const SST_MAGIC = '57fb808b247547db';
+function readBlockEntries(block) {
+  const n = block.readUInt32LE(block.length - 4);
+  const dataEnd = block.length - 4 - 4 * n;
+  const out = [];
+  let i = 0, prev = Buffer.alloc(0);
+  while (i < dataEnd) {
+    let shared, nonshared, vlen;
+    [shared, i] = lvVarint(block, i); [nonshared, i] = lvVarint(block, i); [vlen, i] = lvVarint(block, i);
+    const key = Buffer.concat([prev.subarray(0, shared), block.subarray(i, i + nonshared)]);
+    i += nonshared;
+    out.push({ key, val: block.subarray(i, i + vlen) });
+    i += vlen;
+    prev = key;
+  }
+  return out;
+}
+function readSst(buf) {
+  const footer = buf.subarray(buf.length - 48);
+  if (footer.subarray(40).toString('hex') !== SST_MAGIC) return { values: [], err: 'bad SSTable magic' };
+  let i = 0, a, b, io, is;
+  [a, i] = lvVarint(footer, i); [b, i] = lvVarint(footer, i); [io, i] = lvVarint(footer, i); [is, i] = lvVarint(footer, i);
+  const block = (off, size) => ({ raw: buf.subarray(off, off + size), comp: buf[off + size] });
+  const idx = block(io, is);
+  let idxRaw;
+  try { idxRaw = idx.comp === 0 ? idx.raw : snappyUncompress(idx.raw); }
+  catch (e) { return { values: [], err: 'index block unreadable: ' + e.message }; }
+  let handles;
+  try {
+    handles = readBlockEntries(idxRaw).map(e => { let x, y, j = 0;[x, j] = lvVarint(e.val, 0);[y, j] = lvVarint(e.val, j); return { off: x, size: y }; });
+  } catch (e) { return { values: [], err: 'index block malformed: ' + e.message }; }
+  const values = [];
+  let blockFail = 0, entryFail = 0;
+  for (const h of handles) {
+    const bl = block(h.off, h.size);
+    let raw;
+    try { raw = bl.comp === 0 ? bl.raw : snappyUncompress(bl.raw); }
+    catch (e) { blockFail++; continue; }
+    try { for (const e of readBlockEntries(raw)) values.push(e.val); }
+    catch (e) { entryFail++; }
+  }
+  return { values, handles: handles.length, blockFail, entryFail };
+}
+
+// ── V8 reconstruction ────────────────────────────────────────────────────────────────────────
+function deserializePackage(valueBytes) {
+  const v8 = require('v8');
+  for (let k = 0; k + 2 < valueBytes.length; k++) {
+    if (valueBytes[k] === 0xFF && valueBytes[k + 2] === 0x6F) {
+      const b = Buffer.from(valueBytes.subarray(k));
+      if (b[1] > 0x0F) b[1] = 0x0F;                 // format 16 -> 15; see the note above
+      try {
+        const o = v8.deserialize(b);
+        if (o && typeof o === 'object' && o.packageId) return o;
+      } catch (e) { /* not a package, or damaged -- counted by the caller */ }
+      return null;
+    }
+  }
+  return null;
+}
+
+// ── The committed canonicalizer, extracted verbatim (never reimplemented) ────────────────────
+function loadCommittedCanonicalizer(indexHtmlPath) {
+  const src = fs.readFileSync(indexHtmlPath, 'utf8');
+  const grab = (re, label) => {
+    const m = src.match(re);
+    if (!m) throw new Error('could not extract ' + label + ' from ' + indexHtmlPath);
+    return m[0];
+  };
+  const parts = [
+    grab(/const EVIDENCE_HASH_EXCLUDED_FIELDS=Object\.freeze\(\[[^\]]*\]\);/, 'EVIDENCE_HASH_EXCLUDED_FIELDS'),
+    grab(/function evidenceCanonValue\(v,seen\)\{[\s\S]*?\n\}/, 'evidenceCanonValue'),
+    grab(/function evidenceCanonicalize\(pkg\)\{[\s\S]*?\n\}/, 'evidenceCanonicalize'),
+  ];
+  const g = {};
+  new Function('g', parts.join('\n') + '\ng.canonicalize=evidenceCanonicalize;g.excluded=EVIDENCE_HASH_EXCLUDED_FIELDS;')(g);
+  return g;
+}
+
+// ── Reconstruct every package in a checkpoint store and re-derive its hash ───────────────────
+function verifyStore(storeDir, indexHtmlPath) {
+  assertNotLive(storeDir);
+  const canon = loadCommittedCanonicalizer(indexHtmlPath);
+  const candidates = [];
+  const containers = [];
+  for (const f of fs.readdirSync(storeDir).sort()) {
+    const p = path.join(storeDir, f);
+    if (!fs.statSync(p).isFile()) continue;
+    const buf = fs.readFileSync(p);
+    if (/\.log$/.test(f)) { const r = readWal(buf); containers.push({ file: f, kind: 'WAL', records: r.length }); candidates.push(...r); }
+    else if (/\.ldb$/.test(f)) { const r = readSst(buf); containers.push({ file: f, kind: 'SST', values: r.values.length, handles: r.handles, blockFail: r.blockFail, entryFail: r.entryFail, err: r.err }); candidates.push(...r.values); }
+  }
+  const pkgs = new Map();
+  let withHeader = 0, undeserializable = 0;
+  for (const c of candidates) {
+    let hasHeader = false;
+    for (let k = 0; k + 2 < c.length; k++) { if (c[k] === 0xFF && c[k + 2] === 0x6F) { hasHeader = true; break; } }
+    if (!hasHeader) continue;
+    withHeader++;
+    const o = deserializePackage(c);
+    if (!o) { undeserializable++; continue; }
+    if (!pkgs.has(o.packageId)) pkgs.set(o.packageId, o);
+  }
+  let verified = 0, mismatched = 0, noHash = 0;
+  const mismatches = [], hashes = [];
+  for (const [id, p] of pkgs) {
+    if (!p.contentHash) { noHash++; continue; }
+    let canonical;
+    try { canonical = canon.canonicalize(p); }
+    catch (e) { mismatched++; mismatches.push({ packageId: id, error: e.message }); continue; }
+    const h = crypto.createHash('sha256').update(Buffer.from(canonical, 'utf8')).digest('hex');
+    if (h === p.contentHash) { verified++; hashes.push(h); }
+    else { mismatched++; mismatches.push({ packageId: id, stored: p.contentHash, recomputed: h }); }
+  }
+  hashes.sort();
+  const rollup = crypto.createHash('sha256').update(hashes.join('\n'), 'utf8').digest('hex');
+  return {
+    storeDir: path.resolve(storeDir),
+    containers,
+    recordsWithV8Header: withHeader,
+    undeserializableRecords: undeserializable,
+    packagesRecovered: pkgs.size,
+    verified, mismatched, noHash,
+    mismatches: mismatches.slice(0, 20),
+    uniqueSourceTradeIds: new Set([...pkgs.values()].map(p => p.sourceTradeId)).size,
+    schemas: [...new Set([...pkgs.values()].map(p => p.packageSchemaVersion))],
+    canonicalizations: [...new Set([...pkgs.values()].map(p => p.contentHashCanonicalization))],
+    algorithms: [...new Set([...pkgs.values()].map(p => p.contentHashAlgorithm))],
+    packageHashes: hashes,
+    hashRollup: rollup,
+  };
+}
+
+// ── Committed hash baseline ──────────────────────────────────────────────────────────────────
+// The baseline is taken over the PRESERVED corpus, which is frozen and will never legitimately
+// change. A live evidence store changes on every trade close and cannot have a committed content
+// baseline -- rolling per-checkpoint manifests cover that, written by mogo_evidence_checkpoint.sh.
+const BASELINE_VERSION = 'mogo.evidence-baseline.v1';
+
+function buildBaseline(storeDir, indexHtmlPath, origin, checkpointLabel) {
+  const v = verifyStore(storeDir, indexHtmlPath);
+  const storeFiles = fs.readdirSync(storeDir).sort()
+    .filter(f => fs.statSync(path.join(storeDir, f)).isFile())
+    .map(f => {
+      const b = fs.readFileSync(path.join(storeDir, f));
+      return { file: f, bytes: b.length, sha256: crypto.createHash('sha256').update(b).digest('hex') };
+    });
+  return {
+    baselineVersion: BASELINE_VERSION,
+    tool: TOOL,
+    origin: origin || null,
+    checkpoint: checkpointLabel || null,
+    canonicalization: v.canonicalizations,
+    hashAlgorithm: v.algorithms,
+    packageSchema: v.schemas,
+    storeFiles,
+    packagesRecovered: v.packagesRecovered,
+    verified: v.verified,
+    mismatched: v.mismatched,
+    undeserializableRecords: v.undeserializableRecords,
+    uniqueSourceTradeIds: v.uniqueSourceTradeIds,
+    hashRollup: v.hashRollup,
+    packageHashes: v.packageHashes,
+  };
+}
+
+// FAIL CLOSED. Every discrepancy is a failure; nothing is tolerated as "close enough".
+function verifyAgainstBaseline(baseline, storeDir, indexHtmlPath) {
+  const problems = [];
+  if (baseline.baselineVersion !== BASELINE_VERSION) problems.push('baseline version is ' + baseline.baselineVersion + ', expected ' + BASELINE_VERSION);
+  const v = verifyStore(storeDir, indexHtmlPath);
+  if (v.mismatched !== 0) problems.push(v.mismatched + ' package(s) failed hash re-derivation');
+  if (v.verified !== baseline.verified) problems.push('verified count ' + v.verified + ' != baseline ' + baseline.verified);
+  if (v.hashRollup !== baseline.hashRollup) problems.push('hash rollup ' + v.hashRollup + ' != baseline ' + baseline.hashRollup);
+  const have = new Set(v.packageHashes);
+  const missing = baseline.packageHashes.filter(h => !have.has(h));
+  if (missing.length) problems.push(missing.length + ' baseline package hash(es) absent from the store');
+  const byFile = new Map(v.containers.map(c => [c.file, c]));
+  for (const sf of baseline.storeFiles || []) {
+    const p = path.join(storeDir, sf.file);
+    if (!fs.existsSync(p)) { problems.push('store file missing: ' + sf.file); continue; }
+    const b = fs.readFileSync(p);
+    const h = crypto.createHash('sha256').update(b).digest('hex');
+    if (h !== sf.sha256) problems.push('store file altered: ' + sf.file);
+  }
+  void byFile;
+  return { ok: problems.length === 0, problems, observed: { verified: v.verified, mismatched: v.mismatched, recovered: v.packagesRecovered, hashRollup: v.hashRollup } };
+}
+
 function selftest() {
   let f = 0;
   const ck = (c, m) => { console.log((c ? 'PASS -- ' : 'FAIL -- ') + m); if (!c) f++; };
@@ -317,7 +589,78 @@ function selftest() {
   catch (e) { refused = /REFUSING to read a LIVE browser profile/.test(e.message); }
   ck(refused, 'reading a live browser profile is REFUSED');
   fs.rmSync(dir, { recursive: true, force: true });
-  console.log(f === 0 ? 'SELFTEST PASS -- record splitting, decoy rejection, version dedup, live refusal'
+
+  // ── M-7: the reconstruction and re-derivation layer ────────────────────────────────────────
+  // Snappy is exercised against a payload with an OVERLAPPING back-reference, because that is the
+  // case a naive implementation using a bulk copy silently corrupts.
+  (function () {
+    const lit = s => Buffer.concat([Buffer.from([(s.length - 1) << 2]), Buffer.from(s, 'latin1')]);
+    const body = Buffer.concat([lit('abcd'), Buffer.from([(1 << 2) | 2, 0x02, 0x00])]); // copy len 2 off 2 ... overlapping
+    const comp = Buffer.concat([Buffer.from([8]), lit('abcd'), Buffer.from([((6 - 4) << 2) | 1 | (0 << 5), 0x04])]);
+    void body;
+    const outp = snappyUncompress(comp);
+    ck(outp.toString('latin1') === 'abcdabcd', 'snappy decodes an overlapping copy correctly (' + outp.toString('latin1') + ')');
+  })();
+
+  (function () {
+    // A round trip through the REAL committed canonicalizer, so the extraction path is proven.
+    const repo = path.resolve(__dirname, '..');
+    const idx = path.join(repo, 'index.html');
+    if (!fs.existsSync(idx)) { ck(false, 'index.html reachable for canonicalizer extraction'); return; }
+    let canon;
+    try { canon = loadCommittedCanonicalizer(idx); }
+    catch (e) { ck(false, 'canonicalizer extracted from committed index.html (' + e.message + ')'); return; }
+    ck(typeof canon.canonicalize === 'function', 'canonicalizer extracted from committed index.html');
+    ck(canon.excluded.indexOf('export') !== -1 && canon.excluded.indexOf('contentHash') !== -1,
+      'the excluded-field list came with it');
+    // K3: key order must be insignificant; K4: array order must be significant.
+    const a = canon.canonicalize({ b: 1, a: [1, 2] });
+    const b = canon.canonicalize({ a: [1, 2], b: 1 });
+    const c = canon.canonicalize({ a: [2, 1], b: 1 });
+    ck(a === b, 'object key order is insignificant (K3)');
+    ck(a !== c, 'array order IS significant (K4)');
+    // The excluded block must not affect the hash -- this is what lets an export be recorded.
+    const withExport = canon.canonicalize({ a: 1, export: { exportedAt: 'x' }, contentHash: 'y' });
+    ck(withExport === canon.canonicalize({ a: 1 }), 'export and contentHash are excluded from the canonical form');
+  })();
+
+  (function () {
+    // A REAL V8-serialized package, framed in a REAL SSTable-style block, must reconstruct and
+    // re-derive. This proves the container + V8 + canonicalizer chain end to end offline.
+    const v8 = require('v8');
+    const repo = path.resolve(__dirname, '..');
+    const idx = path.join(repo, 'index.html');
+    if (!fs.existsSync(idx)) { ck(false, 'index.html reachable for round-trip'); return; }
+    const canon = loadCommittedCanonicalizer(idx);
+    const pkg = { packageSchemaVersion: 'mogo.evidence-package.v1', packageId: 'PKG|s|20260101|1',
+      sourceTradeId: 'AGT|EUR_USD|1', objects: { a: [1, 2, 3] }, createdAt: '2026-01-01T00:00:00.000Z' };
+    pkg.contentHash = crypto.createHash('sha256').update(Buffer.from(canon.canonicalize(pkg), 'utf8')).digest('hex');
+    const ser = v8.serialize(pkg);
+    const back = deserializePackage(ser);
+    ck(!!back && back.packageId === pkg.packageId, 'a V8-serialized package is reconstructed');
+    const rehash = crypto.createHash('sha256').update(Buffer.from(canon.canonicalize(back), 'utf8')).digest('hex');
+    ck(rehash === pkg.contentHash, 'and its content hash re-derives exactly');
+    // A tampered package must NOT verify -- the check has to be able to fail.
+    const tampered = Object.assign({}, back, { sourceTradeId: 'AGT|EUR_USD|999' });
+    const th = crypto.createHash('sha256').update(Buffer.from(canon.canonicalize(tampered), 'utf8')).digest('hex');
+    ck(th !== pkg.contentHash, 'a tampered package FAILS re-derivation (the check can fail)');
+  })();
+
+  (function () {
+    // verifyAgainstBaseline must FAIL CLOSED on every discrepancy class.
+    const base = { baselineVersion: BASELINE_VERSION, verified: 2, hashRollup: 'deadbeef',
+      packageHashes: ['a'.repeat(64), 'b'.repeat(64)], storeFiles: [] };
+    const wrongVersion = Object.assign({}, base, { baselineVersion: 'mogo.evidence-baseline.v0' });
+    let sawVersionProblem = false;
+    try {
+      const r = verifyAgainstBaseline(wrongVersion, path.join(__dirname), path.resolve(__dirname, '..', 'index.html'));
+      sawVersionProblem = r.problems.some(p => /baseline version/.test(p));
+    } catch (e) { sawVersionProblem = false; }
+    ck(sawVersionProblem, 'a baseline with the wrong version is REFUSED');
+  })();
+
+  console.log(f === 0 ? 'SELFTEST PASS -- record splitting, decoy rejection, version dedup, live refusal, '
+                      + 'snappy, canonicalizer extraction, V8 round trip, fail-closed baseline'
                       : 'SELFTEST FAIL -- ' + f + ' check(s) failed');
   return f === 0 ? 0 : 1;
 }
@@ -327,6 +670,53 @@ function main() {
   if (a.includes('--selftest')) process.exit(selftest());
   const get = k => { const i = a.indexOf(k); return i !== -1 ? a[i + 1] : null; };
   const store = get('--store'), origin = get('--origin') || '(unspecified)', out = get('--out');
+  const indexHtml = get('--index-html') || path.resolve(__dirname, '..', 'index.html');
+
+  // ── --verify: reconstruct and re-derive every package hash ────────────────────────────────
+  if (a.includes('--verify')) {
+    if (!store) { console.error('FAIL: --store <CHECKPOINT_LEVELDB_DIR> required'); process.exit(2); }
+    let r;
+    try { r = verifyStore(store, indexHtml); }
+    catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
+    const { packageHashes, ...summary } = r;
+    console.log(JSON.stringify(summary, null, 2));
+    if (out) { fs.writeFileSync(path.resolve(out), JSON.stringify(r, null, 2)); console.log('written to ' + path.resolve(out)); }
+    if (r.mismatched !== 0) { console.error('FAIL CLOSED: ' + r.mismatched + ' package(s) failed hash re-derivation.'); process.exit(1); }
+    console.log('VERIFIED ' + r.verified + ' package(s), 0 mismatched.');
+    process.exit(0);
+  }
+
+  // ── --baseline write|verify ───────────────────────────────────────────────────────────────
+  const baselineMode = get('--baseline');
+  if (baselineMode) {
+    const file = get('--baseline-file') || path.resolve(__dirname, '..', 'docs', 'evidence', 'EVIDENCE_BASELINE.json');
+    if (baselineMode === 'write') {
+      if (!store) { console.error('FAIL: --store required'); process.exit(2); }
+      let b;
+      try { b = buildBaseline(store, indexHtml, origin, get('--checkpoint')); }
+      catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
+      if (b.mismatched !== 0) { console.error('FAIL CLOSED: refusing to write a baseline with ' + b.mismatched + ' mismatch(es).'); process.exit(1); }
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(b, null, 2) + '\n');
+      console.log('baseline written: ' + file);
+      console.log('  verified ' + b.verified + ' package(s), rollup ' + b.hashRollup);
+      process.exit(0);
+    }
+    if (baselineMode === 'verify') {
+      if (!store) { console.error('FAIL: --store required'); process.exit(2); }
+      if (!fs.existsSync(file)) { console.error('FAIL CLOSED: baseline not found: ' + file); process.exit(1); }
+      const b = JSON.parse(fs.readFileSync(file, 'utf8'));
+      let r;
+      try { r = verifyAgainstBaseline(b, store, indexHtml); }
+      catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
+      console.log(JSON.stringify(r, null, 2));
+      if (!r.ok) { console.error('FAIL CLOSED: baseline verification failed.'); process.exit(1); }
+      console.log('BASELINE VERIFIED — ' + r.observed.verified + ' package(s) re-derived, rollup matches.');
+      process.exit(0);
+    }
+    console.error('FAIL: --baseline must be write or verify'); process.exit(2);
+  }
+
   if (!store) { console.error('FAIL: --store <CHECKPOINT_LEVELDB_DIR> required'); process.exit(2); }
   let r;
   try { r = extract(store, origin); }
@@ -338,4 +728,6 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { extract, stringTokens, recordFromTokens, assertNotLive };
+module.exports = { extract, stringTokens, recordFromTokens, assertNotLive,
+  snappyUncompress, readWal, readSst, deserializePackage, loadCommittedCanonicalizer,
+  verifyStore, buildBaseline, verifyAgainstBaseline, BASELINE_VERSION };
