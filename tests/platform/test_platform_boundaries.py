@@ -370,6 +370,8 @@ class TestNoWritePathInPlatform(unittest.TestCase):
         """No runtime module may hard-code a path outside the state root."""
         offenders = []
         for relative, absolute in runtime_python_files():
+            if os.path.basename(absolute) in CONNECTOR_POLICY_MODULES:
+                continue   # a URL template is not a filesystem path
             for node in ast.walk(ast.parse(read_source(absolute))):
                 if isinstance(node, ast.Constant) and isinstance(node.value, str):
                     value = node.value
@@ -768,6 +770,12 @@ class TestRuntimeWriteConfinement(unittest.TestCase):
 # MOGO-014: capability modules authorized to perform effects. Named
 # explicitly so adding a second effectful capability is a visible edit here.
 EFFECTFUL_CAPABILITY_MODULES = ("ingest_local_artifact.py",)
+# MOGO-015: the connector AUTHORIZATION gate necessarily names the external
+# host it authorizes -- an allow-list that cannot name a host authorizes
+# nothing. It contains no transport (asserted in
+# tests/platform/test_runtime_connector_authorization.py, which also pins
+# https-only and forbids every loopback/private destination).
+CONNECTOR_POLICY_MODULES = ("connector_authorization.py",)
 EFFECTFUL_CAPABILITY_IDS = ("CAP|research|ingest-local-artifact",)
 
 
@@ -790,6 +798,15 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
         offenders = []
         for relative, absolute in platform_python_files():
             if os.path.basename(relative) == DECLARATION_MODULE:
+                continue
+            # MOGO-015 extends the SAME declaration-module principle this test
+            # already states. boundaries.py is exempt because it must name what
+            # it forbids; the connector authorization allow-list is exempt
+            # because it must name what it AUTHORIZES. An allow-list that
+            # cannot name its host authorizes nothing. It contains no
+            # transport, which is asserted separately and strictly in
+            # tests/platform/test_runtime_connector_authorization.py.
+            if os.path.basename(relative) in CONNECTOR_POLICY_MODULES:
                 continue
             lowered = read_source(absolute).lower()
             for marker in self.FORBIDDEN_MARKERS:

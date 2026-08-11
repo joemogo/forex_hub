@@ -36,6 +36,7 @@ SUITES=(
   tests.platform.test_runtime_dead_letter
   tests.platform.test_runtime_policy_gate
   tests.platform.test_runtime_authorization
+  tests.platform.test_runtime_connector_authorization
   tests.platform.test_runtime_review_disposition
   tests.platform.test_runtime_recovery
   tests.platform.test_runtime_end_to_end
