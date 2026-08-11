@@ -477,7 +477,12 @@ class TestStep2PrimaryOutcomes(Step2EndToEndCase):
             self.assertIn(heading, failures.stdout)
         self.assertIn("transient", failures.stdout)
         self.assertIn("attempts_exhausted", failures.stdout)
-        self.assertIn("CLOSED", failures.stdout)
+        # MOGO-014 Step 2 opened the A-5 gate under explicit authorization, so
+        # the failures view now reports OPEN. The connector gates remain unmet
+        # and are still named, which is the property this assertion protects:
+        # the operator can see what MOGO is still not allowed to do.
+        self.assertIn("OPEN", failures.stdout)
+        self.assertIn("first_connector_authorization", failures.stdout)
 
     def test_the_status_view_reports_the_step_2_signals(self):
         self.full_step_2_run()

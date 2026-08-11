@@ -1,0 +1,24 @@
+{
+  "artifactId": "RART|193966d9f5d3e19bee2bcd81ada1454a",
+  "byteLength": 16073,
+  "characterLength": 16071,
+  "contentHash": "193966d9f5d3e19bee2bcd81ada1454ab25d649e92e1d7117cba22b5cc4618b1",
+  "contentHashAlgorithm": "SHA-256",
+  "lane": "RESEARCH",
+  "promotionPath": "RESEARCH ARTIFACT -> STRUCTURED CLAIM -> HYPOTHESIS -> PREREGISTRATION -> TEST -> VERIFICATION -> ADJUDICATION -> CANDIDATE -> separately governed forward authorization",
+  "promotionStatus": "NOT_A_TRADING_RULE",
+  "provenance": {
+    "acquisitionPerformed": false,
+    "authorizationId": "9e24aa04-c7b5-4438-acaf-c709cd8796b5",
+    "capabilityVersion": "1.0.0",
+    "claimedSourceId": "SRC|local-intake|e6f30303d8a9",
+    "claimedSourceTitle": "ALEX G \u2014 Risk Management",
+    "claimedSourceUrl": "local://intake/completed/alexg-risk-management.txt",
+    "intakeRef": "completed/alexg-risk-management.txt",
+    "networkAccessPerformed": false,
+    "note": "Ingested from the governed local intake area. MOGO did not fetch this artifact; an operator supplied it. The source attribution is the operator's CLAIM and has not been independently verified by this capability.",
+    "originClass": "OPERATOR_SUPPLIED_LOCAL_INTAKE",
+    "processedByCapability": "CAP|research|ingest-local-artifact"
+  },
+  "schemaVersion": "mogo.research-artifact.v1"
+}

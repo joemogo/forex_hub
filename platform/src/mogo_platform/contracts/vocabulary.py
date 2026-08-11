@@ -58,6 +58,10 @@ COMMAND_TYPES = (
     "AcquireArtifact",
     "AcquireTranscript",
     "NormalizeArtifact",
+    # MOGO-014: the first EFFECTFUL command. Added to the closed vocabulary
+    # deliberately -- a command type MOGO can accept is a governance statement,
+    # so it is an explicit reviewed edit rather than a runtime registration.
+    "IngestLocalArtifact",
     "SegmentArtifact",
     "ExtractMetadata",
     "AnalyzeDuplicates",

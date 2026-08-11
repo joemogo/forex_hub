@@ -89,6 +89,16 @@ _CREATE_V1_STATEMENTS = (
         task_id               TEXT
     )""",
     """CREATE INDEX idx_commands_idem ON commands (idempotency_key)""",
+    # MOGO-014: idempotency-keyed capability result store (risk A-5). UNIQUE key
+    # so a duplicate insert is refused by the database, not by remembering to check.
+    """CREATE TABLE capability_results (
+        idempotency_key TEXT    NOT NULL UNIQUE,
+        capability_id   TEXT    NOT NULL,
+        result_json     TEXT    NOT NULL,
+        result_hash     TEXT    NOT NULL,
+        recorded_at     TEXT    NOT NULL
+    )""",
+    """CREATE INDEX idx_results_capability ON capability_results (capability_id)""",
 
     # APPEND-ONLY local observation: every submission attempt, including those
     # suppressed as duplicates or rejected outright. Constitution section 4.18 --

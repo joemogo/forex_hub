@@ -28,7 +28,7 @@ from mogo_platform.runtime import store  # noqa: E402
 # Transcribed independently of schema.py, as the Step 1 lists were. Schema v2
 # (MOGO-011 Step 2) adds task_attempts, runs and capability_violations.
 EXPECTED_TABLES = (
-    "acquisition_authorizations", "capabilities", "capability_violations",
+    "acquisition_authorizations", "capabilities", "capability_results", "capability_violations",
     "command_submissions", "commands", "event_index", "log_cursor",
     "policy_decisions", "recovery_actions", "runs", "schema_meta",
     "task_attempts", "tasks", "transition_anomalies",
@@ -40,7 +40,7 @@ EXPECTED_INDEXES = (
     "idx_attempts_error", "idx_attempts_task", "idx_authorizations_source",
     "idx_authorizations_super", "idx_commands_idem", "idx_event_task",
     "idx_event_type", "idx_event_workflow", "idx_policy_decisions_kind",
-    "idx_policy_decisions_task", "idx_submissions_idem", "idx_tasks_lease",
+    "idx_policy_decisions_task", "idx_results_capability", "idx_submissions_idem", "idx_tasks_lease",
     "idx_tasks_policy", "idx_tasks_retry", "idx_tasks_state",
 )
 EXPECTED_SCHEMA_VERSION = 3

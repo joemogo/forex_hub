@@ -1,0 +1,18 @@
+{
+  "auditHistory": [
+    "2026-08-11 operator:joemogollon created the first MOGO-014 authorization record. Operator-supplied transcript already present in the governed local intake area; MOGO performed no acquisition. Authorizes ingestion of the named local artifact only."
+  ],
+  "authorizationId": "9e24aa04-c7b5-4438-acaf-c709cd8796b5",
+  "decidedAt": "2026-08-11T00:00:00.000Z",
+  "decisionAuthority": "operator:joemogollon",
+  "modelTrainingRestrictions": "Not for external model training.",
+  "permittedOperations": [
+    "artifact"
+  ],
+  "policyStatus": "PERMITTED_EXPLICIT_LICENSE",
+  "policyVersion": "1.0",
+  "redistributionRestrictions": "No redistribution outside this repository.",
+  "retentionRestrictions": "Research corpus only; no redistribution.",
+  "sourceId": "SRC|local-intake|e6f30303d8a9",
+  "sourceTermsSnapshotRef": "docs/trader-intelligence/intake/completed/alexg-risk-management.txt"
+}

@@ -40,7 +40,10 @@ from mogo_platform.contracts import vocabulary  # noqa: E402
 EXPECTED_COMMAND_TYPES = (
     "RequestSourceDiscovery", "RegisterSource", "EvaluateSourcePolicy",
     "AcquireSourceMetadata", "AcquireArtifact", "AcquireTranscript",
-    "NormalizeArtifact", "SegmentArtifact", "ExtractMetadata",
+    "NormalizeArtifact",
+    # MOGO-014: the first EFFECTFUL command type, added to the closed
+    # vocabulary as a deliberate reviewed edit.
+    "IngestLocalArtifact", "SegmentArtifact", "ExtractMetadata",
     "AnalyzeDuplicates", "CreateEvidenceCandidate", "RequestHumanReview",
     "RecordReviewDecision", "RetryTask", "CancelTask", "SuppressWorkflow",
     "ReclaimTask",
@@ -206,7 +209,7 @@ def valid_event(payload=None, **overrides):
 class TestVocabularyMatchesTheCatalog(unittest.TestCase):
     def test_command_types_exactly(self):
         self.assertEqual(tuple(vocabulary.COMMAND_TYPES), EXPECTED_COMMAND_TYPES)
-        self.assertEqual(len(vocabulary.COMMAND_TYPES), 17)
+        self.assertEqual(len(vocabulary.COMMAND_TYPES), 18)  # +IngestLocalArtifact (MOGO-014)
 
     def test_event_types_exactly(self):
         self.assertEqual(tuple(vocabulary.EVENT_TYPES), EXPECTED_EVENT_TYPES)

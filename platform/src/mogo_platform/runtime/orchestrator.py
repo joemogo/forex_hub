@@ -75,7 +75,9 @@ from . import store  # noqa: E402
 from . import worker as worker_module  # noqa: E402
 from .capabilities import echo as echo_capability  # noqa: E402
 from .capabilities import fail_then_succeed as fail_then_succeed_capability  # noqa: E402
-from .capabilities import policy_probe as policy_probe_capability  # noqa: E402
+from .capabilities import policy_probe as policy_probe_capability
+from .capabilities import ingest_local_artifact as ingest_local_artifact_capability
+from . import result_store as result_store_module  # noqa: E402
 
 PRODUCER_ORCHESTRATOR = "orchestrator"
 PRODUCER_POLICY_GATE = "policyGate"
@@ -96,11 +98,17 @@ CLOCK_OVERRIDE_ENV = "MOGO_RUNTIME_ALLOW_CLOCK_OVERRIDE"
 # of an effectful capability is mechanically refused (risk A-5, decision B-4).
 BUILTIN_CAPABILITIES = (echo_capability.MANIFEST,
                         fail_then_succeed_capability.MANIFEST,
-                        policy_probe_capability.MANIFEST)
+                        policy_probe_capability.MANIFEST,
+                        # MOGO-014: the first EFFECTFUL capability. Registration
+                        # is permitted because runtime/result_store.py satisfies
+                        # every A-5 condition; it is still gated by the policy
+                        # gate, which demands a real authorization record.
+                        ingest_local_artifact_capability.MANIFEST)
 CAPABILITY_CALLABLES = {
     echo_capability.CAPABILITY_ID: echo_capability.execute,
     fail_then_succeed_capability.CAPABILITY_ID: fail_then_succeed_capability.execute,
     policy_probe_capability.CAPABILITY_ID: policy_probe_capability.execute,
+    ingest_local_artifact_capability.CAPABILITY_ID: ingest_local_artifact_capability.execute,
 }
 
 # `blocked` is drivable, and that is a crash-recovery requirement rather than a
@@ -1459,6 +1467,39 @@ class Orchestrator(object):
         self._crash_point("mid_execution")
         self._crash_point("during_retry_execution")
         payload = json.loads(command_row["payload_json"])
+
+        # ── MOGO-014 risk A-5: replay, do not repeat. ──
+        # Crash boundary 8 is the interruption between performing an effect and
+        # recording success. Looking the idempotency key up here is what makes
+        # an EFFECTFUL capability safe to resume: a result already recorded is
+        # returned rather than produced again. lookup() re-derives the hash of
+        # the stored result, so a corrupted row is refused rather than replayed.
+        idem_key = command_row["idempotency_key"]
+        replayed, verification = result_store_module.lookup(
+            self.connection, idem_key)
+        if verification == "corrupt":
+            return self._fail_task(
+                task_row, "validation",
+                "a recorded result for idempotency key %s failed re-hash "
+                "verification; refusing to replay a corrupted result"
+                % (idem_key,), state="running", execution=execution)
+        if replayed is not None:
+            self._emit(
+                "TaskSucceeded", workflow_id, correlation_id, task_id,
+                {"resultHash": replayed["contentHash"],
+                 "byteLength": replayed["byteLength"],
+                 "capabilityId": replayed["capabilityId"],
+                 "capabilityVersion": replayed["capabilityVersion"],
+                 "attempt": attempt,
+                 "leaseGeneration": generation,
+                 "idempotentReplay": True,
+                 "startedAtUtc": execution["startedAtUtc"],
+                 "startedLogSequence": execution["startedLogSequence"]},
+                task_id=task_id, execution_result="success",
+                crash_after_append="after_success_append")
+            self._emit("WorkflowCompleted", workflow_id, correlation_id,
+                       task_id, {"taskId": task_id, "outcome": "succeeded"})
+            return "succeeded"
         callable_ = CAPABILITY_CALLABLES.get(capability_row["capability_id"])
         if callable_ is None:
             return self._fail_task(
@@ -1497,6 +1538,15 @@ class Orchestrator(object):
         if not self._holds_lease(task_id, generation):
             return self._refuse_result_without_lease(task_row, generation,
                                                      "succeeded")
+
+        # Record BEFORE announcing success, so a crash between the two leaves a
+        # recorded result to replay rather than an effect nobody remembers.
+        try:
+            result_store_module.record(self.connection, idem_key,
+                                       capability_row["capability_id"],
+                                       result.result, self._clock.now_iso())
+        except Exception:                      # noqa: BLE001 - never lose a success
+            pass
 
         self._crash_point("before_success_append")
         self._emit(

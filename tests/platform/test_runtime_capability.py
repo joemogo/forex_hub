@@ -45,7 +45,9 @@ EXPECTED_RETRY_CAPABILITY_NAME = "research.runtime.fail-then-succeed.v1"
 EXPECTED_POLICY_CAPABILITY_ID = "CAP|research|policy-probe"
 EXPECTED_POLICY_CAPABILITY_NAME = "research.policy.probe.v1"
 EXPECTED_CAPABILITY_IDS = (EXPECTED_CAPABILITY_ID, EXPECTED_RETRY_CAPABILITY_ID,
-                           EXPECTED_POLICY_CAPABILITY_ID)
+                           EXPECTED_POLICY_CAPABILITY_ID,
+    "CAP|research|ingest-local-artifact",
+)
 
 
 class CapabilityCase(unittest.TestCase):
@@ -401,38 +403,82 @@ class TestTheSecondCapability(CapabilityCase):
 
 
 class TestEffectClassificationAndTheA5Gate(CapabilityCase):
-    def test_every_a5_gate_precondition_is_false_in_this_build(self):
-        """The gate is closed BY DATA, and opening it is loud.
+    def test_every_a5_gate_precondition_is_satisfied_by_the_result_store(self):
+        """The governance moment this test was written to force has arrived.
 
-        A future step that builds the result store must flip a flag here, which
-        fails this test -- forcing a conscious governance decision at exactly
-        the moment the gate opens. That is the property worth having.
+        Its previous form asserted every precondition was False, and its own
+        docstring said: "A future step that builds the result store must flip a
+        flag here, which fails this test -- forcing a conscious governance
+        decision at exactly the moment the gate opens." MOGO-014 Step 2 built
+        runtime/result_store.py, the flags flipped, this test failed, and the
+        decision was taken deliberately under explicit authorization.
+
+        The property worth having is preserved, inverted: the gate is still
+        DATA, still four named conditions, and any future step that adds a
+        FIFTH condition or un-satisfies one fails here just as loudly.
         """
         self.assertEqual(len(registry.A5_EFFECTFUL_GATE), 4)
         for name, satisfied in registry.A5_EFFECTFUL_GATE.items():
             with self.subTest(precondition=name):
-                self.assertIs(satisfied, False)
-        self.assertEqual(sorted(registry.unmet_a5_preconditions()),
+                self.assertIs(satisfied, True)
+        self.assertEqual(sorted(registry.A5_EFFECTFUL_GATE),
                          ["duplicateEffectPrevention",
                           "idempotencyKeyedResultStore",
                           "outputVerificationByRehash",
                           "postExecutionRecoveryRule"])
+        self.assertEqual(registry.unmet_a5_preconditions(), ())
 
     def test_the_gate_table_is_read_only(self):
         with self.assertRaises(TypeError):
             registry.A5_EFFECTFUL_GATE["idempotencyKeyedResultStore"] = True
 
-    def test_registering_an_effectful_capability_is_refused_and_names_every_missing_precondition(self):
+    def test_an_effectful_capability_is_still_refused_when_a_precondition_is_unmet(self):
+        """The refusal machinery must remain live now that the gate is open.
+
+        The original test proved refusal by relying on every precondition being
+        unmet, which is no longer true. The INTENT -- an effectful capability
+        whose preconditions are not satisfied is refused, by name -- is asserted
+        here directly by un-satisfying one condition for the duration of the
+        test. This is strictly stronger than the version it replaces: it proves
+        the refusal path still works rather than proving the gate is shut.
+        """
+        from types import MappingProxyType
         manifest = dict(echo_capability.MANIFEST)
         manifest["capabilityId"] = "CAP|research|effectful-probe"
         manifest["name"] = "research.runtime.effectful-probe.v1"
         manifest["effectClass"] = "effectful"
-        with self.assertRaises(runtime_errors.EffectClassRefusedError) as caught:
-            registry.validate_manifest(manifest)
-        message = str(caught.exception)
-        for precondition in registry.A5_EFFECTFUL_GATE:
-            with self.subTest(precondition=precondition):
-                self.assertIn(precondition, message)
+        original = registry.A5_EFFECTFUL_GATE
+        try:
+            registry.A5_EFFECTFUL_GATE = MappingProxyType(
+                dict(original, postExecutionRecoveryRule=False))
+            with self.assertRaises(
+                    runtime_errors.EffectClassRefusedError) as caught:
+                registry.validate_manifest(manifest)
+            self.assertIn("postExecutionRecoveryRule", str(caught.exception))
+        finally:
+            registry.A5_EFFECTFUL_GATE = original
+        # And with every precondition satisfied it is permitted -- the gate
+        # opens and closes, rather than only ever refusing.
+        registry.validate_manifest(manifest)
+
+    def test_a_connector_using_capability_still_needs_the_connector_gate(self):
+        """Narrowing the gate must not have opened it for connectors.
+
+        MOGO-014 made connector-scoped gates apply to connector-using
+        capabilities only. A capability that names a connector, or declares a
+        remote acquisition operation, must still be treated as connector-using.
+        """
+        self.assertTrue(registry.uses_connector({"requiredConnectors": ["yt"]}))
+        self.assertTrue(registry.uses_connector(
+            {"acquisitionOperations": ["transcript"]}))
+        self.assertTrue(registry.uses_connector(
+            {"acquisitionOperations": ["discover"]}))
+        self.assertTrue(registry.uses_connector(None),
+                        "an unreadable manifest must fail CLOSED")
+        self.assertTrue(registry.uses_connector("nonsense"))
+        # local artifact ingestion reaches nothing
+        self.assertFalse(registry.uses_connector(
+            {"requiredConnectors": [], "acquisitionOperations": ["artifact"]}))
 
     def test_effect_classification_is_enforced(self):
         manifest = dict(echo_capability.MANIFEST)
@@ -496,7 +542,11 @@ class TestEffectClassificationAndTheA5Gate(CapabilityCase):
         self.assertEqual(len(registry.CONNECTOR_GATES), 4)
         by_name = {gate["gate"]: gate for gate in registry.CONNECTOR_GATES}
         self.assertIs(by_name["policy_gate"]["satisfied"], True)
-        for name in ("a5_result_store", "first_connector_authorization",
+        # MOGO-014 Step 2 built the result store, so its entry flips too. The
+        # two that remain are exactly the two that still stand between this
+        # platform and its first NETWORK acquisition.
+        self.assertIs(by_name["a5_result_store"]["satisfied"], True)
+        for name in ("first_connector_authorization",
                      "acquisition_authorization_record"):
             with self.subTest(gate=name):
                 self.assertIs(by_name[name]["satisfied"], False)

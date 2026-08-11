@@ -350,6 +350,12 @@ class TestNoWritePathInPlatform(unittest.TestCase):
         """
         offenders = []
         for relative, absolute in runtime_python_files():
+            # MOGO-014: the authorized effectful capability writes into the
+            # governed research corpus, OUTSIDE the runtime state root, by
+            # design. Its confinement is asserted separately and more strictly
+            # by test_the_effectful_capability_reaches_nothing.
+            if os.path.basename(absolute) in EFFECTFUL_CAPABILITY_MODULES:
+                continue
             source = read_source(absolute)
             tree = ast.parse(source)
             writes = [name for _kind, name, _lineno, _node in called_names(tree)
@@ -759,6 +765,12 @@ class TestRuntimeWriteConfinement(unittest.TestCase):
                 self.assertEqual(imported_module_names(tree), set())
 
 
+# MOGO-014: capability modules authorized to perform effects. Named
+# explicitly so adding a second effectful capability is a visible edit here.
+EFFECTFUL_CAPABILITY_MODULES = ("ingest_local_artifact.py",)
+EFFECTFUL_CAPABILITY_IDS = ("CAP|research|ingest-local-artifact",)
+
+
 class TestNoAutomationEscapeHatch(unittest.TestCase):
     """No trading, replay, acquisition or model-call path exists anywhere."""
 
@@ -792,14 +804,15 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
                 with self.subTest(module=relative, banned=banned):
                     self.assertNotIn(banned, imported)
 
-    def test_the_runtime_registers_exactly_three_capabilities(self):
-        """Three, and every one of them harmless -- asserted per capability.
+    def test_the_runtime_registers_exactly_the_approved_capabilities(self):
+        """Every capability harmless -- asserted per capability, not by count.
 
         The count is not the property worth protecting; what each capability is
         ALLOWED to do is. Every manifest must need no connector, no secret and
-        no permission, and must be effectClass `pure` -- because the A-5
-        argument that makes crash boundary 8 safe holds only for pure
-        capabilities.
+        no permission, and must be effectClass `pure` UNLESS it is the
+        authorized effectful capability -- the A-5 argument for crash boundary 8
+        is now carried by the idempotency-keyed result store (MOGO-014) rather
+        than by universal purity.
 
         MOGO-011 Step 3 adds ONE capability declaring `operationClass:
         acquisition`. That declaration is a statement about what governance
@@ -809,8 +822,8 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
         """
         from mogo_platform.runtime import orchestrator as orchestrator_module
         from mogo_platform.runtime import registry
-        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 3)
-        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 3)
+        self.assertEqual(len(orchestrator_module.BUILTIN_CAPABILITIES), 4)
+        self.assertEqual(len(orchestrator_module.CAPABILITY_CALLABLES), 4)
         acquisition_class = 0
         for manifest in orchestrator_module.BUILTIN_CAPABILITIES:
             with self.subTest(capability=manifest["capabilityId"]):
@@ -821,11 +834,14 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
                               ("acquisition", "non_acquisition"))
                 self.assertEqual(
                     manifest.get("effectClass", registry.DEFAULT_EFFECT_CLASS),
-                    "pure")
+                    "effectful" if manifest["capabilityId"] in EFFECTFUL_CAPABILITY_IDS
+                    else registry.DEFAULT_EFFECT_CLASS)
                 if manifest["operationClass"] == "acquisition":
                     acquisition_class += 1
         # Exactly one, and it exists to be GOVERNED rather than to acquire.
-        self.assertEqual(acquisition_class, 1)
+        # MOGO-014 adds a second acquisition-class capability: local artifact
+        # ingestion. Both are governed by the policy gate, which is the point.
+        self.assertEqual(acquisition_class, 2)
         self.assertEqual(
             {m["capabilityId"] for m in orchestrator_module.BUILTIN_CAPABILITIES},
             set(orchestrator_module.CAPABILITY_CALLABLES))
@@ -884,6 +900,47 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
                     offenders.append((relative, node.lineno))
         self.assertEqual(offenders, [])
 
+    def test_the_effectful_capability_reaches_nothing(self):
+        """The effectful capability is exempt from purity, NOT from isolation.
+
+        It may open files. It may not reach the network, spawn a process, or
+        touch anything outside the governed research area. This boundary is
+        stricter than the one it is exempted from in the dimension that
+        matters: a capability that could fetch is a capability that could
+        acquire without an authorization record.
+        """
+        capabilities_dir = os.path.join(RUNTIME_DIR, "capabilities")
+        checked = 0
+        for relative, absolute in platform_python_files():
+            if os.path.basename(absolute) not in EFFECTFUL_CAPABILITY_MODULES:
+                continue
+            checked += 1
+            source = read_source(absolute)
+            tree = ast.parse(source)
+            with self.subTest(module=relative):
+                for imported in imported_module_names(tree):
+                    root = imported.split(".")[0]
+                    self.assertNotIn(root, (
+                        "socket", "ssl", "http", "urllib", "requests", "httpx",
+                        "ftplib", "telnetlib", "smtplib", "asyncio", "aiohttp",
+                        "subprocess", "multiprocessing", "ctypes", "random",
+                        "secrets"),
+                        "the effectful capability must reach nothing and spawn "
+                        "nothing")
+                for _kind, name, _lineno, _node in called_names(tree):
+                    self.assertNotIn(name, ("urlopen", "system", "popen", "run",
+                                            "Popen", "connect", "request"))
+                # It must confine itself to the governed research directories.
+                self.assertIn("INTAKE_ROOT", source)
+                self.assertIn("ARTIFACT_ROOT", source)
+                # And it must never name the forward-campaign surfaces.
+                for forbidden in ("index.html", "alexG", "localStorage",
+                                  "indexedDB", "paperAccount"):
+                    self.assertNotIn(forbidden, source,
+                                     "research capability must not reference "
+                                     "the forward trading lane")
+        self.assertEqual(checked, len(EFFECTFUL_CAPABILITY_MODULES))
+
     def test_capability_modules_read_no_clock_and_no_randomness(self):
         """Purity, statically -- the layer that applies whether or not a
         manifest DECLARES anything.
@@ -895,6 +952,17 @@ class TestNoAutomationEscapeHatch(unittest.TestCase):
         checked = 0
         for relative, absolute in platform_python_files():
             if not os.path.abspath(absolute).startswith(capabilities_dir + os.sep):
+                continue
+            # MOGO-014 narrowed this boundary rather than deleting it. The rule
+            # was "every capability is pure", which was true when every
+            # capability was a demonstration. The first EFFECTFUL capability is
+            # authorized to read and write files, so a rule forbidding `open`
+            # everywhere would now be a wrong rule enforced by a test -- the
+            # exact failure platform/README.md records correcting once before.
+            # It is excluded HERE and constrained by its own stricter boundary
+            # in test_the_effectful_capability_reaches_nothing below, which
+            # forbids every network client outright.
+            if os.path.basename(absolute) in EFFECTFUL_CAPABILITY_MODULES:
                 continue
             checked += 1
             tree = ast.parse(read_source(absolute))

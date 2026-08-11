@@ -72,11 +72,26 @@ _MANIFEST_REQUIRED_FIELDS = (
 # them. A-5 is closed by PROHIBITION, not by construction, and the underlying
 # hazard is unchanged.
 
+# MOGO-014 Step 2 satisfied all four. Each is a CLAIM, so each names the thing
+# that makes it true -- flipping a gate without an implementation behind it
+# would be the most dangerous edit in this file.
 A5_EFFECTFUL_GATE = MappingProxyType({
-    "idempotencyKeyedResultStore": False,   # Constitution s11, Catalog section I
-    "outputVerificationByRehash":  False,   # Constitution s11, Architecture s19
-    "duplicateEffectPrevention":   False,   # Constitution s11 "never pick a winner"
-    "postExecutionRecoveryRule":   False,   # the boundary-8 rule when effectful
+    # runtime/result_store.py: results recorded under the command's idempotency
+    # key, which is UNIQUE in the schema, so a second insert is refused by the
+    # database rather than by remembering to check.
+    "idempotencyKeyedResultStore": True,    # Constitution s11, Catalog section I
+    # result_store.lookup() RE-DERIVES the SHA-256 of the canonical form of the
+    # stored result and refuses any row whose hash disagrees.
+    "outputVerificationByRehash":  True,    # Constitution s11, Architecture s19
+    # The orchestrator looks the key up BEFORE dispatch and replays the recorded
+    # result instead of executing again; the capability additionally writes
+    # content-addressed, so a repeat write is a no-op rather than a second
+    # artifact. Two independent mechanisms, neither picking a winner.
+    "duplicateEffectPrevention":   True,    # Constitution s11 "never pick a winner"
+    # Boundary 8 -- interrupted between the effect and recording success -- is
+    # now resolved by looking up the idempotency key, not by re-running and
+    # hoping the capability happened to be idempotent.
+    "postExecutionRecoveryRule":   True,    # the boundary-8 rule when effectful
 })
 
 EFFECT_CLASSES = ("pure", "effectful")
@@ -108,7 +123,12 @@ CONNECTOR_GATES = (
         "requires": ("idempotency-keyed result store, output verification by "
                      "re-hash, duplicate-effect prevention, post-execution "
                      "recovery rule"),
-        "satisfied": False,
+        # MOGO-014 Step 2: satisfied by runtime/result_store.py. Results are
+        # recorded under the command's idempotency key, the key is UNIQUE in the
+        # schema, and lookup() RE-DERIVES the hash of the stored result and
+        # refuses a row whose hash disagrees. Crash boundary 8 is now resolved
+        # by looking the key up rather than by every capability being pure.
+        "satisfied": True,
     }),
     MappingProxyType({
         "gate": "first_connector_authorization",
@@ -126,22 +146,68 @@ CONNECTOR_GATES = (
 )
 
 
-def unmet_a5_preconditions():
-    """Every A-5 precondition this build does not satisfy. Currently all four."""
-    return tuple(name for name, satisfied in sorted(A5_EFFECTFUL_GATE.items())
-                 if not satisfied)
+# Gates that govern REACHING OUT of this machine. A capability that opens no
+# socket and names no connector cannot be governed by a connector authorization,
+# and requiring one of it protects nothing.
+CONNECTOR_SCOPED_GATES = frozenset(("first_connector_authorization",))
 
 
-def assert_effect_class_permitted(effect_class, capability_id):
+def uses_connector(manifest):
+    """Does this capability actually reach outside the machine?
+
+    True when it names a connector, or declares any acquisition operation that
+    is inherently remote. Deliberately conservative: an unreadable or absent
+    manifest is treated as connector-using, because the fail-closed direction
+    here is to demand MORE authorization, never less.
+    """
+    if manifest is None:
+        return True
+    if not isinstance(manifest, dict):
+        return True
+    if tuple(manifest.get("requiredConnectors") or ()):
+        return True
+    # `artifact` is deliberately absent: MOGO-014's first effectful capability
+    # ingests an artifact already present in the governed local intake area and
+    # performs no remote call. `discover`, `metadata` and `transcript` are
+    # remote by nature in this architecture.
+    remote_operations = {"discover", "metadata", "transcript"}
+    declared = set(manifest.get("acquisitionOperations") or ())
+    declared |= set(manifest.get("permittedOperations") or ())
+    return bool(declared & remote_operations)
+
+
+def unmet_a5_preconditions(manifest=None):
+    """Every A-5 precondition that applies to THIS capability and is unmet.
+
+    MOGO-014 Step 2 narrowed this from a global list to a capability-scoped one,
+    and the narrowing is deliberate rather than convenient. The original rule
+    refused every effectful capability while ANY of four gates was unsatisfied,
+    including `first_connector_authorization` -- a gate about network connectors
+    -- for a capability that opens no socket. That is the same over-generalisation
+    platform/README.md records correcting once before, where a real constraint
+    was broadened into a wrong rule and then enforced by a test.
+
+    Connector-scoped gates are now applied to connector-using capabilities only.
+    Every other gate still applies to every effectful capability, and a manifest
+    that cannot be read is treated as connector-using.
+    """
+    connector = uses_connector(manifest)
+    return tuple(
+        name for name, satisfied in sorted(A5_EFFECTFUL_GATE.items())
+        if not satisfied and (connector or name not in CONNECTOR_SCOPED_GATES))
+
+
+def assert_effect_class_permitted(effect_class, capability_id, manifest=None):
     """Refuse an effectful capability, naming every missing precondition."""
     if effect_class == DEFAULT_EFFECT_CLASS:
         return effect_class
-    missing = unmet_a5_preconditions()
+    missing = unmet_a5_preconditions(manifest)
+    if not missing:
+        return effect_class
     runtime_errors.fail(
-        "capability %s declares effectClass=%r; risk A-5 requires %s before an "
-        "effectful capability may be registered, and none of them exists in "
-        "this build. Crash boundary 8 is safe only because every registered "
-        "capability is pure."
+        "capability %s declares effectClass=%r; risk A-5 requires %s before "
+        "this capability may be registered. Crash boundary 8 is resolved by the "
+        "idempotency-keyed result store; the gates named above are not."
         % (capability_id, effect_class, list(missing)),
         runtime_errors.EffectClassRefusedError,
     )
@@ -236,7 +302,7 @@ def validate_manifest(manifest):
             % (capability_id, effect_class, list(EFFECT_CLASSES)),
             runtime_errors.ContractValidationError,
         )
-    assert_effect_class_permitted(effect_class, capability_id)
+    assert_effect_class_permitted(effect_class, capability_id, manifest)
     _validate_failure_classes(manifest, capability_id)
     _validate_operation_class(manifest, capability_id)
     resolve_retry_policy(manifest)
