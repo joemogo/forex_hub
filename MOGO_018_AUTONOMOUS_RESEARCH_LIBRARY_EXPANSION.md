@@ -931,9 +931,28 @@ strategy reconstruction, promotion.
 
 ---
 
-# ⚠️ STEP 3B NOT COMMITTED
+# ✅ STEP 3B CHECKPOINT — COMMITTED
 
-Complete and green, but **nothing was committed or pushed** — held for ChatGPT/operator review.
+| | |
+|---|---|
+| Reviewed | approved by ChatGPT/operator |
+| **Checkpoint commit** | **`38ba14c1fcc807b771ccb6499ddc6793ba63a061`** |
+| Commit message | `MOGO-018 Step 3B: bounded multi-entry autonomous collection` |
+| Pushed to | `origin/mogo-main` |
+| Starting checkpoint | `0414920081cb65c7ea5f10e9c6581a4f4f176a84` (Step 3A) |
+
+Final pre-commit verification re-ran all twenty required checks: only the six intended files
+changed; twelve report claims were spot-checked against the running code, including that
+`validate_spec` and `build_command` still carry their original signatures; Step 3B scheduling (81),
+MOGO-017 acquisition/change-detection (102), Step 2 bridge (29) and Step 3A authorization (118)
+suites all green; platform 990/990; canonical 1,160/1,160; drift 0; C1 33/33; legacy corpus 220/0;
+immutable research evidence and Knowledge Library evidence byte-unchanged; Step 2 bridge output
+unchanged; plist template unchanged with four calendar entries; the production set still holds
+exactly one entry and `approved_source_ids()` exactly one source; **no acquisition performed**
+(`capability_results` still 7 rows); and a live sweep confirmed a URL is refused at **both** the
+document and entry level, that unapproved/unauthorized entries refuse the **whole window**, and that
+the connector gate itself still fails closed.
+
 **No source was authorized. No acquisition was performed.**
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
