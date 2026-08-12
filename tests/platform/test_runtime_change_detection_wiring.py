@@ -645,3 +645,168 @@ class TestScientificFirewall(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# Step 3: the provenance repair, and the property it must not break
+# ---------------------------------------------------------------------------
+
+class TestProvenanceRepair(ChangeDetectionWiringCase):
+    """`acquiredAt` and `decidedAt` are populated. Nothing scientific moved."""
+
+    def test_provenance_is_now_populated_on_a_real_acquisition(self):
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        result = self.recorded_results()[0]
+        self.assertIsNotNone(result["acquiredAt"],
+                             "acquiredAt was the provenance gap; it must be filled")
+        self.assertIsNotNone(result["connectorDecision"]["decidedAt"],
+                             "decidedAt was the same gap on the gate decision")
+        self.assertEqual(result["acquiredAt"],
+                         result["connectorDecision"]["decidedAt"],
+                         "ONE authoritative instant, not two clock reads that "
+                         "could disagree about when the same acquisition happened")
+
+    def test_provenance_does_not_alter_scientific_content_identity(self):
+        """Proofs 1 and 2: the identity is the external bytes, and only those."""
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        result = self.recorded_results()[0]
+        self.assertEqual(result["contentHash"], HASH_A)
+        self.assertEqual(result["changeDetection"]["currentContentIdentity"],
+                         HASH_A)
+
+    def test_changing_provenance_between_runs_still_yields_unchanged(self):
+        """Proof 3, and the whole point of the exclusion.
+
+        Two acquisitions of IDENTICAL external bytes, separated in time so their
+        provenance timestamps genuinely differ, must remain UNCHANGED and must
+        NOT mint a second research artifact.
+        """
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        self.acquire_once("R2")
+        first, second = self.recorded_results()
+        self.assertNotEqual(first["acquiredAt"], second["acquiredAt"],
+                            "the two runs must genuinely differ in provenance")
+        self.assertEqual(self.classification_of(second), cd.UNCHANGED)
+        self.assertEqual(self.events("SourceMutationDetected"), [])
+        self.assertEqual(second["ingestion"]["duplicateStatus"],
+                         "DUPLICATE_ALREADY_INGESTED")
+        self.assertEqual(len(os.listdir(self.artifacts)), 1,
+                         "differing provenance must NOT mint a second research "
+                         "artifact for unchanged external content")
+
+    def test_the_repair_leaves_the_committed_production_wrapper_untouched(self):
+        """No existing evidence was disturbed and nothing was migrated.
+
+        The genuine artifact committed in MOGO-015 must rebuild byte-identically
+        under the repaired code, or the first post-repair acquisition would mint
+        a second artifact for external content already ingested.
+        """
+        path = os.path.join(research_corpus.PRODUCTION_INTAKE_ROOT, "acquired",
+                            "b668d4209abbf2b8718cea2fa84eacd3985cbb4d1fc352dd"
+                            "1720f64bebb92a00.json")
+        if not os.path.isfile(path):
+            self.skipTest("the committed production artifact is not present")
+        with open(path, "rb") as handle:
+            committed = handle.read()
+        document = json.loads(committed.decode("utf-8"))
+        document["acquisition"] = acquire.stable_acquisition_record(
+            document["acquisition"])
+        rebuilt = (json.dumps(document, indent=2, sort_keys=True) + "\n").encode()
+        self.assertEqual(rebuilt, committed,
+                         "the repaired wrapper must be byte-identical to the "
+                         "one already committed -- no churn, no migration")
+
+    def test_the_wrapper_excludes_volatile_provenance_so_dedupe_survives(self):
+        """Proof 4: the wrapper hash is stable across runs BECAUSE of this.
+
+        The wrapper is what ingestion hashes, so a wall-clock value inside it
+        would change the research artifact's identity every acquisition.
+        """
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        raw_path = os.path.join(self.intake, "acquired", HASH_A + ".json")
+        with open(raw_path, "rb") as handle:
+            first_wrapper = handle.read()
+        self.acquire_once("R2")
+        with open(raw_path, "rb") as handle:
+            second_wrapper = handle.read()
+        self.assertEqual(first_wrapper, second_wrapper,
+                         "identical external bytes must produce a byte-identical "
+                         "wrapper regardless of when they were acquired")
+        document = json.loads(first_wrapper.decode("utf-8"))
+        # PINNED, not deleted -- deleting the keys would change the wrapper's
+        # shape and mint one new artifact for content already ingested.
+        self.assertIsNone(document["acquisition"]["acquiredAt"])
+        self.assertIsNone(document["acquisition"]["decision"]["decidedAt"])
+        # ...while the full record, timestamps included, is still recorded.
+        self.assertIsNotNone(self.recorded_results()[0]["acquiredAt"])
+
+    def test_the_stripper_removes_exactly_the_volatile_fields(self):
+        record = {"acquiredAt": "T", "httpStatus": 200, "contentHash": HASH_A,
+                  "decision": {"decidedAt": "T", "decision": "permit",
+                               "approvedUrl": "https://example.test/x"}}
+        stable = acquire.stable_acquisition_record(record)
+        # The KEY SET is unchanged -- only the two volatile values are pinned.
+        self.assertEqual(set(stable), set(record))
+        self.assertEqual(set(stable["decision"]), set(record["decision"]))
+        self.assertIsNone(stable["acquiredAt"])
+        self.assertIsNone(stable["decision"]["decidedAt"])
+        self.assertEqual(stable["httpStatus"], 200)
+        self.assertEqual(stable["decision"]["approvedUrl"],
+                         "https://example.test/x")
+        self.assertEqual(record["acquiredAt"], "T",
+                         "the input must not be mutated")
+        self.assertEqual(record["decision"]["decidedAt"], "T")
+
+    def test_a_historical_artifact_with_null_provenance_stays_compatible(self):
+        """Proof 5: nothing was migrated, and nothing needed to be.
+
+        The MOGO-016 rows predate both the classifier and this repair. They are
+        still valid ACCEPTED history, because acceptance reads validation and
+        storage -- never provenance.
+        """
+        legacy = {"sourceId": APPROVED_SOURCE, "resourceId": APPROVED_RESOURCE,
+                  "contentHash": HASH_A, "acquiredAt": None,
+                  "connectorDecision": {"decidedAt": None},
+                  "ingestion": {"validationStatus": "VALID",
+                                "storedVerified": True}}
+        self.assertEqual(cd.accepted_identity_from_acquisition(legacy), HASH_A)
+        verdict = cd.classify_acquisition_result(None, legacy)
+        self.assertEqual(verdict.classification, cd.FIRST_OBSERVATION)
+
+    def test_valid_changed_bytes_still_produce_changed(self):
+        """Proof 6, re-run after the repair."""
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        self.box["body"] = BODY_B
+        self.acquire_once("R2")
+        self.assertEqual(self.classification_of(self.recorded_results()[-1]),
+                         cd.CHANGED)
+        self.assertEqual(len(self.events("SourceMutationDetected")), 1)
+
+    def test_invalid_changed_bytes_still_do_not_produce_changed(self):
+        """Proof 7, re-run after the repair."""
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        self.box["body"] = BODY_INVALID
+        self.acquire_once("R2")
+        self.assertEqual(len(self.recorded_results()), 1)
+        self.assertEqual(self.events("SourceMutationDetected"), [])
+
+    def test_first_observation_remains_distinct_from_changed(self):
+        """Proof 8, re-run after the repair."""
+        self.initialise()
+        self.box["body"] = BODY_A
+        self.acquire_once("R1")
+        self.assertEqual(self.classification_of(self.recorded_results()[0]),
+                         cd.FIRST_OBSERVATION)
+        self.assertEqual(self.events("SourceMutationDetected"), [])

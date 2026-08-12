@@ -1548,9 +1548,273 @@ A scheduler-triggered acquisition classifies itself against the prior *accepted*
 
 ---
 
-# ⚠️ MOGO-017 IS NOT DECLARED COMPLETE
+# ⚠️ MOGO-017 WAS NOT DECLARED COMPLETE AT STEP 2C
 
-Step 2C delivered the detector. **The milestone closeout is a separate, explicitly authorized step**
-and has not been performed. No closeout claim is made here.
+Step 2C delivered the detector. The milestone closeout was a separate, explicitly authorized step.
+*(Performed in Step 3, below.)*
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+---
+
+# MOGO-017 STEP 3 — PROVENANCE REPAIR, OPTIMIZATION, CLOSEOUT
+
+## 1. Starting state — with one discrepancy, reported rather than absorbed
+
+| | Verified before any edit |
+|---|---|
+| Repository | `origin` → `https://github.com/joemogo/forex_hub.git` |
+| Branch / HEAD | `main` · **`900b54fcbb851d134fda1c6039dacfe15012b9a8`** |
+| `git status` / `git diff` | **empty — clean** |
+| Ahead / behind | **0 / 0** |
+
+⚠️ **The checkpoint in the Step 3 instruction was `900b54fcbb851d134fd1c6039dacfe15012b9a8` — 39
+characters.** A SHA-1 is 40. Comparing against the actual HEAD shows a single dropped `a`
+(`…134fd1c…` vs `…134fda1c…`); `git rev-parse` cannot resolve the supplied string at all
+(*"Needed a single revision"*). HEAD **is** the Step 2C commit, it **is** on `origin/mogo-main`, and
+the tree is clean. **A transcription slip in the instruction, not repository drift** — so this was
+reported and work continued rather than stopping.
+
+## 2. The provenance gap — root cause
+
+| Field | Why it was null |
+|---|---|
+| `acquiredAt` | `connector_transport.acquire(request, now_iso=None, …)` takes the instant as a **parameter**; the capability called it **without one**, so `AcquisitionOutcome.acquiredAt` was always `None`. |
+| `decidedAt` | `connector_authorization.evaluate()` reads `request.get("decidedAt")`; the capability's request dict **had no such key**. |
+| `decision.requestedUrl` | **Correct as-is — left alone.** The gate compares a caller-supplied URL against the derived one to catch substitution; `None` truthfully means *"the caller named no URL"*, which is the safest state. The capability physically cannot supply it — the URL is derived **by** the gate, inside `acquire()` — and duplicating that derivation to fill a field would create the second URL source the anti-SSRF design exists to prevent. The URL is already recorded on `decision.approvedUrl` and on the result's `requestedUrl` / `finalUrl`. |
+
+**Root cause: a dropped value, twice. Both timestamps already had a home; nobody passed them.** No
+missing mechanism, no schema gap.
+
+**No existing test relied on the nulls.** The `decidedAt` hits elsewhere in the suites are the
+*authorization record's* `decidedAt` — a different field entirely.
+
+## 3. Why the obvious fix would have been wrong — measured, not assumed
+
+The wrapper written to `intake/acquired/<contentHash>.json` embeds the acquisition record, and
+**that document's bytes are what ingestion hashes to derive the research artifact's identity.**
+
+```
+wrapper hash, acquiredAt = null            64a653a9507a120f
+wrapper hash, run 1 real timestamp         c1bb457eeec9d24c
+wrapper hash, run 2 real timestamp         948418488b8f4dad     ← different again
+```
+
+Writing the timestamps straight into the wrapper would mint **a new research artifact every six
+hours forever**, with `duplicateStatus` reading `NEW` permanently. Change detection would have been
+fine — it compares raw external bytes — but **artifact dedupe would not**, and dedupe is the
+content-addressing discipline the whole research corpus rests on.
+
+### And the second-order trap, also caught before shipping
+
+The first repair *removed* the two keys. That changes the wrapper's **shape**, which changes its
+bytes:
+
+```
+existing committed production wrapper   d4e4ec829fe80b576a1304f4
+key-deleted form                        7cd5fd3740ccb7c6f339d8dc     ← would mint ONE new artifact
+```
+
+So the final repair **pins the fields to `null` rather than deleting them**, keeping the wrapper
+**byte-identical to every artifact already committed**. A test now rebuilds the genuine MOGO-015
+artifact under the repaired code and asserts byte equality, so this can never regress.
+
+## 4. The repair
+
+`capabilities/acquire_approved_source_metadata.py` only:
+
+- **one** authoritative instant per acquisition — `clock_module.SystemClock().now_iso()`, read
+  **once** and used for both fields, so the gate decision and the fetch can never disagree about
+  when the same acquisition happened;
+- passed as `decidedAt` in the gate request (**the gate already reads it — no gate change**) and as
+  `now_iso=` to `transport.acquire` (**the transport already accepts it — no transport change**);
+- `VOLATILE_PROVENANCE_FIELDS` + `stable_acquisition_record()` pin those two fields in the
+  content-addressed wrapper.
+
+**`connector_transport.content_hash` was not touched. Scientific change identity was not touched.
+Dedupe semantics were not touched. No historical artifact was rehashed, rewritten or migrated.**
+
+## 5. Optimization
+
+A bounded review of the MOGO-017 code found **one** genuine duplication, and it was removed:
+
+`classify_acquisition_result()` was rebuilding a **synthetic ingestion-shaped dict** purely to
+re-enter `classify()` — a round trip that could only ever go wrong — and the prior-hash validation
+existed in that one path only. Both entry points now share a single `compare()` core, so they cannot
+drift apart. **Behaviour identical, proven by all 72 pre-existing change-detection tests passing
+unchanged.**
+
+**Everything else was left alone deliberately.** `PriorAcceptedAcquisition` is used once but makes
+the orchestrator read `prior.idempotencyKey` instead of `prior[1]`. `acquisition_history._stream_of`
+overlaps `comparison_key` only superficially — one is a lenient reader of stored data, the other a
+validating constructor. The two test harnesses differ because they test different layers. **No
+cosmetic refactor was performed.**
+
+Two stale docstrings were corrected, because this codebase's discipline is that comments must be
+true: `change_detection.py` still claimed *"nothing in the running system imports it yet"* and *"null
+today only because the capability never passes a clock"* — both false after Steps 2C and 3.
+
+## 6. Provenance proofs — 8 new fixtures, all passing
+
+| Proof | Result |
+|---|---|
+| 1 · populating `acquiredAt` does not alter content identity | ✅ identity still `hash(bytes)` |
+| 2 · populating `decidedAt` does not alter content identity | ✅ |
+| 3 · differing provenance between runs of identical bytes | ✅ **`UNCHANGED`**, no event, **one** artifact |
+| 4 · wrapper stays byte-identical across runs | ✅ and the fields are **pinned, not deleted** |
+| 4b · the **committed production artifact** rebuilds byte-identically | ✅ no churn, no migration |
+| 5 · historical artifacts with null provenance stay compatible | ✅ acceptance reads validation and storage, never provenance |
+| 6 · valid changed bytes still `CHANGED` | ✅ exactly one event |
+| 7 · invalid changed bytes still not `CHANGED` | ✅ no event, baseline held |
+| 8 · `FIRST_OBSERVATION` still distinct from `CHANGED` | ✅ |
+
+Plus: the two timestamps are asserted **equal**, proving one clock read rather than two.
+
+## 7. Live production confirmation
+
+One bounded acquisition of the approved source through the governed path — no new source, no
+arbitrary URL, no transcript access, **scheduler cadence untouched** (the plist stayed at six hours;
+only the spec's window was narrowed for one command and restored immediately).
+
+```
+CHANGE DETECTION UNCHANGED (prior=b668d4209abb current=b668d4209abb)
+advanced=3 succeeded=1
+
+acquiredAt          : 2026-08-12T02:39:58.418Z
+decision.decidedAt  : 2026-08-12T02:39:58.418Z      ← same authoritative instant
+classification      : UNCHANGED
+ingestion           : DUPLICATE_ALREADY_INGESTED  ingested=False
+```
+
+**`git status docs/trader-intelligence` → empty.** Provenance populated, zero artifact churn, zero
+mutation events, research corpus still exactly 2 artifacts + 1 raw acquisition.
+
+## 8. Forward paper health — from persisted evidence only
+
+**The live browser was not touched, reloaded or restarted.**
+
+| Check | Status |
+|---|---|
+| Durable observation flow | ✅ **active** — WAL written at 22:40, the minute it was checked |
+| Ledger growth | ✅ **2,636 record headers**, up from 2,060 at MOGO-016 |
+| New polling gap | ✅ **none** — zero sleep/wake events since the 17:01 wake |
+| Step 2A PIPELINE instrumentation | ✅ **installed in the repository** (8 references) |
+| Natural CANDIDATE / REQUESTED / OPENED evidence | ⚠️ **none yet — and it cannot exist yet** |
+| Genuine paper trades | **still zero** |
+
+⚠️ **The running tab predates the instrumentation.** Its last page-load marker is **Aug 11 17:02**;
+Step 2A landed at **19:47**. The PIPELINE wiring is in the committed file but **not in the page
+currently executing**, so it will begin recording only on the next natural page load — which was
+deliberately not forced. Absence of PIPELINE evidence today is therefore expected, and is **not**
+evidence about the execution path.
+
+**Zero trades is not treated as a failure.** Step 1 established the reason and nothing has changed
+it: only one setup has qualified since activation, and it was already stale. No new evidence
+suggests a malfunction. No trading behaviour was modified.
+
+## 9. Scientific firewall
+
+Every occurrence of `SourceMutationDetected`: the vocabulary declaration, `orchestrator.py` as the
+**one** emitter, and three test files. **`index.html` — ALEX and every trading path — has zero
+references.** No consumer in strategy parameters, execution, forward evidence, Campaign C1, legacy
+evidence, rule promotion, hypothesis promotion or live-money trading.
+
+## 10. Final MOGO-017 success audit
+
+| # | Condition | Result |
+|---|---|---|
+| 1 | Unchanged accepted content → `UNCHANGED` | ✅ deterministic **and** twice in production |
+| 2 | Valid changed content → `CHANGED` | ✅ with exactly one event |
+| 3 | Prior/current identities preserved for audit | ✅ in the durable record and on the event |
+| 4 | `FIRST_OBSERVATION` handled correctly | ✅ never emits a mutation |
+| 5 | Failures never masquerade as mutations | ✅ incl. changed-but-invalid |
+| 6 | Duplicate/idempotency behaviour correct | ✅ `ingested=false` still `UNCHANGED` |
+| 7 | Scheduled autonomous acquisition traverses the classifier | ✅ launchd-triggered, logged |
+| 8 | Research remains RESEARCH ONLY | ✅ `lane: RESEARCH`, `NOT_A_TRADING_RULE` |
+| 9 | No research content in the forward trading lane | ✅ 0 forward evidence packages |
+| 10 | Protected ALEX functions unchanged | ✅ **drift 0** — 63 functions, 4 constants |
+| 11 | Campaign C1 intact | ✅ **33/33**, manifest hash unchanged |
+| 12 | Legacy evidence intact | ✅ **220 re-derived, 0 mismatched** |
+| 13 | Scheduler safety intact | ✅ six-hour cadence, `runs = 0`, spec at 21600 |
+| 14 | Authorization fail-closed | ✅ every run passed the real gate and record |
+| 15 | Provenance correct, or limitation justified | ✅ repaired; `requestedUrl` justified in §2 |
+| 16 | All integrity gates green | ✅ below |
+| 17 | Repository clean and synchronized | ✅ |
+
+## 11. Final integrity results
+
+| Gate | Result |
+|---|---|
+| Provenance + change-detection wiring suite | ✅ **28 / 28** |
+| Change-detection contract suite | ✅ **55 / 55** |
+| Forward PIPELINE observability suite | ✅ **47 / 47** |
+| Platform suite | ✅ **22 suites · 929 tests · 0 failures · 0 errors** |
+| Canonical gate | ✅ **19 suites · 1,160 fixtures · 1,160 passed · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ **33 / 33 · 0 mismatched** · `VERIFIED` |
+| Legacy corpus | ✅ **220 re-derived · 0 mismatched** |
+| Research corpus | ✅ **2 artifacts + 1 raw acquisition, byte-unchanged** |
+| Research ↔ forward contamination | ✅ **none, both directions** |
+| Authorization | ✅ unchanged, fail-closed |
+| Scheduler state | ✅ 00:00 / 06:00 / 12:00 / 18:00, `runs = 0` |
+
+Two boundary tests failed during this step and both were **my defects, fixed rather than excused**:
+a comment naming `index.html` (a prohibited literal only `boundaries.py` may contain), and the
+earlier key-deletion approach. **No guard was weakened.**
+
+## 12. MOGO-018 direction — autonomous research library (DOCUMENTED, NOT IMPLEMENTED)
+
+MOGO research acquisition is intended to become **continuous infrastructure**. The operator should
+not have to approve routine acquisition of an already-approved item.
+
+```
+AUTONOMOUS RESEARCH → governed approved-source acquisition → validation → dedupe
+  → change detection → provenance → LIBRARY ORGANIZATION
+  → strategy-specific corpus growth → corpus maturity assessment
+  → proposed mechanical strategy specification
+  → ★ OPERATOR REVIEW / FREEZE ★
+  → preregistered validation
+  → ★ OPERATOR PROMOTION DECISION ★
+  → isolated forward paper strategy campaign
+```
+
+**Candidate families:** TJR · CRT · ICT · continued Alex G · other explicitly approved sources later.
+
+**Strategy lanes stay isolated.** Each future strategy carries its own version, frozen rules, source
+provenance, configuration identity, historical validation evidence, forward paper account, trades,
+performance metrics and adjudication history. ALEX · TJR · CRT · ICT · MOGO-derived remain separate
+lanes that never share an account or an evidence store.
+
+**Routine research and library building may become autonomous. Governance remains mandatory at every
+promotion boundary:** strategy specification freeze; preregistration/validation authorization;
+promotion to forward paper trading; modification of a frozen forward strategy; and any future
+live-money authority.
+
+**Immediate MOGO-018 mission:** turn accumulated research artifacts into an organized,
+source-attributed, per-strategy **library** — the layer between "we have artifacts" and "we can
+assess corpus maturity". Not extraction, not hypotheses, not rules.
+
+## 13. Final repository state
+
+Clean · `0 ahead / 0 behind origin/mogo-main` · scheduler on its six-hour production cadence.
+
+---
+
+# ✅ MOGO-017 — COMPLETE — GREEN
+
+## AUTONOMOUS RESEARCH CHANGE DETECTION
+
+MOGO can now answer, autonomously and durably:
+
+> **"Did the accepted content for this approved source/resource change since the prior accepted
+> acquisition?"**
+
+```
+launchd → scheduling adapter → governed runtime → authorization → approved connector
+  → bounded transport → validation → durable ingestion / dedupe
+  → prior accepted content lookup → FIRST_OBSERVATION | UNCHANGED | CHANGED
+  → SourceMutationDetected on CHANGED only → durable status/audit → workflow completion
+```
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**

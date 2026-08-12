@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """MOGO Automation Platform -- the research change-detection CONTRACT.
 
-MOGO-017 Step 2B. THE CONTRACT ONLY. NOT THE DETECTOR.
+MOGO-017 Step 2B froze this contract; Step 2C wired it.
 
 WHAT THIS IS, AND WHAT IT IS DELIBERATELY NOT
 
-    This module freezes the semantics MOGO-017's future detector must obey, as
-    executable, testable code. It is a PURE decision function over values the
-    caller already holds.
+    The semantics the detector obeys, as executable, testable code. It is a PURE
+    decision function over values the caller already holds.
 
-    It contains NO history query, NO event emission, NO storage, NO clock and NO
-    production call site. Nothing in the running system imports it yet, and that
-    absence is the point: Step 2B was authorised to fix the contract, not to
-    start classifying real acquisitions. Wiring it up is Step 2C's job, and it
-    must be a visible edit rather than something that quietly began working.
+    It still contains NO history query, NO event emission, NO storage and NO
+    clock. History is an ARGUMENT. Exactly two modules use it --
+    acquisition_history.py supplies the prior identity, and orchestrator.py acts
+    on the verdict -- and a test asserts that allow-list, so a third consumer
+    breaks the build rather than appearing quietly.
 
 THE ONE SENTENCE
 
@@ -42,14 +41,18 @@ CONTENT IDENTITY IS THE RAW EXTERNAL BYTE HASH, AND THIS MATTERS
     VALIDATE it and discards the parsed value.
 
     The research ARTIFACT hash is a different number and must NOT be used here.
-    It is the hash of a wrapper document that embeds the acquisition record, and
-    that record carries `acquiredAt`, `decidedAt` and a decision `requestedUrl`.
-    Those are null today only because the capability never passes a clock -- a
-    provenance gap, not a design guarantee. The moment anyone fixes that gap, the
-    wrapper hash would change on EVERY acquisition and every scheduled run would
-    report a mutation. Comparing raw bytes is immune to that by construction, and
-    the contract tests pin it so the gap can be fixed later without breaking
-    change detection.
+    It is the hash of a wrapper document that embeds the acquisition record.
+
+    MOGO-017 Step 3 populated `acquiredAt` and `decidedAt`, which were null
+    because the capability passed no clock. Had they simply been written INTO the
+    wrapper, its hash would have changed on every acquisition and unchanged
+    content would have minted a new research artifact every six hours -- measured,
+    not assumed. So the wrapper now excludes exactly those two volatile fields
+    while the full record keeps them.
+
+    Change detection was never exposed to that either way, because it compares the
+    raw external bytes. That immunity is deliberate and is pinned by tests, which
+    is what made the provenance repair safe to perform at all.
 
 CHANGED IS AN OBSERVATION, NOT A CONCLUSION
 
@@ -257,9 +260,24 @@ def classify(prior_content_identity, acquisition_ok, ingestion_result):
         return Classification(VALIDATION_FAILURE, prior_content_identity,
                               None, False, REASON_NOT_VALIDATED)
 
-    # 3. No prior accepted content. This establishes a baseline and is NOT a
-    #    mutation -- reporting a source's first ever observation as a change
-    #    would make every new source look like it had just mutated.
+    # 3-4. The comparison itself.
+    return compare(prior_content_identity, current)
+
+
+def compare(prior_content_identity, current):
+    """Compare two ACCEPTED identities. Pure.
+
+    The single comparison core, so `classify` and `classify_acquisition_result`
+    cannot drift apart -- the latter previously rebuilt a synthetic
+    ingestion-shaped dict purely to re-enter `classify`, which is a round trip
+    that could only ever go wrong.
+
+    Callers must have established acceptance first: reaching here means BOTH
+    identities are content this system accepted.
+    """
+    # No prior accepted content establishes a baseline and is NOT a mutation --
+    # reporting a source's first ever observation as a change would make every
+    # new source look like it had just mutated.
     if prior_content_identity is None:
         return Classification(FIRST_OBSERVATION, None, current, True,
                               REASON_NO_PRIOR)
@@ -271,10 +289,9 @@ def classify(prior_content_identity, acquisition_ok, ingestion_result):
             % (prior_content_identity,),
             runtime_errors.ContractValidationError)
 
-    # 4. The comparison itself. Byte identity, nothing else. A new request
-    #    identity, a new acquisition timestamp and changed transport metadata all
-    #    reach this rung with an unchanged `current`, and therefore all resolve
-    #    to UNCHANGED.
+    # Byte identity, nothing else. A new request identity, a new acquisition
+    # timestamp and changed transport metadata all reach here with an unchanged
+    # `current`, and therefore all resolve to UNCHANGED.
     if current == prior_content_identity:
         return Classification(UNCHANGED, prior_content_identity, current, True,
                               REASON_IDENTICAL)
@@ -326,11 +343,7 @@ def classify_acquisition_result(prior_content_identity, result):
     if identity is None:
         return Classification(VALIDATION_FAILURE, prior_content_identity, None,
                               False, REASON_NOT_VALIDATED)
-    return classify(prior_content_identity, True, {
-        "validationStatus": VALIDATION_STATUS_VALID,
-        "storedVerified": True,
-        "contentHash": identity,
-    })
+    return compare(prior_content_identity, identity)
 
 
 def next_baseline(prior_content_identity, classification):

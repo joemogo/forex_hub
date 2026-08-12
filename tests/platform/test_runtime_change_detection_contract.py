@@ -129,9 +129,14 @@ class TestContentIdentityIsTheRawExternalBytes(unittest.TestCase):
     def test_the_artifact_wrapper_hash_is_a_different_number_and_is_not_used(self):
         """The reason the contract names the raw hash explicitly.
 
-        The wrapper embeds the acquisition record, whose acquiredAt/decidedAt
-        slots are null only because the capability passes no clock. Filling that
-        gap would change the wrapper hash on every acquisition.
+        MOGO-017 Step 3 populated acquiredAt/decidedAt. This fixture is the
+        measurement that decided HOW: writing them into the wrapper would change
+        its hash on every acquisition, so unchanged content would mint a new
+        research artifact every six hours. The repair therefore excludes exactly
+        those two fields from the wrapper and keeps them on the full record.
+
+        The assertion below is unchanged and still true -- it is precisely the
+        hazard the exclusion avoids.
         """
         raw_identity = transport.content_hash(BODY_A)
         wrapper_now = ids.content_hash_of(

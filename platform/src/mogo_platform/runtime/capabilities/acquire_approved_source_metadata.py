@@ -55,6 +55,7 @@ import os
 from ...contracts import ids  # noqa: E402
 from .. import connector_authorization as connector_gate  # noqa: E402
 from .. import connector_transport as transport  # noqa: E402
+from .. import clock as clock_module  # noqa: E402
 from .. import errors as runtime_errors  # noqa: E402
 from .. import research_corpus  # noqa: E402
 from . import ingest_local_artifact as ingest  # noqa: E402
@@ -67,6 +68,34 @@ CAPABILITY_VERSION = "1.0.0"
 # ingestion capability already guards. Not a new location -- a subdirectory of
 # the one boundary that is already enforced.
 ACQUIRED_SUBDIR = "acquired"
+
+# MOGO-017 Step 3 -- volatile provenance, and why it is kept OUT of this document.
+#
+# `acquiredAt` and `decidedAt` are genuine provenance and are now populated. They
+# are recorded on the ACQUISITION RECORD, which is durable in the capability
+# result and in the append-only event log.
+#
+# They are PINNED TO NULL in the CONTENT-ADDRESSED wrapper below, because that
+# document's bytes are what research.ingest.local-artifact.v1 hashes to derive
+# the research artifact's identity. A wall-clock value inside it would change
+# that hash on EVERY acquisition, so unchanged external content would mint a new
+# research artifact every six hours and `duplicateStatus` would read NEW forever.
+# Measured, not assumed: two runs of identical bytes produce different wrapper
+# hashes the moment a timestamp is embedded.
+#
+# Pinned rather than DELETED, also measured: deleting the keys changes the
+# wrapper's shape and would mint one new artifact for content already ingested.
+# The wrapper therefore stays byte-identical to every artifact already committed.
+# A reader should take the wrapper's null here to mean "recording-time provenance
+# is not carried in the content-addressed artifact" -- the authoritative values
+# are on the acquisition record in the capability result and the event log.
+#
+# This is the same discipline the browser evidence layer already applies with
+# EVIDENCE_HASH_EXCLUDED_FIELDS: a field that describes the RECORDING must never
+# be able to change the identity of the thing RECORDED. Change detection is
+# unaffected either way -- it compares the raw external byte hash -- but artifact
+# dedupe is not, and dedupe is what this protects.
+VOLATILE_PROVENANCE_FIELDS = ("acquiredAt", "decidedAt")
 
 MANIFEST = {
     "capabilityId": CAPABILITY_ID,
@@ -112,6 +141,37 @@ def acquired_root(corpus=None):
 def _relative_intake_ref(content_hash):
     """The ref the ingestion capability expects: relative to INTAKE_ROOT."""
     return "%s/%s.json" % (ACQUIRED_SUBDIR, content_hash)
+
+
+def stable_acquisition_record(record):
+    """The acquisition record with VOLATILE provenance PINNED, not removed. Pure.
+
+    The fields are kept and set to None rather than deleted, and that choice is
+    deliberate rather than lazy. Deleting them changes the wrapper's shape, which
+    changes its bytes, which changes the research artifact's identity -- so the
+    very first post-repair acquisition would mint a SECOND artifact for external
+    content already ingested. Measured before choosing: the existing production
+    wrapper hashes d4e4ec82..., the key-deleted form 7cd5fd37....
+
+    Pinning keeps the wrapper byte-identical to every artifact already committed,
+    so the repair disturbs no existing evidence and creates no duplicate.
+
+    Everything else in the record is already stable for identical external
+    content -- the decision, the URLs, the status, the byte length, the content
+    hash -- so these two fields were the whole problem.
+    """
+    stable = dict(record)
+    for name in VOLATILE_PROVENANCE_FIELDS:
+        if name in stable:
+            stable[name] = None
+    decision = stable.get("decision")
+    if isinstance(decision, dict):
+        decision = dict(decision)
+        for name in VOLATILE_PROVENANCE_FIELDS:
+            if name in decision:
+                decision[name] = None
+        stable["decision"] = decision
+    return stable
 
 
 def preserve_raw(raw, content_hash, acquisition_record, corpus=None):
@@ -163,6 +223,12 @@ def execute(payload, corpus=None):
     resource_id = plain.get("resourceId")
     authorization_id = plain.get("authorizationId")
 
+    # ONE authoritative instant for this acquisition, read once and used for both
+    # provenance fields. Two clock reads would let the gate decision and the fetch
+    # disagree about when they happened, which is precisely the kind of small
+    # inconsistency an audit trail must not contain.
+    now_iso = clock_module.SystemClock().now_iso()
+
     # ── ACQUIRE. The gate runs inside transport.acquire(); no permit, no socket.
     outcome = transport.acquire({
         "sourceId": source_id,
@@ -171,7 +237,11 @@ def execute(payload, corpus=None):
         "capabilityId": CAPABILITY_ID,
         "capabilityVersion": CAPABILITY_VERSION,
         "operation": connector_gate.OPERATION_METADATA,
-    })
+        # Carried onto the connector decision by the gate, which already reads it
+        # from the request -- no gate change is needed, the value was simply
+        # never supplied.
+        "decidedAt": now_iso,
+    }, now_iso=now_iso)
 
     if not outcome.ok:
         # The failure class the transport assigned is preserved verbatim, so the
@@ -186,7 +256,8 @@ def execute(payload, corpus=None):
     content_hash = outcome.contentHash
 
     # ── PRESERVE raw bytes before any interpretation.
-    stored_path = preserve_raw(outcome.rawBytes, content_hash, acquisition_record,
+    stored_path = preserve_raw(outcome.rawBytes, content_hash,
+                               stable_acquisition_record(acquisition_record),
                                corpus)
     intake_ref = _relative_intake_ref(content_hash)
 
