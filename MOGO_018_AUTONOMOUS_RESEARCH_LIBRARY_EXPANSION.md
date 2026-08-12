@@ -1631,3 +1631,86 @@ No educator was authorized, no research was acquired, no strategy logic was touc
 persisted derived state, module, database, index, framework or cache was introduced.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+# MOGO-018 STEP 3E — UNATTENDED MULTI-SOURCE OPERATIONAL PROOF
+
+**Status: ⏳ PARTIALLY SATISFIED — the two-source unattended run has NOT yet occurred.**
+**Read-only audit. No code changed, no evidence manufactured, no cadence altered.**
+
+## 1. Starting state
+
+HEAD `d77f8409ca4666485a34beaf6236d89e36d27ede`, clean, 0 ahead / 0 behind.
+
+*(The brief quotes the Step 3D implementation commit as `c59e6e36cf53f3c7f00ac1df5afe2c442ca78915`.
+That object does not exist; the actual commit — recorded in this report and on `origin/mogo-main` —
+is `c59e6e36cf53f3c7f06ac1df5afe2c442ca78915`. A one-character transcription slip, noted for the
+audit trail.)*
+
+## 2. Is the scheduler genuinely running unattended? YES — proved
+
+`launchctl list` shows **`com.mogo.research.collect` loaded, last exit status 0**, and
+`~/Library/LaunchAgents/com.mogo.research.collect.plist` is installed.
+
+Its own log records **seven** invocations. Separating genuine unattended launchd firings from
+development runs by alignment to the committed cadence:
+
+| issuedAt (UTC) | local (EDT) | Unattended? | Outcome |
+|---|---|---|---|
+| 2026-08-11T23:24:07.841Z | 19:24:07 | no — dev run | ACCEPTED |
+| 2026-08-11T23:26:05.160Z | 19:26:05 | no — dev run | ACCEPTED |
+| 2026-08-11T23:26:21.029Z | 19:26:21 | no — dev run | DUPLICATE SUPPRESSED |
+| 2026-08-11T23:28:00.715Z | 19:28:00 | no — dev run | ACCEPTED |
+| 2026-08-12T02:12:00.595Z | 22:12:00 | no — dev run | ACCEPTED |
+| **2026-08-12T04:00:00.755Z** | **00:00:00** | **YES** | DUPLICATE SUPPRESSED (window 82708 already consumed) |
+| **2026-08-12T10:00:01.613Z** | **06:00:01** | **YES** | **ACCEPTED → acquired → UNCHANGED** |
+
+**Two genuine unattended firings, both within ~1.6 s of the scheduled instant, both behaving
+correctly** — one correctly suppressed as a repeat inside an already-consumed window, one performing
+a real bounded acquisition and classifying it `UNCHANGED`.
+
+## 3. What is missing, stated exactly
+
+**No unattended scheduled firing has yet run the TWO-ENTRY (ALEX + TJR) configuration.**
+
+The ordering is the whole reason:
+
+| Event | UTC | Window bucket |
+|---|---|---|
+| Last unattended firing (ALEX only — TJR not yet authorized) | 2026-08-12T10:00:01Z | 82709 |
+| **TJR authorized + second entry committed (Step 3C)** | ~2026-08-12T13:47Z | — |
+| Manual Step 3C two-source proof | 2026-08-12T13:47:24Z | **82710** |
+| Audit performed | 2026-08-12T15:01Z | 82710 |
+
+TJR entered the committed set **after** the last scheduled firing. The two-source path has therefore
+been proved **manually** (Step 3C) and **in fixtures** (Steps 3C/3D), but **never unattended**.
+
+## 4. The exact mechanical closeout gate
+
+**The next firing will NOT satisfy the gate, and pretending otherwise would be wrong.**
+
+The 12:00-local firing occurs at **16:00Z, which is still window bucket 82710** — the same bucket the
+manual Step 3C proof already consumed. By the Step 3B invariant that is the *same request*, so it
+will be **DUPLICATE SUPPRESSED for both streams and perform no acquisition**. That is the collection
+window working exactly as designed, and it is not evidence of two-source scheduled collection.
+
+**The first firing in a fresh window is 18:00 local = 2026-08-12T22:00Z, window bucket 82711.**
+
+### GATE-3E — what that run must mechanically show
+
+1. `platform/runtime/logs/scheduled-collection.out.log` gains a block headed
+   **`COLLECT WINDOW -- 2 approved entries, at most one acquisition each`** with
+   `issuedAt` ≈ `2026-08-12T22:00:0Xz` and `window=W|21600|82711` on **both** entries.
+2. **Exactly two** acquisition requests in that window — one per committed entry, no third.
+3. `capability_results` grows from **9 to 11** rows: one `SRC|youtube|c785970cc458 / hb7ot1_szWI`
+   and one `SRC|youtube|11cd2542b5b0 / 8qwEmE1DwYw`.
+4. Alex G classifies `UNCHANGED` or `CHANGED` **against Alex G's own prior identity**
+   (`b668d4209abb…`); TJR classifies `UNCHANGED` or `CHANGED` **against TJR's own**
+   (`0cc6cf59e6d1…`). Neither compares against the other.
+5. `mogo_runtime corpus` still reports `comparisonStreamMismatches=0` and `historyChainBreaks=0`
+   on both streams.
+6. No source outside the committed set appears in the log or in `capability_results`.
+
+**Cadence was NOT changed to make this happen sooner**, and no scheduled event was manufactured or
+substituted. Everything else in the milestone closeout proceeds now.
