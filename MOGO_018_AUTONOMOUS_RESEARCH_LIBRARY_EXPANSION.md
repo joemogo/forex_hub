@@ -1714,3 +1714,73 @@ window working exactly as designed, and it is not evidence of two-source schedul
 
 **Cadence was NOT changed to make this happen sooner**, and no scheduled event was manufactured or
 substituted. Everything else in the milestone closeout proceeds now.
+
+---
+
+# MOGO-018 STEP 3F — END-TO-END RESEARCH PIPELINE AUDIT
+
+**Status: ✅ COMPLETE — GREEN.**
+**One test added. No production code changed.**
+
+## 1. The audited path
+
+```
+approved source → authorization → scheduled collection spec → connector boundary
+→ acquisition → change detection → accepted observation → immutable artifact
+→ research-library bridge → corpus observability
+```
+
+## 2. Audit method — reuse first, add only a genuine gap
+
+Every required proof was first sought in the **existing** suites. Seven of eight were already
+established. **One was genuinely missing** and only that one was added.
+
+| # | Required proof | Established by | New? |
+|---|---|---|---|
+| 1 | **Identifier continuity across the whole path** | `TestIdentifierContinuityAcrossThePipeline` | ✅ **ADDED** |
+| 2 | Fail-closed behaviour | `test_runtime_connector_authorization` (36) — unknown source, missing/malformed authorization, malformed resource, forbidden scheme/host; `test_runtime_scheduled_collection` (82) — whole-window refusal | existing |
+| 3 | Caller URL substitution impossible | `test_no_caller_controlled_url_is_accepted`, `test_caller_url_substitution_is_refused_for_both_sources`, `test_one_source_cannot_borrow_the_others_approved_url` | existing |
+| 4 | No cross-educator contamination | `test_runtime_two_source_isolation` (31) — both directions, per-stream dedupe, failure isolation | existing |
+| 5 | Unchanged observations do not inflate artifact counts | `test_no_artifact_is_double_counted` | existing |
+| 6 | Library is derived, not a second source of truth | `test_runtime_research_library` (29) — writes nothing, two reads byte-identical | existing |
+| 7 | Corpus reporting read-only, no strategy verdict | `test_runtime_corpus_report` (27) — no network, no acquisition, no write, no verdict word, no float | existing |
+
+**Nothing was generalised, no framework was introduced, and no production code changed.**
+
+## 3. The one genuine gap, and why it mattered
+
+Every *hop* had a test; the unbroken *chain* did not. A pipeline can preserve identity in each stage
+independently and still lose it at a **seam** — and a lost identity is precisely how one educator's
+material would end up in another's corpus.
+
+`test_the_committed_entry_identity_reaches_the_corpus_report` walks **both** production streams
+through **eight hops**, asserting the same `(sourceId, resourceId)` and the same `authorizationId`
+at every one:
+
+1. committed collection entry — the only place a stream is named
+2. approved destination registry — where the URL comes from
+3. connector gate decision — `permitted`, `sourceId`, `approvedUrl`
+4. stored acquisition record — `resourceId`, `authorizationId`, `connectorDecision.sourceId`, and
+   `finalUrl == the derived URL` (the fetched URL is the derived one, unaltered)
+5. change detection — `comparisonStream == {sourceId, resourceId}` of **this** stream
+6. immutable artifact — `RART|…` id and a non-empty `intakeRef`
+7. Step 2 bridge entry — same resource, **same `artifactId`**, same authorization
+8. Step 3D corpus stream — same resource, artifact present, same authorization
+
+A companion test proves the chain **cannot start** for an unapproved source: `derive_destination`
+raises, and the source is absent from both the registry and the committed set.
+
+**Verified non-vacuous by mutation:** making the bridge report a wrong `artifactId` fails the
+continuity test for **both** streams at hop 7. The module was restored byte-for-byte.
+
+## 4. Results
+
+| Gate | Result |
+|---|---|
+| Pipeline-relevant suites | connector-auth 36 · transport 20 · scheduling 82 · change-detection 54 + 28 · bridge 29 · isolation 31 · corpus 27 |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** (was 1,047) |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160 · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants |
+| Runtime integrity | ✅ INTEGRITY OK |
+| Acquisitions performed by the audit | ✅ **none** — `capability_results` still **9 rows** |
+| `index.html`, `docs/`, `platform/scheduling` | ✅ byte-unchanged |

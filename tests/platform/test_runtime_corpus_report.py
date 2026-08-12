@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "platform", "src"))
 
 from mogo_platform.runtime import change_detection as cd            # noqa: E402
 from mogo_platform.runtime import connector_authorization as ca     # noqa: E402
+from mogo_platform.runtime import errors as runtime_errors           # noqa: E402
 from mogo_platform.runtime import research_library as library       # noqa: E402
 from mogo_platform.runtime import scheduled_collection as sched     # noqa: E402
 
@@ -430,6 +431,95 @@ class TestEarlierStepsAreUnchanged(CorpusReportCase):
                 self.assertEqual(stream["integrity"]["historyChainBreaks"], 0)
                 self.assertEqual(
                     stream["integrity"]["acceptedObservationsWithoutArtifact"], 0)
+
+
+# ---------------------------------------------------------------------------
+# Step 3F: the identifier survives every hop of the pipeline
+# ---------------------------------------------------------------------------
+
+class TestIdentifierContinuityAcrossThePipeline(CorpusReportCase):
+    """The ONE proof the suite was missing before Step 3F.
+
+    Every hop had a test; the unbroken CHAIN did not. This walks a single stream
+    from the committed collection entry to the corpus report and asserts the SAME
+    (sourceId, resourceId) and the SAME authorizationId at every hop -- because a
+    pipeline that preserves identity in each stage independently can still lose it
+    at a seam, and a lost identity is exactly how one educator's material would
+    end up in another's corpus.
+    """
+
+    def test_the_committed_entry_identity_reaches_the_corpus_report(self):
+        self.two_streams()
+        report = self.report()
+        entries = {e["sourceId"]: e for e in committed_entries()}
+        library_entries = {e["sourceId"]: e for e in self.library_entries()}
+
+        for source_id, expected_resource, expected_auth in (
+                (APPROVED_SOURCE, APPROVED_RESOURCE, AUTHORIZATION_ID),
+                (TJR_SOURCE, TJR_RESOURCE, TJR_AUTH)):
+            with self.subTest(source=source_id):
+                # 1. committed collection entry -- the only place a stream is named
+                entry = entries[source_id]
+                self.assertEqual(entry["resourceId"], expected_resource)
+
+                # 2. the destination registry, which is where the URL comes from
+                self.assertIn(source_id, ca.APPROVED_DESTINATIONS)
+                url, _ = ca.derive_destination(source_id, entry["resourceId"])
+
+                # 3. the connector gate's own decision
+                decision = ca.evaluate({
+                    "sourceId": source_id,
+                    "authorizationId": entry["authorizationId"],
+                    "operation": entry["operation"],
+                    "resourceId": entry["resourceId"]})
+                self.assertTrue(decision.permitted, decision.reason)
+                self.assertEqual(decision.sourceId, source_id)
+                self.assertEqual(decision.approvedUrl, url)
+
+                # 4. the acquisition record the runtime actually stored
+                results = [r for r in self.recorded_results()
+                           if r.get("sourceId") == source_id]
+                self.assertTrue(results)
+                result = results[-1]
+                self.assertEqual(result["resourceId"], entry["resourceId"])
+                self.assertEqual(result["authorizationId"], expected_auth)
+                self.assertEqual(result["connectorDecision"]["sourceId"], source_id)
+                self.assertEqual(result["connectorDecision"]["approvedUrl"], url)
+                self.assertEqual(result["finalUrl"], url,
+                                 "the fetched URL is the derived one, unaltered")
+
+                # 5. change detection compared THIS stream against itself
+                self.assertEqual(result["changeDetection"]["comparisonStream"],
+                                 {"sourceId": source_id,
+                                  "resourceId": entry["resourceId"]})
+
+                # 6. the immutable artifact reference
+                artifact_id = result["ingestion"]["artifactId"]
+                self.assertTrue(artifact_id.startswith("RART|"))
+                self.assertTrue(result["intakeRef"])
+
+                # 7. the Step 2 bridge entry
+                bridge = library_entries[source_id]
+                self.assertEqual(bridge["resourceId"], entry["resourceId"])
+                self.assertEqual(bridge["artifactId"], artifact_id)
+                self.assertEqual(bridge["authorizationId"], expected_auth)
+
+                # 8. the Step 3D corpus report stream
+                stream = self.stream(report, source_id)
+                self.assertEqual(stream["resourceId"], entry["resourceId"])
+                self.assertIn(artifact_id, stream["artifactIds"])
+                self.assertEqual(stream["authorization"]["authorizationId"],
+                                 expected_auth)
+
+    def test_the_chain_cannot_start_for_an_unapproved_source(self):
+        """Fail-closed at hop 2, before any of the rest exists."""
+        for stranger in ("SRC|youtube|ICTICTICTIC", "SRC|youtube|CRTCRTCRTCR"):
+            with self.subTest(source=stranger):
+                self.assertNotIn(stranger, ca.APPROVED_DESTINATIONS)
+                with self.assertRaises(runtime_errors.PlatformError):
+                    ca.derive_destination(stranger, TJR_RESOURCE)
+                self.assertNotIn(stranger,
+                                 {e["sourceId"] for e in committed_entries()})
 
 
 if __name__ == "__main__":
