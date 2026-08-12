@@ -27,6 +27,10 @@ SUBCOMMANDS
     audit     complete ordered activity record
     failures  what failed, when, and why -- Architecture section 23's operator
               view, plus the A-5 and connector gates
+    library   MOGO-018 Step 2: the DERIVED research library index (read-only)
+    corpus    MOGO-018 Step 3D: what the autonomous research system possesses,
+              by source and strategy family -- counts and timestamps only, no
+              verdict, no network, no acquisition, no write
     verify    integrity checks alone; non-zero exit on any finding
     reset     delete runtime state, or rebuild the index from the log alone
     demo      the end-to-end demonstration required by MOGO-011
@@ -477,6 +481,122 @@ def cmd_collect(args):
     return 2 if rejected else 0
 
 
+def cmd_corpus(args):
+    """MOGO-018 Step 3D: what the autonomous research system possesses.
+
+    A READ, and nothing else. No network, no acquisition, no trading action, no
+    write -- generating this report cannot change what it describes, and running
+    it twice over unchanged evidence produces identical output.
+
+    IT REPORTS FACTS AND MAKES NO JUDGEMENT. Counts, timestamps and presence
+    checks only. Nothing here says a corpus is ready, mature, valid, good, bad
+    or profitable, and there is no field in which such a verdict could be put.
+    """
+    with open(os.path.abspath(research_library.ATTRIBUTION_PATH), "r",
+              encoding="utf-8") as handle:
+        attribution = json.load(handle)
+    paths, connection = _open_readonly(args)
+    try:
+        report = research_library.corpus_report(connection, attribution)
+        if getattr(args, "json", False):
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0
+
+        print("MOGO autonomous research corpus -- READ-ONLY OBSERVABILITY")
+        print("  lane=%s  promotionStatus=%s" % (report["lane"],
+                                                 report["promotionStatus"]))
+        totals = report["totals"]
+        print("  streams=%d (attributed %d, unattributed %d)  "
+              "acceptedObservations=%d  immutableArtifacts=%d"
+              % (totals["streams"], totals["attributedStreams"],
+                 totals["unattributedStreams"], totals["acceptedObservations"],
+                 totals["artifacts"]))
+
+        print("\n  ── BY STRATEGY FAMILY (deterministic counts, not a verdict) ──")
+        for bucket in report["corpora"]:
+            print("  %s   trader=%s" % (bucket["strategyFamilyId"],
+                                        bucket["traderId"] or "(none)"))
+            print("      approved resources=%d  accepted observations=%d  "
+                  "immutable artifacts=%d  distinct content identities=%d"
+                  % (bucket["distinctApprovedResources"],
+                     bucket["acceptedObservations"], bucket["artifacts"],
+                     bucket["distinctContentIdentities"]))
+            print("      first=%d  unchanged=%d  changed=%d  "
+                  "classification not recorded=%d"
+                  % (bucket["firstObservationCount"],
+                     bucket["unchangedObservations"],
+                     bucket["changedObservations"],
+                     bucket["classificationNotRecorded"]))
+            print("      observed %s -> %s" % (bucket["observedFrom"] or "(none)",
+                                               bucket["observedTo"] or "(none)"))
+            print("      acquisition provenance: complete=%d incomplete=%d   "
+                  "integrity=%s"
+                  % (bucket["provenanceCompleteObservations"],
+                     bucket["provenanceIncompleteObservations"],
+                     bucket["integrityStatus"]))
+
+        print("\n  ── BY STREAM ──")
+        for stream in report["streams"]:
+            print("  %s / %s" % (stream["sourceId"], stream["resourceId"]))
+            print("      trader=%s  families=%s  [%s]"
+                  % (stream["traderId"] or "(none)",
+                     ",".join(stream["strategyFamilyIds"]) or "(none)",
+                     stream["attributionStatus"]))
+            auth = stream["authorization"]
+            print("      authorization=%s%s  operations=%s"
+                  % (auth["status"],
+                     "" if auth["problem"] is None else " (%s)" % auth["problem"],
+                     ",".join(auth["permittedOperations"]) or "none"))
+            obs = stream["observations"]
+            print("      observations: recorded=%d accepted=%d notAccepted=%d"
+                  % (obs["recorded"], obs["accepted"], obs["notAccepted"]))
+            counts = stream["classifications"]
+            print("      classifications: FIRST_OBSERVATION=%d UNCHANGED=%d "
+                  "CHANGED=%d NOT_RECORDED=%d"
+                  % (counts["FIRST_OBSERVATION"], counts["UNCHANGED"],
+                     counts["CHANGED"],
+                     counts[research_library.CLASSIFICATION_NOT_RECORDED]))
+            print("      latest: %s at %s"
+                  % (stream["latestClassification"] or "(not recorded)",
+                     stream["lastAcceptedAt"] or "(none)"))
+            print("      latest content identity=%s (%s)"
+                  % ((stream["latestContentIdentity"] or "(none)")[:16] + "...",
+                     stream["contentIdentityBasis"]))
+            print("      immutable artifacts=%d  %s"
+                  % (stream["artifactCount"],
+                     ",".join(stream["artifactIds"]) or "(none)"))
+            prov = stream["acquisitionProvenance"]
+            print("      acquisition provenance: complete=%d incomplete=%d "
+                  "networkAccess=%d"
+                  % (prov["completeObservations"], prov["incompleteObservations"],
+                     prov["networkAccessObservations"]))
+            if prov["missingFields"]:
+                print("        missing on some observations: %s"
+                      % (", ".join(prov["missingFields"]),))
+            integrity = stream["integrity"]
+            print("      integrity=%s  comparisonStreamMismatches=%d  "
+                  "historyChainBreaks=%d  acceptedWithoutArtifact=%d"
+                  % (integrity["status"], integrity["comparisonStreamMismatches"],
+                     integrity["historyChainBreaks"],
+                     integrity["acceptedObservationsWithoutArtifact"]))
+
+        print("\n  NOTE ON PROVENANCE. Acquisition provenance above is derived "
+              "from the authoritative")
+        print("  acquisition records, NOT from the research-artifact wrapper. "
+              "The wrapper carries")
+        print("  acquisitionPerformed=false / networkAccessPerformed=false "
+              "because those fields")
+        print("  describe the INGEST step; they are not a statement about "
+              "whether the governed")
+        print("  acquisition opened a socket. See MOGO-018 Step 3D.")
+        print("\n  presence in a corpus is ORGANIZATION, NOT VALIDATION -- no "
+              "number above is a")
+        print("  claim that any strategy is ready, valid or profitable.")
+        return 0
+    finally:
+        connection.close()
+
+
 def cmd_library(args):
     """MOGO-018: the derived research library index.
 
@@ -911,6 +1031,11 @@ def build_parser():
         "library", help="the DERIVED research library index (read-only)")
     library.add_argument("--json", action="store_true")
 
+    corpus = subparsers.add_parser(
+        "corpus", help="what the autonomous research system possesses, by "
+                       "source and strategy family (read-only)")
+    corpus.add_argument("--json", action="store_true")
+
     subparsers.add_parser("verify", help="integrity checks only")
 
     reset = subparsers.add_parser("reset", help="delete state, or rebuild the index")
@@ -929,6 +1054,7 @@ HANDLERS = {
     "audit": cmd_audit, "verify": cmd_verify, "reset": cmd_reset, "demo": cmd_demo,
     "failures": cmd_failures, "authorize": cmd_authorize, "review": cmd_review,
     "policy": cmd_policy, "collect": cmd_collect, "library": cmd_library,
+    "corpus": cmd_corpus,
 }
 
 

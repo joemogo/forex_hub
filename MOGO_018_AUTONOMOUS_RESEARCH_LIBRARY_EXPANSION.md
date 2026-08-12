@@ -1362,3 +1362,272 @@ No forward campaign was re-baselined, no paper trade was forced, the forward bro
 or restarted, and no ALEX trading rule, parameter or protected function changed.
 
 **ICT and CRT REMAIN NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+# MOGO-018 STEP 3D — READ-ONLY AUTONOMOUS RESEARCH CORPUS OBSERVABILITY
+
+**Status: ✅ COMPLETE. Not committed — held for review.**
+**PAPER TRADING ONLY — live-money trading remains unauthorized.**
+
+## 1. Starting state
+
+HEAD `ebb7690c864a581ddf43df38d9e2ac84b5876542`, clean, 0 ahead / 0 behind `origin/mogo-main`.
+(Local branch is named `main` and tracks `origin/mogo-main` — the same convention as Steps 3A–3C.)
+
+## 2. Implementation — one function and one subcommand
+
+**No new module, no new table, no new file, no second index.** The report is a **second derived view
+over the same rows `entries()` already walks**, added to `research_library.py` because it needs
+exactly what the Step 2 bridge needs — the acquisition history and the resolved attribution — and a
+separate module would have duplicated that walk.
+
+| File | Change |
+|---|---|
+| `platform/src/mogo_platform/runtime/research_library.py` | `corpus_report()` + `_corpora()` and four small helpers |
+| `platform/src/mogo_platform/runtime/cli.py` | new read-only `corpus` subcommand (`--json`) |
+| `tests/platform/test_runtime_corpus_report.py` | **new**, 25 tests |
+| `tests/run_platform_tests.sh` | registers the new suite |
+
+`entries()` and `corpus_summary()` were **not modified**. Proved by running `library --json` with the
+change stashed and unstashed: **byte-identical**.
+
+## 3. Exact derived fields
+
+**Per stream** — `sourceId`, `resourceId`, `traderId`, `strategyFamilyIds`, `attributionStatus`,
+`authorization {status, authorizationId, policyStatus, permittedOperations, problem}`,
+`observations {recorded, accepted, notAccepted}`,
+`classifications {FIRST_OBSERVATION, UNCHANGED, CHANGED, NOT_RECORDED}`,
+`firstAcceptedAt`, `lastAcceptedAt`, `latestClassification`, `latestContentIdentity` (+ basis +
+algorithm), `distinctContentIdentities`, `artifactIds`, `artifactCount`,
+`acquisitionProvenance {completeObservations, incompleteObservations, missingFields,
+networkAccessObservations}`, `integrity {comparisonStreamMismatches, historyChainBreaks,
+acceptedObservationsWithoutArtifact, status, checks}`, `lane`, `promotionStatus`.
+
+**Per strategy family** — source ids, distinct approved resources, accepted observations, first /
+unchanged / changed / not-recorded counts, artifacts, distinct content identities, `observedFrom` →
+`observedTo`, provenance complete/incomplete, integrity status.
+
+**Two counting rules that matter.** Artifacts are counted by **distinct identifier**, never per
+observation — eight acquisitions of unchanged content are **one** artifact, and counting observations
+would inflate precisely the corpus that is behaving correctly. Accepted observations are counted from
+the MOGO-017 acceptance contract (`accepted_identity_from_acquisition`), reused rather than restated,
+so the report and the detector cannot disagree about what counts as accepted.
+
+## 4. Corpus separation proof
+
+Two independent integrity checks run per row, both derived from records that already exist:
+
+- **`comparisonStreamMismatches`** — every row's own `changeDetection.comparisonStream` must equal
+  its own `(sourceId, resourceId)`. A row compared against another source is counted, not assumed
+  away.
+- **`historyChainBreaks`** — each accepted row's `priorContentIdentity` must equal the previous
+  accepted identity **of that same stream**. This chain cannot hold if two sources ever shared
+  history.
+
+Production result: **0 and 0 on both streams.**
+
+## 5. The live report
+
+```
+MOGO autonomous research corpus -- READ-ONLY OBSERVABILITY
+  lane=RESEARCH  promotionStatus=NOT_A_TRADING_RULE
+  streams=2 (attributed 2, unattributed 0)  acceptedObservations=9  immutableArtifacts=2
+
+  ── BY STRATEGY FAMILY (deterministic counts, not a verdict) ──
+  SF|ALEX_G|SUPPORT_RESISTANCE_V1   trader=ALEX_G
+      approved resources=1  accepted observations=8  immutable artifacts=1  distinct content identities=1
+      first=0  unchanged=5  changed=0  classification not recorded=3
+      observed 2026-08-11T23:24:08.227Z -> 2026-08-12T13:47:24.054Z
+      acquisition provenance: complete=3 incomplete=5   integrity=OK
+  SF|TJR|SESSION_ZONE_REACTION   trader=TJR
+      approved resources=1  accepted observations=1  immutable artifacts=1  distinct content identities=1
+      first=1  unchanged=0  changed=0  classification not recorded=0
+      observed 2026-08-12T13:47:24.196Z -> 2026-08-12T13:47:24.196Z
+      acquisition provenance: complete=1 incomplete=0   integrity=OK
+```
+
+Per stream, both `integrity=OK  comparisonStreamMismatches=0  historyChainBreaks=0
+acceptedWithoutArtifact=0`, both `authorization=AUTHORIZED operations=metadata`.
+
+**The report immediately surfaced two true facts that were previously invisible without reading raw
+JSON:**
+
+1. **Alex G has 8 accepted observations but only 1 immutable artifact** — correct, because the content
+   has never changed and ingestion deduplicates. A naive index would have implied 8 artifacts.
+2. **3 of Alex G's observations carry no classification and 5 have incomplete acquisition
+   provenance** — these are the rows written before MOGO-017 and before MOGO-017 Step 3 populated
+   `acquiredAt` / `decidedAt`. They are reported in their own `NOT_RECORDED` bucket and as
+   `missing: acquiredAt, connectorDecision.decidedAt`, **not folded into `UNCHANGED`** where they
+   would have looked tidier and been wrong.
+
+## 6. Provenance semantics — the Step 3C backlog item, handled without touching evidence
+
+The Step 3C finding was that the research-artifact **wrapper** carries `acquisitionPerformed: false`
+and `networkAccessPerformed: false` even when the governed acquisition genuinely opened a socket,
+because those fields describe the **ingest** step.
+
+Truthful reporting required distinguishing the two, so — exactly as the brief directs — the
+distinction is **derived from authoritative existing records, not by mutating evidence**:
+
+- **Acquisition provenance** is read from `capability_results`, the authoritative record of what the
+  connector and transport actually did. `networkAccessPerformed` is **derived as a fact** (a recorded
+  HTTP status *and* a final URL mean a socket was opened and answered), never copied from a wrapper.
+- The wrapper's own fields are **never read** by this report. A test asserts the Step 3D code
+  contains no `.get("acquisitionPerformed")` / `.get("networkAccessPerformed")`.
+- The CLI prints an explicit note so an operator cannot misread the wrapper later.
+
+Result: the report correctly shows `networkAccess=8` for Alex G and `networkAccess=1` for TJR, while
+**no historical immutable evidence was rewritten**. The underlying wrapper wording remains a genuine
+backlog item — see §10.
+
+## 7. Corpus maturity — facts only, and no place to put a verdict
+
+No score, grade, rating or readiness label exists. Maturity is expressed **only** as: distinct
+approved resources, accepted observations, changed observations, observation time span, provenance
+completeness, integrity state.
+
+A test serializes the whole report and asserts that **none** of
+`ready · mature · valid · invalid · profitable · unprofitable · good · bad · score · grade · rating ·
+recommend · promising` appears anywhere in it, and that no field holds a float — because a float here
+would be a score. The point is that there is **nowhere to put a judgement**, not that one was omitted
+today.
+
+## 8. Tests — 25 added, all 16 required proofs covered
+
+| # | Proof | Where |
+|---|---|---|
+| 1 | ALEX and TJR are separate corpora | `test_alex_and_tjr_appear_as_separate_corpora` |
+| 2 | Stream counts deterministic | `test_stream_counts_are_deterministic_and_correct` |
+| 3 | TJR FIRST_OBSERVATION counted only for TJR | `test_tjr_first_observation_is_counted_only_for_tjr` |
+| 4 | Alex G history stays under ALEX | `test_alex_prior_observations_remain_only_under_alex` |
+| 5 | No artifact double-counted | `test_no_artifact_is_double_counted` |
+| 6 | Attribution explicit | `test_strategy_family_attribution_is_explicit` |
+| 7 | Unknowns surfaced, not guessed | 3 tests: unattributed stream, missing classification, incomplete provenance |
+| 8 | Immutable evidence never modified | `test_immutable_evidence_is_never_modified` (byte digests before/after) |
+| 9 | No network access | `test_generation_performs_no_network_access` (socket call counter) |
+| 10 | No acquisition | `test_generation_performs_no_acquisition_and_writes_no_row` |
+| 11 | No trading action | `test_generation_takes_no_trading_or_promotion_path` (AST scan, docstrings stripped) |
+| 12 | Repeated generation deterministic | `test_repeated_generation_is_byte_identical` |
+| 13 | Step 2 bridge unchanged | `test_step_2_bridge_semantics_are_unchanged` + byte-identical `library --json` |
+| 14 | Step 3A fail-closed | `test_step_3a_authorization_remains_fail_closed` |
+| 15 | Step 3B bounded collection unchanged | `test_step_3b_bounded_collection_is_unchanged` |
+| 16 | Step 3C two-source config unchanged | `test_step_3c_two_source_configuration_is_unchanged` |
+
+**Verified non-vacuous by mutation.** Counting artifacts per observation instead of per distinct
+identifier breaks exactly `test_no_artifact_is_double_counted`; making unattributed material silently
+inherit the ALEX family breaks exactly
+`test_an_unattributed_stream_is_surfaced_rather_than_guessed`. The module was restored byte-for-byte
+after each.
+
+## 9. Integrity results
+
+| Gate | Result |
+|---|---|
+| Step 3D focused suite | ✅ **25 / 25** |
+| Platform suite | ✅ **25 suites · 1,047 tests · 0 failures** (was 24 · 1,022) |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160 · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants |
+| Campaign C1 | ✅ 33 / 33 (committed attestation, byte-unchanged) |
+| Runtime integrity (`verify`) | ✅ INTEGRITY OK |
+| Step 2 bridge output | ✅ **byte-identical** before/after |
+| Acquisitions performed | ✅ **none** — `capability_results` still **9 rows** |
+| Immutable research evidence · Knowledge Library · campaigns · strategy-fidelity · `index.html` · `platform/scheduling` | ✅ all **byte-unchanged** |
+| Scheduler, cadence, plist, `MAX_COLLECTION_ENTRIES` | ✅ untouched |
+| Approved sources / collection entries | ✅ still exactly **two** and **two** |
+
+**Forward paper evidence, including the operator-observed closed AUD/JPY trade, was neither read nor
+touched.** This step adds a read-only view over the *research* lane only; it has no code path to the
+forward campaign, to paper-trading execution, or to `index.html`. The live forward browser was not
+reloaded or restarted and no paper trade was forced.
+
+## 10. Remaining limitations — stated, not hidden
+
+1. **`integrity` checks recorded-record consistency only.** It does **not** re-hash corpus files on
+   disk. The field carries that caveat inline (`checks: "...corpus files on disk are NOT re-hashed by
+   this report"`) so nobody reads it as a filesystem verification.
+2. **The artifact wrapper still says `acquisitionPerformed: false`.** Step 3D routes around it
+   truthfully but does not fix it. Fixing it means either a new wrapper schema version for *future*
+   artifacts or an ADR accepting the wording — **historical immutable evidence must not be
+   rewritten**.
+3. **`claimedSourceTitle` is null for anything the scheduler acquires** (Step 3C §16). The report does
+   not surface titles at all, so this is invisible here rather than solved.
+4. **Failed acquisitions are counted but not itemised.** `notAccepted` is a count; the report does not
+   yet list why each failed. Zero in production today.
+5. **One resource per source.** Both corpora have exactly one approved resource, so the
+   multi-resource aggregation paths are proved only by fixtures, not by production data.
+
+## 11. Recommendation for the next research-library step
+
+**Let the schedule run before adding anything.** Two facts the corpus report now makes visible argue
+for patience rather than expansion: TJR has exactly **one** observation, and the interesting
+production behaviour — an independent `CHANGED` on one stream while the other holds `UNCHANGED` —
+still has not occurred outside fixtures. A few unattended windows will produce it or prove it does
+not, and either outcome is worth more than a third educator.
+
+When work does resume, the highest-value item is **limitation 2**: decide, by ADR, whether the
+artifact wrapper gets a corrected schema version for future artifacts or whether the ingest-step
+wording is formally accepted. It is the only item on this list that touches the meaning of immutable
+evidence, and it will only get more expensive as the corpus grows.
+
+**No educator was authorized. No research was acquired. ICT and CRT REMAIN UNAUTHORIZED.**
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+# ✅ STEP 3D CHECKPOINT — COMMITTED
+
+| | |
+|---|---|
+| Reviewed | approved by ChatGPT/operator |
+| **Implementation commit** | **`PENDING`** |
+| Commit message | `MOGO-018 Step 3D: read-only autonomous research corpus observability` |
+| Pushed to | `origin/mogo-main` |
+| Starting checkpoint | `ebb7690c864a581ddf43df38d9e2ac84b5876542` (Step 3C) |
+
+## Pre-commit simplification
+
+Two dead-code reductions were made before commit, neither weakening a proof:
+
+- `_acquisition_provenance()` returned **eight** fields of which only three were ever consumed
+  (`complete`, `missingFields`, `networkAccessPerformed`). The five unused ones — `acquiredAt`,
+  `decidedAt`, `authorizationId`, `connectorPermitted`, `httpStatus` — were computed per row and
+  discarded, so they were removed. **−9 lines.**
+- The test file carried an unused `SPEC_PATH` constant and one filler assertion
+  (`assertIsInstance(source, str)`) that tested nothing; both removed.
+
+All 25 focused tests still pass unchanged after both reductions.
+
+## Checkpoint verification
+
+| Check | Result |
+|---|---|
+| Files changed | ✅ **5 only** — 4 modified + 1 new test suite |
+| Trading / forward-campaign / scheduler / connector / capability code | ✅ **byte-unchanged** (`index.html`, `docs/campaigns`, `docs/evidence`, `docs/strategy-fidelity`, `docs/trader-intelligence`, `platform/scheduling`, `capabilities/`, `connector_authorization.py`, `change_detection.py`, `scheduled_collection.py`, `orchestrator.py`) |
+| Report is read-only | ✅ `capability_results` **9 → 9**; runtime database digest **identical** across two report runs |
+| ALEX / TJR separation | ✅ 2 distinct corpora, no shared strategy family, no shared artifact id |
+| `comparisonStreamMismatches` | ✅ **0** on both streams |
+| `historyChainBreaks` | ✅ **0** on both streams |
+| `acceptedObservationsWithoutArtifact` | ✅ **0** on both streams |
+| Step 3D focused suite | ✅ **25 / 25** |
+| Platform suite | ✅ **25 suites · 1,047 tests · 0 failures · 0 errors** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160 · 0 failed · 0 execution errors** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants byte-identical |
+| Runtime integrity (`verify`) | ✅ INTEGRITY OK |
+| Immutable research evidence + Knowledge Library | ✅ byte-unchanged |
+| Approved sources / collection entries | ✅ still **two** and **two**; ICT and CRT unauthorized |
+| Scheduler cadence | ✅ unchanged, `00:00,06:00,12:00,18:00` |
+
+## Truthful findings preserved verbatim
+
+| Finding | Reported value |
+|---|---|
+| Accepted observations ≠ immutable artifacts | Alex G: **8 accepted observations, 1 artifact** |
+| Pre-MOGO-017 gaps not inferred | `NOT_RECORDED: 3` (never folded into `UNCHANGED: 5`); provenance `complete=3 incomplete=5`, `missing: acquiredAt, connectorDecision.decidedAt` |
+| Integrity scope is recorded-record consistency | carried inline on every stream: *"recorded-record consistency only; corpus files on disk are NOT re-hashed by this report"* |
+| Artifact-wrapper wording remains a backlog item | report derives `networkAccessObservations = 8` from the authoritative record while the wrapper still says `networkAccessPerformed: false`; **no historical evidence repaired** |
+
+No educator was authorized, no research was acquired, no strategy logic was touched, and no
+persisted derived state, module, database, index, framework or cache was introduced.
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
