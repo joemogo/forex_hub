@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "mogo.research-library-attribution.v1",
+  "note": "MOGO-018 Step 2. The ONE thing the research library bridge cannot derive: which educator a governed acquisition source belongs to. Everything else in a library entry is derived from authoritative existing data. This file is a DERIVED-INDEX INPUT, not evidence: it attributes, it does not assert that any strategy is valid or that any material has become a trading rule. Adding an entry here is a visible, reviewed edit -- it is not configuration and cannot be supplied at runtime.",
+  "attributions": [
+    {
+      "sourceId": "SRC|youtube|c785970cc458",
+      "sourceIdDerivation": {
+        "provider": "youtube",
+        "channelUrl": "https://www.youtube.com/@fxalexg__",
+        "evidenceRef": "docs/strategy-fidelity/audit/alex-channel-catalogue.json"
+      },
+      "traderId": "ALEX_G",
+      "strategyFamilyIds": [
+        "SF|ALEX_G|SUPPORT_RESISTANCE_V1"
+      ],
+      "attributionNote": "Organizational attribution only. This says the material was collected for the ALEX_G corpus. It does NOT say the strategy is valid, that the material has been verified, or that anything here is a trading rule. The sourceId above is RECOMPUTED from channelUrl at load time and refused if it disagrees, so the link is verified rather than pasted."
+    }
+  ]
+}

@@ -568,7 +568,12 @@ class TestTheDetectorIsNotYetWired(unittest.TestCase):
         the history lookup that supplies its argument, and the orchestrator that
         acts on its verdict.
         """
-        permitted = {"acquisition_history.py", "orchestrator.py"}
+        # MOGO-018 added research_library.py, which REUSES the acceptance
+        # predicate rather than restating it -- so the library and the detector
+        # can never disagree about what counts as accepted content. Still an
+        # allow-list: a fourth consumer breaks this test.
+        permitted = {"acquisition_history.py", "orchestrator.py",
+                     "research_library.py"}
         importers = set()
         for root, _dirs, files in os.walk(self.RUNTIME_DIR):
             if "__pycache__" in root:

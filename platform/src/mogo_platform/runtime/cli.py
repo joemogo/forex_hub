@@ -58,6 +58,7 @@ from . import projection  # noqa: E402
 from . import authorizations as authorizations_module  # noqa: E402
 from . import policy as policy_module  # noqa: E402
 from . import registry  # noqa: E402
+from . import research_library  # noqa: E402
 from . import schema as schema_module  # noqa: E402
 from . import scheduled_collection  # noqa: E402
 from . import store  # noqa: E402
@@ -443,6 +444,53 @@ def cmd_collect(args):
         return 0 if not report["dead_lettered"] else 3
 
 
+def cmd_library(args):
+    """MOGO-018: the derived research library index.
+
+    A READ. It writes nothing, and running it twice on unchanged input produces
+    identical output -- the index is derived state, never a source of truth, so
+    there is deliberately no `rebuild` to run.
+    """
+    with open(os.path.abspath(research_library.ATTRIBUTION_PATH), "r",
+              encoding="utf-8") as handle:
+        attribution = json.load(handle)
+    paths, connection = _open_readonly(args)
+    try:
+        index = research_library.entries(connection, attribution)
+        summary = research_library.corpus_summary(connection, attribution)
+        if getattr(args, "json", False):
+            print(json.dumps({"entries": index, "corpusSummary": summary},
+                             indent=2, sort_keys=True))
+            return 0
+        print("MOGO research library (DERIVED -- organization, not validation)")
+        print("  entries : %d" % (len(index),))
+        for entry in index:
+            print("  %s / %s" % (entry["sourceId"], entry["resourceId"]))
+            print("      trader=%s  families=%s  [%s]"
+                  % (entry["traderId"] or "(none)",
+                     ",".join(entry["strategyFamilyIds"]) or "(none)",
+                     entry["attributionStatus"]))
+            print("      artifact=%s" % (entry["artifactId"],))
+            print("      acceptedContentIdentity=%s (%s)"
+                  % (entry["acceptedContentIdentity"][:16] + "...",
+                     entry["acceptedContentIdentityBasis"]))
+            print("      accepted observations=%d  distinct identities=%d  last=%s"
+                  % (entry["acceptedObservationCount"],
+                     entry["distinctAcceptedContentIdentities"],
+                     entry["lastClassification"] or "(none)"))
+        print("  corpus by strategy family:")
+        for bucket in summary:
+            print("      %-34s streams=%d observations=%d identities=%d"
+                  % (bucket["strategyFamilyId"], bucket["streams"],
+                     bucket["acceptedObservations"],
+                     bucket["distinctContentIdentities"]))
+        print("  lane=RESEARCH  promotionStatus=NOT_A_TRADING_RULE -- presence in "
+              "a corpus is NOT a claim of validity")
+        return 0
+    finally:
+        connection.close()
+
+
 def cmd_authorize(args):
     """Record one governance-supplied Acquisition Authorization Record.
 
@@ -826,6 +874,10 @@ def build_parser():
         "policy", help="policy decisions, authorizations, and what is blocked")
     policy_parser.add_argument("--json", action="store_true")
 
+    library = subparsers.add_parser(
+        "library", help="the DERIVED research library index (read-only)")
+    library.add_argument("--json", action="store_true")
+
     subparsers.add_parser("verify", help="integrity checks only")
 
     reset = subparsers.add_parser("reset", help="delete state, or rebuild the index")
@@ -843,7 +895,7 @@ HANDLERS = {
     "init": cmd_init, "submit": cmd_submit, "run": cmd_run, "status": cmd_status,
     "audit": cmd_audit, "verify": cmd_verify, "reset": cmd_reset, "demo": cmd_demo,
     "failures": cmd_failures, "authorize": cmd_authorize, "review": cmd_review,
-    "policy": cmd_policy, "collect": cmd_collect,
+    "policy": cmd_policy, "collect": cmd_collect, "library": cmd_library,
 }
 
 
