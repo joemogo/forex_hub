@@ -1784,3 +1784,106 @@ continuity test for **both** streams at hop 7. The module was restored byte-for-
 | Runtime integrity | ✅ INTEGRITY OK |
 | Acquisitions performed by the audit | ✅ **none** — `capability_results` still **9 rows** |
 | `index.html`, `docs/`, `platform/scheduling` | ✅ byte-unchanged |
+
+---
+
+# MOGO-018 STEP 3G — AUTONOMY BOUNDARY AND NEXT-STAGE CONTRACT
+
+**Status: ✅ COMPLETE — documentation only, no code.**
+
+## 1. The eleven stages, classified by mechanical evidence
+
+Each row states what the **repository and runtime actually prove**, not what the architecture
+aspires to.
+
+| # | Stage | Status | Mechanical evidence |
+|---|---|---|---|
+| 1 | **Autonomous research acquisition** | ✅ **AUTHORIZED & PROVEN** | launchd job loaded, exit 0; two unattended firings observed (00:00 and 06:00 local), one acquiring and one correctly suppressed; destinations derived from a two-entry registry |
+| 2 | **Research corpus accumulation** | ✅ **AUTHORIZED & PROVEN** | 9 accepted observations across 2 streams; 2 immutable artifacts committed |
+| 3 | **Change detection** | ✅ **AUTHORIZED & PROVEN** | `FIRST_OBSERVATION` / `UNCHANGED` observed in production; `CHANGED` proved in fixtures; per-stream history isolated |
+| 4 | **Immutable evidence preservation** | ✅ **AUTHORIZED & PROVEN** | content-addressed intake + artifact files; `verify` INTEGRITY OK; byte-unchanged across every step |
+| 5 | **Corpus observability** | ✅ **AUTHORIZED & PROVEN** | `mogo_runtime corpus`, derived and read-only, 27 tests |
+| 6 | Concept / topic extraction | ❌ **DOES NOT EXIST** | no code reads a research artifact for meaning — grep for concept/topic extraction over Lane B returns **nothing** |
+| 7 | Strategy reconstruction | ❌ **DOES NOT EXIST** | no module converts research into rules |
+| 8 | Mechanical strategy specification | ❌ **DOES NOT EXIST** | no specification freeze exists for any research-derived strategy |
+| 9 | Scientific validation / backtesting | ❌ **DOES NOT EXIST FOR LANE B** | backtesting exists for **ALEX only**, from its own frozen specification and Campaign C1 — **nothing** connects it to the research corpus |
+| 10 | Paper-trading promotion | ❌ **DOES NOT EXIST FOR LANE B** | ALEX's paper trading is a **separate, pre-existing** lane. No research→paper path exists. **TJR paper trading is NOT authorized** |
+| 11 | Live-money trading | ❌ **NOT AUTHORIZED** | no authority anywhere in the repository |
+
+**Stages 6–11 are not "in progress" — they have no code at all in the research lane.** The only
+consumers of Lane B artifacts are `research_corpus.py`, `ingest_local_artifact.py`,
+`research_library.py` and their tests.
+
+## 2. Exact autonomous authority granted
+
+MOGO may, without a human present:
+
+- fire `collect` on the committed cadence (00:00 / 06:00 / 12:00 / 18:00 local);
+- issue **at most one** acquisition per committed entry per 6-hour window — currently **≤ 2 requests
+  per window**;
+- fetch **only** URLs derived by the connector from the two-entry approved registry;
+- validate, hash, store and deduplicate the returned bytes;
+- classify the result against **that stream's own** accepted history;
+- create an immutable research artifact when content is genuinely new;
+- expose derived, read-only library and corpus views.
+
+## 3. Exact authority withheld
+
+MOGO may **not**, autonomously or otherwise, without a new reviewed authorization:
+
+- add, discover or contact any source outside the committed registry (**ICT and CRT remain
+  unauthorized**);
+- accept a caller-supplied URL, host, scheme or template;
+- follow a redirect or any link inside acquired content;
+- acquire transcripts or artifacts — **metadata only**;
+- interpret, summarise, model or reconstruct anything from acquired research;
+- create a hypothesis, rule, blueprint, specification, backtest or campaign;
+- modify ALEX rules, parameters, protected functions or `index.html`;
+- influence the forward paper campaign or force a paper trade;
+- promote anything to paper trading — **including TJR**;
+- trade live money.
+
+The last four are additionally enforced in code: `boundaries.PROHIBITED_WRITE_PATHS` refuses
+references to `index.html`, `evidence/`, `docs/campaigns/`, pre-registrations, the verified replay
+record and `hypothesis-registry.json`, and a platform test fails the build on any runtime module
+naming them.
+
+## 4. The interface MOGO-019 should consume
+
+**MOGO-019 must read the derived views, never the acquisition internals.**
+
+| Consume | Why |
+|---|---|
+| `research_library.entries(connection, attribution)` | one row per `(sourceId, resourceId)` stream with attribution, artifact reference and accepted content identity |
+| `research_library.corpus_report(connection, attribution)` | per-stream and per-family counts, provenance completeness and integrity state |
+| `artifactId` / `artifactPath` from those views | the immutable artifact, **by reference** |
+| `intakeRef` | the raw external bytes, if the original response is needed |
+
+**Contract terms MOGO-019 must honour:**
+
+1. **Do not query `capability_results` directly.** Consuming the derived views lets the acquisition
+   layer change without breaking downstream work — and stops a second component inventing its own
+   idea of what "accepted" means. Acceptance has exactly one definition,
+   `change_detection.accepted_identity_from_acquisition`.
+2. **Read-only over Lane B.** Never write to `research-artifacts/`, `intake/`, the attribution file
+   or the runtime database. Anything MOGO-019 derives is **new state in its own namespace**, never
+   written back into research evidence.
+3. **Carry the lane forward.** Every view row states `lane: RESEARCH` and
+   `promotionStatus: NOT_A_TRADING_RULE`. Presence in a corpus is organization, not validation;
+   MOGO-019 must not treat a high observation count as significance.
+4. **Two hashes stay distinct.** `acceptedContentIdentity` is the raw external byte hash, labelled
+   `acceptedContentIdentityBasis: RAW_EXTERNAL_RESPONSE_BYTES`. It is **not** Lane A's transcript
+   hash and must never be compared with one.
+5. **Respect `NOT_RECORDED` and incomplete provenance.** Do not infer a missing classification or a
+   missing `acquiredAt`. Historical gaps are facts about the record, not defects to be filled.
+6. **No acquisition.** MOGO-019 must not call the acquisition capability, the connector or the
+   transport, and must not add a collection entry. Needing new material is a **reviewed
+   authorization decision**, not a runtime one.
+7. **Attribution is an input, not an output.** `source-attribution.json` is a reviewed committed
+   edit. MOGO-019 may read it; it may never write it or infer an educator.
+
+**Recommended MOGO-019 objective:** *read-only concept and topic extraction over the governed research
+corpus, producing structured claims in its own namespace, with no strategy reconstruction, no
+hypothesis, and no promotion path* — stage 6 only, leaving 7–11 closed.
+
+**MOGO-019 was not built in this milestone.**
