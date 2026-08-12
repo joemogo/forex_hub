@@ -1887,3 +1887,109 @@ corpus, producing structured claims in its own namespace, with no strategy recon
 hypothesis, and no promotion path* — stage 6 only, leaving 7–11 closed.
 
 **MOGO-019 was not built in this milestone.**
+
+---
+
+# 🟡 MOGO-018 MILESTONE CLOSEOUT — WAITING ON OPERATIONAL EVIDENCE
+
+**Classification: WAITING ON OPERATIONAL EVIDENCE.**
+**Every closeout proof that can be established without a future scheduled run is GREEN.
+Exactly ONE gate remains, and it can only be satisfied by an event that has not happened yet.**
+
+This is deliberately **not** classified GREEN. Fifteen of sixteen closeout criteria are mechanically
+satisfied; the sixteenth requires an unattended two-source scheduled run, and calling the milestone
+complete without it would be claiming an autonomy property that has been proved manually and in
+fixtures but **never observed unattended**.
+
+## 1. Closeout gate results
+
+| # | Required claim | Status | Evidence |
+|---|---|---|---|
+| 1 | Scheduled autonomous acquisition exists and is bounded | ✅ | launchd loaded, exit 0; 2 unattended firings; ≤ 1 acquisition per entry per 6 h window |
+| 2 | Approved sources are registry-derived | ✅ | `APPROVED_DESTINATIONS`; caller supplies identity, never a URL |
+| 3 | ALEX and TJR are independent research streams | ✅ | 31 isolation tests + live `FIRST_OBSERVATION prior=none` against 7 prior ALEX observations |
+| 4 | Multi-entry collection deterministic and bounded | ✅ | committed file order; `MAX_COLLECTION_ENTRIES=25`; 2 entries → ≤ 2 requests |
+| 5 | No runtime source discovery | ✅ | no code path adds a registry entry; no link-following |
+| 6 | No caller-supplied destination substitution | ✅ | `REASON_URL_SUBSTITUTION`, proved for both sources and cross-source |
+| 7 | Accepted observations have durable identity | ✅ | SHA-256 over exact external bytes; content-addressed storage |
+| 8 | Immutable evidence protected | ✅ | byte-unchanged across every step; `boundaries.PROHIBITED_WRITE_PATHS` |
+| 9 | Unchanged observations do not duplicate artifacts | ✅ | ALEX: 8 accepted observations → **1** artifact |
+| 10 | Library / corpus views derived and read-only | ✅ | write nothing; two reads byte-identical; DB digest unchanged across report runs |
+| 11 | No strategy verdict or promotion in the acquisition layer | ✅ | no verdict word or float in the report; no code path to hypothesis/backtest/promotion |
+| 12 | Protected ALEX drift zero | ✅ | 63 functions, 4 constants byte-identical |
+| 13 | Forward paper campaign uncontaminated | ✅ | `index.html`, `docs/campaigns`, `docs/evidence` byte-unchanged; browser never touched |
+| 14 | ICT and CRT unauthorized | ✅ | absent from registry and committed set |
+| 15 | Live-money trading unauthorized | ✅ | no authority anywhere |
+| **16** | **Unattended TWO-SOURCE scheduled run** | ⏳ **OUTSTANDING** | **GATE-3E — see §3** |
+
+## 2. Milestone facts
+
+| | |
+|---|---|
+| **Final HEAD** | recorded in the checkpoint below |
+| **Implementation commits** | `ddfa925` (3C), `c59e6e3` (3D), `d2e14b4` (3E), `b3f4b4f` (3F), `2c916a2` (3G) + 2 checkpoint-record commits |
+| Platform suite | **25 suites · 1,049 tests · 0 failures · 0 errors** |
+| Canonical gate | **19 suites · 1,160 / 1,160 · 0 failed** |
+| Protected ALEX drift | **0** |
+| Campaign C1 | 33 / 33 · 0 mismatched |
+| Runtime integrity | INTEGRITY OK |
+| Approved sources | **2** — Alex G (`SRC\|youtube\|c785970cc458`), TJR (`SRC\|youtube\|11cd2542b5b0`) |
+| Collection entries | **2**, deterministic committed order |
+| Scheduler cadence | **00:00 / 06:00 / 12:00 / 18:00 local**, one launchd job, unchanged all milestone |
+| Observed unattended runs | **2** (00:00 local suppressed; 06:00 local acquired → `UNCHANGED`) |
+| Corpus state | 2 streams · 9 accepted observations · **2** immutable artifacts · 2 strategy families · integrity OK on both |
+
+## 3. The one outstanding gate
+
+**GATE-3E — an unattended scheduled run of the two-entry configuration.**
+
+The event that will satisfy it: the **18:00 local (2026-08-12T22:00Z) firing, window bucket 82711**.
+The 12:00-local firing at 16:00Z falls in bucket 82710, already consumed by the manual Step 3C proof,
+so it will be duplicate-suppressed for both streams and acquire nothing — correct behaviour, but not
+this evidence.
+
+It must mechanically show: a `COLLECT WINDOW -- 2 approved entries` block at bucket 82711; exactly two
+requests; `capability_results` **9 → 11**; each stream classified against **its own** prior identity
+(ALEX `b668d4209abb…`, TJR `0cc6cf59e6d1…`); `comparisonStreamMismatches=0` and `historyChainBreaks=0`;
+and no source outside the committed set.
+
+**Cadence was not changed to reach it sooner.**
+
+## 4. Known limitations and backlog
+
+1. **Artifact-wrapper provenance wording.** Wrappers say `acquisitionPerformed: false` /
+   `networkAccessPerformed: false` even for genuinely acquired artifacts, because those fields
+   describe the ingest step. Step 3D reports truthfully around it from the authoritative record.
+   **Needs an ADR** — corrected schema version for future artifacts, or formal acceptance. Historical
+   evidence must not be rewritten.
+2. **`claimedSourceTitle` is null for scheduler-acquired artifacts** — the scheduler supplies no
+   title by design.
+3. **Historical provenance gaps preserved, not filled.** 3 ALEX observations carry no classification
+   and 5 lack `acquiredAt`/`decidedAt`; reported as `NOT_RECORDED` / incomplete, never inferred.
+4. **`integrity` is recorded-record consistency only** — it does not re-hash corpus files on disk.
+5. **One resource per source.** Multi-resource aggregation is proved only in fixtures.
+6. **`CHANGED` never observed in production** — proved only in fixtures, because neither source's
+   metadata has changed yet.
+7. **Legacy-corpus figure.** The baseline is byte-unchanged and its rollup re-derives from the 220
+   committed hashes, but the packages live outside the repository and were not re-checked against
+   disk.
+
+## 5. Autonomous authority — granted and withheld
+
+**Granted:** fire `collect` on the committed cadence; at most one acquisition per committed entry per
+window (currently ≤ 2 requests); fetch only registry-derived URLs; validate, hash, store and dedupe;
+classify against that stream's own history; mint an artifact only when content is genuinely new;
+expose derived read-only views.
+
+**Withheld:** any source outside the registry; caller-supplied destinations; redirects and
+link-following; transcripts; interpretation, modelling or reconstruction; hypotheses, blueprints,
+backtests or campaigns; ALEX or `index.html` changes; forward-campaign influence; paper-trading
+promotion **including TJR**; live money.
+
+## 6. Recommended MOGO-019 objective
+
+**Read-only concept and topic extraction over the governed research corpus** — stage 6 only,
+producing structured claims in its own namespace, consuming `entries()` and `corpus_report()` under
+the §3G contract, with stages 7–11 left closed. **Do not begin until GATE-3E closes.**
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
