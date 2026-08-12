@@ -4382,6 +4382,12 @@ function alexGConstructLivePosition(setup,datasets,ba,cfg,balanceBefore,evalMeta
 async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
   evalMeta=evalMeta||{};
   const signalId=alexGLiveSignalId(setup);
+  // MOGO-017 Step 2A: CANDIDATE. Emitted BEFORE the bid/ask await, deliberately -- reaching this
+  // function means the setup already cleared every eligibility gate in
+  // alexGEvaluatePairForLiveSetups, and recording that here means a candidate that dies inside
+  // fetchBidAsk still leaves evidence it existed. Observation only; nothing below reads it.
+  alexGRecordPipelineStage('CANDIDATE',{pair:setup.pair,timeframe:setup.timeframe,
+    setupId:setup.setupId,signalId:signalId,status:'CANDIDATE',reason:null});
   const ba=await fetchBidAsk(setup.pair); // frozen current-strategy function, unmodified
   // v12.6.0 PROGRAM-001 Phase 2C Wave 1: observability only -- direction is intentionally still
   // null here (not yet resolved by the protected construction function below); never predicted
@@ -4389,6 +4395,11 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
   emitDecisionEvent({eventType:'TRADE_OPEN_REQUESTED',strategyId:RULES_ALEXG.ruleVersion,scanId,correlationId:scanId,
     candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,source:'alexGAttemptOpenLivePosition',
     context:{signalId,setupType:setup.setupType},evidenceCompleteness:'PARTIAL'});
+  // MOGO-017 Step 2A: REQUESTED. Paired with the TRADE_OPEN_REQUESTED decision event immediately
+  // above, so the durable ledger and the ephemeral event bus agree on when the open was
+  // attempted. Bid/ask is in hand; the protected constructor has not been called yet.
+  alexGRecordPipelineStage('REQUESTED',{pair:setup.pair,timeframe:setup.timeframe,
+    setupId:setup.setupId,signalId:signalId,status:'REQUESTED',reason:null});
   const result=alexGConstructLivePosition(setup,datasets,ba,RULES_ALEXG.config,alexGAccount.balance,evalMeta);
   if(result.status==='DUPLICATE'){
     // Duplicate result carries no reason of its own (by design -- see Section 4 of the Phase 2B
@@ -4398,6 +4409,11 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
       source:'alexGAttemptOpenLivePosition',stage:'CONSTRUCTION',decision:'REJECTED',
       reasonCode:'STATE_SIGNAL_ALREADY_DECIDED',context:{signalId,constructionStatus:result.status},
       evidenceCompleteness:'COMPLETE'});
+    // MOGO-017 Step 2A: REQUEST_FAILED. The construction status is recorded verbatim rather than
+    // re-interpreted -- DUPLICATE genuinely carries no reason of its own, and inventing one here
+    // would be the fabrication the existing comment above already refuses.
+    alexGRecordPipelineStage('REQUEST_FAILED',{pair:setup.pair,timeframe:setup.timeframe,
+      setupId:setup.setupId,signalId:signalId,status:result.status,reason:null});
     return;
   }
   const base={signalId,setupId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,setupType:setup.setupType,
@@ -4419,6 +4435,10 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
       source:'alexGAttemptOpenLivePosition',stage:'CONSTRUCTION',decision:'REJECTED',
       reasonCode:ALEXG_CONSTRUCTION_REASON_CODE_MAP[result.reason]||'UNKNOWN_NOT_RECORDED',reasonText:result.reason,
       context:{signalId,constructionStatus:result.status},evidenceCompleteness:'COMPLETE'});
+    // MOGO-017 Step 2A: REQUEST_FAILED. Every BLOCKED_* construction outcome lands here, carrying
+    // the protected constructor's OWN status and reason -- never a re-derived one.
+    alexGRecordPipelineStage('REQUEST_FAILED',{pair:setup.pair,timeframe:setup.timeframe,
+      setupId:setup.setupId,signalId:signalId,status:result.status,reason:result.reason});
     alexGRecordLiveSetupStatus(base);
     if(result.status==='BLOCKED — EXISTING POSITION'){
       alexGAutoTrading.log.unshift({status:result.status,reason:result.reason,pair:setup.pair,timeframe:setup.timeframe,setupId:setup.setupId,at:new Date().toISOString()});
@@ -4456,6 +4476,12 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
       direction:position.direction,source:'alexGAttemptOpenLivePosition',stage:'LEDGER_COMMIT',decision:'REJECTED',
       reasonCode:'EXECUTION_LEDGER_REJECTED',reasonText:committed.reason!=null?committed.reason:null,
       context:{signalId,integrityCompromised:!!committed.integrityCompromised},evidenceCompleteness:'COMPLETE'});
+    // MOGO-017 Step 2A: REQUEST_FAILED, and this branch is the reason OPENED is emitted AFTER the
+    // commit rather than after construction. The position object existed and is about to be rolled
+    // back; recording OPENED here would durably assert a paper trade that does not exist.
+    alexGRecordPipelineStage('REQUEST_FAILED',{pair:setup.pair,timeframe:setup.timeframe,
+      setupId:setup.setupId,signalId:signalId,tradeId:position.tradeId,
+      status:'LEDGER_COMMIT_REJECTED',reason:committed.reason!=null?committed.reason:null});
     alexGAccount=alexGAccountSnapshot;
     alexGJournalEntries=alexGJournalEntriesSnapshot;
     renderAlexGLivePanel();
@@ -4467,6 +4493,13 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
     context:{signalId,entry:position.entry,stop:position.stop,target:position.target,
       positionSize:position.positionSize,qualificationTimestamp:position.qualificationTimestamp,
       openedAt:position.openedAt},evidenceCompleteness:'COMPLETE'});
+  // MOGO-017 Step 2A: OPENED. Emitted only here -- after commitAlexGLedger() returned ok, so the
+  // paper position is genuinely persisted. `occurredAt` is the position's OWN openedAt rather than
+  // "now", which makes the record's natural key stable and ties the ledger entry to the account
+  // record by the same instant the account itself carries.
+  alexGRecordPipelineStage('OPENED',{pair:position.pair,timeframe:position.timeframe,
+    setupId:setup.setupId,signalId:signalId,tradeId:position.tradeId,
+    status:'TRADE OPENED',reason:null,occurredAt:position.openedAt||null});
   alexGAutoTrading.tradedSignals[signalId]=true;
   alexGAutoTrading.tradedToday[setup.pair]=new Date().toDateString(); // secondary guard only, non-controlling
   alexGRecordLiveSetupStatus(base);
@@ -4796,6 +4829,11 @@ async function alexGFetchExecutableCandles(pair,fromMs,toMs){
 const ALEXG_LIVE_CANDLE_DURATION_MS=60000; // M1
 async function alexGCheckLivePositions(){
   if(!alexGAccount.openPositions.length) return;
+  // MOGO-017 Step 2A: the tradeIds open BEFORE this tick's monitoring runs. Read-only, local, and
+  // used solely to identify which positions THIS tick closed -- so CLOSED is recorded once, for
+  // the closes that actually happened, rather than re-emitted for the whole closed history every
+  // tick and left to the duplicate index to absorb.
+  const __pipeOpenBefore=alexGAccount.openPositions.map(function(p){return p&&p.tradeId;});
   for(const pos of [...alexGAccount.openPositions]){
     try{
       const nowMs=Date.now();
@@ -4842,6 +4880,27 @@ async function alexGCheckLivePositions(){
   // cannot mutate openPositions; cannot write the journal/ledger; and is idempotent per tradeId.
   // It therefore cannot prevent, repeat, delay or alter a position close.
   try{ evidenceCaptureClosedTrades(); }catch(e){ try{ evidenceRecordWriteFailure('capture-seam',e); }catch(e2){} }
+  // ── MOGO-017 Step 2A: CLOSED ──────────────────────────────────────────────────────────────
+  // Placed AFTER the loop and AFTER the existing capture seam, for the identical reason ruling C5
+  // gives above: by this point every close this tick was going to perform has already completed
+  // through the protected, unmodified close function. (That function is named in the comment
+  // above and deliberately NOT repeated here: v128 fixture P2 locates the LAST occurrence of its
+  // name to prove the capture seam follows every close call, and a mention below the seam would
+  // defeat that check while changing nothing about the code.) This reads already-closed positions
+  // only; it cannot re-enter the close path, mutate openPositions, or write the journal/ledger.
+  // `occurredAt` is the position's own closedAt, so the record's natural key is stable and a
+  // repeated emission would be rejected by the UNIQUE index rather than duplicated.
+  try{
+    const stillOpen=alexGAccount.openPositions.map(function(p){return p&&p.tradeId;});
+    __pipeOpenBefore.forEach(function(tradeId){
+      if(tradeId==null||stillOpen.indexOf(tradeId)!==-1) return;
+      const closed=alexGAccount.closedPositions.find(function(p){return p&&p.tradeId===tradeId;});
+      if(!closed) return;
+      alexGRecordPipelineStage('CLOSED',{pair:closed.pair,timeframe:closed.timeframe,
+        setupId:closed.setupId||null,signalId:closed.signalId||null,tradeId:tradeId,
+        status:closed.result||'closed',reason:null,occurredAt:closed.closedAt||null});
+    });
+  }catch(e){ try{ evidenceRecordWriteFailure('pipeline-closed-seam',e); }catch(e2){} }
   renderAlexGLivePanel();
 }
 
@@ -4967,7 +5026,13 @@ async function alexGLivePollTick(){
         // The status ledger the protected recorder already produced, recorded verbatim. Duplicate
         // protection means only genuinely new observations are written; the hourly re-creation
         // MOGO-012 discovered produces new natural keys and is therefore preserved as it happens.
-        statuses:__obsAdvanced?(alexGLiveSetupStatuses||[]):[]});
+        statuses:__obsAdvanced?(alexGLiveSetupStatuses||[]):[],
+        // MOGO-017 Step 2A. The `pipeline` parameter has existed since MOGO-013 and no caller has
+        // ever supplied it, which is why the execution half of the ledger recorded nothing. It is
+        // drained HERE, in the same `finally`, so a tick that throws still persists whatever
+        // execution stages it reached before failing -- the same reason the poll record itself
+        // lives in `finally`. Draining also empties the buffer, so nothing is written twice.
+        pipeline:alexGDrainPipelineObservations()});
     }catch(e){ /* never allow observation to affect the trading path */ }
   }
 }
@@ -12998,6 +13063,70 @@ function evidenceBuildPipelineObservation(i){
   rec.packageId=o.packageId||null;
   return rec;
 }
+
+// ══ MOGO-017 Step 2A -- forward PAPER execution observability ════════════════════════════════
+//
+// WHY THIS EXISTS
+//
+// MOGO-013 built the PIPELINE observation kind above, complete with its stages, its natural key
+// and its write path -- and then wired only POLL and EVALUATION to it. Neither caller of
+// evidenceRecordForwardObservations ever supplied a `pipeline` array, so the execution half of
+// the ledger has been recording nothing since the day it was built.
+//
+// The MOGO-017 Step 1 audit is what made that visible and what makes it matter: the forward
+// campaign holds ZERO paper trades, and the only durable evidence available stopped at
+// "evaluated and rejected". Whether a qualifying setup would actually reach a paper position
+// could not be answered from evidence -- so the audit could not conclude better than
+// "APPEARS HEALTHY, INSUFFICIENT EVIDENCE". Zero PIPELINE records proved nothing about
+// execution; it proved only that nothing wrote them.
+//
+// IT OBSERVES. IT DOES NOT DECIDE. -- the same rule MOGO-013 states, and for the same reason.
+//
+// Nothing here participates in signal generation, qualification, entry, stop, target, risk, pair
+// selection, staleness or execution. Every function below is total: it returns undefined, throws
+// nothing, and is called from a non-protected seam that ignores its result. alexGConstructLivePosition,
+// alexGRecordLiveSetupStatus, alexGIsSetupSignalStale, alexGIsSetupEligibleForLiveTrading,
+// alexGLiveSignalId, alexGTradeId and alexGCloseLivePosition are all PROTECTED and are not touched.
+//
+// BUFFERED, NOT WRITTEN INLINE. The execution path is the one place in this application where a
+// stray await or a slow write could sit between a decision and its commit. So stages are pushed
+// onto a plain in-memory array and drained ONCE, by alexGLivePollTick's existing MOGO-013 seam,
+// in its `finally`. The trading path never awaits an observation.
+const EVIDENCE_PIPELINE_BUFFER_MAX=500;   // a tick that somehow never drains cannot grow unbounded
+let alexGPipelineObservationBuffer=[];
+
+// Records one execution-lifecycle stage. TOTAL BY CONSTRUCTION: the entire body is guarded, and
+// a failure here can never alter, delay or prevent a trading decision -- which is the property
+// that makes it safe to call from inside the open-trade path at all.
+function alexGRecordPipelineStage(stage,input){
+  try{
+    if(alexGPipelineObservationBuffer.length>=EVIDENCE_PIPELINE_BUFFER_MAX) return;
+    const o=input||{};
+    alexGPipelineObservationBuffer.push(evidenceBuildPipelineObservation({
+      stage:stage,pair:o.pair||null,timeframe:o.timeframe||null,
+      setupId:o.setupId||null,signalId:o.signalId||null,
+      status:o.status||null,reason:o.reason||null,
+      // REFERENCES ONLY, exactly as the builder's own comment requires: the account, journal and
+      // package store remain the authoritative financial records.
+      sourceTradeId:o.sourceTradeId||null,tradeId:(o.tradeId===undefined)?null:o.tradeId,
+      packageId:o.packageId||null,occurredAt:o.occurredAt||null}));
+  }catch(e){
+    try{ evidenceRecordWriteFailure('pipeline-stage',e,{stage:stage}); }catch(e2){}
+  }
+}
+
+// Hands the tick everything buffered since the last drain and empties the buffer. Draining is
+// what makes the buffer bounded in practice: alexGCheckLivePositions and
+// alexGAttemptOpenLivePosition are reachable only from alexGLivePollTick, which always drains in
+// its `finally` -- including when the tick throws.
+function alexGDrainPipelineObservations(){
+  try{
+    const drained=alexGPipelineObservationBuffer;
+    alexGPipelineObservationBuffer=[];
+    return drained;
+  }catch(e){ return []; }
+}
+
 // PURE. Poll continuity, derived from stored records rather than from live memory -- which is the
 // whole point: after MOGO-013 these questions are answered by arithmetic on durable data.
 function evidenceSummarizeObservations(list){
