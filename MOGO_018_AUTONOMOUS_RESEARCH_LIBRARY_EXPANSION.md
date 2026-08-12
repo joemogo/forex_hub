@@ -1327,3 +1327,38 @@ file**, `docs/trader-intelligence/evidence/reports/integrity-report.json` — on
 `integrityReportId`; `findings` stayed `[]` and the summary stayed all-zero. That is a verification
 artefact, not a Step 3C change, so it was reverted with `git checkout --`. The Knowledge Library tree
 is byte-unchanged.
+
+---
+
+# ✅ STEP 3C CHECKPOINT — COMMITTED
+
+| | |
+|---|---|
+| Reviewed | approved by ChatGPT/operator, with a directed pre-commit evidence verification |
+| **Implementation commit** | **`ddfa925fcace35735fc5749ebf2b1b068b72f346`** |
+| Commit message | `MOGO-018 Step 3C: authorize TJR as the second research source` |
+| Pushed to | `origin/mogo-main` |
+| Starting checkpoint | `e3707a5a1000dcab97180c68e07da69d80795823` (Step 3B) |
+
+## Evidence disposition
+
+| Item | Disposition |
+|---|---|
+| `intake/acquired/0cc6cf59….json` | **COMMITTED** — canonical repository-managed immutable evidence, per the tracked Alex G precedent |
+| `research-artifacts/8aa491b0….json` | **COMMITTED** — same precedent |
+| `platform/runtime/` (state root, event log, SQLite index) | **remains untracked** — gitignored by `platform/runtime/.gitignore`; that boundary is unchanged |
+| TJR authorization record in the runtime DB | registered locally by `mogo_runtime authorize`; the *record itself* is committed as `AUTH-tjr-metadata.json` |
+
+The final pre-commit sweep re-confirmed: focused 280 green; platform 24 suites / 1,022 tests / 0
+failures; canonical 19 suites / 1,160 fixtures / 1,160 passed; protected ALEX drift 0 across 63
+functions and 4 constants; Campaign C1 33/33 from the byte-unchanged committed attestation; runtime
+`verify` INTEGRITY OK; `docs/campaigns`, `docs/evidence`, `docs/strategy-fidelity`,
+`trader-intelligence/evidence`, `traders`, `imports`, all three pre-existing tracked acquisition
+artifacts, `index.html`, the plist template and the installer **all byte-unchanged**; exactly two
+approved sources; exactly two committed collection entries; `MAX_COLLECTION_ENTRIES` still 25;
+cadence still `00:00,06:00,12:00,18:00`; ICT and CRT absent from the registry.
+
+No forward campaign was re-baselined, no paper trade was forced, the forward browser was not reloaded
+or restarted, and no ALEX trading rule, parameter or protected function changed.
+
+**ICT and CRT REMAIN NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
