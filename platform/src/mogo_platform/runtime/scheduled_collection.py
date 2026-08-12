@@ -71,6 +71,21 @@ from .capabilities import acquire_approved_source_metadata as acquire  # noqa: E
 
 SPEC_SCHEMA_VERSION = "mogo.scheduled-collection.v1"
 
+# MOGO-018 Step 3B. The committed file is now a SET of entry records rather than
+# one bare entry. The names are distinct on purpose: a `-set.v1` document
+# contains `mogo.scheduled-collection.v1` entries, so a reader is never left
+# guessing which schema a version string refers to, and the ENTRY schema is
+# versioned independently of the document that carries it.
+SET_SCHEMA_VERSION = "mogo.scheduled-collection-set.v1"
+
+# THE BOUND, stated as a number rather than left to the file's length. One
+# scheduled window issues at most one acquisition per entry, so this is also the
+# ceiling on requests per window: with the production six-hour cadence, 25
+# entries is 100 requests a day against public metadata endpoints, which is
+# still unambiguously polite. Its real job is to stop a fat-fingered committed
+# file from quietly becoming a crawler.
+MAX_COLLECTION_ENTRIES = 25
+
 IDEMPOTENCY_OPERATION = "scheduled_metadata_acquisition"
 
 # Catalog section A permits `orchestrator`, `operator:<id>` and `workflow:<type>`.
@@ -188,6 +203,76 @@ def validate_spec(spec):
                 "%d..%d" % (window, MIN_COLLECTION_WINDOW_SECONDS,
                             MAX_COLLECTION_WINDOW_SECONDS))
     return spec
+
+
+def validate_collection_set(document):
+    """Fail-closed validation of the WHOLE committed collection set.
+
+    Validated in full BEFORE any acquisition is issued for the window. A single
+    malformed or unapproved entry refuses the entire window rather than letting
+    the rest proceed, because a committed specification that is partly wrong is
+    a specification nobody has actually reviewed -- and quietly executing the
+    valid remainder would make the schedule silently do less than the file says.
+
+    Nothing here re-implements entry validation: every entry goes through the
+    SAME `validate_spec()` the single-entry model already used, so there is one
+    validation path, not two.
+
+    Returns the validated entries in committed file order.
+    """
+    if not hasattr(document, "keys"):
+        _refuse("the collection set must be a mapping, got %s"
+                % (type(document).__name__,))
+
+    if document.get("schemaVersion") != SET_SCHEMA_VERSION:
+        _refuse("collection set schemaVersion %r is not %r"
+                % (document.get("schemaVersion"), SET_SCHEMA_VERSION))
+
+    unknown = sorted(set(document) - {"schemaVersion", "note", "entries"})
+    if unknown:
+        # The same rule each entry already obeys: an unknown field is how a URL,
+        # a host or a second destination would arrive at the document level.
+        _refuse("collection set declares unknown field(s) %s; the approved "
+                "fields are ['schemaVersion', 'note', 'entries']" % (unknown,))
+
+    entries = document.get("entries")
+    if not isinstance(entries, list) or not entries:
+        _refuse("the collection set must declare a non-empty entries array")
+    if len(entries) > MAX_COLLECTION_ENTRIES:
+        _refuse("the collection set declares %d entries; at most %d are "
+                "permitted, because one window issues one acquisition per entry "
+                "and an unbounded list is a crawler"
+                % (len(entries), MAX_COLLECTION_ENTRIES))
+
+    validated = []
+    streams = set()
+    windows = set()
+    for index, entry in enumerate(entries):
+        try:
+            validate_spec(entry)
+        except runtime_errors.PlatformError as exc:
+            _refuse("collection entry %d is invalid and the whole window is "
+                    "refused rather than partly executed: %s" % (index, exc))
+        stream = (entry["sourceId"], entry["resourceId"])
+        if stream in streams:
+            # Two entries for one stream share an idempotency key inside a
+            # window, so the second would be suppressed as a duplicate and the
+            # schedule would silently do less than the file says.
+            _refuse("collection entry %d repeats the stream %s; two entries for "
+                    "one source and resource would collapse into one request"
+                    % (index, stream))
+        streams.add(stream)
+        windows.add(entry["collectionWindowSeconds"])
+        validated.append(entry)
+
+    if len(windows) != 1:
+        # The installer checks ONE window against the schedule cadence. Allowing
+        # entries to disagree would make that check meaningless and would turn a
+        # bounded collector into a per-source rate scheduler nobody asked for.
+        _refuse("collection entries declare %d different collectionWindowSeconds "
+                "%s; every entry in one committed set must share one window"
+                % (len(windows), sorted(windows)))
+    return validated
 
 
 def collection_window(now_ms, window_seconds):

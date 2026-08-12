@@ -48,11 +48,21 @@ sys.exit(0 if sys.version_info[:2] >= (3, 14) else 1)
 PY
 }
 
+# MOGO-018 Step 3B: the spec is a bounded SET of entries. The installer needs ONE
+# window to check against the schedule cadence, so it refuses a set whose entries
+# disagree -- the same rule validate_collection_set() enforces, applied here too
+# because the installer runs before the runtime ever loads the file.
 spec_window_seconds() {
   "$PYTHON" -c '
 import json, sys
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    print(json.load(handle)["collectionWindowSeconds"])
+    entries = json.load(handle).get("entries")
+if not isinstance(entries, list) or not entries:
+    sys.exit("collection set declares no entries")
+windows = sorted({e.get("collectionWindowSeconds") for e in entries})
+if len(windows) != 1:
+    sys.exit("collection entries disagree on collectionWindowSeconds: %s" % (windows,))
+print(windows[0])
 ' "$SPEC"
 }
 

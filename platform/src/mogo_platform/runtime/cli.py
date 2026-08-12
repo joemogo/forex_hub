@@ -374,65 +374,96 @@ APPROVED_COLLECTION_SPEC = os.path.join(
     _CLI_DIR, "..", "..", "..", "scheduling", "approved-collection.json")
 
 
-def load_approved_collection_spec():
-    """The fixed approved collection spec, validated. Read-only."""
+def load_approved_collection_entries():
+    """The committed collection set, validated IN FULL. Read-only.
+
+    The whole set is validated before this returns, so a malformed or
+    unapproved entry refuses the window before a single acquisition is issued.
+    """
     with open(os.path.abspath(APPROVED_COLLECTION_SPEC), "r",
               encoding="utf-8") as handle:
-        spec = json.load(handle)
-    return scheduled_collection.validate_spec(spec)
+        document = json.load(handle)
+    return scheduled_collection.validate_collection_set(document)
 
 
 def cmd_collect(args):
-    """One bounded, scheduled, governed research collection.
+    """One bounded, scheduled, governed research collection window.
 
     THE ENTIRE SURFACE A HOST SCHEDULE TOUCHES. It takes no source, no URL, no
     resource and no capability -- there is nothing to pass, so there is nothing
-    to inject. The spec is the committed file above and the destination is
-    derived by the connector gate from the source identity in it.
+    to inject. The entries are the committed file above, and every destination
+    is derived by the connector gate from the source identity in each one.
 
-    Submit and run share ONE process lock rather than taking it twice, which
-    closes the window in which a second scheduled invocation could slip between
-    an accepted command and its execution.
+    MOGO-018 Step 3B: the file is a bounded SET, and this iterates it. The
+    invariant an operator should be able to state in one line:
 
-    `--dry-run` builds and validates the command and prints its identity WITHOUT
+        one window issues AT MOST ONE acquisition per committed entry.
+
+    Nothing is discovered, nothing is added at runtime, and no link inside
+    acquired content is ever followed -- so N is decided entirely by the
+    committed file. Entries are processed in committed order, sequentially, and
+    the WHOLE SET is validated before any of it is submitted.
+
+    Submit and run share ONE process lock for the whole window rather than
+    taking it per entry, which closes the gap in which a second scheduled
+    invocation could slip between an accepted command and its execution.
+
+    `--dry-run` builds and validates every entry and prints its identity WITHOUT
     submitting anything and WITHOUT touching the network -- the safe way for an
     operator to inspect what the schedule will do.
     """
-    spec = load_approved_collection_spec()
+    entries = load_approved_collection_entries()
     clock = _clock_from(args) or clock_module.SystemClock()
-    envelope, payload, window = scheduled_collection.build_command(
-        spec, clock.now_ms(), clock.now_iso())
+    now_ms, now_iso = clock.now_ms(), clock.now_iso()
 
-    print("COLLECT source=%s resource=%s operation=%s"
-          % (spec["sourceId"], spec["resourceId"], spec["operation"]))
-    print("        capability=%s" % (spec["capabilityId"],))
-    print("        window=%s (%d s)" % (window, spec["collectionWindowSeconds"]))
-    print("        idempotencyKey=%s" % (envelope["idempotencyKey"],))
-    print("        issuedBy=%s issuedAt=%s"
-          % (envelope["issuedBy"], envelope["issuedAt"]))
+    built = []
+    for entry in entries:
+        envelope, payload, window = scheduled_collection.build_command(
+            entry, now_ms, now_iso)
+        built.append((entry, envelope, payload, window))
+
+    print("COLLECT WINDOW -- %d approved entr%s, at most one acquisition each"
+          % (len(built), "y" if len(built) == 1 else "ies"))
+    for entry, envelope, _payload, window in built:
+        print("  %s / %s  operation=%s"
+              % (entry["sourceId"], entry["resourceId"], entry["operation"]))
+        print("      capability=%s" % (entry["capabilityId"],))
+        print("      window=%s (%d s)" % (window,
+                                          entry["collectionWindowSeconds"]))
+        print("      idempotencyKey=%s" % (envelope["idempotencyKey"],))
+        print("      issuedBy=%s issuedAt=%s"
+              % (envelope["issuedBy"], envelope["issuedAt"]))
 
     if getattr(args, "dry_run", False):
         print("DRY RUN -- nothing was submitted, nothing was acquired")
         return 0
 
+    rejected = False
     with _open(args, create=False) as runtime:
         runtime.recover()
-        outcome = runtime.submit(envelope, payload)
-        for line in runtime.trace:
-            print("  " + line)
-        if outcome.status == "duplicate_suppressed":
-            # The window did its job: a catch-up run after wake, a second
-            # firing, or a manual kickstart inside one collection occasion is
-            # the SAME REQUEST, and the source is not contacted again.
-            print("DUPLICATE SUPPRESSED existing command=%s task=%s"
-                  % (outcome.command_id, outcome.task_id))
-            print("        same collection window -- no acquisition performed")
-            return 0
-        if outcome.status != "accepted":
-            print("REJECTED %s" % outcome.reason)
-            return 2
-        print("ACCEPTED command=%s workflow=%s task=%s"
-              % (outcome.command_id, outcome.workflow_id, outcome.task_id))
+        for entry, envelope, payload, _window in built:
+            stream = "%s / %s" % (entry["sourceId"], entry["resourceId"])
+            outcome = runtime.submit(envelope, payload)
+            for line in runtime.trace:
+                print("  " + line)
+            if outcome.status == "duplicate_suppressed":
+                # The window did its job: a catch-up run after wake, a second
+                # firing, or a manual kickstart inside one collection occasion
+                # is the SAME REQUEST, and the source is not contacted again.
+                print("DUPLICATE SUPPRESSED %s -- same collection window, no "
+                      "acquisition performed (existing command=%s task=%s)"
+                      % (stream, outcome.command_id, outcome.task_id))
+            elif outcome.status == "accepted":
+                print("ACCEPTED %s command=%s workflow=%s task=%s"
+                      % (stream, outcome.command_id, outcome.workflow_id,
+                         outcome.task_id))
+            else:
+                print("REJECTED %s %s" % (stream, outcome.reason))
+                rejected = True
+
+        # ONE run drives every task this window queued. The orchestrator already
+        # executes them sequentially under the lock it is holding, so no batch
+        # runner, worker pool or queue architecture is needed or wanted.
         report = runtime.run_once()
         for line in runtime.trace:
             print("  " + line)
@@ -441,7 +472,9 @@ def cmd_collect(args):
               % (len(report["advanced"]), len(report["succeeded"]),
                  len(report["failed"]), len(report["retried"]),
                  len(report["released"]), len(report["dead_lettered"])))
-        return 0 if not report["dead_lettered"] else 3
+        if report["dead_lettered"]:
+            return 3
+    return 2 if rejected else 0
 
 
 def cmd_library(args):

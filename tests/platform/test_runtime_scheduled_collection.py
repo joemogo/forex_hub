@@ -64,8 +64,13 @@ def read_text(path):
         return handle.read()
 
 
+def committed_entries():
+    """MOGO-018 Step 3B: the committed file is a SET; the entries live under it."""
+    return read_json(SPEC_PATH)["entries"]
+
+
 def spec(**over):
-    base = dict(read_json(SPEC_PATH))
+    base = dict(committed_entries()[0])
     base.update(over)
     return base
 
@@ -77,10 +82,12 @@ def spec(**over):
 class TestTheCommittedSpecIsTheApprovedOne(unittest.TestCase):
 
     def test_the_committed_spec_validates(self):
-        sched.validate_spec(read_json(SPEC_PATH))
+        for entry in committed_entries():
+            sched.validate_spec(entry)
+        sched.validate_collection_set(read_json(SPEC_PATH))
 
     def test_it_names_the_one_approved_source_and_capability(self):
-        document = read_json(SPEC_PATH)
+        document = committed_entries()[0]
         self.assertEqual(document["sourceId"], APPROVED_SOURCE)
         self.assertEqual(document["resourceId"], APPROVED_RESOURCE)
         self.assertEqual(document["authorizationId"], APPROVED_AUTH)
@@ -99,7 +106,8 @@ class TestTheCommittedSpecIsTheApprovedOne(unittest.TestCase):
             self.assertNotIn(forbidden, sched.SPEC_FIELDS)
 
     def test_the_spec_source_is_in_the_connector_registry(self):
-        self.assertIn(read_json(SPEC_PATH)["sourceId"], ca.APPROVED_DESTINATIONS)
+        for entry in committed_entries():
+            self.assertIn(entry["sourceId"], ca.APPROVED_DESTINATIONS)
 
 
 # ---------------------------------------------------------------------------
@@ -530,3 +538,206 @@ class TestTheLaunchdArtifacts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# MOGO-018 Step 3B -- the bounded multi-entry collection set
+# ---------------------------------------------------------------------------
+
+class TestBoundedCollectionSet(unittest.TestCase):
+    """The invariant: one window issues AT MOST ONE acquisition per entry.
+
+    N is decided entirely by the committed file. Nothing is discovered, nothing
+    is added at runtime, and no link inside acquired content is followed -- so
+    the set IS the bound.
+
+    Multi-entry behaviour is proved with LOCAL TEST-ONLY entries. No second real
+    educator is authorized, because proving the collector can iterate must not
+    require widening what it may collect.
+    """
+
+    def document(self, entries=None, **over):
+        base = {"schemaVersion": sched.SET_SCHEMA_VERSION,
+                "entries": committed_entries() if entries is None else entries}
+        base.update(over)
+        return base
+
+    def local_entry(self, **over):
+        """A second entry for the SAME approved source, different resource.
+
+        Deliberately not a second source: the connector registry still holds
+        exactly one, and this suite must not change that.
+        """
+        entry = dict(committed_entries()[0])
+        entry["resourceId"] = "dQw4w9WgXcQ"
+        entry.update(over)
+        return entry
+
+    def refused(self, document):
+        with self.assertRaises(runtime_errors.PlatformError):
+            sched.validate_collection_set(document)
+
+    # -- current production compatibility ----------------------------------
+
+    def test_the_committed_production_set_has_exactly_one_entry(self):
+        """Step 3B generalizes the shape. It authorizes nothing."""
+        entries = sched.validate_collection_set(read_json(SPEC_PATH))
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["sourceId"], APPROVED_SOURCE)
+        self.assertEqual(entries[0]["resourceId"], APPROVED_RESOURCE)
+        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,))
+
+    def test_a_one_entry_set_builds_the_same_command_as_before(self):
+        """Compatibility: the entry schema and command build are UNCHANGED."""
+        entry = sched.validate_collection_set(read_json(SPEC_PATH))[0]
+        envelope, payload, window = sched.build_command(entry, NOW_MS, ISSUED_AT)
+        direct, _payload, direct_window = sched.build_command(
+            sched.validate_spec(spec()), NOW_MS, ISSUED_AT)
+        self.assertEqual(window, direct_window)
+        self.assertEqual(envelope["idempotencyKey"], direct["idempotencyKey"])
+        self.assertEqual(envelope["targetCapability"], entry["capabilityId"])
+        self.assertEqual(payload["sourceId"], APPROVED_SOURCE)
+
+    # -- N entries produce at most N requests ------------------------------
+
+    def test_two_entries_produce_exactly_two_distinct_requests(self):
+        entries = sched.validate_collection_set(
+            self.document([committed_entries()[0], self.local_entry()]))
+        self.assertEqual(len(entries), 2)
+        keys = [sched.build_command(e, NOW_MS, ISSUED_AT)[0]["idempotencyKey"]
+                for e in entries]
+        self.assertEqual(len(set(keys)), 2, "each entry is its own request")
+
+    def test_n_entries_produce_exactly_n_requests_never_more(self):
+        for count in (1, 2, 3, 5, sched.MAX_COLLECTION_ENTRIES):
+            with self.subTest(entries=count):
+                built = [self.local_entry(resourceId="res%08d" % index)
+                         for index in range(count)]
+                entries = sched.validate_collection_set(self.document(built))
+                self.assertEqual(len(entries), count)
+                keys = {sched.build_command(e, NOW_MS, ISSUED_AT)[0]
+                        ["idempotencyKey"] for e in entries}
+                self.assertEqual(len(keys), count,
+                                 "one window issues at most one request per entry")
+
+    def test_the_entry_count_is_bounded(self):
+        """A fat-fingered file must not quietly become a crawler."""
+        too_many = [self.local_entry(resourceId="res%08d" % index)
+                    for index in range(sched.MAX_COLLECTION_ENTRIES + 1)]
+        self.refused(self.document(too_many))
+
+    def test_processing_order_is_the_committed_file_order(self):
+        """Deterministic, and reviewable: what you read is what runs."""
+        built = [self.local_entry(resourceId="res%08d" % index)
+                 for index in range(4)]
+        for _ in range(3):
+            entries = sched.validate_collection_set(self.document(built))
+            self.assertEqual([e["resourceId"] for e in entries],
+                             ["res%08d" % index for index in range(4)])
+
+    def test_each_entry_keeps_its_own_source_and_resource_identity(self):
+        built = [committed_entries()[0], self.local_entry()]
+        entries = sched.validate_collection_set(self.document(built))
+        identities = [(e["sourceId"], e["resourceId"]) for e in entries]
+        self.assertEqual(identities,
+                         [(APPROVED_SOURCE, APPROVED_RESOURCE),
+                          (APPROVED_SOURCE, "dQw4w9WgXcQ")])
+        for entry, identity in zip(entries, identities):
+            _envelope, payload, _window = sched.build_command(
+                entry, NOW_MS, ISSUED_AT)
+            self.assertEqual((payload["sourceId"], payload["resourceId"]),
+                             identity)
+
+    def test_streams_do_not_share_a_request_identity(self):
+        """Requirements 6, 7 and 8 at the request layer.
+
+        Different streams get different idempotency keys, so UNCHANGED, CHANGED
+        and duplicate suppression all remain per-stream -- one entry can never
+        suppress, advance or contaminate another's history.
+        """
+        first, second = sched.validate_collection_set(
+            self.document([committed_entries()[0], self.local_entry()]))
+        key_a = sched.build_command(first, NOW_MS, ISSUED_AT)[0]["idempotencyKey"]
+        key_b = sched.build_command(second, NOW_MS, ISSUED_AT)[0]["idempotencyKey"]
+        self.assertNotEqual(key_a, key_b)
+        # ...and within one stream, the same window is still the same request.
+        repeat = sched.build_command(first, NOW_MS + 1000, ISSUED_AT)[0]
+        self.assertEqual(repeat["idempotencyKey"], key_a)
+
+    # -- fail closed, for the WHOLE window ---------------------------------
+
+    def test_one_malformed_entry_refuses_the_whole_set(self):
+        """Preferred model: refuse the window rather than partly execute it.
+
+        Silently skipping the bad entry would make the schedule do less than the
+        committed file says, and nobody would be told.
+        """
+        for broken in ({**self.local_entry(), "sourceId": "SRC|web|0123456789ab"},
+                       {**self.local_entry(), "operation": "transcript"},
+                       {**self.local_entry(), "url": "https://evil.example/x"},
+                       {**self.local_entry(), "resourceId": "../../etc/passwd"},
+                       {**self.local_entry(), "capabilityId": "CAP|research|ingest-local-artifact"}):
+            with self.subTest(entry=broken.get("sourceId")):
+                self.refused(self.document([committed_entries()[0], broken]))
+
+    def test_a_missing_entry_field_refuses_the_whole_set(self):
+        broken = dict(self.local_entry())
+        del broken["authorizationId"]
+        self.refused(self.document([committed_entries()[0], broken]))
+
+    def test_a_malformed_set_document_is_refused(self):
+        self.refused({"schemaVersion": sched.SET_SCHEMA_VERSION})       # no entries
+        self.refused(self.document([]))                                  # empty
+        self.refused(self.document("not-a-list"))
+        self.refused(self.document(entries=[committed_entries()[0]],
+                                   schemaVersion="mogo.scheduled-collection.v1"))
+        self.refused({"entries": committed_entries()})                   # no version
+        for value in (None, [], "set", 17):
+            with self.subTest(document=value):
+                self.refused(value)
+
+    def test_an_unknown_document_field_is_refused(self):
+        """A URL cannot arrive at the document level either."""
+        self.refused(self.document(url="https://evil.example/x"))
+        self.refused(self.document(discover=True))
+
+    def test_a_duplicated_stream_is_refused(self):
+        """Two entries for one stream would collapse into one request."""
+        self.refused(self.document([committed_entries()[0],
+                                    dict(committed_entries()[0])]))
+
+    def test_entries_must_agree_on_the_collection_window(self):
+        """The installer checks ONE window against the cadence."""
+        self.refused(self.document([committed_entries()[0],
+                                    self.local_entry(collectionWindowSeconds=120)]))
+
+    def test_validation_happens_before_any_command_is_built(self):
+        """No acquisition can begin for a window the set does not pass."""
+        source = read_text(os.path.join(REPO_ROOT, "platform", "src",
+                                        "mogo_platform", "runtime", "cli.py"))
+        collect = source[source.index("def cmd_collect"):source.index("def cmd_library")]
+        load_at = collect.index("load_approved_collection_entries()")
+        build_at = collect.index("scheduled_collection.build_command")
+        submit_at = collect.index("runtime.submit(")
+        self.assertLess(load_at, build_at)
+        self.assertLess(build_at, submit_at)
+
+    # -- the schedule and its surface are unchanged ------------------------
+
+    def test_the_installer_reads_one_window_from_the_set(self):
+        script = read_text(SCRIPT_PATH)
+        self.assertIn("disagree on collectionWindowSeconds", script)
+        self.assertIn('[ "$window" -le "$cadence" ]', script)
+
+    def test_the_launchd_job_still_invokes_one_collect_per_window(self):
+        """One scheduler invocation processes the whole bounded list."""
+        template = read_text(TEMPLATE_PATH)
+        arguments = template.split("<key>ProgramArguments</key>")[1]
+        arguments = arguments.split("</array>")[0]
+        self.assertEqual(arguments.count("<string>collect</string>"), 1)
+        self.assertIn("<key>StartCalendarInterval</key>", template)
+
+    def test_no_second_real_source_was_authorized(self):
+        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,))
+        self.assertEqual(
+            {e["sourceId"] for e in committed_entries()}, {APPROVED_SOURCE})

@@ -762,3 +762,178 @@ substitution, `file://`, unapproved source, missing authorization, wrong operati
 resource identifiers are each still denied with their own distinct reason.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+---
+
+# MOGO-018 STEP 3B — BOUNDED MULTI-ENTRY AUTONOMOUS COLLECTION
+
+**Status: ✅ COMPLETE. Not committed — held for review.**
+**PAPER TRADING ONLY — live-money trading remains unauthorized.**
+
+## 1. Starting state
+
+HEAD `0414920081cb65c7ea5f10e9c6581a4f4f176a84`, clean, 0 ahead / 0 behind.
+
+## 2. Old model → new model
+
+| | Before | After |
+|---|---|---|
+| Committed file | one bare entry object | `{schemaVersion, note, entries: [...]}` |
+| `cmd_collect` | built one command | iterates the committed list |
+| Requests per window | 1 | **at most N**, N = committed entry count |
+
+**The entry record itself is byte-for-byte unchanged** — still
+`mogo.scheduled-collection.v1`, still validated by the same `validate_spec()`.
+
+## 3. Spec representation, and why this shape
+
+```json
+{
+  "schemaVersion": "mogo.scheduled-collection-set.v1",
+  "note": "...",
+  "entries": [ { "schemaVersion": "mogo.scheduled-collection.v1", ... } ]
+}
+```
+
+Two distinct version strings, deliberately: a **`-set.v1` document** contains
+**`mogo.scheduled-collection.v1` entries**, so a reader never has to guess which schema a version
+refers to, and the entry schema stays versioned independently of the document carrying it.
+
+**This is the maximal-reuse shape.** `validate_spec()` and `build_command()` were **not modified at
+all** — they operate on an entry, and an entry is exactly what it always was. The only new code is
+the document wrapper.
+
+## 4. Whole-set validation before any acquisition
+
+`validate_collection_set(document)` validates **everything** before `cmd_collect` submits anything:
+
+- document `schemaVersion` and no unknown document fields (a URL cannot arrive at the document level
+  either);
+- `entries` is a non-empty list of at most `MAX_COLLECTION_ENTRIES`;
+- **every entry through the existing `validate_spec()`** — one validation path, not two;
+- **no duplicated `(sourceId, resourceId)`** — two entries for one stream share an idempotency key
+  inside a window, so the second would be suppressed and the schedule would silently do less than
+  the file says;
+- **all entries agree on `collectionWindowSeconds`** — the installer checks one window against the
+  cadence, and letting entries disagree would make that check meaningless and turn a bounded
+  collector into a per-source rate scheduler nobody asked for.
+
+**One bad entry refuses the whole window.** Nothing is skipped, nothing is guessed, nothing is
+normalised into validity. A committed specification that is partly wrong is one nobody has actually
+reviewed, and quietly executing the valid remainder would hide that. Order is asserted structurally:
+`load → build → submit`, with a test proving the source reads in that order.
+
+## 5. The maximum-request invariant
+
+> **One window issues AT MOST ONE acquisition per committed entry.**
+
+N is decided **entirely by the committed file**. There is no discovery, nothing is added at runtime,
+and no link inside acquired content is ever followed. `MAX_COLLECTION_ENTRIES = 25` states the
+ceiling as a number rather than leaving it to the file's length — at the six-hour cadence that is 100
+requests/day against public metadata endpoints, and its real job is to stop a fat-fingered file from
+quietly becoming a crawler.
+
+The existing per-stream collection window still applies unchanged, so a repeated firing inside one
+window remains one request per stream.
+
+## 6. Order, identity and observability
+
+**Processing order is committed file order** — deterministic, and reviewable: what you read is what
+runs. Asserted stable across repeated validation.
+
+**Each result keeps its own identity.** Every entry builds its own command with its own
+`(sourceId, resourceId)` and its own idempotency key, so UNCHANGED, CHANGED and duplicate
+suppression all stay per-stream — one entry can never suppress, advance or contaminate another's
+history. Nothing is collapsed into an identity-less aggregate; the CLI prints each stream by name.
+
+**One scheduler invocation, one process lock, one `run_once()`.** The orchestrator already executes
+queued tasks sequentially under the lock it holds, so **no batch runner, worker pool, queue or retry
+framework was added** — and none is wanted. The launchd model is untouched: still one job, still
+`collect`, still 00:00/06:00/12:00/18:00.
+
+## 7. Files changed and why
+
+| File | Change |
+|---|---|
+| `platform/scheduling/approved-collection.json` | one entry → a set containing that same entry, byte-identical in content |
+| `runtime/scheduled_collection.py` | **+`SET_SCHEMA_VERSION`, `MAX_COLLECTION_ENTRIES`, `validate_collection_set()`**. `validate_spec()` and `build_command()` **untouched** |
+| `runtime/cli.py` | `load_approved_collection_spec` → `load_approved_collection_entries`; `cmd_collect` iterates |
+| `platform/scheduling/mogo_schedule.sh` | installer reads one window from the set and refuses a set whose entries disagree |
+| `tests/platform/test_runtime_scheduled_collection.py` | helper reads `entries[0]`; **+18 Step 3B fixtures** |
+
+**No new module, class, batch framework, worker pool, concurrency layer, retry framework, scheduler
+or queue.**
+
+## 8. Current production compatibility
+
+The committed set still contains **exactly one entry**, with the same `sourceId`, `resourceId`,
+`authorizationId`, capability, connector, operation and `collectionWindowSeconds: 21600`.
+
+Proved by test: a one-entry set builds a command whose **idempotency key and window are identical**
+to the one the single-entry model built. Live `collect --dry-run`:
+
+```
+COLLECT WINDOW -- 1 approved entry, at most one acquisition each
+  SRC|youtube|c785970cc458 / hb7ot1_szWI  operation=metadata
+      window=W|21600|82710 (21600 s)
+DRY RUN -- nothing was submitted, nothing was acquired
+```
+
+Installer preflight: `schedule 00:00,06:00,12:00,18:00 (cadence 21600s) · window 21600s ·
+PREFLIGHT OK`.
+
+## 9. Tests — 81 in the suite, 18 new, all passing
+
+All 19 required proofs covered, including: one-entry set preserves behaviour; two entries → exactly
+two distinct requests; N ∈ {1,2,3,5,25} → exactly N distinct keys, never more; the cap refuses N+1;
+deterministic committed order; per-entry identity preserved through to the payload; streams never
+share a request identity while a repeat inside one window still does; five malformed-entry shapes
+each refuse the **whole** set; missing field, malformed document, unknown document field, duplicated
+stream and disagreeing windows all refused; validation provably precedes submission; installer and
+launchd model unchanged; and **no second real source authorized**.
+
+**Multi-entry behaviour is proved entirely with local test-only entries** — a second *resource* under
+the already-approved source. No educator was authorized to test that the collector can iterate.
+
+## 10. Integrity results
+
+| Gate | Result |
+|---|---|
+| Focused scheduling + connector + MOGO-017 + bridge | ✅ **228 / 228** |
+| Platform suite | ✅ **23 suites · 990 tests · 0 failures · 0 errors** |
+| Canonical gate | ✅ **19 suites · 1,160 fixtures · 1,160 passed · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ **33 verified · 0 mismatched** · `VERIFIED` |
+| Legacy corpus | ✅ **220 re-derived · 0 mismatched** |
+| Immutable research evidence + Knowledge Library | ✅ byte-unchanged |
+| Step 2 bridge | ✅ unchanged output, semantics untouched |
+| Scheduler | ✅ plist template unchanged, 4 calendar entries, window `21600` |
+| Approved sources | ✅ **exactly one**; committed set has **exactly one entry** |
+| Acquisitions performed | ✅ **none** — `capability_results` still 7 rows |
+
+## 11. Remaining work for Step 3C
+
+1. **Authorization record** for the new educator (`mogo_runtime authorize`).
+2. **Connector destination entry** — now declaring its **own** `resourceIdAlphabet` /
+   `resourceIdLength` (Step 3A), not inheriting YouTube's.
+3. **Attribution entry** in `source-attribution.json`, with its `sourceId` recomputed from the
+   channel URL.
+4. **A second entry** in the collection set — the shape is now ready; only the approval is missing.
+5. **Verify** end to end: two streams, isolated histories, per-stream change detection, and no
+   strategy-corpus contamination in the bridge.
+
+**TJR first** — it already has a trader profile, `SF|TJR|SESSION_ZONE_REACTION`, committed evidence
+and an `imports/tjr/` tree. ICT has a profile but **no strategy family**. CRT has nothing.
+
+Still out of scope: transcript acquisition, discovery, concept modelling, corpus-maturity verdicts,
+strategy reconstruction, promotion.
+
+---
+
+# ⚠️ STEP 3B NOT COMMITTED
+
+Complete and green, but **nothing was committed or pushed** — held for ChatGPT/operator review.
+**No source was authorized. No acquisition was performed.**
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**

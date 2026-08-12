@@ -1,15 +1,20 @@
 {
-  "schemaVersion": "mogo.scheduled-collection.v1",
-  "note": "MOGO-016. The ONE approved scheduled collection. Every field is pinned by tests and re-validated against the connector's approved-destination registry at build time. There is deliberately no field for a URL, a host or a scheme -- an unknown field is refused, so this file cannot become a fetch primitive. Changing sourceId or resourceId is a visible, reviewed edit; it is not configuration.",
-  "capabilityId": "CAP|research|acquire-approved-source-metadata",
-  "commandType": "AcquireSourceMetadata",
-  "commandVersion": 1,
-  "sourceId": "SRC|youtube|c785970cc458",
-  "resourceId": "hb7ot1_szWI",
-  "authorizationId": "96fc2793-b13b-467a-89a8-f31a76ec6d4c",
-  "operation": "metadata",
-  "connectorId": "CONN|research|approved-source-metadata",
-  "connectorVersion": "1.0.0",
-  "policyVersion": "1.0",
-  "collectionWindowSeconds": 21600
+  "schemaVersion": "mogo.scheduled-collection-set.v1",
+  "note": "MOGO-016, generalized to a bounded SET in MOGO-018 Step 3B. Every entry is an unchanged mogo.scheduled-collection.v1 record, validated by the same validate_spec() the single-entry model used. One scheduled window issues AT MOST ONE acquisition per entry, so this file alone determines how many requests a window can make -- there is no discovery, nothing is added at runtime, and no link in acquired content is ever followed. There is deliberately no field for a URL, a host or a scheme at either level, and an unknown field is refused at both. Adding an entry is a visible, reviewed edit; it is not configuration. As of Step 3B there is still exactly ONE approved entry and production behaviour is unchanged.",
+  "entries": [
+    {
+      "schemaVersion": "mogo.scheduled-collection.v1",
+      "capabilityId": "CAP|research|acquire-approved-source-metadata",
+      "commandType": "AcquireSourceMetadata",
+      "commandVersion": 1,
+      "sourceId": "SRC|youtube|c785970cc458",
+      "resourceId": "hb7ot1_szWI",
+      "authorizationId": "96fc2793-b13b-467a-89a8-f31a76ec6d4c",
+      "operation": "metadata",
+      "connectorId": "CONN|research|approved-source-metadata",
+      "connectorVersion": "1.0.0",
+      "policyVersion": "1.0",
+      "collectionWindowSeconds": 21600
+    }
+  ]
 }
