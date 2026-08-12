@@ -60,6 +60,8 @@ from ..contracts import command as command_contract  # noqa: E402
 from ..contracts import errors as contract_errors  # noqa: E402
 from ..contracts import ids  # noqa: E402
 from ..contracts import task_states  # noqa: E402
+from . import acquisition_history  # noqa: E402
+from . import change_detection  # noqa: E402
 from . import clock as clock_module  # noqa: E402
 from . import errors as runtime_errors  # noqa: E402
 from . import event_log as event_log_module  # noqa: E402
@@ -1545,6 +1547,19 @@ class Orchestrator(object):
             return self._refuse_result_without_lease(task_row, generation,
                                                      "succeeded")
 
+        # MOGO-017 Step 2C: change detection, BEFORE the result is recorded, so
+        # the classification travels inside the one durable structure that
+        # already holds the acquisition rather than in a second ledger that could
+        # disagree with it.
+        #
+        # It lives HERE, in the orchestrator, and not in the capability, because
+        # the execution context deliberately carries {attempt, taskId,
+        # leaseGeneration} and NO database handle. A capability cannot read
+        # history, and widening that boundary to let it would be a far larger
+        # change than this milestone is allowed to make.
+        classification = self._classify_acquisition(capability_row, result,
+                                                    idem_key)
+
         # Record BEFORE announcing success, so a crash between the two leaves a
         # recorded result to replay rather than an effect nobody remembers.
         try:
@@ -1553,6 +1568,31 @@ class Orchestrator(object):
                                        result.result, self._clock.now_iso())
         except Exception:                      # noqa: BLE001 - never lose a success
             pass
+
+        # Emitted only after the acquisition it describes is durably recorded,
+        # and only for CHANGED. A mutation is INFORMATION about a SUCCESSFUL
+        # acquisition -- never an error, never a task failure.
+        if classification is not None \
+                and classification.classification == change_detection.CHANGED:
+            self._emit(
+                "SourceMutationDetected", workflow_id, correlation_id, task_id,
+                {"sourceId": result.result.get("sourceId"),
+                 "resourceId": result.result.get("resourceId"),
+                 "priorContentIdentity": classification.priorContentIdentity,
+                 "currentContentIdentity": classification.currentContentIdentity,
+                 "contentHashAlgorithm": "SHA-256",
+                 "contentIdentityBasis": "RAW_EXTERNAL_RESPONSE_BYTES",
+                 "classification": classification.classification,
+                 "capabilityId": capability_row["capability_id"],
+                 "detectionContract": change_detection.CONTRACT_VERSION,
+                 # Carried on the event itself so a reader never has to infer
+                 # the boundary from where the record happens to live.
+                 "lane": "RESEARCH",
+                 "promotionStatus": "NOT_A_TRADING_RULE"},
+                task_id=task_id,
+                subject_refs=[ref for ref in (result.result.get("sourceId"),
+                                              result.result.get("resourceId"))
+                              if ref])
 
         self._crash_point("before_success_append")
         self._emit(
@@ -1571,6 +1611,81 @@ class Orchestrator(object):
         self._emit("WorkflowCompleted", workflow_id, correlation_id, task_id,
                    {"taskId": task_id, "outcome": "succeeded"})
         return "succeeded"
+
+    def _classify_acquisition(self, capability_row, result, idem_key):
+        """Classify an acquisition against its stream's accepted history.
+
+        MOGO-017 Step 2C. Returns the Classification, or None when this result
+        is not an acquisition this detector governs.
+
+        MUTATES `result.result` IN PLACE, adding a `changeDetection` block, so
+        the classification is recorded by the very next statement inside the
+        capability result -- durable in `capability_results`, covered by that
+        row's verification hash, and queryable after a process restart. No second
+        ledger, because a second ledger could disagree with this one.
+
+        CLASSIFICATION CAN NEVER FAIL AN ACQUISITION. The work below is entirely
+        observational: the bytes were already fetched, validated and durably
+        stored before this runs. So every failure path returns rather than
+        raises, and the acquisition is still recorded and still reported as the
+        success it genuinely was. A change detector that could turn a good
+        acquisition into a failed task would be worse than no detector.
+
+        NOTHING IS LOST BY DEGRADING. The baseline is DERIVED from accepted
+        acquisition history, not stored separately, so a run whose
+        classification did not complete still records its own accepted result --
+        and the next run compares against it correctly.
+        """
+        payload = getattr(result, "result", None)
+        if not isinstance(payload, dict):
+            return None
+        # Only the approved-source acquisition capability produces the
+        # (sourceId, resourceId, contentHash, ingestion) shape this governs.
+        # Anything else is left completely alone.
+        if capability_row["capability_id"] != acquire_metadata_capability.CAPABILITY_ID:
+            return None
+        try:
+            verdict, prior = acquisition_history.classify_acquisition(
+                self.connection, capability_row["capability_id"], payload,
+                exclude_idempotency_key=idem_key)
+        except Exception as exc:                   # noqa: BLE001
+            # Recorded as an honest UNAVAILABLE rather than silently omitted: an
+            # absent field and a field that could not be computed are different
+            # facts, and a later reader must be able to tell them apart.
+            payload["changeDetection"] = {
+                "contract": change_detection.CONTRACT_VERSION,
+                "classification": "UNAVAILABLE",
+                "reason": "classification_failed",
+                "detail": str(exc)[:200],
+                "priorContentIdentity": None,
+                "currentContentIdentity": payload.get("contentHash"),
+            }
+            self._note("CHANGE DETECTION unavailable: %s" % (str(exc)[:120],))
+            return None
+
+        payload["changeDetection"] = {
+            "contract": change_detection.CONTRACT_VERSION,
+            "classification": verdict.classification,
+            "reason": verdict.reason,
+            "priorContentIdentity": verdict.priorContentIdentity,
+            "currentContentIdentity": verdict.currentContentIdentity,
+            "contentHashAlgorithm": "SHA-256",
+            "contentIdentityBasis": "RAW_EXTERNAL_RESPONSE_BYTES",
+            "comparisonStream": {"sourceId": payload.get("sourceId"),
+                                 "resourceId": payload.get("resourceId")},
+            # Traceability back to the exact prior acquisition compared against,
+            # so an auditor never has to guess which run established the
+            # baseline.
+            "priorAcquisitionKey": None if prior is None else prior.idempotencyKey,
+            "priorAcquisitionRecordedAt": None if prior is None else prior.recordedAt,
+            "lane": "RESEARCH",
+            "promotionStatus": "NOT_A_TRADING_RULE",
+        }
+        self._note("CHANGE DETECTION %s (prior=%s current=%s)"
+                   % (verdict.classification,
+                      (verdict.priorContentIdentity or "none")[:12],
+                      (verdict.currentContentIdentity or "none")[:12]))
+        return verdict
 
     def _fail_task(self, task_row, error_class, message, state=None,
                    execution=None, declared=False):

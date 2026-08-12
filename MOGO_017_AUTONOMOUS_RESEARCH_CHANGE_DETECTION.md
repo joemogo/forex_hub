@@ -927,6 +927,11 @@ Step 2A closed a **forward paper-trading observability** gap. That is all it did
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
 
+> **SUPERSEDED BY STEP 2C.** The two "not yet wired" assertions in this section were
+> deliberately written as hard emptiness checks so that wiring them would BREAK A TEST rather
+> than quietly start passing. Step 2C wired the detector and edited both, in a commit, with a
+> reason. Both are now allow-lists, so a *third* consumer still breaks them. See Step 2C §2.
+
 ---
 ---
 
@@ -1238,5 +1243,314 @@ that walks every runtime module. No `SourceMutationDetected` event is emitted fr
 path — asserted the same way. The scheduler, the acquisition capability, the connector, the research
 authorization and the research artifacts are **entirely unchanged in behaviour**. The next scheduled
 collection will behave exactly as it did before this step.
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+*(Step 2C then enabled it, deliberately and visibly. See below.)*
+
+---
+---
+
+# MOGO-017 STEP 2C — AUTONOMOUS CHANGE DETECTOR IMPLEMENTATION
+
+**Status: ✅ COMPLETE.** Production change detection is **wired, proven end to end, and
+autonomously exercised by launchd.**
+**PAPER TRADING ONLY — live-money trading remains unauthorized.**
+
+## 1. Authoritative starting state
+
+| | Verified before any edit |
+|---|---|
+| Repository | `origin` → `https://github.com/joemogo/forex_hub.git` |
+| Branch / HEAD | `main` · **`0be18c1bc9717f0be0648780a92abaec22226b2e`** = Step 2B closeout |
+| `git status --porcelain` / `git diff` | **empty — clean** |
+| Ahead / behind `origin/mogo-main` | **0 / 0** |
+
+## 2. Exact files and functions modified
+
+| File | Change |
+|---|---|
+| `runtime/acquisition_history.py` | **new** — `prior_accepted()`, `classify_acquisition()`, `PriorAcceptedAcquisition` |
+| `runtime/change_detection.py` | +2 **pure** adapters: `accepted_identity_from_acquisition()`, `classify_acquisition_result()` |
+| `runtime/orchestrator.py` | +`_classify_acquisition()`; the classify→record→emit seam in the success path |
+| `capabilities/acquire_approved_source_metadata.py` | `corpus=None` threaded through `execute()`, `preserve_raw()`, `acquired_root()` |
+| `runtime/audit.py` | +`_change_detection_summary()`; one `status` line + recent classifications |
+| `tests/platform/test_runtime_change_detection_wiring.py` | **new** — 18 fixtures |
+| `tests/platform/test_runtime_change_detection_contract.py` | the two Step 2B "not yet wired" pins updated to allow-lists |
+| `tests/run_platform_tests.sh` | +1 line registering the new suite |
+
+**`index.html` was not touched.** No ALEX code, parameter, protected function, forward evidence,
+Campaign C1 or legacy evidence was modified.
+
+### The architectural decision that shaped this step
+
+**Classification lives in the ORCHESTRATOR, not in the capability.** The execution context a
+capability receives is `{attempt, taskId, leaseGeneration}` and deliberately carries **no database
+handle** — so a capability physically cannot read history, and widening that boundary would be a far
+larger change than this milestone permits. The orchestrator already holds the connection, already
+emits the acquisition lifecycle, and is (per Step 2B §8) the correct emitter for an event that needs
+no manifest declaration. Everything followed from that.
+
+## 3. Prior accepted history lookup
+
+`acquisition_history.prior_accepted(connection, capability_id, sourceId, resourceId,
+exclude_idempotency_key)` reads `capability_results` for the acquisition capability, newest first,
+and returns the first row that is **both** in the same `(sourceId, resourceId)` stream **and**
+passes the Step 2B acceptance predicate.
+
+**Ordering:** `recorded_at DESC, rowid DESC`. `recorded_at` is stamped by the orchestrator's clock,
+which is guarded by a monotonic floor that **aborts rather than record a time earlier than the event
+it follows** — a durable repository-native ordering, not a hopeful one. `rowid` breaks a
+same-millisecond tie deterministically.
+
+**A run never compares against itself** — `exclude_idempotency_key` omits the acquisition being
+classified, because a replay may already have recorded it.
+
+### There is no separate baseline store, and that is the design
+
+A second store holding "the current accepted hash" would be a second source of truth that can
+disagree with the history it summarises. The failure mode is nasty: a crash between recording an
+acquisition and updating the baseline leaves them permanently inconsistent with nothing able to say
+which is right. **Deriving the baseline from the history makes that class impossible** — the
+baseline is not a value anyone maintains, it is the newest accepted row.
+
+**Three independent reasons a failure cannot poison it:** the orchestrator records a result only for
+a task that SUCCEEDED, so a failed acquisition never reaches the store; ingestion raises on empty,
+oversized, non-UTF-8 or unstorable content, so a validation failure fails the task and records
+nothing; and every candidate row is re-checked against the acceptance predicate anyway.
+
+**Scalability, recorded honestly:** `capability_results` has no `source_id` column or index, so this
+scans one capability's rows and filters in Python. At single-digit volume that is free, and **no
+index was added** — optimising a table that fits in a cache line would be premature. If scheduled
+collection ever reaches thousands of acquisitions per source, the right change is a generated column
+plus an index, or a narrow projection table. It is **not** to weaken the acceptance filter.
+
+## 4. Classifier logic
+
+The Step 2B contract, unchanged and not duplicated. Two new **pure** adapters translate the
+acquisition result shape, and they live in `change_detection.py` rather than at the call site so the
+knowledge of *which hash is the scientific identity* stays in the module that defines it — a caller
+reaching into the dict itself would be free to pick the wrong one.
+
+`accepted_identity_from_acquisition()` reads the **top-level `contentHash`** (the raw external byte
+hash) together with `ingestion.validationStatus` and `ingestion.storedVerified`. The nested
+`ingestion` block deliberately carries no `contentHash` of its own, so there is **no ambiguity to
+resolve**: the wrapper hash is not reachable from here.
+
+## 5. Durable classification representation
+
+The classification is written into the capability result **before** `result_store.record()`, so it
+lands inside the one durable structure that already holds the acquisition — covered by that row's
+verification hash, and queryable after a process restart (pinned by a test). **No second ledger.**
+
+Recorded fields: `classification`, `reason`, `priorContentIdentity`, `currentContentIdentity`,
+`contentHashAlgorithm`, `contentIdentityBasis`, `comparisonStream{sourceId,resourceId}`,
+`priorAcquisitionKey`, `priorAcquisitionRecordedAt`, `contract`, `lane`, `promotionStatus`.
+
+**Classification can never fail an acquisition.** The work is purely observational — the bytes were
+already fetched, validated and durably stored before it runs — so every failure path returns rather
+than raises, recording an honest `classification: "UNAVAILABLE"` with its reason. An absent field and
+a field that could not be computed are different facts. Two fixtures prove the acquisition still
+succeeds under a deliberately faulted classifier, **and that the degraded run still becomes the
+baseline for the next one** — because the baseline is derived, not stored.
+
+## 6. `SourceMutationDetected` emission path
+
+Emitted by the **orchestrator**, `producer: "orchestrator"`, **only on `CHANGED`**, and only after
+the acquisition it describes is durably recorded. Payload carries both identities, the stream, the
+algorithm, the identity basis, the contract version, `lane: RESEARCH` and
+`promotionStatus: NOT_A_TRADING_RULE`; `subjectRefs` carries source and resource.
+
+Per Step 2B §8 this required **no manifest edit, no `capabilityId` bump and no weakening of event
+registration validation** — `emittedEvents` is never consulted at emit time, and the orchestrator
+already emits `PolicyEvaluated` / `AcquisitionAuthorized` / `AcquisitionDenied`, none of which
+appears in any manifest. **A mutation is information about a SUCCESSFUL acquisition — never an
+error, never a task failure, and `source_mutated` is not used.**
+
+## 7. Deterministic Run A / Run B / Run C proof
+
+Driven through the **real Orchestrator** on a temporary state root: real command contract, real
+policy gate, real authorization record, real claim/lease, the real acquisition capability (connector
+gate, permit derivation, transport limits, hashing, raw preservation), the real ingestion capability,
+the real result store, the real event log. **Only two things are doubled** — the *socket*
+(`connector_transport._opener`, so the real gate, permit, limits and validation all still run) and
+the *corpus* (a Step 2B sandbox).
+
+| Run | Request | Bytes | Classification | Prior → Current | Mutation event |
+|---|---|---|---|---|---|
+| **A** | R1 | A | **`FIRST_OBSERVATION`** | `null` → `hash(A)` | **0** |
+| **B** | **R2 ≠ R1** | **A (identical)** | **`UNCHANGED`** | `hash(A)` → `hash(A)` | **0** |
+| **C** | R3 | **B (different)** | **`CHANGED`** | `hash(A)` → `hash(B)` | **exactly 1** |
+
+Asserted explicitly: `R1 ≠ R2` as idempotency keys while `contentHash(A) == contentHash(A)`;
+`hash(A) ≠ hash(B)`; Run B's `priorAcquisitionKey` is Run A's key; the single mutation event carries
+both identities, both stream fields, `producer: orchestrator`, `RAW_EXTERNAL_RESPONSE_BYTES`,
+`RESEARCH` / `NOT_A_TRADING_RULE`; and the event log still parses, validates and hashes.
+
+## 8. Failure proofs — all passing
+
+| Proof | Result |
+|---|---|
+| 1 · acquisition failure (HTTP 500) | no result recorded, no classification, **no emission**; the next good run still compares against A |
+| 2 · validation failure | same — unvalidated content never recorded as accepted |
+| 3 · **changed bytes that FAIL validation** | **not `CHANGED`, no emission**; baseline still A, proved by a following run classifying `UNCHANGED` |
+| 3b · wrong content type | refused; baseline unmoved |
+| 4 · duplicate already-ingested valid content | `duplicateStatus=DUPLICATE_ALREADY_INGESTED`, `ingested=false`, still **`UNCHANGED`** |
+| 5 · first accepted observation | **never** emits a mutation |
+| 6 · different `resourceId`, same source | separate history — different bytes there are `FIRST_OBSERVATION`, **not** a mutation |
+| 7 · different `sourceId` | separate history — no inheritance, proved at the history layer |
+| 8 · a run never compares against itself | `exclude_idempotency_key` verified |
+
+## 9. Sandbox end-to-end proof
+
+Every fixture asserts the genuine research corpus listing is **byte-identical before and after**, in
+`tearDown`, for all 18 tests. The raw acquired bytes and the research artifact both land in the
+sandbox, verified by path. `sandbox_corpus()` had already refused to construct any corpus able to
+reach the genuine one.
+
+## 10. Production approved-source proof
+
+One bounded real acquisition of the already-approved source through `mogo_runtime collect` — the
+exact governed path, no arbitrary URL, no new source, no transcript access.
+
+```
+COLLECT source=SRC|youtube|c785970cc458 resource=hb7ot1_szWI operation=metadata
+        window=W|21600|82708   issuedAt=2026-08-12T02:10:27.727Z
+  PolicyEvaluated → AcquisitionAuthorized → TaskClaimed → TaskStarted
+  CHANGE DETECTION UNCHANGED (prior=b668d4209abb current=b668d4209abb)
+  TaskSucceeded → WorkflowCompleted        advanced=3 succeeded=1
+```
+
+**Observed classification: `UNCHANGED`** — HTTP 200, 794 bytes, `DUPLICATE_ALREADY_INGESTED`,
+`ingested=false`, and it was still correctly `UNCHANGED` because content identity, not storage
+outcome, decides. Baseline was the MOGO-016 acquisition of `2026-08-11T23:28:01.709Z`. **Zero
+`SourceMutationDetected` events in the production log.**
+
+This was observed, not assumed: the source *had* remained byte-identical. A natural `CHANGED` would
+have been equally legitimate and would have been preserved and reported without altering the test
+design. No interpretation of any content was performed.
+
+## 11. Autonomous scheduler proof
+
+The exact already-proven MOGO-016 mechanism, with the smallest temporary acceleration.
+
+- Installed with a two-entry proof schedule; `runs = 0` before, `RunAtLoad=false`.
+- **launchd fired it at 22:12:03 local**, `last exit code = 0`, **stderr empty**.
+- The scheduled run traversed the complete chain and logged
+  **`CHANGE DETECTION UNCHANGED (prior=b668d4209abb current=b668d4209abb)`**.
+
+```
+launchd → mogo_runtime collect → governed runtime → policy → authorization
+       → connector gate → transport → validation → durable ingestion/dedupe
+       → CHANGE CLASSIFICATION → audit → WorkflowCompleted
+```
+
+**Scheduler restored immediately** to the committed six-hour production cadence (00:00 / 06:00 /
+12:00 / 18:00), verified loaded with `runs = 0`, and the committed spec is back to
+`collectionWindowSeconds: 21600` with `git status platform/scheduling` empty. **No uncontrolled
+repeated acquisitions**: two real production requests total this step.
+
+## 12. Classification observed on the real Alex G acquisition
+
+**`UNCHANGED`**, twice — once operator-triggered, once launchd-triggered. Content identity
+`b668d4209abbf2b8718cea2fa84eacd3985cbb4d1fc352dd1720f64bebb92a00` on both sides.
+
+## 13. Scientific firewall proof
+
+Every occurrence of `SourceMutationDetected` in the repository, enumerated rather than assumed:
+
+| File | Role |
+|---|---|
+| `contracts/vocabulary.py` | the approved-type declaration |
+| `runtime/orchestrator.py` | **the one emitter** |
+| `tests/platform/test_platform_envelopes.py` | pre-existing vocabulary test |
+| `tests/platform/test_runtime_change_detection_{contract,wiring}.py` | these proofs |
+
+**`index.html` — which carries ALEX and every trading path — has ZERO references.** No consumer
+exists in ALEX, strategy parameters, strategy execution, forward paper evidence, Campaign C1, legacy
+evidence, rule promotion, hypothesis promotion or live-money trading. **No unexpected trading-lane
+consumer was found**, so no stop condition was triggered.
+
+A test additionally scans the detector's **code** (docstrings stripped via AST, because both modules
+*document* the prohibition) for `alexG`, `ALEX`, `paperAccount`, `openPaperPosition`, `Campaign`,
+`tradingRule`, `hypothesis`, `promoteRule` — none present.
+
+## 14. Integrity results
+
+| Gate | Result |
+|---|---|
+| Step 2C focused suite | ✅ **18 / 18** |
+| Step 2B contract suite | ✅ **55 / 55** (2 pins updated to allow-lists) |
+| Platform suite | ✅ **22 suites · 919 tests · 0 failures · 0 errors** |
+| Canonical gate | ✅ **19 suites · 1,160 fixtures · 1,160 passed · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants byte-identical |
+| Campaign C1 | ✅ **33 / 33 · 0 mismatched** · `VERIFIED`; manifest `c23e72e0…` unchanged |
+| Legacy corpus | ✅ **220 re-derived · 0 mismatched**; rollup `667ff4c7…` matches |
+| Research corpus | ✅ **2 artifacts + 1 raw acquisition, byte-unchanged** — identical bytes correctly deduped, no synthetic fixture leaked in |
+| Forward / trading lane | ✅ `index.html`, `docs/campaigns`, `evidence/`, `docs/evidence`, `docs/strategy-fidelity`, `docs/trader-intelligence` all unmodified |
+| Authorization controls | ✅ unchanged; every run passed the real policy gate and authorization record |
+| Scheduler controls | ✅ restored to six-hour production cadence, `runs = 0`, committed spec at 21600 |
+| Dedupe behaviour | ✅ unchanged — `DUPLICATE_ALREADY_INGESTED`, no second artifact |
+
+### Four test failures were found, diagnosed and fixed — reported, not smoothed over
+
+1. **Two Step 2B pins broke by design.** `test_no_production_module_imports_change_detection` and
+   `test_no_source_mutation_event_is_emitted_anywhere_yet` were written as hard emptiness checks
+   precisely so wiring would **break a test** rather than quietly start passing. Both were rewritten
+   as **allow-lists** — so a *third* consumer still breaks them — plus a new test asserting **no
+   capability** imports the contract.
+2. **My own test helper was wrong** — it read `record.envelope`; the event log exposes `record.event`.
+   A test-harness defect, not a wiring defect.
+3. **My firewall scan matched prose.** Both detector modules *document* the prohibition ("no change
+   to ALEX", "promotes no hypothesis"), so a raw text scan flagged the very sentences describing the
+   firewall. Fixed by stripping docstrings via AST and scanning code — and the fix is self-checked.
+4. **A path literal tripped a legitimate guard.** My permitted-consumer list spelled out the package
+   path, whose substring `platform/contracts` is exactly what `test_platform_boundaries` scans for
+   when proving no suite reaches the retired flat directory. Fixed by building the paths from
+   components — **the guard was not weakened.**
+
+## 15. Scheduler final state
+
+Loaded, `state = not running`, `runs = 0`, four calendar entries at **00:00 / 06:00 / 12:00 / 18:00**
+local, `collectionWindowSeconds: 21600`. **Not left accelerated.**
+
+## 16. Remaining limitations
+
+1. **No production `CHANGED` has ever been observed** — the source has been byte-stable across six
+   acquisitions since MOGO-015. `CHANGED` is proven deterministically, not in the wild, and no test
+   asserts the source will ever change.
+2. **The three pre-2C MOGO-016 rows carry no `changeDetection` field.** They are still valid accepted
+   *history* — the acceptance predicate reads validation and storage, not the classification — but
+   they are not retroactively classified, and nothing backfills them.
+3. **Classification degrades to `UNAVAILABLE` rather than failing**, by design. A pathological
+   classifier fault would leave a gap in the *record* while leaving the *baseline* correct.
+4. **`capability_results` has no `source_id` index** — correctness first; see §3.
+5. **One resource, one source.** The comparison stream is keyed for more, but only one is approved.
+6. **The wrapper-hash provenance gap is still open** (`acquiredAt`/`decidedAt` null). Change
+   detection is immune by construction and pinned by test, so it can now be fixed safely — but it
+   has not been fixed.
+
+## 17. Can MOGO now answer the question?
+
+> **"Did the accepted content for this approved source/resource change since the prior accepted
+> acquisition?"**
+
+**Yes — autonomously, durably, and without an operator comparing hashes by hand.**
+
+A scheduler-triggered acquisition classifies itself against the prior *accepted* content for its own
+`(sourceId, resourceId)` stream, records the verdict inside the durable acquisition result, emits
+`SourceMutationDetected` on `CHANGED` only, and surfaces the answer in `mogo_runtime status`:
+
+```
+  change detection: UNCHANGED=1
+      UNCHANGED         SRC|youtube|c785970cc458/hb7ot1_szWI  b668d4209abb -> b668d4209abb  2026-08-12T02:10:27.909Z
+```
+
+---
+
+# ⚠️ MOGO-017 IS NOT DECLARED COMPLETE
+
+Step 2C delivered the detector. **The milestone closeout is a separate, explicitly authorized step**
+and has not been performed. No closeout claim is made here.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**

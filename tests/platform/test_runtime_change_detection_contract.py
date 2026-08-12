@@ -551,19 +551,56 @@ class TestTheDetectorIsNotYetWired(unittest.TestCase):
     RUNTIME_DIR = os.path.join(REPO_ROOT, "platform", "src", "mogo_platform",
                                "runtime")
 
-    def test_no_production_module_imports_change_detection(self):
-        """Step 2B froze the contract. It did NOT start classifying."""
-        importers = []
+    def test_only_the_named_seams_import_change_detection(self):
+        """Step 2B froze the contract and asserted NOTHING imported it.
+
+        MOGO-017 Step 2C wired it, so this assertion had to be edited -- in a
+        commit, with a reason -- rather than quietly starting to pass. That is
+        the whole point of having written it as a hard emptiness check.
+
+        It is now an ALLOW-LIST rather than a prohibition, so a THIRD consumer
+        still breaks the test. The contract is meant to have exactly two callers:
+        the history lookup that supplies its argument, and the orchestrator that
+        acts on its verdict.
+        """
+        permitted = {"acquisition_history.py", "orchestrator.py"}
+        importers = set()
         for root, _dirs, files in os.walk(self.RUNTIME_DIR):
             if "__pycache__" in root:
                 continue
             for name in files:
                 if not name.endswith(".py") or name == "change_detection.py":
                     continue
-                path = os.path.join(root, name)
-                if "change_detection" in read_text(path):
-                    importers.append(os.path.relpath(path, REPO_ROOT))
-        self.assertEqual(importers, [])
+                # Real IMPORTS, via the AST -- not a substring scan. audit.py
+                # legitimately reads the recorded `changeDetection` field and
+                # names a helper after it WITHOUT importing the contract, and
+                # conflating "mentions the words" with "depends on the module"
+                # would make this assertion mean something weaker than it says.
+                tree = ast.parse(read_text(os.path.join(root, name)))
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ImportFrom):
+                        if any(a.name == "change_detection" for a in node.names):
+                            importers.add(name)
+                    elif isinstance(node, ast.Import):
+                        if any(a.name.endswith("change_detection")
+                               for a in node.names):
+                            importers.add(name)
+        self.assertEqual(importers, permitted)
+
+    def test_no_capability_imports_change_detection(self):
+        """Classification is the ORCHESTRATOR's job, not a capability's.
+
+        A capability receives {attempt, taskId, leaseGeneration} and NO database
+        handle, so it cannot read history -- and widening that boundary to let it
+        would be a far larger change than this milestone permits.
+        """
+        capability_dir = os.path.join(self.RUNTIME_DIR, "capabilities")
+        for name in sorted(os.listdir(capability_dir)):
+            if not name.endswith(".py"):
+                continue
+            with self.subTest(capability=name):
+                self.assertNotIn("change_detection",
+                                 read_text(os.path.join(capability_dir, name)))
 
     def test_change_detection_performs_no_io_and_reads_no_clock(self):
         tree = ast.parse(read_text(cd.__file__))
@@ -628,19 +665,26 @@ class TestTheDetectorIsNotYetWired(unittest.TestCase):
                 self.assertNotIn("SourceMutationDetected",
                                  read_text(os.path.join(capability_dir, name)))
 
-    def test_no_source_mutation_event_is_emitted_anywhere_yet(self):
-        emitters = []
+    def test_the_orchestrator_is_the_only_emitter_of_the_mutation_event(self):
+        """Step 2B asserted NOTHING emitted it. Step 2C made the orchestrator
+        the one emitter, for the reason this suite already established: an
+        orchestrator-produced event needs no manifest declaration, so no
+        capabilityId bump and no weakening of registration validation.
+
+        An allow-list again, so a second emitter -- especially a capability --
+        still breaks this test.
+        """
+        emitters = set()
         for root, _dirs, files in os.walk(self.RUNTIME_DIR):
             if "__pycache__" in root:
                 continue
             for name in files:
                 if not name.endswith(".py"):
                     continue
-                path = os.path.join(root, name)
-                if "SourceMutationDetected" in read_text(path):
-                    emitters.append(os.path.relpath(path, REPO_ROOT))
-        self.assertEqual(emitters, [],
-                         "Step 2B must not emit the event from production")
+                if "SourceMutationDetected" in read_text(os.path.join(root, name)):
+                    emitters.add(name)
+        self.assertEqual(emitters, {"orchestrator.py"},
+                         "the orchestrator is the one and only emitter")
 
 
 if __name__ == "__main__":

@@ -56,6 +56,7 @@ from ...contracts import ids  # noqa: E402
 from .. import connector_authorization as connector_gate  # noqa: E402
 from .. import connector_transport as transport  # noqa: E402
 from .. import errors as runtime_errors  # noqa: E402
+from .. import research_corpus  # noqa: E402
 from . import ingest_local_artifact as ingest  # noqa: E402
 
 CAPABILITY_ID = "CAP|research|acquire-approved-source-metadata"
@@ -96,8 +97,16 @@ MANIFEST = {
 }
 
 
-def acquired_root():
-    return os.path.join(ingest.INTAKE_ROOT, ACQUIRED_SUBDIR)
+def acquired_root(corpus=None):
+    """Where raw acquired bytes land, inside whichever intake area is in force.
+
+    MOGO-017 Step 2B/2C: defaults to the production corpus, so an unchanged
+    caller is unchanged. A test supplies a sandbox that
+    research_corpus.sandbox_corpus() has already proven cannot reach the genuine
+    research corpus.
+    """
+    corpus = research_corpus.resolve_corpus(corpus)
+    return os.path.join(corpus.intakeRoot, ACQUIRED_SUBDIR)
 
 
 def _relative_intake_ref(content_hash):
@@ -105,7 +114,7 @@ def _relative_intake_ref(content_hash):
     return "%s/%s.json" % (ACQUIRED_SUBDIR, content_hash)
 
 
-def preserve_raw(raw, content_hash, acquisition_record):
+def preserve_raw(raw, content_hash, acquisition_record, corpus=None):
     """Write the acquired bytes into the governed intake area, content-addressed.
 
     The file name IS the content hash, so a repeated acquisition of unchanged
@@ -113,7 +122,7 @@ def preserve_raw(raw, content_hash, acquisition_record):
     copies. The RAW bytes are preserved verbatim alongside the acquisition
     record -- interpretation happens later, in ingestion, never here.
     """
-    root = acquired_root()
+    root = acquired_root(corpus)
     os.makedirs(root, exist_ok=True)
     target = os.path.join(root, content_hash + ".json")
     document = {
@@ -133,8 +142,17 @@ def preserve_raw(raw, content_hash, acquisition_record):
     return target
 
 
-def execute(payload):
-    """Acquire, preserve, ingest. THE GOVERNED EXTERNAL ACQUISITION."""
+def execute(payload, corpus=None):
+    """Acquire, preserve, ingest. THE GOVERNED EXTERNAL ACQUISITION.
+
+    `corpus` is MOGO-017 Step 2B's isolation seam, threaded through in Step 2C so
+    a deterministic fixture can drive this ENTIRE capability -- gate, transport,
+    raw preservation and real ingestion -- without any possibility of touching
+    the genuine research corpus. It defaults to None, which resolves to the
+    production corpus, so the orchestrator's `callable(payload)` dispatch and
+    every production write are unchanged.
+    """
+    corpus = research_corpus.resolve_corpus(corpus)
     ids.require_json_shaped(payload, "$capabilityPayload")
     plain = ids.as_plain(payload)
     if not isinstance(plain, dict):
@@ -168,7 +186,8 @@ def execute(payload):
     content_hash = outcome.contentHash
 
     # ── PRESERVE raw bytes before any interpretation.
-    stored_path = preserve_raw(outcome.rawBytes, content_hash, acquisition_record)
+    stored_path = preserve_raw(outcome.rawBytes, content_hash, acquisition_record,
+                               corpus)
     intake_ref = _relative_intake_ref(content_hash)
 
     # ── INGEST through the EXISTING pipeline. Not a second ingestion path: this
@@ -179,7 +198,7 @@ def execute(payload):
         "claimedSourceTitle": plain.get("claimedSourceTitle"),
         "claimedSourceUrl": outcome.requestedUrl,
         "authorizationId": authorization_id,
-    })
+    }, corpus=corpus)
 
     return {
         "capabilityId": CAPABILITY_ID,

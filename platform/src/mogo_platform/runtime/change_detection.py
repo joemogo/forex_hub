@@ -283,6 +283,56 @@ def classify(prior_content_identity, acquisition_ok, ingestion_result):
                           REASON_DIFFERS)
 
 
+# ---------------------------------------------------------------------------
+# MOGO-017 Step 2C -- adapters for the acquisition capability's result shape
+# ---------------------------------------------------------------------------
+# Both are PURE and both live here rather than at the call site, so the knowledge
+# of WHICH hash is the scientific identity stays in the module that defines the
+# contract. A caller reaching into the result dict itself would be free to pick
+# the wrong one, which is exactly the mistake Step 2B exists to prevent.
+
+def accepted_identity_from_acquisition(result):
+    """The accepted content identity of one acquisition result, or None. Pure.
+
+    `research.acquire.approved-source-metadata.v1` returns the RAW external byte
+    hash at the top level as `contentHash`, and nests ingestion's verdict under
+    `ingestion`. This reads exactly those two places.
+
+    The nested `ingestion` block deliberately does NOT carry a contentHash of its
+    own, so there is no ambiguity to resolve here: the identity is the raw hash,
+    never the research artifact wrapper hash.
+    """
+    if not isinstance(result, dict):
+        return None
+    ingestion = result.get("ingestion")
+    if not isinstance(ingestion, dict):
+        return None
+    return accepted_content_identity(True, {
+        "validationStatus": ingestion.get("validationStatus"),
+        "storedVerified": ingestion.get("storedVerified"),
+        "contentHash": result.get("contentHash"),
+    })
+
+
+def classify_acquisition_result(prior_content_identity, result):
+    """Classify one acquisition capability result. Pure.
+
+    A recorded acquisition result exists only for a task that SUCCEEDED, so
+    `acquisition_ok` is True by construction here -- but the acceptance predicate
+    still re-checks validation and storage, because a recorded result is not the
+    same fact as an accepted one.
+    """
+    identity = accepted_identity_from_acquisition(result)
+    if identity is None:
+        return Classification(VALIDATION_FAILURE, prior_content_identity, None,
+                              False, REASON_NOT_VALIDATED)
+    return classify(prior_content_identity, True, {
+        "validationStatus": VALIDATION_STATUS_VALID,
+        "storedVerified": True,
+        "contentHash": identity,
+    })
+
+
 def next_baseline(prior_content_identity, classification):
     """The accepted baseline AFTER this observation. Pure.
 

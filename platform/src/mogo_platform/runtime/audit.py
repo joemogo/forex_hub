@@ -132,7 +132,47 @@ def status_report(connection, log, paths):
         "a5GateUnmet": list(registry.unmet_a5_preconditions()),
         "connectorGatesUnmet": [gate["gate"] for gate in registry.CONNECTOR_GATES
                                 if not gate["satisfied"]],
+        # MOGO-017 Step 2C. Read from the recorded capability results, which are
+        # where the classification durably lives -- so this survives a restart
+        # and is not a second copy of the answer that could disagree.
+        "changeDetection": _change_detection_summary(connection),
     }
+
+
+def _change_detection_summary(connection):
+    """What change detection has concluded, newest first.
+
+    Constitution section 13 applied to research: an operator must be able to see
+    whether an approved source CHANGED without re-deriving hashes by hand.
+    Bounded to the most recent few, because this is a health snapshot rather than
+    a history report -- `audit` carries the full record.
+    """
+    import json as _json
+    rows = connection.execute(
+        "SELECT result_json, recorded_at FROM capability_results "
+        "ORDER BY recorded_at DESC, rowid DESC LIMIT 50").fetchall()
+    counts = {}
+    recent = []
+    for row in rows:
+        try:
+            result = _json.loads(row["result_json"])
+        except (ValueError, TypeError):
+            continue
+        detection = result.get("changeDetection")
+        if not isinstance(detection, dict):
+            continue
+        classification = detection.get("classification")
+        counts[classification] = counts.get(classification, 0) + 1
+        if len(recent) < 5:
+            recent.append({
+                "classification": classification,
+                "sourceId": (detection.get("comparisonStream") or {}).get("sourceId"),
+                "resourceId": (detection.get("comparisonStream") or {}).get("resourceId"),
+                "priorContentIdentity": detection.get("priorContentIdentity"),
+                "currentContentIdentity": detection.get("currentContentIdentity"),
+                "observedAt": row["recorded_at"],
+            })
+    return {"counts": counts, "recent": recent}
 
 
 def policy_report(connection, log):
@@ -783,6 +823,21 @@ def render_status(report):
                  % (len(report["connectorGatesUnmet"]),
                     (" -- " + ", ".join(report["connectorGatesUnmet"]))
                     if report["connectorGatesUnmet"] else ""))
+    # MOGO-017 Step 2C. Printed in the ordinary health snapshot: "did the
+    # approved source change" is health information about the research lane, and
+    # an operator should never have to compare two hashes by hand to answer it.
+    detection = report.get("changeDetection") or {}
+    counts = detection.get("counts") or {}
+    lines.append("  change detection: %s"
+                 % (", ".join("%s=%d" % (name, counts[name])
+                              for name in sorted(counts)) or "no classified acquisitions"))
+    for entry in (detection.get("recent") or []):
+        lines.append("      %-17s %s/%s  %s -> %s  %s"
+                     % (entry["classification"], entry["sourceId"] or "?",
+                        entry["resourceId"] or "?",
+                        (entry["priorContentIdentity"] or "none")[:12],
+                        (entry["currentContentIdentity"] or "none")[:12],
+                        entry["observedAt"]))
     return "\n".join(lines)
 
 
