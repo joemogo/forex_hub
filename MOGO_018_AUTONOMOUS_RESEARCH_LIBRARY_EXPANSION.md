@@ -741,8 +741,24 @@ reconstruction, promotion.
 
 ---
 
-# ⚠️ STEP 3A NOT COMMITTED
+# ✅ STEP 3A CHECKPOINT — COMMITTED
 
-Complete and green, but **nothing was committed or pushed** — held for ChatGPT/operator review.
+| | |
+|---|---|
+| Reviewed | approved by ChatGPT/operator |
+| **Checkpoint commit** | **`70f5bb39a38d2d00f2aa087ac5af8bf8f00a6e2a`** |
+| Commit message | `MOGO-018 Step 3A: per-destination resource-id authorization boundary` |
+| Pushed to | `origin/mogo-main` |
+| Starting checkpoint | `faf4ba8c50c0cc9923016d9749037f0d02d6c5df` (Step 2) |
+
+Final pre-commit verification re-ran all fifteen required checks: only the three intended files
+changed; the report's factual claims were spot-checked against the running code; focused
+authorization/connector/policy (138) and MOGO-017 detection plus Step 2 bridge (111) tests green;
+platform 972/972; canonical 1,160/1,160; drift 0; C1 33/33; legacy corpus 220/0; immutable research
+evidence and Knowledge Library evidence byte-unchanged; scheduler untouched; **no acquisition
+performed** (`capability_results` still 7 rows, unchanged from the Step 2 checkpoint); **no source
+authorized** (`approved_source_ids()` still one entry); and a live fail-closed sweep confirmed URL
+substitution, `file://`, unapproved source, missing authorization, wrong operation and crafted
+resource identifiers are each still denied with their own distinct reason.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
