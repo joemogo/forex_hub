@@ -1926,7 +1926,7 @@ fixtures but **never observed unattended**.
 
 | | |
 |---|---|
-| **Final HEAD** | recorded in the checkpoint below |
+| **Final HEAD** | `2cea3892366592f7514efaf53a7313146091c2a0` (closeout commit) |
 | **Implementation commits** | `ddfa925` (3C), `c59e6e3` (3D), `d2e14b4` (3E), `b3f4b4f` (3F), `2c916a2` (3G) + 2 checkpoint-record commits |
 | Platform suite | **25 suites · 1,049 tests · 0 failures · 0 errors** |
 | Canonical gate | **19 suites · 1,160 / 1,160 · 0 failed** |
@@ -1991,5 +1991,20 @@ promotion **including TJR**; live money.
 **Read-only concept and topic extraction over the governed research corpus** — stage 6 only,
 producing structured claims in its own namespace, consuming `entries()` and `corpus_report()` under
 the §3G contract, with stages 7–11 left closed. **Do not begin until GATE-3E closes.**
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+# 🟡 MOGO-018 CLOSEOUT CHECKPOINT
+
+| | |
+|---|---|
+| **Milestone classification** | **WAITING ON OPERATIONAL EVIDENCE** |
+| **Closeout commit** | **`2cea3892366592f7514efaf53a7313146091c2a0`** |
+| Outstanding gate | **GATE-3E** — unattended two-source scheduled run, 18:00 local / 22:00Z, window bucket 82711 |
+| Pushed to | `origin/mogo-main` |
+
+MOGO-019 was not begun. ICT and CRT remain unauthorized. TJR paper trading is not authorized.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
