@@ -41,12 +41,21 @@ TEMPLATE_PATH = os.path.join(SCHEDULING_DIR,
 SCRIPT_PATH = os.path.join(SCHEDULING_DIR, "mogo_schedule.sh")
 ADAPTER_PATH = os.path.join(REPO_ROOT, "platform", "src", "mogo_platform",
                             "runtime", "scheduled_collection.py")
-AUTH_RECORD_PATH = os.path.join(REPO_ROOT, "docs", "trader-intelligence",
-                                "authorizations", "AUTH-fxalexg-metadata.json")
+AUTHORIZATION_DIR = os.path.join(REPO_ROOT, "docs", "trader-intelligence",
+                                 "authorizations")
+AUTH_RECORD_PATH = os.path.join(AUTHORIZATION_DIR, "AUTH-fxalexg-metadata.json")
+TJR_AUTH_RECORD_PATH = os.path.join(AUTHORIZATION_DIR, "AUTH-tjr-metadata.json")
 
 APPROVED_SOURCE = "SRC|youtube|c785970cc458"
 APPROVED_RESOURCE = "hb7ot1_szWI"
 APPROVED_AUTH = "96fc2793-b13b-467a-89a8-f31a76ec6d4c"
+
+# MOGO-018 Step 3C -- the second approved educator, reused from committed
+# evidence (docs/trader-intelligence/evidence/sources/EVSRC_TJR_20260727_002.json
+# and docs/trader-intelligence/traders/tjr/profile.json), never invented here.
+TJR_SOURCE = "SRC|youtube|11cd2542b5b0"
+TJR_RESOURCE = "8qwEmE1DwYw"
+TJR_AUTH = "3008510b-6c34-4a46-ba26-1c90bb9c728a"
 
 # A fixed instant, as milliseconds. Never read from a clock: every function
 # under test takes `now_ms` as an argument, so no test here waits for anything.
@@ -426,9 +435,40 @@ class TestTheAcquisitionAuthorizationRecordGate(unittest.TestCase):
                 self.assertNotIn(prefix, record["decisionAuthority"])
 
     def test_every_real_approved_source_has_such_a_record(self):
-        """The gate's standing obligation, checked rather than asserted."""
-        record = read_json(AUTH_RECORD_PATH)
-        self.assertEqual(ca.approved_source_ids(), (record["sourceId"],))
+        """The gate's standing obligation, checked rather than asserted.
+
+        Step 3C makes this test do real work for the first time. With one source
+        it could compare a tuple; with two it has to READ the committed
+        authorization records and prove the set they cover is exactly the set of
+        approved sources. A third destination added without a record now fails
+        here, which is the whole point of the obligation.
+        """
+        records = [read_json(AUTH_RECORD_PATH), read_json(TJR_AUTH_RECORD_PATH)]
+        for record in records:
+            with self.subTest(source=record["sourceId"]):
+                authorizations.validate_record(record)
+                self.assertEqual(list(record["permittedOperations"]),
+                                 ["metadata"])
+        self.assertEqual({record["sourceId"] for record in records},
+                         set(ca.approved_source_ids()))
+
+    def test_the_tjr_record_authorizes_metadata_only_and_names_its_evidence(self):
+        """TJR is authorized for the SAME narrow operation as Alex G.
+
+        The archived TJR transcript is `restricted_third_party`; this record
+        must not be readable as authorizing it.
+        """
+        record = read_json(TJR_AUTH_RECORD_PATH)
+        authorizations.validate_record(record)
+        self.assertEqual(record["sourceId"], TJR_SOURCE)
+        self.assertEqual(record["authorizationId"], TJR_AUTH)
+        self.assertEqual(list(record["permittedOperations"]), ["metadata"])
+        self.assertEqual(record["policyStatus"], "PERMITTED_PUBLIC_METADATA")
+        self.assertTrue(record["decisionAuthority"].startswith("operator:"))
+        # It cites the committed evidence the channel identity came from,
+        # rather than asserting a channel on its own authority.
+        self.assertTrue(os.path.exists(
+            os.path.join(REPO_ROOT, record["sourceTermsSnapshotRef"])))
 
     def test_all_four_connector_gates_are_now_satisfied(self):
         self.assertEqual(len(registry.CONNECTOR_GATES), 4)
@@ -579,13 +619,19 @@ class TestBoundedCollectionSet(unittest.TestCase):
 
     # -- current production compatibility ----------------------------------
 
-    def test_the_committed_production_set_has_exactly_one_entry(self):
-        """Step 3B generalizes the shape. It authorizes nothing."""
+    def test_the_committed_production_set_has_exactly_two_entries(self):
+        """Step 3C added TJR. The Alex G entry is unchanged and still FIRST.
+
+        Committed order is the processing order, so pinning the index is
+        pinning behaviour, not formatting.
+        """
         entries = sched.validate_collection_set(read_json(SPEC_PATH))
-        self.assertEqual(len(entries), 1)
+        self.assertEqual(len(entries), 2)
         self.assertEqual(entries[0]["sourceId"], APPROVED_SOURCE)
         self.assertEqual(entries[0]["resourceId"], APPROVED_RESOURCE)
-        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,))
+        self.assertEqual(entries[1]["sourceId"], TJR_SOURCE)
+        self.assertEqual(entries[1]["resourceId"], TJR_RESOURCE)
+        self.assertEqual(ca.approved_source_ids(), (TJR_SOURCE, APPROVED_SOURCE))
 
     def test_a_one_entry_set_builds_the_same_command_as_before(self):
         """Compatibility: the entry schema and command build are UNCHANGED."""
@@ -737,7 +783,8 @@ class TestBoundedCollectionSet(unittest.TestCase):
         self.assertEqual(arguments.count("<string>collect</string>"), 1)
         self.assertIn("<key>StartCalendarInterval</key>", template)
 
-    def test_no_second_real_source_was_authorized(self):
-        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,))
-        self.assertEqual(
-            {e["sourceId"] for e in committed_entries()}, {APPROVED_SOURCE})
+    def test_exactly_two_real_sources_are_authorized_and_no_third(self):
+        """Step 3C: Alex G and TJR. ICT and CRT remain unauthorized."""
+        self.assertEqual(ca.approved_source_ids(), (TJR_SOURCE, APPROVED_SOURCE))
+        self.assertEqual({e["sourceId"] for e in committed_entries()},
+                         {APPROVED_SOURCE, TJR_SOURCE})

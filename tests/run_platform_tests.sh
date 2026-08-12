@@ -42,6 +42,7 @@ SUITES=(
   tests.platform.test_runtime_change_detection_contract
   tests.platform.test_runtime_change_detection_wiring
   tests.platform.test_runtime_research_library
+  tests.platform.test_runtime_two_source_isolation
   tests.platform.test_runtime_review_disposition
   tests.platform.test_runtime_recovery
   tests.platform.test_runtime_end_to_end

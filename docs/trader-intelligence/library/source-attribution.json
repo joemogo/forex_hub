@@ -14,6 +14,19 @@
         "SF|ALEX_G|SUPPORT_RESISTANCE_V1"
       ],
       "attributionNote": "Organizational attribution only. This says the material was collected for the ALEX_G corpus. It does NOT say the strategy is valid, that the material has been verified, or that anything here is a trading rule. The sourceId above is RECOMPUTED from channelUrl at load time and refused if it disagrees, so the link is verified rather than pasted."
+    },
+    {
+      "sourceId": "SRC|youtube|11cd2542b5b0",
+      "sourceIdDerivation": {
+        "provider": "youtube",
+        "channelUrl": "https://www.youtube.com/@TJRTrades",
+        "evidenceRef": "docs/trader-intelligence/evidence/sources/EVSRC_TJR_20260727_002.json"
+      },
+      "traderId": "TJR",
+      "strategyFamilyIds": [
+        "SF|TJR|SESSION_ZONE_REACTION"
+      ],
+      "attributionNote": "MOGO-018 Step 3C. Organizational attribution only. This says the material was collected for the TJR corpus and nothing else: it does NOT say TJR is profitable, validated, accepted, ready for reconstruction, ready for backtesting or ready for paper trading, and it must not affect ALEX. The strategy family SF|TJR|SESSION_ZONE_REACTION is the one already declared in docs/trader-intelligence/traders/tjr/profile.json -- reused, not minted, so there is exactly one TJR identity in the repository. The channelUrl is the one recorded in the evidenceRef above, whose titleVerification block confirmed the publisher through the same oEmbed method this connector uses. As with ALEX_G, the sourceId is RECOMPUTED from channelUrl at load time and refused if it disagrees."
     }
   ]
 }

@@ -64,8 +64,11 @@ VIDEO_ID_PATTERN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 # ---------------------------------------------------------------------------
 # Approved destination registry -- source identity IS the key.
 # ---------------------------------------------------------------------------
-# One entry, deliberately. Adding a second external source is a visible, reviewed
-# edit to this table, not a configuration change and not a runtime registration.
+# TWO entries as of MOGO-018 Step 3C, and both arrived the only way one can:
+# a visible, reviewed edit to this table. Not a configuration change, not a
+# runtime registration, and not discovery -- there is no code path that adds an
+# entry here, so the number of educators MOGO may contact is whatever a reader
+# of this file counts.
 #
 # `urlTemplate` carries exactly one substitution, {videoId}, which is validated
 # against a strict pattern before use. Nothing else in the URL is caller-
@@ -97,6 +100,53 @@ APPROVED_DESTINATIONS = MappingProxyType({
         # global rule they replace, so this source's acceptance boundary is
         # unchanged -- the alphabet is referenced by name rather than retyped
         # precisely so it cannot drift by a character.
+        "resourceIdAlphabet": VIDEO_ID_PATTERN,
+        "resourceIdLength": 11,
+        "maxResponseBytes": 65536,
+        "expectedContentType": "application/json",
+        "followRedirects": False,
+    }),
+
+    # TJR -- MOGO-018 Step 3C, the SECOND approved educator. The channel
+    # identity is REUSED, not invented: it comes from the committed research
+    # record EVSRC|TJR|20260727|002, whose titleVerification block records
+    # method youtube_oembed, status verified_publisher and
+    # traderAttributionConfirmed true -- the publisher was confirmed through the
+    # SAME oEmbed endpoint this entry names. That record is cited BY IDENTIFIER
+    # rather than by path: a runtime module must not name a scientific-corpus
+    # location, and a platform boundary test enforces exactly that. The
+    # resolvable path lives in the authorization record and in the research
+    # library's attribution file, which are documents rather than runtime.
+    #
+    # NO `channelId` FIELD, DELIBERATELY. Alex G's entry carries a UC-form
+    # channel id because the repository has one for that channel. It has none
+    # for TJR, so this entry omits the field rather than guess a value. Nothing
+    # reads `channelId` or `sourceLabel` -- they document the entry for a human
+    # -- so the omission changes no behaviour, and inventing one would put an
+    # unverified identifier into an authorization boundary.
+    #
+    # THE RESOURCE-ID RULE IS DECLARED HERE, NOT INHERITED. Step 3A moved this
+    # constraint off the module and onto the entry precisely so that no
+    # destination silently obeys a rule written for another. TJR is also
+    # YouTube and legitimately uses the same 11-character resource shape, so it
+    # declares the SAME rule explicitly. Two entries agreeing on a rule does not
+    # make the rule global again: deleting either declaration must break only
+    # that destination.
+    "SRC|youtube|11cd2542b5b0": MappingProxyType({
+        "sourceLabel": "TJRTrades",
+        "channelUrl": "https://www.youtube.com/@TJRTrades",
+        "scheme": "https",
+        "host": "www.youtube.com",
+        "path": "oembed",   # joined, never a leading-slash literal
+        "operation": OPERATION_METADATA,
+        # Written out in full rather than shared with the entry above. A
+        # destination that spells out its own URL is one a reviewer can read
+        # without cross-referencing, and it keeps the Alex G entry untouched by
+        # this step. A test pins the exact derived URL for BOTH sources, so the
+        # duplication cannot drift unnoticed.
+        "urlTemplate": ("https://www.youtube.com" "/" "oembed"
+                        "?url=https://www.youtube.com" "/" "watch%3Fv%3D{videoId}"
+                        "&format=json"),
         "resourceIdAlphabet": VIDEO_ID_PATTERN,
         "resourceIdLength": 11,
         "maxResponseBytes": 65536,

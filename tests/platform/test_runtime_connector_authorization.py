@@ -20,6 +20,11 @@ APPROVED_SOURCE = "SRC|youtube|c785970cc458"
 GOOD_AUTH = "9e24aa04-c7b5-4438-acaf-c709cd8796b5"
 GOOD_VIDEO = "hb7ot1_szWI"
 
+# MOGO-018 Step 3C -- the second approved educator. Both identifiers are REUSED
+# from committed repository evidence, never invented here.
+TJR_SOURCE = "SRC|youtube|11cd2542b5b0"
+TJR_VIDEO = "8qwEmE1DwYw"
+
 
 def request(**over):
     base = {"sourceId": APPROVED_SOURCE,
@@ -51,9 +56,19 @@ class TestTheApprovedSourceIsEligible(unittest.TestCase):
         self.assertEqual(record["scheme"], "https")
         self.assertEqual(record["host"], "www.youtube.com")
 
-    def test_exactly_one_external_source_is_approved(self):
-        """Adding a second source must be a visible edit, not a config change."""
-        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,))
+    def test_exactly_two_external_sources_are_approved(self):
+        """MOGO-018 Step 3C authorized TJR, and NOTHING else.
+
+        This is the count assertion, and it is deliberately exact rather than a
+        lower bound: `assertGreaterEqual` would pass while a third educator sat
+        in the registry unreviewed. Adding a source must remain a visible edit
+        that breaks this test until a human updates it.
+        """
+        self.assertEqual(ca.approved_source_ids(),
+                         (TJR_SOURCE, APPROVED_SOURCE))
+        for denied in ("SRC|youtube|ICT", "SRC|youtube|CRT"):
+            with self.subTest(source=denied):
+                self.assertNotIn(denied, ca.APPROVED_DESTINATIONS)
 
 
 class TestUnauthorizedDestinationsFailClosed(unittest.TestCase):
@@ -413,8 +428,8 @@ class TestPerDestinationResourceIdBoundary(unittest.TestCase):
         url, entry = ca.derive_destination(APPROVED_SOURCE, GOOD_VIDEO)
         self.assertEqual(url, entry["urlTemplate"].format(videoId=GOOD_VIDEO))
         self.assertTrue(url.startswith("https://www.youtube.com/oembed"))
-        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,),
-                         "Step 3A authorized no new source")
+        self.assertEqual(ca.approved_source_ids(), (TJR_SOURCE, APPROVED_SOURCE),
+                         "Step 3C authorized TJR and nothing else")
 
     def test_the_acceptance_boundary_is_identical_to_the_global_rule(self):
         """Compatibility, proved rather than asserted.

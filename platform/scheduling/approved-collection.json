@@ -1,6 +1,6 @@
 {
   "schemaVersion": "mogo.scheduled-collection-set.v1",
-  "note": "MOGO-016, generalized to a bounded SET in MOGO-018 Step 3B. Every entry is an unchanged mogo.scheduled-collection.v1 record, validated by the same validate_spec() the single-entry model used. One scheduled window issues AT MOST ONE acquisition per entry, so this file alone determines how many requests a window can make -- there is no discovery, nothing is added at runtime, and no link in acquired content is ever followed. There is deliberately no field for a URL, a host or a scheme at either level, and an unknown field is refused at both. Adding an entry is a visible, reviewed edit; it is not configuration. As of Step 3B there is still exactly ONE approved entry and production behaviour is unchanged.",
+  "note": "MOGO-016, generalized to a bounded SET in MOGO-018 Step 3B. Every entry is an unchanged mogo.scheduled-collection.v1 record, validated by the same validate_spec() the single-entry model used. One scheduled window issues AT MOST ONE acquisition per entry, so this file alone determines how many requests a window can make -- there is no discovery, nothing is added at runtime, and no link in acquired content is ever followed. There is deliberately no field for a URL, a host or a scheme at either level, and an unknown field is refused at both. Adding an entry is a visible, reviewed edit; it is not configuration. As of MOGO-018 Step 3C there are exactly TWO entries -- Alex G (unchanged, byte-for-byte, from Step 3B) and TJR -- so one window issues AT MOST TWO acquisitions. Each entry carries its own (sourceId, resourceId), its own authorizationId and therefore its own idempotency key, so the two streams have independent accepted history and neither can advance, suppress or contaminate the other.",
   "entries": [
     {
       "schemaVersion": "mogo.scheduled-collection.v1",
@@ -10,6 +10,20 @@
       "sourceId": "SRC|youtube|c785970cc458",
       "resourceId": "hb7ot1_szWI",
       "authorizationId": "96fc2793-b13b-467a-89a8-f31a76ec6d4c",
+      "operation": "metadata",
+      "connectorId": "CONN|research|approved-source-metadata",
+      "connectorVersion": "1.0.0",
+      "policyVersion": "1.0",
+      "collectionWindowSeconds": 21600
+    },
+    {
+      "schemaVersion": "mogo.scheduled-collection.v1",
+      "capabilityId": "CAP|research|acquire-approved-source-metadata",
+      "commandType": "AcquireSourceMetadata",
+      "commandVersion": 1,
+      "sourceId": "SRC|youtube|11cd2542b5b0",
+      "resourceId": "8qwEmE1DwYw",
+      "authorizationId": "3008510b-6c34-4a46-ba26-1c90bb9c728a",
       "operation": "metadata",
       "connectorId": "CONN|research|approved-source-metadata",
       "connectorVersion": "1.0.0",

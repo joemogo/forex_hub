@@ -1,0 +1,45 @@
+{
+  "acquisition": {
+    "acquiredAt": null,
+    "authorizationId": "3008510b-6c34-4a46-ba26-1c90bb9c728a",
+    "byteLength": 829,
+    "connectorId": "CONN|research|approved-source-metadata",
+    "contentHash": "0cc6cf59e6d12fc5add7e1b9ba8ebae4610cebc69c0f00bdb75859f73c43904f",
+    "contentType": "application/json",
+    "decision": {
+      "approvedUrl": "https://www.youtube.com/oembed?url=https://www.youtube.com/watch%3Fv%3D8qwEmE1DwYw&format=json",
+      "authorizationId": "3008510b-6c34-4a46-ba26-1c90bb9c728a",
+      "capabilityId": "CAP|research|acquire-approved-source-metadata",
+      "capabilityVersion": "1.0.0",
+      "connectorId": "CONN|research|approved-source-metadata",
+      "connectorVersion": "1.0.0",
+      "decidedAt": null,
+      "decision": "permit",
+      "host": "www.youtube.com",
+      "limits": {
+        "expectedContentType": "application/json",
+        "followRedirects": false,
+        "maxResponseBytes": 65536
+      },
+      "operation": "metadata",
+      "permitted": true,
+      "reason": "connector_destination_permitted",
+      "requestedUrl": null,
+      "scheme": "https",
+      "sourceId": "SRC|youtube|11cd2542b5b0"
+    },
+    "detail": null,
+    "failureClass": null,
+    "finalUrl": "https://www.youtube.com/oembed?url=https://www.youtube.com/watch%3Fv%3D8qwEmE1DwYw&format=json",
+    "httpStatus": 200,
+    "ok": true,
+    "reason": null,
+    "requestedUrl": "https://www.youtube.com/oembed?url=https://www.youtube.com/watch%3Fv%3D8qwEmE1DwYw&format=json",
+    "sourceId": "SRC|youtube|11cd2542b5b0",
+    "transportVersion": "1.0.0"
+  },
+  "contentHash": "0cc6cf59e6d12fc5add7e1b9ba8ebae4610cebc69c0f00bdb75859f73c43904f",
+  "contentHashAlgorithm": "SHA-256",
+  "rawContent": "{\"title\":\"Path to Profitability: How to Read a Candlestick Chart\",\"author_name\":\"TJR\",\"author_url\":\"https://www.youtube.com/@TJRTrades\",\"type\":\"video\",\"height\":113,\"width\":200,\"version\":\"1.0\",\"provider_name\":\"YouTube\",\"provider_url\":\"https://www.youtube.com/\",\"thumbnail_height\":360,\"thumbnail_width\":480,\"thumbnail_url\":\"https://i.ytimg.com/vi/8qwEmE1DwYw/hqdefault.jpg\",\"html\":\"\\u003ciframe width=\\u0022200\\u0022 height=\\u0022113\\u0022 src=\\u0022https://www.youtube.com/embed/8qwEmE1DwYw?feature=oembed\\u0022 frameborder=\\u00220\\u0022 allow=\\u0022accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\\u0022 referrerpolicy=\\u0022strict-origin-when-cross-origin\\u0022 allowfullscreen title=\\u0022Path to Profitability: How to Read a Candlestick Chart\\u0022\\u003e\\u003c/iframe\\u003e\"}",
+  "schemaVersion": "mogo.raw-acquisition.v1"
+}

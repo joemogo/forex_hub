@@ -1,0 +1,20 @@
+{
+  "auditHistory": [
+    "2026-08-12 operator:joemogollon authorized METADATA-ONLY acquisition from the TJR channel (https://www.youtube.com/@TJRTrades) via the public oEmbed metadata API, as MOGO-018 Step 3C. The channel identity is not asserted here: it is REUSED from committed repository evidence docs/trader-intelligence/evidence/sources/EVSRC_TJR_20260727_002.json, whose titleVerification block records method youtube_oembed, status verified_publisher, traderAttributionConfirmed true and verifiedScope [title, channel/author, video identity] -- i.e. the publisher was confirmed through the SAME oEmbed endpoint this connector is authorized to call. No channel URL, channel ID or video ID was invented for this record.",
+    "2026-08-12 SCOPE NOTE. The archived TJR TRANSCRIPT carries licensingStatus restricted_third_party, and this authorization does NOT touch it. Transcript and artifact operations are NOT authorized -- only the public oEmbed metadata document for the one resource named in the approved collection set. TJR has NO UC-form channel ID anywhere in the repository, so none is claimed; the destination registry entry deliberately omits that field rather than guess one.",
+    "2026-08-12 ATTRIBUTION IS NOT VALIDATION. Organizational attribution of this source to the TJR research corpus (SF|TJR|SESSION_ZONE_REACTION) says only that the material was collected for that corpus. It does NOT say TJR is profitable, validated, accepted, ready for reconstruction, ready for backtesting or ready for paper trading, and it must not affect ALEX. Bound to connector CONN|research|approved-source-metadata v1.0.0."
+  ],
+  "authorizationId": "3008510b-6c34-4a46-ba26-1c90bb9c728a",
+  "decidedAt": "2026-08-12T00:00:00.000Z",
+  "decisionAuthority": "operator:joemogollon",
+  "modelTrainingRestrictions": "Not for external model training.",
+  "permittedOperations": [
+    "metadata"
+  ],
+  "policyStatus": "PERMITTED_PUBLIC_METADATA",
+  "policyVersion": "1.0",
+  "redistributionRestrictions": "No redistribution outside this repository.",
+  "retentionRestrictions": "Research corpus only; no redistribution.",
+  "sourceId": "SRC|youtube|11cd2542b5b0",
+  "sourceTermsSnapshotRef": "docs/trader-intelligence/evidence/sources/EVSRC_TJR_20260727_002.json"
+}

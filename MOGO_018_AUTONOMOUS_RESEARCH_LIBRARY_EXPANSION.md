@@ -956,3 +956,374 @@ the connector gate itself still fails closed.
 **No source was authorized. No acquisition was performed.**
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+# MOGO-018 STEP 3C — TJR AUTHORIZED AS THE SECOND APPROVED RESEARCH SOURCE
+
+**Status: ✅ COMPLETE. Not committed — held for review.**
+**PAPER TRADING ONLY — live-money trading remains unauthorized.**
+
+## 1. Starting state
+
+HEAD `e3707a5a1000dcab97180c68e07da69d80795823`, clean working tree, 0 ahead / 0 behind
+`origin/mogo-main`.
+
+**One naming discrepancy, reported rather than silently accepted.** The brief specified branch
+`mogo-main`; the local branch is named **`main`** and *tracks* `origin/mogo-main`. Every substantive
+check passed — correct repository, exact HEAD, clean tree, 0/0 against `origin/mogo-main` — and this
+is the same configuration Steps 3A and 3B were committed and pushed from. Only the local label
+differs.
+
+## 2. The TJR identity — reused, never invented
+
+**No channel URL, channel ID, video ID, traderId or strategy family was guessed.** Every identifier
+below already existed in committed repository evidence before this step.
+
+| What | Value | Where it already existed |
+|---|---|---|
+| traderId | `TJR` | `docs/trader-intelligence/traders/tjr/profile.json` |
+| Strategy family | `SF\|TJR\|SESSION_ZONE_REACTION` | same profile + `strategy-families/session-zone-reaction.json` |
+| Channel URL | `https://www.youtube.com/@TJRTrades` | `evidence/sources/EVSRC_TJR_20260727_002.json` |
+| Resource (video) ID | `8qwEmE1DwYw` | same record (`youtubeVideoId`, `canonicalReference`) |
+| Derived sourceId | `SRC\|youtube\|11cd2542b5b0` | computed by `ids.make_source_id` from the channel URL |
+
+**Why that evidence record is strong enough to authorize against.** Its `titleVerification` block
+records `method: youtube_oembed`, `status: verified_publisher`, `traderAttributionConfirmed: true`
+and `verifiedScope: [title, channel/author, video identity]` — the publisher was confirmed through
+**the same oEmbed endpoint this connector is authorized to call**. That is the identical corroboration
+pattern Alex G had in MOGO-015 Step 1A.
+
+**What the repository does NOT contain, and was therefore NOT claimed.** There is **no `UC…` channel
+ID for TJR** anywhere in the repository. Alex G's registry entry carries one; the TJR entry
+**omits the field** rather than invent a value. Nothing reads `channelId`, so the omission changes no
+behaviour — and an unverified identifier inside an authorization boundary would have been a real
+defect. `EVSRC|TJR|20260727|001` has a null `canonicalReference` and was therefore unusable; only
+`…|002` grounds a resource.
+
+## 3. Authorization additions — four, the number Step 3B predicted
+
+| # | File | Change |
+|---|---|---|
+| 1 | `docs/trader-intelligence/authorizations/AUTH-tjr-metadata.json` | **NEW.** authorizationId `3008510b-6c34-4a46-ba26-1c90bb9c728a`, `PERMITTED_PUBLIC_METADATA`, `permittedOperations: ["metadata"]`, `decisionAuthority: operator:joemogollon` |
+| 2 | `platform/src/mogo_platform/runtime/connector_authorization.py` | Second `APPROVED_DESTINATIONS` entry |
+| 3 | `docs/trader-intelligence/library/source-attribution.json` | TJR → `TJR` / `SF\|TJR\|SESSION_ZONE_REACTION` |
+| 4 | `platform/scheduling/approved-collection.json` | Second committed collection entry |
+
+**The Alex G registry entry was not touched.** TJR's `urlTemplate` is written out in full rather than
+factored into a shared constant — refactoring would have edited the incumbent's authorization line for
+no behavioural gain. A test pins the **exact derived URL for both sources**, so the duplication cannot
+drift unnoticed.
+
+**Scope note carried in the record:** the archived TJR *transcript* is `restricted_third_party`, and
+this authorization does not touch it. Only the public oEmbed metadata document for the one named
+resource is authorized.
+
+## 4. Per-destination resource rule — declared, not inherited
+
+TJR declares its own `resourceIdAlphabet` (referencing `VIDEO_ID_PATTERN`) and `resourceIdLength: 11`.
+TJR is also YouTube and legitimately uses the same shape, so it **declares the same rule explicitly**.
+
+**Two entries agreeing on a rule does not make the rule global again.** Proved by test: stripping the
+declaration from a copy of the TJR entry makes TJR accept **nothing** — including its own valid
+identifier — while the real Alex G entry is completely unaffected.
+
+## 5. Production collection set: one entry → two
+
+```
+SRC|youtube|c785970cc458 / hb7ot1_szWI   idempotencyKey=e21508a5…   (unchanged)
+SRC|youtube|11cd2542b5b0 / 8qwEmE1DwYw   idempotencyKey=55223bec…   (new)
+```
+
+Both in window `W|21600|82710`. **`requests_this_window <= 2`.** `MAX_COLLECTION_ENTRIES` is still
+25, the window is still 21600 s, and the launchd model is unchanged: **one job, one `collect`,
+00:00 / 06:00 / 12:00 / 18:00 local**. No second job, no per-source scheduler, no cadence change.
+
+## 6. Live end-to-end proof — REAL, through the governed path
+
+`python3 platform/mogo_runtime.py collect` against the committed two-entry production configuration.
+The scheduler was **not** accelerated and launchd was **not** modified.
+
+```
+CHANGE DETECTION UNCHANGED         (prior=b668d4209abb current=b668d4209abb)   ← Alex G
+CHANGE DETECTION FIRST_OBSERVATION (prior=none         current=0cc6cf59e6d1)   ← TJR
+advanced=6 succeeded=2 failed=0 retried=0 released=0 deadLettered=0
+```
+
+**This single output is the isolation proof.** Alex G had **seven** prior accepted observations at
+that moment. TJR's first acquisition classified `FIRST_OBSERVATION` with **`prior=none`**. Had the two
+streams shared a history, it would have been reported as `CHANGED` — a fabricated mutation.
+
+| Property | Alex G | TJR |
+|---|---|---|
+| Authorization | ✅ permit | ✅ permit |
+| Destination derived from registry | ✅ | ✅ |
+| HTTP | 200 | 200, 829 bytes |
+| Validation | ✅ | ✅ |
+| Immutable artifact | `RART\|d4e4ec82…` (pre-existing, unchanged) | `RART\|8aa491b0…` (new) |
+| Classification | `UNCHANGED` | `FIRST_OBSERVATION` |
+| Strategy family | `SF\|ALEX_G\|SUPPORT_RESISTANCE_V1` | `SF\|TJR\|SESSION_ZONE_REACTION` |
+
+### The provider independently corroborated the reused identity
+
+The live oEmbed body matched committed evidence on **all three** identity fields:
+
+| Field | Live response | Committed evidence | Match |
+|---|---|---|---|
+| `author_url` | `https://www.youtube.com/@TJRTrades` | same | ✅ |
+| `author_name` | `TJR` | same | ✅ |
+| `title` | `Path to Profitability: How to Read a Candlestick Chart` | same | ✅ |
+
+The identity was not merely *assumed* correct — YouTube confirmed it.
+
+## 7. Library bridge — both corpora, cleanly separated
+
+```
+entries : 2
+  SRC|youtube|11cd2542b5b0 / 8qwEmE1DwYw
+      trader=TJR      families=SF|TJR|SESSION_ZONE_REACTION      [ATTRIBUTED]
+      artifact=RART|8aa491b01b883e8d0682e038a263417d
+      accepted observations=1  distinct identities=1  last=FIRST_OBSERVATION
+  SRC|youtube|c785970cc458 / hb7ot1_szWI
+      trader=ALEX_G   families=SF|ALEX_G|SUPPORT_RESISTANCE_V1   [ATTRIBUTED]
+      artifact=RART|d4e4ec829fe80b576a1304f46405f76a
+      accepted observations=8  distinct identities=1  last=UNCHANGED
+
+  SF|ALEX_G|SUPPORT_RESISTANCE_V1    streams=1 observations=8 identities=1
+  SF|TJR|SESSION_ZONE_REACTION       streams=1 observations=1 identities=1
+  lane=RESEARCH  promotionStatus=NOT_A_TRADING_RULE
+```
+
+Distinct artifacts, distinct content identities, no shared counts. The bridge remains **derived and
+read-only** — it persists nothing and two reads are byte-identical.
+
+## 8. Contamination / isolation proof
+
+Proved in **both directions**, not once and assumed symmetric:
+
+| Property | Proof |
+|---|---|
+| Alex G history cannot advance TJR's | live `FIRST_OBSERVATION prior=none` + fixture |
+| TJR history cannot advance Alex G's | fixture: TJR mutates, Alex G still `UNCHANGED` |
+| Reverse direction | fixture: Alex G mutates → `CHANGED`, TJR still `UNCHANGED` |
+| A failure never advances a neighbour | fixture: refused TJR body never becomes a baseline |
+| Dedupe is per stream | same window label under a different stream is a different request |
+| No artifact crosses corpora | distinct `artifactId`, `artifactPath`, `authorizationId` |
+| Attribution is explicit | a channel URL swapped under an unchanged sourceId **fails closed** |
+| One source cannot borrow the other's URL | refused as `requested_url_does_not_match_approved_destination` |
+
+**These tests are not vacuous — that was verified by mutation.** Collapsing `comparison_key()` so all
+streams share one identity caused exactly the three cross-stream isolation tests to fail; the file was
+then restored byte-for-byte.
+
+## 9. Hash contract preserved
+
+`connector_transport.content_hash` remains SHA-256 over the exact validated external response body
+bytes. The bridge still emits `acceptedContentIdentity` + `acceptedContentIdentityBasis`
+(`RAW_EXTERNAL_RESPONSE_BYTES`) and **never** a bare `contentHash` — asserted per entry for both
+sources. Lane A transcript hashes were not touched or reinterpreted.
+
+## 10. Files changed — 8
+
+**Production (4)**
+- `docs/trader-intelligence/authorizations/AUTH-tjr-metadata.json` *(new)*
+- `platform/src/mogo_platform/runtime/connector_authorization.py`
+- `docs/trader-intelligence/library/source-attribution.json`
+- `platform/scheduling/approved-collection.json`
+
+**Tests (3)**
+- `tests/platform/test_runtime_two_source_isolation.py` *(new, 31 tests)*
+- `tests/platform/test_runtime_connector_authorization.py`
+- `tests/platform/test_runtime_scheduled_collection.py`
+
+**Runner (1)**
+- `tests/run_platform_tests.sh` — registers the new suite (it has an explicit suite list; without
+  this line the new tests would have run only when invoked directly, and the platform total would
+  have silently under-reported)
+
+**Generated by the live proof, not authored (2, untracked):**
+`intake/acquired/0cc6cf59….json` and `research-artifacts/8aa491b0….json` — genuine new TJR research
+evidence.
+
+## 11. Tests — 32 added, all 25 required proofs covered
+
+Five pre-existing assertions changed, and **all five were "exactly one source / one entry"
+statements** — precisely the invariant this step deliberately changes. **No behavioural test broke.**
+
+The authorization-record obligation test was strengthened rather than merely re-pointed: with one
+source it could compare a tuple, so it now **reads both committed records** and proves the set they
+cover equals the set of approved sources. A third destination added without a record now fails there.
+
+| Suite | Result |
+|---|---|
+| `test_runtime_two_source_isolation` *(new)* | ✅ 31 |
+| `test_runtime_connector_authorization` | ✅ 36 |
+| `test_runtime_scheduled_collection` | ✅ 82 |
+| `test_runtime_change_detection_contract` | ✅ 54 |
+| `test_runtime_change_detection_wiring` | ✅ 28 |
+| `test_runtime_research_library` (Step 2 bridge) | ✅ 29 |
+
+## 12. Integrity results
+
+| Gate | Result |
+|---|---|
+| Focused Step 3C suites | ✅ **280 / 280** |
+| Platform suite | ✅ **24 suites · 1,022 tests · 0 failures** (was 23 · 990) |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160 · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants byte-identical |
+| Campaign C1 | ✅ **33 / 33 verified · 0 mismatched** — read from the committed `C1_INTEGRITY_ATTESTATION.json`, which the canonical gate's `run_v128_evidence_platform_tests.js` loads and evaluates; attestation byte-unchanged |
+| Legacy corpus | ✅ baseline byte-unchanged; rollup `667ff4c7…` **re-derived from the 220 committed package hashes and matches** — see the honesty note below |
+| Runtime integrity (`verify`) | ✅ INTEGRITY OK |
+| Existing immutable Alex G evidence | ✅ byte-unchanged (no modifications under `research-artifacts/`, `intake/`) |
+| Knowledge Library evidence | ✅ byte-unchanged (`evidence/`, `traders/`, `imports/` all clean) |
+| Campaigns / strategy-fidelity / `index.html` | ✅ untouched |
+| Scheduler cadence | ✅ unchanged, plist template unchanged |
+| Approved sources | ✅ **exactly two** |
+| Committed collection entries | ✅ **exactly two** |
+| Forward/research contamination | ✅ **0 both directions** |
+
+### Honesty note on the legacy-corpus figure
+
+Earlier steps reported "220 re-derived · 0 mismatched" as an integrity result. **I could not reproduce
+that check the way the phrase implies, and I am not going to restate it as though I had.** What I
+actually verified:
+
+- `docs/evidence/EVIDENCE_BASELINE.json` is **byte-unchanged** by this step.
+- It records `packagesRecovered: 220`, `verified: 220`, `mismatched: 0`.
+- I **re-derived** its `hashRollup` — SHA-256 over the 220 committed package hashes joined by newline
+  — and it reproduces `667ff4c7…` exactly. The baseline is internally consistent.
+
+What I did **not** do: re-verify the 220 packages against evidence on disk.
+`node scripts/mogo_evidence_verify.js --scan docs/evidence` finds **zero** packages and returns
+`FAIL — an empty scan is not a pass`, because the evidence packages live in an ephemeral scratchpad
+outside the repository (`docs/KNOWN_ISSUES.md`, and the canonical gate's own closing note). That is a
+**pre-existing environmental condition, not a regression introduced by Step 3C** — the canonical gate
+never re-derived that number either, so its output contains no "220" line. A reviewer should read the
+legacy-corpus row as *"the committed baseline is untouched and self-consistent"*, not as *"220
+artifacts were re-checked against disk today"*.
+
+**Two platform-boundary failures were hit and fixed properly, not suppressed.** A comment I added to
+the runtime cited the TJR evidence file *by path*, which contains the literal `evidence/` — a
+prohibited scientific-corpus path in any runtime module. The rule is right; the comment was wrong. It
+now cites the record **by identifier** (`EVSRC|TJR|20260727|002`) and the resolvable path lives only
+in the authorization record and the attribution file, which are documents rather than runtime.
+
+## 13. Scientific firewall
+
+Zero impact on ALEX trading rules, parameters, protected functions, strategy version, the forward
+activation cutoff `2026-08-11T02:43:57.894Z`, forward paper evidence, the genuine forward paper
+campaign, Campaign C1, the legacy corpus, paper-trading execution logic or live-money trading
+authority. The live forward browser was **not** reloaded or restarted, **no** paper trade was forced,
+staleness limits were **not** changed and the campaign was **not** re-baselined.
+
+**Attribution is organizational only.** That TJR material sits in the TJR corpus does **not** say TJR
+is profitable, validated, accepted, ready for reconstruction, ready for backtesting or ready for paper
+trading. No TJR rule was interpreted, reconstructed, hypothesised, backtested or blended into ALEX,
+and no MOGO-derived strategy was created.
+
+## 14. Remaining work for ICT / CRT expansion
+
+1. **ICT** has a trader profile but **no strategy family** — one would have to be declared and
+   reviewed before attribution is possible.
+2. **CRT** has **nothing**: no profile, no family, no evidence, no imports tree.
+3. **Neither has a channel URL or resource ID in committed evidence.** TJR was authorizable precisely
+   because `EVSRC|TJR|20260727|002` carried an oEmbed-verified channel and video id. **Authorizing
+   ICT or CRT today would require guessing an external destination, which must not happen** — the
+   identity must be established and reviewed first.
+4. The mechanism itself needs nothing further: a third source is now four reviewed edits.
+
+Still out of scope: transcript acquisition, discovery, concept modelling, corpus-maturity verdicts,
+strategy reconstruction, promotion.
+
+## 15. Recommendation for the next MOGO-018 step
+
+**Do not authorize a third educator next.** The two-source configuration is one collection window old
+and its most interesting behaviour — an independent `CHANGED` on one stream while the other stays
+`UNCHANGED` — has been proved in fixtures but not yet observed in production. Let the committed
+schedule run and confirm the invariant holds unattended.
+
+The higher-value next step is **corpus observability**: a read-only operator view answering "what does
+MOGO hold per educator, how fresh is it, and what changed" from the derived bridge. That is
+low-risk, needs no new authorization, and is the natural prerequisite before the corpus grows.
+
+**ICT and CRT remain NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+## 16. Step 3C evidence verification (pre-commit, operator-directed)
+
+The two files the live proof produced were **not** added on trust. Each was proven mechanically to be
+the expected Step 3C TJR acquisition output — **65 checks, all passing**.
+
+### The three classes of evidence, kept distinct
+
+| Class | Files | Disposition |
+|---|---|---|
+| **Pre-existing committed evidence** | Alex G `RART\|d4e4ec82…`, `intake/acquired/b668d420…`, all Lane A Knowledge Library records | **byte-unchanged**; not touched by this step |
+| **Newly generated Step 3C autonomous TJR evidence** | `intake/acquired/0cc6cf59….json`, `research-artifacts/8aa491b0….json` | verified below, **committed** per existing precedent |
+| **Derived / read-only** | `source-attribution.json` (attribution input), the library bridge index | attribution is a reviewed input; the index persists nothing |
+
+### The two new files
+
+| | Path |
+|---|---|
+| Raw acquisition record | `docs/trader-intelligence/intake/acquired/0cc6cf59e6d12fc5add7e1b9ba8ebae4610cebc69c0f00bdb75859f73c43904f.json` |
+| Research artifact | `docs/trader-intelligence/research-artifacts/8aa491b01b883e8d0682e038a263417d186c144ddce2c8a99a4bc8c6fc56b107.json` |
+
+### Verification results
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Exact paths identified | ✅ |
+| 2 | Traced to the creating event | ✅ one `capability_results` row, idempotencyKey `55223bec…` — the key the live `collect` printed; row → `intakeRef` → `artifactId` chain intact |
+| 3 | sourceId is `SRC\|youtube\|11cd2542b5b0` | ✅ in the acquisition record, the connector decision and the artifact's `claimedSourceId` |
+| 4 | resourceId is `8qwEmE1DwYw` | ✅ in the acquisition row and embedded in `claimedSourceUrl` |
+| 5 | Matches the committed approved destination | ✅ `approvedUrl` == `requestedUrl` == `finalUrl` == the registry-derived URL; resource id appears exactly once |
+| 6 | Provenance complete | ✅ intake, acquisition and provenance key sets are **identical to the Alex G precedent** |
+| 7 | Authorization present and successful | ✅ `permit` / `connector_destination_permitted`, authorizationId `3008510b-…`, HTTP 200, `failureClass: null`, redirects not followed, within byte limit |
+| 8 | `acquiredAt` / `decidedAt` | ✅ **null, matching the Alex G precedent exactly** — see the note below |
+| 9 | Hash semantics | ✅ intake `contentHash` == SHA-256 of the raw external bytes; artifact hash is the **wrapper** hash and correctly **differs**; both filenames equal their hashes; `artifactId` == `RART\|` + first 32 hex |
+| 10 | FIRST_OBSERVATION for the TJR stream | ✅ |
+| 11 | No prior accepted TJR history | ✅ `priorContentIdentity: null` |
+| 12 | Does not claim or inherit Alex G history | ✅ TJR's identity matches no Alex G identity; distinct authorizationId; no Alex G identifier appears anywhere in either file |
+| 13 | No ALEX logic or trading state | ✅ no `ALEX`/`fxalexg`/`SUPPORT_RESISTANCE` token; no position/order/PnL/equity/balance/backtest/campaign state |
+| 14 | No credential, token, secret, key or cookie | ✅ nine secret patterns, all clean |
+| 15 | Applicable integrity checks | ✅ runtime `verify` **INTEGRITY OK**; platform corpus fingerprint tests green; Lane A validator `0 ERROR / 0 FATAL` |
+
+### Two findings reported rather than smoothed over
+
+**1. `claimedSourceTitle` is `null` on the TJR artifact; Alex G's says `"fxalexg — channel metadata"`.**
+This is correct, not a defect. The field is populated from the command payload, and
+`scheduled_collection.build_command()` emits only `sourceId`, `resourceId`, `authorizationId` and
+`collectionWindow` — **the scheduler deliberately supplies no title**, because a title is a claim the
+scheduler cannot make. Alex G's artifact carries one only because it was minted in **MOGO-015 Step 4**
+(commit `28b838f`), before the scheduled path existed, and its content has not changed since, so no
+new artifact has been minted for it. **Any artifact created by the scheduled path will have a null
+title.**
+
+**2. The artifact wrapper's provenance describes the INGEST step, not the acquisition step.**
+Both the TJR and the Alex G artifacts carry `acquisitionPerformed: false`,
+`networkAccessPerformed: false`, `originClass: OPERATOR_SUPPLIED_LOCAL_INTAKE` and a note reading
+*"MOGO did not fetch this artifact; an operator supplied it."* For an autonomously acquired artifact
+that reads as inaccurate. The true network provenance lives in the `intake/acquired/` record, which is
+complete and correct; the wrapper is minted by `CAP|research|ingest-local-artifact`, which stamps its
+own boilerplate. **This is pre-existing and identical on the approved Alex G artifact — it is not a
+Step 3C regression**, and it is flagged here as a provenance-accuracy issue for a future step rather
+than silently accepted. Nothing in Step 3C depends on those three fields.
+
+### Retention policy — precedent followed, not invented
+
+`git ls-files` confirms the Alex G equivalents are **tracked**
+(`intake/acquired/b668d420….json`, `research-artifacts/d4e4ec82….json`, `193966d9….json`), and no
+`.gitignore` rule covers either new file. Repository policy therefore treats governed acquisition
+evidence as **canonical repository-managed immutable evidence**, and the two new TJR files are
+committed on that precedent. (By contrast, the runtime state root `platform/runtime/` **is**
+gitignored and stays untracked — that boundary is unchanged.)
+
+### One side effect I caused and reverted
+
+Running `scripts/trader_intelligence/validate_evidence.py` as part of check 15 **rewrote a tracked
+file**, `docs/trader-intelligence/evidence/reports/integrity-report.json` — only its `generatedAt` and
+`integrityReportId`; `findings` stayed `[]` and the summary stayed all-zero. That is a verification
+artefact, not a Step 3C change, so it was reverted with `git checkout --`. The Knowledge Library tree
+is byte-unchanged.
