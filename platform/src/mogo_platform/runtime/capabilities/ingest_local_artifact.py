@@ -54,6 +54,7 @@ import os
 
 from ...contracts import ids  # noqa: E402
 from .. import errors as runtime_errors  # noqa: E402
+from .. import research_corpus  # noqa: E402
 
 CAPABILITY_ID = "CAP|research|ingest-local-artifact"
 CAPABILITY_NAME = "research.ingest.local-artifact.v1"
@@ -63,9 +64,13 @@ CAPABILITY_VERSION = "1.0.0"
 # capabilities/ -> repository root is five levels up.
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", "..", "..", "..", ".."))
-INTAKE_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "intake")
-ARTIFACT_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence",
-                             "research-artifacts")
+# MOGO-017 Step 2B: the roots now come from runtime/research_corpus.py, which
+# owns them and is the only place a non-production corpus can be constructed --
+# and only after proving it cannot reach these. The names below are RETAINED and
+# unchanged in value so every existing reader, test and report keeps working;
+# they are the production roots, and `corpus=None` still resolves to exactly them.
+INTAKE_ROOT = research_corpus.PRODUCTION_INTAKE_ROOT
+ARTIFACT_ROOT = research_corpus.PRODUCTION_ARTIFACT_ROOT
 
 MAX_ARTIFACT_BYTES = 2_000_000        # matches acquisition_common's Phase 1 cap
 ALLOWED_EXTENSIONS = (".txt", ".md", ".json")
@@ -111,19 +116,25 @@ def _refuse(message, error_class=None):
                         error_class or runtime_errors.ContractValidationError)
 
 
-def resolve_intake_path(artifact_ref):
+def resolve_intake_path(artifact_ref, corpus=None):
     """Resolve a reference INSIDE the governed intake area, or refuse.
 
     Refuses absolute paths, traversal, and anything that resolves outside the
     boundary -- checked AFTER realpath, so a symlink pointing out is caught too.
+
+    `corpus` defaults to the production corpus, so an unchanged caller is
+    unchanged in behaviour. The confinement rule below is applied to whichever
+    corpus is in force, so a sandbox is bounded exactly as strictly as the real
+    one rather than being a hole in the check.
     """
+    corpus = research_corpus.resolve_corpus(corpus)
     if not isinstance(artifact_ref, str) or not artifact_ref.strip():
         _refuse("artifactRef is required and must be a non-empty string")
     if os.path.isabs(artifact_ref):
         _refuse("artifactRef must be relative to the governed intake area, "
                 "not an absolute path: %r" % (artifact_ref,))
-    candidate = os.path.realpath(os.path.join(INTAKE_ROOT, artifact_ref))
-    root = os.path.realpath(INTAKE_ROOT)
+    candidate = os.path.realpath(os.path.join(corpus.intakeRoot, artifact_ref))
+    root = os.path.realpath(corpus.intakeRoot)
     if candidate != root and not candidate.startswith(root + os.sep):
         _refuse("artifactRef resolves outside the governed intake area and is "
                 "refused: %r" % (artifact_ref,))
@@ -194,10 +205,11 @@ def build_artifact_record(payload, artifact_ref, raw, text):
     }
 
 
-def find_existing(content_hash):
+def find_existing(content_hash, corpus=None):
     """The stored artifact with this content hash, or None. Content-addressed,
     so this is a path check rather than a corpus scan."""
-    path = os.path.join(ARTIFACT_ROOT, content_hash + ".json")
+    corpus = research_corpus.resolve_corpus(corpus)
+    path = os.path.join(corpus.artifactRoot, content_hash + ".json")
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as handle:
@@ -207,8 +219,17 @@ def find_existing(content_hash):
     return None
 
 
-def execute(payload):
-    """Ingest one governed local artifact. THE EFFECT."""
+def execute(payload, corpus=None):
+    """Ingest one governed local artifact. THE EFFECT.
+
+    `corpus` is MOGO-017 Step 2B's test-isolation seam and defaults to None,
+    which resolves to the production corpus -- so the orchestrator's
+    `callable(payload)` dispatch is unchanged and production writes exactly
+    where it always did. A test supplies a sandbox that
+    research_corpus.sandbox_corpus() has already proven cannot reach the genuine
+    research corpus.
+    """
+    corpus = research_corpus.resolve_corpus(corpus)
     ids.require_json_shaped(payload, "$capabilityPayload")
     plain = ids.as_plain(payload)
     if not isinstance(plain, dict):
@@ -220,7 +241,7 @@ def execute(payload):
                 "cannot be attributed, and an anonymous research artifact is "
                 "refused")
 
-    path = resolve_intake_path(artifact_ref)
+    path = resolve_intake_path(artifact_ref, corpus)
     if not os.path.isfile(path):
         _refuse("artifact %r does not exist in the governed intake area"
                 % (artifact_ref,))
@@ -237,14 +258,14 @@ def execute(payload):
     record = build_artifact_record(plain, artifact_ref, raw, text)
     content_hash = record["contentHash"]
 
-    existing = find_existing(content_hash)
+    existing = find_existing(content_hash, corpus)
     duplicate = existing is not None
 
     if not duplicate:
         # THE EFFECT. Content-addressed: the path IS the identity, so a repeat
         # write cannot create a second artifact.
-        os.makedirs(ARTIFACT_ROOT, exist_ok=True)
-        target = os.path.join(ARTIFACT_ROOT, content_hash + ".json")
+        os.makedirs(corpus.artifactRoot, exist_ok=True)
+        target = os.path.join(corpus.artifactRoot, content_hash + ".json")
         tmp = target + ".tmp"
         body = json.dumps(record, indent=2, sort_keys=True) + "\n"
         with open(tmp, "w", encoding="utf-8") as handle:
@@ -273,7 +294,7 @@ def execute(payload):
         "ingested": not duplicate,
         "storedVerified": stored_verified,
         "storedPath": os.path.relpath(
-            os.path.join(ARTIFACT_ROOT, content_hash + ".json"), REPO_ROOT),
+            os.path.join(corpus.artifactRoot, content_hash + ".json"), REPO_ROOT),
         "sourceId": plain.get("sourceId"),
         "authorizationId": plain.get("authorizationId"),
         "intakeRef": artifact_ref,

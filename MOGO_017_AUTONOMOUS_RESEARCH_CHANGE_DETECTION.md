@@ -926,3 +926,317 @@ untouched** by this step. Part A of this report remains a *plan*, not an impleme
 Step 2A closed a **forward paper-trading observability** gap. That is all it did.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+---
+
+# MOGO-017 STEP 2B — CHANGE-DETECTION SAFETY BOUNDARY & CONTRACT
+
+**Status: ✅ COMPLETE.** The contract is frozen as executable code and the contamination risk is
+closed. **The production detector is NOT implemented and NOT wired.**
+**PAPER TRADING ONLY — live-money trading remains unauthorized.**
+
+## 1. Authoritative starting state
+
+| | Verified before any edit |
+|---|---|
+| Repository | `origin` → `https://github.com/joemogo/forex_hub.git` |
+| Branch / HEAD | `main` · **`d99916fc3077e8cec7def341f4a3d5ad773fcc68`** = Step 2A closeout |
+| `git status --porcelain` | **empty — clean** |
+| Ahead / behind `origin/mogo-main` | **0 / 0** |
+| `git diff` | empty |
+
+Exactly as expected. Nothing unexplained to absorb.
+
+## 2. Same-source identity contract — **`(sourceId, resourceId)`**
+
+Frozen in `runtime/change_detection.py` → `comparison_key(source_id, resource_id)`.
+
+| Field | Where it already lives |
+|---|---|
+| `sourceId` | `tasks.subject_source_id` (`runtime/schema.py`); `SRC\|…` composite validated by `ids.require_composite_id`; the key of `connector_authorization.APPROVED_DESTINATIONS` and of `authorizations.resolve()` |
+| `resourceId` | `capability_results.result_json.resourceId`, written by `acquire_approved_source_metadata.execute()` |
+| ordering | `capability_results.recorded_at`, and authoritatively the append-only event log sequence |
+
+**Two acquisitions belong to the same history** when both fields match — proven joinable today with
+existing columns and indexes (the three-table join executed live in Step 1 §A3).
+
+**`sourceId` alone is insufficient, and the reason is concrete:** this connector acquires metadata
+**for one resource**. Two different videos under the approved channel would otherwise share a
+history, and each acquisition would read as a mutation of the other. Catalog section I's metadata
+row omits the resource because it addresses a *source as a whole*; this contract does not.
+
+**No broader source abstraction was invented.** The key is returned as a **tuple**, not a joined
+string, so no separator can be smuggled through an identifier to collide two streams.
+
+## 3. Content identity contract — **the raw external byte hash**
+
+> **SOURCE CONTENT IDENTITY = `connector_transport.content_hash(raw)` = SHA-256 over the exact
+> validated external response body.**
+
+Proven from code, not assumed:
+
+```python
+def content_hash(raw):
+    """Deterministic identity of the acquired bytes. Never a timestamp."""
+    return hashlib.sha256(raw).hexdigest()
+```
+
+| Question | Answer | Evidence |
+|---|---|---|
+| Algorithm | **SHA-256** | `hashlib.sha256(...).hexdigest()` |
+| Exact response bytes? | **Yes** | `raw = response.read(max_bytes + 1)`; `content_hash(raw)` is called on that value |
+| Headers participate? | **No** | `Content-Type` is read into `content_type` and recorded as a *field*; never hashed |
+| Timestamps participate? | **No** | `acquiredAt` is an `AcquisitionOutcome` field, never an input to the hash |
+| Request / execution ids? | **No** | idempotency key, commandId, taskId all live above the transport |
+| Acquisition metadata? | **No** | `as_record()` is built *from* the outcome; the hash is computed *before* it |
+| JSON re-serialization? | **No** | `json.loads(raw.decode("utf-8"))` is called **for validation only and its result is discarded** — key order and whitespace stay in the identity |
+| URL / request metadata? | **No** | `requestedUrl` / `finalUrl` are recorded fields |
+
+A static test pins this structurally: `content_hash` takes **exactly one positional argument**,
+`raw`, with no `*args`, no `**kwargs` and no keyword-only arguments — so no timestamp, header, URL
+or record can reach it even by a future edit.
+
+### Why the research artifact wrapper hash is refused
+
+`ingest.build_artifact_record()` hashes the bytes of the **wrapper document**, which embeds the
+whole acquisition record — including `acquiredAt`, `decidedAt` and the decision's `requestedUrl`.
+Those are `null` today **only because `acquire_approved_source_metadata.execute()` never passes a
+clock** to `transport.acquire(request, now_iso=None, …)`. That is a provenance gap, not a design
+guarantee.
+
+The contract test demonstrates the trap directly: a wrapper with `acquiredAt: null` and the same
+wrapper with a real timestamp hash **differently**, while the raw identity is unchanged. If anyone
+fixes that gap — which MOGO-016's own report recommended — the wrapper hash would change on **every
+scheduled acquisition** and every run would report a mutation. **The raw hash is immune by
+construction, and the test pins it so the gap can be fixed later safely.**
+
+Raw byte hashing **is** scientifically appropriate here, so no stop condition was triggered.
+
+## 4. Accepted-content lifecycle boundary — **after validated durable ingestion**
+
+Frozen in `change_detection.accepted_content_identity(acquisition_ok, ingestion_result)`, which
+returns the content identity **only** when all of:
+
+1. `acquisition_ok` — which already implies the connector gate permitted it, the final URL was the
+   authorized one, the status was acceptable, the content type matched, the body was within the cap
+   and the body parsed as UTF-8 JSON (all enforced in `connector_transport` *before* an ok outcome
+   can exist);
+2. `validationStatus == "VALID"` — ingestion's own permanent-validation rules passed;
+3. `storedVerified` — the artifact was **re-read from disk and its hash re-derived**, so "stored"
+   means stored rather than attempted;
+4. a well-formed SHA-256 content hash is present.
+
+**Why this boundary and not an earlier one.** A transport success is not scientific acceptance:
+bytes can arrive HTTP 200 and still be refused as empty, oversized, non-UTF-8 or unstorable. If such
+bytes became the baseline, one truncated or hostile response would silently redefine *what this
+source says* — and the **next genuine** acquisition would be reported as a mutation, with the
+corruption persisting as the new normal. Choosing the narrowest point that proves acquisition,
+authorization, validation, identity, provenance **and** durable storage removes that whole class.
+
+**`ingested` is deliberately NOT required.** A repeat acquisition of identical bytes reports
+`ingested=false` / `duplicateStatus=DUPLICATE_ALREADY_INGESTED` because the artifact already exists
+— the content is accepted, the *storage* was a no-op. Requiring `ingested` would make every
+`UNCHANGED` observation, the normal case for a stable source, look like a failure.
+
+## 5. Classification semantics — frozen, and closed
+
+| Classification | Condition | Baseline |
+|---|---|---|
+| **`FIRST_OBSERVATION`** | accepted content exists, no prior accepted identity for this `(sourceId, resourceId)` | **establishes** it. **Not a mutation** |
+| **`UNCHANGED`** | accepted identity **equals** the prior accepted identity | unchanged in value |
+| **`CHANGED`** | accepted identity **differs** from the prior accepted identity | **advances**; both identities preserved for audit |
+| **`ACQUISITION_FAILURE`** | `acquisition_ok` false | **must not move** |
+| **`VALIDATION_FAILURE`** | acquired but not accepted | **must not move** |
+
+`CLASSIFICATIONS` is a closed set, exactly partitioned into `BASELINE_ADVANCING` and
+`BASELINE_PRESERVING` — asserted by test, so a future addition cannot land in neither or both.
+
+**A new request identity, a new acquisition timestamp and changed transport metadata all resolve to
+`UNCHANGED`**, because none of them reaches the content identity.
+
+**`CHANGED_BYTES_THAT_FAIL_VALIDATION` is deliberately NOT a separate state.** It is
+`VALIDATION_FAILURE`. The bytes never became accepted content, so **no legitimate comparison was
+ever available** — naming it separately would imply a mutation was observed and then set aside. A
+test pins that reading, across three distinct failure shapes.
+
+**No unnecessary state was invented.** Five classifications, and `next_baseline()` is stated as its
+own function precisely because *"a failure must not advance the baseline"* is the rule a future
+caller is most likely to get wrong writing it inline.
+
+**`CHANGED` is an observation, not a conclusion.** It means only: *previously accepted validated
+content for this approved source and resource differs from newly accepted validated content.* It
+authorises no interpretation, no hypothesis, no rule, no promotion, and no change to ALEX or any
+trading behaviour.
+
+**A mutation is not a failure.** `contracts/errors.py`'s `source_mutated` class is **not used** — a
+test asserts it appears nowhere in the module body. `registry._validate_failure_classes()` would
+refuse it anyway (it routes to review with no terminal path), but the deeper reason is semantic:
+modelling a change as an execution failure would dead-letter a *successful* acquisition and lose the
+very observation this milestone exists to make.
+
+## 6. Synthetic test isolation architecture
+
+**New module `runtime/research_corpus.py`** — one value object naming the two roots, and two ways to
+get one:
+
+```
+production_corpus()            the real roots. The default. Unchanged.
+sandbox_corpus(intake, arts)   test-owned roots, VALIDATED before construction.
+```
+
+**Dependency injection, not global mutation.** No mutable module state, no "current corpus" to set,
+no environment variable, no context manager to forget to exit. Production callers pass nothing, so
+production behaviour is unchanged **by construction rather than by convention**.
+
+**No environment-variable backdoor, deliberately.** `MOGO_RUNTIME_STATE_ROOT` is right for runtime
+state — ephemeral, git-ignored, rebuildable. The research corpus is committed scientific evidence. A
+variable that can silently redirect where evidence is written is one that eventually will, including
+in production. A caller wanting a different corpus must say so **in code, at the call site**. A test
+asserts `os.environ`/`getenv` appear nowhere in the module.
+
+**Fail closed, in the direction that matters.** The dangerous mistake is not "a test wrote somewhere
+odd" — it is *"a test wrote into the real corpus while believing it was sandboxed."* So
+`sandbox_corpus()` **refuses to construct** any corpus whose roots are, contain, or are contained by
+either production root, compared through `os.path.realpath` so `..` and planted symlinks are
+defeated. Both roots are validated independently, so one cannot be sandboxed while the other quietly
+points at real evidence, and the two roots may not overlap each other.
+
+**Contamination during the fixtures is therefore impossible by construction**, not by remembering.
+
+## 7. Exact files and functions modified
+
+| File | Change | Justification |
+|---|---|---|
+| `runtime/research_corpus.py` | **new** — `ResearchCorpus`, `production_corpus()`, `sandbox_corpus()`, `resolve_corpus()` | the isolation seam; pure path resolution, performs no I/O |
+| `runtime/change_detection.py` | **new** — the frozen contract: `comparison_key`, `accepted_content_identity`, `classify`, `next_baseline` | pure; **imported by nothing in production**, pinned by test |
+| `capabilities/ingest_local_artifact.py` | 5 seam edits (below) | the only production file touched |
+| `tests/platform/test_runtime_change_detection_contract.py` | **new** — 53 tests | the contract and isolation proofs |
+| `tests/run_platform_tests.sh` | +1 line registering the suite | a suite the runner does not enumerate is a suite that does not run |
+
+**Every changed line in the production capability, justified:**
+
+1. `+from .. import research_corpus` — the seam.
+2. `INTAKE_ROOT` / `ARTIFACT_ROOT` now alias `research_corpus.PRODUCTION_*`. **Values are
+   identical**; the names are retained so every existing reader, test and report keeps working. A
+   test asserts they still equal the production roots.
+3. `resolve_intake_path(artifact_ref, corpus=None)` — resolves against the corpus in force. The
+   traversal/symlink confinement rule is applied to **whichever** corpus is active, so a sandbox is
+   bounded exactly as strictly as production rather than being a hole in the check (tested with
+   `../escape.json`, `/etc/passwd`, `acquired/../../x.json`).
+4. `find_existing(content_hash, corpus=None)` — duplicate check against the corpus in force.
+5. `execute(payload, corpus=None)` — threads the corpus to the four sites that touch a root.
+
+**`corpus=None` resolves to production in exactly one place** (`resolve_corpus`), so no call site can
+invent a different fallback. The orchestrator's `callable(payload)` dispatch is unchanged — an
+optional keyword does not alter it — so **production writes exactly where it always did**.
+
+**No test-only branch exists inside scientific production logic**, and no evidence-path validation
+was weakened; the confinement rule got *stricter* coverage, not looser.
+
+## 8. `SourceMutationDetected` — event-contract findings
+
+| Question | Finding |
+|---|---|
+| Already approved? | ✅ **Yes** — present in `contracts/vocabulary.py` `EVENT_TYPES`, and `contracts/event.py` validates `eventType` against exactly that set. **No contract change needed.** |
+| Required fields | the standard 14-field envelope: `eventId`, `eventType`, `eventVersion`, `workflowId`, `correlationId`, `causationId`, `producer`, `producerVersion`, `occurredAt`, `recordedAt`, `subjectRefs`, `payload`, `payloadHash`, `sequence` |
+| Can it carry **prior** content identity? | ✅ yes — `payload` is free-form JSON-shaped |
+| Can it carry **current** content identity? | ✅ yes — same |
+| Source / resource identity | ✅ `subjectRefs` (a list of strings) plus `payload` |
+| Audit / provenance identity | ✅ `producer`, `producerVersion`, `correlationId`, `causationId`, `taskId`, `policyContext` |
+| Do current semantics match MOGO-017? | ✅ yes — Catalog section I already assigns metadata acquisition the `SourceMutationDetected` source-mutation behaviour |
+
+### The manifest-hash concern from Step 1 — **resolved, and it is a non-issue**
+
+**Emit it from the ORCHESTRATOR, not from the capability.** Established by precedent and pinned by
+test: every capability manifest declares only `["TaskSucceeded","TaskFailed"]`, yet the orchestrator
+already emits `PolicyEvaluated`, `AcquisitionAuthorized` and `AcquisitionDenied` — **none of which
+appears in any manifest.** `emittedEvents` is stored at registration and **never consulted at emit
+time**.
+
+So emitting `SourceMutationDetected` from the orchestrator requires **no manifest edit, no
+`capabilityId` bump, and no weakening of registration validation.** That is also semantically right:
+the classification is a runtime observation *about a completed task*, exactly like `PolicyEvaluated`.
+
+Emitting from the *capability* would require changing its manifest → changing its hash →
+`register()` refusing it under an unchanged `capabilityId`, by design. **Step 2C should not do
+that.** No production emission was added in Step 2B, and a test asserts the string appears in no
+runtime module.
+
+## 9. Focused tests — **53 / 53 PASS**
+
+| Required proof | Fixtures |
+|---|---|
+| 1 · identical bytes, different request identities → identical identity | ✅ |
+| 2 · volatile metadata does not alter the identity | ✅ incl. the static one-argument pin on `content_hash` |
+| 3 · different bytes → different identities | ✅ incl. a single flipped byte |
+| 4 · source/resource partitions streams correctly | ✅ incl. tuple-not-string, and malformed identity refused |
+| 5 · acquisition failure cannot become accepted state | ✅ baseline provably unmoved |
+| 6 · validation failure cannot become accepted state | ✅ |
+| 7 · **changed-but-invalid** cannot become accepted state | ✅ across 3 failure shapes, and end-to-end through the real validator |
+| 8 · `FIRST_OBSERVATION` is distinct from `CHANGED` | ✅ |
+| 9 · synthetic writes cannot reach the genuine corpus | ✅ **the real `ingest.execute()` runs sandboxed; the genuine corpus listing is asserted byte-identical before/after** |
+| 10 · production storage defaults unchanged | ✅ incl. no `os.environ` in the seam |
+| 11 · isolation fails closed on an unsafe path | ✅ **7 overlapping-root shapes refused**, plus relative, empty, and self-overlapping roots |
+
+Additional: a full `FIRST → UNCHANGED → CHANGED → failure → UNCHANGED` sequence driven through the
+**real ingestion path** inside a sandbox, ending with the baseline correctly on the changed content
+and **two** artifacts on disk (identical content created no second artifact).
+
+## 10. Integrity results
+
+| Gate | Result |
+|---|---|
+| Step 2B focused suite | ✅ **53 / 53** |
+| Platform suite | ✅ **21 suites · 900 tests · 0 failures · 0 errors** |
+| Canonical gate `tests/run_all.sh` | ✅ **19 suites · 1,160 fixtures · 1,160 passed · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants byte-identical |
+| Campaign C1 | ✅ **33 / 33 · 0 mismatched** · `VERIFIED`; manifest SHA-256 `c23e72e0…` unchanged |
+| Legacy corpus | ✅ **220 re-derived · 0 mismatched**; rollup `667ff4c7…` matches |
+| Research corpus | ✅ **2 artifacts + 1 raw acquisition, byte-unchanged** — no synthetic fixture leaked in |
+| Forward evidence | ✅ untouched; `index.html` **not modified at all** by Step 2B |
+| Scheduler integrity | ✅ `platform/scheduling` unmodified; agent still loaded, `runs = 0` since the production install |
+| Authorization integrity | ✅ `docs/trader-intelligence` unmodified — the authorization record is untouched |
+| Repository changes | ✅ limited to 2 new runtime modules, 5 seam edits in one capability, 1 new test suite, 1 runner line, and this report |
+
+No unexplained drift. Nothing stopped.
+
+## 11. Remaining work for Step 2C
+
+1. **The history query** — resolve the prior accepted identity for a `(sourceId, resourceId)` from
+   `tasks` ⋈ `commands` ⋈ `capability_results`. Note `capability_results` has **no `source_id`
+   column or index**; at current volume the join is free, and adding one should be a deliberate
+   decision, not a reflex.
+2. **The call site** — classify after validated ingestion in
+   `acquire_approved_source_metadata.execute()`, adding `changeStatus`, `priorContentIdentity`,
+   `priorObservedAt` to the result.
+3. **Emit `SourceMutationDetected` from the orchestrator** on `CHANGED`, carrying prior + current
+   identity and source/resource in `subjectRefs`. **Not from the capability** (§8).
+4. **Thread `corpus=` through `acquire_approved_source_metadata.execute()`** so a Step 2C fixture can
+   drive the whole acquire → ingest → classify chain sandboxed. Step 2B stopped at ingestion because
+   that is where the contamination risk was.
+5. **Surface `changeStatus` in `status` / `audit`.**
+6. **Live proof** — one scheduled run classified `UNCHANGED` end to end, plus full gates.
+
+**Still explicitly out of scope:** more sources, discovery, transcripts, strategy extraction,
+hypothesis generation, rule promotion.
+
+## 12. Scientific firewall
+
+**RESEARCH CHANGE ≠ TRADING CHANGE.** Step 2B altered no ALEX code, no strategy parameter, no
+execution logic; promoted no hypothesis; created no trading rule; entered no forward evidence; and
+touched neither Campaign C1 nor the legacy corpus. `index.html` was not modified at all.
+
+---
+
+# ⚠️ PRODUCTION AUTONOMOUS CHANGE DETECTION IS **NOT** ENABLED
+
+> **Step 2B froze the contract and closed the contamination risk. It did not start detecting.**
+
+`runtime/change_detection.py` is imported by **nothing** in the running system — asserted by a test
+that walks every runtime module. No `SourceMutationDetected` event is emitted from any production
+path — asserted the same way. The scheduler, the acquisition capability, the connector, the research
+authorization and the research artifacts are **entirely unchanged in behaviour**. The next scheduled
+collection will behave exactly as it did before this step.
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
