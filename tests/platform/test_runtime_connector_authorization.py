@@ -281,3 +281,162 @@ class TestScientificFirewall(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------
+# MOGO-018 Step 3A -- the resource-id rule is PER DESTINATION, and fails closed
+# ---------------------------------------------------------------------------
+
+class TestPerDestinationResourceIdBoundary(unittest.TestCase):
+    """The rule moved OFF the module and ONTO each approved destination.
+
+    This narrows the boundary. Before, one 11-character YouTube rule was applied
+    to every destination, so a future destination would have inherited a rule
+    written for someone else. Now a destination that does not declare what it
+    accepts accepts NOTHING.
+    """
+
+    ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+
+    def entry(self, **over):
+        """A local, test-only destination declaration.
+
+        Deliberately NOT a second real source: proving per-destination behaviour
+        must not require authorizing anyone.
+        """
+        base = {"resourceIdAlphabet": self.ALPHABET, "resourceIdLength": 11}
+        base.update(over)
+        return base
+
+    # -- the approved source is unchanged ----------------------------------
+
+    def test_the_approved_source_declares_its_own_constraint(self):
+        entry = ca.APPROVED_DESTINATIONS[APPROVED_SOURCE]
+        self.assertEqual(entry["resourceIdAlphabet"], self.ALPHABET)
+        self.assertEqual(entry["resourceIdLength"], 11)
+
+    def test_the_approved_source_still_accepts_its_exact_valid_form(self):
+        self.assertTrue(ca.evaluate(request()).permitted)
+        url, _entry = ca.derive_destination(APPROVED_SOURCE, GOOD_VIDEO)
+        self.assertIn(GOOD_VIDEO, url)
+
+    def test_invalid_length_remains_denied(self):
+        for bad in ("", "a", GOOD_VIDEO[:-1], GOOD_VIDEO + "a", "a" * 64):
+            with self.subTest(resourceId=bad):
+                self.assertEqual(ca.evaluate(request(resourceId=bad)).reason,
+                                 ca.REASON_MALFORMED_VIDEO_ID)
+
+    def test_invalid_alphabet_remains_denied(self):
+        for bad in ("hb7ot1_szW!", "hb7ot1 szWI", "hb7ot1/szWI", "hb7ot1.szWI",
+                    "hb7ot1%szWI", "hb7ot1\tszWI", "hb7ot1észWI"):
+            with self.subTest(resourceId=bad):
+                self.assertEqual(ca.evaluate(request(resourceId=bad)).reason,
+                                 ca.REASON_MALFORMED_VIDEO_ID)
+
+    def test_an_unknown_source_remains_denied_before_any_resource_check(self):
+        decision = ca.evaluate(request(sourceId="SRC|web|0123456789ab"))
+        self.assertEqual(decision.reason, ca.REASON_SOURCE_NOT_APPROVED)
+        with self.assertRaises(runtime_errors.PlatformError):
+            ca.derive_destination("SRC|web|0123456789ab", GOOD_VIDEO)
+
+    # -- fail closed on a destination that does not declare a rule ----------
+
+    def test_a_destination_with_no_constraint_accepts_nothing(self):
+        """The property that makes this a NARROWING rather than a widening."""
+        for missing in ({}, {"urlTemplate": "https://example.test/{videoId}"},
+                        self.entry(resourceIdAlphabet=None),
+                        self.entry(resourceIdLength=None)):
+            with self.subTest(entry=missing):
+                self.assertFalse(ca._valid_resource_id(missing, GOOD_VIDEO))
+
+    def test_a_malformed_constraint_accepts_nothing(self):
+        for bad in (self.entry(resourceIdAlphabet=""),
+                    self.entry(resourceIdAlphabet=11),
+                    self.entry(resourceIdAlphabet=["a", "b"]),
+                    self.entry(resourceIdLength=0),
+                    self.entry(resourceIdLength=-1),
+                    self.entry(resourceIdLength="11"),
+                    self.entry(resourceIdLength=True),
+                    self.entry(resourceIdLength=11.0)):
+            with self.subTest(entry=bad):
+                self.assertFalse(ca._valid_resource_id(bad, GOOD_VIDEO))
+
+    def test_an_absent_entry_accepts_nothing(self):
+        for entry in (None, "not-an-entry", 17, []):
+            with self.subTest(entry=entry):
+                self.assertFalse(ca._valid_resource_id(entry, GOOD_VIDEO))
+
+    def test_a_non_string_resource_id_accepts_nothing(self):
+        for value in (None, 17, [], {}, b"hb7ot1_szWI"):
+            with self.subTest(value=value):
+                self.assertFalse(
+                    ca._valid_resource_id(self.entry(), value))
+
+    # -- one destination's rule does not apply to another ------------------
+
+    def test_a_resource_valid_for_one_constraint_is_not_valid_for_another(self):
+        """The point of localizing: constraints do not leak between entries."""
+        eleven = self.entry()
+        six = self.entry(resourceIdLength=6)
+        digits = self.entry(resourceIdAlphabet="0123456789")
+        self.assertTrue(ca._valid_resource_id(eleven, GOOD_VIDEO))
+        self.assertFalse(ca._valid_resource_id(six, GOOD_VIDEO))
+        self.assertFalse(ca._valid_resource_id(digits, GOOD_VIDEO))
+        self.assertTrue(ca._valid_resource_id(six, "abc123"))
+        self.assertFalse(ca._valid_resource_id(eleven, "abc123"))
+        self.assertTrue(ca._valid_resource_id(digits, "01234567890"))
+        # ...and the REAL entry is unaffected by any of the above.
+        self.assertTrue(
+            ca._valid_resource_id(ca.APPROVED_DESTINATIONS[APPROVED_SOURCE],
+                                  GOOD_VIDEO))
+
+    def test_every_approved_destination_declares_a_usable_constraint(self):
+        """No entry may ship without one -- otherwise it would fetch nothing."""
+        for source_id, entry in ca.APPROVED_DESTINATIONS.items():
+            with self.subTest(source=source_id):
+                self.assertIsInstance(entry["resourceIdAlphabet"], str)
+                self.assertTrue(entry["resourceIdAlphabet"])
+                self.assertIsInstance(entry["resourceIdLength"], int)
+                self.assertGreater(entry["resourceIdLength"], 0)
+
+    # -- the authorization boundary is otherwise untouched ------------------
+
+    def test_no_caller_controlled_url_is_accepted(self):
+        for hostile in ("https://evil.example/x", "file:///etc/passwd",
+                        "http://169.254.169.254/", "https://www.youtube.com/x"):
+            with self.subTest(url=hostile):
+                self.assertEqual(
+                    ca.evaluate(request(requestedUrl=hostile)).reason,
+                    ca.REASON_URL_SUBSTITUTION)
+
+    def test_destination_derivation_remains_registry_controlled(self):
+        url, entry = ca.derive_destination(APPROVED_SOURCE, GOOD_VIDEO)
+        self.assertEqual(url, entry["urlTemplate"].format(videoId=GOOD_VIDEO))
+        self.assertTrue(url.startswith("https://www.youtube.com/oembed"))
+        self.assertEqual(ca.approved_source_ids(), (APPROVED_SOURCE,),
+                         "Step 3A authorized no new source")
+
+    def test_the_acceptance_boundary_is_identical_to_the_global_rule(self):
+        """Compatibility, proved rather than asserted.
+
+        The previous GLOBAL rule is reconstructed here and compared against the
+        new per-entry rule across every single-character substitution at every
+        position, every length 0..15, and hostile shapes. Not one identifier
+        changed status in either direction.
+        """
+        def old_rule(value):
+            if not isinstance(value, str) or len(value) != 11:
+                return False
+            return all(c in self.ALPHABET for c in value)
+
+        entry = ca.APPROVED_DESTINATIONS[APPROVED_SOURCE]
+        cases = ["a" * length for length in range(16)]
+        for code in list(range(32, 127)) + [9, 10, 0]:
+            for position in range(11):
+                cases.append("a" * position + chr(code) + "a" * (10 - position))
+        cases += ["../../etc/passwd", "x&url=https://evil.example", GOOD_VIDEO,
+                  "", "hb7ot1 szWI", "hb7ot1/szWI", "hb7ot1.szWI", "é" * 11]
+        for value in cases:
+            with self.subTest(resourceId=value):
+                self.assertEqual(ca._valid_resource_id(entry, value),
+                                 old_rule(value))

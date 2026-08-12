@@ -590,3 +590,159 @@ as "~190 lines" when it is 291 (the estimate predated the refactor that moved fi
 added the explanatory docstrings). Corrected before committing.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+---
+
+# MOGO-018 STEP 3A — PER-SOURCE RESOURCE-ID AUTHORIZATION BOUNDARY
+
+**Status: ✅ COMPLETE. Not committed — held for review.**
+**PAPER TRADING ONLY — live-money trading remains unauthorized.**
+
+## 1. Starting state
+
+HEAD `faf4ba8c50c0cc9923016d9749037f0d02d6c5df`, clean, 0 ahead / 0 behind. Verified before editing.
+
+## 2. The old global boundary
+
+```python
+VIDEO_ID_PATTERN = "abc…XYZ0123456789-_"   # 64 chars
+VIDEO_ID_LENGTH  = 11
+
+def _valid_video_id(value):                # ONE rule, EVERY destination
+    if not isinstance(value, str) or len(value) != VIDEO_ID_LENGTH:
+        return False
+    return all(character in VIDEO_ID_PATTERN for character in value)
+```
+
+Called from `derive_destination()` and `evaluate()`. A future non-YouTube destination would have
+**inherited a rule written for someone else** — and the only way to admit it would have been to
+*loosen* the shared rule, which would simultaneously loosen it for YouTube.
+
+## 3. The new per-destination boundary
+
+Each approved destination declares its **own** constraint:
+
+```python
+"SRC|youtube|c785970cc458": MappingProxyType({
+    …
+    "resourceIdAlphabet": VIDEO_ID_PATTERN,   # referenced, never retyped
+    "resourceIdLength": 11,
+    …
+})
+```
+
+```python
+def _valid_resource_id(entry, value):
+    if entry is None or not hasattr(entry, "get"):        return False
+    alphabet = entry.get("resourceIdAlphabet")
+    length   = entry.get("resourceIdLength")
+    if not isinstance(alphabet, str) or not alphabet:     return False
+    if isinstance(length, bool) or not isinstance(length, int) or length <= 0:
+                                                          return False
+    if not isinstance(value, str) or len(value) != length: return False
+    return all(character in alphabet for character in value)
+```
+
+`hasattr(entry, "get")` rather than `isinstance(entry, dict)` — registry entries are
+`MappingProxyType`, which is deliberately **not** a dict.
+
+## 4. Why this NARROWS rather than widens authorization
+
+| | Before | After |
+|---|---|---|
+| A destination with **no** declared rule | inherited YouTube's rule and would fetch | **accepts nothing** |
+| Admitting a differently-shaped id | required **loosening the shared rule for everyone** | requires a **new entry declaring its own rule** |
+| Blast radius of a constraint edit | every destination | exactly one destination |
+
+Nothing else moved. The destination is still **derived** from the registry, callers still supply no
+URL, `requestedUrl` substitution is still refused, the scheme/host allow-list and forbidden-host
+list are untouched, and `approved_source_ids()` is still exactly one entry. **No source was
+authorized. No new field is caller-supplied.**
+
+## 5. Exact files changed
+
+| File | Change |
+|---|---|
+| `runtime/connector_authorization.py` | entry declares `resourceIdAlphabet` + `resourceIdLength`; `_valid_video_id(value)` → `_valid_resource_id(entry, value)`; two call sites pass the entry; `VIDEO_ID_LENGTH` removed (now per-entry); `VIDEO_ID_PATTERN` retained as YouTube's alphabet, referenced by YouTube's entry |
+| `tests/platform/test_runtime_connector_authorization.py` | +14 fixtures |
+
+**Two files. No new module, no class, no framework, no regex engine, no plugin system.** No test
+referenced the old constants or validator, so nothing else needed touching.
+
+## 6. Compatibility with the existing approved source — proved, not asserted
+
+The old global rule is **reconstructed inside the test** and compared against the new per-entry rule
+across every single-character substitution at every one of the 11 positions, every length 0–15, and
+hostile shapes.
+
+An ad-hoc sweep over **3,127 cases** (including 2,000 randomised) reported:
+
+```
+BEHAVIOUR MISMATCHES: 0
+newly-accepted ids  : 0      <-- nothing previously invalid became valid
+newly-rejected ids  : 0      <-- nothing previously valid became invalid
+```
+
+**The acceptance boundary for the existing source is byte-for-byte identical.**
+
+## 7. Tests — 36 in the suite, 14 new, all passing
+
+| Required proof | Fixture |
+|---|---|
+| 1 · approved source still accepts its exact valid form | permit + URL derivation |
+| 2 · invalid length denied | `""`, 1, 10, 12, 64 chars |
+| 3 · invalid alphabet denied | `!`, space, `/`, `.`, `%`, tab, `é` |
+| 4 · unknown source denied | denied **before** any resource check |
+| 5 · missing declaration fails closed | 4 shapes, all reject |
+| 6 · malformed declaration fails closed | 8 shapes incl. `True`, `11.0`, `"11"`, `0`, `-1` |
+| 7 · one destination's rule ≠ another's | length-6 and digits-only local declarations; the real entry unaffected |
+| 8 · no caller-controlled URL accepted | 4 hostile URLs → `requested_url_does_not_match_approved_destination` |
+| 9 · derivation registry-controlled | url == template.format(...); still exactly one approved source |
+| 10 · existing connector tests green | all 36 pass |
+| 11 · MOGO-017 behaviour unchanged | connector + transport + detection + wiring + bridge: **167 tests green** |
+| *(extra)* every shipped entry declares a usable constraint | no entry can ship ruleless |
+| *(extra)* non-string resource ids rejected | incl. `bytes` |
+
+**No second real source was added.** Per-destination behaviour is proven with local test-only
+declarations, so nothing was authorized to test authorization.
+
+## 8. Integrity results
+
+| Gate | Result |
+|---|---|
+| Focused connector/transport/detection/bridge | ✅ **167 / 167** |
+| Platform suite | ✅ **23 suites · 972 tests · 0 failures · 0 errors** |
+| Canonical gate | ✅ **19 suites · 1,160 fixtures · 1,160 passed · 0 failed** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ **33 verified · 0 mismatched** · `VERIFIED` |
+| Legacy corpus | ✅ **220 re-derived · 0 mismatched** |
+| Immutable research evidence | ✅ unchanged (`git status docs/` empty) |
+| Knowledge Library evidence | ✅ unchanged |
+| Step 2 bridge | ✅ still reads correctly, unchanged output |
+| Scheduler | ✅ `21600`, 4 calendar entries, spec untouched |
+| `index.html` / ALEX | ✅ not modified |
+
+**No new external acquisition was performed.** Nothing required one.
+
+## 9. Remaining work for Step 3B
+
+1. **Multi-entry collection spec** — `approved-collection.json` is one entry and `collect` reads
+   one. Make it a list, iterate, validate each through the existing `validate_spec()`. Preserve
+   every refusal; apply the installer's window/cadence coherence check per entry. The collection
+   window already *is* the rate limit, so N items ⇒ at most N requests per window.
+2. **Then Step 3C: authorize exactly ONE educator** — authorization record + destination entry
+   (now declaring its own resource-id rule) + attribution entry. **TJR first**: it already has a
+   trader profile, `SF|TJR|SESSION_ZONE_REACTION`, committed evidence and an `imports/tjr/` tree.
+   ICT has a profile but **no strategy family**. CRT has nothing.
+
+Still out of scope: transcript acquisition, concept modelling, corpus-maturity verdicts, strategy
+reconstruction, promotion.
+
+---
+
+# ⚠️ STEP 3A NOT COMMITTED
+
+Complete and green, but **nothing was committed or pushed** — held for ChatGPT/operator review.
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**

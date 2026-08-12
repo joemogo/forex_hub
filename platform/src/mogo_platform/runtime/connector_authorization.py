@@ -51,6 +51,16 @@ CONNECTOR_VERSION = "1.0.0"
 # body, and pursuing it would mean working around an access control.
 OPERATION_METADATA = "metadata"
 
+# YouTube video ids are exactly 11 characters of an unreserved alphabet. Pinned
+# as a pattern rather than "whatever the caller sent" so a crafted id cannot
+# introduce a query parameter, a path segment or an encoded host.
+#
+# MOGO-018 Step 3A: this is now YouTube's alphabet REFERENCED BY the YouTube
+# entry, not a global rule imposed on every destination. It is defined above the
+# registry because the entry uses it; a future non-YouTube destination declares
+# its own and must not reuse this one.
+VIDEO_ID_PATTERN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+
 # ---------------------------------------------------------------------------
 # Approved destination registry -- source identity IS the key.
 # ---------------------------------------------------------------------------
@@ -60,6 +70,12 @@ OPERATION_METADATA = "metadata"
 # `urlTemplate` carries exactly one substitution, {videoId}, which is validated
 # against a strict pattern before use. Nothing else in the URL is caller-
 # influenced -- scheme, host and path are constants in this file.
+#
+# MOGO-018 Step 3A: each entry now declares its OWN resourceIdAlphabet and
+# resourceIdLength. This NARROWS the boundary rather than widening it -- before,
+# one global 11-character YouTube rule was applied to every destination, so a
+# future destination would have inherited a rule written for someone else. Now a
+# destination that does not say what it accepts accepts NOTHING.
 APPROVED_DESTINATIONS = MappingProxyType({
     # Alex G -- the educator behind the frozen ALEX strategy. Verified in
     # docs/strategy-fidelity/audit/alex-channel-catalogue.json with
@@ -76,17 +92,19 @@ APPROVED_DESTINATIONS = MappingProxyType({
         "urlTemplate": ("https://www.youtube.com" "/" "oembed"
                         "?url=https://www.youtube.com" "/" "watch%3Fv%3D{videoId}"
                         "&format=json"),
+        # MOGO-018 Step 3A. THIS destination's own resource-id rule, declared
+        # here rather than applied globally. The VALUES are byte-identical to the
+        # global rule they replace, so this source's acceptance boundary is
+        # unchanged -- the alphabet is referenced by name rather than retyped
+        # precisely so it cannot drift by a character.
+        "resourceIdAlphabet": VIDEO_ID_PATTERN,
+        "resourceIdLength": 11,
         "maxResponseBytes": 65536,
         "expectedContentType": "application/json",
         "followRedirects": False,
     }),
 })
 
-# YouTube video ids are exactly 11 characters of an unreserved alphabet. Pinned
-# as a pattern rather than "whatever the caller sent" so a crafted id cannot
-# introduce a query parameter, a path segment or an encoded host.
-VIDEO_ID_PATTERN = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-VIDEO_ID_LENGTH = 11
 
 APPROVED_SCHEMES = ("https",)
 
@@ -165,10 +183,28 @@ def approved_source_ids():
     return tuple(sorted(APPROVED_DESTINATIONS))
 
 
-def _valid_video_id(value):
-    if not isinstance(value, str) or len(value) != VIDEO_ID_LENGTH:
+def _valid_resource_id(entry, value):
+    """Does this identifier satisfy THIS destination's own declared rule?
+
+    FAILS CLOSED in every direction that matters. A destination that declares no
+    constraint, or a malformed one, accepts NOTHING -- because a registry entry
+    that cannot say what it accepts must never be read as accepting anything.
+    That is the whole point of moving the rule off the module and onto the entry.
+
+    `hasattr(entry, "get")` rather than isinstance(entry, dict): registry entries
+    are MappingProxyType, which is deliberately NOT a dict.
+    """
+    if entry is None or not hasattr(entry, "get"):
         return False
-    return all(character in VIDEO_ID_PATTERN for character in value)
+    alphabet = entry.get("resourceIdAlphabet")
+    length = entry.get("resourceIdLength")
+    if not isinstance(alphabet, str) or not alphabet:
+        return False
+    if isinstance(length, bool) or not isinstance(length, int) or length <= 0:
+        return False
+    if not isinstance(value, str) or len(value) != length:
+        return False
+    return all(character in alphabet for character in value)
 
 
 def _looks_like_uuid4(value):
@@ -192,10 +228,10 @@ def derive_destination(source_id, resource_id):
         runtime_errors.fail(
             "source %r is not in the approved destination registry" % (source_id,),
             runtime_errors.ContractValidationError)
-    if not _valid_video_id(resource_id):
+    if not _valid_resource_id(entry, resource_id):
         runtime_errors.fail(
-            "resource identifier %r is not a valid %d-character id"
-            % (resource_id, VIDEO_ID_LENGTH),
+            "resource identifier %r does not satisfy the declared constraint for "
+            "source %r" % (resource_id, source_id),
             runtime_errors.ContractValidationError)
     return (entry["urlTemplate"].format(videoId=resource_id), entry)
 
@@ -262,7 +298,7 @@ def evaluate(request):
 
     # 6. The resource identifier must match its pinned shape before it is ever
     #    substituted into a URL.
-    if not _valid_video_id(resource_id):
+    if not _valid_resource_id(entry, resource_id):
         return _deny(REASON_MALFORMED_VIDEO_ID, **common)
 
     approved_url = entry["urlTemplate"].format(videoId=resource_id)
