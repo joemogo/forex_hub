@@ -571,9 +571,22 @@ strategy reconstruction, any promotion mechanism.
 
 ---
 
-# ⚠️ NOT COMMITTED
+# ✅ STEP 2 CHECKPOINT — COMMITTED
 
-Step 2 is complete and every gate is green, but **nothing was committed or pushed** — held for
-ChatGPT/operator review as instructed.
+| | |
+|---|---|
+| Reviewed | approved by ChatGPT/operator |
+| **Checkpoint commit** | **`1c76d2b0251efa6e39905713e5114fae6b95c919`** |
+| Commit message | `MOGO-018 Step 2: minimal research library bridge` |
+| Pushed to | `origin/mogo-main` |
+| Starting checkpoint | `b49bc1bbb7ac7de2c03937024cf47598e90dd291` (`mogo-017-complete`) |
+
+Final pre-commit verification confirmed only the seven intended files changed, all gates green, and
+immutable research evidence, Knowledge Library evidence, ALEX, Campaign C1, the legacy corpus, the
+scheduler cadence and MOGO-017 change-detection semantics all unchanged.
+
+**One report inaccuracy was found and corrected during that verification:** the module was described
+as "~190 lines" when it is 291 (the estimate predated the refactor that moved file I/O to the CLI and
+added the explanatory docstrings). Corrected before committing.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
