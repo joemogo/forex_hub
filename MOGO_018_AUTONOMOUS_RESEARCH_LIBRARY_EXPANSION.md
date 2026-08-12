@@ -2008,3 +2008,67 @@ the §3G contract, with stages 7–11 left closed. **Do not begin until GATE-3E 
 MOGO-019 was not begun. ICT and CRT remain unauthorized. TJR paper trading is not authorized.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+# ✅ MOGO-018 — GATE-3E CLOSED. MILESTONE GREEN.
+
+**Classification upgraded: WAITING ON OPERATIONAL EVIDENCE → ✅ GREEN.**
+
+The outstanding gate closed on its own schedule, unattended, with no intervention and no cadence
+change. Both predicted firings behaved exactly as the Step 3E audit forecast.
+
+## The 12:00-local firing (16:00Z) — predicted no-op, confirmed
+
+```
+COLLECT WINDOW -- 2 approved entries, at most one acquisition each
+  SRC|youtube|c785970cc458 / hb7ot1_szWI   window=W|21600|82710
+  SRC|youtube|11cd2542b5b0 / 8qwEmE1DwYw   window=W|21600|82710
+DUPLICATE SUPPRESSED ... no acquisition performed   (both streams)
+advanced=0 succeeded=0 failed=0 retried=0 released=0 deadLettered=0
+```
+
+Bucket 82710 was already consumed by the manual Step 3C proof, so the window correctly suppressed
+both — **while still reading the two-entry file unattended**, which proves the multi-entry path runs
+under the scheduler.
+
+## The 18:00-local firing (22:00Z) — GATE-3E
+
+| GATE-3E criterion | Result |
+|---|---|
+| 1. Two-entry `COLLECT WINDOW` block, fresh window | ✅ |
+| 2. Exactly two requests, no third | ✅ **2** |
+| 3. `capability_results` 9 → 11 | ✅ **11** |
+| 4. Each stream classified against **its own** prior identity | ✅ ALEX `UNCHANGED` vs `b668d4209abb…`; TJR `UNCHANGED` vs `0cc6cf59e6d1…` |
+| 5. `comparisonStreamMismatches` / `historyChainBreaks` | ✅ **0 / 0** on both |
+| 6. No source outside the committed set | ✅ none |
+
+**GATE-3E: SATISFIED.**
+
+This is the first fully autonomous two-source research collection in MOGO's history: unattended,
+bounded to exactly one acquisition per committed entry, with two independent comparison histories
+that did not touch each other.
+
+## Post-gate corpus state
+
+```
+streams=2  acceptedObservations=11  immutableArtifacts=2
+  SF|ALEX_G|SUPPORT_RESISTANCE_V1  9 accepted, 1 artifact, unchanged=6, not-recorded=3, integrity=OK
+  SF|TJR|SESSION_ZONE_REACTION     2 accepted, 1 artifact, first=1, unchanged=1, integrity=OK
+```
+
+**Note the invariant holding under real autonomy:** 11 accepted observations still produce exactly
+**2** immutable artifacts, because unchanged content deduplicates.
+
+## Final gates at closure
+
+Platform **25 suites · 1,049 tests · 0 failures** · canonical **19 suites · 1,160 / 1,160** ·
+protected ALEX drift **0** (63 functions, 4 constants) · runtime `INTEGRITY OK`.
+
+**All sixteen closeout criteria are now satisfied. MOGO-018 is GREEN.**
+
+Limitations from the closeout stand unchanged, and one is now partly retired: `CHANGED` has still
+never been observed in production (neither source's metadata has changed), and the artifact-wrapper
+provenance wording still needs an ADR.
+
+**LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
