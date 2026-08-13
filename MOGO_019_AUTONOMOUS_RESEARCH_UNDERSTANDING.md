@@ -1249,3 +1249,204 @@ housekeeping, not a feedback loop.
 
 **`XCONTRA|20260728|001` was NOT ruled on and remains `open`. No EvidenceQuestion was answered. TJR
 eligibility is unchanged at BLOCKED / 17 blockers. No `risk_rule` was manufactured.**
+
+---
+
+## STEP 6 — HUMAN EXTRACTION GOVERNANCE AUDIT (READ-ONLY)
+
+**Status: ✅ AUDIT COMPLETE. No code, tests, schema or records changed. Gate not altered.**
+
+### 1. The exact human gate
+
+| | |
+|---|---|
+| **Executable requirement** | `scripts/trader_intelligence/ingest.py` → `_validate_manifest()` line 335: `if not m.get("annotations"): errs.append("`annotations` is empty -- nothing to apply")` |
+| **Phase 1** | `phase1()` verifies file, SHA-256, duplicate-checks, normalizes, proposes sections, emits a draft manifest with `"annotations": []`. **Registers nothing.** |
+| **Phase 2** | `phase2()` runs `_validate_manifest()` first; every error is fatal before any write |
+| **Documentation** | module docstring: *"nothing enters the evidence store until a human (or Claude) has reviewed the extraction judgments"* |
+| **Historical rationale** | `docs/trader-intelligence/STANDARDS-extraction.md` — **Normative**, derived from `INTAKE\|TJR\|20260727\|001`: *"Two operators who classify the same sentence differently produce two different Knowledge Libraries from identical evidence. These are not stylistic preferences; they are the inputs to the engine."* |
+| **Tests enforcing it** | **none found** — the gate is enforced by the executable path, not by a test |
+
+**The rationale is determinism of downstream engine inputs, not distrust of machines per se.** That
+distinction matters: it means the gate's purpose can in principle be met by anything that makes
+classification reproducible.
+
+### 2–3. What the human judges, and how much of it is mechanical
+
+`STANDARDS-extraction.md` states **two inviolable rules**, and they fall on opposite sides of the line:
+
+- **Rule 1 — `exactExcerpt` is verbatim, always.** The document itself says this is *"machine-enforced
+  rather than trusted."* ✅ Already deterministic.
+- **Rule 2 — `proposedClaim` restates; it never adds.** With worked counterexamples (adding a time
+  window, inventing a stop buffer, inventing a reliability claim) and *the generalization test*:
+  *"If you find yourself reasoning 'he'd obviously also do X', stop."* ❌ **Not machine-enforced.**
+
+| Annotation field | Judgment required | Class |
+|---|---|---|
+| `excerpt` verbatim containment | none — substring test | **MECHANICALLY VERIFIABLE** (enforced) |
+| `section` exists, `key` unique | none | **MECHANICALLY VERIFIABLE** (enforced) |
+| `evidenceType`, `directness`, `extractionCertainty`, `evidenceQuality` | vocabulary membership | **MECHANICALLY VERIFIABLE**; *which* value → **SEMANTIC, OBJECTIVELY CHECKABLE** against STANDARDS §3–§5 |
+| `claimType` | vocabulary membership enforced; assignment → taxonomy judgment | **SEMANTIC, OBJECTIVELY CHECKABLE** |
+| `supports` / `supportsClaimId` | referential integrity | **MECHANICALLY VERIFIABLE** (enforced) |
+| **`claim` (normalizedClaim)** | **Rule 2 — restates without adding** | **INTERPRETIVE** |
+| which excerpt to select / where to cut sections | relevance judgment | **INTERPRETIVE** |
+| `contradictions[]` | identifying incompatibility | **INTERPRETIVE** |
+| `openQuestions[]` | recognising ambiguity | **INTERPRETIVE** |
+| contradiction *resolution*, promotion, freeze | — | **GOVERNANCE / CONSEQUENCE-SENSITIVE** |
+
+**The machine already validates the FORM completely. The human supplies the JUDGMENT.** No mechanical
+check is currently delegated to a person.
+
+### 4. Usable safety signals — populated, not merely defined
+
+| Signal | Populated? |
+|---|---|
+| `exactExcerpt` | ✅ **366 / 366** (100%) |
+| `contentHash` | ✅ **366 / 366** (100%) |
+| `directness`, `extractionCertainty`, `evidenceQuality`, `evidenceType` | ✅ 100% |
+| `traderId` on claims | ✅ 100% |
+| `EvidenceClaimLink.relationshipType` / `independenceGroup` | ✅ 100% |
+| `ContradictionRecord`, `EvidenceQuestion.blockingStatus` | ✅ populated (16 / 281) |
+| **`strategyFamilyId`** | ❌ **null on all 341 claims — unusable** |
+| **`answerEvidenceIds`** | ❌ **empty on all 281 questions — unusable** |
+| **multi-source support** | ❌ **does not exist** — every link is one independence group (`AUTHOR\|ALEX_G`, `AUTHOR\|TJR`), so **all 295 claims are `emerging`**; POLICY-001 caps them there |
+
+### 5. Empirical distribution (descriptive only)
+
+| | ALEX_G (280 items) | TJR (86 items) |
+|---|---|---|
+| Charter **Explicit** | **269 (96.1%)** | **75 (87.2%)** |
+| Implicit | 0 | 3 |
+| Inferred | 0 | 1 (inside "Unknown") |
+| Opinion | 4 | 1 |
+| Unknown | 7 | 7 |
+| certainty `certain`/`high` | 271 | 70 |
+| `exactExcerpt` / `contentHash` | 100% / 100% | 100% / 100% |
+
+**The corpus is overwhelmingly explicit** — which is what makes the question worth asking at all.
+
+### 6. Proposed strict acceptance predicate (design only)
+
+Eleven deterministic predicates, all fail-closed, evaluated **against SUPPORTING evidence only**
+(`relationshipType ∈ {supports, exemplifies}`) — see §12 for why that distinction is load-bearing:
+
+P1 registered governed source · P2 `contentHash` present · P3 unambiguous `traderId` ·
+P4 `exactExcerpt` present · P5 supporting `EvidenceClaimLink` resolves ·
+P6 Charter class **Explicit** · P7 `extractionCertainty ∈ {certain, high}` ·
+P8 no open blocking `EvidenceQuestion` · P9 no open `ContradictionRecord` ·
+P10 `claimType` in taxonomy · P11 deterministic validation passes.
+
+**These are necessary. They are NOT sufficient — see §9.**
+
+### 7. Mandatory human escalation
+
+`inferred_from_context` / `derived_from_analysis` · `indirect_implied` on a required category ·
+any open contradiction · ambiguous trader or strategy identity · missing provenance ·
+novel taxonomy value · **any claim whose text is not entailed by its excerpt** · rule reconstruction ·
+inferred risk rules · conflict resolution · specification freeze · paper promotion · live
+authorization. **Unknown always escalates.**
+
+### 8. Testability — deterministic vs model-based, kept apart
+
+| Deterministic proof | Model-based verification (**NOT** proof) |
+|---|---|
+| excerpt containment · hash equality · identity resolution · duplicate keys · referential integrity · corpus isolation · mutation tests · ground-truth fixtures | second-pass paraphrase comparison · entailment checking · disagreement escalation |
+
+**Model agreement is not determinism.** Two models agreeing on a paraphrase is correlated evidence,
+not proof — and if the same model family produced and checked the extraction, it is **self-confirmation**.
+Any future verifier must be independent by construction, and its output should gate *escalation*,
+never *acceptance*.
+
+### 9. Failure modes vs existing detection
+
+| Failure mode | Detected today? |
+|---|---|
+| Hallucinated claim (no excerpt) | ✅ verbatim-substring check |
+| **Faithful quote, wrong interpretation** | ❌ **Rule 2 not machine-enforced** |
+| **Lost qualifier** | ❌ |
+| Wrong timeframe | ⚠️ `missing_timeframe` question exists — human-authored |
+| Wrong trader | ✅ `--trader` + `TraderRecord`; Step 2 `CorpusAmbiguous` |
+| **Wrong strategy family** | ❌ `strategyFamilyId` null everywhere |
+| Exception → general rule | ⚠️ `claimType: exception` exists; STANDARDS §2 records a **known defect** |
+| Example mistaken for instruction | ⚠️ `evidenceType: trade_example / chart_example` |
+| **Historical description as current rule** | ❌ no temporal-validity field |
+| Contradictory evidence ignored | ✅ `ContradictionRecord` + Step 3 blocks |
+| Duplicate evidence → false support | ✅ `independenceGroup` + POLICY-001 caps at `emerging` |
+| **Model self-confirmation** | ❌ no independent verifier exists |
+
+**Five of twelve are undetected, and four of those five live in the claim paraphrase.**
+
+### 10. Autonomy tiers — defensible decomposition
+
+| Tier | Scope | Verdict |
+|---|---|---|
+| **0 — Mechanical** | hash, identity, excerpt containment, dedupe, preservation | ✅ **already fully deterministic and machine-enforced today** |
+| **1 — Evidence-item classification** | `directness`, `evidenceType`, certainty on an explicit excerpt | ⚠️ **arguably defensible** — bounded enums with a documented decision procedure (STANDARDS §3–§5) |
+| **2 — Claim creation (paraphrase)** | Rule 2 | ❌ **not defensible deterministically** |
+| **3 — Strategy reconstruction** | rules, blueprint | ❌ operator |
+| **4 — Trading promotion** | paper, live | ❌ operator |
+
+### 11. Feedback-loop relationship
+
+A future Lane B → Lane A bridge would sit **entirely inside Tier 0**: preserve, hash, identify,
+dedupe. **It would still stop at the Tier 2 boundary**, exactly as today — which is consistent with
+Step 5's conclusion and means the bridge would not be blocked by this audit, nor unblocked by it.
+
+### 12. TJR simulation (read-only, nothing approved)
+
+| | TJR | ALEX_G |
+|---|---|---|
+| Claims | 69 | 226 |
+| **Would pass P1–P11** | **42 (60.9%)** | **106 (46.9%)** |
+| Would escalate | 27 (39.1%) | 120 (53.1%) |
+
+Escalation drivers — TJR: certainty 12, blocking question 10, not-Explicit 8, contradiction 7.
+ALEX: **blocking question 106**, contradiction 19, not-Explicit 11, certainty 7.
+
+**I corrected my own first run.** It evaluated *all* links, including `contextualizes`. That mattered:
+`CLAIM|TJR|20260727|003` ("New York pre-market starts at 8:30") looked like a Rule-2 violation
+because its first-listed excerpt discusses the 9:30 open — but that link is `contextualizes`, and its
+`supports` link is the verbatim sentence. **There was no defect; my check was wrong.** The predicate
+must evaluate supporting relationships only, and it now does.
+
+### **The decisive finding**
+
+> **Only 1 of 295 claims (0.3%) is verbatim-identical to its supporting excerpt.**
+> **294 involve a human paraphrase judgment that no predicate in §6 can verify.**
+
+So even a claim passing all eleven predicates still rests on an unverified Rule-2 judgment. The
+predicates gate *provenance and context*; they say nothing about whether the claim adds a threshold,
+a timeframe or a condition the excerpt does not contain.
+
+### 13. Is partial autonomous acceptance scientifically defensible?
+
+**At Tier 0, yes — and it already is.** At Tier 1, arguably, with independent verification gating
+escalation. **At Tier 2, no** — and Tier 2 is where 99.7% of the corpus actually lives, so the
+practical answer today is **no meaningful reduction in human review is currently defensible.**
+
+The one honest exception: a claim whose text is *verbatim* its excerpt requires no Rule-2 judgment at
+all and could be accepted deterministically. **That describes exactly 1 of 295 claims.**
+
+### 14. Risks
+
+1. **Predicate false confidence** — 60.9% "would pass" invites reading the predicate as validation of
+   claim content. It is not.
+2. **Model self-confirmation** — the largest scientific risk, and undetected today.
+3. **Automating classification would change the corpus** — `directness` drives `TraderProfile` concept
+   status, gap detection and Step 3 eligibility. A reclassification is a silent re-derivation.
+4. **Escalation-rate drift** — if escalation is tuned by volume rather than evidence, rigor decays
+   invisibly.
+
+### 15. Smallest recommended next implementation
+
+**None in this direction.** Autonomy at Tier 2 is not defensible today, and Tiers 0–1 are already
+machine-enforced or blocked by the same governance decisions Step 4 identified.
+
+If a small, genuinely useful item is wanted, it is a **read-only Rule-2 conformance report**: for each
+claim, show excerpt beside `normalizedClaim` and flag the mechanically checkable subset — claims
+containing a number, timeframe or instrument **absent from every supporting excerpt**. That would not
+approve anything; it would let a human review 295 claims by exception instead of exhaustively, and it
+is exactly the check the corpus currently lacks.
+
+**`XCONTRA|20260728|001` NOT ruled on. 0 EvidenceQuestions answered. 0 RuleCandidateProposal records.
+TJR eligibility unchanged at BLOCKED / 17. Human annotation gate unchanged and not bypassed.**
