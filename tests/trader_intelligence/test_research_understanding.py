@@ -452,8 +452,53 @@ class TestExecutionFirewall(ViewCase):
                 imported |= {a.name for a in node.names}
             elif isinstance(node, ast.ImportFrom):
                 imported.add(node.module or "")
+        # MOGO-019 Step 4 widened this allow-list by exactly ONE module, and
+        # deliberately: Step 4 must report what acquisition is currently
+        # authorized, which means READING the approved-destination registry.
+        # `connector_authorization` is the research-acquisition gate -- the
+        # module whose job is to REFUSE unapproved destinations -- not trading
+        # logic, and it is imported inside a try/except that fails closed to an
+        # empty registry. The property that matters is that no WRITE path
+        # exists, which `test_the_planner_never_mutates_the_authorization_registry`
+        # and the on-disk digest tests assert directly.
         self.assertEqual(imported,
-                         {"argparse", "json", "os", "sys", "query_evidence"})
+                         {"argparse", "json", "os", "sys", "query_evidence",
+                          "glob", "mogo_platform.runtime"})
+        self.assertNotIn("index", imported)
+
+    def test_the_authorization_registry_is_only_ever_read(self):
+        """The one platform import must never be written through.
+
+        Checked structurally: subscripting the registry is how you READ it, so
+        a text scan would ban the correct usage. What must not exist is an
+        ASSIGNMENT, augmented assignment, deletion or mutating method call
+        targeting it.
+        """
+        with open(self.MODULE, encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        registry = "APPROVED_DESTINATIONS"
+
+        def touches(node):
+            return any(isinstance(n, ast.Name) and n.id == registry
+                       or isinstance(n, ast.Attribute) and n.attr == registry
+                       for n in ast.walk(node))
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
+                targets = (node.targets if isinstance(node, ast.Assign)
+                           else [node.target])
+                for target in targets:
+                    self.assertFalse(touches(target),
+                                     "assignment into the registry")
+            elif isinstance(node, ast.Delete):
+                for target in node.targets:
+                    self.assertFalse(touches(target), "deletion from registry")
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if node.func.attr in ("update", "pop", "clear", "setdefault",
+                                      "__setitem__"):
+                    self.assertFalse(touches(node.func.value),
+                                     "mutating call on the registry")
+        self.assertNotIn("setattr", ast.unparse(tree))
 
     def test_running_the_view_mutates_no_file_on_disk(self):
         roots = [os.path.join(ru.EVIDENCE_ROOT, d)
@@ -791,6 +836,286 @@ class TestEligibilityFreezeFirewall(EligibilityCase):
         self.assertEqual(digest(), before)
         self.assertEqual(
             glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
+
+
+# ---------------------------------------------------------------------------
+# MOGO-019 Step 4 -- research-gap resolution planner
+# ---------------------------------------------------------------------------
+
+class PlannerCase(EligibilityCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.gaps = ru.load_gaps()
+        cls.plan = ru.research_plan(cls.view, cls.result, cls.gaps)
+
+    def replanned(self, gaps=None, approved=None, result=None):
+        return ru.research_plan(self.view, result or self.result,
+                                self.gaps if gaps is None else gaps,
+                                approved_destinations=approved)
+
+
+class TestPlanningIsDeterministicAndComplete(PlannerCase):
+
+    def test_planning_is_byte_identical_across_runs(self):
+        a = json.dumps(self.replanned(), sort_keys=True)
+        b = json.dumps(self.replanned(), sort_keys=True)
+        self.assertEqual(a, b)
+
+    def test_every_blocker_receives_exactly_one_plan_item(self):
+        self.assertEqual(self.plan["itemCount"], self.result["blockerCount"])
+        ids = [i["blockerId"] for i in self.plan["items"]]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_every_item_carries_a_known_action_and_autonomy(self):
+        for item in self.plan["items"]:
+            self.assertIn(item["researchAction"], ru._ACTION_RANK)
+            self.assertEqual(item["autonomy"],
+                             ru._AUTONOMY[item["researchAction"]])
+
+    def test_counts_reconcile_with_items(self):
+        self.assertEqual(sum(self.plan["countsByAction"].values()),
+                         self.plan["itemCount"])
+        self.assertEqual(sum(self.plan["countsByAutonomy"].values()),
+                         self.plan["itemCount"])
+
+    def test_ordering_is_deterministic_and_explained(self):
+        self.assertTrue(self.plan["orderingRule"])
+        keys = [(0 if i["requiredCategory"] else 1,
+                 ru._ACTION_RANK[i["researchAction"]], i["blockerId"])
+                for i in self.plan["items"]]
+        self.assertEqual(keys, sorted(keys))
+
+    def test_no_opaque_numeric_priority_exists(self):
+        def walk(node):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    self.assertNotIsInstance(value, float, key)
+                    self.assertNotIn("score", key.lower())
+                    self.assertNotIn("priority", key.lower())
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+        walk(self.plan["items"])
+
+
+class TestExistingCorpusFirst(PlannerCase):
+
+    def test_a_partially_answered_gap_routes_to_searching_what_we_have(self):
+        item = next(i for i in self.plan["items"]
+                    if i["blockerId"] == "REQUIRED_CATEGORY|entry_rule")
+        self.assertEqual(item["researchAction"], ru.SEARCH_EXISTING_CORPUS)
+        self.assertEqual(item["autonomy"], ru.ACTIONABLE_NOW)
+        gap = next(g for g in self.gaps if g["gapId"] == item["knowledgeGapId"])
+        self.assertEqual(gap["answerStatus"], "partially_answered")
+        self.assertTrue(gap["currentBestAnswer"])
+
+    def test_searching_existing_corpus_outranks_acquisition(self):
+        self.assertLess(ru._ACTION_RANK[ru.SEARCH_EXISTING_CORPUS],
+                        ru._ACTION_RANK[ru.AUTHORIZATION_REQUIRED])
+        self.assertLess(ru._ACTION_RANK[ru.SEARCH_EXISTING_CORPUS],
+                        ru._ACTION_RANK[ru.ACQUIRE_FROM_APPROVED_SOURCE])
+
+    def test_an_unanswered_gap_does_not_claim_the_corpus_has_the_answer(self):
+        gaps = copy.deepcopy(self.gaps)
+        for gap in gaps:
+            if gap.get("traderId") == TJR:
+                gap["answerStatus"] = "unanswered"
+                gap["currentBestAnswer"] = None
+        plan = self.replanned(gaps=gaps)
+        self.assertEqual(plan["countsByAction"].get(ru.SEARCH_EXISTING_CORPUS, 0), 0)
+
+
+class TestAuthorizationAwareness(PlannerCase):
+
+    def test_the_approved_source_is_reported_without_granting_acquisition(self):
+        item = self.plan["items"][0]
+        auth = item["authorization"]
+        self.assertTrue(auth["approvedSource"])
+        self.assertEqual(auth["approvedOperations"], ["metadata"])
+        # approved SOURCE is not an approved ANSWER
+        self.assertFalse(auth["operationAvailable"])
+        self.assertFalse(auth["autonomousAcquisitionPermitted"])
+
+    def test_transcript_needs_are_never_autonomously_actionable_today(self):
+        for item in self.plan["items"]:
+            if item["researchAction"] == ru.AUTHORIZATION_REQUIRED:
+                self.assertEqual(item["autonomy"], ru.AFTER_AUTHORIZATION)
+                self.assertFalse(item["autonomousActionPermittedNow"])
+
+    def test_an_unknown_authorization_surface_fails_closed(self):
+        plan = self.replanned(approved={})
+        for item in plan["items"]:
+            self.assertFalse(item["authorization"]["approvedSource"])
+            self.assertFalse(item["authorization"]["autonomousAcquisitionPermitted"])
+        self.assertEqual(plan["countsByAction"].get(
+            ru.ACQUIRE_FROM_APPROVED_SOURCE, 0), 0)
+
+    def test_MUTATION_authorizing_transcripts_would_change_the_plan(self):
+        """The authorization predicate must be capable of mattering."""
+        widened = {"SRC|youtube|11cd2542b5b0": {
+            "sourceLabel": "TJRTrades", "operation": "transcript"}}
+        plan = self.replanned(approved=widened)
+        self.assertGreater(
+            plan["countsByAction"].get(ru.ACQUIRE_FROM_APPROVED_SOURCE, 0), 0)
+        self.assertEqual(plan["countsByAction"].get(ru.AUTHORIZATION_REQUIRED, 0), 0)
+        # and the real, unwidened plan authorizes none of it
+        self.assertEqual(self.plan["countsByAction"].get(
+            ru.ACQUIRE_FROM_APPROVED_SOURCE, 0), 0)
+
+    def test_the_planner_never_mutates_the_authorization_registry(self):
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(REPO_ROOT, "platform", "src"))
+        from mogo_platform.runtime import connector_authorization as gate
+        before = dict(gate.APPROVED_DESTINATIONS)
+        before_ops = {s: gate.APPROVED_DESTINATIONS[s]["operation"]
+                      for s in gate.approved_source_ids()}
+        self.replanned()
+        self.assertEqual(dict(gate.APPROVED_DESTINATIONS), before)
+        self.assertEqual({s: gate.APPROVED_DESTINATIONS[s]["operation"]
+                          for s in gate.approved_source_ids()}, before_ops)
+        self.assertEqual(set(before_ops.values()), {"metadata"})
+
+
+class TestDirectTraderClarificationIsPreserved(PlannerCase):
+
+    def test_risk_rule_routes_to_a_direct_question_not_more_video(self):
+        """The gap itself records 'direct question to trader'. That must not be
+        silently converted into passive collection."""
+        item = next(i for i in self.plan["items"]
+                    if i["blockerId"] == "REQUIRED_CATEGORY|risk_rule")
+        self.assertEqual(item["researchAction"], ru.DIRECT_TRADER_CLARIFICATION)
+        self.assertEqual(item["autonomy"], ru.HUMAN_INPUT)
+        self.assertEqual(item["recommendedNextSourceType"],
+                         "direct question to trader")
+        self.assertNotEqual(item["researchAction"], ru.AUTHORIZATION_REQUIRED)
+        self.assertNotEqual(item["researchAction"],
+                            ru.ACQUIRE_FROM_APPROVED_SOURCE)
+
+    def test_direct_only_and_transcript_only_route_differently(self):
+        self.assertEqual(ru._route_recommended_source("direct question to trader"),
+                         ru.DIRECT_TRADER_CLARIFICATION)
+        self.assertEqual(
+            ru._route_recommended_source("additional transcript on targets"),
+            ru.AUTHORIZATION_REQUIRED)
+
+    def test_an_unrecognised_recommendation_fails_closed(self):
+        for bad in (None, "", "   ", "consult the oracle", 42, []):
+            with self.subTest(value=bad):
+                self.assertIsNone(ru._route_recommended_source(bad))
+
+    def test_a_meaning_question_asks_the_educator_not_the_archive(self):
+        for question_type in ("ambiguous_statement", "unclear_scope",
+                              "implied_requirement", "unruled_exception"):
+            self.assertEqual(ru._QUESTION_ROUTE[question_type],
+                             ru.DIRECT_TRADER_CLARIFICATION)
+
+
+class TestContradictionRouting(PlannerCase):
+
+    def test_the_cross_corpus_contradiction_routes_to_an_operator_ruling(self):
+        item = next(i for i in self.plan["items"]
+                    if i["blockerId"] == "XCONTRA|20260728|001")
+        self.assertEqual(item["researchAction"], ru.OPERATOR_RULING_REQUIRED)
+        self.assertEqual(item["autonomy"], ru.HUMAN_INPUT)
+        self.assertEqual(item["foreignTraderId"], ALEX)
+
+    def test_the_foreign_claim_is_referenced_for_routing_only(self):
+        item = next(i for i in self.plan["items"]
+                    if i["blockerId"] == "XCONTRA|20260728|001")
+        self.assertTrue(item["foreignClaimId"].startswith("CLAIM|ALEX"))
+        # identity only -- no foreign content
+        self.assertNotIn("normalizedClaim", item)
+        self.assertNotIn("evidence", item)
+        self.assertEqual(item["currentSupportingEvidence"]["claimIds"], [])
+
+    def test_a_contradiction_is_not_treated_as_missing_information(self):
+        for kind in ("DIRECTIONAL", "CONDITIONAL_SCOPE", "SCOPE_MISMATCH"):
+            self.assertEqual(ru._CONTRADICTION_ROUTE[kind],
+                             ru.OPERATOR_RULING_REQUIRED)
+
+    def test_no_contradiction_is_resolved_by_the_planner(self):
+        for item in self.plan["items"]:
+            self.assertNotIn("resolution", item)
+        source = next(c for c in self.idx.contradictions.values()
+                      if c["contradictionId"] == "XCONTRA|20260728|001")
+        self.assertIsNone(source["resolution"])
+        self.assertEqual(source["status"], "open")
+
+
+class TestPlannerFailsClosed(PlannerCase):
+
+    def test_an_unknown_question_type_fails_closed(self):
+        result = copy.deepcopy(self.result)
+        for blocker in result["blockers"]:
+            if blocker["blockerType"] == "BLOCKING_QUESTION":
+                blocker["questionType"] = "something_new"
+        plan = self.replanned(result=result)
+        unknown = [i for i in plan["items"]
+                   if i["blockerType"] == "BLOCKING_QUESTION"]
+        self.assertTrue(unknown)
+        for item in unknown:
+            self.assertEqual(item["researchAction"], ru.NO_RESOLUTION_PATH)
+            self.assertEqual(item["autonomy"], ru.NO_KNOWN_PATH)
+            self.assertFalse(item["autonomousActionPermittedNow"])
+
+    def test_an_unknown_contradiction_type_fails_closed(self):
+        result = copy.deepcopy(self.result)
+        for blocker in result["blockers"]:
+            if blocker["blockerType"] == "BLOCKING_CONTRADICTION":
+                blocker["contradictionType"] = "MYSTERY"
+                blocker["scope"] = "INTERNAL"
+        plan = self.replanned(result=result)
+        item = next(i for i in plan["items"]
+                    if i["blockerType"] == "BLOCKING_CONTRADICTION")
+        self.assertEqual(item["researchAction"], ru.NO_RESOLUTION_PATH)
+
+    def test_unknown_is_never_classified_as_autonomous(self):
+        self.assertEqual(ru._AUTONOMY[ru.NO_RESOLUTION_PATH], ru.NO_KNOWN_PATH)
+        self.assertNotEqual(ru._AUTONOMY[ru.NO_RESOLUTION_PATH],
+                            ru.ACTIONABLE_NOW)
+
+
+class TestPlannerIsolationAndSideEffects(PlannerCase):
+
+    def test_no_alex_claim_enters_the_plan(self):
+        for item in self.plan["items"]:
+            for claim_id in item["currentSupportingEvidence"]["claimIds"]:
+                self.assertNotIn("ALEX", claim_id)
+            if item["blockerId"].startswith("CLAIM"):
+                self.assertNotIn("ALEX", item["blockerId"])
+
+    def test_planning_performs_no_acquisition_and_writes_nothing(self):
+        roots = [os.path.join(ru.EVIDENCE_ROOT, d)
+                 for d in ("claims", "items", "gaps", "questions",
+                           "contradictions", "proposals")]
+        def digest():
+            out = {}
+            for root in roots:
+                for path in sorted(glob.glob(os.path.join(root, "*.json"))):
+                    with open(path, "rb") as handle:
+                        out[path] = hashlib.sha256(handle.read()).hexdigest()
+            return out
+        before = digest()
+        self.replanned()
+        ru.render_plan(self.plan)
+        self.assertEqual(digest(), before)
+        self.assertEqual(
+            glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
+
+    def test_the_plan_states_it_is_not_an_authorization(self):
+        self.assertIs(self.plan["planningOnly"], True)
+        self.assertIn("not an authorization", self.plan["meaning"].lower())
+        self.assertEqual(self.plan["promotionStatus"], "NOT_A_TRADING_RULE")
+        self.assertEqual(self.plan["lane"], "RESEARCH")
+
+    def test_the_plan_creates_no_strategy_or_proposal_object(self):
+        blob = json.dumps(self.plan)
+        for forbidden in ("proposalId", "blueprintId", "ruleId",
+                          "promotionState", "specification"):
+            self.assertNotIn(forbidden, blob)
 
 
 if __name__ == "__main__":

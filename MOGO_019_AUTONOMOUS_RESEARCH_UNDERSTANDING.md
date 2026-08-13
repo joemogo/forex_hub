@@ -837,3 +837,200 @@ acquiring anything. That reuses existing fields, writes nothing, and needs no sc
 unsupported, proposals would still be born blocked.
 
 **TJR PAPER TRADING REMAINS NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+## STEP 4 — AUTONOMOUS RESEARCH GAP RESOLUTION PLANNER
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Zero schema changes · zero persistence · zero acquisition · zero authorization changes.**
+
+### 1. Files and size
+
+| File | Change |
+|---|---|
+| `scripts/trader_intelligence/research_understanding.py` | **+397 / −4** (same module extended) |
+| `tests/trader_intelligence/test_research_understanding.py` | **+~460** (95 tests total, +30) |
+| `MOGO_019_AUTONOMOUS_RESEARCH_UNDERSTANDING.md` | this section |
+
+No new module, no new database, no persisted plan. The planner is a pure function.
+
+### 2. Architecture
+
+`research_plan(view, eligibility_result, gaps, approved_destinations=None)` — pure, deterministic,
+read-only. Consumes the Step 2 view, the Step 3 eligibility result, existing `KnowledgeGap` records,
+and the platform's approved-destination registry. One plan item per Step 3 blocker.
+
+### 3. Action classes and how each is decided — **every route is grounded**
+
+| Class | Decided by |
+|---|---|
+| `SEARCH_EXISTING_CORPUS` | `KnowledgeGap.answerStatus == partially_answered` **and** `currentBestAnswer` populated — a real signal that governed material already partly answers it |
+| `ACQUIRE_FROM_APPROVED_SOURCE` | the approved registry actually permits the needed operation |
+| `AUTHORIZATION_REQUIRED` | `recommendedNextSourceType` names *"additional transcript…"*, or a `missing_*` question type — and transcripts are **not** an approved operation |
+| `DIRECT_TRADER_CLARIFICATION` | `recommendedNextSourceType` names *"direct question to trader"*, or a question about what the educator **meant** |
+| `OPERATOR_RULING_REQUIRED` | a contradiction (never missing information), or any cross-corpus conflict |
+| `NO_RESOLUTION_PATH` | **fail-closed default** — unrecognised type, absent metadata |
+
+**Two derivations are Step 4's own and are documented as such**, because no existing field carries
+them: `EvidenceQuestion` has no `recommendedNextSourceType`, and `answerEvidenceIds` is empty on all
+281 records. The routes are derived from each `questionType`'s own meaning — *what the educator meant*
+can only be answered by the educator; *information absent from this source* is an acquisition
+question; *the source disagreeing with itself* is a judgement call. `contradictionType` routing uses
+the existing enum, with only `TEMPORAL_DRIFT` having an evidence answer.
+
+### 4. Deterministic ordering rule
+
+```
+required category first  →  action rank  →  blocker id
+SEARCH_EXISTING_CORPUS < ACQUIRE_FROM_APPROVED_SOURCE < AUTHORIZATION_REQUIRED
+  < DIRECT_TRADER_CLARIFICATION < OPERATOR_RULING_REQUIRED < NO_RESOLUTION_PATH
+```
+
+Cheapest-and-already-permitted first, unknown last. **The rank is a position in a fixed list, not a
+number** — a test asserts no float and no field named `score`/`priority` exists anywhere.
+
+### 5. TJR research plan — 17 blockers, 17 plan items
+
+| Research action | Count | Blockers |
+|---|---|---|
+| **SEARCH_EXISTING_CORPUS** | **1** | `entry_rule` |
+| **ACQUIRE_FROM_APPROVED_SOURCE** | **0** | — |
+| **AUTHORIZATION_REQUIRED** | **6** | `stop_rule`, `EQ|…|002`, `|003`, `|012`, `|013`, `|014` |
+| **DIRECT_TRADER_CLARIFICATION** | **8** | `risk_rule`, `EQ|…|004`, `|007`, `|008`, `|009`, `|016`, `|017`, `|018` |
+| **OPERATOR_RULING_REQUIRED** | **2** | `setup_requirement`, `XCONTRA|20260728|001` |
+| **NO_RESOLUTION_PATH** | **0** | — |
+
+| Autonomy | Count |
+|---|---|
+| `AUTONOMOUSLY_ACTIONABLE_NOW` | **1** |
+| `AUTONOMOUS_AFTER_AUTHORIZATION` | **6** |
+| `HUMAN_INPUT_REQUIRED` | **10** |
+| `BLOCKED_NO_KNOWN_PATH` | **0** |
+
+**Answering the six operator questions directly:**
+
+- **What can MOGO investigate with what it already has?** → **1** item. The `entry_rule` gap is
+  `partially_answered` with a real `currentBestAnswer`, so re-examining governed material is the
+  cheapest genuine next step.
+- **What could MOGO autonomously collect under current authorization?** → **0**. Both sources are
+  approved for `metadata` only — channel title and author — which cannot answer any strategy
+  question. **The approved surface is real but useless for these gaps, and the plan says so.**
+- **What requires authorization expansion?** → **6**, all needing transcript-class material.
+- **What requires a direct question to TJR?** → **8**, including the critical **`risk_rule`**, whose
+  own gap record already says *"direct question to trader"*.
+- **What requires an operator decision?** → **2**, both tracing to `XCONTRA|20260728|001`.
+- **What has no known path?** → **0**.
+
+### 6. Direct-question preservation
+
+`risk_rule` routes to `DIRECT_TRADER_CLARIFICATION`, **never** to acquisition — a dedicated test
+asserts it is neither `AUTHORIZATION_REQUIRED` nor `ACQUIRE_FROM_APPROVED_SOURCE`, and a mutation
+converting direct-questions into transcript acquisition fails two tests. **MOGO now knows when more
+passive collection cannot answer a question.**
+
+### 7. Authorization result — read, never widened
+
+Every item reports `approvedSource: true`, `approvedOperations: ["metadata"]`,
+`operationAvailable: false`, `autonomousAcquisitionPermitted: false`. No source was added, no
+operation authorized, no transcript/Instagram/ICT/CRT access granted.
+
+The planner reads `connector_authorization.APPROVED_DESTINATIONS` inside a try/except that **fails
+closed to an empty registry**. A test asserts the registry is only ever read — checked structurally
+via AST for assignments, deletions and mutating calls, because subscripting is how you *read* it.
+Another asserts the registry and its operations are byte-identical after planning.
+
+**This widened the module's import allow-list by exactly one module, deliberately and visibly.**
+§5 requires authorization awareness, which requires reading the registry. `connector_authorization`
+is the research-acquisition *gate* — the module whose job is to refuse unapproved destinations — not
+trading logic. The firewall property that matters is the absence of a **write** path, which the
+non-mutation and on-disk digest tests assert directly.
+
+### 8. Isolation
+
+No ALEX claim enters any plan item. `XCONTRA|20260728|001` references
+`CLAIM|ALEX_G|20260728|025` and trader `ALEX_G` **for routing only** — a test asserts the item
+carries no `normalizedClaim`, no `evidence`, and an empty `claimIds` list.
+
+### 9. Feedback-loop design — existing interfaces only, **not implemented**
+
+```
+Step 4 plan item (AUTHORIZATION_REQUIRED / ACQUIRE_FROM_APPROVED_SOURCE)
+   ↓  operator reviews and, if approved, makes ONE reviewed edit
+platform/src/.../connector_authorization.py  APPROVED_DESTINATIONS   (MOGO-018 Step 3A/3C)
+   +  docs/trader-intelligence/authorizations/AUTH-*.json
+   +  platform/scheduling/approved-collection.json                   (bounded entry, Step 3B)
+   ↓  the EXISTING launchd job fires on its unchanged cadence
+mogo_runtime collect  →  connector gate  →  transport  →  change detection
+   ↓  new immutable evidence
+intake/acquired/ + research-artifacts/                               (content-addressed)
+   ↓  Lane A ingestion (existing scripts)
+EvidenceSource → EvidenceItem → Claim → EvidenceClaimLink
+   ↓  re-run, no new code
+research_understanding --plan / --eligibility
+```
+
+**Every arrow is an interface that already exists.** No new scheduler, no new connector framework,
+no new task store. The only genuinely missing link is Lane A ingestion of a Lane B artifact, which
+is out of Step 4's scope and is not built here.
+
+### 10. Tests — 95 total (+30), 5 mutations caught
+
+Covering all 17 required categories: deterministic planning · one plan per blocker ·
+existing-corpus-first · approved-source classification · unauthorized-source classification ·
+direct-trader-question preservation · operator-ruling routing · unknown fails closed · contradiction
+routing · no foreign evidence expansion · ALEX/TJR isolation · no acquisition side effect · no
+authorization mutation · no reconstruction · no proposal persistence · deterministic ordering · no
+opaque numeric priority.
+
+| Mutation | Caught |
+|---|---|
+| Unknown type → autonomously actionable | ✅ 2 tests |
+| `autonomousAcquisitionPermitted: True` regardless of operation | ✅ |
+| Direct-trader-question → transcript acquisition | ✅ 2 tests |
+| Cross-corpus contradiction routed as an evidence gap | ✅ |
+| Ignore the existing-corpus signal | ✅ |
+
+**One test I wrote was wrong and I fixed the test, not the code:** it banned `APPROVED_DESTINATIONS[`
+as a "write", but that subscript is exactly how the registry is *read*. It now checks structurally
+for assignments, deletions and mutating calls.
+
+### 11. Integrity
+
+| Gate | Result |
+|---|---|
+| Focused MOGO-019 suite | ✅ **95 / 95** |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| Forward cutoff | ✅ `2026-08-11T02:43:57.894Z` unchanged |
+| Authorization state | ✅ 2 sources, `metadata` only — unchanged |
+| Acquisition performed | ✅ none — `capability_results` still **11** |
+| `RuleCandidateProposal` records | ✅ **0** |
+| TJR paper trading / live-money | ✅ NOT AUTHORIZED |
+
+### 12. Recommendation for Step 5
+
+**Step 4's most useful output is a negative result, and it should drive the decision: 0 of 17
+blockers can be resolved by autonomous acquisition under current authorization.** Sixteen need either
+an authorization expansion (6), a direct question to TJR (8), or an operator ruling (2).
+
+**Do not build Step 5 as more automation.** The bottleneck is now governance, not capability. The
+three decisions worth putting to the operator are:
+
+1. **`XCONTRA|20260728|001`** — the record's own rationale already notes the two educators are
+   "closer in practice than the words suggest" but marks it blocking because *"the reconciliation is
+   MOGO's reading, not either educator's statement."* An operator ruling closes **2** blockers.
+2. **The 8 direct-question items** — a single clarification session with TJR would address more than
+   half the plan, including the critical `risk_rule` that no transcript can supply.
+3. **Whether transcript-class acquisition should ever be authorized** — it would unblock 6 items, but
+   MOGO-015 Step 1A found that path returns an empty body and pursuing it means working around an
+   access control. **My recommendation is not to authorize it.**
+
+If code is wanted next, the smallest honest step is the **one missing feedback-loop link** — Lane A
+ingestion of a Lane B artifact — which is a real gap and would make the loop in §9 closeable. It
+needs no new authorization.
+
+**TJR PAPER TRADING REMAINS NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**

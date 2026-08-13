@@ -423,6 +423,10 @@ def main(argv=None):
     parser.add_argument("--trader", default="TJR")
     parser.add_argument("--evidence-root", default=EVIDENCE_ROOT)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--plan", action="store_true",
+                        help="derived research-resolution plan (MOGO-019 "
+                             "Step 4): what evidence each blocker needs. "
+                             "Planning only -- acquires nothing.")
     parser.add_argument("--eligibility", action="store_true",
                         help="derived reconstruction-eligibility (MOGO-019 "
                              "Step 3): what blocks a FUTURE reconstruction "
@@ -435,13 +439,18 @@ def main(argv=None):
     except CorpusAmbiguous as exc:
         print("REFUSED: %s" % (exc,))
         return 2
-    payload = eligibility(view) if args.eligibility else view
+    if args.plan:
+        payload = research_plan(view, eligibility(view), load_gaps(
+            os.path.join(args.evidence_root)))
+        renderer = render_plan
+    elif args.eligibility:
+        payload, renderer = eligibility(view), render_eligibility
+    else:
+        payload, renderer = view, render
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
-    elif args.eligibility:
-        print("\n".join(render_eligibility(payload)))
     else:
-        print("\n".join(render(view)))
+        print("\n".join(renderer(payload)))
     return 0
 
 
@@ -687,6 +696,390 @@ def render_eligibility(result):
             out.append("      research need   %s" % (blocker["researchNeed"],))
     out.append("\n  " + result["meaning"])
     return out
+
+
+# ---------------------------------------------------------------------------
+# MOGO-019 Step 4 -- the research-gap resolution planner
+# ---------------------------------------------------------------------------
+# Turns Step 3's named blockers into named RESEARCH NEEDS. It plans; it does not
+# acquire, resolve, authorize or reconstruct. A recommendation here is NOT an
+# authorization, and nothing in this module can widen one.
+
+PLAN_SCHEMA_VERSION = "mogo.research-resolution-plan.v1"
+
+SEARCH_EXISTING_CORPUS = "SEARCH_EXISTING_CORPUS"
+ACQUIRE_FROM_APPROVED_SOURCE = "ACQUIRE_FROM_APPROVED_SOURCE"
+AUTHORIZATION_REQUIRED = "AUTHORIZATION_REQUIRED"
+DIRECT_TRADER_CLARIFICATION = "DIRECT_TRADER_CLARIFICATION"
+OPERATOR_RULING_REQUIRED = "OPERATOR_RULING_REQUIRED"
+NO_RESOLUTION_PATH = "NO_RESOLUTION_PATH"
+
+ACTIONABLE_NOW = "AUTONOMOUSLY_ACTIONABLE_NOW"
+AFTER_AUTHORIZATION = "AUTONOMOUS_AFTER_AUTHORIZATION"
+HUMAN_INPUT = "HUMAN_INPUT_REQUIRED"
+NO_KNOWN_PATH = "BLOCKED_NO_KNOWN_PATH"
+
+# Reading MOGO's own governed evidence needs no new authorization; everything
+# else does, and human input is not something MOGO can grant itself.
+_AUTONOMY = {
+    SEARCH_EXISTING_CORPUS: ACTIONABLE_NOW,
+    ACQUIRE_FROM_APPROVED_SOURCE: ACTIONABLE_NOW,
+    AUTHORIZATION_REQUIRED: AFTER_AUTHORIZATION,
+    DIRECT_TRADER_CLARIFICATION: HUMAN_INPUT,
+    OPERATOR_RULING_REQUIRED: HUMAN_INPUT,
+    NO_RESOLUTION_PATH: NO_KNOWN_PATH,
+}
+
+# ORDERING RULE, stated as data so it can be read without tracing code.
+# Cheapest-and-already-permitted first, unknown last. There is deliberately no
+# numeric priority: the rank is a fixed position in this list.
+_ACTION_RANK = {
+    SEARCH_EXISTING_CORPUS: 0,
+    ACQUIRE_FROM_APPROVED_SOURCE: 1,
+    AUTHORIZATION_REQUIRED: 2,
+    DIRECT_TRADER_CLARIFICATION: 3,
+    OPERATOR_RULING_REQUIRED: 4,
+    NO_RESOLUTION_PATH: 5,
+}
+
+# Routing for a blocking EvidenceQuestion.
+#
+# THIS MAPPING IS STEP 4'S OWN DERIVATION and is documented as such: the
+# EvidenceQuestion schema carries no recommendedNextSourceType, and
+# `answerEvidenceIds` is empty on all 281 records, so there is no existing field
+# to route by. The derivation is from the questionType's own meaning:
+#
+#   * a question about what the educator MEANT can only be answered by the
+#     educator -- more passive collection cannot settle an ambiguity in wording;
+#   * a question about information ABSENT from this source might be answered by
+#     another source, which is an acquisition question;
+#   * a question about the source disagreeing with ITSELF, or with its own
+#     examples, is a judgement call, not an evidence gap;
+#   * anything unrecognised FAILS CLOSED to NO_RESOLUTION_PATH rather than being
+#     optimistically called autonomous.
+_QUESTION_ROUTE = {
+    "ambiguous_statement": DIRECT_TRADER_CLARIFICATION,
+    "unclear_scope": DIRECT_TRADER_CLARIFICATION,
+    "implied_requirement": DIRECT_TRADER_CLARIFICATION,
+    "unruled_exception": DIRECT_TRADER_CLARIFICATION,
+    "discretionary_management": DIRECT_TRADER_CLARIFICATION,
+    "missing_timeframe": AUTHORIZATION_REQUIRED,
+    "missing_session": AUTHORIZATION_REQUIRED,
+    "missing_invalidation": AUTHORIZATION_REQUIRED,
+    "missing_stop_placement": AUTHORIZATION_REQUIRED,
+    "missing_target_logic": AUTHORIZATION_REQUIRED,
+    "insufficient_independent_support": AUTHORIZATION_REQUIRED,
+    "self_contradiction": OPERATOR_RULING_REQUIRED,
+    "behavior_conflicts_with_instruction": OPERATOR_RULING_REQUIRED,
+    "example_mismatch": OPERATOR_RULING_REQUIRED,
+    "missing_replay_validation": OPERATOR_RULING_REQUIRED,
+    "missing_paper_validation": OPERATOR_RULING_REQUIRED,
+}
+
+# Routing for a blocking ContradictionRecord, from its existing
+# contradictionType. A contradiction is not missing information -- it is two
+# statements that cannot both stand -- so no amount of the SAME evidence settles
+# it. Only TEMPORAL_DRIFT has an evidence answer (later material supersedes
+# earlier), and only when it is internal to one corpus.
+_CONTRADICTION_ROUTE = {
+    "TEMPORAL_DRIFT": AUTHORIZATION_REQUIRED,
+    "DIRECTIONAL": OPERATOR_RULING_REQUIRED,
+    "DEFINITIONAL": DIRECT_TRADER_CLARIFICATION,
+    "NUMERIC_THRESHOLD": DIRECT_TRADER_CLARIFICATION,
+    "CONDITIONAL_SCOPE": OPERATOR_RULING_REQUIRED,
+    "SCOPE_MISMATCH": OPERATOR_RULING_REQUIRED,
+}
+
+_DIRECT_MARKER = "direct question to trader"
+_TRANSCRIPT_MARKER = "additional transcript"
+
+
+def _route_recommended_source(recommended):
+    """Classify a KnowledgeGap.recommendedNextSourceType. Existing free text.
+
+    The field is prose, but its vocabulary is closed in practice (8 distinct
+    values across 110 gaps), so it is matched on the two markers that actually
+    vary. A value carrying NEITHER marker is unrecognised and fails closed.
+    """
+    if not isinstance(recommended, str) or not recommended.strip():
+        return None
+    text = recommended.lower()
+    direct = _DIRECT_MARKER in text
+    transcript = _TRANSCRIPT_MARKER in text
+    if direct and not transcript:
+        return DIRECT_TRADER_CLARIFICATION
+    if transcript:
+        # A transcript would serve -- but transcript acquisition is NOT an
+        # approved operation, so the only currently-available path is the one
+        # the gap itself also names. Both are reported; the class names the path
+        # that exists today.
+        return DIRECT_TRADER_CLARIFICATION if direct else AUTHORIZATION_REQUIRED
+    return None
+
+
+def _authorization_for(trader_id, approved_destinations, required_operation):
+    """What acquisition is currently authorized for this corpus. No widening."""
+    matches = [(source_id, entry)
+               for source_id, entry in sorted(approved_destinations.items())
+               if trader_id.replace("_", "").lower()
+               in entry.get("sourceLabel", "").replace("_", "").lower()]
+    if not matches:
+        return {"approvedSource": False, "sourceId": None,
+                "approvedOperations": [], "operationAvailable": False,
+                "autonomousAcquisitionPermitted": False}
+    source_id, entry = matches[0]
+    operations = [entry["operation"]]
+    return {
+        "approvedSource": True,
+        "sourceId": source_id,
+        "approvedOperations": operations,
+        "operationAvailable": required_operation in operations,
+        # An approved SOURCE is not an approved ANSWER: the only approved
+        # operation returns channel metadata, which cannot answer a question
+        # about how a strategy is traded.
+        "autonomousAcquisitionPermitted": required_operation in operations,
+    }
+
+
+def research_plan(view, result, gaps, approved_destinations=None):
+    """One resolution-plan item per Step 3 blocker. Pure. Writes nothing.
+
+    PLANS ONLY. It performs no acquisition, resolves no question, settles no
+    contradiction, and grants no authorization -- a recommendation here is not
+    an authorization, and this module has no code path to one.
+    """
+    trader_id = view["traderId"]
+    approved = (connector_destinations() if approved_destinations is None
+                else approved_destinations)
+
+    corpus_gaps = [g for g in gaps if g.get("traderId") == trader_id]
+    gap_by_category = {}
+    for gap in sorted(corpus_gaps, key=lambda g: g["gapId"]):
+        gap_by_category.setdefault(gap["category"], gap)
+
+    # rule category -> the gap categories that make it required (Step 3 table)
+    gap_categories_for = {}
+    for gap_category, rule_category in REQUIRED_BY_GAP_CATEGORY.items():
+        gap_categories_for.setdefault(rule_category, []).append(gap_category)
+
+    items = []
+    for blocker in result["blockers"]:
+        kind = blocker["blockerType"]
+        gap = None
+        action = None
+        evidence_needed = blocker.get("researchNeed")
+        recommended = None
+
+        if kind.startswith("REQUIRED_CATEGORY_"):
+            for gap_category in sorted(gap_categories_for.get(
+                    blocker["ruleCategory"], [])):
+                if gap_category in gap_by_category:
+                    gap = gap_by_category[gap_category]
+                    break
+            if gap is not None:
+                recommended = gap.get("recommendedNextSourceType")
+                # EXISTING CORPUS FIRST, and only on a deterministic signal:
+                # a partially-answered gap already carries a currentBestAnswer
+                # drawn from real claim text, so re-examining what MOGO holds is
+                # the cheapest genuine next step.
+                if (gap.get("answerStatus") == "partially_answered"
+                        and gap.get("currentBestAnswer")):
+                    action = SEARCH_EXISTING_CORPUS
+                else:
+                    action = _route_recommended_source(recommended)
+            if action is None:
+                # No gap record. The blocker's STATUS still names the cause, so
+                # route from that rather than reporting "no path" for something
+                # whose cause is known and already planned in its own right.
+                action = _route_required_category(blocker, result)
+        elif kind == "BLOCKING_QUESTION":
+            action = _QUESTION_ROUTE.get(blocker["questionType"])
+        elif kind == "BLOCKING_CONTRADICTION":
+            action = _CONTRADICTION_ROUTE.get(blocker.get("contradictionType"))
+            if blocker.get("scope") == "CROSS_CORPUS":
+                # No amount of THIS corpus's evidence settles a disagreement
+                # with another educator, and the foreign corpus may not be read.
+                action = OPERATOR_RULING_REQUIRED
+
+        if action is None:
+            action = NO_RESOLUTION_PATH
+
+        needs_external = action in (ACQUIRE_FROM_APPROVED_SOURCE,
+                                    AUTHORIZATION_REQUIRED)
+        authorization = _authorization_for(trader_id, approved, "transcript")
+        if action == AUTHORIZATION_REQUIRED and authorization["operationAvailable"]:
+            action = ACQUIRE_FROM_APPROVED_SOURCE
+
+        items.append({
+            "blockerId": (blocker.get("questionId")
+                          or blocker.get("contradictionId")
+                          or "REQUIRED_CATEGORY|%s" % (blocker["ruleCategory"],)),
+            "blockerType": kind,
+            "ruleCategory": blocker.get("ruleCategory"),
+            "requiredCategory": blocker.get("ruleCategory")
+                                in REQUIRED_RULE_CATEGORIES,
+            "evidenceGap": evidence_needed,
+            "currentSupportingEvidence": _support_summary(view, blocker),
+            "requiredEvidenceType": ("transcript or direct statement"
+                                     if needs_external else None),
+            "recommendedNextSourceType": recommended,
+            "knowledgeGapId": None if gap is None else gap["gapId"],
+            "researchAction": action,
+            "autonomy": _AUTONOMY[action],
+            "authorization": authorization,
+            "autonomousActionPermittedNow": _AUTONOMY[action] == ACTIONABLE_NOW,
+            "operatorActionRequired": _operator_action(action),
+            "foreignClaimId": blocker.get("foreignClaimId"),
+            "foreignTraderId": blocker.get("foreignTraderId"),
+        })
+
+    items.sort(key=lambda i: (0 if i["requiredCategory"] else 1,
+                              _ACTION_RANK[i["researchAction"]],
+                              i["blockerId"]))
+
+    counts = {}
+    for item in items:
+        counts[item["researchAction"]] = counts.get(item["researchAction"], 0) + 1
+    autonomy_counts = {}
+    for item in items:
+        autonomy_counts[item["autonomy"]] = autonomy_counts.get(item["autonomy"], 0) + 1
+
+    return {
+        "schemaVersion": PLAN_SCHEMA_VERSION,
+        "traderId": trader_id,
+        "lane": "RESEARCH",
+        "promotionStatus": "NOT_A_TRADING_RULE",
+        "planningOnly": True,
+        "meaning": "A recommendation is NOT an authorization. This plan performs "
+                   "no acquisition, resolves no question, settles no "
+                   "contradiction and grants no permission.",
+        "orderingRule": "required category first, then research action rank "
+                        "(%s), then blocker id" % (
+                            " < ".join(sorted(_ACTION_RANK,
+                                              key=_ACTION_RANK.get)),),
+        "items": items,
+        "itemCount": len(items),
+        "countsByAction": counts,
+        "countsByAutonomy": autonomy_counts,
+    }
+
+
+def _route_required_category(blocker, result):
+    """Route a required-category blocker from its Step 3 STATUS.
+
+    CONFLICTED is never missing information -- two claims cannot both stand, and
+    the contradiction that caused it is planned separately. AMBIGUOUS is carried
+    by specific blocking questions, which are also planned separately, so the
+    category inherits the MOST CONSERVATIVE of their actions rather than
+    inventing a different one. Anything else genuinely has no route and fails
+    closed.
+    """
+    status = blocker.get("status")
+    if status == CONFLICTED:
+        return OPERATOR_RULING_REQUIRED
+    if status == AMBIGUOUS:
+        actions = [_QUESTION_ROUTE.get(other["questionType"])
+                   for other in result["blockers"]
+                   if other["blockerType"] == "BLOCKING_QUESTION"
+                   and other.get("ruleCategory") == blocker["ruleCategory"]]
+        actions = [a for a in actions if a is not None]
+        if actions:
+            return max(actions, key=_ACTION_RANK.get)
+    return None
+
+
+def _operator_action(action):
+    if action == DIRECT_TRADER_CLARIFICATION:
+        return "ask the educator directly; passive collection cannot settle this"
+    if action == OPERATOR_RULING_REQUIRED:
+        return "governance/scope decision required"
+    if action == AUTHORIZATION_REQUIRED:
+        return "review whether an additional source or operation should be authorized"
+    if action == NO_RESOLUTION_PATH:
+        return "no deterministic path exists in current data; operator review"
+    return None
+
+
+def _support_summary(view, blocker):
+    """What evidence the corpus already holds for the blocker's category."""
+    name = blocker.get("ruleCategory")
+    entries = view["ruleCategories"].get(name) or view["nonRuleClaims"].get(name)
+    if not entries:
+        return {"claimCount": 0, "sourceSaidClaimCount": 0, "claimIds": []}
+    return {
+        "claimCount": len(entries),
+        "sourceSaidClaimCount": sum(1 for e in entries
+                                    if e["hasSourceSaidSupport"]),
+        "claimIds": [e["claimId"] for e in entries],
+    }
+
+
+def connector_destinations():
+    """The approved acquisition surface, READ from the platform registry.
+
+    Imported lazily and defensively: the planner must report authorization
+    truthfully, but it must never depend on the trading platform being
+    importable, and it must never modify it.
+    """
+    try:
+        platform_src = os.path.join(REPO_ROOT, "platform", "src")
+        if platform_src not in sys.path:
+            sys.path.insert(0, platform_src)
+        from mogo_platform.runtime import connector_authorization as gate
+        return {source_id: dict(gate.APPROVED_DESTINATIONS[source_id])
+                for source_id in gate.approved_source_ids()}
+    except Exception:
+        # Fail closed: unknown authorization is NOT permission.
+        return {}
+
+
+def render_plan(plan):
+    out = ["MOGO research resolution plan -- DERIVED, READ-ONLY, PLANNING ONLY",
+           "  trader=%s  items=%d" % (plan["traderId"], plan["itemCount"]),
+           "  ordering: %s" % (plan["orderingRule"],), "",
+           "  ── COUNTS BY RESEARCH ACTION ──"]
+    for name in sorted(_ACTION_RANK, key=_ACTION_RANK.get):
+        out.append("  %-30s %d" % (name, plan["countsByAction"].get(name, 0)))
+    out.append("\n  ── COUNTS BY AUTONOMY ──")
+    for name in (ACTIONABLE_NOW, AFTER_AUTHORIZATION, HUMAN_INPUT, NO_KNOWN_PATH):
+        out.append("  %-30s %d" % (name, plan["countsByAutonomy"].get(name, 0)))
+    out.append("\n  ── PLAN ──")
+    for item in plan["items"]:
+        out.append("  %s  %s" % ("[REQUIRED]" if item["requiredCategory"]
+                                 else "[optional]", item["blockerId"]))
+        out.append("      category   %s  (%s)"
+                   % (item["ruleCategory"], item["blockerType"]))
+        out.append("      action     %s   autonomy=%s"
+                   % (item["researchAction"], item["autonomy"]))
+        if item["recommendedNextSourceType"]:
+            out.append("      next source (recorded)  %s"
+                       % (item["recommendedNextSourceType"],))
+        if item["knowledgeGapId"]:
+            out.append("      knowledge gap  %s" % (item["knowledgeGapId"],))
+        support = item["currentSupportingEvidence"]
+        out.append("      have       claims=%d sourceSaid=%d"
+                   % (support["claimCount"], support["sourceSaidClaimCount"]))
+        if item["foreignTraderId"]:
+            out.append("      foreign    %s (%s) -- routing reference only"
+                       % (item["foreignClaimId"], item["foreignTraderId"]))
+        if item["operatorActionRequired"]:
+            out.append("      operator   %s" % (item["operatorActionRequired"],))
+        if item["evidenceGap"]:
+            out.append("      need       %s" % (item["evidenceGap"],))
+    out.append("\n  " + plan["meaning"])
+    return out
+
+
+def load_gaps(evidence_root=None):
+    """KnowledgeGap records. The only file read Step 4 adds -- read-only."""
+    import glob as globmod
+    root = evidence_root or EVIDENCE_ROOT
+    out = []
+    for path in sorted(globmod.glob(os.path.join(root, "gaps", "*.json"))):
+        with open(path, "r", encoding="utf-8") as handle:
+            out.append(json.load(handle))
+    return out
+
 
 if __name__ == "__main__":
     sys.exit(main())
