@@ -1034,3 +1034,218 @@ ingestion of a Lane B artifact — which is a real gap and would make the loop i
 needs no new authorization.
 
 **TJR PAPER TRADING REMAINS NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+## STEP 5 — RESEARCH FEEDBACK-LOOP PREFLIGHT (READ-ONLY)
+
+**Status: ✅ PREFLIGHT COMPLETE. Nothing implemented, nothing committed.**
+**Bridge status: `ABSENT` — proven executably. But the gap is not the one Step 4 assumed.**
+
+### 1. Exact Lane B producer path
+
+| Stage | Code |
+|---|---|
+| Scheduler | launchd `com.mogo.research.collect` → `mogo_runtime collect` → `cli.cmd_collect` |
+| Spec | `scheduled_collection.validate_collection_set()` → `build_command()` |
+| Authorization | `connector_authorization.evaluate()` → `derive_destination()` |
+| Transport | `connector_transport.acquire()` → `content_hash(raw)` = SHA-256 of exact response bytes |
+| Capability | `capabilities/acquire_approved_source_metadata.execute()` |
+| Preservation | `preserve_raw()` → `intake/acquired/<contentHash>.json` |
+| Artifact | `capabilities/ingest_local_artifact.execute()` → `research-artifacts/<wrapperHash>.json`, `RART\|…` |
+| Roots | `research_corpus.PRODUCTION_INTAKE_ROOT`, `PRODUCTION_ARTIFACT_ROOT` |
+
+**Lane B terminates at `research-artifacts/` + `intake/acquired/`.** `ingest_local_artifact` is
+*Lane B's own* wrapper writer — despite the name, it does **not** touch the Knowledge Library.
+
+### 2. Exact Lane A ingestion path
+
+`scripts/trader_intelligence/ingest.py` — **two phases, with a mandatory human step between them**:
+
+```
+PHASE 1  ingest.py <transcript> --trader TJR
+   phase1(): verify → SHA-256 → duplicate-check (contentHash AND canonicalRef)
+   → preserve raw → normalize → propose sections → emit DRAFT manifest
+   "Registers nothing in the evidence store."
+
+[ a researcher fills in the manifest's `annotations` array ]   ← HUMAN
+
+PHASE 2  ingest.py --apply <manifest>
+   phase2(): _validate_manifest() (every excerpt VERBATIM, fail-closed)
+   → intake_registry / evidence_registry → segments → annotations
+   → contradictions + questions → _build_library() → build_graph → validate → dashboard
+```
+
+Supporting modules: `evidence_registry.py`, `intake_registry.py`, `annotation_pipeline.py`,
+`extraction_pipeline.py`, `evidence_questions.py`, `knowledge_gaps.py`, `build_graph.py`,
+`validate_evidence.py`.
+
+### 3. Bridge status: **ABSENT** — executable proof
+
+| Probe | Result |
+|---|---|
+| `research-artifacts` / `research_artifacts` in `scripts/trader_intelligence/` | **0 hits** |
+| `RART\|` in Lane A scripts **or** in any Lane A evidence record | **0 hits** |
+| Lane A consuming `intake/acquired/` | **0 hits** (only unrelated `acquiredAt` field names) |
+| Lane B referencing `EVSRC`, `claims/`, `evidence/sources` | **0 hits** |
+
+The two lanes share the `docs/trader-intelligence/` **directory** and have **no executable
+connection in either direction.** No adapter, import, queue, watcher, manifest, CLI path, scheduler
+hook or shared identifier joins them.
+
+### 4. ⚠️ The gap is NOT what Step 4 assumed — and this changes the recommendation
+
+Step 4 called the missing link "Lane A ingestion of a Lane B artifact," implying a small adapter.
+The code says otherwise. **Two independent blockers sit in front of that adapter:**
+
+**(a) Lane A requires human extraction judgment, by design.** `phase1` emits `"annotations": []` and
+instructs the researcher to fill it; `phase2` line 335 refuses outright:
+`if not m.get("annotations"): _fail(...)`. The module docstring states the reason — *"nothing enters
+the evidence store until a human (or Claude) has reviewed the extraction judgments."* **An autonomous
+Lane B → Lane A loop would have to bypass a deliberate governance gate.** That is not a missing
+adapter; it is a designed checkpoint.
+
+**(b) There is nothing worth bridging under current authorization.** Lane B's only approved operation
+is `metadata`. The TJR artifact is **829 bytes of oEmbed JSON** — `title`, `author_name`,
+`author_url`, `thumbnail_*`. It contains **no teaching content**. `phase1` expects a transcript whose
+text yields verbatim excerpts; an oEmbed document yields none. **Even with a perfect bridge, ingesting
+it would create an EvidenceSource with zero extractable claims and would close zero of the 17
+blockers.**
+
+**Conclusion: the feedback loop is not blocked by a missing bridge. It is blocked by the same
+authorization boundary Step 4 already identified** — metadata-only acquisition — plus a deliberate
+human-review gate. Building the bridge now would produce working code with nothing useful to carry.
+
+### 5. A third structure exists and would be the right coupling point
+
+`docs/trader-intelligence/acquisition/` + `acquisition_common.py` + `register_source.py` define an
+**18-state acquisition-candidate lifecycle**:
+
+```
+DISCOVERED → REGISTERED → METADATA_PENDING → METADATA_VERIFIED → DUPLICATE_REVIEW
+→ PRIORITIZED → OWNER_REVIEW → APPROVED_FOR_ACQUISITION → ACQUISITION_IN_PROGRESS
+→ ACQUIRED → APPROVED_FOR_EXTRACTION → EXTRACTION_IN_PROGRESS → EXTRACTED
+→ READY_FOR_RESEARCH_INTAKE → APPROVED_FOR_RESEARCH_INTAKE
+```
+
+with `STORAGE_POLICIES = [METADATA_ONLY, REFERENCED_LOCAL_CONTENT, COMMITTED_OWNER_CONTENT]` —
+**`METADATA_ONLY` is precisely what Lane B produces** — and ready-made queries
+`approved_but_not_acquired()`, `acquired_but_not_extracted()`, `ready_for_research_intake()`.
+
+**It holds 0 candidates.** Declared, designed for exactly this, never populated. **A future bridge
+should drive this state machine rather than invent one.**
+
+### 6. Provenance mapping — what survives, what has no home
+
+| Lane B field | Lane A EvidenceSource home |
+|---|---|
+| `contentHash` (SHA-256 external bytes) | ✅ `contentHash` |
+| `acquisition.acquiredAt` | ✅ `acquiredAt` — **exists but `evidence_registry.py:74` hard-codes `None`** |
+| `acquisition.finalUrl` | ✅ `externalReference` / `canonicalReference` |
+| `rawContent` bytes | ✅ `repositoryPath` (file on disk) |
+| trader identity | ✅ `traderId` (supplied by operator today) |
+| `acquisition.sourceId` (`SRC\|…`) | ❌ **no home** — Lane A uses `EVSRC\|` |
+| `authorizationId` | ❌ **no home** |
+| `connectorId` / `httpStatus` / `byteLength` | ❌ **no home** |
+| `artifactId` (`RART\|…`) | ❌ **no home** |
+
+**Five acquisition-provenance fields have nowhere to land.** `EvidenceSource.metadata` is a free-form
+object and could carry them without a schema change — the same pattern
+`titleVerification` already uses. **No fabricated provenance; no field invented.**
+
+### 7. Identity, immutability, idempotency — reuse, don't rebuild
+
+| Property | Existing mechanism |
+|---|---|
+| Bytes never rewritten | Lane B files are **content-addressed** (`<sha256>.json`); Lane A `phase1` re-hashes and refuses on mismatch |
+| Idempotent re-ingestion | `phase1` duplicate-checks on **two** keys — `contentHash` *and* `canonicalReference` — the second added 2026-07-29 after `sZAE_lqdeno` reappeared in a different transcript rendering |
+| No duplicate evidence | Same two keys; Lane B additionally returns `DUPLICATE_ALREADY_INGESTED` |
+| No identity mutation | `EVSRC` ids are minted once; `supersedesEvidenceId` handles revision |
+| Traceable to acquisition | would require the `metadata` carry-through in §6 |
+
+**No new hash, no new identity scheme, no new dedupe mechanism is needed.**
+
+### 8. Authorization boundary
+
+A bridge must **not** imply permission to acquire richer content. Lane A ingestion should
+**independently verify** that the artifact was acquired under an allowed operation — the
+`acquisition.decision` block already records `permitted`, `operation`, `approvedUrl` and
+`authorizationId`, so the check is a read, not a new mechanism.
+
+**Current state is unchanged: 2 approved sources, `metadata` only; transcripts, Instagram, ICT and
+CRT all unauthorized.**
+
+### 9. Failure behaviour — all fail-closed, all existing
+
+| Condition | Existing behaviour to reuse |
+|---|---|
+| Malformed artifact | `phase1` `_fail()` → non-zero exit, nothing registered |
+| Hash mismatch | `phase1` re-hash + reject into `intake/rejected/` (precedent: `…ALTERED-20260727.txt`) |
+| Missing source identity | `_fail` — `--trader` is required and regex-validated |
+| Ambiguous trader | `_fail` — no `TraderRecord` → refuse |
+| Missing authorization metadata | **new check, fail closed** (§8) |
+| Already ingested | duplicate-check → reject, no new records |
+| Lane A validation fails | `_validate_manifest` fail-closed before any write |
+| Claim extraction fails | phase 2 aborts; `rollback(intake_id)` exists |
+| Graph update fails | `build_graph` is **derived** — rebuildable, never authoritative |
+
+**`rollback()` already exists.** No new recovery infrastructure required.
+
+### 10. Steps 2/3/4 integration — **no modification required, proven**
+
+Steps 2–4 read the Knowledge Library through `EvidenceIndex.load(EVIDENCE_ROOT)`, which globs
+`claims/`, `items/`, `links/`, `questions/`, `contradictions/`, `gaps/`. **They consume records, not
+producers.** New evidence appears automatically:
+
+- **Step 2** — `corpus_view()` selects by `Claim.traderId`; a new TJR claim is picked up with no code change.
+- **Step 3** — `eligibility()` recomputes category status from whatever claims exist.
+- **Step 4** — `research_plan()` re-routes from the resulting blockers and gaps.
+
+**The only requirement is that the bridge write `traderId` on every claim** — Step 2 raises
+`CorpusAmbiguous` on any unattributed claim, so a bridge that omitted it would fail the whole view
+closed rather than corrupt it. That is the existing guard doing its job.
+
+### 11. Proposed tests (designed, NOT implemented)
+
+Valid artifact → ingestion · exact provenance preservation · SHA-256 preservation and verification ·
+duplicate ingestion idempotent (both keys) · unauthorized artifact rejected · malformed artifact
+rejected · ambiguous trader rejected · no foreign-corpus contamination · Step 2 sees new evidence ·
+Step 3 re-evaluates deterministically · Step 4 re-plans deterministically · no executable strategy
+mutation · no trading-authorization mutation · no paper/live side effects.
+
+Mutation targets: the authorization re-check, and the duplicate-detection keys.
+
+### 12. Minimum implementation surface, if it were built
+
+| | |
+|---|---|
+| **Files modified** | ~1 new adapter in `scripts/trader_intelligence/`; optionally `evidence_registry.py` to stop hard-coding `acquiredAt=None` |
+| **Schema changes** | **None required** — acquisition provenance fits `EvidenceSource.metadata` |
+| **Persistence changes** | New Lane A records only (the point); no new store |
+| **New frameworks** | None — reuse `ingest.py` phase 1/2, the candidate lifecycle, `rollback()` |
+
+### 13. Risks
+
+1. **Bypassing the human annotation gate** would silently convert a reviewed pipeline into an
+   unreviewed one. **The highest risk in this milestone.**
+2. **Ingesting metadata-only artifacts** would create EvidenceSources with zero claims — corpus
+   noise that closes no blocker and inflates source counts.
+3. **`EVSRC` vs `SRC` collapse** — the two `sourceId` namespaces mean different things; a careless
+   bridge could conflate them. Step 2 already documents why they must not merge.
+4. **Populating the candidate lifecycle** without operator review would let MOGO advance its own
+   acquisition states.
+
+### 14. Recommendation
+
+**Do not build the bridge.** It is real, correctly identified and cleanly specifiable — but under
+current authorization it would carry an 829-byte metadata document into a pipeline that requires
+verbatim-excerpt transcripts and human annotation, closing **zero** of the 17 blockers.
+
+The preflight has instead produced the more useful result: **the loop is gated by governance in two
+places, and both are deliberate.** Step 4's three operator decisions remain the real path forward,
+unchanged. If any code is wanted next, the honest smallest item is the one-line provenance fix —
+`evidence_registry.py` hard-codes `acquiredAt=None` for a field the schema defines — but that is
+housekeeping, not a feedback loop.
+
+**`XCONTRA|20260728|001` was NOT ruled on and remains `open`. No EvidenceQuestion was answered. TJR
+eligibility is unchanged at BLOCKED / 17 blockers. No `risk_rule` was manufactured.**
