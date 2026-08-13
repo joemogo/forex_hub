@@ -2501,3 +2501,272 @@ any of them.
 | Authorization | ✅ 2 sources, metadata only |
 
 **Nothing was answered, linked, adjudicated, acquired or authorized.**
+
+---
+
+# MOGO-019 FINAL CLOSEOUT AUDIT
+
+**Read-only adjudication. Nothing implemented, resolved, ruled on, reconstructed or authorized.**
+**Step 11 checkpoint: `60f97c7b8e072cf2614966778fbfb22222196769`**
+
+## A. Original mission — 18 capabilities
+
+| # | Capability | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Use governed source-backed research concepts | ✅ **PASS** | Step 2 reads only `EvidenceIndex`; 295 claims across 2 corpora |
+| 2 | SOURCE SAID vs MOGO INFERRED | ✅ **PASS** | `directness` → `SOURCE_SAID`/`MOGO_INFERRED`, **never summed**; TJR 82/3/1 |
+| 3 | Rule candidates as separate objects/views | ✅ **PASS** | Step 3 category view; **0 `RuleCandidateProposal` records persisted** |
+| 4 | Surface ambiguity | ✅ **PASS** | 14 unresolved questions, 12 blocking, surfaced per claim |
+| 5 | Surface contradiction | ✅ **PASS** | 2 internal + 4 cross-corpus; blocking one drives eligibility |
+| 6 | Preserve provenance | ✅ **PASS** | claim → link → evidence → source chain, Step 3F continuity test, 8 hops |
+| 7 | Trader/strategy isolation | ✅ **PASS** | enforced in Steps 2, 7, 8, 10, 11; mutation-caught in every one |
+| 8 | Sufficiency via explicit factual gaps | ✅ **PASS** | categories present/missing, **no score**; verdict-word test |
+| 9 | Identify reconstruction blockers | ✅ **PASS** | 17 named TJR blockers |
+| 10 | Determine what information is missing | ✅ **PASS** | Step 9 §3, smallest answerable question per gap |
+| 11 | Whether existing evidence may answer a question | ✅ **PASS** | Step 9 found 4; Steps 10/11 made it executable |
+| 12 | Search governed EvidenceItems | ✅ **PASS** | Step 10, all 6 acceptance cases |
+| 13 | Search governed Claims | ✅ **PASS** | Step 11, `EQ\|013` → `CLAIM\|…\|022` at rank 1 |
+| 14 | Preserve scope differences | ✅ **PASS** | 1m vs 5m named, "NOT resolved here" |
+| 15 | Retrieval ≠ adjudication | ✅ **PASS** | `CANDIDATE_ONLY / NOT_ANSWERED / NOT_ADJUDICATED / NOT_LINKED` |
+| 16 | Candidate ≠ accepted evidence | ✅ **PASS** | 416 links unchanged throughout |
+| 17 | Route to evidence / trader / operator | ✅ **PASS** | Step 4: 6 / 7 / 4 |
+| 18 | Research↔execution firewall | ✅ **PASS** | **0 files modified repo-wide** since MOGO-018 GREEN |
+
+**18 PASS · 0 PARTIAL · 0 FAIL.**
+
+## B. Scientific object model — no new schema
+
+| Concept | Authoritative object | New? |
+|---|---|---|
+| SOURCE CLAIM | `Claim` + `EvidenceItem.directness ∈ {direct_explicit, direct_demonstrated}` | reused |
+| INTERPRETATION | `Hypothesis`; `directness ∈ {inferred_from_context, derived_from_analysis}` | reused |
+| RULE CANDIDATE | `RuleCandidateProposal` **schema** (view only, 0 records) | reused |
+| AMBIGUITY | `EvidenceQuestion` + `blockingStatus` | reused |
+| CONFLICT | `ContradictionRecord` + `severity: blocking` | reused |
+| PROVENANCE | `EvidenceClaimLink` + `EvidenceItem` + `EvidenceSource` | reused |
+
+**Zero schema changes across all eleven steps** — as Step 1 predicted. The rule-category vocabulary is
+*read from* `rule-candidate-proposal.schema.json` at import time; the required-category set is *derived
+from* `knowledge_gaps._category_spec()` critical priorities. Both are pinned by tests so they cannot
+drift from their sources.
+
+## C. The stack
+
+| Step | Kind | Artifact |
+|---|---|---|
+| 1 | audit | readiness — found the architecture already existed |
+| **2** | **code** | research-understanding view |
+| **3** | **code** | eligibility / freeze-blocking predicate |
+| **4** | **code** | research-gap resolution planner |
+| 5 | audit | feedback-loop preflight — bridge ABSENT, and *nothing worth bridging* |
+| 6 | audit | human-extraction governance — 294/295 claims rest on a paraphrase judgment |
+| **7** | **code** | Rule-2 conformance / review-by-exception |
+| **8** | **code** | exception triage |
+| 9 | audit | gap resolution planning — 4 blockers already answerable from corpus |
+| **10** | **code** | EvidenceItem candidate search |
+| **11** | **code** | Claim candidate search |
+
+**Redundancy that must NOT be expanded:** Step 11 §6 measured the claim-search yield at **2 of 12
+questions**; ten duplicate or dilute Step 10. Steps 10 and 11 now cover both abstraction levels the
+corpus actually populates. **A third retrieval layer would search structures that do not exist.**
+
+## D. TJR scientific state (unchanged by this audit)
+
+2 sources · **86 evidence items** · **69 claims** · **BLOCKED / 17 blockers**
+
+| Required category | Status | Claims |
+|---|---|---|
+| `setup_requirement` | **CONFLICTED** | 9 |
+| `entry_rule` | **AMBIGUOUS** | 1 |
+| `stop_rule` | **AMBIGUOUS** | 1 |
+| `risk_rule` | **MISSING** | 0 |
+| `invalidation_rule` | ✅ SUPPORTED | 1 |
+
+14 unresolved questions (12 blocking) · 2 internal + 4 cross-corpus contradictions ·
+1 open blocking (`XCONTRA|20260728|001`) · Rule-2: 40 clean / 29 flagged · triage: 14 rule-category,
+5 blocker-relevant, **9-claim minimum review set** · candidate availability across the 12 questions:
+**178 evidence + 230 claims**.
+
+**Why TJR cannot yet reach mechanical reconstruction:** one required category has no claim at all
+(`risk_rule`), one is conflicted with another educator, and two are ambiguous pending unanswered
+questions.
+
+**This is not a defect in TJR's teaching or in MOGO.** It is an accurate measurement of a two-source
+corpus: the educator did not state a risk rule on camera, and MOGO correctly declines to invent one.
+**Measuring incompleteness precisely is the milestone's success, not its failure.**
+
+## E. Human vs autonomous boundary
+
+**AUTOMATED:** governed acquisition when authorized · immutable preservation · deterministic corpus
+search · evidence and claim nomination · provenance validation · conformance checking · blocker
+detection · gap classification · routing to existing-evidence / new-evidence / trader-question /
+operator-ruling.
+
+**HUMAN-GOVERNED:** semantic claim judgment under Rule 2 · conflict reconciliation · ambiguity
+adjudication · answer acceptance and linkage · mechanical specification review · specification
+freeze · strategy promotion · paper authorization · live authorization.
+
+**Defensible? Yes.** The boundary sits exactly where determinism ends. Step 6 established the
+quantitative basis: **only 1 of 295 claims is verbatim-identical to its excerpt**, so 294 rest on a
+judgment no predicate can verify. Steps 7–11 make the *search* for what to judge cheap without
+pretending the judgment itself is mechanical. **MOGO has eliminated the hunt, not the judgment.**
+
+## F. Research autonomy loop
+
+| Link | Status |
+|---|---|
+| research material → governed evidence | ⚠️ **GOVERNANCE-BLOCKED** — `ingest.py` requires human annotation *by design* |
+| governed evidence → understanding | ✅ IMPLEMENTED (Step 2) |
+| understanding → blocker detection | ✅ IMPLEMENTED (Step 3) |
+| blocker → existing-corpus search | ✅ IMPLEMENTED (Steps 10, 11) |
+| → candidate evidence/claim nomination | ✅ IMPLEMENTED |
+| → identify unresolved gap | ✅ IMPLEMENTED (Step 4, 9) |
+| → determine legitimate next source | ✅ IMPLEMENTED (Step 4) |
+| → acquisition authorization check | ✅ IMPLEMENTED (Step 4) |
+| → acquisition | ✅ IMPLEMENTED (MOGO-018) — **but answers 0 of 17 blockers** |
+| → ingestion | ⚠️ **GOVERNANCE-BLOCKED** (human annotation gate) |
+| → understanding refresh | ✅ automatic once linked |
+| → eligibility refresh | ✅ automatic once linked |
+
+**Smallest remaining missing links — both governance, not capability:** the human annotation gate, and
+the evidence↔question linkage decision. **Neither is a bug to fix.**
+
+## G. Strategy firewall — proved
+
+Since MOGO-018 GREEN (`ed3cda4`), MOGO-019 changed **0 files** outside its own new modules:
+
+`index.html` **0** · `platform/` **0** · `docs/campaigns` **0** · `docs/trader-intelligence` **0** ·
+`scripts/trader_intelligence/ingest.py` **unchanged** · `RuleCandidateProposal` records **0** ·
+ALEX blueprint still `DRAFT_RESEARCH_ONLY` · no specification freeze · no TJR execution authority.
+
+**10 files added, 0 modified.** There is no executable path from research to strategy execution
+because MOGO-019 wrote no code that touches one.
+
+## H. ALEX protection
+
+Forward activation cutoff **`2026-08-11T02:43:57.894Z`** — file unchanged, 4 references intact ·
+**protected drift 0** (63 functions, 4 constants) · forward evidence unchanged · **Campaign C1
+33/33, 0 mismatched** · no TJR↔ALEX contamination (isolation mutation-tested in 5 modules) · no ALEX
+rule optimization from TJR.
+
+## I. Governance state
+
+`XCONTRA|20260728|001` **open / blocking / resolution `null`** · **0 of 281** questions answered ·
+**416** evidence links · **0** proposals · TJR `paperTradingStatus: not_approved` · research
+authorization **2 sources, `metadata` only** · no transcript expansion · no Instagram ingestion ·
+annotation gate unchanged.
+
+## J. Test / integrity baselines
+
+| | |
+|---|---|
+| Focused MOGO-019 | ✅ **222 / 222** |
+| Mutation tests | ✅ **24 across 5 modules, all caught** — incl. **2 that exposed bad tests, not bad code** |
+| Platform suite | ✅ 25 suites · **1,049 / 1,049** |
+| Canonical gate | ✅ 19 suites · **1,160 / 1,160** |
+| Protected ALEX drift | ✅ **0** |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| Branch | local `main` → `origin/mogo-main` |
+| **HEAD** | **`60f97c7b8e072cf2614966778fbfb22222196769`** |
+| Ahead / behind | **0 / 0** |
+| `git status` | 1 untracked file (the unrelated Instagram prose report) |
+
+**No unexplained drift.**
+
+## K. Code and complexity audit
+
+| Module | Lines | Role |
+|---|---|---|
+| `research_understanding.py` | 1,085 | Steps 2 + 3 + 4 |
+| `candidate_search.py` | 565 | Steps 10 + 11 |
+| `rule_conformance.py` | 390 | Step 7 |
+| `exception_triage.py` | 373 | Step 8 |
+| 4 test files | 2,638 | 222 tests |
+| **Total** | **5,051** | 8 files added, **0 modified** |
+
+**Duplication:** none material. `_normalize` is defined once in `rule_conformance` and reused by
+`candidate_search`; `SUPPORTING_RELATIONSHIPS` comes from `evidence_common`; `RULE_CATEGORIES` from
+the schema; `REQUIRED_RULE_CATEGORIES` from `knowledge_gaps`. Dependency graph is layered and
+acyclic.
+
+**Dead code:** none found. Step 4 removed 5 unused return fields at the time; Step 11 deleted the
+superseded Step 10 `main()` rather than duplicating it.
+
+**Test-to-code ratio 1.09:1** — appropriate for a milestone whose value is the guarantees.
+
+**Simplification worth reporting, not doing now:** `research_understanding.py` carries three steps in
+one 1,085-line module while Steps 7/8/10/11 use one module per capability. Splitting it would match
+the later pattern — but it is **behaviour-neutral cosmetic refactoring of committed, tested code**, so
+I am reporting it rather than performing it. **No material simplification is required before closeout.**
+
+## L. Success criteria
+
+| # | Criterion | Verdict |
+|---|---|---|
+| 1 | Understanding only governed research | ✅ PASS |
+| 2 | Provenance on extracted knowledge | ✅ PASS |
+| 3 | Fact vs inference separation | ✅ PASS |
+| 4 | Strategy-family / trader isolation | ✅ PASS |
+| 5 | Ambiguity preservation | ✅ PASS |
+| 6 | Conflict preservation | ✅ PASS |
+| 7 | No automatic strategy modification | ✅ PASS |
+| 8 | No automatic backtesting | ✅ PASS |
+| 9 | No automatic paper trading | ✅ PASS |
+| 10 | Transparent sufficiency | ✅ PASS |
+| 11 | Visible missing rule categories | ✅ PASS |
+| 12 | Contradictions can block freeze | ✅ PASS |
+| 13 | Candidate evidence retrieved automatically | ✅ PASS |
+| 14 | Candidate claims retrieved automatically | ✅ PASS |
+| 15 | Operator review required before freeze | ✅ PASS |
+| 16 | ALEX untouched | ✅ PASS |
+| 17 | TJR non-executable | ✅ PASS |
+| 18 | Campaign C1 intact | ✅ PASS |
+| 19 | Autonomous acquisition intact | ✅ PASS |
+| 20 | Canonical integrity GREEN | ✅ PASS |
+
+**20 PASS · 0 PARTIAL · 0 FAIL.**
+
+## M. Closeout decision
+
+# ✅ MOGO-019 COMPLETE — GREEN
+
+MOGO-019 was an **engineering milestone: build the machinery to understand governed research and
+identify what blocks reconstruction.** It did that, with zero schema changes, zero modifications to
+existing files, and zero impact on ALEX.
+
+**TJR's reconstruction is incomplete — and that is a finding, not a failure.** The milestone's
+purpose was to make incompleteness *measurable, attributable and routable*, and it produced exactly
+that: 17 named blockers, each with a stated missing fact and a routed next action. Confusing "the
+corpus lacks a risk rule" with "the milestone is unfinished" would be the error this closeout exists
+to avoid.
+
+### Open scientific items carried forward
+
+1. **`XCONTRA|20260728|001`** — operator ruling; ALEX scope statement could remove the need.
+2. **6 direct trader questions** — designed in Step 9 §5, not sent, incl. the critical `risk_rule`.
+3. **6 existing-evidence reviews** — now one command each (Steps 10/11).
+4. **142-claim Rule-2 exception queue** — 81 strategy-relevant.
+5. **Artifact-wrapper provenance wording** — needs an ADR (MOGO-018 Step 3C).
+6. **Instagram case `ALEX-IG-2026-CASE-002`** — blocked; screenshots never provided.
+
+## N. Recommended MOGO-020
+
+**Not another analyzer.** Steps 3, 4, 8, 9 and 11 each independently converged on the same three human
+decisions, and Step 8 proved no further analysis can change TJR's eligibility.
+
+**Recommended mission: GOVERNED RESEARCH ANSWER INTAKE.**
+
+The one link that would actually move the loop: a governed path for a human answer — to an
+`EvidenceQuestion`, or a ruling on a contradiction — to enter the Knowledge Library with provenance,
+so `answerStatus`, `answerEvidenceIds` and `ContradictionRecord.resolution` become settable **under
+the existing human-review governance**, and Steps 3/4/8 automatically re-evaluate.
+
+Every prior step ends at that same wall: MOGO can now find, rank and route what needs deciding, **but
+there is no governed way to record the decision.** That is the smallest change that converts eleven
+steps of read-only understanding into a loop that can actually close — and it needs no new
+authorization, no acquisition, and no weakening of the annotation gate.
+
+**Do not begin MOGO-020 without operator approval. MOGO-019 is not tagged.**
+
+**TJR PAPER TRADING REMAINS NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
