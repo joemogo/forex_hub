@@ -1450,3 +1450,208 @@ is exactly the check the corpus currently lacks.
 
 **`XCONTRA|20260728|001` NOT ruled on. 0 EvidenceQuestions answered. 0 RuleCandidateProposal records.
 TJR eligibility unchanged at BLOCKED / 17. Human annotation gate unchanged and not bypassed.**
+
+---
+
+## STEP 7 — RULE-2 CONFORMANCE / REVIEW-BY-EXCEPTION
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Read-only · zero schema changes · zero persistence · approves nothing.**
+
+### 1. Architecture and files
+
+| File | Lines | Role |
+|---|---|---|
+| `scripts/trader_intelligence/rule_conformance.py` | **~430** | derived read-only analyzer + CLI |
+| `tests/trader_intelligence/test_rule_conformance.py` | **~400** | 37 focused tests |
+
+A **separate module**, not an extension of `research_understanding.py`: Rule-2 conformance is
+claim-vs-excerpt lexical analysis, a different concern from corpus understanding, with its own CLI.
+It reuses `EvidenceIndex.load()` and — importantly — `evidence_common._SUPPORTING_RELATIONSHIPS`
+rather than redefining what "support" means.
+
+```
+python3 scripts/trader_intelligence/rule_conformance.py --trader TJR [--all] [--json]
+```
+
+### 2. What it checks, and what that is
+
+Rule 1 (verbatim excerpt) is already machine-enforced by `ingest.py`. **Rule 2 is not.** This
+analyzer does not check Rule 2 either — it checks a **deterministic shadow** of it: concrete tokens
+present in the claim and absent from **every** supporting excerpt.
+
+| Class | Detects |
+|---|---|
+| `REVIEW_NUMERIC` | integers, decimals, percentages (thousands separators normalized) |
+| `REVIEW_TIME` | clock times, AM/PM, `M1`–`D1` timeframe tokens, minute/hour/day/session words |
+| `REVIEW_INSTRUMENT` | currency pairs (closed currency-code list) and index/symbol tokens |
+| `REVIEW_DIRECTION` | long/short, buy/sell, bullish/bearish, upside/downside |
+| `REVIEW_QUANTIFIER` | always, never, every, only, must, exactly, all, none, any, no |
+
+Plus fail-closed states `MISSING_SUPPORT`, `AMBIGUOUS_SUPPORT`, `PROVENANCE_FAILURE`, and
+`REVIEW_MULTIPLE` when more than one class fires.
+
+### 3. Normalization — conservative, and deliberately incomplete
+
+Applied: case-fold · whitespace collapse · thousands separators (`1,000` → `1000`) · punctuation to
+spaces · currency-pair separators (`EUR/USD` = `EUR-USD` = `EURUSD`).
+
+**Deliberately NOT applied:** no stemming, no synonym table, **no ordinal expansion**. `first` is not
+treated as `1`, and `day` is not treated as `daily`. Those are morphological/semantic judgments, not
+deterministic formatting — so they are **surfaced**, and §7 below quantifies the cost. A test pins
+this refusal.
+
+A closed currency-code list prevents `_PAIR` firing on ordinary three-letter words — without it,
+"the low was" would flag as an instrument.
+
+### 4. Support semantics — the Step 6 lesson, encoded
+
+Only `supports` and `exemplifies` are read. The corpus contains **415 `supports` and exactly 1
+`contextualizes`** — and that single record is the one that misled Step 6's first pass.
+`CLAIM|TJR|20260727|003` ("New York pre-market starts at 8:30") has a contextualizing excerpt about
+the 9:30 open and a supporting excerpt that is the verbatim sentence. **A dedicated test asserts this
+claim is `CLEAN` and that no supporting excerpt contains "9:30".** Treating `contextualizes` as
+support makes it a false Rule-2 violation.
+
+Relationships are resolved by identifier and type. An unrecognised `relationshipType` yields
+`AMBIGUOUS_SUPPORT`, never `CLEAN`.
+
+### 5. Results
+
+| | **TJR** | **ALEX_G** |
+|---|---|---|
+| Total claims | **69** | **226** |
+| `CLEAN_MECHANICAL_MATCH` | **40 (58.0%)** | **113 (50.0%)** |
+| Needing review | **29 (42.0%)** | **113 (50.0%)** |
+| `REVIEW_QUANTIFIER` | 7 | 46 |
+| `REVIEW_TIME` | 10 | 10 |
+| `REVIEW_NUMERIC` | 6 | 11 |
+| `REVIEW_DIRECTION` | 4 | 8 |
+| `REVIEW_INSTRUMENT` | 0 | 1 |
+| `REVIEW_MULTIPLE` | 2 | 37 |
+| `MISSING_SUPPORT` / `AMBIGUOUS_SUPPORT` / `PROVENANCE_FAILURE` | **0 / 0 / 0** | **0 / 0 / 0** |
+
+**Discrepancy tokens by class** (a claim may contribute to several) — TJR: quantifier 8, time 12,
+numeric 7, direction 4, instrument 0. ALEX: **quantifier 75**, time 31, numeric 36, direction 16,
+instrument 2.
+
+**Directness distribution** — CLEAN vs FLAGGED are nearly identical (TJR clean 40 `direct_explicit`
+vs flagged 31; ALEX clean 123 vs flagged 120). **Flagging is not a proxy for weak evidence** — these
+are well-sourced claims whose *paraphrase* adds a token.
+
+### 6. Representative true positives
+
+| Claim | Flag | Excerpt says | Claim says |
+|---|---|---|---|
+| `CLAIM\|ALEX_G\|20260727\|026` | `must`, `never` | *"the area of interest **should only** be found inside of the high and the low"* | *"**must** lie inside … **never** outside that range"* |
+| `CLAIM\|TJR\|20260727\|004` | `never` | *"we **don't want to** take trades on the lagging index"* | *"… **never** on the lagging index"* |
+| `CLAIM\|TJR\|20260727\|011` | `session` | *"if this high right here has already been pushed past…"* | *"A **session** high or low that has already been swept…"* |
+| `CLAIM\|TJR\|20260727\|014` | `only`, `all` | *"We just need one to confirm"* / *"We don't need every single one"* | *"**Only** one … **all** four are not needed"* |
+
+`ALEX_G|026` is the clearest: **`should only` → `must … never`** is a modal escalation of exactly the
+kind STANDARDS §1 Rule 2 warns against. **Surfaced for review — not adjudicated here.**
+
+### 7. False positives — measured, not estimated
+
+Mechanically identifiable FP classes, counted over all flagged tokens:
+
+| Class | TJR | ALEX_G |
+|---|---|---|
+| Numeric: MOGO `"Step N"` label (the number is a MOGO sequence label, not a source claim) | 4 | 0 |
+| Numeric: ordinal word present in excerpt (`first` vs `1`) | 0 | 14 |
+| Time: morphological variant (`day` vs `daily`) | 3 | 8 |
+| **Total identifiable FP** | **7 / 35 (20%)** | **22 / 221 (10%)** |
+| Remaining, requiring human judgment | 28 (80%) | 199 (90%) |
+
+**"Requiring human judgment" is not the same as "true positive."** Some of the 199 will be faithful
+paraphrases a reviewer clears in seconds — which is the intended output of review-by-exception, not a
+defect.
+
+### 8. What this CAN and CANNOT prove
+
+**CAN prove:** a specific token in the claim occurs in no supporting excerpt — a lexical fact from
+exact comparison after conservative normalization.
+
+**CANNOT prove:** that any claim is faithful, correct, approved or semantically equivalent to its
+evidence.
+
+> **`CLEAN_MECHANICAL_MATCH` means EXACTLY ONE THING: no discrepancy was detectable by the checks
+> implemented here. IT IS NOT APPROVAL.**
+
+That sentence is carried in the module docstring, in the report's `cleanMeaning` field, in the CLI
+footer, and asserted by three tests. **A paraphrase can violate Rule 2 using only words present in
+the excerpt, and this analyzer will not see it** — a false negative class it cannot close.
+
+The human semantic-review requirement in `ingest.py` is **unchanged and remains authoritative**.
+
+### 9. Tests — 37, five mutations caught
+
+Adversarial mutations of one real clean pair: changed number · changed timeframe (two forms) ·
+changed instrument · inserted direction · inserted always/never/only/every/must/exactly · combined
+multi-class · token present in *any* supporting excerpt not flagged.
+Plus: formatting equivalence (4 pair forms, case/punctuation, thousands separators) · normalization
+refusing to resolve meaning · three-letter words not mistaken for pairs · support-relationship
+semantics incl. the `contextualizes` regression · fail-closed (missing/empty/malformed/unresolvable/
+unknown corpus) · corpus isolation incl. foreign-trader evidence · CLEAN-is-not-approval · determinism
+· firewall.
+
+| Mutation | Caught |
+|---|---|
+| Treat `contextualizes` as support | ✅ 3 tests |
+| Drop the quantifier check | ✅ (crashes the suite — detected, though as an error rather than a clean failure) |
+| `MISSING_SUPPORT` → `CLEAN` | ✅ 2 tests |
+| Skip the foreign-trader isolation check | ✅ |
+| Suppress numeric extraction | ✅ 3 tests |
+
+### 10. Firewall — proven structurally
+
+Tests assert the module: opens no file for writing (no `"w"`/`"a"`/`remove`/`shutil`/`unlink`/
+`rmtree`/`mkdir`/`setattr`); names no `index.html`, `docs/campaigns`, `hypothesis-registry`,
+`PREREG-`, `proposals`, `blueprints` or `graph/build`; imports **only**
+`argparse, json, os, re, sys, query_evidence, evidence_common`; contains **no** identifier segment
+from {paper, backtest, live, trade, trading, order, execute, promote, promotion, freeze, approve,
+resolve, answer}; leaves every evidence file byte-identical by SHA-256; and leaves contradiction
+statuses, question `answerStatus` values and the empty `proposals/` directory unchanged.
+
+### 11. Integrity
+
+| Gate | Result |
+|---|---|
+| Step 7 focused suite | ✅ **37 / 37** |
+| Step 2–4 suite (unchanged) | ✅ **95 / 95** |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| `XCONTRA\|20260728\|001` | ✅ **open / blocking / unresolved** |
+| Questions answered · proposals | ✅ **0 of 281 · 0** |
+| TJR eligibility | ✅ **BLOCKED / 17** |
+
+### 12. Scientific interpretation
+
+The analyzer converts an exhaustive 295-claim re-read into a **142-claim exception queue** — real
+leverage, and it found a concrete modal escalation (`should only` → `must … never`) that survived
+human review.
+
+**But it does not move the Step 6 conclusion.** It closes no part of the Rule-2 gap: it cannot verify
+that a CLEAN claim is faithful, and 153 CLEAN claims remain exactly as unverified as before. It is a
+**review aid**, not a verification mechanism, and `CLEAN_MECHANICAL_MATCH` must never be read as
+approval.
+
+### 13. Recommendation for Step 8
+
+**Do not extend the analyzer to reduce false positives.** The two identified classes — ordinal words
+and MOGO `Step N` labels — are 10–20% of flags and cost a reviewer seconds each. Suppressing them
+means adding lexical mappings that could equally hide a real addition, which trades a cheap known
+cost for an unbounded unknown one.
+
+**The honest next step is human, not code:** work the 142-claim exception queue, starting with the
+**121 quantifier/modal flags** (75 ALEX + 8 TJR tokens), because modal escalation is the class most
+likely to change a rule's meaning and is exactly what STANDARDS Rule 2 exists to prevent.
+
+If code is wanted, the smallest useful item remains unchanged from Step 4: this analyzer does not
+alter the fact that **0 of 17 TJR blockers are autonomously resolvable**, and the three operator
+decisions are still the path forward.
+
+**Nothing was approved, resolved, answered or promoted. The annotation gate is untouched.**
