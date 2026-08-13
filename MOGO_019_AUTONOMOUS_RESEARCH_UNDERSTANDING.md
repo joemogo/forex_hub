@@ -2118,3 +2118,186 @@ branch executable. It must nominate, never link — the evidence↔question deci
 **Everything else is human:** 6 reviews, 6 trader questions, and 2 operator rulings.
 
 **Nothing was resolved, answered, acquired, linked or ruled on.**
+
+---
+
+## STEP 10 — GOVERNED CANDIDATE-EVIDENCE SEARCH
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Step 9 checkpoint: `9cb33c16cbf7def5cf5ce15c8eb94e4df8cd9eb7`**
+**Read-only · zero schema changes · zero persistence · nominates, never adjudicates.**
+
+### 1. Files
+
+| File | Lines |
+|---|---|
+| `scripts/trader_intelligence/candidate_search.py` | **315** (new) |
+| `tests/trader_intelligence/test_candidate_search.py` | **415** (new, 32 tests) |
+
+**+730 / −0. No existing file modified. No schema change** — as predicted.
+
+### 2. Architecture reused
+
+`EvidenceIndex.load()` · `rule_conformance._normalize` (**one normalization, not two**) ·
+`rule_conformance.SUPPORTING_RELATIONSHIPS` · `research_understanding.REQUIRED_RULE_CATEGORIES` ·
+existing `EvidenceQuestion` / `EvidenceItem` / `EvidenceClaimLink` / `EvidenceSource` records.
+
+A separate module follows the established MOGO-019 pattern — one capability per module, as
+`rule_conformance` and `exception_triage` already are.
+
+```
+python3 scripts/trader_intelligence/candidate_search.py 'EQ|20260727|018' [--limit N] [--json]
+```
+
+### 3. Search boundary
+
+**The corpus is the boundary, not the vocabulary.** Corpus membership is resolved from governed
+identifiers — the question's `claimId` first, then its declared `sourceIds` — and evidence is
+admitted only when `source.traderId == trader_id`. Two educators teaching "liquidity sweeps" share
+terminology, not evidence.
+
+Even an *explicit* `evidenceIds` reference pointing outside the corpus is **dropped**
+(`explicit &= set(corpus_items)`), and a test proves it.
+
+**Fails closed:** unknown question · already-answered question · no resolvable trader · **corpus
+resolving to more than one trader** (refused, never picked) · trader with no governed evidence.
+
+### 4. Ranking predicates — governed first, lexical last
+
+```
+EXPLICITLY_RELATED > SUPPORTS_RELATED_CLAIM > SAME_RULE_CATEGORY
+  > DISTINCTIVE_TOKEN_OVERLAP > NORMALIZED_TOKEN_OVERLAP
+```
+
+Tie-break: **more distinctive tokens → more matched tokens → `evidenceId`** (stable).
+
+A token is *distinctive* when it appears in at most **25%** of the corpus's evidence items —
+corpus-relative, stated as a named constant, so it survives a corpus of 86 items or 8,600.
+**No opaque score:** every candidate carries its tier, its exact reasons, and the exact tokens that
+produced it. A test asserts no `score`/`confidence` field and no float anywhere.
+
+### 5. Result contract
+
+Per candidate: `questionId`, `evidenceId`, `traderId`, `sourceId`, `exactExcerpt`, `directness`,
+`extractionCertainty`, `relatedClaimIds`, `tier`, `reasons[]`, `matchedTokens[]`,
+`distinctiveTokens[]`, `rank` — plus **`status: CANDIDATE_ONLY`, `answerStatus: NOT_ANSWERED`,
+`adjudicationStatus: NOT_ADJUDICATED` on every result and on the envelope.**
+
+### 6. Acceptance — the real Step 9 cases
+
+| Question | Candidates | Tier distribution |
+|---|---|---|
+| `EQ\|…\|018` break of structure | **11** | supports-claim 1, same-category 3, distinctive 7 |
+| `EQ\|…\|013` entry/invalidation | **4** | supports-claim 3, distinctive 1 |
+| `EQ\|…\|003` TP ladder | **9** | supports-claim 3, distinctive 6 |
+| `EQ\|…\|009` 2B ordering | **13** | supports-claim 2, same-category 8, distinctive 3 |
+| `EQ\|…\|012` timeframe (session) | **1** | supports-claim 1 |
+| `EQ\|…\|014` timeframe (target) | **3** | supports-claim 3 |
+
+**All six surface candidates.** For `EQ|003` the top-ranked results are exactly Step 9's manual
+finds (`…|041`, `…|042`, `…|043` — *"target previous draws on liquidity"*).
+
+**`EQ|018` deserves an honest note.** Step 9's hand-found evidence — `EV|…|001|020`,
+*"For price to break structure to the downside, we need price to close underneath the most recent low
+within the uptrend"* — ranks **7 of 11**, in the `DISTINCTIVE_TOKEN_OVERLAP` tier. That is the
+ordering the design mandates (governed relationships outrank lexical ones), and it still appears
+inside the default limit of 10 — but **the single most relevant item was not first.** A test pins
+both facts: it must be present, and it must survive the default limit.
+
+**`EQ|013` is a genuine limitation, not a success.** Step 9's insight was *claim-level* —
+`CLAIM|TJR|20260727|022` **is** an `invalidation_rule`, sitting at `5m` while the entry rule is `1m`,
+so the question fires on scope mismatch. This module searches **evidence**, so it surfaces the entry
+rule's own supporting excerpts instead. **It does not reproduce the Step 9 finding for `EQ|013`.**
+
+### 7. Negative and mutation tests — 32 tests
+
+Corpus isolation (TJR question → TJR evidence only; ALEX question → ALEX only; shared terminology
+does not cross; out-of-corpus explicit references dropped) · fails closed (unknown, answered, no
+trader, ambiguous trader, unattributed claim) · deterministic ranking (byte-identical reruns,
+tier ordering, contiguous ranks, stable tie-break, limit truncates without reordering) ·
+nomination-not-adjudication · no state change (file digests, question `answerStatus`, **416 links**,
+contradictions, proposals, eligibility) · firewall (no writes, **no network/acquisition path**,
+import allow-list, no trading/authorization identifier, authorization byte-unchanged).
+
+| Mutation | Caught |
+|---|---|
+| Drop the corpus boundary (search all traders) | ✅ **10 tests** |
+| Resolve an ambiguous corpus by picking one | ✅ |
+| Allow already-answered questions | ✅ |
+| Unstable ordering (drop identifier tie-break) | ✅ 5 tests |
+| **Relabel results as `ANSWERED`** | ✅ **— only after I fixed the test** |
+
+**A test of mine was tautological and the mutation exposed it.** It asserted
+`result["answerStatus"] == cs.NOT_ANSWERED` — comparing the output to the module's own constant, so
+redefining the constant moved both sides together and the mutation passed. It now asserts the
+**literal** strings, and the mutation fails. **This is the second time in MOGO-019 that mutation
+testing caught a test rather than code, and it is why the practice earns its cost.**
+
+### 8. Proofs
+
+**Persistence/write:** the module contains no `open(`, no write mode, no `shutil`/`remove`/`mkdir`.
+File digests across `questions/`, `links/`, `items/`, `claims/`, `contradictions/`, `proposals/`,
+`gaps/` are unchanged after running all six acceptance searches. **Links remain 416; 0 of 281
+questions answered; 0 proposals.**
+
+**Authorization/network:** no `urllib`, `requests`, `socket`, `http`, `connector`, `transport`,
+`acquire`, `acquisition` or `subprocess` appears in the code. The approved-destination registry is
+byte-identical after searching, still **2 sources, `metadata` only**.
+
+**Eligibility:** recomputed read-only after every search — **BLOCKED / 17**, unchanged.
+
+### 9. Scientific limitations
+
+> **Candidate search answers "What governed evidence should be reviewed for this question?"
+> It does NOT answer "Does this evidence resolve the question?"**
+
+Lexical overlap is not semantic relevance, and the tool never claims it is. Every result is a
+nomination for human review. **The Step 6 finding stands unchanged: semantic claim creation and
+adjudication remain human-governed.** Nothing here is authorized to link evidence to a question —
+that decision is exactly the human judgment this milestone has repeatedly found irreducible.
+
+Known weaknesses, stated plainly: the highest-ranked candidate is not necessarily the most relevant
+(§6, `EQ|018`); evidence-level search cannot reproduce claim-level insights (§6, `EQ|013`); and the
+stop list and 25% distinctiveness threshold are judgment calls that shape recall.
+
+### 10. Executable autonomy — updated
+
+| Loop stage | Executable? |
+|---|---|
+| unanswered question → **same-corpus candidate search** | ✅ **NOW EXECUTABLE (Step 10)** |
+| → deterministic ranking | ✅ **NOW EXECUTABLE (Step 10)** |
+| → candidate presentation | ✅ **NOW EXECUTABLE (Step 10)** |
+| → **decide whether a candidate answers the question** | ❌ human |
+| → link evidence to question | ❌ human |
+| → re-evaluate blockers | ✅ (Step 3, automatic once linked) |
+
+**MOGO can now go from an unanswered question to a ranked, reasoned candidate list with no human
+effort.** Step 9 performed that by hand for six questions; it is now one command each.
+
+### 11. Next smallest missing capability — **not implemented**
+
+**Claim-level candidate search.** The `EQ|013` gap in §6 is the concrete evidence for it: the answer
+was a *claim* whose scope differed, not an *excerpt*. A sibling search returning candidate **claims**
+(same category, overlapping scope, differing `timeframe`/`session`) would have surfaced
+`CLAIM|TJR|20260727|022` directly. It reuses the same index, needs no authorization, and would close
+the one acceptance case this step missed.
+
+**Do not build it yet** — it is the natural Step 11, and it still ends at the same human linkage
+decision.
+
+### 12. Integrity
+
+| Gate | Result |
+|---|---|
+| Focused MOGO-019 (Steps 2–4, 7, 8, 10) | ✅ **196 / 196** |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| `XCONTRA\|20260728\|001` | ✅ open / blocking / unresolved |
+| Questions answered · links · proposals | ✅ **0 of 281 · 416 · 0** |
+| TJR eligibility | ✅ **BLOCKED / 17** |
+| Authorization | ✅ 2 sources, metadata only |
+
+**Nothing was answered, linked, adjudicated, acquired or authorized.**
