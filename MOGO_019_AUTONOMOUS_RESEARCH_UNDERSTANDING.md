@@ -1893,3 +1893,228 @@ If review work is wanted first, the honest ordering is the **9-claim TJR minimum
 and changes eligibility for **nothing**.
 
 **Nothing was adjudicated, answered, resolved or promoted. The annotation gate is untouched.**
+
+---
+
+## STEP 9 — RESEARCH-GAP RESOLUTION PLANNER
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Step 8 checkpoint: `43fb3b6721a874ec1ad9f98ecb7336e8b2c438f5`**
+**Read-only audit. NO executable code added — performed with ad-hoc read-only queries over the
+existing MOGO-019 tooling (`rule_conformance`, `research_understanding`, `EvidenceIndex`).**
+
+### 1. The 17 blockers, enumerated
+
+**A finding that shaped everything below: all 12 blocking questions carry
+`answerEvidenceIds: (none)` and `evidenceIds: (none)`.** Not one question has ever been linked to
+evidence. That is why a corpus search was worth doing at all.
+
+| Blocker | Type | Category (req) | Blocking | Answer status |
+|---|---|---|---|---|
+| `EQ\|…\|002` | missing_stop_placement | stop_rule ✅ | rule_candidate | unanswered |
+| `EQ\|…\|003` | missing_target_logic | target_rule | rule_candidate | unanswered |
+| `EQ\|…\|004` | unclear_scope | definition | **promotion** | unanswered |
+| `EQ\|…\|007` | unruled_exception | setup_requirement ✅ | rule_candidate | unanswered |
+| `EQ\|…\|008` | ambiguous_statement | entry_rule ✅ | rule_candidate | unanswered |
+| `EQ\|…\|009` | unclear_scope | confirmation_rule | rule_candidate | unanswered |
+| `EQ\|…\|012` | missing_timeframe | session_rule | rule_candidate | unanswered |
+| `EQ\|…\|013` | missing_invalidation | entry_rule ✅ | rule_candidate | unanswered |
+| `EQ\|…\|014` | missing_timeframe | target_rule | rule_candidate | unanswered |
+| `EQ\|…\|016` | unclear_scope | definition | rule_candidate | unanswered |
+| `EQ\|…\|017` | unclear_scope | setup_requirement ✅ | rule_candidate | unanswered |
+| `EQ\|…\|018` | implied_requirement | exception | rule_candidate | unanswered |
+| `REQUIRED_CATEGORY\|setup_requirement` | CONFLICTED ✅ | — | — | — |
+| `REQUIRED_CATEGORY\|entry_rule` | AMBIGUOUS ✅ | — | — | — |
+| `REQUIRED_CATEGORY\|stop_rule` | AMBIGUOUS ✅ | — | — | — |
+| `REQUIRED_CATEGORY\|risk_rule` | MISSING ✅ | — | — | — |
+| `XCONTRA\|20260728\|001` | DIRECTIONAL | setup_requirement ✅ | blocking | open |
+
+### 2. Existing-corpus search — **four genuine near-misses found**
+
+Method: lexical search over the **86 TJR evidence items** (2 governed sources) to **nominate**
+candidates, then I read each candidate and judged it. **The nomination is lexical; the classification
+below is my reading and is labelled INTERPRETATION.** Nothing was linked, and no question was
+answered. Trader isolation held throughout — only `EVSRC|TJR|…` sources were searched.
+
+| Blocker | Classification | Evidence found |
+|---|---|---|
+| `EQ\|…\|018` break-of-structure | **EXISTING_EVIDENCE_CANDIDATE** | `EV\|…\|001\|020`: *"For price to break structure to the downside, we need price to close underneath the most recent low within the uptrend."* — **a structural definition already in the corpus** |
+| `EQ\|…\|013` missing invalidation | **EXISTING_EVIDENCE_CANDIDATE** | `CLAIM\|TJR\|20260727\|022` **is** an `invalidation_rule` (*"the setup remains valid only while price stays in the trend…"*) at `timeframe=5m`; the entry rule `027` is `1m`. The question fires on **scope mismatch, not absence** |
+| `EQ\|…\|003` TP ladder | **EXISTING_EVIDENCE_CANDIDATE** | `…\|041`, `\|042`, `\|043`: targets are *"previous draws on liquidity"* — *"five minute highs… Asia session highs… previous day highs"* |
+| `EQ\|…\|009` 2B ordering | **EXISTING_EVIDENCE_CANDIDATE** | `…\|027`, `\|028`, `\|034` describe when 2B activates and what it enables |
+| `EQ\|…\|012`, `\|014` timeframe | **EXISTING_EVIDENCE_NEEDS_HUMAN_REVIEW** | **9 TJR claims already carry a timeframe**; these two are structural metadata questions ("`claim.timeframe` is null"), not substantive gaps |
+| `EQ\|…\|016` consolidation | **NO_EXISTING_EVIDENCE** | only *"There's uptrends, there's downtrends, and then there's consolidation."* — names it, never defines it |
+| `EQ\|…\|002` stop placement | **DIRECT_TRADER_CLARIFICATION_REQUIRED** | only *"You can put your stop loss underneath this low."* — the chart-relative statement the question already cites |
+| `EQ\|…\|007` news consequence | **DIRECT_TRADER_CLARIFICATION_REQUIRED** | only the single `indirect_implied` check; **no consequence stated anywhere** |
+| `EQ\|…\|008` "special little number" | **DIRECT_TRADER_CLARIFICATION_REQUIRED** | 1 unrelated hit (broker price differences) |
+| `EQ\|…\|017` two-candle filter | **DIRECT_TRADER_CLARIFICATION_REQUIRED** | the rule exists (*"We take the highest point of those two candlesticks"*); **no significance filter anywhere** |
+| `EQ\|…\|004` forex vs indexes | **CONFLICT_REQUIRES_RULING** | **0 forex/currency hits in 86 items**, confirming the question. But this asks whether MOGO's own *intake filename* was mis-filed — an operator question about MOGO's filing, **not a TJR teaching question** |
+| `risk_rule` MISSING | **NO_EXISTING_EVIDENCE** | no risk claim exists; the gap's own `recommendedNextSourceType` is *"direct question to trader"* |
+| `XCONTRA\|20260728\|001` | **CONFLICT_REQUIRES_RULING** | see §5 |
+
+**Headline: 4 of 17 blockers have candidate evidence already sitting in the governed corpus,
+unlinked.** No new acquisition would be needed for those — only human semantic review.
+
+### 3. Exact missing information (9D)
+
+For blockers with no existing evidence, stated as the smallest answerable question:
+
+| Blocker | Missing information |
+|---|---|
+| `risk_rule` | An explicit statement of how much is risked per trade (fixed %, fixed amount, or by stop distance). |
+| `EQ\|…\|002` | An explicit statement of which swing the stop references and whether a buffer is applied. |
+| `EQ\|…\|007` | An explicit statement of what happens when high-impact news IS present. |
+| `EQ\|…\|008` | The value of the "special little number", and whether it forms part of the entry rule. |
+| `EQ\|…\|016` | An explicit definition of consolidation and its identification criteria. |
+| `EQ\|…\|017` | An explicit statement of any minimum-size or significance filter for a two-candle high/low. |
+
+### 4. Source-class routing (9E) and passive-vs-direct (9F)
+
+| Blocker | Source class | Why that class can answer it |
+|---|---|---|
+| `EQ\|018`, `013`, `003`, `009` | **existing governed transcript** | the material is already held; only linkage and scope judgment are missing |
+| `EQ\|012`, `014` | **existing governed transcript** | 9 sibling claims already carry timeframes; this is metadata completion |
+| `EQ\|002`, `007`, `008`, `016`, `017`, `risk_rule` | **direct trader Q&A** | each asks for a fact the source never states; passive material can only re-demonstrate, not define |
+| `EQ\|004` | **operator ruling** | concerns MOGO's own intake filename, not TJR's teaching |
+| `XCONTRA\|20260728\|001` | **operator ruling**, or an ALEX scope statement (§5) | requires reconciling two educators |
+
+**Transcript-class acquisition is NOT recommended for any of them.** For the six direct-question
+blockers, more video cannot supply a definition the trader never gave — and MOGO-015 Step 1A
+established that path returns an empty body and pursuing it means working around an access control.
+
+### 5. Proposed trader clarification questions (design only — nothing sent)
+
+Written to avoid leading, avoid embedding MOGO's hypothesis, ask one fact at a time, and preserve
+ambiguity:
+
+1. **risk_rule** — *"When you take a trade, what determines the position size?"*
+2. **`EQ|002` stop** — *"When identifying a valid setup, what determines where the stop loss is placed?"*
+3. **`EQ|007` news** — *"When you check for high-impact news before a setup, what do you do if there is high-impact news that day?"*
+4. **`EQ|008` number** — *"In the long entry example you mentioned price needing one extra point to reach a number you wanted. What was that number based on?"*
+5. **`EQ|016` consolidation** — *"How do you identify consolidation on a chart?"*
+6. **`EQ|017` filter** — *"When marking highs and lows using two candlesticks, does every such pair count, or does something make one significant?"*
+
+Each is open-ended and single-fact. **None was sent; this is question design only.**
+
+### 6. XCONTRA|20260728|001 — scope analysis, NOT a ruling
+
+**FACT — what each source said:**
+
+| | Claim | Verbatim excerpt | Directness |
+|---|---|---|---|
+| **ALEX_G** `CLAIM\|…\|025` (`failure_condition`) | *"No consistent strategy can be built on trading liquidity sweeps themselves."* | *"There's no way that you can have a specific strategy to trade **solely** off of these sweeps."* | direct_explicit / certain |
+| **TJR** `CLAIM\|…\|006` (`setup_requirement`) | *"The strategy is based on liquidity sweeps."* | *"My strategy is **based off of** liquidity sweeps."* | direct_explicit / certain |
+
+**FACT — also in the TJR corpus:** `CLAIM|TJR|20260727|012` (*"Step 2 requires a five-minute
+confirmation confluence after the liquidity sweep"*) and `|014` (*"Only one confirmation confluence
+is required"*). **TJR's documented strategy is sweep + a separate confirmation step, not sweep
+alone.**
+
+**FACT:** `contradictionType: DIRECTIONAL`, `severity: blocking`, `status: open`,
+**`scopeOverlap: "unknown"`**, `resolution: null`.
+
+**INTERPRETATION (mine, and explicitly not a ruling):** Alex's statement is scoped by the word
+**"solely"**. TJR's documented method is not sweep-alone. On that reading the two statements could
+both be true simultaneously under different scopes — which is why `scopeOverlap` is recorded as
+`unknown` rather than `overlapping`. The contradiction record's own rationale reached the same
+observation and **deliberately kept it blocking because "the reconciliation is MOGO's reading, not
+either educator's statement."** I have not changed that.
+
+**Is it truly logical?** Only if Alex's claim is read as covering sweep-plus-confirmation strategies.
+The excerpt does not say that either way — **this is exactly the undetermined point.**
+
+**Exact operator decision required:** whether Alex's "solely" scopes his objection narrowly enough
+that TJR's sweep-plus-confirmation method falls outside it — i.e. set `scopeOverlap` and either
+resolve as `accepted_as_context_dependent` or confirm it as a genuine conflict.
+
+**Evidence that could remove the need for a ruling:** an explicit ALEX statement on whether his
+objection extends to sweep-plus-confirmation setups. That is a **statement about Alex's scope**, so
+it would have to come from the ALEX corpus — and would be an ALEX research question, not a TJR one.
+
+### 7. Autonomous resolution potential (9H)
+
+| Classification | Count | Blockers |
+|---|---|---|
+| `AUTONOMOUSLY_RESEARCHABLE_NOW` | **0** | — |
+| `AUTONOMOUSLY_RESEARCHABLE_IF_SOURCE_AUTHORIZED` | **0** | — |
+| **`EXISTING_EVIDENCE_NEEDS_HUMAN_REVIEW`** | **6** | `EQ\|003`, `009`, `012`, `013`, `014`, `018` |
+| **`DIRECT_TRADER_INPUT_REQUIRED`** | **7** | `EQ\|002`, `007`, `008`, `016`, `017`, `risk_rule`, + `stop_rule` category |
+| **`OPERATOR_RULING_REQUIRED`** | **4** | `EQ\|004`, `XCONTRA`, `setup_requirement`, `entry_rule` (secondary) |
+| `NO_KNOWN_RESOLUTION_PATH` | **0** | — |
+
+**Zero blockers are autonomously researchable, even with authorization expansion** — because the
+missing information is either already held (needs review) or was never stated by the source (needs
+asking). **This is a stronger result than Step 4's:** Step 4 found 6 blockers would need
+authorization; Step 9's corpus search shows **more acquisition would not answer them either.**
+
+### 8. Resolution order (9I) — ordering predicates, no score
+
+1. **Existing evidence before acquisition** → the 6 `EXISTING_EVIDENCE_NEEDS_HUMAN_REVIEW` first; they cost only review time.
+2. **High leverage first within that set** → `EQ|013` (invalidation, **required** entry_rule) and `EQ|018` (break-of-structure, feeds trend definitions) — both have concrete candidate evidence.
+3. **Passive before bothering the trader** → exhaust the 6 before asking anything.
+4. **Batch the trader questions** → all 6 direct questions in one session; `risk_rule` is the only one blocking a required category with no alternative path.
+5. **Factual clarification before operator interpretation** → `EQ|004` (mis-filing) is cheap and independent; do it any time.
+6. **Operator rulings last** → `XCONTRA` after §6's scope analysis has been read, since an ALEX scope statement could still remove the need.
+
+### 9. Question-driven research loop (9J — design only)
+
+```
+blocker detected (Step 3)
+  → SEARCH GOVERNED CORPUS FIRST (Step 9's method, currently manual)
+      found candidate? → human semantic review → link evidence → re-evaluate
+      not found       → state the smallest answerable question (Step 9 §3)
+  → route to source class (Step 4 + Step 9 §4)
+      existing transcript | approved source | direct trader Q&A | operator ruling
+  → AUTHORIZATION CHECK (never widened by the loop)
+      authorized?  → acquire → immutable preservation → candidate extraction
+                     → deterministic checks (Step 7) → exception routing (Step 8)
+                     → HUMAN annotation gate → evidence/question linkage
+      not authorized → stop and report; do NOT collect around the boundary
+  → re-evaluate blockers (Step 3) → repeat
+STOP when: resolved · human clarification required · operator ruling required ·
+           no legitimate path exists
+```
+
+**"More research" is never unlimited collection.** Every acquisition must trace to a named blocker
+and a stated missing fact; a source that cannot answer the question is not collected.
+
+### 10. Capability vs authorization vs judgment (9K)
+
+| Gap | Type | Detail |
+|---|---|---|
+| **Corpus search is manual** | **CAPABILITY MISSING** | Step 9 found 4 near-misses by hand. No executable "search governed corpus for evidence relevant to this question" exists. This is the **only** missing executable capability in the whole loop. |
+| Evidence↔question linkage | **HUMAN JUDGMENT** | deciding a candidate answers a question is semantic |
+| Transcript acquisition | **AUTHORIZATION MISSING** — and **would not help** | §7: acquisition answers none of the 17 |
+| Claim creation (Rule 2) | **HUMAN JUDGMENT** | Step 6: 294/295 claims |
+| Contradiction ruling | **HUMAN JUDGMENT** | `XCONTRA` |
+
+### 11. Integrity
+
+| Gate | Result |
+|---|---|
+| Focused MOGO-019 (Steps 2–4, 7, 8) | ✅ **164 / 164** |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| `XCONTRA\|20260728\|001` | ✅ **open / blocking / resolution null — NOT ruled on** |
+| Questions answered · proposals | ✅ **0 of 281 · 0** |
+| TJR eligibility | ✅ **BLOCKED / 17** |
+| Authorization | ✅ 2 sources, metadata only |
+
+### 12. Smallest recommended Step 10
+
+**A read-only "candidate evidence search" helper — the one genuinely missing executable capability.**
+
+For a given unanswered `EvidenceQuestion`, return governed evidence items from **that trader's corpus
+only** whose excerpts are lexically relevant, ranked deterministically, **nominating candidates for
+human linkage and linking nothing**. Step 9 did this by hand and it found **4 of 17 blockers** with
+evidence already in the corpus — the highest-yield result in the milestone so far.
+
+It needs **no new authorization**, creates no records, and would make the §9 loop's first and cheapest
+branch executable. It must nominate, never link — the evidence↔question decision stays human.
+
+**Everything else is human:** 6 reviews, 6 trader questions, and 2 operator rulings.
+
+**Nothing was resolved, answered, acquired, linked or ruled on.**
