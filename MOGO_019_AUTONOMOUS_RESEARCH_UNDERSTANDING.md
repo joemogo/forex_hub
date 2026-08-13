@@ -1655,3 +1655,241 @@ alter the fact that **0 of 17 TJR blockers are autonomously resolvable**, and th
 decisions are still the path forward.
 
 **Nothing was approved, resolved, answered or promoted. The annotation gate is untouched.**
+
+---
+
+## STEP 8 — EXCEPTION QUEUE TRIAGE AND HUMAN-REVIEW OPTIMIZATION
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Step 7 checkpoint: `9cee8095f4141e9fb01c1766cadeb75c86fde57c`**
+**Read-only · zero schema changes · zero persistence · adjudicates nothing.**
+
+### 1. Architecture and files
+
+| File | Lines | Role |
+|---|---|---|
+| `scripts/trader_intelligence/exception_triage.py` | ~380 | triage + blocker impact + review packets |
+| `tests/trader_intelligence/test_exception_triage.py` | ~340 | 32 focused tests |
+
+**A composition of three existing views** — the Step 7 conformance report, the Step 2 corpus view and
+the Step 3 eligibility predicate. It performs **no new analysis of the evidence**; it only asks which
+already-flagged claims deserve a human's time, and in what order. `CLEAN_MECHANICAL_MATCH` keeps its
+Step 7 meaning exactly.
+
+```
+python3 scripts/trader_intelligence/exception_triage.py --trader TJR [--limit N] [--json]
+```
+
+### 2. Triage classes and priority
+
+Fixed list position, never a computed number:
+
+```
+BLOCKER_RELEVANT > CRITICAL_RULE_MEANING > MODAL_OR_QUANTIFIER_ESCALATION
+  > NUMERIC_OR_TIME_CHANGE > INSTRUMENT_OR_DIRECTION_CHANGE
+  > GENERAL_SEMANTIC_REVIEW > LIKELY_MECHANICAL_FALSE_POSITIVE
+```
+
+**Nothing is dropped on a guess.** A claim is downgraded only when **every** flagged token was
+*demonstrated* mechanical (a MOGO `Step N` label, an ordinal word actually present in the excerpt, a
+morphological variant actually present). One unexplained token keeps it in the real queue, and a
+**blocker-relevant claim is never demoted at all** — three tests and two mutations pin this.
+
+### 3. Results — 142 exceptions triaged
+
+| | **TJR** | **ALEX_G** | **Combined** |
+|---|---|---|---|
+| Total claims | 69 | 226 | **295** |
+| CLEAN (not approved) | 40 | 113 | **153** |
+| Flagged | 29 | 113 | **142 (48.1%)** |
+| **Rule-category claims** | **14** | **67** | **81** |
+| **Required-category claims** | **8** | **34** | **42** |
+| **Blocker-relevant** | **5** | **70** | **75** |
+| Demonstrable false positives | 3 | 1 | **4** |
+
+**Priority distribution** — TJR: blocker-relevant 5, critical-rule 9, numeric/time 6, modal 3,
+instrument/direction 3, likely-FP 3. ALEX: blocker-relevant 70, critical-rule 18, modal 15,
+numeric/time 7, instrument/direction 2, likely-FP 1.
+
+Note the asymmetry: **ALEX's queue is dominated by blocker-relevant claims (70 of 113)** because
+ALEX carries 106 blocking questions; TJR's is dominated by rule-meaning and numeric/time.
+
+### 4. TJR dedicated queue (8F)
+
+Of the 29 flagged TJR claims: **14 are rule-category**, **8 touch a required category**, **5 are
+blocker-relevant**, 8 carry modal/quantifier flags, 18 carry numeric/time flags, 4
+instrument/direction, and **3 are demonstrable mechanical false positives**.
+
+**Minimum set whose review could change TJR eligibility: 9 claims** —
+`|004`, `|008`, `|010`, `|011`, `|018`, `|027`, `|028`, `|055`, `|066`.
+
+**From 69 claims to 9.** But see §5 for what that review can and cannot achieve.
+
+### 5. The 17-blocker impact map (8G) — **the load-bearing result**
+
+| Impact | Count |
+|---|---|
+| `REVIEW_CAN_RESOLVE` | **0** |
+| `REVIEW_CAN_CLARIFY_BUT_NOT_RESOLVE` | **8** |
+| `REVIEW_CANNOT_RESOLVE` | **9** |
+
+| Blocker | Required | Impact | flagged/related |
+|---|---|---|---|
+| `REQUIRED_CATEGORY\|setup_requirement` | ✅ | CLARIFY | 5/9 |
+| `REQUIRED_CATEGORY\|entry_rule` | ✅ | CLARIFY | 1/1 |
+| `REQUIRED_CATEGORY\|stop_rule` | ✅ | CLARIFY | 1/1 |
+| `REQUIRED_CATEGORY\|risk_rule` | ✅ | **CANNOT** — no claim exists to review | 0/0 |
+| `EQ\|…\|002`, `008`, `009`, `013`, `016` | mixed | CLARIFY | 1/1 each |
+| `EQ\|…\|003`, `004`, `007`, `012`, `014`, `017`, `018` | mixed | CANNOT | 0/1 each |
+| **`XCONTRA\|20260728\|001`** | — | **CANNOT — operator ruling** | 0/1 |
+
+**`REVIEW_CAN_RESOLVE` is computed, not assumed, and its emptiness is the finding.** Blockers exist
+because of unanswered `EvidenceQuestion`s and open `ContradictionRecord`s. A Rule-2 review decides
+whether a **paraphrase overreached**. Those are different questions — so review can establish that
+MOGO's wording was faithful (or wasn't), but it cannot answer what the trader meant, settle a
+disagreement between two educators, or bring a missing `risk_rule` into existence.
+
+**Reviewing all 142 exceptions would change TJR's eligibility from BLOCKED/17 to… BLOCKED/17.**
+
+A mutation that makes the code claim `REVIEW_CAN_RESOLVE` fails the test.
+
+### 6. XCONTRA position (8H)
+
+`XCONTRA|20260728|001` sits at **`REVIEW_CANNOT_RESOLVE`** with `stillRequiresOperatorRuling: true`.
+No TJR claim on its side is flagged, so there is nothing for Rule-2 review to examine. **It remains
+`open` / `blocking` / `resolution: null`.**
+
+The decision that would eventually be required is an operator ruling on whether Alex G's *"there's no
+way you can have a specific strategy to trade solely off of these sweeps"* and TJR's *"my strategy is
+based off of liquidity sweeps"* are genuinely incompatible, or scope-dependent — the record's own
+rationale already notes they are *"closer in practice than the words suggest"* while marking it
+blocking because *"the reconciliation is MOGO's reading, not either educator's statement."*
+**That decision was not made here.**
+
+### 7. Human workload (8I)
+
+| | Count | % of corpus |
+|---|---|---|
+| **A** — claims requiring semantic judgment originally | **295** | 100% |
+| **B** — Step 7 exception count | **142** | 48.1% |
+| **C** — mechanically clean (**not approved**) | **153** | 51.9% |
+| **D** — demonstrable false positives | **4** | 1.4% of corpus, 2.8% of queue |
+| **E** — strategy-relevant exceptions | **81** | 27.5% |
+| **F** — TJR strategy-relevant exceptions | **14** | 4.7% |
+| **G** — TJR blocker-impacting exceptions | **9** | 3.1% |
+| **H** — minimum set able to change TJR eligibility | **0** | **0%** |
+
+**Read H carefully.** The *minimum review set* is 9 claims, but the set capable of **changing
+eligibility** is **empty**, because no blocker is review-resolvable. Reviewing those 9 improves
+corpus accuracy; it does not unblock reconstruction.
+
+**Honest accounting of what MOGO eliminated:** it reduced a 295-claim exhaustive re-read to a
+142-claim ordered queue whose top 81 are strategy-relevant — roughly a **52% reduction in claims
+needing a look, and a 73% reduction if only strategy-relevant ones are worked**. It eliminated **no**
+semantic judgment: the 153 CLEAN claims remain exactly as unverified as before.
+
+### 8. Review packet (8J)
+
+Implemented as CLI output only — no UI, no persisted adjudication:
+
+```
+[1] CLAIM|TJR|20260727|004   priority=BLOCKER_RELEVANT
+    STRATEGY IMPACT : claimType=setup_requirement  [RULE CATEGORY]  [REQUIRED]
+    SOURCE          : "we don't want to take trades on the lagging index..."
+                      (EV|EVSRC|TJR|20260727|001|005  direct_explicit/high)
+    MOGO INTERPRETATION: Trades are taken on the leading index, never on the lagging index.
+    WHY FLAGGED     : REVIEW_QUANTIFIER -- 'never' absent from every supporting excerpt
+    HUMAN DECISION  : [ ] faithful   [ ] not faithful   [ ] uncertain / needs more evidence
+```
+
+The decision boxes are **printed, never recorded** — a test asserts no `decision`, `adjudicated`,
+`approved` or `accepted` field exists anywhere in the output.
+
+### 9. Tests — 32, four mutations caught
+
+Determinism · fixed-rank ordering · no numeric score · CLEAN claims absent from the queue · strategy
+relevance from the shared schema vocabulary · unknown claimType not treated as critical · downgrade
+requires *every* token demonstrated · partly-demonstrated stays queued · blocker-relevant never
+demoted · every blocker mapped once · **no blocker resolvable** · missing category has nothing to
+review · contradiction still needs an operator · minimum set ⊆ queue · trader isolation · support-
+relationship isolation survives composition · unknown corpus refused · firewall.
+
+| Mutation | Caught |
+|---|---|
+| Downgrade on *any* demonstrated token | ✅ 2 tests |
+| Demote a blocker-relevant claim | ✅ |
+| Claim a blocker is `REVIEW_CAN_RESOLVE` | ✅ |
+| Treat every claimType as strategy-critical | ✅ 3 tests |
+
+**One test I wrote was wrong and I fixed the test:** it banned the identifier segment `order`, which
+flagged `PRIORITY_ORDER` — sort order, not a trade order. The trading sense is already covered by
+`trade`/`trading`/`execute`.
+
+### 10. Firewall
+
+No write mode, no `open(` at all, imports limited to
+`argparse, json, os, re, sys, research_understanding, rule_conformance, query_evidence`, no trading or
+adjudication identifier segment, evidence digests unchanged, `proposals/` still empty, and eligibility
+reported but unchanged (**BLOCKED / 17**).
+
+### 11. Integrity
+
+| Gate | Result |
+|---|---|
+| Steps 2–4 + 7 + 8 focused | ✅ **164 / 164** (95 + 37 + 32) |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| `XCONTRA\|20260728\|001` | ✅ open / blocking / unresolved |
+| Questions answered · proposals | ✅ 0 of 281 · 0 |
+| TJR eligibility | ✅ BLOCKED / 17 |
+
+### 12. Future autonomy (8K) — what MOGO can and cannot do alone
+
+| Capability | Autonomous today? |
+|---|---|
+| 1. Acquire authorized material | ✅ **yes** — proven unattended at GATE-3E |
+| 2. Preserve it immutably | ✅ **yes** — content-addressed, hash-verified |
+| 3. Mechanically extract candidate evidence | ❌ **no** — `ingest.py` requires human annotation; Step 6 found 294/295 claims rest on a paraphrase judgment |
+| 4. Run deterministic conformance checks | ✅ **yes** — Step 7 |
+| 5. Prioritize exceptions | ✅ **yes** — Step 8 |
+| 6. Determine what needs new evidence | ✅ **yes** — Step 4, from `recommendedNextSourceType` |
+| 7. Determine what needs trader clarification | ✅ **yes** — Step 4 |
+| 8. Determine what needs operator judgment | ✅ **yes** — Steps 3, 4, 8 |
+
+**Unavoidable human judgment remains in exactly two places:**
+
+1. **Claim creation (Rule 2)** — deciding that a paraphrase restates without adding. 294 of 295
+   claims depend on it and no deterministic check can close it.
+2. **Adjudication of conflicts and ambiguity** — answering an `EvidenceQuestion`, ruling on a
+   contradiction, or deciding a scope distinction.
+
+Everything *around* those two — acquisition, preservation, conformance checking, prioritization,
+routing, and knowing which of the three human actions is needed — MOGO now does autonomously. **The
+work MOGO has eliminated is the search for what to look at. The work it has not eliminated, and
+cannot, is the judgment itself.**
+
+### 13. Recommendation for Step 9
+
+**Stop building analysis. The tooling has reached its useful limit for this corpus.**
+
+Steps 3, 4, 7 and 8 have each independently converged on the same three human decisions, and Step 8
+now proves the strongest form of it: **no amount of further automated analysis can change TJR's
+eligibility.** Building a Step 9 analyzer would add code that cannot move the outcome.
+
+The three decisions, unchanged since Step 4:
+
+1. **Rule on `XCONTRA|20260728|001`** — closes 2 blockers.
+2. **One clarification session with TJR** — addresses 8, including the critical `risk_rule` that no
+   transcript can supply.
+3. **Decide whether transcript-class acquisition is ever authorized** — unblocks 6, and I continue to
+   **recommend against it** (MOGO-015 Step 1A: empty body, and pursuing it means working around an
+   access control).
+
+If review work is wanted first, the honest ordering is the **9-claim TJR minimum set**, then the
+**75 blocker-relevant claims** across both corpora — with the expectation that this improves accuracy
+and changes eligibility for **nothing**.
+
+**Nothing was adjudicated, answered, resolved or promoted. The annotation gate is untouched.**
