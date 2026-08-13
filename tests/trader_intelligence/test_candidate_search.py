@@ -411,5 +411,307 @@ class TestFirewall(SearchCase):
             "corpus membership must be decided by traderId, not by text")
 
 
+# ---------------------------------------------------------------------------
+# MOGO-019 Step 11 -- claim-level candidate search
+# ---------------------------------------------------------------------------
+
+class ClaimSearchCase(SearchCase):
+    """The canonical case: EQ|013's answer lives one abstraction level up."""
+
+    EQ013 = "EQ|20260727|013"
+    TARGET = "CLAIM|TJR|20260727|022"
+    SUBJECT = "CLAIM|TJR|20260727|027"
+
+
+class TestEQ013AcceptanceCase(ClaimSearchCase):
+
+    def test_the_invalidation_claim_is_surfaced_first(self):
+        """Step 10 could not find this; Step 11 must, and must rank it first."""
+        result = cs.search_claims(self.idx, self.EQ013, limit=None)
+        self.assertGreater(result["candidateCount"], 0)
+        top = result["candidates"][0]
+        self.assertEqual(top["claimId"], self.TARGET)
+        self.assertEqual(top["claimType"], "invalidation_rule")
+        self.assertEqual(top["tier"], "WANTED_CATEGORY")
+        self.assertEqual(top["rank"], 1)
+
+    def test_the_wanted_category_is_derived_from_the_question_type(self):
+        result = cs.search_claims(self.idx, self.EQ013, limit=None)
+        self.assertEqual(result["questionType"], "missing_invalidation")
+        self.assertEqual(result["wantedCategory"], "invalidation_rule")
+        self.assertIn("missing_invalidation",
+                      cs.WANTED_CATEGORY_BY_QUESTION_TYPE)
+
+    def test_the_1m_versus_5m_scope_difference_is_exposed_not_resolved(self):
+        top = cs.search_claims(self.idx, self.EQ013, limit=1)["candidates"][0]
+        scope = top["scopeComparison"]
+        self.assertEqual(scope["timeframe"]["subject"], "1m")
+        self.assertEqual(scope["timeframe"]["candidate"], "5m")
+        self.assertIn("timeframe", top["scopeDifferences"])
+        self.assertIn("session", top["scopeDifferences"])
+        # named, never resolved
+        joined = " ".join(top["reasons"]).lower()
+        self.assertIn("not resolved here", joined)
+        self.assertNotIn("resolution", top)
+        self.assertNotIn("scopeCompatible", top)
+
+    def test_the_subject_claim_is_never_its_own_candidate(self):
+        result = cs.search_claims(self.idx, self.EQ013, limit=None)
+        self.assertEqual(result["subjectClaimId"], self.SUBJECT)
+        self.assertNotIn(self.SUBJECT,
+                         {c["claimId"] for c in result["candidates"]})
+
+    def test_eq013_is_not_answered_or_linked_by_searching(self):
+        cs.search_claims(index(), self.EQ013, limit=None)
+        after = index()
+        self.assertNotEqual(after.questions[self.EQ013].get("answerStatus"),
+                            "answered")
+        self.assertEqual(after.questions[self.EQ013].get("answerEvidenceIds")
+                         or [], [])
+        self.assertEqual(len(glob.glob(os.path.join(rc.EVIDENCE_ROOT, "links",
+                                                    "*.json"))), 416)
+
+
+class TestScopeDifferencePreservation(ClaimSearchCase):
+
+    def test_every_candidate_carries_a_full_scope_comparison(self):
+        for question_id in ("EQ|20260727|013", "EQ|20260727|007",
+                            "EQ|20260727|002"):
+            with self.subTest(question=question_id):
+                result = cs.search_claims(self.idx, question_id, limit=None)
+                for candidate in result["candidates"]:
+                    for field in cs.SCOPE_FIELDS:
+                        self.assertIn(field, candidate["scopeComparison"])
+                        self.assertIn("subject",
+                                      candidate["scopeComparison"][field])
+                        self.assertIn("candidate",
+                                      candidate["scopeComparison"][field])
+
+    def test_a_difference_is_recorded_whenever_the_values_differ(self):
+        for question_id in ("EQ|20260727|013", "EQ|20260727|007"):
+            with self.subTest(question=question_id):
+                for candidate in cs.search_claims(self.idx, question_id,
+                                                  limit=None)["candidates"]:
+                    scope = candidate["scopeComparison"]
+                    expected = sorted(field for field in cs.SCOPE_FIELDS
+                                      if scope[field]["subject"]
+                                      != scope[field]["candidate"])
+                    self.assertEqual(sorted(candidate["scopeDifferences"]),
+                                     expected)
+
+    def test_scope_fields_are_only_the_ones_the_corpus_populates(self):
+        """Designing around empty fields would be designing around nothing."""
+        self.assertEqual(cs.SCOPE_FIELDS, ("timeframe", "session"))
+        tjr_claims = [c for c in self.idx.claims.values()
+                      if c.get("traderId") == TJR]
+        for empty in ("marketSymbol", "marketCondition", "subjectEntityType"):
+            self.assertEqual(sum(1 for c in tjr_claims if c.get(empty)), 0)
+
+
+class TestClaimCorpusIsolation(ClaimSearchCase):
+
+    def test_a_tjr_question_returns_only_tjr_claims(self):
+        for question_id in ("EQ|20260727|013", "EQ|20260727|007",
+                            "EQ|20260727|018"):
+            with self.subTest(question=question_id):
+                result = cs.search_claims(self.idx, question_id, limit=None)
+                for candidate in result["candidates"]:
+                    self.assertEqual(candidate["traderId"], TJR)
+                    self.assertNotIn("ALEX", candidate["claimId"])
+                    for source_id in candidate["sourceIds"]:
+                        self.assertNotIn("ALEX", source_id or "")
+
+    def test_an_alex_question_returns_only_alex_claims(self):
+        alex_question = next(
+            q["questionId"] for q in self.idx.questions.values()
+            if (self.idx.claims.get(q.get("claimId")) or {}).get("traderId") == ALEX
+            and q.get("answerStatus") != "answered")
+        result = cs.search_claims(self.idx, alex_question, limit=None)
+        self.assertEqual(result["traderId"], ALEX)
+        for candidate in result["candidates"]:
+            self.assertNotIn("TJR", candidate["claimId"])
+
+    def test_supporting_evidence_never_crosses_the_corpus(self):
+        alex_sources = {s["sourceId"] for s in self.idx.sources.values()
+                        if s.get("traderId") == ALEX}
+        for candidate in cs.search_claims(self.idx, self.EQ013,
+                                          limit=None)["candidates"]:
+            for source_id in candidate["sourceIds"]:
+                self.assertNotIn(source_id, alex_sources)
+
+    def test_an_ambiguous_corpus_is_refused(self):
+        idx = index()
+        alex_source = next(s["sourceId"] for s in idx.sources.values()
+                           if s.get("traderId") == ALEX)
+        idx.questions = dict(idx.questions)
+        idx.questions[self.EQ013] = dict(idx.questions[self.EQ013],
+                                         sourceIds=[alex_source])
+        with self.assertRaises(cs.SearchRefused):
+            cs.search_claims(idx, self.EQ013)
+
+    def test_unknown_and_answered_questions_are_refused(self):
+        with self.assertRaises(cs.SearchRefused):
+            cs.search_claims(self.idx, "EQ|GHOST|999")
+        idx = index()
+        idx.questions = dict(idx.questions)
+        idx.questions[self.EQ013] = dict(idx.questions[self.EQ013],
+                                         answerStatus="answered")
+        with self.assertRaises(cs.SearchRefused):
+            cs.search_claims(idx, self.EQ013)
+
+
+class TestClaimRankingIsDeterministic(ClaimSearchCase):
+
+    def test_two_runs_are_byte_identical(self):
+        a = json.dumps(cs.search_claims(index(), self.EQ013, limit=None),
+                       sort_keys=True)
+        b = json.dumps(cs.search_claims(index(), self.EQ013, limit=None),
+                       sort_keys=True)
+        self.assertEqual(a, b)
+
+    def test_structural_tiers_rank_above_lexical_ones(self):
+        for question_id in ("EQ|20260727|013", "EQ|20260727|007",
+                            "EQ|20260727|009"):
+            with self.subTest(question=question_id):
+                ranks = [cs._CLAIM_TIER_RANK[c["tier"]] for c in
+                         cs.search_claims(self.idx, question_id,
+                                          limit=None)["candidates"]]
+                self.assertEqual(ranks, sorted(ranks))
+
+    def test_ties_break_on_the_claim_identifier(self):
+        candidates = cs.search_claims(self.idx, "EQ|20260727|007",
+                                      limit=None)["candidates"]
+        groups = {}
+        for candidate in candidates:
+            key = (candidate["tier"], len(candidate["distinctiveTokens"]),
+                   len(candidate["matchedTokens"]))
+            groups.setdefault(key, []).append(candidate["claimId"])
+        for identifiers in groups.values():
+            self.assertEqual(identifiers, sorted(identifiers))
+
+    def test_shared_scope_alone_does_not_nominate(self):
+        """Nine TJR claims share `session`. Scope must coincide with wording."""
+        for candidate in cs.search_claims(self.idx, self.EQ013,
+                                          limit=None)["candidates"]:
+            if candidate["tier"] == "SHARED_SCOPE":
+                self.assertTrue(candidate["matchedTokens"])
+
+    def test_no_opaque_score_is_emitted(self):
+        def walk(node):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    self.assertNotIsInstance(value, float, key)
+                    self.assertNotIn("score", key.lower())
+                    self.assertNotIn("confidence", key.lower())
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+        result = cs.search_claims(self.idx, self.EQ013, limit=None)
+        for candidate in result["candidates"]:
+            walk({k: v for k, v in candidate.items()
+                  if k != "confidenceState"})   # a governed enum, not a score
+
+
+class TestClaimNominationIsNotAnswering(ClaimSearchCase):
+
+    def test_labels_are_asserted_against_literals_not_constants(self):
+        """Comparing to the module's own constants would let code and test
+        mutate together -- the exact defect Step 10's mutation exposed."""
+        result = cs.search_claims(self.idx, self.EQ013, limit=None)
+        self.assertEqual(cs.NOT_LINKED, "NOT_LINKED")
+        self.assertEqual(result["status"], "CANDIDATE_ONLY")
+        self.assertEqual(result["answerStatus"], "NOT_ANSWERED")
+        self.assertEqual(result["adjudicationStatus"], "NOT_ADJUDICATED")
+        self.assertEqual(result["linkStatus"], "NOT_LINKED")
+        for candidate in result["candidates"]:
+            self.assertEqual(candidate["status"], "CANDIDATE_ONLY")
+            self.assertEqual(candidate["answerStatus"], "NOT_ANSWERED")
+            self.assertEqual(candidate["adjudicationStatus"], "NOT_ADJUDICATED")
+            self.assertEqual(candidate["linkStatus"], "NOT_LINKED")
+
+    def test_the_output_never_claims_an_answer_or_a_link(self):
+        blob = json.dumps(cs.search_claims(self.idx, self.EQ013, limit=None))
+        for forbidden in ('"answerEvidenceIds"', '"linkId"', '"resolution"',
+                          '"proposalId"', '"approved"', '"resolved"',
+                          '"answers"', '"validated"'):
+            self.assertNotIn(forbidden, blob)
+
+    def test_the_meaning_states_scope_is_not_resolved(self):
+        meaning = cs.search_claims(self.idx, self.EQ013,
+                                   limit=None)["meaning"].lower()
+        self.assertIn("nominates", meaning)
+        self.assertIn("does not answer", meaning)
+        self.assertIn("scope difference", meaning)
+
+
+class TestClaimSearchChangesNothing(ClaimSearchCase):
+
+    QUESTIONS = ("EQ|20260727|013", "EQ|20260727|007", "EQ|20260727|002",
+                 "EQ|20260727|018")
+
+    def test_no_file_is_mutated(self):
+        roots = [os.path.join(rc.EVIDENCE_ROOT, d)
+                 for d in ("claims", "questions", "links", "items",
+                           "contradictions", "proposals")]
+
+        def digest():
+            out = {}
+            for root in roots:
+                for path in sorted(glob.glob(os.path.join(root, "*.json"))):
+                    with open(path, "rb") as handle:
+                        out[path] = hashlib.sha256(handle.read()).hexdigest()
+            return out
+
+        before = digest()
+        for question_id in self.QUESTIONS:
+            cs.render_claims(cs.search_claims(index(), question_id, limit=None))
+        self.assertEqual(digest(), before)
+
+    def test_questions_claims_links_and_proposals_are_unchanged(self):
+        before = index()
+        answered = sum(1 for q in before.questions.values()
+                       if q.get("answerStatus") == "answered")
+        claims = {c["claimId"]: c.get("normalizedClaim")
+                  for c in before.claims.values()}
+        for question_id in self.QUESTIONS:
+            cs.search_claims(index(), question_id, limit=None)
+        after = index()
+        self.assertEqual(sum(1 for q in after.questions.values()
+                             if q.get("answerStatus") == "answered"), answered)
+        self.assertEqual(answered, 0)
+        self.assertEqual({c["claimId"]: c.get("normalizedClaim")
+                          for c in after.claims.values()}, claims)
+        self.assertEqual(len(glob.glob(os.path.join(rc.EVIDENCE_ROOT, "links",
+                                                    "*.json"))), 416)
+        self.assertEqual(
+            glob.glob(os.path.join(rc.EVIDENCE_ROOT, "proposals", "*.json")), [])
+
+    def test_xcontra_is_untouched(self):
+        for question_id in self.QUESTIONS:
+            cs.search_claims(index(), question_id, limit=None)
+        record = index().contradictions["XCONTRA|20260728|001"]
+        self.assertEqual(record["status"], "open")
+        self.assertEqual(record["severity"], "blocking")
+        self.assertIsNone(record["resolution"])
+
+    def test_tjr_eligibility_is_unchanged(self):
+        for question_id in self.QUESTIONS:
+            cs.search_claims(index(), question_id, limit=None)
+        result = ru.eligibility(ru.corpus_view(index(), TJR))
+        self.assertEqual(result["eligibility"], "BLOCKED")
+        self.assertEqual(result["blockerCount"], 17)
+
+    def test_authorization_is_unchanged(self):
+        sys.path.insert(0, os.path.join(REPO_ROOT, "platform", "src"))
+        from mogo_platform.runtime import connector_authorization as gate
+        before = {s: gate.APPROVED_DESTINATIONS[s]["operation"]
+                  for s in gate.approved_source_ids()}
+        cs.search_claims(index(), self.EQ013, limit=None)
+        self.assertEqual({s: gate.APPROVED_DESTINATIONS[s]["operation"]
+                          for s in gate.approved_source_ids()}, before)
+        self.assertEqual(set(before.values()), {"metadata"})
+
+
 if __name__ == "__main__":
     unittest.main()

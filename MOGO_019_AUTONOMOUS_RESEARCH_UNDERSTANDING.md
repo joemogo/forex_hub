@@ -2301,3 +2301,203 @@ decision.
 | Authorization | ✅ 2 sources, metadata only |
 
 **Nothing was answered, linked, adjudicated, acquired or authorized.**
+
+---
+
+## STEP 11 — GOVERNED CLAIM-LEVEL CANDIDATE SEARCH
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Step 10 checkpoint: `65d0bcd9356f84bd4f75617d6850fd9bcbb2d2f6`**
+**Read-only · zero schema changes · zero persistence · nominates, never adjudicates.**
+
+### 1. Files and size
+
+| File | Change |
+|---|---|
+| `scripts/trader_intelligence/candidate_search.py` | **+264 / −7** (extended) |
+| `tests/trader_intelligence/test_candidate_search.py` | **+302** (58 tests total) |
+
+**+559 / −7, two files, no new module.** Baseline verified before starting: ALEX drift 0, C1 33/33,
+integrity OK, XCONTRA open/blocking/null, 0/281 answered, **416 links**, 0 proposals, TJR BLOCKED/17,
+2 sources metadata-only — all matched, nothing rebased.
+
+### 2. Architecture — a sibling, not a second module
+
+`search_claims()` lives beside `search()` and **reuses `resolve_corpus()`, `_tokens()`,
+`SearchRefused`, the label constants and the distinctiveness threshold directly**. One corpus
+resolution, one normalization, one refusal path — the duplicate-normalization risk 11M warns about is
+avoided by construction. The single `main()` now dispatches on `--claims`; the Step 10 `main()` was
+removed rather than duplicated (**the −7 lines**).
+
+```
+python3 scripts/trader_intelligence/candidate_search.py 'EQ|20260727|013' --claims
+```
+
+### 3. Predicates — structural before lexical
+
+```
+WANTED_CATEGORY > SAME_CATEGORY_AS_SUBJECT > SHARED_SCOPE
+  > DISTINCTIVE_TOKEN_OVERLAP > NORMALIZED_TOKEN_OVERLAP
+```
+
+Tie-break: distinctive count → match count → `claimId`. The subject claim is **excluded** — it is the
+thing being questioned.
+
+**`WANTED_CATEGORY` is Step 11's own derivation, documented as such.** `EvidenceQuestion` has no
+"wanted category" field, so the mapping is read off the questionType's own name — a
+`missing_invalidation` question asks for an `invalidation_rule` — and every value is a member of the
+existing `claimType` vocabulary. Four mappings only; an unmapped questionType maps to **nothing**
+rather than a guess.
+
+**`SHARED_SCOPE` was tightened during implementation.** Scope alone nominated 22 claims for `EQ|012`,
+because nine TJR claims share `session` — noise wearing a structural label. It now requires scope
+coincidence **and** token overlap. `EQ|013` dropped 25 → 17 candidates; the canonical result was
+unaffected. A test pins the conjunction.
+
+### 4. Scope handling — named, never resolved
+
+Scope comparison covers **`timeframe` and `session` only**. `marketSymbol`, `marketCondition`,
+`scope`, `subjectEntityType` and `strategyFamilyId` are schema-defined but **empty on all 69 TJR
+claims** — designing around them would be designing around nothing, and a test asserts they are still
+empty.
+
+Each candidate carries `scopeComparison` (subject vs candidate, per field) and `scopeDifferences`.
+Differences are **labelled and explicitly not resolved** — whether a 5m rule governs a 1m entry is a
+judgement this module must not make.
+
+### 5. EQ|013 — the canonical acceptance case ✅
+
+```
+subject  : CLAIM|TJR|20260727|027  type=entry_rule  [REQUIRED CATEGORY]
+wanted   : invalidation_rule
+
+[1] CLAIM|TJR|20260727|022   tier=WANTED_CATEGORY   type=invalidation_rule
+    claim    : After the five-minute manipulation the setup remains valid only while
+               price stays in the trend established by the confirmation confluence.
+    why      : category 'invalidation_rule' is what a 'missing_invalidation' question asks for
+    why      : scope differs on timeframe, session -- NOT resolved here
+    scope    : timeframe subject='1m' candidate='5m'   session subject='New York' candidate=None
+    evidence : EV|...|001|029, EV|...|001|030, EV|...|001|031
+```
+
+**Rank 1, with the 1m-versus-5m distinction exposed.** This is precisely the Step 9 hand-finding that
+Step 10 could not reach — and the reason is instructive: the fact lives in a Claim's *category and
+scope*, not in any excerpt's words. **EQ|013 was not answered, `answerEvidenceIds` stayed empty, no
+link was created, the entry rule was not declared complete, and TJR eligibility is unchanged.**
+
+### 6. Other Step 9 cases (11H)
+
+| Question | Evidence (S10) | Claims (S11) | Top claim tier |
+|---|---|---|---|
+| `EQ\|…\|002` | 22 | 20 | distinctive |
+| `EQ\|…\|003` | 9 | 4 | distinctive |
+| `EQ\|…\|004` | 28 | 32 | same-category |
+| **`EQ\|…\|007`** | 13 | **31** | **WANTED_CATEGORY** |
+| `EQ\|…\|008` | 21 | 19 | shared-scope |
+| `EQ\|…\|009` | 13 | 24 | same-category |
+| `EQ\|…\|012` | 1 | 14 | distinctive |
+| **`EQ\|…\|013`** | 4 | **17** | **WANTED_CATEGORY** |
+| `EQ\|…\|014` | 3 | 14 | distinctive |
+| `EQ\|…\|016` | 27 | 22 | same-category |
+| `EQ\|…\|017` | 26 | 23 | same-category |
+| `EQ\|…\|018` | 11 | 10 | same-category |
+
+**Claim search adds something Step 10 structurally cannot in exactly two cases** — `EQ|013`
+(1 `invalidation_rule`) and `EQ|007` (4 `exception` claims, for a question asking what happens when
+news IS present). **Everywhere else it duplicates or dilutes.** Ten of twelve questions produce
+same-category or lexical tiers that Step 10 already covered from a different angle.
+
+**That is the honest yield: two questions out of twelve.** Reported rather than dressed up — the
+capability is narrow, and its value is concentrated where a question names a category the corpus
+already holds elsewhere.
+
+### 7. Tests — 58 total (+26), five mutations caught
+
+| Mutation | Caught |
+|---|---|
+| Search all traders' claims | ✅ **6 tests** |
+| Hide scope differences | ✅ 3 tests |
+| Relabel `NOT_LINKED` → `LINKED` | ✅ |
+| Drop the wanted-category mapping | ✅ 3 tests |
+| Include the subject claim as its own candidate | ✅ |
+
+**Labels are asserted against LITERAL strings, not module constants** — the defect Step 10's mutation
+exposed, applied as a rule here from the outset (11I).
+
+Also covered: corpus isolation both directions, supporting evidence never crossing corpora, ambiguous
+corpus refused, unknown/answered refused, byte-identical reruns, structural-before-lexical ordering,
+stable tie-break, shared-scope requiring wording overlap, no opaque score, and no state change across
+files / questions / claims / links / proposals / XCONTRA / eligibility / authorization.
+
+### 8. Proofs
+
+**Persistence:** file digests across `claims/`, `questions/`, `links/`, `items/`, `contradictions/`,
+`proposals/` unchanged after searching; claim texts compared before/after and identical; **links
+still 416**; **0 of 281 answered**; **0 proposals**.
+**Authorization/network:** no network or acquisition identifier in the module; registry byte-identical
+at **2 sources, metadata only**.
+**XCONTRA:** `open` / `blocking` / `resolution: null`. **Eligibility:** BLOCKED / 17.
+
+### 9. Composition (11J) — kept separate, deliberately
+
+The two searches already share everything worth sharing — corpus resolution, tokenizer, labels,
+threshold, refusal path — and `main()` dispatches between them on one flag. **A further orchestration
+function would add a layer to save nothing:** the two return different shapes (evidence vs claims) and
+a caller wanting both can call both. **Simplicity wins; they stay separate.**
+
+### 10. Scientific boundary — preserved
+
+> **RETRIEVAL ≠ ANSWERING · CLAIM NOMINATION ≠ CLAIM VALIDATION ·
+> SCOPE OVERLAP ≠ SCOPE EQUIVALENCE · MULTIPLE SUPPORTING ITEMS ≠ INDEPENDENT CONFIRMATION**
+
+Every result carries `CANDIDATE_ONLY / NOT_ANSWERED / NOT_ADJUDICATED / NOT_LINKED`. The last matters
+most here: surfacing an `invalidation_rule` for an entry rule is **not** evidence that the entry rule
+now has one — the scope difference is the open question, and the module says so in every result.
+
+On independent confirmation: all 69 TJR claims remain `emerging` under a single independence group
+(`AUTHOR|TJR`). **Nominating three supporting evidence items for `CLAIM|…|022` is not three
+confirmations** — POLICY-001 still caps it, and nothing here changes that.
+
+### 11. Autonomous loop — updated
+
+| Stage | Executable? |
+|---|---|
+| unanswered question → candidate **evidence** search | ✅ Step 10 |
+| → candidate **claim** search | ✅ **Step 11** |
+| → deterministic ranked presentation with scope differences | ✅ **Step 11** |
+| → **decide whether a candidate answers the question** | ❌ human |
+| → **decide whether a scope difference is acceptable** | ❌ human |
+| → link evidence/claim to question | ❌ human |
+| → re-evaluate blockers | ✅ Step 3, automatic once linked |
+
+**MOGO can now present, with no human effort, both the evidence and the claims that bear on an
+unanswered question — including one whose answer sits at a different timeframe.** Every remaining
+stage is a judgement.
+
+### 12. Next smallest missing capability — **not implemented**
+
+**None worth building in this direction.** Steps 10 and 11 have now covered both abstraction levels
+the corpus actually has, and §6 shows the yield is already narrow. A third retrieval layer would
+search structures the corpus does not populate.
+
+The genuinely next thing is unchanged since Step 4 and reinforced by Step 9: **the three human
+decisions.** Step 11 makes one of them cheaper — a reviewer looking at `EQ|013` now sees
+`CLAIM|…|022` and the 1m/5m question immediately instead of hunting for it — but it does not remove
+any of them.
+
+### 13. Integrity
+
+| Gate | Result |
+|---|---|
+| Focused MOGO-019 (Steps 2–4, 7, 8, 10, 11) | ✅ **222 / 222** |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** |
+| Campaign C1 | ✅ 33 / 33 |
+| Runtime integrity | ✅ INTEGRITY OK |
+| `XCONTRA\|20260728\|001` | ✅ open / blocking / unresolved |
+| Answered · links · proposals | ✅ **0 of 281 · 416 · 0** |
+| TJR eligibility | ✅ **BLOCKED / 17** |
+| Authorization | ✅ 2 sources, metadata only |
+
+**Nothing was answered, linked, adjudicated, acquired or authorized.**
