@@ -1,0 +1,18 @@
+{
+  "actor": "operator:joemogollon",
+  "entityId": "XCONTRA|20260728|001",
+  "entityType": "CONTRADICTION_RECORD",
+  "eventId": "LCEVT|CONTRADICTION_RECORD|XCONTRA|20260728|001|002",
+  "eventType": "status_changed",
+  "metadata": {
+    "decisionFingerprint": "5e0ce0830bebbb06742a5c8fa1ee3cf36e143ac572c9d4a04e96d6fd6239a251",
+    "intakeSchemaVersion": "mogo.governed-answer-intake.v1",
+    "ruling": "leave_open",
+    "scopeOverlap": "unknown"
+  },
+  "newStatus": "open",
+  "priorStatus": "open",
+  "reason": "Reviewed against governed evidence 2026-08-13. Both corpora show a confirmation requirement before entry, and Alex G's own wording is 'solely'/'themselves'. That narrows the apparent conflict, but no new evidence has arrived since detection and neither educator addressed the other, so the reconciliation remains MOGO's reading. Recorded as reviewed and deliberately left open.",
+  "schemaVersion": 1,
+  "timestamp": "2026-08-13T21:00:25Z"
+}

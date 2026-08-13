@@ -2622,3 +2622,976 @@ this commit.
 **MOGO-020 remains ACTIVE and is NOT complete.** No `mogo-020-complete` tag and no
 milestone-completion tag was created. No further EvidenceQuestion has been selected or previewed.
 16 TJR blockers remain.
+
+Committed as `cd424be7642e1939c99f7e3f573eaaee58bc9408`, pushed to `origin/mogo-main`, 0/0.
+
+---
+---
+
+# STEP 9 — AUTONOMOUS ADJUDICATION QUALIFICATION / SHADOW DESIGN
+
+**Status:** READ-ONLY ANALYSIS + DESIGN · **ZERO CODE CHANGES** · NOTHING WRITTEN
+**Date:** 2026-08-13
+**HEAD:** `cd424be7642e1939c99f7e3f573eaaee58bc9408`
+
+## S9.0 Headline
+
+**On the current corpus, a correctly-designed autonomous qualifier would classify
+`AUTO_CANDIDATE` = 0 of 17.**
+
+That is the finding, not a failure of the design. The analysis below shows *why*, and — more
+importantly — it caught a **false-auto trap that would have auto-retired 11 genuine research
+blockers**. That trap is the most valuable output of this step.
+
+## S9.1 Reusable existing architecture
+
+Everything needed for the *mechanical* half of qualification already exists and must not be
+duplicated:
+
+| Capability | Existing component | Reuse |
+|---|---|---|
+| Corpus resolution, fail-closed | `candidate_search.resolve_corpus()` | ✅ as-is |
+| Evidence nomination + tiering | `candidate_search.search()` | ✅ as-is |
+| Provenance / directness / certainty | `EvidenceItem` fields + `EvidenceSource.provenanceStatus` | ✅ as-is |
+| Hash integrity | `graph_common.content_hash_of` + `validate_evidence.check_inconsistent_hash` | ✅ as-is |
+| Contradiction state | `ContradictionRecord` + `eligibility()`'s blocking-contradiction logic | ✅ as-is |
+| Confidence | `evidence_confidence.compute_confidence` | ✅ as-is — **do not re-derive** |
+| Corpus isolation | `corpus_view()`'s fail-closed unattributed-claim check | ✅ as-is |
+| Question generation predicate | **`evidence_questions.detect_questions_for_claim()`** — a pure function | ✅ **the key reuse** |
+| Full intake validation | `answer_intake._plan_*` (13 fail-closed conditions) | ✅ as-is |
+| Forecast without writing | `answer_intake.preview()` + `_prospective_index()` | ✅ as-is |
+| Read-only reevaluation | `answer_intake.reevaluate()` → Step 2/3/4 evaluators | ✅ as-is |
+
+## S9.2 The actual missing capability
+
+Not a scoring model. Not a confidence threshold. The missing capability is:
+
+> **Provenance of the question itself.** MOGO cannot currently tell whether it generated an
+> EvidenceQuestion deterministically, or whether a human wrote it.
+
+`EvidenceQuestion` has no `origin` field. Without it, no autonomous action on a question is safe —
+and the next section shows exactly how unsafe.
+
+## S9.3 The false-auto trap (the important finding)
+
+The obvious deterministic signal is: *re-run the predicate that generated the question; if it no
+longer holds, the question is stale and can be retired autonomously.* `detect_questions_for_claim()`
+is pure, so this is cheap and reproducible.
+
+Re-running it against today's records over TJR's 17 unresolved questions reports **11 as
+"predicate no longer holds"** — apparently 11 blockers auto-retirable.
+
+**That reading is wrong, and acting on it would have destroyed real research findings.**
+
+Comparing each question's stored text against what the detector would emit today:
+
+| Origin | Count | Examples |
+|---|---|---|
+| **DETECTOR-generated** | **2** | `EQ\|20260727\|012`, `EQ\|20260727\|013` |
+| **HAND-AUTHORED by a human analyst** | **15** | `EQ\|20260727\|001`, `004`, `017`, … |
+
+The detector's text is formulaic — *"Claim 'CLAIM|TJR|20260727|002' has no timeframe recorded — does
+this rule apply on a specific timeframe, or all of them?"* — with a formulaic `reason`
+(*"claimType='session_rule' is timeframe-sensitive and claim.timeframe is null."*).
+
+The hand-authored ones are nothing of the kind:
+
+> *"The intake filename describes a 'forex session strategy', but the transcript states the
+> instruments are US indexes (S&P 500 and NASDAQ) and no forex pair is mentioned anywhere."*
+> — `EQ|20260727|004`, reason: *"Direct conflict between the supplied filename and the source's own
+> instrument statement."*
+
+For these, "predicate no longer holds" means **"the detector never generated this"**, *not*
+"this has been resolved". A naive autonomous qualifier would have retired 11 human research
+findings — including the instrument-scope conflict and the missing no-trade conditions — as stale.
+
+**Hard precondition, derived from this:** a question may only be auto-qualified if MOGO can prove it
+generated the question deterministically. Everything else is a human artifact and must stay human.
+
+And for the 2 detector-generated questions, **both predicates still hold today.** Neither is
+retirable either.
+
+## S9.4 Qualification lanes
+
+Deliberately reusing existing vocabulary — the lanes map onto Step 4's existing
+`_AUTONOMY` routing (`AUTONOMOUSLY_ACTIONABLE_NOW` / `AFTER_AUTHORIZATION` / `HUMAN_INPUT_REQUIRED`
+/ `BLOCKED_NO_KNOWN_PATH`) rather than inventing a parallel taxonomy.
+
+| Lane | Meaning | Existing analogue |
+|---|---|---|
+| **AUTO_CANDIDATE** | Safe candidate for **shadow** adjudication. **Never means authorized to write.** | `SEARCH_EXISTING_CORPUS` / `ACTIONABLE_NOW` |
+| **HUMAN_REVIEW** | Evidence exists in corpus; material semantic judgment remains | `HUMAN_INPUT_REQUIRED` |
+| **MORE_RESEARCH** | Corpus lacks the evidence; acquisition/clarification needed | `ACQUIRE_FROM_APPROVED_SOURCE` / `AUTHORIZATION_REQUIRED` |
+| **GOVERNANCE_REQUIRED** | Contradiction, scope/corpus conflict, policy or authority decision | `OPERATOR_RULING_REQUIRED` |
+
+## S9.5 Fail-closed AUTO_CANDIDATE conditions
+
+All must hold; any that cannot be **established deterministically** demotes to another lane.
+
+| # | Condition | Machine-verifiable today? |
+|---|---|---|
+| 1 | Question was **detector-generated** (§S9.3) | ⚠️ derivable by text comparison; **no stored field** |
+| 2 | Generating predicate re-derives deterministically | ✅ `detect_questions_for_claim()` |
+| 3 | Corpus resolves uniquely | ✅ `resolve_corpus()` |
+| 4 | Provenance valid (source exists, not `unverified`, directness set) | ✅ |
+| 5 | Evidence hash integrity | ✅ recompute vs stored |
+| 6 | No open **blocking** contradiction touching the subject claim | ✅ |
+| 7 | No cross-corpus contamination | ✅ |
+| 8 | Sufficient directness (`direct_explicit` / `direct_demonstrated`) | ✅ |
+| 9 | Deterministic, reproducible result | ✅ all inputs pure |
+| 10 | No strategy-rule creation/mutation | ✅ structurally impossible — §S531.9 |
+| 11 | No authority change | ✅ structurally impossible |
+| 12 | No unsupported inference promoted to source fact | ✅ `exactExcerpt` vs `normalizedObservation` separation |
+| 13 | **The evidence actually ANSWERS the question** | ❌ **NOT machine-verifiable** |
+
+**Condition 13 is the wall.** Nothing in MOGO can establish it; `candidate_search` says so in its own
+docstring (*"ANSWERS: what evidence should a human review. DOES NOT: does this evidence resolve the
+question?"*), and the Step 1 audit found semantic adjudication is human-governed by design.
+
+Consequently `AUTO_CANDIDATE` is only ever reachable for questions whose answer is **structural, not
+semantic** — i.e. where satisfying condition 2 *is* the answer. No numeric AI-confidence threshold is
+used anywhere; every condition is a boolean over governed records.
+
+**Candidate count is explicitly rejected as a signal.** Empirically it is anti-correlated with
+tractability: the hardest questions have the *most* candidates (`EQ|004` 28, `EQ|016` 27, `EQ|017`
+26, `EQ|002` 22 — all `direct`), while the question a human actually answered had **3**. High
+recall means retrieval could not discriminate.
+
+## S9.6 Shadow classification of the 17 unresolved TJR questions
+
+| Lane | Count |
+|---|---|
+| **AUTO_CANDIDATE** | **0** |
+| **HUMAN_REVIEW** | **5** |
+| **MORE_RESEARCH** | **9** |
+| **GOVERNANCE_REQUIRED** | **3** |
+
+### AUTO_CANDIDATE — 0
+
+Both detector-generated questions (`EQ|012`, `EQ|013`) fail condition 2: their predicates still hold.
+The other 15 fail condition 1: hand-authored. Nothing qualifies.
+
+### HUMAN_REVIEW — 5 (evidence in corpus; judgment remains)
+
+| Question | Why it stops at review |
+|---|---|
+| `EQ\|20260727\|002` | stop placement, 22 direct candidates — all chart-relative (*"underneath this low"*). Whether that is mechanizable is judgment. |
+| `EQ\|20260727\|008` | *"One extra point down to hit our special little level"* — 21 direct candidates; the referent is genuinely ambiguous. |
+| `EQ\|20260727\|012` | detector-generated, predicate holds. Its 1 candidate is about **session**, not timeframe — retrieval nominated something that does not answer. |
+| `EQ\|20260727\|013` | detector-generated, predicate holds. Candidates describe *entry confirmation*; the closest invalidation material (*"the five minute trend is still intact. We haven't closed underneath this low yet"*) only hints. **REQUIRED category.** |
+| `EQ\|20260727\|018` | break-of-trend undefined; demonstrated behaviour exists but no stated criterion. |
+
+### MORE_RESEARCH — 9 (corpus lacks the evidence)
+
+`EQ|001` risk_rule (**0 claims, 0 evidence**) · `EQ|003` TP1–TP4 selection never defined ·
+`EQ|005` + `EQ|006` transcription defects (`$1,47,984`, *"one two 3.63"*) needing source
+re-verification · `EQ|007` news-present behaviour never stated · `EQ|009` exact step ordering never
+stated · `EQ|010` no-trade conditions absent · `EQ|011` single-source ceiling (needs an independent
+second source) · `EQ|016` consolidation never defined.
+
+### GOVERNANCE_REQUIRED — 3
+
+| Question | Why |
+|---|---|
+| `EQ\|20260727\|004` | instrument-scope conflict: filename says *forex*, source says *US indexes*. A corpus/scope attribution decision. |
+| `EQ\|20260727\|015` | the pre-existing inconsistent record (Step 1): `partially_answered` with empty `answerEvidenceIds`. Operator decision; repair explicitly forbidden. |
+| `EQ\|20260727\|017` | subject claim `CLAIM\|TJR\|20260727\|065` sits in open cross-corpus `XCONTRA\|20260727\|003`. |
+
+### The four named cases — none forced toward AUTO
+
+* **`risk_rule` MISSING** → `MORE_RESEARCH`. Zero claims and zero evidence. There is nothing to
+  adjudicate; only acquisition closes it. Auto-closing it would fabricate a risk rule — the single
+  most dangerous possible false-auto.
+* **`setup_requirement` CONFLICTED** → `GOVERNANCE_REQUIRED`. Traced to root cause:
+  `CLAIM|TJR|20260727|006` is implicated in **`XCONTRA|20260728|001`** (blocking, open,
+  cross-corpus vs ALEX_G). The category cannot clear until that contradiction is ruled on.
+* **`entry_rule` / `stop_rule` AMBIGUOUS** → `HUMAN_REVIEW` (`EQ|013`, `EQ|002`). Both REQUIRED
+  categories, both resting on chart-relative or hinted criteria.
+* **`XCONTRA|20260728|001`** → `GOVERNANCE_REQUIRED`, permanently. A contradiction between two
+  educators is a governance ruling by definition, never an evidence lookup. Step 4 already routes it
+  `OPERATOR_RULING_REQUIRED`. **No autonomous path to it may ever exist.**
+
+## S9.7 Calibration against the first human case
+
+**Would the qualifier have classified `EQ|20260727|014` as AUTO_CANDIDATE before Joe adjudicated it?**
+
+**No.** It would have landed in **HUMAN_REVIEW** — using only pre-decision information:
+
+* condition 1 ✅ — it *is* detector-generated (formulaic text and reason);
+* condition 2 ❌ — **the predicate still holds today**: `CLAIM|TJR|20260727|029.timeframe` is still
+  `null`, so the detector would raise the same question again right now;
+* condition 13 ❌ — nothing machine-checkable establishes that the two cited excerpts answer it.
+
+**This is the correct outcome.** Joe's decision was precisely the judgment no deterministic check can
+make: that the *absence* of a single timeframe **is** the answer, because the concept is
+multi-timeframe by design. The machine can see `timeframe: null`; only a human can decide whether
+that null is a **gap** or a **finding**.
+
+**First calibration point recorded: human ACCEPT vs shadow HUMAN_REVIEW — agreement on lane
+(escalate), and no false-auto.** The accepted decision is unaltered.
+
+## S9.8 Minimum shadow implementation
+
+One new read-only module and its tests. **No second adjudication engine, no agent framework, no
+event bus, no queue, no autonomous commit path.**
+
+```
+qualify(evidence_root, questionId)          -> lane + the exact failed condition(s)
+shadow_evaluate(evidence_root, traderId)    -> for each unresolved question:
+      classify lane
+      if AUTO_CANDIDATE: build the proposed adjudication and call the EXISTING
+        answer_intake.preview() -- which already writes nothing and already
+        forecasts the eligibility/routing effect
+      collect into a shadow report; WRITE NOTHING to production research state
+```
+
+Everything else is delegation: `resolve_corpus`, `detect_questions_for_claim`,
+`_validate_evidence_ids`, `preview()`, `reevaluate()`, the contradiction and integrity logic.
+
+**Shadow results must never be written into `evidence/`.** They are a measurement artifact and
+belong outside the governed research tree (a report file or stdout), because a shadow verdict is not
+evidence and must not become queryable as if it were.
+
+**Deliberately NOT proposed:** adding an `origin` field to the 281 existing questions. Backfilling
+would be a production data mutation, and the operator has repeatedly and correctly ring-fenced those
+records. Origin can be derived read-only by text comparison, as done here. A stored `origin` field
+should be added only to *newly created* questions, in a separate authorized step.
+
+## S9.9 How autonomy would be earned
+
+No autonomous write is authorized by this step, and none should be until all of the following hold
+for a **specific narrow class** of question (not for adjudication in general):
+
+| Criterion | Threshold |
+|---|---|
+| Shadow-vs-human agreement | ≥ 95% on lane assignment, **and 100% on "never AUTO where the human escalated"** |
+| **False-auto count** | **exactly 0** — a single false-auto resets the clock |
+| Boundary violations | 0 corpus, provenance, hash or governance violations across all shadow runs |
+| Deterministic replay | identical input → byte-identical shadow output, verified |
+| Minimum sample | ≥ 20 adjudicated cases **within the same question class** |
+| Class restriction | only detector-generated questions whose predicate re-derivation *is* the answer |
+
+**Honest note on feasibility:** the corpus currently contains **1** human adjudication and **2**
+detector-generated questions. A 20-case sample in one class is years away at the present evidence
+rate. Autonomy here is a long-horizon goal, and saying so now is more useful than implying it is
+close.
+
+Major strategy transitions remain human-governed unconditionally. `GOVERNANCE_REQUIRED` is never
+promotable to autonomy by any amount of agreement data.
+
+## S9.10 Files the next step would touch
+
+| File | Change |
+|---|---|
+| `scripts/trader_intelligence/shadow_qualification.py` | **NEW** — `qualify()` + `shadow_evaluate()` + CLI, read-only (~200 lines) |
+| `tests/trader_intelligence/test_shadow_qualification.py` | **NEW** — lane tests, fail-closed tests, **a regression test reproducing the §S9.3 hand-authored trap**, zero-write proof |
+| `MOGO_020_GOVERNED_RESEARCH_ANSWER_INTAKE.md` | Step 10 record |
+
+**No existing production file requires modification.** `answer_intake.py`, `evidence_questions.py`,
+`candidate_search.py`, `research_understanding.py` and every schema stay untouched.
+
+## S9.11 Is implementation justified?
+
+**Yes — but as a measurement instrument, not as a step toward near-term autonomy, and its value is
+contingent.**
+
+**For:** it is small (one read-only module), reuses everything, writes nothing, and would encode the
+§S9.3 trap as a permanent regression test so no future qualifier can repeat it. It converts
+"autonomy readiness" from opinion into a measured quantity, and gives every future adjudication a
+free shadow calibration point at no governance cost.
+
+**Against:** on today's corpus it would classify **0 of 17** as AUTO_CANDIDATE and change nothing
+operationally. Its output would be a report saying *"escalate all 17"* — which this analysis already
+established by hand.
+
+**Recommendation:** build it, but scope it honestly as instrumentation, and expect it to auto-qualify
+nothing until the corpus contains substantially more detector-generated questions. The binding
+constraint on MOGO's research is still **evidence volume**, not adjudication throughput — TJR has one
+transcript-pair, `risk_rule` has zero evidence, and no amount of qualification logic manufactures a
+risk rule. If the operator wants the largest research gain per unit of effort, resolving
+`XCONTRA|20260728|001` or acquiring a second TJR source outranks building this.
+
+## S9.12 Step 9 changes
+
+**Zero code changes. Zero production research changes.** All analysis was performed through existing
+read-only entry points. The only file modified is this report.
+
+`git status`: `M MOGO_020_GOVERNED_RESEARCH_ANSWER_INTAKE.md` plus the untracked Instagram report.
+Production: 281 questions (279 unanswered / 1 answered / 1 pre-existing partially_answered), links
+**416**, proposals **0**, EQ lifecycle events **1**, `XCONTRA|20260728|001` unchanged, TJR
+**BLOCKED / 16**, paper and live-money **NOT AUTHORIZED**.
+
+---
+---
+
+# STEP 10 — RESEARCH BOTTLENECK / AUTONOMOUS ACQUISITION PATH
+
+**Status:** READ-ONLY AUDIT · **ZERO CODE CHANGES** · NOTHING ACQUIRED
+**Date:** 2026-08-13
+**HEAD:** `cd424be7642e1939c99f7e3f573eaaee58bc9408`
+
+## S10.0 Headline
+
+**The autonomous acquisition branch STOPS at governance, not at code.**
+
+MOGO's only TJR acquisition authority is **oEmbed metadata for one video that is already fully
+ingested**. Running it autonomously right now would fetch an 829-byte JSON document containing a
+title, an author name and a thumbnail URL — deduplicate against an identical existing artifact,
+yield zero claims, and close **zero** of the 9 `MORE_RESEARCH` gaps.
+
+There is also a factual correction to the step premise: there is **one** TJR authorization, not two.
+The two metadata-only authorizations cover **different traders** — one TJR, one Alex G.
+
+## S10.1 What already works
+
+| Capability | Component | State |
+|---|---|---|
+| Authorization records | `docs/trader-intelligence/authorizations/*.json` | ✅ 3 records, explicit `permittedOperations` |
+| Connector allow-list | `platform/runtime/connector_authorization.APPROVED_DESTINATIONS` | ✅ 2 destinations, per-host/scheme/path pinned |
+| Bounded scheduled set | `platform/scheduling/approved-collection.json` | ✅ exactly 2 entries; "no discovery, nothing added at runtime, no link ever followed" |
+| Transport limits | `connector_transport` | ✅ `followRedirects: false`, `maxResponseBytes: 65536`, `expectedContentType` enforced |
+| A-5 effectful gate | `registry.unmet_a5_preconditions()` | ✅ **OPEN** — 0 unmet preconditions |
+| Idempotency | per-entry `(sourceId, resourceId, authorizationId)` → distinct key | ✅ |
+| Artifact preservation | `docs/trader-intelligence/research-artifacts/RART\|…` | ✅ 3 artifacts, SHA-256, `promotionStatus: NOT_A_TRADING_RULE` |
+| Deduplication | content-hash filenames + `detect_duplicates.py` + canonical-URL matcher | ✅ |
+| Ingestion / extraction | `ingest.py`, `extraction_pipeline.py`, `annotation_pipeline.py` | ✅ — behind the human-annotation gate |
+| Corpus reevaluation | `answer_intake.reevaluate()` → Step 2/3/4 evaluators | ✅ MOGO-020 |
+
+**The machinery is built and the gate is open.** That is not the constraint.
+
+## S10.2 What MOGO has actually acquired autonomously: nothing
+
+All three research artifacts carry the same provenance:
+
+```
+originClass            : OPERATOR_SUPPLIED_LOCAL_INTAKE
+acquisitionPerformed   : False
+networkAccessPerformed : False
+processedByCapability  : CAP|research|ingest-local-artifact
+note                   : "MOGO did not fetch this artifact; an operator supplied it."
+```
+
+**MOGO has never performed an autonomous network acquisition.** Every artifact in the library was
+hand-supplied. The acquisition queue holds **0 candidates**.
+
+## S10.3 TJR as the real case — authority and technical capability
+
+### The exact authorized TJR source
+
+| Field | Value |
+|---|---|
+| Authorization | `AUTH-tjr-metadata.json` · `3008510b-6c34-4a46-ba26-1c90bb9c728a` |
+| `permittedOperations` | **`["metadata"]`** — only |
+| `policyStatus` | `PERMITTED_PUBLIC_METADATA` |
+| Source | `SRC\|youtube\|11cd2542b5b0` (TJRTrades) |
+| Approved resource | **exactly one**: `8qwEmE1DwYw` |
+| Connector | `CONN\|research\|approved-source-metadata` v1.0.0, oEmbed endpoint only |
+
+The authorization states the exclusion itself:
+
+> *"The archived TJR TRANSCRIPT carries licensingStatus restricted_third_party, and this
+> authorization does NOT touch it. Transcript and artifact operations are NOT authorized — only the
+> public oEmbed metadata document for the one resource named in the approved collection set."*
+
+### The decisive overlap
+
+`8qwEmE1DwYw` **is already in the corpus** as `EVSRC|TJR|20260727|002` —
+*"Path to Profitability: How to Read a Candlestick Chart"*, `canonicalReference:
+https://www.youtube.com/watch?v=8qwEmE1DwYw`, fully ingested with 24 evidence items and 23 linked
+claims. Its `titleVerification` block already records the same oEmbed metadata.
+
+The acquired artifact's content, in full substance:
+
+```json
+{"title":"Path to Profitability: How to Read a Candlestick Chart",
+ "author_name":"TJR","author_url":"https://www.youtube.com/@TJRTrades",
+ "thumbnail_url":"https://i.ytimg.com/vi/8qwEmE1DwYw/hqdefault.jpg", …}
+```
+
+**829 bytes. No teaching content. Zero extractable claims.**
+
+### The precise gap — governance AND technical
+
+| Layer | Gap |
+|---|---|
+| **Governance** | No `transcript` or `artifact` operation is authorized for TJR. The transcript is `restricted_third_party`. Only an operator can change this, and it requires a licensing decision — which is already open as **Decision #2** in `proposals/README.md`. |
+| **Technical** | The connector is *structurally* metadata-only: oEmbed `urlTemplate`, `expectedContentType: application/json`, `maxResponseBytes: 65536`, `followRedirects: false`, 11-character resource-id alphabet. It has **no transcript capability to misuse**. |
+| **Upstream** | Prior work recorded that YouTube caption endpoints are server-blocked (HTTP 200 with 0 bytes), while channel-catalogue metadata is retrievable. *Recorded from earlier investigation, not re-verified in this step.* |
+
+> **This branch STOPS here.** Content acquisition from TJR is not technically blocked by missing
+> code — it is not authorized, and building a transcript connector before the licensing decision
+> would be building a capability MOGO is forbidden to use.
+
+## S10.4 Second-source opportunity — assessed, and it is not one
+
+The "second TJR source" already exists and is already fully ingested. What it actually contributed:
+
+| Source | Items | Claims | Claim types |
+|---|---|---|---|
+| `EVSRC\|TJR\|20260727\|001` (strategy walkthrough) | 62 | 47 | setup_requirement 7 · confirmation_rule 6 · definition 8 · **entry_rule 1 · stop_rule 1 · target_rule 1 · invalidation_rule 1** · session_rule 1 · trade_management_rule 1 · exception 3 · hypotheses/observations 16 |
+| `EVSRC\|TJR\|20260727\|002` (candlestick basics) | 24 | 23 | **definition 13** · behavioral_observation 4 · causal_hypothesis 2 · setup_requirement 2 · exception 1 · failure_condition 1 |
+
+Measured against the `MORE_RESEARCH` gaps:
+
+| Gap | Claims contributed by source 002 |
+|---|---|
+| `risk_rule` (`EQ\|001` risk-per-trade) | **0** |
+| `target_rule` (`EQ\|003` TP1–TP4 selection) | **0** |
+| `entry_rule` / `stop_rule` | **0** / **0** |
+| `exception` (`EQ\|007` news handling) | 1 |
+| `definition` (`EQ\|016` consolidation) | 13 |
+
+Source 002 is **beginner candlestick education** — how to read a chart, what a 1-day candle
+represents, when the market opens. It contains no risk management and no setup specification, and it
+has already given everything it has. **It cannot close the risk_rule gap, and no re-acquisition of
+it would change that.**
+
+This is stated as a measurement, not a disappointment: the purpose was evidence acquisition, not
+confirmation of a desired rule, and the honest measurement is that the authorized surface is
+exhausted.
+
+## S10.5 The autonomous loop — designed, with nothing to run on
+
+The loop is fully expressible in existing components:
+
+```
+MORE_RESEARCH question
+  → gap category                    knowledge_gaps / eligibility() blockers        ✅ exists
+  → search authorized sources       approved-collection.json (2 entries)           ✅ exists
+  → acquire artifact                CAP|research|acquire-approved-source-metadata  ✅ exists, gate OPEN
+  → hash / preserve provenance      RART| + SHA-256 + provenance block             ✅ exists
+  → deduplicate                     content-hash filename + canonical-URL matcher  ✅ exists
+  → ingest / extract                ingest.py + extraction_pipeline                ⚠️ HUMAN GATE by design
+  → link evidence where justified   evidence_registry.link_evidence_to_claim       ⚠️ human judgment
+  → reevaluate                      answer_intake.reevaluate()                     ✅ MOGO-020
+  → escalate when insufficient      Step 9 lanes                                   ⚠️ design only
+```
+
+**Fail-closed properties already guaranteed:** no discovery (the set is a committed file), no link in
+acquired content is ever followed, at most one acquisition per entry per window, per-entry
+idempotency keys, and refusal on unknown fields at both levels.
+
+**Two deliberate human gates remain, and neither should be removed here:**
+
+1. `ingest.py` refuses a manifest with empty `annotations` — *"nothing enters the evidence store
+   until a human (or Claude) has reviewed the extraction judgments."* Re-confirmed as a **designed
+   checkpoint**, not a missing adapter (MOGO-019 Step 5, carried into `BACKLOG-004`).
+2. Linking evidence to a claim triggers confidence recomputation — the input the proposal pipeline
+   consumes. MOGO-020 deliberately never calls it.
+
+**No autonomous strategy mutation, no automatic source authorization, no paper/live authority change
+is anywhere in this loop, and none should be added.**
+
+## S10.6 Can a controlled acquisition safely be attempted next?
+
+**Safely, yes. Usefully, no — and it should not be the next action.**
+
+A controlled cycle against `SRC|youtube|11cd2542b5b0` / `8qwEmE1DwYw` would be *safe*: the gate is
+open, the connector is pinned, the response is size- and type-capped, redirects are refused, and the
+result is content-hashed. It would also be **provably pointless**: the response is deterministic
+public metadata already held byte-identically (`contentHash 0cc6cf59…`), so dedup would reject it,
+and it maps to a source whose extraction is complete.
+
+The single defensible reason to run it is to convert `acquisitionPerformed: false` into a first
+**true** autonomous acquisition — i.e. to test the pipeline end-to-end rather than to gain evidence.
+That is a legitimate but small engineering milestone, and it should be labelled as such rather than
+as research progress.
+
+## S10.7 Minimum implementation — and why the answer is "almost none"
+
+| Question | Answer |
+|---|---|
+| Minimum code to run ONE controlled autonomous acquisition | **~0 new modules.** `platform/runtime/cli.py collect` already builds, validates and submits the approved set, and supports `--dry-run`. The capability, connector, transport, authorization gate and artifact writer all exist. |
+| What is missing technically | Nothing for *metadata*. Everything for *content* — and that is correct, because content is unauthorized. |
+| Expected artifacts | One `RART\|…` (~829 bytes JSON) + one `intake/acquired/<sha256>.json`, both hash-named |
+| Dedup / provenance protection | Content-hash filename collides with the existing artifact; `provenance.acquisitionPerformed` would flip to `true` and `originClass` would leave `OPERATOR_SUPPLIED_LOCAL_INTAKE` |
+| How success would be measured | `networkAccessPerformed: true`, response within limits, hash matches the known document, **0 new claims**, **0 blockers closed**, TJR still BLOCKED/16 |
+| Files that would change | `platform/scheduling/*` untouched; only new artifact + acquired records. **No source file needs modification.** |
+
+## S10.8 What actually unblocks research — in priority order
+
+The bottleneck is an **operator decision and a source supply**, not code:
+
+1. **Licensing decision on TJR content** (`proposals/README.md` open Decision #2). Until resolved, no
+   TJR transcript can be acquired or ingested, and `risk_rule` stays at zero evidence permanently.
+2. **Rule on `XCONTRA|20260728|001`** — one operator ruling clears the `setup_requirement`
+   CONFLICTED status *and* the blocking-contradiction blocker. Cheapest blocker reduction available,
+   and it needs no acquisition at all.
+3. **Supply a TJR risk-management source.** `risk_rule` is MISSING with 0 claims and 0 evidence; it
+   is a REQUIRED category, and nothing in the authorized surface can close it.
+4. **Metadata-only channel-catalogue authorization** (a *recommendation*, not an action — this step
+   widened nothing). Catalogue metadata would let `build_research_queue.py` / `prioritize_sources.py`
+   — both built and idle at **0 candidates** — discover and rank which TJR videos are worth a
+   per-source licensing decision, without touching restricted content.
+
+Autonomous acquisition becomes worth building at step 4, not before.
+
+## S10.9 Step 9 dependency preserved
+
+**EvidenceQuestion origin/provenance remains an unmet autonomy dependency.** `EvidenceQuestion` has
+no `origin` field; only 2 of 17 unresolved TJR questions are detector-generated, and a naive staleness
+check would have auto-retired 11 hand-authored human findings (§S9.3). Any future autonomous loop —
+acquisition or adjudication — must satisfy that precondition before it may act on a question. This
+finding is unchanged by Step 10 and is recorded in `BACKLOG-004` as part of the same dependency set.
+
+## S10.10 Step 10 changes
+
+**Zero code changes. Zero acquisitions. Zero production research changes.** All findings came from
+reading committed records and existing read-only entry points. Nothing was fetched; no network
+access was performed.
+
+Production unchanged: 281 questions (279 unanswered / 1 answered / 1 pre-existing
+partially_answered), links **416**, proposals **0**, EQ lifecycle events **1**,
+`XCONTRA|20260728|001` `open`/`blocking`/unresolved, TJR **BLOCKED / 16**, ALEX drift **0**,
+research authorization **unchanged and not widened**, paper and live-money **NOT AUTHORIZED**.
+
+---
+---
+
+# STEP 11 — GOVERNED CONTRADICTION REVIEW: `XCONTRA|20260728|001`
+
+**Status:** REVIEW + PREVIEW ONLY · **NOT RESOLVED** · ZERO MUTATION · ZERO CODE CHANGES
+**Date:** 2026-08-13
+**HEAD:** `cd424be7642e1939c99f7e3f573eaaee58bc9408`
+
+## S11.1 Reconstruction
+
+| Field | Value |
+|---|---|
+| Contradiction | `XCONTRA\|20260728\|001` · `DIRECTIONAL` · `blocking` · `open` |
+| Detected | 2026-07-28T02:23:09Z · `scopeOverlap: unknown` · `resolution: null` · `reviewedAt: null` |
+| Side A | `CLAIM\|ALEX_G\|20260728\|025` — `failure_condition`, `emerging` (22.0), `pending_review` |
+| Side B | `CLAIM\|TJR\|20260727\|006` — `setup_requirement`, `emerging` (22.0), `pending_review` |
+
+**Side A claim text:** *"No consistent strategy can be built on trading liquidity sweeps themselves."*
+Supported by 1 link: `EV|EVSRC|ALEX_G|20260728|002|013`, `direct_explicit`, `partially_verified`.
+
+**Side B claim text:** *"The strategy is based on liquidity sweeps."*
+Supported by 1 link: `EV|EVSRC|TJR|20260727|001|008`, `direct_explicit`, `partially_verified`.
+
+Neither claim carries `timeframe`, `session`, `marketCondition` or `strategyFamilyId` — both are
+unscoped, which is why `scopeOverlap` is `unknown`.
+
+### OBSERVED EVIDENCE — verbatim, all `direct_explicit`, in-corpus
+
+**Alex G (`EVSRC|ALEX_G|20260728|002`):**
+
+| Item | Excerpt |
+|---|---|
+| `\|013` | *"There's no way that you can have a specific strategy to trade **solely** off of these sweeps."* |
+| `\|014` | *"There is no way that you can **anticipate** for a move like this to happen."* |
+| `\|016` | *"I go enter a position when I have a **confirmation**."* |
+| `\|017` | *"**Waiting for a liquidity sweep to enter a position** is almost like playing defense in trading. And **waiting for a confirmation** in trading to enter the position is playing offense."* |
+| `\|019` | *"what would be a confirmation? A bearish candlestick confirming that it's going in that direction"* |
+| `\|021` | *"Is it worth waiting for this liquidity grab to happen and miss out on every single one of these opportunities?"* |
+
+**TJR (`EVSRC|TJR|20260727|001`):**
+
+| Item | Excerpt |
+|---|---|
+| `\|008` | *"My strategy is based off of liquidity sweeps."* |
+| `\|010` | *"the **first thing** that I'm looking for is a liquidity sweep"* |
+| `\|011` | *"And I'm looking for a liquidity sweep every single time."* |
+| `\|015` | *"We wait for a fiveminut **confirmation confluence**."* |
+| `\|023` | *"When the liquidity sweep happens during pre-market, I am **always going to wait** for a low time frame manipulation."* |
+| `\|036` | *"We want to see a one minute **confirmation confluence**."* |
+
+### INTERPRETATION — MOGO's reading, explicitly labelled as such
+
+Alex G's own qualifiers are **"solely"** (`|013`) and **"anticipate"** (`|014`); the normalized claim
+preserves this as **"themselves"**. His stated method is to enter on **confirmation** (`|016`, `|019`).
+
+TJR uses a sweep as the **first screening condition** (`|010`, `|011`) and then **requires** a
+confirmation confluence before entry (`|015`, `|036`, `|023`). On his own preserved evidence, TJR
+does **not** trade solely off sweeps.
+
+So the literal contradiction depends on equating TJR's *"based off of"* with Alex G's *"solely off
+of"* — an equation TJR's own corpus does not support. **Both educators require confirmation before
+entry.**
+
+### THE ACTUAL CONFLICT — what survives the above
+
+A real, narrower disagreement remains and is directly evidenced: Alex G positively **disprefers**
+sweep-gated entry even when confirmation follows — `|017` frames waiting for a sweep as *"playing
+defense"*, and `|021` asks whether it is *"worth waiting for this liquidity grab to happen and miss
+out on every single one of these opportunities"*. TJR requires a sweep **every single time**
+(`|011`).
+
+That is a **methodological preference about a screening condition**, not a claim of impossibility.
+
+### UNCERTAINTY
+
+* **Neither educator addressed the other.** Both statements are one-way; there is no exchange.
+* Both claims are **unscoped** — no timeframe, session, market condition or strategy family — so the
+  scope overlap genuinely cannot be computed from the records.
+* Each side rests on **exactly one supporting link**, `emerging` confidence (22.0), `pending_review`
+  status, `partially_verified` provenance, and — for TJR — a **single-source corpus** (`EQ|20260727|011`
+  records that ceiling).
+* Alex G is discussing index/FX price action generally; TJR is discussing NYSE-open index trading.
+  Whether the two contexts are comparable is not established by any record.
+* **Decisively: no new evidence has arrived since detection.** The evidence set on 2026-08-13 is
+  identical to the set on 2026-07-28.
+
+### Affected research fields and current blocker consequence
+
+`CLAIM|TJR|20260727|006` is the **only** TJR claim implicated in an open blocking contradiction, and
+it is a `setup_requirement`. Via `_category_status`'s `conflicted_claim_ids`, that single claim forces
+the **REQUIRED** category `setup_requirement` to `CONFLICTED`.
+
+It therefore produces **two** of TJR's 16 blockers:
+
+* `BLOCKING_CONTRADICTION|XCONTRA|20260728|001`
+* `REQUIRED_CATEGORY_CONFLICTED|setup_requirement`
+
+## S11.2 Viable existing rulings
+
+No new status or enum is proposed. From `evc.CONTRADICTION_RULINGS`:
+
+| Ruling | Target status | Forecast consequence (measured, TJR corpus) |
+|---|---|---|
+| `resolved` | `resolved_by_owner` | TJR **16 → 15**. Removes both blockers above; `setup_requirement` **CONFLICTED → AMBIGUOUS** (still a REQUIRED-category blocker, via `EQ\|20260727\|017`). Asserts the conflict is settled. |
+| `scope_qualified` | `accepted_as_context_dependent` | **Identical blocker effect: TJR 16 → 15**, same two blockers removed, same `AMBIGUOUS` outcome. Asserts only that both hold in their own context. Also sets `scopeOverlap: partial`. |
+| `leave_open` | `open` (unchanged) | TJR **16 → 16**. Records that a human reviewed it, sets `reviewedAt`, leaves `resolution: null`. No blocker change. |
+| `superseded` | `superseded` | **Not applicable** — neither claim supersedes the other; no temporal drift, no replacement record. |
+
+`resolved` and `scope_qualified` are **equivalent in blocker effect** but **not** in what they
+assert. `scope_qualified` is the weaker and more defensible of the two.
+
+### A behavioural detail worth recording
+
+For a **cross-corpus** contradiction, `preview()` resolves `corpusTraderId` from **claim A's owner** —
+here `ALEX_G` — so its headline reevaluation reports the **ALEX_G** corpus (207 blockers), not TJR.
+The TJR-side forecast above was therefore computed explicitly via `_prospective_index()` +
+`_reevaluate_index()`, both read-only. This is a **reporting limitation, not a correctness defect**:
+the ruling itself is corpus-agnostic and nothing was mis-forecast. Worth a small future improvement
+(preview could forecast both corpora for a cross-corpus record); **not fixed here**, as Step 11
+forbids code changes absent a blocking defect.
+
+## S11.3 Recommendation — **LEAVE OPEN**
+
+**I do not recommend resolving this contradiction on the current evidence.**
+
+The evidence for reconciliation is genuinely stronger than the detection-time rationale credited:
+Alex G's own word is *"solely"*, and both corpora independently show a confirmation requirement
+before entry. A reasonable operator could rule `scope_qualified` on that basis.
+
+But four things argue against MOGO recommending it:
+
+1. **No new evidence exists.** The corpus is byte-identical to detection day. Changing the ruling now
+   would be changing the *interpretation*, not responding to *evidence*.
+2. **The detection-time rationale already considered and rejected this exact reconciliation** — it
+   names the anticipate-vs-confirm distinction explicitly and still chose `blocking`, on the stated
+   ground that *"the reconciliation is MOGO's reading, not either educator's statement."* That
+   judgment was correct then and nothing has changed.
+3. **A real disagreement survives the reconciliation** (`|017`, `|021` vs `|011`) — Alex G thinks
+   sweep-gating costs opportunities; TJR requires it every time. Ruling `resolved` would paper over
+   a live methodological difference.
+4. **The blocker reduction is exactly the wrong incentive.** This ruling removes 2 of 16 blockers,
+   including one on a REQUIRED category — the single largest cheap reduction available. That is
+   precisely when to be most sceptical, not least. **Scientific correctness outranks blocker
+   reduction.**
+
+**What would settle it**, in ascending order of strength: an explicit operator scope ruling (a
+governance decision, not an evidence finding); a direct-trader clarification from either educator
+about the other's method; or independent evidence of Alex G addressing sweep-gated-plus-confirmation
+entry specifically.
+
+`leave_open` is a real, recorded decision — not a deferral. It sets `reviewedAt`, appends an
+append-only lifecycle event with the operator's reasoning, and leaves `resolution: null` so an open
+contradiction never looks resolved.
+
+## S11.4 Preview — `leave_open` (recommended)
+
+```
+contradiction : XCONTRA|20260728|001
+ruling        : leave_open        operator : operator:joemogollon   (PROPOSED)
+sourceClaimIds: ['CLAIM|ALEX_G|20260728|025', 'CLAIM|TJR|20260727|006']
+sourceClaimsUnchanged : True
+
+CHANGED FIELDS (forecast only)
+  reviewedAt     None -> '2026-08-13T20:02:50Z'
+  status         unchanged ('open')     resolution unchanged (null)
+
+FORECAST
+  TJR eligibility : BLOCKED / 16  ->  BLOCKED / 16   (no blocker change)
+  blockers removed: none
+
+previewToken : 64f30c752f3617ea0bae6054f1b477188a5159217934d03030a3812506d5ae10
+```
+
+For comparison only — **not recommended** — `scope_qualified` (`scopeOverlap: partial`) forecasts
+TJR **16 → 15**, removing `BLOCKING_CONTRADICTION|XCONTRA|20260728|001` and
+`REQUIRED_CATEGORY_CONFLICTED|setup_requirement`, with token
+`8bd29d3dc7acfcbbda2a27e503d692069254fb2397a8f6d3b8a37eb938991fc5`. Both previews wrote nothing.
+
+## S11.5 Zero-mutation verification
+
+SHA-256 digest over every file under `evidence/` taken before and after **all three** forecast
+probes: **identical**.
+
+| Check | Value |
+|---|---|
+| `XCONTRA\|20260728\|001` | `open` / `blocking` / `resolution: null` / `reviewedAt: null` / `scopeOverlap: unknown` |
+| `EQ\|20260727\|014` | `answered` / `answered` |
+| TJR eligibility | **BLOCKED / 16** |
+| EvidenceLinks | **416** |
+| RuleCandidateProposal | **0** |
+| Production EQ lifecycle events | **1** |
+| Lifecycle events for this contradiction | **1** (its original `created`) |
+| Evidence integrity | `{INFO:0, WARNING:0, ERROR:0, FATAL:0}` |
+| ALEX drift | **0** — 63 functions, 4 constants |
+| Campaign C1 | intact — 1,160 / 1,160 |
+| Paper / live-money authority | **NOT AUTHORIZED** — unchanged |
+| Code changes | **none** |
+
+## S11.6 Awaiting decision
+
+**The contradiction was NOT resolved.** Awaiting Joe's ruling: `LEAVE OPEN` (recommended),
+`SCOPE-QUALIFIED`, `RESOLVED`, or `MORE RESEARCH`.
+
+**Operator responded `LEAVE OPEN` — see Step 12.**
+
+---
+---
+
+# STEP 12 — GOVERNED LEAVE_OPEN RULING COMMITTED
+
+**Status:** COMMITTED TO PRODUCTION RESEARCH STATE · CONTRADICTION **NOT RESOLVED** · NOT GIT-COMMITTED
+**Date:** 2026-08-13
+**HEAD:** `cd424be7642e1939c99f7e3f573eaaee58bc9408` (unchanged — no git commit made)
+
+## S12.1 The operator decision
+
+| Field | Value |
+|---|---|
+| **Operator** | Joe (`operator:joemogollon`) |
+| **Decision** | **LEAVE OPEN** |
+| **Contradiction** | `XCONTRA\|20260728\|001` |
+| **Preview token** | `64f30c752f3617ea0bae6054f1b477188a5159217934d03030a3812506d5ae10` |
+| **Ruling recorded** | `leave_open` → status stays `open` |
+
+### The exact narrow finding accepted
+
+> Existing governed evidence does not justify resolving or scope-qualifying this contradiction. A
+> genuine methodological difference remains, while the claims are insufficiently scoped and the
+> available evidence cannot establish whether their scopes are actually comparable.
+
+**No additional reconciliation is inferred.** MOGO's partial-reconciliation reading (§S11.1) remains
+exactly what the detection-time rationale called it — MOGO's reading, not either educator's
+statement — and it has been recorded as reviewed, not adopted.
+
+## S12.2 Pre-commit state check
+
+The token was verified still valid and material state unchanged before `commit()` was invoked:
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| `XCONTRA\|20260728\|001` | open / blocking / `resolution: null` | `open` / `blocking` / `null` / `reviewedAt: null` | ✅ |
+| `EQ\|20260727\|014` | answered | `answered` | ✅ |
+| TJR | BLOCKED / 16 | **BLOCKED / 16** | ✅ |
+| EvidenceLinks | 416 | **416** | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Production EQ lifecycle events | 1 | **1** | ✅ |
+| ALEX drift | 0 | **0** — 63 functions, 4 constants | ✅ |
+| Campaign C1 | intact | 1,160 / 1,160 | ✅ |
+
+## S12.3 The commit
+
+Executed through the **public `commit()` path** with the exact approved token and a byte-identical
+rationale. No private writer was invoked.
+
+```
+outcome         : APPLIED
+contradictionId : XCONTRA|20260728|001
+ruling          : leave_open
+previewToken    : 64f30c752f3617ea0bae6054f1b477188a5159217934d03030a3812506d5ae10
+```
+
+## S12.4 Before / after
+
+| Field | Before | After |
+|---|---|---|
+| `status` | `open` | **`open` — deliberately unchanged** |
+| `resolution` | `null` | **`null` — deliberately unchanged** |
+| `severity` | `blocking` | `blocking` — unchanged |
+| `scopeOverlap` | `unknown` | `unknown` — unchanged |
+| `reviewedAt` | `null` | **`2026-08-13T21:00:25Z`** |
+| `rationale` (detection-time) | *"CROSS-EDUCATOR, FOUNDATIONAL…"* | **unchanged, byte-identical** |
+| `claimAId` / `claimBId` | both | **unchanged** |
+
+**`reviewedAt` is the only mutated field.** This is exactly the design intent of `leave_open`: it
+records that a human looked, without making an open contradiction look resolved. The operator's
+reasoning lives in append-only history, not in `resolution`.
+
+## S12.5 Lifecycle event
+
+**`LCEVT|CONTRADICTION_RECORD|XCONTRA|20260728|001|002`** — sequence `002`, appended after the
+original `created` event.
+
+```
+entityType : CONTRADICTION_RECORD      eventType : status_changed
+actor      : operator:joemogollon
+prior→new  : open → open               (a recorded review, not a transition)
+timestamp  : 2026-08-13T21:00:25Z
+metadata   : ruling=leave_open
+             decisionFingerprint=5e0ce0830bebbb06742a5c8fa1ee3cf36e143ac572c9d4a04e96d6fd6239a251
+             scopeOverlap=unknown
+             intakeSchemaVersion=mogo.governed-answer-intake.v1
+```
+
+Full history for this record is now:
+
+| Event | Type | Transition | Actor |
+|---|---|---|---|
+| `…\|001` | `created` | `None → open` | `ingest-cli` |
+| `…\|002` | `status_changed` | `open → open` | **`operator:joemogollon`** |
+
+The operator's rationale is preserved verbatim in the event's `reason`.
+
+## S12.6 Verified persisted effects
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| `XCONTRA\|20260728\|001` status | remains `open` | **`open`** | ✅ |
+| `resolution` | remains `null` | **`null`** | ✅ |
+| Review metadata | recorded | `reviewedAt` + event `002` | ✅ |
+| Contradiction lifecycle events | exactly the expected one appended | **2 total** (1 pre-existing + 1 new) | ✅ |
+| TJR eligibility | BLOCKED / 16 | **BLOCKED / 16 — unchanged** | ✅ |
+| EvidenceLinks | 416 | **416** | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Claims / evidence | unchanged | **341 / 416** | ✅ |
+| `EQ\|20260727\|014` | unchanged | `answered` / `answered` | ✅ |
+| Production EQ lifecycle events | 1 | **1** | ✅ |
+| Evidence integrity | clean | `{INFO:0, WARNING:0, ERROR:0, FATAL:0}` | ✅ |
+| ALEX drift | 0 | **0** | ✅ |
+| Campaign C1 | intact | **1,160 / 1,160** | ✅ |
+| Paper / live-money authority | unchanged | **NOT AUTHORIZED** | ✅ |
+| Research authorization | unchanged | 3 records, 2 metadata-only | ✅ |
+
+**No discrepancy between the approved preview and the persisted effect.** The forecast said
+`reviewedAt` set, status unchanged, blockers **16 → 16**. That is exactly what happened.
+
+**Exactly two evidence files changed:**
+
+```
+ M docs/trader-intelligence/evidence/contradictions/XCONTRA_20260728_001.json
+?? docs/trader-intelligence/evidence/lifecycle/8022825b4f5384954e86beed77a02eb1.json
+```
+
+Lifecycle total **4,473 → 4,474**.
+
+## S12.7 Idempotency
+
+The identical approved ruling was replayed with the same token:
+
+```
+outcome                 : DUPLICATE_NOOP
+evidence tree unchanged : True   (SHA-256 over every path+bytes under evidence/)
+lifecycle events        : 4474 -> 4474
+events for this record  : 2  ['|001', '|002']
+status / resolution     : open / None
+```
+
+No duplicate ruling, no duplicate event, no alteration of legitimate persisted state — detected by
+`decisionFingerprint` before any write.
+
+## S12.8 Zero strategy / trading side effects
+
+0 RuleCandidateProposal · 0 new EvidenceLinks · 0 claim mutations · 0 evidence mutations · no
+strategy specification · no backtest artifact · no paper-trade artifact · ALEX unmodified (drift 0,
+cutoff `2026-08-11T02:43:57.894Z`) · TJR RESEARCH ONLY at BLOCKED / 16 · paper and live-money
+**NOT AUTHORIZED** · research authorization not widened.
+
+## S12.9 What this ruling means
+
+**The contradiction is still open and still blocking.** MOGO has not decided that Alex G and TJR
+agree, and has not narrowed either claim's scope. What changed is that the record now carries a
+timestamped, attributed statement that a human reviewed it against the evidence and concluded the
+evidence is insufficient to settle it — and *why*.
+
+This is the second governed production decision in MOGO's history, and the first to deliberately
+change nothing except the audit trail. **A decision not to decide is still a decision, and it is now
+recorded as one.**
+
+## S12.10 Status
+
+**One ruling performed. Stopped.** No further contradiction or EvidenceQuestion was reviewed.
+
+---
+
+# STEP 13 — CHECKPOINT THE CONTRADICTION REVIEW
+
+**Parent HEAD:** `cd424be7642e1939c99f7e3f573eaaee58bc9408`
+**Commit message:** `MOGO-020: record governed contradiction review`
+**Transaction checkpoint, not milestone completion.**
+
+## S13.1 What this checkpoint preserves
+
+This is **MOGO's second governed production decision**, and its **first governed `LEAVE_OPEN`
+contradiction review**.
+
+The governed production decision record to date:
+
+| # | Date | Target | Decision | Effect |
+|---|---|---|---|---|
+| 1 | 2026-08-13 | `EQ\|20260727\|014` | **ACCEPT** | TJR blockers 17 → 16 |
+| 2 | 2026-08-13 | `XCONTRA\|20260728\|001` | **LEAVE_OPEN** | TJR blockers 16 → **16** |
+
+Decision #2 is the more important of the two for governance. It demonstrates that the MOGO-020
+intake path can record a human's decision **not to act** — with full attribution, rationale and
+append-only history — rather than only decisions that advance a metric. The contradiction remains
+`open` and `blocking`; `resolution` remains `null`; only `reviewedAt` moved.
+
+**A decision not to decide is still a decision, and MOGO can now record one.**
+
+## S13.2 Pre-commit verification
+
+Working tree contained **exactly** the three expected Step 12 changes and nothing else:
+
+```
+ M MOGO_020_GOVERNED_RESEARCH_ANSWER_INTAKE.md
+ M docs/trader-intelligence/evidence/contradictions/XCONTRA_20260728_001.json
+?? docs/trader-intelligence/evidence/lifecycle/8022825b4f5384954e86beed77a02eb1.json
+?? MOGO-019-ALEX-IG-CASE-002-REPORT.md          <- excluded, unrelated
+```
+
+The untracked lifecycle file was confirmed to be the correct artifact rather than a stray: its
+hash-derived filename recomputes exactly from its own `eventId`
+(`LCEVT|CONTRADICTION_RECORD|XCONTRA|20260728|001|002` → `8022825b4f5384954e86beed77a02eb1.json`,
+**MATCH**).
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| `XCONTRA\|20260728\|001` | open / blocking / `resolution: null` | **`open` / `blocking` / `null`** | ✅ |
+| `reviewedAt` | populated | **`2026-08-13T21:00:25Z`** | ✅ |
+| Contradiction lifecycle history | contains the new reviewed `open→open` event | `\|001` created + **`\|002` status_changed, `operator:joemogollon`** | ✅ |
+| TJR | BLOCKED / 16 | **BLOCKED / 16** | ✅ |
+| `EQ\|20260727\|014` | answered | **answered** | ✅ |
+| EvidenceLinks | 416 | **416** | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Production EQ lifecycle events | 1 | **1** | ✅ |
+| Lifecycle total | 4,474 | **4,474** | ✅ |
+| Evidence integrity | clean | `{INFO:0, WARNING:0, ERROR:0, FATAL:0}` | ✅ |
+| ALEX drift | 0 | **0** — 63 functions, 4 constants | ✅ |
+| Campaign C1 | intact | **19 suites · 1,160 / 1,160 · 0 failed** | ✅ |
+| TJR paper trading | NOT AUTHORIZED | NOT AUTHORIZED | ✅ |
+| Live-money trading | NOT AUTHORIZED | NOT AUTHORIZED | ✅ |
+| Research authorization | unchanged | 3 records, 2 metadata-only | ✅ |
+
+## S13.3 Committed scope — 3 files
+
+| File | Kind |
+|---|---|
+| `docs/trader-intelligence/evidence/contradictions/XCONTRA_20260728_001.json` | the reviewed ContradictionRecord (`reviewedAt` only) |
+| `docs/trader-intelligence/evidence/lifecycle/8022825b4f5384954e86beed77a02eb1.json` | the append-only ruling event |
+| `MOGO_020_GOVERNED_RESEARCH_ANSWER_INTAKE.md` | Steps 11–13 record |
+
+**Excluded:** `MOGO-019-ALEX-IG-CASE-002-REPORT.md` — unrelated pre-existing artifact, still
+untracked. No code, schema, test, ALEX file, authorization file, or other evidence record is in this
+commit.
+
+## S13.4 Status
+
+**MOGO-020 remains ACTIVE and is NOT complete.** No `mogo-020-complete` tag and no
+milestone-completion tag was created. 16 TJR blockers remain, and
+**`XCONTRA|20260728|001` is still open and still blocking** — by decision.
