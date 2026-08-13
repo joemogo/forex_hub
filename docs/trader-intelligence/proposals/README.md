@@ -16,6 +16,7 @@ itself.
 | [BACKLOG-001 — Replay Validation](BACKLOG-001-replay-validation.md) | Backlog | Gated on pipeline review + replay authorization |
 | [BACKLOG-002 — TJR Source Acquisition](BACKLOG-002-tjr-source-acquisition.md) | Backlog | Gated on licensing resolution |
 | [BACKLOG-003 — Pipeline Hardening](BACKLOG-003-pipeline-hardening.md) | Backlog | 17 items, trigger-gated |
+| [BACKLOG-004 — Human-Assisted Research Ingestion & Decision-Difference Analysis](BACKLOG-004-human-assisted-research-ingestion.md) | Backlog | Milestone number **deferred**; eligible after governed research intake, standardized research-package interface and artifact-ingestion governance mature |
 | [REPLAY-CANDIDATES](REPLAY-CANDIDATES.md) | Specifications | 9 candidates, charter format; gated on replay authorization |
 | [MOGO-IMPLEMENTATION-CANDIDATES](MOGO-IMPLEMENTATION-CANDIDATES.md) | Recommendations | 12 engines assessed; 4 buildable now, 8 evidence-blocked |
 
@@ -40,7 +41,15 @@ Toolkit decision (owner) ──────────►  PROPOSAL-002  ──
                                             └──────────►  manifest schema ──► PROPOSAL-003 hook
 
 source #3 ─────────────────────────►  PROPOSAL-003  ──►  cross-trader comparison
+
+MOGO-020 governed answer intake ──┐
+artifact-ingestion governance ────┼─►  BACKLOG-004  ──►  Decision-Difference dataset
+standardized research package ────┘   (milestone number deferred)
 ```
+
+`BACKLOG-004` is the only item here whose milestone number is deliberately unassigned: three of its
+dependencies do not exist yet, so any number would imply a sequence position the dependency table
+does not support. **MOGO-020 supplies foundational dependencies but does not implement it.**
 
 ## The four open owner decisions
 

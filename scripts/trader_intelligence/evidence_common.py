@@ -58,8 +58,14 @@ _CONTRADICTING_RELATIONSHIPS = {"contradicts"}
 _WEAKENING_RELATIONSHIPS = {"weakens"}
 _CONTEXTUAL_RELATIONSHIPS = {"contextualizes", "qualifies", "supersedes", "unresolved"}
 
+# NOTE (MOGO-020 Step 1 audit finding, deliberately NOT repaired here):
+# "INTAKE_MANIFEST" exists in this constant but has never been added to
+# evidence-lifecycle-event.schema.json's entityType enum or eventId pattern.
+# That pre-existing code/schema drift is reported, not fixed -- repairing it is
+# outside MOGO-020's mandate and belongs to a separate operator decision.
+# "EVIDENCE_QUESTION" (MOGO-020 Step 2) WAS added to both places together.
 LIFECYCLE_ENTITY_TYPES = ["EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "EVIDENCE_CLAIM_LINK", "CONTRADICTION_RECORD",
-                          "INTAKE_MANIFEST"]
+                          "INTAKE_MANIFEST", "EVIDENCE_QUESTION"]
 LIFECYCLE_EVENT_TYPES = ["created", "status_changed", "confidence_recomputed", "superseded", "corrected", "linked", "unlinked", "reviewed", "other"]
 
 CONTRADICTION_TYPES = ["DEFINITIONAL", "NUMERIC_THRESHOLD", "CONDITIONAL_SCOPE", "TEMPORAL_DRIFT", "DIRECTIONAL", "SCOPE_MISMATCH", "OTHER"]
@@ -182,6 +188,34 @@ REVIEW_ACTIONS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# MOGO-020 (governed research answer intake) vocabularies.
+#
+# These are the HUMAN semantic decisions the machine records -- never the ones
+# it makes. Deliberately three values, mapped onto the EvidenceQuestion statuses
+# that already exist (QUESTION_ANSWER_STATUSES / QUESTION_RESEARCH_STATUSES);
+# no new question status was invented for this milestone.
+# ---------------------------------------------------------------------------
+
+ADJUDICATION_DECISIONS = ["accepted", "rejected", "uncertain"]
+
+# The rulings an operator may record on a ContradictionRecord. Every target is
+# an EXISTING CONTRADICTION_STATUSES value; "leave_open" is a real recorded
+# decision that deliberately changes no status at all.
+CONTRADICTION_RULINGS = {
+    "resolved": "resolved_by_owner",
+    "scope_qualified": "accepted_as_context_dependent",
+    "superseded": "superseded",
+    "leave_open": "open",
+}
+
+# A ruling/adjudication must be attributable to a HUMAN. Machine actors used
+# elsewhere in the pipeline ("pipeline", "ingest", ...) are bare names; a human
+# decision is namespaced, matching the convention already used by
+# docs/trader-intelligence/authorizations/*.json ("operator:joemogollon").
+HUMAN_ACTOR_PATTERN = re.compile(r"^(operator|reviewer):[A-Za-z0-9_.@-]+$")
+
+
 class EvidenceValidationError(ValueError):
     """Raised on a fatal creation error. Carries structured findings (dicts
     matching evidence-integrity-report.schema.json's finding shape) so a
@@ -191,6 +225,19 @@ class EvidenceValidationError(ValueError):
     def __init__(self, message, findings=None):
         super().__init__(message)
         self.findings = findings or []
+
+
+def require_human_actor(actor, field="actor"):
+    """Fail closed unless `actor` is an explicitly namespaced human identity
+    (MOGO-020). A missing, empty, non-string or machine actor is refused rather
+    than defaulted -- an unattributed semantic decision is not a governed
+    decision."""
+    if not isinstance(actor, str) or not HUMAN_ACTOR_PATTERN.match(actor):
+        raise EvidenceValidationError(
+            "%s %r is not an explicit human identity; expected 'operator:<name>' or "
+            "'reviewer:<name>'. A semantic decision must be attributable to a person."
+            % (field, actor))
+    return actor
 
 
 # ---------------------------------------------------------------------------

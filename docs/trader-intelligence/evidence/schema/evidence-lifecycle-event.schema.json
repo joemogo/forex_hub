@@ -9,12 +9,13 @@
   "properties": {
     "eventId": {
       "type": "string",
-      "pattern": "^LCEVT\\|(EVIDENCE_SOURCE|EVIDENCE_ITEM|CLAIM|EVIDENCE_CLAIM_LINK|CONTRADICTION_RECORD)\\|.+\\|\\d{3,}$",
+      "pattern": "^LCEVT\\|(EVIDENCE_SOURCE|EVIDENCE_ITEM|CLAIM|EVIDENCE_CLAIM_LINK|CONTRADICTION_RECORD|EVIDENCE_QUESTION)\\|.+\\|\\d{3,}$",
       "description": "Format: LCEVT|{entityType}|{entityId}|{seq}."
     },
     "entityType": {
       "type": "string",
-      "enum": ["EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "EVIDENCE_CLAIM_LINK", "CONTRADICTION_RECORD"]
+      "description": "MOGO-020 Step 2 adds EVIDENCE_QUESTION so that a human adjudication of an EvidenceQuestion (accepted/rejected/uncertain) is recorded in this one existing append-only history rather than a second event system. EvidenceQuestions are created WITHOUT a lifecycle event (evidence_questions.create_question has never emitted one), so a question's genesis lifecycle event is its first 'reviewed' adjudication -- see validate_evidence._GENESIS_EVENT_TYPE_BY_ENTITY_TYPE.",
+      "enum": ["EVIDENCE_SOURCE", "EVIDENCE_ITEM", "CLAIM", "EVIDENCE_CLAIM_LINK", "CONTRADICTION_RECORD", "EVIDENCE_QUESTION"]
     },
     "entityId": { "type": "string" },
     "eventType": {

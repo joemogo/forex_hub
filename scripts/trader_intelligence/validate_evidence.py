@@ -173,6 +173,12 @@ def check_malformed_provenance(sources, items, findings, now):
 
 _GENESIS_EVENT_TYPE_BY_ENTITY_TYPE = {
     "EVIDENCE_CLAIM_LINK": "linked",  # a link's genesis event is "linked", not "created"
+    # MOGO-020: EvidenceQuestions are created WITHOUT a lifecycle event --
+    # evidence_questions.create_question() has never emitted one, and MOGO-020
+    # deliberately did not start backdating a synthetic "created" event onto the
+    # 281 existing records. A question's first lifecycle event is therefore its
+    # first human adjudication, whose eventType is "reviewed".
+    "EVIDENCE_QUESTION": "reviewed",
 }
 
 
