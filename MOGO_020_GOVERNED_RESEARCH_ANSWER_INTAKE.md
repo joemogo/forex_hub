@@ -2237,5 +2237,388 @@ The MOGO-020 commit scope proposed in §S531.9 should now additionally include
 `docs/trader-intelligence/proposals/BACKLOG-004-human-assisted-research-ingestion.md` and
 `docs/trader-intelligence/proposals/README.md`.
 
-**STOP. Roadmap update complete. MOGO-020 remains GREEN and awaiting explicit operator authorization
-to commit.**
+**Roadmap update complete. Checkpoint committed as `634f775c1b759405c1e0898e081825859293325e` and
+pushed to `origin/mogo-main`. MOGO-020 is NOT complete — this was the foundation checkpoint only.**
+
+---
+---
+
+# STEP 6 — FIRST CONTROLLED PRODUCTION PREVIEW
+
+**Status:** PREVIEW ONLY · ZERO PRODUCTION MUTATION · AWAITING ONE OPERATOR DECISION
+**Date:** 2026-08-13
+**HEAD:** `634f775c1b759405c1e0898e081825859293325e`
+
+## S6.0 Verification
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| Repo / branch | forex_hub / `main` | ✅ | ✅ |
+| HEAD | `634f775…` | `634f775c1b759405c1e0898e081825859293325e` | ✅ |
+| Ahead / behind `origin/mogo-main` | 0 / 0 | `0  0` | ✅ |
+| ALEX drift | 0 | **0** — 63 functions, 4 constants | ✅ |
+| Campaign C1 | intact | canonical 1,160/1,160 | ✅ |
+| TJR eligibility | BLOCKED / 17 | **BLOCKED / 17** | ✅ |
+| EvidenceQuestions | 281 | **281** | ✅ |
+| EvidenceLinks | 416 | **416** | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Production EQ lifecycle events | 0 | **0** | ✅ |
+
+The full regression battery was not re-run: the tree is byte-identical to the committed checkpoint
+(`git status` shows only the untracked Instagram report), and no code changed. ALEX drift and the
+canonical gate were re-run because they are cheap relative to their value.
+
+## S6.1 Candidate selection — 3 inspected
+
+TJR carries **18** unresolved EvidenceQuestions. Three were inspected with the governed
+candidate-evidence search (`candidate_search.py`, read-only nomination).
+
+| Candidate | Subject | Why not / why chosen |
+|---|---|---|
+| `EQ\|20260727\|012` | `CLAIM\|TJR\|20260727\|002` — `session_rule`, *"Trades are always taken around the New York Stock Exchange open"* | ❌ **Rejected.** The only nominated evidence (*"I'm always trading New York Stock Exchange open"*) is about **session**, not timeframe. The question asks for a timeframe on a rule whose scope is a session; the honest answer is closer to "the question is a category artifact", which none of the three decisions expresses cleanly. A poor first exercise. |
+| `EQ\|20260727\|013` | `CLAIM\|TJR\|20260727\|027` — `entry_rule`, missing invalidation | ❌ **Rejected.** `entry_rule` is a **REQUIRED** category, so the consequence is not narrow. The nominated evidence describes *entry confirmation*, not invalidation; the closest material (*"as long as we are still staying in the current trend"*, *"the five minute trend is still intact. We haven't closed underneath this low yet"*) only hints at invalidation. Genuinely uncertain, and higher-stakes. |
+| **`EQ\|20260727\|014`** | `CLAIM\|TJR\|20260727\|029` — `target_rule`, *"Targets are the previous draws on liquidity in the direction of the trade"* | ✅ **Chosen.** |
+
+`EQ|20260727|014` satisfies every constraint: unanswered · answerable from existing governed
+evidence · no acquisition required · not `EQ|20260727|015` · does not depend on
+`XCONTRA|20260728|001` (which concerns `CLAIM|TJR|20260727|006`) · and `target_rule` is an
+**optional** category, so the consequence is exactly one blocker.
+
+## S6.2 The proposed decision, separated
+
+### Observed evidence — what the source actually establishes
+
+| Evidence | Directness | Verbatim |
+|---|---|---|
+| `EV\|EVSRC\|TJR\|20260727\|001\|012` | `direct_explicit` | *"whether that's from 1 hour highs and lows, 4hour highs and lows, or session highs and lows, that's what I'm looking for for my draws on liquidity"* |
+| `EV\|EVSRC\|TJR\|20260727\|001\|043` | `direct_demonstrated` | *"You guys can target these five minute highs right here. You can target Asia session highs right here. And then previous day highs right here."* |
+
+Both are TJR-corpus, `partially_verified` provenance, `high` extraction certainty, hash-verified.
+
+### Interpretation — what can reasonably be concluded
+
+The target rule's *draws on liquidity* are drawn from **multiple explicitly named timeframes** —
+1-hour, 4-hour, session, five-minute, and previous-day levels. The rule is therefore **not scoped to
+a single timeframe**, and the claim's null `timeframe` is **correct rather than missing**: the
+absence of one timeframe is the answer, not a gap.
+
+### Uncertainty — what remains unsupported
+
+* The source never states an execution timeframe on which target *evaluation* occurs.
+* The source gives **no selection rule** for choosing among the candidate draws when several exist
+  in the same direction. `EV|001|043` says *"you guys can target"* — permissive, not mechanical.
+* `EV|001|012` describes draws on liquidity in general; it is linked to
+  `CLAIM|TJR|20260727|009`, not to the subject claim. It is cited as the source's own definition of
+  the term the subject claim uses — **not** as direct support for the target rule.
+* Answering this question does **not** make `target_rule` mechanically specifiable. A separate,
+  unraised question about target *selection* would remain open.
+
+### Proposed human decision
+
+**ACCEPT** `EV|EVSRC|TJR|20260727|001|012` + `EV|EVSRC|TJR|20260727|001|043` as answering
+`EQ|20260727|014`, on the reading that the rule is deliberately multi-timeframe.
+
+## S6.3 The real preview (production, read-only)
+
+`answer_intake.preview()` run against `docs/trader-intelligence/evidence`.
+
+```
+action          : question_adjudication      target : EQ|20260727|014
+actor           : operator:joemogollon       decision : accepted   (PROPOSED)
+corpusTraderId  : TJR
+evidenceIds     : EV|EVSRC|TJR|20260727|001|012, EV|EVSRC|TJR|20260727|001|043
+wouldWrite      : True        isAuthorization : False
+
+CHANGED FIELDS (forecast only)
+  answerEvidenceIds  [] -> ['EV|...|012', 'EV|...|043']
+  answerStatus       'unanswered' -> 'answered'
+  researchStatus     'open' -> 'answered'
+  resolvedAt         None -> '2026-08-13T18:10:15Z'
+
+LIFECYCLE EVENT THAT WOULD BE APPENDED
+  LCEVT|EVIDENCE_QUESTION|EQ|20260727|014|001
+  reviewed | actor operator:joemogollon | unanswered -> answered
+
+ELIGIBILITY EFFECT
+  before  BLOCKED / 17      after  BLOCKED / 16
+  eligibility status changes : False
+  blockers removed : ['BLOCKING_QUESTION|EQ|20260727|014']
+  blockers added   : []          retained : 16
+  routing changed  : True
+
+previewToken : fb9a965fc62eadba134d58d803aa53fed3d64709648915f2dad611a1bda859f4
+```
+
+This would be the **first `EVIDENCE_QUESTION` lifecycle event in production** — sequence `001`, with
+`reviewed` as its genesis event, exactly as the Step 2 lifecycle extension designed.
+
+## S6.4 Zero-mutation proof
+
+A SHA-256 digest over every path+bytes under `docs/trader-intelligence/evidence/` was taken
+immediately before and after the preview: **identical**.
+
+| Item | Persisted value after preview |
+|---|---|
+| `EQ\|20260727\|014` | `answerStatus: unanswered` · `researchStatus: open` · `answerEvidenceIds: []` · `resolvedAt: null` — **unchanged** |
+| EvidenceQuestions | **281** (280 unanswered / 1 pre-existing partially_answered) |
+| EvidenceLinks | **416** |
+| RuleCandidateProposal | **0** |
+| Claims / items / sources | **341 / 416 / 12** — unchanged |
+| Lifecycle events | **4,472**; `EVIDENCE_QUESTION` events **0** |
+| `XCONTRA\|20260728\|001` | `open` / `blocking` / `resolution: null` / `reviewedAt: null` |
+| Evidence integrity | `{INFO:0, WARNING:0, ERROR:0, FATAL:0}` |
+| **TJR persisted eligibility** | **BLOCKED / 17** |
+| `git status` | only the untracked Instagram report — **no file changed** |
+
+**Forecast vs persisted:** the preview *forecasts* 16 blockers. Persisted state is still **17**.
+Nothing about the forecast has been written, and it never will be unless a human commits it with the
+token above.
+
+No strategy, backtest, paper-trade or trading artifact was created. ALEX untouched, drift 0. TJR
+authority unchanged. Research authorization unchanged at 2 sources, metadata-only.
+
+## S6.5 Status
+
+**Awaited exactly one operator decision on `EQ|20260727|014`. Operator responded `ACCEPT` — see
+Step 7.**
+
+---
+---
+
+# STEP 7 — FIRST GOVERNED PRODUCTION ADJUDICATION
+
+**Status:** COMMITTED TO PRODUCTION RESEARCH STATE · ONE ADJUDICATION ONLY · NOT GIT-COMMITTED
+**Date:** 2026-08-13
+**HEAD:** `634f775c1b759405c1e0898e081825859293325e` (unchanged — no git commit made)
+
+## S7.1 The operator decision
+
+| Field | Value |
+|---|---|
+| **Operator** | Joe (`operator:joemogollon`) |
+| **Decision** | **ACCEPT** |
+| **EvidenceQuestion** | `EQ\|20260727\|014` |
+| **Preview token** | `fb9a965fc62eadba134d58d803aa53fed3d64709648915f2dad611a1bda859f4` |
+| **Evidence accepted** | `EV\|EVSRC\|TJR\|20260727\|001\|012` (`direct_explicit`) · `EV\|EVSRC\|TJR\|20260727\|001\|043` (`direct_demonstrated`) |
+
+### The exact narrow finding accepted
+
+> **TJR's liquidity-target concept is not scoped to a single timeframe.**
+
+### What this approval explicitly does NOT establish
+
+Recorded verbatim from the operator's authorization, because the boundary of an accepted answer
+matters as much as the answer:
+
+* no mechanical target-selection rule;
+* no execution timeframe;
+* no target priority;
+* no target-selection criteria;
+* no additional inference beyond the Step 6 preview.
+
+## S7.2 Pre-commit state check
+
+Material state was re-verified against the reviewed preview **before** invoking `commit()`:
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| `EQ\|20260727\|014` | unanswered | `unanswered` / `open` / `[]` / `null` | ✅ |
+| EvidenceLinks | 416 | **416** | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Production EQ lifecycle events | 0 | **0** | ✅ |
+| TJR | BLOCKED / 17 | **BLOCKED / 17** | ✅ |
+| `XCONTRA\|20260728\|001` | unchanged | `open` / `blocking` / `null` / `null` | ✅ |
+| ALEX drift | 0 | **0** — 63 functions, 4 constants | ✅ |
+| Campaign C1 | intact | canonical 1,160/1,160 | ✅ |
+
+The token was **not** stale and no material reviewed state had changed, so the commit proceeded.
+
+## S7.3 The commit
+
+Executed through the **public `commit()` path** with the exact approved token and byte-identical
+action arguments. No private writer was invoked directly.
+
+```
+outcome      : APPLIED
+action       : question_adjudication
+questionId   : EQ|20260727|014
+decision     : accepted
+evidenceIds  : ['EV|EVSRC|TJR|20260727|001|012', 'EV|EVSRC|TJR|20260727|001|043']
+previewToken : fb9a965fc62eadba134d58d803aa53fed3d64709648915f2dad611a1bda859f4
+```
+
+## S7.4 Before / after
+
+| Field | Before | After |
+|---|---|---|
+| `answerStatus` | `unanswered` | **`answered`** |
+| `researchStatus` | `open` | **`answered`** |
+| `answerEvidenceIds` | `[]` | **`['EV\|…\|012', 'EV\|…\|043']`** |
+| `resolvedAt` | `null` | **`2026-08-13T18:17:18Z`** |
+
+Every other field on the record — `questionId`, `questionText`, `questionType`, `priority`,
+`reason`, `blockingStatus`, `claimId`, `evidenceIds`, `sourceIds`, `createdAt`, `schemaVersion` —
+is unchanged.
+
+## S7.5 Lifecycle event
+
+**`LCEVT|EVIDENCE_QUESTION|EQ|20260727|014|001`** — the **first `EVIDENCE_QUESTION` lifecycle event
+in production**, sequence `001`, with `reviewed` as its genesis event exactly as the Step 2
+extension designed.
+
+```
+entityType : EVIDENCE_QUESTION      eventType : reviewed
+actor      : operator:joemogollon
+prior→new  : unanswered → answered
+timestamp  : 2026-08-13T18:17:18Z
+metadata   : decision=accepted
+             decisionFingerprint=99eca7b20083bb362f466a4938d03a13a1c8f47eee7604437dcf5ff734ea6cdb
+             evidenceIds=[EV|…|012, EV|…|043]
+             corpusTraderId=TJR
+             intakeSchemaVersion=mogo.governed-answer-intake.v1
+```
+
+The operator's full rationale is preserved verbatim in the event's `reason`.
+
+## S7.6 Verified persisted effects
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| `EQ\|20260727\|014` | answered | **answered** | ✅ |
+| Approved evidence recorded | both IDs | both, sorted | ✅ |
+| Resolved/reviewed metadata | recorded | `resolvedAt` + event | ✅ |
+| EVIDENCE_QUESTION lifecycle events | exactly 1 | **1** | ✅ |
+| EvidenceLinks | 416 | **416** — unchanged | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Claims | unchanged | **341**; `CLAIM\|TJR\|20260727\|029` still `timeframe: null`, `confidenceState: emerging` | ✅ |
+| Source evidence | unchanged | items **416**, sources **12** | ✅ |
+| `XCONTRA\|20260728\|001` | unchanged | `open` / `blocking` / `null` / `null` | ✅ |
+| Deterministic reevaluation | runs | ran post-commit, `available: True` | ✅ |
+| TJR blockers | 17 → 16 | **17 → 16** | ✅ |
+| TJR eligibility | still BLOCKED | **BLOCKED** | ✅ |
+| Strategy / backtest / paper artifact | none | **none** | ✅ |
+| TJR paper trading | NOT AUTHORIZED | NOT AUTHORIZED | ✅ |
+| Live-money trading | NOT AUTHORIZED | NOT AUTHORIZED | ✅ |
+| ALEX drift | 0 | **0** | ✅ |
+| Campaign C1 | intact | **1,160 / 1,160** | ✅ |
+| Research authorization | unchanged | 3 records, still 2 metadata-only | ✅ |
+| Evidence integrity | clean | `{INFO:0, WARNING:0, ERROR:0, FATAL:0}` | ✅ |
+
+**No discrepancy between the approved preview and the persisted effect.** The forecast said
+`17 → 16`, `answered`, one lifecycle event, 416 links, 0 proposals. That is exactly what happened.
+
+**Exactly two evidence files changed:**
+
+```
+ M docs/trader-intelligence/evidence/questions/EQ_20260727_014.json
+?? docs/trader-intelligence/evidence/lifecycle/4410d84db654d65b745e622e6d4f2223.json
+```
+
+Question distribution is now **279 unanswered / 1 answered / 1 pre-existing partially_answered**.
+Lifecycle total **4,472 → 4,473**.
+
+## S7.7 Idempotency
+
+The identical approved operation was replayed with the same token:
+
+```
+outcome                 : DUPLICATE_NOOP
+evidence tree unchanged : True   (SHA-256 over every path+bytes under evidence/)
+lifecycle events        : 4473 -> 4473
+EVIDENCE_QUESTION events: 1  ['LCEVT|EVIDENCE_QUESTION|EQ|20260727|014|001']
+question still          : answered / ['EV|…|012', 'EV|…|043']
+```
+
+No duplicate adjudication, no duplicate lifecycle event, and **no alteration of legitimate persisted
+state** — the replay was a true no-op, detected by `decisionFingerprint` before any write.
+
+## S7.8 What this does and does not mean
+
+**It means:** one of TJR's 17 research blockers is closed by governed evidence, adjudicated by a
+named human, with the reasoning and the exact supporting excerpts preserved in append-only history.
+
+**It does not mean:** TJR is closer to tradable in any operational sense. Eligibility is still
+**BLOCKED**, with 16 blockers remaining — including `risk_rule` **MISSING**, `setup_requirement`
+**CONFLICTED**, `entry_rule` and `stop_rule` **AMBIGUOUS**, and the blocking cross-corpus
+contradiction `XCONTRA|20260728|001`. `CLAIM|TJR|20260727|029` still carries `timeframe: null`, which
+is now *correct* rather than *missing*: the accepted finding is that the concept is multi-timeframe
+by design.
+
+**ACCEPTED ANSWER ≠ STRATEGY RULE** held: 0 proposals, 0 links, 0 claim mutations.
+
+## S7.9 Status
+
+**One production adjudication performed. Stopped.** No further EvidenceQuestion was selected or
+previewed.
+
+---
+
+# STEP 8 — CHECKPOINT THE FIRST PRODUCTION ADJUDICATION
+
+**Parent HEAD:** `634f775c1b759405c1e0898e081825859293325e`
+**Commit message:** `MOGO-020: record first governed TJR adjudication`
+**This is a transaction checkpoint, not milestone completion.**
+
+## S8.1 This is the first successful production governed adjudication
+
+`EQ|20260727|014` is the **first EvidenceQuestion in MOGO's production research library ever
+answered through a governed path** — previewed, approved by a named human operator against a
+state-bound token, committed through the public `commit()` boundary, and recorded in append-only
+history. Every prior answer state in this repository arrived by direct file editing (see the Step 1
+finding on `EQ|20260727|015`, which remains in its pre-existing inconsistent state and was not
+touched).
+
+`LCEVT|EVIDENCE_QUESTION|EQ|20260727|014|001` is correspondingly the first `EVIDENCE_QUESTION`
+lifecycle event in production.
+
+## S8.2 Pre-commit verification
+
+Working tree contained **exactly** the three expected Step 7 changes and nothing else:
+
+```
+ M MOGO_020_GOVERNED_RESEARCH_ANSWER_INTAKE.md
+ M docs/trader-intelligence/evidence/questions/EQ_20260727_014.json
+?? docs/trader-intelligence/evidence/lifecycle/4410d84db654d65b745e622e6d4f2223.json
+?? MOGO-019-ALEX-IG-CASE-002-REPORT.md          <- excluded, unrelated
+```
+
+The untracked lifecycle file was confirmed to be the correct artifact rather than a stray: its
+hash-derived filename recomputes exactly from its own `eventId`
+(`evidence_common.lifecycle_event_id_to_filename("LCEVT|EVIDENCE_QUESTION|EQ|20260727|014|001")`
+→ `4410d84db654d65b745e622e6d4f2223.json`, **MATCH**).
+
+| Check | Expected | Observed | ✓ |
+|---|---|---|---|
+| `EQ\|20260727\|014` | answered | **answered / answered** + both evidence IDs | ✅ |
+| TJR | BLOCKED / 16 | **BLOCKED / 16** | ✅ |
+| EvidenceLinks | 416 | **416** | ✅ |
+| RuleCandidateProposal | 0 | **0** | ✅ |
+| Production EQ lifecycle events | exactly 1 | **1** — `LCEVT\|EVIDENCE_QUESTION\|EQ\|20260727\|014\|001` | ✅ |
+| Lifecycle total | 4,473 | **4,473** | ✅ |
+| `XCONTRA\|20260728\|001` | unchanged | `open` / `blocking` / `null` / `null` | ✅ |
+| ALEX drift | 0 | **0** — 63 functions, 4 constants | ✅ |
+| Campaign C1 | intact | **19 suites · 1,160 / 1,160 · 0 errors** | ✅ |
+| Evidence integrity | clean | `{INFO:0, WARNING:0, ERROR:0, FATAL:0}` | ✅ |
+| TJR paper trading | NOT AUTHORIZED | NOT AUTHORIZED | ✅ |
+| Live-money trading | NOT AUTHORIZED | NOT AUTHORIZED | ✅ |
+| Research authorization | unchanged | 3 records, 2 metadata-only | ✅ |
+
+## S8.3 Committed scope — 3 files
+
+| File | Kind |
+|---|---|
+| `docs/trader-intelligence/evidence/questions/EQ_20260727_014.json` | the adjudicated EvidenceQuestion |
+| `docs/trader-intelligence/evidence/lifecycle/4410d84db654d65b745e622e6d4f2223.json` | the append-only lifecycle event |
+| `MOGO_020_GOVERNED_RESEARCH_ANSWER_INTAKE.md` | Steps 6–8 record |
+
+**Excluded:** `MOGO-019-ALEX-IG-CASE-002-REPORT.md` — unrelated pre-existing artifact, still
+untracked.
+
+No code, no schema, no test, no ALEX file, no authorization file, and no other evidence record is in
+this commit.
+
+## S8.4 Status
+
+**MOGO-020 remains ACTIVE and is NOT complete.** No `mogo-020-complete` tag and no
+milestone-completion tag was created. No further EvidenceQuestion has been selected or previewed.
+16 TJR blockers remain.

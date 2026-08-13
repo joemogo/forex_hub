@@ -1,6 +1,9 @@
 {
-  "answerEvidenceIds": [],
-  "answerStatus": "unanswered",
+  "answerEvidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|012",
+    "EV|EVSRC|TJR|20260727|001|043"
+  ],
+  "answerStatus": "answered",
   "blockingStatus": "blocks_rule_candidate",
   "claimId": "CLAIM|TJR|20260727|029",
   "createdAt": "2026-07-27T03:56:30Z",
@@ -10,8 +13,8 @@
   "questionText": "Claim 'CLAIM|TJR|20260727|029' has no timeframe recorded -- does this rule apply on a specific timeframe, or all of them?",
   "questionType": "missing_timeframe",
   "reason": "claimType='target_rule' is timeframe-sensitive and claim.timeframe is null.",
-  "researchStatus": "open",
-  "resolvedAt": null,
+  "researchStatus": "answered",
+  "resolvedAt": "2026-08-13T18:17:18Z",
   "schemaVersion": 1,
   "sourceIds": []
 }

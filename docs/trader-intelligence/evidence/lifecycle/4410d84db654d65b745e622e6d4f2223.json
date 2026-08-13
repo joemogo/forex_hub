@@ -1,0 +1,22 @@
+{
+  "actor": "operator:joemogollon",
+  "entityId": "EQ|20260727|014",
+  "entityType": "EVIDENCE_QUESTION",
+  "eventId": "LCEVT|EVIDENCE_QUESTION|EQ|20260727|014|001",
+  "eventType": "reviewed",
+  "metadata": {
+    "corpusTraderId": "TJR",
+    "decision": "accepted",
+    "decisionFingerprint": "99eca7b20083bb362f466a4938d03a13a1c8f47eee7604437dcf5ff734ea6cdb",
+    "evidenceIds": [
+      "EV|EVSRC|TJR|20260727|001|012",
+      "EV|EVSRC|TJR|20260727|001|043"
+    ],
+    "intakeSchemaVersion": "mogo.governed-answer-intake.v1"
+  },
+  "newStatus": "answered",
+  "priorStatus": "unanswered",
+  "reason": "The source explicitly names the timeframes its draws on liquidity come from (1-hour, 4-hour, session) and demonstrates targeting five-minute highs, Asia session highs and previous day highs. The rule is therefore not scoped to one timeframe: targets are selected from multiple explicitly named levels.",
+  "schemaVersion": 1,
+  "timestamp": "2026-08-13T18:17:18Z"
+}
