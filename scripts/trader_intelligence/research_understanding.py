@@ -423,6 +423,10 @@ def main(argv=None):
     parser.add_argument("--trader", default="TJR")
     parser.add_argument("--evidence-root", default=EVIDENCE_ROOT)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--eligibility", action="store_true",
+                        help="derived reconstruction-eligibility (MOGO-019 "
+                             "Step 3): what blocks a FUTURE reconstruction "
+                             "draft. Informational only -- authorizes nothing.")
     args = parser.parse_args(argv)
 
     idx = EvidenceIndex.load(args.evidence_root)
@@ -431,12 +435,258 @@ def main(argv=None):
     except CorpusAmbiguous as exc:
         print("REFUSED: %s" % (exc,))
         return 2
+    payload = eligibility(view) if args.eligibility else view
     if args.json:
-        print(json.dumps(view, indent=2, sort_keys=True))
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    elif args.eligibility:
+        print("\n".join(render_eligibility(payload)))
     else:
         print("\n".join(render(view)))
     return 0
 
+
+
+# ---------------------------------------------------------------------------
+# MOGO-019 Step 3 -- reconstruction eligibility, derived and informational
+# ---------------------------------------------------------------------------
+# Answers ONE question: what specifically prevents this corpus from being
+# eligible for a FUTURE mechanical reconstruction draft? It resolves nothing,
+# answers no question, and authorizes nothing. Eligibility here is a statement
+# about EVIDENCE, never about a strategy's merit.
+
+ELIGIBLE = "ELIGIBLE_FOR_RECONSTRUCTION_DRAFT"
+BLOCKED = "BLOCKED"
+
+# Per-category status, in the precedence order they are evaluated.
+MISSING = "MISSING"
+PROVENANCE_GAP = "PROVENANCE_GAP"
+CONFLICTED = "CONFLICTED"
+AMBIGUOUS = "AMBIGUOUS"
+INFERENCE_ONLY = "INFERENCE_ONLY"
+SUPPORTED = "SUPPORTED"
+
+# WHICH CATEGORIES ARE REQUIRED IS NOT INVENTED HERE.
+#
+# `knowledge_gaps._category_spec()` already assigns a researchPriority to every
+# gap category, and marks exactly six `critical` -- each with a stated reason of
+# the form "without this, the strategy cannot be replayed/tested/sized". Those
+# six ARE the repository's existing statement of mechanical necessity, so this
+# table maps them onto the claim types that same module already pairs them with
+# (`_related_claims(claims_by_type, "stop_rule")` and friends). A test asserts
+# these keys still equal the `critical` set, so the requirement cannot drift
+# away from its source.
+#
+# `execution_timeframe` and `entry_trigger` are both paired with `entry_rule`
+# there, and `setup_sequence` with `setup_requirement`; that is why five claim
+# types cover six critical categories.
+REQUIRED_BY_GAP_CATEGORY = {
+    "entry_trigger": "entry_rule",
+    "execution_timeframe": "entry_rule",
+    "setup_sequence": "setup_requirement",
+    "invalidation": "invalidation_rule",
+    "stop_placement": "stop_rule",
+    "risk_percentage": "risk_rule",
+}
+REQUIRED_RULE_CATEGORIES = tuple(sorted(set(REQUIRED_BY_GAP_CATEGORY.values())))
+
+_BLOCKING_QUESTION_STATUSES = ("blocks_rule_candidate", "blocks_promotion")
+
+# What a blocker tells a FUTURE research process to look for. Reuses the
+# existing questionType/gap vocabulary rather than inventing a second one.
+_RESEARCH_NEED = {
+    "entry_rule": "an explicit statement of the condition that triggers entry, "
+                  "and the timeframe it is executed on",
+    "setup_requirement": "an explicit walk-through of what constitutes a valid setup",
+    "invalidation_rule": "an explicit statement of what invalidates the setup",
+    "stop_rule": "an explicit statement of where the stop is placed",
+    "risk_rule": "an explicit statement of risk per trade",
+}
+
+
+def _category_status(entries, blocking_question_ids, conflicted_claim_ids):
+    """Deterministic status for one rule category. Precedence is fixed.
+
+    MISSING first (a category with no claims cannot have any other condition),
+    then provenance, then conflict, then ambiguity, then inference-only.
+    """
+    if not entries:
+        return MISSING, []
+    reasons = []
+
+    broken = [e["claimId"] for e in entries
+              if any(not row["present"] or row["directness"] in (None, "unresolved")
+                     for row in e["evidence"]) or not e["evidence"]]
+    if broken:
+        return PROVENANCE_GAP, broken
+
+    conflicted = [e["claimId"] for e in entries
+                  if e["claimId"] in conflicted_claim_ids]
+    if conflicted:
+        return CONFLICTED, conflicted
+
+    ambiguous = [e["claimId"] for e in entries
+                 if any(q["questionId"] in blocking_question_ids
+                        for q in e["unresolvedQuestions"])]
+    if ambiguous:
+        return AMBIGUOUS, ambiguous
+
+    if not any(e["hasSourceSaidSupport"] for e in entries):
+        # Conservative, and consistent with the blueprint's own separation of
+        # statedRiskRules from inferredRiskRules: mechanical behaviour resting
+        # only on MOGO's inference is not something the educator said.
+        return INFERENCE_ONLY, [e["claimId"] for e in entries]
+
+    return SUPPORTED, reasons
+
+
+def eligibility(view):
+    """Derived reconstruction-eligibility for a Step 2 corpus view. Pure.
+
+    INFORMATIONAL ONLY. `ELIGIBLE_FOR_RECONSTRUCTION_DRAFT` means the evidence
+    contains no known blocker -- it does NOT mean a specification is frozen, a
+    strategy is approved, or that any backtest, paper or live activity is
+    authorized. Each of those remains a separate, explicit operator decision
+    that this function cannot make and does not represent.
+    """
+    # Blocking questions, by identifier -- never by text.
+    blocking_questions = {}
+    for entries in list(view["ruleCategories"].values()) \
+            + list(view["nonRuleClaims"].values()):
+        for entry in entries:
+            for question in entry["unresolvedQuestions"]:
+                if question["blockingStatus"] in _BLOCKING_QUESTION_STATUSES:
+                    blocking_questions[question["questionId"]] = dict(
+                        question, affectedClaimId=entry["claimId"],
+                        affectedCategory=entry["claimType"])
+    blocking_question_ids = set(blocking_questions)
+
+    # Blocking contradictions. A cross-corpus record names the foreign claim and
+    # its trader for reporting; NO foreign evidence is read or imported.
+    blocking_contradictions, conflicted_claim_ids = [], set()
+    for record in view["internalContradictions"]:
+        if record["severity"] == "blocking" and record["status"] == "open":
+            blocking_contradictions.append(dict(record, scope="INTERNAL"))
+            conflicted_claim_ids.update({record["claimAId"], record["claimBId"]})
+    for record in view["crossCorpusContradictions"]:
+        if record["severity"] == "blocking" and record["status"] == "open":
+            blocking_contradictions.append(dict(record, scope="CROSS_CORPUS"))
+            conflicted_claim_ids.add(record["corpusClaimId"])
+
+    categories, blockers = {}, []
+    for name in RULE_CATEGORIES:
+        entries = view["ruleCategories"][name]
+        status, claim_ids = _category_status(entries, blocking_question_ids,
+                                             conflicted_claim_ids)
+        required = name in REQUIRED_RULE_CATEGORIES
+        categories[name] = {
+            "status": status,
+            "required": required,
+            "claimCount": len(entries),
+            "claimIds": [e["claimId"] for e in entries],
+            "implicatedClaimIds": claim_ids,
+            "sourceSaidClaimCount": sum(1 for e in entries
+                                        if e["hasSourceSaidSupport"]),
+            "requiredBecause": sorted(
+                gap for gap, claim_type in REQUIRED_BY_GAP_CATEGORY.items()
+                if claim_type == name),
+        }
+        if required and status != SUPPORTED:
+            blockers.append({
+                "blockerType": "REQUIRED_CATEGORY_%s" % (status,),
+                "ruleCategory": name,
+                "status": status,
+                "implicatedClaimIds": claim_ids,
+                "requiredBecause": categories[name]["requiredBecause"],
+                "researchNeed": _RESEARCH_NEED.get(name),
+            })
+
+    for question_id in sorted(blocking_questions):
+        question = blocking_questions[question_id]
+        blockers.append({
+            "blockerType": "BLOCKING_QUESTION",
+            "questionId": question_id,
+            "questionType": question["questionType"],
+            "affectedClaimId": question["affectedClaimId"],
+            "ruleCategory": question["affectedCategory"],
+            "blockingStatus": question["blockingStatus"],
+            "answerStatus": question["answerStatus"],
+            "whyItBlocks": "an unanswered question carrying blockingStatus %s "
+                           "leaves this claim without one unique mechanical "
+                           "reading" % (question["blockingStatus"],),
+            "researchNeed": question["questionText"],
+        })
+
+    for record in blocking_contradictions:
+        blockers.append({
+            "blockerType": "BLOCKING_CONTRADICTION",
+            "contradictionId": record["contradictionId"],
+            "scope": record["scope"],
+            "severity": record["severity"],
+            "status": record["status"],
+            "corpusClaimId": record.get("corpusClaimId")
+                             or record.get("claimAId"),
+            "foreignClaimId": record.get("foreignClaimId"),
+            "foreignTraderId": record.get("foreignTraderId"),
+            "whyItBlocks": "two claims cannot both hold without qualification, "
+                           "so no single mechanical reading exists",
+            "researchNeed": "an operator decision or further evidence "
+                            "qualifying the scope of the conflicting claims",
+        })
+
+    return {
+        "schemaVersion": ELIGIBILITY_SCHEMA_VERSION,
+        "traderId": view["traderId"],
+        "lane": "RESEARCH",
+        "promotionStatus": "NOT_A_TRADING_RULE",
+        "eligibility": BLOCKED if blockers else ELIGIBLE,
+        "informationalOnly": True,
+        "meaning": "Eligibility describes the EVIDENCE only. It authorizes no "
+                   "reconstruction, no specification freeze, no backtest, no "
+                   "paper trading and no live trading; each remains a separate "
+                   "explicit operator decision.",
+        "requiredRuleCategories": list(REQUIRED_RULE_CATEGORIES),
+        "requiredCategorySource": "knowledge_gaps._category_spec() "
+                                  "researchPriority == 'critical'",
+        "categories": categories,
+        "blockers": blockers,
+        "blockerCount": len(blockers),
+    }
+
+
+ELIGIBILITY_SCHEMA_VERSION = "mogo.reconstruction-eligibility.v1"
+
+
+def render_eligibility(result):
+    out = ["MOGO reconstruction eligibility -- DERIVED, READ-ONLY, INFORMATIONAL",
+           "  trader=%s  result=%s  blockers=%d"
+           % (result["traderId"], result["eligibility"], result["blockerCount"]),
+           "  required categories: %s" % (", ".join(result["requiredRuleCategories"]),),
+           "  required-category source: %s" % (result["requiredCategorySource"],),
+           "", "  ── CATEGORY STATUS ──"]
+    for name in RULE_CATEGORIES:
+        row = result["categories"][name]
+        out.append("  %-24s %-15s %s claims=%d sourceSaid=%d"
+                   % (name, row["status"],
+                      "[REQUIRED]" if row["required"] else "[optional]",
+                      row["claimCount"], row["sourceSaidClaimCount"]))
+    out.append("\n  ── BLOCKERS ──")
+    if not result["blockers"]:
+        out.append("  (none)")
+    for blocker in result["blockers"]:
+        head = blocker["blockerType"]
+        detail = (blocker.get("ruleCategory") or blocker.get("contradictionId")
+                  or blocker.get("questionId") or "")
+        out.append("  %-32s %s" % (head, detail))
+        for key in ("questionId", "contradictionId", "scope", "affectedClaimId",
+                    "foreignClaimId", "foreignTraderId", "status"):
+            if blocker.get(key):
+                out.append("      %-16s %s" % (key, blocker[key]))
+        if blocker.get("whyItBlocks"):
+            out.append("      why             %s" % (blocker["whyItBlocks"],))
+        if blocker.get("researchNeed"):
+            out.append("      research need   %s" % (blocker["researchNeed"],))
+    out.append("\n  " + result["meaning"])
+    return out
 
 if __name__ == "__main__":
     sys.exit(main())

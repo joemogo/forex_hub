@@ -406,10 +406,42 @@ class TestExecutionFirewall(ViewCase):
             self.assertNotIn(forbidden, code)
 
     def test_the_module_names_no_executable_or_campaign_path(self):
+        """No path into executable or campaign state, anywhere."""
         code = self.code()
         for forbidden in ("index.html", "docs/campaigns", "hypothesis-registry",
-                          "PREREG-", "paper", "backtest", "live"):
+                          "PREREG-", "docs/evidence"):
             self.assertNotIn(forbidden.lower(), code.lower())
+
+    def test_no_trading_identifier_is_referenced_in_executable_code(self):
+        """Checks IDENTIFIERS, not prose.
+
+        The module must not name a paper/backtest/live variable, attribute or
+        call. It MAY say the words in a disclaimer string -- the Step 3 result
+        has to state that it authorizes no backtest, no paper trading and no
+        live trading, and forbidding the words outright would forbid the safety
+        notice itself.
+        """
+        with open(self.MODULE, encoding="utf-8") as handle:
+            tree = ast.parse(handle.read())
+        names = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name):
+                names.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                names.add(node.attr)
+            elif isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                names.add(node.name)
+            elif isinstance(node, ast.keyword) and node.arg:
+                names.add(node.arg)
+        # Segment-exact, not substring: `trader_id` names the EDUCATOR and must
+        # not be confused with trading.
+        forbidden = {"paper", "backtest", "live", "trade", "trading", "order",
+                     "execute", "exec", "promote", "promotion", "freeze",
+                     "position", "broker"}
+        for identifier in names:
+            segments = set(identifier.lower().split("_"))
+            with self.subTest(identifier=identifier):
+                self.assertEqual(segments & forbidden, set())
 
     def test_the_module_imports_nothing_from_the_trading_engine(self):
         with open(self.MODULE, encoding="utf-8") as handle:
@@ -452,6 +484,313 @@ class TestExecutionFirewall(ViewCase):
         self.assertEqual(
             glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
         self.assertNotIn("proposalId", json.dumps(self.view))
+
+
+# ---------------------------------------------------------------------------
+# MOGO-019 Step 3 -- reconstruction eligibility
+# ---------------------------------------------------------------------------
+
+class EligibilityCase(ViewCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.result = ru.eligibility(cls.view)
+
+    def rebuilt(self, view):
+        return ru.eligibility(view)
+
+
+class TestRequiredCategoriesComeFromExistingArchitecture(EligibilityCase):
+
+    def test_required_categories_match_the_critical_knowledge_gaps(self):
+        """The requirement is NOT invented here -- it is knowledge_gaps'
+        `critical` priority, and it must not be able to drift from it."""
+        import knowledge_gaps as kg
+        blueprint = {"scope": {"instruments": [], "sessions": [],
+                               "higherTimeframes": [], "executionTimeframes": []},
+                     "workflow": [], "entryLogic": {"requiredConditions": []},
+                     "exitLogic": {"setupInvalidation": [], "stopPlacement": [],
+                                   "profitTargets": []},
+                     "riskLogic": {"statedRiskRules": [], "inferredRiskRules": []}}
+        critical = {spec[0] for spec in kg._category_spec(None, blueprint, {})
+                    if spec[5] == "critical"}
+        self.assertEqual(set(ru.REQUIRED_BY_GAP_CATEGORY), critical)
+
+    def test_every_required_category_is_a_real_rule_category(self):
+        for name in ru.REQUIRED_RULE_CATEGORIES:
+            self.assertIn(name, ru.RULE_CATEGORIES)
+
+    def test_optional_categories_are_not_treated_as_required(self):
+        for name in ("timeframe_rule", "target_rule", "confirmation_rule",
+                     "session_rule", "trade_management_rule"):
+            self.assertFalse(self.result["categories"][name]["required"], name)
+
+
+class TestEligibilityIsDeterministicAndBlocking(EligibilityCase):
+
+    def test_repeated_evaluation_is_byte_identical(self):
+        a = json.dumps(ru.eligibility(ru.corpus_view(index(), TJR)), sort_keys=True)
+        b = json.dumps(ru.eligibility(ru.corpus_view(index(), TJR)), sort_keys=True)
+        self.assertEqual(a, b)
+
+    def test_the_real_tjr_corpus_is_blocked(self):
+        self.assertEqual(self.result["eligibility"], ru.BLOCKED)
+        self.assertGreater(self.result["blockerCount"], 0)
+
+    def test_every_blocker_is_surfaced_not_just_the_first(self):
+        kinds = {b["blockerType"] for b in self.result["blockers"]}
+        self.assertIn("BLOCKING_QUESTION", kinds)
+        self.assertIn("BLOCKING_CONTRADICTION", kinds)
+        self.assertTrue(any(k.startswith("REQUIRED_CATEGORY_") for k in kinds))
+        self.assertEqual(len(self.result["blockers"]), self.result["blockerCount"])
+
+    def test_a_corpus_with_no_blockers_is_eligible(self):
+        """The predicate must be capable of returning ELIGIBLE."""
+        clean = copy.deepcopy(self.view)
+        clean["internalContradictions"] = []
+        clean["crossCorpusContradictions"] = []
+        for name in ru.REQUIRED_RULE_CATEGORIES:
+            clean["ruleCategories"][name] = [{
+                "claimId": "CLAIM|%s|SYNTHETIC" % TJR, "claimType": name,
+                "hasSourceSaidSupport": True, "unresolvedQuestions": [],
+                "evidence": [{"present": True, "directness": "direct_explicit"}],
+            }]
+        for name in ru.RULE_CATEGORIES:
+            for entry in clean["ruleCategories"][name]:
+                entry["unresolvedQuestions"] = []
+        for entries in clean["nonRuleClaims"].values():
+            for entry in entries:
+                entry["unresolvedQuestions"] = []
+        result = self.rebuilt(clean)
+        self.assertEqual(result["eligibility"], ru.ELIGIBLE, result["blockers"])
+
+    def test_one_reintroduced_blocker_flips_it_back_to_blocked(self):
+        clean = copy.deepcopy(self.view)
+        clean["internalContradictions"] = []
+        clean["crossCorpusContradictions"] = []
+        for name in ru.REQUIRED_RULE_CATEGORIES:
+            clean["ruleCategories"][name] = [{
+                "claimId": "CLAIM|%s|SYNTHETIC" % TJR, "claimType": name,
+                "hasSourceSaidSupport": True, "unresolvedQuestions": [],
+                "evidence": [{"present": True, "directness": "direct_explicit"}]}]
+        for name in ru.RULE_CATEGORIES:
+            for entry in clean["ruleCategories"][name]:
+                entry["unresolvedQuestions"] = []
+        for entries in clean["nonRuleClaims"].values():
+            for entry in entries:
+                entry["unresolvedQuestions"] = []
+        self.assertEqual(self.rebuilt(clean)["eligibility"], ru.ELIGIBLE)
+        # remove ONE required category -> blocked again
+        blocked = copy.deepcopy(clean)
+        blocked["ruleCategories"]["risk_rule"] = []
+        result = self.rebuilt(blocked)
+        self.assertEqual(result["eligibility"], ru.BLOCKED)
+        self.assertEqual([b["ruleCategory"] for b in result["blockers"]],
+                         ["risk_rule"])
+
+
+class TestCategoryStatusSemantics(EligibilityCase):
+
+    def test_missing_required_category_is_reported_missing(self):
+        risk = self.result["categories"]["risk_rule"]
+        self.assertEqual(risk["status"], ru.MISSING)
+        self.assertTrue(risk["required"])
+        self.assertEqual(risk["claimCount"], 0)
+
+    def test_a_blocking_question_makes_its_category_ambiguous(self):
+        entry_rule = self.result["categories"]["entry_rule"]
+        self.assertEqual(entry_rule["status"], ru.AMBIGUOUS)
+        self.assertTrue(entry_rule["implicatedClaimIds"])
+
+    def test_a_blocking_contradiction_makes_its_category_conflicted(self):
+        setup = self.result["categories"]["setup_requirement"]
+        self.assertEqual(setup["status"], ru.CONFLICTED)
+
+    def test_a_non_blocking_question_does_not_block(self):
+        """Only blocks_rule_candidate / blocks_promotion may block."""
+        view = copy.deepcopy(self.view)
+        for entries in view["ruleCategories"].values():
+            for entry in entries:
+                entry["unresolvedQuestions"] = [
+                    {"questionId": "EQ|SYNTH|1", "questionType": "other",
+                     "questionText": "x", "blockingStatus": "non_blocking",
+                     "answerStatus": "unanswered", "researchStatus": "open"}]
+        for entries in view["nonRuleClaims"].values():
+            for entry in entries:
+                entry["unresolvedQuestions"] = []
+        result = self.rebuilt(view)
+        self.assertFalse([b for b in result["blockers"]
+                          if b["blockerType"] == "BLOCKING_QUESTION"])
+
+    def test_a_resolved_or_non_blocking_contradiction_does_not_block(self):
+        view = copy.deepcopy(self.view)
+        view["internalContradictions"] = [
+            {"contradictionId": "X|1", "claimAId": "a", "claimBId": "b",
+             "contradictionType": "T", "severity": "blocking",
+             "status": "resolved_by_owner"},
+            {"contradictionId": "X|2", "claimAId": "a", "claimBId": "b",
+             "contradictionType": "T", "severity": "material", "status": "open"}]
+        view["crossCorpusContradictions"] = []
+        result = self.rebuilt(view)
+        self.assertFalse([b for b in result["blockers"]
+                          if b["blockerType"] == "BLOCKING_CONTRADICTION"])
+
+    def test_inference_only_support_is_not_treated_as_source_backed(self):
+        view = copy.deepcopy(self.view)
+        view["internalContradictions"] = []
+        view["crossCorpusContradictions"] = []
+        for entries in list(view["ruleCategories"].values()) \
+                + list(view["nonRuleClaims"].values()):
+            for entry in entries:
+                entry["unresolvedQuestions"] = []
+        view["ruleCategories"]["stop_rule"] = [{
+            "claimId": "CLAIM|TJR|INFERRED", "claimType": "stop_rule",
+            "hasSourceSaidSupport": False, "unresolvedQuestions": [],
+            "evidence": [{"present": True,
+                          "directness": "inferred_from_context"}]}]
+        result = self.rebuilt(view)
+        self.assertEqual(result["categories"]["stop_rule"]["status"],
+                         ru.INFERENCE_ONLY)
+        self.assertIn("REQUIRED_CATEGORY_INFERENCE_ONLY",
+                      [b["blockerType"] for b in result["blockers"]])
+
+    def test_a_provenance_failure_fails_closed(self):
+        view = copy.deepcopy(self.view)
+        view["ruleCategories"]["stop_rule"] = [{
+            "claimId": "CLAIM|TJR|BROKEN", "claimType": "stop_rule",
+            "hasSourceSaidSupport": True, "unresolvedQuestions": [],
+            "evidence": [{"present": False, "directness": None}]}]
+        result = self.rebuilt(view)
+        self.assertEqual(result["categories"]["stop_rule"]["status"],
+                         ru.PROVENANCE_GAP)
+
+    def test_a_claim_with_no_evidence_at_all_fails_closed(self):
+        view = copy.deepcopy(self.view)
+        view["ruleCategories"]["stop_rule"] = [{
+            "claimId": "CLAIM|TJR|NOEV", "claimType": "stop_rule",
+            "hasSourceSaidSupport": True, "unresolvedQuestions": [],
+            "evidence": []}]
+        self.assertEqual(self.rebuilt(view)["categories"]["stop_rule"]["status"],
+                         ru.PROVENANCE_GAP)
+
+
+class TestEligibilityBlockersAreActionable(EligibilityCase):
+
+    def test_all_twelve_blocking_questions_surface_with_their_identity(self):
+        questions = [b for b in self.result["blockers"]
+                     if b["blockerType"] == "BLOCKING_QUESTION"]
+        self.assertEqual(len(questions), 12)
+        for blocker in questions:
+            self.assertTrue(blocker["questionId"].startswith("EQ|"))
+            self.assertIn(blocker["blockingStatus"],
+                          ("blocks_rule_candidate", "blocks_promotion"))
+            self.assertNotEqual(blocker["answerStatus"], "answered")
+            self.assertTrue(blocker["whyItBlocks"])
+            # the research NEED is stated; the question is NOT answered
+            self.assertTrue(blocker["researchNeed"])
+            self.assertNotIn("answer", blocker)
+
+    def test_blocking_questions_are_resolved_by_identifier_not_text(self):
+        surfaced = {b["questionId"] for b in self.result["blockers"]
+                    if b["blockerType"] == "BLOCKING_QUESTION"}
+        corpus = {e["claimId"] for e in self.entries()}
+        for qid in surfaced:
+            self.assertIn(self.idx.questions[qid]["claimId"], corpus)
+
+    def test_every_required_category_blocker_states_a_research_need(self):
+        for blocker in self.result["blockers"]:
+            if blocker["blockerType"].startswith("REQUIRED_CATEGORY_"):
+                self.assertTrue(blocker["researchNeed"])
+                self.assertTrue(blocker["requiredBecause"])
+
+
+class TestEligibilityIsolation(EligibilityCase):
+
+    def test_the_cross_corpus_contradiction_blocks_without_importing_evidence(self):
+        blockers = [b for b in self.result["blockers"]
+                    if b["blockerType"] == "BLOCKING_CONTRADICTION"]
+        self.assertTrue(blockers)
+        cross = [b for b in blockers if b["scope"] == "CROSS_CORPUS"]
+        self.assertTrue(cross)
+        for blocker in cross:
+            self.assertEqual(blocker["foreignTraderId"], ALEX)
+            self.assertTrue(blocker["foreignClaimId"].startswith("CLAIM|ALEX"))
+            # identified for conflict reporting ONLY -- no foreign content
+            self.assertNotIn("normalizedClaim", blocker)
+            self.assertNotIn("evidence", blocker)
+
+    def test_xcontra_20260728_001_is_present_and_not_resolved(self):
+        blocker = next(b for b in self.result["blockers"]
+                       if b.get("contradictionId") == "XCONTRA|20260728|001")
+        self.assertEqual(blocker["status"], "open")
+        self.assertEqual(blocker["severity"], "blocking")
+        self.assertNotIn("resolution", blocker)
+
+    def test_no_alex_claim_id_appears_as_a_corpus_side_blocker(self):
+        for blocker in self.result["blockers"]:
+            for key in ("affectedClaimId", "corpusClaimId"):
+                if blocker.get(key):
+                    self.assertNotIn("ALEX", blocker[key])
+        for row in self.result["categories"].values():
+            for claim_id in row["claimIds"]:
+                self.assertNotIn("ALEX", claim_id)
+
+    def test_ambiguous_corpus_fails_closed_before_eligibility(self):
+        idx = index()
+        victim = next(iter(idx.claims))
+        idx.claims = dict(idx.claims)
+        idx.claims[victim] = dict(idx.claims[victim], traderId=None)
+        with self.assertRaises(ru.CorpusAmbiguous):
+            ru.eligibility(ru.corpus_view(idx, TJR))
+
+
+class TestEligibilityFreezeFirewall(EligibilityCase):
+
+    def test_no_numerical_readiness_score_exists(self):
+        def walk(node):
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    self.assertNotIsInstance(value, float, key)
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+        walk(self.result)
+
+    def test_eligibility_is_a_two_valued_fact_not_a_grade(self):
+        self.assertIn(self.result["eligibility"], (ru.ELIGIBLE, ru.BLOCKED))
+
+    def test_the_result_states_it_authorizes_nothing(self):
+        self.assertIs(self.result["informationalOnly"], True)
+        self.assertEqual(self.result["promotionStatus"], "NOT_A_TRADING_RULE")
+        self.assertEqual(self.result["lane"], "RESEARCH")
+        for word in ("freeze", "frozen", "authorized", "approved"):
+            self.assertNotIn(word, json.dumps(
+                {k: v for k, v in self.result.items() if k != "meaning"}).lower())
+
+    def test_eligibility_emits_no_promotion_stage(self):
+        blob = json.dumps(self.result)
+        for stage in ("promotionState", "DISCOVERED", "PAPER_", "LIVE_",
+                      "PRODUCTION_", "IMPLEMENTATION_", "REPLAY_", "SHADOW_"):
+            self.assertNotIn(stage, blob)
+
+    def test_eligibility_creates_no_record_and_mutates_no_file(self):
+        roots = [os.path.join(ru.EVIDENCE_ROOT, d)
+                 for d in ("claims", "items", "links", "questions",
+                           "contradictions", "hypotheses", "proposals")]
+        def digest():
+            out = {}
+            for root in roots:
+                for path in sorted(glob.glob(os.path.join(root, "*.json"))):
+                    with open(path, "rb") as handle:
+                        out[path] = hashlib.sha256(handle.read()).hexdigest()
+            return out
+        before = digest()
+        ru.eligibility(ru.corpus_view(index(), TJR))
+        self.assertEqual(digest(), before)
+        self.assertEqual(
+            glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
 
 
 if __name__ == "__main__":

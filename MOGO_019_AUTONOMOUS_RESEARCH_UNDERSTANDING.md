@@ -643,3 +643,197 @@ statement.
 proposal is minted.
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+## STEP 3 — RECONSTRUCTION ELIGIBILITY & FREEZE-BLOCKING PREDICATE
+
+**Status: ✅ COMPLETE — GREEN. Not committed, held for review.**
+**Zero schema changes · zero persistence · zero new modules.**
+
+### 1. Files and size
+
+| File | Change |
+|---|---|
+| `scripts/trader_intelligence/research_understanding.py` | **+252** lines (Step 2 module extended; 1 line moved) |
+| `tests/trader_intelligence/test_research_understanding.py` | **+341** lines |
+
+**591 insertions, 2 deletions, 2 files.** No new subsystem, no new record type, no persistence,
+no schema change. The only structural edit was moving the `if __name__` block to the end of the file
+so the appended Step 3 definitions load before `main()` runs.
+
+### 2. Required categories — **derived from existing architecture, not invented**
+
+This was the item most at risk of guessing, so it was audited first.
+
+**`knowledge_gaps._category_spec()` already assigns a `researchPriority` to all 17 gap categories and
+marks exactly six `critical`**, each with a stated mechanical reason ("without a stated stop rule,
+risk per trade cannot be calculated or replayed"). That is the repository's existing statement of
+mechanical necessity. The same function already pairs each category with a claim type via
+`_related_claims(claims_by_type, "stop_rule")`.
+
+| Critical gap category | Claim type |
+|---|---|
+| `entry_trigger` | `entry_rule` |
+| `execution_timeframe` | `entry_rule` |
+| `setup_sequence` | `setup_requirement` |
+| `invalidation` | `invalidation_rule` |
+| `stop_placement` | `stop_rule` |
+| `risk_percentage` | `risk_rule` |
+
+**→ 5 required rule categories:** `entry_rule`, `invalidation_rule`, `risk_rule`,
+`setup_requirement`, `stop_rule`.
+
+A test **rebuilds the critical set by calling `_category_spec()` directly** and asserts it equals the
+table's keys, so the requirement cannot drift from its source. `timeframe_rule` and `target_rule` are
+**not** required — existing architecture maps `execution_timeframe` to `entry_rule` and rates
+`target_selection` as `high`, not `critical`. That distinction was inherited, not chosen.
+
+### 3. Eligibility algorithm
+
+Two-valued, no score. Per-category status with **fixed precedence**:
+
+```
+MISSING → PROVENANCE_GAP → CONFLICTED → AMBIGUOUS → INFERENCE_ONLY → SUPPORTED
+```
+
+`BLOCKED` if any **required** category is not `SUPPORTED`, or any blocking question, or any open
+blocking contradiction. Otherwise `ELIGIBLE_FOR_RECONSTRUCTION_DRAFT`.
+
+**Source quality for critical rules (§7):** audited first. The existing `strategy-blueprint` schema
+distinguishes `statedRiskRules` from `inferredRiskRules`, but no *eligibility* semantic exists
+anywhere (nothing has ever been eligible). The conservative rule was therefore implemented and
+tested: a required category whose claims have **no `SOURCE_SAID` support** is `INFERENCE_ONLY` and
+blocks. Consistent with the blueprint's own stated/inferred separation.
+
+### 4. Current TJR result — **BLOCKED, 17 blockers**
+
+| Category | Status | Required | Claims |
+|---|---|---|---|
+| `setup_requirement` | **CONFLICTED** | ✅ | 9 |
+| `entry_rule` | **AMBIGUOUS** | ✅ | 1 |
+| `stop_rule` | **AMBIGUOUS** | ✅ | 1 |
+| `risk_rule` | **MISSING** | ✅ | 0 |
+| `invalidation_rule` | SUPPORTED | ✅ | 1 |
+| `confirmation_rule` | AMBIGUOUS | — | 6 |
+| `target_rule` | AMBIGUOUS | — | 1 |
+| `session_rule` | AMBIGUOUS | — | 1 |
+| `exception` | AMBIGUOUS | — | 4 |
+| `failure_condition` | SUPPORTED | — | 2 |
+| `trade_management_rule` | SUPPORTED | — | 1 |
+| `timeframe_rule` | MISSING | — | 0 |
+
+**Blockers:** 4 required-category (1 CONFLICTED, 2 AMBIGUOUS, 1 MISSING) · **12 blocking questions**
+· **1 blocking contradiction**.
+
+**Only 1 of 5 required categories is SUPPORTED.**
+
+### 5. The 12 blocking questions — identified, never answered
+
+Each carries `questionId`, `questionType`, affected claim, affected category, `blockingStatus`,
+`answerStatus`, why it blocks, and the **research need** (the question text as a statement of what
+evidence is missing). Representative examples:
+
+| Question | Affects | Evidence gap |
+|---|---|---|
+| `EQ\|20260727\|002` | `stop_rule` | stop is only ever given chart-relatively — which exact swing, and is a buffer applied? |
+| `EQ\|20260727\|008` | `entry_rule` | entry refers to a "special little number" that is never defined |
+| `EQ\|20260727\|013` | `entry_rule` | the entry rule has no companion invalidation claim in scope |
+| `EQ\|20260727\|007` | `setup_requirement` | news is checked, but what happens when news **is** present is never stated |
+| `EQ\|20260727\|003` | `target_rule` | four TP levels are used but never defined or sized |
+| `EQ\|20260727\|009` | `confirmation_rule` | step ordering "can be variable" — exact order when 2B activates is unstated |
+
+**Resolved by identifier, never by text** — a test asserts every surfaced question's `claimId`
+resolves into the TJR corpus. **No question is answered and no solution is inferred.**
+
+### 6. Contradictions
+
+| | Internal | Cross-corpus |
+|---|---|---|
+| Total | 2 | 4 |
+| **Open + blocking** | **0** | **1** |
+
+**`XCONTRA|20260728|001`** — `CLAIM|TJR|20260727|006` vs `CLAIM|ALEX_G|20260728|025`, severity
+`blocking`, status `open`. **Not resolved.** It is reported with the foreign claim and trader
+**named for conflict reporting only**; no ALEX claim text, evidence or hypothesis is read or
+imported. A test asserts the blocker carries no `normalizedClaim` and no `evidence` key.
+
+### 7. Gates
+
+**Provenance (§8):** a category whose claims have a missing evidence record, a `null`/`unresolved`
+`directness`, or no evidence at all becomes `PROVENANCE_GAP` and blocks. Nothing is repaired. TJR
+currently has **0 provenance gaps**.
+
+**Corpus identity (§9):** unchanged from Step 2 — unknown trader, empty corpus, or any unattributed
+claim raises `CorpusAmbiguous` **before** eligibility is computed. Tested.
+
+**Freeze firewall (§10):** the result carries `informationalOnly: true`, `lane: RESEARCH`,
+`promotionStatus: NOT_A_TRADING_RULE` and an explicit `meaning` string stating it authorizes no
+reconstruction, freeze, backtest, paper or live trading. Tests assert: no float anywhere, eligibility
+is two-valued, no promotion stage or `promotionState` is emitted, no record is created, no
+`proposals/` file appears, and evidence file digests are unchanged.
+
+### 8. Tests — 65 total (+29 for Step 3), mutation-verified
+
+Covering all 15 required categories: deterministic eligibility · one blocker → BLOCKED · multiple
+blockers all surface · blocking-question handling · non-blocking question does **not** block ·
+blocking-contradiction handling · resolved/non-blocking contradiction does **not** block ·
+cross-corpus contradiction imports no foreign evidence · missing required category · provenance
+failure · inference-only critical rule · ambiguous corpus fails closed · ALEX/TJR isolation · no
+numerical score · no execution/promotion side effects.
+
+| Mutation | Caught |
+|---|---|
+| Treat `non_blocking` questions as blocking | ✅ 2 tests |
+| Accept `INFERENCE_ONLY` as `SUPPORTED` | ✅ |
+| Block on severity alone, ignoring `resolved` status | ✅ |
+| Drop `risk_rule` from required categories | ✅ 3 tests, incl. the knowledge-gaps binding |
+| Let a provenance gap pass as `SUPPORTED` | ✅ 2 tests |
+
+**One firewall test was corrected, not weakened.** The original banned the words *paper/backtest/live*
+anywhere in the module — but Step 3's disclaimer **must** say it authorizes none of them, so the test
+forbade its own safety notice. It now checks **identifiers** (AST `Name`/`Attribute`/`Call`/kwarg),
+segment-exact so `trader_id` is not confused with trading, while path literals (`index.html`,
+`docs/campaigns`, `hypothesis-registry`, `PREREG-`, `docs/evidence`) remain banned anywhere.
+
+### 9. Integrity
+
+| Gate | Result |
+|---|---|
+| Focused Step 2 + Step 3 suite | ✅ **65 / 65** |
+| Platform suite | ✅ **25 suites · 1,049 tests · 0 failures** |
+| Canonical gate | ✅ **19 suites · 1,160 / 1,160** |
+| **Protected ALEX drift** | ✅ **0** — 63 functions, 4 constants |
+| Campaign C1 | ✅ 33 / 33 · 0 mismatched |
+| Runtime integrity | ✅ INTEGRITY OK |
+| Forward activation cutoff | ✅ `2026-08-11T02:43:57.894Z` unchanged |
+| TJR paper trading | ✅ `not_approved` |
+| Live-money trading | ✅ NOT AUTHORIZED |
+| Records created / acquisition | ✅ none · no Instagram ingestion · no `RuleCandidateProposal` |
+
+### 10. Recommendation for Step 4
+
+**The predicate has done its job: it converted "the corpus feels incomplete" into 17 named,
+addressable facts.** Four of them are the ones that matter, because they are the required categories:
+
+1. **`risk_rule` MISSING** — no risk claim exists at all. `knowledge_gaps` rates this `critical`
+   because position sizing cannot be determined without it, and its own recommended next source is
+   **"direct question to trader"** — no transcript is likely to fix it.
+2. **`setup_requirement` CONFLICTED** — via `XCONTRA|20260728|001` against ALEX_G.
+3. **`entry_rule` AMBIGUOUS** — the undefined "special little number", plus a missing companion
+   invalidation.
+4. **`stop_rule` AMBIGUOUS** — chart-relative only.
+
+**Recommended Step 4 is an operator decision, not code.** Blockers 2–4 need either an operator ruling
+(is the ALEX/TJR contradiction genuinely scope-dependent?) or new evidence; blocker 1 likely needs
+neither and simply cannot be closed from the existing corpus.
+
+If code is wanted, the smallest useful next step is a **derived research-priority ordering** — group
+the 17 blockers by the `recommendedNextSourceType` that `knowledge_gaps` **already records**, so a
+future autonomous process can tell "ask the trader" apart from "acquire another transcript" without
+acquiring anything. That reuses existing fields, writes nothing, and needs no schema change.
+
+**Do not populate `RuleCandidateProposal` in Step 4 either.** With 4 of 5 required categories
+unsupported, proposals would still be born blocked.
+
+**TJR PAPER TRADING REMAINS NOT AUTHORIZED. LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
