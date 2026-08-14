@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,440/1,440 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 24 suites 1,446/1,446 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -2301,10 +2301,10 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `562f677` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `73cfe4b` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical 24 suites **1,440 / 1,440** · platform 25 suites **1,049 / 1,049** ·
+**Gates:** canonical 24 suites **1,446 / 1,446** · platform 25 suites **1,049 / 1,049** ·
 protected drift **0** against the **v12.21.0** baseline (63 functions, 4 constants).
 
 ### Governance decisions already authorized and DONE — do not re-litigate
@@ -2355,3 +2355,94 @@ all passed independent verification.**
 
 **Do not declare GREEN because the gates are green.** Every defect this milestone found was found by
 adversarial mutation against a *passing* suite.
+
+---
+
+## 14. Scanner cadence, coverage, concurrency and failure isolation (completion item 4)
+
+Independent adversarial audit against `562f677`. It found a **demonstrated wrong trading outcome**,
+which is the first concurrency defect in this milestone to change what ALEX actually trades rather
+than what it reports.
+
+### 14.1 🔴 Overlapping ticks re-rolled a rejection the design calls PERMANENT
+
+`alexGLivePollTick` has no re-entrancy guard and is driven by `setInterval`. The duplicate gate is
+consulted **before** the trade attempt, the decision is recorded only **after** it, and the attempt
+suspends on `await fetchBidAsk` in between. Two in-flight ticks therefore both passed the gate for
+the same `signalId`:
+
+* tick 1 was blocked by the price-dependent entry-delay rule and recorded a **permanent** rejection;
+* tick 2 — already past the gate — re-evaluated the **same setup** against a **fresh bid/ask** and
+  **opened a real position the sequential path refuses.**
+
+Measured: sequential `openPositions = 0` versus overlapping `openPositions = 1`, a $100-risk
+position, with `ENTRY_MOVED = 1` **and** `TRADE_OPENED = 1` for one setup inside one H1 boundary, and
+**zero** `STATE_SIGNAL_ALREADY_DECIDED` events.
+
+**Why nothing caught it.** Every duplicate guard looks for an **existing position**, and tick 1 never
+opened one. This is not a duplicate trade — it is an **extra** trade past a permanent rejection,
+which is exactly why it survived everything this milestone hardened. It generalises to every gate
+evaluated against live price or `Date.now()`: staleness, entry-day, entry-delay, invalid-stop, R:R.
+Under overlap each was a coin flipped twice.
+
+**Fixed** with an in-flight claim keyed on `signalId`, tested-and-set **synchronously** in the same
+statement as the duplicate check and released in a `finally` around the await — the pattern already
+shipped and proven for `closePaperPosition`'s `paperPositionsClosing` guard. It invents no policy: it
+makes the documented *"decided a single time, never re-evaluated on a later poll"* contract actually
+hold under overlap, so the concurrent path behaves exactly like the sequential one.
+
+> **Governance judgment, stated so it can be overruled.** I treated this as *inside* the already
+> authorized Decisions 2+3 remediation, whose stated purpose is that the same economic setup is not
+> reconsidered. The concurrency hole means the authorized decided-authority does not actually hold;
+> closing it completes that work rather than deciding something new. It is also the conservative
+> direction — it removes a trade rather than adding one.
+
+**No re-entrancy guard was added to the tick.** That would suppress polls that today genuinely run —
+including the exit monitoring in `alexGCheckLivePositions` — and would silently reduce scans per
+hour, the very number §14.2 says must not change silently. It is **not** a neutral change and was not
+made.
+
+CONCUR-1..6, mutation-proven twice: removing the claim reproduces the defect exactly, and *moving the
+claim to after the await* reproduces it identically — proving the claim must be **synchronous**, not
+merely present.
+
+**JVM does not have this defect**, and the asymmetry is worth recording: JVM has no permanent
+per-signal rejection, `evaluateLiveTrigger` is re-derived every sweep anyway, and `checkAutoTrades`'
+post-await re-check plus `openPaperPosition` are a single await-free block, with
+`tradedToday[oPair]` capping it at one trade per pair per day regardless.
+
+### 14.2 Failure isolation, accounting and a leaked timer — all fixed
+
+| Defect | Effect |
+|---|---|
+| `scanPair` had **no try/catch** and was dispatched bare into `Promise.all` | One instrument throwing rejected its chunk, aborted every remaining chunk, and skipped `checkPaperPositions`, `checkAutoTrades` **and** `runManualReviewScan` for the whole sweep. **One instrument's display fault suppressed the entire trade pass.** |
+| `renderAlexGLivePanel()` sat outside every `try`, inside a function awaited **before** the pair loop | A panel repaint throwing left **all twelve instruments unevaluated** |
+| `__obsSkipped` is only pushed from inside the pair loop | On any pre-loop abort the ledger reported `instrumentsSkipped:[]` beside `instrumentsConfigured:12` — **0 of 12 accounted for**, the same unanswerable-coverage asymmetry closed for JVM in §2.14a and left open here |
+| `disconnect()` cleared `scanInterval` and `countdownInterval` but not `autoScanTimer` | `initAll` then assigned a **new** hourly timer over the handle, stranding the old one unstoppable. Every disconnect/reconnect cycle permanently added one top-down scan per hour — and that scan writes `scanData[pair].bucket`, which is `checkAutoTrades`' eligibility gate |
+
+Fixture `L15` caught my first attempt at the accounting fix — it asserts by source inspection that
+the ledger seam call is the first statement inside its own `try`, and I had inserted ahead of it.
+It was right to.
+
+### 14.3 What the audit confirmed is already sound
+
+Every fetch primitive ends in `catch{return null}`, so a rejected fetch, non-OK response or malformed
+JSON cannot throw into either engine. **All 24 snapshot→mutate→commit→rollback critical sections in
+the file contain zero `await`** — mechanically verified — so there is no lost update and no
+resurrection. JVM's 35-instrument chunking is an exact partition with every instrument accounted for
+on every path. `structuralAOICache`/`structuralAOIInflight`, the decided-authority maps and the
+tick-stamped pipeline buffer are all safe under overlap. **No duplicate paper position was reachable
+through any interleaving the auditor could construct** — the residual damage was the extra trade in
+§14.1, not duplication.
+
+### 14.4 Disclosed and NOT fixed
+
+* **Cadence has no fixture at all.** Every interval period, every install guard and every
+  extra-sweep trigger can be changed and the gate stays green. Fixtures are being added.
+* **Concurrency guards have no *behavioural* fixture** — `checkAutoTrades`' post-await re-check and
+  `paperPositionsClosing` are protected only by the drift byte-check. **A drift check proves the
+  bytes did not change; it does not prove the guard works.**
+* **"Observation must never affect the trading path" is asserted in comments at four sites and tested
+  at none** — turning any of those `catch` blocks into a rethrow leaves the gate green.
+* MAE/MFE mutations on a `pos` held across a concurrent `alexGAccount` rollback are discarded
+  (`alexGCloseLivePosition` is **protected**; recorded as a residual, not touched).
