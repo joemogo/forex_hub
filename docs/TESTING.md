@@ -116,6 +116,27 @@ Current per-suite counts (including the 22 historical, scratch-only ones) are tr
 `regression-baseline.json`) rather than restated here, so there is exactly one place to keep them
 in sync.
 
+### A known limitation of this harness — SCOPE CORRECTED (MOGO-021)
+
+> **⚠️ Read this before citing the section below to defer coverage.** The limitation is real but
+> **narrower than stated**, and the wording below was used for two years to justify deferring the
+> JVM close-math fixtures to a live browser. That deferral is no longer valid.
+>
+> The constraint applies to a promise that settles on **genuinely pending external I/O**. It does
+> **not** apply when `fetch` is stubbed to return an already-resolved promise — which is what every
+> offline suite in this repository does anyway. In that case the microtask chain drains inside the
+> harness's own async runner and `await` completes normally.
+>
+> **Demonstrated, not argued:** `tests/run_v1233_jvm_autotrade_reliability_tests.js` is an async
+> runner that does `await closePaperPosition(...)` and asserts post-`await` state. During the
+> MOGO-021 execution audit, two mutations placed *after* that `await` — inverting the balance update
+> and removing it — were killed by fixture `JVMCLOSE-1`. The post-await write was observed. It
+> follows that `closePaperPosition`'s exit price, P&L and result classification **are drivable
+> offline today**, and they are now covered there rather than deferred.
+>
+> The original empirical result stands for what it actually tested: a spin-wait around a *real*
+> rejecting `fetch()` never observed settlement. That is a different situation from a stubbed one.
+
 ### A known, permanent limitation of this harness
 
 `osascript -l JavaScript` (JXA) runs JavaScriptCore without a real event loop. **It cannot
@@ -173,8 +194,10 @@ rather than reintroducing a real-clock dependency.
 Operational Audit, its v12.3.2 corrective pass, the subsequent Final Ledger Atomicity Review, and
 the Final Pre-Commit Integrity Gate (rollback-failure-of-rollback detection, `RollbackFailure.*`).
 It exercises the same permanent limitation above from a different angle: `closePaperPosition()`
-has one genuine internal `await fetchBidAsk(...)`, so its exit-price/P&L/result-classification
-math cannot be driven to completion offline — those specific scenarios (winning/losing long and
+has one genuine internal `await fetchBidAsk(...)`, which this suite therefore does not drive to
+completion — **but see the scope correction above: with a stubbed `fetch` that is not a limitation,
+and `run_v1233` now covers that math offline.** As originally written, the exit-price/P&L/result
+math was said to be impossible offline — those specific scenarios (winning/losing long and
 short, manual partial close, break-even) are proven directly against the real running app in a
 live browser instead, disclosed as a `requires-live-browser` note in the fixture output rather
 than silently skipped. `alexGCloseLivePosition()`, by contrast, has no internal `await`

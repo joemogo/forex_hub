@@ -261,11 +261,17 @@ Trade Inspector foundation shipped (v10.0) and remains unbuilt.
 
 ## Offline test harness cannot resolve real async calls
 
-The JXA-based offline fixture harness (`osascript -l JavaScript`) cannot complete a function that
-contains a genuine `await` on an asynchronously-settling promise. This is a permanent constraint
-of the tooling, not something to "fix" — the established, correct workaround is live browser
-verification for anything that needs it. See [TESTING.md](TESTING.md) for the full explanation
-and pattern.
+The JXA-based offline fixture harness (`osascript -l JavaScript`) cannot complete a function whose
+promise settles on **genuinely pending external I/O**. See [TESTING.md](TESTING.md) for the full
+explanation and pattern.
+
+**SCOPE CORRECTED (MOGO-021).** This was previously written as an unqualified permanent constraint,
+and was used to defer JVM close-math coverage to a live browser. It does **not** apply when `fetch`
+is stubbed to return an already-resolved promise — which every offline suite here already does. In
+that case the microtask chain drains and `await` completes. Demonstrated:
+`run_v1233_jvm_autotrade_reliability_tests.js` awaits a real `closePaperPosition()` and observes
+post-`await` state, proven by mutations after the `await` being killed. **Do not cite this section to
+defer coverage without first checking whether the I/O in question is stubbed.**
 
 ## Two visual/design passes are scoped but not started
 
