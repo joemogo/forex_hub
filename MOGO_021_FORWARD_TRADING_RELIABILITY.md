@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,446/1,446 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 24 suites 1,468/1,468 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -2301,10 +2301,10 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `27daeb5` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `8daf41d` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical 24 suites **1,446 / 1,446** · platform 25 suites **1,049 / 1,049** ·
+**Gates:** canonical 24 suites **1,468 / 1,468** · platform 25 suites **1,049 / 1,049** ·
 protected drift **0** against the **v12.21.0** baseline (63 functions, 4 constants).
 
 ### Governance decisions already authorized and DONE — do not re-litigate
@@ -2441,15 +2441,42 @@ tick-stamped pipeline buffer are all safe under overlap. **No duplicate paper po
 through any interleaving the auditor could construct** — the residual damage was the extra trade in
 §14.1, not duplication.
 
-### 14.4 Disclosed and NOT fixed
+### 14.4 Coverage — CLOSED
 
-* **Cadence has no fixture at all.** Every interval period, every install guard and every
-  extra-sweep trigger can be changed and the gate stays green. Fixtures are being added.
-* **Concurrency guards have no *behavioural* fixture** — `checkAutoTrades`' post-await re-check and
-  `paperPositionsClosing` are protected only by the drift byte-check. **A drift check proves the
-  bytes did not change; it does not prove the guard works.**
-* **"Observation must never affect the trading path" is asserted in comments at four sites and tested
-  at none** — turning any of those `catch` blocks into a rethrow leaves the gate green.
+All four §14.2 fixes shipped **without coverage**, which is precisely the disease this milestone
+keeps finding. 22 fixtures added (1,446 → 1,468). Every acceptance mutation was first confirmed
+**green on the pre-existing gate**, so the audit's claim was independently reproduced rather than
+taken on trust:
+
+| Mutation | Pre-existing gate | Now |
+|---|---|---|
+| remove the per-dispatch `scanPair` `.catch()` | **1,446/1,446 green** | JVMISO-1..4 |
+| unwrap `renderAlexGLivePanel()` | **green** | TICKISO-1, 2 |
+| delete the ledger accounting block | **green** | LEDGER-2 |
+| remove `clearInterval` from `disconnect()` | **green** | JVMTMR-1 |
+| remove the `initAll` timer guard | **green** | JVMTMR-2 |
+
+`JVMISO-4` is the one that matters: with a fault injected at `bestConfluence` for an
+`ALL_PAIRS`-only instrument — so it throws inside the **real, unstubbed** `scanPair` — the trade pass
+is still reached and 8 real positions still open.
+
+**Three guards that were protected only by the drift byte-check now have behavioural fixtures:**
+`checkAutoTrades`' post-await re-check (**each half isolated**, so removing either alone dies),
+`paperPositionsClosing`, and the four "observation must never reach the trading path" `catch` blocks —
+asserted in comments at four sites and tested at none. *A drift check proves the bytes did not
+change; it does not prove the guard works.*
+
+**Honestly not claimed**, and recorded in the fixture comments rather than overstated: `JVMTMR-0` is
+a harness control, not a code claim; `JVMCLOSE-1` does **not** discriminate the concurrent-close
+guard because the pre-existing `idx2` re-validation already prevents a second record — only
+`JVMCLOSE-2` does; and `LEDGER-1`'s killer is already caught by the pre-existing `L2`.
+
+**Still open:** the `DISPATCHED_NO_RESULT` residual — a sweep aborting with its own `scanPair`
+promises in flight under-reports its own coverage. Pre-existing, fail-closed, documented in code,
+and unpinned by any fixture.
+
+* **Cadence still has no fixture** beyond the timer-leak guards: interval *periods* and the
+  extra-sweep triggers remain changeable with a green gate.
 * MAE/MFE mutations on a `pos` held across a concurrent `alexGAccount` rollback are discarded
   (`alexGCloseLivePosition` is **protected**; recorded as a residual, not touched).
 
