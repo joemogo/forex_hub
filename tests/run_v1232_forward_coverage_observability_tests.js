@@ -221,6 +221,22 @@ const wrapped = new Function('g',
   '  await alexGLivePollTick();\n' +
   '  const bnd4=Math.floor(g.now()/3600000)*3600000;\n' +
   '  g.record("RESIL-4","the instrument recovers automatically once data returns",!!(alexGLastEvaluatedCloseTime["EUR_USD"]&&alexGLastEvaluatedCloseTime["EUR_USD"].H1===bnd4),"recovered");\n' +
+  '  g.setBadPair(null); g.advanceHour();\n' +
+  '  alexGLastEvaluatedCloseTime={}; \n' +
+  '  await alexGLivePollTick();\n' +
+  '  const bndS=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  alexGLastEvaluatedCloseTime["EUR_USD"]={H1:bndS+72*3600000};   // cursor 3 days ahead\n' +
+  '  let seen=0;\n' +
+  '  for(let h=0;h<8;h++){ g.advanceHour(); await alexGLivePollTick();\n' +
+  '    const b=Math.floor(g.now()/3600000)*3600000;\n' +
+  '    if(alexGLastEvaluatedCloseTime["EUR_USD"].H1===b) seen++; }\n' +
+  '  g.record("STARVE-1","BEHAVIOUR: a cursor dated ahead of the boundary starves the instrument with NO recovery",\n' +
+  '    seen===0,"evaluated "+seen+"/8 hours -- exactly the EUR_USD signature");\n' +
+  '  const others=SCAN_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return op!=="EUR_USD";})\n' +
+  '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===Math.floor(g.now()/3600000)*3600000; });\n' +
+  '  g.record("STARVE-2","the other 11 remain healthy throughout -- starvation is per-instrument",others.length===11,"healthy="+others.length+"/11");\n' +
+  '  g.record("STARVE-3","the loop has NO guard clamping an impossible future-dated cursor",\n' +
+  '    alexGLastEvaluatedCloseTime["EUR_USD"].H1>Math.floor(g.now()/3600000)*3600000,"cursor still ahead; never reset");\n' +
   '  return g;\n' +
   '})();'
 );
