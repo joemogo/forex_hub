@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 23 suites 1,272/1,272 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,297/1,297 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -37,11 +37,16 @@ those requirements are not yet addressed.
 
 ### Live-campaign caveat carried forward
 
-The running page loaded its code **before** `c24b96b`. Confirmed by direct search of the durable
-store: `instrumentsSkipped`, `instrumentsConfigured` and `DATA_INSUFFICIENT_HISTORY` all appear
-**0** times. **The new diagnostics are not yet active in the live campaign** — they require a page
-reload, which costs re-entering broker credentials (MOGO-013). That is an operator action, recorded
-under blockers rather than taken unilaterally.
+The running page loaded its code **before** `c24b96b`. Originally inferred from absence in the
+durable store; now **confirmed directly** by reading the live page's own `REASON_CODE_REGISTRY` over
+CDP — it contains neither `DATA_INSUFFICIENT_HISTORY` nor `STATE_CURSOR_AHEAD_OF_CLOCK`. **The new
+diagnostics are not active in the live campaign.** Activating them needs a page reload, which costs
+re-entering broker credentials (MOGO-013) — an operator action, recorded as a blocker rather than
+taken unilaterally.
+
+This caveat turned out to be the whole story: §2.10 shows the pre-`c24b96b` durable evidence is
+**structurally incapable** of reporting the first pairs in scan order, and that is what produced the
+false EUR_USD diagnosis.
 
 ---
 
@@ -136,8 +141,13 @@ would have had to be dated ≥56h ahead, and **no mechanism producing that has b
 
 `fetchCandlesRange` filters to `c.complete` (so forming candles are excluded) and `getCandleCloseTime`
 puts the last H1 candle's close exactly *on* the boundary (fixture LOOP-3: 12/12 cursors land on
-the boundary). **The EUR_USD root cause remains unestablished.** What ships here is detection that
-will identify the condition durably if it recurs — not a fix, and it is not claimed as one.
+the boundary). What ships here is detection that will identify a cursor anomaly durably if one ever
+occurs — not a fix, and it is not claimed as one.
+
+> **Since superseded: the root cause IS now established, and it is not starvation of any kind.**
+> See **§2.10**. Live production state shows EUR_USD's cursor healthy and 30 setups qualifying per
+> cycle. The cursor-sanity detector remains worth keeping as a genuine data-integrity guard, but it
+> is no longer connected to the EUR_USD question.
 
 ### 2.5 JVM suite rebuilt — the first version could not fail
 
@@ -311,13 +321,216 @@ disclosed honestly in the codebase: `ALEX_X_002` is marked `origin:'MOGO Operati
 gate, not a frozen strategy rule. **No change proposed**; recorded so the milestone does not later
 mistake a deliberate contract for a gap.
 
+### 2.10 EUR_USD ROOT CAUSE — ESTABLISHED. It was never starved.
+
+**Conclusion: the "EUR_USD starvation" never existed. The original observation was a measurement
+artifact of a truncated in-memory ring, and I built two successive wrong theories on top of it.**
+
+#### How the evidence was obtained, safely
+
+The evaluation cursor is memory-only and never persisted, so no amount of disk forensics could ever
+reveal it — which is why four prior investigations stalled. The running campaign's Chrome was
+started with `--remote-debugging-port=9222`, so the live in-memory state is readable over CDP
+**without a reload, without credentials, and without touching campaign state**. All reads went
+through a helper that refuses any expression containing an assignment, a mutating call, or a
+navigation (`scratchpad/cdp_read.js`); only pure expressions were evaluated. The campaign was
+confirmed live (durable store written seconds before each read).
+
+#### What the live campaign actually shows
+
+| Observation | Value |
+|---|---|
+| Cursors, all 12 pairs | **identical**, `H1 = 2026-08-14T01:00:00Z` = **exactly the current H1 boundary** |
+| Hours behind boundary | **0** — the healthy state, confirming fixture LOOP-3 in production |
+| `alexGSetupState` | 383 setups; **EUR_USD = 30**, mid-pack of 12 (GBP_CHF highest at 54) |
+| `alexGLiveSetupStatuses` | exactly **300** — at cap |
+| Statuses for EUR_USD / GBP_USD | **0 / 0**; GBP_JPY 4 of its 26 |
+| `alexGEngineErrors` | 0 |
+| Running build | **pre-`c24b96b`** — neither new reason code exists in its registry |
+
+EUR_USD's cursor is healthy and it qualifies 30 setups per cycle. **It is being evaluated normally,
+identically to the other eleven.** The cursor is *behind or on* the boundary, never ahead — so the
+entire cursor-ahead theory is refuted in production, not merely doubted.
+
+#### The actual mechanism
+
+`alexGRecordLiveSetupStatus` (**PROTECTED**, `index.html:4282`):
+
+```js
+if(alexGLiveSetupStatuses.some(e=>e.signalId===entry.signalId)) return;
+alexGLiveSetupStatuses.unshift(entry);                 // newest to the FRONT
+if(alexGLiveSetupStatuses.length>300) alexGLiveSetupStatuses.length=300;   // truncate the TAIL
+```
+
+Newest goes to the front; truncation drops the **tail**, i.e. the **oldest**. Pairs are evaluated in
+`SCAN_PAIRS` order, so the pairs evaluated *first* sit nearest the tail and are evicted *first*.
+One cycle produces 383 setups against a 300 cap.
+
+The arithmetic works out as `383 − 300 = 83 = 31 (GBP_USD) + 30 (EUR_USD) + 22 (GBP_JPY partial)`.
+
+**I originally presented that as the proof. It is not — verification showed it is tautological.**
+Given "the ring is the last 300 of one 383-entry pass", the missing 83 *must* be the first 83 in
+scan order; it cannot come out any other way, so it restates the model rather than testing it.
+
+The genuinely discriminating evidence is the ring's **block structure**, which I checked as a
+prediction before looking: the pairs appear in **exactly reverse `SCAN_PAIRS` order**, each pair
+contiguous, no interleaving, with only the tail block cut mid-pair —
+
+> `USD_CHF, USD_CAD, EUR_JPY, AUD_JPY, NZD_USD, GBP_CAD, GBP_CHF, USD_JPY, AUD_USD, GBP_JPY`
+
+— and head/tail timestamps spanning **20.2 seconds of a single scan**. No alternative partition
+survives that. Two competing hypotheses were tested and rejected: a mid-scan abort would favour
+*early* pairs, not late ones; a per-pair error would leave `failures` or `outcome ≠ OK` entries, and
+the ledger contains **zero** error polls.
+
+And `alexGLivePollTick` records that same array verbatim into the durable ledger
+(`statuses:` at `index.html:5125`). **So the `statuses` evidence structurally cannot contain
+GBP/USD or EUR/USD** — the two pairs at the front of scan order.
+
+#### Correction: this explains "zero evaluations", but NOT "zero poll appearances"
+
+I initially folded the whole original claim into this one artifact. That was wrong, and it hid a
+**third, separate error**. Truncation cannot touch `instrumentsEvaluated` — that field is built
+from the poll loop (`__obsEvaluated.push(oPair)`), not from the ring, and **the pre-`c24b96b`
+running build already persisted it**. Read directly from the durable ledger across 67 advancing
+polls:
+
+| GBP_USD | EUR_USD | GBP_JPY | AUD_USD | USD_JPY | GBP_CHF | GBP_CAD | NZD_USD | AUD_JPY | EUR_JPY | USD_CAD | USD_CHF |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 61 | **61** | 61 | 61 | 61 | 62 | 61 | 62 | 62 | 63 | 64 | 67 |
+
+**EUR_USD is 61/67, identical to GBP_USD and in line with every peer.** The MOGO-020 claim of an
+asymmetry between them — "EUR_USD zero poll appearances, GBP_USD ~one per H1 boundary" — has no
+basis in the data. It was a reading error, and the evidence to refute it was present in the ledger
+the whole time. The suite header that asserted it has been retracted in place.
+
+Reproduced offline as regression protection (**BIAS-1..5**, `run_v1232`): 384 statuses recorded in
+scan order overflow the ring to exactly 300, and the pairs it evicts are `GBP_USD, EUR_USD` —
+precisely the two the original audit flagged.
+
+#### It is already remediated in committed code
+
+`instrumentsEvaluated` / `instrumentsConfigured` / `instrumentsSkipped` (added in `c24b96b`) are
+built from the **poll loop itself**, not from the status ring, so they are immune to this
+truncation. **BIAS-4/5** assert exactly that: 12/12 instruments named in the durable coverage
+record even while the ring has evicted the first two. The running campaign predates that commit,
+which is why the data I originally analysed was blind.
+
+#### The remaining consequence is trading-relevant and governance-blocked
+
+The duplicate guard at `index.html:4641` is documented *"PERMANENT, never reconsidered"* but reads
+that **same truncated ring**. For the evicted pairs the short-circuit cannot fire, so their setups
+are re-evaluated on every poll rather than being decided once.
+
+A duplicate **trade** is still prevented: `alexGConstructLivePosition` (`index.html:4302`) checks
+`alexGAutoTrading.tradedSignals` (persisted, unbounded) plus open/closed positions and journal
+entries. The real deviation is narrower: a setup blocked for a **transient** reason can be retried
+on a later poll, contrary to the documented finality — bounded by the staleness gate, since
+`signalAgeMinutesAtEvaluation` is measured from `qualificationTimestamp` and grows with the clock
+(one bar-period: H1 60 min).
+
+#### The consequence is larger than I first reported: the dedup is void for ALL twelve pairs
+
+I framed this as affecting only the evicted pairs. Verification showed that is wrong, and the
+correct version is a **strategy-fidelity defect**, not an observability one.
+
+A pair's own entries survive to its *next* turn only if `(totalSetups − thatPairsSetups) < 300`.
+The most-favoured instrument is GBP_CHF at 54 setups: `383 − 54 = 329 > 300`. **No pair clears the
+bar.** Measured independently in the durable ledger: **377 distinct signalIds against 17,700
+evaluation records — ~47 re-decisions per signal.** Even USD_CHF, evaluated last and sitting at the
+ring head, shows ~61 — one per advancing poll. Offline, **REDEC-1..4** reproduce it: every one of
+the 12 pairs retains **0 of 32** prior decisions into its next turn.
+
+So a setup blocked for a **transient** reason is re-attempted on every advancing poll, bounded only
+by staleness (one bar-period). Polls advance hourly, so the exposure is per-timeframe:
+
+| Timeframe | Live setups | Extra trade attempts before the setup goes stale |
+|---|---|---|
+| H1 | 281 | ~0 — the 60-minute window matches the hourly cadence **by coincidence, not by design** |
+| H4 | 89 | up to **3** |
+| D | 11 | up to **23** |
+| W | 2 | up to **167** |
+
+The sharpest case is `ENTRY_MOVED_TOO_FAR_FROM_SIGNAL` (`index.html:4333`). The v4.2 contract is
+explicit that the rule *rejects, never chases*, when price has moved >5 pips from
+`qualificationClose`. With hourly re-decision, a D-timeframe setup rejected at hour 1 is re-tested
+every hour for a day and **opens the moment price wanders back inside 5 pips — which is chasing.**
+`BLOCKED — EXISTING POSITION` behaves the same way once the blocking position closes.
+
+**Not repaired autonomously.** `alexGRecordLiveSetupStatus` is protected, and raising the cap
+changes which setups ALEX reconsiders — a frozen-strategy semantic change. See §7.2. This is the
+single most consequential open item in the milestone.
+
+#### Honesty note on the CDP evidence
+
+The read helper refuses assignments and known mutating calls, but a regex over source text
+**cannot** enforce read-only in JavaScript — verification demonstrated working bypasses
+(`Object.assign(...)`, `Array.prototype.sort/reverse/fill`, `Reflect.set`, string-built names). The
+guard reduces accident; it does not prove safety. The read-only property of this evidence rests on
+the expressions actually issued, all of which are recorded above, and every load-bearing figure was
+independently re-derived by the verifier from the durable on-disk ledger rather than taken from my
+reads.
+
+### 2.11 Why ALEX produces ~1 trade — answered from live production, and it is not a defect
+
+The MOGO-020 question that started this whole thread ("why has ALEX produced ~1 paper trade?") is
+now answered with live production evidence rather than inference. **Two frozen rules, both working
+exactly as designed, account for it completely.**
+
+| Stage | Live value |
+|---|---|
+| Setups in the engine's 90-day rebuild | **383** |
+| Qualification timestamps span | 2025-12-12 → 2026-08-13 |
+| Activation cutoff (`activatedAt`) | 2026-08-11T02:43:57.894Z |
+| Setups qualifying **after** activation | **8 of 383 — 2.1%** |
+| Those 8, evaluated against the H1 staleness limit | ages **1,501 / 1,621 / 2,161 / 2,581 minutes** vs `maxAgeMinutes: 60` |
+| Result | all rejected `STATE_SIGNAL_STALE` |
+| `tradedSignals` / closed positions / balance | **1** / **1** / **$9,900** (one −1R trade) |
+
+So the funnel is: 383 setups → 375 rejected `CONFIG_BEFORE_ACTIVATION` (they pre-date activation) →
+8 survive → all are 25–43 hours old against a one-bar-period limit → 0 new trades. The dominant
+reason code in the live event log is `CONFIG_BEFORE_ACTIVATION` (335 of 500 events), with
+`ALEX_ACTIVATION_CUTOFF` recorded `FAIL` 171 times and `STATE_SIGNAL_STALE` 8 times.
+
+**This is the activation-cutoff rule doing its job.** `alexGRunSetupEngine` rebuilds 90 days of
+history on every poll, so almost everything it finds is historical and must not be back-filled into
+live trading. Nothing here indicates a pipeline failure — the pipeline is running the full chain
+(rebuild → dedup → activation → staleness) on all 12 instruments every H1 boundary, and correctly
+declining.
+
+**The operational consequence worth flagging** (in scope under *restart/recovery*): both
+`alexGLiveSetupStatuses` and the evaluation cursor are **session-only** — a page reload clears them.
+On the first poll after any restart the engine re-derives all 383 setups and evaluates the
+post-activation ones *for the first time* long after they qualified, so they are permanently
+recorded `IGNORED — STALE SIGNAL`. That is the frozen rule behaving correctly (never trade a signal
+you missed), but it means **every restart burns the entire backlog of post-activation setups**, and
+only setups qualifying while the tab stays open can ever trade. Recorded as a characteristic, not a
+defect — changing it would be a frozen-strategy semantic change.
+
+#### Decision-event accuracy, validated against live production
+
+Checked directly on the running campaign's 500-event ring (~31 minutes, 76 scans):
+
+| Property | Result |
+|---|---|
+| `sequenceNumber` strictly increasing | **yes** — 34,654 → 35,153, no reordering |
+| Schema version | single (`mogo.decision-event.v1`) |
+| `evidenceCompleteness` | `COMPLETE` on 500/500 |
+| `scanId` ≠ `correlationId` | **0 events** |
+| Scans started but never completed | **0** |
+| Events carrying `parentEventId` | 172 |
+| Unregistered reason codes | **none** |
+
+The single `SCAN_COMPLETED` without a matching `SCAN_STARTED` is the ring boundary — its start event
+was evicted — not a correctness defect.
+
 ---
 
 ## 3. Gates
 
 | Gate | Result |
 |---|---|
-| Canonical | **23 suites · 1,272 / 1,272 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,297 / 1,297 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |
@@ -335,7 +548,7 @@ after I checked them myself:**
 
 1. The cursor auto-repair was **fail-open** in exactly the condition it detected (§2.3) — withdrawn.
 2. The "permanent starvation" model was **arithmetically wrong**, and the fixture proving it was
-   tautological (§2.4) — corrected, and the root cause is now stated as unresolved.
+   tautological (§2.4) — corrected. The root cause was later established outright (§2.10).
 3. Eight of sixteen JVM fixtures **could not fail** (§2.5) — suite rebuilt around a positive control.
 
 Two further verifications ran after the redesign — one attacking the fail-closed detector, one
@@ -375,8 +588,8 @@ findings against my work, all of which are fixed. Full results in §6.
 
 | Item | Where | Status |
 |---|---|---|
-| EUR_USD root cause unestablished — no mechanism identified that dates a cursor ≥56h ahead | §2.4 | **open**; detection now in place if it recurs |
-| `alexGLiveSetupStatuses` is a 300-entry FIFO but is documented as "PERMANENT, never reconsidered" (`index.html:4264` vs `4617`) | ALEX | open — comment and behaviour disagree |
+| EUR_USD root cause | §2.10 | **RESOLVED** — never starved; a truncated 300-entry status ring made the front-of-scan-order pairs invisible in the durable ledger |
+| `alexGLiveSetupStatuses` 300-entry FIFO vs its "PERMANENT, never reconsidered" contract (`index.html:4282` vs `4641`) | ALEX | **open, governance-blocked** — now with production proof (§2.10); smallest governed change in §7.2 |
 | PIPELINE natural key omits the pair (`index.html:13039`), so two instruments failing in the same millisecond collide and one record is dropped as a duplicate | MOGO-020 carry-over | open |
 | `instrumentsEvaluated` is pushed **before** the `await`, so it means "attempted" | naming | open |
 | `alexGCheckLivePositions()` runs before the per-pair loop and is not individually guarded — a throw there aborts the whole tick | ALEX | open |
@@ -473,3 +686,96 @@ genuine, not tolerance-gamed. The negative control scores 43 vs 55, a real near-
 prices from a period-6 synthetic cycle. It satisfies the frozen 3-touch rule honestly, but no real
 market produces that. The positive control proves the path fires; it is **not** evidence about how
 often real structure would.
+
+---
+
+## 7. Governance boundaries — what stays unobservable, and the smallest change that would fix it
+
+Two gaps are blocked by the protected-function contract, not by engineering difficulty. Neither is
+repaired autonomously. For each: what is unobservable, why it is blocked, the **smallest** governed
+change, and whether a non-invasive method gives equivalent proof.
+
+### 7.1 JVM candidate-level diagnostics
+
+**Unobservable today.** JVM emits scan-level events only (`SCAN_STARTED`, `SCAN_COMPLETED`,
+`ENGINE_ERROR`, all from `scanAll`). Not one candidate-, rule- or rejection-level event exists —
+proven against a real firing sweep by **JVM-27/28**, where 8 positions opened and the only events
+present were the two scan-level ones. Three drop points discard already-computed detail:
+
+| Site | Discarded | Line |
+|---|---|---|
+| `if(!result.fires)return;` | `result.reason` and `result.conf` | `index.html:16593` |
+| `if(pos.error){return;}` | structured sizing error on a **fired** signal | `index.html:16597` |
+| the eligibility filter | which pairs were excluded and why | `index.html:16580-16588` |
+
+**Why blocked.** All four functions on that path — `checkAutoTrades`, `evaluateLiveTrigger`,
+`openPaperPosition`, `getSession` — are protected. Any emit added inside them breaks drift-0.
+ALEX's equivalent plumbing is *not* protected, which is why ALEX could be instrumented
+autonomously and JVM cannot.
+
+**Smallest governed change.** One line at `index.html:16593`, before the existing `return`:
+
+```js
+if(!result.fires){ emitDecisionEvent({eventType:'CANDIDATE_REJECTED',strategyId:'current_strategy',
+  pair:oPair,source:'checkAutoTrades',stage:'LIVE_TRIGGER',decision:'REJECTED',
+  reasonCode:'CONFLUENCE_BELOW_THRESHOLD',reasonText:result.reason,
+  context:{confluence:result.conf&&result.conf.total},evidenceCompleteness:'PARTIAL'}); return; }
+```
+
+It touches one protected function, adds no branch, changes no rule, and reuses a value the function
+already computed. It would require a new baseline hash for `checkAutoTrades` and one new reason
+code registered **before** use. Cost: drift-0 must be re-established against a new baseline.
+
+**Non-invasive equivalent? Partial, and it should not be mistaken for the real thing.**
+`evaluateLiveTrigger` is pure and callable from outside, so a shadow observer could recompute the
+verdict for each eligible pair and record *that*. It would reproduce the reason text faithfully.
+What it could **not** do is prove the recomputed verdict is the one the live path actually acted on
+— it is a re-derivation, not a record of the real decision, and it would double the market-data
+cost. Recommended only if the governed change is declined.
+
+### 7.2 ALEX live-setup status ring (the §2.10 residue)
+
+**Unobservable / incorrect today.** `alexGLiveSetupStatuses` is a 300-entry ring that holds less
+than one poll cycle (383 setups). Consequences: the pairs earliest in `SCAN_PAIRS` order are absent
+from the panel and from the `statuses` array written to the durable ledger; and the duplicate guard
+at `index.html:4641`, documented *"PERMANENT, never reconsidered"*, reads that same truncated ring,
+so for evicted pairs a setup's fate is **not** decided once.
+
+**Why blocked.** `alexGRecordLiveSetupStatus` is protected. Raising the cap, or separating the
+"decided" set from the "display" ring, means editing it.
+
+**Severity — this is the milestone's most consequential open item.** It is not merely a display
+cap. Because no pair's entries survive to its next turn (`383 − 54 = 329 > 300` in the best case,
+and REDEC-1..4 measure 0 of 32 retained for all twelve), the duplicate short-circuit never fires,
+and the durable ledger records **~47 re-decisions per signalId**. A setup blocked for a transient
+reason is therefore re-attempted every advancing poll until it goes stale: up to 3 extra attempts
+on H4, 23 on D, 167 on W. For `ENTRY_MOVED_TOO_FAR_FROM_SIGNAL` that converts the documented
+*"rejecting — never chasing"* rule into chasing on the D and W timeframes. H1 is safe only because
+the 60-minute staleness window happens to match the hourly poll cadence — a coincidence, not a
+guard.
+
+**Smallest governed change.** Raise the cap so it exceeds one cycle's setup count with headroom —
+`if(alexGLiveSetupStatuses.length>5000) alexGLiveSetupStatuses.length=5000;` — a single numeric
+literal in one protected function. It restores the documented finality contract, removes the ledger
+bias, and eliminates the chasing exposure in one edit. It **does** change ALEX's live behaviour:
+setups currently re-decided each poll would be decided once, as the contract already says they
+should be. **That is a frozen-strategy semantic question and is Joe's call, not mine.**
+
+**Non-invasive equivalent? Yes for observability, no for the dedup.**
+* *Observability:* already solved and shipped. `instrumentsEvaluated`/`instrumentsConfigured`/
+  `instrumentsSkipped` derive from the poll loop, not the ring, and are immune to the truncation
+  (**BIAS-4/5**). No protected change needed. The running campaign simply predates it.
+* *Dedup:* a parallel unbounded decided-signal `Set` in the non-protected caller would work
+  mechanically, but a prior attempt was reverted for desynchronizing whenever
+  `alexGLiveSetupStatuses` is reset externally (`index.html:5195`, and existing suites do this).
+  That specific desync is now solvable — the reset sites are known and a parallel structure can be
+  cleared alongside them. **But it would still change which setups ALEX reconsiders**, which is the
+  same semantic change as above, reached by a back door that evades the protected-function gate.
+  Doing it that way would be worse governance, not better. Not done.
+
+### 7.3 Standing constraints, all intact
+
+PAPER ONLY · live-money **NOT AUTHORIZED** and no live-money gate touched · TJR **not**
+paper-authorized and untouched (`status:'development'`, all four capabilities false) · ALEX
+protected drift **0** (63 functions, 4 constants byte-identical) · JVM governed strategy integrity
+preserved — every JVM function on the decision path is called as-is and none was modified.

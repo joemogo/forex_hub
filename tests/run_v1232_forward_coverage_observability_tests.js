@@ -1,10 +1,21 @@
 // Forward-coverage observability fixture.
 //
 // PURPOSE
-// The ALEX forward campaign lost two of twelve configured instruments for its entire duration
-// with NO signal of any kind: EUR_USD produced zero poll appearances and zero evaluations,
-// GBP_USD was attempted ~once per H1 boundary and produced zero evaluations. Neither left an
-// error, a decision event or an observation. Two silent paths caused that invisibility:
+// This suite was written against a MOGO-020 premise that has since been RETRACTED. The original
+// claim -- "EUR_USD produced zero poll appearances and zero evaluations, while GBP_USD was
+// attempted ~once per H1 boundary" -- is FALSE, and the asymmetry it asserted never existed.
+// Read directly from the durable ledger across 67 advancing polls, instrumentsEvaluated shows
+// GBP_USD 61 and EUR_USD 61: identical, and in line with every peer. EUR_USD was never starved
+// and was never missing from the poll. See MOGO_021_FORWARD_TRADING_RELIABILITY.md section 2.10.
+//
+// What was really happening is the STATUS-RING TRUNCATION BIAS proved by BIAS-1..5 at the end of
+// this file: alexGLiveSetupStatuses is a 300-entry ring that cannot hold one scan cycle, so the
+// pairs earliest in SCAN_PAIRS order never survive into the durable `statuses` array. A coverage
+// claim read off that array under-reports them; a coverage claim read off instrumentsEvaluated
+// does not, and instrumentsEvaluated was already present in the running build all along.
+//
+// The two silent paths below are nevertheless REAL and their fixtures remain valid -- they were
+// simply not what happened to EUR_USD:
 //
 //   1. alexGEvaluatePairForLiveSetups() returned early on a short H1 dataset, recording nothing.
 //   2. alexGLivePollTick() skipped a pair whose evaluation cursor had not fallen behind the
@@ -287,6 +298,69 @@ const wrapped = new Function('g',
   '  g.record("STARVE-12","and it evicts oldest-first at the cap rather than growing past it",\n' +
   '    alexGCursorSanityReported.size===ALEXG_CURSOR_SANITY_REPORTED_MAX&&!alexGCursorSanityReported.has("SYNTH|0"),\n' +
   '    "size="+alexGCursorSanityReported.size+" after inserting cap+50; oldest evicted");\n' +
+  // ── STATUS-RING TRUNCATION BIAS: the defect that produced a false starvation diagnosis ──
+  // alexGLiveSetupStatuses is a 300-entry ring (PROTECTED alexGRecordLiveSetupStatus: unshift then
+  // truncate the TAIL). Pairs are evaluated in SCAN_PAIRS order, so the pairs recorded FIRST sit
+  // nearest the tail and are evicted first. Production carries 383 setups per cycle against that
+  // 300 cap, so GBP/USD (1st) and EUR/USD (2nd) are evicted BEFORE the cycle even finishes -- and
+  // alexGLivePollTick records this same array verbatim into the durable ledger. Any forward-coverage
+  // analysis built on it therefore under-reports the pairs at the front of scan order, which is
+  // exactly what produced the (false) "EUR_USD is starved" conclusion in MOGO-020.
+  '  alexGLiveSetupStatuses=[];\n' +
+  '  const ORDER=SCAN_PAIRS.map(function(p){return p.replace("/","_");});\n' +
+  '  let sid=0;\n' +
+  '  for(const op of ORDER){ for(let k=0;k<32;k++){ sid++;\n' +
+  '    alexGRecordLiveSetupStatus({signalId:"S|"+sid,pair:op,timeframe:"H1",status:"IGNORED"}); } }\n' +
+  '  const ringPairs=alexGLiveSetupStatuses.map(function(e){return e.pair;});\n' +
+  '  g.record("BIAS-1","one cycle of setups OVERFLOWS the 300-entry status ring",\n' +
+  '    sid===384&&alexGLiveSetupStatuses.length===300,"recorded "+sid+" statuses, ring holds "+alexGLiveSetupStatuses.length);\n' +
+  '  g.record("BIAS-2","the ring evicts the pairs evaluated FIRST -- scan order decides who disappears",\n' +
+  '    ringPairs.indexOf(ORDER[0])===-1&&ringPairs.indexOf(ORDER[1])===-1&&ringPairs.indexOf(ORDER[11])!==-1,\n' +
+  '    ORDER[0]+" and "+ORDER[1]+" absent; "+ORDER[11]+" present -- entries="+ringPairs.length);\n' +
+  // Names the EXPECTED pairs. An earlier version asserted only "some pair is missing", which is
+  // tautologically true whenever 384 entries overflow a 300 cap in ANY eviction direction -- it
+  // survived an unshift->push mutation unchanged and therefore proved nothing.
+  '  const invisible=ORDER.filter(function(op){return ringPairs.indexOf(op)===-1;});\n' +
+  '  g.record("BIAS-3","and the pairs it hides are exactly the FRONT of scan order, not an arbitrary pair",\n' +
+  '    invisible.length===2&&invisible[0]===ORDER[0]&&invisible[1]===ORDER[1],\n' +
+  '    "invisible in the ring: "+invisible.join(",")+" (expected "+ORDER[0]+","+ORDER[1]+")");\n' +
+  // The remediation: instrumentsEvaluated/instrumentsConfigured are built from the poll loop
+  // itself, not from the status ring, so they are immune to this truncation.
+  '  alexGLastEvaluatedCloseTime={}; g.advanceHour();\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const obs=g.lastObs();\n' +
+  '  g.record("BIAS-4","the DURABLE coverage record coming from the poll loop is NOT subject to that bias",\n' +
+  '    (obs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&obs.instrumentsConfigured===SCAN_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((obs.instrumentsEvaluated||[]).length)+"/"+obs.instrumentsConfigured);\n' +
+  '  g.record("BIAS-5","and it names EVERY configured instrument, including the ones the ring evicted",\n' +
+  '    ORDER.every(function(op){ return (obs.instrumentsEvaluated||[]).indexOf(op)!==-1; }),\n' +
+  '    "all "+ORDER.length+" pairs present in the durable coverage record");\n' +
+  // ── THE TRADING-FIDELITY CONSEQUENCE: the dedup at index.html:4641 is void for EVERY pair ──
+  // A pair's own entries survive to its NEXT turn only if (totalSetups - thatPairsSetups) < 300.
+  // In production the most-favoured pair is GBP_CHF at 54 setups: 383 - 54 = 329 > 300. No pair
+  // clears the bar, so the "PERMANENT, never reconsidered" contract does not hold for any
+  // instrument -- every setup is re-decided on every advancing poll. Measured in the durable
+  // ledger at ~47 re-decisions per signalId (377 signalIds, 17,700 evaluation records).
+  '  alexGLiveSetupStatuses=[];\n' +
+  '  function cycle(tag){ const seen={};\n' +
+  '    ORDER.forEach(function(op,pi){\n' +
+  '      const mine=[]; for(let k=0;k<32;k++) mine.push("S|"+op+"|"+k);\n' +
+  '      seen[op]=mine.filter(function(id){ return alexGLiveSetupStatuses.some(function(e){return e.signalId===id;}); }).length;\n' +
+  '      mine.forEach(function(id){ alexGRecordLiveSetupStatus({signalId:id,pair:op,timeframe:"H1",status:"IGNORED"}); });\n' +
+  '    }); return seen; }\n' +
+  '  cycle("first");\n' +
+  '  const survived=cycle("second");\n' +
+  '  const anySurvivor=ORDER.filter(function(op){ return survived[op]===32; });\n' +
+  '  g.record("REDEC-1","NO instrument keeps a full cycle of decisions to its next turn -- the ring is too small",\n' +
+  '    anySurvivor.length===0,"pairs retaining all 32 prior decisions: "+anySurvivor.length+"/12");\n' +
+  '  g.record("REDEC-2","so the PERMANENT dedup contract (index.html:4641) is void for EVERY pair, not just evicted ones",\n' +
+  '    ORDER.every(function(op){ return survived[op]<32; }),\n' +
+  '    "retained per pair: "+ORDER.map(function(op){return survived[op];}).join(","));\n' +
+  '  g.record("REDEC-3","the pair evaluated LAST is the best case and still loses decisions",\n' +
+  '    survived[ORDER[11]]<32,ORDER[11]+" retained "+survived[ORDER[11]]+"/32 of its own prior decisions");\n' +
+  '  g.record("REDEC-4","a ring larger than one cycle WOULD hold the contract -- the cap is the whole cause",\n' +
+  '    (function(){ const need=ORDER.length*32; return need>300; })(),\n' +
+  '    "one cycle needs "+(ORDER.length*32)+" slots; the ring holds 300");\n' +
   '  return g;\n' +
   '})();'
 );
