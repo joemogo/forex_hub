@@ -1095,6 +1095,78 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("CONCUR-6","and this block leaves production policy exactly as it found it",\n' +
   '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true&&fetchBidAsk===__origFBA2,\n' +
   '    "suspension restored and the bid/ask seam removed");\n' +
+  // ══ MOGO-021 -- A PANEL REPAINT MUST NOT ABORT THE WHOLE TICK ═════════════════════════════
+  // alexGCheckLivePositions is awaited BEFORE the per-pair loop, and its closing
+  // renderAlexGLivePanel() sat outside every try -- so a throw from a DISPLAY call aborted the
+  // entire tick and left all twelve instruments unevaluated, recorded as an ERROR poll. Exit
+  // monitoring and evaluation must not be hostage to a repaint. Nothing covered that: unwrapping
+  // the call left the whole gate green.
+  //
+  // A position must be OPEN for any of this to be reachable at all -- alexGCheckLivePositions
+  // returns immediately when there are none, and the repaint under test is its LAST statement. The
+  // synthetic position is deliberately un-closeable this tick (stop and target far outside any
+  // price the harness serves), so the only renderAlexGLivePanel call reachable inside
+  // alexGCheckLivePositions is the one under test.
+  '  g.setPlan(null); g.setT0(t0); g.setH1(g.build(t0)); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  function isoOpenPosition(){ alexGAccount.openPositions=[{tradeId:"ISO-FIXTURE-1",pair:"EUR_USD",\n' +
+  '    timeframe:"H1",direction:"buy",entry:1.10600,stop:1.00000,target:1.30000,plannedRR:2,\n' +
+  '    pipValue:10,positionSize:1,riskAmount:100,status:"open",setupId:"ISO",signalId:"ISO",\n' +
+  '    openedAt:new Date(Date.now()-3600000).toISOString(),lastExitCheckTimestamp:Date.now()-60000}]; }\n' +
+  '  fullReset(); alexGIdentityDriftReported=new Set(); isoOpenPosition(); alexGEngineErrors=[];\n' +
+  // Armed for exactly ONE call. alexGCheckLivePositions is the first thing the tick awaits and
+  // nothing closes here, so the first repaint of the tick IS its closing one; disarming immediately
+  // leaves the pair loop's own repaints untouched. This tests THAT call site, not a globally broken
+  // renderer -- and if anything earlier in the tick repainted, the tick would abort and TICKISO-2
+  // would fail rather than quietly passing for the wrong reason.
+  '  const __isoPanel=renderAlexGLivePanel; let __isoArm=true,__isoThrows=0;\n' +
+  '  renderAlexGLivePanel=function(){ if(__isoArm){ __isoArm=false; __isoThrows++;\n' +
+  '    throw new Error("fixture panel repaint fault"); } return __isoPanel.apply(this,arguments); };\n' +
+  '  let __isoTickThrew=false;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __isoTickThrew=true; }\n' +
+  '  renderAlexGLivePanel=__isoPanel;\n' +
+  '  const isoObs=g.lastObs();\n' +
+  '  const isoErr=alexGEngineErrors.filter(function(e){\n' +
+  '    return /^renderAlexGLivePanel: fixture panel repaint fault/.test(String(e&&e.message)); });\n' +
+  '  g.record("TICKISO-1","PRECONDITION: the panel repaint really threw at that seam, was recorded there, and did NOT abort the tick",\n' +
+  '    __isoThrows===1&&isoErr.length===1&&__isoTickThrew===false,\n' +
+  '    "throws="+__isoThrows+" recorded engine errors="+isoErr.length+" ["+String((isoErr[0]||{}).message).slice(0,46)+\n' +
+  '    "], tick threw="+__isoTickThrew);\n' +
+  '  g.record("TICKISO-2","the tick still evaluates ALL TWELVE instruments and still reports outcome OK -- a repaint cannot cost a whole poll",\n' +
+  '    (isoObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&isoObs.outcome==="OK"&&\n' +
+  '    isoObs.instrumentsAttempted===SCAN_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((isoObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length+\n' +
+  '    " attempted="+isoObs.instrumentsAttempted+" outcome="+String(isoObs.outcome)+\n' +
+  '    " (unwrapped, this tick aborted with 0 evaluated and outcome ERROR)");\n' +
+  // ══ MOGO-021 -- EVERY CONFIGURED INSTRUMENT ACCOUNTED FOR ON EVERY OUTCOME PATH ═══════════
+  // __obsSkipped is only pushed from inside the pair loop, so anything throwing BEFORE or DURING it
+  // left instrumentsSkipped EMPTY beside instrumentsConfigured:12 -- 0 of 12 accounted for, the same
+  // unanswerable-coverage asymmetry that left the EUR_USD question open for four investigations.
+  // The fault is injected at saveAlexG, which alexGCheckLivePositions calls OUTSIDE every try and
+  // BEFORE the pair loop is ever reached: a persistence failure aborting the tick outward, which is
+  // exactly the shape the accounting exists for.
+  '  fullReset(); isoOpenPosition(); alexGEngineErrors=[];\n' +
+  '  const __isoSave=saveAlexG;\n' +
+  '  saveAlexG=function(){ throw new Error("fixture persistence fault before the pair loop"); };\n' +
+  '  let __ledThrew=false;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __ledThrew=/fixture persistence fault/.test(String(e&&e.message)); }\n' +
+  '  saveAlexG=__isoSave;\n' +
+  '  const ledObs=g.lastObs();\n' +
+  '  g.record("LEDGER-1","PRECONDITION: the tick really aborted BEFORE the pair loop, the error still propagated, and the poll is still recorded",\n' +
+  '    __ledThrew===true&&(ledObs.instrumentsEvaluated||[]).length===0&&ledObs.outcome==="ERROR"&&\n' +
+  '    /fixture persistence fault/.test(String(ledObs.errorText)),\n' +
+  '    "threw="+__ledThrew+" outcome="+String(ledObs.outcome)+" evaluated="+((ledObs.instrumentsEvaluated)||[]).length+\n' +
+  '    " errorText=["+String(ledObs.errorText).slice(0,46)+"]");\n' +
+  '  const ledSk=ledObs.instrumentsSkipped||[];\n' +
+  '  g.record("LEDGER-2","EVERY configured instrument is still accounted for -- evaluated + skipped equals instrumentsConfigured, and the unreached ones are NAMED",\n' +
+  '    ledObs.instrumentsConfigured===SCAN_PAIRS.length&&\n' +
+  '    (ledObs.instrumentsEvaluated||[]).length+ledSk.length===ledObs.instrumentsConfigured&&\n' +
+  '    ledSk.length===SCAN_PAIRS.length&&\n' +
+  '    ledSk.filter(function(x){return x.reason==="NOT_REACHED_THIS_TICK";}).length===SCAN_PAIRS.length&&\n' +
+  '    SCAN_PAIRS.every(function(p){ return ledSk.some(function(x){ return x.pair===p.replace("/","_"); }); }),\n' +
+  '    "configured="+ledObs.instrumentsConfigured+" evaluated="+((ledObs.instrumentsEvaluated)||[]).length+\n' +
+  '    " skipped="+ledSk.length+" all NOT_REACHED_THIS_TICK, one row per configured instrument"+\n' +
+  '    " (without the accounting block this read 0 of "+ledObs.instrumentsConfigured+")");\n' +
+  '  fullReset();\n' +
   '  return g;\n})();'
 );
 

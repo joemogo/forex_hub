@@ -82,7 +82,16 @@ globalThis.Blob=function(p,o){return{parts:p,opts:o};};
 globalThis.URL={createObjectURL:()=>'blob:stub',revokeObjectURL(){}};
 let __t=0;
 globalThis.setTimeout=()=>++__t;globalThis.clearTimeout=()=>{};
-globalThis.setInterval=()=>++__t;globalThis.clearInterval=()=>{};
+// MOGO-021 TIMER LEAK. The stubs used to be `setInterval=()=>++__t; clearInterval=()=>{}`, which
+// hand out ids and forget them -- so a LEAKED timer (one whose handle was overwritten before it was
+// cleared) is indistinguishable from a cleared one and no fixture could ever see the leak. The stub
+// now keeps a registry of LIVE intervals, keyed by the same id it returns, so "how many hourly
+// top-down timers are actually still running?" is answerable. Ids are still `++__t`, so every
+// existing fixture sees byte-identical return values; only clearInterval gained an effect. Nothing
+// is ever executed -- these are records of live handles, not a scheduler.
+const __liveIntervals=new Map();
+globalThis.setInterval=function(fn,ms){ const id=++__t; __liveIntervals.set(id,{fn:fn,ms:ms}); return id; };
+globalThis.clearInterval=function(id){ if(id!=null) __liveIntervals.delete(id); };
 globalThis.ResizeObserver=function(){return{observe(){},disconnect(){}};};
 globalThis.LightweightCharts={LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}};
 globalThis.Notification=undefined;
@@ -215,6 +224,11 @@ g.failPair=p=>{__failPair=p;};
 g.throwPair=p=>{__throwPair=p;};
 g.setShortGran=(p,tf)=>{__shortGranPair=p;__shortGranTf=tf;};
 g.releaseHeld=()=>{__gatePair=null; if(__gateRelease){__gateRelease(); __gateRelease=null;}};
+// How many LIVE intervals are currently registered against this exact callback. Identity, not the
+// period, is the test: counting `ms===3600000` would also count any other hourly timer and would
+// still pass if the hourly handle were stranded and a second one created against a different fn.
+g.liveTimersFor=fn=>{ let n=0; __liveIntervals.forEach(v=>{ if(v.fn===fn) n++; }); return n; };
+g.liveTimerIds=()=>Array.from(__liveIntervals.keys());
 g.setNow=t=>{__simNow=t;};
 g.now=()=>__simNow;
 g.utc=(y,mo,d,h)=>__RealDate.UTC(y,mo,d,h,0,0);
@@ -736,6 +750,97 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    faulted.fires===false&&/Incomplete market data/.test(String(faulted.reason))&&recovered.fires===true,\n' +
   '    "faulted=["+String(faulted.reason)+"] then recovered fires="+recovered.fires+\n' +
   '    " (an incomplete AOI is deliberately NOT cached, or one bad page would cost 15 minutes of trading)");\n' +
+  // ══ MOGO-021 SCAN FAILURE ISOLATION -- one instrument must not suppress the whole trade pass ══
+  // scanPair had no try/catch and was dispatched BARE into Promise.all, so ONE instrument throwing
+  // rejected its chunk, aborted every remaining chunk, and skipped checkPaperPositions,
+  // checkAutoTrades AND runManualReviewScan for the entire sweep: one instrument's display fault
+  // suppressing every trade decision on the other 34. That had no fixture anywhere -- removing the
+  // per-dispatch .catch() left the whole gate green.
+  //
+  // The fault is injected at bestConfluence for ONE instrument, so it throws inside the REAL,
+  // unstubbed scanPair and BEFORE the pairData/__jvmResults write -- the organic shape of the
+  // defect, and the only shape that also reaches DISPATCHED_NO_RESULT. EUR_GBP is deliberately an
+  // ALL_PAIRS-only instrument (NOT one of the 12 SCAN_PAIRS), so the injected fault cannot reach
+  // checkAutoTrades' own evaluateLiveTrigger call: the trade pass is measured on instruments the
+  // fault never touched, which is the point -- their trades must not be collateral damage.
+  '  var __isoObs=null; const __isoRec=evidenceRecordForwardObservations;\n' +
+  '  evidenceRecordForwardObservations=function(input){ __isoObs=evidenceBuildPollObservation((input&&input.poll)||{}); return __isoRec.apply(this,arguments); };\n' +
+  '  jvmFreshFiring(); paperEngineErrors=[];\n' +
+  '  const __isoBC=bestConfluence;\n' +
+  '  bestConfluence=function(candles,pairKey,overrides){\n' +
+  '    if(pairKey==="EUR_GBP") throw new Error("fixture display fault"); return __isoBC.apply(this,arguments); };\n' +
+  '  const __isoCAT=checkAutoTrades; let __isoCATCalls=0;\n' +
+  '  checkAutoTrades=function(){ __isoCATCalls++; return __isoCAT.apply(this,arguments); };\n' +
+  '  const __isoMRS=runManualReviewScan; let __isoMRSCalls=0;\n' +
+  '  runManualReviewScan=function(){ __isoMRSCalls++; return __isoMRS.apply(this,arguments); };\n' +
+  '  let __isoThrew=false;\n' +
+  '  try{ await scanAll(); }catch(e){ __isoThrew=true; }\n' +
+  '  bestConfluence=__isoBC; checkAutoTrades=__isoCAT; runManualReviewScan=__isoMRS;\n' +
+  '  evidenceRecordForwardObservations=__isoRec;\n' +
+  '  const __isoErr=paperEngineErrors.filter(function(e){ return /^scanPair\\(EUR_GBP\\): fixture display fault/.test(String(e&&e.message)); });\n' +
+  '  g.record("JVMISO-1","PRECONDITION: the injected fault really threw inside scanPair, was recorded per-instrument, and did NOT abort the sweep",\n' +
+  '    __isoErr.length===1&&__isoThrew===false,\n' +
+  '    "scanPair(EUR_GBP) errors recorded="+__isoErr.length+" ["+String((__isoErr[0]||{}).message).slice(0,44)+"], scanAll threw="+__isoThrew);\n' +
+  '  g.record("JVMISO-2","the OTHER 34 instruments still complete and are reported evaluated -- one fault does not abort the remaining chunks",\n' +
+  '    (__isoObs.instrumentsEvaluated||[]).length===ALL_PAIRS.length-1&&\n' +
+  '    (__isoObs.instrumentsEvaluated||[]).indexOf("EUR_GBP")===-1,\n' +
+  '    "evaluated="+((__isoObs.instrumentsEvaluated)||[]).length+"/"+ALL_PAIRS.length+" with EUR_GBP absent");\n' +
+  '  const __isoSk=(__isoObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="EUR_GBP";})[0]||{};\n' +
+  '  g.record("JVMISO-3","the throwing instrument is reported DISPATCHED_NO_RESULT -- isolated, not silently absorbed",\n' +
+  '    __isoSk.reason==="DISPATCHED_NO_RESULT"&&__isoSk.completenessState===null&&\n' +
+  '    (__isoObs.instrumentsSkipped||[]).length===1&&__isoObs.instrumentsAttempted===ALL_PAIRS.length,\n' +
+  '    "EUR_GBP reason="+String(__isoSk.reason)+" completenessState="+String(__isoSk.completenessState)+\n' +
+  '    " attempted="+__isoObs.instrumentsAttempted+" skipped="+((__isoObs.instrumentsSkipped)||[]).length);\n' +
+  // THE ONE THAT MATTERS. A display fault on a single instrument used to cost the ENTIRE trade pass:
+  // Promise.all rejected, the throw propagated out of the chunk loop, and checkAutoTrades was never
+  // reached. Asserting the call alone would be satisfied by a call that failed, so the opened
+  // positions are asserted too -- the pass ran to completion, not merely started.
+  '  g.record("JVMISO-4","THE TRADE PASS STILL RUNS: checkAutoTrades and runManualReviewScan are reached and real positions still open",\n' +
+  '    __isoCATCalls===1&&__isoMRSCalls===1&&paperAccount.openPositions.length>0,\n' +
+  '    "checkAutoTrades calls="+__isoCATCalls+" runManualReviewScan calls="+__isoMRSCalls+\n' +
+  '    " positions opened="+paperAccount.openPositions.length+" (bare dispatch skipped the whole pass)");\n' +
+  // ══ MOGO-021 LEAKED HOURLY TIMER ══════════════════════════════════════════════════════════
+  // disconnect() cleared scanInterval and countdownInterval but NOT autoScanTimer, and initAll then
+  // assigned a NEW hourly timer over the handle -- so the old one kept running with nothing left to
+  // stop it, and every disconnect/reconnect cycle permanently added one top-down scan per hour.
+  // That scan writes scanData[pair].bucket, which IS checkAutoTrades' eligibility gate, so the leak
+  // is trading-adjacent rather than cosmetic. Both halves are proven separately below, because
+  // either one alone masks the other in the end-to-end cycle.
+  '  g.setMode("flat"); structuralAOICache={}; pairData={};\n' +
+  '  if(autoScanTimer){ clearInterval(autoScanTimer); autoScanTimer=null; }\n' +
+  // POSITIVE CONTROL FIRST. Without it, every count below could be a harness that simply cannot
+  // report more than one live timer, and the two fixtures after it would be vacuous by construction.
+  '  const __ctlA=setInterval(runAutoTopDownScan,60*60*1000);\n' +
+  '  const __ctlB=setInterval(runAutoTopDownScan,60*60*1000);\n' +
+  '  const __ctlBoth=g.liveTimersFor(runAutoTopDownScan);\n' +
+  '  clearInterval(__ctlA); const __ctlOne=g.liveTimersFor(runAutoTopDownScan); clearInterval(__ctlB);\n' +
+  '  g.record("JVMTMR-0","POSITIVE CONTROL: a STRANDED hourly timer is actually observable -- two live handles read as two, one as one, none as none",\n' +
+  '    __ctlBoth===2&&__ctlOne===1&&g.liveTimersFor(runAutoTopDownScan)===0&&__ctlA!==__ctlB,\n' +
+  '    "two handles -> "+__ctlBoth+" live, after clearing one -> "+__ctlOne+", after clearing both -> "+g.liveTimersFor(runAutoTopDownScan));\n' +
+  // lastRunAt is fresh on purpose: `stale` must be false so neither toggleAutoScan nor initAll kicks
+  // off a real top-down scan. This fixture is about the HANDLE, not about the scan.
+  '  autoScan={enabled:true,lastRunAt:new Date().toISOString()};\n' +
+  '  document.getElementById("autoScanToggle").checked=true;\n' +
+  '  toggleAutoScan();\n' +
+  '  const __tmrOn=g.liveTimersFor(runAutoTopDownScan),__tmrHandleOn=autoScanTimer;\n' +
+  '  disconnect();\n' +
+  '  g.record("JVMTMR-1","DISCONNECT stops the hourly top-down timer instead of stranding it unstoppable",\n' +
+  '    __tmrOn===1&&__tmrHandleOn!=null&&autoScanTimer===null&&g.liveTimersFor(runAutoTopDownScan)===0,\n' +
+  '    "before disconnect: handle="+String(__tmrHandleOn)+" live="+__tmrOn+"; after disconnect: handle="+\n' +
+  '    String(autoScanTimer)+" live="+g.liveTimersFor(runAutoTopDownScan));\n' +
+  // The RECONNECT half. initAll assigns the hourly timer, and a second initAll must not leave the
+  // first one running behind an overwritten handle -- the guard toggleAutoScan always had.
+  '  cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice";\n' +
+  '  try{ initAll(); }catch(e){}\n' +
+  '  const __tmrH1=autoScanTimer,__tmrAfter1=g.liveTimersFor(runAutoTopDownScan);\n' +
+  '  try{ initAll(); }catch(e){}\n' +
+  '  const __tmrH2=autoScanTimer,__tmrAfter2=g.liveTimersFor(runAutoTopDownScan);\n' +
+  '  g.record("JVMTMR-2","a SECOND initAll cannot strand the running timer behind an overwritten handle",\n' +
+  '    __tmrAfter1===1&&__tmrAfter2===1&&__tmrH1!=null&&__tmrH2!=null&&__tmrH1!==__tmrH2,\n' +
+  '    "after one initAll: handle="+String(__tmrH1)+" live="+__tmrAfter1+"; after a second: handle="+\n' +
+  '    String(__tmrH2)+" live="+__tmrAfter2+" (unguarded, the first handle would still be running)");\n' +
+  '  if(autoScanTimer){ clearInterval(autoScanTimer); autoScanTimer=null; }\n' +
+  '  autoScan={enabled:false,lastRunAt:null};\n' +
 
   '  return g;\n})();'
 );

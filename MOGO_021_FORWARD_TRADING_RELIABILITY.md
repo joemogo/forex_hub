@@ -2446,3 +2446,76 @@ through any interleaving the auditor could construct** — the residual damage w
   at none** — turning any of those `catch` blocks into a rethrow leaves the gate green.
 * MAE/MFE mutations on a `pos` held across a concurrent `alexGAccount` rollback are discarded
   (`alexGCloseLivePosition` is **protected**; recorded as a residual, not touched).
+
+---
+
+## 15. 🔴 Detection-surface coverage (completion item 6) — the largest gap in the milestone
+
+Independent adversarial audit: **117 proven-applied behaviour-changing mutations across the entire
+detection surface. 64 kill ZERO fixtures out of 1,440.** Three are provably equivalent mutants, so
+**61 genuinely uncovered trading rules — 54% of the non-equivalent surface.**
+
+**These are not production defects. The rules are correct; they are simply not protected.** Any of
+them could be changed tomorrow, by anyone, and every gate would stay green.
+
+### 15.1 The structural cause
+
+**Only 6 of 24 suites ever kill anything, and every kill is a second-order consequence of one
+scenario ceasing to fire.** There is not one fixture in the repository that asserts a detection
+function's own output value against crafted input.
+
+Blinding `computeAOI` entirely, zeroing `scoreConfluence`, emptying `detectSignals`, inverting
+`getBias`, raising `ALERT_THRESHOLD` to 95 and zeroing `WEIGHTS.engulf` all kill **the same
+37-fixture set** — the single engineered "textbook bullish continuation" in `run_v1233`. Every
+organic ALEX kill is the same 39-fixture block — one qualifying repeated-reaction setup.
+
+> **The detection surface is not covered, it is ANCHORED.** Two hand-built scenarios hold up 1,440
+> fixtures. Anything that does not extinguish one of them is invisible.
+
+### 15.2 Severity 1 — silently changes which trades are taken, or at what price
+
+| # | Uncovered rule | Mutation that survives |
+|---|---|---|
+| 1 | **The counter-trend block — no fixture at all, on either side** | `biasMatch` forced always-true; and the entry trigger no longer required to match bias. Directly contradicts `RULES.entry`: *"Never enter against confirmed top-down bias."* → **trades in the wrong direction** |
+| 2 | **R:R 1.99 minimum** | 1.99 → 1.50, and → 2.99 |
+| 3 | **`ALERT_THRESHOLD` = 55** | 55 → 56 and → 54, and the `<`→`<=` boundary flip. Only a move to 95 is felt |
+| 4 | **The AOI 3-touch rule** — *"fewer than 3 = no AOI, move on"* | 3+ → 2+, and → 4+ |
+| 5 | **Engulfing confirmation** — *"no break, no trade"* | the requirement deleted outright |
+| 6 | **ALEX `qualificationClose` from the wrong candle** | → wrong entry price on every live ALEX trade, and it silently defeats `maxLiveEntryDelayPips` |
+| 7 | **ALEX break DIRECTION inverted** | `brokenDirection` drives break-and-retest direction → **buys where it should sell** |
+| 8 | **Stop/target inputs** | 7→20 pip stop buffer; `stopATRBuffer`; `minRR` |
+| 9 | **AOI direction swaps** | confluence credits a long for sitting at *resistance* |
+| 10 | **`maxLiveEntryDelayPips` boundary** | a fill exactly at 5 pips flips accept↔reject |
+
+### 15.3 Three fixture anti-patterns this exposed
+
+* **The drift check wearing a fixture costume.** Ten `RULES_ALEXG` zone/risk constants die *only* to
+  `v127` fixtures whose failure text is *"expected 0.5, got 1"* — they read the constant and compare
+  it to a hard-coded number. Set `minRR` to 1.0 and the only objection is a fixture asserting that
+  `minRR` is 2.0. **Not one fixture observes a different trading outcome.** These must stop being
+  counted as rule coverage; `regression-baseline.json` already does that job, and better.
+* **Negative controls that could never have fired.** `JVM-2` and `JVM-29` assert silence against a
+  flat series — but emptying `detectSignals` entirely kills 36 fixtures and *not those two*. This is
+  the identical defect corrected earlier in this same suite; the correction was applied to the data
+  contract and never extended to the rules.
+* **An assertion true for every possible input.** The only direct `findSwingPoints` fixture asserts
+  `swingHighs.length + swingLows.length >= 0`.
+
+### 15.4 What is genuinely well built — and is the model to copy
+
+`v128`'s B3/B4 falsify the two ALEX setup qualifiers by flipping **exactly one field** off a passing
+baseline, eight and four times. That discipline is why six separate break-and-retest and
+repeated-reaction mutations all die. And `DECIDED-9` pins the staleness boundary to the millisecond —
+**the only threshold in the entire system with a real at-boundary control**, and it catches a
+`>`→`>=` flip nothing else in 1,440 fixtures would.
+
+The team knows how to do this. It was applied to two functions out of the whole surface.
+
+### 15.5 Disposition
+
+This is **test debt on frozen, correct rules**, so it crosses no governance boundary — writing
+fixtures changes no behaviour. It is being closed in severity order, starting with the counter-trend
+block, which is the one rule with no control of any kind on either side.
+
+The constraint holds throughout: **the candles may be constructed; the verdict must not be.** No
+fixture may stub, override or force a protected function's outcome.
