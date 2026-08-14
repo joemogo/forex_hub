@@ -1974,9 +1974,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.20.0';
+const APP_VERSION='12.21.0';
 const APP_VERSION_DATE='14 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.21.0 — MOGO-021 JVM MARKET-DATA COMPLETENESS PARITY (owner-authorized; DATA VALIDITY ONLY). THE ASYMMETRY: scanPair, which only SCORES for display, has been ADR-011 gated since v12.8.3 -- but the path that actually OPENS TRADES was not. evaluateLiveTrigger was guarded only by candles.length<25, and getStructuralAOI set the real stop and target from Daily/Weekly data it never checked: a PARTIAL 40-bar daily response clears computeAOI\\u2019s own length floor and yields a perfectly plausible support level, which then becomes a stop on a real paper trade. JVM\\u2019s display layer was strictly stricter than its trading layer, which nobody chose. THE REPAIR, three gates, all on completenessState and NOTHING else per ADR-011, all fail-closed and all scoped per instrument: (1) evaluateLiveTrigger refuses an M15 entry series that is not COMPLETE; (2) getStructuralAOI refuses to hand out levels derived from D/W data that is not COMPLETE, and reports that as a distinct fact rather than as \\u2018no valid AOI\\u2019; (3) runAutoTopDownScan refuses to derive bias from incomplete W/D/H4 -- required trade-path data, because that bias becomes scanData.bucket and checkAutoTrades\\u2019 eligibility filter requires bucket===\\u2018Active watch\\u2019. AN INCOMPLETE AOI IS DELIBERATELY NOT CACHED. Caching a data fault for the 15-minute TTL would convert one transient short page into 15 minutes of refused trades -- losing valid setups to a gate that exists to protect them, which the authorization explicitly rules out. TRANSPORT, COMPLETENESS AND STRATEGY REJECTION REMAIN THREE DISTINCT FACTS: DATA_CANDLES_UNAVAILABLE (nothing arrived) vs DATA_TIMEFRAME_INCOMPLETE (it arrived and did not satisfy the contract) vs CONFLUENCE_BELOW_THRESHOLD / STRUCTURE_AOI_NOT_VALIDATED (the strategy declined). Collapsing any two would make a data fault indistinguishable from a rule rejection, which is the confusion the old code produced. NOT AUTHORIZED AND NOT TOUCHED: setup definitions, scoring rules, confluences, thresholds, entries, stops, targets, risk, sizing and economic strategy logic are all unchanged. The gate only decides whether the frozen evaluators are handed data at all. Proven by JVMCG-1/2: with COMPLETE data the trigger still fires, and direction, entry, stop, target, confluence and R:R are unchanged and self-consistent. GOVERNED BASELINE CONSEQUENCE: evaluateLiveTrigger is the ONLY protected function changed -- the drift check named exactly it and nothing else, which independently confirms getStructuralAOI, runAutoTopDownScan and the reason mapper are unprotected. regression-baseline.json re-issued from this version; drift 0 against the new baseline. VERIFIED: JVMCG-1..13 cover complete-data-still-fires, M15/D/W/H4 each failing closed independently, UNKNOWN failing closed, per-instrument scope, three distinct reason codes, a short broker page through the real sweep, overlapping sweeps, and recovery after a transient fault. Every mutation proven applied: removing the M15 guard kills JVMCG-3; removing the AOI guard kills 4/5/10/13; making the AOI never report incompleteness kills 4/5/8/10/11/12/13; removing the bias gate kills 6; caching the incomplete AOI kills 13; collapsing the reason code kills 9. PAPER ONLY; live money NOT AUTHORIZED; TJR untouched and research-only.',
   '12.20.0 — MOGO-021 GOVERNED TRADING-CORRECTNESS REMEDIATION (owner-authorized; four decisions). DECISION 1 -- HIGHER-TIMEFRAME COMPLETENESS. ALEX checked only datasets.H1, and only against a raw length floor (<60); H4, D and W were handed to the frozen engine with NO check at all. Because the fetch is by fixed COUNT, a broker page two candles short (a reproduced 148-of-150 daily response) moved the window START off a bar boundary, re-anchored the zone identity INSIDE the staleness window and defeated every duplicate-trade guard -- opening a SECOND real paper position where a full-count control blocked it as DUPLICATE. Two repairs: fetchCandlesRange no longer treats a short page as proof of exhaustion (it CONTINUES the walk, so a transient shortfall is repaired rather than merely detected; only REACHED_COUNT or a genuinely EMPTY continuation now satisfy the request), and alexGEvaluatePairForLiveSetups gates evaluation on completenessState===COMPLETE for all four timeframes -- on completenessState and NOTHING else, per ADR-011. Fail-closed; suppression is per-pair and records DATA_CANDLES_UNAVAILABLE (transport) versus the newly registered DATA_TIMEFRAME_INCOMPLETE (contract), with a durable DATA_INCOMPLETE pipeline stage. DECISIONS 2+3 -- STABLE ECONOMIC IDENTITY AND A DECIDED-AUTHORITY SEPARATE FROM THE DISPLAY RING. alexGLiveSetupStatuses is a 300-entry DISPLAY ring holding less than one poll cycle (388 setups), so the documented PERMANENT-never-reconsidered contract was void for all twelve pairs -- roughly 53 re-decisions per signalId, measured. The withdrawn 300-to-5000 workaround was NOT implemented: it is bounded by count where the requirement is time, and collapses to about 11.9 hours under identity drift. Instead: alexGEconomicSetupIdentity (immutable categorical fields plus PRICES) joins alexGStableSetupIdentity as a second OR-term, because getCandleCloseTime returns an ESTIMATE for the newest bar and therefore moves reactionId AND qualificationTimestamp by about 48h at every weekend reopen -- two of the five components the anchor-free identity relied on. The decided-authority is a session-scoped map age-evicted by the frozen staleness contract itself (provably lossless: a setup past its staleness limit can no longer change any outcome), and whether a setup was already TRADED is derived from the EXISTING durable account and journal records -- no new persistent state, no parallel persistent Set. alexGResetLiveDecisionState is the single primitive owning both the ring and the authority, so they cannot desynchronise (the defect that reverted the MOGO-020 attempt). SEMANTIC CHANGE, AUTHORIZED: setups previously re-decided every poll are now decided once, as the contract already stated. DECISION 4 -- JVM CANDIDATE-LEVEL DIAGNOSTIC. checkAutoTrades discarded the verdict evaluateLiveTrigger had already computed, leaving every JVM rejection unauditable. One statement inside the protected checkAutoTrades now calls jvmRecordCandidateRejected (non-protected, total by construction, result never read), which records the reason the strategy ACTUALLY returned -- never a recomputation. All eight reasons evaluateLiveTrigger can return map to reason codes that ALREADY existed; none was invented and none stretched. JVM-27/28/29 asserted the auditability gap and are inverted to assert the contract; JVM-30/31 pin the mapping and prove no unregistered code can be emitted. ALSO IN THIS RELEASE, and recorded here because a release note that omits a contract change is a governance gap: alexGEvaluatePairForLiveSetups now RETURNS {evaluated,reason,incompleteTimeframes} and its caller acts on that value -- the poll ledger previously credited a pair as evaluated BEFORE evaluation ran and derived instrumentsAttempted from the same array, so the two were identical by construction and a suppressed instrument would have been reported as fully evaluated. instrumentsAttempted is now a separate true dispatch list, and a throw downstream of the frozen engine still reports the instrument as EVALUATED (a coverage row contradicting a durable trade record is a wrong report, not a safe under-report). fetchCandlesRange gains a CURSOR_NOT_ADVANCING termination and a shortPages diagnostic: removing the short-page break meant a broker ignoring the `to` cursor could be paginated against until the guard limit and accumulate DUPLICATE candles that could reach the requested count and read COMPLETE; the guard reports PARTIAL instead of returning a corrupt window. The DURABLE half of the decided-authority is age-bounded by the timeframe staleness limit plus a four-day market-gap allowance, and excludes developer test trades -- without that bound it had no age limit at all and would have refused a genuinely new setup sharing an economic identity for the life of the account, which is a permanently lost trade and worse than the duplicate it prevents. The economic index is age-evicted on its own terms because two setups can share an economic identity while differing in stable identity, so it can hold a record the stable map never had. GOVERNED BASELINE CONSEQUENCE: checkAutoTrades is the ONLY protected function changed -- the drift check flagged exactly it and nothing else, which independently confirms Decisions 1 and 2+3 touched no protected code. regression-baseline.json re-issued from this version; drift is 0 against the NEW baseline. No confluence, threshold, setup definition, pattern, entry, stop, target, filter, risk, sizing or exclusion was altered. PAPER ONLY; live money NOT authorized; TJR untouched and research-only.',
   '12.19.0 — MOGO-004 L2: RUN-IDENTITY HASH PERSISTENCE (evidence-record release; NO trading behavior change; NO replay behavior change; NO strategy logic touched; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical). THE PROBLEM, found by the MOGO-004 Step 1 pilot: PRE-REG-001 section 8 item 1 requires runId, datasetHash, configHash and paramsHash for every campaign run WITHOUT EXCEPTION, and only two of the four ever reached the evidence package. configHash and paramsHash were computed by alexGBuildReplayRunIdentity (index.html:13581-13582), contributed to the deterministic runId, were returned on the run-identity object -- and were then dropped: the replay capture seam constructed identity from mode, runId, datasetHash and replayDateRange only. Nothing else retained them (runIdentity is a local in runAlexGReplay, returned into a local const in runAlexGReplayUI; alexGReplayState is run-control only), so once a run returned, both hashes were UNRECOVERABLE -- as they now permanently are for RUN-001 and for both MOGO-004 pilot runs. THE CHANGE IS PURELY ADDITIVE AND PURELY A RECORDING: two keys are carried from the run-identity object into identity, following the exact pattern v12.9.0 established for datasetHash and replayDateRange -- ALWAYS PRESENT, null for LIVE_PAPER, populated for REPLAY, so every package keeps an identical key set regardless of strategy or mode. NO HASH IS RECOMPUTED, no hash derivation changed, and runId is carried through verbatim rather than rebuilt -- a fixture asserts the package builder contains no hash computation at all. The schema version is deliberately NOT bumped: mogo.evidence-package.v1 is preserved so that already-verified packages continue to import. VALIDATION IS PRESENT-ONLY, for the reason v12.10.0 recorded: RUN-001 (24 packages) and the MOGO-004 pilot (50 packages) were captured before this release and omit both keys entirely, and requiring them outright would retroactively invalidate 74 already-hash-verified packages. But because the producer now emits both keys unconditionally, a REPLAY package that CARRIES a key and leaves it null could only come from a capture regression -- so that specific case IS an error and names the field. Net effect: legacy evidence still validates and still verifies, and no future replay run can silently lose the two hashes the pre-registration requires. TESTING: v128 grows 224 -&gt; 227 (R5b/R5c/R5d) plus R4 and R5 extended: persistence verbatim for REPLAY, key-present-and-null required for LIVE_PAPER, no hash computed in the builder, runId unaffected, legacy packages still valid with both keys deleted, and a nulled REPLAY hash rejected by name. Full regression: 947/947 across 17 suites, zero drift.',
   '12.18.0 — MOGO-003 REPORTING AUTHORITY TRANSITION (reporting-only release; NO trading behavior change; NO position-sizing change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; FLAG DEFAULTS OFF FOR EVERY STRATEGY). WHAT IT SWITCHES: when enabled for a strategy, the figures that strategy DISPLAYS come from the immutable ledger instead of its stored totals. WHAT IT POINTEDLY DOES NOT SWITCH: position sizing still reads the STORED balance -- alexGConstructLivePosition is protected and untouched and its call site still passes alexGAccount.balance, so the next trade risks exactly what it would have risked before. This flag CANNOT alter a trade, and a fixture asserts the protected constructor contains no reference to the reporting layer while the reporting layer references no sizing or open path. The stored balance also continues to be written by the protected close path; the ledger simply stops being READ FROM it for display. TWO SWITCHES, BOTH OFF: a master switch and a per-strategy switch must both be true, so the master alone enables nothing; JVM additionally records WHY it is not yet eligible (paperAccount declares no startingBalance, so a derived balance would be a guess). OFF MEANS BYTE-IDENTICAL: with the flag off the resolver returns the stored value and performs no derivation at all, so every surface computes exactly what it computed in v12.17.0 -- asserted, not assumed. FAILS TO THE STORED VALUE: an exception in the enablement check returns false, and a derivation failure returns STORED_DERIVATION_FAILED with the stored balance, so a figure is always produced and the display is never blanked. DISCLOSURE: a derived figure is labelled \'Alex balance (ledger-derived)\' so the operator can always tell which authority produced the number. DIAGNOSTICS REMAIN PERMANENT and unaffected by the flag, reconciling derived against stored in both modes -- after a switch that card is the long-term drift detector. ROLLBACK is a flag flip: because this layer never writes, turning it off restores prior behaviour with no data operation. TESTING: v128 grows 214 -&gt; 224 (A1-A10): default-off for every strategy, stored pass-through when off, ledger figures when on, master-switch-alone enables nothing, failure falls back to stored, sizing untouched and unreachable, no writes, display seams routed and disclosed, reconciliation unchanged by the flag, and replay/evidence untouched. Full regression: 943/943 across 17 suites, zero drift.',
@@ -6947,15 +6948,30 @@ async function getStructuralAOI(oPair){
   if(structuralAOIInflight[oPair]) return structuralAOIInflight[oPair];
   const inflight=(async function(){
   const[daily,weekly]=await Promise.all([fetchCandles(oPair,'D',100),fetchCandles(oPair,'W',60)]);
+  // MOGO-021 JVM COMPLETENESS PARITY (owner-authorized). These D/W levels set the REAL stop and
+  // target on a real paper trade, and neither was ever checked against the completeness contract --
+  // so JVM's display path (scanPair, ADR-011 gated since v12.8.3) was stricter than its TRADING
+  // path. A PARTIAL 40-bar daily response clears computeAOI's own length floor and yields a
+  // perfectly plausible support level, which then becomes a stop. Gated on completenessState and
+  // NOTHING else, per ADR-011. Fail closed: anything not provably COMPLETE yields no levels.
+  const dState=marketDataCompletenessOf(daily);
+  const wState=marketDataCompletenessOf(weekly);
+  const incomplete=(dState!==MARKET_DATA_COMPLETENESS.COMPLETE||wState!==MARKET_DATA_COMPLETENESS.COMPLETE);
   const dAOI=findAOIs(daily||[]);
   const wAOI=findAOIs(weekly||[]);
   const result={
-    support:dAOI.support!=null?dAOI.support:wAOI.support,
-    resistance:dAOI.resistance!=null?dAOI.resistance:wAOI.resistance,
-    band:Math.max(dAOI.band||0,wAOI.band||0),
+    support:incomplete?null:(dAOI.support!=null?dAOI.support:wAOI.support),
+    resistance:incomplete?null:(dAOI.resistance!=null?dAOI.resistance:wAOI.resistance),
+    band:incomplete?0:Math.max(dAOI.band||0,wAOI.band||0),
+    // Distinct from "this instrument has no AOI structure", which is a STRATEGY verdict. Collapsing
+    // the two would make a data fault indistinguishable from a rule rejection.
+    incomplete:incomplete,dailyCompleteness:dState,weeklyCompleteness:wState,
     fetchedAt:Date.now()
   };
-  structuralAOICache[oPair]=result;
+  // Deliberately NOT cached when incomplete. Caching a data fault for 15 minutes would convert a
+  // transient short page into 15 minutes of refused trades -- losing valid setups to a gate that
+  // exists to protect them, which the authorization explicitly rules out.
+  if(!incomplete) structuralAOICache[oPair]=result;
   return result;
   })();
   structuralAOIInflight[oPair]=inflight;
@@ -6981,6 +6997,7 @@ async function evaluateLiveTrigger(oPair){
   if(!isPreferredTradingDay()) return{fires:false,reason:'Outside Mon-Wed preferred entry window'};
   const candles=await fetchCandles(oPair,'M15',60);
   if(!candles||candles.length<25) return{fires:false,reason:'No data'};
+  if(marketDataCompletenessOf(candles)!==MARKET_DATA_COMPLETENESS.COMPLETE) return{fires:false,reason:'Incomplete market data (M15)'};
   const signals=detectSignals(candles,oPair);
   const conf=bestConfluence(candles,oPair);
   if(conf.total<ALERT_THRESHOLD) return{fires:false,reason:'Confluence below threshold',conf};
@@ -6988,6 +7005,7 @@ async function evaluateLiveTrigger(oPair){
   const entrySig=signals.find(s=>s.type==='engulf'&&s.dir===dir&&s.biasMatch);
   if(!entrySig) return{fires:false,reason:'No engulfing trigger yet',conf};
   const aoi=await getStructuralAOI(oPair);
+  if(aoi&&aoi.incomplete) return{fires:false,reason:'Incomplete market data (D/W)',conf};
   const pip=pipSize(oPair);
   // Fill at the real ask for buys / bid for sells, matching how you'd actually get filled --
   // falls back to the candle close only if live bid/ask couldn't be fetched.
@@ -9010,6 +9028,24 @@ async function runAutoTopDownScan(){
         fetchCandles(oPair,'D',100),
         fetchCandles(oPair,'H4',100)
       ]);
+      // MOGO-021 JVM COMPLETENESS PARITY (owner-authorized). This bias feeds scanData[pair].bucket,
+      // and checkAutoTrades' eligibility filter requires bucket==='Active watch' -- so a bias derived
+      // from a truncated W/D/H4 response can make a pair eligible for a real paper trade. That makes
+      // these three REQUIRED trade-path inputs, not merely display inputs. Gated on completenessState
+      // and nothing else, per ADR-011; fail closed, and scoped to THIS pair so an incomplete
+      // instrument cannot suppress the other eleven.
+      const __wS=marketDataCompletenessOf(wCandles),__dS=marketDataCompletenessOf(dCandles),__hS=marketDataCompletenessOf(h4Candles);
+      if(__wS!==MARKET_DATA_COMPLETENESS.COMPLETE||__dS!==MARKET_DATA_COMPLETENESS.COMPLETE||__hS!==MARKET_DATA_COMPLETENESS.COMPLETE){
+        if(!scanData[pair]) scanData[pair]={weekly:'—',daily:'—',fh:'—',bucket:'—',grade:'—',notes:''};
+        // Not eligible this cycle, and recorded as a DATA fault rather than a strategy verdict --
+        // a pair that could not be assessed must not be indistinguishable from one that was assessed
+        // and rejected.
+        scanData[pair].bucket='—'; scanData[pair].grade='—';
+        scanData[pair].completenessSuppressed=true;
+        scanData[pair].completenessByTimeframe={W:__wS,D:__dS,H4:__hS};
+        scanData[pair].notes='Not assessed — incomplete market data (W/D/H4)';
+        return;
+      }
       const weekly=calcBiasFromCandles(wCandles);
       const daily=calcBiasFromCandles(dCandles);
       const fh=calcBiasFromCandles(h4Candles);
@@ -9020,6 +9056,9 @@ async function runAutoTopDownScan(){
       scanData[pair].weekly=weekly;
       scanData[pair].daily=daily;
       scanData[pair].fh=fh;
+      // Cleared on a clean cycle: a single transient short page must not mark an instrument forever.
+      scanData[pair].completenessSuppressed=false;
+      scanData[pair].completenessByTimeframe={W:__wS,D:__dS,H4:__hS};
       const score=getScore(scanData[pair]);
       let grade='—',bucket='—';
       if(score===3) grade='A';
@@ -9265,6 +9304,9 @@ function jvmLiveTriggerReasonCode(reason){
   const r=String(reason==null?'':reason);
   if(r==='Outside Mon-Wed preferred entry window') return 'SESSION_OUTSIDE_PREFERRED_DAY';
   if(r==='No data') return 'DATA_CANDLES_UNAVAILABLE';
+  // Transport ("nothing arrived") vs contract ("it arrived and did not satisfy completeness") are
+  // different facts and must not share a code -- that distinction is the whole point of the gate.
+  if(r.indexOf('Incomplete market data')===0) return 'DATA_TIMEFRAME_INCOMPLETE';
   if(r==='Confluence below threshold') return 'CONFLUENCE_BELOW_THRESHOLD';
   if(r==='No engulfing trigger yet') return 'ENTRY_SIGNAL_NOT_PRESENT';
   if(r==='No valid support AOI'||r==='No valid resistance AOI') return 'STRUCTURE_AOI_NOT_VALIDATED';

@@ -156,6 +156,9 @@ let __candleCount=60,__priceOk=true,__mode='flat',__shortPair=null,__shortAll=fa
 // overlapping-sweep condition scanAll allows (no re-entrancy guard; called unawaited from
 // setInterval, from init, and from setTf() on an operator click).
 let __gatePair=null,__gateRelease=null,__failPair=null,__throwPair=null;
+// MOGO-021 JVM completeness parity: make ONE granularity short for ONE instrument, so a fixture
+// can prove each required timeframe fails closed independently rather than all at once.
+let __shortGranPair=null,__shortGranTf=null;
 function __gate(){ return new Promise(function(res){ __gateRelease=res; }); }
 globalThis.fetch=function(url){
   const u=String(url);
@@ -164,6 +167,19 @@ globalThis.fetch=function(url){
     return Promise.resolve(makeResponse(true,200,{prices:[{bids:[{price:'1.10290'}],asks:[{price:'1.10310'}]}]}));
   }
   if(__mode==='firing'){
+    // MOGO-021: this must run BEFORE the D/W early returns below, which short-circuit on
+    // granularity alone and would otherwise make a per-granularity short response unreachable.
+    if(__shortGranPair&&__shortGranTf){
+      const __inst=(u.match(/instruments\/([^/]+)\//)||[])[1];
+      const __g=(u.match(/granularity=(\w+)/)||[])[1];
+      if(__inst===__shortGranPair&&__g===__shortGranTf){
+        // Short by a handful, not to nothing: a truncated-but-usable response is the case that
+        // slipped past every guard, and the one a length floor cannot catch.
+        const __want=parseInt((u.match(/count=(\d+)/)||[])[1],10)||60;
+        if(__g==='D'||__g==='W') return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(Math.max(20,__want-3))}));
+        return Promise.resolve(makeResponse(true,200,{candles:firingM15(Math.max(30,__want-3))}));
+      }
+    }
     if(/granularity=D/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(120)}));
     if(/granularity=W/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(60)}));
     const wantN=parseInt((u.match(/count=(\d+)/)||[])[1],10)||60;
@@ -197,6 +213,7 @@ g.setShortAll=v=>{__shortAll=v;};
 g.holdPair=p=>{__gatePair=p;};
 g.failPair=p=>{__failPair=p;};
 g.throwPair=p=>{__throwPair=p;};
+g.setShortGran=(p,tf)=>{__shortGranPair=p;__shortGranTf=tf;};
 g.releaseHeld=()=>{__gatePair=null; if(__gateRelease){__gateRelease(); __gateRelease=null;}};
 g.setNow=t=>{__simNow=t;};
 g.now=()=>__simNow;
@@ -595,7 +612,131 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '      (__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.reason!=="NOT_REACHED_THIS_SCAN";}).length,\n' +
   '    "attempted="+__jvmObs.instrumentsAttempted+" evaluated="+((__jvmObs.instrumentsEvaluated)||[]).length+\n' +
   '    " (a write-count would have reported "+((__jvmObs.instrumentsEvaluated)||[]).length+")");\n' +
+  // ══ MOGO-021 JVM COMPLETENESS PARITY (owner-authorized) ═══════════════════════════════════
+  // scanPair -- which only SCORES for display -- has been ADR-011 gated since v12.8.3. The path
+  // that actually opens trades was not: evaluateLiveTrigger was guarded only by length<25, and
+  // getStructuralAOI set real stops and targets from D/W data it never checked. JVM's display layer
+  // was stricter than its trading layer, which nobody chose. These prove the parity, in both
+  // directions -- it must fail closed on bad data AND must not cost a single valid setup.
   '  evidenceRecordForwardObservations=__origRec;\n' +
+  '  function jvmFreshFiring(){ g.setMode("firing"); structuralAOICache={}; structuralAOIInflight={}; pairData={};\n' +
+  '    firedAlerts=new Set(); clearDecisionEvents(); autoTrading.enabled=true; autoTrading.tradedToday={};\n' +
+  '    autoTrading.log=[]; autoTrading._lastDay=null; paperAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +
+  '    scanData={}; SCAN_PAIRS.forEach(function(p){ scanData[p]={weekly:"Bullish",daily:"Bullish",fh:"Bullish",bucket:"Active watch"}; }); }\n' +
+  // 1 + 11 + 12: COMPLETE data still evaluates, still fires, and still produces the SAME economic
+  // decision. This is the anti-over-blocking control and it carries requirement 12 on its own.
+  '  jvmFreshFiring();\n' +
+  '  const baseTrig=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  await checkAutoTrades();\n' +
+  '  const baseOpened=paperAccount.openPositions.length;\n' +
+  '  g.record("JVMCG-1","COMPLETE required data still evaluates and still FIRES -- the gate costs no valid setup",\n' +
+  '    baseTrig.fires===true&&baseOpened>0,\n' +
+  '    "trigger fires="+baseTrig.fires+" ratio="+String(baseTrig.ratio)+", positions opened="+baseOpened);\n' +
+  '  const baseShape=JSON.stringify({dir:baseTrig.dir,entry:baseTrig.entry,stop:baseTrig.stop,target:baseTrig.target,conf:baseTrig.confluence});\n' +
+  '  g.record("JVMCG-2","and the economic decision is unchanged -- direction, entry, stop, target and confluence all present and self-consistent",\n' +
+  '    baseTrig.dir&&baseTrig.entry>0&&baseTrig.stop>0&&baseTrig.target>0&&baseTrig.ratio>=1.99&&\n' +
+  '    ((baseTrig.dir==="buy"&&baseTrig.stop<baseTrig.entry&&baseTrig.target>baseTrig.entry)||\n' +
+  '     (baseTrig.dir==="sell"&&baseTrig.stop>baseTrig.entry&&baseTrig.target<baseTrig.entry)),\n' +
+  '    baseShape);\n' +
+  // 2: the REQUIRED entry timeframe. JVM's trade path requires M15 (entry timing) + D and W (the
+  // structural AOI that sets the stop). H1 is required only when it is the active SCAN timeframe,
+  // and that path (scanPair) was already gated -- stated plainly rather than implied.
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","M15");\n' +
+  '  const shortM15=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  await checkAutoTrades();\n' +
+  '  const m15Open=paperAccount.openPositions.filter(function(p){return p.oPair==="EUR_USD";}).length;\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-3","INCOMPLETE entry-timeframe (M15) data FAILS CLOSED -- no evaluation, no trade",\n' +
+  '    shortM15.fires===false&&/Incomplete market data/.test(String(shortM15.reason))&&m15Open===0,\n' +
+  '    "reason=["+String(shortM15.reason)+"] positions on that pair="+m15Open);\n' +
+  // 4 + 5: the D and W structure that sets the REAL stop and target.
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","D");\n' +
+  '  const shortD=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  await checkAutoTrades();\n' +
+  '  const dOpen=paperAccount.openPositions.filter(function(p){return p.oPair==="EUR_USD";}).length;\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-4","INCOMPLETE DAILY data FAILS CLOSED -- the stop is never derived from it",\n' +
+  '    shortD.fires===false&&/Incomplete market data/.test(String(shortD.reason))&&dOpen===0,\n' +
+  '    "reason=["+String(shortD.reason)+"] positions on that pair="+dOpen);\n' +
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","W");\n' +
+  '  const shortW=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  await checkAutoTrades();\n' +
+  '  const wOpen=paperAccount.openPositions.filter(function(p){return p.oPair==="EUR_USD";}).length;\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-5","INCOMPLETE WEEKLY data FAILS CLOSED -- the structural AOI is refused, not approximated",\n' +
+  '    shortW.fires===false&&/Incomplete market data/.test(String(shortW.reason))&&wOpen===0,\n' +
+  '    "reason=["+String(shortW.reason)+"] positions on that pair="+wOpen);\n' +
+  // 3: H4 reaches the trade decision through the bias scan -> scanData.bucket -> the eligibility
+  // filter, so it is a required trade-path input even though checkAutoTrades never fetches it.
+  '  jvmFreshFiring(); scanData={}; g.setShortGran("EUR_USD","H4");\n' +
+  '  await runAutoTopDownScan();\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  const eurRow=scanData["EUR/USD"]||{};\n' +
+  '  g.record("JVMCG-6","INCOMPLETE H4 data FAILS CLOSED in the bias scan, so the pair cannot become auto-trade ELIGIBLE",\n' +
+  '    eurRow.completenessSuppressed===true&&eurRow.bucket!=="Active watch",\n' +
+  '    "bucket=["+String(eurRow.bucket)+"] suppressed="+String(eurRow.completenessSuppressed)+\n' +
+  '    " byTf="+JSON.stringify(eurRow.completenessByTimeframe));\n' +
+  // 6: UNKNOWN/unclassified must fail closed -- marketDataCompletenessOf reports it UNAVAILABLE.
+  '  g.record("JVMCG-7","UNKNOWN completeness FAILS CLOSED -- unclassified data is never assumed complete",\n' +
+  '    marketDataCompletenessOf([1,2,3])===MARKET_DATA_COMPLETENESS.UNAVAILABLE&&\n' +
+  '    marketDataCompletenessOf(null)===MARKET_DATA_COMPLETENESS.UNAVAILABLE&&\n' +
+  '    marketDataCompletenessOf(undefined)===MARKET_DATA_COMPLETENESS.UNAVAILABLE,\n' +
+  '    "an array carrying no completeness verdict reads UNAVAILABLE, not COMPLETE");\n' +
+  // 8: scoped to the instrument. An incomplete pair must not cost the healthy eleven.
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","D");\n' +
+  '  await checkAutoTrades();\n' +
+  '  const others=paperAccount.openPositions.filter(function(p){return p.oPair!=="EUR_USD";}).length;\n' +
+  '  const eurs=paperAccount.openPositions.filter(function(p){return p.oPair==="EUR_USD";}).length;\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-8","one INCOMPLETE instrument does not suppress the healthy ones -- suppression is per-pair",\n' +
+  '    eurs===0&&others>0,\n' +
+  '    "EUR_USD opened "+eurs+"; other instruments opened "+others);\n' +
+  // 9 + 10: three different facts, three different codes. Collapsing any two would make a data
+  // fault indistinguishable from a rule rejection.
+  '  g.record("JVMCG-9","TRANSPORT failure, COMPLETENESS suppression and STRATEGY rejection carry three DISTINCT codes",\n' +
+  '    jvmLiveTriggerReasonCode("No data")==="DATA_CANDLES_UNAVAILABLE"&&\n' +
+  '    jvmLiveTriggerReasonCode("Incomplete market data (M15)")==="DATA_TIMEFRAME_INCOMPLETE"&&\n' +
+  '    jvmLiveTriggerReasonCode("Incomplete market data (D/W)")==="DATA_TIMEFRAME_INCOMPLETE"&&\n' +
+  '    jvmLiveTriggerReasonCode("Confluence below threshold")==="CONFLUENCE_BELOW_THRESHOLD"&&\n' +
+  '    jvmLiveTriggerReasonCode("No valid support AOI")==="STRUCTURE_AOI_NOT_VALIDATED"&&\n' +
+  '    !!REASON_CODE_REGISTRY["DATA_TIMEFRAME_INCOMPLETE"],\n' +
+  '    "no data -> transport; incomplete -> contract; low confluence / no AOI -> strategy");\n' +
+  // A data fault must NOT be reported as the strategy declining to score -- the specific confusion
+  // the old code produced, since an incomplete AOI simply looked like "no valid support AOI".
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","D");\n' +
+  '  const rej=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-10","an incomplete AOI is reported as a DATA fault, never as \\u201cno valid support AOI\\u201d",\n' +
+  '    /Incomplete market data/.test(String(rej.reason))&&!/No valid (support|resistance) AOI/.test(String(rej.reason)),\n' +
+  '    "reason=["+String(rej.reason)+"]");\n' +
+  // 7: the reproduced defect shape -- a short broker page must not produce a JVM paper trade.
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","D");\n' +
+  '  await scanAll();\n' +
+  '  const afterSweep=paperAccount.openPositions.filter(function(p){return p.oPair==="EUR_USD";}).length;\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-11","a SHORT BROKER PAGE cannot generate a JVM paper trade, through the real sweep",\n' +
+  '    afterSweep===0,"EUR_USD positions after a full scanAll with a short daily page="+afterSweep);\n' +
+  // 14: overlapping sweeps must not let the gated instrument through on either pass.
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","D");\n' +
+  '  const sw1=scanAll(); const sw2=scanAll();\n' +
+  '  await sw2; try{ await sw1; }catch(e){}\n' +
+  '  const overlapEur=paperAccount.openPositions.filter(function(p){return p.oPair==="EUR_USD";}).length;\n' +
+  '  const overlapOthers=paperAccount.openPositions.filter(function(p){return p.oPair!=="EUR_USD";}).length;\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  g.record("JVMCG-12","OVERLAPPING sweeps cannot bypass the gate -- neither pass admits the incomplete instrument",\n' +
+  '    overlapEur===0&&overlapOthers>0,\n' +
+  '    "across two concurrent sweeps EUR_USD opened "+overlapEur+" and healthy instruments opened "+overlapOthers);\n' +
+  // 13: recovery. A transient fault must not be cached into a lasting refusal -- that would lose
+  // valid setups, which the authorization explicitly rules out.
+  '  jvmFreshFiring(); g.setShortGran("EUR_USD","D");\n' +
+  '  const faulted=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  g.setShortGran(null,null);\n' +
+  '  const recovered=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  g.record("JVMCG-13","RECOVERY: a transient short page is not cached into a lasting refusal",\n' +
+  '    faulted.fires===false&&/Incomplete market data/.test(String(faulted.reason))&&recovered.fires===true,\n' +
+  '    "faulted=["+String(faulted.reason)+"] then recovered fires="+recovered.fires+\n' +
+  '    " (an incomplete AOI is deliberately NOT cached, or one bad page would cost 15 minutes of trading)");\n' +
+
   '  return g;\n})();'
 );
 

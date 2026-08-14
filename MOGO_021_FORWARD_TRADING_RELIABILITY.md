@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,427/1,427 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 24 suites 1,440/1,440 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -2133,7 +2133,7 @@ comment would cost a protected-function re-baseline. The correction is recorded 
 the protected contract working exactly as intended, and it is worth noting that it applies even to
 prose.
 
-### 10.5 🔴 NEW OPERATOR DECISION REQUIRED — JVM completeness parity
+### 10.5 JVM completeness parity — ✅ AUTHORIZED AND IMPLEMENTED (§12)
 
 Decision 1 gated **ALEX** on the completeness contract. The same gap exists on **JVM's trade path**
 (§10.1) and is *not* covered by that authorization. Closing it changes which trades JVM takes.
@@ -2216,3 +2216,81 @@ produced a byte-identical file.
   *No re-entrancy guard was added:* overlap is production-observed and §2.13 established it is
   trading-safe, so suppressing it would be a behaviour change nobody authorized. This fixes the
   **attribution**, not the concurrency.
+
+---
+
+## 12. JVM market-data completeness parity — AUTHORIZED AND IMPLEMENTED
+
+The §10.5 escalation was authorized: *"JVM must not open a paper trade from incomplete required
+market data"*, as a DATA VALIDITY change only.
+
+**The asymmetry, restated.** `scanPair` — which only *scores for display* — has been ADR-011 gated
+since v12.8.3. The path that actually **opens trades** was not. `evaluateLiveTrigger` was guarded
+only by `candles.length < 25`, and `getStructuralAOI` set the real stop and target from Daily/Weekly
+data it never checked: a PARTIAL 40-bar daily response clears `computeAOI`'s own length floor and
+yields a perfectly plausible support level, which then becomes a **stop on a real paper trade**.
+
+**Three gates, all on `completenessState` and nothing else, all fail-closed, all scoped per pair:**
+
+1. `evaluateLiveTrigger` refuses an M15 entry series that is not COMPLETE. *(one protected function)*
+2. `getStructuralAOI` refuses to hand out levels derived from non-COMPLETE D/W, and reports that as
+   a **distinct fact** rather than as "no valid AOI". *(unprotected)*
+3. `runAutoTopDownScan` refuses to derive bias from incomplete W/D/H4. **These are required
+   trade-path inputs, not display inputs** — that bias becomes `scanData[pair].bucket`, and
+   `checkAutoTrades`' eligibility filter requires `bucket === 'Active watch'`. *(unprotected)*
+
+**An incomplete AOI is deliberately NOT cached.** Caching a data fault for the 15-minute TTL would
+turn one transient short page into 15 minutes of refused trades — losing valid setups to a gate that
+exists to protect them, which the authorization explicitly rules out.
+
+**Three facts stay three codes:** `DATA_CANDLES_UNAVAILABLE` (nothing arrived) vs
+`DATA_TIMEFRAME_INCOMPLETE` (it arrived and failed the contract) vs
+`CONFLUENCE_BELOW_THRESHOLD` / `STRUCTURE_AOI_NOT_VALIDATED` (the strategy declined). Collapsing any
+two would make a data fault indistinguishable from a rule rejection — the exact confusion the old
+code produced, since an incomplete AOI simply looked like "no valid support AOI".
+
+**Nothing economic was touched.** Setup definitions, scoring, confluences, thresholds, entries,
+stops, targets, risk and sizing are unchanged; the gate decides only whether the frozen evaluators
+are handed data at all. JVMCG-1/2 prove it: with COMPLETE data the trigger still fires and
+direction, entry, stop, target, confluence and R:R are unchanged and self-consistent.
+
+### 12.1 The 14 required proofs
+
+| # | Requirement | Fixture |
+|---|---|---|
+| 1, 11, 12 | COMPLETE data still evaluates, still fires, same economic decision, no valid setup lost | JVMCG-1, JVMCG-2 |
+| 2 | Incomplete **required entry timeframe** fails closed | JVMCG-3 |
+| 3 | Incomplete **H4** fails closed | JVMCG-6 |
+| 4 | Incomplete **D** fails closed | JVMCG-4 |
+| 5 | Incomplete **W** fails closed | JVMCG-5 |
+| 6 | **UNKNOWN** completeness fails closed | JVMCG-7 |
+| 7 | A short broker page cannot generate a JVM paper trade | JVMCG-11 |
+| 8 | One incomplete instrument does not suppress healthy ones | JVMCG-8 |
+| 9, 10 | Transport vs completeness vs strategy rejection stay distinct | JVMCG-9, JVMCG-10 |
+| 13 | Restart/recovery — a transient fault is not cached into a lasting refusal | JVMCG-13 |
+| 14 | Overlapping scans cannot bypass the gate | JVMCG-12 |
+
+*Honest mapping note on requirement 2:* JVM's trade path requires **M15** (entry timing) plus **D**
+and **W** (the structural AOI that sets the stop). H1 is required only when it is the active scan
+timeframe, and that path — `scanPair` — was already gated. JVMCG-3 covers the required entry series.
+
+### 12.2 Mutation evidence — every mutation proven applied
+
+| Mutation | Fixtures killed |
+|---|---|
+| remove the M15 completeness guard | JVMCG-3 |
+| remove the D/W AOI incompleteness guard | JVMCG-4, 5, 10, 13 |
+| make the AOI never report incompleteness | JVMCG-4, 5, 8, 10, 11, 12, 13 |
+| remove the bias-scan completeness gate | JVMCG-6 |
+| cache the incomplete AOI (15-minute refusal) | JVMCG-13 |
+| collapse completeness into a strategy code | JVMCG-9 |
+
+### 12.3 Governance record
+
+`APP_VERSION` 12.20.0 → **12.21.0**; `regression-baseline.json` re-issued. The drift check was again
+run as a **positive control before re-baselining**: it named exactly `CHANGED: evaluateLiveTrigger`
+and nothing else, independently confirming `getStructuralAOI`, `runAutoTopDownScan` and the reason
+mapper are unprotected. Baseline delta: 63 → 63 protected functions, **one changed**, none added,
+none removed; 4 → 4 constants, none changed.
+
+Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · drift **0**.

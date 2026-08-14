@@ -1,5 +1,5 @@
 {
-  "generatedFromAppVersion": "12.20.0",
+  "generatedFromAppVersion": "12.21.0",
   "knownGoodHtmlSha1": "31baa279ddc64fdfa90f052da195239bff9a0569",
   "protectedFunctionCount": 63,
   "protectedFunctions": {
@@ -20,8 +20,8 @@
       "length": 1916
     },
     "evaluateLiveTrigger": {
-      "sha1": "d3ca23edf56be0f5aac6870885a360b5120ba919",
-      "length": 1768
+      "sha1": "0df708f125e3cf6e3eedeec1b2070ab5ab92914c",
+      "length": 1993
     },
     "scoreConfluence": {
       "sha1": "fa92acdc3cc703fd538c4f3e50bb010a7c0db1bf",
