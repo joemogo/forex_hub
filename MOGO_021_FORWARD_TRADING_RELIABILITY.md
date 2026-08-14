@@ -761,10 +761,26 @@ after I checked them myself:**
    tautological (§2.4) — corrected. The root cause was later established outright (§2.10).
 3. Eight of sixteen JVM fixtures **could not fail** (§2.5) — suite rebuilt around a positive control.
 
-Two further verifications ran after the redesign — one attacking the fail-closed detector, one
-attempting to prove the new JVM positive control is non-discriminating by **deleting each gate from
-a copy of `index.html`** and confirming the corresponding fixture then fails. Both returned further
-findings against my work, all of which are fixed. Full results in §6.
+Six adversarial passes ran across the milestone. Every one returned findings against my own work,
+and the cumulative tally is the honest summary of this milestone's engineering:
+
+| Round | Target | Outcome |
+|---|---|---|
+| 1 | MOGO-020 carry-over claims | cursor guard **fail-open**; starvation model arithmetically wrong; 8/16 JVM fixtures could not fail |
+| 2 | the fail-closed cursor detector | no trading defect, but the latch survived `clearDecisionEvents()`, was unbounded, and **STARVE-3 was a fake proof** |
+| 3 | the JVM positive control | core survived **6/6 gate-deletion mutants**; drop-point and auditability claims overstated |
+| 4 | the EUR_USD root cause | mechanism upheld, but my lead arithmetic was **tautological**, "0 poll appearances" was a **separate error**, and the dedup defect was **larger than I reported** |
+| 5 | the remediation | **found the signal-identity defect I missed** (§2.16); E2E-11/12 and E2E-15 vacuous; REDEC-4 vacuous; §2.11 falsified from the ledger |
+| 6 | this remediation | *(running at time of writing; recorded in §6)* |
+
+**Twelve distinct defects in my own work were found by verification rather than by me**, including
+one — signal-identity instability — that is the most serious trading-correctness finding of the
+milestone. Every one was reproduced independently before being accepted, and every fixture fix was
+mutation-tested to confirm it now fails when the thing it tests is broken.
+
+The method that made the difference was granting verifiers authority to **mutate a copy of the
+codebase** rather than only read it. Four separate vacuous fixtures of mine passed review and died
+only to mutation.
 
 **Corrections to earlier reporting**, both surfaced by verification:
 
@@ -1016,3 +1032,56 @@ PAPER ONLY · live-money **NOT AUTHORIZED** and no live-money gate touched · TJ
 paper-authorized and untouched (`status:'development'`, all four capabilities false) · ALEX
 protected drift **0** (63 functions, 4 constants byte-identical) · JVM governed strategy integrity
 preserved — every JVM function on the decision path is called as-is and none was modified.
+
+---
+
+## 8. MOGO-021 completion standard — coverage matrix
+
+| Scope item | Status | Evidence |
+|---|---|---|
+| Authoritative ALEX/JVM instrument × timeframe coverage | **done** | §1 table, read from live state. ALEX 12 pairs H1/H4/D/W; JVM scans 35, auto-trades 12, M15 entry |
+| H1/H4/D/W candle completeness and boundary correctness | **done** | `run_v1234` (27) — DST to the minute, 17:00 NY, per-granularity fallbacks; ADR-011 contract + `run_v130` |
+| Chart data vs strategy-evaluation data consistency | **done** | §2.12 — shared verdict function, deliberate candle divergence, operator-visible amber card |
+| Stale / incomplete / missing candle handling | **done** | RESIL-1..4, `DATA_INSUFFICIENT_HISTORY`, E2E-13/14, `run_v130` |
+| Restart / recovery behaviour | **done** | E2E-11/12/13; §2.11 restart-backlog characteristic |
+| Observation and evaluation continuity | **done** | COVERAGE-1..11, BIAS-4/5; live: 12/12 instruments, EUR_USD 61/67 in line with peers |
+| Decision-event accuracy | **done** | Live 500-event validation: strictly increasing sequence, single schema, 100% `scanId==correlationId`, 0 unterminated scans |
+| AOI / setup / signal qualification correctness | **done** | `v126` (61) organic zone/setup engine; E2E-1 gate chain |
+| Valid paper order-generation path | **done** | ALEX E2E-6..9; JVM-12..16 |
+| Deterministic end-to-end paper execution (ALEX + JVM) | **done** | ALEX `run_v1236` through `alexGLivePollTick`; JVM `run_v1233` through `scanAll` |
+| Lifecycle persistence | **done** | E2E-8, E2E-12 (isolated persisted guard) |
+| Ledger / account consistency | **done** | `run_v1235` (24) + §2.15 live: both ledgers reconcile to 0.00 |
+| Reconciliation | **done** | `run_v1235` — the mutating path had never been tested despite v11.0 claiming coverage |
+| Reporting accuracy | **done** | §2.15 — live integrity checks clean on both strategies, INC-001 signature absent |
+| Failure isolation | **done** | E2E-15/16 (pricing seam genuinely reached), RESIL-1..4, concurrency RE-1..5 |
+| Diagnostic coverage | **done** | cursor-sanity detector, `instrumentsSkipped`/`Configured`, completeness card |
+| Future strategy inheritance | **done (analysis)** | §2.14 — the forward-coverage ledger is ALEX-only and would **not** be inherited; `scanAll` is unprotected so wiring it is not governance-blocked |
+| **EUR_USD root cause** | **RESOLVED** | §2.10 — never starved; status-ring truncation bias |
+| **Why ALEX trades rarely** | **ANSWERED** | §2.11 — suspension + entry-day dominate; corrected from the durable ledger |
+
+### Why this closes YELLOW, not GREEN
+
+Every scope item above is complete, and every defect found in my own work has been corrected and
+re-verified. **Three trading-fidelity defects remain open, all blocked by the protected-function
+contract rather than by engineering difficulty**, and one of them has a path to a real duplicate
+paper trade. Declaring GREEN with a known, fixable trading-correctness defect outstanding would be
+exactly the failure mode this milestone was created to prevent.
+
+| # | Defect | Severity | Smallest governed change |
+|---|---|---|---|
+| 1 | **Signal identity not stable** — all four duplicate-trade guards can miss; a closed setup can re-open (§2.16) | **highest — path to a duplicate paper trade** | add an anchor-free `stableId` as a second OR-term in the duplicate check (§7.3) |
+| 2 | **Status ring holds less than one cycle** — "PERMANENT, never reconsidered" is void for all 12 pairs; converts *reject, never chase* into chasing on D/W (§2.10) | high, currently unexercised (all live D/W setups pre-activation) | one numeric literal: cap 300 → 5000 (§7.2) |
+| 3 | **JVM emits no candidate-level diagnostics** — rejections and dropped fills are unauditable (§7.1) | medium — observability, not correctness | one `emitDecisionEvent` before the existing `return` (§7.1) |
+
+**What is required from Joe** — three decisions, not implementation work:
+
+1. **Authorize the governed protected-function change for #1** (or direct otherwise). This is the
+   only item that can produce a wrong trade. The change adds a guard term; it removes none.
+2. **Rule on #2**, which is a frozen-strategy semantic question: raising the cap means setups
+   currently re-decided every poll would be decided once, as the contract already states they
+   should be.
+3. **Rule on #3**, a governed change to `checkAutoTrades` purely to record a value it already
+   computes.
+
+Each would re-baseline the affected protected function, so drift-0 must be re-established against a
+new baseline — which is the governance step, and is Joe's to authorize.
