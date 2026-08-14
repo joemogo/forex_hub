@@ -2785,3 +2785,104 @@ headroom below 2^53.
 
 `TEST J.2` should be replaced at the same time with a deterministic check — freeze the clock, open
 twice, assert distinct — so it stops being a coin flip in both directions.
+
+---
+
+## 17. Continuity, alignment and observability integrity (completion items 1, 2, 11)
+
+Independent adversarial audit: **93 behaviour-changing mutations, 63 killed, 30 killed nothing.** A
+healthier surface than detection (64/117) or execution (47/96) — but the survivors cluster in the
+worst possible place: **the Paper Trading Health Check's headline verdict and its entire
+balance-reconciliation arm cannot report unhealthy.**
+
+### 17.1 ✅ The one I fixed immediately — a vacuous fixture guarding the identity-drift mechanism
+
+`ALIGN-9` is titled *"every candle but the last closes EXACTLY at the next candle start (no duration
+math)"* — and supplied a **perfectly regular hourly series**, where "next bar's start" and "start + 1h"
+are the same number at every index. **The property it names was untestable against its own data.**
+Verified: deleting the exact-close branch from `getCandleCloseTime` **entirely** left 27/27 passing.
+
+This is not academic. That estimate/exact split is the documented mechanism by which `reactionId` and
+`qualificationTimestamp` move ~48h at every weekend reopen — which re-anchors zone identity, and is
+what drove the entire identity-drift workstream (§2.16, §2.17). **It was unpinned in both
+directions:** nothing would have noticed if the estimate stopped being confined to the newest bar, or
+if it spread to every bar.
+
+Rebuilt on a **gap-bearing** series — the only shape where the two readings differ — plus `ALIGN-9b`
+pinning that the estimate stays confined to the newest bar, and `ALIGN-9c` retaining the original
+regular-series case. Both mutations now die.
+
+> **My first fix was itself insufficient, and my own mutation test caught it.** I used
+> `00:00 / 05:00 / 06:00` — but bars 1 and 2 are exactly an hour apart, so index 1 could not
+> discriminate, and narrowing the exact branch to `i < length-2` still survived. Both gaps are now
+> irregular (`00:00 / 05:00 / 09:00`). The lesson is the audit's own: a fixture's *data* decides what
+> it can detect, not its title.
+
+### 17.2 🔴 The health check cannot report unhealthy about balance
+
+Five mutations, none of which kill anything:
+
+| Mutation | Effect |
+|---|---|
+| `reconciliationStatus` forced to `'CLEAN — no reconciliation issues detected'` | the verdict an operator pastes into a review is unfalsifiable |
+| `balanceDifference = 0` unconditionally (JVM **and** ALEX) | — |
+| **`expectedBalance = paperAccount.balance`** (JVM **and** ALEX) | `expectedBalance` exists to be an *independent* recomputation. Point it at `actual` and the check becomes `actual − actual === 0` — **a constant compared against itself, forever CLEAN** |
+
+The last is the "drift check wearing a fixture costume" trap, except escaped into **production code**.
+Why nothing catches it: the only assertions are `balanceDifference === 0` in two suites — **both
+asserting the healthy value** — and `HealthCheck.6` asserts `CLEAN` on a deliberately clean, empty
+account. **A positive control with no negative control anywhere; no fixture ever drives this function
+to `ISSUES DETECTED`.**
+
+**And a real production defect sits behind it.** `reconciliationStatus` consults `balanceDifference`,
+duplicate account ids, newly-orphaned records and four mismatch arrays — but **omits**
+`accountPositionsWithNoJournal`, `duplicateJournalTradeIds`, `closedJournalMissingPnl`,
+`closedAccountMissingJournalClosure`, `invalidTimestamps`, `invalidPrices` and `missingStrategyId`. A
+ledger with account positions that have **no journal record at all** currently reports
+**"CLEAN — no reconciliation issues detected"**, and that line ends the copyable report.
+
+**Every warning banner can be silenced.** Five render functions — the two ledger-integrity banners,
+the blocking banner, the evidence-storage banner ("⚠ EVIDENCE NOT BEING SAVED") and the unexported
+-packages warning — can each be made to render nothing forever with zero fixtures objecting. The
+underlying **detection** is covered; only the **display** is not. `sharedRiskStatus` can likewise be
+forced to `'MATCH'`, so drift in `pipSize`/`pipValuePerLot` — the two functions both engines' risk
+math depends on — would report clean.
+
+### 17.3 Continuity: the summariser is not called by anything, and cannot see an ongoing outage
+
+`evidenceSummarizeObservations` appears **exactly once in the application — its own definition.**
+Nothing consumes `missedIntervals`, `maxGapMs` or `lastSuccessfulPollAt`. **The "84.5% continuity, 12
+gaps > 10 min" figure in §5 was produced by an analyst reading the ledger, not by code** — so there is
+nothing there for the gate to cover.
+
+The arithmetic itself is reasonably covered, but structurally blind in the direction that matters:
+
+* **A system dead for three hours reports `missedIntervals = 0`, `maxGapMs = 60000`.** The summariser
+  takes no notion of "now" and has no trailing-gap term — a gap exists only *between two records that
+  both exist*. An outage is detectable only if the system came back. A frozen tab, a sleep that never
+  wakes, or any **ongoing** outage is invisible, which is precisely the question an operator would
+  consult it to answer.
+* A poll built with no `outcome` is recorded as **`'OK'`** and counted in `pollsOk` — an attempt
+  credited as a success, the same disease as §9.6a and §11.2.
+* A poll with no `startedAt` is stamped **"now"**, manufacturing continuity from a missing record.
+* A rewound clock pushes a **negative** interval that is silently clamped away.
+
+### 17.4 Evidence integrity — one direct contradiction of a stated contract
+
+Reason-code validation is **properly closed** (every registry, type and completeness-level check dies
+when removed), and `JVM-30` is a genuine differential fixture. But:
+
+**JVM's `CANDIDATE_REJECTED` can declare `evidenceCompleteness: 'COMPLETE'` with nothing objecting** —
+against the contract stated in that very code's own comment, which I wrote in §9.4: *"PARTIAL, not
+COMPLETE: evaluateLiveTrigger short-circuits on its first failed gate… Claiming COMPLETE here would be
+the fabrication this ledger exists to prevent."* **The comment states the rule; nothing enforces it.**
+Also unpinned: `reasonText` can be hard-coded while `reasonCode` stays correct, so the two fields
+would contradict each other in the same record; and the entry-day gate has no FAIL-path fixture.
+
+### 17.5 A fourth fixture anti-pattern, added to the register
+
+`v128:1378` asserts `p.expectedIntervalMs === EVIDENCE_POLL_EXPECTED_INTERVAL_MS` — but the record's
+field is set *from* that constant one line earlier. **It compares the constant to itself and survives
+doubling it**, because both sides move together. (The stored field is also read by nothing; the
+summariser uses the global.) And `L9` pins seq-ordering with a **regex over the function's source
+text** rather than behaviourally — it caught a sort mutation only because the text changed.

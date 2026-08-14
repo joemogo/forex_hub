@@ -106,9 +106,36 @@ const wrapped=new Function('g', appCode + '\n' + 'return (function(){\n' +
   // ══ getCandleCloseTime -- the exact/estimated split ══
   '  function series(startMs,stepMs,n){ const a=[]; for(let i=0;i<n;i++) a.push({t:new Date(startMs+i*stepMs)}); return a; }\n' +
   '  const h1=series(g.U(2026,5,1,0),3600000,10);\n' +
+  // MOGO-021: this fixture named the right property and then supplied the ONE dataset that cannot
+  // test it. On a perfectly regular hourly series, "the next bar's start" and "this bar's start + 1h"
+  // are the SAME NUMBER at every index -- so the assertion held for any implementation, including one
+  // with the exact-close branch DELETED ENTIRELY (verified: 27/27 still passed). That is not an
+  // academic gap: this estimate/exact split is the documented mechanism by which reactionId and
+  // qualificationTimestamp move ~48h at every weekend reopen, which is what re-anchors zone identity
+  // and drove the whole identity-drift workstream. It was unpinned in BOTH directions.
+  //
+  // A GAP-BEARING series is the only shape in which the two differ, so it is the only shape that can
+  // discriminate. Bars at 00:00, 05:00, 06:00: the true close of bar 0 is 05:00Z (the next bar's
+  // start), NOT 01:00Z (start + one hour).
+  // BOTH gaps are irregular, deliberately. A first draft used 00:00/05:00/06:00 -- but bars 1 and 2
+  // are then exactly one hour apart, so index 1 could not discriminate, and a mutation narrowing the
+  // exact branch to `i<length-2` survived. Caught by mutation-testing this very fixture.
+  '  const irr=[{t:new Date(g.U(2026,5,1,0))},{t:new Date(g.U(2026,5,1,5))},{t:new Date(g.U(2026,5,1,9))}];\n' +
+  '  const irr0=getCandleCloseTime(irr,0,"H1").getTime(), irr1=getCandleCloseTime(irr,1,"H1").getTime();\n' +
+  '  g.record("ALIGN-9","every candle but the last closes EXACTLY at the next candle start (no duration math)",\n' +
+  '    irr0===g.U(2026,5,1,5)&&irr1===g.U(2026,5,1,9),\n' +
+  '    "gap-bearing series: close[0]="+new Date(irr0).toISOString()+" (duration math would give "+\n' +
+  '    new Date(g.U(2026,5,1,0)+3600000).toISOString()+"), close[1]="+new Date(irr1).toISOString()+\n' +
+  '    " (duration math would give "+new Date(g.U(2026,5,1,5)+3600000).toISOString()+")");\n' +
+  // The positive control for the OTHER half, on the SAME series: the estimate must still apply to the
+  // newest bar, and to it alone. Without this, confining the estimate could be lost in either
+  // direction -- narrowed to nothing, or spread to every bar.
+  '  g.record("ALIGN-9b","and ONLY the newest candle estimates -- the split is confined to the edge",\n' +
+  '    getCandleCloseTime(irr,2,"H1").getTime()===g.U(2026,5,1,9)+3600000,\n' +
+  '    "newest close="+new Date(getCandleCloseTime(irr,2,"H1")).toISOString()+" = start+1h");\n' +
   '  let exact=0;\n' +
   '  for(let i=0;i<h1.length-1;i++){ if(getCandleCloseTime(h1,i,"H1").getTime()===h1[i+1].t.getTime()) exact++; }\n' +
-  '  g.record("ALIGN-9","every candle but the last closes EXACTLY at the next candle start (no duration math)",\n' +
+  '  g.record("ALIGN-9c","and the regular-series case still holds, where both readings coincide",\n' +
   '    exact===h1.length-1,exact+"/"+(h1.length-1)+" exact");\n' +
   '  const lastH1=getCandleCloseTime(h1,h1.length-1,"H1");\n' +
   '  g.record("ALIGN-10","the last H1 candle falls back to start+1h",\n' +

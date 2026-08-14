@@ -160,6 +160,13 @@ function structuralCandles(n){
   }
   return out;
 }
+// MOGO-021 JVM EXIT MATH. The /pricing response used to be a hard-coded symmetric-ish pair. It is
+// now settable, DEFAULTING TO THE EXACT PREVIOUS BYTES, so every pre-existing fixture sees an
+// identical response and only the new exit-math fixtures ever change it. A close fills at the bid
+// (buy) or the ask (sell), so a fixture cannot tell a wrong FILL SIDE from a wrong MID unless
+// bid, ask and mid are three distinguishable numbers -- which requires setting them per fixture.
+const __BID_DEFAULT='1.10290',__ASK_DEFAULT='1.10310';
+let __pbid=__BID_DEFAULT,__pask=__ASK_DEFAULT;
 let __candleCount=60,__priceOk=true,__mode='flat',__shortPair=null,__shortAll=false;
 // Holds one instrument's candle fetch open so a SECOND scanAll can overtake the first -- the
 // overlapping-sweep condition scanAll allows (no re-entrancy guard; called unawaited from
@@ -173,7 +180,7 @@ globalThis.fetch=function(url){
   const u=String(url);
   if(/\/pricing/.test(u)){
     if(!__priceOk) return Promise.resolve(makeResponse(false,503,{}));
-    return Promise.resolve(makeResponse(true,200,{prices:[{bids:[{price:'1.10290'}],asks:[{price:'1.10310'}]}]}));
+    return Promise.resolve(makeResponse(true,200,{prices:[{bids:[{price:__pbid}],asks:[{price:__pask}]}]}));
   }
   if(__mode==='firing'){
     // MOGO-021: this must run BEFORE the D/W early returns below, which short-circuit on
@@ -216,6 +223,8 @@ const results=[];
 const g={record:(id,desc,pass,detail)=>results.push({id,desc,pass,detail:detail||''})};
 g.setCandleCount=n=>{__candleCount=n;};
 g.setPriceOk=v=>{__priceOk=v;};
+g.setBidAsk=(b,a)=>{__pbid=String(b);__pask=String(a);};
+g.resetBidAsk=()=>{__pbid=__BID_DEFAULT;__pask=__ASK_DEFAULT;};
 g.setMode=m=>{__mode=m;};
 g.setShortPair=p=>{__shortPair=p;};
 g.setShortAll=v=>{__shortAll=v;};
@@ -901,6 +910,315 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __clFBACalls===1,\n' +
   '    "fetchBidAsk calls across two concurrent closes of the same id="+__clFBACalls+\n' +
   '    " (without the in-flight guard the second call fetches too, and only then finds the position gone)");\n' +
+  // ══ MOGO-021 JVM EXIT MATH: the FILL SIDE, the ARITHMETIC and the LABELS ══════════════════
+  // WHY THESE EXIST. JVMCLOSE-1 above asserts balance === balBefore + closedPos.pnl. That compares
+  // TWO OUTPUTS OF THE SAME COMPUTATION: it dies only if the balance diverges FROM the recorded
+  // P&L, and is blind to a wrong P&L, a wrong exit price, a wrong side or a wrong result label --
+  // flipping the P&L sign flips both together and it still passes. Every other fixture in this
+  // repository claiming to cover closePaperPosition matches SOURCE TEXT (getSource(...) containing
+  // literal strings), which every behaviour-changing mutation leaves intact. An adversarial audit
+  // ran 96 mutations against this 1,538-fixture gate; 47 killed nothing, concentrated right here.
+  //
+  // THE RULE THESE FIXTURES FOLLOW: every assertion is against a value THE FIXTURE CHOSE, computed
+  // by hand from fixture literals, never against the record calculating itself. Positions are
+  // opened through the real openPaperPosition and closed through the real closePaperPosition; the
+  // only seams are globalThis.fetch and the /pricing response, both already used by this suite. No
+  // protected function has its outcome stubbed, overridden or forced anywhere below.
+  //
+  // THE ARITHMETIC, done by hand ONCE and reused as literals:
+  //   balance $10,000, risk 1% = $100. EUR_USD: pip 0.0001, pipValuePerLot = $10 per pip per lot.
+  //   entry 1.10000, stop 1.09800 -> 20 pips of risk -> lots = 100/(20*10) = 0.50 exactly.
+  //   A buy filled at bid 1.10500 is +50 pips -> 50 * $10 * 0.50 = +$250.00 -> balance $10,250.00.
+  // The spread is deliberately ASYMMETRIC -- bid 1.10500, ask 1.10530, mid 1.10515 -- so the three
+  // candidate fills are three DISTINGUISHABLE dollar figures: $250.00 on the bid, $265.00 on the
+  // ask, $257.50 at the mid. Against a symmetric spread a wrong SIDE is indistinguishable from a
+  // wrong MID, which is exactly how "buy closes on the ask" survived the whole gate.
+  '  function jvmClosedRec(id){ return paperAccount.closedPositions.filter(function(p){ return p.id===id; })[0]||{}; }\n' +
+  '  function jvmStillOpen(id){ return paperAccount.openPositions.some(function(p){ return p.id===id; }); }\n' +
+  '  function jvmFreshAccount(){ pairData={}; paperAccount={balance:10000,openPositions:[],closedPositions:[]}; }\n' +
+  // ── the buy: fill side, dollars, balance, label ──
+  '  jvmFreshAccount();\n' +
+  '  const __cbBuy=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  g.record("JVMCLOSE-3","PRECONDITION: the position the hand-computed dollars below assume -- 0.50 lots at $10 per pip from a $10,000 account",\n' +
+  '    __cbBuy.lots===0.5&&__cbBuy.pipValueAtEntry===10&&__cbBuy.entry===1.10000&&__cbBuy.dir==="buy"&&\n' +
+  '    __cbBuy.riskAmount===100&&paperAccount.balance===10000&&paperAccount.openPositions.length===1,\n' +
+  '    "lots="+__cbBuy.lots+" pipValueAtEntry="+__cbBuy.pipValueAtEntry+" entry="+__cbBuy.entry+\n' +
+  '    " risk="+__cbBuy.riskAmount+" balance="+paperAccount.balance+" (every literal below follows from these)");\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  await closePaperPosition(__cbBuy.id,false,"Win");\n' +
+  '  const __cbRec=jvmClosedRec(__cbBuy.id);\n' +
+  '  g.record("JVMCLOSE-4","a BUY is filled at the BID the fixture stubbed -- not the ask, not the mid",\n' +
+  '    __cbRec.exitPrice===1.10500&&__cbRec.exitPrice!==1.10530&&__cbRec.exitPrice!==1.10515&&\n' +
+  '    __cbRec.exitPrice!==__cbBuy.entry,\n' +
+  '    "exitPrice="+__cbRec.exitPrice+" against stubbed bid 1.10500 / ask 1.10530 / mid 1.10515 / entry 1.10000");\n' +
+  '  g.record("JVMCLOSE-5","the recorded P&L equals the HAND-COMPUTED dollars: +50 pips * $10 * 0.50 lots = +$250.00",\n' +
+  '    __cbRec.pnl===250,\n' +
+  '    "pnl="+__cbRec.pnl+" (the ask would be 265.00, the mid 257.50, an inverted sign -250.00)");\n' +
+  '  g.record("JVMCLOSE-6","the balance equals the CONSTANT 10000 + 250 -- asserted against the fixture literal, never against balanceBefore + the record own pnl",\n' +
+  '    paperAccount.balance===10250,\n' +
+  '    "balance="+paperAccount.balance+" vs the literal 10250 (a sign flip moves both balance and pnl together and passes a before+pnl check)");\n' +
+  '  g.record("JVMCLOSE-7","an automatic WIN is labelled Win and reasoned TAKE_PROFIT, and the position is gone from the book",\n' +
+  '    __cbRec.result==="Win"&&__cbRec.closeReason==="TAKE_PROFIT"&&!jvmStillOpen(__cbBuy.id)&&\n' +
+  '    paperAccount.closedPositions.filter(function(p){ return p.id===__cbBuy.id; }).length===1,\n' +
+  '    "result="+__cbRec.result+" closeReason="+__cbRec.closeReason);\n' +
+  // ── the losing buy: the same four values with the opposite sign, so no assertion above is
+  //    satisfiable by a constant. TAKE_PROFIT/STOP_LOSS cannot be swapped without failing here.
+  '  jvmFreshAccount();\n' +
+  '  const __clBuy=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  g.setBidAsk("1.09700","1.09730");\n' +
+  '  await closePaperPosition(__clBuy.id,false,"Loss");\n' +
+  '  const __clRec=jvmClosedRec(__clBuy.id);\n' +
+  '  g.record("JVMCLOSE-8","a LOSING buy fills at the bid too and debits the HAND-COMPUTED -30 pips * $10 * 0.50 = -$150.00",\n' +
+  '    __clRec.exitPrice===1.09700&&__clRec.pnl===-150&&paperAccount.balance===9850,\n' +
+  '    "exitPrice="+__clRec.exitPrice+" pnl="+__clRec.pnl+" balance="+paperAccount.balance+\n' +
+  '    " vs literals 1.09700 / -150 / 9850 (ask would be -135.00, mid -142.50)");\n' +
+  '  g.record("JVMCLOSE-9","and it is reasoned STOP_LOSS, not TAKE_PROFIT -- the two reasons are not interchangeable",\n' +
+  '    __clRec.result==="Loss"&&__clRec.closeReason==="STOP_LOSS"&&__cbRec.closeReason==="TAKE_PROFIT"&&\n' +
+  '    __clRec.closeReason!==__cbRec.closeReason,\n' +
+  '    "winning close -> "+__cbRec.closeReason+", losing close -> "+__clRec.closeReason);\n' +
+  // ── the SELL. Every P&L assertion in this repository is a long, so the (dir==="buy"?1:-1) term
+  //    could be reduced to a constant 1 and nothing anywhere failed. A sell closes on the ASK.
+  '  jvmFreshAccount();\n' +
+  '  const __csSell=openPaperPosition("EUR_USD","sell",1.10000,1.10200,1.09400,"fixture");\n' +
+  '  g.record("JVMCLOSE-10","PRECONDITION: the SELL is sized identically -- 0.50 lots at $10 per pip, entry 1.10000",\n' +
+  '    __csSell.lots===0.5&&__csSell.pipValueAtEntry===10&&__csSell.entry===1.10000&&__csSell.dir==="sell"&&\n' +
+  '    paperAccount.balance===10000,\n' +
+  '    "lots="+__csSell.lots+" pipValueAtEntry="+__csSell.pipValueAtEntry+" dir="+__csSell.dir);\n' +
+  '  g.setBidAsk("1.09400","1.09430");\n' +
+  '  await closePaperPosition(__csSell.id,false,"Win");\n' +
+  '  const __csRec=jvmClosedRec(__csSell.id);\n' +
+  '  g.record("JVMCLOSE-11","a SELL is bought back at the ASK -- the opposite side from a buy, and not the mid",\n' +
+  '    __csRec.exitPrice===1.09430&&__csRec.exitPrice!==1.09400&&__csRec.exitPrice!==1.09415,\n' +
+  '    "exitPrice="+__csRec.exitPrice+" against stubbed bid 1.09400 / ask 1.09430 / mid 1.09415");\n' +
+  '  g.record("JVMCLOSE-12","a SELL that falls is a PROFIT: hand-computed +57 pips * $10 * 0.50 = +$285.00, balance 10000 + 285",\n' +
+  '    __csRec.pnl===285&&paperAccount.balance===10285&&__csRec.result==="Win",\n' +
+  '    "pnl="+__csRec.pnl+" balance="+paperAccount.balance+" result="+__csRec.result+\n' +
+  '    " -- dropping the short-side negation reports -285.00 and every long-only fixture still passes");\n' +
+  // ── the MANUAL branch: this is where Win/Loss is classified from the P&L and where
+  //    BREAK_EVEN_R_EPSILON lives. Both fixtures are the SAME position and differ ONLY in the bid.
+  '  jvmFreshAccount();\n' +
+  '  const __cmWin=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  await closePaperPosition(__cmWin.id,true);\n' +
+  '  const __cmWinRec=jvmClosedRec(__cmWin.id);\n' +
+  '  g.record("JVMCLOSE-13","a MANUAL close in profit is classified Win / MANUAL_CLOSE -- realized R of 2.50 is not inside the break-even epsilon",\n' +
+  '    __cmWinRec.pnl===250&&__cmWinRec.result==="Win"&&__cmWinRec.closeReason==="MANUAL_CLOSE"&&\n' +
+  '    paperAccount.balance===10250,\n' +
+  '    "pnl="+__cmWinRec.pnl+" (realized R = 250/100 = 2.50) result="+__cmWinRec.result+\n' +
+  '    " closeReason="+__cmWinRec.closeReason+" -- widening BREAK_EVEN_R_EPSILON to 1e9 reports Break even / BREAK_EVEN here");\n' +
+  '  jvmFreshAccount();\n' +
+  '  const __cmFlat=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  g.setBidAsk("1.10000","1.10030");\n' +
+  '  await closePaperPosition(__cmFlat.id,true);\n' +
+  '  const __cmFlatRec=jvmClosedRec(__cmFlat.id);\n' +
+  '  g.record("JVMCLOSE-14","SIBLING CONTROL, one variable away: the SAME manual close filled exactly at entry IS Break even / BREAK_EVEN",\n' +
+  '    __cmFlatRec.exitPrice===1.10000&&__cmFlatRec.pnl===0&&__cmFlatRec.result==="Break even"&&\n' +
+  '    __cmFlatRec.closeReason==="BREAK_EVEN"&&paperAccount.balance===10000,\n' +
+  '    "only the stubbed bid changed (1.10500 -> 1.10000): pnl="+__cmFlatRec.pnl+" result="+__cmFlatRec.result+\n' +
+  '    " closeReason="+__cmFlatRec.closeReason+" -- so JVMCLOSE-13 is not passing because Break even is unreachable");\n' +
+  // ── the THIRD classifier: an automatic close with NO caller-supplied label falls back to
+  //    exitPrice-vs-target. The discriminating case is a fill BELOW target that is nonetheless in
+  //    PROFIT: the label must follow the target comparison, never the sign of the P&L.
+  '  jvmFreshAccount();\n' +
+  '  const __caHit=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10400,"fixture");\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  await closePaperPosition(__caHit.id,false);\n' +
+  '  const __caHitRec=jvmClosedRec(__caHit.id);\n' +
+  '  g.record("JVMCLOSE-15","an UNLABELLED automatic close whose fill CLEARS the target is a Win / TAKE_PROFIT",\n' +
+  '    __caHitRec.result==="Win"&&__caHitRec.closeReason==="TAKE_PROFIT"&&__caHitRec.exitPrice===1.10500&&\n' +
+  '    __caHit.target===1.10400&&__caHitRec.pnl===250,\n' +
+  '    "fill 1.10500 vs target "+__caHit.target+" -> "+__caHitRec.result+" / "+__caHitRec.closeReason);\n' +
+  '  jvmFreshAccount();\n' +
+  '  const __caMiss=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  await closePaperPosition(__caMiss.id,false);\n' +
+  '  const __caMissRec=jvmClosedRec(__caMiss.id);\n' +
+  '  g.record("JVMCLOSE-16","and one that FALLS SHORT of the target is a Loss EVEN THOUGH IT BOOKED +$250 -- the label reads the target, not the P&L sign",\n' +
+  '    __caMissRec.result==="Loss"&&__caMissRec.closeReason==="STOP_LOSS"&&__caMissRec.pnl===250&&\n' +
+  '    paperAccount.balance===10250&&__caMiss.target===1.10600,\n' +
+  '    "fill 1.10500 vs target "+__caMiss.target+" -> "+__caMissRec.result+" while pnl="+__caMissRec.pnl+\n' +
+  '    " -- only two fixtures one variable apart can separate the target comparison from the P&L sign");\n' +
+  // ── the post-await re-validation. The position vanishes WHILE the bid/ask fetch is in flight,
+  //    which is the only window the second findIndex exists for. The seam is fetchBidAsk, wrapped
+  //    as a pure pass-through: the real function is called and its real verdict returned; the
+  //    wrapper only mutates the surrounding account state while the close is suspended on it,
+  //    which is exactly what a sibling close resolving first does in production. Without the
+  //    re-validation the stale index is reused and it splices out the WRONG POSITION.
+  '  jvmFreshAccount();\n' +
+  '  const __rvA=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  paperAccount.openPositions.push({id:"JVMCLOSE-SIBLING",pair:"GBP/USD",oPair:"GBP_USD",dir:"buy",\n' +
+  '    entry:1.30000,stop:1.29800,target:1.30600,lots:0.5,riskAmount:100,pipValueAtEntry:10,\n' +
+  '    openedAt:new Date().toISOString(),source:"fixture"});\n' +
+  '  const __rvOrigFBA=fetchBidAsk; let __rvHits=0;\n' +
+  '  fetchBidAsk=async function(p){ const r=await __rvOrigFBA.apply(this,arguments);\n' +
+  '    if(++__rvHits===1){ const k=paperAccount.openPositions.findIndex(function(x){ return x.id===__rvA.id; });\n' +
+  '      if(k>-1) paperAccount.openPositions.splice(k,1); }\n' +
+  '    return r; };\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  const __rvRet=await closePaperPosition(__rvA.id,true);\n' +
+  '  fetchBidAsk=__rvOrigFBA;\n' +
+  '  g.record("JVMCLOSE-17","PRECONDITION: the position really did disappear DURING the bid/ask fetch, and a sibling was sitting behind it",\n' +
+  '    __rvHits===1&&!jvmStillOpen(__rvA.id)&&__rvA.lots===0.5,\n' +
+  '    "fetchBidAsk calls="+__rvHits+", the closing position was removed mid-await, sibling JVMCLOSE-SIBLING was at the index it vacated");\n' +
+  '  g.record("JVMCLOSE-18","the POST-AWAIT re-validation abandons the close: no closed record, balance untouched at the literal 10000, and the SIBLING is still open",\n' +
+  '    __rvRet===undefined&&paperAccount.closedPositions.length===0&&paperAccount.balance===10000&&\n' +
+  '    jvmStillOpen("JVMCLOSE-SIBLING")&&paperAccount.openPositions.length===1,\n' +
+  '    "returned="+String(__rvRet)+" closedPositions="+paperAccount.closedPositions.length+" balance="+\n' +
+  '    paperAccount.balance+" open="+JSON.stringify(paperAccount.openPositions.map(function(p){return String(p.id);}))+\n' +
+  '    " (reusing the pre-await index splices the SIBLING out and books the vanished position anyway)");\n' +
+  // ── the failed-commit ROLLBACK. The commit is made to fail through STORAGE ONLY -- another tab
+  //    is simulated by writing a newer fxhub_paper_version straight into the fixture localStorage.
+  //    Nothing is stubbed: savePaperAccountGuarded reaches its own real STALE_VERSION branch.
+  '  jvmFreshAccount();\n' +
+  '  const __rbPos=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  const __rbSavedVer=localStorage.getItem("fxhub_paper_version");\n' +
+  '  localStorage.setItem("fxhub_paper_version",String(paperAccountKnownVersion+5));\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  const __rbRet=await closePaperPosition(__rbPos.id,true);\n' +
+  '  g.record("JVMCLOSE-19","a REJECTED ledger commit leaves the close UNAPPLIED IN MEMORY -- position still open, balance still the literal 10000, no closed record",\n' +
+  '    !!__rbRet&&__rbRet.blocked===true&&typeof __rbRet.error==="string"&&\n' +
+  '    paperAccount.balance===10000&&jvmStillOpen(__rbPos.id)&&paperAccount.closedPositions.length===0,\n' +
+  '    "blocked="+String(__rbRet&&__rbRet.blocked)+" balance="+paperAccount.balance+" (never 10250) stillOpen="+\n' +
+  '    jvmStillOpen(__rbPos.id)+" closedPositions="+paperAccount.closedPositions.length);\n' +
+  '  localStorage.setItem("fxhub_paper_version",__rbSavedVer);\n' +
+  '  const __rbRet2=await closePaperPosition(__rbPos.id,true);\n' +
+  '  const __rbRec2=jvmClosedRec(__rbPos.id);\n' +
+  '  g.record("JVMCLOSE-20","SIBLING CONTROL, one variable away: with the version conflict cleared the SAME close succeeds and books the same +$250.00",\n' +
+  '    !!__rbRet2&&__rbRet2.committed===true&&__rbRec2.pnl===250&&paperAccount.balance===10250&&\n' +
+  '    !jvmStillOpen(__rbPos.id),\n' +
+  '    "only the stored fxhub_paper_version changed: pnl="+__rbRec2.pnl+" balance="+paperAccount.balance+\n' +
+  '    " -- so JVMCLOSE-19 is not passing because this close could never have completed");\n' +
+  // ── the missing pip value. A position carrying no pipValueAtEntry on a pair with no conversion
+  //    rate loaded cannot be priced in dollars, and the close must REFUSE rather than guess. The
+  //    trap: deleting the guard does NOT produce NaN -- null multiplies to ZERO, so the balance is
+  //    unchanged and a balance assertion alone proves nothing. The position and the closed-record
+  //    count are what discriminate.
+  '  jvmFreshAccount();\n' +
+  '  paperAccount.openPositions.push({id:"JVMCLOSE-NOPIP",pair:"EUR/GBP",oPair:"EUR_GBP",dir:"buy",\n' +
+  '    entry:0.85000,stop:0.84800,target:0.85600,lots:0.5,riskAmount:100,\n' +
+  '    openedAt:new Date().toISOString(),source:"fixture"});\n' +
+  '  g.setBidAsk("0.85500","0.85530");\n' +
+  '  const __npRet=await closePaperPosition("JVMCLOSE-NOPIP",true);\n' +
+  '  g.record("JVMCLOSE-21","with NO pip value available the close is REFUSED and the position is left open -- it is never booked at a fabricated P&L",\n' +
+  '    pipValuePerLot("EUR_GBP")===null&&__npRet===undefined&&jvmStillOpen("JVMCLOSE-NOPIP")&&\n' +
+  '    paperAccount.closedPositions.length===0&&paperAccount.balance===10000,\n' +
+  '    "pipValuePerLot(EUR_GBP)="+String(pipValuePerLot("EUR_GBP"))+" returned="+String(__npRet)+\n' +
+  '    " stillOpen="+jvmStillOpen("JVMCLOSE-NOPIP")+" closedPositions="+paperAccount.closedPositions.length+\n' +
+  '    " (dropping the guard books it at pnl 0, since null multiplies to zero and the balance never moves)");\n' +
+  '  pairData["USD_GBP"]={price:0.80000};\n' +
+  '  const __npRet2=await closePaperPosition("JVMCLOSE-NOPIP",true);\n' +
+  '  const __npRec2=jvmClosedRec("JVMCLOSE-NOPIP");\n' +
+  '  g.record("JVMCLOSE-22","SIBLING CONTROL, one variable away: once a USD_GBP rate exists the SAME position closes at the hand-computed +50 pips * $12.50 * 0.50 = +$312.50",\n' +
+  '    pipValuePerLot("EUR_GBP")===12.5&&!!__npRet2&&__npRec2.exitPrice===0.85500&&__npRec2.pnl===312.5&&\n' +
+  '    paperAccount.balance===10312.5&&!jvmStillOpen("JVMCLOSE-NOPIP"),\n' +
+  '    "only pairData.USD_GBP changed: pipValuePerLot="+pipValuePerLot("EUR_GBP")+" exitPrice="+__npRec2.exitPrice+\n' +
+  '    " pnl="+__npRec2.pnl+" balance="+paperAccount.balance+" -- so JVMCLOSE-21 is not passing because this close was impossible");\n' +
+  // ══ MOGO-021 JVM AUTOMATIC EXIT DETECTION: checkPaperPositions ════════════════════════════
+  // NO FIXTURE ANYWHERE CALLED THIS FUNCTION. It could be reduced to a bare `return;` and the whole
+  // 1,538-fixture gate stayed green -- JVM would simply have stopped taking profits and stopping
+  // out, silently. It is synchronous, so a direct unit fixture is sufficient and honest.
+  //
+  // The spy below is a PURE PASS-THROUGH: it records the arguments checkPaperPositions hands to
+  // closePaperPosition, calls the real function, returns its real promise unaltered, and collects
+  // the promises so the assertions can await them deterministically rather than counting
+  // microtasks. No outcome is forced. Both the call arguments AND the resulting closed record are
+  // asserted, because either alone leaves half the path unproven.
+  '  async function jvmExitSweep(){ const __oC=closePaperPosition; const calls=[],proms=[];\n' +
+  '    closePaperPosition=function(id,manual,autoResult){ calls.push({id:String(id),manual:manual,autoResult:autoResult});\n' +
+  '      const pr=__oC.apply(this,arguments); proms.push(pr); return pr; };\n' +
+  '    try{ checkPaperPositions(); } finally { closePaperPosition=__oC; }\n' +
+  '    await Promise.all(proms); return calls; }\n' +
+  '  function jvmSeedPosition(id,dir,entry,stop,target){\n' +
+  '    paperAccount.openPositions.push({id:id,pair:"EUR/USD",oPair:"EUR_USD",dir:dir,entry:entry,stop:stop,\n' +
+  '      target:target,lots:0.5,riskAmount:100,pipValueAtEntry:10,openedAt:new Date().toISOString(),source:"fixture"}); }\n' +
+  // TARGET CROSSED. The fill is deliberately BELOW the target (bid 1.10500 vs target 1.10600):
+  // the Win label must come from the level the CALLER saw crossed, not from re-deriving it from
+  // the post-spread fill -- which is the documented contract and would misclassify this as a Loss.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-WIN","buy",1.10000,1.09800,1.10600);\n' +
+  '  pairData["EUR_USD"]={price:1.10700};\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  const __exWin=await jvmExitSweep();\n' +
+  '  const __exWinRec=jvmClosedRec("JVMEXIT-WIN");\n' +
+  '  g.record("JVMEXIT-1","a live price THROUGH the target closes the position exactly once, as an AUTOMATIC Win",\n' +
+  '    __exWin.length===1&&__exWin[0].id==="JVMEXIT-WIN"&&__exWin[0].manual===false&&__exWin[0].autoResult==="Win"&&\n' +
+  '    paperAccount.closedPositions.length===1&&__exWinRec.result==="Win"&&__exWinRec.closeReason==="TAKE_PROFIT",\n' +
+  '    "price 1.10700 vs target 1.10600 -> closePaperPosition("+JSON.stringify(__exWin)+"), record result="+\n' +
+  '    __exWinRec.result+"/"+__exWinRec.closeReason);\n' +
+  '  g.record("JVMEXIT-2","and the exit is booked at the hand-computed +50 pips * $10 * 0.50 = +$250.00, balance 10000 + 250",\n' +
+  '    __exWinRec.exitPrice===1.10500&&__exWinRec.pnl===250&&paperAccount.balance===10250&&\n' +
+  '    !jvmStillOpen("JVMEXIT-WIN"),\n' +
+  '    "exitPrice="+__exWinRec.exitPrice+" pnl="+__exWinRec.pnl+" balance="+paperAccount.balance+\n' +
+  '    " -- the fill 1.10500 is BELOW the target, so the Win cannot have been re-derived from it");\n' +
+  // STOP CROSSED.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-LOSS","buy",1.10000,1.09800,1.10600);\n' +
+  '  pairData["EUR_USD"]={price:1.09700};\n' +
+  '  g.setBidAsk("1.09700","1.09730");\n' +
+  '  const __exLoss=await jvmExitSweep();\n' +
+  '  const __exLossRec=jvmClosedRec("JVMEXIT-LOSS");\n' +
+  '  g.record("JVMEXIT-3","a live price THROUGH the stop closes the position exactly once, as an AUTOMATIC Loss -- the opposite label from the same code path",\n' +
+  '    __exLoss.length===1&&__exLoss[0].autoResult==="Loss"&&__exLoss[0].manual===false&&\n' +
+  '    __exLossRec.result==="Loss"&&__exLossRec.closeReason==="STOP_LOSS"&&\n' +
+  '    __exLossRec.pnl===-150&&paperAccount.balance===9850,\n' +
+  '    "price 1.09700 vs stop 1.09800 -> "+JSON.stringify(__exLoss)+", pnl="+__exLossRec.pnl+\n' +
+  '    " balance="+paperAccount.balance+" (Win and Loss are not interchangeable at this call site)");\n' +
+  // NEGATIVE CONTROL, one variable from both positives: the SAME position, a price INSIDE the
+  // bracket. Nothing is called at all.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-INSIDE","buy",1.10000,1.09800,1.10600);\n' +
+  '  pairData["EUR_USD"]={price:1.10100};\n' +
+  '  g.setBidAsk("1.10100","1.10130");\n' +
+  '  const __exInside=await jvmExitSweep();\n' +
+  '  g.record("JVMEXIT-4","NEGATIVE CONTROL: a price INSIDE the bracket closes nothing -- closePaperPosition is not called at all",\n' +
+  '    __exInside.length===0&&jvmStillOpen("JVMEXIT-INSIDE")&&paperAccount.closedPositions.length===0&&\n' +
+  '    paperAccount.balance===10000,\n' +
+  '    "price 1.10100 sits between stop 1.09800 and target 1.10600: calls="+__exInside.length+\n' +
+  '    " stillOpen="+jvmStillOpen("JVMEXIT-INSIDE")+" balance="+paperAccount.balance);\n' +
+  // THE AMBIGUITY CASE -- the ONLY fixture that can detect a reordering of the two branches.
+  // It requires a position in which BOTH levels read as crossed on a single tick, and for a buy
+  // that is only possible when the stop sits ABOVE the target. That is a DEGENERATE position by
+  // construction, stated plainly rather than dressed up as a market scenario: no live price series
+  // can produce this state on a coherent bracket (stop < entry < target), so it is seeded
+  // directly. It is not hypothetical either -- it is exactly the state a mis-applied stop
+  // adjustment leaves behind, and it is the state in which the evaluation ORDER decides the
+  // recorded result. The shipped ordering checks the target first and must record a Win.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-BOTH","buy",1.10000,1.10500,1.10200);\n' +
+  '  pairData["EUR_USD"]={price:1.10300};\n' +
+  '  g.setBidAsk("1.10300","1.10330");\n' +
+  // Read back the state the sweep is about to see, so this precondition is an assertion about the
+  // ACTUAL seeded book and price feed and fails if either drifts -- not a restatement of literals,
+  // which would be true for every input and could never fail.
+  '  const __exBothSeed=paperAccount.openPositions.filter(function(p){ return p.id==="JVMEXIT-BOTH"; })[0]||{};\n' +
+  '  const __exBothLive=(pairData["EUR_USD"]||{}).price;\n' +
+  '  const __exBoth=await jvmExitSweep();\n' +
+  '  const __exBothRec=jvmClosedRec("JVMEXIT-BOTH");\n' +
+  '  g.record("JVMEXIT-5","PRECONDITION: the position actually in the book, at the price actually in the feed, satisfies BOTH crossing tests on the same tick",\n' +
+  '    __exBothSeed.dir==="buy"&&__exBothLive>=__exBothSeed.target&&__exBothLive<=__exBothSeed.stop&&\n' +
+  '    __exBothSeed.stop>__exBothSeed.target,\n' +
+  '    "live "+__exBothLive+" >= target "+__exBothSeed.target+" AND live "+__exBothLive+" <= stop "+__exBothSeed.stop+\n' +
+  '    " -- both hitTarget and hitStop are true, which for a buy requires the degenerate stop-above-target bracket seeded here");\n' +
+  '  g.record("JVMEXIT-6","with BOTH levels crossed the shipped TARGET-FIRST ordering records a Win -- the only fixture that can see the branches reordered",\n' +
+  '    __exBoth.length===1&&__exBoth[0].autoResult==="Win"&&__exBothRec.result==="Win"&&\n' +
+  '    __exBothRec.closeReason==="TAKE_PROFIT"&&__exBothRec.pnl===150&&paperAccount.balance===10150,\n' +
+  '    "calls="+JSON.stringify(__exBoth)+" record="+__exBothRec.result+"/"+__exBothRec.closeReason+\n' +
+  '    " pnl="+__exBothRec.pnl+" (checking the stop first records Loss / STOP_LOSS from the identical inputs)");\n' +
+  // SIBLING CONTROL for the ambiguity fixture: the SAME degenerate position, one variable moved
+  // (the live price), so the stop branch is the only one that can fire. Without this, JVMEXIT-6
+  // could be passing simply because this bracket always yields Win.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-BOTH2","buy",1.10000,1.10500,1.10200);\n' +
+  '  pairData["EUR_USD"]={price:1.10100};\n' +
+  '  g.setBidAsk("1.10100","1.10130");\n' +
+  '  const __exOne=await jvmExitSweep();\n' +
+  '  const __exOneRec=jvmClosedRec("JVMEXIT-BOTH2");\n' +
+  '  g.record("JVMEXIT-7","SIBLING CONTROL, one variable away: the SAME degenerate bracket below its target records a Loss, so the Win above is the ORDERING and not the bracket",\n' +
+  '    __exOne.length===1&&__exOne[0].autoResult==="Loss"&&__exOneRec.result==="Loss"&&\n' +
+  '    __exOneRec.closeReason==="STOP_LOSS"&&__exOneRec.pnl===50&&paperAccount.balance===10050,\n' +
+  '    "only the live price changed (1.10300 -> 1.10100): calls="+JSON.stringify(__exOne)+" record="+\n' +
+  '    __exOneRec.result+" while pnl="+__exOneRec.pnl+" is POSITIVE -- the label follows the level crossed, not the money");\n' +
+  '  g.resetBidAsk(); jvmFreshAccount();\n' +
   // ══ MOGO-021 LEAKED HOURLY TIMER ══════════════════════════════════════════════════════════
   // disconnect() cleared scanInterval and countdownInterval but NOT autoScanTimer, and initAll then
   // assigned a NEW hourly timer over the handle -- so the old one kept running with nothing left to

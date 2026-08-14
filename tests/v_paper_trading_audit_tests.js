@@ -360,6 +360,291 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     assert('ALEX.3: alexGCloseLivePosition computes correct P&L for a losing long (-$100) and uses a fixed -1R (not recomputed)',
       acc.balance===9900&&acc.closedPositions[0].resultR===-1,JSON.stringify(acc.closedPositions[0]));
   }
+
+  // ═══ MOGO-021 F6 — THE ALEX SELL SIDE (both pre-existing P&L fixtures above are LONGS) ═══
+  // ALEX.1/ALEX.2/ALEX.3 are all direction:'buy'. The direction sign in
+  // alexGCloseLivePosition's movePips -- `*(pos.direction==='buy'?1:-1)` -- was therefore
+  // never exercised on the branch that actually needs it: dropping the multiplier entirely
+  // leaves every long fixture green while turning every SHORT winner into a loser of the same
+  // size. These are the exact mirrors of ALEX.1/ALEX.3 with the geometry inverted (entry
+  // 1.1000, stop 1.1050, target 1.0900), so the ONLY variable that changed is the direction.
+  {
+    seedClean();
+    const openPos={tradeId:'A5',pair:'GBP_USD',direction:'sell',entry:1.1000,stop:1.1050,target:1.0900,
+      plannedRR:2,positionSize:0.2,pipValue:10,riskAmount:100,strategyId:'alex_g_sr_v1',openedAt:new Date().toISOString(),maePips:0,mfePips:0,maeR:0,mfeR:0};
+    g.setAlexGAccount({balance:10000,openPositions:[openPos],closedPositions:[]});
+    g.alexGCloseLivePosition('A5','Win',1.0900,null,{ambiguous:true,ambiguousMode:'conservative'});
+    const acc=g.getAlexGAccount();
+    const closed=acc.closedPositions[0]||{};
+    assert('ALEX.5 (F6): SELL SIDE -- a winning SHORT closed 100 pips BELOW entry earns +$200 and raises the balance to $10,200 (the mirror of ALEX.1, direction the only variable)',
+      acc.balance===10200&&closed.pnl===200,JSON.stringify(closed));
+    assert('ALEX.6 (F6): the winning SHORT records the exit price it was actually closed at (1.0900), not the entry or the stop',
+      closed.exitPrice===1.0900&&closed.status==='closed',
+      'exitPrice='+closed.exitPrice+' status='+closed.status);
+    assert('ALEX.7 (F6): the winning SHORT uses the FIXED planned R-multiple (+2), exactly as the long path does',
+      closed.resultR===2,'resultR='+closed.resultR);
+    assert('ALEX.8 (F6): an AMBIGUOUS exit survives onto the closed record -- both ambiguous:true AND ambiguousMode:\'conservative\' are carried through from exitMeta, never silently normalised away',
+      closed.ambiguous===true&&closed.ambiguousMode==='conservative',
+      'ambiguous='+closed.ambiguous+' ambiguousMode='+String(closed.ambiguousMode));
+  }
+  {
+    // NEGATIVE CONTROL for ALEX.8, one variable away from it: the SAME close with no ambiguity
+    // metadata must record ambiguous:false / ambiguousMode:null. Without this, ALEX.8 would also
+    // pass against a function that hard-coded ambiguous:true.
+    seedClean();
+    const openPos={tradeId:'A6',pair:'GBP_USD',direction:'sell',entry:1.1000,stop:1.1050,target:1.0900,
+      plannedRR:2,positionSize:0.2,pipValue:10,riskAmount:100,strategyId:'alex_g_sr_v1',openedAt:new Date().toISOString(),maePips:0,mfePips:0,maeR:0,mfeR:0};
+    g.setAlexGAccount({balance:10000,openPositions:[openPos],closedPositions:[]});
+    g.alexGCloseLivePosition('A6','Loss',1.1050,null,{});
+    const acc=g.getAlexGAccount();
+    const closed=acc.closedPositions[0]||{};
+    assert('ALEX.9 (F6): SELL SIDE -- a losing SHORT stopped 50 pips ABOVE entry costs -$100 and drops the balance to $9,900 (the mirror of ALEX.3)',
+      acc.balance===9900&&closed.pnl===-100&&closed.resultR===-1,JSON.stringify(closed));
+    assert('ALEX.10 (F6): NEGATIVE CONTROL for ALEX.8 -- the same close path with NO exitMeta records ambiguous:false/ambiguousMode:null, so ALEX.8 cannot be satisfied by a hard-coded flag',
+      closed.ambiguous===false&&closed.ambiguousMode===null,
+      'ambiguous='+closed.ambiguous+' ambiguousMode='+String(closed.ambiguousMode));
+  }
+
+  // ═══ MOGO-021 F3 — LIVE EXIT-EVENT RECONSTRUCTION (alexGReconstructExitFromCandles) ═══
+  // Before this block, alexGReconstructExitFromCandles had ZERO references anywhere under
+  // tests/ -- the protected function that decides whether a live ALEX position was stopped out
+  // during a poll gap could be deleted outright with the whole gate staying green. It is pure
+  // and synchronous (no await, no I/O, no globals beyond pipSize), so a direct unit fixture on
+  // the REAL function is the correct instrument: the bid/ask M1 candles below are constructed,
+  // but every verdict is the unmodified function's own.
+  //
+  // The rule being pinned: a BUY is stopped on the BID and a SELL on the ASK -- never the other
+  // side, never the mid -- and a single candle whose executable range spans BOTH stop and target
+  // is genuinely unresolvable from OHLC and must be resolved CONSERVATIVELY as a Loss at the
+  // stop, flagged ambiguous, never silently booked as a win at the target.
+  function f3Buy(){ return {pair:'EUR_USD',direction:'buy',entry:1.1000,stop:1.0950,target:1.1100,
+    mfePips:0,maePips:0,mfeR:0,maeR:0}; }
+  function f3Sell(){ return {pair:'EUR_USD',direction:'sell',entry:1.1000,stop:1.1050,target:1.0900,
+    mfePips:0,maePips:0,mfeR:0,maeR:0}; }
+  const F3_T=Date.UTC(2026,7,11,14,0,0), F3_DUR=60000;
+  {
+    // (a) BUY: the ASK low breaches the stop, the BID low does not. A buy exits on the BID, so
+    // there must be NO exit. This negative sits exactly ONE variable from the proven positive in
+    // (b) below -- the same position, the same candle, with the bid low moved 1.0955 -> 1.0950.
+    const pos=f3Buy();
+    const candles=[{t:F3_T,
+      bid:{o:1.1000,h:1.1010,l:1.0955,c:1.1000},
+      ask:{o:1.1002,h:1.1012,l:1.0945,c:1.1002}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    assert('F3.1: a BUY is stopped on the BID, never the ASK -- a candle whose ASK low (1.0945) breaches the 1.0950 stop while its BID low (1.0955) does not produces NO exit',
+      r.exit===null,'exit='+JSON.stringify(r.exit));
+    assert('F3.2: and the gap is still consumed -- lastProcessedTime advances to the end of the processed candle even though nothing exited',
+      r.lastProcessedTime===F3_T+F3_DUR,'lastProcessedTime='+r.lastProcessedTime);
+  }
+  {
+    // (b) POSITIVE CONTROL for F3.1: identical position and candle, bid low lowered by half a pip
+    // so it touches the stop exactly. Touching (<=) must exit.
+    const pos=f3Buy();
+    const candles=[{t:F3_T,
+      bid:{o:1.1000,h:1.1010,l:1.0950,c:1.0960},
+      ask:{o:1.1002,h:1.1012,l:1.0952,c:1.0962}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    const e=r.exit||{};
+    assert('F3.3: POSITIVE CONTROL for F3.1 -- with the BID low moved to exactly 1.0950 (the only variable changed), the same BUY IS stopped: type=stop, result=Loss, triggerLevel=1.0950, ambiguous=false',
+      e.type==='stop'&&e.result==='Loss'&&e.triggerLevel===1.0950&&e.ambiguous===false&&e.ambiguousMode===null,
+      JSON.stringify(e));
+    assert('F3.4: the stop exit is stamped with the candle window it was detected in',
+      e.candleStart===F3_T&&e.candleEnd===F3_T+F3_DUR&&r.lastProcessedTime===F3_T+F3_DUR,
+      'candleStart='+e.candleStart+' candleEnd='+e.candleEnd);
+  }
+  {
+    // (c) BUY, one candle whose BID range spans BOTH stop and target. Every one of the four
+    // properties below is asserted, deliberately: asserting only `result` would still pass if the
+    // whole ambiguity branch were deleted (control would fall through to the plain stop branch,
+    // which also yields result:'Loss'). The ASK deliberately spans NEITHER level, so a wrong-side
+    // reading of this candle produces no exit at all.
+    const pos=f3Buy();
+    const candles=[{t:F3_T,
+      bid:{o:1.1000,h:1.1120,l:1.0940,c:1.1000},
+      ask:{o:1.1002,h:1.1050,l:1.0960,c:1.1002}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    const e=r.exit||{};
+    assert('F3.5: BUY AMBIGUITY -- one candle whose BID range spans BOTH the 1.0950 stop and the 1.1100 target is resolved CONSERVATIVELY: type=ambiguous, result=Loss, triggerLevel===pos.stop, ambiguous=true, ambiguousMode=conservative (all four asserted, so deleting the branch cannot hide in result alone)',
+      e.type==='ambiguous'&&e.result==='Loss'&&e.triggerLevel===pos.stop&&e.triggerLevel===1.0950&&
+      e.ambiguous===true&&e.ambiguousMode==='conservative',JSON.stringify(e));
+    assert('F3.6: the ambiguous candle is NOT booked as a win at the target -- neither the result nor the trigger level is ever the target',
+      e.result!=='Win'&&e.triggerLevel!==pos.target,'result='+e.result+' triggerLevel='+e.triggerLevel);
+  }
+  {
+    // (d) The mirror of (c) for a SELL, on the ASK side. The BID here spans NEITHER level, so a
+    // sell that reads the bid -- the sell-side-only wrong-side mutation -- produces no exit.
+    const pos=f3Sell();
+    const candles=[{t:F3_T,
+      ask:{o:1.1000,h:1.1060,l:1.0890,c:1.1000},
+      bid:{o:1.0998,h:1.1040,l:1.0910,c:1.0998}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    const e=r.exit||{};
+    assert('F3.7: SELL AMBIGUITY on the ASK -- one candle whose ASK range spans BOTH the 1.1050 stop and the 1.0900 target resolves conservatively: type=ambiguous, result=Loss, triggerLevel===pos.stop, ambiguous=true, ambiguousMode=conservative',
+      e.type==='ambiguous'&&e.result==='Loss'&&e.triggerLevel===pos.stop&&e.triggerLevel===1.1050&&
+      e.ambiguous===true&&e.ambiguousMode==='conservative',JSON.stringify(e));
+  }
+  {
+    // A SELL is stopped on the ASK, never the BID, on the plain (unambiguous) stop path too:
+    // the ASK high reaches 1.1055 and crosses the 1.1050 stop, while the BID high tops out at
+    // 1.1045 and does not. A bid-side reading of this candle produces no exit at all.
+    const pos=f3Sell();
+    const candles=[{t:F3_T,
+      ask:{o:1.1000,h:1.1055,l:1.1000,c:1.1052},
+      bid:{o:1.0998,h:1.1045,l:1.0998,c:1.1042}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    const e=r.exit||{};
+    assert('F3.8: a SELL is stopped on the ASK, never the BID -- a candle whose ASK high (1.1055) crosses the 1.1050 stop while its BID high (1.1045) does not IS a stop: type=stop, result=Loss, triggerLevel=1.1050',
+      e.type==='stop'&&e.result==='Loss'&&e.triggerLevel===1.1050&&e.ambiguous===false,
+      JSON.stringify(e));
+  }
+  {
+    // NEGATIVE CONTROL for F3.7, one variable from it: the SAME sell, with the ask high pulled
+    // below the stop so only the target is crossed. A sell whose ask never reaches the stop is a
+    // clean, UNambiguous Win -- proving the ambiguous verdict above is discriminated, not default.
+    const pos=f3Sell();
+    const candles=[{t:F3_T,
+      ask:{o:1.1000,h:1.1040,l:1.0890,c:1.0895},
+      bid:{o:1.0998,h:1.1038,l:1.0888,c:1.0893}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    const e=r.exit||{};
+    assert('F3.9: NEGATIVE CONTROL for F3.7 -- with the ASK high pulled to 1.1040 (below the 1.1050 stop, the only variable changed) the same SELL is an UNambiguous target Win: type=target, result=Win, triggerLevel=1.0900, ambiguous=false',
+      e.type==='target'&&e.result==='Win'&&e.triggerLevel===1.0900&&e.ambiguous===false&&e.ambiguousMode===null,
+      JSON.stringify(e));
+  }
+  {
+    // The walk stops at the FIRST crossing candle and never processes what came after it.
+    const pos=f3Buy();
+    const candles=[
+      {t:F3_T,          bid:{o:1.1000,h:1.1010,l:1.0990,c:1.1005},ask:{o:1.1002,h:1.1012,l:1.0992,c:1.1007}},
+      {t:F3_T+F3_DUR,   bid:{o:1.1005,h:1.1010,l:1.0950,c:1.0960},ask:{o:1.1007,h:1.1012,l:1.0952,c:1.0962}},
+      {t:F3_T+2*F3_DUR, bid:{o:1.0960,h:1.1300,l:1.0960,c:1.1290},ask:{o:1.0962,h:1.1302,l:1.0962,c:1.1292}}];
+    const r=alexGReconstructExitFromCandles(pos,candles,F3_DUR);
+    const e=r.exit||{};
+    assert('F3.10: the walk exits on the FIRST crossing candle and never processes the candles after it -- the third candle would have hit the target, and it is neither the exit nor counted into MFE',
+      e.type==='stop'&&e.candleStart===F3_T+F3_DUR&&r.lastProcessedTime===F3_T+2*F3_DUR&&pos.mfePips<20,
+      'exit candleStart='+e.candleStart+' lastProcessedTime='+r.lastProcessedTime+' mfePips='+pos.mfePips);
+  }
+
+  // ═══ MOGO-021 F3 (replay engine mirror) — alexGWalkOutcome ambiguity ═══
+  // The historical replay engine's equivalent Loss->Win flip on an ambiguous candle also killed
+  // nothing. Same rule, same conservative default, asserted the same way.
+  {
+    // bar 0 = entry bar (never inspected), bar 1 spans both levels, bar 2 exists so the exit
+    // timestamp comes from the next bar's open rather than the synthetic-close fallback.
+    const bars=[{o:1.1000,h:1.1010,l:1.0990,c:1.1000,t:new Date(F3_T)},
+                {o:1.1000,h:1.1120,l:1.0940,c:1.1000,t:new Date(F3_T+3600000)},
+                {o:1.1000,h:1.1010,l:1.0990,c:1.1000,t:new Date(F3_T+7200000)}];
+    const cons=alexGWalkOutcome(bars,0,'buy',1.0950,1.1100,'conservative','H1');
+    assert('F3.11: REPLAY ENGINE -- a candle spanning BOTH the stop and the target is resolved CONSERVATIVELY as a Loss AT THE STOP, flagged ambiguous (result, exitPrice and the ambiguous flag all asserted, so deleting the branch cannot hide in result alone)',
+      cons.result==='Loss'&&cons.ambiguous===true&&cons.exitPrice===1.0950&&cons.exitBarIndex===1&&cons.stillOpen===false,
+      JSON.stringify(cons));
+    assert('F3.12: and it is NOT booked as a win at the target',
+      cons.result!=='Win'&&cons.exitPrice!==1.1100,'result='+cons.result+' exitPrice='+cons.exitPrice);
+    // POSITIVE CONTROLS on the same bars, one variable (the mode) away: the branch really does
+    // read ambiguousMode, so F3.11 cannot be satisfied by a function that always returns a Loss.
+    const opt=alexGWalkOutcome(bars,0,'buy',1.0950,1.1100,'optimistic','H1');
+    const exc=alexGWalkOutcome(bars,0,'buy',1.0950,1.1100,'exclude','H1');
+    assert('F3.13: POSITIVE CONTROL -- the SAME ambiguous candle under ambiguousMode=optimistic resolves as a Win at the target, and under exclude is Excluded; both still flagged ambiguous',
+      opt.result==='Win'&&opt.exitPrice===1.1100&&opt.ambiguous===true&&
+      exc.result==='Excluded (ambiguous candle)'&&exc.ambiguous===true,
+      'optimistic='+opt.result+' exclude='+exc.result);
+    // NEGATIVE CONTROL, one variable away: pull the bar's low above the stop and the SAME
+    // conservative call becomes an UNambiguous Win.
+    const clean=[bars[0],{o:1.1000,h:1.1120,l:1.0990,c:1.1000,t:new Date(F3_T+3600000)},bars[2]];
+    const cw=alexGWalkOutcome(clean,0,'buy',1.0950,1.1100,'conservative','H1');
+    assert('F3.14: NEGATIVE CONTROL for F3.11 -- with that bar’s low raised above the stop (the only variable changed) the same conservative call is an UNambiguous Win at the target',
+      cw.result==='Win'&&cw.ambiguous===false&&cw.exitPrice===1.1100,JSON.stringify(cw));
+    // SELL mirror.
+    const sbars=[{o:1.1000,h:1.1010,l:1.0990,c:1.1000,t:new Date(F3_T)},
+                 {o:1.1000,h:1.1060,l:1.0890,c:1.1000,t:new Date(F3_T+3600000)},
+                 {o:1.1000,h:1.1010,l:1.0990,c:1.1000,t:new Date(F3_T+7200000)}];
+    const sc=alexGWalkOutcome(sbars,0,'sell',1.1050,1.0900,'conservative','H1');
+    assert('F3.15: REPLAY ENGINE, SELL mirror -- a candle spanning both the 1.1050 stop and the 1.0900 target resolves conservatively as a Loss at the stop, flagged ambiguous',
+      sc.result==='Loss'&&sc.ambiguous===true&&sc.exitPrice===1.1050&&sc.exitBarIndex===1,JSON.stringify(sc));
+  }
+
+  // ═══ MOGO-021 F4 — MAE/MFE MONOTONICITY AND THE EXECUTABLE EXIT SIDE ═══
+  // alexGUpdatePositionExcursionAndCheckExit is the per-poll snapshot path. Two properties were
+  // uncovered on both the snapshot and the reconstruction path: (1) a recorded extreme is never
+  // overwritten by a worse one, and (2) the exit is priced on the EXECUTABLE side -- bid for a
+  // buy, ask for a sell -- never the mid.
+  //
+  // The monotonicity assertions below would ALSO pass against a function that simply never wrote
+  // mfePips/maePips at all, so a genuine positive control is mandatory and is included in the
+  // SAME fixture: a third call with a genuinely better extreme must INCREASE it.
+  {
+    const pos={pair:'EUR_USD',direction:'buy',entry:1.1000,stop:1.0900,target:1.1200,
+      mfePips:0,maePips:0,mfeR:0,maeR:0};
+    // 1. favourable -- sets MFE to ~50 pips.
+    const r1=alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.1050,ask:1.1051});
+    const mfe1=pos.mfePips;
+    assert('F4.1: a BUY is exited on the BID, never the ASK and never the mid -- exitVal is exactly the bid (1.1050), not 1.1051 and not the 1.10505 mid',
+      r1.exitVal===1.1050&&r1.hitStop===false&&r1.hitTarget===false,
+      'exitVal='+r1.exitVal);
+    assert('F4.2: a favourable snapshot 50 pips above entry records MFE≈50 pips',
+      Math.abs(mfe1-50)<1e-6,'mfePips='+mfe1);
+    // 2. WORSE -- MFE must not move at all.
+    alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.1020,ask:1.1021});
+    assert('F4.3: MFE IS MONOTONIC -- a later, WORSE favourable extreme (only +20 pips) leaves the recorded 50-pip MFE byte-identical, never overwritten downward',
+      pos.mfePips===mfe1,'mfePips='+pos.mfePips+' (was '+mfe1+')');
+    // 3. MANDATORY POSITIVE CONTROL -- a genuinely better extreme MUST increase it. Without this
+    // the fixture above would pass against a function that never writes mfePips at all.
+    alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.1080,ask:1.1081});
+    assert('F4.4: POSITIVE CONTROL for F4.3 -- a genuinely BETTER extreme (+80 pips) DOES raise the MFE, so F4.3 cannot be satisfied by a function that never writes mfePips',
+      Math.abs(pos.mfePips-80)<1e-6&&pos.mfePips>mfe1,'mfePips='+pos.mfePips);
+    // 4-6. The same three-step pattern for MAE, on the same position.
+    alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.0960,ask:1.0961});
+    const mae1=pos.maePips;
+    assert('F4.5: an adverse snapshot 40 pips below entry records MAE≈40 pips',
+      Math.abs(mae1-40)<1e-6,'maePips='+mae1);
+    alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.0980,ask:1.0981});
+    assert('F4.6: MAE IS MONOTONIC -- a later, LESS adverse extreme (only -20 pips) leaves the recorded 40-pip MAE byte-identical, never overwritten downward',
+      pos.maePips===mae1,'maePips='+pos.maePips+' (was '+mae1+')');
+    alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.0930,ask:1.0931});
+    assert('F4.7: POSITIVE CONTROL for F4.6 -- a genuinely WORSE extreme (-70 pips) DOES raise the MAE, so F4.6 cannot be satisfied by a function that never writes maePips',
+      Math.abs(pos.maePips-70)<1e-6&&pos.maePips>mae1,'maePips='+pos.maePips);
+    assert('F4.8: and MFE was not disturbed by any of the adverse snapshots -- it still holds the best extreme ever seen',
+      Math.abs(pos.mfePips-80)<1e-6,'mfePips='+pos.mfePips);
+    assert('F4.9: mfeR/maeR are re-derived from the recorded extremes against the position’s own 100-pip risk distance',
+      Math.abs(pos.mfeR-0.8)<1e-6&&Math.abs(pos.maeR-0.7)<1e-6,
+      'mfeR='+pos.mfeR+' maeR='+pos.maeR);
+  }
+  {
+    // The SELL side of the executable-exit rule, and its stop/target triggers.
+    const pos={pair:'EUR_USD',direction:'sell',entry:1.1000,stop:1.1050,target:1.0900,
+      mfePips:0,maePips:0,mfeR:0,maeR:0};
+    const r=alexGUpdatePositionExcursionAndCheckExit(pos,{bid:1.0899,ask:1.0900});
+    assert('F4.10: a SELL is exited on the ASK, never the BID and never the mid -- exitVal is exactly the ask (1.0900), not the 1.0899 bid and not the 1.08995 mid',
+      r.exitVal===1.0900,'exitVal='+r.exitVal);
+    assert('F4.11: and that ask touching the 1.0900 target IS the target trigger for a sell (hitTarget true, hitStop false)',
+      r.hitTarget===true&&r.hitStop===false,'hitTarget='+r.hitTarget+' hitStop='+r.hitStop);
+    const pos2={pair:'EUR_USD',direction:'sell',entry:1.1000,stop:1.1050,target:1.0900,
+      mfePips:0,maePips:0,mfeR:0,maeR:0};
+    const r2=alexGUpdatePositionExcursionAndCheckExit(pos2,{bid:1.1049,ask:1.1050});
+    assert('F4.12: NEGATIVE CONTROL one variable from F4.11 -- with the ask moved to the 1.1050 stop instead, the SAME sell trips hitStop and not hitTarget, and is still priced on the ask',
+      r2.hitStop===true&&r2.hitTarget===false&&r2.exitVal===1.1050,
+      'hitStop='+r2.hitStop+' hitTarget='+r2.hitTarget+' exitVal='+r2.exitVal);
+  }
+  {
+    // MAE/MFE monotonicity on the OTHER path -- the historical reconstruction. Same three-step
+    // shape, including the mandatory positive control, driven through real candles.
+    const pos={pair:'EUR_USD',direction:'buy',entry:1.1000,stop:1.0900,target:1.1200,
+      mfePips:0,maePips:0,mfeR:0,maeR:0};
+    const good=[{t:F3_T,bid:{o:1.1000,h:1.1050,l:1.0960,c:1.1040},ask:{o:1.1002,h:1.1052,l:1.0962,c:1.1042}}];
+    alexGReconstructExitFromCandles(pos,good,F3_DUR);
+    const mfe1=pos.mfePips,mae1=pos.maePips;
+    assert('F4.13: RECONSTRUCTION PATH -- a candle’s BID high/low set MFE≈50 and MAE≈40 pips',
+      Math.abs(mfe1-50)<1e-6&&Math.abs(mae1-40)<1e-6,'mfePips='+mfe1+' maePips='+mae1);
+    const worse=[{t:F3_T+F3_DUR,bid:{o:1.1000,h:1.1020,l:1.0980,c:1.1000},ask:{o:1.1002,h:1.1022,l:1.0982,c:1.1002}}];
+    alexGReconstructExitFromCandles(pos,worse,F3_DUR);
+    assert('F4.14: RECONSTRUCTION PATH -- a strictly narrower later candle leaves BOTH recorded extremes byte-identical, never shrinking them',
+      pos.mfePips===mfe1&&pos.maePips===mae1,'mfePips='+pos.mfePips+' maePips='+pos.maePips);
+    const better=[{t:F3_T+2*F3_DUR,bid:{o:1.1000,h:1.1090,l:1.0930,c:1.1000},ask:{o:1.1002,h:1.1092,l:1.0932,c:1.1002}}];
+    alexGReconstructExitFromCandles(pos,better,F3_DUR);
+    assert('F4.15: POSITIVE CONTROL for F4.14 -- a genuinely wider later candle DOES raise both extremes (MFE≈90, MAE≈70), so F4.14 cannot be satisfied by a function that never writes them',
+      Math.abs(pos.mfePips-90)<1e-6&&Math.abs(pos.maePips-70)<1e-6&&pos.mfePips>mfe1&&pos.maePips>mae1,
+      'mfePips='+pos.mfePips+' maePips='+pos.maePips);
+  }
   {
     // CORRECTED (v12.3.2, Decision 1): saveAlexG() is now a back-compat alias for
     // saveAlexGRest() only -- it no longer touches fxhub_alexg_account at all. The real

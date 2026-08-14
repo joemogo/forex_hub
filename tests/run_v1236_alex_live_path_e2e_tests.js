@@ -151,6 +151,17 @@ function buildSixTouchReactionH1(t0){
   filler(20);
   return candles;
 }
+// ── MOGO-021 F5 (sell side). A PRICE REFLECTION of the series above about a level K:
+//   o -> 2K-o,  c -> 2K-c,  and the high/low swap places (2K-l becomes the high).
+// Reflection is structure-preserving: every swing LOW in the source is a swing HIGH here at the
+// mirrored price, every candle range is identical (so calcATR/atrAtEntry is unchanged), and the
+// approach side flips from below instead of above. The FROZEN zone engine therefore validates the
+// same zone with role 'resistance', and the FROZEN alexGDetermineTradeDirection derives 'sell'
+// from that role on its own. Nothing about the rules is touched -- only the candles are mirrored,
+// exactly as the buy-side series is constructed.
+function mirrorSeries(candles,K){
+  return candles.map(c=>({o:2*K-c.o,h:2*K-c.l,l:2*K-c.h,c:2*K-c.c,t:c.t}));
+}
 // Structureless higher-timeframe filler, and a structureless H1 series for every OTHER pair, so
 // only the one instrument under test produces a setup and the other eleven honestly produce none.
 function buildFlat(t0,n,stepMs){
@@ -221,6 +232,7 @@ g.setT0=t=>{__t0=t;};
 g.setBidAsk=v=>{__bidask=v;};
 g.build=t0=>buildRepeatedReactionH1(t0);
 g.build6=t0=>buildSixTouchReactionH1(t0);
+g.mirror=(c,K)=>mirrorSeries(c,K);
 g.now=()=>Date.now();
 g.setPlan=p=>{__plan=p;__planIdx=0;};              // null restores the default one-page-then-exhausted broker
 g.htf=gran=>__htfDefault(gran);                    // the exact array the healthy control is served
@@ -304,6 +316,61 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    pos.pair==="EUR_USD"&&pos.timeframe==="H1"&&typeof pos.entry==="number"&&\n' +
   '    typeof pos.stop==="number"&&typeof pos.target==="number"&&pos.stop<pos.entry&&pos.target>pos.entry,\n' +
   '    JSON.stringify({pair:pos.pair,tf:pos.timeframe,dir:pos.direction||pos.dir,entry:pos.entry,stop:pos.stop,target:pos.target}));\n' +
+  // ══ MOGO-021 F5 -- POSITION SIZING AND STOP GEOMETRY, ORGANICALLY ══════════════════════════
+  // Nothing anywhere in tests/ asserted an expected ALEX position size, risk amount, or the SIDE
+  // the ATR stop buffer is applied on. E2E-7 above asserts only `stop < entry`, which an INVERTED
+  // buffer still satisfies (the stop merely sits inside the zone instead of beyond it), and a
+  // riskPercent that is never divided by 100 -- a one-character change that risks 100x the
+  // intended amount on every trade -- changed no assertion at all.
+  //
+  // These run on the position the REAL alexGConstructLivePosition just built from the REAL setup
+  // the frozen engine derived above. riskPercent and stopATRBuffer are read from the FROZEN
+  // config rather than hard-coded, so the fixture pins the relationship, not a magic number, and
+  // a governed config change updates the expectation instead of breaking the suite. The balance
+  // is the one fullReset() established, not a value read back off the position.
+  '  const __cfgRisk=RULES_ALEXG.config.riskPercent, __cfgBuf=RULES_ALEXG.config.stopATRBuffer;\n' +
+  '  const __pip=pipSize("EUR_USD"), __pv=pipValuePerLot("EUR_USD");\n' +
+  '  g.record("SIZE-0","PRECONDITION: the position was sized off the $10,000 balance fullReset() established, with a live pip value and a usable frozen risk policy",\n' +
+  '    pos.balanceAtEntry===10000&&__pv===10&&typeof __cfgRisk==="number"&&__cfgRisk>0&&\n' +
+  '    typeof __cfgBuf==="number"&&__cfgBuf>0&&typeof pos.atrAtEntry==="number"&&pos.atrAtEntry>0,\n' +
+  '    "balanceAtEntry="+pos.balanceAtEntry+" pipValue="+__pv+" riskPercent="+__cfgRisk+\n' +
+  '    " stopATRBuffer="+__cfgBuf+" atrAtEntry="+pos.atrAtEntry);\n' +
+  // riskAmount is recomputed here from the KNOWN starting balance and the frozen percentage --
+  // never compared against another output of the same call. riskPercent=1.0 means 1% of $10,000
+  // = $100; a riskPercent that skipped the /100 would produce $10,000, i.e. the entire account.
+  '  const __expRisk=10000*(__cfgRisk/100);\n' +
+  '  g.record("SIZE-1","RISK AMOUNT: riskAmount is exactly balanceBefore x riskPercent/100, recomputed independently from the $10,000 balance and the frozen riskPercent -- a riskPercent that skipped the /100 would risk the WHOLE account on one trade",\n' +
+  '    pos.riskAmount===__expRisk&&pos.riskAmount!==10000*__cfgRisk&&pos.riskPercent===__cfgRisk,\n' +
+  '    "riskAmount="+pos.riskAmount+" expected="+__expRisk+" (undivided would have been "+(10000*__cfgRisk)+")");\n' +
+  // positionSize is checked against the risk amount the fixture computed itself (above), not
+  // against pos.riskAmount, so a mutated riskAmount cannot cancel out inside this assertion.
+  '  const __rdp=Math.abs(pos.entry-pos.stop)/__pip;\n' +
+  '  const __expSize=__expRisk/(__rdp*__pv);\n' +
+  '  g.record("SIZE-2","POSITION SIZE: positionSize is exactly riskAmount/(riskDistancePips x pipValue) -- checked against the fixture’s OWN risk amount, so a doubled or halved size cannot hide behind a matching riskAmount",\n' +
+  '    Math.abs(pos.positionSize-__expSize)<1e-9&&pos.positionSize>0&&pos.pipValue===__pv,\n' +
+  '    "positionSize="+pos.positionSize+" expected="+__expSize+" riskDistancePips="+__rdp);\n' +
+  '  g.record("SIZE-3","and that size risks exactly the intended amount if the stop is hit: riskDistancePips x pipValue x positionSize === riskAmount",\n' +
+  '    Math.abs(__rdp*__pv*pos.positionSize-__expRisk)<1e-6,\n' +
+  '    "loss at stop=$"+(__rdp*__pv*pos.positionSize).toFixed(4)+" vs intended $"+__expRisk);\n' +
+  // THE ONE THAT MATTERS. `stop < entry` is satisfied by an inverted buffer too, because the live
+  // fill sits above the zone. The real rule is that the stop sits stopATRBuffer x ATR BEYOND the
+  // ZONE EDGE, on the far side -- below zoneLow for a buy, never inside the zone.
+  '  g.record("SIZE-4","STOP GEOMETRY: for a BUY the stop sits BEYOND the ZONE EDGE -- stop < zoneLow, not merely stop < entry (an inverted ATR buffer still satisfies stop < entry and would sit INSIDE the zone)",\n' +
+  '    pos.stop<pos.zoneLow&&pos.zoneLow<pos.entry,\n' +
+  '    "stop="+pos.stop+" zoneLow="+pos.zoneLow+" zoneHigh="+pos.zoneHigh+" entry="+pos.entry);\n' +
+  '  g.record("SIZE-5","and the distance beyond that edge is exactly stopATRBuffer x atrAtEntry, read from the frozen config rather than hard-coded",\n' +
+  '    Math.abs((pos.zoneLow-pos.stop)-__cfgBuf*pos.atrAtEntry)<1e-12&&(pos.zoneLow-pos.stop)>0,\n' +
+  '    "zoneLow-stop="+(pos.zoneLow-pos.stop)+" stopATRBuffer*atrAtEntry="+(__cfgBuf*pos.atrAtEntry));\n' +
+  // Entry side. A BUY is filled on the ASK. Both sides of the served quote are named so the
+  // assertion cannot be satisfied by a fill that merely happens to be a number in range.
+  '  g.record("SIZE-6","ENTRY SIDE: a BUY is filled on the ASK (1.10605), never the BID (1.10595) and never the mid -- and the position records both sides of the quote it was actually filled against",\n' +
+  '    pos.entry===1.10605&&pos.entry!==1.10595&&pos.entryAsk===1.10605&&pos.entryBid===1.10595&&\n' +
+  '    pos.liveFillPrice===pos.entry,\n' +
+  '    "entry="+pos.entry+" entryBid="+pos.entryBid+" entryAsk="+pos.entryAsk);\n' +
+  '  g.record("SIZE-7","TARGET GEOMETRY: the target sits minRR x the risk distance beyond the FILL, on the profitable side",\n' +
+  '    Math.abs((pos.target-pos.entry)-RULES_ALEXG.config.minRR*(pos.entry-pos.stop))<1e-12&&\n' +
+  '    pos.plannedRR===RULES_ALEXG.config.minRR,\n' +
+  '    "target-entry="+(pos.target-pos.entry)+" minRR*(entry-stop)="+(RULES_ALEXG.config.minRR*(pos.entry-pos.stop)));\n' +
   '  g.record("E2E-8","LIFECYCLE PERSISTENCE: journalled once and the signal marked traded",\n' +
   '    alexGJournalEntries.length===1&&Object.keys(alexGAutoTrading.tradedSignals).length===1&&\n' +
   '    alexGAutoTrading.tradedSignals[pos.signalId]===true,\n' +
@@ -348,6 +415,142 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    alexGJournalEntries.length===0&&Object.keys(alexGAutoTrading.tradedSignals).length===1&&\n' +
   '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
   '    "setup re-derived and reached the duplicate check; open=0 with tradedSignals as the only surviving guard");\n' +
+  // ══ MOGO-021 F7 -- A RESTART MUST NOT RE-OPEN A TRADE THAT ALREADY HAPPENED ════════════════
+  // E2E-12 above proves tradedSignals is load-bearing, but it RE-SEEDS the map in memory and
+  // never exercises the LOAD. Deleting the fxhub_alexg_auto line from loadAlexGSaved() -- which
+  // is precisely what a restart does differently from a same-session poll -- therefore killed
+  // nothing: the map was already sitting in memory when the tick ran. The same held for
+  // fxhub_alexg_journal.
+  //
+  // These fixtures do the real thing. The guard is written to REAL storage keys, the in-memory
+  // state is wiped the way a page reload wipes it (alexGAutoTrading is reset to an EMPTY
+  // tradedSignals map and is NEVER re-seeded), the REAL loadAlexGSaved() is called, and only
+  // then is a poll tick driven. Anything that blocks the second open has to have come off disk
+  // through the real loader.
+  //
+  // Each negative sits ONE variable from a positive proved in the same block: the identical
+  // restart with the persisted guard emptied (or naming a different setup) DOES open a second
+  // position, so "nothing opened" can never be a false pass from a broken scenario.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const __rOpen=alexGAccount.openPositions[0]||{};\n' +
+  '  const __persistedAuto=JSON.stringify(alexGAutoTrading);\n' +
+  '  const __persistedJournal=JSON.stringify(alexGJournalEntries);\n' +
+  '  g.record("RESTART-0","PRECONDITION: a real position was opened and its signal really was written into the auto-trading state that is about to be persisted",\n' +
+  '    !!__rOpen.signalId&&alexGAutoTrading.tradedSignals[__rOpen.signalId]===true&&\n' +
+  '    alexGJournalEntries.length===1&&alexGJournalEntries[0].tradeId===__rOpen.tradeId,\n' +
+  '    "signalId="+String(__rOpen.signalId).slice(0,44)+" journal=1 for tradeId="+String(__rOpen.tradeId).slice(0,44));\n' +
+  // A page reload: every in-memory ALEX variable is back to a session default, storage is
+  // whatever was left behind, and loadAlexGSaved() is the ONLY thing that bridges the two.
+  // The account key is deliberately NOT persisted, so closedPositions cannot do the blocking --
+  // exactly the isolation E2E-12 performs, but reached through the loader.
+  '  function restartFromDisk(autoJson,journalJson){\n' +
+  '    ["fxhub_alexg_account","fxhub_alexg_account_version","fxhub_alexg_auto",\n' +
+  '     "fxhub_alexg_journal","fxhub_alexg_setups","fxhub_alexg_zones"].forEach(function(k){\n' +
+  '       try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '    if(autoJson!=null) localStorage.setItem("fxhub_alexg_auto",autoJson);\n' +
+  '    if(journalJson!=null) localStorage.setItem("fxhub_alexg_journal",journalJson);\n' +
+  '    alexGAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +
+  '    alexGJournalEntries=[];\n' +
+  // NEVER re-seeded: tradedSignals starts EMPTY. enabled/activatedAt match the persisted copy so
+  // the ONLY thing that can differ after the load is the dedupe map itself.
+  '    alexGAutoTrading={enabled:true,activatedAt:nowMs-72*3600000,tradedSignals:{},tradedToday:{},log:[]};\n' +
+  '    alexGAccountKnownVersion=0;\n' +
+  '    freshSession();\n' +
+  '    loadAlexGSaved();\n' +
+  '    alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  }\n' +
+  // ── F7a. fxhub_alexg_auto is the only thing on disk. ──
+  '  restartFromDisk(__persistedAuto,null);\n' +
+  '  g.record("RESTART-1","THE LOAD ITSELF: after wiping memory and calling the REAL loadAlexGSaved(), the persisted tradedSignals map is back in memory -- it was never re-seeded by this fixture",\n' +
+  '    alexGAutoTrading.tradedSignals[__rOpen.signalId]===true&&\n' +
+  '    Object.keys(alexGAutoTrading.tradedSignals).length===1&&\n' +
+  '    alexGAccount.closedPositions.length===0&&alexGJournalEntries.length===0,\n' +
+  '    "tradedSignals restored from fxhub_alexg_auto; closedPositions=0 journal=0 so it is the ONLY guard");\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("RESTART-2","RESTART CANNOT RE-OPEN A TRADE THAT ALREADY HAPPENED: the setup is re-derived and reaches the duplicate check, and the tradedSignals map recovered BY THE LOADER refuses it",\n' +
+  '    alexGAccount.openPositions.length===0&&\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
+  '    "open="+alexGAccount.openPositions.length+", setup re-derived="+\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length);\n' +
+  // ── POSITIVE CONTROL for RESTART-2, exactly one variable away: the identical restart with the
+  // persisted map EMPTIED. Without this, RESTART-2 would also pass if the restart sequence were
+  // simply incapable of opening anything.
+  '  const __emptyAuto=JSON.stringify(Object.assign(JSON.parse(__persistedAuto),{tradedSignals:{}}));\n' +
+  '  restartFromDisk(__emptyAuto,null);\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("RESTART-3","POSITIVE CONTROL for RESTART-2 -- the SAME restart with the persisted tradedSignals map emptied (the only variable changed) DOES open a second position, so RESTART-2 is not a fixture that could never have fired",\n' +
+  '    alexGAccount.openPositions.length===1&&\n' +
+  '    alexGAccount.openPositions[0].signalId===__rOpen.signalId,\n' +
+  '    "open="+alexGAccount.openPositions.length+" on the same signalId -- the restart path is genuinely capable of re-opening");\n' +
+  // ── F7b. fxhub_alexg_journal is the only identity on disk. ──
+  '  restartFromDisk(__emptyAuto,__persistedJournal);\n' +
+  '  g.record("RESTART-4","THE LOAD ITSELF: the REAL loadAlexGSaved() also restores the persisted ALEX journal, with tradedSignals and closedPositions both empty so the journal is the ONLY surviving identity",\n' +
+  '    alexGJournalEntries.length===1&&alexGJournalEntries[0].tradeId===__rOpen.tradeId&&\n' +
+  '    Object.keys(alexGAutoTrading.tradedSignals).length===0&&alexGAccount.closedPositions.length===0,\n' +
+  '    "journal restored from fxhub_alexg_journal; tradedSignals=0 closedPositions=0");\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("RESTART-5","and the journal recovered BY THE LOADER alone is enough to refuse the re-open",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGJournalEntries.length===1&&\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
+  '    "open="+alexGAccount.openPositions.length+" journal="+alexGJournalEntries.length);\n' +
+  // POSITIVE CONTROL for RESTART-5, one variable away: a journal IS loaded, of the same shape and
+  // length, but it names a different setup. This is what makes RESTART-5 a claim about identity
+  // rather than about the mere presence of a journal record.
+  '  const __unrelatedJournal=JSON.stringify(JSON.parse(__persistedJournal).map(function(j){\n' +
+  '    return Object.assign({},j,{pair:"USD_CHF",timeframe:"H4",setupType:"B_breakRetest",\n' +
+  '      reactionId:"AGR|USD_CHF|H4|high|1700000000000",qualificationTimestamp:1700000000000,\n' +
+  '      signalId:"AGL|UNRELATED",tradeId:"AGT|UNRELATED",setupId:"AGS|UNRELATED"}); }));\n' +
+  '  restartFromDisk(__emptyAuto,__unrelatedJournal);\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("RESTART-6","POSITIVE CONTROL for RESTART-5 -- a journal of the SAME shape and length is loaded but names a DIFFERENT setup, and the trade opens; RESTART-5 is therefore a claim about the loaded IDENTITY, not about a journal merely existing",\n' +
+  '    alexGAccount.openPositions.length===1&&alexGJournalEntries.length===2&&\n' +
+  '    alexGJournalEntries.some(function(j){return j.tradeId==="AGT|UNRELATED";}),\n' +
+  '    "open="+alexGAccount.openPositions.length+" with an unrelated journal record loaded from disk");\n' +
+  // ══ MOGO-021 F5 (sell side) -- THE WHOLE SELL SIDE OF THE LIVE OPEN PATH ═══════════════════
+  // Every pre-existing live-path fixture in this suite runs on a support zone and therefore on a
+  // BUY. The sell branches of the frozen constructor -- the fill side (ba.bid), the stop side
+  // (zoneHigh + buffer), the target side -- were never executed at all, so a sell that filled on
+  // the ASK, or put its stop INSIDE the zone, changed no assertion anywhere.
+  //
+  // The series below is the SAME construction reflected about 1.1000 (see mirrorSeries): the same
+  // four real touches, the same candle ranges (identical ATR), approached from below instead of
+  // above. The frozen zone engine validates it as a RESISTANCE zone and the frozen direction
+  // function derives 'sell' from that role by itself -- no direction is injected anywhere. The
+  // quote is the mirror of the buy-side quote, so bid/ask stay correctly ordered.
+  '  const __K=1.1000;\n' +
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  fullReset();\n' +
+  '  g.setH1(g.mirror(g.build(t0),__K)); g.setBidAsk({bid:1.09395,ask:1.09405});\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const spos=alexGAccount.openPositions[0]||{};\n' +
+  '  g.record("SELL-1","THE SELL SIDE OPENS AT ALL: the mirrored series is validated as a RESISTANCE zone and the FROZEN direction rule derives a SELL from that role on its own -- no direction is injected",\n' +
+  '    alexGAccount.openPositions.length===1&&spos.direction==="sell"&&\n' +
+  '    spos.zoneRoleAtQualification==="resistance"&&spos.pair==="EUR_USD"&&spos.timeframe==="H1",\n' +
+  '    "direction="+spos.direction+" zoneRole="+spos.zoneRoleAtQualification);\n' +
+  '  g.record("SELL-2","ENTRY SIDE: a SELL is filled on the BID (1.09395), never the ASK (1.09405) and never the mid -- the exact mirror of SIZE-6, and the branch SIZE-6 can never reach",\n' +
+  '    spos.entry===1.09395&&spos.entry!==1.09405&&spos.entryBid===1.09395&&spos.entryAsk===1.09405&&\n' +
+  '    spos.liveFillPrice===spos.entry,\n' +
+  '    "entry="+spos.entry+" entryBid="+spos.entryBid+" entryAsk="+spos.entryAsk);\n' +
+  '  g.record("SELL-3","STOP GEOMETRY: for a SELL the stop sits BEYOND the ZONE HIGH -- stop > zoneHigh, not merely stop > entry -- at exactly stopATRBuffer x atrAtEntry above that edge",\n' +
+  '    spos.stop>spos.zoneHigh&&spos.zoneHigh>spos.entry&&\n' +
+  '    Math.abs((spos.stop-spos.zoneHigh)-__cfgBuf*spos.atrAtEntry)<1e-12,\n' +
+  '    "stop="+spos.stop+" zoneHigh="+spos.zoneHigh+" entry="+spos.entry+\n' +
+  '    " stop-zoneHigh="+(spos.stop-spos.zoneHigh)+" buffer*atr="+(__cfgBuf*spos.atrAtEntry));\n' +
+  '  const __srdp=Math.abs(spos.entry-spos.stop)/__pip;\n' +
+  '  g.record("SELL-4","SIZING on the sell side: riskAmount is balanceBefore x riskPercent/100 and positionSize is riskAmount/(riskDistancePips x pipValue), recomputed independently from the $10,000 balance",\n' +
+  '    spos.riskAmount===__expRisk&&Math.abs(spos.positionSize-__expRisk/(__srdp*__pv))<1e-9&&\n' +
+  '    Math.abs(__srdp*__pv*spos.positionSize-__expRisk)<1e-6,\n' +
+  '    "riskAmount="+spos.riskAmount+" positionSize="+spos.positionSize+" riskDistancePips="+__srdp);\n' +
+  '  g.record("SELL-5","TARGET GEOMETRY: the sell target sits minRR x the risk distance BELOW the fill",\n' +
+  '    spos.target<spos.entry&&\n' +
+  '    Math.abs((spos.entry-spos.target)-RULES_ALEXG.config.minRR*(spos.stop-spos.entry))<1e-12,\n' +
+  '    "entry-target="+(spos.entry-spos.target)+" minRR*(stop-entry)="+(RULES_ALEXG.config.minRR*(spos.stop-spos.entry)));\n' +
+  // Restore the buy-side series and quote every later fixture runs on.
+  '  g.setH1(g.build(t0)); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
   // stale backlog after a restart -- never back-filled
   '  fullReset();\n' +
   '  const tOld=nowMs-48*3600000-8*3600000;\n' +
