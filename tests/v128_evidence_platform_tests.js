@@ -1431,7 +1431,14 @@ function runEvidencePlatformFixtures(g){
        'the identical observation written twice collapses to one key');
   });
   t('L7 natural keys are deterministic per kind and cannot be null-collided',function(){
-    eq(g.evidenceObservationNaturalKey({kind:'POLL',tickId:'T1'}),'POLL|T1');
+    // MOGO-021: the POLL key gained a strategy component. ALEX and JVM both write POLL records
+    // now, and the decision-event id counter restarts at zero on every page load, so two tabs on
+    // this origin can mint the same tickId -- at which point the unique index would silently drop
+    // one strategy's record. Omitted strategyId still yields a stable, deterministic key.
+    eq(g.evidenceObservationNaturalKey({kind:'POLL',tickId:'T1'}),'POLL||T1');
+    eq(g.evidenceObservationNaturalKey({kind:'POLL',strategyId:'alex_g_sr_v1',tickId:'T1'}),'POLL|alex_g_sr_v1|T1');
+    eq(g.evidenceObservationNaturalKey({kind:'POLL',strategyId:'current_strategy',tickId:'T1'}),'POLL|current_strategy|T1',
+       'the same tickId from two strategies can no longer collide');
     eq(g.evidenceObservationNaturalKey({kind:'RETENTION',evictedSeqFrom:1,evictedSeqTo:9}),'RETN|1|9');
     eq(g.evidenceObservationNaturalKey(null),null);
     eq(g.evidenceObservationNaturalKey({kind:'NONSENSE'}),null,'an unknown kind has no key and cannot be written');

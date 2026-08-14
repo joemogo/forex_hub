@@ -118,8 +118,11 @@ function flatM15(n){
 // bullish engulfing bar that also takes out the prior high (market-structure break). Nothing here
 // targets a score -- it is a textbook setup, and the frozen scorer values it at 65 against its own
 // threshold of 55 (bias 25 + engulf 20 + session 10 + MSB 10; AOI and wick both score ZERO).
-function firingM15(){
-  const out=[],n=60;
+// n defaults to 60 (what evaluateLiveTrigger requests). scanPair asks for 220, and ADR-011 treats
+// a short response as PARTIAL -- deliberately suppressing evaluation -- so the stub must honour the
+// requested count or every scanned pair is legitimately reported as suppressed.
+function firingM15(n){
+  const out=[]; n=n||60;
   for(let i=n;i>=4;i--){
     const base=1.1000+(n-i)*0.00002;
     out.push(mk(__simNow-i*900000,base,base+0.00015,base-0.00015,base+0.00005));
@@ -148,7 +151,7 @@ function structuralCandles(n){
   }
   return out;
 }
-let __candleCount=60,__priceOk=true,__mode='flat';
+let __candleCount=60,__priceOk=true,__mode='flat',__shortPair=null,__shortAll=false;
 globalThis.fetch=function(url){
   const u=String(url);
   if(/\/pricing/.test(u)){
@@ -158,7 +161,12 @@ globalThis.fetch=function(url){
   if(__mode==='firing'){
     if(/granularity=D/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(120)}));
     if(/granularity=W/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(60)}));
-    return Promise.resolve(makeResponse(true,200,{candles:firingM15()}));
+    const wantN=parseInt((u.match(/count=(\d+)/)||[])[1],10)||60;
+    const instMatch=(u.match(/instruments\/([^/]+)\//)||[])[1];
+    // One instrument can be made to return a SHORT history, which ADR-011 classifies as PARTIAL
+    // and deliberately suppresses from evaluation -- the state JVMOBS-10 asserts is reported.
+    if(__shortAll||(__shortPair&&instMatch===__shortPair)) return Promise.resolve(makeResponse(true,200,{candles:firingM15(20)}));
+    return Promise.resolve(makeResponse(true,200,{candles:firingM15(wantN)}));
   }
   return Promise.resolve(makeResponse(true,200,{candles:flatM15(__candleCount)}));
 };
@@ -168,6 +176,8 @@ const g={record:(id,desc,pass,detail)=>results.push({id,desc,pass,detail:detail|
 g.setCandleCount=n=>{__candleCount=n;};
 g.setPriceOk=v=>{__priceOk=v;};
 g.setMode=m=>{__mode=m;};
+g.setShortPair=p=>{__shortPair=p;};
+g.setShortAll=v=>{__shortAll=v;};
 g.setNow=t=>{__simNow=t;};
 g.now=()=>__simNow;
 g.utc=(y,mo,d,h)=>__RealDate.UTC(y,mo,d,h,0,0);
@@ -367,6 +377,51 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("JVMOBS-6","ALEX records are UNCHANGED when strategyId is omitted -- the shared builder did not regress",\n' +
   '    alexShaped.strategyId===RULES_ALEXG.ruleVersion,\n' +
   '    "omitted strategyId still resolves to "+String(alexShaped.strategyId));\n' +
+  // ── the fields that had NO fixture able to fail ──
+  // An ABORTED sweep is the case the finally exists for, and the case a persistent-state check
+  // gets wrong: pairs never reached still hold the PREVIOUS scan's pairData. This asserts the
+  // ledger reports only what this sweep actually touched.
+  '  __jvmObs=null; pairData={};\n' +
+  '  await scanAll();\n' +
+  '  const fullCount=(__jvmObs.instrumentsEvaluated||[]).length;\n' +
+  '  __jvmObs=null;\n' +
+  '  const __origRender2=renderPairList; let __chunks=0;\n' +
+  '  renderPairList=function(){ __chunks++; if(__chunks>=2) throw new Error("abort mid-sweep"); };\n' +
+  '  try{ await scanAll(); }catch(e){}\n' +
+  '  renderPairList=__origRender2;\n' +
+  '  g.record("JVMOBS-7","an ABORTED sweep reports only the instruments it actually reached, not last scan\u2019s",\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length>0&&(__jvmObs.instrumentsEvaluated||[]).length<fullCount,\n' +
+  '    "aborted sweep evaluated "+((__jvmObs.instrumentsEvaluated)||[]).length+" of "+fullCount+\n' +
+  '    " -- a stale-state check would have claimed all "+fullCount);\n' +
+  '  g.record("JVMOBS-8","and the ones it never reached are named as SKIPPED with a reason",\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).length===ALL_PAIRS.length-(__jvmObs.instrumentsEvaluated||[]).length&&\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).some(function(x){return x.reason==="NOT_REACHED_THIS_SCAN";})&&\n' +
+  '    __jvmObs.instrumentsAttempted===(__jvmObs.instrumentsEvaluated||[]).length,\n' +
+  '    "skipped="+((__jvmObs.instrumentsSkipped)||[]).length+" attempted="+__jvmObs.instrumentsAttempted);\n' +
+  // tradingEnabled and evaluationAdvanced were asserted only against a fixture that set them true.
+  '  __jvmObs=null; pairData={}; autoTrading.enabled=false;\n' +
+  '  await scanAll();\n' +
+  '  g.record("JVMOBS-9","tradingEnabled reflects the REAL flag, not a constant",\n' +
+  '    __jvmObs.tradingEnabled===false,"tradingEnabled="+__jvmObs.tradingEnabled+" with auto-trading off");\n' +
+  '  autoTrading.enabled=true;\n' +
+  // ADR-011: an instrument whose history came back short is NOT evaluated by the app. The ledger
+  // must not claim it was -- an empty candle array is truthy, which is how it previously did.
+  '  __jvmObs=null; pairData={}; g.setShortPair("EUR_USD");\n' +
+  '  await scanAll();\n' +
+  '  g.setShortPair(null);\n' +
+  '  g.record("JVMOBS-10","an instrument SUPPRESSED by the completeness contract is reported skipped, not evaluated",\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).indexOf("EUR_USD")===-1&&\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).some(function(x){return x.pair==="EUR_USD"&&x.reason==="EVALUATION_SUPPRESSED_INCOMPLETE_DATA";}),\n' +
+  '    "EUR_USD suppressed by ADR-011 and reported as such, evaluated="+((__jvmObs.instrumentsEvaluated)||[]).length);\n' +
+  // Tested where evaluated===0. Asserting the identity against a scan that DID evaluate would be
+  // satisfied by a hard-coded `true`, which is exactly how this field escaped coverage before.
+  '  __jvmObs=null; pairData={}; g.setShortAll(true);\n' +
+  '  await scanAll();\n' +
+  '  g.setShortAll(false);\n' +
+  '  g.record("JVMOBS-11","evaluationAdvanced is FALSE when nothing could be evaluated -- it is not hard-coded",\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length===0&&__jvmObs.evaluationAdvanced===false&&\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).length===ALL_PAIRS.length,\n' +
+  '    "evaluated=0/"+ALL_PAIRS.length+" evaluationAdvanced="+__jvmObs.evaluationAdvanced+" (every pair suppressed by ADR-011)");\n' +
   '  evidenceRecordForwardObservations=__origRec;\n' +
   '  return g;\n})();'
 );

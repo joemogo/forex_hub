@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,324/1,324 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,331/1,331 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -710,10 +710,36 @@ as ALEX**, which is worse than having none.
 3. `scanAll` records a JVM poll observation in a **`finally`** — a ledger that only remembers
    successful scans hides exactly the gaps it exists to expose.
 
-Proven by **JVMOBS-1..6**: the observation is recorded (`kind: POLL`), labelled `current_strategy`
-and **not** ALEX's ruleVersion, covers `35/35` scanned instruments while recording that only 12 are
+Proven by **JVMOBS-1..11**: the observation is recorded (`kind: POLL`), labelled `current_strategy`
+and **not** ALEX's ruleVersion, covers the scanned universe while recording that only 12 of 35 are
 tradeable, carries the real outcome and auto-trading state, and — **JVMOBS-5** — a *failed* scan is
 still recorded with `outcome: ERROR` **while the original error still propagates unchanged**.
+
+#### Two defects in my first version, both making the ledger actively misleading
+
+**It reported stale coverage, and lied hardest on exactly the scan it exists to catch.**
+`instrumentsEvaluated` was derived from `pairData`, which **persists between scans**. Ordinary fetch
+failures were fine (`fetchCandles` returns null, so `scanPair` still writes `candles: null`), but a
+sweep that *aborts* leaves unreached pairs holding the previous scan's data. Measured: an aborted
+scan claimed **35/35 coverage for 25 instruments it never touched**, with `instrumentsSkipped`
+empty and `evaluationAdvanced: true` — precisely the "silently unscanned instrument is
+indistinguishable from a scanned one" signature this ledger was built to end. Coverage is now
+**measured** by reference-diffing `pairData` across the sweep; **JVMOBS-7/8** assert an aborted
+sweep reports 10 of 35 and names the other 25 as `NOT_REACHED_THIS_SCAN`.
+
+**It counted instruments the strategy had explicitly refused to evaluate.** `pairData[p].candles` is
+truthy for `[]`, and ADR-011 deliberately suppresses evaluation for anything short of `COMPLETE`,
+recording that as `evaluationSuppressed` in the same object. The ledger ignored it — the app said
+"not evaluated" while the ledger said "evaluated". The predicate now honours the completeness
+contract, and **JVMOBS-10** asserts a suppressed instrument is reported skipped with
+`EVALUATION_SUPPRESSED_INCOMPLETE_DATA`.
+
+Two smaller corrections from the same pass: `evidenceObservationBase` accepted `""`/`false`/`0` as a
+strategy identity (only a non-empty string overrides now), and the POLL natural key carried no
+strategy component — with ALEX and JVM both writing POLL records and the id counter restarting each
+page load, two tabs could mint the same `tickId` and the unique index would silently drop one
+strategy's record. The key now includes `strategyId`; the existing contract fixture **L7** was
+updated to match, deliberately, rather than the change being hidden.
 
 One fixture of mine had to be corrected as a result: **JVM-28** asserted every event on a sweep is
 sourced to `scanAll`, which stopped being true once the observation write began emitting
@@ -905,7 +931,7 @@ no allocation, no scan.
 
 | Gate | Result |
 |---|---|
-| Canonical | **24 suites · 1,324 / 1,324 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,331 / 1,331 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |

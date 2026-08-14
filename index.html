@@ -8954,6 +8954,12 @@ async function scanAll(){
   // read only by the ledger call in the finally, never by a trading decision.
   const __jvmStartedAt=new Date().toISOString();
   let __jvmOutcome='OK',__jvmError=null;
+  // Reference snapshot, so coverage is MEASURED rather than inferred. pairData persists across
+  // scans, so a presence check counts a pair that succeeded on an EARLIER scan but was never
+  // reached on this one -- overstating coverage on exactly the aborted scan this ledger exists to
+  // expose, which is the EUR_USD failure mode all over again. scanPair assigns a fresh object every
+  // time, so reference inequality is an exact "written during this sweep" test.
+  const __jvmBefore=new Map(ALL_PAIRS.map(function(p){ return [p,pairData[p]]; }));
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
   try{
     document.getElementById('scanStatus').textContent='Scanning...';
@@ -8990,16 +8996,28 @@ async function scanAll(){
       // JVM scans ALL_PAIRS but can only auto-trade SCAN_PAIRS, so both are recorded. Reading
       // "35 instruments scanned" as "35 tradeable" would be wrong, and the ledger should not
       // invite that reading.
-      const __jvmEvaluated=ALL_PAIRS.filter(function(p){ return pairData[p]&&pairData[p].candles; });
+      // "Evaluated" must mean what the STRATEGY means by it. ADR-011 gates evaluation on
+      // completenessState===COMPLETE and records the fact as evaluationSuppressed; a pair whose
+      // candles came back short is deliberately NOT scored. Counting it here -- which a truthiness
+      // check on `candles` does, since an empty array is truthy -- would have the ledger assert
+      // "evaluated" for an instrument the app itself recorded as suppressed.
+      const __jvmTouched=ALL_PAIRS.filter(function(p){ return pairData[p]&&pairData[p]!==__jvmBefore.get(p); });
+      const __jvmEvaluated=__jvmTouched.filter(function(p){ return !pairData[p].evaluationSuppressed; });
+      const __jvmSkipped=ALL_PAIRS.filter(function(p){ return __jvmEvaluated.indexOf(p)===-1; })
+        .map(function(p){
+          const touched=__jvmTouched.indexOf(p)!==-1;
+          return{pair:p.replace('/','_'),
+            reason:touched?'EVALUATION_SUPPRESSED_INCOMPLETE_DATA':'NOT_REACHED_THIS_SCAN',
+            completenessState:(pairData[p]&&touched)?pairData[p].completenessState:null};
+        });
       evidenceRecordForwardObservations({scanId:__scanId,
         poll:{tickId:__scanId,strategyId:'current_strategy',
           startedAt:__jvmStartedAt,finishedAt:new Date().toISOString(),
           outcome:__jvmOutcome,tradingEnabled:!!autoTrading.enabled,
           evaluationAdvanced:__jvmEvaluated.length>0,
-          instrumentsAttempted:ALL_PAIRS.length,instrumentsEvaluated:__jvmEvaluated,
+          instrumentsAttempted:__jvmTouched.length,instrumentsEvaluated:__jvmEvaluated,
           instrumentsConfigured:ALL_PAIRS.length,
-          instrumentsSkipped:ALL_PAIRS.filter(function(p){ return !(pairData[p]&&pairData[p].candles); })
-            .map(function(p){ return {pair:p.replace('/','_'),reason:'NO_CANDLES_THIS_SCAN'}; }),
+          instrumentsSkipped:__jvmSkipped,
           errorText:__jvmError}});
     }catch(e){ /* never allow observation to affect the trading path */ }
   }
@@ -13203,7 +13221,10 @@ async function evidenceForwardPaperPreflight(overrides){
 function evidenceObservationNaturalKey(o){
   const s=function(v){ return (v===undefined||v===null)?'':String(v); };
   if(!o||typeof o!=='object') return null;
-  if(o.kind==='POLL') return 'POLL|'+s(o.tickId);
+  // strategyId is part of the key: ALEX and JVM both write POLL records now, the id counter
+  // restarts at zero on every page load, and two tabs on this origin can therefore mint the same
+  // tickId -- at which point the unique index silently drops one of the two strategies' record.
+  if(o.kind==='POLL') return 'POLL|'+s(o.strategyId)+'|'+s(o.tickId);
   if(o.kind==='EVALUATION') return 'EVAL|'+s(o.signalId)+'|'+s(o.firstLiveEvaluationTimestamp);
   if(o.kind==='PIPELINE') return 'PIPE|'+s(o.stage)+'|'+s(o.sourceTradeId||o.tradeId||o.setupId)+'|'+s(o.occurredAt);
   if(o.kind==='RETENTION') return 'RETN|'+s(o.evictedSeqFrom)+'|'+s(o.evictedSeqTo);
@@ -13222,7 +13243,11 @@ function evidenceObservationBase(kind,occurredAt,strategyId){
     recordedAt:new Date().toISOString(),          // when the ledger wrote it -- never the same field
     captureOrigin:evidenceCurrentOrigin(),
     appVersion:(typeof APP_VERSION!=='undefined')?APP_VERSION:null,
-    strategyId:(strategyId!==undefined&&strategyId!==null)?strategyId
+    // Only a non-empty string overrides. The first version accepted anything that was not
+    // undefined/null, so "", false and 0 were written through verbatim as a strategy identity --
+    // pre-change, any falsy value resolved to ALEX's id, so this was a new way to produce a
+    // meaningless identity rather than a legitimate one.
+    strategyId:(typeof strategyId==='string'&&strategyId)?strategyId
       :((typeof RULES_ALEXG!=='undefined'&&RULES_ALEXG.ruleVersion)?RULES_ALEXG.ruleVersion:null),
     provenance:'FORWARD_LIVE_OBSERVATION'
   };

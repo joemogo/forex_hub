@@ -423,6 +423,40 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("DRIFT-9b","and in that state the guards DO miss -- a second position opens",\n' +
   '    alexGAccount.openPositions.length===1,\n' +
   '    "open="+alexGAccount.openPositions.length+" with every recorded identity re-anchored");\n' +
+  // ── the latch fix itself, which had NO repository coverage ──
+  // The first attempt at this fix reordered the mark to after the emit and was a no-op, because
+  // emitDecisionEvent never throws -- it returns {ok:false}. Reverting the real fix (marking
+  // unconditionally) previously killed nothing in the suite. These two fixtures close that.
+  '  fullReset(); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  alexGIdentityDriftReported=new Set();\n' +   // fullReset does not clear the latch; earlier scenarios latched
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  if(alexGAccount.openPositions.length) closeOpenPosition();\n' +
+  '  alexGAccount.closedPositions[0].signalId="AGL|DRIFTED|"+alexGAccount.closedPositions[0].signalId;\n' +
+  '  alexGAccount.closedPositions[0].tradeId="AGT|DRIFTED|"+alexGAccount.closedPositions[0].tradeId;\n' +
+  '  const __origValidate=validateDecisionEvent;\n' +
+  '  validateDecisionEvent=function(ev){ if(ev&&ev.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED") return{valid:false,errors:["forced reject"]}; return __origValidate.apply(this,arguments); };\n' +
+  '  freshSession();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  validateDecisionEvent=__origValidate;\n' +
+  '  g.record("DRIFT-10","a REJECTED drift event does NOT latch -- the condition is not silently suppressed",\n' +
+  '    alexGIdentityDriftReported.size===0&&\n' +
+  '    (g.lastPipeline()||[]).filter(function(r){return r&&r.reason==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===1,\n' +
+  '    "latchSize="+alexGIdentityDriftReported.size+" (unlatched, so it keeps reporting) with the durable row still written");\n' +
+  // Asserts the key the DETECTOR actually built. Calling the mark helper with literal keys tests
+  // the Set, not the composition -- and left the "keyed on stableId only" mutation surviving.
+  '  alexGIdentityDriftReported=new Set(); freshSession();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const latchKeys=Array.from(alexGIdentityDriftReported);\n' +
+  '  const curSig=alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).map(alexGLiveSignalId)[0];\n' +
+  '  const curSetup=alexGSetupState.filter(function(x){return x.pair==="EUR_USD";})[0];\n' +
+  '  const expectKey=curSetup?(alexGStableSetupIdentity(curSetup)+"|"+curSig):null;\n' +
+  '  g.record("DRIFT-11","the latch key the detector builds is (stableId|signalId), so a second re-anchor still reports",\n' +
+  '    latchKeys.length===1&&!!expectKey&&latchKeys[0]===expectKey,\n' +
+  '    "key="+String(latchKeys[0]).slice(-40)+" (stable id alone would suppress a later re-anchor)");\n' +
+  '  alexGIdentityDriftReported=new Set();\n' +
   '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__susp3;\n' +
   '  g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
   // ══ CONCURRENT POLL TICKS ══
