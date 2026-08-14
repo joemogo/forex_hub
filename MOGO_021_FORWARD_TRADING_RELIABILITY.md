@@ -2301,7 +2301,7 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `73cfe4b` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `27daeb5` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
 **Gates:** canonical 24 suites **1,446 / 1,446** · platform 25 suites **1,049 / 1,049** ·
@@ -2330,12 +2330,18 @@ never been reloaded**, and a reload remains an operator action requiring broker 
 
 ### In flight at checkpoint time
 
-Two independent adversarial audits, both relaunched after a usage-limit interruption killed them
-before they began:
-1. **Detection discrimination** — mutate every protected detector and see what dies. Any detector
-   where a real behaviour change kills zero fixtures is an uncovered trading rule.
-2. **Scanner cadence / coverage / concurrency / failure isolation** — prioritising whether any
-   interleaving can corrupt a *trading* outcome, not merely an observation.
+Both adversarial audits have **completed** and both found real problems (§14, §15). Two agents are
+now closing the resulting gaps:
+1. **Isolation/timer coverage** — fixtures for the four §14.2 fixes, which shipped without coverage.
+2. **`tests/v1237_detection_controls_tests.js`** (new suite) — the §15 Severity-1 rules, starting
+   with the counter-trend block, the one rule with no control of any kind on either side.
+
+### 🔴 The largest open item: detection-surface test debt (§15)
+
+**61 uncovered trading rules.** Not production defects — the rules are correct and no behaviour is
+wrong — but any of them could be changed tomorrow with a fully green gate. Closing this is pure
+fixture work and crosses no governance boundary. Severity order is in §15.2; the organic zone-engine
+controls (§15 recipes 13–17) are **not yet started** and are the largest remaining chunk.
 
 ### Known open items — not defects I have chosen to leave, but work not yet reached
 
