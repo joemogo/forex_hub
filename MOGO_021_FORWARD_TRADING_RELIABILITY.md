@@ -2734,8 +2734,16 @@ pairs, so same-millisecond opens are a normal occurrence rather than a contrivan
 `closePaperPosition` resolves its target by `findIndex(p => p.id === id)`. **A collision closes the
 wrong position.** That is money-affecting, not cosmetic.
 
-It also makes the gate itself flaky: `TEST J.2` asserts uniqueness *probabilistically* and will fail
-at roughly that rate — the auditor hit exactly that during the run and had to re-score.
+**The fixture that appears to guard this is worthless in BOTH directions**, which is worse than
+having none. `TEST J.2`'s stated purpose is *"two distinct opens never collide on trade ID"*. During
+the audit it **failed spuriously** against an unrelated mutation (a genuine collision,
+`id1 = id2 = 1786748218934`) — and then, when the id was deliberately reduced to a bare `Date.now()`
+so collisions became *systematic*, it **passed**. Whichever way the two opens happen to straddle a
+millisecond boundary decides the result. It is not evidence of uniqueness in either direction, and it
+will randomly redden the gate.
+
+(The systematic-collision mutation *was* caught — but by `JVMCLOSE-1`, an unrelated fixture. The one
+written to guard trade-id uniqueness did not notice.)
 
 **`openPaperPosition` is PROTECTED, and no authorization covers this.** It is not a setup definition,
 scoring rule, confluence, threshold, entry, stop, target, risk, sizing or economic-logic change — it
