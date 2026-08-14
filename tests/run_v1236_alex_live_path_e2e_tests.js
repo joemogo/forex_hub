@@ -174,6 +174,13 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    alexGJournalEntries=[];\n' +
   '    alexGAutoTrading={enabled:true,activatedAt:nowMs-72*3600000,tradedSignals:{},tradedToday:{},log:[]};\n' +
   '    alexGAccountKnownVersion=0;\n' +
+  // The persisted ledger version must be cleared too. Without this, the optimistic-concurrency
+  // guard refuses every commit after the first, so a scenario looks like "no duplicate opened"
+  // when the real cause is a blocked write -- which is exactly why an earlier E2E-11 survived
+  // removal of all four duplicate guards.
+  '    ["fxhub_alexg_account","fxhub_alexg_account_version","fxhub_alexg_auto",\n' +
+  '     "fxhub_alexg_journal","fxhub_alexg_setups","fxhub_alexg_zones"].forEach(function(k){\n' +
+  '       try{ localStorage.removeItem(k); }catch(e){} });\n' +
   '  }\n' +
   '  fullReset();\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
@@ -231,15 +238,36 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    alexGAccount.openPositions.length===1&&alexGAccount.balance===balAfter,\n' +
   '    "open="+alexGAccount.openPositions.length+" balance unchanged="+(alexGAccount.balance===balAfter));\n' +
   // ══ RESTART / RECOVERY -- the property that actually matters ══
+  // The position must be CLOSED before the restart. With it still open, the pair+timeframe overlap
+  // rule (index.html:4314) blocks any re-open and the persistence guards are never reached -- an
+  // earlier version of these two fixtures passed even with the tradedSignals guard disabled.
+  // Production's only real trade closed the same day, so this is the case that actually matters.
+  '  alexGAccount.closedPositions.push(alexGAccount.openPositions.shift());\n' +
   '  freshSession();\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
   '  await alexGLivePollTick();\n' +
-  '  g.record("E2E-11","RESTART SAFETY: after a simulated reload the same setup is NOT re-opened",\n' +
-  '    alexGAccount.openPositions.length===1&&alexGJournalEntries.length===1,\n' +
-  '    "open="+alexGAccount.openPositions.length+" journal="+alexGJournalEntries.length);\n' +
-  '  g.record("E2E-12","and the block comes from PERSISTED tradedSignals, not the session-only status ring",\n' +
-  '    alexGLiveSetupStatuses.length===0&&Object.keys(alexGAutoTrading.tradedSignals).length===1,\n' +
-  '    "status ring cleared by the reload ("+alexGLiveSetupStatuses.length+"), tradedSignals survived ("+Object.keys(alexGAutoTrading.tradedSignals).length+")");\n' +
+  // NOTE ON STRENGTH: this fixture is a scenario check, not a guard proof. Mutation-tested -- it
+  // survives removal of all four duplicate guards, because other persisted state still prevents a
+  // second open in this configuration. E2E-12 below is the discriminating one: it isolates
+  // tradedSignals and does die when that guard is disabled. Kept because it exercises the
+  // realistic restart-after-close sequence end-to-end, which E2E-12's stripped ledger does not.
+  '  g.record("E2E-11","RESTART SCENARIO: with the trade closed and the session cleared, the ledger is unchanged",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&alexGJournalEntries.length===1,\n' +
+  '    "open="+alexGAccount.openPositions.length+" closed="+alexGAccount.closedPositions.length+" journal="+alexGJournalEntries.length+" (scenario check; E2E-12 carries the discrimination)");\n' +
+  // Isolate the persisted guards one at a time. The status ring is gone, so whatever blocks the
+  // re-open must be persisted state -- and each of these is individually load-bearing.
+  '  alexGAccount.closedPositions=[]; alexGJournalEntries=[];\n' +
+  '  freshSession();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  // The setup must be re-derived (proving the duplicate check was actually reached) while nothing
+  // opens. Note the DUPLICATE path returns before recording a status, so the ring stays empty --
+  // asserting on ring length here would be asserting on the wrong observable.
+  '  g.record("E2E-12","with closed-positions and journal ALSO cleared, persisted tradedSignals ALONE still blocks it",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===0&&\n' +
+  '    alexGJournalEntries.length===0&&Object.keys(alexGAutoTrading.tradedSignals).length===1&&\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
+  '    "setup re-derived and reached the duplicate check; open=0 with tradedSignals as the only surviving guard");\n' +
   // stale backlog after a restart -- never back-filled
   '  fullReset();\n' +
   '  const tOld=nowMs-48*3600000-8*3600000;\n' +
@@ -251,23 +279,57 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    alexGAccount.openPositions.length===0&&staleEv.length>0&&\n' +
   '    staleEv.some(function(e){return e.context&&e.context.maxAgeMinutes===60&&e.context.ageMinutes>60;}),\n' +
   '    JSON.stringify((staleEv.find(function(e){return e.context;})||{}).context));\n' +
-  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__suspendWas;\n' +
-  '  g.record("E2E-14","the suspension flag is RESTORED -- this suite leaves production policy as it found it",\n' +
-  '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true,\n' +
-  '    "setupSuspensionEnabled="+RULES_ALEXG_V11.v11Config.setupSuspensionEnabled);\n' +
+  '  g.record("E2E-14","the stale-backlog rejection is the strategy\u2019s own, measured against its own limit",\n' +
+  '    staleEv.some(function(e){ return e.context&&e.context.maxAgeMinutes===60; }),\n' +
+  '    "maxAgeMinutes=60 as configured for H1");\n' +
   // ══ failure isolation ══
+  // The suspension must be LIFTED here, or the setup is withheld at the policy gate and
+  // alexGAttemptOpenLivePosition -- and therefore fetchBidAsk -- is never reached at all. An
+  // earlier version restored the flag first, so this fixture passed for an unrelated reason and
+  // never exercised the pricing seam. TRADE_OPEN_REQUESTED below proves the seam is reached.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
   '  fullReset();\n' +
   '  g.setT0(t0); g.setH1(g.build(t0)); g.setBidAsk(null);\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
   '  await alexGLivePollTick();\n' +
-  '  g.record("E2E-15","FAILURE ISOLATION: with pricing unavailable nothing opens and no throw escapes the tick",\n' +
+  '  g.record("E2E-15","FAILURE ISOLATION: the pricing seam IS reached and returns nothing, and no throw escapes",\n' +
+  '    decisionEventLog.filter(function(e){return e.eventType==="TRADE_OPEN_REQUESTED";}).length===1&&\n' +
   '    alexGAccount.openPositions.length===0&&alexGJournalEntries.length===0&&\n' +
   '    decisionEventLog.some(function(e){return e.eventType==="SCAN_COMPLETED";}),\n' +
-  '    "open=0, journal=0, scan still completed");\n' +
+  '    "TRADE_OPEN_REQUESTED="+decisionEventLog.filter(function(e){return e.eventType==="TRADE_OPEN_REQUESTED";}).length+\n' +
+  '    ", open=0, journal=0, scan still completed");\n' +
   '  g.record("E2E-16","and coverage is still recorded for every instrument on the failing tick",\n' +
   '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
   '    "instrumentsEvaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length);\n' +
   '  g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  // ══ CONCURRENT POLL TICKS ══
+  // Production evidence (durable ledger) shows 9 hours containing two advancing polls ~25s apart
+  // with disjoint, non-contiguous pair sets -- the signature of one tick overlapping the next
+  // interval firing. startAlexGLivePollingIfNeeded is guarded against a second interval, and
+  // alexGLivePollTick has NO re-entrancy guard, so rather than assume the risk, exercise it.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  const __p1=alexGLivePollTick(); const __p2=alexGLivePollTick();\n' +
+  '  await Promise.all([__p1,__p2]);\n' +
+  '  g.record("RE-1","two CONCURRENT poll ticks both genuinely run -- the hazard is exercised, not avoided",\n' +
+  '    decisionEventLog.filter(function(e){return e.eventType==="SCAN_STARTED";}).length===2,\n' +
+  '    "SCAN_STARTED="+decisionEventLog.filter(function(e){return e.eventType==="SCAN_STARTED";}).length);\n' +
+  '  g.record("RE-2","and they open exactly ONE position between them -- no duplicate trade",\n' +
+  '    alexGAccount.openPositions.length===1,"openPositions="+alexGAccount.openPositions.length);\n' +
+  '  g.record("RE-3","one journal entry and one traded-signal mark, not two",\n' +
+  '    alexGJournalEntries.length===1&&Object.keys(alexGAutoTrading.tradedSignals).length===1,\n' +
+  '    "journal="+alexGJournalEntries.length+" tradedSignals="+Object.keys(alexGAutoTrading.tradedSignals).length);\n' +
+  '  g.record("RE-4","exactly one TRADE_OPENED across both ticks",\n' +
+  '    decisionEventLog.filter(function(e){return e.eventType==="TRADE_OPENED";}).length===1,\n' +
+  '    "TRADE_OPENED="+decisionEventLog.filter(function(e){return e.eventType==="TRADE_OPENED";}).length);\n' +
+  '  g.record("RE-5","concurrent rebuild of the SAME pair does not duplicate its setup state",\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
+  '    "EUR_USD setups after concurrent rebuild="+alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length);\n' +
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__suspendWas;\n' +
+  '  g.record("E2E-17","the suspension flag is RESTORED -- this suite leaves production policy as it found it",\n' +
+  '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true,\n' +
+  '    "setupSuspensionEnabled="+RULES_ALEXG_V11.v11Config.setupSuspensionEnabled);\n' +
   '  return g;\n})();'
 );
 

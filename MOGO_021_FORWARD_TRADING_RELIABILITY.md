@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,297/1,297 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,304/1,304 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -34,6 +34,22 @@ those requirements are not yet addressed.
 | JVM timeframe | M15 |
 | Forward activation cutoff | `2026-08-11T02:43:57.894Z` — unchanged |
 | Live campaign | **running** (durable ledger written 1 s before inspection) |
+
+### Authoritative instrument × timeframe coverage (read from the live campaign)
+
+| | ALEX (`alex_g_sr_v1`) | JVM (`current_strategy`) |
+|---|---|---|
+| Instruments **scanned** | `SCAN_PAIRS` — **12** | `ALL_PAIRS` — **35** |
+| Instruments **eligible to auto-trade** | the same **12** | **12** — `checkAutoTrades` filters to `SCAN_PAIRS`, not `ALL_PAIRS` |
+| Timeframes evaluated | **H1** (master clock), **H4**, **D**, **W** — confirmed from the live cursor's own sub-keys | **M15** for entry timing, regardless of the displayed chart timeframe |
+| Signal-age limit per timeframe | H1 60 · H4 240 · D 1440 · W 10080 minutes (one bar-period each) | none — JVM has no staleness gate |
+| Auto-trading state in the live campaign | **enabled** | **enabled** |
+| Forward-observation coverage ledger | **yes** | **no** (§2.14) |
+
+The scan/trade asymmetry is worth stating plainly: **JVM scans 35 instruments but can only
+auto-trade 12.** The other 23 are scored and charted but are never eligible for an automated entry.
+That is the existing design, not a defect, but it means "35 pairs scanned" must never be read as
+"35 pairs traded".
 
 ### Live-campaign caveat carried forward
 
@@ -444,12 +460,29 @@ the 12 pairs retains **0 of 32** prior decisions into its next turn.
 So a setup blocked for a **transient** reason is re-attempted on every advancing poll, bounded only
 by staleness (one bar-period). Polls advance hourly, so the exposure is per-timeframe:
 
-| Timeframe | Live setups | Extra trade attempts before the setup goes stale |
+| Timeframe | Live setups | Extra attempts that can reach the entry gate |
 |---|---|---|
 | H1 | 281 | ~0 — the 60-minute window matches the hourly cadence **by coincidence, not by design** |
 | H4 | 89 | up to **3** |
 | D | 11 | up to **23** |
-| W | 2 | up to **167** |
+| W | 2 | up to **72** (not 167 — see below) |
+
+**Two corrections to my first version of this table**, both from verification:
+
+1. **The W bound was overstated ~2.3×.** Re-decisions are not the same as entry-delay re-tests: the
+   `ALEX_V11_ENTRY_DAY` rule is evaluated at `nowMs` and only Mon/Tue/Wed UTC pass, so across a
+   168-hour staleness window at most **72** attempts can reach `alexGConstructLivePosition`. The
+   same truncation applies to D when a setup qualifies late on a Wednesday.
+2. **The suspension currently excludes two-thirds of the exposure.** `A_repeatedReaction` is 257 of
+   383 live setups and is rejected at `index.html:4746` *before* the entry-delay check, so while
+   the research suspension is on, chasing can only apply to `B_breakRetest`. Live D and W setups
+   are 11 and 2 and are **all pre-activation**, so there are **zero live instances today** — the
+   mechanism is structurally real but currently unexercised.
+
+The mechanism itself was confirmed with a positive control against unmodified `index.html`: a setup
+rejected `BLOCKED — ENTRY MOVED` on one poll, with the rejection written to the ring, **opens on the
+next poll once that ring entry is evicted** (`entryDelayPips` 2.0), while a control with the ring
+entry intact correctly holds.
 
 The sharpest case is `ENTRY_MOVED_TOO_FAR_FROM_SIGNAL` (`index.html:4333`). The v4.2 contract is
 explicit that the rule *rejects, never chases*, when price has moved >5 pips from
@@ -483,20 +516,43 @@ exactly as designed, account for it completely.**
 | Qualification timestamps span | 2025-12-12 → 2026-08-13 |
 | Activation cutoff (`activatedAt`) | 2026-08-11T02:43:57.894Z |
 | Setups qualifying **after** activation | **8 of 383 — 2.1%** |
-| Those 8, evaluated against the H1 staleness limit | ages **1,501 / 1,621 / 2,161 / 2,581 minutes** vs `maxAgeMinutes: 60` |
-| Result | all rejected `STATE_SIGNAL_STALE` |
 | `tradedSignals` / closed positions / balance | **1** / **1** / **$9,900** (one −1R trade) |
 
-So the funnel is: 383 setups → 375 rejected `CONFIG_BEFORE_ACTIVATION` (they pre-date activation) →
-8 survive → all are 25–43 hours old against a one-bar-period limit → 0 new trades. The dominant
-reason code in the live event log is `CONFIG_BEFORE_ACTIVATION` (335 of 500 events), with
-`ALEX_ACTIVATION_CUTOFF` recorded `FAIL` 171 times and `STATE_SIGNAL_STALE` 8 times.
+**⚠️ CORRECTED.** I originally wrote that all 8 post-activation setups were "25–43 hours old" and
+"all rejected `STATE_SIGNAL_STALE`", giving "0 new trades". **That was wrong on both counts**, and
+wrong in an instructive way: those ages are ages at the **~47th re-decision**, i.e. artifacts of the
+very ring defect §2.10 documents. I explained the funnel using a symptom of the bug.
 
-**This is the activation-cutoff rule doing its job.** `alexGRunSetupEngine` rebuilds 90 days of
-history on every poll, so almost everything it finds is historical and must not be back-filled into
-live trading. Nothing here indicates a pipeline failure — the pipeline is running the full chain
-(rebuild → dedup → activation → staleness) on all 12 instruments every H1 boundary, and correctly
-declining.
+The durable ledger records each setup's **first** evaluation (`firstLiveEvaluationTimestamp`). Read
+from it, **7 of the 8 were first seen at age 1 minute — not stale at all**:
+
+| Setup | Age at FIRST evaluation | Real first verdict |
+|---|---|---|
+| AUD_JPY H1 `B_breakRetest` | 1 min | **TRADE OPENED** |
+| AUD_USD H1 RZR | 1 min | SUSPENDED — RESEARCH HOLD |
+| EUR_JPY H1 RZR | 1 min | SUSPENDED — RESEARCH HOLD |
+| AUD_USD H1 RZR | 1 min | SUSPENDED — RESEARCH HOLD |
+| NZD_USD H1 RZR | 1 min | SUSPENDED — RESEARCH HOLD |
+| USD_CHF H1 RZR | 1 min | IGNORED — ENTRY DAY NOT ELIGIBLE |
+| GBP_JPY H4 RZR | 1 min | IGNORED — ENTRY DAY NOT ELIGIBLE |
+| AUD_JPY H1 RZR | 539 min | IGNORED — STALE (a genuine restart backlog) |
+| EUR_USD H1 `B_breakRetest` | — | **unobservable** — EUR_USD has 0 of 18,000 ledger records (§2.10) |
+
+**The dominant blockers are the research suspension and the Thursday entry-day rule, not
+staleness** — staleness accounts for exactly one, and that one is the restart-backlog case.
+And "0 new trades" is simply false: the AUD_JPY `B_breakRetest` **was traded**, opened at age
+1 minute. That is the trade sitting in the ledger.
+
+So the corrected picture: with the tab open, post-activation setups are seen within about a minute
+of qualifying — the pipeline is prompt. **For ALEX to trade, a setup must be `B_breakRetest`,
+qualify after `activatedAt`, land on Mon/Tue/Wed UTC, arrive while the tab is open, and fill within
+5 pips of `qualificationClose`.** The AUD_JPY trade met all five conditions. The behaviour is
+defensible; my earlier explanation of it was not.
+
+**The activation cutoff is still doing its job.** `alexGRunSetupEngine` rebuilds 90 days on every
+poll, so almost everything it finds is historical and must not be back-filled. The pipeline runs the
+full chain on all 12 instruments every H1 boundary and declines correctly. What changed is *which*
+gate does the declining: the suspension and entry-day rules, not staleness.
 
 **The operational consequence worth flagging** (in scope under *restart/recovery*): both
 `alexGLiveSetupStatuses` and the evaluation cursor are **session-only** — a page reload clears them.
@@ -524,13 +580,167 @@ Checked directly on the running campaign's 500-event ring (~31 minutes, 76 scans
 The single `SCAN_COMPLETED` without a matching `SCAN_STARTED` is the ring boundary — its start event
 was evicted — not a correctness defect.
 
+### 2.15 Ledger, account and reconciliation state — verified against LIVE production
+
+Everything in §2.8 is fixture evidence. This is the live campaign, read read-only.
+
+| | ALEX | JVM |
+|---|---|---|
+| Balance | **$9,900** | **$10,000** |
+| Open / closed positions | 0 / 1 | **1** / 0 |
+| Journal entries | 1 | 1 |
+| Arithmetic | 10,000 + (−100) = **9,900 ✓** | 10,000 + 0 = **10,000 ✓** (balance moves on close, not open) |
+
+ALEX's single closed trade is `AUD_JPY H1, Loss, −$100, −1.00R`, with
+`exitDetectionSource: historical_candle` — i.e. the exit was reconstructed from real M1
+executable-price candles by the v4.2.1 gap-recovery path, not from a live snapshot. That is the
+exit-monitoring mechanism working on real data.
+
+**JVM currently holds an open paper position.** Worth stating, because the milestone's narrative
+has centred on ALEX's single trade: JVM is trading in this campaign.
+
+The app's own read-only integrity check, run against live state:
+
+| Check | Result |
+|---|---|
+| `balanceDifference` | **0.00** |
+| Journal records with no account position | **0** |
+| Account positions with no journal record | **0** |
+| Duplicate account trade IDs / duplicate journal trade IDs | **0 / 0** |
+| Closed journal records missing P&L | **0** |
+| `newlyOrphanedAfterReset` (the INC-001 signature) | **0** |
+
+The same check for **ALEX**, via `computePaperTradingHealthReport()`:
+
+| Check | Result |
+|---|---|
+| Expected vs actual balance | **9,900 vs 9,900 — difference 0.00** |
+| Journal records with no account position | **0** |
+| Account positions with no journal record | **0** |
+| Duplicate account trade IDs | **0** |
+
+**Both live ledgers reconcile exactly, and the JOURNAL_ONLY orphan class that triggered INC-001 has
+not recurred in this campaign** — on either strategy.
+
+### 2.12 Chart data vs strategy-evaluation data — separation is deliberate and surfaced
+
+The chart and the engine fetch independently, so the question is whether an operator can see a
+chart that disagrees with what the strategy decided. Established by inspection:
+
+* **Verdicts cannot disagree.** `evaluateLiveTrigger` is the single source for both the chart's
+  live-trigger badge and JVM auto-trading, so the badge and the trade decision are the same
+  computation, not two implementations.
+* **Candles deliberately differ, and that is recorded.** `scanPair` keeps the full candle array in
+  `pairData` for charting while gating *evaluation* on the ADR-011 completeness contract
+  (`index.html:8834-8847`), setting `evaluationSuppressed` when they diverge.
+* **The divergence is operator-visible.** `renderMarketDataCompletenessDiagnostics`
+  (`index.html:6051`) renders an amber card naming every pair whose history was too short to
+  evaluate, with requested/received counts and the pagination reason. It is called from `scanAll`
+  (`index.html:8881`) inside a `try/catch` so an indicator can never break a scan, and it is
+  covered by `run_v130_candle_completeness_regression_tests.js`.
+* **Timeframes differ by design**: JVM always evaluates entry timing on M15 regardless of the
+  displayed timeframe, which the code states explicitly.
+
+**No change proposed.** The one residual is that the chart will happily draw a pair the engine
+refused to score; the amber card is what tells the operator why, and it exists.
+
+### 2.13 Concurrent poll ticks — production-observed, and trading-safe
+
+Ledger analysis found **9 hours containing two advancing polls ~25 s apart with disjoint,
+non-contiguous pair sets** (e.g. a 12-pair poll followed by a 5-pair poll covering only late
+scan-order pairs). That is the signature of two `alexGLivePollTick` executions overlapping: the
+second finds the early pairs' cursors already advanced by the first and skips them.
+
+`startAlexGLivePollingIfNeeded` (`index.html:5011`) is guarded against creating a second interval,
+so this is overlap of a long-running tick with the next interval firing, not a duplicate timer.
+There is **no re-entrancy guard** on the tick itself.
+
+Rather than speculate about the risk, it was exercised: two ticks launched concurrently against a
+setup that does open a trade. Result — **exactly one position, one journal entry, one
+`tradedSignals` entry, one `TRADE_OPENED`, and uncorrupted setup state**, with both ticks
+confirmed to have genuinely run (`SCAN_STARTED` = 2). The protection is real and comes from
+`alexGConstructLivePosition`'s four-way duplicate check inside an await-free window.
+
+**Conclusion: no code change is warranted.** The missing re-entrancy guard is a code-hygiene
+observation, not a trading-correctness defect, and is now backed by evidence rather than by the
+absence of a counter-example. Recorded so the open item can be closed honestly.
+
+### 2.14 Inheritance by a future paper-authorized strategy
+
+Which MOGO-021 protections a newly authorized strategy would inherit for free, and which it would
+not:
+
+| Protection | Inherited? | Why |
+|---|---|---|
+| Decision-event schema, reason-code registry, evidence model | **yes** | strategy-agnostic; `emitDecisionEvent` validates against a central registry |
+| Market-data completeness contract (ADR-011) | **yes** | applied in `scanPair`, shared by every scanned instrument |
+| Protected-function/constant drift gate | **yes** | `regression-baseline.json` covers whatever is registered |
+| Paper-ledger version guard / commit + rollback | **yes, if it uses the shared ledger** | `commitPaperLedger` / `savePaperAccountGuarded` |
+| **Forward-observation coverage ledger (MOGO-013)** | **NO** | `evidenceRecordForwardObservations` is called **only** from `alexGLivePollTick`. JVM's `scanAll` records none, so JVM has no forward coverage evidence at all today |
+| **Candidate-level instrumentation** | **NO** | wired only into ALEX's non-protected plumbing; JVM's is protected (§7.1) |
+| Ledger-integrity / reconciliation tooling | **partly** | `computePaperLedgerIntegrity` is JVM-shaped (`paperAccount` + `journalEntries`); ALEX has a separate equivalent |
+
+**The actionable gap is the forward-coverage ledger.** It is the mechanism that makes "was this
+instrument actually evaluated?" answerable, it is what finally settled the EUR_USD question, and
+**JVM does not have it** — nor would a new strategy. Wiring it would mean adding an observation
+call at `scanAll`'s boundary; `scanAll` is **not** protected, so unlike §7.1 this is not
+governance-blocked. Not done in this milestone because it is new forward scope rather than
+remediation of a defect, and it should be specified rather than improvised.
+
+### 2.16 🔴 SIGNAL IDENTITY IS NOT STABLE — all four duplicate-trade guards can miss
+
+**This is the most serious defect found in the milestone, it was found by verification rather than
+by me, and it falsifies a safety claim I made in §2.10.**
+
+I wrote that a duplicate trade is prevented because `alexGConstructLivePosition` (`index.html:4302`)
+checks `tradedSignals`, open positions, closed positions and journal entries. **All four key on
+`signalId`, and `signalId` is not stable across rebuilds.**
+
+`alexGLiveSignalId` (`index.html:4273`) embeds `setup.setupId`, which embeds the `zoneId`, which
+embeds the cluster's **first-reaction close time** and the zone's **validation time**. The engine
+rebuilds from a rolling 90-day window (`fetchAlexGReplayDatasets(oPair,90)`), so when the oldest
+reaction in a cluster ages out of that window the zone **re-anchors** and the same economic setup
+acquires a **different `signalId`**.
+
+Confirmed in live production. The one trade this campaign has ever made, and its own reconstruction
+now — same pair, same timeframe, same setup type, same reaction `AGR|AUD_JPY|H1|low|1786503600000`,
+same `qualificationTimestamp` `1786514400000`:
+
+| | zone component of `signalId` |
+|---|---|
+| As traded (in `tradedSignals` **and** `closedPositions`) | `AGZ\|AGC\|AUD_JPY\|H1\|high\|`**`1775610000000`**`\|v`**`1786395600000`** |
+| As reconstructed now | `AGZ\|AGC\|AUD_JPY\|H1\|high\|`**`1783983600000`**`\|v`**`1786420800000`** |
+
+Measured against live state: `alexGSetupState.map(alexGLiveSignalId)` yields **0 matches** against
+`tradedSignals`, and **0 matches** against `closedPositions`. **Every one of the four guards misses,
+right now, on the only trade the campaign has made.** The ring dedup at `index.html:4641` keys on
+the same field and cannot help either.
+
+**Consequence.** Once the original position has closed — so the pair+timeframe overlap rule no
+longer applies — the same setup can open a **second real paper position**. The only remaining bound
+is the staleness gate, which is a race rather than a guard: the exposure window is one bar-period
+from qualification (H1 60 min, H4 4 h, D 24 h, W 7 days). `qualificationTimestamp` *is* preserved
+across re-anchoring, so staleness still bites eventually — but on D and W the window is wide.
+
+**Why the ring fix does not address it.** Raising the status-ring cap (§7.2) does nothing here: the
+identity itself changes, so a larger ring simply stores the old identity that no longer matches.
+These are two independent defects that happen to share a symptom.
+
+**A stable identity already exists in the data.** `pair | timeframe | setupType | reactionId |
+qualificationTimestamp` are all preserved across re-anchoring — only the zone-anchor components
+drift. So the fix is available without inventing anything.
+
+**Not repaired autonomously**: `alexGLiveSignalId` and `alexGConstructLivePosition` are both
+protected, and changing signal identity changes which trades ALEX considers duplicates — a frozen
+strategy semantic. Recorded in §7.4 with the smallest governed change.
+
 ---
 
 ## 3. Gates
 
 | Gate | Result |
 |---|---|
-| Canonical | **24 suites · 1,297 / 1,297 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,304 / 1,304 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |
@@ -588,12 +798,13 @@ findings against my work, all of which are fixed. Full results in §6.
 
 | Item | Where | Status |
 |---|---|---|
+| 🔴 **Signal identity not stable — all four duplicate-trade guards can miss** | §2.16 / §7.3 | **open, governance-blocked** — the only open item with a path to a real duplicate paper trade |
 | EUR_USD root cause | §2.10 | **RESOLVED** — never starved; a truncated 300-entry status ring made the front-of-scan-order pairs invisible in the durable ledger |
 | `alexGLiveSetupStatuses` 300-entry FIFO vs its "PERMANENT, never reconsidered" contract (`index.html:4282` vs `4641`) | ALEX | **open, governance-blocked** — now with production proof (§2.10); smallest governed change in §7.2 |
 | PIPELINE natural key omits the pair (`index.html:13039`), so two instruments failing in the same millisecond collide and one record is dropped as a duplicate | MOGO-020 carry-over | open |
 | `instrumentsEvaluated` is pushed **before** the `await`, so it means "attempted" | naming | open |
 | `alexGCheckLivePositions()` runs before the per-pair loop and is not individually guarded — a throw there aborts the whole tick | ALEX | open |
-| No re-entrancy guard on `alexGLivePollTick` under `setInterval` | ALEX | open |
+| No re-entrancy guard on `alexGLivePollTick` under `setInterval` | ALEX | **CLOSED** — overlap is production-observed and was exercised directly; trading-safe (§2.13) |
 | JVM diagnostics fix remains governance-blocked (all four functions protected) | §2.2 | blocked, needs governed change |
 | Live campaign still runs pre-`c24b96b` code; new diagnostics inactive until an operator reloads (costs re-entering broker credentials) | §1 | operator action |
 
@@ -773,7 +984,33 @@ should be. **That is a frozen-strategy semantic question and is Joe's call, not 
   same semantic change as above, reached by a back door that evades the protected-function gate.
   Doing it that way would be worse governance, not better. Not done.
 
-### 7.3 Standing constraints, all intact
+### 7.3 Signal identity instability (§2.16) — the most severe open item
+
+**Unobservable / incorrect today.** `signalId` embeds zone-anchor timestamps that drift as the
+rolling 90-day window advances, so all four duplicate-trade guards in
+`alexGConstructLivePosition` (`index.html:4302`) can miss. Confirmed live: 0 of 387 current
+signalIds match the one entry in `tradedSignals`, for a trade that demonstrably happened.
+
+**Why blocked.** `alexGLiveSignalId` and `alexGConstructLivePosition` are both protected, and
+changing signal identity changes which trades ALEX treats as duplicates.
+
+**Smallest governed change.** Add a second, anchor-free identity to the duplicate check rather than
+altering `signalId` itself — every component needed is already on the setup record:
+
+```js
+const stableId=`${setup.pair}|${setup.timeframe}|${setup.setupType}|${setup.reactionId}|${setup.qualificationTimestamp}`;
+```
+
+Store it alongside `tradedSignals[signalId]` and test both. That keeps `signalId` byte-identical for
+every existing consumer (journal, ledger, analytics) and adds one OR-term to the guard. It touches
+one protected function and changes no rule.
+
+**Non-invasive equivalent? No.** The check lives inside a protected function on the trade-open path;
+there is no external hook between the duplicate test and the open. A shadow observer could *detect*
+a duplicate after the fact but could not prevent one. **This is the one open item where the absence
+of a governed change leaves a path to a real duplicate paper trade.**
+
+### 7.4 Standing constraints, all intact
 
 PAPER ONLY · live-money **NOT AUTHORIZED** and no live-money gate touched · TJR **not**
 paper-authorized and untouched (`status:'development'`, all four capabilities false) · ALEX

@@ -358,9 +358,22 @@ const wrapped = new Function('g',
   '    "retained per pair: "+ORDER.map(function(op){return survived[op];}).join(","));\n' +
   '  g.record("REDEC-3","the pair evaluated LAST is the best case and still loses decisions",\n' +
   '    survived[ORDER[11]]<32,ORDER[11]+" retained "+survived[ORDER[11]]+"/32 of its own prior decisions");\n' +
-  '  g.record("REDEC-4","a ring larger than one cycle WOULD hold the contract -- the cap is the whole cause",\n' +
-  '    (function(){ const need=ORDER.length*32; return need>300; })(),\n' +
-  '    "one cycle needs "+(ORDER.length*32)+" slots; the ring holds 300");\n' +
+  // Measures the ring's ACTUAL capacity by filling it, rather than hard-coding 300. An earlier
+  // version asserted `12*32 > 300` with 300 as a literal, which touched no production code and
+  // survived every mutation -- including raising the cap to 5000, the very fix it described.
+  '  alexGLiveSetupStatuses=[];\n' +
+  '  for(let k=0;k<1200;k++) alexGRecordLiveSetupStatus({signalId:"CAP|"+k,pair:"EUR_USD",timeframe:"H1",status:"IGNORED"});\n' +
+  '  const measuredCap=alexGLiveSetupStatuses.length;\n' +
+  '  g.record("REDEC-4","the ring cannot hold one scan cycle -- measured from the real recorder, not assumed",\n' +
+  '    measuredCap<ORDER.length*32,\n' +
+  '    "measured cap="+measuredCap+"; one cycle needs "+(ORDER.length*32)+" slots");\n' +
+  // The exact survival threshold, from the REAL uneven production distribution rather than a flat
+  // 32 per pair: a pair's entries survive to its next turn only if (N - maxPairSetups) < cap.
+  '  const LIVE=[31,30,26,31,33,54,30,31,23,36,28,30];\n' +   // GBP_USD..USD_CHF, live 2026-08-14
+  '  const N=LIVE.reduce(function(a,b){return a+b;},0), maxPair=Math.max.apply(null,LIVE);\n' +
+  '  g.record("REDEC-5","and it fails under the REAL uneven per-pair distribution too, not just a flat one",\n' +
+  '    (N-maxPair)>=measuredCap,\n' +
+  '    "N="+N+", largest pair="+maxPair+" -> needs cap >= "+(N-maxPair+1)+", ring holds "+measuredCap);\n' +
   '  return g;\n' +
   '})();'
 );
