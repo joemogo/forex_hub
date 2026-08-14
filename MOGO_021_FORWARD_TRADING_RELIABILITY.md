@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,331/1,331 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,335/1,335 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -723,9 +723,32 @@ failures were fine (`fetchCandles` returns null, so `scanPair` still writes `can
 sweep that *aborts* leaves unreached pairs holding the previous scan's data. Measured: an aborted
 scan claimed **35/35 coverage for 25 instruments it never touched**, with `instrumentsSkipped`
 empty and `evaluationAdvanced: true` — precisely the "silently unscanned instrument is
-indistinguishable from a scanned one" signature this ledger was built to end. Coverage is now
-**measured** by reference-diffing `pairData` across the sweep; **JVMOBS-7/8** assert an aborted
-sweep reports 10 of 35 and names the other 25 as `NOT_REACHED_THIS_SCAN`.
+indistinguishable from a scanned one" signature this ledger was built to end.
+
+**My first fix for this was itself incomplete, and verification proved it with real concurrency.**
+I reference-diffed `pairData` across the sweep. But reference inequality proves *someone* rewrote
+an entry, not that *this sweep* did — and `scanAll` has no re-entrancy guard and is invoked
+unawaited from three places, including `setTf()` on a single operator click. With one sweep's fetch
+held open and a second run to completion, the aborted sweep reported **`evaluated 35, skipped 0,
+evaluationAdvanced true`** — field for field the original defect, reproduced against my own fix.
+
+Coverage is now attributed **per sweep**: `scanAll` takes a monotonic `sweepToken`, passes it to
+`scanPair`, which stamps it into the `pairData` entry it writes, and the ledger counts only entries
+carrying its own token. `instrumentsAttempted` is the true dispatch list rather than a count of
+writes. **JVMOBS-12** asserts the property directly: across two overlapping sweeps every instrument
+is credited **exactly once** — combined `35/35`, zero double-credits, where object-identity diffing
+produced 70.
+
+The predicate is also now **fail-closed**: evaluation requires `completenessState === COMPLETE`
+rather than the absence of a flag, so an entry written by any future second writer of `pairData`
+reads as *not evaluated* rather than silently restoring 35/35 over-reporting. And a **transport
+failure is no longer labelled as a contract suppression** — `MARKET_DATA_UNAVAILABLE` and
+`EVALUATION_SUPPRESSED_INCOMPLETE_DATA` are distinct, with `completenessState` recorded alongside
+(**JVMOBS-14/15**), restoring the information the original `NO_CANDLES_THIS_SCAN` carried.
+
+**JVMOBS-7/8 now pin exact numbers** — 10 evaluated, 25 `NOT_REACHED_THIS_SCAN`. The earlier
+`evaluated > 0 && evaluated < 35` range passed for any partial value, and let both an off-by-one
+and a whole lost chunk through under mutation.
 
 **It counted instruments the strategy had explicitly refused to evaluate.** `pairData[p].candles` is
 truthy for `[]`, and ADR-011 deliberately suppresses evaluation for anything short of `COMPLETE`,
@@ -736,10 +759,17 @@ contract, and **JVMOBS-10** asserts a suppressed instrument is reported skipped 
 
 Two smaller corrections from the same pass: `evidenceObservationBase` accepted `""`/`false`/`0` as a
 strategy identity (only a non-empty string overrides now), and the POLL natural key carried no
-strategy component — with ALEX and JVM both writing POLL records and the id counter restarting each
-page load, two tabs could mint the same `tickId` and the unique index would silently drop one
-strategy's record. The key now includes `strategyId`; the existing contract fixture **L7** was
+strategy component. The key now includes `strategyId`, and the existing contract fixture **L7** was
 updated to match, deliberately, rather than the change being hidden.
+
+*Rationale corrected:* I justified this as closing a cross-tab collision where two tabs mint the
+same `tickId`. That overstated it — `generateDecisionEventId` already embeds a millisecond
+timestamp *and* a counter, so the collision needs both to coincide. The change is reasonable
+namespacing now that two strategies write POLL records, but it was sold on a hazard the id format
+had largely closed, and it cost key-format continuity with ~3,250 existing durable rows. Verified
+harmless: `naturalKey` is never used as a lookup anywhere (`evidenceListObservations` is `getAll`,
+retention reads the `bySeq` index and deletes by `observationId`), old and new key shapes cannot
+collide, and no ALEX **record body** changed — only the POLL key.
 
 One fixture of mine had to be corrected as a result: **JVM-28** asserted every event on a sweep is
 sourced to `scanAll`, which stopped being true once the observation write began emitting
@@ -931,7 +961,7 @@ no allocation, no scan.
 
 | Gate | Result |
 |---|---|
-| Canonical | **24 suites · 1,331 / 1,331 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,335 / 1,335 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |

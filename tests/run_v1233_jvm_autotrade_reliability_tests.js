@@ -152,6 +152,11 @@ function structuralCandles(n){
   return out;
 }
 let __candleCount=60,__priceOk=true,__mode='flat',__shortPair=null,__shortAll=false;
+// Holds one instrument's candle fetch open so a SECOND scanAll can overtake the first -- the
+// overlapping-sweep condition scanAll allows (no re-entrancy guard; called unawaited from
+// setInterval, from init, and from setTf() on an operator click).
+let __gatePair=null,__gateRelease=null,__failPair=null;
+function __gate(){ return new Promise(function(res){ __gateRelease=res; }); }
 globalThis.fetch=function(url){
   const u=String(url);
   if(/\/pricing/.test(u)){
@@ -163,8 +168,15 @@ globalThis.fetch=function(url){
     if(/granularity=W/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(60)}));
     const wantN=parseInt((u.match(/count=(\d+)/)||[])[1],10)||60;
     const instMatch=(u.match(/instruments\/([^/]+)\//)||[])[1];
+    if(__gatePair&&instMatch===__gatePair){
+      const held=__gate();
+      return held.then(function(){ return makeResponse(true,200,{candles:firingM15(wantN)}); });
+    }
     // One instrument can be made to return a SHORT history, which ADR-011 classifies as PARTIAL
     // and deliberately suppresses from evaluation -- the state JVMOBS-10 asserts is reported.
+    // A hard transport failure for one instrument: fetchCandles returns null, so completeness is
+    // UNAVAILABLE rather than PARTIAL -- a different fact from an ADR-011 suppression.
+    if(__failPair&&instMatch===__failPair) return Promise.resolve(makeResponse(false,503,{}));
     if(__shortAll||(__shortPair&&instMatch===__shortPair)) return Promise.resolve(makeResponse(true,200,{candles:firingM15(20)}));
     return Promise.resolve(makeResponse(true,200,{candles:firingM15(wantN)}));
   }
@@ -178,6 +190,9 @@ g.setPriceOk=v=>{__priceOk=v;};
 g.setMode=m=>{__mode=m;};
 g.setShortPair=p=>{__shortPair=p;};
 g.setShortAll=v=>{__shortAll=v;};
+g.holdPair=p=>{__gatePair=p;};
+g.failPair=p=>{__failPair=p;};
+g.releaseHeld=()=>{__gatePair=null; if(__gateRelease){__gateRelease(); __gateRelease=null;}};
 g.setNow=t=>{__simNow=t;};
 g.now=()=>__simNow;
 g.utc=(y,mo,d,h)=>__RealDate.UTC(y,mo,d,h,0,0);
@@ -342,8 +357,8 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // instrument actually evaluated?" answerable, and whose absence left the EUR_USD question
   // unanswerable for four investigations. These fixtures prove it records, is labelled as JVM
   // rather than ALEX, survives a failed scan, and does not disturb ALEX's own records.
-  '  var __jvmObs=null; const __origRec=evidenceRecordForwardObservations;\n' +
-  '  evidenceRecordForwardObservations=function(input){ __jvmObs=evidenceBuildPollObservation((input&&input.poll)||{}); return __origRec.apply(this,arguments); };\n' +
+  '  var __jvmObs=null,__jvmAll=[]; const __origRec=evidenceRecordForwardObservations;\n' +
+  '  evidenceRecordForwardObservations=function(input){ __jvmObs=evidenceBuildPollObservation((input&&input.poll)||{}); __jvmAll.push(__jvmObs); return __origRec.apply(this,arguments); };\n' +
   '  g.setMode("firing"); structuralAOICache={}; pairData={}; firedAlerts=new Set(); clearDecisionEvents();\n' +
   '  autoTrading.enabled=true; autoTrading.tradedToday={}; autoTrading.log=[]; autoTrading._lastDay=null;\n' +
   '  paperAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +
@@ -389,15 +404,17 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  renderPairList=function(){ __chunks++; if(__chunks>=2) throw new Error("abort mid-sweep"); };\n' +
   '  try{ await scanAll(); }catch(e){}\n' +
   '  renderPairList=__origRender2;\n' +
-  '  g.record("JVMOBS-7","an ABORTED sweep reports only the instruments it actually reached, not last scan\u2019s",\n' +
-  '    (__jvmObs.instrumentsEvaluated||[]).length>0&&(__jvmObs.instrumentsEvaluated||[]).length<fullCount,\n' +
-  '    "aborted sweep evaluated "+((__jvmObs.instrumentsEvaluated)||[]).length+" of "+fullCount+\n' +
-  '    " -- a stale-state check would have claimed all "+fullCount);\n' +
-  '  g.record("JVMOBS-8","and the ones it never reached are named as SKIPPED with a reason",\n' +
-  '    (__jvmObs.instrumentsSkipped||[]).length===ALL_PAIRS.length-(__jvmObs.instrumentsEvaluated||[]).length&&\n' +
-  '    (__jvmObs.instrumentsSkipped||[]).some(function(x){return x.reason==="NOT_REACHED_THIS_SCAN";})&&\n' +
-  '    __jvmObs.instrumentsAttempted===(__jvmObs.instrumentsEvaluated||[]).length,\n' +
-  '    "skipped="+((__jvmObs.instrumentsSkipped)||[]).length+" attempted="+__jvmObs.instrumentsAttempted);\n' +
+  // EXACT numbers. The abort fires on the 2nd renderPairList, i.e. after two 5-pair chunks, so the
+  // sweep reached precisely 10 and left 25. A range assertion passed for any partial value and let
+  // both an off-by-one and a whole lost chunk through.
+  '  g.record("JVMOBS-7","an ABORTED sweep reports EXACTLY the instruments it reached -- 10, not last scan\u2019s 35",\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length===10&&fullCount===ALL_PAIRS.length,\n' +
+  '    "aborted sweep evaluated "+((__jvmObs.instrumentsEvaluated)||[]).length+" (expected exactly 10); a stale check claimed all "+fullCount);\n' +
+  '  g.record("JVMOBS-8","and EXACTLY the other 25 are named NOT_REACHED_THIS_SCAN",\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).length===25&&\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.reason==="NOT_REACHED_THIS_SCAN";}).length===25&&\n' +
+  '    __jvmObs.instrumentsAttempted===10,\n' +
+  '    "skipped="+((__jvmObs.instrumentsSkipped)||[]).length+" all NOT_REACHED, attempted="+__jvmObs.instrumentsAttempted);\n' +
   // tradingEnabled and evaluationAdvanced were asserted only against a fixture that set them true.
   '  __jvmObs=null; pairData={}; autoTrading.enabled=false;\n' +
   '  await scanAll();\n' +
@@ -422,6 +439,53 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    (__jvmObs.instrumentsEvaluated||[]).length===0&&__jvmObs.evaluationAdvanced===false&&\n' +
   '    (__jvmObs.instrumentsSkipped||[]).length===ALL_PAIRS.length,\n' +
   '    "evaluated=0/"+ALL_PAIRS.length+" evaluationAdvanced="+__jvmObs.evaluationAdvanced+" (every pair suppressed by ADR-011)");\n' +
+  // ── the concurrency case that defeated object-identity diffing ──
+  '  __jvmObs=null; pairData={}; autoTrading.enabled=true;\n' +
+  '  g.holdPair("EUR_USD");\n' +
+  '  __jvmAll=[];\n' +
+  '  const sweepA=scanAll();\n' +
+  '  for(let y=0;y<25;y++) await Promise.resolve();\n' +
+  '  g.releaseHeld();\n' +
+  '  const sweepB=scanAll();\n' +
+  '  await sweepB; try{ await sweepA; }catch(e){}\n' +
+  // Sum across BOTH sweeps. Under object-identity diffing each sweep claimed the other's writes,
+  // so the total exceeded the universe; per-sweep attribution credits every instrument exactly once.
+  '  const totals=__jvmAll.reduce(function(a,o){ return a+((o.instrumentsEvaluated||[]).length); },0);\n' +
+  '  const counts={}; __jvmAll.forEach(function(o){ (o.instrumentsEvaluated||[]).forEach(function(x){ counts[x]=(counts[x]||0)+1; }); });\n' +
+  '  const seenTwice=Object.keys(counts).filter(function(k){ return counts[k]>1; });\n' +
+  '  g.record("JVMOBS-12","CONCURRENT sweeps credit each instrument EXACTLY ONCE -- neither claims the other\\u2019s work",\n' +
+  '    __jvmAll.length===2&&totals===ALL_PAIRS.length&&seenTwice.length===0,\n' +
+  '    "two sweeps, combined evaluated="+totals+"/"+ALL_PAIRS.length+", double-credited="+seenTwice.length+\n' +
+  '    " (object-identity diffing produced "+(2*ALL_PAIRS.length)+")");\n' +
+  // R3 had no coverage at all: reverting the non-empty-string guard survived both gates.
+  '  const isoNow=new Date().toISOString();\n' +
+  '  g.record("JVMOBS-13","a FALSY strategyId is not accepted as an identity -- it falls back to ALEX",\n' +
+  '    evidenceObservationBase("POLL",isoNow,"").strategyId===RULES_ALEXG.ruleVersion&&\n' +
+  '    evidenceObservationBase("POLL",isoNow,false).strategyId===RULES_ALEXG.ruleVersion&&\n' +
+  '    evidenceObservationBase("POLL",isoNow,0).strategyId===RULES_ALEXG.ruleVersion&&\n' +
+  '    evidenceObservationBase("POLL",isoNow,"current_strategy").strategyId==="current_strategy",\n' +
+  '    "empty string, false and 0 all resolve to "+RULES_ALEXG.ruleVersion+"; a real id still overrides");\n' +
+  // transport failure and contract suppression must not share a label
+  '  __jvmObs=null; pairData={}; g.setShortPair("EUR_USD");\n' +
+  '  await scanAll();\n' +
+  '  g.setShortPair(null);\n' +
+  '  const skEur=(__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="EUR_USD";})[0]||{};\n' +
+  '  g.record("JVMOBS-14","a skipped instrument carries the completenessState that explains WHY",\n' +
+  '    skEur.completenessState===MARKET_DATA_COMPLETENESS.PARTIAL&&\n' +
+  '    skEur.reason==="EVALUATION_SUPPRESSED_INCOMPLETE_DATA",\n' +
+  '    "reason="+skEur.reason+" completenessState="+skEur.completenessState);\n' +
+  // A TRANSPORT failure and a CONTRACT suppression are different facts and must not share a label.
+  // Collapsing them is how "no data arrived" starts reading as "the strategy declined to score it".
+  '  __jvmObs=null; pairData={}; g.failPair("GBP_USD"); g.setShortPair("EUR_USD");\n' +
+  '  await scanAll();\n' +
+  '  g.failPair(null); g.setShortPair(null);\n' +
+  '  const skFail=(__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="GBP_USD";})[0]||{};\n' +
+  '  const skShort=(__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="EUR_USD";})[0]||{};\n' +
+  '  g.record("JVMOBS-15","a TRANSPORT failure is reported distinctly from an ADR-011 suppression",\n' +
+  '    skFail.reason==="MARKET_DATA_UNAVAILABLE"&&skFail.completenessState===MARKET_DATA_COMPLETENESS.UNAVAILABLE&&\n' +
+  '    skShort.reason==="EVALUATION_SUPPRESSED_INCOMPLETE_DATA"&&skShort.completenessState===MARKET_DATA_COMPLETENESS.PARTIAL&&\n' +
+  '    skFail.reason!==skShort.reason,\n' +
+  '    "no data arrived -> "+skFail.reason+"; short history -> "+skShort.reason);\n' +
   '  evidenceRecordForwardObservations=__origRec;\n' +
   '  return g;\n})();'
 );

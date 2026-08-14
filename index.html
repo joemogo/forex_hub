@@ -8909,7 +8909,13 @@ function renderRecBanner(conf,sess){
 }
 
 // ── SCAN ──
-async function scanPair(pair){
+// MOGO-021: sweepToken identifies WHICH sweep wrote this entry. scanAll has no re-entrancy guard
+// and is invoked unawaited from setInterval, from init, and from setTf() on an operator click, so
+// two sweeps can overlap. Object-identity diffing proves only "someone rewrote this", and credited
+// an overlapping sweep's writes to the aborted one -- reproducing the exact over-reporting this
+// ledger exists to end. Purely additive: the token is read only by the observation code.
+let __jvmSweepToken=0;
+async function scanPair(pair,sweepToken){
   const [candles,price]=await Promise.all([fetchCandles(pair,activeTf,220),fetchPrice(pair)]);
   // v12.8.3 ADR-011: gate evaluation on the ONE completeness abstraction. Anything short of
   // COMPLETE is evaluated as no data at all, by passing null into the evaluators -- which is
@@ -8925,7 +8931,8 @@ async function scanPair(pair){
   const conf=bestConfluence(evaluable,pair);
   // candles is still recorded in full so charting and diagnostics keep everything that arrived;
   // only EVALUATION is gated. Transport facts are diagnostics -- no consumer may branch on them.
-  pairData[pair]={candles,price,signals,conf,completenessState,
+  pairData[pair]={sweepToken:sweepToken===undefined?null:sweepToken,
+    candles,price,signals,conf,completenessState,
     requestedCount:candles?candles.requestedCount:220,
     receivedCount:candles?candles.receivedCount:0,
     pagesRequested:candles?candles.pagesRequested:null,
@@ -8959,14 +8966,15 @@ async function scanAll(){
   // reached on this one -- overstating coverage on exactly the aborted scan this ledger exists to
   // expose, which is the EUR_USD failure mode all over again. scanPair assigns a fresh object every
   // time, so reference inequality is an exact "written during this sweep" test.
-  const __jvmBefore=new Map(ALL_PAIRS.map(function(p){ return [p,pairData[p]]; }));
+  const __jvmSweep=++__jvmSweepToken;
+  const __jvmDispatched=[];
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
   try{
     document.getElementById('scanStatus').textContent='Scanning...';
     document.getElementById('liveDot').classList.remove('off');
     const chunks=[];
     for(let i=0;i<ALL_PAIRS.length;i+=5) chunks.push(ALL_PAIRS.slice(i,i+5));
-    for(const ch of chunks){await Promise.all(ch.map(p=>scanPair(p)));renderPairList();}
+    for(const ch of chunks){await Promise.all(ch.map(function(p){ __jvmDispatched.push(p); return scanPair(p,__jvmSweep); }));renderPairList();}
     const high=Object.values(pairData).filter(d=>d.conf&&d.conf.total>=ALERT_THRESHOLD).length;
     document.getElementById('setupCount').textContent=`${high} setups`;
     document.getElementById('scanStatus').textContent=`${new Date().toLocaleTimeString()}`;
@@ -8996,26 +9004,34 @@ async function scanAll(){
       // JVM scans ALL_PAIRS but can only auto-trade SCAN_PAIRS, so both are recorded. Reading
       // "35 instruments scanned" as "35 tradeable" would be wrong, and the ledger should not
       // invite that reading.
-      // "Evaluated" must mean what the STRATEGY means by it. ADR-011 gates evaluation on
-      // completenessState===COMPLETE and records the fact as evaluationSuppressed; a pair whose
-      // candles came back short is deliberately NOT scored. Counting it here -- which a truthiness
-      // check on `candles` does, since an empty array is truthy -- would have the ledger assert
-      // "evaluated" for an instrument the app itself recorded as suppressed.
-      const __jvmTouched=ALL_PAIRS.filter(function(p){ return pairData[p]&&pairData[p]!==__jvmBefore.get(p); });
-      const __jvmEvaluated=__jvmTouched.filter(function(p){ return !pairData[p].evaluationSuppressed; });
+      // Counted per SWEEP, not per object identity: only entries this sweep actually wrote.
+      // And "evaluated" must mean what the STRATEGY means by it -- ADR-011 gates evaluation on
+      // completenessState===COMPLETE, so the test is that, not the absence of a flag. Written
+      // fail-CLOSED: anything that is not provably COMPLETE is reported skipped, because the whole
+      // point of this ledger is that an uncertain instrument must not read as a scanned one.
+      const __jvmWrote=ALL_PAIRS.filter(function(p){ return pairData[p]&&pairData[p].sweepToken===__jvmSweep; });
+      const __jvmEvaluated=__jvmWrote.filter(function(p){
+        return pairData[p].completenessState===MARKET_DATA_COMPLETENESS.COMPLETE; });
       const __jvmSkipped=ALL_PAIRS.filter(function(p){ return __jvmEvaluated.indexOf(p)===-1; })
         .map(function(p){
-          const touched=__jvmTouched.indexOf(p)!==-1;
-          return{pair:p.replace('/','_'),
-            reason:touched?'EVALUATION_SUPPRESSED_INCOMPLETE_DATA':'NOT_REACHED_THIS_SCAN',
-            completenessState:(pairData[p]&&touched)?pairData[p].completenessState:null};
+          const wrote=__jvmWrote.indexOf(p)!==-1;
+          const dispatched=__jvmDispatched.indexOf(p)!==-1;
+          const st=wrote?pairData[p].completenessState:null;
+          // Transport failure and contract suppression are different facts and must not share a
+          // label -- collapsing them is how "no data arrived" starts reading as "the strategy
+          // declined to score it".
+          return{pair:p.replace('/','_'),completenessState:st,
+            reason:!dispatched?'NOT_REACHED_THIS_SCAN'
+              :!wrote?'DISPATCHED_NO_RESULT'
+              :(st===MARKET_DATA_COMPLETENESS.UNAVAILABLE?'MARKET_DATA_UNAVAILABLE'
+                :'EVALUATION_SUPPRESSED_INCOMPLETE_DATA')};
         });
       evidenceRecordForwardObservations({scanId:__scanId,
         poll:{tickId:__scanId,strategyId:'current_strategy',
           startedAt:__jvmStartedAt,finishedAt:new Date().toISOString(),
           outcome:__jvmOutcome,tradingEnabled:!!autoTrading.enabled,
           evaluationAdvanced:__jvmEvaluated.length>0,
-          instrumentsAttempted:__jvmTouched.length,instrumentsEvaluated:__jvmEvaluated,
+          instrumentsAttempted:__jvmDispatched.length,instrumentsEvaluated:__jvmEvaluated,
           instrumentsConfigured:ALL_PAIRS.length,
           instrumentsSkipped:__jvmSkipped,
           errorText:__jvmError}});
