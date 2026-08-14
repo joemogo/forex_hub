@@ -1166,6 +1166,80 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    "configured="+ledObs.instrumentsConfigured+" evaluated="+((ledObs.instrumentsEvaluated)||[]).length+\n' +
   '    " skipped="+ledSk.length+" all NOT_REACHED_THIS_TICK, one row per configured instrument"+\n' +
   '    " (without the accounting block this read 0 of "+ledObs.instrumentsConfigured+")");\n' +
+  // ══ "OBSERVATION MUST NEVER REACH THE TRADING PATH" -- THE CATCH BLOCKS THEMSELVES ════════
+  // Three catch blocks in ALEX's live path exist solely to keep an observation defect away from a
+  // trading decision, and NONE of them had a fixture: turning any into a rethrow left the whole
+  // gate green, so the property they encode was an unverified comment. Each is covered the only way
+  // a swallow can be: a POSITIVE CONTROL that makes the observation itself throw and then asserts
+  // the trading path is bit-for-bit unaffected.
+  //
+  // (1) The identity-drift detector inside alexGEvaluatePairForLiveSetups. The fault is injected at
+  // alexGIdentityDriftReported.has, which is reachable ONLY from inside that block -- the detector's
+  // own latch -- so nothing else in the tick can be disturbed by the injection. The tick is run
+  // twice against identical state and the two outcomes compared, because "unaffected" is a claim
+  // about equality with an uninjected run, not about any single value.
+  '  function isoDriftState(){ fullReset(); alexGIdentityDriftReported=new Set();\n' +
+  '    alexGAccount.closedPositions=[{tradeId:"ISO-CLOSED-1",pair:"EUR_USD",timeframe:"H1",direction:"buy",\n' +
+  '      status:"closed",result:"Win",resultR:2,pnl:200,entry:1.106,stop:1.10,target:1.12,\n' +
+  '      signalId:"ISO-CLOSED-SIG",setupId:"ISO-CLOSED-SETUP",setupType:"A_repeatedReaction",\n' +
+  '      closedAt:new Date(Date.now()-7200000).toISOString()}];\n' +
+  '    alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; }\n' +
+  '  function isoOutcome(){ return JSON.stringify({\n' +
+  '    statuses:(alexGLiveSetupStatuses||[]).map(function(s){return String(s.status)+"|"+String(s.reason);}),\n' +
+  '    open:alexGAccount.openPositions.length,journal:alexGJournalEntries.length,\n' +
+  '    traded:Object.keys(alexGAutoTrading.tradedSignals).length,\n' +
+  '    evaluated:(g.lastObs().instrumentsEvaluated||[]).length,outcome:String(g.lastObs().outcome)}); }\n' +
+  '  isoDriftState();\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const __driftControl=isoOutcome();\n' +
+  '  isoDriftState();\n' +
+  '  const __origDriftLatch=alexGIdentityDriftReported; let __driftHits=0;\n' +
+  '  alexGIdentityDriftReported={has:function(){ __driftHits++; throw new Error("fixture observation fault"); },\n' +
+  '    add:function(){},delete:function(){},get size(){return 0;},values:function(){return [].values();}};\n' +
+  '  let __driftThrew=false;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __driftThrew=true; }\n' +
+  '  alexGIdentityDriftReported=__origDriftLatch;\n' +
+  '  const __driftInjected=isoOutcome();\n' +
+  '  g.record("OBSISO-1","PRECONDITION: the identity-drift OBSERVATION really threw, on every setup it inspected",\n' +
+  '    __driftHits>0&&__driftThrew===false,\n' +
+  '    "observation faults raised="+__driftHits+", tick threw="+__driftThrew);\n' +
+  '  g.record("OBSISO-2","a throwing identity-drift observation leaves the TRADING OUTCOME bit-for-bit identical to the uninjected run",\n' +
+  '    __driftInjected===__driftControl,\n' +
+  '    "control="+__driftControl+" injected="+__driftInjected);\n' +
+  // (2) The instrument-accounting block in the tick's finally. Injected by overriding
+  // SCAN_PAIRS.forEach -- which the accounting block calls and nothing else between the injection
+  // and the finally does -- from INSIDE the saveAlexG fault, so the override window is the abort
+  // itself. If this catch rethrew, the accounting failure would both replace the real error on its
+  // way out and prevent the ledger call that follows it from ever running.
+  '  fullReset(); isoOpenPosition();\n' +
+  '  const __isoForEach=SCAN_PAIRS.forEach, __isoSave2=saveAlexG; let __accHits=0;\n' +
+  '  saveAlexG=function(){\n' +
+  '    SCAN_PAIRS.forEach=function(){ __accHits++; throw new Error("fixture accounting fault"); };\n' +
+  '    throw new Error("fixture persistence fault before the pair loop"); };\n' +
+  '  let __accErr=null;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __accErr=String(e&&e.message); }\n' +
+  '  SCAN_PAIRS.forEach=__isoForEach; saveAlexG=__isoSave2;\n' +
+  '  const accObs=g.lastObs();\n' +
+  '  g.record("OBSISO-3","a throwing ACCOUNTING block neither replaces the real error nor costs the poll record it precedes",\n' +
+  '    __accHits===1&&/fixture persistence fault/.test(String(__accErr))&&\n' +
+  '    !/accounting fault/.test(String(__accErr))&&accObs.outcome==="ERROR"&&\n' +
+  '    /fixture persistence fault/.test(String(accObs.errorText)),\n' +
+  '    "accounting faults raised="+__accHits+", error out of the tick=["+String(__accErr).slice(0,46)+\n' +
+  '    "], poll still recorded with outcome="+String(accObs.outcome));\n' +
+  // (3) The durable ledger write in the same finally. A ledger that throws must not turn a healthy
+  // tick into a failed one -- and in a `finally`, a rethrow does exactly that: it replaces the
+  // tick's normal completion outright.
+  '  fullReset(); alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  const __isoRecObs=evidenceRecordForwardObservations; let __recHits=0;\n' +
+  '  evidenceRecordForwardObservations=function(){ __recHits++; throw new Error("fixture ledger write fault"); };\n' +
+  '  let __recThrew=false;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __recThrew=true; }\n' +
+  '  evidenceRecordForwardObservations=__isoRecObs;\n' +
+  '  g.record("OBSISO-4","a throwing durable LEDGER WRITE cannot abort a healthy tick -- all twelve instruments are still evaluated",\n' +
+  '    __recHits===1&&__recThrew===false&&alexGLastEvaluatedCloseTime.EUR_USD.H1>t0+40*3600000&&\n' +
+  '    (alexGLiveSetupStatuses||[]).length>0,\n' +
+  '    "ledger faults raised="+__recHits+", tick threw="+__recThrew+", evaluation still advanced the H1 cursor and recorded "+\n' +
+  '    (alexGLiveSetupStatuses||[]).length+" live setup status row(s)");\n' +
   '  fullReset();\n' +
   '  return g;\n})();'
 );

@@ -799,6 +799,108 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __isoCATCalls===1&&__isoMRSCalls===1&&paperAccount.openPositions.length>0,\n' +
   '    "checkAutoTrades calls="+__isoCATCalls+" runManualReviewScan calls="+__isoMRSCalls+\n' +
   '    " positions opened="+paperAccount.openPositions.length+" (bare dispatch skipped the whole pass)");\n' +
+  // ══ "OBSERVATION MUST NEVER REACH THE TRADING PATH" -- THE CATCH BLOCK ITSELF ═════════════
+  // scanAll's forward-coverage ledger sits in a `finally`, wrapped in a catch whose entire purpose
+  // is to keep an observation defect away from the trading path -- and that catch had no fixture:
+  // turning it into a rethrow left the whole gate green. In a `finally` a rethrow is especially
+  // severe, because it REPLACES the sweep's normal completion: a durable-write failure would start
+  // reporting itself as a failed scan to every caller.
+  '  jvmFreshFiring();\n' +
+  '  const __obsRec=evidenceRecordForwardObservations; let __obsHits=0;\n' +
+  '  evidenceRecordForwardObservations=function(){ __obsHits++; throw new Error("fixture ledger write fault"); };\n' +
+  '  let __obsThrew=false;\n' +
+  '  try{ await scanAll(); }catch(e){ __obsThrew=true; }\n' +
+  '  evidenceRecordForwardObservations=__obsRec;\n' +
+  '  g.record("JVMOBSISO-1","a throwing durable LEDGER WRITE cannot turn a healthy sweep into a failed one",\n' +
+  '    __obsHits===1&&__obsThrew===false&&paperAccount.openPositions.length>0,\n' +
+  '    "ledger faults raised="+__obsHits+", scanAll threw="+__obsThrew+", positions still opened="+\n' +
+  '    paperAccount.openPositions.length);\n' +
+  // ══ checkAutoTrades: THE POST-AWAIT DUPLICATE RE-CHECK ════════════════════════════════════
+  // checkAutoTrades builds `eligible` synchronously and only THEN awaits evaluateLiveTrigger, so a
+  // second invocation entering while the first is mid-await sees the identical eligible list. The
+  // re-check immediately before openPaperPosition is the only thing standing between that and two
+  // positions on the same instrument -- and it had no behavioural fixture at all: only the
+  // protected-drift byte check stood between it and silent removal, and a drift check proves the
+  // bytes did not change, never that the guard works.
+  //
+  // The concurrency is REAL, not simulated: checkAutoTrades has no re-entrancy guard and is called
+  // unawaited from scanAll, which has none either.
+  '  jvmFreshFiring();\n' +
+  '  await checkAutoTrades();\n' +
+  '  const __dupBaseline=paperAccount.openPositions.length;\n' +
+  '  jvmFreshFiring();\n' +
+  '  const __dupA=checkAutoTrades(), __dupB=checkAutoTrades();\n' +
+  '  await Promise.all([__dupA,__dupB]);\n' +
+  '  const __dupCounts={}; paperAccount.openPositions.forEach(function(p){ __dupCounts[p.oPair]=(__dupCounts[p.oPair]||0)+1; });\n' +
+  '  const __dupPairs=Object.keys(__dupCounts).filter(function(k){ return __dupCounts[k]>1; });\n' +
+  '  g.record("JVMDUP-1","PRECONDITION: a single pass genuinely opens positions, so the concurrent pass below has something to duplicate",\n' +
+  '    __dupBaseline>0,"one sequential checkAutoTrades opened "+__dupBaseline+" position(s)");\n' +
+  '  g.record("JVMDUP-2","TWO CONCURRENT checkAutoTrades passes cannot open a SECOND position on the same instrument",\n' +
+  '    __dupPairs.length===0&&paperAccount.openPositions.length===__dupBaseline&&\n' +
+  '    autoTrading.log.length===paperAccount.openPositions.length,\n' +
+  '    "concurrent pass opened "+paperAccount.openPositions.length+" (sequential baseline "+__dupBaseline+\n' +
+  '    "), instruments held twice="+__dupPairs.length+", journal entries="+autoTrading.log.length);\n' +
+  // The re-check has TWO halves and they answer different questions, so each needs its own control:
+  // against two concurrent auto passes the tradedToday half alone already blocks the duplicate, and
+  // removing only the open-position half survived the fixture above. These two isolate each half by
+  // creating the state it exists for DURING the await, which is the only window either can matter
+  // in. The seam is evaluateLiveTrigger -- wrapped, never altered: the real one is called and its
+  // real verdict returned; the wrapper only mutates the surrounding account state while the pass is
+  // suspended on it, which is exactly what a manual click or a sibling pass does in production.
+  '  jvmFreshFiring();\n' +
+  '  const __mcOrig=evaluateLiveTrigger; let __mcPair=null;\n' +
+  '  evaluateLiveTrigger=async function(oPair){ const r=await __mcOrig.apply(this,arguments);\n' +
+  '    if(__mcPair===null&&r&&r.fires){ __mcPair=oPair;\n' +
+  '      paperAccount.openPositions.push({oPair:oPair,dir:"buy",entry:1.1,stop:1.09,target:1.12,\n' +
+  '        lots:1,riskAmount:100,id:"manual-click-during-await",source:"manual"}); }\n' +
+  '    return r; };\n' +
+  '  await checkAutoTrades();\n' +
+  '  evaluateLiveTrigger=__mcOrig;\n' +
+  '  const __mcHeld=paperAccount.openPositions.filter(function(p){ return p.oPair===__mcPair; });\n' +
+  '  g.record("JVMDUP-3","a MANUAL open landing during the await blocks the auto entry -- the open-position half of the re-check, isolated",\n' +
+  '    !!__mcPair&&__mcHeld.length===1&&__mcHeld[0].id==="manual-click-during-await"&&\n' +
+  '    !autoTrading.tradedToday[__mcPair],\n' +
+  '    __mcPair+" positions="+__mcHeld.length+" ["+__mcHeld.map(function(p){return String(p.source);}).join(",")+\n' +
+  '    "], tradedToday unset -- so ONLY the open-position half could have blocked this");\n' +
+  '  jvmFreshFiring();\n' +
+  '  const __ttOrig=evaluateLiveTrigger; let __ttPair=null;\n' +
+  '  evaluateLiveTrigger=async function(oPair){ const r=await __ttOrig.apply(this,arguments);\n' +
+  '    if(__ttPair===null&&r&&r.fires){ __ttPair=oPair; autoTrading.tradedToday[oPair]=new Date().toDateString(); }\n' +
+  '    return r; };\n' +
+  '  await checkAutoTrades();\n' +
+  '  evaluateLiveTrigger=__ttOrig;\n' +
+  '  const __ttHeld=paperAccount.openPositions.filter(function(p){ return p.oPair===__ttPair; });\n' +
+  '  g.record("JVMDUP-4","a pair marked traded-today during the await is not traded again -- the traded-today half, isolated",\n' +
+  '    !!__ttPair&&__ttHeld.length===0&&paperAccount.openPositions.length>0,\n' +
+  '    __ttPair+" positions="+__ttHeld.length+" while "+paperAccount.openPositions.length+\n' +
+  '    " other instruments still opened -- no open position existed for it, so ONLY the traded-today half could have blocked it");\n' +
+  // ══ closePaperPosition: THE paperPositionsClosing CONCURRENT-CLOSE GUARD ══════════════════
+  // Stated precisely, because it is easy to over-claim here: the pre-existing idx2 re-validation
+  // ALREADY prevents a second closed record in this interleaving, so "only one close happened" is
+  // NOT what proves this guard. What the guard alone does is reject the duplicate call OUTRIGHT --
+  // before it does any I/O at all. The discriminating clause below is therefore the fetchBidAsk
+  // count: with the guard, one; without it, the second call runs the whole bid/ask fetch and only
+  // then discovers the position is gone. Like the re-check above, it had only the drift byte check.
+  '  jvmFreshFiring();\n' +
+  '  await checkAutoTrades();\n' +
+  '  const __clPos=paperAccount.openPositions[0]||{};\n' +
+  '  const __clBalBefore=paperAccount.balance;\n' +
+  '  const __clFBA=fetchBidAsk; let __clFBACalls=0;\n' +
+  '  fetchBidAsk=function(p){ __clFBACalls++; return __clFBA.apply(this,arguments); };\n' +
+  '  const __cl1=closePaperPosition(__clPos.id,true), __cl2=closePaperPosition(__clPos.id,true);\n' +
+  '  await Promise.all([__cl1,__cl2]);\n' +
+  '  fetchBidAsk=__clFBA;\n' +
+  '  const __clClosed=paperAccount.closedPositions.filter(function(p){ return p.id===__clPos.id; });\n' +
+  '  g.record("JVMCLOSE-1","PRECONDITION: the concurrent duplicate close was fired against a REAL open position and it did close, exactly once",\n' +
+  '    !!__clPos.id&&__clClosed.length===1&&\n' +
+  '    !paperAccount.openPositions.some(function(p){ return p.id===__clPos.id; })&&\n' +
+  '    paperAccount.balance===parseFloat((__clBalBefore+__clClosed[0].pnl).toFixed(2)),\n' +
+  '    "id="+String(__clPos.id)+" closed records="+__clClosed.length+", balance "+__clBalBefore+" -> "+\n' +
+  '    paperAccount.balance+" (exactly one P&L application)");\n' +
+  '  g.record("JVMCLOSE-2","the concurrent duplicate is rejected OUTRIGHT -- it never reaches the bid/ask fetch, let alone the ledger",\n' +
+  '    __clFBACalls===1,\n' +
+  '    "fetchBidAsk calls across two concurrent closes of the same id="+__clFBACalls+\n' +
+  '    " (without the in-flight guard the second call fetches too, and only then finds the position gone)");\n' +
   // ══ MOGO-021 LEAKED HOURLY TIMER ══════════════════════════════════════════════════════════
   // disconnect() cleared scanInterval and countdownInterval but NOT autoScanTimer, and initAll then
   // assigned a NEW hourly timer over the handle -- so the old one kept running with nothing left to
