@@ -2169,6 +2169,27 @@ let alexGReplayState={running:false,cancelRequested:false,lastResult:null,lastSt
 // alexGLastEvaluatedCloseTime[pair][timeframe] -- drives the H1-master-clock multi-timeframe
 // replay/live loop approved for a later phase; only declared here in Phase 1.
 let alexGLastEvaluatedCloseTime={};
+// MOGO-021: latch for the cursor-sanity detector in alexGLivePollTick, keyed by pair|cursorValue.
+// Purely diagnostic -- it gates only whether the condition has already been reported, never
+// whether an instrument is evaluated or a trade is opened, so it cannot desynchronize into a
+// trading decision. Re-keys automatically if the bad cursor changes value.
+//
+// Bounded, because the key space is NOT one-per-pair as first assumed. Under the primary fault
+// mode -- a feed persistently future-dating candles -- the cursor advances each time the pair is
+// finally evaluated, minting a new key: measured at ~3 keys/hour across 12 pairs under a +3h shift,
+// which is unbounded growth in a tab designed to stay open indefinitely. FIFO-evicted at a named
+// cap, matching decisionEventKnownCandidateIds; every other bounded structure in this file does
+// the same and this was the only one that did not.
+const ALEXG_CURSOR_SANITY_REPORTED_MAX=500;
+const ALEXG_CURSOR_MAX_AHEAD_MS=2*3600000;
+let alexGCursorSanityReported=new Set();
+function alexGMarkCursorSanityReported(key){
+  alexGCursorSanityReported.add(key);
+  if(alexGCursorSanityReported.size>ALEXG_CURSOR_SANITY_REPORTED_MAX){
+    const oldest=alexGCursorSanityReported.values().next().value;
+    alexGCursorSanityReported.delete(oldest);
+  }
+}
 // alexGSetupState -- Phase 3 setup-qualification records (REPEATED ZONE REACTION /
 // BREAK & RETEST). Fully separate from alexGJournalEntries/journalEntries -- Phase 3
 // creates zero trades and zero paper positions, only setup-qualification records.
@@ -5031,11 +5052,54 @@ async function alexGLivePollTick(){
     for(const pair of SCAN_PAIRS){
       const oPair=pair.replace('/','_');
       const lastEval=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1)||0;
+      // MOGO-021 cursor sanity -- DETECTION ONLY, deliberately fail-CLOSED.
+      //
+      // alexGRunSetupEngine derives this cursor from the last complete candle's own timestamp, so
+      // a healthy run can only ever leave it AT the boundary current when the engine ran (fixture
+      // LOOP-3: 12/12 cursors land exactly on the boundary). More than two H1 bars ahead is
+      // therefore not reachable from healthy data on a healthy clock, and only two things produce
+      // it: future-dated candle timestamps, or a local clock running >2h behind real time.
+      //
+      // In BOTH of those cases the app's time reference is untrustworthy -- and both of ALEX's
+      // time-based trade gates read that same reference: alexGIsSetupEligibleForLiveTrading
+      // compares qualificationTimestamp>=activatedAt (a future-dated qualification always passes)
+      // and alexGIsSetupSignalStale computes (now-qualificationTimestamp) (negative, so never
+      // stale). Auto-clearing the cursor to "unstarve" the instrument would therefore resume
+      // trading it precisely when the two gates that should catch bad-timestamp setups are both
+      // neutralised -- converting a no-trade state into a trade-on-corrupt-data state. An earlier
+      // revision of this block did exactly that and was withdrawn.
+      //
+      // So the cursor is NOT repaired here. The instrument stays skipped -- the same posture the
+      // short-H1-dataset guard above already takes for untrustworthy data -- and the condition is
+      // recorded instead, both on the decision bus and, durably, on the skip record itself, so
+      // instrumentsSkipped in the forward-observation ledger distinguishes "no new bar yet" from
+      // "this cursor is impossible". Repair is an operator action once the source of the bad
+      // timestamp is known; starvation from a frozen future cursor is in any case self-limiting,
+      // ending once the wall clock passes it.
+      // Two H1 bars. H1-SCOPED ON PURPOSE -- do NOT reuse this tolerance for another timeframe:
+      // H1 is the master clock, and the .D/.W cursors are written only inside a loop gated on
+      // `closeTimes[tf][ptr+1] <= h1CloseTs`, so they are structurally clamped at or behind .H1
+      // and can never lead it. A per-timeframe generalization of this guard would be redundant.
+      const cursorAhead=lastEval>currentH1Boundary+ALEXG_CURSOR_MAX_AHEAD_MS;
+      if(cursorAhead){
+        // Latched per (pair,cursor): the fault persists across every 60s poll, and an unlatched
+        // emit would flood the 500-entry decision ring and evict the rest of the scan's evidence.
+        const latch=oPair+'|'+lastEval;
+        if(!alexGCursorSanityReported.has(latch)){
+          alexGMarkCursorSanityReported(latch);
+          emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,
+            correlationId:__scanId,pair:oPair,source:'alexGLivePollTick',stage:'CURSOR_SANITY',
+            reasonCode:'STATE_CURSOR_AHEAD_OF_CLOCK',severity:'ERROR',
+            reasonText:'Evaluation cursor dated ahead of the clock -- instrument held out of live evaluation until the source of the timestamp is resolved',
+            context:{lastEvaluatedH1:lastEval,currentH1Boundary,aheadMs:lastEval-currentH1Boundary},
+            evidenceCompleteness:'MINIMAL'});
+        }
+      }
       // MOGO forward-reliability: a pair skipped here previously left NO trace at all, so a pair
       // whose cursor never falls behind the current boundary disappears from forward coverage
       // permanently and invisibly -- the EUR_USD signature (zero poll appearances, zero
       // evaluations, no error). The skip decision itself is unchanged; it is now recorded.
-      if(currentH1Boundary<=lastEval){ __obsSkipped.push({pair:oPair,lastEvaluatedH1:lastEval,currentH1Boundary}); continue; }
+      if(currentH1Boundary<=lastEval){ __obsSkipped.push({pair:oPair,lastEvaluatedH1:lastEval,currentH1Boundary,cursorAheadOfClock:cursorAhead}); continue; }
       __obsAdvanced=true; __obsEvaluated.push(oPair);
       await alexGEvaluatePairForLiveSetups(oPair,__scanId);
     }
@@ -11514,6 +11578,10 @@ const REASON_CODE_REGISTRY=Object.freeze({
   STATE_ALREADY_TRADED_TODAY:Object.freeze({code:'STATE_ALREADY_TRADED_TODAY',category:'STATE',label:'Pair already traded today'}),
   STATE_SIGNAL_ALREADY_DECIDED:Object.freeze({code:'STATE_SIGNAL_ALREADY_DECIDED',category:'STATE',label:'Signal already decided (duplicate-prevention)'}),
   STATE_SIGNAL_STALE:Object.freeze({code:'STATE_SIGNAL_STALE',category:'STATE',label:'Signal stale (missed its evaluation window)'}),
+  // Registered before first use. An evaluation cursor dated implausibly far ahead of the wall
+  // clock cannot be produced by a healthy engine run and permanently removes an instrument from
+  // forward coverage; recording it is what makes that condition visible rather than silent.
+  STATE_CURSOR_AHEAD_OF_CLOCK:Object.freeze({code:'STATE_CURSOR_AHEAD_OF_CLOCK',category:'STATE',label:'Evaluation cursor dated ahead of the clock'}),
   CONFIG_AUTOMATION_DISABLED:Object.freeze({code:'CONFIG_AUTOMATION_DISABLED',category:'CONFIG',label:'Automated trading is turned off'}),
   CONFIG_BEFORE_ACTIVATION:Object.freeze({code:'CONFIG_BEFORE_ACTIVATION',category:'CONFIG',label:'Setup qualified before live trading was activated'}),
   CONFIG_ENTRY_DAY_NOT_ELIGIBLE:Object.freeze({code:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',category:'CONFIG',label:'Entry day is outside the configured eligible days'}),
@@ -11678,6 +11746,12 @@ function clearDecisionEvents(){
   decisionEventSequenceCounter=0;
   decisionEventValidationFailures=[];
   decisionEventKnownCandidateIds=new Set();
+  // MOGO-021: the cursor-sanity latch must be cleared here too. Without this, clearing the bus
+  // from Diagnostics permanently silences an ONGOING cursor fault -- the latch would still say
+  // "already reported" while the event it referred to had just been deleted, leaving the fault
+  // invisible on the bus for the rest of the tab's life. Same failure class, and same remedy,
+  // as decisionEventKnownCandidateIds on the line above.
+  alexGCursorSanityReported=new Set();
 }
 
 // ── v12.6.0 PROGRAM-001 Phase 2C Wave 1: ALEX Candidate Lifecycle Instrumentation ──

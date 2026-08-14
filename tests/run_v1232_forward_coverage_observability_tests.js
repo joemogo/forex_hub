@@ -225,18 +225,68 @@ const wrapped = new Function('g',
   '  alexGLastEvaluatedCloseTime={}; \n' +
   '  await alexGLivePollTick();\n' +
   '  const bndS=Math.floor(g.now()/3600000)*3600000;\n' +
+  // Capture what the poll ACTUALLY hands the durable ledger, rather than asserting on a
+  // hand-built observation -- the durable skip record is the operator-visible artifact.
+  '  var __lastObs=null; const __origRecObs=evidenceRecordForwardObservations;\n' +
+  // Capture the record the DURABLE BUILDER produces, not the raw object handed to the recorder.
+  // An earlier version asserted on the seam input and therefore passed even when the builder
+  // stripped the field entirely -- it tested the hook, not the schema.
+  '  evidenceRecordForwardObservations=function(input){ __lastObs=evidenceBuildPollObservation((input&&input.poll)||{}); return __origRecObs.apply(this,arguments); };\n' +
+  '  g.lastObs=function(){ return __lastObs||{}; };\n' +
   '  alexGLastEvaluatedCloseTime["EUR_USD"]={H1:bndS+72*3600000};   // cursor 3 days ahead\n' +
-  '  let seen=0;\n' +
+  '  let seen=0,skips=0,flagged=0;\n' +
   '  for(let h=0;h<8;h++){ g.advanceHour(); await alexGLivePollTick();\n' +
   '    const b=Math.floor(g.now()/3600000)*3600000;\n' +
-  '    if(alexGLastEvaluatedCloseTime["EUR_USD"].H1===b) seen++; }\n' +
-  '  g.record("STARVE-1","BEHAVIOUR: a cursor dated ahead of the boundary starves the instrument with NO recovery",\n' +
-  '    seen===0,"evaluated "+seen+"/8 hours -- exactly the EUR_USD signature");\n' +
+  '    if(alexGLastEvaluatedCloseTime["EUR_USD"].H1===b) seen++;\n' +
+  '    const rec=(g.lastObs().instrumentsSkipped||[]).filter(function(x){return x.pair==="EUR_USD";})[0];\n' +
+  '    if(rec) skips++; if(rec&&rec.cursorAheadOfClock===true) flagged++; }\n' +
+  '  g.record("STARVE-1","an impossible cursor holds the instrument OUT of live evaluation (fail-closed)",\n' +
+  '    seen===0&&skips===8,"evaluated "+seen+"/8, skipped "+skips+"/8 -- untrusted timestamps are not traded on");\n' +
   '  const others=SCAN_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return op!=="EUR_USD";})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===Math.floor(g.now()/3600000)*3600000; });\n' +
-  '  g.record("STARVE-2","the other 11 remain healthy throughout -- starvation is per-instrument",others.length===11,"healthy="+others.length+"/11");\n' +
-  '  g.record("STARVE-3","the loop has NO guard clamping an impossible future-dated cursor",\n' +
-  '    alexGLastEvaluatedCloseTime["EUR_USD"].H1>Math.floor(g.now()/3600000)*3600000,"cursor still ahead; never reset");\n' +
+  '  g.record("STARVE-2","the other 11 remain healthy throughout -- the condition is per-instrument",others.length===11,"healthy="+others.length+"/11");\n' +
+  '  g.record("STARVE-3","the flag SURVIVES the durable builder -- the ledger separates a normal skip from an impossible cursor",\n' +
+  '    flagged===8,"flagged "+flagged+"/8 records built by evidenceBuildPollObservation");\n' +
+  '  const cur=decisionEventLog.filter(function(e){return e&&e.reasonCode==="STATE_CURSOR_AHEAD_OF_CLOCK";});\n' +
+  '  g.record("STARVE-4","the condition is reported ONCE, not re-emitted every poll (the ring is not flooded)",\n' +
+  '    cur.length===1,"events="+cur.length+" across 8 polls");\n' +
+  '  const c0=(cur[0]||{}).context||{};\n' +
+  '  g.record("STARVE-5","the record carries the cursor, the boundary and how far ahead it was",\n' +
+  '    typeof c0.lastEvaluatedH1==="number"&&typeof c0.currentH1Boundary==="number"&&typeof c0.aheadMs==="number","aheadMs="+c0.aheadMs);\n' +
+  '  g.record("STARVE-6","the cursor is NOT auto-repaired -- resuming trade evaluation on untrusted time is not the remedy",\n' +
+  '    alexGLastEvaluatedCloseTime["EUR_USD"].H1===bndS+72*3600000,"cursor left intact for operator diagnosis");\n' +
+  // ── the threshold itself, tested at the boundary rather than 2h away from it ──
+  '  alexGLastEvaluatedCloseTime={}; g.advanceHour(); await alexGLivePollTick();\n' +
+  '  function cursorEventsFor(op){ return decisionEventLog.filter(function(e){return e&&e.reasonCode==="STATE_CURSOR_AHEAD_OF_CLOCK"&&e.pair===op;}).length; }\n' +
+  '  const bT=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  alexGLastEvaluatedCloseTime["USD_JPY"]={H1:bT+2*3600000};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("STARVE-7","exactly +2h does NOT trip the detector -- the boundary is inclusive as written",\n' +
+  '    cursorEventsFor("USD_JPY")===0,"no event at +2h exactly");\n' +
+  '  alexGLastEvaluatedCloseTime["USD_CHF"]={H1:bT+2*3600000+1};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("STARVE-8","one millisecond past +2h DOES trip it -- the fixture discriminates at the threshold",\n' +
+  '    cursorEventsFor("USD_CHF")===1,"event at +2h+1ms");\n' +
+  '  const bH=Math.floor(g.now()/3600000)*3600000; alexGLastEvaluatedCloseTime["AUD_USD"]={H1:bH};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("STARVE-9","a healthy on-boundary cursor never trips it",cursorEventsFor("AUD_USD")===0,"no false positive");\n' +
+  // ── the latch must not outlive the events it refers to ──
+  '  alexGLastEvaluatedCloseTime={}; g.advanceHour(); await alexGLivePollTick();\n' +
+  '  const bC=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  alexGLastEvaluatedCloseTime["GBP_JPY"]={H1:bC+50*3600000};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const firstReport=cursorEventsFor("GBP_JPY");\n' +
+  '  clearDecisionEvents();\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("STARVE-10","clearing the bus RE-ARMS the detector -- a dev-only button cannot permanently silence a live fault",\n' +
+  '    firstReport===1&&cursorEventsFor("GBP_JPY")===1,"reported again after clear (was "+firstReport+" before)");\n' +
+  '  g.record("STARVE-11","the latch is a bounded Set, not an unbounded object -- it cannot grow forever in a long-lived tab",\n' +
+  '    alexGCursorSanityReported instanceof Set&&alexGCursorSanityReported.size<=ALEXG_CURSOR_SANITY_REPORTED_MAX,\n' +
+  '    "size="+alexGCursorSanityReported.size+" cap="+ALEXG_CURSOR_SANITY_REPORTED_MAX);\n' +
+  '  for(let k=0;k<ALEXG_CURSOR_SANITY_REPORTED_MAX+50;k++) alexGMarkCursorSanityReported("SYNTH|"+k);\n' +
+  '  g.record("STARVE-12","and it evicts oldest-first at the cap rather than growing past it",\n' +
+  '    alexGCursorSanityReported.size===ALEXG_CURSOR_SANITY_REPORTED_MAX&&!alexGCursorSanityReported.has("SYNTH|0"),\n' +
+  '    "size="+alexGCursorSanityReported.size+" after inserting cap+50; oldest evicted");\n' +
   '  return g;\n' +
   '})();'
 );
