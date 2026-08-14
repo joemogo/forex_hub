@@ -315,6 +315,10 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("RE-1","two CONCURRENT poll ticks both genuinely run -- the hazard is exercised, not avoided",\n' +
   '    decisionEventLog.filter(function(e){return e.eventType==="SCAN_STARTED";}).length===2,\n' +
   '    "SCAN_STARTED="+decisionEventLog.filter(function(e){return e.eventType==="SCAN_STARTED";}).length);\n' +
+  // ATTRIBUTION, established by mutation rather than assumed: with ALL FIVE identity-keyed guards
+  // disabled (the four at index.html:4302 plus the tradeId guard at 4361) these still pass. The
+  // guard that actually holds under concurrency is the pair+timeframe OVERLAP rule at
+  // index.html:4314. Removing that makes RE-2 and RE-4 fail with two positions open.
   '  g.record("RE-2","and they open exactly ONE position between them -- no duplicate trade",\n' +
   '    alexGAccount.openPositions.length===1,"openPositions="+alexGAccount.openPositions.length);\n' +
   '  g.record("RE-3","one journal entry and one traded-signal mark, not two",\n' +
@@ -326,6 +330,15 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("RE-5","concurrent rebuild of the SAME pair does not duplicate its setup state",\n' +
   '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
   '    "EUR_USD setups after concurrent rebuild="+alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length);\n' +
+  // Names the operative guard, so the attribution is asserted rather than left to a comment.
+  '  g.record("RE-6","the guard holding under concurrency is the pair+timeframe OVERLAP rule, not signal identity",\n' +
+  '    alexGAccount.openPositions.filter(function(p){return p.pair==="EUR_USD"&&p.timeframe==="H1";}).length===1,\n' +
+  '    "one open EUR_USD/H1 position -- index.html:4314 is what prevents the second");\n' +
+  // SCOPE LIMIT, stated so this suite is not read as covering the identity-drift defect.
+  '  g.record("RE-7","SCOPE: these ticks share one identity, so they do NOT exercise the signal-drift defect",\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).map(alexGLiveSignalId)\n' +
+  '      .every(function(id){ return alexGAutoTrading.tradedSignals[id]===true; }),\n' +
+  '    "identity is stable within a session; drift needs a candle-window shift (see report 2.16)");\n' +
   '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__suspendWas;\n' +
   '  g.record("E2E-17","the suspension flag is RESTORED -- this suite leaves production policy as it found it",\n' +
   '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true,\n' +
