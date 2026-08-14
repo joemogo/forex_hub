@@ -26,7 +26,19 @@
 // PROTECTED FUNCTIONS ARE CALLED, NEVER MODIFIED OR RE-IMPLEMENTED:
 //   detectSignals, scoreConfluence, bestConfluence, computeAOI, computeAOIWithTouches,
 //   findSwingPoints, findAOIs, getSession, getBias, getScore, evaluateLiveTrigger,
-//   alexGZoneRole, alexGConstructLivePosition, alexGDetermineTradeDirection, pipSize.
+//   alexGZoneRole, alexGConstructLivePosition, alexGDetermineTradeDirection, pipSize,
+//   alexGRunSetupEngine, alexGCheckSwingAt, alexGFindSwingPoints, alexGAssignCluster, calcATR.
+//
+// S12 (the ALEX FROZEN ZONE ENGINE) drives the REAL alexGRunSetupEngine over constructed H1
+// price series and then asserts the EXACT zone and setup the frozen engine produced -- its
+// boundaries, its touch list, its strength tier, its quality, its break direction, its
+// qualification close. calcATR is exposed alongside it because several S12 series place a
+// candle at an EXACT multiple of the engine's own ATR; the fixture uses the engine's own
+// frozen ATR function to build that candle, and then asserts what the engine decides about it.
+// Nothing in S12 is stubbed, wrapped or forced: the only writes are to ordinary application
+// state (alexGZoneState / alexGSetupState / alexGLastEvaluatedCloseTime), reset between
+// fixtures exactly as a fresh page load resets them. NO PAPER TRADE IS EVER PERSISTED --
+// alexGConstructLivePosition is the pure decision core and writes to no account or journal.
 //
 // Run from the project root:
 //   osascript -l JavaScript tests/run_v1237_detection_controls_tests.js
@@ -170,6 +182,17 @@ const wrapped = new Function('g',
   'g.alexGZoneRole=alexGZoneRole;' +
   'g.alexGConstructLivePosition=alexGConstructLivePosition;' +
   'g.pipSize=pipSize;' +
+  // ── S12: the frozen ALEX zone/setup engine and its own helpers, called never re-implemented ──
+  'g.alexGRunSetupEngine=alexGRunSetupEngine;' +
+  'g.alexGCheckSwingAt=alexGCheckSwingAt;' +
+  'g.alexGFindSwingPoints=alexGFindSwingPoints;' +
+  'g.alexGAssignCluster=alexGAssignCluster;' +
+  'g.alexGDetermineTradeDirection=alexGDetermineTradeDirection;' +
+  'g.calcATR=calcATR;' +
+  // ── S13: the two UNCOVERED copies of the counter-trend predicate ──
+  'g.evaluateSetupFullBreakdownCore=evaluateSetupFullBreakdownCore;' +
+  'g.simulateTrueMTFReplay=simulateTrueMTFReplay;' +
+  'g.calcBiasFromCandles=calcBiasFromCandles;' +
   // ── PROTECTED CONSTANTS, read through live accessors so a fixture can never hold a stale copy
   //    and can never assign one back ──
   'g.ALERT_THRESHOLD=function(){return ALERT_THRESHOLD;};' +
@@ -184,6 +207,13 @@ const wrapped = new Function('g',
   'g.resetAlexG=function(){ alexGAccount={balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]};' +
   '  alexGJournalEntries=[]; alexGAutoTrading={enabled:false,tradedToday:{},log:[],activatedAt:null,tradedSignals:{}}; };' +
   'g.resetPairData=function(){ pairData={}; };' +
+  // Ordinary ALEX zone-engine state, reset exactly as a fresh page load resets it (these three
+  // are plain module-level variables the app itself re-initialises the same way). Deliberately
+  // SEPARATE from the engine run itself, so an S12 fixture can also decline to reset and drive
+  // the engine twice over the same persisted state -- which is precisely what live polling does.
+  'g.resetAlexGZoneEngine=function(){ alexGZoneState={}; alexGSetupState=[]; alexGLastEvaluatedCloseTime={}; };' +
+  'g.alexGZoneStateFor=function(pair,tf){ return alexGZoneState[pair][tf]; };' +
+  'g.alexGSetupStateAll=function(){ return alexGSetupState; };' +
   'return runV1237DetectionControlFixtures(g);'
 );
 

@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 25 suites 1,514/1,514 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 25 suites 1,538/1,538 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -2301,10 +2301,10 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `52333fe` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `c7413e6` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical **25** suites **1,514 / 1,514** · platform 25 suites **1,049 / 1,049** ·
+**Gates:** canonical **25** suites **1,538 / 1,538** · platform 25 suites **1,049 / 1,049** ·
 protected drift **0** against the **v12.21.0** baseline (63 functions, 4 constants).
 
 ### Governance decisions already authorized and DONE — do not re-litigate
@@ -2589,20 +2589,53 @@ previously had **no control of any kind, on either side**.
   derives the reachable lattice from the live `WEIGHTS`, so it also fails if any weight ever makes 54
   or 56 reachable.
 
-### 15.5b Still uncovered, and named rather than implied
+### 15.5b The ALEX zone engine's own rules — CLOSED
 
-* **The counter-trend rule exists in THREE places and one is covered.** The predicate appears in
-  `evaluateLiveTrigger` (the live decision path — covered), `evaluateSetupFullBreakdownCore`
-  (diagnostics) and `simulateTrueMTFReplay`. The two uncovered copies can diverge from the live rule
-  silently.
-* **`findSwingPoints` has a parallel copy**, `alexGFindSwingPoints`, with identical `>=`/`<=`
-  comparisons and no coverage.
-* **The organic zone-engine controls are not started** — the largest remaining chunk. Of eight
-  rule-level mutations inside `alexGProcessTimeframeCandle`, seven still survive: displacement
-  threshold and boundary, same-interaction dedup, break-confirmation count, **break direction**,
-  choppy boundary, prior-role inference. The organic fixtures assert *"a setup was produced and a
-  trade opened"* — never *which* zone, at *what* price, from *which* touch, in *which* direction.
-  That is precisely why rule-level changes slip through.
+24 fixtures added to the same suite (46 → 70). **19 of 19 previously-surviving mutations now die**,
+each scored against the whole gate, each proven applied with `index.html` restored and hash-verified
+after every run. Gate: **25 suites · 1,538 / 1,538 · drift 0**.
+
+Killed, all of which previously survived all 1,514 fixtures: displacement threshold and its `>=`
+boundary; same-interaction dedup; break-confirmation count; **break direction inverted**; the
+wick-only penetration side (a bonus find, not on the brief); the choppy boundary; prior-role
+inference; `zoneStrength` tiers; inclusive touch bounds; `qualificationClose` taken from the previous
+candle; the same-interaction gap; the swing lookback-edge guard; blindness to swing highs; cluster
+tolerance; and highs sharing a low cluster. **Independently re-verified here:** inverting
+`zone.brokenDirection` now kills ZONE-Z3-1 and ZONE-Z5-1/2/3/4 — before this work it killed nothing.
+
+**Both remaining copies of the counter-trend rule are now covered too** —
+`evaluateSetupFullBreakdownCore` and both gates inside `simulateTrueMTFReplay` — as is
+`alexGFindSwingPoints`, the parallel copy of `findSwingPoints`.
+
+**How the series are built, because it is the part that makes the boundary fixtures possible:** every
+bar's range is exactly `2^-10` with each close inside the next bar's range, so the frozen `calcATR`
+returns exactly `2^-10` with no floating-point residue. The displacement threshold is then exactly
+`2^-12`, and a candle can sit *exactly* on it — which is the only way to kill a `>=`→`>` flip. The
+engine decides everything after that.
+
+**Three honesty notes from that work, each of which I'd rather have than a clean sweep:**
+
+* **One recipe I supplied was not constructible, and the agent said so instead of faking it.** "Two
+  swing lows 3 bars apart → one touch" cannot exist: with lookback 3, a swing low at bar *j* requires
+  the next three lows to be higher, while a swing low at *j+3* requires the opposite. Two same-type
+  anchors can never be within `lookback` bars in one array. But the dedup rule is **not** an
+  equivalent mutant — `alexGRunSetupEngine` re-runs over a rolling window every poll while
+  `alexGZoneState` persists, so the same interaction is re-offered at a bar index that shifts by one
+  each time a candle closes. The fixtures exercise exactly that, and only the shifted variant kills
+  the gap-to-zero mutation.
+* **One listed gap was already covered.** The closest real rule — inverting the anchor price selection
+  — killed 39 existing fixtures before anything was written. No new coverage was needed, and none was
+  invented to look productive.
+* **The one arguably self-referential assertion is isolated and labelled** a precondition on the
+  fixture's own inputs, with the actual verdict asserted separately — the trap that caught the
+  previous agent.
+
+### 15.5c Still uncovered, and named rather than implied
+
+* **Not yet re-examined with mutation testing:** market-data continuity; ALEX and JVM end-to-end
+  paper trading; position lifecycle, persistence and ledger/account reconciliation; restart/recovery;
+  diagnostics and observability. §8 marks these done, but on evidence gathered *before* the anchored-
+  coverage problem was understood. Each needs the same treatment before anything is called GREEN.
 
 ### 15.5 Disposition
 

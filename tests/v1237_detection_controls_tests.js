@@ -880,6 +880,843 @@ function runV1237DetectionControlFixtures(g){
     return 'ask 1.10000 -> delay 0 pips -> TRADE OPENED';
   });
 
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // S12 — THE ALEX FROZEN ZONE ENGINE'S OWN RULES
+  //
+  // WHAT WAS MISSING. The organic ALEX fixtures elsewhere in this repository (v126, v017,
+  // run_v1236) do drive real candles end to end, and they do catch total blindness -- deleting
+  // the engine kills 39 of them. But they assert only that A SETUP WAS PRODUCED AND A TRADE
+  // OPENED. They never assert WHICH zone, at WHAT price, from WHICH touch, in WHICH direction.
+  // That is exactly why an audit could invert the BREAK DIRECTION -- the field that decides
+  // whether a break-and-retest is bought or sold -- and watch 1,514 fixtures stay green: the
+  // scenario still yielded *a* setup. S12 asserts the zone and the setup themselves.
+  //
+  // HOW THE SERIES ARE BUILT, AND WHY IT IS STILL THE ENGINE THAT DECIDES.
+  // Every S12 series is made of bars whose range is EXACTLY T = 2^-10 = 0.0009765625 price
+  // units, with every close falling inside the following bar's own range. That makes each bar's
+  // true range exactly T, so the frozen calcATR() -- which averages 14 true ranges -- returns
+  // exactly T, with no floating-point residue at all (T and every partial sum k*T for k<=14 are
+  // exact binary fractions, and 14T/14 is exact). Two things follow, and both are properties of
+  // the ENGINE'S OWN arithmetic, not of anything the fixtures impose:
+  //   * the reaction-displacement threshold is exactly 0.25*T = 2^-12, so a candle can be placed
+  //     EXACTLY ON it -- the only way to kill a `>=` -> `>` flip on that comparison; and
+  //   * the zone-cluster grouping tolerance is exactly 0.5*T, so cluster membership is decidable
+  //     by hand and the resulting zone boundaries are exact, assertable numbers.
+  // Everything after that is the frozen engine's: which bars are swings, which reactions
+  // qualify, where the zone's edges lock, how many touches it counts, when it breaks, which way
+  // it broke, and what setup (if any) that produces. The fixtures report those verdicts.
+  //
+  // A swing anchor here is a bar whose low dips below its six neighbours (or whose high rises
+  // above them). The engine's own swing test is STRICT on both sides, so two bars sharing a low
+  // are neither of them a swing -- that is used deliberately to place wick-only penetrations
+  // that are provably not reactions.
+  //
+  // NO PAPER TRADE IS PERSISTED ANYWHERE IN S12. alexGConstructLivePosition is the pure decision
+  // core: it RETURNS a position and writes to no account, journal, ledger or store. ALEX state
+  // is reset before each call and nothing is ever committed.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  const T=0.0009765625;            // 2^-10 -- the exact bar range every S12 series uses
+  const ATR_EXACT=T;               // therefore the engine's own 14-period ATR, exactly
+  const DISP_THRESHOLD=0.25*T;     // 2^-12 -- rejectionDisplacementATRMultiplier * ATR, exactly
+  const SHELF_LOW=1.09840;         // the "shelf" every low-cluster series rests on
+  const SHELF_CLOSE=1.09880;       // inside every bar's range in those series, so every TR is T
+  const SHELF_HIGH=1.09960;        // the mirror shelf for the high-cluster (resistance) series
+  const SHELF_CLOSE_HI=1.09930;
+  const H1_MS=3600000;
+  const SERIES_T0=Date.UTC(2026,0,5,0,0,0); // a Monday; irrelevant to every S12 verdict, since
+                                            // the zone engine has no session or day gate at all
+
+  // A bar pinned by its LOW: range exactly T, close supplied.
+  function loBar(low,close){ return{o:close,h:low+T,l:low,c:close}; }
+  // A bar pinned by its HIGH: range exactly T, close supplied.
+  function hiBar(high,close){ return{o:close,h:high,l:high-T,c:close}; }
+  // Stamps real candle times on a bar list. barOffset lets the SAME market bar keep the SAME
+  // timestamp when a rolling window drops an older candle -- which is what makes the re-run
+  // fixtures a genuine simulation of live polling rather than a relabelling exercise.
+  function h1(bars,barOffset){
+    const off=barOffset||0;
+    return bars.map(function(b,i){ return{o:b.o,h:b.h,l:b.l,c:b.c,t:new Date(SERIES_T0+(off+i)*H1_MS)}; });
+  }
+  function runEngine(bars){ return g.alexGRunSetupEngine('EUR_USD',{H1:bars,H4:[],D:[],W:[]}); }
+  function onlyZone(res){
+    const zs=res.zones.H1.validatedZones;
+    if(zs.length!==1) throw new Error('expected exactly one validated zone, got '+zs.length);
+    return zs[0];
+  }
+  function touchSummary(z){
+    return z.touches.map(function(t){ return t.barIndex+'@'+t.price+'/'+t.swingType+'/'+t.fromSide; }).join(' ');
+  }
+
+  // ── THE SUPPORT SERIES ────────────────────────────────────────────────────────────────────
+  // A flat shelf at 1.09840/1.0993765625 with four dips beneath it, 8 bars apart. Three of them
+  // (1.09800, 1.09810, 1.09790) are the reactions that validate a zone; the fourth is the return
+  // that can qualify as a setup. fourthLow is the ONE variable the A10 pair moves.
+  function supportSeries(fourthLow,n){
+    const bars=[];
+    const len=n||50;
+    for(let i=0;i<len;i++) bars.push(loBar(SHELF_LOW,SHELF_CLOSE));
+    bars[20]=loBar(1.09800,SHELF_CLOSE);
+    bars[28]=loBar(1.09810,SHELF_CLOSE);
+    bars[36]=loBar(1.09790,SHELF_CLOSE);
+    if(fourthLow!=null) bars[44]=loBar(fourthLow,SHELF_CLOSE);
+    // The qualification bar carries a DIFFERENT close from its predecessor, so "this candle's
+    // close" and "the previous candle's close" are distinguishable values.
+    if(len>47) bars[47]=loBar(SHELF_LOW,1.09890);
+    return h1(bars);
+  }
+
+  await t('ZONE-Z1-1 the validated zone IS the three reactions -- exact edges, exact centre, exact touches',async function(){
+    g.resetAlexGZoneEngine();
+    const bars=supportSeries(null,44);
+    const z=onlyZone(runEngine(bars));
+    // PRECONDITION, from the engine's own ATR function, not from this fixture's arithmetic.
+    eq(g.calcATR(bars.slice(0,37),14),ATR_EXACT,'the engine’s own 14-period ATR at the validating anchor');
+    // The zone's edges are the extremes of the three reactions -- not the shelf, not the centre
+    // of mass, not a widened band.
+    eq(z.low,1.09790,'zone LOW is the lowest of the three reactions');
+    eq(z.high,1.09810,'zone HIGH is the highest of the three reactions');
+    eq(z.center,1.09800,'zone CENTRE is the midpoint of those two edges');
+    eq(z.touches.length,3,'exactly three touches -- the shelf bars are not reactions');
+    eq(z.zoneStrength,'valid','three touches is the "valid" tier, by name');
+    eq(z.status,'validated','and it is validated, not broken');
+    eq(z.quality,'clean','with no wick-only penetration recorded');
+    eq(z.brokenDirection,null,'and no break direction, because it has not broken');
+    eq(z.formedAtBar,37,'formed at the validating reaction’s own confirmation bar');
+    // Each touch is the swing bar itself, at the swing bar's own price, approached from above.
+    eq(touchSummary(z),'20@1.098/low/above 28@1.0981/low/above 36@1.0979/low/above',
+      'every touch names its own bar, its own price, its own swing type and its own approach side');
+    return 'zone [1.09790,1.09810] c=1.09800 touches=3 valid/validated/clean';
+  });
+
+  await t('ZONE-Z1-2 the 4th touch is admitted at EXACTLY the zone’s upper edge -- one tick higher and it is not',async function(){
+    // POSITIVE: a reaction whose price sits exactly ON zone.high is inside the zone.
+    g.resetAlexGZoneEngine();
+    const onEdge=runEngine(supportSeries(1.09810));
+    const ze=onlyZone(onEdge);
+    eq(ze.high,1.09810,'PRECONDITION: the reaction price and the zone edge are the same number');
+    eq(ze.touches.length,4,'a reaction exactly on the edge IS counted');
+    eq(ze.touches[3].price,1.09810,'at its own price');
+    eq(ze.touches[3].barIndex,44,'from its own bar');
+    eq(ze.zoneStrength,'strong','four touches is the "strong" tier');
+    eq(onEdge.setups.length,1,'and it produces exactly one setup');
+    // NEGATIVE, ONE TICK AWAY: the same series with that fourth dip a single pip higher, so it
+    // falls OUTSIDE the locked zone. The engine gives it its own cluster instead of a touch.
+    g.resetAlexGZoneEngine();
+    const above=runEngine(supportSeries(1.09811));
+    const za=onlyZone(above);
+    eq(za.touches.length,3,'one pip above the edge is not a touch of this zone');
+    eq(za.zoneStrength,'valid','so the zone stays at three touches');
+    eq(above.setups.length,0,'and no setup is produced at all');
+    eq(above.zones.H1.provisionalClusters.length,1,'the refused reaction started its own cluster instead');
+    return 'low 1.09810 (== zone.high) -> 4 touches, strong, 1 setup | low 1.09811 -> 3 touches, valid, 0 setups';
+  });
+
+  await t('ZONE-Z1-3 the setup names the exact touch, the exact close and the exact direction it was built from',async function(){
+    g.resetAlexGZoneEngine();
+    const res=runEngine(supportSeries(1.09810));
+    eq(res.setups.length,1,'PRECONDITION: exactly one setup');
+    const s=res.setups[0];
+    eq(s.setupType,'A_repeatedReaction','a 4th reaction into an unbroken zone is a repeated reaction');
+    eq(s.setupLabel,'REPEATED ZONE REACTION','under its user-facing label');
+    eq(s.zoneTouchNumber,4,'it is the FOURTH touch, counted from the zone’s own tally');
+    eq(s.reactionSwingType,'low','built from a swing LOW');
+    eq(s.reactionFromSide,'above','approached from above the zone');
+    eq(s.reactionPrice,1.09810,'at the reaction’s own price');
+    eq(s.zoneLow,1.09790,'carrying the zone’s own low');
+    eq(s.zoneHigh,1.09810,'and its own high');
+    eq(s.zoneCenter,1.09800,'and its own centre');
+    eq(s.zoneStrength,'strong','and the strength tier as of qualification');
+    eq(s.zoneQualityAtQualification,'clean','and the corrected quality as of qualification');
+    eq(s.zoneStatusAtQualification,'validated','from a zone that is still validated');
+    eq(s.zoneRoleAtQualification,'support','acting as SUPPORT, because price has been above it');
+    eq(s.brokenDirection,null,'with no break direction, since it never broke');
+    eq(g.alexGDetermineTradeDirection(s).direction,'buy','so the frozen direction function makes it a BUY');
+    return 'A_repeatedReaction touch#4 @1.09810 zone[1.09790,1.09810] role=support -> buy';
+  });
+
+  await t('ZONE-Z1-4 qualificationClose is THIS candle’s close, not the previous candle’s',async function(){
+    g.resetAlexGZoneEngine();
+    const bars=supportSeries(1.09810);
+    const s=runEngine(bars)[ 'setups' ][0];
+    eq(s.qualificationBarIndex,47,'the setup qualified on bar 47');
+    // The two candidate values are DIFFERENT numbers, which is the only thing that makes this
+    // assertion capable of failing.
+    ok(bars[47].c!==bars[46].c,'PRECONDITION: bar 47 and bar 46 close at different prices ('+bars[47].c+' vs '+bars[46].c+')');
+    eq(s.qualificationClose,bars[47].c,'qualificationClose is bar 47’s own close');
+    eq(s.qualificationClose,1.09890,'which is 1.09890');
+    eq(s.qualificationTimestamp,new Date(SERIES_T0+48*H1_MS).getTime(),'stamped at bar 47’s own close time');
+    return 'qualificationBarIndex=47 close=1.09890 (bar 46 closed 1.09880)';
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // Z2 — THE REACTION-DISPLACEMENT THRESHOLD, ORGANICALLY
+  // The third reaction's confirmation candle is placed at 0.24x, 0.25x and 0.26x the engine's
+  // OWN ATR above the anchor. Only its high moves between the three series.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  function displacementSeries(multiple){
+    const bars=[];
+    for(let i=0;i<46;i++) bars.push(loBar(SHELF_LOW,SHELF_CLOSE));
+    bars[20]=loBar(1.09800,SHELF_CLOSE);
+    bars[28]=loBar(1.09810,SHELF_CLOSE);
+    bars[36]=loBar(1.09790,SHELF_CLOSE);
+    // The single confirmation candle of the third reaction. Its LOW stays above the anchor's
+    // (so the anchor is still a swing low); only its HIGH -- the displacement -- moves.
+    bars[37]={o:1.09800,h:1.09790+multiple*ATR_EXACT,l:1.09791,c:1.09800};
+    return h1(bars);
+  }
+
+  await t('ZONE-Z2-0 PRECONDITION: the 0.25x series really does sit EXACTLY on the threshold',async function(){
+    // A boundary fixture that is only NEAR the boundary cannot kill a >= -> > flip, so the
+    // identity is re-proved at run time rather than assumed. These are the fixture's own inputs
+    // being checked, not the engine's verdict -- the verdict is asserted in ZONE-Z2-1.
+    const bars=displacementSeries(0.25);
+    const atr=g.calcATR(bars.slice(0,37),14);
+    eq(atr,ATR_EXACT,'the engine’s own ATR at the third anchor is exactly 2^-10');
+    eq(g.ALEXG_CONFIG().rejectionDisplacementATRMultiplier,0.25,'and the frozen multiplier is 0.25');
+    const displacement=bars[37].h-bars[36].l;
+    eq(displacement,0.25*atr,'so the constructed displacement is EXACTLY 0.25 * ATR, bit for bit');
+    eq(displacement,DISP_THRESHOLD,'= 2^-12 = 0.000244140625');
+    ok(displacementSeries(0.24)[37].h-bars[36].l<displacement,'the 0.24x series sits strictly below it');
+    ok(displacementSeries(0.26)[37].h-bars[36].l>displacement,'and the 0.26x series strictly above');
+    return 'ATR=2^-10 exactly; displacement at 0.25x = 2^-12 exactly';
+  });
+
+  await t('ZONE-Z2-1 a reaction displacing 0.25x ATR qualifies; 0.24x does not -- and nothing else changed',async function(){
+    const seen={};
+    [0.24,0.25,0.26].forEach(function(m){
+      g.resetAlexGZoneEngine();
+      const res=runEngine(displacementSeries(m));
+      seen[m]={zones:res.zones.H1.validatedZones.length,
+               clusters:res.zones.H1.provisionalClusters.map(function(c){return c.reactions.length;}).join(',')};
+    });
+    // NEGATIVE half: below the threshold the third reaction is silently not counted.
+    eq(seen[0.24].zones,0,'0.24x ATR: NO zone is validated');
+    eq(seen[0.24].clusters,'2','and the cluster is left holding exactly TWO accepted reactions');
+    // POSITIVE half, one input away: the same series with only that candle's high raised to the
+    // threshold. Two reactions already qualified, so the negative half is provably a rejection
+    // of the third reaction and not a series that could never have produced anything.
+    eq(seen[0.25].zones,1,'0.25x ATR -- exactly AT the threshold: the zone IS validated');
+    eq(seen[0.25].clusters,'','with no cluster left over');
+    eq(seen[0.26].zones,1,'0.26x ATR: likewise validated');
+    return '0.24x -> 0 zones (cluster stuck at 2 reactions) | 0.25x -> 1 zone | 0.26x -> 1 zone';
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // Z3 — BREAK CONFIRMATION, AND THE SAME-INTERACTION RULE
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  // The support zone from Z1, then three candles closing INSIDE it (so the zone never gets a
+  // role from them), then bar 42 -- the one variable. Bar 42 always wicks below the zone; only
+  // its CLOSE decides whether that is a confirmed break or a wick.
+  function breakConfirmSeries(closeBeyond){
+    const bars=[];
+    for(let i=0;i<48;i++) bars.push(loBar(SHELF_LOW,SHELF_CLOSE));
+    bars[20]=loBar(1.09800,SHELF_CLOSE);
+    bars[28]=loBar(1.09810,SHELF_CLOSE);
+    bars[36]=loBar(1.09790,SHELF_CLOSE);
+    for(let i=39;i<48;i++) bars[i]=loBar(1.09795,1.09800); // closes inside [1.09790,1.09810]
+    bars[42]={o:1.09750,h:1.09700+T,l:1.09700,c:closeBeyond?1.09750:1.09800};
+    return h1(bars);
+  }
+
+  await t('ZONE-Z3-1 ONE close beyond a support zone breaks it; ZERO closes leaves it validated',async function(){
+    // POSITIVE: exactly one candle closes below the zone.
+    g.resetAlexGZoneEngine();
+    const broke=onlyZone(runEngine(breakConfirmSeries(true)));
+    eq(g.ALEXG_CONFIG().breakConfirmationCloses,1,'PRECONDITION: the frozen requirement is 1 close');
+    eq(broke.status,'broken','one confirming close breaks the zone');
+    eq(broke.brokenAtBar,42,'on that candle, not a later one');
+    eq(broke.brokenAt,new Date(SERIES_T0+43*H1_MS).getTime(),'stamped at that candle’s own close time');
+    eq(broke.brokenDirection,'downThroughSupport','downward, through support');
+    eq(broke.consecutiveBreakCloses,1,'after exactly one consecutive breaking close');
+    eq(broke.penetrationEvents.length,0,'a confirmed break is not recorded as a wick penetration');
+    // NEGATIVE, ONE NUMBER AWAY: the same candle, same low, same wick -- it just closes back
+    // inside the zone instead of below it.
+    g.resetAlexGZoneEngine();
+    const held=onlyZone(runEngine(breakConfirmSeries(false)));
+    eq(held.status,'validated','with zero closes beyond it the zone is NOT broken');
+    eq(held.brokenAtBar,null,'no break bar');
+    eq(held.brokenDirection,null,'no break direction');
+    eq(held.penetrationEvents.length,1,'the same wick is recorded as a penetration instead');
+    eq(held.penetrationEvents[0].startBarIndex,42,'on the same bar 42');
+    return 'close 1.09750 -> broken@42 downThroughSupport | close 1.09800 -> validated, 1 penetration@42';
+  });
+
+  // ── THE RE-RUN SERIES ─────────────────────────────────────────────────────────────────────
+  // alexGRunSetupEngine is re-run over a rolling window on EVERY live poll, and alexGZoneState
+  // persists between those runs -- so the same market interaction is re-offered to the engine
+  // over and over, at a bar index that SHIFTS by one every time a new candle closes. The
+  // same-interaction rule is what stops one reaction becoming many touches. These two fixtures
+  // deliberately do NOT reset the engine between runs, because not resetting is the real
+  // behaviour under test.
+  //
+  // (The audit's literal recipe -- "two swing lows 3 bars apart" -- is not constructible: with
+  // the engine's lookback of 3, a swing low at bar j REQUIRES candles[j+1..j+3].l > candles[j].l,
+  // while a swing low at bar j+3 requires the opposite. Two same-type swings can never be within
+  // the lookback of each other inside ONE candle array, so the rule is only reachable across
+  // runs. That is what these fixtures exercise.)
+  function reRunBars(len){
+    const bars=[];
+    for(let i=0;i<len;i++) bars.push(loBar(SHELF_LOW,SHELF_CLOSE));
+    bars[20]=loBar(1.09800,SHELF_CLOSE);
+    bars[28]=loBar(1.09810,SHELF_CLOSE);
+    bars[36]=loBar(1.09790,SHELF_CLOSE);
+    bars[44]=loBar(1.09810,SHELF_CLOSE);
+    if(len>56) bars[52]=loBar(1.09805,SHELF_CLOSE); // a genuinely NEW, later interaction
+    return bars;
+  }
+  function liveZone(){ return g.alexGZoneStateFor('EUR_USD','H1').validatedZones[0]; }
+
+  await t('ZONE-Z3-2 re-running the engine over the SAME window does not re-count the same reactions',async function(){
+    g.resetAlexGZoneEngine();
+    runEngine(h1(reRunBars(50)));
+    eq(liveZone().touches.length,4,'PRECONDITION: the first run counts four touches');
+    // Poll again with no new candle -- exactly what happens between bar closes.
+    runEngine(h1(reRunBars(50)));
+    eq(liveZone().touches.length,4,'a second pass over the same candles still counts FOUR touches');
+    eq(liveZone().touches.map(function(x){return x.barIndex;}).join(','),'20,28,36,44','the same four bars');
+    eq(g.alexGSetupStateAll().length,1,'and still exactly one setup record');
+    // POSITIVE CONTROL, in the same fixture: the third pass sees a window extended by eight
+    // candles containing a genuinely NEW interaction. It IS admitted -- so the two assertions
+    // above are the dedup rule working, not the engine having stopped looking.
+    runEngine(h1(reRunBars(58)));
+    eq(liveZone().touches.length,5,'a genuinely new reaction on the extended window IS admitted');
+    eq(liveZone().touches[4].barIndex,52,'at its own bar');
+    eq(g.alexGSetupStateAll().length,2,'producing a second setup record');
+    return 'run1=4 touches, re-run=4, extended run=5 (new touch@52)';
+  });
+
+  await t('ZONE-Z3-3 a reaction re-offered at a SHIFTED bar index is still one interaction, not two',async function(){
+    g.resetAlexGZoneEngine();
+    runEngine(h1(reRunBars(50)));
+    eq(liveZone().touches.map(function(x){return x.barIndex;}).join(','),'20,28,36,44',
+      'PRECONDITION: four touches at bars 20/28/36/44');
+    // The rolling window drops its oldest candle and gains newer ones. Every surviving bar keeps
+    // its own market timestamp, but its INDEX is now one lower -- so the four already-counted
+    // interactions come back as anchors at bars 19/27/35/43.
+    const shifted=h1(reRunBars(58).slice(1),1);
+    runEngine(shifted);
+    eq(liveZone().touches.length,5,'the four shifted repeats are still four touches, not eight');
+    eq(liveZone().touches.map(function(x){return x.barIndex;}).join(','),'20,28,36,44,51',
+      'the original four keep their original bars, and only the new interaction is added');
+    // POSITIVE CONTROL, same window, same run: the interaction eight bars past the last touch is
+    // NOT the same interaction and IS admitted -- so the four above were refused by the
+    // same-interaction rule, not by the engine refusing everything on a second pass.
+    eq(liveZone().touches[4].price,1.09805,'at the new interaction’s own price');
+    eq(liveZone().zoneStrength,'strong','and the zone tally moved by exactly one');
+    return 'shifted re-run: anchors at 19/27/35/43 deduped; the new one at 51 admitted -> 5 touches';
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // Z4 — THE CHOPPY BOUNDARY
+  // Each "episode" is a PAIR of adjacent bars sharing one low beneath the zone and closing back
+  // above it. Sharing a low is what makes them provably not reactions (the engine's swing test
+  // is strict), and adjacency is what makes the pair ONE penetration episode. A shelf bar
+  // between episodes ends the episode. Only the NUMBER of episodes changes between the two runs.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  function choppySeries(episodes){
+    const bars=[];
+    for(let i=0;i<58;i++) bars.push(loBar(SHELF_LOW,SHELF_CLOSE));
+    bars[20]=loBar(1.09800,SHELF_CLOSE);
+    bars[28]=loBar(1.09810,SHELF_CLOSE);
+    bars[36]=loBar(1.09790,SHELF_CLOSE);
+    [40,43,46].slice(0,episodes).forEach(function(start){
+      bars[start]=loBar(1.09750,1.09820);   // wicks below zone.low, closes back above zone.high
+      bars[start+1]=loBar(1.09750,1.09820); // shares the low, so neither bar is a swing
+    });
+    bars[52]=loBar(1.09810,SHELF_CLOSE);    // the 4th reaction, well clear of every wick bar
+    return h1(bars);
+  }
+
+  await t('ZONE-Z4-1 two wick-only penetrations leave a zone CLEAN; the third makes it CHOPPY',async function(){
+    eq(g.ALEXG_CONFIG().maxPenetrationsBeforeChoppyFlag,3,'PRECONDITION: the frozen threshold is 3');
+    eq(g.ALEXG_CONFIG().choppyLookbackBars,50,'inside a 50-bar lookback');
+    g.resetAlexGZoneEngine();
+    const two=onlyZone(runEngine(choppySeries(2)));
+    eq(two.penetrationEvents.map(function(p){return p.startBarIndex;}).join(','),'40,43',
+      'two episodes are recorded, one per pair, at the bar each began');
+    eq(two.quality,'clean','two is below the threshold: CLEAN');
+    // ONE EPISODE AWAY: the identical series with a third pair.
+    g.resetAlexGZoneEngine();
+    const three=onlyZone(runEngine(choppySeries(3)));
+    eq(three.penetrationEvents.map(function(p){return p.startBarIndex;}).join(','),'40,43,46',
+      'three episodes, still one per pair -- an adjacent repeat is not a second episode');
+    eq(three.quality,'choppy','three is AT the threshold: CHOPPY');
+    eq(three.status,'validated','and it is a quality flag, not a break -- the zone is still validated');
+    eq(three.low,1.09790,'with its boundaries untouched');
+    eq(three.high,1.09810,'on both edges');
+    return '2 episodes [40,43] -> clean | 3 episodes [40,43,46] -> choppy';
+  });
+
+  await t('ZONE-Z4-2 a choppy zone is REFUSED a repeated-reaction setup -- and the clean one gets it',async function(){
+    // POSITIVE CONTROL: two episodes, so the same 4th reaction on the same zone qualifies.
+    g.resetAlexGZoneEngine();
+    const clean=runEngine(choppySeries(2));
+    eq(onlyZone(clean).touches.length,4,'PRECONDITION: a genuine 4th touch was accepted');
+    eq(clean.setups.length,1,'a clean zone’s 4th reaction IS a setup');
+    eq(clean.setups[0].setupType,'A_repeatedReaction','a repeated zone reaction');
+    eq(clean.setups[0].zoneQualityAtQualification,'clean','recorded as clean');
+    eq(onlyZone(clean).touches[3].setupEligibility,'A_repeatedReaction','and the touch is marked eligible');
+    // NEGATIVE, ONE EPISODE AWAY: the identical 4th reaction on the identical zone, refused.
+    g.resetAlexGZoneEngine();
+    const choppy=runEngine(choppySeries(3));
+    eq(onlyZone(choppy).touches.length,4,'the SAME 4th touch is still accepted as a touch');
+    eq(choppy.setups.length,0,'but the choppy zone produces NO setup');
+    eq(onlyZone(choppy).touches[3].setupEligibility,null,'and the touch is explicitly marked ineligible');
+    return '2 episodes -> 1 A_repeatedReaction setup | 3 episodes -> same 4th touch, 0 setups';
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // Z5 — BREAK DIRECTION
+  // The highest-severity gap the audit found: brokenDirection drives alexGDetermineTradeDirection
+  // for every break-and-retest, so inverting it buys where the strategy should sell. These two
+  // series are mirror images -- a support zone broken DOWNWARD and retested from below, and a
+  // resistance zone broken UPWARD and retested from above -- and each asserts the direction the
+  // frozen engine actually produced, all the way through to a constructed (never persisted) trade.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  // Support zone [1.09790,1.09810]; three candles close inside it (so the zone's role is never
+  // written by them and must be INFERRED backwards when the break arrives); bar 42 closes below;
+  // bar 50 rallies back into the zone as a swing HIGH -- the retest, from below.
+  function breakDownRetestSeries(){
+    const bars=[];
+    for(let i=0;i<54;i++) bars.push(loBar(SHELF_LOW,SHELF_CLOSE));
+    bars[20]=loBar(1.09800,SHELF_CLOSE);
+    bars[28]=loBar(1.09810,SHELF_CLOSE);
+    bars[36]=loBar(1.09790,SHELF_CLOSE);
+    bars[39]=loBar(1.09795,1.09800); bars[40]=loBar(1.09795,1.09800); bars[41]=loBar(1.09795,1.09800);
+    for(let i=42;i<54;i++) bars[i]=loBar(1.09700,1.09750); // below the zone, closing below it
+    bars[50]={o:1.09750,h:1.09805,l:1.09805-T,c:1.09750};  // the retest: a swing HIGH into the zone
+    return h1(bars);
+  }
+  // The mirror. Resistance zone [1.09990,1.10010] built from three swing HIGHS with price below
+  // it throughout; bar 42 closes above; bar 50 dips back into the zone as a swing LOW -- the
+  // retest, from above.
+  function breakUpRetestSeries(){
+    const bars=[];
+    for(let i=0;i<54;i++) bars.push(hiBar(SHELF_HIGH,SHELF_CLOSE_HI));
+    bars[20]=hiBar(1.10000,SHELF_CLOSE_HI);
+    bars[28]=hiBar(1.10010,SHELF_CLOSE_HI);
+    bars[36]=hiBar(1.09990,SHELF_CLOSE_HI);
+    for(let i=42;i<54;i++) bars[i]=hiBar(1.10100,1.10050); // above the zone, closing above it
+    bars[50]={o:1.10050,h:1.10000+T,l:1.10000,c:1.10050};  // the retest: a swing LOW into the zone
+    return h1(bars);
+  }
+  // Constructs (and never persists) the live position the frozen gate would actually open, with
+  // the fill placed at the setup's own qualification close so no entry-delay or R:R gate is what
+  // is being measured. alexGConstructLivePosition writes to no account, journal or ledger.
+  function constructFromSetup(setup,bars){
+    g.resetAlexG();
+    const q=setup.qualificationClose;
+    return g.alexGConstructLivePosition(setup,{H1:bars},{bid:q,ask:q},g.ALEXG_CONFIG(),10000,{});
+  }
+
+  await t('ZONE-Z5-1 a support zone broken DOWNWARD is retested from below and the trade is a SELL',async function(){
+    g.resetAlexGZoneEngine();
+    const bars=breakDownRetestSeries();
+    const res=runEngine(bars);
+    const z=onlyZone(res);
+    eq(z.low,1.09790,'PRECONDITION: the zone is the same [1.09790,1.09810] support zone');
+    eq(z.high,1.09810,'on both edges');
+    eq(z.status,'broken','it broke');
+    eq(z.brokenAtBar,42,'on bar 42');
+    eq(z.brokenDirection,'downThroughSupport','DOWNWARD, through support');
+    eq(res.setups.length,1,'and exactly one setup followed');
+    const s=res.setups[0];
+    eq(s.setupType,'B_breakRetest','a break and retest');
+    eq(s.setupLabel,'BREAK & RETEST','under its user-facing label');
+    eq(s.reactionSwingType,'high','the retest is a swing HIGH');
+    eq(s.reactionFromSide,'below','approached from BELOW the broken zone');
+    eq(s.reactionPrice,1.09805,'at its own price, back inside the old zone');
+    eq(s.zoneTouchNumber,4,'as the zone’s fourth touch');
+    eq(s.brokenDirection,'downThroughSupport','carrying the break direction onto the setup record');
+    eq(s.barsSinceBreak,11,'eleven bars after the break');
+    eq(g.alexGDetermineTradeDirection(s).direction,'sell','so the frozen direction function makes it a SELL');
+    const pos=constructFromSetup(s,bars);
+    eq(pos.status,'TRADE OPENED','and the frozen live gate constructs it: '+pos.status+' / '+pos.reason);
+    eq(pos.direction,'sell','as a SELL');
+    ok(pos.position.stop>pos.position.entry,'with the stop ABOVE entry, as a sell must have');
+    ok(pos.position.target<pos.position.entry,'and the target below it');
+    return 'broken@42 downThroughSupport -> retest high/below @1.09805 -> SELL (stop '+pos.position.stop.toFixed(5)+' > entry '+pos.position.entry.toFixed(5)+')';
+  });
+
+  await t('ZONE-Z5-2 the MIRROR: a resistance zone broken UPWARD is retested from above and the trade is a BUY',async function(){
+    g.resetAlexGZoneEngine();
+    const bars=breakUpRetestSeries();
+    const res=runEngine(bars);
+    const z=onlyZone(res);
+    eq(z.low,1.09990,'PRECONDITION: a resistance zone at [1.09990,1.10010]');
+    eq(z.high,1.10010,'on both edges');
+    eq(z.touches[0].swingType,'high','built from swing HIGHS');
+    eq(z.touches[0].fromSide,'below','approached from below throughout');
+    eq(z.status,'broken','it broke');
+    eq(z.brokenAtBar,42,'on bar 42');
+    eq(z.brokenDirection,'upThroughResistance','UPWARD, through resistance');
+    eq(res.setups.length,1,'and exactly one setup followed');
+    const s=res.setups[0];
+    eq(s.setupType,'B_breakRetest','a break and retest');
+    eq(s.reactionSwingType,'low','the retest is a swing LOW');
+    eq(s.reactionFromSide,'above','approached from ABOVE the broken zone');
+    eq(s.reactionPrice,1.10000,'at its own price, back inside the old zone');
+    eq(s.brokenDirection,'upThroughResistance','carrying the break direction onto the setup record');
+    eq(g.alexGDetermineTradeDirection(s).direction,'buy','so the frozen direction function makes it a BUY');
+    const pos=constructFromSetup(s,bars);
+    eq(pos.status,'TRADE OPENED','and the frozen live gate constructs it: '+pos.status+' / '+pos.reason);
+    eq(pos.direction,'buy','as a BUY');
+    ok(pos.position.stop<pos.position.entry,'with the stop BELOW entry, as a buy must have');
+    ok(pos.position.target>pos.position.entry,'and the target above it');
+    return 'broken@42 upThroughResistance -> retest low/above @1.10000 -> BUY (stop '+pos.position.stop.toFixed(5)+' < entry '+pos.position.entry.toFixed(5)+')';
+  });
+
+  await t('ZONE-Z5-3 the two breaks never agree: each direction follows its OWN break, and they are opposite',async function(){
+    g.resetAlexGZoneEngine();
+    const down=runEngine(breakDownRetestSeries());
+    g.resetAlexGZoneEngine();
+    const up=runEngine(breakUpRetestSeries());
+    eq(down.setups.length,1,'PRECONDITION: both series produced a setup');
+    eq(up.setups.length,1,'both');
+    const dDir=g.alexGDetermineTradeDirection(down.setups[0]).direction;
+    const uDir=g.alexGDetermineTradeDirection(up.setups[0]).direction;
+    eq(dDir,'sell','the downward break sells');
+    eq(uDir,'buy','the upward break buys');
+    ok(dDir!==uDir,'and the two are opposite -- neither is a constant');
+    eq(down.setups[0].brokenDirection,'downThroughSupport','each carrying its own break direction');
+    eq(up.setups[0].brokenDirection,'upThroughResistance','on its own record');
+    // The retest geometry is likewise mirrored, so a single swapped field cannot satisfy both.
+    eq(down.setups[0].reactionSwingType+'/'+down.setups[0].reactionFromSide,'high/below','down: high from below');
+    eq(up.setups[0].reactionSwingType+'/'+up.setups[0].reactionFromSide,'low/above','up: low from above');
+    return 'downThroughSupport -> sell (high/below) | upThroughResistance -> buy (low/above)';
+  });
+
+  await t('ZONE-Z5-4 a zone whose role was never written is still classified from its OWN history',async function(){
+    // The three candles before the break close INSIDE the zone, so lastKnownRole is still null
+    // when bar 42 arrives -- the engine must infer the prior role by looking strictly backward.
+    // If it cannot, the break is not classified at all and the zone silently never breaks.
+    g.resetAlexGZoneEngine();
+    const partial=breakConfirmSeries(false); // identical series, wick only, no confirming close
+    const held=onlyZone(runEngine(partial));
+    eq(held.lastKnownRole,null,'PRECONDITION: no candle ever closed outside the zone after it formed');
+    eq(held.penetrationEvents.length,1,'yet the wick beneath it IS still classified -- as a support-side penetration');
+    eq(held.penetrationEvents[0].startBarIndex,42,'on bar 42');
+    // POSITIVE half, one number away: the same bar closing below instead of inside.
+    g.resetAlexGZoneEngine();
+    const broke=onlyZone(runEngine(breakConfirmSeries(true)));
+    eq(broke.brokenDirection,'downThroughSupport','and the same inference classifies the confirmed break as downward');
+    eq(broke.brokenAtBar,42,'on the same bar 42');
+    return 'role never written; wick@42 still classified support-side; the confirming close breaks downThroughSupport';
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // Z6 — alexGCheckSwingAt / alexGAssignCluster UNIT BOUNDARIES
+  // These two functions are the engine's entire input surface: everything above depends on them
+  // reporting swings at all, at the right edges, and never merging a high cluster with a low one.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  // 14 flat bars with one bar's high raised and one bar's low dropped.
+  function swingAtSeries(){
+    const bars=[];
+    for(let i=0;i<14;i++) bars.push(loBar(1.09840,SHELF_CLOSE));
+    bars[6]={o:SHELF_CLOSE,h:1.10000,l:1.09840,c:SHELF_CLOSE};  // a lone higher high
+    bars[10]=loBar(1.09700,SHELF_CLOSE);                        // a lone lower low
+    return bars;
+  }
+
+  await t('ZONE-Z6-1 alexGCheckSwingAt reports a swing HIGH at all -- with a swing LOW as its control',async function(){
+    const bars=swingAtSeries();
+    eq(g.alexGCheckSwingAt(bars,6,3),'high','the lone higher high IS reported as a swing high');
+    eq(g.alexGCheckSwingAt(bars,10,3),'low','and the lone lower low as a swing low');
+    // The two answers are different words for different bars, so neither can be standing in for
+    // the other, and an ordinary bar is neither.
+    eq(g.alexGCheckSwingAt(bars,8,3),null,'an ordinary bar between them is neither');
+    return 'bar 6 -> high | bar 8 -> null | bar 10 -> low';
+  });
+
+  await t('ZONE-Z6-2 the lookback-edge guard sits exactly at centerIdx-lookback<0, not one bar later',async function(){
+    // A dip at exactly index 3 has exactly `lookback` candles on its left -- the earliest bar
+    // that can be evaluated at all. It must be evaluated.
+    const bars=[];
+    for(let i=0;i<10;i++) bars.push(loBar(1.09840,SHELF_CLOSE));
+    bars[3]=loBar(1.09700,SHELF_CLOSE);
+    eq(g.alexGCheckSwingAt(bars,3,3),'low','a swing at exactly index==lookback IS evaluated and reported');
+    // NEGATIVE, one bar away: index 2 genuinely has too little history on its left.
+    const shifted=[];
+    for(let i=0;i<10;i++) shifted.push(loBar(1.09840,SHELF_CLOSE));
+    shifted[2]=loBar(1.09700,SHELF_CLOSE);
+    eq(g.alexGCheckSwingAt(shifted,2,3),null,'the identical dip one bar earlier is refused for want of history');
+    // ...and the same guard at the right-hand edge, for the same reason.
+    const tail=[];
+    for(let i=0;i<10;i++) tail.push(loBar(1.09840,SHELF_CLOSE));
+    tail[6]=loBar(1.09700,SHELF_CLOSE);
+    eq(g.alexGCheckSwingAt(tail,6,3),'low','index 6 of a 10-bar array has exactly 3 candles to its right, and IS evaluated');
+    eq(g.alexGCheckSwingAt(tail,7,3),null,'index 7 does not, and is refused');
+    return 'idx 2 -> null | idx 3 -> low | idx 6 -> low | idx 7 -> null';
+  });
+
+  await t('ZONE-Z6-3 cluster grouping is INCLUSIVE at exactly the tolerance, exclusive one tick past it',async function(){
+    const center=1.09800, tol=DISP_THRESHOLD; // 2^-12: an exact binary fraction, so the boundary is exact
+    const cluster={id:'AGC|fixture',swingType:'low',center:center,createdAtCloseTimeMs:1};
+    const atEdge=center+tol;
+    eq(Math.abs(atEdge-center),tol,'PRECONDITION: the candidate price is EXACTLY one tolerance away, bit for bit');
+    eq(g.alexGAssignCluster([cluster],'low',atEdge,tol),cluster,'a price exactly at the tolerance IS assigned');
+    // NEGATIVE, one representable tick away (2^-52 at this magnitude).
+    const past=atEdge+Math.pow(2,-52);
+    ok(Math.abs(past-center)>tol,'PRECONDITION: one tick further is strictly beyond the tolerance');
+    eq(g.alexGAssignCluster([cluster],'low',past,tol),null,'and it is refused');
+    return 'centre+tolerance -> assigned; centre+tolerance+1ulp -> null';
+  });
+
+  await t('ZONE-Z6-4 a swing HIGH is never assigned to a swing-LOW cluster, however close the price',async function(){
+    const center=1.09800, tol=DISP_THRESHOLD;
+    const lowCluster={id:'AGC|low',swingType:'low',center:center,createdAtCloseTimeMs:1};
+    // POSITIVE CONTROL: the identical price, identical cluster, identical tolerance -- matching type.
+    eq(g.alexGAssignCluster([lowCluster],'low',center,tol),lowCluster,'a swing low at the exact centre IS assigned');
+    // NEGATIVE, ONE VARIABLE AWAY: only the swing type differs.
+    eq(g.alexGAssignCluster([lowCluster],'high',center,tol),null,'a swing HIGH at the exact same price is NOT');
+    // and symmetrically.
+    const highCluster={id:'AGC|high',swingType:'high',center:center,createdAtCloseTimeMs:1};
+    eq(g.alexGAssignCluster([highCluster],'high',center,tol),highCluster,'a swing high joins a high cluster');
+    eq(g.alexGAssignCluster([highCluster],'low',center,tol),null,'and a swing low does not');
+    // With BOTH clusters present at the same centre, each type still picks its own.
+    eq(g.alexGAssignCluster([lowCluster,highCluster],'high',center,tol),highCluster,'with both offered, a high picks the high cluster');
+    eq(g.alexGAssignCluster([lowCluster,highCluster],'low',center,tol),lowCluster,'and a low picks the low cluster');
+    return 'same price, same tolerance: type match -> assigned, type mismatch -> null, both ways';
+  });
+
+  await t('ZONE-Z6-5 alexGFindSwingPoints -- the array-wide twin -- is strict on both sides and reports highs',async function(){
+    // The parallel copy of findSwingPoints used by the ALEX trend-context pass. It has never had
+    // a fixture of its own, so it could diverge from its twin silently.
+    function twinSeries(neighbourHigh,neighbourLow){
+      const bars=[];
+      for(let i=0;i<20;i++) bars.push(bar(1.09880,1.09960,1.09840,1.09880));
+      bars[9]=bar(1.09880,neighbourHigh,1.09840,1.09880);
+      bars[10]=bar(1.09880,1.10000,1.09840,1.09880); // the candidate high
+      bars[14]=bar(1.09880,1.09960,neighbourLow,1.09880);
+      bars[15]=bar(1.09880,1.09960,1.09700,1.09880); // the candidate low
+      return bars;
+    }
+    const clear=g.alexGFindSwingPoints(twinSeries(1.09960,1.09840),3);
+    eq(clear.swingHighs.length,1,'a lone higher high IS reported');
+    eq(clear.swingHighs[0].price,1.10000,'at its own price');
+    eq(clear.swingHighs[0].barIndex,10,'and its own bar');
+    eq(clear.swingLows.length,1,'and a lone lower low likewise');
+    eq(clear.swingLows[0].price,1.09700,'at its own price');
+    eq(clear.swingLows[0].barIndex,15,'and its own bar');
+    // NEGATIVE, one variable each: a neighbour that EQUALS the candidate disqualifies it -- the
+    // rule is strict, not "greater than or equal".
+    eq(g.alexGFindSwingPoints(twinSeries(1.10000,1.09840),3).swingHighs.length,0,'an equal-high neighbour disqualifies the high');
+    eq(g.alexGFindSwingPoints(twinSeries(1.09960,1.09700),3).swingLows.length,0,'an equal-low neighbour disqualifies the low');
+    // ...and each negative leaves the OTHER side intact, so neither is silence for the wrong reason.
+    eq(g.alexGFindSwingPoints(twinSeries(1.10000,1.09840),3).swingLows.length,1,'while the low is still found');
+    eq(g.alexGFindSwingPoints(twinSeries(1.09960,1.09700),3).swingHighs.length,1,'and the high still found');
+    return 'clear -> 1 high@1.10000/bar10 + 1 low@1.09700/bar15; equal neighbour -> that side drops to 0, the other unchanged';
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+  // S13 — THE OTHER TWO COPIES OF THE COUNTER-TREND RULE
+  //
+  // RULES.entry: "Never enter against confirmed top-down bias -- no counter-trend trades."
+  // The predicate that enforces it, `s.type==='engulf' && s.dir===dir && s.biasMatch`, is
+  // written out THREE times in index.html. S1 above covers the live one, inside
+  // evaluateLiveTrigger. The other two -- inside evaluateSetupFullBreakdownCore (which is what
+  // Manual Review and the setup-breakdown UI show a human) and inside simulateTrueMTFReplay
+  // (which is what every historical research result is computed from, in TWO places: the main
+  // gate and the Thursday/Friday diagnostic capture) -- had no control at all. Deleting
+  // `&&s.biasMatch` from any of them left all 1,534 fixtures green, so the three copies could
+  // drift apart silently and the research path could start counting trades the live path would
+  // never take.
+  //
+  // Every fixture below holds the top-down bias FIXED and unmistakably Bearish, and moves only
+  // the direction of the M15 trigger. That is the one-variable pairing: identical bias,
+  // identical structural AOI, identical thresholds -- a with-trend trigger that is accepted, and
+  // a counter-trend trigger that is refused, differing only in which way the candles point.
+  //
+  // NO TRADE IS PERSISTED. simulateTrueMTFReplay is a pure historical simulator: it RETURNS
+  // {trades,diag} and writes to no account, journal, ledger or store.
+  // ══════════════════════════════════════════════════════════════════════════════════════════
+
+  const S13_MON=new Date('2026-06-08T13:00:00Z'); // a real Monday, inside the London/NY overlap
+
+  function breakdownInput(bias){
+    const candles=reversalM15(); // the SAME bullish reversal the S1 fixtures use
+    return{
+      oPair:'EUR_USD',candles:candles,decisionCandle:candles[candles.length-1],
+      decisionTs:Date.parse(S13_MON),
+      weeklyBias:bias,dailyBias:bias,h4Bias:bias,
+      // A structural AOI wide enough that the R:R gate is not what decides anything here.
+      structSupport:1.09950,structResistance:1.10500,
+      structSupportSrc:'Daily',structResistanceSrc:'Daily',
+      sessionAt:S13_MON,weekdayDate:S13_MON
+    };
+  }
+  function gateOf(b,id){ return b.gates.filter(function(x){return x.id===id;})[0]; }
+
+  await t('CTREND-BREAKDOWN-1 the setup breakdown REFUSES a counter-trend engulf -- and accepts the identical one with bias aligned',async function(){
+    // POSITIVE CONTROL: bias aligned with the trigger. Every hard gate passes.
+    const aligned=g.evaluateSetupFullBreakdownCore(breakdownInput('Bullish'));
+    eq(aligned.direction,'buy','PRECONDITION: the breakdown reads the series as a buy');
+    eq(aligned.overallBias,'Bullish','with a Bullish top-down bias');
+    eq(gateOf(aligned,'confirmation').pass,true,'the directional-confirmation gate PASSES');
+    eq(gateOf(aligned,'confirmation').observed,'Bullish engulf (1)','naming the engulf it accepted');
+    eq(aligned.failedGates.length,0,'and nothing else fails either: '+JSON.stringify(aligned.failedGates.map(function(x){return x.id;})));
+    // NEGATIVE, ONE VARIABLE AWAY: the same candles, the same AOI, the same clock -- the top-down
+    // bias table is flipped and nothing else.
+    const against=g.evaluateSetupFullBreakdownCore(breakdownInput('Bearish'));
+    eq(against.direction,'buy','the SAME series is still read as a buy -- the read is not what changed');
+    eq(against.overallBias,'Bearish','against a Bearish top-down bias');
+    eq(against.score,aligned.score,'with the same 3/3 alignment score, so the strength of the bias is unchanged');
+    eq(gateOf(against,'confirmation').pass,false,'now the directional-confirmation gate REFUSES it');
+    eq(gateOf(against,'confirmation').observed,'no qualifying engulf','because no engulf matching bias exists');
+    // The refusal is the BIAS rule, not a low score or a missing pattern: the confluence gate
+    // still passes on its own merits, and the engulf is still present in the signal list.
+    eq(gateOf(against,'min_confluence').pass,true,'the confluence gate still passes ('+against.confluence+'%)');
+    ok(against.confluence>=g.ALERT_THRESHOLD(),'at or above the frozen threshold');
+    ok(against.signals.some(function(s){return s.type==='engulf'&&s.dir==='buy';}),
+      'and the bullish engulf is STILL detected -- it is only refused as a trigger');
+    eq(against.signals.filter(function(s){return s.type==='engulf'&&s.dir==='buy';})[0].biasMatch,false,
+      'marked as not matching bias');
+    eq(against.failedGates.map(function(x){return x.id;}).join(','),'confirmation',
+      'and confirmation is the ONLY gate that fails -- the block is provably the counter-trend rule');
+    return 'Bullish table -> confirmation PASS, 0 failed gates | Bearish table -> confirmation FAIL, and it is the only failure (confluence '+against.confluence+'%)';
+  });
+
+  // ── THE REPLAY DATASETS ───────────────────────────────────────────────────────────────────
+  // One fixed, unmistakably Bearish top-down picture, used unchanged by every replay fixture:
+  //   * Weekly and H4 decline steadily -- the frozen calcBiasFromCandles reads both as Bearish.
+  //   * Daily oscillates for 100 candles (giving the frozen 3-touch AOI engine a genuine,
+  //     repeatedly-touched resistance shelf at 1.12000) and then declines for 30, which is what
+  //     makes its own bias Bearish. Both facts are asserted, from the frozen functions, before
+  //     any replay verdict is read.
+  // Only the M15 trigger direction ever changes between runs.
+  const S13_DAY=86400000, S13_HR=3600000;
+  function s13Bar(o,h,l,c,t){ return{o:o,h:h,l:l,c:c,t:t}; }
+  function s13Daily(n,startMs){
+    const a=[];
+    for(let i=0;i<n;i++){
+      const t=new Date(startMs+i*S13_DAY);
+      if(i<n-30){
+        const ph=i%10;
+        if(ph===5) a.push(s13Bar(1.11700,1.12000,1.11500,1.11700,t));      // the repeated peak
+        else if(ph===0) a.push(s13Bar(1.10200,1.10500,1.09900,1.10200,t)); // the repeated trough
+        else a.push(s13Bar(1.11000,1.11200,1.10800,1.11000,t));
+      } else {
+        const h=1.11200-(i-(n-30))*0.00100;                                // the closing downtrend
+        a.push(s13Bar(h-0.0005,h,h-0.00400,h-0.00300,t));
+      }
+    }
+    return a;
+  }
+  function s13Declining(n,startMs,stepMs,start,step){
+    const a=[];
+    for(let i=0;i<n;i++){ const b=start-i*step; a.push(s13Bar(b,b+0.00100,b-0.00100,b-0.00050,new Date(startMs+i*stepMs))); }
+    return a;
+  }
+  const S13_WEEKLY=s13Declining(70,Date.UTC(2025,1,8),7*S13_DAY,1.19000,0.00100);
+  const S13_DAILY=s13Daily(130,Date.UTC(2026,1,10));
+  const S13_H4=s13Declining(200,Date.UTC(2026,4,12),4*S13_HR,1.12000,0.00020);
+  // A 16-bar M15 cycle whose last three bars are a complete reversal trigger -- rejection wick,
+  // engulf and market-structure break together. 'buy' prints the bullish version, 'sell' the
+  // exact mirror of it. Nothing else differs between the two.
+  function s13M15(direction,n,startMs){
+    const a=[];
+    for(let i=0;i<n;i++){
+      const t=new Date(startMs+i*15*60000), k=i%16;
+      if(k<13){
+        if(direction==='buy'){ const b=1.09800+k*0.00003; a.push(s13Bar(b,b+0.00010,b-0.00010,b+0.00005,t)); }
+        else { const b=1.10200-k*0.00003; a.push(s13Bar(b,b+0.00010,b-0.00010,b-0.00005,t)); }
+      } else if(k===13){
+        a.push(direction==='buy'?s13Bar(1.09995,1.10020,1.09990,1.10015,t):s13Bar(1.10005,1.10010,1.09980,1.09985,t));
+      } else if(k===14){
+        a.push(direction==='buy'?s13Bar(1.10025,1.10028,1.10005,1.10010,t):s13Bar(1.09975,1.09995,1.09972,1.09990,t));
+      } else {
+        a.push(direction==='buy'?s13Bar(1.10000,1.10040,1.09900,1.10030,t):s13Bar(1.10000,1.10100,1.09960,1.09970,t));
+      }
+    }
+    return a;
+  }
+  const S13_WIN_MONWED=Date.UTC(2026,5,6,0,0,0); // Saturday start -- the evaluated bars run Mon-Wed on
+  const S13_WIN_THUFRI=Date.UTC(2026,5,10,0,0,0); // Wednesday start -- the evaluated bars are Thu/Fri on
+  async function replay(direction,windowStart){
+    return await g.simulateTrueMTFReplay('EUR_USD',
+      {weekly:S13_WEEKLY,daily:S13_DAILY,h4:S13_H4,m15:s13M15(direction,700,windowStart)},{});
+  }
+  function monWedRows(diag){ return diag.rejectedCandidates.filter(function(c){return c.weekday==='Mon-Wed';}); }
+  function thuFriRows(diag){ return diag.rejectedCandidates.filter(function(c){return c.weekday==='Thu'||c.weekday==='Fri';}); }
+  function noConfirmation(rows){ return rows.filter(function(c){return c.primaryRejectionId==='no_acceptable_confirmation';}); }
+  function uniq(rows,field){ return Array.from(new Set(rows.map(function(c){return c[field];}))).join('|'); }
+
+  await t('CTREND-REPLAY-0 PRECONDITION: the replay datasets really are Bearish, with a real 3-touch AOI',async function(){
+    // Read from the frozen bias and AOI functions themselves -- these are the inputs the two
+    // replay fixtures below depend on, so if they ever stop holding, those fixtures stop
+    // proving anything and this one says so first.
+    eq(g.calcBiasFromCandles(S13_WEEKLY),'Bearish','the weekly dataset reads Bearish');
+    eq(g.calcBiasFromCandles(S13_DAILY),'Bearish','the daily dataset reads Bearish');
+    eq(g.calcBiasFromCandles(S13_H4),'Bearish','the H4 dataset reads Bearish');
+    eq(g.getScore({weekly:'Bearish',daily:'Bearish',fh:'Bearish'}),3,'so the top-down alignment score is 3/3');
+    eq(g.getBias({weekly:'Bearish',daily:'Bearish',fh:'Bearish'}),'Bearish','and the overall bias is Bearish');
+    const aoi=g.computeAOIWithTouches(S13_DAILY,100,3);
+    eq(aoi.resistance,1.12,'the frozen AOI engine finds a resistance shelf at 1.12000');
+    eq(aoi.resistanceTouches,7,'from seven genuine touches, well past the 3-touch minimum');
+    return 'W/D/H4 all Bearish (3/3); daily AOI resistance 1.12000 with 7 touches';
+  });
+
+  await t('CTREND-REPLAY-1 the historical replay REFUSES counter-trend triggers -- and takes the with-trend one',async function(){
+    // POSITIVE CONTROL: the trigger points the same way as the fixed Bearish bias.
+    const withTrend=await replay('sell',S13_WIN_MONWED);
+    ok(!withTrend.error,'PRECONDITION: the with-trend replay ran: '+withTrend.error);
+    eq(withTrend.trades.length,1,'it takes a trade');
+    eq(withTrend.trades[0].direction,'sell','on the bias side');
+    eq(withTrend.diag.rejectionTotals.no_acceptable_confirmation,undefined,
+      'and NOTHING is ever rejected for want of an acceptable confirmation');
+    // NEGATIVE, ONE VARIABLE AWAY: the mirrored M15 trigger. Same bias, same AOI, same clock.
+    const counter=await replay('buy',S13_WIN_MONWED);
+    eq(counter.trades.length,0,'the mirrored, counter-trend trigger takes NO trade at all');
+    const refused=noConfirmation(monWedRows(counter.diag));
+    eq(refused.length,9,'nine Mon-Wed candidates are refused specifically at the confirmation gate');
+    eq(uniq(refused,'direction'),'buy','every one of them read as a buy');
+    eq(uniq(refused,'engulfing'),'none','with no acceptable engulf');
+    // ...yet the bullish pattern was fully present on those very bars: rejectionWick and msb are
+    // recorded on the SAME rejected rows, and they are two thirds of the same three-candle
+    // reversal that carries the engulf. The funnel's engulf-observation counters (written from
+    // their own lines, never from this gate) counted the engulfs anyway.
+    eq(uniq(refused,'rejectionWick'),'Rejection wick (lower)','while the bullish rejection wick WAS observed on those bars');
+    eq(uniq(refused,'msb'),'MSB bullish','and the bullish market-structure break too');
+    eq(counter.diag.funnel.engulfingPatternObservations,18,
+      'and the engulf-observation counters -- written from their own lines, not from this gate -- counted eighteen');
+    ok(counter.diag.funnel.candidatesReachingMinConfluence>0,
+      'candidates did clear the confluence gate first ('+counter.diag.funnel.candidatesReachingMinConfluence+'), so the refusal is not a low score');
+    return 'with-trend: 1 trade, 0 confirmation rejections | counter-trend: 0 trades, 9 refused at confirmation despite 18 engulfs observed';
+  });
+
+  await t('CTREND-REPLAY-2 the Thursday/Friday diagnostic capture applies the SAME counter-trend rule',async function(){
+    // A separate, third copy of the predicate, in the branch that records what a Thu/Fri setup
+    // would have been. It never opens a trade, but it is what a human reads when deciding
+    // whether a Thu/Fri setup was worth a manual entry -- so it must agree with the live rule.
+    // POSITIVE CONTROL: a with-trend trigger on a Thu/Fri window IS recorded as a real engulf.
+    const withTrend=await replay('sell',S13_WIN_THUFRI);
+    const wtRows=thuFriRows(withTrend.diag);
+    ok(wtRows.length>0,'PRECONDITION: the Thu/Fri diagnostic branch was actually reached ('+wtRows.length+' rows)');
+    eq(uniq(wtRows,'direction'),'sell','every captured row read as a sell, with the bias');
+    ok(wtRows.some(function(c){return c.engulfing==='Bearish engulf (1)';}),
+      'and at least one records the engulf BY NAME -- the capture does see engulfs');
+    eq(noConfirmation(wtRows).length,0,'none of them is refused for want of an acceptable confirmation');
+    // NEGATIVE, ONE VARIABLE AWAY: the mirrored trigger over the same window.
+    const counter=await replay('buy',S13_WIN_THUFRI);
+    const ctRows=thuFriRows(counter.diag);
+    ok(ctRows.length>0,'the same branch is reached ('+ctRows.length+' rows)');
+    eq(uniq(ctRows,'engulfing'),'none','but NOT ONE row records an acceptable engulf');
+    const ctRefused=noConfirmation(ctRows);
+    eq(ctRefused.length,3,'three of them name the confirmation gate as their primary failure');
+    eq(uniq(ctRefused,'direction'),'buy','all of them counter-trend buys');
+    // The pattern was there: the same replay's bias-free observation counter saw the engulfs.
+    ok(counter.diag.funnel.engulfingPatternObservations>0,
+      'while the bias-free observation counter still saw '+counter.diag.funnel.engulfingPatternObservations+' engulfs');
+    eq(counter.trades.length,0,'and no trade was taken');
+    return 'Thu/Fri capture: with-trend records "Bearish engulf (1)"; counter-trend records "none" on every row, 3 named at the confirmation gate';
+  });
+
   return out;
   })();
 }
