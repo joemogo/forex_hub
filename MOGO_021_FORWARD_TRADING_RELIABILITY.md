@@ -2301,7 +2301,7 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `c7413e6` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `4d88c7e` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
 **Gates:** canonical **25** suites **1,538 / 1,538** · platform 25 suites **1,049 / 1,049** ·
@@ -2335,17 +2335,26 @@ closing. **Isolation/timer coverage: done** (§14.4, +22 fixtures). **Detection 
 (§15.5a, new `v1237` suite, +46 fixtures, 45/45 mutations killed). One agent is running on the
 organic zone-engine controls (§15.5b).
 
-### 🔴 Largest open item: the ALEX zone engine's own rules (§15.5b)
+### 🔴🔴 OPEN GOVERNANCE ITEM AWAITING JOE — duplicate trade IDs (§16.6)
 
-Seven of eight rule-level mutations inside `alexGProcessTimeframeCandle` still survive the whole
-gate — including an **inverted break direction**, which decides which way a break-and-retest trade
-is taken. The organic fixtures assert *"a setup was produced and a trade opened"* but never *which*
-zone, at *what* price, from *which* touch, in *which* direction. That is the entire reason
-rule-level changes slip through. Being closed now in `v1237`.
+`openPaperPosition` mints `id = Date.now() + random(1000)`; two opens in the same millisecond collide
+at ~1/1000, `checkAutoTrades` opens via `Promise.all` so that is routine, and `closePaperPosition`
+resolves by `findIndex(p => p.id === id)` — **so a collision closes the wrong position.** Money, not
+cosmetics. `openPaperPosition` is **protected** and no authorization covers it. Smallest fix: a
+monotonic counter combined with the timestamp (the shape `generateDecisionEventId` already uses),
+plus making `TEST J.2` deterministic. **Escalated, not taken.**
 
-Also still uncovered: the counter-trend predicate exists in **three** places and only the live one
-(`evaluateLiveTrigger`) is covered; and `alexGFindSwingPoints` is a parallel copy of
-`findSwingPoints` with identical comparisons and no coverage.
+### 🔴 Largest open coverage item: the paper-execution layer (§16)
+
+47 of 96 mutations kill nothing, concentrated on the exit half of both engines. Two protected
+functions — `checkPaperPositions` and `alexGReconstructExitFromCandles` — have **no execution
+coverage at all**. Being closed now by two agents (JVM close math + exit detection; ALEX
+reconstruction, MAE/MFE, sizing, sell side, restart dedupe).
+
+### The ALEX zone engine's own rules (§15.5b) — CLOSED
+
+19 of 19 previously-surviving mutations now die, including the inverted break direction. Both other
+copies of the counter-trend rule and `alexGFindSwingPoints` are covered too.
 
 ### Not yet re-examined with mutation testing
 
