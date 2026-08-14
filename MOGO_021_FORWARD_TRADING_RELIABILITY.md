@@ -2771,6 +2771,50 @@ with positive controls one variable away that **do** open a second position.
   Its pagination, its `null`-on-failure contract, and the caller's "do not advance
   `lastExitCheckTimestamp` on failure" rule have no fixture. A separate gap, not opened.
 
+### 16.5b JVM close math and automatic exit detection — CLOSED
+
+27 fixtures (suite 78 → 105). **All 18 acceptance mutations survived the pristine gate; all 18 die
+now.** Scored as a controlled experiment — every other suite pinned to one snapshot, only the JVM
+suite differing — with each mutation proven applied by unique anchor, byte delta and distinct sha256.
+
+Now killed: buy closing on the **ask** (16 fixtures), exit at **mid** (16), the move-pips sign, **the
+P&L sign flipped so every win books as a loss** (13), manual Win/Loss inverted, the break-even
+epsilon, `exitPrice` replaced by the entry price, the post-await re-validation removed, the rollback
+skipped, TAKE_PROFIT↔STOP_LOSS swapped, a missing pip value no longer blocking the close,
+**sell-side-only** P&L sign, `hitTarget`/`hitStop` inverted, the same-tick ordering flipped, the
+auto-close labels swapped, and **`checkPaperPositions` reduced to a bare `return;`**.
+
+**Independently re-verified here:** making a buy close on the ask now kills 16 fixtures. Before this
+work it killed nothing.
+
+The assertions are deliberately built to defeat the trap that hid this gap: each compares against a
+**literal the fixture chose** — `exitPrice === 1.10500` (explicitly *not* the ask 1.10530, not the mid
+1.10515), `pnl === 250` hand-computed, `balance === 10250` asserted against the constant rather than
+`before + pnl`. `JVMEXIT-*` uses a **pure pass-through spy** that records the arguments handed to
+`closePaperPosition` and returns its real promise unaltered, so both the call and the resulting record
+are asserted without stubbing a verdict.
+
+**Three disclosures the agent made rather than glossing:**
+* **The ambiguity fixture uses a deliberately degenerate bracket** (stop *above* target). That is
+  unavoidable: for a coherent buy (`stop < entry < target`) no single price can satisfy both crossing
+  tests, so the target-first ordering is undetectable without it. Documented as degenerate in the
+  fixture, it is exactly the state a mis-applied stop adjustment leaves behind, and it is the **only**
+  thing that kills the reordering mutation.
+* **Deleting the pip-value guard does not produce NaN** — `null` multiplies to zero, so the balance
+  never moves. A balance assertion alone would have been **vacuous**; the kill comes from the position
+  remaining open and the closed-record count.
+* **~29 of the original 47 surviving mutations were outside this brief and remain open** — chiefly the
+  ledger/persistence survivors in §16.4 and the remaining reporting-only ones.
+
+### 16.5c Attribution correction
+
+Commits `769a197` and `cbe3459` swept two agents' in-flight test files into commits whose messages
+describe *other* work. The record: the `run_v1233` JVM close-math fixtures and the `run_v1236` /
+`v_paper_trading_audit` ALEX execution fixtures were produced by those agents, not by the change each
+commit is titled for. `index.html` was byte-identical across both, so no result was affected — but
+staging with `-A` while agents are writing is the wrong habit, and paths are being staged explicitly
+from here.
+
 ### 16.6 🔴 A REAL PRODUCTION DEFECT, not test debt — and a NEW governance boundary
 
 `openPaperPosition` mints `id: Date.now() + Math.floor(Math.random()*1000)`. **Two opens in the same
