@@ -4553,7 +4553,33 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
     // a cold start is never mistaken for a genuinely new candidate.
     const previousH1Boundary=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1!=null)?alexGLastEvaluatedCloseTime[oPair].H1:null;
     const datasets=await fetchAlexGReplayDatasets(oPair,90);
-    if(!datasets.H1||datasets.H1.length<60) return;
+    // MOGO forward-reliability: this early return was previously SILENT -- a pair whose H1
+    // dataset came back short produced no observation, no decision event and no error, so it
+    // simply vanished from forward coverage with nothing anywhere recording that it had. That
+    // is how GBP_USD reached ~56 hourly attempts and zero evaluations without any signal.
+    // Purely additive observability: the return behaviour and every strategy decision below are
+    // byte-for-byte unchanged; this only makes the coverage loss auditable.
+    if(!datasets.H1||datasets.H1.length<60){
+      const h1=datasets&&datasets.H1;
+      const meta=(h1&&h1.marketDataCompleteness)?h1.marketDataCompleteness:null;
+      emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId,correlationId:scanId,
+        pair:oPair,source:'alexGEvaluatePairForLiveSetups',stage:'MARKET_DATA_FETCH',
+        reasonCode:'DATA_INSUFFICIENT_HISTORY',severity:'ERROR',
+        reasonText:'H1 dataset too short for live evaluation -- pair skipped for this boundary',
+        context:{requiredMinCandles:60,receivedH1:h1?h1.length:0,
+          receivedH4:datasets&&datasets.H4?datasets.H4.length:0,
+          receivedD:datasets&&datasets.D?datasets.D.length:0,
+          receivedW:datasets&&datasets.W?datasets.W.length:0,
+          completenessState:meta?meta.completenessState:null,
+          paginationTerminationReason:meta?meta.paginationTerminationReason:null,
+          httpStatus:meta?meta.httpStatus:null,
+          requestedCount:meta?meta.requestedCount:null},
+        evidenceCompleteness:'MINIMAL'});
+      alexGRecordPipelineStage('DATA_INSUFFICIENT',{pair:oPair,timeframe:'H1',
+        status:'SKIPPED — INSUFFICIENT MARKET DATA',reason:'DATA_INSUFFICIENT_HISTORY',
+        occurredAt:new Date().toISOString()});
+      return;
+    }
     delete alexGZoneState[oPair];
     alexGSetupState=alexGSetupState.filter(s=>s.pair!==oPair);
     alexGRunSetupEngine(oPair,datasets); // frozen Phase 2/3 function, unmodified -- also advances alexGLastEvaluatedCloseTime[oPair]
@@ -4983,6 +5009,7 @@ async function alexGLivePollTick(){
   // read only by the ledger call at the end and never influence a single trading decision. ──
   const __obsStartedAt=new Date().toISOString();
   const __obsEvaluated=[];
+  const __obsSkipped=[];
   let __obsAdvanced=false,__obsOutcome='OK',__obsError=null;
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
   try{
@@ -5004,7 +5031,11 @@ async function alexGLivePollTick(){
     for(const pair of SCAN_PAIRS){
       const oPair=pair.replace('/','_');
       const lastEval=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1)||0;
-      if(currentH1Boundary<=lastEval) continue;
+      // MOGO forward-reliability: a pair skipped here previously left NO trace at all, so a pair
+      // whose cursor never falls behind the current boundary disappears from forward coverage
+      // permanently and invisibly -- the EUR_USD signature (zero poll appearances, zero
+      // evaluations, no error). The skip decision itself is unchanged; it is now recorded.
+      if(currentH1Boundary<=lastEval){ __obsSkipped.push({pair:oPair,lastEvaluatedH1:lastEval,currentH1Boundary}); continue; }
       __obsAdvanced=true; __obsEvaluated.push(oPair);
       await alexGEvaluatePairForLiveSetups(oPair,__scanId);
     }
@@ -5022,6 +5053,7 @@ async function alexGLivePollTick(){
         poll:{tickId:__scanId,startedAt:__obsStartedAt,finishedAt:new Date().toISOString(),
           outcome:__obsOutcome,tradingEnabled:!!alexGAutoTrading.enabled,evaluationAdvanced:__obsAdvanced,
           instrumentsAttempted:__obsEvaluated.length,instrumentsEvaluated:__obsEvaluated,
+          instrumentsConfigured:SCAN_PAIRS.length,instrumentsSkipped:__obsSkipped,
           errorText:__obsError},
         // The status ledger the protected recorder already produced, recorded verbatim. Duplicate
         // protection means only genuinely new observations are written; the hourly re-creation
@@ -11453,6 +11485,10 @@ const REASON_CODE_REGISTRY=Object.freeze({
   DATA_PRICE_UNAVAILABLE:Object.freeze({code:'DATA_PRICE_UNAVAILABLE',category:'DATA',label:'Live price unavailable'}),
   DATA_ATR_UNAVAILABLE:Object.freeze({code:'DATA_ATR_UNAVAILABLE',category:'DATA',label:'ATR unavailable at entry'}),
   DATA_PIP_VALUE_UNAVAILABLE:Object.freeze({code:'DATA_PIP_VALUE_UNAVAILABLE',category:'DATA',label:'Pip value/conversion rate unavailable'}),
+  // Registered BEFORE first use, per this registry's own rule. Emitted when a pair's H1 dataset
+  // comes back too short for live evaluation -- previously a silent early return that removed an
+  // instrument from forward coverage with no record anywhere.
+  DATA_INSUFFICIENT_HISTORY:Object.freeze({code:'DATA_INSUFFICIENT_HISTORY',category:'DATA',label:'Insufficient candle history for live evaluation'}),
   SESSION_OUTSIDE_ALLOWED_WINDOW:Object.freeze({code:'SESSION_OUTSIDE_ALLOWED_WINDOW',category:'SESSION',label:'Outside allowed trading session'}),
   SESSION_OUTSIDE_PREFERRED_DAY:Object.freeze({code:'SESSION_OUTSIDE_PREFERRED_DAY',category:'SESSION',label:'Outside preferred trading day window'}),
   STRUCTURE_AOI_NOT_VALIDATED:Object.freeze({code:'STRUCTURE_AOI_NOT_VALIDATED',category:'STRUCTURE',label:'Area of interest not validated'}),
@@ -13005,6 +13041,10 @@ function evidenceBuildPollObservation(i){
   rec.evaluationAdvanced=!!o.evaluationAdvanced;          // did a new H1 boundary exist this tick
   rec.instrumentsAttempted=(typeof o.instrumentsAttempted==='number')?o.instrumentsAttempted:null;
   rec.instrumentsEvaluated=Array.isArray(o.instrumentsEvaluated)?o.instrumentsEvaluated.slice():[];
+  // MOGO forward-reliability: configured-vs-evaluated is what makes a permanently starved
+  // instrument detectable. Additive only -- no existing field changes meaning.
+  rec.instrumentsConfigured=(typeof o.instrumentsConfigured==='number')?o.instrumentsConfigured:null;
+  rec.instrumentsSkipped=Array.isArray(o.instrumentsSkipped)?o.instrumentsSkipped.slice(0,40):[];
   rec.failures=Array.isArray(o.failures)?o.failures.slice(0,20):[];
   rec.errorText=o.errorText||null;
   return rec;
