@@ -2301,7 +2301,7 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `7f3bb42` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `52333fe` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
 **Gates:** canonical **25** suites **1,514 / 1,514** · platform 25 suites **1,049 / 1,049** ·
@@ -2330,18 +2330,29 @@ never been reloaded**, and a reload remains an operator action requiring broker 
 
 ### In flight at checkpoint time
 
-Both adversarial audits have **completed** and both found real problems (§14, §15). Two agents are
-now closing the resulting gaps:
-1. **Isolation/timer coverage** — fixtures for the four §14.2 fixes, which shipped without coverage.
-2. **`tests/v1237_detection_controls_tests.js`** (new suite) — the §15 Severity-1 rules, starting
-   with the counter-trend block, the one rule with no control of any kind on either side.
+Both audits completed (§14, §15) and both found real problems; both sets of gaps are now closed or
+closing. **Isolation/timer coverage: done** (§14.4, +22 fixtures). **Detection Severity-1: done**
+(§15.5a, new `v1237` suite, +46 fixtures, 45/45 mutations killed). One agent is running on the
+organic zone-engine controls (§15.5b).
 
-### 🔴 The largest open item: detection-surface test debt (§15)
+### 🔴 Largest open item: the ALEX zone engine's own rules (§15.5b)
 
-**61 uncovered trading rules.** Not production defects — the rules are correct and no behaviour is
-wrong — but any of them could be changed tomorrow with a fully green gate. Closing this is pure
-fixture work and crosses no governance boundary. Severity order is in §15.2; the organic zone-engine
-controls (§15 recipes 13–17) are **not yet started** and are the largest remaining chunk.
+Seven of eight rule-level mutations inside `alexGProcessTimeframeCandle` still survive the whole
+gate — including an **inverted break direction**, which decides which way a break-and-retest trade
+is taken. The organic fixtures assert *"a setup was produced and a trade opened"* but never *which*
+zone, at *what* price, from *which* touch, in *which* direction. That is the entire reason
+rule-level changes slip through. Being closed now in `v1237`.
+
+Also still uncovered: the counter-trend predicate exists in **three** places and only the live one
+(`evaluateLiveTrigger`) is covered; and `alexGFindSwingPoints` is a parallel copy of
+`findSwingPoints` with identical comparisons and no coverage.
+
+### Not yet re-examined with mutation testing
+
+§8 marks these done on evidence gathered before the "anchored coverage" disease was understood.
+Each should get the same mutation treatment before anything is called GREEN: market-data continuity;
+ALEX and JVM end-to-end paper trading; position lifecycle, persistence and ledger/account
+reconciliation; restart/recovery; diagnostics and observability.
 
 ### Known open items — not defects I have chosen to leave, but work not yet reached
 
