@@ -2734,6 +2734,43 @@ reconstruction by forcing its history fetch to fail. The JVM paper-audit suite *
 close inside the fixture** and then tests the commit: the commit path is covered, the arithmetic that
 should have produced those numbers is never compared against them.
 
+### 16.5a ALEX execution coverage — CLOSED
+
+56 fixtures added. **23 of 24 mutations survived the pristine 1,538-fixture gate; all 24 die now.**
+Each proven applied (anchor unique, byte diff), each scored against the whole gate.
+
+| Previously invisible | Now killed by |
+|---|---|
+| **`alexGReconstructExitFromCandles` deleted outright** | 10 fixtures |
+| the same-candle ambiguity resolved as a **Win at target** instead of conservatively as a Loss | F3.5/6/7 — and the replay engine's identical flip, F3.11/12/15 |
+| buy/sell executable exit sides swapped; sell reading the bid; exit priced at **mid** | 9 fixtures each |
+| **MAE and MFE allowed to shrink**, on *both* the snapshot and reconstruction paths | F4.3/6/8/9/14 |
+| **`riskAmount` 100× too large** (`riskPercent` not divided by 100) | SIZE-1/2/3, SELL-4 |
+| position size doubled; **ATR stop buffer on the wrong side of the zone** | SIZE-2/3/4/5, SELL-3/4 |
+| **the entire ALEX sell branch** — every prior P&L assertion was a long | SELL-1..5, ALEX.5..10 |
+| **`fxhub_alexg_auto` never loaded on restart** — a restart re-opening a completed trade | RESTART-1/2 |
+| `fxhub_alexg_journal` never loaded on restart | RESTART-4/5/6 |
+
+**Independently re-verified here:** making `riskAmount` 100× too large now kills SIZE-1, SIZE-2,
+SIZE-3 and SELL-4. Before this work it killed nothing — a one-character change would have sized every
+ALEX position at a hundred times its intended risk with a fully green gate.
+
+The sell-side coverage is genuinely organic: the H1 series is a **price reflection** about 1.1000, so
+the frozen zone engine validates a *resistance* zone and derives `sell` **on its own**. No direction,
+verdict or outcome is injected. And the restart fixtures write real storage keys, reset
+`tradedSignals` to an **empty** map that is never re-seeded, and call the real `loadAlexGSaved()` —
+with positive controls one variable away that **do** open a second position.
+
+**Three honest disclosures from that work:**
+* One mutation — swapping *both* fill sides — turned out to be **already caught** incidentally by the
+  pre-existing `ENTRYDELAY-2/3`. Reported as found rather than claimed as a new kill. The *sell-only*
+  variant genuinely was uncovered and now dies.
+* **Sell-side *exit* through the live poll loop is covered only at unit level.** There is no organic
+  end-to-end sell that opens *and* is closed by `alexGCheckLivePositions`.
+* **`alexGFetchExecutableCandles` remains uncovered** — the async wrapper feeding the reconstruction.
+  Its pagination, its `null`-on-failure contract, and the caller's "do not advance
+  `lastExitCheckTimestamp` on failure" rule have no fixture. A separate gap, not opened.
+
 ### 16.6 🔴 A REAL PRODUCTION DEFECT, not test debt — and a NEW governance boundary
 
 `openPaperPosition` mints `id: Date.now() + Math.floor(Math.random()*1000)`. **Two opens in the same
