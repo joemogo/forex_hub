@@ -372,6 +372,55 @@ function runCandleCompletenessFixtures(g){
       return 'the chart reads the engine rather than forming a second opinion';
     });
 
+    // ══ MOGO-021 item 5 — AOI FIDELITY ══════════════════════════════════════════════════
+    // The purple AOI lines are the Daily/Weekly structure the TRADE path uses. The "AOI touch"
+    // badge and confluence item beside them come from the DISPLAYED timeframe's swing clusters --
+    // different window, different tolerance. detectSignals/scoreConfluence are PROTECTED and their
+    // labels are frozen, so the qualifier is added at the display layer.
+    await t('AOI-1 an AOI badge states the timeframe it was computed on',async function(){
+      g.setActiveTf('M15');
+      g.renderSignalBadges([{type:'aoi',label:'AOI resistance touch',dir:'sell',biasMatch:true}]);
+      const m15=g.signalsRowHtml();
+      ok(m15.indexOf('AOI resistance touch')!==-1,'the frozen label itself is unchanged');
+      ok(m15.indexOf('(M15)')!==-1,'and the displayed timeframe is stated beside it');
+      g.setActiveTf('H4');
+      g.renderSignalBadges([{type:'aoi',label:'AOI resistance touch',dir:'sell',biasMatch:true}]);
+      ok(g.signalsRowHtml().indexOf('(H4)')!==-1,'the qualifier tracks the timeframe, it is not hard-coded');
+      return 'AOI badges can no longer be read as the D/W lines they sit under';
+    });
+    await t('AOI-2 a NON-AOI badge is left exactly as the frozen engine produced it',async function(){
+      g.setActiveTf('M15');
+      g.renderSignalBadges([{type:'engulf',label:'Bullish engulfing',dir:'buy',biasMatch:true}]);
+      ok(g.signalsRowHtml().indexOf('(M15)')===-1,
+        'only AOI items are qualified -- this is a targeted clarification, not a blanket relabel');
+      return 'non-AOI badges untouched';
+    });
+    await t('AOI-3 the AOI confluence item carries the same qualifier',async function(){
+      g.setActiveTf('M15');
+      g.renderConfluencePanel({total:65,direction:'long',
+        items:[{label:'AOI zone touch',state:'hit',pts:10},{label:'Bias alignment',state:'hit',pts:25}]});
+      const html=g.confItemsHtml();
+      ok(/AOI zone touch[\s\S]{0,80}\(M15\)/.test(html),'the AOI item states its timeframe');
+      ok(!/Bias alignment[\s\S]{0,40}\(M15\)/.test(html),'and the others are untouched');
+      return 'confluence AOI item qualified, others left alone';
+    });
+    await t('AOI-4 the drawn AOI carries its computation time, because those lines never refresh',async function(){
+      const label=g.aoiAgeLabel(Date.UTC(2026,7,14,9,7,0));
+      ok(/as of 09:07Z/.test(label),'the stamp must name the instant the AOI was computed');
+      eq(g.aoiAgeLabel(null),'','and be absent rather than fabricated when unknown');
+      return 'AOI provenance is on the chart';
+    });
+    await t('AOI-5 concurrent callers share ONE AOI computation, so chart and trade path cannot diverge',async function(){
+      g.resetStructuralAOICache();
+      // Both D and W requests, for two concurrent callers, would be four fetches without dedup.
+      g.setFetchScript([g.okCandles(100),g.okCandles(60),g.okCandles(100),g.okCandles(60)]);
+      const before=g.fetchCallCount?g.fetchCallCount():null;
+      const [a,b]=await Promise.all([g.getStructuralAOI('EUR_USD'),g.getStructuralAOI('EUR_USD')]);
+      ok(a===b,'concurrent callers must receive the SAME object, not two races for it');
+      eq(g.structuralAOICacheSize(),1,'and exactly one cache entry results');
+      return 'chart and trade path consume one computation';
+    });
+
     return out;
   })();
 }

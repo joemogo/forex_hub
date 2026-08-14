@@ -6934,9 +6934,18 @@ function isVolatilityAcceptable(candles){
 // per pair and cached briefly (weekly/daily structure doesn't meaningfully change minute
 // to minute) so switching chart timeframes or pairs doesn't hammer the API.
 let structuralAOICache={};
+// MOGO-021 completion item 5. IN-FLIGHT DEDUP -- the chart and the trade path must consume the SAME
+// AOI object, not two races for it. On a cold cache, loadChart and evaluateLiveTrigger each issued
+// their own D+W fetch pair; last writer won the cache while the chart's own closure drew ITS result,
+// so the levels an operator measured a stop against could be a different computation from the one
+// that set the real stop. Sharing the in-flight promise makes them literally the same object.
+// Semantically neutral: same function, same inputs, same cache lifetime -- strictly fewer requests.
+let structuralAOIInflight={};
 async function getStructuralAOI(oPair){
   const cached=structuralAOICache[oPair];
   if(cached&&(Date.now()-cached.fetchedAt)<15*60*1000) return cached;
+  if(structuralAOIInflight[oPair]) return structuralAOIInflight[oPair];
+  const inflight=(async function(){
   const[daily,weekly]=await Promise.all([fetchCandles(oPair,'D',100),fetchCandles(oPair,'W',60)]);
   const dAOI=findAOIs(daily||[]);
   const wAOI=findAOIs(weekly||[]);
@@ -6948,6 +6957,10 @@ async function getStructuralAOI(oPair){
   };
   structuralAOICache[oPair]=result;
   return result;
+  })();
+  structuralAOIInflight[oPair]=inflight;
+  try{ return await inflight; }
+  finally{ delete structuralAOIInflight[oPair]; }
 }
 
 // Mon-Wed is the stated preferred entry window ("unless exceptional setup"). An algorithm
@@ -11036,7 +11049,11 @@ async function loadChart(){
   // AOI zones — sourced from weekly/daily structure (per the strategy rules), not whatever
   // timeframe happens to be selected for the candlestick display. Shown as a pair of thin
   // boundary lines (top & bottom of the zone) rather than a fill or per-candle markers.
-  getStructuralAOI(activePair).then(({support,resistance,band})=>{
+  // MOGO-021 item 5: fetchedAt is destructured too. These lines are drawn ONCE and never refresh,
+  // while the engine's AOI cache rolls every 15 minutes -- so without a stamp an operator can
+  // measure a stop against a level the trade path has already superseded, with nothing on screen
+  // saying so.
+  getStructuralAOI(activePair).then(({support,resistance,band,fetchedAt:aoiFetchedAt})=>{
     if(activePair.replace('_','/')!==name) return; // pair changed while this was loading
     if(!lwChart) return; // chart was torn down while this was loading
     const zoneWidth=Math.max(band,pipSize(activePair)*3);
@@ -11049,13 +11066,13 @@ async function loadChart(){
     // whole price scale to stretch to include it, squashing the candlesticks.
     if(support){
       const upper=lwChart.addLineSeries({color:'rgba(156,111,228,.9)',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,autoscaleInfoProvider:()=>null});
-      const lower=lwChart.addLineSeries({color:'rgba(156,111,228,.9)',lineWidth:2,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:false,title:'Support AOI (D/W)',autoscaleInfoProvider:()=>null});
+      const lower=lwChart.addLineSeries({color:'rgba(156,111,228,.9)',lineWidth:2,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:false,title:'Support AOI (D/W) '+aoiAgeLabel(aoiFetchedAt),autoscaleInfoProvider:()=>null});
       upper.setData(zoneData(support+zoneWidth));
       lower.setData(zoneData(support-zoneWidth));
       supportZoneLines=[upper,lower];
     }
     if(resistance){
-      const upper=lwChart.addLineSeries({color:'rgba(156,111,228,.55)',lineWidth:2,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:false,title:'Resistance AOI (D/W)',autoscaleInfoProvider:()=>null});
+      const upper=lwChart.addLineSeries({color:'rgba(156,111,228,.55)',lineWidth:2,priceLineVisible:false,lastValueVisible:true,crosshairMarkerVisible:false,title:'Resistance AOI (D/W) '+aoiAgeLabel(aoiFetchedAt),autoscaleInfoProvider:()=>null});
       const lower=lwChart.addLineSeries({color:'rgba(156,111,228,.55)',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,autoscaleInfoProvider:()=>null});
       upper.setData(zoneData(resistance+zoneWidth));
       lower.setData(zoneData(resistance-zoneWidth));
@@ -11113,6 +11130,16 @@ async function loadChart(){
 // the ENGINE's verdict or a local pre-scan computation, and refuses to let a suppressed pair look
 // like an evaluated one. TJR already does exactly this in its own chart legend, so the pattern is
 // not new to this codebase -- the shared scanner chart simply never had it.
+// MOGO-021 item 5. The drawn AOI is a snapshot; the engine re-derives its own every 15 minutes.
+// Stamping the series title with the computation time is the honest, zero-semantic-change half of
+// that -- shortening the cache TTL would change which minutes JVM can trade in and is NOT authorized.
+function aoiAgeLabel(fetchedAt){
+  if(fetchedAt==null) return '';
+  try{
+    const d=new Date(fetchedAt);
+    return '\u00b7 as of '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
+  }catch(e){ return ''; }
+}
 function renderChartEvaluationState(state){
   const el=document.getElementById('chartEvaluationState');
   if(!el) return;
@@ -11150,7 +11177,13 @@ function renderSignalBadges(signals){
       s.type==='msb'?'sig-msb':s.type==='aoi'?'sig-aoi':
       s.type==='wick'?(s.dir==='buy'?'sig-buy':'sig-sell'):'sig-doji';
     const warn=!s.biasMatch&&s.dir!=='neutral'?' ⚠':'';
-    row.innerHTML+=`<span class="sig-badge ${cls}">${s.label}${warn}</span>`;
+    // MOGO-021 completion item 5: an AOI badge is derived from the DISPLAYED timeframe's swing
+    // clusters, while the purple AOI lines drawn beside it are the D/W structure the trade path
+    // actually uses -- different window, different tolerance. detectSignals is PROTECTED and its
+    // label is frozen, so the qualifier is added HERE, at the display layer, where it changes no
+    // decision. Without it "AOI resistance touch" reads as if it referred to the lines it sits under.
+    const tfq=s.type==='aoi'?` <span style="opacity:.7">(${escapeHtml(String(activeTf))})</span>`:'';
+    row.innerHTML+=`<span class="sig-badge ${cls}">${s.label}${warn}${tfq}</span>`;
   });
 }
 
@@ -11162,10 +11195,12 @@ function renderConfluencePanel(conf){
   }
   const col=conf.direction==='long'?'var(--green)':'var(--red)';
   dirEl.innerHTML=`<span style="color:${col};font-weight:600">${conf.direction==='long'?'▲ LONG':'▼ SHORT'} — ${conf.total}%</span>`;
+  // MOGO-021 item 5: same qualifier as the badges. scoreConfluence is PROTECTED and its "AOI zone
+  // touch" label is frozen; the timeframe it was computed on is stated at the display layer instead.
   itemsEl.innerHTML=(conf.items||[]).map(item=>`
     <div class="conf-item ci-${item.state}">
       <div class="ci-dot ci-dot-${item.state}"></div>
-      <div class="ci-label">${item.label}</div>
+      <div class="ci-label">${item.label}${/AOI/i.test(String(item.label||''))?` <span style="opacity:.7">(${escapeHtml(String(activeTf))})</span>`:''}</div>
       <div class="ci-pts">${item.pts?'+'+item.pts:''}</div>
     </div>`).join('');
 }

@@ -137,6 +137,14 @@ const wrapped = new Function('g',
   'g.marketDataCompletenessOf=marketDataCompletenessOf;' +
   'g.renderMarketDataCompletenessDiagnostics=renderMarketDataCompletenessDiagnostics;' +
   'g.renderChartEvaluationState=renderChartEvaluationState;' +
+  'g.renderSignalBadges=renderSignalBadges;' +
+  'g.renderConfluencePanel=renderConfluencePanel;' +
+  'g.aoiAgeLabel=aoiAgeLabel;' +
+  'g.getStructuralAOI=getStructuralAOI;' +
+  'g.structuralAOICacheSize=function(){return Object.keys(structuralAOICache).length;};' +
+  'g.resetStructuralAOICache=function(){structuralAOICache={};structuralAOIInflight={};};' +
+  'g.signalsRowHtml=function(){return (document.getElementById("signalsRow")||{innerHTML:""}).innerHTML||"";};' +
+  'g.confItemsHtml=function(){return (document.getElementById("confItems")||{innerHTML:""}).innerHTML||"";};' +
   'g.chartStateHtml=function(){return (document.getElementById("chartEvaluationState")||{innerHTML:""}).innerHTML||"";};' +
   'g.pairData=function(){return pairData;};' +
   'g.resetPairData=function(){pairData={};};' +

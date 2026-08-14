@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,422/1,422 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 24 suites 1,427/1,427 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -2094,6 +2094,44 @@ shared chart is a JVM surface and makes no ALEX claim, so it does not *assert* a
 ALEX — but the owner's framing holds: the chart draws a pair ALEX explicitly refused to evaluate,
 with zero indication, and there is no ALEX surface an operator could consult instead. TJR already
 does this correctly, rendering `(incomplete)` in its chart legend — so the pattern exists in-repo.
+
+### 10.6 What was fixed (items 3 and 5)
+
+Everything below is display-layer and semantically neutral: no rule, threshold, entry, stop, target
+or filter changed, and protected drift stayed 0 throughout.
+
+* **D1 — the chart no longer forms a second opinion.** `loadChart` reads the engine's own verdict out
+  of `pairData[activePair]` — literally the same object `scanPair` produced — and falls back to a
+  local computation only before the first scan. Both paths are gated on the completeness contract,
+  and a suppressed instrument renders an explicit **NOT EVALUATED** state instead of a fabricated 0%.
+  *(CHART-1/2/3, mutation-proven.)*
+* **D3 — the suppression indicator is now where the operator is looking.** The completeness card
+  renders to a Scanner container as well as the Diagnostics one. **VISIBILITY-2 asserts structural
+  reachability** — that the container genuinely lives inside `panel-scanner` — because the
+  pre-existing `VISIBILITY-1` stubs `getElementById` and would pass identically for an element nobody
+  can see. That is exactly how this defect survived, and it is the vacuity class this milestone keeps
+  rediscovering.
+* **D4/D9 — AOI labels can no longer be misread.** An "AOI touch" badge and the "AOI zone touch"
+  confluence item now state the timeframe they were computed on, so they cannot be read as referring
+  to the D/W lines drawn beside them. `detectSignals` and `scoreConfluence` are **protected** and
+  their labels are frozen, so the qualifier is added at the display layer, where it changes no
+  decision. Non-AOI items are deliberately left untouched. *(AOI-1/2/3.)*
+* **D5 — the drawn AOI carries its computation time.** Those lines are drawn once and never refresh
+  while the engine's cache rolls every 15 minutes, so an operator could measure a stop against a
+  superseded level. Stating *when* it was computed is the honest, zero-semantic-change half;
+  shortening the TTL would change which minutes JVM can trade in and is **not** authorized. *(AOI-4.)*
+* **D8 (first half) — concurrent callers now share one AOI computation.** On a cold cache the chart
+  and `evaluateLiveTrigger` each issued their own D+W fetch pair, last writer won the cache, and the
+  chart drew *its* result while the engine used the other. They are now literally the same object.
+  Semantically neutral — same function, same inputs, strictly fewer requests. *(AOI-5.)* The other
+  half (not caching a `null`-derived AOI, which changes retry timing) remains **blocked**.
+
+**One thing I deliberately did not fix.** The source comment at `index.html:9156` claims the AOI
+badges "can never disagree with what the confluence score or Auto Trading see". It is **false** —
+same engine, different inputs — but it sits **inside the protected `detectSignals`**, so correcting a
+comment would cost a protected-function re-baseline. The correction is recorded here instead. That is
+the protected contract working exactly as intended, and it is worth noting that it applies even to
+prose.
 
 ### 10.5 🔴 NEW OPERATOR DECISION REQUIRED — JVM completeness parity
 
