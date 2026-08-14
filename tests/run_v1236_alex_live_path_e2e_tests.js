@@ -321,6 +321,15 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
   '  await alexGLivePollTick();\n' +
   '  const traded=alexGAccount.openPositions[0];\n' +
+  // The likeliest way the journal scan could go wrong: firing on a setup's OWN journal entry every
+  // time it is re-evaluated. Re-arm the cursor so the setup really is re-evaluated, then demand
+  // silence -- this is the fixture that would catch a tradeId derivation mismatch.
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGLiveSetupStatuses=[];\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("DRIFT-1b","NO false positive: re-evaluating a normally-traded setup reports no drift",\n' +
+  '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===0&&\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&alexGJournalEntries.length===1,\n' +
+  '    "0 drift events across "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 re-evaluated instruments, journal present");\n' +
   '  g.record("DRIFT-1","precondition: a real position exists to drift away from",!!traded,"tradeId="+(traded||{}).tradeId);\n' +
   // Close it, then re-anchor its stored identity exactly as a candle-window roll does: the zone
   // components change while pair/timeframe/setupType/reactionId/qualificationTimestamp do not.
@@ -396,14 +405,24 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  await alexGLivePollTick();\n' +
   '  const jTraded=alexGAccount.openPositions[0];\n' +
   '  if(jTraded) closeOpenPosition();\n' +
+  // EVERY recorded identity must be re-anchored, tradedSignals included -- rewriting only the
+  // journal tradeId leaves tradedSignals matching, so no second position opens and the fixture
+  // would prove detection without proving the guards actually miss in this state.
   '  alexGJournalEntries.forEach(function(j){ if(j.tradeId) j.tradeId="AGT|DRIFTED|"+j.tradeId; });\n' +
-  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +   // account key unreadable; journal survives
+  '  alexGAutoTrading.tradedSignals={}; alexGAutoTrading.tradedSignals["AGL|DRIFTED|orphan"]=true;\n' +
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +   // account key unreadable; journal + auto survive
   '  freshSession();\n' +
+  '  ["fxhub_alexg_account","fxhub_alexg_account_version"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '  alexGAccountKnownVersion=0;\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
   '  await alexGLivePollTick();\n' +
-  '  g.record("DRIFT-9","BLIND SPOT CLOSED: drift is still detected when only the JOURNAL survives",\n' +
-  '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===1,\n' +
-  '    "detected from the journal alone, with positions empty (INC-001 per-key load state)");\n' +
+  '  const jDrift=decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";});\n' +
+  '  g.record("DRIFT-9","BLIND SPOT CLOSED: drift is detected when ONLY the journal survives",\n' +
+  '    jDrift.length===1&&(jDrift[0].context||{}).priorRecord==="journal",\n' +
+  '    "detected from the journal alone, positions empty (the INC-001 per-key load state)");\n' +
+  '  g.record("DRIFT-9b","and in that state the guards DO miss -- a second position opens",\n' +
+  '    alexGAccount.openPositions.length===1,\n' +
+  '    "open="+alexGAccount.openPositions.length+" with every recorded identity re-anchored");\n' +
   '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__susp3;\n' +
   '  g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
   // ══ CONCURRENT POLL TICKS ══

@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,316/1,316 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,318/1,318 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -817,6 +817,13 @@ Lessons from earlier in this milestone are applied rather than re-learned: the r
 registered **before** use, the latch is a **bounded** Set with FIFO eviction, and it is **cleared in
 `clearDecisionEvents()`** so a dev-only button cannot permanently silence an ongoing condition.
 
+> **⚠️ It is observing nothing yet.** Verified directly over CDP: the running tab has no
+> `alexGStableSetupIdentity`, and neither `STATE_SIGNAL_IDENTITY_DRIFTED` nor
+> `STATE_CURSOR_AHEAD_OF_CLOCK` exists in its registry — it predates all of this milestone's
+> diagnostics. **The tab must be reloaded before any of these detectors measure anything**, and a
+> reload costs re-entering broker credentials (MOGO-013). That is an operator action, and it is now
+> the single thing standing between these detectors and real production evidence.
+
 **DRIFT-1..9 (`run_v1236`) include a regression proof of the defect itself.** DRIFT-6 drives the
 full production path with every persisted record carrying the pre-drift identity and the
 freshly-derived setup carrying the new one, and the result is **one economic setup, two open/closed
@@ -834,8 +841,15 @@ a real guard miss in production (§2.16).
 **Verified observation-only, four independent ways.** The detector was removed surgically and the
 entire 24-suite run compared: the only deltas are the DRIFT fixtures themselves. Hooking both event
 sinks and diffing an identical scenario with and without the detector gives an **identical pipeline
-stream and a byte-identical final account state**. Forcing the identity function to throw on every
-setup in every evaluation fails only the DRIFT fixtures — every trading fixture is unaffected.
+stream, an identical `alexGRecordLiveSetupStatus` stream, and a byte-identical final account,
+journal and `tradedSignals` state**. Forcing the identity function — or `alexGTradeId`, or the
+journal scan — to throw on every setup fails only the DRIFT fixtures.
+
+*Precision correction:* I first wrote that both sinks are identical. The **decision bus is not** —
+118 vs 116 non-drift events. The extra durable observation triggers one more evidence-store write
+attempt, and with IndexedDB absent in the offline harness that produces two `DATA_UNAVAILABLE`
+events. No trading path reads them (`recordAlexGEngineError` is a bounded display-only array with
+no circuit breaker), but the claim as first stated was too strong.
 
 **Blind spot found and closed.** The first version scanned only `alexGAccount` positions. Because
 `loadAlexGSaved` loads `fxhub_alexg_account` and `fxhub_alexg_auto` independently (INC-001 per-key
@@ -849,10 +863,30 @@ second real position opening with **zero** drift events. The detector now also s
 instruments — the cursor gate skipped every pair — so it passed with the latch permanently
 disabled. DRIFT-8 ran against an empty account, so a degenerate identity returning a constant
 survived. DRIFT-4 asserted only `reason`, so `stage` and `sourceTradeId` could be stripped
-silently. All three now die to the mutation that breaks what they name, each killing only its own
-fixture. The latch is also now marked **after** a successful emit rather than before, so a rejected
-event can no longer suppress the condition silently, and it keys on `(stableId, signalId)` so a
-second re-anchor is still reported.
+silently. All three now die to the mutation that breaks what they name. *(Precision: the `stage`
+and `sourceTradeId` mutations also kill ~18 unrelated fixtures, because
+`evidenceBuildPipelineObservation` is shared by every pipeline stage — so "each kills exactly its
+own fixture" is true of the detector mutations, not of those two.)*
+
+**The latch-order fix was itself a no-op, and is now real.** I reordered the mark to after the emit
+and claimed that stopped a rejected event from suppressing the condition. It did not:
+`emitDecisionEvent` never throws — it returns `{ok:false}` — and I never inspected the return, so a
+rejected event still latched. Verification measured exactly that. The detector now checks the
+result, and forcing the bus to reject this reason code gives **`latchSize = 0` with the durable row
+still written** (it measured 1 before). The latch also keys on `(stableId, signalId)`, so a second
+re-anchor to a third identity is still reported.
+
+**DRIFT-9 was weaker than its name and is now faithful.** It rewrote only the stored journal
+`tradeId`, leaving `tradedSignals` matching — so it proved detection but not that the guards miss.
+Every recorded identity is now re-anchored, and **DRIFT-9b** asserts what follows: in that state a
+**second position does open**. **DRIFT-1b** was added as the false-positive guard — re-evaluating a
+normally-traded setup, with its own journal entry present, must report zero drift. That is the
+fixture that would catch a `tradeId` derivation mismatch, and it is the likeliest way the journal
+scan could have gone wrong.
+
+**Performance.** The scan runs for every non-latched setup on every poll and stays unlatched in the
+common no-drift case, so it now exits immediately when there is nothing to have drifted from —
+no allocation, no scan.
 
 ---
 
@@ -860,7 +894,7 @@ second re-anchor is still reported.
 
 | Gate | Result |
 |---|---|
-| Canonical | **24 suites · 1,316 / 1,316 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,318 / 1,318 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |

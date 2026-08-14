@@ -4676,6 +4676,10 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
       //
       // Wholly wrapped: an observation defect must never reach a trading decision.
       try{
+        // Cheap exit first. In the overwhelmingly common case there is nothing to have drifted FROM,
+        // and this runs for every setup on every poll (387 setups in production) and stays unlatched
+        // while no drift exists -- so the no-match path must not allocate or scan.
+        if(alexGAccount.openPositions.length||alexGAccount.closedPositions.length||alexGJournalEntries.length){
         const stableId=alexGStableSetupIdentity(setup);
         // Latched per (stableId, signalId): keying on stableId alone would report only the FIRST
         // re-anchor and stay silent if the same setup later drifts to a third identity.
@@ -4694,7 +4698,7 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
             return j&&j.tradeId&&j.tradeId!==currentTradeId&&alexGStableSetupIdentity(j)===stableId;
           });
           if(prior){
-            emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId,
+            const driftEmit=emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId,
               correlationId:scanId,pair:setup.pair,timeframe:setup.timeframe,candidateId:setup.setupId,
               source:'alexGEvaluatePairForLiveSetups',stage:'IDENTITY_DRIFT',
               reasonCode:'STATE_SIGNAL_IDENTITY_DRIFTED',severity:'ERROR',
@@ -4708,11 +4712,15 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
               setupId:setup.setupId,signalId:signalId,status:'IDENTITY DRIFTED — ALREADY TRADED',
               reason:'STATE_SIGNAL_IDENTITY_DRIFTED',sourceTradeId:prior.tradeId,
               occurredAt:new Date().toISOString()});
-            // Latched only AFTER the record is written. Marking first would mean a rejected emit
-            // silently suppressed the condition for the rest of the tab's life with no evidence
-            // anywhere -- it validates today, but a future schema change would regress in silence.
-            alexGMarkIdentityDriftReported(driftLatchKey);
+            // Latched only after the bus ACCEPTED the event. emitDecisionEvent never throws -- it
+            // returns {ok:false} on a validation reject -- so simply reordering the call was not
+            // enough: the return value has to be inspected, or a rejected event would still latch
+            // and suppress the condition for the rest of the tab's life. It validates today; a
+            // future schema change would otherwise regress in silence. The durable pipeline record
+            // above is written unconditionally, so evidence survives either way.
+            if(driftEmit&&driftEmit.ok!==false) alexGMarkIdentityDriftReported(driftLatchKey);
           }
+        }
         }
       }catch(e){ /* observation must never affect the trading path */ }
       // Already decided once -- PERMANENT, never reconsidered on a later poll even though
