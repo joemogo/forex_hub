@@ -940,6 +940,104 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    (rDecided[0].context||{}).identityDrifted===false,\n' +
   '    "0 suppressions; the TRADED identity is re-derived unchanged (zoneId and signalId both), and "+\n' +
   '    "the refusal reports identityDrifted=false -- the window never moved, so nothing had to be blocked");\n' +
+  // ══ RELOAD + WEEKEND CLOSE-TIME RE-ESTIMATION: the DURABLE ECONOMIC term, end to end ══════
+  // alexGFindPriorDecision's durable half has two OR-terms. The stableId term is exercised by
+  // DRIFT-6/9b/12b, where a zone re-anchor leaves reactionId and qualificationTimestamp untouched.
+  // The economicId term exists for the ONE case that term cannot cover: getCandleCloseTime returns
+  // an ESTIMATE while a bar is still the newest, so every artifact anchored on the last bar of a
+  // trading week has its close time move by ~48h when the market reopens -- moving reactionId AND
+  // qualificationTimestamp together, two of the five components of the stable identity. Removing
+  // the term survived the entire gate.
+  //
+  // Nothing about the trading path is disabled here. The reload is simulated the way this suite
+  // already simulates one (freshSession clears the session maps), the persisted signal/trade marks
+  // are cleared because a re-derivation under a shifted identity would not match them anyway, and
+  // the surviving durable record is shifted BACK by one market gap so the setup the engine
+  // re-derives really does differ from it in both fields. The stable term therefore cannot match,
+  // and neither can the tradeId or signalId guards -- the economic term is the only thing left.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  g.setPlan(null); g.setT0(t0); g.setH1(g.build(t0)); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  fullReset(); alexGIdentityDriftReported=new Set();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const wkPos=alexGAccount.openPositions[0]||null;\n' +
+  '  g.record("RELOAD-1","precondition: a real position exists, carrying the economic fields the durable term reads",\n' +
+  '    alexGAccount.openPositions.length===1&&!!wkPos&&typeof wkPos.qualificationClose==="number"&&\n' +
+  '    typeof wkPos.reactionId==="string"&&typeof wkPos.qualificationTimestamp==="number",\n' +
+  '    "qualificationClose="+String(wkPos&&wkPos.qualificationClose)+" on the stored position");\n' +
+  '  if(wkPos) closeOpenPosition();\n' +
+  // Shift the surviving record back by one market gap: the trailing anchor time inside reactionId
+  // AND qualificationTimestamp, exactly the pair of fields the close-time re-estimation moves.
+  // qualificationClose is a PRICE and is deliberately untouched -- that is what the economic
+  // identity is built from.
+  '  const wkStored=alexGAccount.closedPositions[0];\n' +
+  '  const wkParts=String(wkStored.reactionId).split("|");\n' +
+  '  wkParts[4]=String(Number(wkParts[4])-48*3600000);\n' +
+  '  wkStored.reactionId=wkParts.join("|");\n' +
+  '  wkStored.qualificationTimestamp=wkStored.qualificationTimestamp-48*3600000;\n' +
+  '  wkStored.signalId="AGL|PREWEEKEND|"+wkStored.signalId;\n' +
+  '  wkStored.tradeId="AGT|PREWEEKEND|"+wkStored.tradeId;\n' +
+  '  alexGJournalEntries=[];\n' +
+  '  alexGAutoTrading.tradedSignals={};\n' +
+  '  freshSession();\n' +
+  '  ["fxhub_alexg_account","fxhub_alexg_account_version"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '  alexGAccountKnownVersion=0;\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const wkSetup=alexGSetupState.filter(function(x){return x.pair==="EUR_USD";})[0]||null;\n' +
+  '  const wkDecided=decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&\n' +
+  '    e.reasonCode==="STATE_SIGNAL_ALREADY_DECIDED";});\n' +
+  '  g.record("RELOAD-2","the re-derivation differs in BOTH drifting components, so ONLY the economic identity can match",\n' +
+  '    !!wkSetup&&wkSetup.reactionId!==wkStored.reactionId&&\n' +
+  '    wkSetup.qualificationTimestamp!==wkStored.qualificationTimestamp&&\n' +
+  '    alexGStableSetupIdentity(wkSetup)!==alexGStableSetupIdentity(wkStored)&&\n' +
+  '    alexGEconomicSetupIdentity(wkSetup)===alexGEconomicSetupIdentity(wkStored)&&\n' +
+  '    alexGLiveSignalId(wkSetup)!==wkStored.signalId,\n' +
+  '    "stable identities differ, economic identity holds ("+alexGEconomicSetupIdentity(wkSetup)+")");\n' +
+  '  g.record("RELOAD-3","AFTER A RELOAD the weekend-shifted setup is still REFUSED -- from the durable record alone",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&\n' +
+  '    Object.keys(alexGAutoTrading.tradedSignals).length===0&&alexGJournalEntries.length===0&&\n' +
+  '    wkDecided.length===1&&(wkDecided[0].context||{}).matchSource==="durable"&&\n' +
+  '    (wkDecided[0].context||{}).matchedBy==="economicId"&&\n' +
+  '    (wkDecided[0].context||{}).identityDrifted===true,\n' +
+  '    "open="+alexGAccount.openPositions.length+" with the session maps empty, no tradedSignals and no "+\n' +
+  '    "journal -- refused via matchedBy="+String((wkDecided[0]||{}).context&&wkDecided[0].context.matchedBy)+\n' +
+  '    " from source="+String((wkDecided[0]||{}).context&&wkDecided[0].context.matchSource));\n' +
+  // ══ A THROW AFTER THE FROZEN ENGINE RAN MUST NOT REPORT THE PAIR AS SKIPPED ═══════════════
+  // __engineRan is set immediately after alexGRunSetupEngine, and the catch returns
+  // {evaluated:__engineRan}. Reverting it to {evaluated:false} survived the entire gate -- yet that
+  // is the case where the ledger would claim an instrument was NOT evaluated while a real paper
+  // position for it is durably recorded. A coverage row contradicting a trade record is not a safe
+  // under-report, it is a wrong one.
+  //
+  // The fault is injected at showAlexGLiveToast, a UI call that runs AFTER the ledger commit, the
+  // tradedSignals mark and saveAlexG -- so the position genuinely exists when the throw happens.
+  // No trading function is stubbed, reordered or weakened; a rendering call is made to fail.
+  '  g.setPlan(null); g.setT0(t0); g.setH1(g.build(t0)); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  fullReset(); alexGIdentityDriftReported=new Set();\n' +
+  '  const __origToast=showAlexGLiveToast;\n' +
+  '  showAlexGLiveToast=function(){ throw new Error("fixture fault downstream of the frozen engine"); };\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  showAlexGLiveToast=__origToast;\n' +
+  '  const thrObs=g.lastObs();\n' +
+  '  const thrErr=decisionEventLog.filter(function(e){return e.eventType==="ENGINE_ERROR"&&\n' +
+  '    e.source==="alexGEvaluatePairForLiveSetups"&&e.reasonCode==="SYSTEM_UNEXPECTED_ERROR"&&e.pair==="EUR_USD";});\n' +
+  '  g.record("THROW-1","precondition: the throw really happened AND a real position was durably opened first",\n' +
+  '    thrErr.length===1&&alexGAccount.openPositions.length===1&&alexGJournalEntries.length===1&&\n' +
+  '    Object.keys(alexGAutoTrading.tradedSignals).length===1,\n' +
+  '    "1 SYSTEM_UNEXPECTED_ERROR for EUR_USD, with open=1 journal=1 tradedSignals=1 already committed");\n' +
+  '  g.record("THROW-2","the ledger reports that pair as EVALUATED, not skipped -- coverage must not contradict a trade record",\n' +
+  '    (thrObs.instrumentsEvaluated||[]).indexOf("EUR_USD")!==-1&&\n' +
+  '    !(thrObs.instrumentsSkipped||[]).some(function(x){return x.pair==="EUR_USD";})&&\n' +
+  '    (thrObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((thrObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length+\n' +
+  '    ", EUR_USD present and absent from instrumentsSkipped despite the throw");\n' +
+  '  g.record("THROW-3","and the scan itself is unaffected: the other eleven are still covered on that tick",\n' +
+  '    (thrObs.instrumentsSkipped||[]).length===0&&thrObs.instrumentsAttempted===SCAN_PAIRS.length&&\n' +
+  '    decisionEventLog.some(function(e){return e.eventType==="SCAN_COMPLETED";}),\n' +
+  '    "attempted="+thrObs.instrumentsAttempted+" skipped="+((thrObs.instrumentsSkipped)||[]).length+\n' +
+  '    " -- the swallow-and-continue behaviour is unchanged, only the attribution is honest");\n' +
   '  g.setPlan(null); g.setT0(t0); g.setH1(g.build(t0));\n' +
   '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__suspendWas;\n' +
   '  g.record("E2E-17","the suspension flag is RESTORED -- this suite leaves production policy as it found it",\n' +

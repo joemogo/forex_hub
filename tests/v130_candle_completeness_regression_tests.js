@@ -112,6 +112,33 @@ function runCandleCompletenessFixtures(g){
       return 'incomplete-data state exposed';
     });
 
+    // ── CURSOR-1 (MOGO-021 DECISION 1) ─────────────────────────────────────────────────────
+    // The cursor guard had NO fixture anywhere: removing it survived all 24 suites. It only
+    // became reachable when the walk started continuing past a short page -- while the loop
+    // stopped at the first short page, a broker that ignored `&to=` was never asked twice.
+    //
+    // The scripted boundary repeats its LAST entry for every further request, which IS a broker
+    // that ignores the cursor and replays the same page: no scripting trick is needed to produce
+    // the condition, only a request that asks for more than one page holds.
+    await t('CURSOR-1 fetchCandlesRange() refuses a broker that ignores the `to` cursor',async function(){
+      g.setFetchScript([g.okCandles(PARTIAL)]);
+      const c=await g.fetchCandlesRange('EUR_USD','M15',SCANNER_LOOKBACK);
+      eq(c.paginationTerminationReason,'CURSOR_NOT_ADVANCING',
+        'a replayed page must terminate the walk on the cursor, not be paginated against');
+      eq(g.marketDataCompletenessOf(c),'PARTIAL',
+        'the request was NOT satisfied, so it must never be classified COMPLETE');
+      // The consequence that matters: duplicates could reach totalCount and then be classified
+      // COMPLETE, handing the engine a corrupt window that looks fully satisfied.
+      eq(c.length,PARTIAL,'exactly one page is kept -- not one duplicate candle is accumulated');
+      const times=c.map(function(x){return x.t.getTime();});
+      eq(new Set(times).size,times.length,'and every candle in the accumulation is distinct');
+      eq(c.receivedCount,PARTIAL,'the recorded receivedCount agrees with the accumulation');
+      eq(g.fetchCallCount(),2,
+        'the walk stops on the SECOND page -- the guard limit is not what ends it');
+      return 'requested '+SCANNER_LOOKBACK+', replayed page of '+PARTIAL+
+        ' -> CURSOR_NOT_ADVANCING, PARTIAL, '+c.length+' candles, 0 duplicates, 2 pages';
+    });
+
     // ── SAFETY-1 ───────────────────────────────────────────────────────────────────────────
     await t('SAFETY-1 scanPair() must produce zero signals when history is materially incomplete',async function(){
       // The REQUIRED safety assertion, expressed against the path that can actually deliver a
@@ -268,6 +295,81 @@ function runCandleCompletenessFixtures(g){
       g.renderMarketDataCompletenessDiagnostics();
       eq(g.diagnosticsHtml(),'','a fully-satisfied scan must render no indicator at all');
       return 'shown when suppressed, silent when healthy';
+    });
+
+    // ══ MOGO-021 item 3 — OPERATOR REACHABILITY, not merely "innerHTML was written" ═══════
+    // VISIBILITY-1 above stubs document.getElementById through a flat map, so it passes identically
+    // whether the container is on screen or inside a display:none panel. It was, and that is how a
+    // suppressed pair could show a confident recommendation on the chart with nothing to contradict
+    // it. These assert the structural fact instead.
+    await t('VISIBILITY-2 the suppression indicator is reachable from the SCANNER, not only Diagnostics',async function(){
+      const raw=g.rawHtml();
+      const scannerStart=raw.indexOf('id="panel-scanner"');
+      const diagStart=raw.indexOf('id="panel-diagnostics"');
+      ok(scannerStart!==-1&&diagStart!==-1,'both panels must exist');
+      // The scanner panel runs until the next panel opens; the original card sits in Diagnostics.
+      const scannerBlock=raw.slice(scannerStart,diagStart>scannerStart?diagStart:raw.length);
+      ok(scannerBlock.indexOf('id="marketDataCompletenessCardScanner"')!==-1,
+        'a suppression container must live inside panel-scanner, where the chart is');
+      ok(raw.slice(diagStart).indexOf('id="marketDataCompletenessCard"')!==-1,
+        'and the Diagnostics card stays, because ADR-011 places this state there too');
+      return 'reachable from the panel the operator is actually looking at';
+    });
+    await t('VISIBILITY-3 the indicator is rendered to BOTH containers, so neither can silently go stale',async function(){
+      g.setFetchScript([g.okCandles(PARTIAL),g.okPrice()]);
+      g.setActiveTf('M15'); g.resetPairData();
+      await g.scanPair('EUR_USD');
+      g.renderMarketDataCompletenessDiagnostics();
+      ok(/not evaluated/i.test(g.scannerCardHtml()),'the scanner container must carry the suppression');
+      eq(g.scannerCardHtml(),g.diagnosticsHtml(),'both containers must show the identical state');
+      g.setFetchScript([g.okCandlesRaw(SCANNER_LOOKBACK,SCANNER_LOOKBACK-1),g.okPrice()]);
+      g.resetPairData();
+      await g.scanPair('EUR_USD');
+      g.renderMarketDataCompletenessDiagnostics();
+      eq(g.scannerCardHtml(),'','and both fall silent together when nothing is suppressed');
+      return 'both containers, identical content, silent when healthy';
+    });
+
+    // ══ MOGO-021 item 3 — THE CHART MUST NOT DECIDE SOMETHING THE ENGINE DID NOT ═════════
+    // loadChart used to run detectSignals/bestConfluence on its OWN fetch with no completeness gate
+    // and render a "STRATEGY RECOMMENDS BUY" banner from the result -- so a pair the scanner had
+    // suppressed showed "-" / 0% in the pair row and a confident recommendation on the chart.
+    await t('CHART-1 a suppressed instrument renders an explicit NOT-EVALUATED state',async function(){
+      g.renderChartEvaluationState({suppressed:true,completenessState:'PARTIAL',source:'engine',
+        requestedCount:SCANNER_LOOKBACK,receivedCount:PARTIAL,timeframe:'M15'});
+      const shown=g.chartStateHtml();
+      ok(/NOT EVALUATED/i.test(shown),'it must say the instrument was not evaluated');
+      ok(/Nothing below is a strategy verdict/i.test(shown),
+        'and disclaim the panels beside it, which is the whole point');
+      ok(shown.indexOf(String(SCANNER_LOOKBACK))!==-1&&shown.indexOf(String(PARTIAL))!==-1,
+        'and show requested vs received');
+      return 'suppression is stated on the chart itself';
+    });
+    await t('CHART-2 a healthy instrument still renders, and says WHOSE verdict it is',async function(){
+      g.renderChartEvaluationState({suppressed:false,completenessState:'COMPLETE',source:'engine',timeframe:'H4'});
+      const fromEngine=g.chartStateHtml();
+      ok(!/NOT EVALUATED/i.test(fromEngine),'a healthy instrument must NOT be marked unevaluated');
+      ok(/scanner/i.test(fromEngine)&&fromEngine.indexOf('H4')!==-1,
+        'it must attribute the verdict to the scanner and name the timeframe');
+      g.renderChartEvaluationState({suppressed:false,completenessState:'COMPLETE',source:'chart',timeframe:'H4'});
+      const fromChart=g.chartStateHtml();
+      ok(/has not scored/i.test(fromChart),
+        'a pre-scan chart-local computation must not be presented as the engine\u2019s verdict');
+      ok(fromEngine!==fromChart,'the two must be distinguishable -- only one is what auto-trading acted on');
+      return 'engine verdict and chart-local computation are told apart';
+    });
+    await t('CHART-3 loadChart no longer scores raw candles without a completeness gate',async function(){
+      const raw=g.rawHtml();
+      const start=raw.indexOf('async function loadChart(');
+      ok(start!==-1,'loadChart must exist');
+      const body=raw.slice(start,start+9000);
+      ok(body.indexOf('detectSignals(candles,')===-1&&body.indexOf('bestConfluence(candles,')===-1,
+        'loadChart must not score its own raw fetch ungated -- that is the defect');
+      ok(body.indexOf('marketDataCompletenessOf(candles)')!==-1,
+        'it must consult the completeness contract');
+      ok(body.indexOf('pairData[activePair]')!==-1,
+        'and prefer the engine\u2019s own verdict, so the chart and the decision are the same object');
+      return 'the chart reads the engine rather than forming a second opinion';
     });
 
     return out;

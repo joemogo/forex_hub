@@ -116,6 +116,11 @@ g.hasCompletenessState=function(v){
 };
 g.completenessStateOf=function(v){ return (v&&typeof v==='object')?v.completenessState:undefined; };
 g.diagnosticsHtml=function(){ return (elMap['marketDataCompletenessCard']||{innerHTML:''}).innerHTML||''; };
+g.scannerCardHtml=function(){ return (elMap['marketDataCompletenessCardScanner']||{innerHTML:''}).innerHTML||''; };
+// The raw document, so a fixture can assert WHERE a container lives rather than merely that
+// something was written into it. VISIBILITY-1 could not tell a visible element from one inside a
+// display:none panel; these can.
+g.rawHtml=function(){ return html; };
 
 const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
@@ -131,6 +136,8 @@ const wrapped = new Function('g',
   // ── live-binding accessors ──
   'g.marketDataCompletenessOf=marketDataCompletenessOf;' +
   'g.renderMarketDataCompletenessDiagnostics=renderMarketDataCompletenessDiagnostics;' +
+  'g.renderChartEvaluationState=renderChartEvaluationState;' +
+  'g.chartStateHtml=function(){return (document.getElementById("chartEvaluationState")||{innerHTML:""}).innerHTML||"";};' +
   'g.pairData=function(){return pairData;};' +
   'g.resetPairData=function(){pairData={};};' +
   'g.setActiveTf=function(v){activeTf=v;};' +

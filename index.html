@@ -950,6 +950,12 @@ button.danger:hover{background:var(--red-dim)}
                 <div id="chartOHLC" style="margin-left:auto;font-size:11px;color:var(--text2);white-space:nowrap"></div>
               </div>
               <div id="liveTriggerBadge" style="display:none;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:8px"></div>
+              <!-- MOGO-021 item 3: the chart's evaluation state, on the SCANNER. The amber
+                   completeness card lives in panel-diagnostics, and .panel{display:none} means an
+                   operator looking at this chart never saw it -- which is why a suppressed pair
+                   could show a confident recommendation with nothing to contradict it. -->
+              <div id="chartEvaluationState"></div>
+              <div id="marketDataCompletenessCardScanner"></div>
               <div class="signals-row" id="signalsRow"></div>
               <div class="chart-stage">
                 <div id="chartContainer"></div>
@@ -1971,7 +1977,7 @@ const ALL_PAIRS=[
 const APP_VERSION='12.20.0';
 const APP_VERSION_DATE='14 Aug 2026';
 const APP_VERSION_LOG=[
-  '12.20.0 — MOGO-021 GOVERNED TRADING-CORRECTNESS REMEDIATION (owner-authorized; four decisions). DECISION 1 -- HIGHER-TIMEFRAME COMPLETENESS. ALEX checked only datasets.H1, and only against a raw length floor (<60); H4, D and W were handed to the frozen engine with NO check at all. Because the fetch is by fixed COUNT, a broker page two candles short (a reproduced 148-of-150 daily response) moved the window START off a bar boundary, re-anchored the zone identity INSIDE the staleness window and defeated every duplicate-trade guard -- opening a SECOND real paper position where a full-count control blocked it as DUPLICATE. Two repairs: fetchCandlesRange no longer treats a short page as proof of exhaustion (it CONTINUES the walk, so a transient shortfall is repaired rather than merely detected; only REACHED_COUNT or a genuinely EMPTY continuation now satisfy the request), and alexGEvaluatePairForLiveSetups gates evaluation on completenessState===COMPLETE for all four timeframes -- on completenessState and NOTHING else, per ADR-011. Fail-closed; suppression is per-pair and records DATA_CANDLES_UNAVAILABLE (transport) versus the newly registered DATA_TIMEFRAME_INCOMPLETE (contract), with a durable DATA_INCOMPLETE pipeline stage. DECISIONS 2+3 -- STABLE ECONOMIC IDENTITY AND A DECIDED-AUTHORITY SEPARATE FROM THE DISPLAY RING. alexGLiveSetupStatuses is a 300-entry DISPLAY ring holding less than one poll cycle (388 setups), so the documented PERMANENT-never-reconsidered contract was void for all twelve pairs -- roughly 53 re-decisions per signalId, measured. The withdrawn 300-to-5000 workaround was NOT implemented: it is bounded by count where the requirement is time, and collapses to about 11.9 hours under identity drift. Instead: alexGEconomicSetupIdentity (immutable categorical fields plus PRICES) joins alexGStableSetupIdentity as a second OR-term, because getCandleCloseTime returns an ESTIMATE for the newest bar and therefore moves reactionId AND qualificationTimestamp by about 48h at every weekend reopen -- two of the five components the anchor-free identity relied on. The decided-authority is a session-scoped map age-evicted by the frozen staleness contract itself (provably lossless: a setup past its staleness limit can no longer change any outcome), and whether a setup was already TRADED is derived from the EXISTING durable account and journal records -- no new persistent state, no parallel persistent Set. alexGResetLiveDecisionState is the single primitive owning both the ring and the authority, so they cannot desynchronise (the defect that reverted the MOGO-020 attempt). SEMANTIC CHANGE, AUTHORIZED: setups previously re-decided every poll are now decided once, as the contract already stated. DECISION 4 -- JVM CANDIDATE-LEVEL DIAGNOSTIC. checkAutoTrades discarded the verdict evaluateLiveTrigger had already computed, leaving every JVM rejection unauditable. One statement inside the protected checkAutoTrades now calls jvmRecordCandidateRejected (non-protected, total by construction, result never read), which records the reason the strategy ACTUALLY returned -- never a recomputation. All eight reasons evaluateLiveTrigger can return map to reason codes that ALREADY existed; none was invented and none stretched. JVM-27/28/29 asserted the auditability gap and are inverted to assert the contract; JVM-30/31 pin the mapping and prove no unregistered code can be emitted. GOVERNED BASELINE CONSEQUENCE: checkAutoTrades is the ONLY protected function changed -- the drift check flagged exactly it and nothing else, which independently confirms Decisions 1 and 2+3 touched no protected code. regression-baseline.json re-issued from this version; drift is 0 against the NEW baseline. No confluence, threshold, setup definition, pattern, entry, stop, target, filter, risk, sizing or exclusion was altered. PAPER ONLY; live money NOT authorized; TJR untouched and research-only.',
+  '12.20.0 — MOGO-021 GOVERNED TRADING-CORRECTNESS REMEDIATION (owner-authorized; four decisions). DECISION 1 -- HIGHER-TIMEFRAME COMPLETENESS. ALEX checked only datasets.H1, and only against a raw length floor (<60); H4, D and W were handed to the frozen engine with NO check at all. Because the fetch is by fixed COUNT, a broker page two candles short (a reproduced 148-of-150 daily response) moved the window START off a bar boundary, re-anchored the zone identity INSIDE the staleness window and defeated every duplicate-trade guard -- opening a SECOND real paper position where a full-count control blocked it as DUPLICATE. Two repairs: fetchCandlesRange no longer treats a short page as proof of exhaustion (it CONTINUES the walk, so a transient shortfall is repaired rather than merely detected; only REACHED_COUNT or a genuinely EMPTY continuation now satisfy the request), and alexGEvaluatePairForLiveSetups gates evaluation on completenessState===COMPLETE for all four timeframes -- on completenessState and NOTHING else, per ADR-011. Fail-closed; suppression is per-pair and records DATA_CANDLES_UNAVAILABLE (transport) versus the newly registered DATA_TIMEFRAME_INCOMPLETE (contract), with a durable DATA_INCOMPLETE pipeline stage. DECISIONS 2+3 -- STABLE ECONOMIC IDENTITY AND A DECIDED-AUTHORITY SEPARATE FROM THE DISPLAY RING. alexGLiveSetupStatuses is a 300-entry DISPLAY ring holding less than one poll cycle (388 setups), so the documented PERMANENT-never-reconsidered contract was void for all twelve pairs -- roughly 53 re-decisions per signalId, measured. The withdrawn 300-to-5000 workaround was NOT implemented: it is bounded by count where the requirement is time, and collapses to about 11.9 hours under identity drift. Instead: alexGEconomicSetupIdentity (immutable categorical fields plus PRICES) joins alexGStableSetupIdentity as a second OR-term, because getCandleCloseTime returns an ESTIMATE for the newest bar and therefore moves reactionId AND qualificationTimestamp by about 48h at every weekend reopen -- two of the five components the anchor-free identity relied on. The decided-authority is a session-scoped map age-evicted by the frozen staleness contract itself (provably lossless: a setup past its staleness limit can no longer change any outcome), and whether a setup was already TRADED is derived from the EXISTING durable account and journal records -- no new persistent state, no parallel persistent Set. alexGResetLiveDecisionState is the single primitive owning both the ring and the authority, so they cannot desynchronise (the defect that reverted the MOGO-020 attempt). SEMANTIC CHANGE, AUTHORIZED: setups previously re-decided every poll are now decided once, as the contract already stated. DECISION 4 -- JVM CANDIDATE-LEVEL DIAGNOSTIC. checkAutoTrades discarded the verdict evaluateLiveTrigger had already computed, leaving every JVM rejection unauditable. One statement inside the protected checkAutoTrades now calls jvmRecordCandidateRejected (non-protected, total by construction, result never read), which records the reason the strategy ACTUALLY returned -- never a recomputation. All eight reasons evaluateLiveTrigger can return map to reason codes that ALREADY existed; none was invented and none stretched. JVM-27/28/29 asserted the auditability gap and are inverted to assert the contract; JVM-30/31 pin the mapping and prove no unregistered code can be emitted. ALSO IN THIS RELEASE, and recorded here because a release note that omits a contract change is a governance gap: alexGEvaluatePairForLiveSetups now RETURNS {evaluated,reason,incompleteTimeframes} and its caller acts on that value -- the poll ledger previously credited a pair as evaluated BEFORE evaluation ran and derived instrumentsAttempted from the same array, so the two were identical by construction and a suppressed instrument would have been reported as fully evaluated. instrumentsAttempted is now a separate true dispatch list, and a throw downstream of the frozen engine still reports the instrument as EVALUATED (a coverage row contradicting a durable trade record is a wrong report, not a safe under-report). fetchCandlesRange gains a CURSOR_NOT_ADVANCING termination and a shortPages diagnostic: removing the short-page break meant a broker ignoring the `to` cursor could be paginated against until the guard limit and accumulate DUPLICATE candles that could reach the requested count and read COMPLETE; the guard reports PARTIAL instead of returning a corrupt window. The DURABLE half of the decided-authority is age-bounded by the timeframe staleness limit plus a four-day market-gap allowance, and excludes developer test trades -- without that bound it had no age limit at all and would have refused a genuinely new setup sharing an economic identity for the life of the account, which is a permanently lost trade and worse than the duplicate it prevents. The economic index is age-evicted on its own terms because two setups can share an economic identity while differing in stable identity, so it can hold a record the stable map never had. GOVERNED BASELINE CONSEQUENCE: checkAutoTrades is the ONLY protected function changed -- the drift check flagged exactly it and nothing else, which independently confirms Decisions 1 and 2+3 touched no protected code. regression-baseline.json re-issued from this version; drift is 0 against the NEW baseline. No confluence, threshold, setup definition, pattern, entry, stop, target, filter, risk, sizing or exclusion was altered. PAPER ONLY; live money NOT authorized; TJR untouched and research-only.',
   '12.19.0 — MOGO-004 L2: RUN-IDENTITY HASH PERSISTENCE (evidence-record release; NO trading behavior change; NO replay behavior change; NO strategy logic touched; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical). THE PROBLEM, found by the MOGO-004 Step 1 pilot: PRE-REG-001 section 8 item 1 requires runId, datasetHash, configHash and paramsHash for every campaign run WITHOUT EXCEPTION, and only two of the four ever reached the evidence package. configHash and paramsHash were computed by alexGBuildReplayRunIdentity (index.html:13581-13582), contributed to the deterministic runId, were returned on the run-identity object -- and were then dropped: the replay capture seam constructed identity from mode, runId, datasetHash and replayDateRange only. Nothing else retained them (runIdentity is a local in runAlexGReplay, returned into a local const in runAlexGReplayUI; alexGReplayState is run-control only), so once a run returned, both hashes were UNRECOVERABLE -- as they now permanently are for RUN-001 and for both MOGO-004 pilot runs. THE CHANGE IS PURELY ADDITIVE AND PURELY A RECORDING: two keys are carried from the run-identity object into identity, following the exact pattern v12.9.0 established for datasetHash and replayDateRange -- ALWAYS PRESENT, null for LIVE_PAPER, populated for REPLAY, so every package keeps an identical key set regardless of strategy or mode. NO HASH IS RECOMPUTED, no hash derivation changed, and runId is carried through verbatim rather than rebuilt -- a fixture asserts the package builder contains no hash computation at all. The schema version is deliberately NOT bumped: mogo.evidence-package.v1 is preserved so that already-verified packages continue to import. VALIDATION IS PRESENT-ONLY, for the reason v12.10.0 recorded: RUN-001 (24 packages) and the MOGO-004 pilot (50 packages) were captured before this release and omit both keys entirely, and requiring them outright would retroactively invalidate 74 already-hash-verified packages. But because the producer now emits both keys unconditionally, a REPLAY package that CARRIES a key and leaves it null could only come from a capture regression -- so that specific case IS an error and names the field. Net effect: legacy evidence still validates and still verifies, and no future replay run can silently lose the two hashes the pre-registration requires. TESTING: v128 grows 224 -&gt; 227 (R5b/R5c/R5d) plus R4 and R5 extended: persistence verbatim for REPLAY, key-present-and-null required for LIVE_PAPER, no hash computed in the builder, runId unaffected, legacy packages still valid with both keys deleted, and a nulled REPLAY hash rejected by name. Full regression: 947/947 across 17 suites, zero drift.',
   '12.18.0 — MOGO-003 REPORTING AUTHORITY TRANSITION (reporting-only release; NO trading behavior change; NO position-sizing change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; FLAG DEFAULTS OFF FOR EVERY STRATEGY). WHAT IT SWITCHES: when enabled for a strategy, the figures that strategy DISPLAYS come from the immutable ledger instead of its stored totals. WHAT IT POINTEDLY DOES NOT SWITCH: position sizing still reads the STORED balance -- alexGConstructLivePosition is protected and untouched and its call site still passes alexGAccount.balance, so the next trade risks exactly what it would have risked before. This flag CANNOT alter a trade, and a fixture asserts the protected constructor contains no reference to the reporting layer while the reporting layer references no sizing or open path. The stored balance also continues to be written by the protected close path; the ledger simply stops being READ FROM it for display. TWO SWITCHES, BOTH OFF: a master switch and a per-strategy switch must both be true, so the master alone enables nothing; JVM additionally records WHY it is not yet eligible (paperAccount declares no startingBalance, so a derived balance would be a guess). OFF MEANS BYTE-IDENTICAL: with the flag off the resolver returns the stored value and performs no derivation at all, so every surface computes exactly what it computed in v12.17.0 -- asserted, not assumed. FAILS TO THE STORED VALUE: an exception in the enablement check returns false, and a derivation failure returns STORED_DERIVATION_FAILED with the stored balance, so a figure is always produced and the display is never blanked. DISCLOSURE: a derived figure is labelled \'Alex balance (ledger-derived)\' so the operator can always tell which authority produced the number. DIAGNOSTICS REMAIN PERMANENT and unaffected by the flag, reconciling derived against stored in both modes -- after a switch that card is the long-term drift detector. ROLLBACK is a flag flip: because this layer never writes, turning it off restores prior behaviour with no data operation. TESTING: v128 grows 214 -&gt; 224 (A1-A10): default-off for every strategy, stored pass-through when off, ledger figures when on, master-switch-alone enables nothing, failure falls back to stored, sizing untouched and unreachable, no writes, display seams routed and disclosed, reconciliation unchanged by the flag, and replay/evidence untouched. Full regression: 943/943 across 17 suites, zero drift.',
   '12.17.0 — MOGO-003 PHASE 2: LEDGER RECONCILIATION DIAGNOSTICS (diagnostics-only release; NO trading behavior change; zero protected-function/protected-constant drift -- 63 functions and 4 constants byte-identical; NO stored total is replaced and nothing is written). WHAT IT DOES: a new Diagnostics card renders one table per strategy comparing STORED account state against state DERIVED from the immutable ledger, with Field / Stored / Derived / Difference / Verdict / Explanation across eight figures -- balance, realizedPnl, wins, losses, decided, winRate, netR and maxDrawdownR -- plus the responsible trade ids on every non-matching row and a preserved list of excluded events beneath each table. HOW A DIFFERENCE IS EXPLAINED: the ledger is derived TWICE, once excluding quarantined events (the authoritative view) and once including them (the view the stored totals actually reflect). If a field\'s stored value matches the all-inclusive derivation, the difference is EXACTLY the excluded records and is reported as EXPLAINED_BY_EXCLUSIONS with those records named; if it matches neither it is UNEXPLAINED_DELTA -- the stored value moved for a reason the ledger cannot account for -- which is reported, never absorbed; otherwise MATCHES. The vocabulary is a frozen three-value constant. AGAINST THE REAL INC-005 ACCOUNT (stored 10200, ledger 10000) the view returns EXPLAINED_BY_EXCLUSIONS on six fields, MATCHES on two, and drill-down on balance returns the single responsible event AGT|MANUAL-B|1785634676564 with its $200 and the three integrity rules it violated. winRate derives as null rather than 0% -- zero decided trades has no win rate, and inventing one would be a fabricated figure. DRILL-DOWN: ledgerReconciliationDrillDown(report,field) returns the verdict, the explanation and the full ledger events behind it, each with result, P&amp;L and violated rules. READ-ONLY BY CONSTRUCTION: the layer contains no localStorage, commitAlexGLedger, saveAlexG, balance-assignment, splice or delete path; accounts are byte-identical after reconciliation; the report carries readOnly:true; and the card states on screen that it replaces nothing. DELIBERATE LIMITATION: nothing is corrected -- the stored balance still reads what it reads. This milestone makes the divergence visible and attributable; changing it is a separate explicit act. TESTING: v128 grows 205 -&gt; 214 (R1-R9): all-match, the INC-005 case field by field, an unexplained delta reported, all three verdicts from the declared vocabulary, drill-down reaching the responsible event, excluded events preserved, a no-write/no-mutation proof, both strategies covered and the view wired into Diagnostics, and determinism with safe degradation when no stored value exists. Full regression: 933/933 across 17 suites, zero drift.',
@@ -2249,8 +2255,12 @@ function alexGMarkSetupDecided(setup,signalId){
     if(!stableId&&!economicId) return;
     const rec={stableId:stableId,economicId:economicId,signalId:signalId||null,
       timeframe:setup.timeframe,qualificationTimestamp:setup.qualificationTimestamp,decidedAt:Date.now()};
-    // Both maps are written here and only here, and cleared/pruned together below, so they cannot
-    // drift apart -- they are two indexes over one record, not two sources of truth.
+    // Both maps are written here and only here and cleared together, and both are age-evicted on
+    // their own terms. They are NOT guaranteed to hold the same key set: two setups can share an
+    // economic identity while differing in stable identity, so the economic map can hold a record the
+    // stable map never had. That is why the prune walks both rather than assuming one mirrors the
+    // other -- an earlier version of this comment claimed they "cannot drift apart", and that was
+    // false.
     if(stableId&&!alexGDecidedSetups.has(stableId)) alexGDecidedSetups.set(stableId,rec);
     if(economicId&&!alexGDecidedEconomic.has(economicId)) alexGDecidedEconomic.set(economicId,rec);
     while(alexGDecidedSetups.size>ALEXG_DECIDED_MAX) alexGDecidedSetups.delete(alexGDecidedSetups.keys().next().value);
@@ -2277,6 +2287,17 @@ function alexGPruneDecidedSetups(nowMs,cfg){
       alexGDecidedSetups.delete(k);
       if(r&&r.economicId&&alexGDecidedEconomic.get(r.economicId)===r) alexGDecidedEconomic.delete(r.economicId);
     });
+    // The economic index is NOT merely a second view of the stable one. Two setups can share an
+    // economic identity while differing in stable identity, in which case the economic map holds a
+    // record the stable map never had -- and walking only the stable map would leave it to block for
+    // the rest of the session. The count cap deletes from each map independently for the same reason.
+    // Age-evict this index on its own terms rather than assuming the two cannot drift apart.
+    const deadEcon=[];
+    alexGDecidedEconomic.forEach(function(rec,key){
+      const lim=max[rec.timeframe];
+      if(lim!=null&&rec.qualificationTimestamp!=null&&(nowMs-rec.qualificationTimestamp)/60000>lim) deadEcon.push(key);
+    });
+    deadEcon.forEach(function(k){ alexGDecidedEconomic.delete(k); });
   }catch(e){ /* bookkeeping must never break a trading decision */ }
 }
 // Answers "has this economic setup already been decided or traded?" from the session record FIRST
@@ -2296,11 +2317,31 @@ function alexGResetLiveDecisionState(){
   alexGDecidedSetups=new Map();
   alexGDecidedEconomic=new Map();
 }
+// How far apart two qualification timestamps may be and still be plausibly the SAME economic event.
+// The stable identity pins the timestamp exactly, so this bounds only the ECONOMIC match, which
+// deliberately drops time. A pure zone re-anchor leaves qualificationTimestamp identical (gap 0); the
+// weekend close-time re-estimation moves it by one market gap. Four days covers a weekend plus a
+// holiday, so a genuinely NEW setup weeks later can never be mistaken for a re-derivation of an old
+// trade. Without this the durable half had NO age bound at all and would refuse such a setup for the
+// life of the account -- a permanently lost trade, which is worse than the duplicate it prevents.
+const ALEXG_ECONOMIC_MATCH_GAP_MS=4*24*60*60*1000;
+function alexGEconomicMatchWindowMs(timeframe){
+  const lim=RULES_ALEXG.config&&RULES_ALEXG.config.maxLiveSignalAgeMinutes
+    ? RULES_ALEXG.config.maxLiveSignalAgeMinutes[timeframe] : null;
+  return (lim==null?0:lim*60000)+ALEXG_ECONOMIC_MATCH_GAP_MS;
+}
+// A developer test trade must never durably block a real setup. It goes through the same frozen
+// functions by design, so it lands in the account and journal like any other -- which is exactly why
+// it has to be excluded HERE rather than assumed absent.
+function alexGIsDeveloperRecord(r){
+  return !!(r&&(r.isDeveloperTrade===true||r.tradeSource==='TEST'));
+}
 function alexGFindPriorDecision(setup,signalId){
   try{
     if(!setup) return null;
     const stableId=alexGStableSetupIdentity(setup);
     const economicId=alexGEconomicSetupIdentity(setup);
+    const matchWindowMs=alexGEconomicMatchWindowMs(setup.timeframe);
     const sessionRec=(stableId&&alexGDecidedSetups.get(stableId))||(economicId&&alexGDecidedEconomic.get(economicId))||null;
     if(sessionRec) return{source:'session',
       matchedBy:(stableId&&alexGDecidedSetups.get(stableId)===sessionRec)?'stableId':'economicId',
@@ -2310,11 +2351,15 @@ function alexGFindPriorDecision(setup,signalId){
       const records=alexGAccount.openPositions.concat(alexGAccount.closedPositions,alexGJournalEntries);
       for(let i=0;i<records.length;i++){
         const p=records[i];
-        if(!p) continue;
+        if(!p||alexGIsDeveloperRecord(p)) continue;
+        // The stable identity embeds qualificationTimestamp, so an exact match IS the same event and
+        // needs no age bound. The economic identity drops time and therefore does.
         if(stableId&&alexGStableSetupIdentity(p)===stableId)
           return{source:'durable',matchedBy:'stableId',priorSignalId:p.signalId||null,
             priorTradeId:p.tradeId||null,drifted:p.signalId!==signalId};
-        if(economicId&&alexGEconomicSetupIdentity(p)===economicId)
+        if(economicId&&alexGEconomicSetupIdentity(p)===economicId
+           &&setup.qualificationTimestamp!=null&&p.qualificationTimestamp!=null
+           &&Math.abs(setup.qualificationTimestamp-p.qualificationTimestamp)<=matchWindowMs)
           return{source:'durable',matchedBy:'economicId',priorSignalId:p.signalId||null,
             priorTradeId:p.tradeId||null,drifted:true};
       }
@@ -4556,7 +4601,7 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
   // function means the setup already cleared every eligibility gate in
   // alexGEvaluatePairForLiveSetups, and recording that here means a candidate that dies inside
   // fetchBidAsk still leaves evidence it existed. Observation only; nothing below reads it.
-  alexGRecordPipelineStage('CANDIDATE',{pair:setup.pair,timeframe:setup.timeframe,
+  alexGRecordPipelineStage('CANDIDATE',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
     setupId:setup.setupId,signalId:signalId,status:'CANDIDATE',reason:null});
   const ba=await fetchBidAsk(setup.pair); // frozen current-strategy function, unmodified
   // v12.6.0 PROGRAM-001 Phase 2C Wave 1: observability only -- direction is intentionally still
@@ -4568,7 +4613,7 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
   // MOGO-017 Step 2A: REQUESTED. Paired with the TRADE_OPEN_REQUESTED decision event immediately
   // above, so the durable ledger and the ephemeral event bus agree on when the open was
   // attempted. Bid/ask is in hand; the protected constructor has not been called yet.
-  alexGRecordPipelineStage('REQUESTED',{pair:setup.pair,timeframe:setup.timeframe,
+  alexGRecordPipelineStage('REQUESTED',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
     setupId:setup.setupId,signalId:signalId,status:'REQUESTED',reason:null});
   const result=alexGConstructLivePosition(setup,datasets,ba,RULES_ALEXG.config,alexGAccount.balance,evalMeta);
   if(result.status==='DUPLICATE'){
@@ -4582,7 +4627,7 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
     // MOGO-017 Step 2A: REQUEST_FAILED. The construction status is recorded verbatim rather than
     // re-interpreted -- DUPLICATE genuinely carries no reason of its own, and inventing one here
     // would be the fabrication the existing comment above already refuses.
-    alexGRecordPipelineStage('REQUEST_FAILED',{pair:setup.pair,timeframe:setup.timeframe,
+    alexGRecordPipelineStage('REQUEST_FAILED',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
       setupId:setup.setupId,signalId:signalId,status:result.status,reason:null});
     return;
   }
@@ -4607,7 +4652,7 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
       context:{signalId,constructionStatus:result.status},evidenceCompleteness:'COMPLETE'});
     // MOGO-017 Step 2A: REQUEST_FAILED. Every BLOCKED_* construction outcome lands here, carrying
     // the protected constructor's OWN status and reason -- never a re-derived one.
-    alexGRecordPipelineStage('REQUEST_FAILED',{pair:setup.pair,timeframe:setup.timeframe,
+    alexGRecordPipelineStage('REQUEST_FAILED',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
       setupId:setup.setupId,signalId:signalId,status:result.status,reason:result.reason});
     alexGRecordLiveSetupStatus(base);
     // MOGO-021 DECISIONS 2+3: record the decision under identities that survive a zone re-anchor,
@@ -4653,7 +4698,7 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
     // MOGO-017 Step 2A: REQUEST_FAILED, and this branch is the reason OPENED is emitted AFTER the
     // commit rather than after construction. The position object existed and is about to be rolled
     // back; recording OPENED here would durably assert a paper trade that does not exist.
-    alexGRecordPipelineStage('REQUEST_FAILED',{pair:setup.pair,timeframe:setup.timeframe,
+    alexGRecordPipelineStage('REQUEST_FAILED',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
       setupId:setup.setupId,signalId:signalId,tradeId:position.tradeId,
       status:'LEDGER_COMMIT_REJECTED',reason:committed.reason!=null?committed.reason:null});
     alexGAccount=alexGAccountSnapshot;
@@ -4671,7 +4716,7 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
   // paper position is genuinely persisted. `occurredAt` is the position's OWN openedAt rather than
   // "now", which makes the record's natural key stable and ties the ledger entry to the account
   // record by the same instant the account itself carries.
-  alexGRecordPipelineStage('OPENED',{pair:position.pair,timeframe:position.timeframe,
+  alexGRecordPipelineStage('OPENED',{scanId:scanId,pair:position.pair,timeframe:position.timeframe,
     setupId:setup.setupId,signalId:signalId,tradeId:position.tradeId,
     status:'TRADE OPENED',reason:null,occurredAt:position.openedAt||null});
   alexGAutoTrading.tradedSignals[signalId]=true;
@@ -4718,6 +4763,7 @@ function alexGIsSetupSignalStale(setup,nowMs,cfg){
 // cursor can ever cause a skipped candle, since nothing is trusted across
 // this rebuild) and attempts to act on every setup found for that pair.
 async function alexGEvaluatePairForLiveSetups(oPair,scanId){
+  let __engineRan=false;   // MOGO-021: did the frozen setup engine actually run for this instrument?
   try{
     // v12.6.0 pre-release correction: the real H1 boundary this pair had already reached as of the END of
     // its own LAST evaluation, captured BEFORE this poll's full rebuild advances it further.
@@ -4753,7 +4799,7 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
           httpStatus:meta?meta.httpStatus:null,
           requestedCount:meta?meta.requestedCount:null},
         evidenceCompleteness:'MINIMAL'});
-      alexGRecordPipelineStage('DATA_INSUFFICIENT',{pair:oPair,timeframe:'H1',
+      alexGRecordPipelineStage('DATA_INSUFFICIENT',{scanId:scanId,pair:oPair,timeframe:'H1',
         status:'SKIPPED — INSUFFICIENT MARKET DATA',reason:'DATA_INSUFFICIENT_HISTORY',
         occurredAt:new Date().toISOString()});
       return{evaluated:false,reason:'DATA_INSUFFICIENT_HISTORY'};
@@ -4789,7 +4835,7 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
         reasonText:'Required timeframe(s) '+__tfIncomplete.join(',')+' did not satisfy the completeness contract -- pair not evaluated for this boundary',
         context:{incompleteTimeframes:__tfIncomplete.slice(),completenessByTimeframe:__tfState},
         evidenceCompleteness:'MINIMAL'});
-      alexGRecordPipelineStage('DATA_INCOMPLETE',{pair:oPair,timeframe:__tfIncomplete[0],
+      alexGRecordPipelineStage('DATA_INCOMPLETE',{scanId:scanId,pair:oPair,timeframe:__tfIncomplete[0],
         status:'SKIPPED — INCOMPLETE MARKET DATA',reason:__reasonCode,
         occurredAt:new Date().toISOString()});
       return{evaluated:false,reason:__reasonCode,incompleteTimeframes:__tfIncomplete.slice()};
@@ -4797,6 +4843,12 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
     delete alexGZoneState[oPair];
     alexGSetupState=alexGSetupState.filter(s=>s.pair!==oPair);
     alexGRunSetupEngine(oPair,datasets); // frozen Phase 2/3 function, unmodified -- also advances alexGLastEvaluatedCloseTime[oPair]
+    // MOGO-021: from here on the frozen engine HAS run, so this instrument was genuinely evaluated
+    // whatever happens next. Without this flag a throw from anything downstream -- the setup loop,
+    // the open-position path, saveAlexG, a render or a toast -- lands in the catch below and the
+    // ledger reports the pair as SKIPPED while a real position may already be durably recorded. A
+    // coverage row that contradicts a trade record is not a safe under-report, it is a wrong one.
+    __engineRan=true;
     const setups=alexGSetupState.filter(s=>s.pair===oPair);
     for(const setup of setups){
       // v12.6.0 PROGRAM-001 Phase 2C Wave 1 (pre-release corrected): CANDIDATE_CREATED must mean the
@@ -4875,7 +4927,7 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
                 currentZoneId:setup.zoneId,priorZoneId:prior.zoneId,
                 priorRecord:prior.signalId?'position':'journal'},
               evidenceCompleteness:'COMPLETE'});
-            alexGRecordPipelineStage('IDENTITY_DRIFT',{pair:setup.pair,timeframe:setup.timeframe,
+            alexGRecordPipelineStage('IDENTITY_DRIFT',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
               setupId:setup.setupId,signalId:signalId,status:'IDENTITY DRIFTED — ALREADY TRADED',
               reason:'STATE_SIGNAL_IDENTITY_DRIFTED',sourceTradeId:prior.tradeId,
               occurredAt:new Date().toISOString()});
@@ -5054,8 +5106,9 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
       reasonText:(e&&e.message)?e.message:(e?String(e):null),
       context:{errorName:(e&&e.name)?e.name:null,stage:'alexGEvaluatePairForLiveSetups'},
       evidenceCompleteness:e?'COMPLETE':'UNKNOWN'});
-    // The swallow-and-continue behaviour is unchanged; the ledger simply stops calling this evaluated.
-    return{evaluated:false,reason:'SYSTEM_UNEXPECTED_ERROR'};
+    // The swallow-and-continue behaviour is unchanged. Coverage is reported on whether the frozen
+    // engine actually ran, not on whether the surrounding code completed cleanly.
+    return{evaluated:__engineRan,reason:'SYSTEM_UNEXPECTED_ERROR'};
   }
 }
 
@@ -5166,7 +5219,7 @@ async function alexGFetchExecutableCandles(pair,fromMs,toMs){
 // replaces the historical reconstruction, per the authorization's explicit "CURRENT SNAPSHOT"
 // rule.
 const ALEXG_LIVE_CANDLE_DURATION_MS=60000; // M1
-async function alexGCheckLivePositions(){
+async function alexGCheckLivePositions(scanId){
   if(!alexGAccount.openPositions.length) return;
   // MOGO-017 Step 2A: the tradeIds open BEFORE this tick's monitoring runs. Read-only, local, and
   // used solely to identify which positions THIS tick closed -- so CLOSED is recorded once, for
@@ -5235,7 +5288,7 @@ async function alexGCheckLivePositions(){
       if(tradeId==null||stillOpen.indexOf(tradeId)!==-1) return;
       const closed=alexGAccount.closedPositions.find(function(p){return p&&p.tradeId===tradeId;});
       if(!closed) return;
-      alexGRecordPipelineStage('CLOSED',{pair:closed.pair,timeframe:closed.timeframe,
+      alexGRecordPipelineStage('CLOSED',{scanId:scanId,pair:closed.pair,timeframe:closed.timeframe,
         setupId:closed.setupId||null,signalId:closed.signalId||null,tradeId:tradeId,
         status:closed.result||'closed',reason:null,occurredAt:closed.closedAt||null});
     });
@@ -5335,7 +5388,7 @@ async function alexGLivePollTick(){
     // makes the eviction boundary provably identical to the staleness boundary rather than merely
     // intended to be.
     alexGPruneDecidedSetups(Date.now(),RULES_ALEXG.config);
-    await alexGCheckLivePositions(); // always monitor/close existing positions first
+    await alexGCheckLivePositions(__scanId); // always monitor/close existing positions first
     stopAlexGLivePollingIfDone();
     if(!alexGAutoTrading.enabled){ // do not look for new setups while OFF
       emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
@@ -5441,7 +5494,7 @@ async function alexGLivePollTick(){
         // drained HERE, in the same `finally`, so a tick that throws still persists whatever
         // execution stages it reached before failing -- the same reason the poll record itself
         // lives in `finally`. Draining also empties the buffer, so nothing is written twice.
-        pipeline:alexGDrainPipelineObservations()});
+        pipeline:alexGDrainPipelineObservations(__scanId)});
     }catch(e){ /* never allow observation to affect the trading path */ }
   }
 }
@@ -6364,10 +6417,18 @@ function marketDataAttachCompleteness(arr,facts){
 }
 // ADR-011: suppression must never be silent to the operator. Always visible (not Developer-Mode
 // gated) because a silently unscanned pair looks identical to a pair with no setup.
+// MOGO-021 item 3: rendered into BOTH the Diagnostics card and a Scanner-panel container. ADR-011
+// does place this state in Diagnostics, and that stays -- but `.panel{display:none}` means an
+// operator looking at the chart never saw it, which is exactly how a suppressed pair could show a
+// confident recommendation with nothing on screen to contradict it. scanAll's own comment already
+// claimed the operator sees the suppression "rather than only when they open Diagnostics"; this is
+// what makes that true instead of aspirational.
 function renderMarketDataCompletenessDiagnostics(){
   if(typeof document==='undefined'||!document.getElementById) return;
-  const el=document.getElementById('marketDataCompletenessCard');
-  if(!el) return;
+  const targets=['marketDataCompletenessCard','marketDataCompletenessCardScanner']
+    .map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if(!targets.length) return;
+  const el={set innerHTML(v){ targets.forEach(function(t){ t.innerHTML=v; }); }};
   const rows=Object.keys(pairData||{}).filter(function(p){ return pairData[p]&&pairData[p].evaluationSuppressed; })
     .map(function(p){ const d=pairData[p];
       return{pair:p,state:d.completenessState||'UNAVAILABLE',
@@ -10806,12 +10867,40 @@ async function loadChart(){
   }
   currentChartCandles=candles; // v6.0: kept in sync so Fit Visible/Fit All never need a re-fetch
 
-  const signals=detectSignals(candles,activePair);
-  const conf=bestConfluence(candles,activePair);
+  // MOGO-021 completion item 3 -- THE CHART MUST NOT DECIDE SOMETHING THE ENGINE DID NOT.
+  //
+  // This block used to call detectSignals/bestConfluence on the chart's OWN 500-bar fetch, with no
+  // ADR-011 gate of any kind, and render signal badges, a confluence panel and a
+  // "STRATEGY RECOMMENDS BUY" banner from the result. Two consequences, both operator-facing:
+  //   * For a pair scanPair had SUPPRESSED as incomplete, the pair row showed "-" / 0% while this
+  //     chart showed a confident recommendation. Same pair, same timeframe, same second, directly
+  //     contradictory -- and the chart was the one with no completeness check.
+  //   * Even when healthy, the two were computed from different windows (500 bars here, 220 in
+  //     scanPair), so the displayed score need not equal the score the engine actually scored.
+  //
+  // The chart now shows what the ENGINE decided rather than a second opinion: it reads scanPair's
+  // own verdict for this pair out of pairData -- literally the same object -- and falls back to
+  // computing locally only before the first scan has produced one. Both paths are gated on the
+  // completeness contract, and a suppressed pair renders an explicit not-evaluated state instead of
+  // a fabricated 0%. Display only: no rule, threshold or decision is changed by any of this.
+  const engineVerdict=pairData[activePair];
+  const chartCompleteness=marketDataCompletenessOf(candles);
+  const usingEngineVerdict=!!(engineVerdict&&engineVerdict.conf&&engineVerdict.signals);
+  const evaluationSuppressed=usingEngineVerdict
+    ? engineVerdict.completenessState!==MARKET_DATA_COMPLETENESS.COMPLETE
+    : chartCompleteness!==MARKET_DATA_COMPLETENESS.COMPLETE;
+  const signals=usingEngineVerdict?engineVerdict.signals:detectSignals(evaluationSuppressed?null:candles,activePair);
+  const conf=usingEngineVerdict?engineVerdict.conf:bestConfluence(evaluationSuppressed?null:candles,activePair);
   const sess=getSession();
   renderSignalBadges(signals);
   renderConfluencePanel(conf);
   renderRecBanner(conf,sess);
+  renderChartEvaluationState({suppressed:evaluationSuppressed,
+    completenessState:usingEngineVerdict?engineVerdict.completenessState:chartCompleteness,
+    source:usingEngineVerdict?'engine':'chart',
+    requestedCount:usingEngineVerdict?engineVerdict.requestedCount:(candles?candles.requestedCount:null),
+    receivedCount:usingEngineVerdict?engineVerdict.receivedCount:(candles?candles.receivedCount:null),
+    timeframe:activeTf});
 
   const dec=activePair.includes('JPY')?3:5;
   const last=candles[candles.length-1];
@@ -11020,6 +11109,36 @@ async function loadChart(){
   document.getElementById('rrEntry').value=last.c.toFixed(5);
 }
 
+// MOGO-021 completion item 3. States, on the chart itself, whether what is displayed beside it is
+// the ENGINE's verdict or a local pre-scan computation, and refuses to let a suppressed pair look
+// like an evaluated one. TJR already does exactly this in its own chart legend, so the pattern is
+// not new to this codebase -- the shared scanner chart simply never had it.
+function renderChartEvaluationState(state){
+  const el=document.getElementById('chartEvaluationState');
+  if(!el) return;
+  const st=state||{};
+  if(!st.suppressed){
+    // Not silent on the happy path: an operator must be able to tell a live engine verdict from a
+    // chart-local one, because only the first is what auto-trading acted on.
+    el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:2px 0">'+
+      (st.source==='engine'
+        ? 'Showing the scanner\u2019s own '+escapeHtml(String(st.timeframe||''))+' verdict for this pair.'
+        : 'Computed on this chart\u2019s '+escapeHtml(String(st.timeframe||''))+' data \u2014 the scanner has not scored this pair yet.')+
+      '</div>';
+    return;
+  }
+  el.innerHTML='<div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:6px;'+
+    'padding:8px 10px;margin:4px 0;font-size:12px">'+
+    '<strong style="color:var(--gold)">NOT EVALUATED \u2014 incomplete market data</strong>'+
+    '<div style="color:var(--text2);margin-top:3px;font-size:11px">'+
+    'This instrument did not satisfy the market-data completeness contract on '+
+    escapeHtml(String(st.timeframe||''))+', so no signal, confluence or recommendation was computed '+
+    'for it. Nothing below is a strategy verdict.'+
+    '<div style="font-family:monospace;margin-top:3px">state '+escapeHtml(String(st.completenessState))+
+    ' \u00b7 requested '+escapeHtml(String(st.requestedCount))+
+    ' \u00b7 received '+escapeHtml(String(st.receivedCount))+'</div>'+
+    '</div></div>';
+}
 function renderSignalBadges(signals){
   const row=document.getElementById('signalsRow');
   row.innerHTML='';
@@ -13756,14 +13875,23 @@ function alexGRecordPipelineStage(stage,input){
   try{
     if(alexGPipelineObservationBuffer.length>=EVIDENCE_PIPELINE_BUFFER_MAX) return;
     const o=input||{};
-    alexGPipelineObservationBuffer.push(evidenceBuildPipelineObservation({
+    // MOGO-021: stamp the row with the tick that PRODUCED it, at the moment it is produced.
+    // alexGLivePollTick has no re-entrancy guard and is driven by setInterval, so two ticks can
+    // overlap -- and the drain below used to take the WHOLE shared buffer, meaning whichever tick
+    // drained second wrote the other tick's rows under its own scanId. That is the same
+    // read-shared-state-after-the-fact mistake the JVM coverage ledger was refuted for twice; the
+    // fix is the same one: attribute at write time. Non-enumerable, so the stored observation is
+    // byte-identical to before and no consumer sees a new field.
+    const __row=evidenceBuildPipelineObservation({
       stage:stage,pair:o.pair||null,timeframe:o.timeframe||null,
       setupId:o.setupId||null,signalId:o.signalId||null,
       status:o.status||null,reason:o.reason||null,
       // REFERENCES ONLY, exactly as the builder's own comment requires: the account, journal and
       // package store remain the authoritative financial records.
       sourceTradeId:o.sourceTradeId||null,tradeId:(o.tradeId===undefined)?null:o.tradeId,
-      packageId:o.packageId||null,occurredAt:o.occurredAt||null}));
+      packageId:o.packageId||null,occurredAt:o.occurredAt||null});
+    try{ Object.defineProperty(__row,'__tickScanId',{value:(o.scanId==null?null:o.scanId),enumerable:false,writable:false,configurable:true}); }catch(e){}
+    alexGPipelineObservationBuffer.push(__row);
   }catch(e){
     try{ evidenceRecordWriteFailure('pipeline-stage',e,{stage:stage}); }catch(e2){}
   }
@@ -13773,11 +13901,23 @@ function alexGRecordPipelineStage(stage,input){
 // what makes the buffer bounded in practice: alexGCheckLivePositions and
 // alexGAttemptOpenLivePosition are reachable only from alexGLivePollTick, which always drains in
 // its `finally` -- including when the tick throws.
-function alexGDrainPipelineObservations(){
+// Drains only the rows THIS tick produced. Rows carrying no tick id are drained too, so any caller
+// that predates the stamping still behaves exactly as before; rows belonging to a concurrent tick are
+// left in the buffer for that tick's own drain rather than being misfiled under this scanId.
+function alexGDrainPipelineObservations(scanId){
   try{
-    const drained=alexGPipelineObservationBuffer;
-    alexGPipelineObservationBuffer=[];
-    return drained;
+    if(scanId==null){
+      const all=alexGPipelineObservationBuffer;
+      alexGPipelineObservationBuffer=[];
+      return all;
+    }
+    const mine=[],theirs=[];
+    alexGPipelineObservationBuffer.forEach(function(r){
+      const owner=r?r.__tickScanId:null;
+      if(owner==null||owner===scanId) mine.push(r); else theirs.push(r);
+    });
+    alexGPipelineObservationBuffer=theirs;
+    return mine;
   }catch(e){ return []; }
 }
 

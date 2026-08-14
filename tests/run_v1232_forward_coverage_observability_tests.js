@@ -465,10 +465,37 @@ const wrapped = new Function('g',
   '  g.record("DECIDED-8","the record is kept while the setup is still actionable and evicted only once it is not",\n' +
   '    beforeLimit===true&&afterLimit===false,\n' +
   '    "held inside the H1 staleness window ("+H1LIM+"m), released outside it");\n' +
-  '  g.record("DECIDED-9","eviction is PROVABLY LOSSLESS -- an evicted setup is one the frozen staleness gate already rejects",\n' +
+  // STRENGTHENED (was mis-titled). This fixture claimed eviction was provably lossless but asserted
+  // ONLY the pre-existing frozen alexGIsSetupSignalStale boundary -- it touched no eviction code at
+  // all and died to no eviction mutation. Renaming it would have been the cheaper fix; it is
+  // strengthened instead, because the claim it makes is the one thing that justifies evicting a
+  // decided record at all, and a claim that load-bearing should be tested rather than retitled.
+  //
+  // The two boundaries are now MEASURED against each other, to the millisecond, on every timeframe:
+  // for each, the record is pruned exactly AT lim and one millisecond past it, and eviction must
+  // agree with staleness at both points. Any prune that reads a different limit, a different config
+  // source, or a different comparison than the frozen gate now disagrees somewhere and fails here.
+  '  const TIE_TFS=["H1","H4","D","W"];\n' +
+  '  const tieRows=TIE_TFS.map(function(tf,i){\n' +
+  '    const lim=RULES_ALEXG.config.maxLiveSignalAgeMinutes[tf];\n' +
+  '    const rec=Object.assign({},asTraded,{timeframe:tf,qualificationClose:1.20000+i*0.00100});\n' +
+  '    function at(ms){\n' +
+  '      alexGResetLiveDecisionState();\n' +
+  '      alexGMarkSetupDecided(rec,"AGL|tie|"+tf);\n' +
+  '      alexGPruneDecidedSetups(QT+ms,RULES_ALEXG.config);\n' +
+  '      return{evicted:alexGFindPriorDecision(rec,"AGL|tieprobe")===null,\n' +
+  '        stale:alexGIsSetupSignalStale(rec,QT+ms,RULES_ALEXG.config)};\n' +
+  '    }\n' +
+  '    const on=at(lim*60000),past=at(lim*60000+1);\n' +
+  '    return{tf:tf,lim:lim,agree:on.evicted===on.stale&&past.evicted===past.stale,\n' +
+  '      discriminates:on.stale===false&&past.stale===true};\n' +
+  '  });\n' +
+  '  g.record("DECIDED-9","eviction is PROVABLY LOSSLESS -- the eviction boundary IS the frozen staleness boundary, to the millisecond, on every timeframe",\n' +
+  '    tieRows.every(function(r){return r.agree&&r.discriminates;})&&\n' +
   '    alexGIsSetupSignalStale(asTraded,QT+(H1LIM+1)*60000,RULES_ALEXG.config)===true&&\n' +
   '    alexGIsSetupSignalStale(asTraded,QT+(H1LIM-1)*60000,RULES_ALEXG.config)===false,\n' +
-  '    "the eviction boundary IS the staleness boundary, so no evicted record could have changed an outcome");\n' +
+  '    tieRows.map(function(r){return r.tf+"@"+r.lim+"m"+(r.agree?" tied":" DIVERGED");}).join(", ")+\n' +
+  '    " -- measured at the limit and one millisecond past it, so no evicted record could have changed an outcome");\n' +
   // Per-timeframe lifetime: a W setup must be remembered 7 days, not one hour.
   '  alexGResetLiveDecisionState();\n' +
   '  const wSetup=Object.assign({},asTraded,{timeframe:"W",qualificationClose:1.30000});\n' +
@@ -505,6 +532,229 @@ const wrapped = new Function('g',
   '  g.record("DECIDED-14","one primitive clears the ring AND the authority together -- they cannot desynchronise",\n' +
   '    alexGLiveSetupStatuses.length===0&&alexGFindPriorDecision(asTraded,"AGL|any")===null,\n' +
   '    "ring="+alexGLiveSetupStatuses.length+" and authority reports nothing");\n' +
+  // ══ THE DURABLE ECONOMIC TERM IS AGE-BOUNDED (MOGO-021, both directions) ══════════════════
+  // The stable identity pins qualificationTimestamp exactly, so an exact match needs no age bound.
+  // The economic identity deliberately drops time, and until the bound landed the durable half had
+  // NO age limit at all: a setup carrying the same categorical fields and the same qualificationClose
+  // would have been refused for the life of the account. A permanently lost trade is worse than the
+  // duplicate it prevents, so BOTH directions have to hold.
+  '  alexGResetLiveDecisionState();\n' +
+  '  const tradedRec=Object.assign({},asTraded,{signalId:"AGL|orig",tradeId:"AGT|orig",status:"closed"});\n' +
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[tradedRec]};\n' +
+  '  alexGJournalEntries=[];\n' +
+  // (a) the case the term exists for: the weekend close-time re-estimation moved reactionId AND
+  // qualificationTimestamp, so ONLY the economic identity can still match.
+  '  const wkMatch=alexGFindPriorDecision(afterWeekend,"AGL|weekend");\n' +
+  // (b) a genuinely NEW setup three weeks later carrying the IDENTICAL economic identity -- same
+  // pair, timeframe, setup type, swing type and qualificationClose. Nothing but the age bound
+  // distinguishes it from (a).
+  '  const newLater=Object.assign({},asTraded,{\n' +
+  '    reactionId:"AGR|AUD_JPY|H1|low|"+(1786503600000+21*24*3600000),\n' +
+  '    qualificationTimestamp:QT+21*24*3600000});\n' +
+  '  const newMatch=alexGFindPriorDecision(newLater,"AGL|new21d");\n' +
+  '  g.record("ECON-AGE-1","the DURABLE economic term still refuses a weekend-shifted re-derivation (~48h apart)",\n' +
+  '    !!wkMatch&&wkMatch.source==="durable"&&wkMatch.matchedBy==="economicId"&&\n' +
+  '    wkMatch.priorTradeId==="AGT|orig"&&wkMatch.drifted===true&&\n' +
+  '    alexGStableSetupIdentity(afterWeekend)!==alexGStableSetupIdentity(tradedRec),\n' +
+  '    "matchedBy="+String(wkMatch&&wkMatch.matchedBy)+" source="+String(wkMatch&&wkMatch.source)+\n' +
+  '    " -- the stable identity does NOT match, so this is the economic term or nothing");\n' +
+  '  g.record("ECON-AGE-2","but a genuinely NEW setup 21 days later with the IDENTICAL economic identity is NOT refused",\n' +
+  '    newMatch===null&&\n' +
+  '    alexGEconomicSetupIdentity(newLater)===alexGEconomicSetupIdentity(tradedRec)&&\n' +
+  '    (newLater.qualificationTimestamp-tradedRec.qualificationTimestamp)>alexGEconomicMatchWindowMs("H1"),\n' +
+  '    "same economic identity ("+alexGEconomicSetupIdentity(newLater)+"), gap "+\n' +
+  '    Math.round((newLater.qualificationTimestamp-tradedRec.qualificationTimestamp)/86400000)+"d vs window "+\n' +
+  '    (alexGEconomicMatchWindowMs("H1")/86400000).toFixed(2)+"d -- an unbounded term would lose this trade forever");\n' +
+  '  g.record("ECON-AGE-3","the window is the timeframe’s OWN staleness limit plus the market-gap allowance, per timeframe",\n' +
+  '    alexGEconomicMatchWindowMs("H1")===H1LIM*60000+ALEXG_ECONOMIC_MATCH_GAP_MS&&\n' +
+  '    alexGEconomicMatchWindowMs("W")===WLIM*60000+ALEXG_ECONOMIC_MATCH_GAP_MS&&\n' +
+  '    alexGEconomicMatchWindowMs("W")>alexGEconomicMatchWindowMs("H1"),\n' +
+  '    "H1="+alexGEconomicMatchWindowMs("H1")+"ms W="+alexGEconomicMatchWindowMs("W")+"ms");\n' +
+  // ══ A DEVELOPER TEST TRADE MUST NOT DURABLY BLOCK A REAL SETUP ════════════════════════════
+  // Developer trades travel through the same frozen open/close functions by design, so they land in
+  // the account and the journal exactly like real ones -- which is precisely why they have to be
+  // excluded HERE rather than assumed absent. The positive control is what makes this non-vacuous:
+  // the SAME record without the tags must still block.
+  '  alexGResetLiveDecisionState();\n' +
+  '  function devScan(over){\n' +
+  '    alexGAccount={balance:10000,openPositions:[],\n' +
+  '      closedPositions:[Object.assign({},asTraded,{signalId:"AGL|d",tradeId:"AGT|d",status:"closed"},over)]};\n' +
+  '    return alexGFindPriorDecision(reAnchored,"AGL|realsetup");\n' +
+  '  }\n' +
+  '  const realBlocks=devScan({});\n' +
+  '  const devFlagged=devScan({isDeveloperTrade:true});\n' +
+  '  const testSourced=devScan({tradeSource:"TEST"});\n' +
+  '  const bothTagged=devScan({isDeveloperTrade:true,tradeSource:"TEST"});\n' +
+  '  g.record("DEV-1","POSITIVE CONTROL: an untagged durable record on that setup DOES refuse it",\n' +
+  '    !!realBlocks&&realBlocks.source==="durable"&&realBlocks.priorTradeId==="AGT|d",\n' +
+  '    "refused via "+String(realBlocks&&realBlocks.matchedBy)+" -- so silence below is exclusion, not absence");\n' +
+  '  g.record("DEV-2","a DEVELOPER test trade does NOT durably block the real setup -- on either tag, or both",\n' +
+  '    devFlagged===null&&testSourced===null&&bothTagged===null,\n' +
+  '    "isDeveloperTrade=true -> "+String(devFlagged)+", tradeSource=TEST -> "+String(testSourced)+\n' +
+  '    ", both -> "+String(bothTagged)+" (the identical untagged record refuses it)");\n' +
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[]}; alexGJournalEntries=[];\n' +
+  // ══ THE COUNT CAP: A BACKSTOP, AND WHAT IT COSTS ══════════════════════════════════════════
+  // ALEXG_DECIDED_MAX had no fixture at all: setting it to 1 survived every suite. These pin the
+  // two facts that matter -- it bounds BOTH maps, and it is NOT the operating bound, because unlike
+  // the age prune it can evict a record that is still inside its staleness window.
+  '  alexGResetLiveDecisionState();\n' +
+  '  function synthDecided(i,over){ return Object.assign({pair:"EUR_JPY",timeframe:"H1",setupType:"B_breakRetest",\n' +
+  '    reactionId:"AGR|EUR_JPY|H1|low|"+(1700000000000+i*3600000),\n' +
+  '    qualificationTimestamp:QT,qualificationClose:Number((1.50000+i*0.00001).toFixed(5))},over||{}); }\n' +
+  '  const CAPN=ALEXG_DECIDED_MAX;\n' +
+  '  for(let i=0;i<CAPN+25;i++) alexGMarkSetupDecided(synthDecided(i),"AGL|cap|"+i);\n' +
+  '  g.record("CAP-1","the backstop cap bounds BOTH maps, not just the stable one",\n' +
+  '    alexGDecidedSetups.size===CAPN&&alexGDecidedEconomic.size===CAPN,\n' +
+  '    "inserted "+(CAPN+25)+" distinct decisions -> stable="+alexGDecidedSetups.size+\n' +
+  '    " economic="+alexGDecidedEconomic.size+" (cap "+CAPN+")");\n' +
+  // The eviction ORDER as actually observed -- insertion order, oldest first -- rather than an
+  // idealised least-recently-used or least-valuable policy.
+  '  const capFirst=synthDecided(0),capLast=synthDecided(CAPN+24);\n' +
+  '  g.record("CAP-2","and it evicts in INSERTION order: the first 25 recorded are gone, the newest is held",\n' +
+  '    alexGFindPriorDecision(capFirst,"AGL|q1")===null&&\n' +
+  '    alexGFindPriorDecision(synthDecided(24),"AGL|q2")===null&&\n' +
+  '    !!alexGFindPriorDecision(synthDecided(25),"AGL|q3")&&\n' +
+  '    !!alexGFindPriorDecision(capLast,"AGL|q4"),\n' +
+  '    "records 0..24 evicted, 25 and "+(CAPN+24)+" retained -- oldest-first, not by remaining usefulness");\n' +
+  // THE HONEST COST, stated rather than glossed: every one of those evicted records was still inside
+  // its staleness window, so the cap CAN throw away a decision that could still have changed an
+  // outcome. That is exactly what the age prune does not do, and why the cap is only a backstop.
+  '  g.record("CAP-3","HONEST COST: the cap evicts records still INSIDE their staleness window -- unlike the age prune",\n' +
+  '    alexGIsSetupSignalStale(capFirst,QT,RULES_ALEXG.config)===false&&\n' +
+  '    alexGFindPriorDecision(capFirst,"AGL|q5")===null,\n' +
+  '    "the evicted record is not stale at QT yet is no longer known -- a count cap cannot claim losslessness");\n' +
+  // And the reason it is only a backstop: at production scale it never fires. One poll cycle is 388
+  // setups against a cap of 5,000, so the AGE prune is what actually bounds the maps in service.
+  '  alexGResetLiveDecisionState();\n' +
+  '  const CYCLE=388;\n' +
+  '  for(let i=0;i<CYCLE;i++) alexGMarkSetupDecided(synthDecided(i),"AGL|cycle|"+i);\n' +
+  '  const cycleHeld=[];\n' +
+  '  for(let i=0;i<CYCLE;i++) if(alexGFindPriorDecision(synthDecided(i),"AGL|c|"+i)) cycleHeld.push(i);\n' +
+  '  g.record("CAP-4","the cap is a BACKSTOP, not the operating bound: a full production poll cycle evicts NOTHING",\n' +
+  '    cycleHeld.length===CYCLE&&alexGDecidedSetups.size===CYCLE,\n' +
+  '    "one cycle of "+CYCLE+" decisions, "+cycleHeld.length+" still known, cap="+CAPN+\n' +
+  '    " -- a cap near the cycle size would silently drop live decisions");\n' +
+  // ══ THE ECONOMIC INDEX IS AGE-EVICTED ON ITS OWN TERMS ════════════════════════════════════
+  // The two maps are NOT guaranteed to hold the same key set. alexGMarkSetupDecided only writes a
+  // key that is absent, and the count cap trims each map independently -- so when two setups share
+  // one economic identity the economic map fills slower, the stable map hits the cap first, and the
+  // economic map is left holding a record the stable map no longer has. A prune that walked only
+  // the stable map would leave that orphan blocking for the rest of the session.
+  //
+  // Nothing here reaches into the maps: the orphan is produced by alexGMarkSetupDecided alone.
+  '  alexGResetLiveDecisionState();\n' +
+  '  const SHARED=1.99999;\n' +   // r0 and r1 share ONE economic identity and differ in stable identity
+  '  const orph0=synthDecided(0,{qualificationClose:SHARED,qualificationTimestamp:QT-(H1LIM+120)*60000});\n' +
+  '  const orph1=synthDecided(1,{qualificationClose:SHARED,qualificationTimestamp:QT-(H1LIM+60)*60000});\n' +
+  '  alexGMarkSetupDecided(orph0,"AGL|orph0");\n' +
+  '  alexGMarkSetupDecided(orph1,"AGL|orph1");\n' +
+  '  for(let i=2;i<=CAPN;i++) alexGMarkSetupDecided(synthDecided(i),"AGL|orph|"+i);\n' +
+  '  const orphEcon=alexGEconomicSetupIdentity(orph0);\n' +
+  '  g.record("ORPHAN-1","precondition: the economic map holds a record the stable map no longer has",\n' +
+  '    alexGDecidedSetups.size===CAPN&&alexGDecidedEconomic.size===CAPN&&\n' +
+  '    !alexGDecidedSetups.has(alexGStableSetupIdentity(orph0))&&\n' +
+  '    alexGDecidedEconomic.get(orphEcon)&&\n' +
+  '    alexGDecidedEconomic.get(orphEcon).stableId===alexGStableSetupIdentity(orph0),\n' +
+  '    "stable="+alexGDecidedSetups.size+" economic="+alexGDecidedEconomic.size+\n' +
+  '    "; the orphan’s stable key was capped out while its economic key survived");\n' +
+  // A DIFFERENT setup sharing that economic identity is what the orphan blocks. Before the prune it
+  // is refused -- that is the state the prune has to release.
+  '  const orphPeer=synthDecided(9999,{qualificationClose:SHARED,qualificationTimestamp:QT});\n' +
+  '  const blockedBefore=!!alexGFindPriorDecision(orphPeer,"AGL|peer1");\n' +
+  '  alexGPruneDecidedSetups(QT,RULES_ALEXG.config);\n' +
+  '  g.record("ORPHAN-2","the age prune walks the ECONOMIC index on its own terms and evicts that orphan",\n' +
+  '    blockedBefore===true&&alexGDecidedEconomic.has(orphEcon)===false&&\n' +
+  '    alexGFindPriorDecision(orphPeer,"AGL|peer2")===null,\n' +
+  '    "orphan aged out at its own qualificationTimestamp; a stable-map-only walk would never reach it "+\n' +
+  '    "and would block this setup for the rest of the session");\n' +
+  '  g.record("ORPHAN-3","and the walk is age-bounded, not a purge: the still-live economic entries survive it",\n' +
+  '    alexGDecidedEconomic.size===CAPN-1&&\n' +
+  '    !!alexGFindPriorDecision(synthDecided(CAPN),"AGL|peer3"),\n' +
+  '    "economic entries after prune="+alexGDecidedEconomic.size+" of "+CAPN+" -- only the aged one left");\n' +
+  '  alexGResetLiveDecisionState();\n' +
+  // ══ THE AGE PRUNE IS WIRED INTO THE REAL POLL TICK ════════════════════════════════════════
+  // DECIDED-8/9/10 call alexGPruneDecidedSetups DIRECTLY with the right config, so they test the
+  // function and not the wiring. Deleting the call from alexGLivePollTick survived the whole gate --
+  // and so did passing snapshotAlexGConfig(), which nests the rules under .config so
+  // maxLiveSignalAgeMinutes reads undefined and the prune silently does nothing. That exact defect
+  // shipped once in this milestone. This drives the REAL tick.
+  //
+  // Auto-trading is OFF for the tick on purpose: the poll prunes BEFORE the disabled check and
+  // returns without evaluating anything, so the tick cannot re-mark the record it just evicted and
+  // the observation is unambiguous.
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[]}; alexGJournalEntries=[];\n' +
+  '  const PNOW=g.now();\n' +
+  '  const agedDecided={pair:"NZD_USD",timeframe:"H1",setupType:"B_breakRetest",\n' +
+  '    reactionId:"AGR|NZD_USD|H1|low|1700000000000",qualificationTimestamp:PNOW-(H1LIM+30)*60000,\n' +
+  '    qualificationClose:0.61234};\n' +
+  '  const freshDecided={pair:"NZD_USD",timeframe:"H1",setupType:"B_breakRetest",\n' +
+  '    reactionId:"AGR|NZD_USD|H1|high|1700003600000",qualificationTimestamp:PNOW-(H1LIM-30)*60000,\n' +
+  '    qualificationClose:0.62345};\n' +
+  '  alexGMarkSetupDecided(agedDecided,"AGL|aged");\n' +
+  '  alexGMarkSetupDecided(freshDecided,"AGL|fresh");\n' +
+  '  const wiredBefore=!!alexGFindPriorDecision(agedDecided,"AGL|a1")&&!!alexGFindPriorDecision(freshDecided,"AGL|f1");\n' +
+  '  const __enabledWas=alexGAutoTrading.enabled;\n' +
+  '  alexGAutoTrading.enabled=false;\n' +
+  '  await alexGLivePollTick();\n' +
+  '  alexGAutoTrading.enabled=__enabledWas;\n' +
+  '  const wiredObs=g.lastObs();\n' +
+  // Every earlier poll in this suite ran with trading ENABLED and attempted all twelve pairs, so a
+  // durable record carrying tradingEnabled=false and zero attempts can only have come from this
+  // tick -- which is what makes it evidence that the tick really executed.
+  '  g.record("WIRE-1","the tick really ran and evaluated nothing -- so nothing below can be a re-mark",\n' +
+  '    wiredObs.tradingEnabled===false&&wiredObs.instrumentsAttempted===0&&\n' +
+  '    (wiredObs.instrumentsEvaluated||[]).length===0,\n' +
+  '    "tradingEnabled="+String(wiredObs.tradingEnabled)+" attempted="+String(wiredObs.instrumentsAttempted)+\n' +
+  '    " evaluated="+((wiredObs.instrumentsEvaluated)||[]).length);\n' +
+  '  g.record("WIRE-2","a REAL poll tick age-evicts an aged decided record and keeps a fresh one",\n' +
+  '    wiredBefore===true&&alexGFindPriorDecision(agedDecided,"AGL|a2")===null&&\n' +
+  '    !!alexGFindPriorDecision(freshDecided,"AGL|f2"),\n' +
+  '    "aged by "+(H1LIM+30)+"m evicted, fresh at "+(H1LIM-30)+"m retained -- the prune is CALLED, "+\n' +
+  '    "and called with the same config object the frozen staleness gate reads");\n' +
+  '  alexGResetLiveDecisionState();\n' +
+  // ══ A PAIR WITH TOO LITTLE H1 HISTORY IS SKIPPED, NOT COUNTED AS EVALUATED ════════════════
+  // RESIL-1..3 above prove the pair is not evaluated and that the failure is recorded on the bus.
+  // Neither reads the COVERAGE LEDGER, so flipping the early return to evaluated:true survived the
+  // gate: the durable record would have claimed a pair was evaluated when the frozen engine was
+  // never handed its data. A coverage row that contradicts what happened is a wrong report.
+  '  g.setBadPair("EUR_USD"); alexGLastEvaluatedCloseTime={}; g.advanceHour();\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const insObs=g.lastObs();\n' +
+  '  const insSkip=(insObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="EUR_USD";})[0];\n' +
+  '  g.record("INSUF-1","a pair whose H1 dataset is too short is reported SKIPPED, never EVALUATED",\n' +
+  '    (insObs.instrumentsEvaluated||[]).indexOf("EUR_USD")===-1&&!!insSkip&&\n' +
+  '    insSkip.reason==="DATA_INSUFFICIENT_HISTORY",\n' +
+  '    "skip reason="+String(insSkip&&insSkip.reason)+"; EUR_USD absent from instrumentsEvaluated");\n' +
+  '  g.record("INSUF-2","and the ledger still accounts for every configured instrument exactly once",\n' +
+  '    (insObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length-1&&\n' +
+  '    insObs.instrumentsAttempted===SCAN_PAIRS.length&&\n' +
+  '    (insObs.instrumentsEvaluated||[]).length+(insObs.instrumentsSkipped||[]).length===SCAN_PAIRS.length,\n' +
+  '    "attempted="+insObs.instrumentsAttempted+" evaluated="+((insObs.instrumentsEvaluated)||[]).length+\n' +
+  '    " skipped="+((insObs.instrumentsSkipped)||[]).length+" configured="+SCAN_PAIRS.length);\n' +
+  '  g.setBadPair(null);\n' +
+  // ══ MOGO-021 -- ALEX PIPELINE OBSERVATION ATTRIBUTION UNDER OVERLAPPING TICKS ══
+  // alexGLivePollTick has no re-entrancy guard and is driven by setInterval, so two ticks can
+  // overlap. The drain used to take the WHOLE shared buffer, so whichever tick drained second wrote
+  // the other tick's rows under its own scanId -- the same read-shared-state-after-the-fact mistake
+  // the JVM coverage ledger was refuted for twice, on the other engine.
+  '  alexGPipelineObservationBuffer=[];\n' +
+  '  alexGRecordPipelineStage("CANDIDATE",{scanId:"SCAN|A",pair:"EUR_USD",timeframe:"H1",setupId:"S|A",occurredAt:"2026-08-14T12:00:00.000Z"});\n' +
+  '  alexGRecordPipelineStage("CANDIDATE",{scanId:"SCAN|B",pair:"GBP_USD",timeframe:"H1",setupId:"S|B",occurredAt:"2026-08-14T12:00:00.001Z"});\n' +
+  '  const drainedA=alexGDrainPipelineObservations("SCAN|A");\n' +
+  '  g.record("TICKATTR-1","a tick drains only the observation rows IT produced, never a concurrent tick\\u2019s",\n' +
+  '    drainedA.length===1&&drainedA[0].pair==="EUR_USD"&&alexGPipelineObservationBuffer.length===1,\n' +
+  '    "tick A drained "+drainedA.length+" row(s) ("+((drainedA[0]||{}).pair)+"); "+\n' +
+  '    alexGPipelineObservationBuffer.length+" row(s) left for the concurrent tick");\n' +
+  '  const drainedB=alexGDrainPipelineObservations("SCAN|B");\n' +
+  '  g.record("TICKATTR-2","and the concurrent tick still gets its OWN row -- nothing is lost, only re-attributed",\n' +
+  '    drainedB.length===1&&drainedB[0].pair==="GBP_USD"&&alexGPipelineObservationBuffer.length===0,\n' +
+  '    "tick B drained "+drainedB.length+" row(s) ("+((drainedB[0]||{}).pair)+"); buffer now "+alexGPipelineObservationBuffer.length);\n' +
+  // The stamp must not leak into the stored observation -- the durable record has to stay byte-identical.
+  '  g.record("TICKATTR-3","the ownership stamp is non-enumerable, so the durable observation is unchanged",\n' +
+  '    Object.keys(drainedA[0]).indexOf("__tickScanId")===-1&&\n' +
+  '    JSON.parse(JSON.stringify(drainedA[0])).__tickScanId===undefined&&\n' +
+  '    drainedA[0].__tickScanId==="SCAN|A",\n' +
+  '    "readable for attribution, absent from every serialization");\n' +
   '  return g;\n' +
   '})();'
 );

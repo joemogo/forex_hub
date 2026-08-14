@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,391/1,391 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 24 suites 1,422/1,422 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -652,7 +652,13 @@ The same check for **ALEX**, via `computePaperTradingHealthReport()`:
 **Both live ledgers reconcile exactly, and the JOURNAL_ONLY orphan class that triggered INC-001 has
 not recurred in this campaign** — on either strategy.
 
-### 2.12 Chart data vs strategy-evaluation data — separation is deliberate and surfaced
+### 2.12 Chart data vs strategy-evaluation data — ⚠️ SUPERSEDED BY §10
+
+> **Three of this section's four load-bearing claims are FALSE against current code**, and its line
+> citations are 200–300 lines off, so it was written against an earlier revision and never re-checked.
+> In particular "the divergence is operator-visible" was wrong — the amber card lives in a
+> `display:none` panel — and the chart independently recomputed a full recommendation with no
+> completeness gate at all. Retained as the record of what was believed; **read §10 instead.**
 
 The chart and the engine fetch independently, so the question is whether an operator can see a
 chart that disagrees with what the strategy decided. Established by inspection:
@@ -1730,7 +1736,7 @@ preserved — every JVM function on the decision path is called as-is and none w
 |---|---|---|
 | Authoritative ALEX/JVM instrument × timeframe coverage | **done** | §1 table, read from live state. ALEX 12 pairs H1/H4/D/W; JVM scans 35, auto-trades 12, M15 entry |
 | H1/H4/D/W candle completeness and boundary correctness | **done** | `run_v1234` (27) — DST to the minute, 17:00 NY, per-granularity fallbacks; ADR-011 contract + `run_v130` |
-| Chart data vs strategy-evaluation data consistency | **done** | §2.12 — shared verdict function, deliberate candle divergence, operator-visible amber card |
+| Chart data vs strategy-evaluation data consistency | ⚠️ **REOPENED, then largely fixed** | §2.12's conclusion did not survive re-derivation. §10 records what was actually wrong; the chart now reads the engine's own verdict, gates on completeness, and states suppression where the operator is looking. **One item escalated (§10.5).** |
 | Stale / incomplete / missing candle handling | **done** | RESIL-1..4, `DATA_INSUFFICIENT_HISTORY`, E2E-13/14, `run_v130` |
 | Restart / recovery behaviour | **done** | E2E-11/12/13; §2.11 restart-backlog characteristic |
 | Observation and evaluation continuity | **done** | COVERAGE-1..11, BIAS-4/5; live: 12/12 instruments, EUR_USD 61/67 in line with peers |
@@ -1743,7 +1749,7 @@ preserved — every JVM function on the decision path is called as-is and none w
 | Reconciliation | **done** | `run_v1235` — the mutating path had never been tested despite v11.0 claiming coverage |
 | Reporting accuracy | **done** | §2.15 — live integrity checks clean on both strategies, INC-001 signature absent |
 | Failure isolation | **done** | E2E-15/16 (pricing seam genuinely reached), RESIL-1..4, concurrency RE-1..5 |
-| Diagnostic coverage | **done** | cursor-sanity detector, `instrumentsSkipped`/`Configured`, completeness card |
+| Diagnostic coverage | **done, and corrected twice** | cursor-sanity detector, `instrumentsSkipped`/`Configured`, completeness card — plus §9.6a (the ledger credited an attempt as an evaluation) and §11.2 (a throw after the engine ran reported the pair skipped while a real position existed) |
 | Future strategy inheritance | **done (analysis)** | §2.14 — the forward-coverage ledger is ALEX-only and would **not** be inherited; `scanAll` is unprotected so wiring it is not governance-blocked |
 | **EUR_USD root cause** | **RESOLVED** | §2.10 — never starved; status-ring truncation bias |
 | **Why ALEX trades rarely** | **ANSWERED** | §2.11 — suspension + entry-day dominate; corrected from the durable ledger |
@@ -1803,7 +1809,7 @@ sections' "not done autonomously" framing.**
 
 | Gate | Before | After |
 |---|---|---|
-| Canonical | 24 suites · 1,354 / 1,354 | **24 suites · 1,391 / 1,391 · 0 failures · 0 execution errors** |
+| Canonical | 24 suites · 1,354 / 1,354 | **24 suites · 1,422 / 1,422 · 0 failures · 0 execution errors** |
 | Platform | 1,049 / 1,049 | **1,049 / 1,049** |
 | Protected drift | 0 against the v12.5.0 baseline | **0 against the re-issued v12.20.0 baseline** |
 | Protected functions changed | — | **exactly one: `checkAutoTrades`** (0 added, 0 removed, 0 constants changed) |
@@ -2001,11 +2007,174 @@ list kills MDC-13b.
   number of durable records. At today's campaign size that is ~1,200 string builds once per hour.
   It is bounded by the journal, not by the ring, and it is not on a latency-sensitive path.
 * **The economic identity keys on a 5-decimal price.** Two genuinely distinct setups sharing pair,
-  timeframe, setup type, swing direction *and* an identical qualification close would collapse. It is
-  consulted only against traded records and the session map, and it is an OR-term beside the precise
-  identity, so a collision costs one skipped re-decision rather than a wrong trade — but it is a real
-  and stated limitation, not a proof of uniqueness.
+  timeframe, setup type, swing direction *and* an identical qualification close would collapse.
+  > **⚠️ This bullet originally said "a collision costs one skipped re-decision rather than a wrong
+  > trade." Verification proved that FALSE for the durable half, which had no age bound at all:** a
+  > genuinely new setup **30 days later** with the same economic identity was refused, and would have
+  > been refused *for the life of the account and journal*. That is a permanently lost trade, which is
+  > worse than the duplicate it prevents. Quantified: a repeated-reaction setup is by definition price
+  > returning to the same zone, so pair/timeframe/setupType/swingType repeat almost by construction and
+  > only the price discriminates — roughly **0.5% per pair of same-zone setups**, and JPY crosses get no
+  > extra protection from their 3-decimal quoting. **Fixed:** the durable economic match now requires
+  > the two qualification timestamps to be within the timeframe's staleness limit plus a four-day
+  > market-gap allowance — which still catches the weekend re-estimation (~48h apart) and the pure
+  > re-anchor (0 apart), but can never mistake a new setup weeks later for a re-derivation. Developer
+  > test trades are also excluded, because they go through the same frozen functions by design and so
+  > land in the account and journal like any other — a test trade must not durably block a real setup.
 * **The authority is memory-only by design.** A reload legitimately re-decides. The already-*traded*
   half survives, because it is derived from the durable account and journal; only the
   decided-but-not-traded half is session-scoped, and that is correct — "decided" is meaningful for at
   most 7 days.
+
+---
+
+## 10. Chart ↔ engine fidelity (completion items 3 and 5)
+
+Re-derived from `035853b`. **§2.12's conclusion does not survive re-derivation** — three of its four
+load-bearing claims are false against current code, and its line citations are ~200–300 lines off,
+confirming it was written against an earlier revision and never re-checked.
+
+### 10.1 🔴 The trade path is LESS protected than the display path — and that is backwards
+
+**This is the most serious finding and it is a governance escalation, not something I fixed.**
+
+MOGO-021 Decision 1 gated ALEX on the completeness contract. `scanPair` — which only *scores for
+display and alerting* — has been gated since ADR-011. But **`evaluateLiveTrigger`, which is JVM's
+live auto-entry decision and actually opens trades, is gated only by `candles.length < 25`**, with no
+completeness check at all (`index.html:6908-6909`). Its structural stop/target levels come from
+`getStructuralAOI` (`index.html:6876-6890`), which fetches D and W and checks **neither** for
+completeness: `findAOIs(daily||[])` on a PARTIAL 40-bar daily response clears `computeAOI`'s
+`length<20` floor and produces a real support level that sets a **real stop on a real trade**.
+
+So today: the pair list can suppress an instrument as incomplete while auto-trading, on the same
+instrument, computes an entry, a stop and a target from data it never checked.
+
+**Why I did not fix it.** Every correct fix changes which trades JVM takes. `evaluateLiveTrigger` and
+`checkAutoTrades` are both **protected**, so those routes are blocked outright.
+`getStructuralAOI` is *not* protected — but gating there makes `evaluateLiveTrigger` reject more
+often, which is a change to frozen JVM strategy semantics. That is **a genuinely new
+frozen-strategy semantic decision not covered by the current authorization**, which Decision 1 scoped
+explicitly to ALEX. Recorded as an operator decision (§10.5), not taken unilaterally.
+
+Related and blocked for the same reason: shortening `structuralAOICache`'s 15-minute TTL, and not
+caching a `null`-derived AOI (a single transient fetch failure currently yields 15 minutes of
+"No valid support AOI" rejections with no retry). The **in-flight dedup** half of that is
+semantically neutral and is not blocked.
+
+### 10.2 What the chart shows that the engine did not decide
+
+| # | Defect | Severity |
+|---|---|---|
+| **D1** | `loadChart` independently recomputes `detectSignals`/`bestConfluence` and renders signal badges, a confluence panel and a **"▲ STRATEGY RECOMMENDS BUY"** banner with **no ADR-011 gate** (`index.html:10809-10814`). For a pair `scanPair` suppressed, the pair row shows `—`/0% while the chart shows a confident recommendation. Same pair, same timeframe, same second, directly contradictory | **HIGH — misleads about what the system decided** |
+| **D2** | The chart's entire strategy layer is a **one-shot snapshot** taken at load. There is no `candleSeries.update()` anywhere, and `loadChart` is not on the scan tick, while the engine re-evaluates every 60 s. The badge can read "no live trigger right now" after `checkAutoTrades` has already opened a position on that pair | **HIGH — misleads** |
+| **D3** | The amber completeness card — the mitigation §2.12 relied on when it called the divergence "operator-visible" — lives at `index.html:1360`, **inside `panel-diagnostics`**, and `.panel{display:none}`. `scanAll`'s own comment claims it is refreshed "rather than only when they open Diagnostics", which is the opposite of what happens. ADR-011 does place this state in Diagnostics, so the ADR is not violated — the **code comment and §2.12 were** | **HIGH** |
+| **D4** | The "AOI touch" badge and confluence item derive from an `activeTf` AOI (100 bars of the displayed timeframe), while the purple lines drawn beside them are the **D/W** AOI the trade path actually uses. Different window, different tolerance. The source comment at `index.html:9081-9082` asserts they "can never disagree with what the confluence score or Auto Trading see" — same *engine*, different *inputs*, so the claim is false | **MEDIUM-HIGH** |
+| **D5** | Drawn AOI lines never refresh; the engine's cache rolls every 15 minutes. An operator measures stop distance off a level the engine has already superseded | MEDIUM |
+| **D6** | **ALEX suppression has no operator surface at all.** The completeness card reads only `pairData[].evaluationSuppressed`, a JVM structure. ALEX has no chart anywhere — `alexGZoneState` has no drawing site in the file | MEDIUM |
+| **D9–D12** | Badges/confluence/banner state no timeframe while the two deliberately-labelled surfaces do; `scanAll` refreshes `#chartPrice` while OHLC stays pinned to load time; `fetchCandlesAroundWindow` never attaches completeness | LOW |
+
+**Deliberate and documented, left alone:** per-call-site fetch counts; JVM entry timing always M15
+(and *stated in the UI*); AOI sourced from D/W rather than the displayed timeframe (also stated);
+`scanPair` retaining full candles for charting while gating evaluation; ADR-011 placing completeness
+state in Diagnostics.
+
+### 10.3 Test coverage — the honest gap
+
+**Not one fixture anywhere asserts chart/engine consistency.** Nothing asserts `loadChart` gates on
+completeness (it does not), that the drawn AOI equals the AOI the trigger consumed, or that a
+suppressed pair's chart differs from an evaluated one's. The closest, `VISIBILITY-1`, stubs
+`document.getElementById` and asserts the returned `innerHTML` — **it would pass identically for an
+element in a `display:none` panel, which is exactly the case.** That is the vacuity class this
+milestone keeps rediscovering, and it is why D3 survived.
+
+### 10.4 ALEX zones are never drawn
+
+`alexGZoneState` has no chart-drawing site anywhere in the file; there is no ALEX chart surface. The
+shared chart is a JVM surface and makes no ALEX claim, so it does not *assert* anything false about
+ALEX — but the owner's framing holds: the chart draws a pair ALEX explicitly refused to evaluate,
+with zero indication, and there is no ALEX surface an operator could consult instead. TJR already
+does this correctly, rendering `(incomplete)` in its chart legend — so the pattern exists in-repo.
+
+### 10.5 🔴 NEW OPERATOR DECISION REQUIRED — JVM completeness parity
+
+Decision 1 gated **ALEX** on the completeness contract. The same gap exists on **JVM's trade path**
+(§10.1) and is *not* covered by that authorization. Closing it changes which trades JVM takes.
+
+**The decision:** should JVM's live auto-entry path — `evaluateLiveTrigger` and the structural AOI
+that sets its stops — be held to the same completeness contract ALEX now is?
+
+* **If yes:** the smallest route is to gate inside `getStructuralAOI` (unprotected) and, for the M15
+  entry series, inside `evaluateLiveTrigger` (**protected** — requires a governed change and a new
+  baseline, exactly like Decision 4).
+* **If no:** the asymmetry should be recorded deliberately, because at present JVM's display layer is
+  stricter than its trading layer, which no one chose.
+
+I have not implemented either. Everything in §10.2 that is display-only and semantically neutral is
+being fixed under the existing authorization.
+
+---
+
+## 11. Independent adversarial verification of the four remediations
+
+Run against `035853b` by a verifier instructed to disprove, with every mutation proven applied by
+unique-anchor assertion plus byte diff before its result was accepted.
+
+### 11.1 The headline held
+
+**No duplicate paper position could be opened through the reproduced construction.** The verifier
+first proved the scenario is a genuine duplicate-generator rather than one that never could be: with
+**both** the completeness gate and the decided-authority removed, the short-page construction reports
+`open=1 closed=1` — a second real position on an already-traded setup. With the shipped code it
+reports `open=0 closed=1`, zero setups derived, suppression recorded. **Defence in depth is real and
+was measured:** removing the gate alone still blocks (the authority catches it); removing the
+authority alone still blocks (the gate catches it).
+
+Decision 4 was upheld strongly: across `checkAutoTrades` runs in both flat and *firing* mode (8 real
+positions), with `emitDecisionEvent` made to throw, to return `{ok:false}`, and to be undefined, and
+with the reason mapper made to throw, the paper account, auto-trade log, `tradedToday` and journal
+were **identical every time**, and nothing rethrew. The eight reason strings were checked against the
+literal source of `evaluateLiveTrigger` rather than against a copy of the map.
+
+The governance record was independently reproduced: drift against the pre-milestone baseline reports
+exactly `CHANGED: checkAutoTrades`, and regenerating `regression-baseline.json` in a scratchpad
+produced a byte-identical file.
+
+### 11.2 What it found, and what I fixed
+
+| Finding | Severity | Status |
+|---|---|---|
+| **The durable half of the decided-authority had NO age bound.** A genuinely new setup 30 days later sharing an economic identity was refused — and would have been refused for the life of the account. A **permanently lost trade**, worse than the duplicate it prevents. Developer TEST journal entries could durably block real setups too | **HIGH — over-blocking** | **FIXED** — age-bounded to the staleness limit + a four-day market-gap allowance; developer records excluded |
+| **The two decided-maps CAN drift apart**, contrary to a code comment asserting they "cannot". Two setups sharing an economic identity but differing in stable identity leave an orphan the stable-map walk never evicts | MEDIUM | **FIXED** — the prune walks both indexes on their own terms; the false comment is corrected |
+| **A false negative in the poll ledger.** A throw *downstream* of the frozen engine (a toast, a render, `saveAlexG`) reported the instrument as SKIPPED while a real position was already durably recorded. A coverage row contradicting a trade record is a wrong report, not a safe under-report | MEDIUM | **FIXED** — coverage is reported on whether the engine ran, not on whether the surrounding code finished |
+| **Six mutations survived all 1,396 fixtures** — the prune's *wiring* (including the exact `snapshotAlexGConfig()` defect already shipped once), the durable economic term, `CURSOR_NOT_ADVANCING`, `ALEXG_DECIDED_MAX`, and `DATA_INSUFFICIENT_HISTORY ⇒ evaluated:false` | HIGH (test integrity) | **CLOSED** — 23 fixtures added; every one dies to its named acceptance mutation. Two are outright positive controls: removing the durable economic term **opens a second real position**, and removing the cursor guard accumulates duplicates all the way to the requested count and would classify them COMPLETE |
+| Release note omitted three behavioural changes | MEDIUM (governance) | **FIXED** |
+| §9.7's "a collision costs one skipped re-decision rather than a wrong trade" | false | **CORRECTED** |
+| DECIDED-9 is mis-titled — it asserts the frozen staleness boundary, not eviction | LOW | **STRENGTHENED, not renamed.** Renaming was cheaper, but "eviction is provably lossless" is the *only* thing justifying eviction at all, so it is now tested rather than retitled: it measures the eviction boundary against the staleness boundary to the millisecond on all four timeframes. It is the only fixture in the entire gate that catches an off-by-one at that boundary |
+
+### 11.3 Residuals I did NOT fix, and why
+
+* **`EMPTY_PAGE` is trusted as exhaustion regardless of count.** A page short by 2 followed by an
+  *empty* continuation classifies COMPLETE at 71/73 with the window start moved. This is the original
+  defect's shape, but it now costs **two** independent transient faults rather than zero, and the
+  consequence — a re-anchored identity — is caught by the decided-authority. Distinguishing "genuinely
+  exhausted" from "short twice in a row" requires cross-poll state, i.e. a new persistent source of
+  truth, which the authorization explicitly forbids creating unnecessarily. Disclosed rather than
+  papered over.
+* **`tradedSignals` present while positions AND journal are both absent leaves the authority blind.**
+  `tradedSignals` values are bare `true` and carry no economic identity, so no identity match is
+  possible from them. Making them self-sufficient means changing a *persisted* shape late in a
+  session, and the present-but-unreadable variant of this state is already blocked by
+  `saveAlexGAccountGuarded` (no second position can commit). Recorded as an open item, not changed.
+* **ALEX poll-tick observation attribution — NOW FIXED.** `alexGLivePollTick` has no re-entrancy
+  guard and is driven by `setInterval`, and the pipeline drain used to take the **whole** shared
+  buffer — so whichever of two overlapping ticks drained second wrote the other tick's rows under its
+  own `scanId`. That is the same read-shared-state-after-the-fact mistake the JVM coverage ledger was
+  refuted for **twice**, on the other engine. Fixed the same way: each row is stamped with the tick
+  that produced it, **at the moment it is produced**, and a tick drains only its own rows. The stamp
+  is non-enumerable, so the durable observation is byte-identical and no consumer sees a new field;
+  unstamped rows still drain to any tick, so nothing regresses. TICKATTR-1/2/3, mutation-proven —
+  restoring the whole-buffer drain kills 1 and 2, making the stamp enumerable kills 3, and never
+  stamping kills all three.
+  *No re-entrancy guard was added:* overlap is production-observed and §2.13 established it is
+  trading-safe, so suppressing it would be a behaviour change nobody authorized. This fixes the
+  **attribution**, not the concurrency.
