@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,468/1,468 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
+**Gates:** canonical 25 suites 1,514/1,514 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
 **Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
@@ -2301,10 +2301,10 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `8daf41d` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `7f3bb42` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical 24 suites **1,468 / 1,468** · platform 25 suites **1,049 / 1,049** ·
+**Gates:** canonical **25** suites **1,514 / 1,514** · platform 25 suites **1,049 / 1,049** ·
 protected drift **0** against the **v12.21.0** baseline (63 functions, 4 constants).
 
 ### Governance decisions already authorized and DONE — do not re-litigate
@@ -2543,6 +2543,55 @@ repeated-reaction mutations all die. And `DECIDED-9` pins the staleness boundary
 `>`→`>=` flip nothing else in 1,440 fixtures would.
 
 The team knows how to do this. It was applied to two functions out of the whole surface.
+
+### 15.5a Severity-1 coverage — CLOSED (`tests/v1237_detection_controls_tests.js`)
+
+A new dedicated suite, **46 fixtures, 45 mutations, 45 killed, 0 survivors** — each proven applied
+(anchor unique, byte diff) and scored against the **whole gate**. Gate is now
+**25 suites · 1,514 / 1,514 · drift 0**.
+
+Covered: the counter-trend block (S1), R:R 1.99 (S2), `ALERT_THRESHOLD` (S3), the AOI 3-touch rule
+(S4), pattern thresholds — wick, doji, engulf swallow, both engulf colour requirements, both MSB
+close requirements (S5), `getSession` window edges (S6), the `getBias` table (S7), **item-level**
+confluence including the AOI side-swap and all seven `WEIGHTS` terms (S8), swing detection including
+the equal-neighbour boundary and blindness to highs (S9), `alexGZoneRole`'s inclusive edges (S10),
+and the `maxLiveEntryDelayPips` boundary (S11).
+
+**Independently re-verified here, not taken on trust:** deleting `&& s.biasMatch` from
+`evaluateLiveTrigger`'s entry-trigger predicate now kills `BIAS-BLOCK-3` — *"a bullish trigger
+against a confirmed Bearish top-down bias must NOT fire — expected false, got true"*. That rule
+previously had **no control of any kind, on either side**.
+
+**Three disclosures worth more than the fixtures themselves:**
+
+* **One of the new fixtures was itself vacuous, and was caught before shipping.** `WEIGHTS.aoi 20→15`
+  killed nothing, because every confluence fixture compared an item's points against `WEIGHTS.aoi`
+  *itself* — a self-referential assertion true for any value. `CONFITEM-0` now pins all seven literals
+  plus the identity that the best attainable score is exactly 100, and all seven weight mutations die.
+* **The audit's own S6 recipe was wrong.** It asked for `21:00 → active===false`; the frozen New York
+  branch is `utcM>=1200 && utcM<2100` — 2100 *minutes* — so 21:00 is New York and active, and
+  Off-hours is 00:00–07:59 only. The fixture asserts the **frozen behaviour** and records the
+  discrepancy; writing to the recipe would have demanded a production change to satisfy a test.
+* **`ALERT_THRESHOLD` 55→54 is an equivalent mutant behaviourally.** Confluence totals are sums of the
+  frozen weights, so only 39 values are reachable and neither 54 nor 56 is among them. 55→56 *is*
+  killable; 55→54 changes no verdict and is caught only by pinning the constant — and that fixture
+  derives the reachable lattice from the live `WEIGHTS`, so it also fails if any weight ever makes 54
+  or 56 reachable.
+
+### 15.5b Still uncovered, and named rather than implied
+
+* **The counter-trend rule exists in THREE places and one is covered.** The predicate appears in
+  `evaluateLiveTrigger` (the live decision path — covered), `evaluateSetupFullBreakdownCore`
+  (diagnostics) and `simulateTrueMTFReplay`. The two uncovered copies can diverge from the live rule
+  silently.
+* **`findSwingPoints` has a parallel copy**, `alexGFindSwingPoints`, with identical `>=`/`<=`
+  comparisons and no coverage.
+* **The organic zone-engine controls are not started** — the largest remaining chunk. Of eight
+  rule-level mutations inside `alexGProcessTimeframeCandle`, seven still survive: displacement
+  threshold and boundary, same-interaction dedup, break-confirmation count, **break direction**,
+  choppy boundary, prior-role inference. The organic fixtures assert *"a setup was produced and a
+  trade opened"* — never *which* zone, at *what* price, from *which* touch, in *which* direction.
+  That is precisely why rule-level changes slip through.
 
 ### 15.5 Disposition
 
