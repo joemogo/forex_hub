@@ -1,5 +1,5 @@
 {
-  "generatedFromAppVersion": "12.5.0",
+  "generatedFromAppVersion": "12.20.0",
   "knownGoodHtmlSha1": "31baa279ddc64fdfa90f052da195239bff9a0569",
   "protectedFunctionCount": 63,
   "protectedFunctions": {
@@ -16,8 +16,8 @@
       "length": 476
     },
     "checkAutoTrades": {
-      "sha1": "b756871846649a9d1d3bcfff2f77fb7d36b909ed",
-      "length": 1873
+      "sha1": "01a78e299015bdbf247c3215df5b428e0c42898f",
+      "length": 1916
     },
     "evaluateLiveTrigger": {
       "sha1": "d3ca23edf56be0f5aac6870885a360b5120ba919",
@@ -306,7 +306,11 @@
     "run_v121_tests.js (Strategy Framework, Release 2 -- JVM registration)": 30,
     "run_v122_tests.js (Multi-Strategy Foundation, ADR-006)": 30,
     "run_v123_tests.js (TJR_SLR Phase 1 -- Session and Zone Engine)": 48,
-    "run_v1231_tests.js (Strategy Workspace Framework + dedicated TJR workspace)": 31
+    "run_v1231_tests.js (Strategy Workspace Framework + dedicated TJR workspace)": 31,
+    "run_v127_alex_v11_release_tests.js (MOGO-002.8A/002.8B -- ALEX v1.1 release + setup execution policy)": 88,
+    "run_v128_evidence_platform_tests.js (MOGO-003 Evidence Platform + EXP-001 + DoD #10 + replay identity)": 96,
+    "run_v129_browser_isolation_guard_tests.js (INC-001 load integrity + INC-004 isolation guards)": 27,
+    "run_v130_candle_completeness_regression_tests.js (ADR-011 market data completeness contract)": 14
   },
-  "totalFixtureCount": 759
+  "totalFixtureCount": 984
 }

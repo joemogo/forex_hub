@@ -132,6 +132,15 @@ function hourlyCandles(n,granMs){
 }
 globalThis.fetch=function(url){
   fetchUrls.push(url);
+  // MOGO-021: a continuation request (`&to=`) asks for history OLDER than what we already hold.
+  // This stub previously ignored the cursor and replayed the same page, which was harmless only
+  // because fetchCandlesRange used to stop at the first short page. Now that a short page is walked
+  // past rather than treated as proof of exhaustion, ignoring `to` would hand the engine the same
+  // candles over and over until the guard limit. A real broker returns nothing before the start of
+  // its history, and that is what the v1236 harness already models -- so do the same here. This
+  // makes the stub MORE faithful, not more permissive: an empty continuation is exactly the
+  // EMPTY_PAGE signal that legitimately ends a walk.
+  if(/&to=/.test(String(url))) return Promise.resolve(makeResponse(true,200,{candles:[]}));
   // An explicit script wins when one is installed (used by the short-dataset fixtures); otherwise
   // every pair gets healthy per-granularity data.
   if(__badPair && url.indexOf('/instruments/'+__badPair+'/')!==-1){
@@ -198,7 +207,7 @@ const wrapped = new Function('g',
   '  g.setFetchScript([]);\n' +
   '  cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice";\n' +
   '  alexGAutoTrading.enabled=true; alexGAutoTrading.activatedAt=g.now()-86400000;\n' +
-  '  alexGLastEvaluatedCloseTime={}; alexGZoneState={}; alexGSetupState=[]; alexGLiveSetupStatuses=[];\n' +
+  '  alexGLastEvaluatedCloseTime={}; alexGZoneState={}; alexGSetupState=[]; alexGResetLiveDecisionState(); alexGLiveSetupStatuses=[];\n' +
   '  await alexGLivePollTick();\n' +
   '  const covered=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1!=null; });\n' +
@@ -306,7 +315,7 @@ const wrapped = new Function('g',
   // alexGLivePollTick records this same array verbatim into the durable ledger. Any forward-coverage
   // analysis built on it therefore under-reports the pairs at the front of scan order, which is
   // exactly what produced the (false) "EUR_USD is starved" conclusion in MOGO-020.
-  '  alexGLiveSetupStatuses=[];\n' +
+  '  alexGResetLiveDecisionState();\n' +
   '  const ORDER=SCAN_PAIRS.map(function(p){return p.replace("/","_");});\n' +
   '  let sid=0;\n' +
   '  for(const op of ORDER){ for(let k=0;k<32;k++){ sid++;\n' +
@@ -341,7 +350,7 @@ const wrapped = new Function('g',
   // clears the bar, so the "PERMANENT, never reconsidered" contract does not hold for any
   // instrument -- every setup is re-decided on every advancing poll. Measured in the durable
   // ledger at ~47 re-decisions per signalId (377 signalIds, 17,700 evaluation records).
-  '  alexGLiveSetupStatuses=[];\n' +
+  '  alexGResetLiveDecisionState();\n' +
   '  function cycle(tag){ const seen={};\n' +
   '    ORDER.forEach(function(op,pi){\n' +
   '      const mine=[]; for(let k=0;k<32;k++) mine.push("S|"+op+"|"+k);\n' +
@@ -353,7 +362,7 @@ const wrapped = new Function('g',
   '  const anySurvivor=ORDER.filter(function(op){ return survived[op]===32; });\n' +
   '  g.record("REDEC-1","NO instrument keeps a full cycle of decisions to its next turn -- the ring is too small",\n' +
   '    anySurvivor.length===0,"pairs retaining all 32 prior decisions: "+anySurvivor.length+"/12");\n' +
-  '  g.record("REDEC-2","so the PERMANENT dedup contract (index.html:4641) is void for EVERY pair, not just evicted ones",\n' +
+  '  g.record("REDEC-2","the DISPLAY ring alone could never uphold the PERMANENT contract for any pair -- which is why the decided-authority exists (DECIDED-*)",\n' +
   '    ORDER.every(function(op){ return survived[op]<32; }),\n' +
   '    "retained per pair: "+ORDER.map(function(op){return survived[op];}).join(","));\n' +
   '  g.record("REDEC-3","the pair evaluated LAST is the best case and still loses decisions",\n' +
@@ -361,7 +370,7 @@ const wrapped = new Function('g',
   // Measures the ring's ACTUAL capacity by filling it, rather than hard-coding 300. An earlier
   // version asserted `12*32 > 300` with 300 as a literal, which touched no production code and
   // survived every mutation -- including raising the cap to 5000, the very fix it described.
-  '  alexGLiveSetupStatuses=[];\n' +
+  '  alexGResetLiveDecisionState();\n' +
   '  for(let k=0;k<1200;k++) alexGRecordLiveSetupStatus({signalId:"CAP|"+k,pair:"EUR_USD",timeframe:"H1",status:"IGNORED"});\n' +
   '  const measuredCap=alexGLiveSetupStatuses.length;\n' +
   '  g.record("REDEC-4","the ring cannot hold one scan cycle -- measured from the real recorder, not assumed",\n' +
@@ -374,6 +383,128 @@ const wrapped = new Function('g',
   '  g.record("REDEC-5","and it fails under the REAL uneven per-pair distribution too, not just a flat one",\n' +
   '    (N-maxPair)>=measuredCap,\n' +
   '    "N="+N+", largest pair="+maxPair+" -> needs cap >= "+(N-maxPair+1)+", ring holds "+measuredCap);\n' +
+  // ══ MOGO-021 DECISIONS 2+3 -- STABLE ECONOMIC IDENTITY AND THE DECIDED-AUTHORITY ══
+  // The ring fixtures above establish that a 300-entry DISPLAY buffer can never uphold a permanent
+  // dedup contract. These prove the authority that replaces it: what it keys on, that it survives
+  // the three things that used to defeat identity, that it does NOT collapse genuinely distinct
+  // setups, and that its bound is provably lossless rather than merely convenient.
+  '  const H1LIM=RULES_ALEXG.config.maxLiveSignalAgeMinutes.H1;\n' +
+  '  const WLIM=RULES_ALEXG.config.maxLiveSignalAgeMinutes.W;\n' +
+  '  const QT=Date.UTC(2026,7,14,12,0,0);\n' +
+  // One economic setup, expressed three ways: as first traded; after a ZONE RE-ANCHOR (zoneId and
+  // setupId move, reactionId/qualificationTimestamp hold); and after the WEEKEND CLOSE-TIME
+  // RE-ESTIMATION (reactionId AND qualificationTimestamp both move by ~48h).
+  '  const asTraded={pair:"AUD_JPY",timeframe:"H1",setupType:"B_breakRetest",\n' +
+  '    reactionId:"AGR|AUD_JPY|H1|low|1786503600000",qualificationTimestamp:QT,qualificationClose:1.10250,\n' +
+  '    zoneId:"AGZ|AGC|AUD_JPY|H1|high|1775610000000|v1786395600000"};\n' +
+  '  const reAnchored=Object.assign({},asTraded,{zoneId:"AGZ|AGC|AUD_JPY|H1|high|1783983600000|v1786420800000"});\n' +
+  '  const afterWeekend=Object.assign({},asTraded,{\n' +
+  '    reactionId:"AGR|AUD_JPY|H1|low|"+(1786503600000+48*3600000),qualificationTimestamp:QT+48*3600000});\n' +
+  '  g.record("DECIDED-1","the STABLE identity survives a zone re-anchor -- the AUD_JPY case that defeated every guard",\n' +
+  '    alexGStableSetupIdentity(asTraded)===alexGStableSetupIdentity(reAnchored)&&\n' +
+  '    asTraded.zoneId!==reAnchored.zoneId,\n' +
+  '    "same identity across two different zoneIds");\n' +
+  // This is the one the five-component key CANNOT do, and the reason a second identity exists.
+  '  g.record("DECIDED-2","the ECONOMIC identity also survives the weekend close-time re-estimation, which the stable identity does NOT",\n' +
+  '    alexGEconomicSetupIdentity(asTraded)===alexGEconomicSetupIdentity(afterWeekend)&&\n' +
+  '    alexGStableSetupIdentity(asTraded)!==alexGStableSetupIdentity(afterWeekend),\n' +
+  '    "economic identity holds where reactionId and qualificationTimestamp both moved 48h");\n' +
+  // ANTI-OVER-BLOCKING. A lossy key that collapsed distinct setups would silently destroy real
+  // opportunities, which is worse than the defect it fixes.
+  '  const otherPrice=Object.assign({},asTraded,{qualificationClose:1.10251});\n' +
+  '  const otherSwing=Object.assign({},asTraded,{reactionId:"AGR|AUD_JPY|H1|high|1786503600000"});\n' +
+  '  const otherTf=Object.assign({},asTraded,{timeframe:"H4"});\n' +
+  '  const otherType=Object.assign({},asTraded,{setupType:"A_repeatedReaction"});\n' +
+  '  const otherPair=Object.assign({},asTraded,{pair:"EUR_USD"});\n' +
+  // Pins that the economic identity EXCLUDES the zone anchor. Without this, folding zoneId back into
+  // it would pass every other fixture while making it useless for the exact case it exists for.
+  '  g.record("DECIDED-2b","the ECONOMIC identity also excludes the zone anchor -- it matches across a re-anchor",\n' +
+  '    alexGEconomicSetupIdentity(asTraded)===alexGEconomicSetupIdentity(reAnchored)&&\n' +
+  '    asTraded.zoneId!==reAnchored.zoneId&&\n' +
+  '    String(alexGEconomicSetupIdentity(asTraded)).indexOf("AGZ")===-1,\n' +
+  '    "economic identity carries no zone anchor: "+alexGEconomicSetupIdentity(asTraded));\n' +
+  '  g.record("DECIDED-3","genuinely DISTINCT economic setups stay distinct -- one pip, one swing, one timeframe, one type or one pair is enough",\n' +
+  '    [otherPrice,otherSwing,otherTf,otherType,otherPair].every(function(x){\n' +
+  '      return alexGEconomicSetupIdentity(x)!==alexGEconomicSetupIdentity(asTraded); }),\n' +
+  '    "no accidental collapsing of legitimate future setups");\n' +
+  '  g.record("DECIDED-4","an unclassifiable record yields NO identity rather than a colliding empty key",\n' +
+  '    alexGEconomicSetupIdentity(null)===null&&alexGEconomicSetupIdentity({pair:"EUR_USD"})===null&&\n' +
+  '    alexGEconomicSetupIdentity(Object.assign({},asTraded,{qualificationClose:null}))===null);\n' +
+  // THE HEADLINE: the decided-authority still knows, after the display ring has thrown the record away.
+  '  alexGResetLiveDecisionState();\n' +
+  '  alexGMarkSetupDecided(asTraded,"AGL|orig");\n' +
+  '  for(let k=0;k<1200;k++) alexGRecordLiveSetupStatus({signalId:"FLOOD|"+k,pair:"EUR_USD",timeframe:"H1",status:"IGNORED"});\n' +
+  '  const ringHasIt=alexGLiveSetupStatuses.some(function(e){return e.signalId==="AGL|orig";});\n' +
+  '  const foundAfterEviction=alexGFindPriorDecision(reAnchored,"AGL|different");\n' +
+  '  g.record("DECIDED-5","duplicate protection SURVIVES display-ring eviction -- the defect this replaces",\n' +
+  '    ringHasIt===false&&!!foundAfterEviction&&foundAfterEviction.drifted===true,\n' +
+  '    "ring evicted the original ("+ringHasIt+"); authority still reports prior decision, drifted="+\n' +
+  '    String(foundAfterEviction&&foundAfterEviction.drifted));\n' +
+  '  g.record("DECIDED-6","and it matches the re-anchored AND the post-weekend form of the same setup",\n' +
+  '    !!alexGFindPriorDecision(afterWeekend,"AGL|different2"),\n' +
+  '    "matched via the economic identity after reactionId and qualificationTimestamp both moved");\n' +
+  // ANTI-OVER-BLOCKING, at the GUARD rather than the identity. A later, genuinely new setup on the
+  // same pair and timeframe must still be tradeable -- a guard that blocked it would destroy real
+  // opportunities, which is worse than the defect it fixes.
+  // (Note: a record differing ONLY in qualificationClose is not tested here because it cannot exist
+  // -- reactionId and qualificationTimestamp together pin one bar, and that bar has one close. The
+  // identity's price discrimination is proved at DECIDED-3 instead.)
+  '  const laterSetup=Object.assign({},asTraded,{\n' +
+  '    reactionId:"AGR|AUD_JPY|H1|low|"+(1786503600000+7*24*3600000),\n' +
+  '    qualificationTimestamp:QT+7*24*3600000,qualificationClose:1.11480});\n' +
+  '  g.record("DECIDED-7","a genuinely NEW setup on the same pair and timeframe is NOT blocked -- no lost opportunity",\n' +
+  '    alexGFindPriorDecision(laterSetup,"AGL|new")===null&&\n' +
+  '    alexGFindPriorDecision(otherPair,"AGL|new2")===null&&\n' +
+  '    alexGFindPriorDecision(otherTf,"AGL|new3")===null,\n' +
+  '    "a later setup, a different pair and a different timeframe all remain tradeable");\n' +
+  // AGE EVICTION, and the proof that it is lossless rather than convenient.
+  '  alexGPruneDecidedSetups(QT+(H1LIM-1)*60000,RULES_ALEXG.config);\n' +
+  '  const beforeLimit=!!alexGFindPriorDecision(reAnchored,"AGL|x");\n' +
+  '  alexGPruneDecidedSetups(QT+(H1LIM+1)*60000,RULES_ALEXG.config);\n' +
+  '  const afterLimit=!!alexGFindPriorDecision(reAnchored,"AGL|x");\n' +
+  '  g.record("DECIDED-8","the record is kept while the setup is still actionable and evicted only once it is not",\n' +
+  '    beforeLimit===true&&afterLimit===false,\n' +
+  '    "held inside the H1 staleness window ("+H1LIM+"m), released outside it");\n' +
+  '  g.record("DECIDED-9","eviction is PROVABLY LOSSLESS -- an evicted setup is one the frozen staleness gate already rejects",\n' +
+  '    alexGIsSetupSignalStale(asTraded,QT+(H1LIM+1)*60000,RULES_ALEXG.config)===true&&\n' +
+  '    alexGIsSetupSignalStale(asTraded,QT+(H1LIM-1)*60000,RULES_ALEXG.config)===false,\n' +
+  '    "the eviction boundary IS the staleness boundary, so no evicted record could have changed an outcome");\n' +
+  // Per-timeframe lifetime: a W setup must be remembered 7 days, not one hour.
+  '  alexGResetLiveDecisionState();\n' +
+  '  const wSetup=Object.assign({},asTraded,{timeframe:"W",qualificationClose:1.30000});\n' +
+  '  alexGMarkSetupDecided(wSetup,"AGL|w");\n' +
+  '  alexGPruneDecidedSetups(QT+(H1LIM+60)*60000,RULES_ALEXG.config);\n' +
+  '  const wHeld=!!alexGFindPriorDecision(wSetup,"AGL|w2");\n' +
+  '  alexGPruneDecidedSetups(QT+(WLIM+1)*60000,RULES_ALEXG.config);\n' +
+  '  const wReleased=!alexGFindPriorDecision(wSetup,"AGL|w3");\n' +
+  '  g.record("DECIDED-10","the lifetime is PER TIMEFRAME -- a W decision outlives an H1 one by its own contract",\n' +
+  '    wHeld===true&&wReleased===true,"W held past the H1 limit ("+H1LIM+"m) and released past its own ("+WLIM+"m)");\n' +
+  // Derived from EXISTING durable state -- not a new persistent source of truth.
+  '  alexGResetLiveDecisionState();\n' +
+  '  const keysBefore=Object.keys(lsStore).length;\n' +
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[Object.assign({},asTraded,{signalId:"AGL|orig",tradeId:"AGT|orig",status:"closed"})]};\n' +
+  '  alexGJournalEntries=[];\n' +
+  '  const fromDurable=alexGFindPriorDecision(reAnchored,"AGL|different");\n' +
+  '  g.record("DECIDED-11","after a RELOAD (session map empty) the already-traded fact is recovered from the EXISTING durable records",\n' +
+  '    !!fromDurable&&fromDurable.source==="durable"&&fromDurable.priorTradeId==="AGT|orig",\n' +
+  '    "recovered from closedPositions with no session state and no new storage key");\n' +
+  '  g.record("DECIDED-12","and it introduced NO new persistent storage key -- nothing was added as a second source of truth",\n' +
+  '    Object.keys(lsStore).length===keysBefore,\n' +
+  '    "localStorage keys before="+keysBefore+" after="+Object.keys(lsStore).length);\n' +
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +
+  '  const journalOnly=Object.assign({},asTraded,{tradeId:"AGT|orig"}); delete journalOnly.signalId;\n' +
+  '  alexGJournalEntries=[journalOnly];\n' +
+  '  g.record("DECIDED-13","the journal alone is sufficient -- positions unreadable does not blind the authority",\n' +
+  '    !!alexGFindPriorDecision(reAnchored,"AGL|different"),\n' +
+  '    "matched from alexGJournalEntries with an empty account");\n' +
+  '  alexGJournalEntries=[];\n' +
+  // The reset primitive is what stopped the MOGO-020 attempt from desynchronising.
+  '  alexGMarkSetupDecided(asTraded,"AGL|orig");\n' +
+  '  alexGRecordLiveSetupStatus({signalId:"AGL|orig",pair:"AUD_JPY",timeframe:"H1",status:"IGNORED"});\n' +
+  '  alexGResetLiveDecisionState();\n' +
+  '  g.record("DECIDED-14","one primitive clears the ring AND the authority together -- they cannot desynchronise",\n' +
+  '    alexGLiveSetupStatuses.length===0&&alexGFindPriorDecision(asTraded,"AGL|any")===null,\n' +
+  '    "ring="+alexGLiveSetupStatuses.length+" and authority reports nothing");\n' +
   '  return g;\n' +
   '})();'
 );

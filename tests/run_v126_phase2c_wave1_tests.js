@@ -124,7 +124,7 @@ const wrapped = new Function('g',
   'g.getAlexGSetupState=function(){return alexGSetupState;};g.setAlexGSetupState=function(v){alexGSetupState=v;};' +
   'g.getAlexGZoneState=function(){return alexGZoneState;};g.setAlexGZoneState=function(v){alexGZoneState=v;};' +
   'g.getAlexGLastEvaluatedCloseTime=function(){return alexGLastEvaluatedCloseTime;};g.setAlexGLastEvaluatedCloseTime=function(v){alexGLastEvaluatedCloseTime=v;};' +
-  'g.getAlexGLiveSetupStatuses=function(){return alexGLiveSetupStatuses;};g.setAlexGLiveSetupStatuses=function(v){alexGLiveSetupStatuses=v;};' +
+  'g.getAlexGLiveSetupStatuses=function(){return alexGLiveSetupStatuses;};g.resetLiveDecisionState=function(){alexGResetLiveDecisionState();};g.setAlexGLiveSetupStatuses=function(v){alexGLiveSetupStatuses=v;};' +
   'g.getAlexGAccount=function(){return alexGAccount;};g.setAlexGAccount=function(v){alexGAccount=v;};' +
   'g.getAlexGJournalEntries=function(){return alexGJournalEntries;};g.setAlexGJournalEntries=function(v){alexGJournalEntries=v;};' +
   'g.getAlexGAutoTrading=function(){return alexGAutoTrading;};g.setAlexGAutoTrading=function(v){alexGAutoTrading=v;};' +

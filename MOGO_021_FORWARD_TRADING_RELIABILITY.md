@@ -1,9 +1,10 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,354/1,354 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,391/1,391 · platform 1,049/1,049 · ALEX protected drift 0 (v12.20.0 baseline)
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Last independent re-verification:** 2026-08-14, from scratch, after a forced session restart
+**Governed remediation:** all four owner-authorized decisions IMPLEMENTED — see §9
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
 > **Line numbers in this report were corrected on 2026-08-14 and are accurate as of that tree.**
@@ -1449,7 +1450,7 @@ non-invasive method gives equivalent proof.
 > live. Treating "unprotected" as "therefore mine to change" would be the same back-door reasoning
 > §7.2 rejects, applied to myself.
 
-### 7.1 JVM candidate-level diagnostics
+### 7.1 JVM candidate-level diagnostics — ✅ AUTHORIZED AND IMPLEMENTED (§9.4)
 
 **Unobservable today.** JVM emits scan-level events only (`SCAN_STARTED`, `SCAN_COMPLETED`,
 `ENGINE_ERROR`, all from `scanAll`). Not one candidate-, rule- or rejection-level event exists —
@@ -1490,7 +1491,7 @@ What it could **not** do is prove the recomputed verdict is the one the live pat
 — it is a re-derivation, not a record of the real decision, and it would double the market-data
 cost. Recommended only if the governed change is declined.
 
-### 7.2 ALEX live-setup status ring (the §2.10 residue)
+### 7.2 ALEX live-setup status ring (the §2.10 residue) — ✅ AUTHORIZED AND IMPLEMENTED (§9.3)
 
 **Unobservable / incorrect today.** `alexGLiveSetupStatuses` is a 300-entry ring that holds less
 than one poll cycle (383 setups). Consequences: the pairs earliest in `SCAN_PAIRS` order are absent
@@ -1628,7 +1629,7 @@ of §7.3's duplicate-trade exposure **for the live-poll path with zero protected
 memory-only, so the protection lapses after a reload; the staleness gate bounds that residual window
 to ≤7 days.
 
-### 7.3 Signal identity instability (§2.16) — the most severe open item
+### 7.3 Signal identity instability (§2.16) — ✅ AUTHORIZED AND IMPLEMENTED (§9.3)
 
 **Unobservable / incorrect today.** `signalId` embeds zone-anchor timestamps that drift as the
 **fixed-count 2,220-bar H1 window (≈129.5 calendar days)** advances — *not* a "rolling 90-day
@@ -1672,7 +1673,7 @@ there is no external hook between the duplicate test and the open. A shadow obse
 a duplicate after the fact but could not prevent one. **This is the one open item where the absence
 of a governed change leaves a path to a real duplicate paper trade.**
 
-### 7.4 🔴 The H4/D/W completeness gap — the only *demonstrated* live path to a duplicate trade
+### 7.4 The H4/D/W completeness gap — ✅ AUTHORIZED AND IMPLEMENTED (§9.2)
 
 **This is new, it is the most actionable item in the milestone, and it is NOT protected — yet I have
 deliberately not fixed it.** Explaining why is the point of this section.
@@ -1747,7 +1748,12 @@ preserved — every JVM function on the decision path is called as-is and none w
 | **EUR_USD root cause** | **RESOLVED** | §2.10 — never starved; status-ring truncation bias |
 | **Why ALEX trades rarely** | **ANSWERED** | §2.11 — suspension + entry-day dominate; corrected from the durable ledger |
 
-### Why this closes YELLOW, not GREEN
+### Why this closed YELLOW — and what changed since
+
+> **⚠️ HISTORICAL — this section records the state at which the milestone paused for authorization.
+> All four decisions below were subsequently AUTHORIZED by the owner and are IMPLEMENTED. See §9 for
+> what shipped, the mutation evidence, and the governance record.** The analysis is retained because
+> it is what the authorization was granted against.
 
 Every scope item above is complete. Two defects found this session were fixed, verified and
 mutation-proven (§2.14a, §2.14b). **Four trading-fidelity defects remain open. The previous claim
@@ -1785,3 +1791,221 @@ Only #1 and #4 re-baseline a protected function. **One further change needs no a
 and will ship on the next pass regardless:** feeding the durable ledger this tick's decisions instead
 of a snapshot of the truncated ring (§7.2), which is pure reporting integrity with zero semantic
 change.
+
+---
+
+## 9. Governed remediation — AUTHORIZED AND IMPLEMENTED (2026-08-14)
+
+Joe authorized all four decisions from §8. All four are implemented. This section records what was
+built, what it cost in governance terms, and what each claim is proven by. **§7.1–§7.4 describe the
+problems and the options considered; this section is what actually shipped, and it supersedes those
+sections' "not done autonomously" framing.**
+
+| Gate | Before | After |
+|---|---|---|
+| Canonical | 24 suites · 1,354 / 1,354 | **24 suites · 1,391 / 1,391 · 0 failures · 0 execution errors** |
+| Platform | 1,049 / 1,049 | **1,049 / 1,049** |
+| Protected drift | 0 against the v12.5.0 baseline | **0 against the re-issued v12.20.0 baseline** |
+| Protected functions changed | — | **exactly one: `checkAutoTrades`** (0 added, 0 removed, 0 constants changed) |
+
+### 9.1 The governance record, stated precisely
+
+`APP_VERSION` 12.19.0 → **12.20.0**, with a full release note in `APP_VERSION_LOG`.
+`regression-baseline.json` re-issued from 12.20.0.
+
+**The drift check was run as a positive control on the governance mechanism itself, before
+re-baselining.** It reported `DRIFT DETECTED in 1 protected item(s): CHANGED: checkAutoTrades` and
+exit 1 — naming exactly the one function Decision 4 authorizes and nothing else. That is
+independent, mechanical confirmation that **Decisions 1, 2 and 3 touched no protected code at all**,
+which is the claim §7.2 previously got wrong in the other direction. A before/after diff of the
+baseline confirms: 63 → 63 protected functions, one changed, none added, none removed, 4 → 4
+protected constants, none changed.
+
+No confluence, threshold, setup definition, pattern definition, entry, stop, target, filter, risk,
+sizing rule or exclusion was altered by any of the four changes.
+
+### 9.2 Decision 1 — higher-timeframe completeness. **DONE.**
+
+Two repairs, because the gate alone would have been a mute button rather than a fix.
+
+1. **`fetchCandlesRange` no longer treats a short page as proof of exhaustion.** It used to `break`
+   on the first `RAW_COUNT_SHORT` and then classify the short accumulation **COMPLETE**. A broker
+   returning 148 candles when asked for 150 was indistinguishable at that point from one that had
+   genuinely run out. The walk now **continues**: if more history exists the cursor retrieves it and
+   the count is reached, so the shortfall is **repaired**, not merely detected; if the instrument
+   really is exhausted the next page comes back empty and `EMPTY_PAGE` records true exhaustion.
+   That distinction is the whole point — **a window pinned at the real start of history cannot
+   move, so its identity is stable, whereas a window that stopped early for a transient reason
+   moves on the next poll.** Only `REACHED_COUNT` or `EMPTY_PAGE` now satisfy the request.
+2. **`alexGEvaluatePairForLiveSetups` gates evaluation on `completenessState === COMPLETE` for all
+   four timeframes.** Previously only `datasets.H1.length < 60` was checked and H4, D and W had no
+   check of any kind. Gated on `completenessState` and **nothing else**, per ADR-011's central rule —
+   branching on `receivedCount`/`httpStatus`/`paginationTerminationReason` here would have
+   re-created the original defect one layer down. Fail-closed (`marketDataCompletenessOf` reports
+   unclassified data as UNAVAILABLE) and scoped per-pair. Transport and contract failures are
+   recorded distinctly: `DATA_CANDLES_UNAVAILABLE` vs the newly registered
+   `DATA_TIMEFRAME_INCOMPLETE`, with `context.incompleteTimeframes`,
+   `context.completenessByTimeframe`, and a durable `DATA_INCOMPLETE` pipeline stage.
+
+*One harness-fidelity correction was needed and is worth recording, because it is the kind of thing
+that hides a real defect:* the `run_v1232` fetch stub ignored the `&to=` continuation cursor and
+replayed the same page. That was harmless only while a short page ended the walk. It now returns an
+empty continuation, as a real broker does and as the `run_v1236` stub already did. **This made the
+stub more faithful, not more permissive.**
+
+### 9.3 Decisions 2+3 — stable economic identity and a decided-authority. **DONE, as one change.**
+
+The withdrawn `300 → 5000` workaround was **not** implemented.
+
+**Two identities, because one is provably not enough.** `alexGStableSetupIdentity` drops the zone
+anchor and so survives a window roll and ring eviction — but `getCandleCloseTime` returns an
+**estimate** for the newest bar, so every artifact anchored on the last bar of a trading week has
+its close time move by ~48h at the weekend reopen, changing `reactionId` **and**
+`qualificationTimestamp`: two of that identity's five components. The new
+`alexGEconomicSetupIdentity` is therefore built from immutable categorical fields and **prices**,
+which no re-estimation touches. It is an additional OR-term — it can only ever block a duplicate,
+never admit one. **DECIDED-2b pins that it excludes the zone anchor**, a gap that survived the first
+mutation pass and would otherwise have let the identity be quietly folded back into uselessness.
+
+**The authority is separated from the display ring, and introduces no new persistent state.**
+`alexGLiveSetupStatuses` remains a bounded 300-entry display buffer, which is all it was ever fit to
+be. Whether a setup was already **traded** is derived from the **existing durable** account and
+journal records — both already carry every field these identities need. Whether it was already
+**decided** is a session-scoped map, and session scope is *correct*: "decided" is only meaningful
+while the setup can still be acted on, so a reload legitimately re-decides, and persisting it would
+create a second durable authority that could desynchronise from the account. **No parallel
+persistent Set was introduced** (DECIDED-12 asserts zero new storage keys).
+
+**Eviction is by age, and provably lossless.** A setup stops being re-decidable the moment
+`alexGIsSetupSignalStale` fires, so an age-evicted record could never have changed an outcome —
+unlike a count cap, which evicts records that are still load-bearing. DECIDED-9 pins that the
+eviction boundary **is** the staleness boundary, and DECIDED-10 that the lifetime is per timeframe
+(a W decision outlives an H1 one by its own contract). The prune reads `RULES_ALEXG.config`, the
+exact object the frozen gate reads.
+
+> **A real defect in my own implementation, caught by its own fixture.** The prune was first wired to
+> `snapshotAlexGConfig()`, which nests the rules under `.config` — so `maxLiveSignalAgeMinutes` read
+> `undefined` and **the age eviction silently did nothing**. It passed every other fixture. This is
+> exactly the class of silent no-op this milestone has been burned by repeatedly, and it is the
+> second time in two sessions that writing the fixture is what found the bug.
+
+**`alexGResetLiveDecisionState()` is the single primitive owning both the ring and the authority**,
+so they cannot desynchronise — the specific failure that caused the MOGO-020 attempt to be reverted.
+
+**SEMANTIC CHANGE, AUTHORIZED AND VISIBLE:** setups previously re-decided every poll (~53 times per
+signalId) are now decided once, as the contract already stated. This is why several suites needed
+their scenario resets updated: a scenario that does not clear session state now correctly inherits
+the previous scenario's decisions.
+
+### 9.4 Decision 4 — JVM candidate-level diagnostic. **DONE.**
+
+`checkAutoTrades` discarded the verdict `evaluateLiveTrigger` had already computed. The protected
+diff is **a single statement**: `if(!result.fires)return;` →
+`if(!result.fires){jvmRecordCandidateRejected(oPair,result);return;}`. Both helpers live outside the
+protected function, in non-protected code.
+
+It **records the decision the strategy actually made** and never recomputes it — `evaluateLiveTrigger`
+is called exactly once, by the trading path, and this reads its result. `jvmRecordCandidateRejected`
+is total by construction: wholly wrapped, returns undefined, result never read, so it cannot alter,
+delay or prevent a trading decision.
+
+**All eight of `evaluateLiveTrigger`'s rejection reasons map to reason codes that already existed** —
+none was invented, none stretched. §7.1's claim that this needed "one new reason code registered
+before use" was already retracted; in fact it needed none. The interpolated `R:R only X:1` reason is
+matched by prefix, and an unmapped reason yields `UNKNOWN_NOT_RECORDED` rather than a fabricated
+code. `evidenceCompleteness` is **PARTIAL**, not COMPLETE, because `evaluateLiveTrigger`
+short-circuits on its first failed gate — the later gates genuinely were not evaluated, and claiming
+otherwise would be the fabrication this ledger exists to prevent.
+
+**JVM-27/28/29 asserted the auditability gap and are inverted** to assert the contract instead; they
+are now the proof the diagnostic landed and fail again the moment it is removed. **JVM-30** pins that
+the reason *code* corresponds to the actual computation rather than a fixed placeholder, and
+**JVM-31** that no unregistered code can be emitted.
+
+### 9.5 Mutation evidence
+
+Every mutation was proven applied (anchor asserted unique, then byte-diffed) before its result was
+accepted.
+
+| Mutation | Fixtures killed |
+|---|---|
+| revert the ALEX four-timeframe completeness gate | D1 suppression + duplicate-from-short-page fixtures |
+| restore `break` on `RAW_COUNT_SHORT` and re-admit it as satisfied | D1 short-page fixtures |
+| collapse the transport and contract reason codes | D1 transport-vs-contract fixture |
+| gate on H1 only (drop W/D/H4) | D1 H4, D and W suppression fixtures |
+| drop the economic identity from the guard | DECIDED-6 |
+| drop the durable positions/journal scan | DECIDED-11, DECIDED-13 |
+| make age eviction a no-op | DECIDED-8, DECIDED-10 |
+| stop clearing the authority on reset | DECIDED-14 |
+| fold the zone anchor back into the economic identity | DECIDED-2b |
+
+### 9.6 What this does and does not close
+
+**Closed:** the only *demonstrated* live path to a duplicate paper trade (§7.4), the void
+"PERMANENT, never reconsidered" contract (§7.2), signal-identity instability across window rolls,
+ring eviction **and** the weekend close-time re-estimation (§2.16/§7.3), and JVM's candidate-level
+auditability gap (§7.1).
+
+**Explicitly not claimed:** that ALEX or JVM is profitable, well-calibrated, or that these changes
+say anything about edge. Nothing here is evidence about strategy quality — only about whether the
+system does what its own contracts say.
+
+### 9.6a A defect Decision 1 exposed — ALEX claimed coverage it had not achieved
+
+Implementing Decision 1 surfaced the ALEX twin of the JVM defect fixed in §2.14a, and made it
+materially worse. `alexGLivePollTick` did:
+
+```js
+__obsAdvanced=true; __obsEvaluated.push(oPair);
+await alexGEvaluatePairForLiveSetups(oPair,__scanId);
+```
+
+The pair was credited as **evaluated before evaluation ran**, and `instrumentsAttempted` was derived
+from that same array — so attempted and evaluated were **identical by construction** and neither
+could ever reveal a gap. That was tolerable only while suppression was rare. Decision 1 makes
+suppression a real, expected outcome, so a pair skipped for incomplete higher-timeframe data would
+have been reported as **fully evaluated**: a diagnostic claiming healthy coverage for evaluation that
+never happened, which is precisely what this ledger exists to prevent (completion-standard item 11).
+
+`alexGEvaluatePairForLiveSetups` (not protected) now returns
+`{evaluated, reason, incompleteTimeframes}` — `evaluated:true` only on the path where the frozen
+engine actually ran — and the tick credits `instrumentsEvaluated` only on that outcome, records a
+reasoned `instrumentsSkipped` entry otherwise, and takes `instrumentsAttempted` from a separate true
+dispatch list. The swallow-and-continue error behaviour is unchanged; the ledger simply stops calling
+a faulted pair evaluated.
+
+**Two existing fixtures had encoded the dishonest attribution and were corrected, not accommodated.**
+MDC-13 asserted 12/12 evaluated *while one instrument was suppressed* — only ever true because an
+attempt counted as an evaluation; it now asserts 11 evaluated + 1 named in `instrumentsSkipped` = 12
+configured. Phase2C.33 pinned the return value as `undefined` as a proxy for "the catch did not
+rethrow"; it now asserts the actual intent plus the new honesty. Both changes make the assertions
+strictly stronger, and both are flagged to independent verification precisely because changing a
+fixture that fails because of one's own edit is the move that most deserves suspicion.
+
+Mutation-proven: making the tick credit every attempt as an evaluation kills MDC-13 (reporting
+`12 evaluated + 0 skipped` — the dishonest state); deriving `instrumentsAttempted` from the evaluated
+list kills MDC-13b.
+
+### 9.7 Residuals and characteristics, disclosed rather than discovered later
+
+* **Pagination cost.** Removing the `break` on a short page means a short page now costs one extra
+  request to settle (retrieve the rest, or confirm exhaustion with an empty page). A *healthy* fetch
+  is unchanged — it already needed a second page, because the newest candle is still forming and is
+  filtered out. A broker that ignored the `to` cursor and replayed the same page would previously
+  have been stopped by the `break`; it is now stopped by an explicit **cursor-not-advancing** guard,
+  which reports `PARTIAL` rather than returning a window padded with duplicates. That guard is a
+  hazard I introduced with this change and closed in the same change, not a pre-existing one.
+* **Decided-authority lookup cost.** `alexGFindPriorDecision` consults the session map first and only
+  falls through to the durable scan on a miss, so after the first poll of a session almost every
+  setup resolves from the map. The worst case is the first poll after a reload: 388 setups × the
+  number of durable records. At today's campaign size that is ~1,200 string builds once per hour.
+  It is bounded by the journal, not by the ring, and it is not on a latency-sensitive path.
+* **The economic identity keys on a 5-decimal price.** Two genuinely distinct setups sharing pair,
+  timeframe, setup type, swing direction *and* an identical qualification close would collapse. It is
+  consulted only against traded records and the session map, and it is an OR-term beside the precise
+  identity, so a collision costs one skipped re-decision rather than a wrong trade — but it is a real
+  and stated limitation, not a proof of uniqueness.
+* **The authority is memory-only by design.** A reload legitimately re-decides. The already-*traded*
+  half survives, because it is derived from the durable account and journal; only the
+  decided-but-not-traded half is session-scoped, and that is correct — "decided" is meaningful for at
+  most 7 days.

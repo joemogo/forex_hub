@@ -92,6 +92,10 @@ function runStep2APipelineObservabilityFixtures(g){
     g.setAlexGZoneState({});
     g.setAlexGLastEvaluatedCloseTime({});
     g.setAlexGLiveSetupStatuses([]);
+    // MOGO-021 DECISIONS 2+3: the decided-authority is session state exactly like the ring, so a
+    // scenario that does not clear it inherits the previous scenario's decisions and its setups are
+    // correctly refused as already-decided. Cleared through the one primitive that owns both.
+    g.resetLiveDecisionState();
     g.setAlexGAccount({balance:10000,openPositions:[],closedPositions:[]});
     g.setAlexGJournalEntries([]);
     g.setAlexGAutoTrading({enabled:true,activatedAt:null,tradedSignals:{},tradedToday:{},log:[]});

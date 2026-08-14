@@ -335,28 +335,51 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  const types={}; decisionEventLog.forEach(function(e){ types[e.eventType]=(types[e.eventType]||0)+1; });\n' +
   '  const CANDIDATE_LEVEL=["CANDIDATE_CREATED","CANDIDATE_APPROVED","CANDIDATE_REJECTED","RULE_EVALUATED",\n' +
   '    "TRADE_OPEN_REQUESTED","TRADE_OPENED","TRADE_OPEN_FAILED"];\n' +
-  '  g.record("JVM-27","AUDITABILITY GAP: a real JVM sweep emits SCAN-level events but NOT ONE candidate-, rule- or trade-level event",\n' +
-  '    (types.SCAN_STARTED||0)>0&&(types.SCAN_COMPLETED||0)>0&&\n' +
-  '    CANDIDATE_LEVEL.every(function(t){ return !types[t]; })&&viaScanAll>0,\n' +
+  // MOGO-021 DECISION 4 -- INVERTED, DELIBERATELY. This fixture asserted the auditability GAP: that a
+  // real JVM sweep emitted scan-level events and NOT ONE candidate-level event. The owner authorized
+  // closing that gap, so the fixture now asserts the contract instead of the defect. It is the proof
+  // the diagnostic landed, and it fails again the moment the diagnostic is removed.
+  '  g.record("JVM-27","a real JVM sweep now emits CANDIDATE-level rejections alongside its scan-level events",\n' +
+  '    (types.SCAN_STARTED||0)>0&&(types.SCAN_COMPLETED||0)>0&&(types.CANDIDATE_REJECTED||0)>0&&viaScanAll>0,\n' +
   '    "eventTypes="+JSON.stringify(types)+" while "+viaScanAll+" positions opened");\n' +
   // Strategy-sourced events only. The evidence platform emits its own DATA_UNAVAILABLE events when
   // the observation store is unreachable (IndexedDB is absent in this harness), and those are
   // infrastructure, not the JVM decision path -- including them would make this assertion about
   // storage availability rather than about what JVM reports.
   '  const stratEvents=decisionEventLog.filter(function(e){ return String(e.source||"")!=="evidence-platform"; });\n' +
-  '  g.record("JVM-28","every STRATEGY event on that sweep is sourced to scanAll -- nothing inside the decision path reports itself",\n' +
-  '    stratEvents.length>0&&stratEvents.every(function(e){ return e.source==="scanAll"; }),\n' +
+  '  g.record("JVM-28","the DECISION PATH now reports itself -- events are sourced to checkAutoTrades, not only scanAll",\n' +
+  '    stratEvents.length>0&&stratEvents.some(function(e){ return e.source==="checkAutoTrades"; })&&\n' +
+  '    stratEvents.every(function(e){ return e.source==="scanAll"||e.source==="checkAutoTrades"; }),\n' +
   '    "strategy sources="+JSON.stringify(Object.keys(stratEvents.reduce(function(a,e){a[e.source]=1;return a;},{})))+\n' +
   '    "; all sources="+JSON.stringify(Object.keys(decisionEventLog.reduce(function(a,e){a[e.source]=1;return a;},{}))));\n' +
   // the discarded reason, with the discard itself asserted
   '  g.setMode("flat"); structuralAOICache={}; resetFiring(); pairData={}; clearDecisionEvents();\n' +
   '  const vrej=await evaluateLiveTrigger("EUR_USD");\n' +
   '  await checkAutoTrades();\n' +
-  '  g.record("JVM-29","the rejection reason EXISTS at the source, and checkAutoTrades DISCARDS it -- no trace anywhere",\n' +
+  '  const rejEvents=decisionEventLog.filter(function(e){ return e.eventType==="CANDIDATE_REJECTED"&&e.source==="checkAutoTrades"; });\n' +
+  '  g.record("JVM-29","the rejection reason computed at the source is now RECORDED VERBATIM, and no trade is taken",\n' +
   '    vrej.fires===false&&typeof vrej.reason==="string"&&vrej.reason.length>0&&\n' +
-  '    autoTrading.log.length===0&&decisionEventLog.length===0&&\n' +
-  '    Object.keys(autoTrading.tradedToday).length===0,\n' +
-  '    "computed ["+String(vrej.reason)+"] -- journal=0, events=0, tradedToday=0");\n' +
+  '    rejEvents.length>0&&rejEvents.every(function(e){ return e.reasonText===vrej.reason; })&&\n' +
+  '    autoTrading.log.length===0&&Object.keys(autoTrading.tradedToday).length===0,\n' +
+  '    "computed ["+String(vrej.reason)+"] recorded on "+rejEvents.length+" event(s) as ["+String((rejEvents[0]||{}).reasonText)+"]"+\n' +
+  '    " -- still journal=0, tradedToday=0");\n' +
+  // The reason CODE must correspond to the reason the strategy actually returned -- a diagnostic
+  // that reports a plausible-but-wrong code is worse than none. Every code below already existed in
+  // the registry; none was invented for this change.
+  '  g.record("JVM-30","the recorded reason CODE corresponds to the actual computation, not a fixed placeholder",\n' +
+  '    jvmLiveTriggerReasonCode("Confluence below threshold")==="CONFLUENCE_BELOW_THRESHOLD"&&\n' +
+  '    jvmLiveTriggerReasonCode("R:R only 1.42:1")==="ENTRY_RATIO_BELOW_MINIMUM"&&\n' +
+  '    jvmLiveTriggerReasonCode("Outside Mon-Wed preferred entry window")==="SESSION_OUTSIDE_PREFERRED_DAY"&&\n' +
+  '    jvmLiveTriggerReasonCode("No engulfing trigger yet")==="ENTRY_SIGNAL_NOT_PRESENT"&&\n' +
+  '    jvmLiveTriggerReasonCode("No valid support AOI")==="STRUCTURE_AOI_NOT_VALIDATED"&&\n' +
+  '    jvmLiveTriggerReasonCode("No valid resistance AOI")==="STRUCTURE_AOI_NOT_VALIDATED"&&\n' +
+  '    jvmLiveTriggerReasonCode("Invalid stop distance")==="RISK_ZERO_STOP_DISTANCE"&&\n' +
+  '    jvmLiveTriggerReasonCode("No data")==="DATA_CANDLES_UNAVAILABLE"&&\n' +
+  '    jvmLiveTriggerReasonCode("something nobody mapped")==="UNKNOWN_NOT_RECORDED",\n' +
+  '    "all eight real reasons map to a distinct pre-existing registry code; an unknown reason is not fabricated");\n' +
+  '  g.record("JVM-31","every recorded reason code is REGISTERED -- the diagnostic cannot emit an unknown code",\n' +
+  '    rejEvents.every(function(e){ return !!REASON_CODE_REGISTRY[e.reasonCode]; }),\n' +
+  '    "codes="+JSON.stringify(rejEvents.map(function(e){return e.reasonCode;})));\n' +
   // ══ JVM FORWARD-COVERAGE LEDGER (report 2.14) ══
   // JVM previously recorded NO forward coverage at all -- the ledger that makes "was this
   // instrument actually evaluated?" answerable, and whose absence left the EUR_USD question

@@ -159,21 +159,53 @@ function buildFlat(t0,n,stepMs){
   return candles;
 }
 
+// The higher-timeframe filler each granularity is served by default, factored out so the
+// MOGO-021 DECISION 1 fixtures below can hand the broker-page plan the IDENTICAL array the
+// healthy control is served. That is what makes those fixtures isolate the completeness
+// contract itself: the candles the engine would see are unchanged, and the only difference is
+// what the broker does on the &to= continuation.
+function __htfDefault(gran){
+  if(gran==='H4') return buildFlat(__t0-30*24*3600000,30,4*3600000);
+  if(gran==='D') return buildFlat(__t0-30*24*3600000,30,24*3600000);
+  return buildFlat(__t0-200*24*3600000,30,7*24*3600000);
+}
+function __wire(arr){
+  return arr.map(c=>({time:c.t.toISOString(),complete:true,
+    mid:{o:String(c.o),h:String(c.h),l:String(c.l),c:String(c.c)}}));
+}
 let __target='EUR_USD', __h1=null, __bidask={bid:1.10595,ask:1.10605}, __t0=0;
+// ── BROKER-PAGE PLAN. The default below is unchanged and is what every pre-existing fixture
+// runs on: one page for the requested granularity, then an empty &to= continuation -- genuine
+// exhaustion, which fetchCandlesRange records as EMPTY_PAGE. MOGO-021 DECISION 1 turns entirely
+// on what happens AFTER a short page, so one instrument+granularity at a time can be given an
+// explicit page sequence instead: `pages` are served in order to the successive requests of one
+// fetchCandlesRange walk, and `then` decides what the broker does once they run out --
+//   'EMPTY'          genuine exhaustion            -> EMPTY_PAGE
+//   'HTTP_ERROR'     a transport failure mid-walk  -> HTTP_ERROR
+//   'NETWORK_ERROR'  the request itself throws     -> NETWORK_ERROR
+// The page counter resets on every request WITHOUT &to=, which is precisely the start of a new
+// walk, so one plan serves repeated polls identically.
+let __plan=null,__planIdx=0;
 globalThis.fetch=async function(url){
   const u=String(url);
   const cm=u.match(/instruments\/([^/]+)\/candles\?count=(\d+)&granularity=(\w+)/);
   if(cm){
     const inst=cm[1], gran=cm[3];
+    if(__plan&&inst===__plan.inst&&gran===__plan.gran){
+      if(!/&to=/.test(u)) __planIdx=0;   // a fresh walk always starts at the plan's first page
+      const page=(__plan.pages||[])[__planIdx++];
+      if(!page){
+        if(__plan.then==='HTTP_ERROR') return {ok:false,status:503,json:async()=>({})};
+        if(__plan.then==='NETWORK_ERROR') throw new Error('simulated network failure');
+        return {ok:true,status:200,json:async()=>({candles:[]})};
+      }
+      return {ok:true,status:200,json:async()=>({candles:__wire(page)})};
+    }
     if(/&to=/.test(u)) return {ok:true,status:200,json:async()=>({candles:[]})};   // no further pages
     let arr;
     if(gran==='H1') arr=(inst===__target)?__h1:buildFlat(__t0,80,3600000);
-    else if(gran==='H4') arr=buildFlat(__t0-30*24*3600000,30,4*3600000);
-    else if(gran==='D') arr=buildFlat(__t0-30*24*3600000,30,24*3600000);
-    else arr=buildFlat(__t0-200*24*3600000,30,7*24*3600000);
-    const candles=arr.map(c=>({time:c.t.toISOString(),complete:true,
-      mid:{o:String(c.o),h:String(c.h),l:String(c.l),c:String(c.c)}}));
-    return {ok:true,status:200,json:async()=>({candles})};
+    else arr=__htfDefault(gran);
+    return {ok:true,status:200,json:async()=>({candles:__wire(arr)})};
   }
   if(/\/pricing\?instruments=/.test(u)){
     if(!__bidask) return {ok:false,status:503,json:async()=>({})};
@@ -190,6 +222,9 @@ g.setBidAsk=v=>{__bidask=v;};
 g.build=t0=>buildRepeatedReactionH1(t0);
 g.build6=t0=>buildSixTouchReactionH1(t0);
 g.now=()=>Date.now();
+g.setPlan=p=>{__plan=p;__planIdx=0;};              // null restores the default one-page-then-exhausted broker
+g.htf=gran=>__htfDefault(gran);                    // the exact array the healthy control is served
+g.flat=(t0,n,step)=>buildFlat(t0,n,step);
 
 const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice";\n' +
@@ -205,7 +240,7 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  const t0=nowMs-48*3600000-5*60000;\n' +   // the qualifying touch lands ~5 min ago
   '  g.setT0(t0); g.setH1(g.build(t0));\n' +
   '  function freshSession(){\n' +
-  '    alexGSetupState=[]; alexGZoneState={}; alexGLastEvaluatedCloseTime={}; alexGLiveSetupStatuses=[];\n' +
+  '    alexGSetupState=[]; alexGZoneState={}; alexGLastEvaluatedCloseTime={}; alexGResetLiveDecisionState();\n' +
   '    decisionEventLog=[]; decisionEventSequenceCounter=0; decisionEventKnownCandidateIds=new Set();\n' +
   '  }\n' +
   '  function fullReset(){\n' +
@@ -367,7 +402,7 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // fixture exists to catch. Verified: without this line, removing j.tradeId!==currentTradeId from
   // the journal scan left DRIFT-1b PASSING, and so did removing p.signalId!==signalId.
   '  alexGIdentityDriftReported=new Set();\n' +
-  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGLiveSetupStatuses=[];\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGResetLiveDecisionState();\n' +
   '  await alexGLivePollTick();\n' +
   '  g.record("DRIFT-1b","NO false positive: re-evaluating a normally-traded setup reports no drift",\n' +
   '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===0&&\n' +
@@ -409,18 +444,28 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // The cursor and status ring must be re-armed, or the second poll skips all 12 pairs at the
   // cadence gate and the detector never runs -- which made an earlier version of this fixture pass
   // even with the latch permanently disabled.
-  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGLiveSetupStatuses=[];\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGResetLiveDecisionState();\n' +
   '  await alexGLivePollTick();\n' +
   '  g.record("DRIFT-5","it is reported ONCE per drifted identity, even though the setup is re-evaluated",\n' +
   '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&\n' +
   '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===1,\n' +
   '    "re-evaluated "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 instruments, still 1 drift event");\n' +
-  // The detector must be observation-only: the drifted setup still trades, because that IS the
-  // defect. If the detector silently blocked it, that would be an unauthorized semantic change.
-  '  g.record("DRIFT-6","THE GUARD MISS IS REAL: the drifted setup opens a SECOND position on an already-traded setup",\n' +
-  '    alexGAccount.openPositions.length===1&&alexGAccount.closedPositions.length===1,\n' +
+  // INVERTED BY MOGO-021 DECISIONS 2+3, exactly as this fixture always said it would be. It
+  // previously asserted the guard MISS -- a second position on one economic setup, report section
+  // 2.16 -- and was documented as "expected to invert when the governed fix lands, at which point
+  // it becomes the proof the fix works." The scenario construction below is unchanged to the
+  // character; only the asserted outcome moved. The decided-authority now matches the drifted
+  // setup through the DURABLE records it left behind, so the duplicate is refused.
+  '  const decided6=decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&\n' +
+  '    e.reasonCode==="STATE_SIGNAL_ALREADY_DECIDED";});\n' +
+  '  g.record("DRIFT-6","THE GUARD MISS IS CLOSED: the drifted setup is REFUSED, not opened a second time",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&\n' +
+  '    alexGJournalEntries.length===1&&Object.keys(alexGAutoTrading.tradedSignals).length===1&&\n' +
+  '    decided6.length>0&&decided6.every(function(e){return (e.context||{}).identityDrifted===true;}),\n' +
   '    "open="+alexGAccount.openPositions.length+" closed="+alexGAccount.closedPositions.length+\n' +
-  '    " -- one economic setup, two positions (report section 2.16)");\n' +
+  '    " journal="+alexGJournalEntries.length+" -- one economic setup, ONE position, refused as "+\n' +
+  '    "already decided on each of the "+decided6.length+" re-evaluations "+\n' +
+  '    "(matchedBy="+String((decided6[0]||{}).context&&decided6[0].context.matchedBy)+")");\n' +
   '  g.record("DRIFT-6b","OBSERVATION ONLY: the detector records it and rejects nothing -- repair is a governed change",\n' +
   '    decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===0&&\n' +
   '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).every(function(e){return e.eventType==="ENGINE_ERROR";}),\n' +
@@ -463,9 +508,17 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("DRIFT-9","BLIND SPOT CLOSED: drift is detected when ONLY the journal survives",\n' +
   '    jDrift.length===1&&(jDrift[0].context||{}).priorRecord==="journal",\n' +
   '    "detected from the journal alone, positions empty (the INC-001 per-key load state)");\n' +
-  '  g.record("DRIFT-9b","and in that state the guards DO miss -- a second position opens",\n' +
-  '    alexGAccount.openPositions.length===1,\n' +
-  '    "open="+alexGAccount.openPositions.length+" with every recorded identity re-anchored");\n' +
+  // INVERTED BY MOGO-021 DECISIONS 2+3. This is the INC-001 blind spot -- positions gone, journal
+  // surviving -- and it was the state in which every identity-keyed guard missed. The
+  // decided-authority derives "already traded" from the durable records that DO survive, so the
+  // journal alone is now enough to refuse the duplicate. Scenario construction unchanged.
+  '  const decided9=decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&\n' +
+  '    e.reasonCode==="STATE_SIGNAL_ALREADY_DECIDED";});\n' +
+  '  g.record("DRIFT-9b","and in that state the guards now HOLD -- the journal alone refuses the second position",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGJournalEntries.length===1&&\n' +
+  '    decided9.length===1&&(decided9[0].context||{}).identityDrifted===true,\n' +
+  '    "open="+alexGAccount.openPositions.length+" with every recorded identity re-anchored; refused via "+\n' +
+  '    String((decided9[0]||{}).context&&decided9[0].context.matchSource));\n' +
   // ── the latch fix itself, which had NO repository coverage ──
   // The first attempt at this fix reordered the mark to after the emit and was a no-op, because
   // emitDecisionEvent never throws -- it returns {ok:false}. Reverting the real fix (marking
@@ -538,11 +591,18 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    orgDrift.length===1&&!!orgPos&&octx.priorSignalId===orgPos.signalId&&\n' +
   '    octx.currentSignalId!==octx.priorSignalId&&octx.priorZoneId!==octx.currentZoneId,\n' +
   '    "events="+orgDrift.length+" priorZoneId!=currentZoneId="+(octx.priorZoneId!==octx.currentZoneId));\n' +
-  '  g.record("DRIFT-12b","and in that organic state the guards DO miss -- a second position opens on one setup",\n' +
-  '    alexGAccount.openPositions.length===1&&alexGAccount.closedPositions.length===1&&\n' +
-  '    alexGAccount.openPositions[0].signalId!==alexGAccount.closedPositions[0].signalId,\n' +
+  // INVERTED BY MOGO-021 DECISIONS 2+3, and this is the strongest of the three: the re-anchor here
+  // is the ENGINE's own -- a real candle-window roll, no stored record edited -- so what is refused
+  // is a duplicate the fixture did not have to manufacture. alexGStableSetupIdentity alone would
+  // still match here; DRIFT-14 pins that. Scenario construction unchanged.
+  '  const decided12=decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&\n' +
+  '    e.reasonCode==="STATE_SIGNAL_ALREADY_DECIDED";});\n' +
+  '  g.record("DRIFT-12b","and in that organic state the guards now HOLD -- one economic setup, ONE position",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&\n' +
+  '    decided12.length===1&&(decided12[0].context||{}).identityDrifted===true&&\n' +
+  '    (decided12[0].context||{}).priorSignalId===orgPos.signalId,\n' +
   '    "open="+alexGAccount.openPositions.length+" closed="+alexGAccount.closedPositions.length+\n' +
-  '    " -- one economic setup, two positions, produced without editing any record");\n' +
+  '    " -- the duplicate the engine itself produced is refused, matched back to the traded signalId");\n' +
   '  g.record("DRIFT-13","the re-anchor is REAL: same reactionId and qualificationTimestamp, DIFFERENT zoneId",\n' +
   '    !!orgSetup&&!!orgPos&&orgSetup.reactionId===orgPos.reactionId&&\n' +
   '    orgSetup.qualificationTimestamp===orgPos.qualificationTimestamp&&orgSetup.zoneId!==orgPos.zoneId&&\n' +
@@ -614,6 +674,273 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).map(alexGLiveSignalId)\n' +
   '      .every(function(id){ return alexGAutoTrading.tradedSignals[id]===true; }),\n' +
   '    "identity is stable within a session; drift needs a candle-window shift (see report 2.16)");\n' +
+  // ══ MARKET-DATA COMPLETENESS GATE (MOGO-021 DECISION 1) ═══════════════════════════════════════
+  // THE DEFECT. fetchAlexGReplayDatasets(oPair,90) fetches by fixed COUNT -- 2220 H1, 600 H4, 150 D,
+  // 73 W -- and fetchCandlesRange used to `break` on the first short page and then classify that
+  // short accumulation COMPLETE, reasoning that a short page means the broker has no more history.
+  // A broker that returns 148 daily candles when asked for 150 is indistinguishable at that point
+  // from one that has genuinely run out, and because the fetch is by COUNT, stopping two candles
+  // early moves the window START off a bar boundary. That re-anchors ALEX's zone identity in the
+  // middle of the staleness window -- where a whole-bar roll can never land -- and every
+  // duplicate-trade guard misses. Reproduced: 148-of-150 opened a SECOND real paper position where
+  // a full-count control blocked the same setup as DUPLICATE.
+  //
+  // THE REPAIR HAS TWO HALVES AND BOTH ARE PROVEN HERE, NOT JUST THE SUPPRESSION HALF:
+  //   1. fetchCandlesRange CONTINUES past a short page, so a shortfall more history can satisfy is
+  //      REPAIRED rather than merely detected (MDC-15, MDC-18), and only REACHED_COUNT or a
+  //      genuinely empty continuation now satisfy the request (MDC-16).
+  //   2. alexGEvaluatePairForLiveSetups gates on marketDataCompletenessOf()===COMPLETE for ALL FOUR
+  //      required timeframes and otherwise suppresses THAT PAIR ONLY (MDC-4..MDC-14, MDC-17).
+  //
+  // THE ONLY SEAM IS THE BROKER'S PAGING. For every suppression fixture the plan serves the
+  // IDENTICAL candle array the healthy control is served (g.htf(...)), changing only what the
+  // broker does on the &to= continuation -- so the data the frozen engine would see is unchanged
+  // and the fixture isolates the completeness contract itself, not a different market.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  // Every suppression this gate can produce, read off the decision bus by SOURCE rather than by
+  // reason code alone -- DATA_CANDLES_UNAVAILABLE is also emitted by an unrelated JVM mapping.
+  '  function suppressions(){ return decisionEventLog.filter(function(e){\n' +
+  '    return e.eventType==="ENGINE_ERROR"&&e.source==="alexGEvaluatePairForLiveSetups"&&\n' +
+  '      (e.reasonCode==="DATA_TIMEFRAME_INCOMPLETE"||e.reasonCode==="DATA_CANDLES_UNAVAILABLE"); }); }\n' +
+  // ── HEALTHY CONTROL. Nothing planned: one page per granularity, then an exhausted continuation.
+  '  g.setPlan(null); g.setT0(t0); g.setH1(g.build(t0)); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  fullReset(); alexGIdentityDriftReported=new Set();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("MDC-1","COMPLETE W/D/H4/H1 permits normal evaluation -- a real paper position opens end-to-end",\n' +
+  '    alexGAccount.openPositions.length===1&&alexGJournalEntries.length===1,\n' +
+  '    "open="+alexGAccount.openPositions.length+" journal="+alexGJournalEntries.length);\n' +
+  // The anti-over-blocking control, and it matters as much as the suppression fixtures: a gate that
+  // blocks healthy data is a trading defect in the other direction.
+  '  g.record("MDC-2","ANTI-OVER-BLOCKING: healthy data suppresses NOTHING, on any of the twelve instruments",\n' +
+  '    suppressions().length===0&&(g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
+  '    "0 suppressions across "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 instruments, setup still derived");\n' +
+  // ── A HEALTHY FULL-COUNT FETCH. 73 is fetchAlexGReplayDatasets' own W count for days=90, so this
+  // is the real request being fully satisfied -- REACHED_COUNT rather than exhaustion -- reached
+  // only BECAUSE the walk continued past a short first page.
+  '  const w73=g.flat(t0-73*7*24*3600000,73,7*24*3600000);\n' +
+  '  g.setPlan({inst:"EUR_USD",gran:"W",pages:[w73.slice(2),w73.slice(0,2)],then:"EMPTY"});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("MDC-3","a FULL-COUNT walk (73 of 73 W, reached only by walking past a short page) still trades",\n' +
+  '    alexGAccount.openPositions.length===1&&suppressions().length===0,\n' +
+  '    "open="+alexGAccount.openPositions.length+", 0 suppressions on a request that was fully satisfied");\n' +
+  // ── PER-TIMEFRAME SUPPRESSION. Same candles as the healthy control; the continuation fails, so
+  // the shortfall is not satisfiable and the dataset is PARTIAL rather than COMPLETE.
+  '  g.setPlan({inst:"EUR_USD",gran:"H4",pages:[g.htf("H4")],then:"HTTP_ERROR"});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const h4Sup=suppressions();\n' +
+  '  g.record("MDC-4","INCOMPLETE H4 suppresses evaluation of that pair -- and no position opens",\n' +
+  '    h4Sup.length===1&&h4Sup[0].pair==="EUR_USD"&&\n' +
+  '    (h4Sup[0].context||{}).incompleteTimeframes.join(",")==="H4"&&\n' +
+  '    alexGAccount.openPositions.length===0,\n' +
+  '    "incompleteTimeframes="+JSON.stringify((h4Sup[0]||{}).context&&h4Sup[0].context.incompleteTimeframes)+" open="+alexGAccount.openPositions.length);\n' +
+  '  g.setPlan({inst:"EUR_USD",gran:"D",pages:[g.htf("D")],then:"HTTP_ERROR"});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const dSup=suppressions(); const dPipe=(g.lastPipeline()||[]).filter(function(r){return r&&r.stage==="DATA_INCOMPLETE";});\n' +
+  '  g.record("MDC-5","INCOMPLETE D suppresses evaluation of that pair -- and no position opens",\n' +
+  '    dSup.length===1&&dSup[0].pair==="EUR_USD"&&\n' +
+  '    (dSup[0].context||{}).incompleteTimeframes.join(",")==="D"&&\n' +
+  '    alexGAccount.openPositions.length===0,\n' +
+  '    "incompleteTimeframes="+JSON.stringify((dSup[0]||{}).context&&dSup[0].context.incompleteTimeframes)+" open="+alexGAccount.openPositions.length);\n' +
+  // The engine is never handed the data at all -- MDC-2 proves the same tick derives a setup when
+  // the data IS complete, so an empty setup list here is suppression, not an absent opportunity.
+  '  g.record("MDC-6","the suppressed pair is never handed to the FROZEN engine -- no setup is derived from it",\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===0&&\n' +
+  '    alexGJournalEntries.length===0,\n' +
+  '    "EUR_USD setups=0 where the identical healthy tick (MDC-2) derives 1");\n' +
+  '  g.setPlan({inst:"EUR_USD",gran:"W",pages:[g.htf("W")],then:"HTTP_ERROR"});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const wSup=suppressions();\n' +
+  '  g.record("MDC-7","INCOMPLETE W suppresses evaluation of that pair -- and no position opens",\n' +
+  '    wSup.length===1&&wSup[0].pair==="EUR_USD"&&\n' +
+  '    (wSup[0].context||{}).incompleteTimeframes.join(",")==="W"&&\n' +
+  '    alexGAccount.openPositions.length===0,\n' +
+  '    "incompleteTimeframes="+JSON.stringify((wSup[0]||{}).context&&wSup[0].context.incompleteTimeframes)+" open="+alexGAccount.openPositions.length);\n' +
+  // ── TRANSPORT vs CONTRACT. The same timeframe, the same gate, two materially different facts:
+  // above, the data ARRIVED and did not satisfy the contract (PARTIAL); here it never arrived at
+  // all (UNAVAILABLE). An operator who cannot tell those apart cannot act on either.
+  '  g.setPlan({inst:"EUR_USD",gran:"D",pages:[],then:"HTTP_ERROR"});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const xSup=suppressions(); const xctx=(xSup[0]||{}).context||{};\n' +
+  '  g.record("MDC-8","TRANSPORT FAILURE reads as UNAVAILABLE and reports DATA_CANDLES_UNAVAILABLE",\n' +
+  '    xSup.length===1&&xSup[0].reasonCode==="DATA_CANDLES_UNAVAILABLE"&&\n' +
+  '    (xctx.completenessByTimeframe||{}).D==="UNAVAILABLE"&&alexGAccount.openPositions.length===0,\n' +
+  '    "reasonCode="+(xSup[0]||{}).reasonCode+" D="+((xctx.completenessByTimeframe||{}).D));\n' +
+  '  g.record("MDC-9","the two facts DO NOT share a code -- a merely-short dataset reports DATA_TIMEFRAME_INCOMPLETE",\n' +
+  '    (dSup[0]||{}).reasonCode==="DATA_TIMEFRAME_INCOMPLETE"&&\n' +
+  '    (xSup[0]||{}).reasonCode==="DATA_CANDLES_UNAVAILABLE"&&\n' +
+  '    (dSup[0]||{}).reasonCode!==(xSup[0]||{}).reasonCode&&\n' +
+  '    !!REASON_CODE_REGISTRY.DATA_TIMEFRAME_INCOMPLETE,\n' +
+  '    "PARTIAL -> "+(dSup[0]||{}).reasonCode+" vs UNAVAILABLE -> "+(xSup[0]||{}).reasonCode);\n' +
+  // ── DECISION EVIDENCE. What was suppressed, why, and on which timeframes -- asserted on the
+  // event the gate actually emitted and on the row the REAL durable builder actually produced.
+  '  const dctx2=(dSup[0]||{}).context||{};\n' +
+  '  g.record("MDC-10","the suppression is RECORDED as an ENGINE_ERROR at the market-data stage, not silently dropped",\n' +
+  '    (dSup[0]||{}).eventType==="ENGINE_ERROR"&&(dSup[0]||{}).stage==="MARKET_DATA_FETCH"&&\n' +
+  '    (dSup[0]||{}).severity==="ERROR"&&/did not satisfy the completeness contract/.test(String((dSup[0]||{}).reasonText)),\n' +
+  '    "stage="+(dSup[0]||{}).stage+" severity="+(dSup[0]||{}).severity);\n' +
+  '  g.record("MDC-11","the evidence NAMES the failing timeframe and reports the state of ALL FOUR",\n' +
+  '    JSON.stringify(dctx2.incompleteTimeframes)===JSON.stringify(["D"])&&\n' +
+  '    (dctx2.completenessByTimeframe||{}).D==="PARTIAL"&&\n' +
+  '    (dctx2.completenessByTimeframe||{}).W==="COMPLETE"&&\n' +
+  '    (dctx2.completenessByTimeframe||{}).H4==="COMPLETE"&&\n' +
+  '    (dctx2.completenessByTimeframe||{}).H1==="COMPLETE",\n' +
+  '    JSON.stringify(dctx2.completenessByTimeframe));\n' +
+  '  g.record("MDC-12","and it survives the DURABLE pipeline builder as a DATA_INCOMPLETE stage",\n' +
+  '    dPipe.length===1&&dPipe[0].pair==="EUR_USD"&&dPipe[0].timeframe==="D"&&\n' +
+  '    dPipe[0].reason==="DATA_TIMEFRAME_INCOMPLETE"&&/INCOMPLETE MARKET DATA/.test(String(dPipe[0].status)),\n' +
+  '    "stage=DATA_INCOMPLETE pair="+(dPipe[0]||{}).pair+" tf="+(dPipe[0]||{}).timeframe+" reason="+(dPipe[0]||{}).reason);\n' +
+  // ── SCOPE. Suppression is per-pair. Planned on GBP_USD, so the instrument under test is a
+  // DIFFERENT one from the instrument that must still trade in the very same tick.
+  '  g.setPlan({inst:"GBP_USD",gran:"D",pages:[g.htf("D")],then:"HTTP_ERROR"});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const iSup=suppressions();\n' +
+  '  g.record("MDC-13","SCOPE: one incomplete instrument does not suppress the others -- EUR_USD still trades on that tick",\n' +
+  '    iSup.length===1&&iSup[0].pair==="GBP_USD"&&alexGAccount.openPositions.length===1&&\n' +
+  '    alexGAccount.openPositions[0].pair==="EUR_USD"&&\n' +
+  // MOGO-021: this asserted 12/12 EVALUATED while one instrument was suppressed -- which was only
+  // ever true because the poll ledger counted an ATTEMPT as an evaluation. The ledger is now honest,
+  // so the correct assertion is 11 evaluated + the suppressed one named in instrumentsSkipped, and
+  // every configured instrument still accounted for. Scope is what this fixture is about, and scope
+  // is still proved: the other eleven were unaffected and EUR_USD traded on the same tick.
+  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length-1&&\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).indexOf("GBP_USD")===-1&&\n' +
+  '    (g.lastObs().instrumentsSkipped||[]).some(function(x){return x.pair==="GBP_USD";})&&\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length+(g.lastObs().instrumentsSkipped||[]).length===SCAN_PAIRS.length,\n' +
+  '    "suppressed="+(iSup[0]||{}).pair+" while EUR_USD opened a position; "+\n' +
+  '    ((g.lastObs().instrumentsEvaluated)||[]).length+" evaluated + "+\n' +
+  '    ((g.lastObs().instrumentsSkipped)||[]).length+" skipped = "+SCAN_PAIRS.length+" configured");\n' +
+  // instrumentsAttempted is the DISPATCH list. It used to be derived from instrumentsEvaluated, so
+  // the two were identical by construction and neither could ever reveal a suppressed instrument.
+  '  g.record("MDC-13b","instrumentsAttempted counts the DISPATCH, so a suppressed instrument is visible rather than absorbed",\n' +
+  '    g.lastObs().instrumentsAttempted===SCAN_PAIRS.length&&\n' +
+  '    g.lastObs().instrumentsAttempted>(g.lastObs().instrumentsEvaluated||[]).length,\n' +
+  '    "attempted="+g.lastObs().instrumentsAttempted+" evaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+\n' +
+  '    " (a count derived from the evaluated list would have reported "+((g.lastObs().instrumentsEvaluated)||[]).length+")");\n' +
+  // ── RESTART / RECOVERY under the gate. The trade is closed first, for the same reason E2E-11
+  // states: with it open the pair+timeframe overlap rule blocks any re-open and the real guards are
+  // never reached. What this adds is that the gate must not change the answer in either direction --
+  // the setup must still be RE-DERIVED (so it genuinely reached the duplicate check) and must not
+  // be traded again.
+  '  g.setPlan(null);\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const rstPos=alexGAccount.openPositions[0]||null;\n' +
+  '  if(rstPos) closeOpenPosition();\n' +
+  '  freshSession();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("MDC-14","RESTART/RECOVERY: after a cleared session the setup is re-derived, NOT suppressed, and NOT re-traded",\n' +
+  '    !!rstPos&&suppressions().length===0&&\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1&&\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&\n' +
+  '    alexGJournalEntries.length===1,\n' +
+  '    "setup re-derived and passed the gate; open=0 closed=1 journal=1, 0 suppressions");\n' +
+  // ── THE WALK ITSELF, at fetchCandlesRange level, where the count and the termination reason are
+  // directly observable. 73 is the real W request for days=90.
+  '  g.setPlan({inst:"EUR_USD",gran:"W",pages:[w73.slice(2),w73.slice(0,2)],then:"EMPTY"});\n' +
+  '  const r15=await fetchCandlesRange("EUR_USD","W",73);\n' +
+  '  const m15=r15||{};\n' +
+  // The head of the accumulation is the assertion that matters: the two candles the short page
+  // omitted are the OLDEST ones, so recovering them is precisely what keeps the window START where
+  // it was. A walk that stopped at the short page would start two bars later -- the re-anchor.
+  '  g.record("MDC-15","REPAIR: a short page followed by AVAILABLE history is walked past and the COUNT IS REACHED",\n' +
+  '    marketDataCompletenessOf(r15)===MARKET_DATA_COMPLETENESS.COMPLETE&&r15.length===73&&\n' +
+  '    m15.paginationTerminationReason==="REACHED_COUNT"&&m15.shortPages===1&&m15.pagesReceived===2&&\n' +
+  '    r15[0].t.getTime()===w73[0].t.getTime(),\n' +
+  '    "received="+r15.length+"/73 termination="+m15.paginationTerminationReason+" shortPages="+m15.shortPages+\n' +
+  '    " -- window START unmoved, so the identity cannot re-anchor");\n' +
+  '  g.setPlan({inst:"EUR_USD",gran:"W",pages:[w73.slice(2)],then:"EMPTY"});\n' +
+  '  const r16=await fetchCandlesRange("EUR_USD","W",73);\n' +
+  '  const m16=r16||{};\n' +
+  '  g.record("MDC-16","EXHAUSTION: a short page followed by an EMPTY continuation is COMPLETE though short",\n' +
+  '    marketDataCompletenessOf(r16)===MARKET_DATA_COMPLETENESS.COMPLETE&&r16.length===71&&\n' +
+  '    m16.paginationTerminationReason==="EMPTY_PAGE"&&m16.shortPages===1,\n' +
+  '    "received="+r16.length+"/73 termination="+m16.paginationTerminationReason+\n' +
+  '    " -- a window pinned at the true start of history cannot move, so it is safe to evaluate");\n' +
+  // ══ THE HEADLINE: A SHORT BROKER PAGE CANNOT CREATE A DUPLICATE OPPORTUNITY ═══════════════════
+  // Reconstructed on the same organic machinery DRIFT-12 uses, and it is the same window shift:
+  // the six-touch series minus its two oldest H1 bars re-anchors the zone, because the first
+  // touch's own ATR slice falls two candles short and the frozen confirmation path can no longer
+  // accept it. Here that two-bar shift arrives the way PRODUCTION produced it -- as a SHORT BROKER
+  // PAGE -- rather than by slicing the fixture's own series. Nothing is hand-edited: the trade, the
+  // close and the second poll are all real.
+  //
+  // WHAT THIS FIXTURE CAN AND CANNOT DISCRIMINATE, stated plainly rather than implied. Since
+  // Decisions 2+3 landed, "no second position" is OVER-DETERMINED: the decided-authority refuses
+  // the duplicate as well. Mutation-established, not assumed -- with the gate reverted ALONE the
+  // second position still does not open, so open===0 alone would be a vacuous assertion here. The
+  // observable that belongs to DECISION 1 is that the truncated window never reaches the FROZEN
+  // ENGINE AT ALL: no setup is derived and the suppression is recorded. Both of those die under a
+  // reverted gate and under a restored short-page break. And the scenario is a genuine
+  // duplicate-generator: with BOTH the gate and the decided-authority removed, this same short page
+  // opens a SECOND real position -- which is the defect exactly as it was reproduced.
+  '  g.setPlan(null); fullReset(); alexGIdentityDriftReported=new Set();\n' +
+  '  const tShort=nowMs-68*3600000-5*60000;\n' +   // the sixth touch qualifies ~5 min ago
+  '  const h1Short=g.build6(tShort);\n' +
+  '  g.setT0(tShort); g.setH1(h1Short);\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:tShort+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const shortPos=alexGAccount.openPositions[0]||null;\n' +
+  '  g.record("MDC-17a","precondition: the unmodified engine opens ONE real position on the full window",\n' +
+  '    alexGAccount.openPositions.length===1&&!!shortPos&&!!shortPos.zoneId,\n' +
+  '    "open="+alexGAccount.openPositions.length+" signalId="+String(shortPos&&shortPos.signalId).slice(-24));\n' +
+  '  if(shortPos) closeOpenPosition();\n' +
+  // The broker now returns a page two candles short of what it holds and then FAILS the
+  // continuation, so the shortfall cannot be repaired: the walk ends HTTP_ERROR and the dataset is
+  // PARTIAL. Every stored record still carries poll 1's identity and no guard is disabled.
+  '  g.setPlan({inst:"EUR_USD",gran:"H1",pages:[h1Short.slice(2)],then:"HTTP_ERROR"});\n' +
+  '  freshSession();\n' +
+  '  ["fxhub_alexg_account","fxhub_alexg_account_version"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '  alexGAccountKnownVersion=0;\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:tShort+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const sSup=suppressions();\n' +
+  '  g.record("MDC-17","HEADLINE: a SHORT BROKER PAGE cannot create a duplicate opportunity -- the pair is suppressed",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&\n' +
+  '    sSup.length===1&&sSup[0].pair==="EUR_USD"&&sSup[0].reasonCode==="DATA_TIMEFRAME_INCOMPLETE"&&\n' +
+  '    (sSup[0].context||{}).incompleteTimeframes.join(",")==="H1"&&\n' +
+  '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===0,\n' +
+  '    "open="+alexGAccount.openPositions.length+" closed="+alexGAccount.closedPositions.length+\n' +
+  '    " -- the two-bar-short window never reaches the frozen engine: 0 setups derived, suppression recorded");\n' +
+  // And the half that makes this a fix rather than a mute button: give the SAME short page a real
+  // continuation and the walk recovers the two missing bars, so the window never moves, the engine
+  // derives the SAME identity it traded, and the ordinary duplicate guard does its job.
+  '  g.setPlan({inst:"EUR_USD",gran:"H1",pages:[h1Short.slice(2),h1Short.slice(0,2)],then:"EMPTY"});\n' +
+  '  freshSession();\n' +
+  '  ["fxhub_alexg_account","fxhub_alexg_account_version"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '  alexGAccountKnownVersion=0;\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:tShort+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  // The six-touch series qualifies several setups; the one that matters is the one that was
+  // TRADED. If the window had moved, that identity would simply not be among the setups the engine
+  // re-derives -- which is exactly what DRIFT-13 shows a two-bar roll does to it.
+  '  const rSetups=alexGSetupState.filter(function(x){return x.pair==="EUR_USD";});\n' +
+  '  const rMatch=rSetups.filter(function(x){return alexGLiveSignalId(x)===(shortPos||{}).signalId;});\n' +
+  '  const rDecided=decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&\n' +
+  '    e.reasonCode==="STATE_SIGNAL_ALREADY_DECIDED";});\n' +
+  '  g.record("MDC-18","REPAIRED, NOT MUTED: the same short page with history behind it is walked past, the identity\\u2019s unchanged, and the duplicate guard holds",\n' +
+  '    alexGAccount.openPositions.length===0&&alexGAccount.closedPositions.length===1&&\n' +
+  '    suppressions().length===0&&!!shortPos&&rMatch.length===1&&\n' +
+  '    rMatch[0].zoneId===shortPos.zoneId&&rDecided.length===1&&\n' +
+  '    (rDecided[0].context||{}).identityDrifted===false,\n' +
+  '    "0 suppressions; the TRADED identity is re-derived unchanged (zoneId and signalId both), and "+\n' +
+  '    "the refusal reports identityDrifted=false -- the window never moved, so nothing had to be blocked");\n' +
+  '  g.setPlan(null); g.setT0(t0); g.setH1(g.build(t0));\n' +
   '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__suspendWas;\n' +
   '  g.record("E2E-17","the suspension flag is RESTORED -- this suite leaves production policy as it found it",\n' +
   '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true,\n' +

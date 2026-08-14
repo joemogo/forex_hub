@@ -83,6 +83,8 @@ function runPhase2CWave1Fixtures(g){
     g.setAlexGZoneState({});
     g.setAlexGLastEvaluatedCloseTime({});
     g.setAlexGLiveSetupStatuses([]);
+    // MOGO-021 DECISIONS 2+3: clear the decided-authority with the ring -- same session lifetime.
+    g.resetLiveDecisionState();
     g.setAlexGAccount({balance:10000,openPositions:[],closedPositions:[]});
     g.setAlexGJournalEntries([]);
     g.setAlexGAutoTrading({enabled:true,activatedAt:null,tradedSignals:{},tradedToday:{},log:[]});
@@ -275,7 +277,13 @@ function runPhase2CWave1Fixtures(g){
       const events=g.getDecisionEvents();
       const errEvents=events.filter(e=>e.eventType==='ENGINE_ERROR');
       check('Phase2C.32: silent ALEX catch emits ENGINE_ERROR',errEvents.length===1&&errEvents[0].reasonCode==='SYSTEM_UNEXPECTED_ERROR'&&/synthetic engine fault/.test(errEvents[0].reasonText||''),JSON.stringify(errEvents[0]));
-      check('Phase2C.33: silent ALEX catch still does not rethrow (function resolved normally)',returnedValue===undefined);
+      // MOGO-021: this asserted returnedValue===undefined as a PROXY for "did not rethrow". The
+      // function now reports its outcome so the poll ledger can attribute coverage truthfully, so
+      // assert the actual intent -- it resolved rather than threw -- plus the new honesty: a pair
+      // whose evaluation faulted must NOT be reported as evaluated.
+      check('Phase2C.33: silent ALEX catch still does not rethrow, and reports the pair as NOT evaluated',
+        !!returnedValue&&returnedValue.evaluated===false&&returnedValue.reason==='SYSTEM_UNEXPECTED_ERROR',
+        JSON.stringify(returnedValue));
       installOfflineFetch();
     }).catch(function(e){
       check('Phase2C.33: silent ALEX catch still does not rethrow (function resolved normally)',false,'threw: '+e.message);
