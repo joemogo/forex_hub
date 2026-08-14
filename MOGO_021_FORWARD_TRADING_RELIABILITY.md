@@ -2294,3 +2294,64 @@ mapper are unprotected. Baseline delta: 63 → 63 protected functions, **one cha
 none removed; 4 → 4 constants, none changed.
 
 Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · drift **0**.
+
+---
+
+## 13. CONTINUATION CHECKPOINT — resume here
+
+*Kept current. If a session ends, resume from this section rather than re-investigating.*
+
+**Commit:** `562f677` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
+
+**Gates:** canonical 24 suites **1,440 / 1,440** · platform 25 suites **1,049 / 1,049** ·
+protected drift **0** against the **v12.21.0** baseline (63 functions, 4 constants).
+
+### Governance decisions already authorized and DONE — do not re-litigate
+
+| Decision | State |
+|---|---|
+| D1 · ALEX H4/D/W completeness gate | done (§9.2) |
+| D2+3 · stable economic identity + decided-authority | done (§9.3) |
+| D4 · JVM candidate-rejection diagnostic | done (§9.4) |
+| Chart/AOI fidelity (completion items 3 and 5) | done (§10.6) |
+| JVM completeness parity | done (§12) |
+
+Protected functions changed across the whole milestone: **`checkAutoTrades`** (D4) and
+**`evaluateLiveTrigger`** (JVM parity). Nothing else. Each was re-baselined deliberately, with the
+drift check run first as a positive control.
+
+### Standing constraints — unchanged
+
+PAPER ONLY · live money **NOT AUTHORIZED** · TJR **RESEARCH ONLY**, no paper authority, untouched ·
+frozen ALEX and JVM economic semantics preserved (no confluence, threshold, setup definition,
+pattern, entry, stop, target, filter, risk, sizing or exclusion altered) · **the live campaign has
+never been reloaded**, and a reload remains an operator action requiring broker credentials (§R4).
+
+### In flight at checkpoint time
+
+Two independent adversarial audits, both relaunched after a usage-limit interruption killed them
+before they began:
+1. **Detection discrimination** — mutate every protected detector and see what dies. Any detector
+   where a real behaviour change kills zero fixtures is an uncovered trading rule.
+2. **Scanner cadence / coverage / concurrency / failure isolation** — prioritising whether any
+   interleaving can corrupt a *trading* outcome, not merely an observation.
+
+### Known open items — not defects I have chosen to leave, but work not yet reached
+
+| Item | Where |
+|---|---|
+| `EMPTY_PAGE` is trusted as exhaustion regardless of count (two-fault residual; mitigated by the identity layer) | §11.3 |
+| `tradedSignals` present while positions **and** journal are both absent leaves the decided-authority blind | §11.3 |
+| The comment at `index.html:9156` is false but sits inside the protected `detectSignals` | §10.6 |
+| Remaining program: market-data continuity, ALEX/JVM end-to-end paper trading, position lifecycle, persistence, ledger/account reconciliation, restart/recovery, diagnostics | completion standard |
+
+### Exact next action
+
+Consume the two audit reports; fix what they find that does not cross a new governance boundary;
+re-run gates; commit and push; then continue the completion program in the order above. **TJR
+research completion does not begin until core reliability, scanner, charts, AOIs, ALEX and JVM have
+all passed independent verification.**
+
+**Do not declare GREEN because the gates are green.** Every defect this milestone found was found by
+adversarial mutation against a *passing* suite.
