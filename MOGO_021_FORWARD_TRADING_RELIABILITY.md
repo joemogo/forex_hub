@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,306/1,306 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,316/1,316 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -693,10 +693,25 @@ not:
 
 **The actionable gap is the forward-coverage ledger.** It is the mechanism that makes "was this
 instrument actually evaluated?" answerable, it is what finally settled the EUR_USD question, and
-**JVM does not have it** — nor would a new strategy. Wiring it would mean adding an observation
-call at `scanAll`'s boundary; `scanAll` is **not** protected, so unlike §7.1 this is not
-governance-blocked. Not done in this milestone because it is new forward scope rather than
-remediation of a defect, and it should be specified rather than improvised.
+**JVM does not have it** — nor would a new strategy.
+
+It is **not governance-blocked**: `scanAll`, `evidenceRecordForwardObservations`,
+`evidenceBuildPollObservation` and `evidenceObservationBase` are all unprotected. But it is also not
+a one-line call, because the observation schema is currently ALEX-shaped —
+`evidenceObservationBase` hard-codes `strategyId` from `RULES_ALEXG.ruleVersion`, so recording a JVM
+poll through it today would **mislabel JVM evidence as ALEX**. The specified change is:
+
+1. Add an optional `strategyId` argument to `evidenceObservationBase`, defaulting to today's value
+   so every existing ALEX record stays **byte-identical** — asserted by fixture, not assumed.
+2. Thread it through `evidenceBuildPollObservation`.
+3. Record a JVM poll observation from `scanAll`, in a `finally` so a failed scan is recorded too
+   (ALEX's own precedent), carrying `instrumentsConfigured = ALL_PAIRS.length` (35),
+   `instrumentsEvaluated` from the pairs actually scanned, and the auto-trade-eligible subset (12).
+
+Natural keys do not collide: POLL keys on `tickId`, and JVM's scanId comes from the same unique
+generator ALEX uses. The one thing to be careful of is that step 1 touches a function ALEX's
+evidence depends on — a regression there would corrupt ALEX's forward ledger, so it needs the same
+implement → independently verify → remediate loop as everything else in this milestone.
 
 ### 2.16 🔴 SIGNAL IDENTITY IS NOT STABLE — all four duplicate-trade guards can miss
 
@@ -771,13 +786,81 @@ drift. So the fix is available without inventing anything.
 protected, and changing signal identity changes which trades ALEX considers duplicates — a frozen
 strategy semantic. Recorded in §7.4 with the smallest governed change.
 
+### 2.17 Identity-drift detector — instrumenting §2.16 without pre-empting the governed fix
+
+§2.16 is governance-blocked: repairing the duplicate guards means changing signal identity inside
+protected functions, which is Joe's decision. But **detecting** the condition is not blocked —
+`alexGEvaluatePairForLiveSetups` is not protected — and until now the defect was invisible in
+production except by hand-analysis of the ledger.
+
+Shipped: a detector that fires when a setup's **anchor-free identity** matches an already
+open/closed position carrying a **different `signalId`** — precisely the state in which every
+duplicate guard misses.
+
+```js
+function alexGStableSetupIdentity(x){
+  return [x.pair,x.timeframe,x.setupType,x.reactionId,x.qualificationTimestamp].join('|');
+}
+```
+
+Every component survives a re-anchor, and the same function serves both setup records and stored
+position records because both carry all five fields. When drift is detected it emits
+`STATE_SIGNAL_IDENTITY_DRIFTED` on the decision bus **and** records a durable `IDENTITY_DRIFT`
+pipeline observation — so the frequency in real trading becomes measurable rather than estimated.
+
+**It is deliberately observation-only.** It does not block, skip, `continue`, or alter any value the
+trading path reads, and the whole detector is wrapped so an observation defect can never reach a
+trading decision. Repairing the guard is the governed change in §7.3; this records the evidence for
+that decision instead of quietly making it.
+
+Lessons from earlier in this milestone are applied rather than re-learned: the reason code is
+registered **before** use, the latch is a **bounded** Set with FIFO eviction, and it is **cleared in
+`clearDecisionEvents()`** so a dev-only button cannot permanently silence an ongoing condition.
+
+**DRIFT-1..9 (`run_v1236`) include a regression proof of the defect itself.** DRIFT-6 drives the
+full production path with every persisted record carrying the pre-drift identity and the
+freshly-derived setup carrying the new one, and the result is **one economic setup, two open/closed
+positions**. Independent verification reproduced the same outcome **organically** — rolling the
+candle window with every guard intact, no hand-edited records — so it is not a fixture artifact.
+That fixture is expected to invert when the governed fix in §7.3 lands, at which point it becomes
+the proof the fix works.
+
+**Calibration, from verification:** the guard miss is real and certain; the *second position* also
+requires the drift to land inside the staleness window. Drift takes roughly 128 days to arrive,
+by which time `alexGIsSetupSignalStale` normally rejects the setup. So this is a narrow coincidence
+rather than a routine occurrence — but it is not prevented by anything, and it has already produced
+a real guard miss in production (§2.16).
+
+**Verified observation-only, four independent ways.** The detector was removed surgically and the
+entire 24-suite run compared: the only deltas are the DRIFT fixtures themselves. Hooking both event
+sinks and diffing an identical scenario with and without the detector gives an **identical pipeline
+stream and a byte-identical final account state**. Forcing the identity function to throw on every
+setup in every evaluation fails only the DRIFT fixtures — every trading fixture is unaffected.
+
+**Blind spot found and closed.** The first version scanned only `alexGAccount` positions. Because
+`loadAlexGSaved` loads `fxhub_alexg_account` and `fxhub_alexg_auto` independently (INC-001 per-key
+isolation), an unreadable account key leaves positions empty while the journal and `tradedSignals`
+survive — a state where the guards miss *and* the detector was blind. Verification demonstrated a
+second real position opening with **zero** drift events. The detector now also scans
+`alexGJournalEntries` (matched on `tradeId`, since journal records carry no `signalId`), and
+**DRIFT-9** proves detection from the journal alone.
+
+**Three of my own fixtures could not fail, and were fixed.** DRIFT-5's second poll evaluated zero
+instruments — the cursor gate skipped every pair — so it passed with the latch permanently
+disabled. DRIFT-8 ran against an empty account, so a degenerate identity returning a constant
+survived. DRIFT-4 asserted only `reason`, so `stage` and `sourceTradeId` could be stripped
+silently. All three now die to the mutation that breaks what they name, each killing only its own
+fixture. The latch is also now marked **after** a successful emit rather than before, so a rejected
+event can no longer suppress the condition silently, and it keys on `(stableId, signalId)` so a
+second re-anchor is still reported.
+
 ---
 
 ## 3. Gates
 
 | Gate | Result |
 |---|---|
-| Canonical | **24 suites · 1,306 / 1,306 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,316 / 1,316 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |

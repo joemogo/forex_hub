@@ -2182,6 +2182,32 @@ let alexGLastEvaluatedCloseTime={};
 // the same and this was the only one that did not.
 const ALEXG_CURSOR_SANITY_REPORTED_MAX=500;
 const ALEXG_CURSOR_MAX_AHEAD_MS=2*3600000;
+
+// MOGO-021 SIGNAL-IDENTITY DRIFT DETECTOR (observation only -- see the detector in
+// alexGEvaluatePairForLiveSetups). alexGLiveSignalId embeds the zoneId, which embeds the cluster's
+// first-reaction close time and the zone's validation time. The engine rebuilds from a fixed-count
+// candle window (2,220 H1 bars, ~128 days), so when the oldest reaction falls out of that window
+// the zone RE-ANCHORS and the same economic setup acquires a different signalId -- after which
+// every duplicate guard keyed on signalId (index.html:4302) and on tradeId (index.html:4361)
+// silently misses. Confirmed in production: a setup already traded was later re-evaluated under a
+// new identity and treated as never-before-seen.
+//
+// This identity deliberately excludes the two drifting components. Every field in it is preserved
+// across a re-anchor, and it is carried on BOTH setup records and stored position records, so the
+// same function serves both.
+function alexGStableSetupIdentity(x){
+  if(!x) return null;
+  return [x.pair,x.timeframe,x.setupType,x.reactionId,x.qualificationTimestamp].join('|');
+}
+const ALEXG_IDENTITY_DRIFT_REPORTED_MAX=500;
+let alexGIdentityDriftReported=new Set();
+function alexGMarkIdentityDriftReported(key){
+  alexGIdentityDriftReported.add(key);
+  if(alexGIdentityDriftReported.size>ALEXG_IDENTITY_DRIFT_REPORTED_MAX){
+    const oldest=alexGIdentityDriftReported.values().next().value;
+    alexGIdentityDriftReported.delete(oldest);
+  }
+}
 let alexGCursorSanityReported=new Set();
 function alexGMarkCursorSanityReported(key){
   alexGCursorSanityReported.add(key);
@@ -4635,6 +4661,60 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
           evidenceCompleteness:'COMPLETE'});
       }
       const signalId=alexGLiveSignalId(setup);
+      // MOGO-021 IDENTITY-DRIFT DETECTOR -- OBSERVATION ONLY, and deliberately so.
+      //
+      // Detects the condition in which this setup is economically the SAME as one already traded,
+      // but carries a different signalId because its zone re-anchored (see alexGStableSetupIdentity).
+      // In that state every duplicate guard downstream misses, and only the staleness gate stands
+      // between the campaign and a second position on a setup it has already traded.
+      //
+      // It does NOT block, skip, continue, or alter any value the trading path reads -- repairing
+      // the guard means changing signal identity inside protected functions, which is a governed
+      // change and Joe's decision (report section 7.3). This records the evidence for that decision
+      // instead of pre-empting it: on the decision bus, and durably via the pipeline observation,
+      // so the frequency in real trading can be measured rather than estimated.
+      //
+      // Wholly wrapped: an observation defect must never reach a trading decision.
+      try{
+        const stableId=alexGStableSetupIdentity(setup);
+        // Latched per (stableId, signalId): keying on stableId alone would report only the FIRST
+        // re-anchor and stay silent if the same setup later drifts to a third identity.
+        const driftLatchKey=stableId+'|'+signalId;
+        if(stableId&&!alexGIdentityDriftReported.has(driftLatchKey)){
+          // Scans positions AND journal entries. Journal records carry pair/timeframe/setupType/
+          // reactionId/qualificationTimestamp but NO signalId, so they are matched on tradeId --
+          // which matters because loadAlexGSaved() loads fxhub_alexg_account and fxhub_alexg_auto
+          // independently (INC-001 per-key isolation), so an unreadable account key can leave the
+          // positions empty while the journal and tradedSignals survive. Scanning positions alone
+          // would go blind in exactly that state, which is also a state where the guards miss.
+          const currentTradeId=alexGTradeId(setup.setupId);
+          const prior=alexGAccount.openPositions.concat(alexGAccount.closedPositions).find(function(p){
+            return p&&p.signalId!==signalId&&alexGStableSetupIdentity(p)===stableId;
+          })||alexGJournalEntries.find(function(j){
+            return j&&j.tradeId&&j.tradeId!==currentTradeId&&alexGStableSetupIdentity(j)===stableId;
+          });
+          if(prior){
+            emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:RULES_ALEXG.ruleVersion,scanId,
+              correlationId:scanId,pair:setup.pair,timeframe:setup.timeframe,candidateId:setup.setupId,
+              source:'alexGEvaluatePairForLiveSetups',stage:'IDENTITY_DRIFT',
+              reasonCode:'STATE_SIGNAL_IDENTITY_DRIFTED',severity:'ERROR',
+              reasonText:'This setup was already traded under a different signalId; the duplicate guards cannot match it',
+              context:{stableId,currentSignalId:signalId,priorSignalId:prior.signalId,
+                priorTradeId:prior.tradeId,priorStatus:prior.status,
+                currentZoneId:setup.zoneId,priorZoneId:prior.zoneId,
+                priorRecord:prior.signalId?'position':'journal'},
+              evidenceCompleteness:'COMPLETE'});
+            alexGRecordPipelineStage('IDENTITY_DRIFT',{pair:setup.pair,timeframe:setup.timeframe,
+              setupId:setup.setupId,signalId:signalId,status:'IDENTITY DRIFTED — ALREADY TRADED',
+              reason:'STATE_SIGNAL_IDENTITY_DRIFTED',sourceTradeId:prior.tradeId,
+              occurredAt:new Date().toISOString()});
+            // Latched only AFTER the record is written. Marking first would mean a rejected emit
+            // silently suppressed the condition for the rest of the tab's life with no evidence
+            // anywhere -- it validates today, but a future schema change would regress in silence.
+            alexGMarkIdentityDriftReported(driftLatchKey);
+          }
+        }
+      }catch(e){ /* observation must never affect the trading path */ }
       // Already decided once -- PERMANENT, never reconsidered on a later poll even though
       // the same historical setup will keep reappearing every full rebuild (v4.2.1 audit
       // confirmed this dedup, which already existed, is what makes every status below final).
@@ -11582,6 +11662,7 @@ const REASON_CODE_REGISTRY=Object.freeze({
   // clock cannot be produced by a healthy engine run and permanently removes an instrument from
   // forward coverage; recording it is what makes that condition visible rather than silent.
   STATE_CURSOR_AHEAD_OF_CLOCK:Object.freeze({code:'STATE_CURSOR_AHEAD_OF_CLOCK',category:'STATE',label:'Evaluation cursor dated ahead of the clock'}),
+  STATE_SIGNAL_IDENTITY_DRIFTED:Object.freeze({code:'STATE_SIGNAL_IDENTITY_DRIFTED',category:'STATE',label:'Setup re-anchored to a new signalId; duplicate guards keyed on the old identity cannot match'}),
   CONFIG_AUTOMATION_DISABLED:Object.freeze({code:'CONFIG_AUTOMATION_DISABLED',category:'CONFIG',label:'Automated trading is turned off'}),
   CONFIG_BEFORE_ACTIVATION:Object.freeze({code:'CONFIG_BEFORE_ACTIVATION',category:'CONFIG',label:'Setup qualified before live trading was activated'}),
   CONFIG_ENTRY_DAY_NOT_ELIGIBLE:Object.freeze({code:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',category:'CONFIG',label:'Entry day is outside the configured eligible days'}),
@@ -11752,6 +11833,9 @@ function clearDecisionEvents(){
   // invisible on the bus for the rest of the tab's life. Same failure class, and same remedy,
   // as decisionEventKnownCandidateIds on the line above.
   alexGCursorSanityReported=new Set();
+  // Same reasoning: leaving this latched while deleting the events it refers to would hide an
+  // ongoing identity-drift condition for the rest of the tab's life.
+  alexGIdentityDriftReported=new Set();
 }
 
 // ── v12.6.0 PROGRAM-001 Phase 2C Wave 1: ALEX Candidate Lifecycle Instrumentation ──

@@ -161,6 +161,9 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  var __lastObs=null; const __origRecObs=evidenceRecordForwardObservations;\n' +
   '  evidenceRecordForwardObservations=function(input){ __lastObs=evidenceBuildPollObservation((input&&input.poll)||{}); return __origRecObs.apply(this,arguments); };\n' +
   '  g.lastObs=function(){ return __lastObs||{}; };\n' +
+  '  var __lastPipeline=[]; const __origDrain=alexGDrainPipelineObservations;\n' +
+  '  alexGDrainPipelineObservations=function(){ const r=__origDrain.apply(this,arguments); __lastPipeline=r||[]; return r; };\n' +
+  '  g.lastPipeline=function(){ return __lastPipeline; };\n' +
   '  const nowMs=Date.now();\n' +
   '  const t0=nowMs-48*3600000-5*60000;\n' +   // the qualifying touch lands ~5 min ago
   '  g.setT0(t0); g.setH1(g.build(t0));\n' +
@@ -182,6 +185,11 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '     "fxhub_alexg_journal","fxhub_alexg_setups","fxhub_alexg_zones"].forEach(function(k){\n' +
   '       try{ localStorage.removeItem(k); }catch(e){} });\n' +
   '  }\n' +
+  '  function closeOpenPosition(){ const q=alexGAccount.openPositions.shift(); if(!q) return null;\n' +
+  '    q.status="closed"; q.exitPrice=q.target; q.closedAt=new Date().toISOString();\n' +
+  '    q.result="Win"; q.resultR=2; q.pnl=200; q.exitBid=q.target; q.exitAsk=q.target;\n' +
+  '    q.exitSpreadPips=0; q.exitDetectionSource="fixture_close";\n' +
+  '    alexGAccount.closedPositions.push(q); return q; }\n' +
   '  fullReset();\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
   '  await alexGLivePollTick();\n' +
@@ -242,7 +250,7 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // rule (index.html:4314) blocks any re-open and the persistence guards are never reached -- an
   // earlier version of these two fixtures passed even with the tradedSignals guard disabled.
   // Production's only real trade closed the same day, so this is the case that actually matters.
-  '  alexGAccount.closedPositions.push(alexGAccount.openPositions.shift());\n' +
+  '  closeOpenPosition();\n' +
   '  freshSession();\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
   '  await alexGLivePollTick();\n' +
@@ -301,6 +309,102 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("E2E-16","and coverage is still recorded for every instrument on the failing tick",\n' +
   '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
   '    "instrumentsEvaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length);\n' +
+  // ══ SIGNAL-IDENTITY DRIFT DETECTOR ══
+  // Reproduces the production condition from report section 2.16: a setup already traded is
+  // re-derived later under a DIFFERENT signalId because its zone re-anchored, at which point every
+  // duplicate guard misses. The detector is observation-only; these fixtures prove it fires on the
+  // real condition, stays silent otherwise, and changes no trading decision.
+  '  const __susp3=RULES_ALEXG_V11.v11Config.setupSuspensionEnabled;\n' +
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const traded=alexGAccount.openPositions[0];\n' +
+  '  g.record("DRIFT-1","precondition: a real position exists to drift away from",!!traded,"tradeId="+(traded||{}).tradeId);\n' +
+  // Close it, then re-anchor its stored identity exactly as a candle-window roll does: the zone
+  // components change while pair/timeframe/setupType/reactionId/qualificationTimestamp do not.
+  '  if(traded) closeOpenPosition();\n' +
+  // Every PERSISTED record must carry the OLD identity while the freshly-derived setup carries the
+  // NEW one -- that is what a zone re-anchor actually produces. Drifting only the stored position
+  // while leaving tradedSignals keyed on the original identity would leave a guard that still
+  // matches, and the scenario would prove nothing.
+  '  alexGAccount.closedPositions[0].signalId="AGL|DRIFTED|"+alexGAccount.closedPositions[0].signalId;\n' +
+  '  alexGAccount.closedPositions[0].tradeId="AGT|DRIFTED|"+alexGAccount.closedPositions[0].tradeId;\n' +
+  '  alexGAutoTrading.tradedSignals={};\n' +
+  '  alexGAutoTrading.tradedSignals[alexGAccount.closedPositions[0].signalId]=true;\n' +
+  '  alexGJournalEntries.forEach(function(j){ if(j.signalId) j.signalId="AGL|DRIFTED|"+j.signalId; });\n' +
+  '  freshSession();\n' +
+  // Clear the persisted ledger version too, or the optimistic-concurrency guard refuses the second
+  // commit and the scenario would look safe for a reason that has nothing to do with the defect.
+  '  ["fxhub_alexg_account","fxhub_alexg_account_version"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '  alexGAccountKnownVersion=0;\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const drift=decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";});\n' +
+  '  g.record("DRIFT-2","the detector FIRES when an already-traded setup returns under a new identity",\n' +
+  '    drift.length===1,"events="+drift.length);\n' +
+  '  const dctx=(drift[0]||{}).context||{};\n' +
+  '  g.record("DRIFT-3","and it names both identities plus the stable key that links them",\n' +
+  '    typeof dctx.stableId==="string"&&typeof dctx.currentSignalId==="string"&&\n' +
+  '    typeof dctx.priorSignalId==="string"&&dctx.currentSignalId!==dctx.priorSignalId,\n' +
+  '    "stableId="+String(dctx.stableId).slice(0,60));\n' +
+  '  const dpipe=(g.lastPipeline()||[]).filter(function(r){return r&&r.reason==="STATE_SIGNAL_IDENTITY_DRIFTED";});\n' +
+  '  g.record("DRIFT-4","the drift survives the DURABLE builder with stage and source trade intact",\n' +
+  '    dpipe.length===1&&dpipe[0].stage==="IDENTITY_DRIFT"&&\n' +
+  '    dpipe[0].sourceTradeId===alexGAccount.closedPositions[0].tradeId,\n' +
+  '    "stage="+String(dpipe[0]&&dpipe[0].stage)+" sourceTradeId set="+!!(dpipe[0]&&dpipe[0].sourceTradeId));\n' +
+  // The cursor and status ring must be re-armed, or the second poll skips all 12 pairs at the
+  // cadence gate and the detector never runs -- which made an earlier version of this fixture pass
+  // even with the latch permanently disabled.
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGLiveSetupStatuses=[];\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("DRIFT-5","it is reported ONCE per drifted identity, even though the setup is re-evaluated",\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&\n' +
+  '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===1,\n' +
+  '    "re-evaluated "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 instruments, still 1 drift event");\n' +
+  // The detector must be observation-only: the drifted setup still trades, because that IS the
+  // defect. If the detector silently blocked it, that would be an unauthorized semantic change.
+  '  g.record("DRIFT-6","THE GUARD MISS IS REAL: the drifted setup opens a SECOND position on an already-traded setup",\n' +
+  '    alexGAccount.openPositions.length===1&&alexGAccount.closedPositions.length===1,\n' +
+  '    "open="+alexGAccount.openPositions.length+" closed="+alexGAccount.closedPositions.length+\n' +
+  '    " -- one economic setup, two positions (report section 2.16)");\n' +
+  '  g.record("DRIFT-6b","OBSERVATION ONLY: the detector records it and rejects nothing -- repair is a governed change",\n' +
+  '    decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===0&&\n' +
+  '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).every(function(e){return e.eventType==="ENGINE_ERROR";}),\n' +
+  '    "no rejection attributable to the detector; it only reports");\n' +
+  '  clearDecisionEvents();\n' +
+  '  g.record("DRIFT-7","clearing the bus re-arms the detector, so a dev-only button cannot hide an ongoing drift",\n' +
+  '    alexGIdentityDriftReported.size===0,"latch cleared alongside the events it referred to");\n' +
+  // An UNRELATED closed position must be present, or the detector has nothing to false-positive
+  // against and the fixture cannot catch a degenerate identity. Verified: with
+  // alexGStableSetupIdentity returning a constant, an empty-account version of this stayed green.
+  '  fullReset();\n' +
+  '  alexGAccount.closedPositions.push({pair:"USD_CHF",timeframe:"H4",setupType:"B_breakRetest",\n' +
+  '    reactionId:"AGR|USD_CHF|H4|high|1700000000000",qualificationTimestamp:1700000000000,\n' +
+  '    signalId:"AGL|UNRELATED",tradeId:"AGT|UNRELATED",status:"closed",exitPrice:1,closedAt:new Date().toISOString(),\n' +
+  '    result:"Win",resultR:2,pnl:200});\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("DRIFT-8","it stays SILENT against an UNRELATED prior trade -- the identity discriminates",\n' +
+  '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===0&&\n' +
+  '    alexGAccount.closedPositions.length===1,\n' +
+  '    "0 drift events despite a prior closed position on a different setup");\n' +
+  // The blind spot the detector now covers: positions gone, journal surviving (INC-001 per-key load).
+  '  fullReset();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const jTraded=alexGAccount.openPositions[0];\n' +
+  '  if(jTraded) closeOpenPosition();\n' +
+  '  alexGJournalEntries.forEach(function(j){ if(j.tradeId) j.tradeId="AGT|DRIFTED|"+j.tradeId; });\n' +
+  '  alexGAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +   // account key unreadable; journal survives
+  '  freshSession();\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  g.record("DRIFT-9","BLIND SPOT CLOSED: drift is still detected when only the JOURNAL survives",\n' +
+  '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===1,\n' +
+  '    "detected from the journal alone, with positions empty (INC-001 per-key load state)");\n' +
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__susp3;\n' +
   '  g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
   // ══ CONCURRENT POLL TICKS ══
   // Production evidence (durable ledger) shows 9 hours containing two advancing polls ~25s apart
