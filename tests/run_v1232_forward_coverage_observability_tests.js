@@ -73,9 +73,18 @@ globalThis.setInterval=function(){return ++__fakeTimerId;};globalThis.clearInter
 globalThis.ResizeObserver=function(){return{observe:function(){},disconnect:function(){}};};
 globalThis.LightweightCharts={LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}};
 globalThis.Notification=undefined;
+// Controllable clock so an H1 boundary can be crossed deterministically. Installed BEFORE the app
+// is evaluated so every Date.now() inside it observes the fixture's simulated time.
+let __simNow=Date.UTC(2026,7,13,12,5,0);
+const __RealDate=Date;
+globalThis.Date=class extends __RealDate{
+  constructor(...a){ if(a.length===0) super(__simNow); else super(...a); }
+  static now(){ return __simNow; }
+};
 globalThis.indexedDB=undefined;   // durable ledger unavailable in-fixture; writer must stay non-throwing
 
 let fetchScript=[],fetchIdx=0,fetchUrls=[];
+let __badPair=null;
 globalThis.fetch=function(url){
   fetchUrls.push(url);
   const step=fetchScript[fetchIdx]||fetchScript[fetchScript.length-1];
@@ -96,11 +105,42 @@ function candleArray(rawCount){
   return out;
 }
 
+// Realistic per-pair responses: hourly candles whose last COMPLETE candle closed on the most
+// recent H1 boundary, exactly as OANDA returns them. Every pair gets identical, healthy data --
+// so if any pair is still starved, the defect is in the loop, not the data.
+function hourlyCandles(n,granMs){
+  const out=[];
+  const lastClose=Math.floor(__simNow/3600000)*3600000;   // most recent H1 boundary
+  for(let i=n;i>=1;i--){
+    const start=lastClose-i*granMs;
+    const base=1.1000+(n-i)*0.0004;
+    out.push({time:new Date(start).toISOString(),complete:true,
+      mid:{o:base.toFixed(5),h:(base+0.0012).toFixed(5),l:(base-0.0003).toFixed(5),c:(base+0.0009).toFixed(5)}});
+  }
+  return out;
+}
+globalThis.fetch=function(url){
+  fetchUrls.push(url);
+  // An explicit script wins when one is installed (used by the short-dataset fixtures); otherwise
+  // every pair gets healthy per-granularity data.
+  if(__badPair && url.indexOf('/instruments/'+__badPair+'/')!==-1){
+    return Promise.resolve(makeResponse(true,200,{candles:hourlyCandles(20,3600000)}));  // short: <60
+  }
+  if(fetchScript.length){ const st=fetchScript[fetchIdx]||fetchScript[fetchScript.length-1]; fetchIdx++; return st(); }
+  const m=/granularity=([A-Z0-9]+)/.exec(url);
+  const gran=m?m[1]:'H1';
+  const ms={W:604800000,D:86400000,H4:14400000,H1:3600000}[gran]||3600000;
+  const n={W:70,D:150,H4:400,H1:2300}[gran]||300;
+  return Promise.resolve(makeResponse(true,200,{candles:hourlyCandles(n,ms)}));
+};
 const g={};
 g.okCandles=function(n){ return function(){ return Promise.resolve(makeResponse(true,200,{candles:candleArray(n)})); }; };
 g.setFetchScript=function(steps){ fetchScript=steps; fetchIdx=0; fetchUrls=[]; };
 g.fetchUrls=function(){ return fetchUrls.slice(); };
 
+g.advanceHour=function(){ __simNow+=3600000; };
+g.setBadPair=function(p){ __badPair=p; };
+g.now=function(){ return __simNow; };
 const results=[];
 function record(id,desc,pass,detail){ results.push({id,desc,pass,detail:detail||''}); }
 g.record=record;
@@ -144,6 +184,43 @@ const wrapped = new Function('g',
   '  g.record("COVERAGE-10","staleness thresholds unchanged by this fix",\n' +
   '    cfg.H1===60&&cfg.H4===240&&cfg.D===1440&&cfg.W===10080,JSON.stringify(cfg));\n' +
   '  g.record("COVERAGE-11","all 12 instruments still configured",SCAN_PAIRS.length===12,"len="+SCAN_PAIRS.length);\n' +
+  '  g.setFetchScript([]);\n' +
+  '  cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice";\n' +
+  '  alexGAutoTrading.enabled=true; alexGAutoTrading.activatedAt=g.now()-86400000;\n' +
+  '  alexGLastEvaluatedCloseTime={}; alexGZoneState={}; alexGSetupState=[]; alexGLiveSetupStatuses=[];\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const covered=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1!=null; });\n' +
+  '  g.record("LOOP-1","one tick evaluates ALL 12 configured instruments",covered.length===12,"covered="+covered.length+"/12 missing="+SCAN_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return covered.indexOf(op)<0;}).join(","));\n' +
+  '  const bnd=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  const ahead=covered.filter(function(op){ return alexGLastEvaluatedCloseTime[op].H1>bnd; });\n' +
+  '  g.record("LOOP-2","no instrument cursor lands AHEAD of the current H1 boundary (starvation condition)",ahead.length===0,"ahead="+ahead.join(","));\n' +
+  '  const atBnd=covered.filter(function(op){ return alexGLastEvaluatedCloseTime[op].H1===bnd; });\n' +
+  '  g.record("LOOP-3","cursors land exactly ON the boundary (evaluate once per H1, as designed)",atBnd.length===12,"atBoundary="+atBnd.length+"/12");\n' +
+  '  g.advanceHour();\n' +
+  '  const before2=JSON.stringify(alexGLastEvaluatedCloseTime);\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const bnd2=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  const covered2=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===bnd2; });\n' +
+  '  g.record("LOOP-4","after one hour ALL 12 re-evaluate (no permanent starvation)",covered2.length===12,"reEvaluated="+covered2.length+"/12");\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const covered3=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===bnd2; });\n' +
+  '  g.record("LOOP-5","a second tick in the SAME hour re-evaluates nothing (cadence gate holds)",covered3.length===12,"stable="+covered3.length+"/12");\n' +
+  '  g.advanceHour(); g.setBadPair("EUR_USD"); alexGLastEvaluatedCloseTime={};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const bnd3=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  const ok3=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===bnd3; });\n' +
+  '  g.record("RESIL-1","one instrument with short data does NOT poison the other 11",ok3.length===11,"healthy="+ok3.length+"/11");\n' +
+  '  g.record("RESIL-2","the failing instrument sets no cursor (so it is retried, never permanently starved)",!alexGLastEvaluatedCloseTime["EUR_USD"],"cursor unset");\n' +
+  '  const errs=decisionEventLog.filter(function(e){return e&&e.reasonCode==="DATA_INSUFFICIENT_HISTORY"&&e.pair==="EUR_USD";});\n' +
+  '  g.record("RESIL-3","the failure is recorded with the instrument named",errs.length>0,"events="+errs.length);\n' +
+  '  g.setBadPair(null); g.advanceHour();\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const bnd4=Math.floor(g.now()/3600000)*3600000;\n' +
+  '  g.record("RESIL-4","the instrument recovers automatically once data returns",!!(alexGLastEvaluatedCloseTime["EUR_USD"]&&alexGLastEvaluatedCloseTime["EUR_USD"].H1===bnd4),"recovered");\n' +
   '  return g;\n' +
   '})();'
 );
