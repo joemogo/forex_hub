@@ -418,7 +418,68 @@ function runStep2APipelineObservabilityFixtures(g){
     return Promise.resolve();
   }
 
-  const steps=[stepP1,stepP2,stepP3,stepP4,stepP5,stepP6,stepP7,stepP8,stepP9];
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  // P10 -- MOGO-021: the PIPELINE natural key must identify the INSTRUMENT.
+  //
+  // The key's identity component is s(sourceTradeId||tradeId||setupId), and not every stage has
+  // any of the three. alexGRecordPipelineStage('DATA_INSUFFICIENT',{pair,timeframe,status,reason,
+  // occurredAt}) supplies none of them, so the key collapsed to 'PIPE|DATA_INSUFFICIENT||<occurredAt>'
+  // -- byte-identical for every instrument. Two pairs failing the H1 history check in the same
+  // millisecond therefore produced the same key; the UNIQUE naturalKey index rejected the second,
+  // and evidencePutObservation classifies a CONSTRAINT error as {ok:true,duplicate:true}. The
+  // observation was dropped silently AND reported as a success.
+  //
+  // These fixtures are written against evidenceObservationNaturalKey directly rather than through
+  // the engine, because the defect is a property of the key function and the collision needs two
+  // records sharing an exact millisecond -- which a live-path test could only produce by accident.
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  function stepP10(){
+    const at='2026-08-14T12:00:00.000Z';
+    // The exact shape index.html emits for DATA_INSUFFICIENT: pair + timeframe only, no identity.
+    function dataInsufficient(pair){
+      return g.evidenceBuildPipelineObservation({stage:'DATA_INSUFFICIENT',pair:pair,timeframe:'H1',
+        status:'SKIPPED — INSUFFICIENT MARKET DATA',reason:'DATA_INSUFFICIENT_HISTORY',occurredAt:at});
+    }
+    const eur=dataInsufficient('EUR_USD'), gbp=dataInsufficient('GBP_USD');
+    const kEur=g.evidenceObservationNaturalKey(eur), kGbp=g.evidenceObservationNaturalKey(gbp);
+
+    // THE REGRESSION PROOF. Reverting the pair/timeframe components makes these two keys identical
+    // and this fixture fails.
+    check('2A.48: two instruments skipped for insufficient history in the SAME millisecond get DISTINCT natural keys',
+      kEur!==kGbp,JSON.stringify({kEur:kEur,kGbp:kGbp}));
+    check('2A.49: neither key has an empty identity segment -- the instrument is always named',
+      kEur.indexOf('EUR_USD')!==-1&&kGbp.indexOf('GBP_USD')!==-1,JSON.stringify({kEur:kEur,kGbp:kGbp}));
+
+    // FALSE-POSITIVE GUARD. Splitting the key must not stop a GENUINE duplicate from collapsing --
+    // that is what the unique index is for, and over-splitting would defeat it.
+    check('2A.50: a genuine duplicate (same pair, same stage, same instant) still collapses to one key',
+      g.evidenceObservationNaturalKey(dataInsufficient('EUR_USD'))===kEur,kEur);
+
+    // The same instrument observed on two timeframes at one instant is two real observations.
+    const h1=g.evidenceBuildPipelineObservation({stage:'DATA_INSUFFICIENT',pair:'EUR_USD',timeframe:'H1',occurredAt:at});
+    const h4=g.evidenceBuildPipelineObservation({stage:'DATA_INSUFFICIENT',pair:'EUR_USD',timeframe:'H4',occurredAt:at});
+    check('2A.51: the same instrument on two timeframes at one instant is two observations, not one',
+      g.evidenceObservationNaturalKey(h1)!==g.evidenceObservationNaturalKey(h4),
+      JSON.stringify({h1:g.evidenceObservationNaturalKey(h1),h4:g.evidenceObservationNaturalKey(h4)}));
+
+    // The pre-existing identity component must still do its job for stages that DO carry one.
+    const a=g.evidenceBuildPipelineObservation({stage:'OPENED',pair:'EUR_USD',timeframe:'H1',tradeId:'AGT|a',occurredAt:at});
+    const b=g.evidenceBuildPipelineObservation({stage:'OPENED',pair:'EUR_USD',timeframe:'H1',tradeId:'AGT|b',occurredAt:at});
+    check('2A.52: stages that DO carry a trade identity are still separated by it',
+      g.evidenceObservationNaturalKey(a)!==g.evidenceObservationNaturalKey(b),
+      JSON.stringify({a:g.evidenceObservationNaturalKey(a),b:g.evidenceObservationNaturalKey(b)}));
+
+    // The key is still a PIPELINE key, and the other three kinds are untouched by this change.
+    check('2A.53: the key is still a well-formed PIPE| key and the other kinds are unchanged',
+      kEur.indexOf('PIPE|')===0
+      &&g.evidenceObservationNaturalKey({kind:'POLL',strategyId:'current_strategy',tickId:'T1'})==='POLL|current_strategy|T1'
+      &&g.evidenceObservationNaturalKey({kind:'EVALUATION',signalId:'S1',firstLiveEvaluationTimestamp:7})==='EVAL|S1|7'
+      &&g.evidenceObservationNaturalKey({kind:'RETENTION',evictedSeqFrom:1,evictedSeqTo:2})==='RETN|1|2',
+      kEur);
+    return Promise.resolve();
+  }
+
+  const steps=[stepP1,stepP2,stepP3,stepP4,stepP5,stepP6,stepP7,stepP8,stepP9,stepP10];
   let chain=Promise.resolve();
   steps.forEach(function(step){ chain=chain.then(function(){ return step(); }); });
   return chain.then(function(){ return results; }).catch(function(e){

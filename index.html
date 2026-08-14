@@ -8915,7 +8915,7 @@ function renderRecBanner(conf,sess){
 // an overlapping sweep's writes to the aborted one -- reproducing the exact over-reporting this
 // ledger exists to end. Purely additive: the token is read only by the observation code.
 let __jvmSweepToken=0;
-async function scanPair(pair,sweepToken){
+async function scanPair(pair,sweepToken,sweepResults){
   const [candles,price]=await Promise.all([fetchCandles(pair,activeTf,220),fetchPrice(pair)]);
   // v12.8.3 ADR-011: gate evaluation on the ONE completeness abstraction. Anything short of
   // COMPLETE is evaluated as no data at all, by passing null into the evaluators -- which is
@@ -8940,6 +8940,18 @@ async function scanPair(pair,sweepToken){
     paginationTerminationReason:candles?candles.paginationTerminationReason:null,
     httpStatus:candles?candles.httpStatus:null,
     evaluationSuppressed:completenessState!==MARKET_DATA_COMPLETENESS.COMPLETE};
+  // MOGO-021: coverage attribution is recorded HERE, into the CALLER'S OWN sweep-local object, and
+  // is never read back out of pairData afterwards. pairData[pair] is a single shared slot: whichever
+  // sweep writes it last owns it. A ledger that re-reads that slot in its `finally` therefore measures
+  // the LAST WRITER, not THIS SWEEP -- so a sweep that genuinely evaluated all 35 instruments and then
+  // sat in its post-chunk work (checkAutoTrades/runManualReviewScan, both real network I/O) while a
+  // second sweep overwrote pairData would report zero evaluated and 35 DISPATCHED_NO_RESULT: a
+  // fabricated total outage, which is the exact phantom-starvation signature this ledger exists to
+  // end. Writing the outcome into sweep-owned state at the moment it is produced is interleaving-
+  // independent by construction -- no other sweep can reach this object.
+  // The sweepToken stamped into pairData above is retained as a DIAGNOSTIC only (it says which sweep
+  // last wrote the entry); no ledger arithmetic reads it any more.
+  if(sweepResults) sweepResults[pair]=completenessState;
   const alertKey=`${pair}_${activeTf}_${Math.floor(Date.now()/300000)}`;
   if(conf.total>=ALERT_THRESHOLD&&!firedAlerts.has(alertKey)){
     firedAlerts.add(alertKey);
@@ -8961,20 +8973,51 @@ async function scanAll(){
   // read only by the ledger call in the finally, never by a trading decision.
   const __jvmStartedAt=new Date().toISOString();
   let __jvmOutcome='OK',__jvmError=null;
-  // Reference snapshot, so coverage is MEASURED rather than inferred. pairData persists across
-  // scans, so a presence check counts a pair that succeeded on an EARLIER scan but was never
-  // reached on this one -- overstating coverage on exactly the aborted scan this ledger exists to
-  // expose, which is the EUR_USD failure mode all over again. scanPair assigns a fresh object every
-  // time, so reference inequality is an exact "written during this sweep" test.
+  // Coverage is MEASURED rather than inferred. pairData persists across scans, so a presence check
+  // counts a pair that succeeded on an EARLIER scan but was never reached on this one -- overstating
+  // coverage on exactly the aborted scan this ledger exists to expose, which is the EUR_USD failure
+  // mode all over again.
+  //
+  // The measurement is SWEEP-LOCAL, recorded at write time. Two earlier versions of this ledger were
+  // both refuted under real concurrency, and for the same underlying reason -- scanAll has no
+  // re-entrancy guard and is invoked unawaited from setInterval, from init and from setTf():
+  //
+  //   1. Object-identity diffing ("scanPair assigns a fresh object every time, so reference
+  //      inequality is an exact 'written during this sweep' test") proves only that SOMEONE rewrote
+  //      the entry, not that THIS sweep did. Holding one instrument's fetch open while a second sweep
+  //      ran to completion made the aborted sweep report evaluated=35, skipped=0.
+  //   2. A per-sweep token stamped into pairData and counted back out in this `finally` fixed that
+  //      case and broke a worse one. pairData[pair] is a single shared slot, so the count measures
+  //      the LAST WRITER, not this sweep: a sweep that evaluated all 35 instruments and then sat in
+  //      its post-chunk work (checkAutoTrades / runManualReviewScan, both real network I/O) while a
+  //      second sweep overwrote pairData reported ZERO evaluated and 35 DISPATCHED_NO_RESULT -- a
+  //      fabricated total outage, the very phantom-starvation signature that cost four
+  //      investigations. The inverse interleaving double-credited instruments across sweeps.
+  //
+  // Both failures come from reading shared state AFTER the fact. __jvmResults is written by scanPair
+  // into this invocation's own object at the moment each outcome is produced, so no other sweep can
+  // reach it and the result does not depend on interleaving. Each poll record now answers exactly
+  // one question honestly: which instruments did THIS sweep evaluate?
+  //
+  // Object.create(null) is load-bearing, not style: a plain {} would let an instrument named
+  // __proto__ vanish from the sink and be reported as a phantom DISPATCHED_NO_RESULT.
+  //
+  // DISCLOSED RESIDUAL (pre-existing, fail-closed, present in all three versions of this ledger):
+  // if this sweep ABORTS while its own scanPair promises are still in flight, the finally emits
+  // before those writes land, so a sibling that later succeeds is reported DISPATCHED_NO_RESULT
+  // while pairData does end up holding its fresh data. The ledger under-reports its own coverage in
+  // that case. That is the safe direction -- it never claims work it did not do -- but it is a real
+  // inaccuracy and is recorded rather than implied away.
   const __jvmSweep=++__jvmSweepToken;
   const __jvmDispatched=[];
+  const __jvmResults=Object.create(null);   // pair -> completenessState, written by scanPair
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
   try{
     document.getElementById('scanStatus').textContent='Scanning...';
     document.getElementById('liveDot').classList.remove('off');
     const chunks=[];
     for(let i=0;i<ALL_PAIRS.length;i+=5) chunks.push(ALL_PAIRS.slice(i,i+5));
-    for(const ch of chunks){await Promise.all(ch.map(function(p){ __jvmDispatched.push(p); return scanPair(p,__jvmSweep); }));renderPairList();}
+    for(const ch of chunks){await Promise.all(ch.map(function(p){ __jvmDispatched.push(p); return scanPair(p,__jvmSweep,__jvmResults); }));renderPairList();}
     const high=Object.values(pairData).filter(d=>d.conf&&d.conf.total>=ALERT_THRESHOLD).length;
     document.getElementById('setupCount').textContent=`${high} setups`;
     document.getElementById('scanStatus').textContent=`${new Date().toLocaleTimeString()}`;
@@ -9004,19 +9047,20 @@ async function scanAll(){
       // JVM scans ALL_PAIRS but can only auto-trade SCAN_PAIRS, so both are recorded. Reading
       // "35 instruments scanned" as "35 tradeable" would be wrong, and the ledger should not
       // invite that reading.
-      // Counted per SWEEP, not per object identity: only entries this sweep actually wrote.
+      // Read from THIS SWEEP'S OWN results object, never back out of the shared pairData -- see the
+      // note above __jvmResults for the two concurrency defects that produced.
       // And "evaluated" must mean what the STRATEGY means by it -- ADR-011 gates evaluation on
       // completenessState===COMPLETE, so the test is that, not the absence of a flag. Written
       // fail-CLOSED: anything that is not provably COMPLETE is reported skipped, because the whole
       // point of this ledger is that an uncertain instrument must not read as a scanned one.
-      const __jvmWrote=ALL_PAIRS.filter(function(p){ return pairData[p]&&pairData[p].sweepToken===__jvmSweep; });
+      const __jvmWrote=ALL_PAIRS.filter(function(p){ return Object.prototype.hasOwnProperty.call(__jvmResults,p); });
       const __jvmEvaluated=__jvmWrote.filter(function(p){
-        return pairData[p].completenessState===MARKET_DATA_COMPLETENESS.COMPLETE; });
+        return __jvmResults[p]===MARKET_DATA_COMPLETENESS.COMPLETE; });
       const __jvmSkipped=ALL_PAIRS.filter(function(p){ return __jvmEvaluated.indexOf(p)===-1; })
         .map(function(p){
           const wrote=__jvmWrote.indexOf(p)!==-1;
           const dispatched=__jvmDispatched.indexOf(p)!==-1;
-          const st=wrote?pairData[p].completenessState:null;
+          const st=wrote?__jvmResults[p]:null;
           // Transport failure and contract suppression are different facts and must not share a
           // label -- collapsing them is how "no data arrived" starts reading as "the strategy
           // declined to score it".
@@ -13242,7 +13286,24 @@ function evidenceObservationNaturalKey(o){
   // tickId -- at which point the unique index silently drops one of the two strategies' record.
   if(o.kind==='POLL') return 'POLL|'+s(o.strategyId)+'|'+s(o.tickId);
   if(o.kind==='EVALUATION') return 'EVAL|'+s(o.signalId)+'|'+s(o.firstLiveEvaluationTimestamp);
-  if(o.kind==='PIPELINE') return 'PIPE|'+s(o.stage)+'|'+s(o.sourceTradeId||o.tradeId||o.setupId)+'|'+s(o.occurredAt);
+  // MOGO-021: pair and timeframe are part of the key because the identity component below can be
+  // EMPTY. Not every stage has a trade or a setup to name: DATA_INSUFFICIENT is recorded before any
+  // setup exists (alexGRecordPipelineStage('DATA_INSUFFICIENT',...)) and supplies no sourceTradeId,
+  // tradeId or setupId at all. Its key therefore collapsed to 'PIPE|DATA_INSUFFICIENT||<occurredAt>'
+  // -- identical for every instrument -- so two pairs failing the history check in the same
+  // millisecond produced the SAME key, the UNIQUE index rejected the second, and
+  // evidencePutObservation reported that rejection as {ok:true,duplicate:true}. The record was lost
+  // silently, and it is precisely the record that says WHICH instrument was skipped: the question
+  // this ledger exists to answer. Both fields are already on the observation (evidenceBuildPipelineObservation
+  // sets rec.pair/rec.timeframe) -- nothing new is stored. Adding a component can only ever SPLIT
+  // keys apart, never merge two distinct observations into one, so this cannot cause a new silent
+  // drop; a genuine duplicate (same pair, same stage, same instant) still collapses as before.
+  // The converse, stated rather than glossed: a row already persisted under the OLD key shape no
+  // longer collides with a re-record of the same logical observation, so an idempotent retry at an
+  // identical occurredAt against a pre-existing IndexedDB row can now insert a second row. Bounded
+  // and low-impact -- occurredAt is stamped per call, so cross-tick re-records already differed --
+  // but this change is not one-sidedly safe and should not be described as if it were.
+  if(o.kind==='PIPELINE') return 'PIPE|'+s(o.stage)+'|'+s(o.pair)+'|'+s(o.timeframe)+'|'+s(o.sourceTradeId||o.tradeId||o.setupId)+'|'+s(o.occurredAt);
   if(o.kind==='RETENTION') return 'RETN|'+s(o.evictedSeqFrom)+'|'+s(o.evictedSeqTo);
   return null;
 }

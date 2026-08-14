@@ -155,7 +155,7 @@ let __candleCount=60,__priceOk=true,__mode='flat',__shortPair=null,__shortAll=fa
 // Holds one instrument's candle fetch open so a SECOND scanAll can overtake the first -- the
 // overlapping-sweep condition scanAll allows (no re-entrancy guard; called unawaited from
 // setInterval, from init, and from setTf() on an operator click).
-let __gatePair=null,__gateRelease=null,__failPair=null;
+let __gatePair=null,__gateRelease=null,__failPair=null,__throwPair=null;
 function __gate(){ return new Promise(function(res){ __gateRelease=res; }); }
 globalThis.fetch=function(url){
   const u=String(url);
@@ -177,6 +177,10 @@ globalThis.fetch=function(url){
     // A hard transport failure for one instrument: fetchCandles returns null, so completeness is
     // UNAVAILABLE rather than PARTIAL -- a different fact from an ADR-011 suppression.
     if(__failPair&&instMatch===__failPair) return Promise.resolve(makeResponse(false,503,{}));
+    // A REJECTED fetch, not merely a non-OK response: the instrument is dispatched but its scanPair
+    // never reaches the write, so this sweep holds no result for it at all. That is the only way to
+    // reach DISPATCHED_NO_RESULT, which shipped with zero coverage.
+    if(__throwPair&&instMatch===__throwPair) return Promise.reject(new Error('forced transport throw'));
     if(__shortAll||(__shortPair&&instMatch===__shortPair)) return Promise.resolve(makeResponse(true,200,{candles:firingM15(20)}));
     return Promise.resolve(makeResponse(true,200,{candles:firingM15(wantN)}));
   }
@@ -192,6 +196,7 @@ g.setShortPair=p=>{__shortPair=p;};
 g.setShortAll=v=>{__shortAll=v;};
 g.holdPair=p=>{__gatePair=p;};
 g.failPair=p=>{__failPair=p;};
+g.throwPair=p=>{__throwPair=p;};
 g.releaseHeld=()=>{__gatePair=null; if(__gateRelease){__gateRelease(); __gateRelease=null;}};
 g.setNow=t=>{__simNow=t;};
 g.now=()=>__simNow;
@@ -448,15 +453,24 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.releaseHeld();\n' +
   '  const sweepB=scanAll();\n' +
   '  await sweepB; try{ await sweepA; }catch(e){}\n' +
-  // Sum across BOTH sweeps. Under object-identity diffing each sweep claimed the other's writes,
-  // so the total exceeded the universe; per-sweep attribution credits every instrument exactly once.
-  '  const totals=__jvmAll.reduce(function(a,o){ return a+((o.instrumentsEvaluated||[]).length); },0);\n' +
-  '  const counts={}; __jvmAll.forEach(function(o){ (o.instrumentsEvaluated||[]).forEach(function(x){ counts[x]=(counts[x]||0)+1; }); });\n' +
-  '  const seenTwice=Object.keys(counts).filter(function(k){ return counts[k]>1; });\n' +
-  '  g.record("JVMOBS-12","CONCURRENT sweeps credit each instrument EXACTLY ONCE -- neither claims the other\\u2019s work",\n' +
-  '    __jvmAll.length===2&&totals===ALL_PAIRS.length&&seenTwice.length===0,\n' +
-  '    "two sweeps, combined evaluated="+totals+"/"+ALL_PAIRS.length+", double-credited="+seenTwice.length+\n' +
-  '    " (object-identity diffing produced "+(2*ALL_PAIRS.length)+")");\n' +
+  // CORRECTED INVARIANT. The previous version asserted that the two sweeps' evaluated sets SUM to 35
+  // with no instrument credited twice. That premise is wrong: overlapping sweeps do not partition the
+  // instrument universe -- each independently scans all 35, so two complete sweeps legitimately report
+  // 35 EACH and every instrument legitimately appears in both. "Combined 35" held only for one
+  // particular interleaving; other interleavings of the same code produced 66 and 0, so the fixture
+  // was pinning an accident rather than a property.
+  //
+  // The property that actually matters is PER-SWEEP HONESTY: each sweep reports exactly the
+  // instruments IT evaluated, whatever the interleaving. Here sweep A is held mid-chunk, released,
+  // and overtaken by sweep B; both go on to complete, so both must report their own full 35.
+  '  const evalCounts=__jvmAll.map(function(o){ return (o.instrumentsEvaluated||[]).length; });\n' +
+  '  const dispatchHonest=__jvmAll.every(function(o){\n' +
+  '    return (o.instrumentsEvaluated||[]).length<=o.instrumentsAttempted\n' +
+  '      &&(o.instrumentsEvaluated||[]).length+(o.instrumentsSkipped||[]).length===ALL_PAIRS.length; });\n' +
+  '  g.record("JVMOBS-12","two OVERLAPPING sweeps each report their OWN full coverage -- neither is erased or inflated by the other",\n' +
+  '    __jvmAll.length===2&&evalCounts.every(function(n){ return n===ALL_PAIRS.length; })&&dispatchHonest,\n' +
+  '    "per-sweep evaluated="+JSON.stringify(evalCounts)+"/"+ALL_PAIRS.length+\n' +
+  '    " (each sweep genuinely scanned all 35; evaluated+skipped==35 and evaluated<=attempted for both)");\n' +
   // R3 had no coverage at all: reverting the non-empty-string guard survived both gates.
   '  const isoNow=new Date().toISOString();\n' +
   '  g.record("JVMOBS-13","a FALSY strategyId is not accepted as an identity -- it falls back to ALEX",\n' +
@@ -486,6 +500,78 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    skShort.reason==="EVALUATION_SUPPRESSED_INCOMPLETE_DATA"&&skShort.completenessState===MARKET_DATA_COMPLETENESS.PARTIAL&&\n' +
   '    skFail.reason!==skShort.reason,\n' +
   '    "no data arrived -> "+skFail.reason+"; short history -> "+skShort.reason);\n' +
+  // ── MOGO-021: the interleaving that the sweep-TOKEN version got backwards ──
+  // Reading attribution back out of pairData in the `finally` measures the LAST WRITER, not this
+  // sweep. Sweep A completes all 35 writes and then sits in its post-chunk work (checkAutoTrades /
+  // runManualReviewScan, both real network I/O in production) while sweep B overwrites pairData and
+  // finishes first. Under the token-counted-from-pairData form, A reported ZERO evaluated and 35
+  // DISPATCHED_NO_RESULT -- a fabricated total outage on a sweep that did everything right.
+  '  __jvmObs=null; __jvmAll=[]; pairData={}; autoTrading.enabled=true;\n' +
+  '  const __origMRS=runManualReviewScan; let __parked=0,__releaseMRS=null;\n' +
+  '  runManualReviewScan=function(){ __parked++;\n' +
+  '    if(__parked===1) return new Promise(function(res){ __releaseMRS=res; });\n' +
+  '    return Promise.resolve(); };\n' +
+  '  const swA=scanAll();\n' +
+  '  for(let y=0;y<400;y++) await Promise.resolve();\n' +
+  '  const swB=scanAll();\n' +
+  '  await swB;\n' +
+  '  if(__releaseMRS) __releaseMRS();\n' +
+  '  try{ await swA; }catch(e){}\n' +
+  '  runManualReviewScan=__origMRS;\n' +
+  '  const recA=__jvmAll[__jvmAll.length-1]||{};\n' +
+  '  g.record("JVMOBS-16","a sweep that finishes LAST still reports its OWN 35 evaluations, not the later sweep\\u2019s overwrite",\n' +
+  '    __jvmAll.length===2&&(recA.instrumentsEvaluated||[]).length===ALL_PAIRS.length&&\n' +
+  '    recA.evaluationAdvanced===true&&\n' +
+  '    (recA.instrumentsSkipped||[]).filter(function(x){return x.reason==="DISPATCHED_NO_RESULT";}).length===0,\n' +
+  '    "overtaken sweep evaluated "+((recA.instrumentsEvaluated)||[]).length+"/"+ALL_PAIRS.length+\n' +
+  '    " advanced="+recA.evaluationAdvanced+" phantom DISPATCHED_NO_RESULT="+\n' +
+  '    ((recA.instrumentsSkipped)||[]).filter(function(x){return x.reason==="DISPATCHED_NO_RESULT";}).length+\n' +
+  '    " (reading pairData back produced 0/35 evaluated and 35 phantom skips)");\n' +
+  '  g.record("JVMOBS-17","and BOTH overlapping sweeps report their own full coverage -- neither is erased by the other",\n' +
+  '    __jvmAll.length===2&&__jvmAll.every(function(o){ return (o.instrumentsEvaluated||[]).length===ALL_PAIRS.length; }),\n' +
+  '    "per-sweep evaluated="+JSON.stringify(__jvmAll.map(function(o){return (o.instrumentsEvaluated||[]).length;})));\n' +
+  // DISPATCHED_NO_RESULT shipped with ZERO coverage -- deleting the branch entirely survived the gate.
+  //
+  // REACHABILITY, stated honestly. It cannot be reached through the I/O layer: fetchCandles and
+  // fetchPrice both end in `catch{return null;}`, so a rejected request becomes a null dataset and the
+  // instrument IS written, as UNAVAILABLE (JVMOBS-18a proves exactly that -- a rejected fetch is
+  // MARKET_DATA_UNAVAILABLE, not DISPATCHED_NO_RESULT). But the branch is NOT dead code and NOT
+  // merely defensive: independent verification reached it through the REAL, unstubbed scanPair by
+  // making the protected bestConfluence throw, and it also fires for an instrument that never threw
+  // at all -- a sibling still in flight when its own sweep aborts mid-chunk. It is exercised here at
+  // the dispatch seam because that is deterministic; scanPair is not protected and is scanAll's
+  // single dispatch point, so substituting it for one instrument tests scanAll's classification
+  // directly. (A strictly stronger organic construction exists -- throw from bestConfluence -- and
+  // is a disclosed follow-up rather than a gap: the fixture below is not vacuous, it dies to the
+  // deletion of the branch it names.)
+  '  __jvmObs=null; __jvmAll=[]; pairData={}; g.throwPair("USD_CHF");\n' +
+  '  try{ await scanAll(); }catch(e){}\n' +
+  '  g.throwPair(null);\n' +
+  '  const skThrown=(__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="USD_CHF";})[0]||{};\n' +
+  '  g.record("JVMOBS-18a","a REJECTED candle request is still a written result -- UNAVAILABLE, not DISPATCHED_NO_RESULT",\n' +
+  '    skThrown.reason==="MARKET_DATA_UNAVAILABLE"&&skThrown.completenessState===MARKET_DATA_COMPLETENESS.UNAVAILABLE&&\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).indexOf("USD_CHF")===-1,\n' +
+  '    "rejected fetch -> reason="+String(skThrown.reason)+" completenessState="+String(skThrown.completenessState));\n' +
+  '  __jvmObs=null; __jvmAll=[]; pairData={};\n' +
+  '  const __origScanPair=scanPair;\n' +
+  '  scanPair=function(p,tok,sink){ if(p==="USD_CHF") return Promise.resolve(); return __origScanPair(p,tok,sink); };\n' +
+  '  await scanAll();\n' +
+  '  scanPair=__origScanPair;\n' +
+  '  const skNoRes=(__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.pair==="USD_CHF";})[0]||{};\n' +
+  '  g.record("JVMOBS-18","an instrument DISPATCHED whose scan produced NO result is named DISPATCHED_NO_RESULT, not conflated with a data fault",\n' +
+  '    skNoRes.reason==="DISPATCHED_NO_RESULT"&&skNoRes.completenessState===null&&\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).indexOf("USD_CHF")===-1&&\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length===ALL_PAIRS.length-1,\n' +
+  '    "USD_CHF reason="+String(skNoRes.reason)+" completenessState="+String(skNoRes.completenessState)+\n' +
+  '    " evaluated="+((__jvmObs.instrumentsEvaluated)||[]).length+"/"+ALL_PAIRS.length);\n' +
+  // instrumentsAttempted is the DISPATCH list, not a count of writes. Reverting it to the write
+  // count (its pre-MOGO-021 meaning) must fail here, or the headline fix has no coverage.
+  '  g.record("JVMOBS-19","instrumentsAttempted counts the DISPATCH, so an instrument attempted-and-failed is not invisible",\n' +
+  '    __jvmObs.instrumentsAttempted>(__jvmObs.instrumentsEvaluated||[]).length&&\n' +
+  '    __jvmObs.instrumentsAttempted===__jvmObs.instrumentsEvaluated.length+\n' +
+  '      (__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.reason!=="NOT_REACHED_THIS_SCAN";}).length,\n' +
+  '    "attempted="+__jvmObs.instrumentsAttempted+" evaluated="+((__jvmObs.instrumentsEvaluated)||[]).length+\n' +
+  '    " (a write-count would have reported "+((__jvmObs.instrumentsEvaluated)||[]).length+")");\n' +
   '  evidenceRecordForwardObservations=__origRec;\n' +
   '  return g;\n})();'
 );

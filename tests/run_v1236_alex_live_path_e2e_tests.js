@@ -115,6 +115,42 @@ function buildRepeatedReactionH1(t0){
   filler(20);
   return candles;
 }
+// ── Six-touch variant, used ONLY by the ORGANIC RE-ANCHOR fixtures (DRIFT-12..14). Same
+// construction the frozen engine already validates above -- real swing-low touches that become a
+// genuine REPEATED ZONE REACTION -- with two deliberate differences.
+//   * SIX touches instead of four, so the zone still validates (3 reactions) and still produces a
+//     qualifying setup on its last touch AFTER the first touch has been lost.
+//   * The FIRST touch is anchored at bar 14, the earliest bar at which the frozen confirmation
+//     path can accept a reaction at all: it calls calcATR(candles.slice(0,anchorBarIndex+1),14),
+//     which returns null below 15 candles.
+// That placement is what makes a candle-window roll ORGANIC. Drop the two oldest H1 candles and
+// the first touch's own ATR slice falls two candles short, so the FROZEN engine simply can no
+// longer confirm it; the cluster re-anchors on the second touch and the zone is validated at a
+// later reaction -- a genuinely different zoneId (and therefore a different setupId/signalId),
+// while the last touch's reactionId and qualificationTimestamp are absolute close times and do
+// not move at all. No stored record is edited and no guard is touched: this is the same window
+// roll fetchAlexGReplayDatasets' fixed 2,220-bar H1 request performs every hour in production.
+function buildSixTouchReactionH1(t0){
+  const candles=[];
+  function push(o,h,l,c){ candles.push({o,h,l,c,t:new Date(t0+candles.length*3600000)}); }
+  function filler(n){
+    let base=1.10600;
+    for(let i=0;i<n;i++){
+      const drift=(candles.length%3)*0.00005;
+      push(base+drift,base+drift+0.00080,base+drift-0.00040,base+drift+0.00020);
+    }
+  }
+  const touchLows=[1.10000,1.10002,1.09998,1.10001,1.10003,1.09999];
+  filler(14);
+  for(let n=0;n<touchLows.length;n++){
+    const l=touchLows[n];
+    push(l+0.00020,l+0.00025,l,l+0.00015);
+    push(l+0.00015,l+0.00200,l+0.00010,l+0.00180);
+    if(n<touchLows.length-1) filler(8);
+  }
+  filler(20);
+  return candles;
+}
 // Structureless higher-timeframe filler, and a structureless H1 series for every OTHER pair, so
 // only the one instrument under test produces a setup and the other eleven honestly produce none.
 function buildFlat(t0,n,stepMs){
@@ -152,6 +188,7 @@ g.setH1=c=>{__h1=c;};
 g.setT0=t=>{__t0=t;};
 g.setBidAsk=v=>{__bidask=v;};
 g.build=t0=>buildRepeatedReactionH1(t0);
+g.build6=t0=>buildSixTouchReactionH1(t0);
 g.now=()=>Date.now();
 
 const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
@@ -324,6 +361,12 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // The likeliest way the journal scan could go wrong: firing on a setup's OWN journal entry every
   // time it is re-evaluated. Re-arm the cursor so the setup really is re-evaluated, then demand
   // silence -- this is the fixture that would catch a tradeId derivation mismatch.
+  // The latch MUST be cleared here, or this fixture is vacuous. Every scenario above runs on the
+  // same t0, so it produces the same (stableId|signalId) latch key -- and a false positive raised
+  // in an EARLIER fixture latches that key and then silently suppresses the very condition this
+  // fixture exists to catch. Verified: without this line, removing j.tradeId!==currentTradeId from
+  // the journal scan left DRIFT-1b PASSING, and so did removing p.signalId!==signalId.
+  '  alexGIdentityDriftReported=new Set();\n' +
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGLiveSetupStatuses=[];\n' +
   '  await alexGLivePollTick();\n' +
   '  g.record("DRIFT-1b","NO false positive: re-evaluating a normally-traded setup reports no drift",\n' +
@@ -456,6 +499,81 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("DRIFT-11","the latch key the detector builds is (stableId|signalId), so a second re-anchor still reports",\n' +
   '    latchKeys.length===1&&!!expectKey&&latchKeys[0]===expectKey,\n' +
   '    "key="+String(latchKeys[0]).slice(-40)+" (stable id alone would suppress a later re-anchor)");\n' +
+  // ══ ORGANIC ZONE RE-ANCHOR -- the drift condition produced by the ENGINE, not by the fixture ══
+  // Every drift fixture above fakes the re-anchor by string-prefixing a stored identifier while
+  // leaving the stored zoneId untouched. A real re-anchor changes the zoneId itself, and the
+  // difference is not cosmetic: appending ,x.zoneId to alexGStableSetupIdentity -- which destroys
+  // the detector's entire reason to exist, since the "stable" identity would then drift with the
+  // zone -- killed 0 of the 38 fixtures that existed before this block, while against a real
+  // re-anchor it produces zero drift events at the exact moment a second position opens.
+  //
+  // Here NOTHING is hand-edited. The real, unmodified engine opens a position on poll 1; the
+  // position is closed (as production's own only real trade was, the same day); and the ONLY
+  // change before poll 2 is that the two oldest H1 candles fall out of the fetch window. The
+  // re-anchor, the new zoneId, the new signalId and the guard miss are all the engine's own.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  fullReset(); alexGIdentityDriftReported=new Set(); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '  const tOrg=nowMs-68*3600000-5*60000;\n' +   // the sixth touch qualifies ~5 min ago
+  '  const h1Full=g.build6(tOrg);\n' +
+  '  g.setT0(tOrg); g.setH1(h1Full);\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:tOrg+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const orgPos=alexGAccount.openPositions[0]||null;\n' +
+  '  g.record("DRIFT-12a","ORGANIC precondition: the unmodified engine opens ONE real position on the full window",\n' +
+  '    alexGAccount.openPositions.length===1&&!!orgPos&&!!orgPos.zoneId&&!!orgPos.reactionId,\n' +
+  '    "open="+alexGAccount.openPositions.length+" zoneId="+String(orgPos&&orgPos.zoneId).slice(-30));\n' +
+  '  if(orgPos) closeOpenPosition();\n' +
+  // The ONLY intervention: roll the candle-fetch window forward by two H1 bars. No stored record
+  // is rewritten, tradedSignals still carries poll 1's real signalId, and no guard is disabled.
+  '  g.setH1(h1Full.slice(2));\n' +
+  '  freshSession();\n' +
+  '  ["fxhub_alexg_account","fxhub_alexg_account_version"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });\n' +
+  '  alexGAccountKnownVersion=0;\n' +
+  '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:tOrg+40*3600000}};\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const orgSetup=alexGSetupState.filter(function(x){return x.pair==="EUR_USD";})[0]||null;\n' +
+  '  const orgDrift=decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";});\n' +
+  '  const octx=(orgDrift[0]||{}).context||{};\n' +
+  '  g.record("DRIFT-12","ORGANIC RE-ANCHOR: the detector fires on drift the ENGINE produced, with nothing hand-edited",\n' +
+  '    orgDrift.length===1&&!!orgPos&&octx.priorSignalId===orgPos.signalId&&\n' +
+  '    octx.currentSignalId!==octx.priorSignalId&&octx.priorZoneId!==octx.currentZoneId,\n' +
+  '    "events="+orgDrift.length+" priorZoneId!=currentZoneId="+(octx.priorZoneId!==octx.currentZoneId));\n' +
+  '  g.record("DRIFT-12b","and in that organic state the guards DO miss -- a second position opens on one setup",\n' +
+  '    alexGAccount.openPositions.length===1&&alexGAccount.closedPositions.length===1&&\n' +
+  '    alexGAccount.openPositions[0].signalId!==alexGAccount.closedPositions[0].signalId,\n' +
+  '    "open="+alexGAccount.openPositions.length+" closed="+alexGAccount.closedPositions.length+\n' +
+  '    " -- one economic setup, two positions, produced without editing any record");\n' +
+  '  g.record("DRIFT-13","the re-anchor is REAL: same reactionId and qualificationTimestamp, DIFFERENT zoneId",\n' +
+  '    !!orgSetup&&!!orgPos&&orgSetup.reactionId===orgPos.reactionId&&\n' +
+  '    orgSetup.qualificationTimestamp===orgPos.qualificationTimestamp&&orgSetup.zoneId!==orgPos.zoneId&&\n' +
+  '    alexGLiveSignalId(orgSetup)!==orgPos.signalId,\n' +
+  '    "zoneId "+String(orgPos&&orgPos.zoneId).slice(-24)+" -> "+String(orgSetup&&orgSetup.zoneId).slice(-24));\n' +
+  // The property the whole detector rests on, asserted against a re-anchor the engine really did.
+  '  g.record("DRIFT-14","IDENTITY INVARIANCE: the stable identity survives a real re-anchor unchanged",\n' +
+  '    !!orgSetup&&!!orgPos&&alexGStableSetupIdentity(orgSetup)===alexGStableSetupIdentity(orgPos)&&\n' +
+  '    orgSetup.zoneId!==orgPos.zoneId,\n' +
+  '    "stable identity identical across two different zoneIds");\n' +
+  // ── COMPOSITION. The five components ARE the detector's correctness, and nothing pinned them:
+  // dropping reactionId, or dropping qualificationTimestamp, each killed 0 of the original 38.
+  '  const __compBase={pair:"EUR_USD",timeframe:"H1",setupType:"A_repeatedReaction",\n' +
+  '    reactionId:"AGR|EUR_USD|H1|low|1700000000000",qualificationTimestamp:1700003600000,\n' +
+  '    zoneId:"AGZ|AGC|EUR_USD|H1|low|1699000000000|v1699500000000",\n' +
+  '    signalId:"AGL|IGNORED",tradeId:"AGT|IGNORED",setupId:"AGS|IGNORED"};\n' +
+  '  function __comp(over){ return Object.assign({},__compBase,over); }\n' +
+  '  g.record("DRIFT-15","COMPOSITION: the identity is EXACTLY the five anchor-free components, in order",\n' +
+  '    alexGStableSetupIdentity(__compBase)===\n' +
+  '      "EUR_USD|H1|A_repeatedReaction|AGR|EUR_USD|H1|low|1700000000000|1700003600000",\n' +
+  '    alexGStableSetupIdentity(__compBase));\n' +
+  '  g.record("DRIFT-16","two setups differing ONLY in reactionId get DIFFERENT identities",\n' +
+  '    alexGStableSetupIdentity(__comp({reactionId:"AGR|EUR_USD|H1|low|1700007200000"}))!==\n' +
+  '      alexGStableSetupIdentity(__compBase),\n' +
+  '    "reactionId is load-bearing -- two touches of one zone are not one setup");\n' +
+  '  g.record("DRIFT-17","two setups differing ONLY in qualificationTimestamp get DIFFERENT identities",\n' +
+  '    alexGStableSetupIdentity(__comp({qualificationTimestamp:1700007200000}))!==\n' +
+  '      alexGStableSetupIdentity(__compBase),\n' +
+  '    "qualificationTimestamp is load-bearing -- one reaction qualifying twice is not one setup");\n' +
+  // Restore the four-touch series every fixture below this point is built on.
+  '  g.setT0(t0); g.setH1(g.build(t0));\n' +
   '  alexGIdentityDriftReported=new Set();\n' +
   '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=__susp3;\n' +
   '  g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
