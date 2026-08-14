@@ -2645,3 +2645,103 @@ block, which is the one rule with no control of any kind on either side.
 
 The constraint holds throughout: **the candles may be constructed; the verdict must not be.** No
 fixture may stub, override or force a protected function's outcome.
+
+---
+
+## 16. 🔴 Paper-trade execution coverage — the worst gap found, and it is where the money is
+
+Independent adversarial audit. **96 behaviour-changing mutations scored against the whole
+1,538-fixture gate. 47 killed ZERO fixtures.** Unlike §15 this is not spread evenly — the
+concentration is precisely on *what price a position closes at, which side of the book it closes on,
+whether it closes at all, how large it is, and how an ambiguous candle is resolved.*
+
+**The auditor established this is not a harness artifact.** Positive control: making
+`openPaperPosition` return an error for every input kills 37 fixtures — the gate *does* observe
+lifecycle behaviour. The uncovered verdicts below are real.
+
+### 16.1 Two protected functions have NO execution coverage whatsoever
+
+`checkPaperPositions` and `alexGReconstructExitFromCandles` can each be **deleted outright** and the
+gate still reports 1,538/1,538. Statically confirmed: `alexGReconstructExitFromCandles` appears in
+zero files under `tests/`; `checkPaperPositions` appears once, in a comment.
+
+### 16.2 JVM close arithmetic — entirely uncovered
+
+Every one of these kills nothing: **buy closes on the ask and sell on the bid (sides swapped)**;
+**exit filled at mid**, erasing the simulated spread cost; the move-pips sign inverted; **the P&L
+sign flipped, so every win becomes a loss**; Win/Loss classification inverted; the recorded
+`exitPrice` replaced by the entry price; the post-await re-validation removed; a failed-commit
+rollback skipped so the close applies in memory anyway; take-profit and stop-loss reasons swapped;
+and a missing pip value no longer blocking the close.
+
+**Why it looked covered.** `JVMCLOSE-1` drives a real close and asserts a balance — but its clause is
+`balance === balBefore + closedPos.pnl`, **comparing two outputs of the same computation.** It dies
+only if the balance update diverges from the recorded P&L, and is blind to a wrong P&L, a wrong exit
+price, a wrong side or a wrong result label. It is a consistency check, not an assertion about money.
+Everything else claiming to cover the close is **source-text assertion** — `getSource(...)` matching
+return-statement strings, which all thirteen mutations leave intact. The drift check wearing a
+fixture costume, again.
+
+**And the stated reason for the gap is no longer true.** `docs/TESTING.md` and the paper-audit suite
+declare the close math permanently unverifiable offline because osascript "never drains the microtask
+queue". `run_v1233` disproves that — it is an async runner with a pricing stub, it awaits real
+closes, and two mutations died *because* the post-await balance write was observed. The deferral to
+"Phase 11 live browser" rests on a limitation a later suite in this same repository already
+superseded.
+
+### 16.3 ALEX — sizing, stops and the ambiguity rule
+
+| Uncovered | Consequence |
+|---|---|
+| `riskAmount` **100× too large** (`riskPercent` not divided by 100) | every position sized 100× intended risk |
+| position size doubled | — |
+| ATR stop buffer applied on the **wrong side** of the zone | `E2E-7` only asserts `stop < entry`, which stays true |
+| snapshot exit side swapped / priced at mid | — |
+| **MAE and MFE allowed to SHRINK** from recorded extremes | the only "coverage" is a source-substring check |
+| reconstruction walks the wrong executable side | — |
+| the same-candle ambiguity branch removed, or resolved as a **Win at target** instead of conservatively as a Loss | **turns losses into wins** |
+| the replay engine's ambiguous-candle rule flippable Loss→Win | corrupts the research record that governs live rules |
+
+**Every ALEX P&L assertion is a LONG.** Both covered scenarios are buys, so inverting sell-side P&L,
+entry side, exit side or reconstruction side kills nothing.
+
+### 16.4 What IS genuinely well covered — attacked harder and held
+
+The **ledger, commit, rollback, version-guard and INC-001 persistence layers.** Version guards,
+rollback paths, INC-001 blocking, commit contracts, derived balance and reconciliation all die hard
+(one mutation kills 30 fixtures, another 13). The auditor extended past the three reconciliation
+probes I ran myself, and the extensions die too. Three survivors: the JVM version never *advancing*
+(the guard's rejection half is covered, its advance half is not), `save()`/`saveAlexGRest()` never
+called after a successful commit, and max-drawdown never growing.
+
+### 16.5 End-to-end stops at "a position opened"
+
+**No fixture anywhere drives a trade from signal to a closed record with a verified exit price, R
+multiple, P&L and balance — for either engine.** `run_v1236`'s `closeOpenPosition()` **hand-forges
+the close** (`exitPrice=target; result="Win"; resultR=2; pnl=200`) and never calls
+`alexGCloseLivePosition`. The one fixture that does close through the real path asserts only
+structure — no price, no result, no R, no P&L, no balance — and deliberately routes around the exit
+reconstruction by forcing its history fetch to fail. The JVM paper-audit suite **re-implements the
+close inside the fixture** and then tests the commit: the commit path is covered, the arithmetic that
+should have produced those numbers is never compared against them.
+
+### 16.6 🔴 A REAL PRODUCTION DEFECT, not test debt — and a NEW governance boundary
+
+`openPaperPosition` mints `id: Date.now() + Math.floor(Math.random()*1000)`. **Two opens in the same
+millisecond collide with p ≈ 1/1000**, and `checkAutoTrades` opens via `Promise.all` across eligible
+pairs, so same-millisecond opens are a normal occurrence rather than a contrivance.
+
+`closePaperPosition` resolves its target by `findIndex(p => p.id === id)`. **A collision closes the
+wrong position.** That is money-affecting, not cosmetic.
+
+It also makes the gate itself flaky: `TEST J.2` asserts uniqueness *probabilistically* and will fail
+at roughly that rate — the auditor hit exactly that during the run and had to re-score.
+
+**`openPaperPosition` is PROTECTED, and no authorization covers this.** It is not a setup definition,
+scoring rule, confluence, threshold, entry, stop, target, risk, sizing or economic-logic change — it
+is identity generation — but it still requires a governed protected-function edit and a re-baseline.
+**Escalated, not taken.**
+
+The smallest correct fix is a collision-free id (a monotonic counter combined with the timestamp, the
+same shape `generateDecisionEventId` already uses elsewhere in this file), plus making `TEST J.2`
+deterministic — freeze the clock, open twice, assert distinct — so it stops being a coin flip.
