@@ -2759,6 +2759,29 @@ scoring rule, confluence, threshold, entry, stop, target, risk, sizing or econom
 is identity generation — but it still requires a governed protected-function edit and a re-baseline.
 **Escalated, not taken.**
 
-The smallest correct fix is a collision-free id (a monotonic counter combined with the timestamp, the
-same shape `generateDecisionEventId` already uses elsewhere in this file), plus making `TEST J.2`
-deterministic — freeze the clock, open twice, assert distinct — so it stops being a coin flip.
+**The fix is written and validated on a scratchpad copy, ready to apply the moment it is authorized.**
+
+```js
+let paperTradeIdSeq=0;
+function paperNextTradeId(){                       // module scope, OUTSIDE the protected function
+  const t=Date.now()*1000;
+  paperTradeIdSeq=(t>paperTradeIdSeq)?t:paperTradeIdSeq+1;
+  return paperTradeIdSeq;
+}
+```
+The protected diff is then **one expression**: `id: Date.now()+Math.floor(Math.random()*1000)` →
+`id: paperNextTradeId()`.
+
+Constraints it had to satisfy, and does: the id must stay a **number** and must survive exact-equality
+matching, because it is not only the close-lookup key — it also becomes the journal `tradeId` that
+reconciliation and orphan detection match on (`p.id === r.tradeId`). Measured: 50,000 ids in a tight
+burst produced **50,000 distinct**, strictly increasing, all safe integers, with ~229 years of
+headroom below 2^53.
+
+> **A first candidate of mine was wrong, and my own test caught it.** `Date.now()*1000 + (seq++ % 1000)`
+> looked fine and passed the full gate at 1,538/1,538 — but a 5,000-id burst yielded only **2,000
+> distinct**, because the modulo wraps after 1,000 opens in one millisecond. The gate could not have
+> caught that either. The monotonic-clock form above has no wrap and no such ceiling.
+
+`TEST J.2` should be replaced at the same time with a deterministic check — freeze the clock, open
+twice, assert distinct — so it stops being a coin flip in both directions.
