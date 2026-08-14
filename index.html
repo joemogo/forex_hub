@@ -8948,6 +8948,12 @@ async function scanPair(pair){
 // itself instrumented or modified anywhere in this release.
 async function scanAll(){
   const __scanId=generateDecisionEventId('SCAN');
+  // MOGO-021 (report 2.14): JVM had no forward-coverage ledger at all. That ledger is what makes
+  // "was this instrument actually evaluated?" answerable, and its absence for ALEX is what left the
+  // EUR_USD question unanswerable for four investigations. Purely additive local bookkeeping --
+  // read only by the ledger call in the finally, never by a trading decision.
+  const __jvmStartedAt=new Date().toISOString();
+  let __jvmOutcome='OK',__jvmError=null;
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
   try{
     document.getElementById('scanStatus').textContent='Scanning...';
@@ -8973,8 +8979,29 @@ async function scanAll(){
     if(document.getElementById('panel-paper')&&document.getElementById('panel-paper').classList.contains('active')) renderPaper();
     emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
   }catch(e){
+    __jvmOutcome='ERROR'; __jvmError=(e&&e.message)?e.message:String(e);
     emitDecisionEvent({eventType:'ENGINE_ERROR',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',reasonCode:'SYSTEM_UNEXPECTED_ERROR',reasonText:(e&&e.message)?e.message:'Unknown error',severity:'ERROR',evidenceCompleteness:'MINIMAL'});
     throw e; // preserve existing error propagation exactly -- never swallow a real error
+  }finally{
+    // In `finally` for the same reason ALEX's is: a ledger that only remembers successful scans
+    // hides exactly the gaps it exists to expose. The rethrow above still happens -- this observes
+    // the failure, it does not swallow it.
+    try{
+      // JVM scans ALL_PAIRS but can only auto-trade SCAN_PAIRS, so both are recorded. Reading
+      // "35 instruments scanned" as "35 tradeable" would be wrong, and the ledger should not
+      // invite that reading.
+      const __jvmEvaluated=ALL_PAIRS.filter(function(p){ return pairData[p]&&pairData[p].candles; });
+      evidenceRecordForwardObservations({scanId:__scanId,
+        poll:{tickId:__scanId,strategyId:'current_strategy',
+          startedAt:__jvmStartedAt,finishedAt:new Date().toISOString(),
+          outcome:__jvmOutcome,tradingEnabled:!!autoTrading.enabled,
+          evaluationAdvanced:__jvmEvaluated.length>0,
+          instrumentsAttempted:ALL_PAIRS.length,instrumentsEvaluated:__jvmEvaluated,
+          instrumentsConfigured:ALL_PAIRS.length,
+          instrumentsSkipped:ALL_PAIRS.filter(function(p){ return !(pairData[p]&&pairData[p].candles); })
+            .map(function(p){ return {pair:p.replace('/','_'),reason:'NO_CANDLES_THIS_SCAN'}; }),
+          errorText:__jvmError}});
+    }catch(e){ /* never allow observation to affect the trading path */ }
   }
 }
 
@@ -13182,7 +13209,12 @@ function evidenceObservationNaturalKey(o){
   if(o.kind==='RETENTION') return 'RETN|'+s(o.evictedSeqFrom)+'|'+s(o.evictedSeqTo);
   return null;
 }
-function evidenceObservationBase(kind,occurredAt){
+// MOGO-021: strategyId is now an OPTIONAL argument. Omitted, it resolves exactly as before, so
+// every ALEX record this function has ever produced is byte-identical -- asserted by fixture, not
+// assumed. It exists because the observation ledger was ALEX-shaped: recording a JVM poll through
+// it previously stamped JVM evidence with ALEX's ruleVersion, which would have been worse than
+// having no JVM coverage at all.
+function evidenceObservationBase(kind,occurredAt,strategyId){
   return{
     schemaVersion:EVIDENCE_OBSERVATION_SCHEMA_VERSION,
     kind:kind,
@@ -13190,13 +13222,14 @@ function evidenceObservationBase(kind,occurredAt){
     recordedAt:new Date().toISOString(),          // when the ledger wrote it -- never the same field
     captureOrigin:evidenceCurrentOrigin(),
     appVersion:(typeof APP_VERSION!=='undefined')?APP_VERSION:null,
-    strategyId:(typeof RULES_ALEXG!=='undefined'&&RULES_ALEXG.ruleVersion)?RULES_ALEXG.ruleVersion:null,
+    strategyId:(strategyId!==undefined&&strategyId!==null)?strategyId
+      :((typeof RULES_ALEXG!=='undefined'&&RULES_ALEXG.ruleVersion)?RULES_ALEXG.ruleVersion:null),
     provenance:'FORWARD_LIVE_OBSERVATION'
   };
 }
 function evidenceBuildPollObservation(i){
   const o=i||{};
-  const rec=evidenceObservationBase('POLL',o.startedAt);
+  const rec=evidenceObservationBase('POLL',o.startedAt,o.strategyId);
   rec.tickId=o.tickId||null;
   rec.startedAt=o.startedAt||null;
   rec.finishedAt=o.finishedAt||null;

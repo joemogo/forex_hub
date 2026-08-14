@@ -309,9 +309,15 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    (types.SCAN_STARTED||0)>0&&(types.SCAN_COMPLETED||0)>0&&\n' +
   '    CANDIDATE_LEVEL.every(function(t){ return !types[t]; })&&viaScanAll>0,\n' +
   '    "eventTypes="+JSON.stringify(types)+" while "+viaScanAll+" positions opened");\n' +
-  '  g.record("JVM-28","every event on that sweep is sourced to scanAll -- nothing inside the decision path reports itself",\n' +
-  '    decisionEventLog.length>0&&decisionEventLog.every(function(e){ return e.source==="scanAll"; }),\n' +
-  '    "sources="+JSON.stringify(Object.keys(decisionEventLog.reduce(function(a,e){a[e.source]=1;return a;},{}))));\n' +
+  // Strategy-sourced events only. The evidence platform emits its own DATA_UNAVAILABLE events when
+  // the observation store is unreachable (IndexedDB is absent in this harness), and those are
+  // infrastructure, not the JVM decision path -- including them would make this assertion about
+  // storage availability rather than about what JVM reports.
+  '  const stratEvents=decisionEventLog.filter(function(e){ return String(e.source||"")!=="evidence-platform"; });\n' +
+  '  g.record("JVM-28","every STRATEGY event on that sweep is sourced to scanAll -- nothing inside the decision path reports itself",\n' +
+  '    stratEvents.length>0&&stratEvents.every(function(e){ return e.source==="scanAll"; }),\n' +
+  '    "strategy sources="+JSON.stringify(Object.keys(stratEvents.reduce(function(a,e){a[e.source]=1;return a;},{})))+\n' +
+  '    "; all sources="+JSON.stringify(Object.keys(decisionEventLog.reduce(function(a,e){a[e.source]=1;return a;},{}))));\n' +
   // the discarded reason, with the discard itself asserted
   '  g.setMode("flat"); structuralAOICache={}; resetFiring(); pairData={}; clearDecisionEvents();\n' +
   '  const vrej=await evaluateLiveTrigger("EUR_USD");\n' +
@@ -321,6 +327,47 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    autoTrading.log.length===0&&decisionEventLog.length===0&&\n' +
   '    Object.keys(autoTrading.tradedToday).length===0,\n' +
   '    "computed ["+String(vrej.reason)+"] -- journal=0, events=0, tradedToday=0");\n' +
+  // ══ JVM FORWARD-COVERAGE LEDGER (report 2.14) ══
+  // JVM previously recorded NO forward coverage at all -- the ledger that makes "was this
+  // instrument actually evaluated?" answerable, and whose absence left the EUR_USD question
+  // unanswerable for four investigations. These fixtures prove it records, is labelled as JVM
+  // rather than ALEX, survives a failed scan, and does not disturb ALEX's own records.
+  '  var __jvmObs=null; const __origRec=evidenceRecordForwardObservations;\n' +
+  '  evidenceRecordForwardObservations=function(input){ __jvmObs=evidenceBuildPollObservation((input&&input.poll)||{}); return __origRec.apply(this,arguments); };\n' +
+  '  g.setMode("firing"); structuralAOICache={}; pairData={}; firedAlerts=new Set(); clearDecisionEvents();\n' +
+  '  autoTrading.enabled=true; autoTrading.tradedToday={}; autoTrading.log=[]; autoTrading._lastDay=null;\n' +
+  '  paperAccount={balance:10000,openPositions:[],closedPositions:[]};\n' +
+  '  scanData={}; SCAN_PAIRS.forEach(function(p){ scanData[p]={weekly:"Bullish",daily:"Bullish",fh:"Bullish",bucket:"Active watch"}; });\n' +
+  '  await scanAll();\n' +
+  '  g.record("JVMOBS-1","a JVM sweep now records a durable forward-coverage observation at all",\n' +
+  '    !!__jvmObs&&__jvmObs.kind==="POLL","kind="+String(__jvmObs&&__jvmObs.kind));\n' +
+  '  g.record("JVMOBS-2","and it is labelled as JVM, not silently stamped with ALEX\u2019s ruleVersion",\n' +
+  '    __jvmObs.strategyId==="current_strategy"&&__jvmObs.strategyId!==RULES_ALEXG.ruleVersion,\n' +
+  '    "strategyId="+String(__jvmObs.strategyId)+" (ALEX would be "+String(RULES_ALEXG.ruleVersion)+")");\n' +
+  '  g.record("JVMOBS-3","it records the SCANNED universe, which is ALL_PAIRS and not the 12 tradeable ones",\n' +
+  '    __jvmObs.instrumentsConfigured===ALL_PAIRS.length&&\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length===ALL_PAIRS.length&&ALL_PAIRS.length>SCAN_PAIRS.length,\n' +
+  '    "evaluated="+((__jvmObs.instrumentsEvaluated)||[]).length+"/"+__jvmObs.instrumentsConfigured+\n' +
+  '    ", tradeable universe is "+SCAN_PAIRS.length);\n' +
+  '  g.record("JVMOBS-4","the observation carries the real outcome and whether auto-trading was on",\n' +
+  '    __jvmObs.outcome==="OK"&&__jvmObs.tradingEnabled===true&&__jvmObs.evaluationAdvanced===true,\n' +
+  '    "outcome="+__jvmObs.outcome+" tradingEnabled="+__jvmObs.tradingEnabled);\n' +
+  // A failed scan must STILL be recorded -- a ledger that only remembers successful scans hides
+  // exactly the gaps it exists to expose -- and the original error must still propagate.
+  '  __jvmObs=null;\n' +
+  '  const __origRender=renderPairList; renderPairList=function(){ throw new Error("forced scan failure"); };\n' +
+  '  let __threw=false;\n' +
+  '  try{ await scanAll(); }catch(e){ __threw=/forced scan failure/.test(String(e&&e.message)); }\n' +
+  '  renderPairList=__origRender;\n' +
+  '  g.record("JVMOBS-5","a FAILED scan is still recorded, and the original error still propagates",\n' +
+  '    __threw===true&&!!__jvmObs&&__jvmObs.outcome==="ERROR"&&/forced scan failure/.test(String(__jvmObs.errorText)),\n' +
+  '    "threw="+__threw+" outcome="+String(__jvmObs&&__jvmObs.outcome));\n' +
+  // The change that carried real regression risk: evidenceObservationBase is shared with ALEX.
+  '  const alexShaped=evidenceBuildPollObservation({tickId:"T",startedAt:new Date().toISOString()});\n' +
+  '  g.record("JVMOBS-6","ALEX records are UNCHANGED when strategyId is omitted -- the shared builder did not regress",\n' +
+  '    alexShaped.strategyId===RULES_ALEXG.ruleVersion,\n' +
+  '    "omitted strategyId still resolves to "+String(alexShaped.strategyId));\n' +
+  '  evidenceRecordForwardObservations=__origRec;\n' +
   '  return g;\n})();'
 );
 

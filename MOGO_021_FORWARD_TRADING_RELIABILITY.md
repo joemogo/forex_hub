@@ -1,7 +1,7 @@
 # MOGO-021 — Forward Trading Reliability & End-to-End Pipeline Validation
 
 **Status:** IN PROGRESS · continuation of MOGO-020
-**Gates:** canonical 24 suites 1,318/1,318 · platform 1,049/1,049 · ALEX protected drift 0
+**Gates:** canonical 24 suites 1,324/1,324 · platform 1,049/1,049 · ALEX protected drift 0
 **Started from:** `c443ed6` (MOGO-020 close-out)
 **Paper trading only · live-money NOT AUTHORIZED · TJR paper NOT activated · ALEX frozen**
 
@@ -695,23 +695,34 @@ not:
 instrument actually evaluated?" answerable, it is what finally settled the EUR_USD question, and
 **JVM does not have it** — nor would a new strategy.
 
-It is **not governance-blocked**: `scanAll`, `evidenceRecordForwardObservations`,
-`evidenceBuildPollObservation` and `evidenceObservationBase` are all unprotected. But it is also not
-a one-line call, because the observation schema is currently ALEX-shaped —
-`evidenceObservationBase` hard-codes `strategyId` from `RULES_ALEXG.ruleVersion`, so recording a JVM
-poll through it today would **mislabel JVM evidence as ALEX**. The specified change is:
+It was **not governance-blocked** — `scanAll` and the whole evidence platform are unprotected — but
+it was not a one-line call either: `evidenceObservationBase` hard-coded `strategyId` from
+`RULES_ALEXG.ruleVersion`, so recording a JVM poll through it would have **mislabelled JVM evidence
+as ALEX**, which is worse than having none.
 
-1. Add an optional `strategyId` argument to `evidenceObservationBase`, defaulting to today's value
-   so every existing ALEX record stays **byte-identical** — asserted by fixture, not assumed.
-2. Thread it through `evidenceBuildPollObservation`.
-3. Record a JVM poll observation from `scanAll`, in a `finally` so a failed scan is recorded too
-   (ALEX's own precedent), carrying `instrumentsConfigured = ALL_PAIRS.length` (35),
-   `instrumentsEvaluated` from the pairs actually scanned, and the auto-trade-eligible subset (12).
+**Now implemented**, in three additive steps, none touching protected code:
 
-Natural keys do not collide: POLL keys on `tickId`, and JVM's scanId comes from the same unique
-generator ALEX uses. The one thing to be careful of is that step 1 touches a function ALEX's
-evidence depends on — a regression there would corrupt ALEX's forward ledger, so it needs the same
-implement → independently verify → remediate loop as everything else in this milestone.
+1. `evidenceObservationBase` takes an **optional** `strategyId`. Omitted, it resolves exactly as
+   before — **JVMOBS-6** asserts an ALEX-shaped record still resolves to `alex_g_sr_v1`, because
+   this was the change carrying real regression risk: a mistake here would have corrupted ALEX's
+   forward ledger, the very evidence that settled §2.10.
+2. `evidenceBuildPollObservation` threads it through.
+3. `scanAll` records a JVM poll observation in a **`finally`** — a ledger that only remembers
+   successful scans hides exactly the gaps it exists to expose.
+
+Proven by **JVMOBS-1..6**: the observation is recorded (`kind: POLL`), labelled `current_strategy`
+and **not** ALEX's ruleVersion, covers `35/35` scanned instruments while recording that only 12 are
+tradeable, carries the real outcome and auto-trading state, and — **JVMOBS-5** — a *failed* scan is
+still recorded with `outcome: ERROR` **while the original error still propagates unchanged**.
+
+One fixture of mine had to be corrected as a result: **JVM-28** asserted every event on a sweep is
+sourced to `scanAll`, which stopped being true once the observation write began emitting
+evidence-platform `DATA_UNAVAILABLE` events in the offline harness. It now scopes to
+**strategy-sourced** events, which is what the claim was always about — storage availability is not
+the JVM decision path.
+
+**JVM now has forward-coverage parity with ALEX**, and a future paper-authorized strategy inherits
+the mechanism rather than the gap.
 
 ### 2.16 🔴 SIGNAL IDENTITY IS NOT STABLE — all four duplicate-trade guards can miss
 
@@ -894,7 +905,7 @@ no allocation, no scan.
 
 | Gate | Result |
 |---|---|
-| Canonical | **24 suites · 1,318 / 1,318 · 0 failures · 0 errors** |
+| Canonical | **24 suites · 1,324 / 1,324 · 0 failures · 0 errors** |
 | Platform | **1,049 / 1,049** |
 | Protected ALEX drift | **0** — 63 functions, 4 constants, byte-identical |
 | Campaign C1 | intact |
