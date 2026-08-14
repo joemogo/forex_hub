@@ -2245,6 +2245,23 @@ function alexGEconomicSetupIdentity(x){
 // authority that could desynchronise from the account. Whether a setup was already TRADED is a
 // separate question and is answered from the EXISTING durable records (positions and journal), which
 // already carry every field these identities need. Nothing new is persisted.
+// MOGO-021: IN-FLIGHT CLAIM. The decided-authority below is consulted BEFORE the trade attempt and
+// written only AFTER it, and the attempt suspends on `await fetchBidAsk`. alexGLivePollTick has no
+// re-entrancy guard, so two overlapping ticks both passed the duplicate gate for the same signalId:
+// tick 1 was blocked by a price-dependent gate and recorded a PERMANENT rejection, while tick 2 --
+// already past the gate -- re-evaluated the same setup against a FRESH bid/ask and OPENED A REAL
+// POSITION the sequential path refuses. Demonstrated: sequential openPositions=0 vs overlapping
+// openPositions=1, with zero STATE_SIGNAL_ALREADY_DECIDED events.
+//
+// The existing duplicate guards cannot catch this: every one of them looks for an EXISTING position,
+// and tick 1 never opened one. It is not a duplicate trade -- it is an EXTRA trade past a rejection
+// the design calls permanent, which is why it survived everything this milestone hardened.
+//
+// Claimed SYNCHRONOUSLY in the same statement as the duplicate check, released in a `finally`. That
+// is the pattern already shipped and proven for closePaperPosition's paperPositionsClosing guard.
+// This makes the concurrent path behave exactly like the sequential one -- it does not invent a new
+// policy, it makes the documented "decided a single time" contract actually hold under overlap.
+let alexGSignalInFlight=new Set();
 const ALEXG_DECIDED_MAX=5000; // backstop only -- age eviction below is the real bound
 let alexGDecidedSetups=new Map();    // stableId   -> decision record
 let alexGDecidedEconomic=new Map();  // economicId -> the SAME record object
@@ -2317,6 +2334,7 @@ function alexGResetLiveDecisionState(){
   alexGLiveSetupStatuses=[];
   alexGDecidedSetups=new Map();
   alexGDecidedEconomic=new Map();
+  alexGSignalInFlight=new Set();
 }
 // How far apart two qualification timestamps may be and still be plausibly the SAME economic event.
 // The stable identity pins the timestamp exactly, so this bounds only the ECONOMIC match, which
@@ -4954,12 +4972,13 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
       // survive a zone re-anchor, a fetch-window roll, a close-time re-estimation and ring eviction
       // alike. It is an additional OR-term -- it can only ever block a duplicate, never admit one.
       const priorDecision=alexGFindPriorDecision(setup,signalId);
-      if(priorDecision||alexGLiveSetupStatuses.some(e=>e.signalId===signalId)){
+      const inFlightElsewhere=alexGSignalInFlight.has(signalId);
+      if(priorDecision||inFlightElsewhere||alexGLiveSetupStatuses.some(e=>e.signalId===signalId)){
         emitDecisionEvent({eventType:'CANDIDATE_REJECTED',strategyId:RULES_ALEXG.ruleVersion,scanId,correlationId:scanId,
           candidateId:setup.setupId,pair:setup.pair,timeframe:setup.timeframe,source:'alexGEvaluatePairForLiveSetups',
           stage:'DUPLICATE_CHECK',decision:'REJECTED',reasonCode:'STATE_SIGNAL_ALREADY_DECIDED',
           context:{signalId,
-            matchedBy:priorDecision?priorDecision.matchedBy:'displayRing',
+            matchedBy:priorDecision?priorDecision.matchedBy:(inFlightElsewhere?'inFlight':'displayRing'),
             matchSource:priorDecision?priorDecision.source:'ring',
             priorSignalId:priorDecision?priorDecision.priorSignalId:signalId,
             priorTradeId:priorDecision?priorDecision.priorTradeId:null,
@@ -5096,7 +5115,13 @@ async function alexGEvaluatePairForLiveSetups(oPair,scanId){
           evidenceCompleteness:'COMPLETE'});
         continue;
       }
-      await alexGAttemptOpenLivePosition(setup,datasets,{firstLiveEvaluationTimestamp,signalAgeMinutesAtEvaluation},scanId);
+      // Claimed synchronously -- no await between the check above and this add, so a concurrent tick
+      // cannot slip between them. Released in the finally: the claim guards the window, the durable
+      // decision recorded inside the attempt is what guards every later tick.
+      alexGSignalInFlight.add(signalId);
+      try{
+        await alexGAttemptOpenLivePosition(setup,datasets,{firstLiveEvaluationTimestamp,signalAgeMinutesAtEvaluation},scanId);
+      } finally { alexGSignalInFlight.delete(signalId); }
     }
     // MOGO-021: report the OUTCOME so the poll ledger can attribute coverage truthfully. This is the
     // only path on which the frozen engine actually ran.
@@ -5294,7 +5319,12 @@ async function alexGCheckLivePositions(scanId){
         status:closed.result||'closed',reason:null,occurredAt:closed.closedAt||null});
     });
   }catch(e){ try{ evidenceRecordWriteFailure('pipeline-closed-seam',e); }catch(e2){} }
-  renderAlexGLivePanel();
+  // MOGO-021 FAILURE ISOLATION. alexGCheckLivePositions is awaited BEFORE the per-pair loop, and this
+  // render sat outside every try -- so a throw from a DISPLAY call aborted the entire tick and left
+  // all twelve instruments unevaluated, reported by the ledger as an ERROR poll. Exit monitoring and
+  // evaluation must not be hostage to a panel repaint. Matches the wrapping already used a few lines
+  // above for the evidence seam.
+  try{ renderAlexGLivePanel(); }catch(e){ try{ recordAlexGEngineError('renderAlexGLivePanel: '+((e&&e.message)?e.message:String(e))); }catch(e2){} }
 }
 
 // Synchronous -- no network/async call is needed to close a position once the exit price is
@@ -5479,6 +5509,25 @@ async function alexGLivePollTick(){
     // MOGO-013. In `finally` so a FAILED poll is recorded too -- a ledger that only remembers
     // successful polls would hide exactly the gaps it exists to expose. The rethrow above still
     // happens: this observes the failure, it does not swallow it.
+    // MOGO-021: account for EVERY configured instrument on EVERY outcome path. __obsSkipped is only
+    // pushed from inside the pair loop, so anything that threw before or during it -- a fault in
+    // alexGCheckLivePositions, an aborted tick -- left instrumentsSkipped EMPTY beside
+    // instrumentsConfigured:12, i.e. 0 of 12 accounted for. That is the same unanswerable-coverage
+    // asymmetry MOGO-021 closed for JVM and left open here. An instrument the tick never reached is
+    // now named, exactly as scanAll already does, rather than silently absent.
+    // In its OWN try, and BEFORE the seam's try, so the ledger call remains the first statement of
+    // its own guard -- L15 asserts that shape, and it is the property that keeps observation from
+    // ever reaching a trading decision.
+    try{
+      const __obsAccounted={};
+      __obsEvaluated.forEach(function(p){ __obsAccounted[p]=1; });
+      __obsSkipped.forEach(function(x){ if(x&&x.pair) __obsAccounted[x.pair]=1; });
+      SCAN_PAIRS.forEach(function(pair){
+        const oPair=pair.replace('/','_');
+        if(!__obsAccounted[oPair]) __obsSkipped.push({pair:oPair,reason:'NOT_REACHED_THIS_TICK',
+          lastEvaluatedH1:null,currentH1Boundary:null,cursorAheadOfClock:false,incompleteTimeframes:null});
+      });
+    }catch(e){ /* accounting must never affect the trading path */ }
     try{
       evidenceRecordForwardObservations({scanId:__scanId,
         poll:{tickId:__scanId,startedAt:__obsStartedAt,finishedAt:new Date().toISOString(),
@@ -6384,6 +6433,12 @@ async function connect(){
 function disconnect(){
   if(mogoLockBlocked())return;
   clearInterval(scanInterval);clearInterval(countdownInterval);
+  // MOGO-021: the hourly top-down timer was NOT cleared here, and initAll assigns a new one over the
+  // handle on reconnect -- so the old timer kept running with no handle to stop it, and every
+  // disconnect/reconnect cycle permanently added one top-down scan per hour. That scan writes
+  // scanData[pair].bucket, which is checkAutoTrades' eligibility gate, so the leak is trading-adjacent.
+  // Removes only leaked DUPLICATES, never the intended timer.
+  if(autoScanTimer){ clearInterval(autoScanTimer); autoScanTimer=null; }
   cfg={key:'',accountId:'',env:'practice'};
   document.getElementById('mainApp').style.display='none';
   document.getElementById('setupScreen').style.display='flex';
@@ -9442,7 +9497,17 @@ async function scanAll(){
     document.getElementById('liveDot').classList.remove('off');
     const chunks=[];
     for(let i=0;i<ALL_PAIRS.length;i+=5) chunks.push(ALL_PAIRS.slice(i,i+5));
-    for(const ch of chunks){await Promise.all(ch.map(function(p){ __jvmDispatched.push(p); return scanPair(p,__jvmSweep,__jvmResults); }));renderPairList();}
+    // MOGO-021 FAILURE ISOLATION. scanPair has no try/catch and was dispatched bare into Promise.all,
+    // so ONE instrument throwing -- an alert render, a toast, a malformed pairData entry -- rejected
+    // its chunk, aborted every remaining chunk, and skipped checkPaperPositions, checkAutoTrades AND
+    // runManualReviewScan for the whole sweep. One instrument's display fault suppressed the entire
+    // trade pass. Per-instrument isolation, mirroring what alexGEvaluatePairForLiveSetups already
+    // does; the instrument is left out of __jvmResults so the ledger reports it DISPATCHED_NO_RESULT
+    // rather than silently absorbing it.
+    for(const ch of chunks){await Promise.all(ch.map(function(p){ __jvmDispatched.push(p);
+      return Promise.resolve(scanPair(p,__jvmSweep,__jvmResults)).catch(function(e){
+        try{ recordPaperEngineError('scanPair('+p+'): '+((e&&e.message)?e.message:String(e))); }catch(e2){}
+      }); }));renderPairList();}
     const high=Object.values(pairData).filter(d=>d.conf&&d.conf.total>=ALERT_THRESHOLD).length;
     document.getElementById('setupCount').textContent=`${high} setups`;
     document.getElementById('scanStatus').textContent=`${new Date().toLocaleTimeString()}`;
@@ -20221,6 +20286,9 @@ function initAll(){
   loadAiSaved();renderPaper();renderAiMessages();updateAutoTradeStatus();renderAutoLog();updatePaperNavBadge();
   updateAutoScanStatus();
   if(autoScan.enabled){
+    // MOGO-021: guard the assignment the way toggleAutoScan already does, so a second initAll cannot
+    // strand a running timer behind an overwritten handle.
+    if(autoScanTimer) clearInterval(autoScanTimer);
     autoScanTimer=setInterval(runAutoTopDownScan,60*60*1000);
     const stale=!autoScan.lastRunAt||(Date.now()-new Date(autoScan.lastRunAt).getTime())>60*60*1000;
     if(stale) runAutoTopDownScan();

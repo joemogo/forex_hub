@@ -1043,6 +1043,58 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("E2E-17","the suspension flag is RESTORED -- this suite leaves production policy as it found it",\n' +
   '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true,\n' +
   '    "setupSuspensionEnabled="+RULES_ALEXG_V11.v11Config.setupSuspensionEnabled);\n' +
+  // ══ MOGO-021 -- OVERLAPPING TICKS MUST NOT RE-ROLL A PERMANENT REJECTION ══
+  // alexGLivePollTick has no re-entrancy guard and is driven by setInterval, and the duplicate gate
+  // is consulted BEFORE the trade attempt while the decision is recorded only AFTER it -- with an
+  // `await fetchBidAsk` in between. Two in-flight ticks therefore both passed the gate for the same
+  // signalId: tick 1 was blocked by the price-dependent entry-delay gate and recorded a PERMANENT
+  // rejection, while tick 2 -- already past the gate -- re-evaluated the SAME setup against a FRESH
+  // bid/ask and opened a real position the sequential path refuses.
+  //
+  // No existing guard could catch it: every duplicate check looks for an EXISTING position, and tick
+  // 1 never opened one. It is not a duplicate trade, it is an EXTRA trade past a permanent rejection.
+  //
+  // The bid/ask is the ONLY seam: the first call returns a price far from qualificationClose (so the
+  // frozen entry-delay rule blocks of its own accord) and every later call a good one. No rule,
+  // threshold or protected function is touched -- the candles and the price are constructed, every
+  // verdict is the strategy's own.
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=false;\n' +
+  '  const __origFBA2=fetchBidAsk; let __ban2=0;\n' +
+  '  fetchBidAsk=async function(p){ __ban2++; return __ban2===1?{bid:1.20000,ask:1.20010}:{bid:1.10595,ask:1.10605}; };\n' +
+  '  fullReset(); alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; __ban2=0;\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const seqAfter1=alexGAccount.openPositions.length;\n' +
+  '  const seqChain=decisionEventLog.map(function(e){return e.eventType+"/"+(e.reasonCode||"-");}).join(",");\n' +
+  '  await alexGLivePollTick();\n' +
+  '  const seqOpen=alexGAccount.openPositions.length;\n' +
+  '  g.record("CONCUR-1","CONTROL (sequential): a price far from the signal blocks the open on poll 1",\n' +
+  '    seqAfter1===0&&/ENTRY_MOVED/.test(seqChain),\n' +
+  '    "open after poll 1="+seqAfter1+" entryMovedRecorded="+/ENTRY_MOVED/.test(seqChain));\n' +
+  '  g.record("CONCUR-2","CONTROL (sequential): poll 2 with a GOOD price still opens nothing -- the block was PERMANENT",\n' +
+  '    seqOpen===0,"openPositions after a second poll="+seqOpen);\n' +
+  '  fullReset(); alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; __ban2=0;\n' +
+  '  const pA=alexGLivePollTick(); const pB=alexGLivePollTick();\n' +
+  '  await Promise.all([pA,pB]);\n' +
+  '  const ovOpen=alexGAccount.openPositions.length;\n' +
+  '  const ovPos=alexGAccount.openPositions[0]||null;\n' +
+  '  g.record("CONCUR-3","OVERLAPPING ticks must NOT open a position the sequential path refused",\n' +
+  '    ovOpen===0,\n' +
+  '    "sequential opened 0; overlapping opened "+ovOpen+\n' +
+  '    (ovPos?(" -- entry="+ovPos.entry+" stop="+ovPos.stop+" target="+ovPos.target+" risk=$"+ovPos.riskAmount):""));\n' +
+  '  const cBlocked=decisionEventLog.filter(function(e){return e.reasonCode==="ENTRY_MOVED_TOO_FAR_FROM_SIGNAL";}).length;\n' +
+  '  const cOpened=decisionEventLog.filter(function(e){return e.eventType==="TRADE_OPENED";}).length;\n' +
+  '  g.record("CONCUR-4","the SAME setup is never both BLOCKED and OPENED within one H1 boundary",\n' +
+  '    cBlocked===0||cOpened===0,\n' +
+  '    "ENTRY_MOVED rejections="+cBlocked+" TRADE_OPENED="+cOpened+" (both non-zero means the gate was re-rolled)");\n' +
+  '  const claimed=decisionEventLog.filter(function(e){ return e.reasonCode==="STATE_SIGNAL_ALREADY_DECIDED"\n' +
+  '    &&e.context&&e.context.matchedBy==="inFlight"; }).length;\n' +
+  '  g.record("CONCUR-5","and the second tick is refused by the IN-FLIGHT claim, recorded as such for audit",\n' +
+  '    claimed>0,"STATE_SIGNAL_ALREADY_DECIDED events attributed to matchedBy=inFlight: "+claimed);\n' +
+  '  fetchBidAsk=__origFBA2;\n' +
+  '  RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=true;\n' +
+  '  g.record("CONCUR-6","and this block leaves production policy exactly as it found it",\n' +
+  '    RULES_ALEXG_V11.v11Config.setupSuspensionEnabled===true&&fetchBidAsk===__origFBA2,\n' +
+  '    "suspension restored and the bid/ask seam removed");\n' +
   '  return g;\n})();'
 );
 
