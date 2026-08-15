@@ -1718,8 +1718,13 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     const twin=g.computeReconciliationPreview(['999']);
     assert('LiveTwin.1: an orphan whose id collides by STRING FORM with a live account position is NOT queued for restore',
       twin.items.length===0,JSON.stringify(twin.items.map(function(i){return i.tradeId;})));
-    assert('LiveTwin.2: and the refusal names the ambiguity rather than silently restoring the wrong trade',
-      twin.skipped.length>0&&/Ambiguous trade ID/.test(String(twin.skipped[0].reason)),
+    // Pins the LIVE-POSITION reason specifically, not just the shared 'Ambiguous trade ID' prefix.
+    // Both guards open with that phrase, so matching it alone could not tell the operator's two
+    // situations apart -- swapping this guard's message for the orphan-vs-orphan one verbatim
+    // survived the whole suite. (§18.9.) The operator is told WHICH ambiguity they are looking at.
+    assert('LiveTwin.2: and the refusal names THIS ambiguity -- a position already in the account -- rather than the orphan-vs-orphan one or silence',
+      twin.skipped.length>0&&/Ambiguous trade ID/.test(String(twin.skipped[0].reason))&&
+      /position already in the account/.test(String(twin.skipped[0].reason)),
       JSON.stringify(twin.skipped));
     assert('LiveTwin.3: the projected balance is therefore unchanged -- no money moves',
       twin.projectedBalance===twin.currentBalance,
@@ -1741,6 +1746,142 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     assert('LiveTwin.5: POSITIVE CONTROL -- the real UI path (a string selection against a numerically stored orphan) is NOT blocked by the new guard',
       crossType.items.length===1&&crossType.items[0].tradeId===999,
       JSON.stringify(crossType.items.map(function(i){return i.tradeId;})));
+    // THE CLOSED HALF OF THE LIVE MAP. All five fixtures above use an OPEN live position, so the
+    // `.concat(paperAccount.closedPositions)` half of a symmetric expression was pinned by NOTHING:
+    // deleting it killed zero fixtures, while a CLOSED live position with the numeric id and an
+    // orphan storing the string form previewed a false +$200 and, with the apply guard also
+    // reverted, restored the wrong trade for real. This is the line the "unreachable by
+    // construction" argument for the apply guard actually rests on. (§18.9, defect F4.)
+    g.setPaperAccount({balance:10000,openPositions:[],
+      closedPositions:[{id:999,pair:'EUR/USD',pnl:0}]});
+    g.setJournalEntries([{tradeId:999,strategyId:'current_strategy',status:'CLOSED',pnl:0},rec2('999')]);
+    const closedTwin=g.computeReconciliationPreview(['999']);
+    assert('LiveTwin.6: a CLOSED live position collides by string form exactly as an open one does -- the closed half of the live map is load-bearing',
+      closedTwin.items.length===0&&closedTwin.projectedBalance===closedTwin.currentBalance,
+      JSON.stringify(closedTwin.items.map(function(i){return i.tradeId;}))+' bal '+String(closedTwin.projectedBalance));
+    assert('LiveTwin.7: and it names the same live-position ambiguity',
+      closedTwin.skipped.length>0&&/position already in the account/.test(String(closedTwin.skipped[0].reason)),
+      JSON.stringify(closedTwin.skipped));
+  }
+  {
+    // ═══ §18.9 — what the v12.23.0 repair itself left open ═══
+    // The commit's own thesis was "a fix that lands on one of two symmetrical arms is not a fix".
+    // Independent re-verification found it had done the same thing one level down.
+
+    // (F1) THE ALEX CARDINALITY TYPE TAG WAS UNCOVERED -- exactly the gap IdKeyWire.1 exists to
+    // close on the JVM arm, recreated on the ALEX arm by the very commit that closed it for JVM.
+    // Reverting alexIdKey to a bare String() in the journal counter and the position check killed
+    // ZERO fixtures, while genuinely silencing the detector.
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[{tradeId:5,pair:'GBP/USD'}],closedPositions:[]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|a',tradeId:'5',strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    assert('AlexIdKeyWire.1: a numeric ALEX position id is NOT considered journalled by a record storing the STRING form -- it is reported unjournalled',
+      g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal.length===1,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal));
+    // And the REPORTED id must be the position's own tradeId, not undefined -- the element content
+    // was pinned by nothing, so the rows could have gone blank without a fixture noticing.
+    // Indexed defensively: when the type tag is reverted this list is correctly EMPTY, and a bare
+    // [0].id threw a TypeError that ABORTED the whole runner instead of failing this one fixture.
+    // An aborted suite is still caught by run_all.sh (zero fixtures is a failure), but it hides
+    // which assertion died and takes every later fixture down with it.
+    assert('AlexIdKeyWire.2: and the reported row carries the position\'s own tradeId, not undefined',
+      (g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal[0]||{}).id===5,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal));
+    // POSITIVE CONTROL, one variable away: the correctly-typed record silences it.
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|a',tradeId:5,strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    assert('AlexIdKeyWire.3: POSITIVE CONTROL -- give it the correctly-typed record and nothing is reported',
+      g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal.length===0,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal));
+  }
+  {
+    // (F2) journalWithNoAccountMatch was the one remaining id comparison held to strict === by
+    // nothing, on BOTH arms. Loosening either to String() killed zero fixtures -- the same
+    // string/number conflation shape this release fixes everywhere else. The ALEX one drives the
+    // bottom-line verdict, so a future String() normalisation there would silently remove a
+    // verdict-driving detector for the cross-type case.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:'777',pair:'GBP/USD'}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:777,strategyId:'current_strategy',status:'OPEN'}]);
+    assert('CrossMatch.1: a JVM journal record whose tradeId matches a position only by STRING FORM is still reported as having no account position',
+      g.computePaperLedgerIntegrity().journalWithNoAccountMatch.length===1,
+      JSON.stringify(g.computePaperLedgerIntegrity().journalWithNoAccountMatch));
+    g.setPaperAccount({balance:10000,openPositions:[{id:777,pair:'GBP/USD'}],closedPositions:[]});
+    assert('CrossMatch.2: POSITIVE CONTROL -- the correctly-typed position silences it',
+      g.computePaperLedgerIntegrity().journalWithNoAccountMatch.length===0,
+      JSON.stringify(g.computePaperLedgerIntegrity().journalWithNoAccountMatch));
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[{tradeId:'888',pair:'GBP/USD'}],closedPositions:[]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|c',tradeId:888,strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    assert('CrossMatch.3: and the same on the ALEX arm, where this detector drives the bottom-line verdict',
+      g.computePaperTradingHealthReport().alex.journalWithNoAccountMatch.length===1,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.journalWithNoAccountMatch));
+    g.setAlexGAccount({balance:10000,openPositions:[{tradeId:888,pair:'GBP/USD'}],closedPositions:[]});
+    assert('CrossMatch.4: POSITIVE CONTROL -- the correctly-typed ALEX position silences it',
+      g.computePaperTradingHealthReport().alex.journalWithNoAccountMatch.length===0,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.journalWithNoAccountMatch));
+  }
+  {
+    // (F3) TWO DETECTORS EXISTED ON THE JVM ARM ONLY, with no ALEX counterpart at all, so both ALEX
+    // shapes signed off as CLEAN while the identical JVM shapes were reported. Added this release.
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[],
+      closedPositions:[{tradeId:'AGT|9',pair:'GBP/USD',pnl:100}]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|9',tradeId:'AGT|9',strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    const closureRep=g.computePaperTradingHealthReport();
+    assert('AlexParity.1: an ALEX position closed in the account while its journal record is still OPEN is now reported',
+      closureRep.alex.closedAccountMissingJournalClosure.length===1,
+      JSON.stringify(closureRep.alex.closedAccountMissingJournalClosure));
+    assert('AlexParity.2: and it reaches the bottom-line verdict, exactly as the JVM equivalent does',
+      closureRep.combined.reconciliationIssues.indexOf('ALEX closed positions missing journal closure')!==-1,
+      JSON.stringify(closureRep.combined.reconciliationIssues));
+    // POSITIVE CONTROL: close the journal record and the detector goes quiet.
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|9',tradeId:'AGT|9',strategyId:'alex_g_sr_v1',status:'CLOSED',pnl:100}]);
+    assert('AlexParity.3: POSITIVE CONTROL -- close the journal record and it is silent',
+      g.computePaperTradingHealthReport().alex.closedAccountMissingJournalClosure.length===0,'');
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|8',tradeId:'AGT|8',strategyId:'alex_g_sr_v1',status:'CLOSED',pnl:null}]);
+    const pnlRep=g.computePaperTradingHealthReport();
+    assert('AlexParity.4: an ALEX CLOSED journal record with no P&L is now reported',
+      pnlRep.alex.closedJournalMissingPnl.length===1,JSON.stringify(pnlRep.alex.closedJournalMissingPnl));
+    assert('AlexParity.5: and it too reaches the bottom-line verdict',
+      pnlRep.combined.reconciliationIssues.indexOf('ALEX closed journal records missing P&L')!==-1,
+      JSON.stringify(pnlRep.combined.reconciliationIssues));
+    // POSITIVE CONTROL: give it a P&L and the detector goes quiet.
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|8',tradeId:'AGT|8',strategyId:'alex_g_sr_v1',status:'CLOSED',pnl:0}]);
+    assert('AlexParity.6: POSITIVE CONTROL -- a recorded P&L of ZERO is a real value and is NOT reported missing',
+      g.computePaperTradingHealthReport().alex.closedJournalMissingPnl.length===0,'');
+  }
+  {
+    // (F5) A FALSE POSITIVE THIS MILESTONE INTRODUCED. Converting the orphan detector from some()
+    // to a count without skipping null ids made a position with no id a permanent "no journal
+    // record" report -- the old some() matched null===null and stayed quiet. It turned the verdict
+    // red over records that are not mismatched at all, which is the same class of defect the
+    // type-tag fix removes. Both arms.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{pair:'GBP/USD'}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:null,strategyId:'current_strategy',status:'OPEN'}]);
+    assert('NullId.1: a JVM position with NO id is not reported as unjournalled -- the journal counter skips null, so the position side must too',
+      g.computePaperLedgerIntegrity().accountPositionsWithNoJournal.length===0,
+      JSON.stringify(g.computePaperLedgerIntegrity().accountPositionsWithNoJournal));
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[{pair:'GBP/USD'}],closedPositions:[]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|z',tradeId:null,strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    const nullRep=g.computePaperTradingHealthReport();
+    assert('NullId.2: and the same on the ALEX arm',
+      nullRep.alex.accountPositionsWithNoJournal.length===0,
+      JSON.stringify(nullRep.alex.accountPositionsWithNoJournal));
+    assert('NullId.3: so the bottom-line verdict is not driven red by it',
+      nullRep.combined.reconciliationIssues.indexOf('ALEX account positions with no journal record')===-1,
+      JSON.stringify(nullRep.combined.reconciliationIssues));
+    // POSITIVE CONTROL, one variable away: a position WITH an id and no matching record IS still
+    // reported, so the null-skip filters rather than disabling the detector.
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[{tradeId:'AGT|7',pair:'GBP/USD'}],closedPositions:[]});
+    g.setAlexGJournalEntries([]);
+    assert('NullId.4: POSITIVE CONTROL -- a position WITH an id and no journal record is still reported, so the null-skip filters rather than disabling',
+      g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal.length===1,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal));
   }
 
   // ═══ §16.4 SURVIVORS — the three the ledger audit could not kill (MOGO-021) ═══

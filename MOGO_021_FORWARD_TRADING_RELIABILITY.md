@@ -3621,8 +3621,8 @@ the real `computePaperTradingHealthReport()`, not argued from source.
 
 | | Defect still live | Reproduction |
 |---|---|---|
-| **ALEX orphan cardinality** (`index.html:12006-12007`) | still `some()` — existence, not count | three ALEX positions sharing `AGT\|1` with one journal record between them → **`alex.accountPositionsWithNoJournal.length === 0`**. The JVM arm reports 2 for the identical shape |
-| **ALEX duplicate counters** (`index.html:11999-12003`) | still raw object keys | ALEX `tradeId` `5` and `'5'` reported as **duplicates of each other**, driving the verdict to **`ISSUES DETECTED`** — the exact false positive the fix existed to remove, surviving one screen away |
+| **ALEX orphan cardinality** (`alexAccountPositionsWithNoJournal`, in `computePaperTradingHealthReport`) | still `some()` — existence, not count | three ALEX positions sharing `AGT\|1` with one journal record between them → **`alex.accountPositionsWithNoJournal.length === 0`**. The JVM arm reports 2 for the identical shape |
+| **ALEX duplicate counters** (`alexIdCounts` / `alexJournalIdCounts`, same function) | still raw object keys | ALEX `tradeId` `5` and `'5'` reported as **duplicates of each other**, driving the verdict to **`ISSUES DETECTED`** — the exact false positive the fix existed to remove, surviving one screen away |
 
 **A fix that lands on one of two symmetrical arms is not a fix. It is a fix and a remaining defect.**
 Both arms now use the same type-tagged, counting form.
@@ -3639,7 +3639,8 @@ form. That closes the orphan-versus-orphan half and leaves **the half its own co
 A live position is not in `newlyOrphanedAfterReset`, so it is now looked for where it actually lives.
 
 **Cross-type matching itself is NOT blocked, and must not be.** The UI renders every selection as a
-quoted string literal (`index.html:16805`, `:16812`), so a *string* selection against a
+quoted string literal (the `previewPaperReconciliationUI` / `confirmPaperReconciliationUI`
+button templates), so a *string* selection against a
 *numerically stored* orphan is the ordinary legitimate restore path. Blocking cross-type matching
 would have broken every real restore. Only the **collision** fails closed. `LiveTwin.5` pins the
 legitimate path so a future tightening cannot quietly take it away.
@@ -3758,3 +3759,61 @@ silently broke the freeze would have left the suite green while its headline cla
 
 **Gate: 25 suites, 1,782 / 1,782. Protected drift 0 against the unchanged v12.22.0 baseline.**
 App version `12.24.0`.
+
+### 18.9 🔴 The symmetry repair had the same flaw it was fixing
+
+v12.23.0's thesis was *"a fix that lands on one of two symmetrical arms is not a fix."* Independent
+re-verification confirmed its 12 fixtures all discriminate, that the reconciliation guard does **not**
+over-block (multi-select, the quoted-string UI path, null/missing ids — all still restore correctly),
+and that the `applyPaperReconciliation` "unreachable" claim is true as shipped. **Then it found the
+commit had done exactly what it criticised, one level down.**
+
+| | Finding | Killed before |
+|---|---|---|
+| **F1** | **The ALEX cardinality type tag was uncovered** — the same gap `IdKeyWire.1` exists to close on the JVM arm, recreated on the ALEX arm *by the commit that closed it for JVM*. A numeric ALEX position id matched by a string-form journal record reported clean | **0 of 274** |
+| **F2** | `journalWithNoAccountMatch` was the one remaining id comparison held to strict `===` by nothing, **on both arms**. The ALEX one **drives the bottom-line verdict** | **0 of 274** each |
+| **F3** | **Two detectors existed on the JVM arm only**, with no ALEX counterpart at all: an ALEX position closed in the account while its journal record is still `OPEN`, and an ALEX `CLOSED` record with no P&L, both signed off **CLEAN** while the identical JVM shapes were reported. Neither previous round caught it | n/a — absent |
+| **F4** | **The closed half of the live-collision map was pinned by nothing.** All five `LiveTwin` fixtures used an *open* live position | **0 of 263** |
+| **F5** | **A false positive this milestone introduced**, on both arms: converting the orphan detector from `some()` to a count without skipping null ids made a position with no id a permanent "no journal record" report. The old `some()` matched `null===null` and stayed quiet | **0** — no fixture either way |
+
+#### F4 is the one that matters most, because another claim rested on it
+
+Deleting `.concat(paperAccount.closedPositions)` killed zero fixtures. With a **closed** live position
+holding the numeric id and an orphan storing the string form, the preview offered a **false +$200**
+and a Confirm that silently did nothing — and with the apply guard also reverted, it **restored the
+wrong trade for real**, leaving a string/number twin pair permanently unmatchable by the `findIndex`
+that closes trades.
+
+> **This corrects §18.7.** `applyPaperReconciliation`'s guard was recorded there as "proven
+> unkillable, unreachable by construction". That remains true *as shipped* — but the unreachability
+> argument **depends on an uncovered line**. The honest statement is not "unreachable by
+> construction" but **"unreachable given a line that nothing pinned"**. It is now pinned, and the
+> guard is recorded as **live defence, not redundancy.**
+
+#### Mutation evidence — 20 fixtures added, every finding controlled
+
+| Mutation | Kills |
+|---|---|
+| revert the **ALEX** cardinality type tag | `AlexIdKeyWire.1`, `.2` |
+| report `p.id` instead of `p.tradeId` on ALEX rows | `AlexIdKeyWire.2`, `RollbackFailure.12` |
+| loosen the JVM cross-match to `String()` | `CrossMatch.1` |
+| loosen the ALEX cross-match to `String()` | `CrossMatch.3` |
+| switch either new ALEX detector off | `AlexParity.1`/`.2`, `.4`/`.5` |
+| make the P&L detector fire on a **zero** P&L | `AlexParity.6` |
+| drop `closedPositions` from the live map | `LiveTwin.6`, `.7` |
+| remove either null-id skip | `NullId.1`, `.2`/`.3` |
+| swap the live-twin reason for the orphan one verbatim | `LiveTwin.2` |
+
+**Two fixture-quality fixes on top.** `LiveTwin.2` could not tell the two ambiguity guards apart —
+both messages open with the same phrase, so swapping one for the other verbatim survived the whole
+suite; it now pins the live-position wording. And `AlexIdKeyWire.2` indexes defensively: a bare
+`[0].id` **aborted the entire runner** rather than failing one fixture once the detector correctly
+went silent — an aborted suite is caught by `run_all.sh`, but it hides which assertion died.
+
+> **Process note for future briefs.** The verifier reported that my scratchpad copy recipe was
+> insufficient: copying only `index.html`, `tests/` and the baseline files omits `docs/` and
+> `scripts/`, which silently produces 19 failures and under-counts by 72 fixtures. **Copy the whole
+> tree minus `.git`.** Recorded because a wrong baseline makes every survivor verdict wrong.
+
+**Gate: 25 suites, 1,801 / 1,801. Protected drift 0 against the unchanged v12.22.0 baseline.**
+App version `12.25.0`.
