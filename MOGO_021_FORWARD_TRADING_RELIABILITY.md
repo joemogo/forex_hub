@@ -4099,3 +4099,140 @@ Mac restart** and restoring it needs broker credentials and an operator (§18.1)
 4. Any suite file found in a scratchpad without a completion report and per-fixture kill evidence is
    **untrusted — discard and re-run.**
 5. **CORE is NOT GREEN** and must not be declared so while any row above is unclosed.
+
+## 18.16 §13 area 2 — LIFECYCLE, PERSISTENCE, LEDGER/JOURNAL RECONCILIATION
+
+25 mutations of the position state machine and the three stores that must agree. **Three killed zero
+fixtures:** a closed trade left in **both** `openPositions` and `closedPositions`; a rejected commit
+rolling the **account** back while leaving the **journal** row `CLOSED`; and a rolled-back commit
+leaving its newly written storage keys persisted.
+
+Closed by `tests/v1239_lifecycle_reconciliation_tests.js` (51 fixtures, prefix `LCR-`), which returns
+a promise and **awaits every close**, driving the real, unmodified, protected open/close path.
+Nothing in production is stubbed — the only new seam is a write/remove failure injector inside the
+harness's own `localStorage` **stub**, because a storage exception is otherwise unreachable offline.
+
+> **Independently re-verified:** leaving a closed trade in both stores kills **9** fixtures in the
+> new suite and **0** in the old paper-audit suite. That is the gap, measured.
+
+### 18.16a 🔴 The NINTH unkillable fixture — an async close that was never awaited
+
+`Reconciliation.1` claimed *"a normal open→close cycle produces zero integrity findings."*
+`runPaperTradingAuditFixtures` is **not** `async` and `closePaperPosition` **is**, so the un-awaited
+call returned a pending promise and the assertion ran before the close did anything.
+
+**Measured at the assertion point: `open=1, closed=0, balance=10000, journal OPEN`.** It was asserting
+that a freshly *opened* trade is self-consistent — trivially true, and structurally incapable of
+detecting any close-path defect. Corroborated independently by the mutation scores: leaving a closed
+trade in both stores (*exactly* the `duplicateAccountIds` condition it asserts is empty) killed
+nothing, and deleting the `closedPositions` write killed 21 fixtures elsewhere and **none** here.
+
+Retitled to what it observes, with a new `Reconciliation.0` precondition pinning that state.
+`TEST I.1`/`I.2` in the same file also fire un-awaited closes but **disclose** that they observe only
+the synchronous prefix — they were honest; this one was not.
+
+## 18.17 §13 area 3+4 — END-TO-END TRADING, and CHART↔ENGINE FIDELITY
+
+### Cross-strategy STATE isolation was entirely unobserved
+
+28 mutations of the signal→closed-record path; **five killed zero fixtures.** The two that matter:
+
+| | |
+|---|---|
+| a **JVM close also crediting `alexGAccount.balance`** | passed all 1,996 fixtures |
+| an **ALEX open also filing into `paperAccount.openPositions`** | passed all 1,996 fixtures |
+
+**Every pre-existing `*ISO*` fixture in that area tests _fault_ isolation** — a throw in one
+observability path not aborting a tick — **never _state_ isolation.** The name looked like coverage.
+
+> **Independently re-verified:** with the JVM→ALEX leak injected, the **full gate reports exactly two
+> failures and both are new fixtures.** Nothing in the pre-existing 1,996 could see a JVM close
+> moving money into the ALEX account.
+
+Three further survivors were defence-in-depth outer layers an inner guard compensates for — correct
+behaviour, but the outer guard could be deleted silently, and under one of them a pair already
+holding an open position was still **evaluated**, including a real API round-trip.
+
+### 🔴 D1 — the chart attributed the engine's verdict to a timeframe it never evaluated
+
+**15 of 25 render-layer mutations killed zero of 2,105 fixtures.** Every AOI-drawing, chart-authority,
+trade-marker and rendered-setup mutation survived. `loadChart()` **had never once been executed** by
+the gate — §10.3's "honest gap" was the entire render layer.
+
+`pairData` recorded `conf`/`signals` but **no timeframe**, and `loadChart` granted engine authority on
+mere presence, then labelled the result with `activeTf`. `setTf()` assigns `activeTf` and calls
+`loadChart()` **before** `scanAll()`, so switching H1→H4 rendered the H1 verdict under the words
+*"Showing the scanner's own H4 verdict for this pair"* — confidence reading **LONG 83% from H1 while
+the state line claimed H4.** The verdict shown and the timeframe named came from different places.
+
+**Fixed at both ends**, display-only, drift 0: `scanPair` records the timeframe it evaluated on, and
+`loadChart` requires it to match. A verdict with **no** recorded timeframe **fails closed**.
+
+**D2** — the live setups panel rendered ALEX's internal research ids while every other surface renders
+the frozen label. Resolved by a display helper that necessarily **duplicates** a mapping inside the
+protected `alexGCreateSetupRecord`; the duplication is **pinned** by `CAF-LABEL.1` rather than left
+to become a third copy of the same truth.
+
+> **Two self-corrections, recorded rather than quietly fixed.** An early draft of the timeframe
+> fixtures moved `activeTf` to a granularity the chart router does not serve, so `loadChart` returned
+> early and the assertions read **stale DOM from the previous fixture** — passing without the code
+> under test running at all. And deleting the **recording half** of the D1 fix killed **zero**
+> fixtures, because the authority fixtures seed `pairData` directly: covered-but-wired-to-nothing, in
+> the coverage of my own fix. Both are closed and both halves are mutation-covered. A tautology of my
+> own (a callback returning `true` unconditionally) was caught and removed before delivery.
+
+## 18.18 §13 area 5 — RESTART/RECOVERY AND DIAGNOSTICS
+
+25 mutations; **six killed zero of 2,105 fixtures** — including a **restart that concatenates closed
+positions into open ones, re-opening every completed trade**, and the engine-error log keeping the
+**oldest** 50 so every new error is discarded while its length stays exactly 50, **on both arms**.
+
+### 🔴 PD-1 — ALEX engine errors were recorded and never surfaced
+
+`alexGEngineErrors` had **three sites in the entire application** — declaration, `unshift`, `slice` —
+and **no read site at all**, while its own declaration comment claimed *"surfaced in Diagnostics,
+mirrors paperEngineErrors."* The ALEX arm was built by mirroring `recordPaperEngineError`; the
+matching **render** block never was.
+
+Every ALEX failure through that channel was invisible: `commitAlexGLedger`'s `ROLLBACK_FAILED` FATAL,
+`STALE_VERSION`, `LOAD_INTEGRITY_BLOCKED`, and the INC-001 storage-load notice **whose entire purpose
+is to tell the operator their data is being preserved** — `recordStorageLoadFailure` deliberately
+fires both channels for exactly that reason, and on the ALEX side it went nowhere. Now rendered
+beside the JVM block under the same Developer Mode gate; the misleading comment corrected in place.
+
+### 🔴 The TENTH unkillable fixture — a security control satisfied by emptiness
+
+`RollbackFailure.15` asserted the ALEX error log never contains the API key or account ID — a pure
+*must-not-contain* check with **no positive precondition**, so an **empty log satisfies it**, which is
+precisely the condition its own title claims to test under. Proven: making `recordAlexGEngineError` a
+no-op kills four fixtures elsewhere gate-wide and leaves that one **green**.
+
+**A credential-leak assertion that passes when nothing was logged is not a security control.**
+`RollbackFailure.15a` now requires a non-empty log whose newest entry is the `commitAlexGLedger`
+FATAL before the leak check is applied.
+
+> **A structural fix, not just two fixture fixes:** the new runner **refuses to report anything
+> unless the suite returns a Promise**, so an un-awaited async suite cannot go false-green there —
+> a direct answer to §18.16a.
+
+## 18.19 §13 COMPLETE — all five areas mutation-verified
+
+| Area | Mutations | Survivors | Fixtures added | Production defects |
+|---|---|---|---|---|
+| Market-data continuity | 25 | 3 | 18 | 0 |
+| Lifecycle / persistence / reconciliation | 25 | 3 | 51 | 0 |
+| ALEX/JVM end-to-end + isolation | 28 | 5 | 57 | 0 |
+| Chart↔engine / AOI / scanner | 25 | 15 | 38 | **2** (D1, D2) |
+| Restart / recovery / diagnostics | 25 | 6 | 36 | **1** (PD-1) |
+| **Total** | **128** | **32** | **200** | **3** |
+
+**Ten literally unkillable fixtures have now been found across this milestone**, plus four
+source-text fixtures relabelled, one duplicate fixture ID renamed, and 54 cross-suite ID collisions
+disclosed as an attribution hazard.
+
+**Gate: 34 suites, 2,180 / 2,180.** Platform **1,049 / 1,049**. Knowledge-engineering 57 with the
+**2 known TJR-domain failures**. Protected drift **0** against the v12.22.0 baseline. App `12.29.0`.
+
+**CORE is NOT yet declared GREEN.** A consolidated independent adversarial pass over all five new
+suites and the three production fixes is running; every previous round of this milestone found that
+work passing its author's own checks failed an independent attack.
