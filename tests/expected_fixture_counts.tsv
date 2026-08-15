@@ -38,6 +38,7 @@ run_v1239_chart_aoi_fidelity_tests.js	38
 run_v1239_lifecycle_reconciliation_tests.js	51
 run_v1239_market_data_continuity_tests.js	18
 run_v1239_paper_trading_e2e_tests.js	57
+run_v1239_restart_diagnostics_tests.js	36
 run_v123_tests.js	48
 run_v124_baseline_registry_tests.js	31
 run_v125_decision_event_tests.js	40
@@ -47,4 +48,4 @@ run_v128_evidence_platform_tests.js	329
 run_v129_browser_isolation_guard_tests.js	27
 run_v130_candle_completeness_regression_tests.js	25
 run_v131_evidence_verifier_tests.js	73
-run_v_paper_trading_audit_tests.js	294
+run_v_paper_trading_audit_tests.js	295

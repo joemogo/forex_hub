@@ -2771,8 +2771,21 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     // account ID set up above must not appear in ANY message this rollback-failure attempt added.
     const alexErr=g.getAlexGEngineErrors?g.getAlexGEngineErrors():[];
     const alexErrText=JSON.stringify(alexErr);
+    // 🔴 MOGO-021 §18.18: THE TENTH VACUOUS FIXTURE. This was a pure "must not contain" assertion
+    // with NO POSITIVE PRECONDITION -- it is satisfied by an EMPTY log, which is exactly the
+    // condition its own title says it is testing under ("even while a rollback-failure attempt is
+    // actively being logged"). Proven by mutation: making recordAlexGEngineError a complete no-op,
+    // so the log is ALWAYS empty, kills 4 fixtures elsewhere gate-wide and this one PASSES.
+    // A credential-leak assertion that passes when nothing was logged is not a security control.
+    // The precondition below makes the log's non-emptiness, and its identity as the rollback FATAL,
+    // a prerequisite for the leak check to mean anything.
+    assert('RollbackFailure.15a (PRECONDITION): the rollback failure really was logged -- the ALEX engine-error log is non-empty and its newest entry is the commitAlexGLedger FATAL, so the credential check below is applied to a log that actually has content',
+      alexErr.length>0&&/FATAL/.test(String(alexErr[0]&&alexErr[0].message))&&
+      /commitAlexGLedger/.test(String(alexErr[0]&&alexErr[0].message)),
+      'len='+alexErr.length+' newest='+String(alexErr[0]&&alexErr[0].message).slice(0,120));
     assert('RollbackFailure.15: diagnostic error logs (alexGEngineErrors) never contain the configured API key or account ID, even while a rollback-failure attempt is actively being logged',
-      alexErrText.indexOf('SECRET-ROLLBACK-TEST-TOKEN')===-1&&alexErrText.indexOf('101-999-88888888-001')===-1,'');
+      alexErrText.indexOf('SECRET-ROLLBACK-TEST-TOKEN')===-1&&alexErrText.indexOf('101-999-88888888-001')===-1,
+      'entries='+alexErr.length);
     g.setCfg({key:'',accountId:'',env:'practice'});
   }
 
