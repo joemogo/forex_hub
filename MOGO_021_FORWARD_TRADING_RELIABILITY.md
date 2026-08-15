@@ -2301,10 +2301,10 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `edfd6e7` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `d08c397` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical **25** suites **1,677 / 1,677** · protected drift **0** against the
+**Gates:** canonical **25** suites **1,706 / 1,706** · protected drift **0** against the
 **v12.21.0** baseline (63 functions, 4 constants). App version **12.21.3**.
 
 **Shipped since the last checkpoint** — every one found by adversarial mutation against a *green*
@@ -2375,15 +2375,35 @@ covered.
 > survivors, all now closed, and the remainder are spread across reporting surfaces rather than
 > concentrated in the ledger. The ledger layer was, and remains, the best-covered code here.
 
-### Open, in priority order, after this checkpoint
+### Open after this checkpoint
 
-1. **§17.2 residual** — five warning banners and `sharedRiskStatus` can each be silenced with zero
-   fixtures objecting. Detection is covered; only *display* is not.
-2. **§16 reporting-only survivors** — what neither execution agent's brief covered.
-3. **§17.3 residual** — `evidenceSummarizeObservations` is now correct and covered but is still
-   **called by nothing**; no screen consumes it.
-4. **§17.4 residual** — the entry-day gate has no FAIL-path fixture.
-5. **§17.5 / v128:1378** — an assertion comparing a constant against itself.
+**One coverage item, and one escalation.**
+
+1. **§16 reporting-only execution survivors** — the mutations neither execution agent's brief
+   covered. **Not re-enumerated since those agents ran**, so treat the old "~29" as stale: the
+   correct next step is to re-score the paper-lifecycle audit's 97-mutation set against the current
+   1,706-fixture gate and work from *that* list, not from the original one.
+2. **🔴 §16.6 duplicate trade IDs — awaiting Joe.** Unchanged. The fix is written and validated.
+
+Everything else in §15, §16.4, §17.2, §17.3, §17.4 and §17.5 is closed and mutation-verified against
+a controlled pre/post comparison.
+
+### Closed since the previous checkpoint
+
+| | |
+|---|---|
+| §15.9 | detection surface — **52 of 53** die; `AG-21` proven semantically equivalent |
+| §16.4a | the three ledger survivors — version *advance*, post-commit `save()`, drawdown growth |
+| §17.2a | the warning **surfaces** — four banners and the severity wording went from **0** kills to 1–2 each |
+| §17.3 | the trailing-outage term (`v12.21.3`) **and** the card that renders it (`v12.21.4`) |
+| §17.4a | the entry-day gate's FAIL path — five mutations, **0 → 1–2** each |
+| §17.5 | two assertions that did not mean what they said (a fixture-quality fix, not new coverage) |
+
+**Five of my own fixtures were caught being vacuous by mutation testing during this stretch** — a
+"tie" that was not a tie in floating point, a duplicate-guard test that never reached the guard, a
+`reasonText` test whose scenario had only one reason, an `async` fixture in a synchronous runner, and
+a clock default sitting behind an `await` the harness cannot drain. Each is recorded where it
+happened. **The gate never caught any of them; only mutation did.**
 
 ### The ALEX zone engine's own rules (§15.5b) — CLOSED
 
