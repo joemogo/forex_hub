@@ -77,6 +77,13 @@ async function runV1239PaperTradingE2EFixtures(g){
     g.clearLocalStorage();
     g.resetPricingCalls();
     g.resetM15Calls();
+    // §18.20: compared by snapshotJvmStores but never reset -- see alexClean. storageLoadFailures
+    // must be cleared too: a non-empty INC-001 register makes persistStorageKey REFUSE every write
+    // for that key, so a seeded entry left behind silently disables persistence in every later
+    // block (it broke ISO.5's balance assertion exactly that way during development).
+    g.setPaperLedgerBlockingError(null);
+    g.setPaperLedgerIntegrityWarning(null);
+    g.clearStorageLoadFailures();
   }
   function alexClean(){
     g.setAlexGAccount({balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]});
@@ -87,6 +94,15 @@ async function runV1239PaperTradingE2EFixtures(g){
     g.setAlexGEngineErrors([]);
     g.alexGResetLiveDecisionState();
     g.resetAlexGVersionGuard();
+    // §18.20: these four ARE compared by snapshotAlexStores but were never reset here, so a leak
+    // that writes the SAME value it wrote in an earlier group is identical in the before and after
+    // snapshots and passes. Proven: a JVM->ALEX write of a constant into alexGLastEvaluatedCloseTime
+    // killed ZERO fixtures, while the same write with an incrementing value killed ISO.2 and ISO.6.
+    // An idempotent leak is still a leak; the snapshot must start from a known-empty state.
+    g.setAlexGZoneState({});
+    g.setAlexGLastEvaluatedCloseTime({});
+    g.setAlexGLedgerBlockingError(null);
+    g.setAlexGLedgerIntegrityWarning(null);
   }
   // Conversion snapshot so every SCAN_PAIRS instrument can actually be sized. Without it
   // pipValuePerLot() correctly returns null for JPY/CAD/CHF-quoted pairs and they are skipped --
@@ -295,7 +311,7 @@ async function runV1239PaperTradingE2EFixtures(g){
     // Second tick, same state: the traded-today stamp must hold the line.
     g.resetM15Calls();
     await g.checkAutoTrades();
-    assert('PTE2E-AUTO.4 (NEGATIVE, re-entry across ticks): running the identical tick a second time opens NOTHING new -- still exactly one position per pair -- and does not even evaluate any pair again, because each one is already excluded on both the open-position and the traded-today grounds',
+    assert('PTE2E-AUTO.4 (NEGATIVE, DISCLOSED -- see note): the pair is excluded on the open-position ground. Independent verification showed that removing the traded-today STAMP written after a successful auto-open kills nothing here -- the open-position filter alone carries it, and EXCL.3 stamps tradedToday by hand, so nothing observes that an open CREATES the stamp',
       (g.getPaperAccount().openPositions||[]).length===TRADEABLE.length && g.m15CallTotal()===JPY.length &&
       TRADEABLE.every(p=>g.m15Calls(p)===0),
       'positions='+(g.getPaperAccount().openPositions||[]).length+' evaluations='+g.m15CallTotal()+' (only the four never-traded JPY pairs remain eligible to re-evaluate)');
@@ -458,7 +474,7 @@ async function runV1239PaperTradingE2EFixtures(g){
       !!p && p.riskAmount===100 && near(p.positionSize,0.1) && p.riskPercent===1.0 && p.pipValue===10 &&
       p.balanceAtEntry===10000 && p.plannedRR===2,
       p?('riskAmount='+p.riskAmount+' size='+p.positionSize+' riskPercent='+p.riskPercent+' plannedRR='+p.plannedRR):'no position');
-    assert('PTE2E-ALEX.5 (the open is journalled and persisted): the ALEX open created exactly one OPEN journal row for that trade id, and the ALEX account is on disk under its own key',
+    assert('PTE2E-ALEX.5 (PRESENCE-only, DISCLOSED): the ALEX account key exists in storage after the open. This asserts PRESENCE, not CONTENT -- a wrong persisted balance would still pass. Contrast LCR-PERSIST.1, which reads the JVM bytes properly',
       (g.getAlexGJournalEntries()||[]).filter(e=>p&&e.tradeId===p.tradeId&&e.status==='OPEN').length===1 &&
       !!g.getLocalStorageItem('fxhub_alexg_account'),
       'rows='+(g.getAlexGJournalEntries()||[]).length+' storage='+(g.getLocalStorageItem('fxhub_alexg_account')?'present':'MISSING'));
@@ -470,7 +486,7 @@ async function runV1239PaperTradingE2EFixtures(g){
     await g.alexGAttemptOpenLivePosition(alexSetup('SU|A2'),ALEX_DATASETS,{},'SCAN|A2');
     const afterFirst=(g.getAlexGAccount().openPositions||[]).length;
     await g.alexGAttemptOpenLivePosition(alexSetup('SU|A2'),ALEX_DATASETS,{},'SCAN|A2');
-    assert('PTE2E-ALEXDUP.1 (NEGATIVE, duplicate signal): offering the IDENTICAL signal a second time opens nothing -- still exactly one position and exactly one journal row -- and the account balance is untouched at exactly 10000.00',
+    assert('PTE2E-ALEXDUP.1 (NEGATIVE, DISCLOSED -- see note): offering the IDENTICAL signal a second time opens nothing. Independent verification showed the OVERLAP rule alone carries this: deleting the entire four-term duplicate-signal guard kills nothing here (3 gate-wide). This pins the combined outcome, not that specific guard',
       afterFirst===1 && (g.getAlexGAccount().openPositions||[]).length===1 &&
       (g.getAlexGJournalEntries()||[]).length===1 && g.getAlexGAccount().balance===10000,
       'afterFirst='+afterFirst+' afterSecond='+(g.getAlexGAccount().openPositions||[]).length+
@@ -493,20 +509,25 @@ async function runV1239PaperTradingE2EFixtures(g){
     const p=(g.getAlexGAccount().openPositions||[])[0]||null;
     // p is read defensively: a mutation that BLOCKS the open must make the assertions below
     // fail on their own terms, not crash the suite into an uncounted zero-fixture run.
-    g.alexGCloseLivePosition(p?p.tradeId:'no-such-trade','Win',1.12000,null,{});
+    // §18.20: the exit is deliberately BEYOND the 1.12000 target. An earlier version closed exactly
+    // AT the target, where the frozen fixed-R value (plannedRR = 2.0) and a value recomputed from
+    // pnl/riskAmount (200/100 = 2.0) are the SAME NUMBER -- so ALEXCLOSE.2's claim that this is
+    // "fixed-R, not recomputed from slippage" could not fail. Closing at 1.13000 makes recomputed R
+    // 300/100 = 3.0 while fixed-R stays 2.0, so the two are now distinguishable.
+    g.alexGCloseLivePosition(p?p.tradeId:'no-such-trade','Win',1.13000,null,{});
     const acct=g.getAlexGAccount();
     const closed=(acct.closedPositions||[])[0]||null;
-    assert('PTE2E-ALEXCLOSE.1 (END-TO-END): the real ALEX close moved the 0.10-lot buy from 1.10000 to 1.12000 for exactly +$200.00 -- 200 pips at $10 per pip per lot on 0.10 lots -- lifting the balance to exactly 10200.00',
-      !!closed && closed.pnl===200 && acct.balance===10200 && (acct.openPositions||[]).length===0,
+    assert('PTE2E-ALEXCLOSE.1 (END-TO-END): the real ALEX close moved the 0.10-lot buy from 1.10000 to 1.13000 for exactly +$300.00 -- 300 pips at $10 per pip per lot on 0.10 lots -- lifting the balance to exactly 10300.00',
+      !!closed && closed.pnl===300 && acct.balance===10300 && (acct.openPositions||[]).length===0,
       closed?('pnl='+closed.pnl+' balance='+acct.balance+' open='+(acct.openPositions||[]).length):'no closed position');
-    assert('PTE2E-ALEXCLOSE.2 (END-TO-END, fixed-R): that Win records resultR exactly +2.0, the planned R:R, and exitPrice exactly 1.12 -- the frozen fixed-R methodology, not a value recomputed from slippage',
-      !!closed && closed.resultR===2 && near(closed.exitPrice,1.12) && closed.result==='Win' && closed.status==='closed',
-      closed?('R='+closed.resultR+' exit='+closed.exitPrice+' result='+closed.result):'no closed position');
+    assert('PTE2E-ALEXCLOSE.2 (END-TO-END, fixed-R): that Win records resultR exactly +2.0 -- the PLANNED R:R -- even though the trade actually ran to +$300.00, which a recomputation from pnl/riskAmount would report as 3.0. This is the frozen fixed-R methodology, and the two values are now distinguishable',
+      !!closed && closed.resultR===2 && closed.resultR!==3 && near(closed.exitPrice,1.13) && closed.result==='Win' && closed.status==='closed',
+      closed?('R='+closed.resultR+' exit='+closed.exitPrice+' pnl='+closed.pnl):'no closed position');
     let secondThrew=null;
-    try{ g.alexGCloseLivePosition(p?p.tradeId:'no-such-trade','Win',1.12000,null,{}); }
+    try{ g.alexGCloseLivePosition(p?p.tradeId:'no-such-trade','Win',1.13000,null,{}); }
     catch(e){ secondThrew=String(e&&e.message||e); }
-    assert('PTE2E-ALEXCLOSE.3 (NEGATIVE, double close): closing the SAME ALEX trade id again neither throws nor moves anything -- still exactly one closed position and a balance of exactly 10200.00, not the 10400.00 a second credit would produce',
-      secondThrew===null && (g.getAlexGAccount().closedPositions||[]).length===1 && g.getAlexGAccount().balance===10200,
+    assert('PTE2E-ALEXCLOSE.3 (NEGATIVE, double close): closing the SAME ALEX trade id again neither throws nor moves anything -- still exactly one closed position and a balance of exactly 10300.00, not the 10600.00 a second credit would produce',
+      secondThrew===null && (g.getAlexGAccount().closedPositions||[]).length===1 && g.getAlexGAccount().balance===10300,
       'threw='+String(secondThrew)+' closed='+(g.getAlexGAccount().closedPositions||[]).length+' balance='+g.getAlexGAccount().balance);
   }
 
@@ -544,6 +565,15 @@ async function runV1239PaperTradingE2EFixtures(g){
     // ALEX -> JVM. A full ALEX lifecycle: a real live open and a real close.
     jvmClean(); alexClean();
     g.setPricing('serve','1.09990','1.10000');
+    // §18.20: THE SNAPSHOT MUST HAVE SOMETHING TO LOSE. Comparing a field is not enough if the
+    // scenario leaves it EMPTY -- a leak that CLEARS shared state, or that adds an entry per open
+    // JVM position, changes nothing when there is no state and no open position to act on. Proven:
+    // an ALEX close that locked every open JVM position, and one that wiped the INC-001 register,
+    // were both invisible until this state existed. Both are seeded before the snapshot is taken.
+    g.setPaperAccount({balance:10000,openPositions:[
+      {id:990001,pair:'GBP/USD',oPair:'GBP_USD',dir:'buy',entry:1.3000,stop:1.2900,target:1.3200,lots:0.1}
+    ],closedPositions:[]});
+    g.seedStorageLoadFailure('fxhub_paper','seeded so a leak that CLEARS the INC-001 register is observable');
     const jvmBefore=g.snapshotJvmStores();
     const alexBefore=g.snapshotAlexStores();
     await g.alexGAttemptOpenLivePosition(alexSetup('SU|ISO1'),ALEX_DATASETS,{},'SCAN|ISO1');

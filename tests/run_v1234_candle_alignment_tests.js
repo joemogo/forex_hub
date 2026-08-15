@@ -194,6 +194,12 @@ const wrapped=new Function('g', appCode + '\n' + 'return (function(){\n' +
   '  for(let i=0;i<h1.length;i++){ if(pre[i]-h1[i].t!==3600000) deltaOk=false; }\n' +
   '  for(let i=1;i<pre.length;i++){ if(pre[i]-pre[i-1]!==3600000) stepOk=false; }\n' +
   '  g.record("ALIGN-21","every H1 close is exactly 3600000ms after its own open -- the literal timeframe duration, not a value re-derived from the function under test",deltaOk,"pre[i]-open[i]===3600000 for all i");\n' +
+  // §18.20 DISCLOSED: ALIGN-21b is a STRICT SUBSET of ALIGN-21, not independent evidence.
+  // getCandleCloseTime returns candles[i+1].t for every INTERIOR index, so for i<n-1 both
+  // assertions reduce to a property of the fixture's own evenly-spaced series and hold for any
+  // implementation. Both therefore test exactly ONE code expression: the LAST bar's
+  // start+3600000. Three independent mutations each kill the two together and none kills 21b
+  // alone. Kept for failure localisation, counted as one piece of evidence.
   '  g.record("ALIGN-21b","and consecutive closes are exactly 3600000ms apart, so no boundary is stretched or collapsed",stepOk,"pre[i]-pre[i-1]===3600000 for all i");\n' +
   '  g.record("ALIGN-22","a null series yields an empty array rather than throwing",\n' +
   '    Array.isArray(precomputeCloseTimes(null,"H1"))&&precomputeCloseTimes(null,"H1").length===0,"[] on null");\n' +

@@ -245,24 +245,67 @@ try{
     //   trade, position, balance, journal or decision data -- they are platform telemetry filed
     //   under a shared channel, not ALEX trading state -- so they are excluded here BY PREFIX and
     //   nothing else is. Every genuinely ALEX-originated engine error is still compared.
-    '  engineErrors:alexGEngineErrors.filter(function(e){return String(e&&e.message||e).indexOf("Evidence platform [")!==0;}),' +
+    // §18.20: the exclusion is now by PROVENANCE, not by message text. The old filter dropped any
+    // entry whose message merely STARTED WITH "Evidence platform [" -- a prefix match on content a
+    // leak can choose for itself. Independent verification proved it: writing JVM P&L into the ALEX
+    // error log under that prefix survived both suites AND the full 2,180-fixture gate, while the
+    // identical leak under any other prefix died. The evidence platform now tags its own entries,
+    // so the exclusion cannot be spoofed by writing the right words.
+    '  engineErrors:alexGEngineErrors.filter(function(e){return !(e&&e.__evidencePlatform===true);}),' +
     '  knownVersion:alexGAccountKnownVersion,' +
     '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
-    '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime, decidedCount:alexGDecidedSetups.size,' +
-    '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alexg")===0;}).sort()' +
+    '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime,' +
+    // decidedCount recorded only .size -- rewriting every key while preserving the count was
+    // invisible. The CONTENTS are compared now.
+    '  decidedSetups:Array.from(alexGDecidedSetups).sort(),' +
+    '  decidedEconomic:(typeof alexGDecidedEconomic!=="undefined"?Array.from(alexGDecidedEconomic).sort():null),' +
+    '  signalInFlight:(typeof alexGSignalInFlight!=="undefined"?Array.from(alexGSignalInFlight).sort():null),' +
+    '  zoneState:(typeof alexGZoneState!=="undefined"?alexGZoneState:null),' +
+    // EVERY fxhub_alex* key, not just fxhub_alexg -- a leak into fxhub_alexv2_account sat outside
+    // BOTH snapshots because one matched a narrower prefix than the family it was guarding.
+    '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alex")===0;}).sort()' +
     '           .map(function(k){return k+"="+localStorage.getItem(k);})' +
     '}); };' +
+    // §18.20: this was a SIX-KEY ALLOWLIST while the fixture text claimed "every JVM localStorage
+    // key". save() also persists fxhub_scan, fxhub_checklist, fxhub_alerts, fxhub_env,
+    // fxhub_autoscan and fxhub_trade_notes -- none was compared, so an ALEX commit could overwrite
+    // any of them invisibly. It is now a DENYLIST: every key that is not ALEX-owned is JVM-side
+    // state, so a new key added anywhere is covered by default instead of needing to be remembered.
+    //
+    // The module-scope additions are the ones that MOVE MONEY. pairData is the shared price cache
+    // closePaperPosition fills its exit from when live bid/ask is unavailable, and that
+    // checkPaperPositions reads to decide TAKE_PROFIT/STOP_LOSS -- poisoning it from the ALEX side
+    // moves JVM money. paperPositionsClosing is the in-flight close lock: seeding it with open JVM
+    // ids means those trades can never close again. storageLoadFailures is the INC-001 register
+    // whose clearing disarms the guard that stops a default overwriting real stored data. All three
+    // were outside both snapshots; all three were proven invisible against the full gate.
     'g.snapshotJvmStores=function(){ return JSON.stringify({' +
     '  account:paperAccount, journal:journalEntries, autoTrading:autoTrading,' +
     '  engineErrors:paperEngineErrors, resetHistory:paperResetHistory,' +
     '  reconciliationAudit:paperReconciliationAudit, knownVersion:paperAccountKnownVersion,' +
     '  blockingError:paperLedgerBlockingError, integrityWarning:paperLedgerIntegrityWarning,' +
-    '  storage:localStorage.__keys().filter(function(k){return k==="fxhub_paper"||k==="fxhub_paper_version"' +
-    '           ||k==="fxhub_journal"||k==="fxhub_auto"||k==="fxhub_paper_reset_history"' +
-    '           ||k==="fxhub_paper_reconciliation_audit";}).sort()' +
+    '  pairData:(typeof pairData!=="undefined"?pairData:null),' +
+    '  scanData:(typeof scanData!=="undefined"?scanData:null),' +
+    '  autoScan:(typeof autoScan!=="undefined"?autoScan:null),' +
+    '  checklistState:(typeof checklistState!=="undefined"?checklistState:null),' +
+    '  alertLog:(typeof alertLog!=="undefined"?alertLog:null),' +
+    '  tradeNotes:(typeof tradeNotes!=="undefined"?tradeNotes:null),' +
+    '  storageLoadFailures:(typeof storageLoadFailures!=="undefined"?Object.keys(storageLoadFailures).sort():null),' +
+    '  positionsClosing:(typeof paperPositionsClosing!=="undefined"?Array.from(paperPositionsClosing).sort():null),' +
+    '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alex")!==0;}).sort()' +
     '           .map(function(k){return k+"="+localStorage.getItem(k);})' +
     '}); };' +
     // ── localStorage helpers ──
+    // §18.20: fields the snapshots COMPARE but the reset helpers could not clear, which made an
+    // idempotent leak (one writing the same value twice) identical before and after.
+    'g.setAlexGZoneState=function(v){alexGZoneState=v;};' +
+    'g.setAlexGLastEvaluatedCloseTime=function(v){alexGLastEvaluatedCloseTime=v;};' +
+    'g.setAlexGLedgerBlockingError=function(v){alexGLedgerBlockingError=v;};' +
+    'g.setAlexGLedgerIntegrityWarning=function(v){alexGLedgerIntegrityWarning=v;};' +
+    'g.setPaperLedgerBlockingError=function(v){paperLedgerBlockingError=v;};' +
+    'g.setPaperLedgerIntegrityWarning=function(v){paperLedgerIntegrityWarning=v;};' +
+    'g.clearStorageLoadFailures=function(){storageLoadFailures={};};' +
+    'g.seedStorageLoadFailure=function(k,m){storageLoadFailures[k]={message:m,at:"2026-01-01T00:00:00.000Z"};};' +
     'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +
     'g.clearLocalStorage=function(){localStorage.__clear();};' +
     'return runV1239PaperTradingE2EFixtures(g);'
