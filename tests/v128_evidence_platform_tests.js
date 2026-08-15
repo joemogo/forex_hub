@@ -1476,6 +1476,58 @@ function runEvidencePlatformFixtures(g){
     eq(s.gapsWithFailures[0].from,'2026-08-11T13:01:00.000Z');
     eq(s.lastSuccessfulPollAt,'2026-08-11T19:01:00.000Z');
   });
+  // ── MOGO-021 §17.3: the summariser was blind to an ONGOING outage ────────────────────────────
+  // A gap existed only BETWEEN TWO RECORDS THAT BOTH EXIST, so an outage was detectable only if
+  // the system came back. A tab dead for three hours reported missedIntervals 0 and maxGapMs
+  // 60000 -- precisely the question an operator consults this to answer, answered wrongly.
+  t('L10a a system that DIED three hours ago is reported as an ongoing outage, not as healthy',function(){
+    const mk=function(id,at){ return{kind:'POLL',seq:id,tickId:'T'+id,startedAt:at,
+      outcome:'OK',instrumentsEvaluated:[],failures:[]}; };
+    const list=[mk(1,'2026-08-11T13:00:00.000Z'),mk(2,'2026-08-11T13:01:00.000Z')];
+    // Same list, same records. The ONLY difference is that the second call is told what time it is.
+    const blind=g.evidenceSummarizeObservations(list);
+    eq(blind.missedIntervals,0,'PRECONDITION: without a clock the records alone look continuous');
+    eq(blind.maxGapMs,60000,'PRECONDITION: the widest gap BETWEEN records is one ordinary interval');
+    eq(blind.ongoingOutage,null,'and the ongoing-outage question is reported as NOT ASKED, not as false');
+    const now=Date.parse('2026-08-11T16:01:00.000Z');   // three hours after the last poll
+    const seeing=g.evidenceSummarizeObservations(list,now);
+    eq(seeing.ongoingOutage,true,'told the time, the same records show an outage that is STILL HAPPENING');
+    eq(seeing.trailingGapMs,3*3600000,'measured from the last poll to now');
+    eq(seeing.trailingMissedIntervals,179,'179 sixty-second intervals missed since');
+    eq(seeing.missedIntervals,179,'and it is folded into the headline figure an operator glances at');
+    eq(seeing.maxGapMs,3*3600000,'so is the widest gap');
+    eq(seeing.maxGapBetween.ongoing,true,'flagged as still open rather than a closed historical gap');
+    eq(seeing.trailingSince,'2026-08-11T13:01:00.000Z','anchored to the last poll of ANY outcome');
+  });
+  t('L10b a HEALTHY loop is not reported as an outage -- the trailing term has both directions',function(){
+    const mk=function(id,at){ return{kind:'POLL',seq:id,startedAt:at,outcome:'OK',
+      instrumentsEvaluated:[],failures:[]}; };
+    const list=[mk(1,'2026-08-11T13:00:00.000Z'),mk(2,'2026-08-11T13:01:00.000Z')];
+    const now=Date.parse('2026-08-11T13:01:30.000Z');   // half an interval later: still alive
+    const s=g.evidenceSummarizeObservations(list,now);
+    eq(s.ongoingOutage,false,'thirty seconds after the last poll is not an outage');
+    eq(s.trailingMissedIntervals,0,'nothing missed');
+    eq(s.missedIntervals,0,'and the headline figure is not inflated by a healthy trailing gap');
+    eq(s.maxGapMs,60000,'nor does a short trailing gap displace the real widest gap');
+  });
+  t('L10c the trailing term measures liveness from the last poll of ANY outcome, not the last SUCCESS',function(){
+    const s=g.evidenceSummarizeObservations([
+      {kind:'POLL',seq:1,startedAt:'2026-08-11T13:00:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]},
+      {kind:'POLL',seq:2,startedAt:'2026-08-11T13:01:00.000Z',outcome:'ERROR',instrumentsEvaluated:[],failures:[]}
+    ],Date.parse('2026-08-11T13:01:30.000Z'));
+    eq(s.trailingSince,'2026-08-11T13:01:00.000Z','the failing poll still proves the LOOP is running');
+    eq(s.ongoingOutage,false,'so this is a failing loop, not a dead one');
+    eq(s.lastSuccessfulPollAt,'2026-08-11T13:00:00.000Z',
+      'while the separate question -- when did anything last SUCCEED -- keeps its own answer');
+  });
+  t('L10d a clock that runs BACKWARDS is reported rather than silently clamped to zero',function(){
+    const s=g.evidenceSummarizeObservations([
+      {kind:'POLL',seq:1,startedAt:'2026-08-11T13:05:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]},
+      {kind:'POLL',seq:2,startedAt:'2026-08-11T13:00:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]}
+    ]);
+    eq(s.negativeIntervals,1,'the one sample proving the timeline is untrustworthy is surfaced');
+    eq(s.missedIntervals,0,'while the missed-interval arithmetic still refuses to invent negatives');
+  });
   t('L11 API/data failures are associated with the period they occurred in',function(){
     const s=g.evidenceSummarizeObservations([
       {kind:'POLL',seq:1,startedAt:'2026-08-11T13:00:00.000Z',outcome:'ERROR',

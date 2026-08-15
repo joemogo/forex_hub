@@ -2965,7 +2965,7 @@ underlying **detection** is covered; only the **display** is not. `sharedRiskSta
 forced to `'MATCH'`, so drift in `pipSize`/`pipValuePerLot` — the two functions both engines' risk
 math depends on — would report clean.
 
-### 17.3 Continuity: the summariser is not called by anything, and cannot see an ongoing outage
+### 17.3 ✅ PARTLY FIXED — the summariser could not see an ongoing outage (v12.21.3)
 
 `evidenceSummarizeObservations` appears **exactly once in the application — its own definition.**
 Nothing consumes `missedIntervals`, `maxGapMs` or `lastSuccessfulPollAt`. **The "84.5% continuity, 12
@@ -2979,10 +2979,39 @@ The arithmetic itself is reasonably covered, but structurally blind in the direc
   both exist*. An outage is detectable only if the system came back. A frozen tab, a sleep that never
   wakes, or any **ongoing** outage is invisible, which is precisely the question an operator would
   consult it to answer.
-* A poll built with no `outcome` is recorded as **`'OK'`** and counted in `pollsOk` — an attempt
-  credited as a success, the same disease as §9.6a and §11.2.
-* A poll with no `startedAt` is stamped **"now"**, manufacturing continuity from a missing record.
 * A rewound clock pushes a **negative** interval that is silently clamped away.
+
+> **Two bullets originally in this section do not hold, and are withdrawn.** I claimed a poll built
+> with no `outcome` is recorded as `'OK'` and counted in `pollsOk`, and that a poll with no
+> `startedAt` is stamped "now". Checked against the code: `evidenceBuildPollObservation` defaults
+> `outcome` to `'UNKNOWN'` — counted as neither `pollsOk` nor `pollsFailed` — and leaves `startedAt`
+> null; the continuity arithmetic keys on `startedAt`, so such a record contributes no interval at
+> all. Only `evidenceObservationBase` stamps `occurredAt`, which the gap math never reads. An audit
+> finding that does not survive checking must not stand.
+
+---
+
+**RESOLVED in v12.21.3 — the trailing-gap blindness and the silent negative clamp.**
+
+An **optional, purely additive** `nowMs` parameter adds a trailing term measured from the last poll
+to now (`trailingGapMs`, `trailingMissedIntervals`, `trailingSince`, `ongoingOutage`). Omitting it
+reports `ongoingOutage: null` — **not asked**, which is distinct from false — so no existing caller
+or fixture changes. The term is folded into `missedIntervals` and `maxGapMs` too, because those are
+the figures an operator actually glances at. It measures from the last poll of **any** outcome, not
+the last successful one: the question is whether the loop is running at all, which a failing poll
+still answers yes to. `lastSuccessfulPollAt` keeps the other question.
+
+Negative intervals are now **counted and reported** rather than clamped away, while the
+missed-interval arithmetic still refuses to invent negatives.
+
+**4 fixtures (L10a–d), both directions** — a healthy loop 30s past its last poll must *not* report an
+outage, and a short trailing gap must not displace the real widest historical gap. Seven mutations
+(term removed; measured from the last success; not folded into the headline; `ongoingOutage` forced
+true; negative counter disabled; trailing gap always overwriting `maxGapMs`; count off by one) each
+kill 1–3 fixtures.
+
+**Still open:** `evidenceSummarizeObservations` is still called by nothing in the application — the
+arithmetic is now correct and covered, but no screen consumes it.
 
 ### 17.4 ✅ FIXED — evidence integrity: a stated contract with nothing behind it (v12.21.2)
 
