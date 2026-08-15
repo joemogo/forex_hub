@@ -220,6 +220,11 @@ const wrapped = new Function('g',
   'g.alexGCreateSetupRecord=alexGCreateSetupRecord;' +
   'g.alexGSetupId=alexGSetupId;' +
   'g.marketDataCompletenessOf=marketDataCompletenessOf;' +
+  'g.marketDataClassify=marketDataClassify;' +
+  'g.alexGEvaluateBreakRetest=alexGEvaluateBreakRetest;' +
+  'g.alexGEvaluateRepeatedReaction=alexGEvaluateRepeatedReaction;' +
+  'g.alexGLastEvaluatedFor=function(pair){ return alexGLastEvaluatedCloseTime[pair]||null; };' +
+  'g.alexGZoneStateAll=function(pair){ return alexGZoneState[pair]||null; };' +
   'g.MARKET_DATA_COMPLETENESS=function(){return MARKET_DATA_COMPLETENESS;};' +
   'g.MARKET_DATA_MIN_USABLE_CANDLES=function(){return MARKET_DATA_MIN_USABLE_CANDLES;};' +
   'return runV1237DetectionControlFixtures(g);'

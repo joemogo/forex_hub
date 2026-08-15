@@ -2657,6 +2657,62 @@ fixture may stub, override or force a protected function's outcome.
 
 ---
 
+### 15.9 Detection surface CLOSED — 52 of 53, and one proven unkillable
+
+The `v1237` suite is now **83 fixtures**. Scored serially in a clean directory, one driver, one
+working copy:
+
+| | mutations |
+|---|---|
+| originally uncovered (killed 0 of 1,440) | **53** |
+| now killed | **52** |
+| proven semantically equivalent | **1** |
+
+**The one that remains is not a gap.** `AG-21` swaps the order in which break-retest and
+repeated-reaction are evaluated. `alexGEvaluateRepeatedReaction` requires `zone.status==='validated'`
+and `alexGEvaluateBreakRetest` requires `'broken'` — **mutually exclusive by construction**, so no
+zone can satisfy both and the order cannot change any outcome. No honest fixture can kill it.
+`PRECEDENCE-1` instead pins the *invariant that makes it equivalent*, in both directions, so if
+either status guard were ever relaxed, precedence would start deciding real setups and this fixture
+would notice.
+
+The last eleven closed: the AOI clustering **tolerance** (three touches spread over 10 pips are one
+zone at the real tolerance and three separate levels at a hundredth of it — every pre-existing
+3-touch fixture used touches at the *same* price, which cluster at any tolerance and so could never
+discriminate); the `detectSignals` AOI badge; the **partial** wick credit and its exclusive 0.35
+boundary; the swing window's outermost neighbour; nearest-cluster assignment and its two tie-breaks;
+the inclusive same-interaction window; the 10-candle usable floor; the live trigger's 25-candle
+floor; that the engine evaluates H4/D/W **at all**; and that an HTF candle closing *exactly* on the
+H1 close is consumed in that step rather than left one candle stale forever.
+
+> **Two of my own fixtures passed for the wrong reason and mutation testing caught both.**
+> `SC-WICK-2`'s first "tie" was not a tie — `1.10050−1.10000` and `1.10000−1.09950` are not equal in
+> binary floating point, so it was really a nearest-wins case proving nothing about the tie-break
+> cascade; rebuilt from identical centres. And **`DUPE-1` did not touch the guard it was named
+> for**: re-running the engine never reaches `alexGCreateSetupRecord` twice for the same touch,
+> because an upstream mechanism already prevents it, so the duplicate guard could be deleted
+> outright with the fixture still green. It now drives the guard **directly**, with the real zone and
+> touch the engine just produced, plus a positive control proving the same call records against
+> empty state.
+
+### 15.10 ⚠️ A re-score I published nothing from, because it was invalid
+
+I ran the 53-mutation re-score twice concurrently — the first launched with `nohup … &` *inside* an
+already-backgrounded call, which I wrongly concluded had died. Both processes mutated and restored
+**the same working copy** while running gates, so one wrote mutant *i* while the other's gate scored
+it as *i−1*. The results were a **perfect off-by-one shift**: every mutation credited with its
+neighbour's kill count, yielding **11 false survivors out of 53**.
+
+The tell was a stored record contradicting its own log line — one mutation's JSON entry held a
+different mutation's failure and `drift_detected:true`. Re-run serially, **all four survivors I
+spot-checked first actually died.**
+
+This is the same disease as an unapplied mutation: *the gate that ran was not the gate you think you
+scored.* Proving a mutation applied is necessary but not sufficient — it must still be applied when
+the suite executes. **One driver, one directory.** (A second harness error found the same way: `cp -R
+tests dest/tests` nests as `dest/tests/tests` when the destination exists, silently running the old
+suite. Rebuild the copy; never refresh it in place.)
+
 ## 16. 🔴 Paper-trade execution coverage — the worst gap found, and it is where the money is
 
 Independent adversarial audit. **96 behaviour-changing mutations scored against the whole

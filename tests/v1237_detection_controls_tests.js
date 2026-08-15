@@ -1780,6 +1780,209 @@ function runV1237DetectionControlFixtures(g){
     return 'dnW/range 0.40 -> "Wick forming" ('+partialItem(above).pts+' pts); 0.30 -> nothing; short side -> nothing';
   });
 
+  // The H1-master-clock orchestrator catches up every newly-closed H4/D/W candle after each H1
+  // candle. The whole higher-timeframe half of the engine could be skipped, or its boundary
+  // flipped by one candle, with the entire repository green.
+  const HTF_T0=Date.UTC(2026,0,5,0,0,0);   // a Monday; the zone engine has no session/day gate
+  const HR=3600000;
+  function htfBar(t,low){ return{o:low+0.00050,h:low+0.00100,l:low,c:low+0.00050,t:new Date(t)}; }
+  function htfH1(){ const a=[]; for(let i=0;i<8;i++) a.push(htfBar(HTF_T0+i*HR,1.09800+i*0.00010)); return a; }
+  // H4 closes land at T0+4h and T0+8h -- the second EXACTLY on the last H1 candle's close.
+  function htfH4(){ return [htfBar(HTF_T0,1.09700),htfBar(HTF_T0+4*HR,1.09750),htfBar(HTF_T0+8*HR,1.09720)]; }
+
+  await t('PRECEDENCE-1 the two setup types are MUTUALLY EXCLUSIVE on zone status -- which is why their order is safe',async function(){
+    // Swapping the order in which alexGClassifySetup evaluates break-retest and repeated-reaction
+    // kills nothing, and no fixture can honestly make it kill anything: the two predicates gate on
+    // OPPOSITE zone statuses, so no zone can ever satisfy both and the order cannot change an
+    // outcome. That makes the swap a semantically equivalent mutation, not an uncovered rule.
+    //
+    // What IS worth pinning is the invariant that makes it equivalent. If either status guard were
+    // ever relaxed, precedence would start deciding real setups silently -- and this fixture is
+    // what would notice.
+    const cfg=g.ALEXG_CONFIG();
+    const validated={id:'Z1',status:'validated',touches:[1,2,3,4],brokenAtBar:null,brokenAt:null,brokenDirection:null};
+    const broken={id:'Z2',status:'broken',touches:[1,2,3,4],brokenAtBar:10,brokenAt:1000,brokenDirection:'downThroughSupport'};
+    const retestTouch={swingType:'high',fromSide:'below'};
+    // A validated zone: repeated-reaction is available, break-retest is refused outright.
+    eq(g.alexGEvaluateRepeatedReaction(validated,retestTouch,3,'clean',cfg).qualifies,true,
+      'PRECONDITION: a clean validated zone on its 4th reaction DOES qualify as a repeated reaction');
+    eq(g.alexGEvaluateBreakRetest(validated,retestTouch,3,11,cfg).qualifies,false,
+      'and the very same zone can NEVER qualify as a break-retest -- it was never broken');
+    // A broken zone: the mirror image.
+    eq(g.alexGEvaluateBreakRetest(broken,retestTouch,3,11,cfg).qualifies,true,
+      'PRECONDITION: a broken zone retested in the right direction DOES qualify as a break-retest');
+    eq(g.alexGEvaluateRepeatedReaction(broken,retestTouch,3,'clean',cfg).qualifies,false,
+      'and the same broken zone can NEVER qualify as a repeated reaction -- the status guard forbids it');
+    return 'validated -> repeated only; broken -> break-retest only. No zone satisfies both, so evaluation order cannot decide anything.';
+  });
+
+  await t('DUPE-1 re-running the engine over the same bars does NOT record the same setup twice',async function(){
+    // alexGRunSetupEngine is re-run over a rolling window on EVERY live poll, so the same
+    // historical setup is re-derived every tick. The guard in alexGCreateSetupRecord is the only
+    // thing stopping alexGSetupState from growing without bound and presenting the SAME setup as
+    // a fresh one over and over -- which downstream is a duplicate trade, not a cosmetic problem.
+    g.resetAlexGZoneEngine();
+    const first=runEngine(supportSeries(1.09810));
+    eq(first.setups.length,1,'PRECONDITION: the series really does produce one setup');
+    const afterFirst=g.alexGSetupStateAll().length;
+    eq(afterFirst,1,'PRECONDITION: and exactly one is recorded');
+    const firstId=g.alexGSetupStateAll()[0].setupId;
+    // Re-run over the SAME bars WITHOUT resetting -- exactly what the next live poll does.
+    runEngine(supportSeries(1.09810));
+    eq(g.alexGSetupStateAll().length,afterFirst,
+      'a second identical pass records nothing new ('+g.alexGSetupStateAll().length+' setups)');
+    eq(g.alexGSetupStateAll()[0].setupId,firstId,'and the one that is there is the ORIGINAL record, not a rewrite');
+    // A third pass, to prove it is a guard rather than an alternating quirk.
+    runEngine(supportSeries(1.09810));
+    eq(g.alexGSetupStateAll().length,afterFirst,'and a third pass still records nothing new');
+
+    // ── AND NOW THE GUARD ITSELF ──────────────────────────────────────────────────────────────
+    // The three assertions above are TRUE but do NOT exercise the duplicate guard: disabling
+    // `if(alexGSetupState.some(s=>s.setupId===setupId)) return null;` leaves every one of them
+    // passing, because re-running the engine never reaches alexGCreateSetupRecord a second time
+    // for the same touch -- an upstream mechanism already prevents that. Asserting only through
+    // the engine would report this rule as covered while the guard could be deleted outright.
+    // (Found by mutation, not by reading: the first version of this fixture stopped here.)
+    //
+    // So the guard is driven DIRECTLY, with the real zone and the real touch the engine just
+    // produced -- the exact inputs that generate the exact setupId already in state.
+    const bars=supportSeries(1.09810);
+    const zone=onlyZone(first);
+    const touch=zone.touches[3];
+    const cfg=g.ALEXG_CONFIG();
+    const before=g.alexGSetupStateAll().length;
+    const dupe=g.alexGCreateSetupRecord('EUR_USD','H1',zone,touch,3,'A_repeatedReaction',{},
+      'clean',bars,touch.barIndex,cfg);
+    eq(dupe,null,'creating a record for a setupId already in state returns null');
+    eq(g.alexGSetupStateAll().length,before,'and records nothing -- the state does not grow');
+    // POSITIVE CONTROL: the guard is keyed on setup IDENTITY, not "refuse everything". The same
+    // call against a fresh state DOES record, so the null above is the guard and not a dead path.
+    g.resetAlexGZoneEngine();
+    const accepted=g.alexGCreateSetupRecord('EUR_USD','H1',zone,touch,3,'A_repeatedReaction',{},
+      'clean',bars,touch.barIndex,cfg);
+    ok(accepted,'the identical call against empty state DOES create a record');
+    eq(g.alexGSetupStateAll().length,1,'and records exactly one');
+    eq(accepted.setupId,firstId,'with the very same setupId the guard was rejecting a moment ago');
+    return 'engine idempotent over the same window; direct duplicate call -> null and no growth; same call on empty state -> records '+firstId;
+  });
+
+  await t('HTF-1 the engine actually evaluates the HIGHER timeframes, not just H1',async function(){
+    g.resetAlexGZoneEngine();
+    g.alexGRunSetupEngine('EUR_USD',{H1:htfH1(),H4:htfH4(),D:[],W:[]});
+    const seen=g.alexGLastEvaluatedFor('EUR_USD');
+    ok(seen,'the engine records what it evaluated');
+    ok(seen.H1!=null,'PRECONDITION: H1 was evaluated -- otherwise nothing ran at all');
+    ok(seen.H4!=null,'H4 was evaluated too: the higher-timeframe catch-up is not a no-op');
+    const st=g.alexGZoneStateAll('EUR_USD');
+    ok(st&&st.H4,'and H4 has its own zone state, built from H4 candles');
+    // NEGATIVE, ONE VARIABLE AWAY: the same H1 series with no H4 data records no H4 evaluation.
+    g.resetAlexGZoneEngine();
+    g.alexGRunSetupEngine('EUR_USD',{H1:htfH1(),H4:[],D:[],W:[]});
+    eq(g.alexGLastEvaluatedFor('EUR_USD').H4,undefined,
+      'with an empty H4 dataset nothing is recorded -- so the assertion above tracks real H4 work');
+    return 'H4 evaluated with data, not evaluated without it';
+  });
+
+  await t('HTF-2 an HTF candle closing EXACTLY on the H1 close is consumed in that step, not left behind',async function(){
+    // `closeTimes[tf][ptr+1] <= h1CloseTs`. Drop the `=` and a higher-timeframe candle that closes
+    // on the very same instant as the H1 candle is skipped -- so the engine trades an H1 bar while
+    // its H4 structure is one candle stale, permanently, at every aligned boundary.
+    g.resetAlexGZoneEngine();
+    g.alexGRunSetupEngine('EUR_USD',{H1:htfH1(),H4:htfH4(),D:[],W:[]});
+    const seen=g.alexGLastEvaluatedFor('EUR_USD');
+    eq(seen.H1,HTF_T0+8*HR,'PRECONDITION: the last H1 candle closes at T0+8h');
+    eq(seen.H4,HTF_T0+8*HR,
+      'and the H4 candle closing at exactly T0+8h was consumed in that same step -- an exclusive '+
+      'boundary would leave H4 stuck at T0+4h');
+    return 'H1 close T0+8h; H4 caught up to T0+8h (inclusive boundary proven)';
+  });
+
+  await t('CLUST-NEAR-1 a swing joins the NEAREST eligible cluster, not the first one in the list',async function(){
+    // alexGAssignCluster scans for the minimum distance. Collapse that scan to "take eligible[0]"
+    // and a swing silently joins whichever zone happens to sit earlier in the array -- the wrong
+    // zone, with the wrong touch count, feeding the wrong setup.
+    const TOL=0.00100;
+    const clusters=[
+      {id:'Z-far', swingType:'low',center:1.10090,createdAtCloseTimeMs:1000},
+      {id:'Z-near',swingType:'low',center:1.10005,createdAtCloseTimeMs:2000}
+    ];
+    const chosen=g.alexGAssignCluster(clusters,'low',1.10000,TOL);
+    ok(chosen,'a cluster must be chosen at all');
+    eq(chosen.id,'Z-near','the NEARER cluster wins, even though it is second in the array and created LATER');
+    // PRECONDITION: both really were eligible -- otherwise "nearest" was never exercised.
+    ok(Math.abs(1.10000-clusters[0].center)<=TOL&&Math.abs(1.10000-clusters[1].center)<=TOL,
+      'PRECONDITION: both clusters are inside the grouping tolerance, so the choice is genuinely between them');
+    // CONTROL: reverse the array. A first-not-nearest rule would flip the answer; the real rule cannot.
+    const reversed=g.alexGAssignCluster([clusters[1],clusters[0]],'low',1.10000,TOL);
+    eq(reversed.id,'Z-near','and the same cluster wins with the array order reversed -- order is not the rule');
+    // And the documented tie-break still applies when the distances are genuinely equal. The tie
+    // is built from IDENTICAL centres rather than two centres equidistant either side of the
+    // price: 1.10050-1.10000 and 1.10000-1.09950 are NOT equal in binary floating point, so that
+    // "tie" is really a nearest-wins case and would prove nothing about the cascade.
+    const tie=g.alexGAssignCluster([
+      {id:'Z-b',swingType:'low',center:1.10050,createdAtCloseTimeMs:2000},
+      {id:'Z-a',swingType:'low',center:1.10050,createdAtCloseTimeMs:1000}
+    ],'low',1.10000,TOL);
+    eq(tie.id,'Z-a','on an exact distance tie the EARLIER-created cluster wins, per the frozen cascade');
+    // ...and the id tie-break below it, when even the creation times match.
+    const tie2=g.alexGAssignCluster([
+      {id:'Z-z',swingType:'low',center:1.10050,createdAtCloseTimeMs:1000},
+      {id:'Z-a',swingType:'low',center:1.10050,createdAtCloseTimeMs:1000}
+    ],'low',1.10000,TOL);
+    eq(tie2.id,'Z-a','and on an exact creation-time tie the lower cluster id wins');
+    return 'nearest wins in both array orders; exact tie falls to the earlier createdAtCloseTimeMs';
+  });
+
+  await t('SAMEINT-1 the same-interaction window is INCLUSIVE at exactly maxBarGap',async function(){
+    // `<=` vs `<`. One bar of difference decides whether two swing anchors are ONE interaction or
+    // two -- which decides the touch count, which decides whether a zone reaches its setup bar.
+    const GAP=3;
+    const A={swingType:'low',barIndex:10};
+    eq(g.alexGIsSameInteraction(A,{swingType:'low',barIndex:13},GAP),true,
+      'exactly maxBarGap apart is ONE interaction -- the boundary is inclusive');
+    eq(g.alexGIsSameInteraction(A,{swingType:'low',barIndex:14},GAP),false,
+      'one bar further apart is TWO interactions');
+    eq(g.alexGIsSameInteraction(A,{swingType:'low',barIndex:10},GAP),true,'the same bar is trivially one');
+    // And the type check is real, not incidental to the distance.
+    eq(g.alexGIsSameInteraction(A,{swingType:'high',barIndex:11},GAP),false,
+      'a swing HIGH one bar away is never the same interaction as a swing LOW');
+    return 'gap 3 -> same; gap 4 -> different; opposite swingType -> never same';
+  });
+
+  await t('MINUSABLE-1 the usable-candle floor is exactly 10 -- ten is usable, nine is not',async function(){
+    const C=g.MARKET_DATA_COMPLETENESS();
+    eq(g.MARKET_DATA_MIN_USABLE_CANDLES(),10,'PRECONDITION: the floor really is 10');
+    eq(g.marketDataClassify(10,10,10),C.COMPLETE,'exactly ten usable candles, count met -> COMPLETE');
+    eq(g.marketDataClassify(20,15,10),C.PARTIAL,'exactly ten usable but short of the request -> PARTIAL');
+    eq(g.marketDataClassify(10,10,9),C.UNAVAILABLE,'nine usable -> UNAVAILABLE, whatever else arrived');
+    eq(g.marketDataClassify(10,10,0),C.UNAVAILABLE,'zero usable -> UNAVAILABLE');
+    // The rule that matters most: short data is never rounded UP to COMPLETE.
+    eq(g.marketDataClassify(220,219,219),C.PARTIAL,'one candle short of the request is PARTIAL, not COMPLETE');
+    return 'floor=10; 10 usable+count met -> COMPLETE, 9 -> UNAVAILABLE, 219/220 -> PARTIAL';
+  });
+
+  await t('ELT-MIN-1 the live trigger needs 25 M15 candles -- twenty-five works, twenty-four is "No data"',async function(){
+    // The guard could be raised to any value and nothing objected, silently starving the trigger
+    // on every pair whose history is merely adequate rather than generous.
+    const base=reversalM15();
+    ok(base.length>=25,'PRECONDITION: the working series has at least 25 bars ('+base.length+')');
+    const setup=function(bars){
+      g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
+      g.setM15Bars(bars); g.setBidAsk(1.10025,1.10035);
+      g.resetScanData(); g.setScanData('EUR/USD',BULLISH_TABLE);
+    };
+    setup(base.slice(-24));
+    const short=await g.evaluateLiveTrigger('EUR_USD');
+    eq(short.fires,false,'24 candles cannot fire');
+    eq(short.reason,'No data','and the refusal names the data floor, not some later gate');
+    // POSITIVE CONTROL, ONE BAR AWAY: the same series with its 25th bar restored must get PAST
+    // the data floor. Without this the fixture would pass with the floor deleted entirely.
+    setup(base.slice(-25));
+    const okv=await g.evaluateLiveTrigger('EUR_USD');
+    ok(okv.reason!=='No data','25 candles clear the data floor (reason now: '+okv.reason+')');
+    return '24 -> "No data"; 25 -> past the floor. Exactly one bar apart.';
+  });
+
   await t('FSP-EDGE-1 the swing window checks the OUTERMOST neighbour too -- the bar exactly `lookback` away',async function(){
     // `for(k=1;k<=lookback;k++)`. Drop the `=` and the neighbour at exactly the lookback distance
     // stops being consulted, so a bar with a lower low three bars out is still reported as a swing
