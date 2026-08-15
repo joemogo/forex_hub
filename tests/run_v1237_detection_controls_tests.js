@@ -214,6 +214,14 @@ const wrapped = new Function('g',
   'g.resetAlexGZoneEngine=function(){ alexGZoneState={}; alexGSetupState=[]; alexGLastEvaluatedCloseTime={}; };' +
   'g.alexGZoneStateFor=function(pair,tf){ return alexGZoneState[pair][tf]; };' +
   'g.alexGSetupStateAll=function(){ return alexGSetupState; };' +
+  // ── S14: the eleven rules that survived even the first detection-controls pass ──
+  'g.clusterLevels=clusterLevels;' +
+  'g.alexGIsSameInteraction=alexGIsSameInteraction;' +
+  'g.alexGCreateSetupRecord=alexGCreateSetupRecord;' +
+  'g.alexGSetupId=alexGSetupId;' +
+  'g.marketDataCompletenessOf=marketDataCompletenessOf;' +
+  'g.MARKET_DATA_COMPLETENESS=function(){return MARKET_DATA_COMPLETENESS;};' +
+  'g.MARKET_DATA_MIN_USABLE_CANDLES=function(){return MARKET_DATA_MIN_USABLE_CANDLES;};' +
   'return runV1237DetectionControlFixtures(g);'
 );
 

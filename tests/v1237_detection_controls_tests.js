@@ -1717,6 +1717,108 @@ function runV1237DetectionControlFixtures(g){
     return 'Thu/Fri capture: with-trend records "Bearish engulf (1)"; counter-trend records "none" on every row, 3 named at the confirmation gate';
   });
 
+  // ══ S14 — the rules that survived even the first detection-controls pass ═══════════════════
+  // A clean single-process re-score of the 53 originally-uncovered mutations against this suite
+  // found these still killing nothing. (The first re-score I ran was invalid: two driver processes
+  // shared one working copy, so every result was attributed to its neighbour -- a perfect
+  // off-by-one shift. Discarded and re-run serially.)
+
+  await t('AOI4-1 the clustering TOLERANCE is what makes three separated touches one zone -- shrink it and the zone disappears',async function(){
+    // The rule under test is `tolerance = max(range*0.04, currentPrice*0.001)`. Three touches
+    // spread across 10 pips are ONE zone at the real tolerance (~11 pips here). They are three
+    // separate 1-touch levels at a hundredth of it, and nothing reaches the 3-touch bar.
+    const SPREAD=[{idx:5,l:1.09500},{idx:12,l:1.09550},{idx:19,l:1.09600}];
+    const spread=g.computeAOIWithTouches(shelfSeries(PLATEAU_S4,SPREAD),100,3);
+    // PRECONDITION: the tolerance really is the ~11-pip figure, and the spread really is inside it.
+    near(spread.band,1.10300*0.001,1e-9,'PRECONDITION: tolerance is the currentPrice*0.001 floor, not the range term');
+    ok(0.00100<spread.band,'PRECONDITION: the 10-pip spread of the three touches fits inside it');
+    ok(spread.support!=null,'the three SEPARATED touches are grouped into one real zone');
+    eq(spread.supportTouches,3,'and counted as three touches of that one zone');
+    ok(spread.support>1.09500&&spread.support<1.09600,
+      'the zone sits between the outermost touches ('+spread.support.toFixed(5)+'), proving they were merged rather than one being picked');
+    // POSITIVE CONTROL, one variable away: identical touches cluster at ANY tolerance, so they
+    // could never discriminate. The spread is the whole point of the fixture.
+    const tight=g.computeAOIWithTouches(shelfSeries(PLATEAU_S4,TOUCH_3),100,3);
+    eq(tight.supportTouches,3,'CONTROL: three touches at the SAME price also make a zone -- but would do so at any tolerance');
+    near(tight.support,1.09500,1e-9,'and sit exactly on their shared price');
+    return 'band='+spread.band.toFixed(5)+'; 3 touches spread over 10 pips merge to '+spread.support.toFixed(5);
+  });
+
+  await t('DS-AOI-1 detectSignals raises the AOI touch badge when price is AT the zone -- and not when it is away from it',async function(){
+    // aoiSigTol = max(band, pipSize*12). The badge is the only thing that tells the operator the
+    // engine believes price is at structure; it could be deleted outright with the gate silent.
+    const at=g.detectSignals(shelfSeries(PLATEAU_S4,TOUCH_3,{o:1.09560,h:1.09600,l:1.09540,c:1.09550}),'EUR_USD');
+    const atAoi=at.filter(function(s){return s.type==='aoi';});
+    ok(atAoi.length>0,'an AOI signal is raised at all');
+    ok(atAoi.some(function(s){return s.dir==='buy'&&s.label==='AOI support touch';}),
+      'and it is the SUPPORT touch, on the buy side: '+typesOf(at));
+    // NEGATIVE, ONE VARIABLE AWAY: the identical series, only the final close moved off the zone.
+    const away=g.detectSignals(shelfSeries(PLATEAU_S4,TOUCH_3),'EUR_USD');
+    const awayAoi=away.filter(function(s){return s.type==='aoi'&&s.dir==='buy';});
+    eq(awayAoi.length,0,'with the close back up at the plateau, no support-touch badge is raised: '+typesOf(away));
+    return 'close 1.09550 at the 1.09500 zone -> "AOI support touch"; close 1.10300 -> none';
+  });
+
+  await t('SC-WICK-1 the PARTIAL wick credit has its own threshold, distinct from the full one',async function(){
+    // scoreConfluence gives half the wick weight at dnW/range > 0.35 ("Wick forming") and the full
+    // weight only at > 0.55 with a small body. The partial threshold had no control of any kind.
+    const partialItem=function(c){ return c.items.filter(function(i){return i.label==='Wick forming';})[0]; };
+    const hitItem=function(c){ return c.items.filter(function(i){return i.label==='Rejection wick'&&i.state==='hit';})[0]; };
+    // ratio 0.40: above the partial threshold, below the full one.
+    const above=g.scoreConfluence(quiet([bar(1.10040,1.10100,1.10000,1.10090)]),'EUR_USD','long');
+    ok(partialItem(above),'a 0.40 lower wick earns the PARTIAL credit');
+    eq(partialItem(above).state,'partial','recorded as partial, not as a full hit');
+    eq(partialItem(above).pts,Math.round(g.WEIGHTS().wick*0.5),'worth exactly half the wick weight');
+    ok(!hitItem(above),'and NOT the full rejection-wick credit');
+    // NEGATIVE, ONE VARIABLE AWAY: ratio 0.30 -- the same candle with the low raised 10 points.
+    const below=g.scoreConfluence(quiet([bar(1.10040,1.10100,1.10010,1.10090)]),'EUR_USD','long');
+    ok(!partialItem(below),'a 0.30 lower wick earns nothing');
+    ok(below.total<above.total,'and scores strictly lower ('+below.total+' < '+above.total+')');
+    // The SHORT side reads the OPPOSITE wick -- the same 0.40 lower wick must earn a long nothing.
+    const shortSide=g.scoreConfluence(quiet([bar(1.10040,1.10100,1.10000,1.10090)]),'EUR_USD','short');
+    ok(!partialItem(shortSide),'the same candle gives a SHORT no partial credit -- the rule is sided');
+    return 'dnW/range 0.40 -> "Wick forming" ('+partialItem(above).pts+' pts); 0.30 -> nothing; short side -> nothing';
+  });
+
+  await t('FSP-EDGE-1 the swing window checks the OUTERMOST neighbour too -- the bar exactly `lookback` away',async function(){
+    // `for(k=1;k<=lookback;k++)`. Drop the `=` and the neighbour at exactly the lookback distance
+    // stops being consulted, so a bar with a lower low three bars out is still reported as a swing
+    // low. Every zone, cluster and AOI downstream is built on these points.
+    const mk=function(lows){ return lows.map(function(l){ return bar(l+0.00050,l+0.00100,l,l+0.00050); }); };
+    //          idx:    0        1        2        3(candidate) 4        5        6        7
+    const DISQUALIFIED=[1.09900,1.10200,1.10100,1.10000,     1.10100,1.10200,1.10300,1.10400];
+    const sp=g.findSwingPoints(mk(DISQUALIFIED),3);
+    ok(sp.swingLows.indexOf(1.10000)===-1,
+      'the candidate is NOT a swing low: the bar exactly 3 back is lower ('+JSON.stringify(sp.swingLows)+')');
+    // POSITIVE CONTROL, ONE VARIABLE AWAY: raise that single outermost bar above the candidate.
+    const QUALIFIED=DISQUALIFIED.slice(); QUALIFIED[0]=1.10300;
+    const sp2=g.findSwingPoints(mk(QUALIFIED),3);
+    ok(sp2.swingLows.indexOf(1.10000)!==-1,
+      'and IS a swing low once that one outermost bar is raised -- so the series really can produce one ('+JSON.stringify(sp2.swingLows)+')');
+    return 'idx0 low 1.09900 -> candidate rejected; idx0 low 1.10300 -> candidate accepted. Only the bar at exactly lookback distance changed.';
+  });
+
+  await t('SC-WICK-2 the partial threshold is EXCLUSIVE at exactly 0.35, not inclusive',async function(){
+    // Decimal FX prices do not generally divide to exact binary fractions, so the boundary candle
+    // is found by search and the exact identity is re-proved here before anything is asserted.
+    // Without this the fixture would silently degrade into a non-boundary test.
+    let found=null;
+    for(let lo=1.10000;lo<1.10500&&!found;lo+=0.00001){
+      for(let r=0.00020;r<0.00300;r+=0.00001){
+        const h=lo+r, minoc=lo+r*0.35;
+        if((minoc-lo)/(h-lo)===0.35){ found={lo:lo,h:h,minoc:minoc,r:r}; break; }
+      }
+    }
+    ok(found,'a candle whose dnW/range is EXACTLY 0.35 in floating point must exist for this test to mean anything');
+    const at=bar(found.minoc,found.h,found.lo,found.minoc+(found.h-found.minoc)*0.5);
+    const dnW=Math.min(at.o,at.c)-at.l, range=at.h-at.l;
+    eq(dnW/range,0.35,'the constructed candle really does sit exactly ON the threshold');
+    const c=g.scoreConfluence(quiet([at]),'EUR_USD','long');
+    ok(!c.items.filter(function(i){return i.label==='Wick forming';})[0],
+      'exactly 0.35 earns NOTHING -- the comparison is strictly greater-than');
+    return 'dnW/range === 0.35 exactly -> no partial credit (exclusive boundary proven, not assumed)';
+  });
+
   return out;
   })();
 }
