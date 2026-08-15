@@ -3988,3 +3988,114 @@ enforces it in both directions (short = fixtures vanished; long = added without 
 
 **Gate: 29 suites, 1,977 / 1,977, with the new per-suite count check active. Drift 0.**
 App version `12.27.0`.
+
+---
+
+## 18.13 RECOVERY — the operator-requested pause for computer transport
+
+The session was stopped deliberately, mid-flight. Two mutation campaigns (end-to-end paper
+trading; lifecycle/reconciliation) were **explicitly stopped by the operator and are NOT complete.**
+
+### What was durable versus what was interrupted
+
+| | |
+|---|---|
+| Repository | `4244763` committed **and pushed** before the pause, 0 ahead / 0 behind |
+| The two stopped campaigns | **wrote nothing into the repository.** Confirmed: no `v1239_paper_trading_e2e` or `v1239_lifecycle_reconciliation` files existed in the tree |
+| Their scratchpads | *did* contain draft suite files, with **no mutation evidence and no completion report behind them**. **Discarded**, not salvaged — a suite whose fixtures have never been shown to fail is not evidence, and adopting one would be the exact false-green this milestone exists to remove |
+| Uncommitted legitimate work | the market-data suite and two fixture repairs, all individually mutation-verified before the pause — **preserved**, re-gated, and committed as `718f908` |
+
+**No PASS was inferred from partial output.** The interrupted campaigns are being re-run from
+scratch rather than resumed.
+
+## 18.14 §13 area 1 of 5 — MARKET-DATA CONTINUITY, mutation-verified
+
+25 behaviour-changing mutations of candle acquisition, completeness, continuity and
+multi-instrument observation, each scored against the whole gate, with a per-suite
+executed-count shortfall counted as a crash-kill rather than a survivor. **Three killed zero
+fixtures:**
+
+| Survivor | What it meant |
+|---|---|
+| the completeness filter neutered | **a still-FORMING candle treated as closed** — the strategy evaluates a bar that has not finished |
+| the backward pagination cursor reading the wrong end of a page | history walks re-request the same window or skip one |
+| a scan serving the **previous sweep's** candles under **this** sweep's verdict | the completeness verdict blesses data it did not describe |
+
+All three are closed by `tests/v1239_market_data_continuity_tests.js` (18 fixtures) using a
+router-based `fetch` seam keyed on instrument/granularity/count/cursor. **No application function
+is stubbed and no trade is opened.** Controls: positive; negative (healthy data is *not*
+suppressed and genuinely scores, which is what makes the suppression assertions discriminating);
+boundary (requested-minus-one, the 220th raw bar, a 49-hour weekend hole **preserved rather than
+filled**, the exact `to` cursor literal); failure isolation (one dead and one short instrument, the
+other 33 still evaluated, transport failure kept distinct from contract failure);
+persistence/restart; and end-to-end (the frozen evaluators receive the blessed array **or nothing
+at all**).
+
+> **Independently spot-checked rather than accepted on report:** neutering the forming-bar filter
+> kills exactly the four fixtures claimed — `MDCONT-1`, `-4`, `-15`, `-18`.
+
+**No production defects found in this area.** Two hardening observations, neither exploitable:
+`fetchCandlesRange`'s all-incomplete branch advances the cursor without the `CURSOR_NOT_ADVANCING`
+check its sibling branch applies (it still fails closed via the guard limit), and `scanPair`
+duplicates the literal `220` as a `requestedCount` fallback.
+
+### 18.14a Two existing fixtures were defective — the eighth unkillable one
+
+**`ALIGN-21` was VACUOUS.** `precomputeCloseTimes` **is**
+`candles.map((c,i)=>getCandleCloseTime(candles,i,granularity).getTime())`, and the fixture asserted
+`pre[i] === getCandleCloseTime(h1,i,'H1').getTime()` — that is `map(f)[i] === f(i)`, **true by
+construction for any `f`**. Its stated claim ("one methodology, not two") is a property of the
+implementation's *shape*, so no behaviour change could falsify it. Proven: halving the H1 close
+interval kills `ALIGN-9b/10/11/12/27` and **`ALIGN-21` passed**.
+
+Rewritten to the spec property it was reaching for — a close is exactly `3600000`ms after its own
+open, and consecutive closes are exactly that far apart — both literal constants from the timeframe
+definition rather than values re-derived by calling the function under test. Plus `ALIGN-21b`.
+**Verified: the same mutation now kills both.**
+
+**`SAFETY-4` was presence-only and far weaker than its title.** It asserted
+`hasCompletenessState(c)`, which accepts **any** of `COMPLETE`/`PARTIAL`/`UNAVAILABLE` — so a
+429-terminated walk classified `COMPLETE` passed it, and only `CURSOR-1` fired from that suite. Its
+first disjunct was also dead code (`c` is always an array, so `!Array.isArray(c)` is always false).
+Now asserts the ADR-011 contract value `PARTIAL` **and** the `HTTP_ERROR` diagnostic.
+**Verified: forcing `satisfied=true` now kills it.**
+
+`CONTRACT-2`'s two `getSource()` regex clauses are labelled **STRUCTURAL** so they are not mistaken
+for behavioural coverage; its behavioural half is what carries the contract.
+
+## 18.15 CONTINUATION CHECKPOINT — resume here
+
+**Commit:** `718f908` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind.** Working tree
+clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
+
+**Gates:** canonical **30 suites, 1,996 / 1,996**, 0 execution errors, **per-suite fixture-count
+check active**; platform **1,049 / 1,049**; knowledge-engineering 57 with **2 known TJR-domain
+failures** (carried into the TJR program); protected drift **0** against the v12.22.0 baseline. App
+version `12.27.0`.
+
+### §13 areas — mutation status
+
+| Area | State |
+|---|---|
+| Market-data continuity / completeness / multi-instrument | ✅ **CLOSED** (§18.14) |
+| ALEX/JVM end-to-end paper trading, order generation, duplicate prevention, ALEX/JVM isolation | 🔄 campaign running |
+| Lifecycle, persistence, ledger/journal/account reconciliation | 🔄 campaign running |
+| Restart / recovery / diagnostics | ⬜ **not started** — interrupted by the session limit, never relaunched |
+| Chart↔engine fidelity, AOI, pattern/setup detection | ⬜ **not started** — same |
+
+### Standing constraints — unchanged
+
+PAPER ONLY · live money **NOT AUTHORIZED** · TJR **RESEARCH ONLY**, not begun, gated behind CORE ·
+frozen ALEX and JVM economic semantics preserved · **the live evidence campaign did not survive the
+Mac restart** and restoring it needs broker credentials and an operator (§18.1).
+
+### Exact restart instructions
+
+1. `git log --oneline -1` should read `718f908`; `git status` clean but for the MOGO-019 report.
+2. `bash tests/run_all.sh` → 30 suites / 1,996 / 0 failed / drift 0. If a suite reports a **count
+   mismatch**, a fixture vanished — investigate, do not regenerate the manifest to make it green.
+3. Relaunch the outstanding campaigns above **in bounded waves of two**, never five: five concurrent
+   heavy campaigns exhausted the session budget once already.
+4. Any suite file found in a scratchpad without a completion report and per-fixture kill evidence is
+   **untrusted — discard and re-run.**
+5. **CORE is NOT GREEN** and must not be declared so while any row above is unclosed.
