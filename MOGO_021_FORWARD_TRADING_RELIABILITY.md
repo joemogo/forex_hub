@@ -2306,7 +2306,7 @@ Run at **v12.22.0**, commit `8cdb0ad`, working tree clean.
 | Gate | Result |
 |---|---|
 | canonical (JXA) | **25 suites, 1,759 / 1,759**, 0 failures |
-| platform + knowledge-engineering (Python `unittest`) | **1,050 tests**, 25 of 26 suites `OK` |
+| platform + knowledge-engineering (Python `unittest`) | ~~**1,050 tests**~~, 25 of 26 suites `OK` — **the test count is wrong; see §18.3.** Reproduced from the recovered state it is platform **1,049** + knowledge-engineering **57** = **1,106**, of which 1,104 pass |
 | protected drift | **0** — all 63 protected functions and 4 protected constants byte-identical to the **v12.22.0** baseline |
 
 > **The platform gate does not need `pytest`.** It is pure-stdlib `unittest`; three suites appear to
@@ -3519,3 +3519,95 @@ answer is only correct if the sort genuinely runs — walking the array as given
 > mutations — what was wrong was that *these two assertions did not mean what they said*. One
 > compared a value to itself; the other would break on a rename and pass on a correct
 > reimplementation. Recorded as such rather than presented as new coverage.
+
+---
+
+## 18. POST-RESTART RECOVERY — authoritative state re-established from durable evidence
+
+The Mac restarted unexpectedly while the autonomous verification program was running. Nothing
+in-memory survived. This section records what was re-established from **durable repository
+evidence and fresh reruns**, not from the restored terminal transcript.
+
+### 18.1 What the restart actually destroyed
+
+| | |
+|---|---|
+| Repository work | **nothing.** `a8b1891` was committed *and pushed* before the crash; `0 ahead / 0 behind origin/mogo-main` |
+| Working tree | clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md` (Aug 12, unrelated) |
+| `git fsck` | clean. Three dangling commits are dropped stashes from Jul 24, Aug 12 and Aug 13 — all *predate* the restart. No lost MOGO-021 work |
+| Ephemeral scratchpad | **destroyed.** This is where the §16 96-mutation list lived, so that list is **gone** and was reconstructed rather than re-scored |
+| Live evidence campaign | **did not survive.** Chrome relaunched 08:24 without `--remote-debugging-port`; no listener on 9222. Restoring it is an operator action requiring broker credentials (§R4) — **not taken** |
+
+**No uncommitted recoverable work existed.** Every pre-restart claim was already durable.
+
+### 18.2 Gates re-run fresh from the recovered state
+
+| Gate | Result | Classification |
+|---|---|---|
+| canonical (JXA) | **25 suites, 1,759 / 1,759**, 0 failures, 0 execution errors | PROVEN DURABLE |
+| protected drift | **0** — 63 functions + 4 constants byte-identical to the v12.22.0 baseline | PROVEN DURABLE |
+| platform (Python `unittest`) | **1,049 / 1,049**, 25 suites | PROVEN DURABLE |
+| knowledge-engineering | 57 tests, **2 failures** — the two TJR-domain snapshot pins | PROVEN DURABLE (pre-existing, TJR-domain) |
+
+### 18.3 🟡 A correction to §12A.1's own figures
+
+§12A.1 recorded the Python gate as **"1,050 tests, 25 of 26 suites OK"**. The suite count is right;
+**the test count is not.** Reproduced from the recovered state:
+
+* `tests/run_platform_tests.sh` — **25 suites, 1,049 tests**, all passing.
+* `tests/knowledge_engineering/` — **1 suite, 57 tests**, 55 passing, 2 failing.
+* Platform + knowledge-engineering therefore totals **26 suites, 1,106 tests, 1,104 passing**.
+
+There is no composition under which the figure is 1,050. The corrected numbers are the ones above.
+The two failures are unchanged and remain TJR-domain, carried into the TJR program.
+
+### 18.4 The rebaseline claim, now proven from git history rather than asserted
+
+§16A.9 claimed the v12.22.0 rebaseline rewrote exactly one hash. That is now verified
+**independently of the report**, by diffing the committed artifact:
+
+```
+git diff 8cdb0ad~1 8cdb0ad -- regression-baseline.json
+  - "generatedFromAppVersion": "12.21.0"      + "12.22.0"
+  - "sha1": "829154ba…", "length": 3069       + "sha1": "06a704e5…", "length": 3046
+```
+
+**Three substantive lines: the version bump and one function.** Every other one of the 63 protected
+functions and 4 protected constants is byte-identical in the committed baseline. The rebaseline was
+not used to launder unrelated drift — this is the durable form of the positive control §16A.2 ran.
+
+### 18.5 A check on the drift check itself — `knownGoodHtmlSha1` is NOT stale
+
+`knownGoodHtmlSha1` did **not** change in `8cdb0ad` even though `index.html` did, and the baseline
+value (`31baa279…`) does not match `index.html` (`01094c74…`) — which looks exactly like a stale
+anchor making the check vacuous. **It is not.** `regression-baseline-tools.py:32` resolves
+`KNOWN_GOOD_HTML` to the frozen archival `index-v2.9-KNOWN-GOOD.html`, whose sha1 *is* `31baa279…`.
+The check pins an immutable reference file, correctly, and `hash_match: True` is legitimate.
+
+> **One genuine caveat found while confirming this.** `regression-baseline.json` carries
+> `fixtureCounts` and `totalFixtureCount: 984`, badly stale against a 1,759-fixture gate — but
+> `cmd_compare()` reads **neither**. They are inert metadata that *read* like a pinned assertion.
+> Harmless today; a trap for anyone who assumes the baseline pins fixture counts.
+
+### 18.6 Fresh presence check over the recovered 1,759-fixture corpus
+
+All 1,759 passing fixture names were re-collected from all 25 suites individually and matched against
+every area named in the recovery authorization. **No area is empty.**
+
+| Area | | Area | | Area | |
+|---|---|---|---|---|---|
+| market-data completeness | 152 | detection rules | 222 | duplicate prevention | 155 |
+| H1/H4/D/W handling | 127 | pattern/setup positive | 256 | trade-ID uniqueness | 125 |
+| scanner coverage | 90 | negative controls | 153 | position lifecycle | 426 |
+| scanner cadence | 61 | boundary controls | 209 | persistence | 228 |
+| scanner concurrency | 53 | chart fidelity | 77 | ledger | 229 |
+| failure isolation | 170 | AOI fidelity | 108 | account state | 196 |
+| evidence completeness | 173 | chart-vs-engine authority | 116 | reconciliation | 97 |
+| health diagnostics | 185 | ALEX paper path | 197 | outage detection | 90 |
+| restart/recovery | 58 | JVM paper path | 132 | | |
+
+**This is a presence floor, not a strength claim, and its patterns are deliberately broader than
+§12A.3's** — so these counts are *not* comparable to that table and should not be read as growth.
+A fixture count proves only that an area is not silent. Strength is what the per-section mutation
+evidence establishes, and the standing rule of this milestone is unchanged: **do not declare GREEN
+because the gates are green.**
