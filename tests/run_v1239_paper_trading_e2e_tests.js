@@ -1,0 +1,286 @@
+// Self-contained runner for the v12.3.9 ALEX/JVM PAPER-TRADING END-TO-END fixture suite.
+// Reads index.html directly and extracts its <script> body itself -- same pattern as
+// run_v_paper_trading_audit_tests.js and run_v1238_execution_reporting_journal_tests.js.
+//
+// Run from the project root:
+//   cd "Forex Hub" && osascript -l JavaScript tests/run_v1239_paper_trading_e2e_tests.js
+// or simply:
+//   tests/run_all.sh   (discovers and runs this automatically)
+//
+// ── WHY THIS RUNNER IS ASYNCHRONOUS ────────────────────────────────────────────────────────
+// Both entry points this suite exists to observe are genuinely `async`: checkAutoTrades()
+// (which awaits Promise.all over the eligible pairs) and closePaperPosition() (one internal
+// `await fetchBidAsk`). Following run_v1238_execution_reporting_journal_tests.js, the suite
+// returns a Promise and prints its fixture lines from the .then() continuation --
+// JavaScriptCore drains its microtask queue after the top-level script body finishes, so the
+// continuation runs and its console.log output is flushed before the interpreter exits. Every
+// production function is driven REAL and UNMODIFIED; nothing is stubbed, wrapped or patched.
+// The one seam is globalThis.fetch, which is the process boundary, not app code.
+//
+// ISOLATION FROM REAL DATA: in-memory localStorage stub, stubbed fetch, no browser, no network,
+// no disk write. This process cannot reach real paper-trading storage, so no real paper trade
+// can be created or persisted by it.
+ObjC.import('Foundation');
+function readFile(path){
+  const s=$.NSString.stringWithContentsOfFileEncodingError(path,$.NSUTF8StringEncoding,null);
+  const v=ObjC.unwrap(s); return v==null?'':v;
+}
+function extractScriptBody(html){
+  const m=html.match(/<script>([\s\S]*)<\/script>/);
+  if(!m) throw new Error('Could not find <script>...</script> body in index.html -- run this from the project root.');
+  return m[1];
+}
+
+const elMap={};
+function makeClassList(){
+  const c=new Set();
+  return{add:x=>c.add(x),remove:x=>c.delete(x),contains:x=>c.has(x),
+    toggle:(x,f)=>{ if(f===undefined){ c.has(x)?c.delete(x):c.add(x); } else if(f) c.add(x); else c.delete(x); }};
+}
+function makeStub(){
+  return {innerHTML:'',textContent:'',value:'',className:'',style:{},options:[{value:'All'}],
+    width:100,height:100,disabled:false,checked:false,classList:makeClassList(),
+    getContext:()=>({clearRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillRect(){},save(){},restore(){},setLineDash(){},arc(){},fill(){},closePath(){},fillText(){},measureText:()=>({width:0})}),
+    appendChild(){},addEventListener(){},focus(){},setSelectionRange(){},click(){},files:[],
+    getBoundingClientRect:()=>({top:0,left:0,width:0,height:0})};
+}
+const lsStore={};
+globalThis.document={
+  getElementById:id=>{ if(!elMap[id]) elMap[id]=makeStub(); return elMap[id]; },
+  querySelector:()=>null,querySelectorAll:()=>[],createElement:()=>makeStub(),
+  addEventListener(){},visibilityState:'visible',
+  body:{appendChild(){},removeChild(){}},activeElement:null
+};
+globalThis.window={devicePixelRatio:1};
+globalThis.localStorage={
+  getItem:k=>Object.prototype.hasOwnProperty.call(lsStore,k)?lsStore[k]:null,
+  setItem:(k,v)=>{lsStore[k]=String(v);},removeItem:k=>{delete lsStore[k];},
+  __keys:()=>Object.keys(lsStore),
+  __clear:()=>{Object.keys(lsStore).forEach(k=>delete lsStore[k]);}
+};
+globalThis.alert=()=>{};globalThis.confirm=()=>true;
+globalThis.Blob=function(p,o){return{parts:p,opts:o};};
+globalThis.URL={createObjectURL:()=>'blob:stub',revokeObjectURL(){}};
+let __t=0;
+globalThis.setTimeout=()=>++__t;globalThis.clearTimeout=()=>{};
+globalThis.setInterval=()=>++__t;globalThis.clearInterval=()=>{};
+globalThis.ResizeObserver=function(){return{observe(){},disconnect(){}};};
+globalThis.LightweightCharts={LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}};
+globalThis.Notification=undefined;
+globalThis.indexedDB=undefined;
+
+// ── FROZEN CLOCK ───────────────────────────────────────────────────────────────────────────
+// Monday 2026-08-10, 14:00 UTC. Inside the strategy's own Mon-Wed preferred entry window and
+// inside an active (priority) London session -- both are the frozen strategy's gates, not
+// fixture conveniences. The Date CONSTRUCTOR is frozen, not only Date.now, so openedAt/closedAt
+// are exact fixture-chosen literals rather than wall-clock values (see §18.12 in the v12.3.8
+// journal suite for why freezing only Date.now is not enough).
+let __simNow=Date.UTC(2026,7,10,14,0,0);
+const __RealDate=Date;
+globalThis.Date=class extends __RealDate{
+  constructor(...a){ if(a.length===0) super(__simNow); else super(...a); }
+  static now(){ return __simNow; }
+};
+
+function makeResponse(ok,status,body){
+  return{ok,status,json:()=>Promise.resolve(body),text:()=>Promise.resolve('')};
+}
+function mk(t,o,h,l,c){
+  return{time:new __RealDate(t).toISOString(),complete:true,
+    mid:{o:o.toFixed(5),h:h.toFixed(5),l:l.toFixed(5),c:c.toFixed(5)}};
+}
+// NEGATIVE-CONTROL series: flat and structureless, so "no trade" is the strategy's own verdict.
+function flatM15(n){
+  const out=[];
+  for(let i=n;i>=1;i--){ const b=1.1000; out.push(mk(__simNow-i*900000,b,b+0.0002,b-0.0002,b)); }
+  return out;
+}
+// POSITIVE-CONTROL series. Byte-for-byte the same construction the v12.3.3 JVM auto-trade
+// suite uses, and for the same stated reason: THE CANDLES ARE CONSTRUCTED, THE VERDICT IS NOT.
+// No threshold, weight or rule is altered -- the frozen scorer rates this ordinary bullish
+// engulfing/market-structure-break setup 65 against its own threshold of 55 and returns its own
+// R:R. Reproduced here rather than imported because a runner may not depend on another runner.
+function firingM15(n){
+  const out=[]; n=n||60;
+  for(let i=n;i>=4;i--){
+    const base=1.1000+(n-i)*0.00002;
+    out.push(mk(__simNow-i*900000,base,base+0.00015,base-0.00015,base+0.00005));
+  }
+  const t=__simNow;
+  out.push(mk(t-3*900000,1.10050,1.10100,1.10000,1.10020));
+  out.push(mk(t-2*900000,1.10180,1.10200,1.10120,1.10140));
+  out.push(mk(t-1*900000,1.10100,1.10320,1.10080,1.10300));
+  return out;
+}
+function structuralCandles(n){
+  const out=[];
+  for(let i=n;i>=1;i--){
+    const phase=i%6; let lo,hi;
+    if(phase===0){lo=1.09900;hi=1.11000;}
+    else if(phase===1){lo=1.09905;hi=1.11500;}
+    else if(phase===2){lo=1.09895;hi=1.12000;}
+    else if(phase===3){lo=1.10500;hi=1.11980;}
+    else if(phase===4){lo=1.10400;hi=1.12010;}
+    else {lo=1.10200;hi=1.11200;}
+    out.push(mk(__simNow-i*86400000,lo+0.0005,hi,lo,hi-0.0005));
+  }
+  return out;
+}
+
+// ── FETCH SEAM ─────────────────────────────────────────────────────────────────────────────
+// /pricing can be made to REJECT. That is deliberate and is NOT a shortcut around the await:
+// fetchBidAsk() catches its own failure and returns null, which drives closePaperPosition()
+// down its documented pairData fallback -- an exit price the fixture controls exactly, so every
+// asserted P&L/R/balance figure is a fixture-chosen literal computed by hand, never re-derived
+// from live data. When a fixture needs a real bid/ask (the ALEX open path requires one), the
+// mode is switched to 'serve' and the exact bid/ask is set by the fixture.
+let __pricingMode='reject', __pbid='1.10000', __pask='1.10000';
+// Counts every attempt to reach the pricing endpoint. This is how a fixture can tell whether
+// closePaperPosition() actually ENTERED its body a second time (the in-flight guard rejects a
+// duplicate BEFORE the fetch) rather than merely finding the position already gone afterwards.
+let __pricingCalls=0;
+let __mode='flat';
+// Per-instrument counter of M15 evaluation fetches. This is an observation of the process
+// boundary -- how many times the engine actually went out to evaluate each pair on one tick --
+// not a wrapper around any app function.
+let __m15Calls={};
+globalThis.fetch=function(url){
+  const u=String(url);
+  if(/\/pricing/.test(u)){
+    __pricingCalls++;
+    if(__pricingMode==='reject') return Promise.reject(new Error('no network'));
+    return Promise.resolve(makeResponse(true,200,{prices:[{bids:[{price:__pbid}],asks:[{price:__pask}]}]}));
+  }
+  const inst=(u.match(/instruments\/([^/]+)\//)||[])[1];
+  const gran=(u.match(/granularity=(\w+)/)||[])[1];
+  const wantN=parseInt((u.match(/count=(\d+)/)||[])[1],10)||60;
+  if(gran==='M15'&&wantN===60){ __m15Calls[inst]=(__m15Calls[inst]||0)+1; }
+  if(__mode==='firing'){
+    if(gran==='D') return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(120)}));
+    if(gran==='W') return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(60)}));
+    return Promise.resolve(makeResponse(true,200,{candles:firingM15(wantN)}));
+  }
+  return Promise.resolve(makeResponse(true,200,{candles:flatM15(60)}));
+};
+
+const g={};
+g.setMode=m=>{__mode=m;};
+g.setPricing=(mode,bid,ask)=>{__pricingMode=mode; if(bid!=null)__pbid=String(bid); if(ask!=null)__pask=String(ask);};
+g.resetM15Calls=()=>{__m15Calls={};};
+g.resetPricingCalls=()=>{__pricingCalls=0;};
+g.pricingCalls=()=>__pricingCalls;
+g.m15Calls=inst=>(__m15Calls[inst]||0);
+g.m15CallTotal=()=>Object.keys(__m15Calls).reduce((a,k)=>a+__m15Calls[k],0);
+g.m15CallPairs=()=>Object.keys(__m15Calls).slice().sort();
+g.setNow=t=>{__simNow=t;};
+g.now=()=>__simNow;
+
+function emit(results){
+  results.forEach(r=>{
+    const tag = r.pass===null ? 'NOTE' : (r.pass?'PASS':'FAIL');
+    console.log(tag+' -- '+r.name+(r.detail?' ('+r.detail+')':''));
+  });
+  const executed=results.filter(r=>r.pass!==null);
+  const failCount=executed.filter(r=>!r.pass).length;
+  const noteCount=results.length-executed.length;
+  console.log('---');
+  console.log(failCount===0
+    ? ('ALL PAPER-TRADING E2E FIXTURES PASSED ('+executed.length+' executed, '+noteCount+' disclosed notes)')
+    : ('FAILURES: '+failCount+'/'+executed.length+' executed ('+noteCount+' disclosed notes)'));
+}
+
+try{
+  const appCode=extractScriptBody(readFile('./index.html'));
+  const testCode=readFile('./tests/v1239_paper_trading_e2e_tests.js');
+  const wrapped = new Function('g',
+    appCode + '\n' + testCode + '\n' +
+    // ── the REAL, unmodified execution entry points this suite drives end-to-end ──
+    'g.openPaperPosition=openPaperPosition;' +
+    'g.closePaperPosition=closePaperPosition;' +
+    'g.checkAutoTrades=checkAutoTrades;' +
+    'g.evaluateLiveTrigger=evaluateLiveTrigger;' +
+    'g.alexGAttemptOpenLivePosition=alexGAttemptOpenLivePosition;' +
+    'g.alexGCloseLivePosition=alexGCloseLivePosition;' +
+    'g.alexGLiveSignalId=alexGLiveSignalId;' +
+    'g.loadSaved=loadSaved;' +
+    'g.getSession=getSession;' +
+    'g.isPreferredTradingDay=isPreferredTradingDay;' +
+    'g.pipSize=pipSize;g.pipValuePerLot=pipValuePerLot;' +
+    // ── frozen config / universe, read-only ──
+    'g.SCAN_PAIRS=SCAN_PAIRS;' +
+    'g.alexCfg=function(){return RULES_ALEXG.config;};' +
+    'g.setAlexSuspension=function(v){var w=RULES_ALEXG_V11.v11Config.setupSuspensionEnabled;RULES_ALEXG_V11.v11Config.setupSuspensionEnabled=v;return w;};' +
+    // ── JVM state get/set ──
+    'g.getPaperAccount=function(){return paperAccount;};g.setPaperAccount=function(v){paperAccount=v;};' +
+    'g.getJournalEntries=function(){return journalEntries;};g.setJournalEntries=function(v){journalEntries=v;};' +
+    'g.getAutoTrading=function(){return autoTrading;};g.setAutoTrading=function(v){autoTrading=v;};' +
+    'g.setScanData=function(v){scanData=v;};g.getScanData=function(){return scanData;};' +
+    'g.getPairData=function(){return pairData;};g.setPairDataObj=function(v){pairData=v;};' +
+    'g.setPairData=function(pair,price){ if(price===null||price===undefined){ delete pairData[pair]; } else { pairData[pair]={price:price}; } };' +
+    'g.getPaperEngineErrors=function(){return paperEngineErrors;};g.setPaperEngineErrors=function(v){paperEngineErrors=v;};' +
+    'g.setCfg=function(v){cfg=v;};' +
+    'g.resetPaperVersionGuard=function(){paperAccountKnownVersion=0;localStorage.removeItem("fxhub_paper_version");};' +
+    'g.resetPaperPositionsClosing=function(){paperPositionsClosing.clear();};' +
+    'g.setPaperResetHistory=function(v){paperResetHistory=v;};' +
+    'g.setPaperReconciliationAudit=function(v){paperReconciliationAudit=v;};' +
+    // ── ALEX state get/set ──
+    'g.getAlexGAccount=function(){return alexGAccount;};g.setAlexGAccount=function(v){alexGAccount=v;};' +
+    'g.getAlexGJournalEntries=function(){return alexGJournalEntries;};g.setAlexGJournalEntries=function(v){alexGJournalEntries=v;};' +
+    'g.getAlexGAutoTrading=function(){return alexGAutoTrading;};g.setAlexGAutoTrading=function(v){alexGAutoTrading=v;};' +
+    'g.setAlexGSetupState=function(v){alexGSetupState=v;};' +
+    'g.setAlexGLiveSetupStatuses=function(v){alexGLiveSetupStatuses=v;};' +
+    'g.setAlexGEngineErrors=function(v){alexGEngineErrors=v;};' +
+    'g.resetAlexGVersionGuard=function(){alexGAccountKnownVersion=0;localStorage.removeItem("fxhub_alexg_account_version");};' +
+    'g.alexGResetLiveDecisionState=alexGResetLiveDecisionState;' +
+    // ── FULL-STORE SNAPSHOTS for the isolation fixtures. Everything each strategy owns, in
+    //    one deterministic string, so "byte-identical" is a real claim and not a spot check. ──
+    'g.snapshotAlexStores=function(){ return JSON.stringify({' +
+    '  account:alexGAccount, journal:alexGJournalEntries, autoTrading:alexGAutoTrading,' +
+    '  setups:alexGSetupState, statuses:alexGLiveSetupStatuses, zones:alexGZoneState,' +
+    // alexGEngineErrors is included, but with entries from the STRATEGY-AGNOSTIC evidence
+    //   platform filtered out. evidenceRecordWriteFailure() deliberately reuses
+    //   recordAlexGEngineError() as its reporting channel ("Reuse the existing, already-surfaced
+    //   engine-error channel rather than inventing a new one"), so an evidence-storage failure
+    //   raised during a JVM-only operation lands in the ALEX error list. Those entries carry no
+    //   trade, position, balance, journal or decision data -- they are platform telemetry filed
+    //   under a shared channel, not ALEX trading state -- so they are excluded here BY PREFIX and
+    //   nothing else is. Every genuinely ALEX-originated engine error is still compared.
+    '  engineErrors:alexGEngineErrors.filter(function(e){return String(e&&e.message||e).indexOf("Evidence platform [")!==0;}),' +
+    '  knownVersion:alexGAccountKnownVersion,' +
+    '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
+    '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime, decidedCount:alexGDecidedSetups.size,' +
+    '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alexg")===0;}).sort()' +
+    '           .map(function(k){return k+"="+localStorage.getItem(k);})' +
+    '}); };' +
+    'g.snapshotJvmStores=function(){ return JSON.stringify({' +
+    '  account:paperAccount, journal:journalEntries, autoTrading:autoTrading,' +
+    '  engineErrors:paperEngineErrors, resetHistory:paperResetHistory,' +
+    '  reconciliationAudit:paperReconciliationAudit, knownVersion:paperAccountKnownVersion,' +
+    '  blockingError:paperLedgerBlockingError, integrityWarning:paperLedgerIntegrityWarning,' +
+    '  storage:localStorage.__keys().filter(function(k){return k==="fxhub_paper"||k==="fxhub_paper_version"' +
+    '           ||k==="fxhub_journal"||k==="fxhub_auto"||k==="fxhub_paper_reset_history"' +
+    '           ||k==="fxhub_paper_reconciliation_audit";}).sort()' +
+    '           .map(function(k){return k+"="+localStorage.getItem(k);})' +
+    '}); };' +
+    // ── localStorage helpers ──
+    'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +
+    'g.clearLocalStorage=function(){localStorage.__clear();};' +
+    'return runV1239PaperTradingE2EFixtures(g);'
+  );
+  const out = wrapped(g);
+  if(out && typeof out.then==='function'){
+    out.then(function(results){
+      try{ emit(results); }
+      catch(e){ console.log('RUNNER ERROR: emitting results failed -- '+e); }
+    }, function(err){
+      console.log('RUNNER ERROR: fixture suite rejected -- '+err+(err&&err.stack?(' :: '+err.stack):''));
+    });
+  } else {
+    console.log('RUNNER ERROR: the suite did not return a Promise -- an un-awaited async fixture is a known false-green here.');
+  }
+}catch(e){
+  console.log('RUNNER ERROR: '+e);
+}
+// osascript prints the script's own completion value; without this the suite's pending Promise
+// would be echoed as a stray "[object Promise]" line after the results.
+void 0;

@@ -36,6 +36,7 @@ run_v1238_execution_reporting_provenance_tests.js	41
 run_v1238_execution_reporting_stats_tests.js	24
 run_v1239_lifecycle_reconciliation_tests.js	51
 run_v1239_market_data_continuity_tests.js	18
+run_v1239_paper_trading_e2e_tests.js	57
 run_v123_tests.js	48
 run_v124_baseline_registry_tests.js	31
 run_v125_decision_event_tests.js	40
