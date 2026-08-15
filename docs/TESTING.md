@@ -136,6 +136,25 @@ in sync.
 >
 > The original empirical result stands for what it actually tested: a spin-wait around a *real*
 > rejecting `fetch()` never observed settlement. That is a different situation from a stubbed one.
+>
+> **SCOPE CORRECTED AGAIN (MOGO-021 §18.10) — the rejecting-`fetch` case works too.** The clause
+> above still conceded too much. The failure was never the *rejection*; it was the **spin-wait**.
+> JavaScriptCore under `osascript -l JavaScript` **does** drain its microtask queue once the
+> top-level script body finishes, and `console.log` from a `.then()` continuation **is** flushed
+> before exit. So a suite that **returns a promise and prints its fixture lines from the
+> continuation** — rather than blocking on a spin-wait — observes post-`await` state normally, even
+> when `fetch` genuinely rejects.
+>
+> `tests/run_v1238_execution_reporting_journal_tests.js` does exactly this and drives the real,
+> unmodified, **protected** `closePaperPosition()` end to end: `fetch` rejects → `fetchBidAsk`
+> returns `null` → the documented `pairData` fallback supplies a fixture-controlled exit price.
+> No production function is stubbed, patched or bypassed. **Independently confirmed:** deleting the
+> `journalNoteCloseJVM(pos,closedPos)` call from inside that protected function kills **18**
+> fixtures, while the control asserting the close itself (`exitPrice`, `pnl`, `balance`) keeps
+> passing — the close ran; only the journal write vanished.
+>
+> **There is no remaining async deferral for the paper close path.** Anything still citing this
+> section to defer offline coverage is citing a limitation that no longer exists.
 
 ### A known, permanent limitation of this harness
 

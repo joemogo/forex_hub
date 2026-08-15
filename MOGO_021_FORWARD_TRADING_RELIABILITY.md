@@ -3817,3 +3817,102 @@ went silent — an aborted suite is caught by `run_all.sh`, but it hides which a
 
 **Gate: 25 suites, 1,801 / 1,801. Protected drift 0 against the unchanged v12.22.0 baseline.**
 App version `12.25.0`.
+
+### 18.10 🔴 §16 execution-reporting coverage — the re-score, and closing it
+
+**The §16 item is answered: FAIL.** The pre-restart list was destroyed with the scratchpad, so the
+mutation set was **reconstructed**, not re-scored. 110 behaviour-changing mutations of the
+execution-reporting surface were scored against the 1,759-fixture gate. **79 killed zero fixtures —
+72%.** The same 79 also survived the current HEAD, so none of the v12.23/24/25 work touched them.
+
+**The verdict is trustworthy because the controls fired.** Doubling the close P&L kills 13 fixtures;
+four *concurrent* unmutated copies each ran 1,759/1,759 (so no kill is a parallelism artefact); eight
+headline survivors were re-confirmed serially with per-run hashes; **zero unapplied mutations.**
+
+#### The structural cause, in one line: nothing that renders or journals was observed
+
+| Survivor | What it means |
+|---|---|
+| `journalNoteCloseJVM` deleted from `closePaperPosition` | **a JVM close is never journalled at all** |
+| `entry.result` → `'Win'` | **every closed trade journals as a Win** |
+| `fmtRMult` sign-flipped | **every R-multiple displayed app-wide** is wrong |
+| paper-panel win rate `*100` → `*1000` | win rate **10× too large** |
+| ALEX win-rate tile fed `st.losses` | the tile reports the **loss** rate |
+| all seven `computeGroupTradeStats` | inverted profit factor, expectancy as a **net** not a mean, drawdown that never accumulates |
+
+**74 of the 79 were on non-protected code that nothing in the gate detected.** Five sat inside
+protected functions, where the drift check *would* block an edit — but **a drift check is a hash
+comparison, not evidence the code is right. Protection is not coverage.**
+
+**One apparent kill was reclassified as a survivor:** it was credited to a `getSource()` substring
+match — the source-text anti-pattern, which survives every behavioural mutation and dies on cosmetic
+edits.
+
+#### Closed — 174 fixtures across four new suites
+
+| Suite | Fixtures | Survivors closed |
+|---|---|---|
+| `v1238_execution_reporting_journal` | 73 | 19 — journal write path, normalization, the real close |
+| `v1238_execution_reporting_display` | 39 | 36 — panels, tables, formatters, Trade Inspector |
+| `v1238_execution_reporting_provenance` | 38 | 7 assigned + 4 found by its own sweep |
+| `v1238_execution_reporting_stats` | 24 | 19 — aggregate and derived statistics |
+
+Every fixture is mutation-proven against the specific defect it exists to catch, each with positive
+controls. Gate **25 suites / 1,801 → 29 suites / 1,975**.
+
+> **Independently re-verified by me, not accepted on report.** Deleting `journalNoteCloseJVM` from
+> the real protected close kills **18** fixtures while `JVM-CLOSE-CONTROL.1` (asserting `exitPrice`,
+> `pnl`, `balance`) keeps passing — the close ran, only the journal write vanished, which is exactly
+> the right signature. And making the **protected** `alexGComputeReplayStats` report the loss rate as
+> the win rate now kills `ERS.T1` and its control; that mutation previously killed nothing.
+
+#### The harness limitation that justified the gap is disproven
+
+Since v4.2 this repository documented `closePaperPosition`'s post-`await` body as permanently
+unverifiable offline — and *that deferral is why the close path was never journalled under test*.
+**The failure was never the rejection; it was the spin-wait.** JavaScriptCore under `osascript`
+drains its microtask queue once the top-level script body finishes, and `console.log` from a
+`.then()` continuation is flushed before exit. A suite that **returns a promise and prints from the
+continuation** observes post-`await` state normally, even when `fetch` genuinely rejects.
+
+The real, unmodified, **protected** `closePaperPosition` is now driven end to end offline with no
+production function stubbed, patched or bypassed. **There is no remaining async deferral for the
+paper close path**, and `docs/TESTING.md` is corrected accordingly.
+
+### 18.11 🔴 Both mini-journals showed "No trades yet." for every real trade
+
+Found independently by **two** agents converging from different directions, and confirmed by reading
+the code before it was touched.
+
+`v12.3.2` correctly made `strategyId` the ownership key in `getFilteredJournalRecords` — display
+labels are metadata and could misattribute a record. **But the two render call sites kept passing the
+label.** `renderPaperMiniJournal` asked for `'JVM'` and `renderMiniJournal` for `'ALEX'`; no record's
+`strategyId` is ever `'JVM'` or `'ALEX'` — they are `'current_strategy'` and `'alex_g_sr_v1'`.
+
+**The filter matched nothing, permanently.** And because those mini-journals are the *only* surface
+that renders `classifyJvmJournalRecord`'s verdict, **the entire account-relationship badge display
+was dead** on both the Paper Trading and ALEX pages.
+
+**Fixed at the caller**, resolving the label through `STRATEGY_REGISTRY` — *not* by re-admitting
+labels inside the filter, which would undo v12.3.2's deliberate correction.
+
+| Mutation | Kills |
+|---|---|
+| revert the JVM call site | `MiniJournal.2`, `.3` |
+| revert the shared renderer | `MiniJournal.4` |
+| make the strategy filter a no-op | `MiniJournal.1`, `.5` |
+| revert the fix (tranche B's own regression fixture) | `M0` |
+
+**`MiniJournal.5` is the control that matters:** an unrecognised label must *still* filter to
+nothing. It proves the fix **resolved** the label rather than **disabling** the filter — which would
+have been a worse defect than the one it replaced.
+
+> **Two fixture-quality notes against my own work.** My first draft of `MiniJournal.3` OR-ed two DOM
+> readers behind a defensive ternary and printed the wrong one in its failure message: it passed
+> while displaying an empty string as its evidence. The summary is written with `textContent`, so it
+> is now read with `elText` directly. And an earlier spot-check of mine used a **non-unique anchor**
+> (count 2) and therefore proved nothing in either direction — it was re-run positionally and the
+> claim held. An unapplied mutation is not evidence, including when it is mine.
+
+**Gate: 29 suites, 1,975 / 1,975. Protected drift 0 against the unchanged v12.22.0 baseline.**
+App version `12.26.0`.
