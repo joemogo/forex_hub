@@ -3611,3 +3611,78 @@ every area named in the recovery authorization. **No area is empty.**
 A fixture count proves only that an area is not silent. Strength is what the per-section mutation
 evidence establishes, and the standing rule of this milestone is unchanged: **do not declare GREEN
 because the gates are green.**
+
+### 18.7 🔴 The §16A.7 ledger fixes were half-applied — independent re-verification, and the repair
+
+The three §16A.7 ledger fixes were re-attacked **from scratch** rather than re-run. All three were
+present and working. **Two of them had only ever been applied to the JVM arm**, and the symmetrical
+ALEX arm one screen below still carried the original defective code — both reproduced live through
+the real `computePaperTradingHealthReport()`, not argued from source.
+
+| | Defect still live | Reproduction |
+|---|---|---|
+| **ALEX orphan cardinality** (`index.html:12006-12007`) | still `some()` — existence, not count | three ALEX positions sharing `AGT\|1` with one journal record between them → **`alex.accountPositionsWithNoJournal.length === 0`**. The JVM arm reports 2 for the identical shape |
+| **ALEX duplicate counters** (`index.html:11999-12003`) | still raw object keys | ALEX `tradeId` `5` and `'5'` reported as **duplicates of each other**, driving the verdict to **`ISSUES DETECTED`** — the exact false positive the fix existed to remove, surviving one screen away |
+
+**A fix that lands on one of two symmetrical arms is not a fix. It is a fix and a remaining defect.**
+Both arms now use the same type-tagged, counting form.
+
+#### The one that moved money
+
+`computeReconciliationPreview`'s ambiguity guard counted only how many **orphans** shared a string
+form. That closes the orphan-versus-orphan half and leaves **the half its own comment describes**:
+
+> a **live** position holding the numeric id `999`, and an unrelated historical orphan storing `'999'`.
+> Only one *orphan* carries that string form, so `stringFormCounts` never reaches 2, the preview queued
+> the historical record, and **its `pnl` was applied to the balance** — the wrong trade restored.
+
+A live position is not in `newlyOrphanedAfterReset`, so it is now looked for where it actually lives.
+
+**Cross-type matching itself is NOT blocked, and must not be.** The UI renders every selection as a
+quoted string literal (`index.html:16805`, `:16812`), so a *string* selection against a
+*numerically stored* orphan is the ordinary legitimate restore path. Blocking cross-type matching
+would have broken every real restore. Only the **collision** fails closed. `LiveTwin.5` pins the
+legitimate path so a future tightening cannot quietly take it away.
+
+#### Mutation evidence — the fixtures are discriminating, and one is honestly not
+
+12 fixtures added, each paired with a positive control. Every mutation had a **unique anchor and a
+non-zero byte diff**; none was unapplied.
+
+| Mutation | Result |
+|---|---|
+| revert ALEX orphan detector to `some()` | **kills `AlexCard.1`** |
+| revert the ALEX type tag to a raw string key | **kills `AlexConflate.1`, `.2`** |
+| disable the live-collision guard | **kills `LiveTwin.1`, `.2`, `.3`** |
+| revert the **JVM** `idKey` type tag | **kills `IdKeyWire.1`** — this mutation killed **zero of 251** before |
+| *positive control:* switch the ALEX orphan detector off entirely | kills `AlexCard.1`, `HealthCheck.17`, `RollbackFailure.12` — it is not a detector that has been silenced |
+| revert `applyPaperReconciliation`'s twin guard to strict `===` | **SURVIVED — killed zero** |
+
+**That last row is reported as a survivor rather than quietly dropped.** It is *not* a coverage gap
+to be closed: the guard is **unreachable by construction**, because `applyPaperReconciliation`
+derives its own list from `computeReconciliationPreview`, which now fails closed on exactly that
+shape. The two comparisons can only ever agree. It is kept as defence in depth and recorded as
+**proven unkillable**, in the same class as `AG-21` in §15.9 — never as covered.
+
+#### Two corrections to the v12.22.0 record, from the same verification
+
+* **§16A.7's "the reported output shape is unchanged" is false on ordering.** Element type is
+  unchanged; order is not. `Object.keys()` over integer-like raw keys enumerates in ascending
+  *numeric* order, while `'number:30'` is an ordinary string key enumerating in *insertion* order —
+  so ids `[30,10,30,10]` used to report `["10","30"]` and now report `["30","10"]`. Every consumer
+  found reads only `.length` and no fixture asserts ordering, so nothing depends on it. The claim
+  was still wrong, and is corrected in the code comment rather than left standing.
+* **`Cardinality.1`/`.2` do not drive the cardinality defect**, though their comment claimed they
+  "drive the same defect from the other direction". With three *unique* ids, `some()` and a count
+  return identical answers — both pass either way. `TradeID.12c` is the only fixture that dies when
+  the `some()` form is restored. They are **positive controls** and are now labelled as such.
+
+**Gate after the repair: 25 suites, 1,771 / 1,771. Protected drift 0 against the *unchanged*
+v12.22.0 protected baseline — no protected function was touched, so nothing was re-baselined.**
+App version `12.23.0`.
+
+> **The lesson is the one this milestone keeps re-learning.** These three fixes shipped with 251
+> passing fixtures and a green gate. The gate never noticed that two of them covered half the
+> surface, or that the third guarded the narrower of the two cases in its own comment. Only an
+> independent verifier attacking them found it — which is why re-running fixtures is not
+> re-verification.

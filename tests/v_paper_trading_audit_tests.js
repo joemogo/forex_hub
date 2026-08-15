@@ -1490,9 +1490,12 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
       JSON.stringify(g.computePaperLedgerIntegrity().duplicateAccountIds));
   }
   {
-    // (b) The orphan detector counted EXISTENCE, not cardinality -- proven above in TradeID.12c/d
-    // through the collision path. This drives the same defect from the other direction: many
-    // positions, too few journal records, WITHOUT any duplicate id involved.
+    // (b) The orphan detector counted EXISTENCE, not cardinality. That defect is driven by
+    // TradeID.12c, which is the only fixture here that dies when the some() form is restored.
+    // THESE TWO DO NOT DRIVE IT, and an earlier version of this comment claimed they did: with
+    // three UNIQUE ids, some() and a count return identical answers, so both pass either way.
+    // They are positive controls -- they prove the detector still tracks the books and has not
+    // been turned into a constant -- and they are kept and labelled as exactly that.
     seedClean();
     g.setPaperAccount({balance:10000,openPositions:[
       {id:901,pair:'GBP/USD'},{id:902,pair:'GBP/USD'},{id:903,pair:'GBP/USD'}],closedPositions:[]});
@@ -1530,6 +1533,117 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     assert('Ambiguous.3: POSITIVE CONTROL -- with no twin, the identical selection previews exactly one restore, so the refusal above is the ambiguity and not a broken preview',
       clean.items.length===1&&clean.items[0].tradeId===1786749300000000,
       JSON.stringify(clean.items.map(function(i){return i.tradeId;})));
+  }
+
+  // ═══ POST-RESTART RE-VERIFICATION (§18.7) — what the §16A.7 fixes did NOT close ═══
+  // An independent verifier re-attacked the three fixes above from scratch after the unexpected
+  // restart. All three were present and working -- on the JVM arm. Two of them had never been
+  // carried across to the SYMMETRICAL ALEX arm one screen below, where the original defective forms
+  // were still live and still reproducible through the real health report. The third closed only
+  // the orphan-versus-orphan half of the ambiguity it describes. These fixtures pin the other half
+  // of each, and each is paired with a positive control so a future "fix" that simply disables a
+  // detector fails here instead of reporting clean.
+  {
+    // (a) ALEX orphan cardinality. Identical defect to Cardinality.1 above, on the ALEX arm.
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[
+      {tradeId:'AGT|1',pair:'GBP/USD'},{tradeId:'AGT|1',pair:'GBP/USD'},{tradeId:'AGT|1',pair:'GBP/USD'}],closedPositions:[]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|1',tradeId:'AGT|1',strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    assert('AlexCard.1: three ALEX positions sharing one tradeId with a single journal record between them report exactly TWO unjournalled -- the ALEX detector counts, it does not test existence',
+      g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal.length===2,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal));
+    // POSITIVE CONTROL, one variable away: give each its own record and the detector goes quiet,
+    // so the count above tracks the books rather than being a constant.
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|1',tradeId:'AGT|1',strategyId:'alex_g_sr_v1',status:'OPEN'},
+                              {journalEntryId:'ALEXJ|2',tradeId:'AGT|1',strategyId:'alex_g_sr_v1',status:'OPEN'},
+                              {journalEntryId:'ALEXJ|3',tradeId:'AGT|1',strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    assert('AlexCard.2: POSITIVE CONTROL -- one journal record per position and none is reported',
+      g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal.length===0,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.accountPositionsWithNoJournal));
+  }
+  {
+    // (b) ALEX string/number conflation. Identical defect to Conflate.1 above, on the ALEX arm.
+    // This one did not merely under-report: it drove the bottom-line verdict RED over two records
+    // that strict === treats as entirely different trades.
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[{tradeId:5,pair:'GBP/USD'}],
+                       closedPositions:[{tradeId:'5',pair:'GBP/USD',pnl:0}]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|a',tradeId:5,strategyId:'alex_g_sr_v1',status:'OPEN'},
+                              {journalEntryId:'ALEXJ|b',tradeId:'5',strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    const alexMixed=g.computePaperTradingHealthReport().alex;
+    assert('AlexConflate.1: the number 5 and the string "5" are NOT reported as duplicate ALEX account ids',
+      alexMixed.duplicateAccountIds.length===0,JSON.stringify(alexMixed.duplicateAccountIds));
+    assert('AlexConflate.2: nor as duplicate ALEX journal trade ids',
+      alexMixed.duplicateJournalTradeIds.length===0,JSON.stringify(alexMixed.duplicateJournalTradeIds));
+    // POSITIVE CONTROL, one variable away: make them the same type and the duplicate IS reported.
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[{tradeId:5,pair:'GBP/USD'}],
+                       closedPositions:[{tradeId:5,pair:'GBP/USD',pnl:0}]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|a',tradeId:5,strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    assert('AlexConflate.3: POSITIVE CONTROL -- two ALEX records that really do share the id 5 ARE reported as duplicates, so the fix filters rather than disabling detection',
+      g.computePaperTradingHealthReport().alex.duplicateAccountIds.indexOf('5')!==-1,
+      JSON.stringify(g.computePaperTradingHealthReport().alex.duplicateAccountIds));
+  }
+  {
+    // (c) The JVM idKey type tag was UNCOVERED -- reverting it to a bare String() killed nothing in
+    // the whole suite. Conflate.3 does not discriminate: its scenario gives each type its own journal
+    // record, so both keyings answer zero. This is the case that separates them -- a position whose
+    // only candidate journal record stores the OTHER type. closePaperPosition's strict === would
+    // never match these two to each other, so the position genuinely has no journal record.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:5,pair:'GBP/USD'}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:'5',strategyId:'current_strategy',status:'OPEN'}]);
+    assert('IdKeyWire.1: a numeric position id is NOT considered journalled by a record storing the STRING form of that number -- it is reported unjournalled',
+      g.computePaperLedgerIntegrity().accountPositionsWithNoJournal.length===1,
+      JSON.stringify(g.computePaperLedgerIntegrity().accountPositionsWithNoJournal));
+    // POSITIVE CONTROL, one variable away: matching types and the same position is silent.
+    g.setJournalEntries([{tradeId:5,strategyId:'current_strategy',status:'OPEN'}]);
+    assert('IdKeyWire.2: POSITIVE CONTROL -- give it the correctly-typed record and nothing is reported',
+      g.computePaperLedgerIntegrity().accountPositionsWithNoJournal.length===0,
+      JSON.stringify(g.computePaperLedgerIntegrity().accountPositionsWithNoJournal));
+  }
+  {
+    // (d) THE ONE THAT MOVES MONEY. The §16A.7 ambiguity guard counted only how many ORPHANS shared
+    // a string form, so it closed the orphan-versus-orphan half and left the half its own comment
+    // describes: a brand-new LIVE trade holding the numeric id while an unrelated historical orphan
+    // stores the string form. A live position is not in newlyOrphanedAfterReset, so the count never
+    // reaches 2, the preview queued the historical record, and its pnl was applied to the balance.
+    // The UI passes ids as quoted STRING literals for every restore, so cross-type matching itself is
+    // the legitimate, intended path and must NOT be blocked -- only the collision is the defect.
+    seedClean();
+    const t2='2026-08-01T00:00:00.000Z';
+    const rec2=function(id){ return{tradeId:id,strategyId:'current_strategy',status:'CLOSED',
+      pair:'GBP/USD',direction:'buy',entry:1.1,stop:1.09,target:1.12,openedAt:t2,closedAt:t2,
+      result:'Win',pnl:200,exitPrice:1.12,riskAmount:100,positionSize:0.2}; };
+    // A LIVE position with the NUMERIC id, and an unrelated historical orphan storing the STRING form.
+    g.setPaperAccount({balance:10000,openPositions:[{id:999,pair:'EUR/USD'}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:999,strategyId:'current_strategy',status:'OPEN'},rec2('999')]);
+    const twin=g.computeReconciliationPreview(['999']);
+    assert('LiveTwin.1: an orphan whose id collides by STRING FORM with a live account position is NOT queued for restore',
+      twin.items.length===0,JSON.stringify(twin.items.map(function(i){return i.tradeId;})));
+    assert('LiveTwin.2: and the refusal names the ambiguity rather than silently restoring the wrong trade',
+      twin.skipped.length>0&&/Ambiguous trade ID/.test(String(twin.skipped[0].reason)),
+      JSON.stringify(twin.skipped));
+    assert('LiveTwin.3: the projected balance is therefore unchanged -- no money moves',
+      twin.projectedBalance===twin.currentBalance,
+      String(twin.currentBalance)+' -> '+String(twin.projectedBalance));
+    // POSITIVE CONTROL, one variable away: remove the colliding LIVE position and the identical
+    // string selection restores the identical orphan cleanly. This is what proves the guard above is
+    // the collision and not a preview that has been broken into refusing everything -- and it pins
+    // the legitimate UI path, where a string selection restores a numerically-stored orphan.
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([rec2('999')]);
+    const twinOk=g.computeReconciliationPreview(['999']);
+    assert('LiveTwin.4: POSITIVE CONTROL -- with no live collision the same selection previews exactly one restore, worth its recorded pnl',
+      twinOk.items.length===1&&twinOk.projectedBalance===twinOk.currentBalance+200,
+      JSON.stringify(twinOk.items.map(function(i){return i.tradeId;}))+' bal '+String(twinOk.projectedBalance));
+    // And the cross-type UI path itself, which must keep working: a NUMERICALLY stored orphan
+    // selected by the string the UI actually passes.
+    g.setJournalEntries([rec2(999)]);
+    const crossType=g.computeReconciliationPreview(['999']);
+    assert('LiveTwin.5: POSITIVE CONTROL -- the real UI path (a string selection against a numerically stored orphan) is NOT blocked by the new guard',
+      crossType.items.length===1&&crossType.items[0].tradeId===999,
+      JSON.stringify(crossType.items.map(function(i){return i.tradeId;})));
   }
 
   // ═══ §16.4 SURVIVORS — the three the ledger audit could not kill (MOGO-021) ═══
