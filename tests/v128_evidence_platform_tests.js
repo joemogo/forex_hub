@@ -1375,7 +1375,13 @@ function runEvidencePlatformFixtures(g){
       finishedAt:'2026-08-11T13:00:02.000Z',outcome:'OK',tradingEnabled:true,evaluationAdvanced:true,
       instrumentsAttempted:12,instrumentsEvaluated:['AUD_JPY','GBP_USD']});
     eq(p.kind,'POLL'); eq(p.outcome,'OK'); eq(p.durationMs,2000);
-    eq(p.expectedIntervalMs,g.EVIDENCE_POLL_EXPECTED_INTERVAL_MS,'the expectation is STORED, not assumed later');
+    // MOGO-021 17.5: this compared the field to the very constant it is set FROM one line
+    // earlier -- a constant against itself, which survived DOUBLING the constant because both
+    // sides moved together. Pinned to the literal instead, so a change to the poll cadence has to
+    // be a deliberate act that updates this fixture rather than a silent one.
+    eq(p.expectedIntervalMs,60000,'the expectation is STORED as the real 60s cadence, not merely echoed back');
+    eq(g.EVIDENCE_POLL_EXPECTED_INTERVAL_MS,60000,
+      'and the constant itself is 60s -- changing the poll cadence must update this fixture, not slip past it');
     eq(p.schemaVersion,g.EVIDENCE_OBSERVATION_SCHEMA_VERSION);
     ok(p.occurredAt&&p.recordedAt,'occurredAt and recordedAt are distinct fields');
   });
@@ -1453,13 +1459,32 @@ function runEvidencePlatformFixtures(g){
       'a rejected duplicate is reported as already-recorded, not as a failure');
     ok(String(g.evidenceRecordForwardObservations).indexOf('evidencePutObservation')!==-1);
   });
-  t('L9 ordering is deterministic and monotonic',function(){
-    const src=String(g.evidencePutObservation);
-    ok(src.indexOf('evidenceAllocateObservationSeq')!==-1,'every observation takes a sequence number');
-    ok(/seq:seq/.test(src),'which is stored on the record');
-    // the summarizer orders by seq, never by insertion order or wall clock
-    ok(/sort\(function\(a,b\)\{return \(a\.seq\|\|0\)-\(b\.seq\|\|0\);\}\)/.test(String(g.evidenceSummarizeObservations)),
-      'poll continuity is computed in seq order');
+  t('L9 ordering is deterministic and monotonic -- proven by BEHAVIOUR, not by source text',function(){
+    // MOGO-021 17.5: this pinned seq-ordering with a REGEX OVER THE FUNCTION'S SOURCE TEXT. It
+    // caught a sort mutation only because the text changed -- rename a variable and it breaks
+    // while the behaviour is fine; reimplement the same ordering differently and it breaks too.
+    // Now driven: the array is deliberately shuffled so ARRAY order and SEQ order disagree, and
+    // the answer is only correct if the summariser sorts.
+    const mk=function(seq,at){ return{kind:'POLL',seq:seq,startedAt:at,outcome:'OK',
+      instrumentsEvaluated:[],failures:[]}; };
+    const inSeqOrder=[
+      mk(1,'2026-08-11T13:00:00.000Z'),
+      mk(2,'2026-08-11T13:01:00.000Z'),
+      mk(3,'2026-08-11T19:01:00.000Z')
+    ];
+    // Same three records, handed over in an order no consumer should depend on.
+    const shuffled=[inSeqOrder[2],inSeqOrder[0],inSeqOrder[1]];
+    const a=g.evidenceSummarizeObservations(inSeqOrder);
+    const b=g.evidenceSummarizeObservations(shuffled);
+    eq(b.maxGapMs,a.maxGapMs,'the shuffled list yields the SAME widest gap as the ordered one');
+    eq(b.maxGapMs,6*3600000,'namely the real six-hour gap between seq 2 and seq 3');
+    eq(b.missedIntervals,a.missedIntervals,'and the same missed-interval count');
+    eq(b.missedIntervals,359,'namely 359');
+    // The decisive part: walking the array as given would have produced a NEGATIVE interval
+    // (19:01 -> 13:00) and a 60s maximum. Neither appears, so the sort genuinely ran.
+    eq(b.negativeIntervals,0,'no negative interval appears -- insertion order was NOT followed');
+    eq(b.maxGapBetween.from,'2026-08-11T13:01:00.000Z','the gap is attributed to the right pair of records');
+    eq(b.maxGapBetween.to,'2026-08-11T19:01:00.000Z','');
   });
   t('L10 polling GAPS and missed intervals are derivable from stored records',function(){
     const mk=function(id,at,outcome){ return{kind:'POLL',seq:id,tickId:'T'+id,startedAt:at,

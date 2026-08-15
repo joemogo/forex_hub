@@ -3197,7 +3197,20 @@ suites, because stages that genuinely do evaluate everything may legitimately cl
 ### 17.5 A fourth fixture anti-pattern, added to the register
 
 `v128:1378` asserts `p.expectedIntervalMs === EVIDENCE_POLL_EXPECTED_INTERVAL_MS` — but the record's
-field is set *from* that constant one line earlier. **It compares the constant to itself and survives
-doubling it**, because both sides move together. (The stored field is also read by nothing; the
-summariser uses the global.) And `L9` pins seq-ordering with a **regex over the function's source
-text** rather than behaviourally — it caught a sort mutation only because the text changed.
+field is set *from* that constant one line earlier. **It compares the constant to itself**, because
+both sides move together. (The stored field is also read by nothing; the summariser uses the global.)
+And `L9` pins seq-ordering with a **regex over the function's source text** rather than behaviourally
+— it caught a sort mutation only because the text changed.
+
+**Both rebuilt.** `L1` now pins the literal `60000` on both the record *and* the constant, so a change
+to the poll cadence must update the fixture rather than slip past it. `L9` is now driven: the same
+three records are handed to the summariser **in an order that disagrees with their seq**, and the
+answer is only correct if the sort genuinely runs — walking the array as given would produce a
+*negative* interval and a 60-second maximum, and neither appears.
+
+> **This is a fixture-QUALITY fix, not a coverage gain, and the numbers say so.** Doubling the
+> constant killed 2 fixtures before and 4 after; removing the sort killed 1 before and 1 after;
+> reversing it killed 7 before and 7 after. Neighbouring fixtures were already catching the
+> mutations — what was wrong was that *these two assertions did not mean what they said*. One
+> compared a value to itself; the other would break on a rename and pass on a correct
+> reimplementation. Recorded as such rather than presented as new coverage.
