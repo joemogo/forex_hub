@@ -1553,6 +1553,95 @@ function runEvidencePlatformFixtures(g){
     eq(s.negativeIntervals,1,'the one sample proving the timeline is untrustworthy is surfaced');
     eq(s.missedIntervals,0,'while the missed-interval arithmetic still refuses to invent negatives');
   });
+  // ── MOGO-021 §17.3: the summary is now RENDERED. It was correct, covered, and called by
+  // nothing -- so "is the poll loop still running?" had no answer on any screen.
+  t('L10e the continuity card reports an ONGOING outage as an outage, in the operator\'s own words',function(){
+    const mk=function(seq,at){ return{kind:'POLL',seq:seq,startedAt:at,outcome:'OK',
+      instrumentsEvaluated:[],failures:[]}; };
+    const list=[mk(1,'2026-08-11T13:00:00.000Z'),mk(2,'2026-08-11T13:01:00.000Z')];
+    const html=g.evidenceContinuityHtml(
+      g.evidenceSummarizeObservations(list,Date.parse('2026-08-11T16:01:00.000Z')));
+    ok(html.indexOf('Outage in progress')!==-1,'the card asks the question at all');
+    ok(html.indexOf('YES')!==-1&&html.indexOf('3.0h')!==-1,
+      'and answers YES with the real elapsed time, not a bare flag');
+    ok(html.indexOf('still open')!==-1,'the widest gap is marked as still open rather than historical');
+    ok(html.indexOf('179')!==-1,'the missed-interval count reaches the screen');
+  });
+  t('L10f a HEALTHY loop is not rendered as an outage, and an UNASKED question is not rendered as healthy',function(){
+    const mk=function(seq,at){ return{kind:'POLL',seq:seq,startedAt:at,outcome:'OK',
+      instrumentsEvaluated:[],failures:[]}; };
+    const list=[mk(1,'2026-08-11T13:00:00.000Z'),mk(2,'2026-08-11T13:01:00.000Z')];
+    const healthy=g.evidenceContinuityHtml(
+      g.evidenceSummarizeObservations(list,Date.parse('2026-08-11T13:01:30.000Z')));
+    ok(healthy.indexOf('Outage in progress: <strong style="color:var(--green)">no')!==-1,
+      'thirty seconds after the last poll renders as no outage');
+    // THE DISTINCTION THAT MATTERS: no clock supplied is NOT the same as healthy. Rendering
+    // "no" for a question nobody asked is the exact defect this card exists to end.
+    const unasked=g.evidenceContinuityHtml(g.evidenceSummarizeObservations(list));
+    ok(unasked.indexOf('not evaluated (no clock supplied)')!==-1,
+      'while a summary built with no clock says the question was not evaluated');
+    ok(unasked.indexOf('>no<')===-1&&unasked.indexOf('YES')===-1,
+      'and claims neither healthy nor unhealthy');
+  });
+  t('L10g a backwards clock is surfaced on the card, not just counted internally',function(){
+    const back=g.evidenceContinuityHtml(g.evidenceSummarizeObservations([
+      {kind:'POLL',seq:1,startedAt:'2026-08-11T13:05:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]},
+      {kind:'POLL',seq:2,startedAt:'2026-08-11T13:00:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]}
+    ]));
+    ok(back.indexOf('ran BACKWARDS')!==-1,'the operator is told the timeline is untrustworthy');
+    ok(back.indexOf('not trustworthy for continuity arithmetic')!==-1,'and told what that means for these figures');
+    // NEGATIVE CONTROL: an ordinary forward timeline says nothing of the kind.
+    const fwd=g.evidenceContinuityHtml(g.evidenceSummarizeObservations([
+      {kind:'POLL',seq:1,startedAt:'2026-08-11T13:00:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]},
+      {kind:'POLL',seq:2,startedAt:'2026-08-11T13:01:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]}
+    ]));
+    ok(fwd.indexOf('ran BACKWARDS')===-1,'and a normal timeline carries no such warning');
+  });
+  t('L10i the rendered summary is built against NOW by default -- the whole point of the trailing term',function(){
+    // Found by mutation: removing the current time from the renderer's call killed NOTHING, because
+    // that line sat behind an await this harness cannot drain -- leaving the single most important
+    // line of the wiring unverified. The clock default was extracted into
+    // evidenceContinuitySummaryFor() precisely so this claim became reachable.
+    const stale=[
+      {kind:'POLL',seq:1,startedAt:'2026-08-11T13:00:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]},
+      {kind:'POLL',seq:2,startedAt:'2026-08-11T13:01:00.000Z',outcome:'OK',instrumentsEvaluated:[],failures:[]}
+    ];
+    // Called with NO clock argument -- exactly as the renderer calls it.
+    const sum=g.evidenceContinuitySummaryFor(stale);
+    ok(sum.ongoingOutage===true,
+      'a ledger whose last poll is long past reports an ONGOING outage without the caller supplying a clock');
+    ok(sum.trailingGapMs>0,'the trailing gap is measured against the real current time: '+sum.trailingGapMs+'ms');
+    ok(sum.missedIntervals>0,'and it reaches the headline missed-interval figure');
+    // NEGATIVE CONTROL: an explicit clock still wins, so the default is a default and not a
+    // hard-coded "now" that ignores its argument.
+    const explicit=g.evidenceContinuitySummaryFor(stale,Date.parse('2026-08-11T13:01:30.000Z'));
+    eq(explicit.ongoingOutage,false,'an explicitly supplied clock is honoured over the default');
+    eq(explicit.trailingGapMs,30000,'and produces its own trailing figure');
+  });
+  t('L10h the card is wired to a REAL element and is Developer-Mode gated, asserted synchronously',function(){
+    // DISCLOSED LIMIT, and the reason this fixture is shaped the way it is: this suite's runner is
+    // synchronous (see run_v128's `const results=wrapped(g)`), and its t() pushes PASS the moment
+    // fn() returns -- so an `async function` fixture here would report PASS for a promise nobody
+    // awaited, and a rejected assertion inside it would be swallowed entirely. A first version of
+    // this fixture WAS async and was exactly that: vacuous. It is now restricted to what this
+    // harness can genuinely observe.
+    //
+    // renderEvidenceContinuityDiagnostics writes the element SYNCHRONOUSLY on the
+    // Developer-Mode-off path (the write precedes its first await), so that half is real evidence:
+    // it proves the element id the renderer targets actually resolves, and that the gate clears it.
+    g.setDeveloperMode(true);
+    g.setElHtml('evidenceContinuityCard','SENTINEL-NOT-CLEARED');
+    g.setDeveloperMode(false);
+    g.renderEvidenceContinuityDiagnostics();
+    eq(g.elHtml('evidenceContinuityCard'),'',
+      'with Developer Mode off the renderer reaches a real element and clears it -- the wiring resolves');
+    // The Developer-Mode-ON path writes only after awaiting the IndexedDB read, which this harness
+    // cannot drain. Its OUTPUT is covered instead by L10e/f/g, which drive the exact expression the
+    // renderer uses -- evidenceContinuityHtml(evidenceSummarizeObservations(list, now)) -- with the
+    // same three states an operator can encounter. This is the same documented offline/live split
+    // already used for alexGCloseLivePosition, not an untested path.
+    g.setDeveloperMode(false);
+  });
   t('L11 API/data failures are associated with the period they occurred in',function(){
     const s=g.evidenceSummarizeObservations([
       {kind:'POLL',seq:1,startedAt:'2026-08-11T13:00:00.000Z',outcome:'ERROR',

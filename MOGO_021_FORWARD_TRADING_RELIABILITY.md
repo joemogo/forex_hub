@@ -3149,8 +3149,28 @@ outage, and a short trailing gap must not displace the real widest historical ga
 true; negative counter disabled; trailing gap always overwriting `maxGapMs`; count off by one) each
 kill 1–3 fixtures.
 
-**Still open:** `evidenceSummarizeObservations` is still called by nothing in the application — the
-arithmetic is now correct and covered, but no screen consumes it.
+**RESOLVED in v12.21.4 — it is now on a screen.** A Developer-Mode-gated **Forward-Observation
+Continuity** card on Diagnostics renders the summary from the real ledger. Three states, three
+different strings: an outage in progress reports **YES** with the real elapsed time; a healthy loop
+reports **no**; and a summary built with no clock reports **"not evaluated (no clock supplied)"** —
+reporting healthy for a question nobody asked is the exact defect this card exists to end. A
+backwards clock is surfaced in plain words, and the widest gap is marked **still open** when it has
+not closed.
+
+> **Mutation found the most important line uncovered, and reshaped the code.** Removing `Date.now()`
+> from the renderer's call — the one line that makes the whole trailing term work — killed
+> **nothing**, because it sat behind an `await` this offline harness cannot drain. The clock default
+> was extracted into a pure `evidenceContinuitySummaryFor()` seam *so the claim became reachable*;
+> both directions are now pinned (no argument uses now, an explicit clock wins over it).
+>
+> **And my own first wiring fixture was vacuous.** It was an `async function` in a **synchronous**
+> runner, whose `t()` pushes PASS the moment `fn()` returns — so it reported PASS for a promise
+> nobody awaited and would have swallowed every assertion inside it. Rebuilt to assert only what this
+> harness can observe, with the limit disclosed in the fixture itself.
+
+Seven mutations — outage question removed, unasked rendered as healthy, backwards clock not
+surfaced, still-open marker dropped, Developer-Mode gate removed, clock default removed, explicit
+clock ignored — each kill 1–2 fixtures.
 
 ### 17.4 ✅ FIXED — evidence integrity: a stated contract with nothing behind it (v12.21.2)
 

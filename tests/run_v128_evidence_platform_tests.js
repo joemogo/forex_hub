@@ -229,6 +229,12 @@ const wrapped = new Function('g',
   'g.evidenceBuildEvaluationObservation=evidenceBuildEvaluationObservation;' +// pure
   'g.evidenceBuildPipelineObservation=evidenceBuildPipelineObservation;' +    // pure
   'g.evidenceSummarizeObservations=evidenceSummarizeObservations;' +          // pure
+  'g.evidenceContinuityHtml=evidenceContinuityHtml;' +                       // pure
+  'g.evidenceContinuitySummaryFor=evidenceContinuitySummaryFor;' +
+  'g.renderEvidenceContinuityDiagnostics=renderEvidenceContinuityDiagnostics;' +
+  'g.setDeveloperMode=function(v){developerModeEnabled=v;};' +
+  'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):null; };' +
+  'g.setElHtml=function(id,v){ var e=document.getElementById(id); if(e) e.innerHTML=v; };' +
   'g.evidencePlanRetention=evidencePlanRetention;' +                          // pure
   'g.evidenceEnforceObservationRetention=evidenceEnforceObservationRetention;' +
   'g.evidencePutObservation=evidencePutObservation;' +
