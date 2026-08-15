@@ -2984,7 +2984,7 @@ The arithmetic itself is reasonably covered, but structurally blind in the direc
 * A poll with no `startedAt` is stamped **"now"**, manufacturing continuity from a missing record.
 * A rewound clock pushes a **negative** interval that is silently clamped away.
 
-### 17.4 Evidence integrity — one direct contradiction of a stated contract
+### 17.4 ✅ FIXED — evidence integrity: a stated contract with nothing behind it (v12.21.2)
 
 Reason-code validation is **properly closed** (every registry, type and completeness-level check dies
 when removed), and `JVM-30` is a genuine differential fixture. But:
@@ -2995,6 +2995,36 @@ COMPLETE: evaluateLiveTrigger short-circuits on its first failed gate… Claimin
 the fabrication this ledger exists to prevent."* **The comment states the rule; nothing enforces it.**
 Also unpinned: `reasonText` can be hard-coded while `reasonCode` stays correct, so the two fields
 would contradict each other in the same record; and the entry-day gate has no FAIL-path fixture.
+
+---
+
+**RESOLVED in v12.21.2.** `validateDecisionEvent` now enforces the rule the comment described.
+
+Deliberately an **error** — the event is refused and the refusal recorded in
+`decisionEventValidationFailures` — rather than a silent downgrade to `PARTIAL`. Rewriting a caller's
+completeness claim would conceal the very defect being checked for; a record that never enters the
+ledger *while its refusal is surfaced* is far safer than one sitting in the ledger with a false
+completeness claim. The rule is **scoped** to the short-circuiting `LIVE_TRIGGER` stage, with its own
+positive control: broadening it to every `CANDIDATE_REJECTED` breaks **14** fixtures across four
+suites, because stages that genuinely do evaluate everything may legitimately claim COMPLETE.
+
+**7 fixtures (JVM-32…38)**, and a controlled experiment against the pre-fix code:
+
+| Mutation | Pre-fix (1,623) | Post-fix (1,645) |
+|---|---|---|
+| the rejection record claims `COMPLETE` | **0** | 6 |
+| `reasonText` hard-coded so code and text contradict | **0** | 1 |
+| enforcement removed | — | 2 |
+| enforcement broadened to every stage (over-blocking) | — | 14 |
+
+> **Disclosed: my first `reasonText` fixture was vacuous, and my own mutation test caught it.** The
+> scenario runs `setMode("flat")`, where every pair rejects for the *same* reason — so a `reasonText`
+> hard-coded to that one reason stayed self-consistent with its own code and survived all 1,644
+> fixtures. Rebuilt on a **mixed** set driven through the real recorder with three of the eight reason
+> strings `evaluateLiveTrigger` actually returns, so any single hard-coded text contradicts at least
+> two records. The reasons are real strategy outputs; no verdict is faked.
+
+**Still open:** the entry-day gate has no FAIL-path fixture.
 
 ### 17.5 A fourth fixture anti-pattern, added to the register
 

@@ -420,6 +420,59 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("JVM-31","every recorded reason code is REGISTERED -- the diagnostic cannot emit an unknown code",\n' +
   '    rejEvents.every(function(e){ return !!REASON_CODE_REGISTRY[e.reasonCode]; }),\n' +
   '    "codes="+JSON.stringify(rejEvents.map(function(e){return e.reasonCode;})));\n' +
+  // ══ MOGO-021 §17.4: the completeness contract is now ENFORCED, not merely commented ══
+  // evaluateLiveTrigger short-circuits on its first failed gate, so a LIVE_TRIGGER rejection can
+  // never have complete evidence. The code comment stated that rule; nothing enforced it, and the
+  // record could claim COMPLETE with the whole gate silent. These fixtures pin BOTH directions:
+  // the real emitter's actual claim, the refusal of a false one, that the refusal is SURFACED
+  // rather than silent, and -- critically -- that the rule is scoped rather than a blanket ban.
+  '  g.record("JVM-32","every real CANDIDATE_REJECTED record claims PARTIAL, never COMPLETE -- the short-circuit means later gates genuinely were not evaluated",\n' +
+  '    rejEvents.length>0&&rejEvents.every(function(e){ return e.evidenceCompleteness==="PARTIAL"; }),\n' +
+  '    "n="+rejEvents.length+" levels="+JSON.stringify(rejEvents.map(function(e){return e.evidenceCompleteness;})));\n' +
+  '  var __vfBefore=decisionEventValidationFailures.length, __logBefore=decisionEventLog.length;\n' +
+  '  var __badRes=emitDecisionEvent({eventType:"CANDIDATE_REJECTED",strategyId:"current_strategy",\n' +
+  '    pair:"EUR_USD",source:"checkAutoTrades",stage:"LIVE_TRIGGER",decision:"REJECTED",\n' +
+  '    reasonCode:"CONFLUENCE_BELOW_THRESHOLD",evidenceCompleteness:"COMPLETE"});\n' +
+  '  g.record("JVM-33","a LIVE_TRIGGER rejection claiming COMPLETE is REFUSED and never enters the append-only ledger",\n' +
+  '    __badRes&&__badRes.ok===false&&decisionEventLog.length===__logBefore,\n' +
+  '    "ok="+String(__badRes&&__badRes.ok)+" logGrew="+String(decisionEventLog.length-__logBefore));\n' +
+  '  g.record("JVM-34","and the refusal is SURFACED as a validation failure rather than silently dropping an audit record",\n' +
+  '    decisionEventValidationFailures.length===__vfBefore+1&&\n' +
+  '    String(decisionEventValidationFailures[decisionEventValidationFailures.length-1].errors.join(" ")).indexOf("short-circuits")!==-1,\n' +
+  '    JSON.stringify(decisionEventValidationFailures.slice(-1)));\n' +
+  '  var __okRes=emitDecisionEvent({eventType:"CANDIDATE_REJECTED",strategyId:"current_strategy",\n' +
+  '    pair:"EUR_USD",source:"checkAutoTrades",stage:"LIVE_TRIGGER",decision:"REJECTED",\n' +
+  '    reasonCode:"CONFLUENCE_BELOW_THRESHOLD",evidenceCompleteness:"PARTIAL"});\n' +
+  '  g.record("JVM-35","POSITIVE CONTROL: the identical record claiming PARTIAL is accepted -- the rule rejects the false claim, not the event type",\n' +
+  '    __okRes&&__okRes.ok===true,"ok="+String(__okRes&&__okRes.ok)+" errs="+JSON.stringify(__okRes&&__okRes.errors));\n' +
+  '  var __otherStage=emitDecisionEvent({eventType:"CANDIDATE_REJECTED",strategyId:"alex_g_sr_v1",\n' +
+  '    pair:"EUR_USD",source:"alexGRunSetupEngine",stage:"SETUP_QUALIFICATION",decision:"REJECTED",\n' +
+  '    reasonCode:"CONFLUENCE_BELOW_THRESHOLD",evidenceCompleteness:"COMPLETE"});\n' +
+  '  g.record("JVM-36","POSITIVE CONTROL: the rule is SCOPED to the short-circuiting LIVE_TRIGGER stage -- a rejection from a stage that does evaluate everything may still claim COMPLETE",\n' +
+  '    __otherStage&&__otherStage.ok===true,\n' +
+  '    "ok="+String(__otherStage&&__otherStage.ok)+" errs="+JSON.stringify(__otherStage&&__otherStage.errors));\n' +
+  // JVM-37 needs a MIXED set of reasons and would otherwise be vacuous. The scenario above runs
+  // setMode("flat"), where every pair rejects for the SAME reason -- so a reasonText hard-coded to
+  // that one reason stays self-consistent with its own code and nothing notices. (Proven: a
+  // hard-coded reasonText survived the entire 1,644-fixture gate against the first version of this
+  // fixture.) Driving the real recorder with three of the eight reason strings evaluateLiveTrigger
+  // genuinely returns makes any single hard-coded text contradict at least two records. The reasons
+  // are real strategy outputs taken from JVM-30's mapping; no verdict is faked.
+  '  clearDecisionEvents();\n' +
+  '  jvmRecordCandidateRejected("EUR_USD",{reason:"Confluence below threshold",conf:{total:40}});\n' +
+  '  jvmRecordCandidateRejected("GBP_USD",{reason:"No engulfing trigger yet",conf:{total:70}});\n' +
+  '  jvmRecordCandidateRejected("USD_JPY",{reason:"Invalid stop distance",conf:{total:80}});\n' +
+  '  var __mixed=decisionEventLog.filter(function(e){ return e.eventType==="CANDIDATE_REJECTED"&&e.source==="checkAutoTrades"; });\n' +
+  '  var __mixedCodes={}; __mixed.forEach(function(e){ __mixedCodes[e.reasonCode]=1; });\n' +
+  '  g.record("JVM-37","reasonText carries the reason the strategy ACTUALLY returned -- across a MIXED set of rejections the code and the text can never contradict each other in the same record",\n' +
+  '    Object.keys(__mixedCodes).length>=3&&\n' +
+  '    __mixed.length===3&&\n' +
+  '    __mixed.every(function(e){ return e.reasonText!=null&&jvmLiveTriggerReasonCode(e.reasonText)===e.reasonCode; }),\n' +
+  '    "distinctCodes="+Object.keys(__mixedCodes).length+" "+JSON.stringify(__mixed.map(function(e){return{code:e.reasonCode,text:e.reasonText,recomputed:jvmLiveTriggerReasonCode(e.reasonText)};})));\n' +
+  '  g.record("JVM-38","and each of those mixed records still claims PARTIAL -- the completeness contract holds per record, not just for one reason",\n' +
+  '    __mixed.length===3&&__mixed.every(function(e){ return e.evidenceCompleteness==="PARTIAL"; }),\n' +
+  '    JSON.stringify(__mixed.map(function(e){return e.evidenceCompleteness;})));\n' +
+  '  clearDecisionEvents();\n' +
   // ══ JVM FORWARD-COVERAGE LEDGER (report 2.14) ══
   // JVM previously recorded NO forward coverage at all -- the ledger that makes "was this
   // instrument actually evaluated?" answerable, and whose absence left the EUR_USD question
