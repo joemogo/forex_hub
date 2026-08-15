@@ -181,8 +181,20 @@ const wrapped=new Function('g', appCode + '\n' + 'return (function(){\n' +
   '  g.record("ALIGN-19","precomputeCloseTimes returns one close per candle",pre.length===h1.length,"len="+pre.length+"/"+h1.length);\n' +
   '  let mono=true; for(let i=1;i<pre.length;i++){ if(!(pre[i]>pre[i-1])) mono=false; }\n' +
   '  g.record("ALIGN-20","close times are strictly increasing -- no duplicate or reversed boundary",mono,"strictly monotonic");\n' +
-  '  let agree=true; for(let i=0;i<h1.length;i++){ if(pre[i]!==getCandleCloseTime(h1,i,"H1").getTime()) agree=false; }\n' +
-  '  g.record("ALIGN-21","it agrees with getCandleCloseTime on every index -- one methodology, not two",agree,"all indices agree");\n' +
+  // MOGO-021 §18.14: ALIGN-21 WAS VACUOUS -- literally unkillable. precomputeCloseTimes IS
+  // `candles.map((c,i)=>getCandleCloseTime(candles,i,granularity).getTime())`, and the fixture
+  // asserted `pre[i] === getCandleCloseTime(h1,i,"H1").getTime()` -- i.e. map(f)[i] === f(i),
+  // true by construction for ANY f. Its stated claim ("one methodology, not two") is a property
+  // of the implementation's shape, so no behaviour change can falsify it. Proven: a mutation
+  // halving the H1 close interval kills ALIGN-9b/10/11/12/27 and ALIGN-21 PASSES.
+  // Replaced with the SPEC property it was reaching for: an H1 bar closes exactly one hour after
+  // it opens, and consecutive closes are exactly one hour apart. Both are literal constants taken
+  // from the timeframe definition, not re-derived by calling the function under test.
+  '  let deltaOk=true, stepOk=true;\n' +
+  '  for(let i=0;i<h1.length;i++){ if(pre[i]-h1[i].t!==3600000) deltaOk=false; }\n' +
+  '  for(let i=1;i<pre.length;i++){ if(pre[i]-pre[i-1]!==3600000) stepOk=false; }\n' +
+  '  g.record("ALIGN-21","every H1 close is exactly 3600000ms after its own open -- the literal timeframe duration, not a value re-derived from the function under test",deltaOk,"pre[i]-open[i]===3600000 for all i");\n' +
+  '  g.record("ALIGN-21b","and consecutive closes are exactly 3600000ms apart, so no boundary is stretched or collapsed",stepOk,"pre[i]-pre[i-1]===3600000 for all i");\n' +
   '  g.record("ALIGN-22","a null series yields an empty array rather than throwing",\n' +
   '    Array.isArray(precomputeCloseTimes(null,"H1"))&&precomputeCloseTimes(null,"H1").length===0,"[] on null");\n' +
   // ══ advancePointer -- the two-pointer walk over those closes ══

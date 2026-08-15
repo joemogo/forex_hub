@@ -104,12 +104,21 @@ function runCandleCompletenessFixtures(g){
     await t('SAFETY-4 fetchCandlesRange() must expose an incomplete-data state after HTTP 429',async function(){
       g.setFetchScript([g.okCandlesRaw(SCANNER_LOOKBACK,PARTIAL),g.RESP_429]);
       const c=await g.fetchCandlesRange('EUR_USD','M15',SCANNER_LOOKBACK);
-      // Directly observable facts only -- never an inferred "missingCandles".
-      ok(c&&typeof c==='object'&&!Array.isArray(c)||g.hasCompletenessState(c),
-        'pagination terminated on HTTP 429 but the caller received a bare array with no '+
-        'paginationTerminationReason, no httpStatus and no pagesRequested/pagesReceived -- the '+
-        'HTTP 429 is completely invisible to every downstream consumer');
-      return 'incomplete-data state exposed';
+      // MOGO-021 §18.14: THIS WAS PRESENCE-ONLY AND FAR WEAKER THAN ITS TITLE. It asserted
+      // `hasCompletenessState(c)`, which accepts ANY of COMPLETE / PARTIAL / UNAVAILABLE -- so a
+      // change classifying a 429-terminated walk as COMPLETE passed it. Verified: a mutation
+      // forcing `satisfied=true` left this fixture green and only CURSOR-1 fired from this suite.
+      // Its first disjunct was also dead code: `c` is always an array here, so
+      // `!Array.isArray(c)` is always false, and it would have blanket-passed if the return
+      // shape ever changed.
+      // The contract (ADR-011) is that consumers depend on completenessState and NOTHING else,
+      // so that is the load-bearing assertion; the termination reason is asserted as forensics,
+      // which is what ADR-011 says those diagnostic fields are for.
+      eq(c.completenessState,'PARTIAL',
+        'a walk terminated by HTTP 429 must be PARTIAL -- not COMPLETE, and not merely "some state"');
+      eq(c.paginationTerminationReason,'HTTP_ERROR',
+        'and the diagnostic must name the HTTP failure rather than an ordinary exhaustion');
+      return 'incomplete-data state exposed as PARTIAL/HTTP_ERROR';
     });
 
     // ── CURSOR-1 (MOGO-021 DECISION 1) ─────────────────────────────────────────────────────
@@ -242,11 +251,17 @@ function runCandleCompletenessFixtures(g){
     await t('CONTRACT-2 scanPair() reads the producer value directly, so loss cannot occur',async function(){
       // The only reader in the codebase. It must consume fetchCandles()' return value with no
       // intervening copy, or the state would be silently lost and every scan would fail closed.
+      // MOGO-021 §18.14: the two clauses below are STRUCTURAL (source-text) assertions, not
+      // behavioural evidence -- they survive every behaviour-changing mutation and die on a
+      // rename. They are kept because "must not classify a COPY" is a shape invariant with no
+      // directly observable behaviour when the copy would be identical, but they are labelled so
+      // they are not mistaken for coverage. The behavioural proof below is what actually holds
+      // this contract, and MDCONT-4/-5 in v1239 now drive it end to end.
       const src=String(g.scanPair);
       ok(/marketDataCompletenessOf\(candles\)/.test(src),
-        'scanPair must classify the producer value itself, not a derived array');
+        'STRUCTURAL: scanPair must classify the producer value itself, not a derived array');
       ok(!/marketDataCompletenessOf\(\s*candles\s*\.\s*(slice|map|filter|concat)/.test(src),
-        'scanPair must not classify a copy');
+        'STRUCTURAL: scanPair must not classify a copy');
       // Behavioural proof: a PARTIAL response really does reach the gate as PARTIAL.
       g.setFetchScript([g.okCandles(PARTIAL),g.okPrice()]);
       g.setActiveTf('M15'); g.resetPairData();
