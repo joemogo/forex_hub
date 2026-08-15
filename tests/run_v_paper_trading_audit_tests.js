@@ -99,6 +99,11 @@ const wrapped = new Function('g',
   'g.getUnifiedJournalRecords=getUnifiedJournalRecords;' +
   'g.getFilteredJournalRecords=getFilteredJournalRecords;' +
   'g.buildTjrSessionZones=buildTjrSessionZones;' +
+  'g.alexGComputeEquityStats=alexGComputeEquityStats;' +
+  'g.alexGComputeReplayStats=alexGComputeReplayStats;' +
+  'g.computeReplayStats=computeReplayStats;' +
+  'g.setPaperResetHistory=function(v){paperResetHistory=v;};' +
+  'g.setAlexGSetupState=function(v){alexGSetupState=v;};' +
   // -- state get/set --
   'g.getJournalEntries=function(){return journalEntries;};g.setJournalEntries=function(v){journalEntries=v;};' +
   'g.getPaperAccount=function(){return paperAccount;};g.setPaperAccount=function(v){paperAccount=v;};' +

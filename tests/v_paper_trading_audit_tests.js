@@ -1027,6 +1027,145 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setAiChat({key:'',model:'test',messages:[]});
   }
 
+  // ═══ §16.4 SURVIVORS — the three the ledger audit could not kill (MOGO-021) ═══
+  // The ledger/commit/rollback/version-guard layers are otherwise the best-covered code in this
+  // repository (one mutation kills 30 fixtures). These three held out: the version guard's ADVANCE
+  // half, the non-ledger persistence that commit performs only AFTER a successful guarded write,
+  // and max drawdown ever growing.
+  {
+    // The version guard is proven to REJECT a stale write. Nothing proved it ADVANCES on a good
+    // one -- and a counter that never advances is a guard that never fires again.
+    seedClean();
+    g.resetPaperVersionGuard();
+    const before=parseInt(g.getLocalStorageItem('fxhub_paper_version')||'0',10);
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    const c1=g.commitPaperLedger();
+    const after1=parseInt(g.getLocalStorageItem('fxhub_paper_version')||'0',10);
+    assert('Ledger.V1: a successful commit ADVANCES fxhub_paper_version by exactly 1 (the guard\'s advance half, not just its rejection half)',
+      c1.ok===true&&after1===before+1,JSON.stringify({before,after1,ok:c1.ok}));
+    const c2=g.commitPaperLedger();
+    const after2=parseInt(g.getLocalStorageItem('fxhub_paper_version')||'0',10);
+    assert('Ledger.V2: a second successful commit advances it again by exactly 1 -- it is a counter, not a one-shot flag',
+      c2.ok===true&&after2===after1+1,JSON.stringify({after1,after2}));
+    // NEGATIVE CONTROL: a REJECTED commit must not advance it. Without this the fixture above
+    // would pass for an implementation that advanced the counter unconditionally.
+    g.rigStalePaperVersion();
+    const rigged=parseInt(g.getLocalStorageItem('fxhub_paper_version'),10);
+    const c3=g.commitPaperLedger();
+    assert('Ledger.V3: a REJECTED commit does not advance the version -- the counter tracks successful writes only',
+      c3.ok===false&&parseInt(g.getLocalStorageItem('fxhub_paper_version'),10)===rigged,
+      JSON.stringify({ok:c3.ok,rigged,now:g.getLocalStorageItem('fxhub_paper_version')}));
+    g.resetPaperVersionGuard();
+  }
+  {
+    // commitPaperLedger() calls save() ONLY after the guarded ledger write succeeds. Deleting that
+    // call killed nothing: every non-ledger store it persists -- the reset history, the auto-trade
+    // toggle and log, the reconciliation audit trail -- would silently stop being written, and the
+    // loss would only show up after a reload.
+    seedClean();
+    g.resetPaperVersionGuard();
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setPaperResetHistory([{at:'2026-08-14T00:00:00.000Z',kind:'ACCOUNT_ONLY',note:'V16.4 fixture'}]);
+    g.setLocalStorageItem('fxhub_paper_reset_history','[]');   // deliberately stale on disk
+    const committed=g.commitPaperLedger();
+    const persisted=g.getLocalStorageItem('fxhub_paper_reset_history');
+    assert('Ledger.S1: a successful commit also persists the NON-ledger state that only save() writes (reset history reached storage)',
+      committed.ok===true&&persisted!=null&&persisted.indexOf('V16.4 fixture')!==-1,
+      JSON.stringify({ok:committed.ok,persisted:String(persisted).slice(0,120)}));
+    // NEGATIVE CONTROL: a rejected commit must NOT persist it -- a blocked action is not partially
+    // applied. This is what stops the fixture above from passing for an unconditional save().
+    seedClean();
+    g.resetPaperVersionGuard();
+    g.setPaperResetHistory([{at:'2026-08-14T00:00:00.000Z',kind:'ACCOUNT_ONLY',note:'V16.4 blocked'}]);
+    g.setLocalStorageItem('fxhub_paper_reset_history','[]');
+    g.rigStalePaperVersion();
+    const blocked=g.commitPaperLedger();
+    assert('Ledger.S2: a REJECTED commit persists none of it -- the non-ledger save is on the success path only',
+      blocked.ok===false&&String(g.getLocalStorageItem('fxhub_paper_reset_history')).indexOf('V16.4 blocked')===-1,
+      JSON.stringify({ok:blocked.ok,stored:String(g.getLocalStorageItem('fxhub_paper_reset_history')).slice(0,120)}));
+    g.resetPaperVersionGuard();
+  }
+  {
+    // The ALEX mirror: commitAlexGLedger() calls saveAlexGRest() only after its guarded write.
+    seedClean();
+    g.resetAlexGVersionGuard();
+    g.setAlexGAccount({balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]});
+    g.setAlexGSetupState([{setupId:'V164|FIXTURE|SETUP',pair:'GBP_USD',timeframe:'H1'}]);
+    g.setLocalStorageItem('fxhub_alexg_setups','[]');
+    const committed=g.commitAlexGLedger();
+    const stored=g.getLocalStorageItem('fxhub_alexg_setups');
+    assert('Ledger.S3: a successful ALEX commit also persists its non-ledger zone/setup/toggle state',
+      committed.ok===true&&stored!=null&&stored.indexOf('V164|FIXTURE|SETUP')!==-1,
+      JSON.stringify({ok:committed.ok,stored:String(stored).slice(0,120)}));
+    g.resetAlexGVersionGuard();
+  }
+  {
+    // Max drawdown is the number an operator reads to decide whether a strategy is survivable.
+    // It could be pinned at zero forever with nothing objecting.
+    const T=function(id,r,when){ return{tradeId:id,result:r>0?'Win':'Loss',resultR:r,pnl:r*100,
+      closedAt:when,strategyId:'alex_g_sr_v1'}; };
+    // Equity curve: +3 (peak 3) -> -2 (1) -> -2 (-1)  => worst peak-to-trough is 4R.
+    const stats=g.alexGComputeEquityStats([
+      T('D1',3,'2026-08-01T00:00:00.000Z'),
+      T('D2',-2,'2026-08-02T00:00:00.000Z'),
+      T('D3',-2,'2026-08-03T00:00:00.000Z')
+    ]);
+    assert('Ledger.D1: max drawdown GROWS to the real worst peak-to-trough (4R), rather than staying at zero',
+      Math.abs(stats.maxDrawdownR-4)<1e-9,JSON.stringify(stats));
+    assert('Ledger.D2: and the peak it is measured from is the real running peak (3R), not the final equity',
+      Math.abs(stats.peakEquityR-3)<1e-9&&Math.abs(stats.finalEquityR-(-1))<1e-9,JSON.stringify(stats));
+    // A RECOVERY must not shrink the maximum -- that is the difference between max and current.
+    const recovered=g.alexGComputeEquityStats([
+      T('D1',3,'2026-08-01T00:00:00.000Z'),
+      T('D2',-2,'2026-08-02T00:00:00.000Z'),
+      T('D3',-2,'2026-08-03T00:00:00.000Z'),
+      T('D4',4,'2026-08-04T00:00:00.000Z')
+    ]);
+    assert('Ledger.D3: a later recovery leaves MAX drawdown at 4R while CURRENT drawdown returns to 0 -- the two are not the same figure',
+      Math.abs(recovered.maxDrawdownR-4)<1e-9&&Math.abs(recovered.currentDrawdownR-0)<1e-9,
+      JSON.stringify(recovered));
+    // POSITIVE CONTROL: a monotonically rising curve has NO drawdown, so the figure is not a
+    // constant that happens to match.
+    const rising=g.alexGComputeEquityStats([
+      T('U1',1,'2026-08-01T00:00:00.000Z'),
+      T('U2',2,'2026-08-02T00:00:00.000Z')
+    ]);
+    assert('Ledger.D4: a curve that only rises reports ZERO drawdown -- the figure tracks the curve, it is not a constant',
+      Math.abs(rising.maxDrawdownR-0)<1e-9&&Math.abs(rising.finalEquityR-3)<1e-9,JSON.stringify(rising));
+  }
+
+  {
+    // THE ACTUAL DRAWDOWN SURVIVOR. alexGComputeEquityStats (asserted above) turned out to be
+    // covered already -- pinning maxDD there kills six fixtures across three suites. The two
+    // implementations that genuinely could be pinned to zero with the whole gate silent are the
+    // REPLAY statistics: alexGComputeReplayStats (ALEX research replay) and computeReplayStats
+    // (TRUE MTF replay). Both are read by a human deciding whether a strategy is survivable.
+    // Three separate copies of the same arithmetic is itself the risk; each needs its own control.
+    const aTrade=function(id,r,res){ return{tradeId:id,result:res||(r>0?'Win':'Loss'),resultR:r,
+      lookaheadPass:true,stillOpen:false,maePips:0,mfePips:0,direction:'buy'}; };
+    // +3 -> -2 -> -2 : peak 3, trough -1, worst peak-to-trough 4R.
+    const aStats=g.alexGComputeReplayStats([aTrade('A1',3),aTrade('A2',-2),aTrade('A3',-2)]);
+    assert('Replay.DD1: the ALEX replay report GROWS max drawdown to the real 4R, rather than reporting zero',
+      Math.abs(aStats.maxDrawdownR-4)<1e-9,JSON.stringify({max:aStats.maxDrawdownR,net:aStats.netR}));
+    const aRecovered=g.alexGComputeReplayStats([aTrade('A1',3),aTrade('A2',-2),aTrade('A3',-2),aTrade('A4',4)]);
+    assert('Replay.DD2: and a later recovery leaves MAX at 4R while CURRENT returns to 0 -- the two figures are distinct',
+      Math.abs(aRecovered.maxDrawdownR-4)<1e-9&&Math.abs(aRecovered.currentDrawdownR-0)<1e-9,
+      JSON.stringify({max:aRecovered.maxDrawdownR,cur:aRecovered.currentDrawdownR}));
+    assert('Replay.DD3: POSITIVE CONTROL -- an only-rising ALEX curve reports ZERO drawdown, so the figure tracks the curve',
+      Math.abs(g.alexGComputeReplayStats([aTrade('U1',1),aTrade('U2',2)]).maxDrawdownR-0)<1e-9,'');
+
+    // TRUE MTF replay keeps its equity in R via ratio-on-win / -1 on loss.
+    const mTrade=function(id,res,ratio){ return{result:res,ratio:ratio,lookaheadPass:true,
+      maePips:0,mfePips:0,direction:'buy',pair:'EUR_USD',ambiguous:false,regimeTags:[],
+      setupType:'test',session:'London',barsHeld:1,calendarHours:1,confluence:60}; };
+    // +3 -> -1 -> -1 : peak 3, trough 1, worst peak-to-trough 2R.
+    const mStats=g.computeReplayStats([mTrade('m1','Win',3),mTrade('m2','Loss',2),mTrade('m3','Loss',2)]);
+    assert('Replay.DD4: the TRUE MTF replay report GROWS max drawdown to the real 2R, rather than reporting zero',
+      Math.abs(mStats.maxDrawdownR-2)<1e-9,JSON.stringify({max:mStats.maxDrawdownR}));
+    assert('Replay.DD5: POSITIVE CONTROL -- an only-rising MTF curve reports ZERO drawdown',
+      Math.abs(g.computeReplayStats([mTrade('u1','Win',2),mTrade('u2','Win',2)]).maxDrawdownR-0)<1e-9,'');
+  }
+
   // ═══ HEALTH-CHECK VERDICT NEGATIVE CONTROLS (MOGO-021) ═══
   // Every fixture above proves a DETECTOR populates its array. None of them ever asserted the
   // VERDICT, and that is exactly where the defect lived: reconciliationStatus consulted ten of the

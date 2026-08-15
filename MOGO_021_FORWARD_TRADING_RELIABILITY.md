@@ -2808,6 +2808,26 @@ probes I ran myself, and the extensions die too. Three survivors: the JVM versio
 (the guard's rejection half is covered, its advance half is not), `save()`/`saveAlexGRest()` never
 called after a successful commit, and max-drawdown never growing.
 
+### 16.4a The three §16.4 survivors — CLOSED (and one of them was the wrong function)
+
+| Survivor | Now killed by |
+|---|---|
+| the JVM version guard's **advance** half (its rejection half was covered) | `Ledger.V1–V3` — advances by exactly 1 per successful commit, twice in a row, and **not at all** on a rejected one |
+| `save()` / `saveAlexGRest()` never called after a successful commit | `Ledger.S1–S3` — the non-ledger state reaches storage on success, and **none of it** on a rejection |
+| max drawdown never growing | `Replay.DD1–DD5` |
+
+> **The drawdown survivor was not the function I first assumed.** I wrote four fixtures against
+> `alexGComputeEquityStats` — and pinning its `maxDD` to zero kills **six** fixtures across three
+> suites, so it was already covered and my fixtures were additive, not the closure. The two
+> implementations that genuinely could be pinned to zero with the whole gate silent are the
+> **replay** statistics: `alexGComputeReplayStats` (ALEX research replay) and `computeReplayStats`
+> (TRUE MTF replay). **Three separate copies of the same peak-to-trough arithmetic is itself the
+> risk**, and each now has its own control, including a positive control proving an only-rising
+> curve reports zero rather than the figure being a constant that happens to match.
+
+The version-guard mutation is anchored on the JVM-only error text above it, because the ALEX block
+five lines away is otherwise byte-identical and would have been hit by accident.
+
 ### 16.5 End-to-end stops at "a position opened"
 
 **No fixture anywhere drives a trade from signal to a closed record with a verified exit price, R
