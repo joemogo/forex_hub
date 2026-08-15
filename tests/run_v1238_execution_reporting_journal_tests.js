@@ -116,6 +116,31 @@ try{
     'g.JOURNAL_NOT_RECORDED=JOURNAL_NOT_RECORDED;' +
     // ── state get/set ──
     'g.getJournalEntries=function(){return journalEntries;};g.setJournalEntries=function(v){journalEntries=v;};' +
+  // §18.12: clock control, so the close-time assertions can pin EXACT values instead of
+  // "is a number and >= 0" -- a shape that passed against a mutation journalling durationMs
+  // as 1 for every trade, and against one journalling the open time as the close time.
+  // Patches the Date CONSTRUCTOR, not just Date.now. The close path timestamps with
+  // `new Date().toISOString()` and derives durationMs from closedAt minus openedAt, so freezing
+  // only Date.now left both timestamps on the wall clock and the duration at ~0 -- which is why
+  // the assertion could only ever be "is a number and >= 0".
+  'g.freezeClock=function(ms){' +
+  '  if(!g.__RealDate){ g.__RealDate=Date; }' +
+  '  var RD=g.__RealDate;' +
+  '  var F=function(){ var a=arguments;' +
+  '    switch(a.length){' +
+  '      case 0: return new RD(ms);' +
+  '      case 1: return new RD(a[0]);' +
+  '      case 2: return new RD(a[0],a[1]);' +
+  '      case 3: return new RD(a[0],a[1],a[2]);' +
+  '      case 4: return new RD(a[0],a[1],a[2],a[3]);' +
+  '      case 5: return new RD(a[0],a[1],a[2],a[3],a[4]);' +
+  '      case 6: return new RD(a[0],a[1],a[2],a[3],a[4],a[5]);' +
+  '      default: return new RD(a[0],a[1],a[2],a[3],a[4],a[5],a[6]);' +
+  '    } };' +
+  '  F.now=function(){ return ms; }; F.parse=RD.parse; F.UTC=RD.UTC; F.prototype=RD.prototype;' +
+  '  Date=F;' +
+  '};' +
+  'g.restoreClock=function(){ if(g.__RealDate){ Date=g.__RealDate; g.__RealDate=null; } };' +
     'g.getPaperAccount=function(){return paperAccount;};g.setPaperAccount=function(v){paperAccount=v;};' +
     'g.getAlexGAccount=function(){return alexGAccount;};g.setAlexGAccount=function(v){alexGAccount=v;};' +
     'g.getAlexGJournalEntries=function(){return alexGJournalEntries;};g.setAlexGJournalEntries=function(v){alexGJournalEntries=v;};' +

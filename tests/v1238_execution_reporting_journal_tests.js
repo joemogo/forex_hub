@@ -54,16 +54,27 @@ async function runV1238ExecutionReportingJournalFixtures(g){
   // ── Drives the REAL close path. Deliberately returns the journal record found by tradeId in
   //    the live journalEntries store -- so a close that never journals produces an untouched
   //    OPEN record (or none), and every assertion below it fails. ──
+  // §18.12: the clock is FROZEN at a known open instant and advanced to a known close instant
+  // exactly 90 minutes later, so closedAt and durationMs are fixture-chosen literals rather than
+  // whatever the wall clock happened to produce. Without this the close ran in under a
+  // millisecond, durationMs was ~0, and the only assertion available was "is a number and >= 0" --
+  // which passes against a mutation that journals 1 for every trade.
+  const OPEN_MS=Date.parse('2026-03-01T10:00:00.000Z');
+  const CLOSE_MS=OPEN_MS+5400000;                       // +90 minutes
+  const EXPECTED_CLOSED_AT=new Date(CLOSE_MS).toISOString();
   async function driveJvmClose(o){
     seedClean();
     g.setPairData(PAIR,o.exitLive);
+    g.freezeClock(OPEN_MS);
     const pos=g.openPaperPosition(PAIR,o.dir,o.entry,o.stop,o.target,'manual');
-    if(!pos||pos.error) return{pos:null,res:null,rec:null,openError:(pos&&pos.error)||'no position'};
+    if(!pos||pos.error){ g.restoreClock(); return{pos:null,res:null,rec:null,openError:(pos&&pos.error)||'no position'}; }
     if(o.developer){ pos.isDeveloperTrade=true; pos.tradeSource='TEST'; }
+    g.freezeClock(CLOSE_MS);
     const res=await g.closePaperPosition(pos.id,!!o.manual,o.autoResult||null);
+    g.restoreClock();
     const rec=(g.getJournalEntries()||[]).find(e=>e.tradeId===pos.id)||null;
     const closedPos=(g.getPaperAccount().closedPositions||[])[0]||null;
-    return{pos,res,rec,closedPos,openError:null};
+    return{pos,res,rec,closedPos,expectedClosedAt:EXPECTED_CLOSED_AT,openError:null};
   }
 
   // ══════════════════════════════════════════════════════════════════════════════════════
@@ -82,7 +93,12 @@ async function runV1238ExecutionReportingJournalFixtures(g){
     const w=await driveJvmClose({dir:'buy',entry:1.3000,stop:1.2900,target:1.3200,exitLive:1.3050,manual:false,autoResult:'Win'});
     assert('JVM-CLOSE-REACH.1 (kills A5): closing a JVM position through the REAL closePaperPosition() actually produces a CLOSED journal record for that exact tradeId -- the journal write is reached from the production close path, not merely callable',
       !!w.rec && w.rec.status==='CLOSED', 'openError='+w.openError+' rec='+(w.rec?w.rec.status:'MISSING'));
-    assert('JVM-CLOSE-REACH.2 (kills A5): the real close path leaves exactly ONE journal row for the trade and it is that trade\'s own OPEN row updated in place (still carrying the entry-time fields 1.3/1.29/1.32), never a second appended row',
+    // LABEL CORRECTED (§18.12). This claimed "(kills A5)" and does not: deleting
+    // journalNoteCloseJVM leaves the trade's untouched OPEN row in place, still carrying its
+    // entry-time fields and still exactly one row, so this fixture passes. A5 is killed by
+    // JVM-CLOSE-REACH.1 and the 17 value assertions. This one pins "no SECOND row is appended",
+    // which is a different property and is worth keeping under its true name.
+    assert('JVM-CLOSE-REACH.2 (does NOT kill A5 -- see note; it pins no-duplicate-row): the real close path leaves exactly ONE journal row for the trade and it is that trade\'s own OPEN row updated in place (still carrying the entry-time fields 1.3/1.29/1.32), never a second appended row',
       (g.getJournalEntries()||[]).filter(e=>w.pos&&e.tradeId===w.pos.id).length===1 &&
       !!w.rec && w.rec.entry===1.3 && w.rec.stop===1.29 && w.rec.target===1.32,
       w.rec?('entry='+w.rec.entry+' stop='+w.rec.stop+' target='+w.rec.target):'no rec');
@@ -98,10 +114,16 @@ async function runV1238ExecutionReportingJournalFixtures(g){
       !!w.rec && w.rec.closeReason==='TAKE_PROFIT', w.rec?String(w.rec.closeReason):'no rec');
     assert('JVM-CLOSE-WHY.1 (kills B9): the close narrative is journalled verbatim -- "Closed as a Win at 1.305 (50.0 pips from entry)." -- replacing the open record\'s "Still open."',
       !!w.rec && w.rec.whyClosed==='Closed as a Win at 1.305 (50.0 pips from entry).', w.rec?String(w.rec.whyClosed):'no rec');
-    assert('JVM-CLOSE-DURATION.1 (kills B5): closing writes a numeric durationMs onto the journal record (the OPEN record carried null) and it is non-negative',
-      !!w.rec && typeof w.rec.durationMs==='number' && w.rec.durationMs>=0, w.rec?String(w.rec.durationMs):'no rec');
-    assert('JVM-CLOSE-CLOSEDAT.1: the journalled closedAt is a real ISO timestamp, not left null by the close',
-      !!w.rec && typeof w.rec.closedAt==='string' && w.rec.closedAt.length>=20, w.rec?String(w.rec.closedAt):'no rec');
+    // EXACT LITERALS, not "is a number and >= 0". §18.12: the previous shape passed against a
+    // mutation that journalled durationMs as 1 for EVERY trade, and against one that journalled
+    // the OPEN time as the close time -- both are wrong values that are still values, and a
+    // presence assertion cannot tell the difference. The close is driven from a frozen clock, so
+    // both figures are fixture-chosen and hand-computed.
+    assert('JVM-CLOSE-DURATION.1 (kills B5): closing writes durationMs of exactly 5400000 (90 minutes, from the frozen open and close times) onto the journal record, which carried null at open',
+      !!w.rec && w.rec.durationMs===5400000, w.rec?String(w.rec.durationMs):'no rec');
+    assert('JVM-CLOSE-CLOSEDAT.1: the journalled closedAt is exactly the CLOSE time, not the open time echoed back',
+      !!w.rec && w.rec.closedAt===w.expectedClosedAt && w.rec.closedAt!==w.rec.openedAt,
+      w.rec?('closedAt='+w.rec.closedAt+' openedAt='+w.rec.openedAt+' expected='+w.expectedClosedAt):'no rec');
     // Positive control on the account side: proves the harness genuinely reached the post-await
     // body of the protected closePaperPosition() rather than silently observing nothing.
     assert('JVM-CLOSE-CONTROL.1 (positive control): the same real close moved the account to exactly one closed position at exitPrice 1.305 / pnl +50 and a balance of exactly 10050 -- so a failure above is a journal defect, not an unreached close path',
@@ -221,11 +243,12 @@ async function runV1238ExecutionReportingJournalFixtures(g){
     seedClean();
     const pos={tradeId:'ALX-C1',pair:PAIR,timeframe:'H1',setupType:'A_repeatedReaction',setupLabel:'Repeated Zone Reaction',
       direction:'buy',entry:1.3000,stop:1.2900,target:1.3250,plannedRR:2.5,riskPercent:1,riskAmount:100,
-      positionSize:0.1,pipValue:10,ruleVersion:'alex_g_sr_v1',openedAt:'2026-03-01T00:00:00.000Z',
+      positionSize:0.1,pipValue:10,ruleVersion:'alex_g_sr_v1',openedAt:'2026-03-01T10:00:00.000Z', // == OPEN_MS, so the close below is exactly 90 minutes later
       liveFillPrice:1.3000,entryDelayPips:0.4,qualificationClose:1.2996,atrAtEntry:0.00123,
       zoneRoleAtQualification:'support',zoneTouchNumber:4,
       maePips:null,mfePips:null,maeR:null,mfeR:null,status:'open'};
     g.getAlexGAccount().openPositions.push(pos);
+    g.freezeClock(OPEN_MS);   // §18.12: exact timestamps, so the duration below is a literal
     g.journalNoteOpenAlex(pos); // the OPEN row as it really exists at trade-open: MAE/MFE still null
     const openRow=(g.getAlexGJournalEntries()||[]).find(e=>e.tradeId==='ALX-C1')||null;
     assert('ALEX-OPEN-BASELINE.1 (baseline for C1/C2/B6): the journal row created at ALEX trade-open carries status OPEN with resultR, pnl, maePips and mfePips all null -- so every non-null value asserted after the close below was genuinely written BY the close',
@@ -233,7 +256,9 @@ async function runV1238ExecutionReportingJournalFixtures(g){
       openRow?JSON.stringify({s:openRow.status,r:openRow.resultR,p:openRow.pnl,mae:openRow.maePips}):'no open row');
     // MAE/MFE accrue on the live position during the trade, exactly as the live poller updates them.
     pos.maePips=12.5; pos.mfePips=33.25; pos.maeR=-0.125; pos.mfeR=0.3325;
+    g.freezeClock(CLOSE_MS);
     g.alexGCloseLivePosition('ALX-C1','Win',1.3200,null,{});
+    g.restoreClock();
     const rec=(g.getAlexGJournalEntries()||[]).find(e=>e.tradeId==='ALX-C1')||null;
     const closed=(g.getAlexGAccount().closedPositions||[])[0]||null;
     assert('ALEX-CLOSE-CONTROL.1 (positive control): the real alexGCloseLivePosition() closed the position at 1.32 for exactly +$200.00 and moved the balance to exactly 10200 -- so a journal failure below is a journal defect, not an unreached close',
@@ -256,8 +281,10 @@ async function runV1238ExecutionReportingJournalFixtures(g){
     assert('ALEX-CLOSE-WHY.1 (kills B9): the ALEX close narrative is journalled verbatim -- "Closed as a Win when price reached the target (1.32), detected via the current live bid/ask snapshot." -- replacing the open row\'s "Still open."',
       !!rec && rec.whyClosed==='Closed as a Win when price reached the target (1.32), detected via the current live bid/ask snapshot.',
       rec?String(rec.whyClosed):'no rec');
-    assert('ALEX-CLOSE-DURATION.1 (kills B5): the ALEX close writes a numeric durationMs onto a row that held null at open',
-      !!rec && typeof rec.durationMs==='number' && rec.durationMs>0, rec?String(rec.durationMs):'no rec');
+    // EXACT literal, not "is a number and > 0" (§18.12): the previous shape passed against a
+    // mutation journalling durationMs as 1 for every trade -- a wrong value is still a value.
+    assert('ALEX-CLOSE-DURATION.1 (kills B5): the ALEX close writes durationMs of exactly 5400000 (90 minutes, from the frozen open and close instants) onto a row that held null at open',
+      !!rec && rec.durationMs===5400000, rec?String(rec.durationMs):'no rec');
   }
   {
     // ALEX losing close: fixed-R methodology journals exactly -1R regardless of the plan's R:R,
@@ -378,14 +405,16 @@ async function runV1238ExecutionReportingJournalFixtures(g){
       !!a2 && a2.ruleVersion==='alex_g_sr_v1' && a2.isLegacyAlex===true, a2?(a2.ruleVersion+'/'+a2.isLegacyAlex):'?');
   }
 
-  // ── Isolation confirmation ──────────────────────────────────────────────────────────────
-  {
-    seedClean();
-    assert('ISOLATION.1: seedClean() returns paperAccount/journalEntries/alexGAccount/alexGJournalEntries to clean, known, in-memory defaults -- this suite runs entirely in the stubbed-localStorage offline harness and can never touch a real user\'s saved paper-trading data',
-      g.getPaperAccount().balance===10000 && g.getJournalEntries().length===0 &&
-      g.getAlexGAccount().balance===10000 && g.getAlexGJournalEntries().length===0 &&
-      g.getPaperAccount().openPositions.length===0 && g.getAlexGAccount().openPositions.length===0,'');
-  }
+  // ── ISOLATION.1 REMOVED (§18.12) ─────────────────────────────────────────────────────────
+  // It asserted that seedClean() leaves clean in-memory defaults -- but the harness setters and
+  // getters are bare assignments (`function(v){paperAccount=v;}` / `function(){return paperAccount;}`)
+  // and nothing between the write and the read can reach those variables. The assertion reduced to
+  // ({balance:10000}).balance === 10000, with NO PRODUCTION CODE IN ITS PATH, so no mutation of any
+  // production function could ever kill it. Proven by an independent verifier: it survived all 27
+  // mutations, including one that made openPaperPosition return null and killed 21 fixtures in this
+  // same suite. It also did not show what it claimed -- real-storage isolation is a property of the
+  // runner's localStorage stub, which the fixture never touched. Deleted rather than reworded: a
+  // seventh unkillable fixture is not evidence, and padding a now-pinned count with one is worse.
 
   return results;
 }

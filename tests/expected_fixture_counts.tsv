@@ -1,0 +1,46 @@
+# Expected fixture count per canonical suite. Format: <runner basename><TAB><count>
+#
+# WHY THIS FILE EXISTS (MOGO-021 §18.12). run_all.sh failed a suite only on ZERO fixtures, a
+# RUNNER ERROR line, a nonzero exit, or a FAIL line -- it never checked that a suite produced the
+# number of fixtures it is supposed to. A suite whose section throws part-way collapses several
+# fixtures into one caught error and quietly runs SHORT: during verification the display suite
+# silently ran 36 instead of 39 and nothing in the gate objected to the missing three.
+#
+# regression-baseline.json already had a `fixtureCounts` map, but it was stale (34 suites, 984
+# total, no v1238 entries) and regression-baseline-tools.py only ever WROTE it, never compared --
+# inert metadata that read like a pinned assertion. This file is the assertion.
+#
+# A suite that runs SHORT now fails the gate. Adding fixtures requires updating the count here,
+# deliberately: that is the same friction the protected-function baseline imposes, for the same
+# reason.
+#
+# Regenerate with:  tests/update_expected_counts.sh
+run_v017_step2a_pipeline_observability_tests.js	53
+run_v1027_strategy_fidelity_provenance_tests.js	61
+run_v120_tests.js	28
+run_v1211_tests.js	13
+run_v1212_tests.js	53
+run_v1213_tests.js	50
+run_v121_tests.js	30
+run_v122_tests.js	30
+run_v1231_tests.js	31
+run_v1232_forward_coverage_observability_tests.js	76
+run_v1233_jvm_autotrade_reliability_tests.js	112
+run_v1234_candle_alignment_tests.js	29
+run_v1235_reconciliation_tests.js	24
+run_v1236_alex_live_path_e2e_tests.js	113
+run_v1237_detection_controls_tests.js	83
+run_v1238_execution_reporting_display_tests.js	39
+run_v1238_execution_reporting_journal_tests.js	72
+run_v1238_execution_reporting_provenance_tests.js	41
+run_v1238_execution_reporting_stats_tests.js	24
+run_v123_tests.js	48
+run_v124_baseline_registry_tests.js	31
+run_v125_decision_event_tests.js	40
+run_v126_phase2c_wave1_tests.js	61
+run_v127_alex_v11_release_tests.js	88
+run_v128_evidence_platform_tests.js	329
+run_v129_browser_isolation_guard_tests.js	27
+run_v130_candle_completeness_regression_tests.js	25
+run_v131_evidence_verifier_tests.js	73
+run_v_paper_trading_audit_tests.js	293

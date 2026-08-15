@@ -94,6 +94,12 @@ results.forEach(r=>{
 });
 const failCount=results.filter(r=>!r.pass).length;
 console.log('---');
-console.log(failCount===0
-  ?('ALL v12.38 EXECUTION REPORTING STATISTICS FIXTURES PASSED ('+results.length+' executed)')
-  :('FAILURES: '+failCount+'/'+results.length+' executed'));
+// ZERO EXECUTED IS NOT SUCCESS (§18.12). On an internal throw the catch above sets results=[],
+// which made failCount 0 and printed "ALL ... PASSED (0 executed)" -- a green last line for a
+// suite that ran nothing. run_all.sh catches it twice over (zero fixtures, and the RUNNER ERROR
+// line), so the gate was never fooled; a human reading the suite standalone was.
+console.log(results.length===0
+  ?'SUITE DID NOT RUN -- 0 fixtures executed. This is a FAILURE, not a pass; see the RUNNER ERROR above.'
+  :(failCount===0
+    ?('ALL v12.38 EXECUTION REPORTING STATISTICS FIXTURES PASSED ('+results.length+' executed)')
+    :('FAILURES: '+failCount+'/'+results.length+' executed')));

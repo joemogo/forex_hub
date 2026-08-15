@@ -104,6 +104,36 @@ for runner in "${RUNNERS[@]}"; do
     OVERALL_EXIT=1
   fi
 
+  # A suite that runs SHORT is a failure, even when every fixture it did run passed.
+  #
+  # This gate had no notion of how many fixtures a suite should produce. A section that throws
+  # part-way is caught by the suite's own try/catch, collapses several fixtures into one reported
+  # error, and the suite quietly emits fewer results -- observed during MOGO-021 verification, where
+  # a suite ran 36 instead of 39 and nothing objected to the three that vanished. Zero fixtures was
+  # already a failure; N-minus-three was not. (§18.12)
+  #
+  # MORE than expected is also a failure: it means fixtures were added without updating the manifest,
+  # so the count would silently stop meaning anything.
+  EXPECTED_FILE="tests/expected_fixture_counts.tsv"
+  RUNNER_BASE="$(basename "$runner")"
+  EXPECTED="$(grep -v '^#' "$EXPECTED_FILE" 2>/dev/null | awk -F'\t' -v r="$RUNNER_BASE" '$1==r{print $2}')"
+  ACTUAL=$((NP + NF))
+  if [ -z "$EXPECTED" ]; then
+    echo "NO EXPECTED FIXTURE COUNT registered for $RUNNER_BASE in $EXPECTED_FILE."
+    echo "  A new suite must register its count -- run tests/update_expected_counts.sh and review the diff."
+    OVERALL_EXIT=1
+  elif [ "$ACTUAL" -ne "$EXPECTED" ]; then
+    echo "FIXTURE COUNT MISMATCH for $RUNNER_BASE: expected $EXPECTED, got $ACTUAL."
+    if [ "$ACTUAL" -lt "$EXPECTED" ]; then
+      echo "  The suite ran SHORT -- fixtures went missing rather than failing. Check for a section"
+      echo "  that threw and was swallowed by the suite's own try/catch."
+    else
+      echo "  The suite ran LONG -- fixtures were added without updating $EXPECTED_FILE."
+    fi
+    echo "  If the change was deliberate: tests/update_expected_counts.sh, then review the diff."
+    OVERALL_EXIT=1
+  fi
+
   echo "$NP PASS, $NF FAIL"
   TOTAL_FIXTURES=$((TOTAL_FIXTURES + NP + NF))
   TOTAL_PASS=$((TOTAL_PASS + NP))

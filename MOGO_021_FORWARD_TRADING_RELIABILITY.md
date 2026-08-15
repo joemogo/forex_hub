@@ -3916,3 +3916,75 @@ have been a worse defect than the one it replaced.
 
 **Gate: 29 suites, 1,975 / 1,975. Protected drift 0 against the unchanged v12.22.0 baseline.**
 App version `12.26.0`.
+
+### 18.12 🔴 The fix for a label-vs-id defect was itself keyed on a label
+
+Independent adversarial verification of the 174 new fixtures. **It could not find a single unclosed
+survivor** — all 19 sampled mutations still kill, deleting `journalNoteCloseJVM` from the protected
+close kills **precisely 18** fixtures while the `exitPrice`/`pnl`/`balance` control holds, and it
+confirmed by reading all four runners line by line that **nothing is monkey-patched**: every `g.*`
+export is a bare reference to the real symbol, `fetch` genuinely rejects, and the `await` is
+unconditional. The async-deferral claim survives scrutiny.
+
+It found two defects in **my** v12.26.0 fix, and one in the gate itself.
+
+#### F1 — rename fragility: the fix used the one lookup marked "not for new code"
+
+The fix resolved a hardcoded display label through `findStrategyEntryByLabel` — whose own docblock
+says **legacy compatibility only**, explicitly not for new code, *precisely because a renamed label
+stops resolving*.
+
+Renaming `JVM_MANIFEST.label` to `'JVM Strategy'` — a pure display-metadata edit, **exactly what
+ADR-006 says labels exist to permit** — reintroduced the original "No trades yet. for every real
+trade" defect **in full**, killing the same 8 fixtures as reverting the fix outright.
+
+Both call sites now pass **Manifest ids**. `MiniJournal.7` performs the rename and proves the panel
+survives it; `MiniJournal.8` is its precondition, confirming the rename genuinely happened.
+
+#### F2 — failing open: a falsy label disabled the filter entirely
+
+`getFilteredJournalRecords` skips the strategy filter when the value is falsy or `'All'`. So `''`,
+`null`, `undefined` and `'All'` did not mean *no match* — they meant **no filter**, leaking every
+strategy's trades into a strategy-specific panel.
+
+That is the precise "worse defect than the one it replaced" that **`MiniJournal.5` was written to
+exclude — and it missed**, because it only ever tested a *truthy* unknown label. Resolution now runs
+id-first, label-second (legacy only), then **fails closed** on a sentinel no record carries.
+`MiniJournal.6` drives all four falsy shapes.
+
+#### F3 — the gate could not see a suite running short
+
+`run_all.sh` failed a suite on zero fixtures, a `RUNNER ERROR`, a nonzero exit, or a `FAIL` line —
+**never on producing fewer fixtures than it should.** A section that throws is caught by the suite's
+own `try/catch`, collapses several fixtures into one reported error, and runs short. During
+verification a suite silently ran **36 instead of 39** and nothing objected to the missing three.
+
+`regression-baseline.json` *had* a `fixtureCounts` map — but stale (34 suites, 984 total) and the
+tool only ever **wrote** it, never compared. **This is the inert-metadata trap recorded in §18.5,
+now cashed in as a real miss.** `tests/expected_fixture_counts.tsv` is the assertion; `run_all.sh`
+enforces it in both directions (short = fixtures vanished; long = added without registering).
+
+> **Proven by positive control, not asserted.** Deleting one passing fixture — so the suite reports
+> **1,977/1,977 with zero failures** — now **fails the gate with exit 1**. Before this change that
+> was a green run.
+
+#### Fixture-evidence repairs
+
+| | |
+|---|---|
+| **`ISOLATION.1` was VACUOUS — a seventh unkillable fixture** | It reduced to `({balance:10000}).balance === 10000` with **no production code in its path** (the harness setters/getters are bare assignments). It survived all 27 verification mutations, including one that killed 21 fixtures *in its own suite*. **Deleted**, not reworded |
+| **Three presence-only assertions accepted wrong values** | `JVM-CLOSE-DURATION.1` and `ALEX-CLOSE-DURATION.1` checked "is a number ≥ 0" and **passed against a mutation journalling `durationMs` as 1 for every trade**; `JVM-CLOSE-CLOSEDAT.1` checked "is an ISO string" and **passed against one journalling the open time as the close time**. All three now pin exact literals — which required freezing the **`Date` constructor**, since the close timestamps with `new Date()` and freezing `Date.now` alone left both stamps on the wall clock. Both mutations now die |
+| **`JVM-CLOSE-REACH.2` claimed "(kills A5)" and does not** | Deleting the journal call leaves the trade's untouched OPEN row in place, so it passes. Relabelled to what it actually pins: *no second row appended* |
+| **`N1.1` had a tautological conjunct** | `cls==='Active position' && cls!=='Closed account trade'` — the second is implied. Dropped rather than left looking like extra rigour |
+| **The stats runner printed `ALL FIXTURES PASSED (0 executed)` when it crashed** | `run_all.sh` caught it twice over, but a human running the suite standalone saw a green last line. Zero executed is now reported as a failure |
+
+> **Disclosed and NOT closed: six fixtures are strict logical subsets of others** (`J4`⊂`J3`,
+> `R1a`⊂`J5`, `R1b`⊂`L3`, `R1c`⊂`P4`, `P3`⊂`R4`, `ERS.G5`⊂`ERS.G3`∧`ERS.G4`). They cannot fail
+> independently — no mutation kills a subset alone. They are **redundant, not vacuous**: each is a
+> true statement that corroborates its superset. They are left in place and recorded here so the
+> count is not read as 174 pieces of *independent* evidence. Two others (`U5.2`/`U5.4`) feed
+> `SETUP_EVALUATOR_VERSION` back into a comparison the code makes against itself — cosmetic
+> self-consistency, with `U5.1/.3/.5` carrying the real load.
+
+**Gate: 29 suites, 1,977 / 1,977, with the new per-suite count check active. Drift 0.**
+App version `12.27.0`.

@@ -84,6 +84,10 @@ const wrapped = new Function('g',
   'g.JVM_RECORD_CLASS=JVM_RECORD_CLASS;' +
   'g.renderPaperMiniJournal=renderPaperMiniJournal;' +
   'g.renderMiniJournal=renderMiniJournal;' +
+  // Exposed so a fixture can simulate a display-label RENAME -- the exact edit ADR-006 says labels
+  // exist to permit, and the one that silently reintroduced the mini-journal defect (§18.12).
+  'g.JVM_MANIFEST=JVM_MANIFEST;' +
+  'g.ALEX_MANIFEST=ALEX_MANIFEST;' +
   'g.getFilteredJournalRecords=getFilteredJournalRecords;' +
   'g.getUnifiedJournalRecords=getUnifiedJournalRecords;' +
   'g.computePaperLedgerIntegrity=computePaperLedgerIntegrity;' +

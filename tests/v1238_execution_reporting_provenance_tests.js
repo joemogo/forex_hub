@@ -64,8 +64,11 @@ function runExecutionReportingProvenanceFixtures(g){
     g.setJournalEntries([raw]);
     const r=g.normalizeJournalRecord(raw,'current_strategy');
     const cls=g.classifyJvmJournalRecord(r);
-    assert('N1.1: a journal record whose tradeId is in paperAccount.openPositions classifies as the literal "Active position", never "Closed account trade"',
-      cls==='Active position'&&cls!=='Closed account trade','cls='+JSON.stringify(cls));
+    // The second conjunct was a TAUTOLOGY given the first (§18.12): if cls === 'Active position'
+    // then cls !== 'Closed account trade' is necessarily true and can never contribute a failure.
+    // Dropped rather than left in place looking like extra rigour.
+    assert('N1.1: a journal record whose tradeId is in paperAccount.openPositions classifies as the literal "Active position"',
+      cls==='Active position','cls='+JSON.stringify(cls));
   }
 
   // ── N1 positive control: the CLOSED case really does produce the other literal, so N1.1 is
@@ -225,6 +228,46 @@ function runExecutionReportingProvenanceFixtures(g){
     assert('MiniJournal.5: NEGATIVE CONTROL -- an unrecognised label still filters to nothing, so the fix resolved the label rather than disabling the filter',
       String(g.elHtml('alexMiniJournal')).indexOf('7103')===-1,
       'html='+String(g.elHtml('alexMiniJournal')).slice(0,200));
+
+    // ── §18.12: TWO DEFECTS IN THE §18.11 FIX ITSELF, found by independent adversarial
+    //    verification. MiniJournal.5 above was the negative control that was SUPPOSED to exclude
+    //    "fixed by disabling the filter" -- and it missed the real version of that failure,
+    //    because it only ever tested a TRUTHY unknown label.
+    //
+    // (a) FAILING OPEN. getFilteredJournalRecords skips the strategy filter entirely when the
+    //     value is falsy or 'All'. So '', null, undefined and 'All' did not mean "no match" --
+    //     they meant NO FILTER, leaking every strategy's trades into a strategy-specific panel.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:7104,oPair:'GBP_USD'}],closedPositions:[]});
+    g.setJournalEntries([jvmRaw({tradeId:7104,strategyId:'current_strategy'})]);
+    const leakCases=[['empty string',''],['null',null],['undefined',undefined],['the All sentinel','All']];
+    let leaked=[];
+    leakCases.forEach(function(c){
+      g.renderMiniJournal('alexMiniJournal','alexMiniJournalSummary',c[1]);
+      if(String(g.elHtml('alexMiniJournal')).indexOf('7104')!==-1) leaked.push(c[0]);
+    });
+    assert('MiniJournal.6: a falsy or "All" strategy argument must FAIL CLOSED -- it renders nothing, rather than disabling the filter and leaking every strategy\'s trades into a strategy-specific panel',
+      leaked.length===0,'leaked for: '+(leaked.join(', ')||'(none)'));
+    // (b) RENAME FRAGILITY. The first version of this fix resolved a hardcoded display LABEL
+    //     through findStrategyEntryByLabel -- the lookup this codebase marks LEGACY COMPATIBILITY
+    //     ONLY, "not for new code", precisely because a renamed label stops resolving. Renaming
+    //     the label is a pure display-metadata edit, exactly what ADR-006 says labels are for, and
+    //     it silently restored the original "No trades yet. for every real trade" defect in full.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:7105,oPair:'GBP_USD'}],closedPositions:[]});
+    g.setJournalEntries([jvmRaw({tradeId:7105,strategyId:'current_strategy'})]);
+    const originalLabel=g.JVM_MANIFEST.label;
+    g.JVM_MANIFEST.label='JVM Strategy';                 // the rename ADR-006 explicitly permits
+    g.renderPaperMiniJournal();
+    const renamedHtml=String(g.elHtml('paperMiniJournal'));
+    g.JVM_MANIFEST.label=originalLabel;                  // restored before asserting, so a failure
+                                                         // here cannot poison later fixtures
+    assert('MiniJournal.7: renaming JVM_MANIFEST.label -- pure display metadata -- does NOT break the panel, because the call site resolves the registry ID and never the label',
+      renamedHtml.indexOf('No trades yet')===-1&&renamedHtml.indexOf('7105')!==-1,
+      'html='+renamedHtml.slice(0,200));
+    assert('MiniJournal.8: PRECONDITION -- the label really was renamed during MiniJournal.7, and is restored afterwards, so that fixture measured a genuine rename',
+      originalLabel==='JVM'&&g.JVM_MANIFEST.label==='JVM',
+      'original='+String(originalLabel)+' now='+String(g.JVM_MANIFEST.label));
   }
 
   // ══════════════════════════════════════════════════════════════════════════════════════════
