@@ -2297,6 +2297,58 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 ---
 
+## 12A. FINAL VERIFICATION PROGRAM — run from the authoritative repository state
+
+Run at **v12.22.0**, commit `8cdb0ad`, working tree clean.
+
+### 12A.1 Gates
+
+| Gate | Result |
+|---|---|
+| canonical (JXA) | **25 suites, 1,759 / 1,759**, 0 failures |
+| platform + knowledge-engineering (Python `unittest`) | **1,050 tests**, 25 of 26 suites `OK` |
+| protected drift | **0** — all 63 protected functions and 4 protected constants byte-identical to the **v12.22.0** baseline |
+
+> **The platform gate does not need `pytest`.** It is pure-stdlib `unittest`; three suites appear to
+> fail when a file is run directly and pass under `PYTHONPATH=.` — an import-path artefact, not a
+> defect. Recorded because the earlier checkpoint's "platform 1,049/1,049" figure was unreproducible
+> until this was worked out.
+
+### 12A.2 🟡 Two pre-existing failures, both TJR-domain
+
+`tests/knowledge_engineering/test_knowledge_engineering.py` — **2 of 57** fail:
+
+* `test_all_195_claims_are_inventoried` — asserts 195 claims / 8 source artifacts; the corpus now
+  holds **226**.
+* `test_delta_reports_the_unclosed_risk_gap` — asserts **0** draft stop-placement rules; there are
+  now **2**.
+
+Both pin a **point-in-time snapshot** that the TJR corpus has since grown past. Neither is MOGO core
+reliability, and **nothing in this milestone touched knowledge-engineering or TJR** — that file was
+last modified in `592ca97`, an earlier milestone. They are carried into the TJR research program as
+the first thing it must reconcile, and are **not** counted as core-reliability failures.
+
+### 12A.3 Every named verification area has real, passing coverage
+
+Fixture names collected from all 25 suites individually (1,768 lines including disclosed notes) and
+mapped to the areas named in the authorization. **No area is empty:**
+
+| Area | Fixtures | | Area | Fixtures |
+|---|---|---|---|---|
+| market-data completeness | 130 | | trade-ID uniqueness | 45 |
+| scanner cadence/concurrency | 28 | | position lifecycle | 5 |
+| scanner failure isolation | 21 | | ledger | 95 |
+| detection rules | 21 | | account state | 158 |
+| pattern/setup controls | 40 | | reconciliation | 37 |
+| chart fidelity | 12 | | health diagnostics | 30 |
+| AOI fidelity | 31 | | outage detection | 10 |
+| ALEX end-to-end paper path | 57 | | evidence completeness | 29 |
+| JVM end-to-end paper path | 88 | | restart/recovery | 50 |
+| duplicate protection | 71 | | | |
+
+**This is a presence check, not a strength check.** What establishes strength is the mutation
+evidence recorded per section — a count of fixtures proves only that the area is not silent.
+
 ## 13. CONTINUATION CHECKPOINT — resume here
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
