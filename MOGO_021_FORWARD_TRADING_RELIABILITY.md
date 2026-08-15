@@ -2301,11 +2301,22 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `4d88c7e` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `fd84f5d` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical **25** suites **1,538 / 1,538** · platform 25 suites **1,049 / 1,049** ·
-protected drift **0** against the **v12.21.0** baseline (63 functions, 4 constants).
+**Gates:** canonical **25** suites **1,662 / 1,662** · protected drift **0** against the
+**v12.21.0** baseline (63 functions, 4 constants). App version **12.21.3**.
+
+**Shipped since the last checkpoint** — every one found by adversarial mutation against a *green*
+gate, never by the gate itself:
+
+| | |
+|---|---|
+| `v12.21.1` §17.2 | the health check **could not report unhealthy**. `reconciliationStatus` consulted 10 of 19 detectors, so a ledger with account positions having **no journal record at all** signed off as `CLEAN`. Deleting an entire detector, and forcing the verdict permanently CLEAN, each killed **0** of 1,623 fixtures. +15 |
+| `v12.21.2` §17.4 | the evidence completeness contract was **a comment with nothing behind it** — a `LIVE_TRIGGER` rejection could claim `COMPLETE`. Now refused *and surfaced*. +7 |
+| `v12.21.3` §17.3 | a system **dead for three hours reported itself healthy** — no trailing-gap term. Optional `nowMs`; `ongoingOutage: null` means *not asked*. +4 |
+| §16.5b | JVM close math — 18/18 acceptance mutations now die (was 0). +27 |
+| §15.9 | detection surface — **52 of 53** now die; `AG-21` proven semantically equivalent. +13 |
 
 ### Governance decisions already authorized and DONE — do not re-litigate
 
@@ -2330,10 +2341,18 @@ never been reloaded**, and a reload remains an operator action requiring broker 
 
 ### In flight at checkpoint time
 
-Both audits completed (§14, §15) and both found real problems; both sets of gaps are now closed or
-closing. **Isolation/timer coverage: done** (§14.4, +22 fixtures). **Detection Severity-1: done**
-(§15.5a, new `v1237` suite, +46 fixtures, 45/45 mutations killed). One agent is running on the
-organic zone-engine controls (§15.5b).
+**Nothing is in flight.** Every audit and agent has returned and been independently re-verified.
+`v1237` is 83 fixtures. The two audit agents that died at the usage limit were recovered from their
+own scratchpad logs rather than re-run — their work had completed before they died.
+
+### ⚠️ Methodology note that cost real time — read before running mutations (§15.10)
+
+**One driver, one directory.** I ran a re-score twice concurrently over the same working copy; the
+two processes' mutate/restore cycles interleaved and produced a **perfect off-by-one attribution
+shift**, i.e. 11 false survivors out of 53. Also: `cp -R tests dest/tests` **nests** as
+`dest/tests/tests` when the destination exists, silently running the old suite. Rebuild the
+scratchpad copy with `rm -rf` first; never refresh it in place. Cross-check each stored result
+against its own printed log line.
 
 ### 🔴🔴 OPEN GOVERNANCE ITEM AWAITING JOE — duplicate trade IDs (§16.6)
 
@@ -2346,10 +2365,20 @@ plus making `TEST J.2` deterministic. **Escalated, not taken.**
 
 ### 🔴 Largest open coverage item: the paper-execution layer (§16)
 
-47 of 96 mutations kill nothing, concentrated on the exit half of both engines. Two protected
-functions — `checkPaperPositions` and `alexGReconstructExitFromCandles` — have **no execution
-coverage at all**. Being closed now by two agents (JVM close math + exit detection; ALEX
-reconstruction, MAE/MFE, sizing, sell side, restart dedupe).
+Of the original 47 surviving execution mutations, the **JVM close-math and exit-detection half is
+closed** (§16.5b, 18/18) and the **ALEX half is closed** (§16.5a). **~29 remain open**, chiefly the
+ledger/persistence survivors in §16.4 and the reporting-only ones. That is the largest single
+remaining coverage item.
+
+### Open, in priority order, after this checkpoint
+
+1. **§16.4 ledger/persistence survivors (~29)** — the biggest remaining block.
+2. **§17.2 residual** — five warning banners and `sharedRiskStatus` can each be silenced with zero
+   fixtures objecting. Detection is covered; only *display* is not.
+3. **§17.3 residual** — `evidenceSummarizeObservations` is now correct and covered but is still
+   **called by nothing**; no screen consumes it.
+4. **§17.4 residual** — the entry-day gate has no FAIL-path fixture.
+5. **§17.5 / v128:1378** — an assertion comparing a constant against itself.
 
 ### The ALEX zone engine's own rules (§15.5b) — CLOSED
 
