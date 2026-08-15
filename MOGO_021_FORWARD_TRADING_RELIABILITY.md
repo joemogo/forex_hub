@@ -3068,7 +3068,36 @@ The **first four rows are the finding**: against the pre-fix code, deleting an e
 forcing the sign-off line permanently CLEAN each killed **nothing**. `computePaperTradingHealthReport`
 is not protected; drift remained 0 across the change.
 
-**Still open from this section:** every warning banner can be silenced. Five render functions — the two ledger-integrity banners,
+#### 17.2a The warning SURFACES — CLOSED (v12.21.3 test debt, fixtures only)
+
+Detection was covered; **display** was not. A warning nobody can see is indistinguishable from one
+that was never raised. 17 fixtures (`Banner.1–14`, `Risk.1–3`), each asserting **both** directions —
+the banner appears when the condition holds and is empty when it does not — so neither *never render*
+nor *always render* survives.
+
+| Mutation | Pre (1,677) | Post (1,694) |
+|---|---|---|
+| JVM blocking banner silenced | **0** | 1 |
+| JVM blocking banner forced always-on | **0** | 2 |
+| JVM ledger-integrity banner silenced | **0** | 1 |
+| ALEX ledger-integrity banner silenced | **0** | 1 |
+| evidence-storage banner silenced | **0** | 2 |
+| `⚠ EVIDENCE NOT BEING SAVED` collapsed into the milder wording | **0** | 1 |
+| unexported-packages banner silenced | 3 | 5 |
+| `sharedRiskStatus` forced to `MATCH` | 1 | 3 |
+
+> **Two rows correct the original finding.** §17.2 said all five banners and `sharedRiskStatus` could
+> be silenced "with zero fixtures objecting". That holds for the four banners and the severity
+> wording; it was **overstated** for the unexported-packages banner (already 3) and `sharedRiskStatus`
+> (already 1). Both are now stronger, but they were not starting from nothing.
+
+The severity fixture matters on its own: `⚠ EVIDENCE NOT BEING SAVED` versus `⚠ EVIDENCE WRITE
+PROBLEM` is a distinction an operator acts on differently, and the two were interchangeable.
+`Risk.1–3` drive the real registry — baseline absent, baseline locked from the current registry, and
+the same baseline with **only** the stored risk fingerprint changed — so the status is proven
+computed rather than constant.
+
+**Original finding, for the record:** every warning banner can be silenced. Five render functions — the two ledger-integrity banners,
 the blocking banner, the evidence-storage banner ("⚠ EVIDENCE NOT BEING SAVED") and the unexported
 -packages warning — can each be made to render nothing forever with zero fixtures objecting. The
 underlying **detection** is covered; only the **display** is not. `sharedRiskStatus` can likewise be

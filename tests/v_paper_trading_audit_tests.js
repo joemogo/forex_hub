@@ -1166,6 +1166,119 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
       Math.abs(g.computeReplayStats([mTrade('u1','Win',2),mTrade('u2','Win',2)]).maxDrawdownR-0)<1e-9,'');
   }
 
+  // ═══ §17.2 RESIDUAL — the warning surfaces could each be silenced forever ═══
+  // Every one of these banners has well-covered DETECTION and had zero coverage of its DISPLAY.
+  // Each render function could be made to output nothing, permanently, with the whole gate green
+  // -- and a warning nobody can see is indistinguishable from a warning that was never raised.
+  // Each fixture asserts BOTH directions: the banner appears when the condition holds, and is
+  // empty when it does not, so neither "always render" nor "never render" survives.
+  {
+    seedClean();
+    g.setPaperLedgerBlockingError(null);
+    g.renderPaperLedgerBlockingBanner();
+    assert('Banner.1: with no blocking error the JVM blocking banner renders nothing',
+      g.elHtml('paperLedgerBlockingBanner')==='',JSON.stringify(g.elHtml('paperLedgerBlockingBanner')));
+    g.setPaperLedgerBlockingError('BANNER-FIXTURE blocked: a newer version exists in another tab.');
+    g.renderPaperLedgerBlockingBanner();
+    const blocking=g.elHtml('paperLedgerBlockingBanner');
+    assert('Banner.2: with a blocking error set the banner RENDERS, names the action as blocked, carries the reason and offers the reload',
+      blocking.indexOf('Action blocked')!==-1&&
+      blocking.indexOf('BANNER-FIXTURE blocked')!==-1&&
+      blocking.indexOf('location.reload()')!==-1,blocking.slice(0,200));
+    g.setPaperLedgerBlockingError(null);
+    g.renderPaperLedgerBlockingBanner();
+    assert('Banner.3: and clearing the error clears the banner again -- it is not a one-way latch',
+      g.elHtml('paperLedgerBlockingBanner')==='',g.elHtml('paperLedgerBlockingBanner'));
+  }
+  {
+    // The integrity warning is the categorically MORE severe state -- a compensating rollback
+    // write itself failed. Silencing this one hides possible real data inconsistency.
+    seedClean();
+    g.setPaperLedgerIntegrityWarning(null);
+    g.renderPaperLedgerIntegrityWarningBanner();
+    assert('Banner.4: with no integrity warning the JVM integrity banner renders nothing',
+      g.elHtml('paperLedgerIntegrityWarningBanner')==='','');
+    g.setPaperLedgerIntegrityWarning('BANNER-FIXTURE JVM: data may be inconsistent after a failed save-and-restore.');
+    g.renderPaperLedgerIntegrityWarningBanner();
+    const jvmInt=g.elHtml('paperLedgerIntegrityWarningBanner');
+    assert('Banner.5: with it set the banner RENDERS and carries the warning text verbatim',
+      jvmInt.length>0&&jvmInt.indexOf('BANNER-FIXTURE JVM')!==-1,jvmInt.slice(0,200));
+    g.setPaperLedgerIntegrityWarning(null);
+  }
+  {
+    seedClean();
+    g.setAlexGLedgerIntegrityWarning(null);
+    g.renderAlexGLedgerIntegrityWarningBanner();
+    assert('Banner.6: with no ALEX integrity warning the ALEX banner renders nothing',
+      g.elHtml('alexGLedgerIntegrityWarningBanner')==='','');
+    g.setAlexGLedgerIntegrityWarning('BANNER-FIXTURE ALEX: data may be inconsistent.');
+    g.renderAlexGLedgerIntegrityWarningBanner();
+    const alexInt=g.elHtml('alexGLedgerIntegrityWarningBanner');
+    assert('Banner.7: with it set the ALEX banner RENDERS, names the inconsistency and carries the text',
+      alexInt.indexOf('POSSIBLE DATA INCONSISTENCY')!==-1&&alexInt.indexOf('BANNER-FIXTURE ALEX')!==-1,
+      alexInt.slice(0,200));
+    g.setAlexGLedgerIntegrityWarning(null);
+  }
+  {
+    // The evidence banners. "⚠ EVIDENCE NOT BEING SAVED" is the single loudest statement this
+    // application makes about durability, and the exact wording distinguishes a CRITICAL storage
+    // failure from an ordinary write problem -- a distinction an operator acts on differently.
+    seedClean();
+    g.setEvidenceStorageBanner(null); g.setEvidenceUnexportedCount(0);
+    assert('Banner.8: with nothing wrong the evidence banner area is empty',
+      g.evidenceBannerHtml()==='',g.evidenceBannerHtml().slice(0,120));
+    g.setEvidenceStorageBanner({severity:'critical',message:'BANNER-FIXTURE quota exhausted'});
+    const critical=g.evidenceBannerHtml();
+    assert('Banner.9: a CRITICAL storage failure says "EVIDENCE NOT BEING SAVED" and carries the message',
+      critical.indexOf('EVIDENCE NOT BEING SAVED')!==-1&&critical.indexOf('BANNER-FIXTURE quota exhausted')!==-1,
+      critical.slice(0,200));
+    g.setEvidenceStorageBanner({severity:'warning',message:'BANNER-FIXTURE intermittent'});
+    const warning=g.evidenceBannerHtml();
+    assert('Banner.10: a NON-critical one says "EVIDENCE WRITE PROBLEM" instead -- the severity wording is not interchangeable',
+      warning.indexOf('EVIDENCE WRITE PROBLEM')!==-1&&warning.indexOf('EVIDENCE NOT BEING SAVED')===-1,
+      warning.slice(0,200));
+    g.setEvidenceStorageBanner(null);
+    assert('Banner.11: and clearing it empties the area again',g.evidenceBannerHtml()==='','');
+  }
+  {
+    seedClean();
+    g.setEvidenceStorageBanner(null); g.setEvidenceUnexportedCount(0);
+    assert('Banner.12: with zero unexported packages there is no unexported warning',
+      g.evidenceBannerHtml().indexOf('never been exported')===-1,'');
+    g.setEvidenceUnexportedCount(3);
+    const unexported=g.evidenceBannerHtml();
+    assert('Banner.13: three unexported packages RAISE the warning, state the count, and state the honest durability limit',
+      unexported.indexOf('never been exported')!==-1&&
+      unexported.indexOf('3 evidence package')!==-1&&
+      unexported.indexOf('Clearing site data')!==-1,unexported.slice(0,260));
+    g.setEvidenceUnexportedCount(1);
+    assert('Banner.14: and one package is described in the singular -- the count is real, not a fixed string',
+      g.evidenceBannerHtml().indexOf('1 evidence package has')!==-1,g.evidenceBannerHtml().slice(0,200));
+    g.setEvidenceUnexportedCount(0);
+  }
+  {
+    // sharedRiskStatus governs pipSize/pipValuePerLot -- the two functions BOTH engines' risk math
+    // depends on. Forced to 'MATCH', a real drift in shared risk arithmetic reports clean.
+    seedClean();
+    g.setLocalStorageItem('fxhub_baseline_registry','');
+    const noBaseline=g.getBaselineDiagnosticsSummary();
+    assert('Risk.1: with no baseline locked the status says so rather than claiming a MATCH it cannot know',
+      noBaseline.sharedRiskStatus==='NO BASELINE LOCKED YET',String(noBaseline.sharedRiskStatus));
+    const current=g.computeBaselineRegistry();
+    g.setLocalStorageItem('fxhub_baseline_registry',JSON.stringify(current));
+    const matched=g.getBaselineDiagnosticsSummary();
+    assert('Risk.2: with the CURRENT registry locked as the baseline the shared risk fingerprint MATCHes',
+      matched.sharedRiskStatus==='MATCH',String(matched.sharedRiskStatus));
+    // NEGATIVE CONTROL, one field away: the same baseline with a different risk fingerprint.
+    const drifted=JSON.parse(JSON.stringify(current));
+    drifted.jvm.riskFingerprint='BANNER-FIXTURE-DIFFERENT-FINGERPRINT';
+    g.setLocalStorageItem('fxhub_baseline_registry',JSON.stringify(drifted));
+    const driftStatus=g.getBaselineDiagnosticsSummary();
+    assert('Risk.3: change ONLY the stored risk fingerprint and it reports DRIFT DETECTED -- the status is computed, not a constant',
+      driftStatus.sharedRiskStatus==='DRIFT DETECTED',String(driftStatus.sharedRiskStatus));
+    g.setLocalStorageItem('fxhub_baseline_registry','');
+  }
+
   // ═══ HEALTH-CHECK VERDICT NEGATIVE CONTROLS (MOGO-021) ═══
   // Every fixture above proves a DETECTOR populates its array. None of them ever asserted the
   // VERDICT, and that is exactly where the defect lived: reconciliationStatus consulted ten of the

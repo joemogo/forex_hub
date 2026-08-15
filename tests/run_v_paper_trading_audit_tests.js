@@ -102,6 +102,20 @@ const wrapped = new Function('g',
   'g.alexGComputeEquityStats=alexGComputeEquityStats;' +
   'g.alexGComputeReplayStats=alexGComputeReplayStats;' +
   'g.computeReplayStats=computeReplayStats;' +
+  // -- MOGO-021 17.2 residual: the WARNING SURFACES, whose detection was covered but whose
+  //    display could be silenced forever with zero fixtures objecting --
+  'g.renderPaperLedgerBlockingBanner=renderPaperLedgerBlockingBanner;' +
+  'g.renderPaperLedgerIntegrityWarningBanner=renderPaperLedgerIntegrityWarningBanner;' +
+  'g.renderAlexGLedgerIntegrityWarningBanner=renderAlexGLedgerIntegrityWarningBanner;' +
+  'g.evidenceBannerHtml=evidenceBannerHtml;' +
+  'g.getBaselineDiagnosticsSummary=getBaselineDiagnosticsSummary;' +
+  'g.computeBaselineRegistry=computeBaselineRegistry;' +
+  'g.setPaperLedgerBlockingError=function(v){paperLedgerBlockingError=v;};' +
+  'g.setPaperLedgerIntegrityWarning=function(v){paperLedgerIntegrityWarning=v;};' +
+  'g.setAlexGLedgerIntegrityWarning=function(v){alexGLedgerIntegrityWarning=v;};' +
+  'g.setEvidenceStorageBanner=function(v){evidenceStorageBanner=v;};' +
+  'g.setEvidenceUnexportedCount=function(v){evidenceUnexportedCount=v;};' +
+  'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):null; };' +
   'g.setPaperResetHistory=function(v){paperResetHistory=v;};' +
   'g.setAlexGSetupState=function(v){alexGSetupState=v;};' +
   // -- state get/set --
