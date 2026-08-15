@@ -2301,10 +2301,10 @@ Gates: canonical 24 suites **1,440 / 1,440** · platform **1,049 / 1,049** · dr
 
 *Kept current. If a session ends, resume from this section rather than re-investigating.*
 
-**Commit:** `fd84f5d` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
+**Commit:** `edfd6e7` on `main`, pushed to `origin/mogo-main`, **0 ahead / 0 behind**.
 Working tree clean apart from the pre-existing untracked `MOGO-019-ALEX-IG-CASE-002-REPORT.md`.
 
-**Gates:** canonical **25** suites **1,662 / 1,662** · protected drift **0** against the
+**Gates:** canonical **25** suites **1,677 / 1,677** · protected drift **0** against the
 **v12.21.0** baseline (63 functions, 4 constants). App version **12.21.3**.
 
 **Shipped since the last checkpoint** — every one found by adversarial mutation against a *green*
@@ -2365,16 +2365,21 @@ plus making `TEST J.2` deterministic. **Escalated, not taken.**
 
 ### 🔴 Largest open coverage item: the paper-execution layer (§16)
 
-Of the original 47 surviving execution mutations, the **JVM close-math and exit-detection half is
-closed** (§16.5b, 18/18) and the **ALEX half is closed** (§16.5a). **~29 remain open**, chiefly the
-ledger/persistence survivors in §16.4 and the reporting-only ones. That is the largest single
-remaining coverage item.
+Of the original 47 surviving execution mutations: the **JVM close-math and exit-detection half is
+closed** (§16.5b, 18/18), the **ALEX half is closed** (§16.5a), and the **three §16.4 ledger
+survivors are closed** (§16.4a). The remainder are the reporting-only ones neither agent's brief
+covered.
+
+> **Correction to an earlier version of this checkpoint.** It said "~29 remain open, chiefly the
+> ledger/persistence survivors in §16.4". That was wrong on both counts: §16.4 named only **three**
+> survivors, all now closed, and the remainder are spread across reporting surfaces rather than
+> concentrated in the ledger. The ledger layer was, and remains, the best-covered code here.
 
 ### Open, in priority order, after this checkpoint
 
-1. **§16.4 ledger/persistence survivors (~29)** — the biggest remaining block.
-2. **§17.2 residual** — five warning banners and `sharedRiskStatus` can each be silenced with zero
+1. **§17.2 residual** — five warning banners and `sharedRiskStatus` can each be silenced with zero
    fixtures objecting. Detection is covered; only *display* is not.
+2. **§16 reporting-only survivors** — what neither execution agent's brief covered.
 3. **§17.3 residual** — `evidenceSummarizeObservations` is now correct and covered but is still
    **called by nothing**; no screen consumes it.
 4. **§17.4 residual** — the entry-day gate has no FAIL-path fixture.
