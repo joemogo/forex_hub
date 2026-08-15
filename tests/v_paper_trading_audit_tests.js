@@ -307,11 +307,35 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
   {
     seedClean();
     // Consistent case: one closed position with a fully matching, correctly-closed journal record.
+    // 🔴 MOGO-021 §18.16: THIS FIXTURE WAS VACUOUS WITH RESPECT TO ITS OWN TITLE -- the NINTH
+    // literally-unkillable fixture found in this milestone, and the first of the
+    // "async fixture that is never awaited" class.
+    //
+    // runPaperTradingAuditFixtures is NOT async, and closePaperPosition IS async (it awaits
+    // fetchBidAsk internally). The un-awaited call below therefore returns a pending promise and
+    // the assertion runs BEFORE the close has done anything at all. Measured, not inferred:
+    // at the assertion point the account holds open=1, closed=0, balance=10000, journal status
+    // OPEN. So a fixture titled "a normal open->close cycle" was asserting that a freshly OPENED
+    // trade is self-consistent -- which is trivially true and cannot detect any close-path defect.
+    // Proof: leaving a closed trade in BOTH stores (which is exactly the duplicateAccountIds
+    // condition this asserts is empty) killed ZERO fixtures gate-wide, and deleting the
+    // closedPositions write killed 21 fixtures elsewhere and NONE here.
+    //
+    // Retitled to what it genuinely observes, with an explicit precondition so the situation
+    // cannot silently drift back. The REAL awaited open->close cycle is covered end to end by
+    // LCR-E2E.0-.5, LCR-CLEAN.1 and LCR-PERSIST.1-.4 in v1239_lifecycle_reconciliation_tests.js,
+    // which return a promise and await every close. TEST I.1/I.2 below fire un-awaited closes too,
+    // but disclose that they observe only the synchronous prefix -- they were honest; this was not.
     const pos=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
     g.setPairData(PAIR,1.1100);
-    g.closePaperPosition(pos.id,false,'Win');
+    g.closePaperPosition(pos.id,false,'Win');   // NOT awaited -- see above; nothing below observes it
     const integ=g.computePaperLedgerIntegrity();
-    assert('Reconciliation.1: a normal open->close cycle produces zero integrity findings (no orphans, no duplicates, balance matches expected exactly)',
+    assert('Reconciliation.0 (PRECONDITION): this synchronous fixture observes the state BEFORE the un-awaited close resolves -- one OPEN position, nothing closed, balance untouched',
+      g.getPaperAccount().openPositions.length===1&&g.getPaperAccount().closedPositions.length===0&&
+      g.getPaperAccount().balance===10000&&(g.getJournalEntries()[0]||{}).status==='OPEN',
+      'open='+g.getPaperAccount().openPositions.length+' closed='+g.getPaperAccount().closedPositions.length+
+      ' balance='+g.getPaperAccount().balance+' journal='+String((g.getJournalEntries()[0]||{}).status));
+    assert('Reconciliation.1: a freshly OPENED trade is already ledger-consistent -- its journal row matches its account position, with no orphan on either side and no duplicate id (this is the OPEN half only; the awaited close cycle is LCR-E2E/CLEAN in v1239)',
       integ.journalWithNoAccountMatch.length===0&&integ.accountPositionsWithNoJournal.length===0&&
       integ.duplicateAccountIds.length===0&&integ.duplicateJournalTradeIds.length===0&&
       integ.balanceDifference===0,
