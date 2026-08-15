@@ -1865,7 +1865,11 @@ function runEvidencePlatformFixtures(g){
     ok(src.indexOf('closedPositions.slice')!==-1,'it reads a COPY of closed positions');
   });
 
-  t('J7/J8 closePaperPosition and commitPaperLedger return contracts are unchanged',function(){
+  // §18.13: legitimately STRUCTURAL. 'The protected close function must contain no evidence code'
+  // is an architectural invariant that can ONLY be expressed over source text -- there is no
+  // behaviour to observe for the ABSENCE of a call. Retitled so it is not counted as behavioural
+  // coverage of the close contract, which v1238's journal suite now provides end to end.
+  t('J7/J8 (STRUCTURAL, source-text only): the closePaperPosition and commitPaperLedger return contracts, and the absence of evidence code inside the PROTECTED close, are unchanged',function(){
     const close=g.getSource('function closePaperPosition');
     ok(close.indexOf('return{closedPos,committed:true}')!==-1,'success contract intact');
     ok(close.indexOf('integrityCompromised:!!committed.integrityCompromised')!==-1,'blocked contract intact');
@@ -3636,7 +3640,15 @@ function runEvidencePlatformFixtures(g){
       ok(v.observed&&typeof v.observed==='object','and cite what it observed');
     });
   });
-  t('Q7 statistics, dashboard and journal all exclude quarantined records',function(){
+  // §18.13 RELABELLED. This is a STRUCTURAL assertion, not behavioural coverage: every clause is
+  // a getSource() substring match, so it survives every behaviour-changing mutation and dies on a
+  // cosmetic rename. Its old title claimed the behaviour outright, and the §16 re-score found it
+  // was the ONLY thing 'covering' the quarantine filter -- a mutation that included quarantined
+  // trades in the panel statistics was scored as killed by this, then reclassified as a survivor.
+  // The behavioural coverage now lives in tests/v1238_execution_reporting_display_tests.js (K1-K4,
+  // L1-L5), which drives the real renderAlexGLivePanel and asserts the rendered figures.
+  // Kept as a code-shape regression pin, under a title that says so.
+  t('Q7 (STRUCTURAL, source-text only -- behaviour is covered by v1238 K3): the quarantine filter, the netting of quarantined P&L and the QUARANTINED badge are still WIRED into renderAlexGLivePanel and the dashboard',function(){
     const panel=g.getSource('function renderAlexGLivePanel()');
     ok(panel.indexOf('tradeIntegrityFilterForStatistics(closedAll')!==-1,'the live panel must filter');
     ok(panel.indexOf('quarantinedPnl')!==-1,'and must net quarantined P&L out of the displayed figure');
@@ -4014,7 +4026,11 @@ function runEvidencePlatformFixtures(g){
     g.ledgerReportingFigures('alex_g_sr_v1',acct.balance,10000,acct.closedPositions);
     eq(JSON.stringify(acct),before,'accounts must be byte-identical afterwards');
   });
-  t('A8 display seams route through the resolver and disclose the source',function(){
+  // §18.13 RELABELLED AND RENAMED. Two different fixtures in this suite were both called 'A8'
+  // (the other is the realizedR loser case), so a failure report naming A8 was ambiguous -- and
+  // per-fixture mutation attribution keyed on the name would have been wrong. Renamed A8b.
+  // Also STRUCTURAL, not behavioural: every clause is a getSource()/appSource substring match.
+  t('A8b (STRUCTURAL, source-text only): the display seams are still WIRED to ledgerReportingFigures and still label a derived figure as derived',function(){
     const panel=g.getSource('function renderAlexGLivePanel()');
     ok(panel.indexOf("ledgerReportingFigures('alex_g_sr_v1'")!==-1,'the live panel must ask the resolver');
     ok(panel.indexOf('ledger-derived')!==-1,'and must label a derived figure as derived');
