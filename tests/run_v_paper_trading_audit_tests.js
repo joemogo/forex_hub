@@ -82,6 +82,10 @@ const wrapped = new Function('g',
   'g.getAlexGLedgerIntegrityWarning=function(){return alexGLedgerIntegrityWarning;};' +
   'g.getPaperLedgerIntegrityWarning=function(){return paperLedgerIntegrityWarning;};' +
   'g.getPaperEngineErrors=function(){return paperEngineErrors;};' +
+  // recordPaperEngineError caps the log at 50 via unshift+slice, so once it saturates the LENGTH
+  // stops changing -- which made a negative control pass in exactly the condition it existed to
+  // catch. Fixtures need to reset the log and compare CONTENT, not count. (§18.8, defect D5.)
+  'g.setPaperEngineErrors=function(v){paperEngineErrors=v;};' +
   'g.getAlexGEngineErrors=function(){return alexGEngineErrors;};' +
   'g.getAlexGAccountKnownVersion=function(){return alexGAccountKnownVersion;};' +
   'g.loadAlexGSaved=loadAlexGSaved;' +

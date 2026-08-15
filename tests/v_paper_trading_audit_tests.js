@@ -1297,25 +1297,31 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     // the same id forever. The floor can no longer install such a value, but every other integrity
     // failure in this engine records an error and this one used to degrade in total silence.
     // (The signal was added and then found UNCOVERED by mutation: deleting it killed nothing.)
+    // These two compared paperEngineErrors.LENGTH. recordPaperEngineError caps the log at 50
+    // (unshift + slice(0,50)), so once it saturates the length stops moving -- and a mutation that
+    // fired the error on EVERY mint, i.e. exactly the noise 17o exists to detect, made 17n fail
+    // spuriously (50 > 50 is false) while 17o PASSED. The negative control was blind precisely in
+    // its own failure case. Both now reset the log and match on CONTENT. (§18.8, defect D5.)
     seedClean();
+    g.setPaperEngineErrors([]);
     g.setPaperTradeIdSeq(9007199254740993);          // 2^53+1, forced past the floor's guard
-    const errsBefore=g.getPaperEngineErrors().length;
     const repeat1=g.paperNextTradeId(), repeat2=g.paperNextTradeId();
     assert('TradeID.17m: PRECONDITION -- at 2^53 the increment really is a no-op, so the generator genuinely does repeat',
       repeat1===repeat2,'ids='+repeat1+','+repeat2);
+    const safeIntErrs=g.getPaperEngineErrors().filter(function(e){
+      return /safe integer range/.test(String(e&&e.message||e)); });
     assert('TradeID.17n: and it RECORDS a paper-engine error naming the condition, rather than degrading in silence',
-      g.getPaperEngineErrors().length>errsBefore&&
-      /safe integer range/.test(String(g.getPaperEngineErrors()[0].message||g.getPaperEngineErrors()[0])),
-      JSON.stringify(g.getPaperEngineErrors().slice(0,1)));
+      safeIntErrs.length>0,JSON.stringify(g.getPaperEngineErrors().slice(0,2)));
     // NEGATIVE CONTROL: normal operation must NOT raise it, or the signal becomes noise.
     seedClean();
+    g.setPaperEngineErrors([]);
     g.freezeClock(1786749500000);
     g.setPaperTradeIdSeq(0);
-    const errsClean=g.getPaperEngineErrors().length;
     g.paperNextTradeId(); g.paperNextTradeId(); g.paperNextTradeId();
-    assert('TradeID.17o: NEGATIVE CONTROL -- ordinary minting records no error at all, so the signal means something when it appears',
-      g.getPaperEngineErrors().length===errsClean,
-      'errors added='+(g.getPaperEngineErrors().length-errsClean));
+    assert('TradeID.17o: NEGATIVE CONTROL -- ordinary minting records no such error at all, so the signal means something when it appears',
+      g.getPaperEngineErrors().filter(function(e){
+        return /safe integer range/.test(String(e&&e.message||e)); }).length===0,
+      JSON.stringify(g.getPaperEngineErrors().slice(0,3)));
     // POSITIVE CONTROL: a legitimate persisted id in the same position IS accepted, so the guard
     // above is a filter and not a blanket refusal that would silently disable the floor entirely.
     seedClean();
@@ -1352,32 +1358,123 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     seedClean();
     g.freezeClock(1786749000000);
     g.setPaperTradeIdSeq(0);
-    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
-    g.setJournalEntries([]);
-    g.setTradeNotes({'JVMJ|1786749800000000':'a note attached to a long-gone trade'});
-    g.setPaperReconciliationAudit([]);
-    g.paperSeedTradeIdSeq();
-    assert('TradeID.17k: an id surviving only as a TRADE NOTE key still raises the floor, so a re-minted id can never inherit another trade\'s note',
+    // DRIVEN THROUGH THE REAL loadSaved() OVER REAL PERSISTED BYTES, not by calling the seeder.
+    // Both of these used to call g.paperSeedTradeIdSeq() directly, which proves the FUNCTION reads
+    // these two stores and proves nothing about the seeder being REACHED after they load. Moving
+    // paperSeedTradeIdSeq() to the TOP of loadSaved() -- before fxhub_trade_notes and
+    // fxhub_paper_reconciliation_audit are parsed -- left both green. That is the same
+    // "covered but wired to nothing" class TradeID.17a exists to close for the account and journal,
+    // never extended to these two. (§18.8, defect D4.)
+    g.setLocalStorageItem('fxhub_paper',JSON.stringify({balance:10000,openPositions:[],closedPositions:[]}));
+    g.setLocalStorageItem('fxhub_journal',JSON.stringify([]));
+    g.setLocalStorageItem('fxhub_trade_notes',JSON.stringify({'JVMJ|1786749800000000':'a note attached to a long-gone trade'}));
+    g.setLocalStorageItem('fxhub_paper_reconciliation_audit',JSON.stringify([]));
+    g.loadSaved();
+    assert('TradeID.17k: WIRING -- an id surviving only as a TRADE NOTE key is raised into the floor by a real loadSaved(), so a re-minted id can never inherit another trade\'s note',
       g.paperNextTradeId()>1786749800000000,'seq='+g.getPaperTradeIdSeq());
     seedClean();
     g.freezeClock(1786749000000);
     g.setPaperTradeIdSeq(0);
-    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
-    g.setJournalEntries([]);
-    g.setTradeNotes({});
-    g.setPaperReconciliationAudit([{action:'restore',tradeId:1786749900000000,at:'2026-08-01T00:00:00.000Z'}]);
-    g.paperSeedTradeIdSeq();
-    assert('TradeID.17l: an id recorded only in the RECONCILIATION AUDIT still raises the floor, so a re-minted id can never be born already-reconciled',
+    g.setLocalStorageItem('fxhub_paper',JSON.stringify({balance:10000,openPositions:[],closedPositions:[]}));
+    g.setLocalStorageItem('fxhub_journal',JSON.stringify([]));
+    g.setLocalStorageItem('fxhub_trade_notes',JSON.stringify({}));
+    g.setLocalStorageItem('fxhub_paper_reconciliation_audit',JSON.stringify(
+      [{action:'restore',tradeId:1786749900000000,at:'2026-08-01T00:00:00.000Z'}]));
+    g.loadSaved();
+    assert('TradeID.17l: WIRING -- an id recorded only in the RECONCILIATION AUDIT is raised into the floor by a real loadSaved(), so a re-minted id can never be born already-reconciled',
       g.paperNextTradeId()>1786749900000000,'seq='+g.getPaperTradeIdSeq());
     g.setTradeNotes({}); g.setPaperReconciliationAudit([]);
     // And the floor reads BOTH stores: an id that exists only in the journal still raises it.
+    // THIS FIXTURE WAS VACUOUS. It ran with the clock still frozen at 1786749000000 -- above the
+    // journal id it was testing -- so the clock term alone satisfied the assertion and the floor
+    // contributed nothing. Deleting the journal scan from the seeder killed TradeID.17i and NOT
+    // this. A sixth vacuous fixture, found by independent adversarial re-verification (§18.8,
+    // defect D2). The clock is now REWOUND BELOW the journal id, which is the only condition under
+    // which the floor is what makes the assertion true, and the precondition says so explicitly.
+    g.freezeClock(1786748000000);
     g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
     g.setJournalEntries([{tradeId:before+5000,strategyId:'current_strategy',status:'OPEN'}]);
     g.setPaperTradeIdSeq(0);
+    assert('TradeID.17p: PRECONDITION -- with the clock rewound, the clock term ALONE is below the journal id, so this fixture can only pass because of the floor',
+      1786748000000*1000<before+5000,'clock term='+(1786748000000*1000)+' journal id='+(before+5000));
     g.paperSeedTradeIdSeq();
     assert('TradeID.17: an id present ONLY in the journal (an orphan, with no account position) still raises the floor',
       g.paperNextTradeId()>before+5000,'seq='+g.getPaperTradeIdSeq());
     g.restoreClock();
+  }
+  {
+    // ── THE FLOOR'S BOUND WAS OFF BY ONE (§18.8, defect D1) ──────────────────────────────────
+    // The guard read `Number.isSafeInteger(v)`, and isSafeInteger(2^53-1) is TRUE -- so
+    // Number.MAX_SAFE_INTEGER was ACCEPTED as a floor. The very first mint then computes max+1 =
+    // 2^53, where seq+1 === seq forever, so every id in the session is identical FROM MINT ONE.
+    // The old guard rejected 2^53+1 and admitted the single value that reaches 2^53 in one step --
+    // the exact failure its own comment describes. MAX_SAFE_INTEGER is also the likeliest corrupt
+    // value of all: it is the canonical "max int" sentinel a naive export or migration writes.
+    // The POISON list tested 2^53+1 and never tested 2^53-1, so nothing objected.
+    seedClean();
+    // CONTROL that the defect was real rather than theoretical: the OLD predicate admits this value.
+    assert('MaxSafe.1: CONTROL -- Number.isSafeInteger(MAX_SAFE_INTEGER) is true, so the previous guard genuinely did admit it as a floor',
+      Number.isSafeInteger(Number.MAX_SAFE_INTEGER)===true,'isSafeInteger(MAX)='+Number.isSafeInteger(Number.MAX_SAFE_INTEGER));
+    // CONTROL that admitting it is instantly fatal, computed from the generator's own arithmetic.
+    assert('MaxSafe.2: CONTROL -- and one step above it the increment is already a no-op, so admitting it repeats ids immediately',
+      (Number.MAX_SAFE_INTEGER+1)+1===(Number.MAX_SAFE_INTEGER+1),
+      'MAX+1='+(Number.MAX_SAFE_INTEGER+1));
+    g.setPaperEngineErrors([]);
+    g.freezeClock(1786749000000);
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:[{id:Number.MAX_SAFE_INTEGER,pair:'GBP/USD',oPair:PAIR}],closedPositions:[]});
+    g.setJournalEntries([]);
+    g.paperSeedTradeIdSeq();
+    // The seeder derives the floor from STORES ONLY -- the clock term enters at mint time, not here
+    // -- so a refused value must leave the floor exactly where it was. Under the old predicate this
+    // read MAX_SAFE_INTEGER, and the very next mint was already the repeating value.
+    assert('MaxSafe.3: a persisted id of MAX_SAFE_INTEGER is REFUSED as a floor -- it is not installed, and the counter is left untouched',
+      g.getPaperTradeIdSeq()===0&&g.getPaperTradeIdSeq()!==Number.MAX_SAFE_INTEGER,
+      'seq='+g.getPaperTradeIdSeq());
+    const afterMax=[g.paperNextTradeId(),g.paperNextTradeId(),g.paperNextTradeId()];
+    assert('MaxSafe.4: and ids minted afterwards are still DISTINCT and safe -- the wrong-position-closed defect is not reachable through this store',
+      new Set(afterMax).size===3&&afterMax.every(Number.isSafeInteger),JSON.stringify(afterMax));
+    assert('MaxSafe.5: the refusal is SURFACED as a paper-engine error rather than silently swallowed',
+      g.getPaperEngineErrors().filter(function(e){
+        return /refused as corrupt/.test(String(e&&e.message||e)); }).length>0,
+      JSON.stringify(g.getPaperEngineErrors().slice(0,2)));
+    // POSITIVE CONTROL, one variable away: a legitimate high id in the same slot IS still accepted,
+    // so the tightened bound filters corruption rather than disabling the floor.
+    seedClean();
+    g.setPaperEngineErrors([]);
+    g.freezeClock(1786749000000);
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:[{id:1786749950000000,pair:'GBP/USD',oPair:PAIR}],closedPositions:[]});
+    g.setJournalEntries([]);
+    g.paperSeedTradeIdSeq();
+    assert('MaxSafe.6: POSITIVE CONTROL -- a legitimate id well above the clock is still accepted, so the bound filters rather than blanket-refusing',
+      g.getPaperTradeIdSeq()===1786749950000000,'seq='+g.getPaperTradeIdSeq());
+    assert('MaxSafe.7: POSITIVE CONTROL -- and accepting it raises NO corruption error, so the signal in MaxSafe.5 means something',
+      g.getPaperEngineErrors().filter(function(e){
+        return /refused as corrupt/.test(String(e&&e.message||e)); }).length===0,
+      JSON.stringify(g.getPaperEngineErrors().slice(0,2)));
+    g.restoreClock();
+  }
+  {
+    // ── THE CLOCK FREEZE ITSELF WAS NEVER ASSERTED (§18.8, defect D3) ────────────────────────
+    // This suite's header claims every trade-id fixture "FREEZES THE CLOCK, so 'same millisecond'
+    // is forced rather than hoped for". Replacing g.freezeClock with a NO-OP killed exactly ONE of
+    // the 43 fixtures. That is not a defect in the generator -- the monotonic counter makes ids
+    // unique whether or not the clock moves, which is the good news -- but it means the
+    // same-millisecond framing was unverified, and a runner refactor that silently broke the freeze
+    // would leave the suite green while its headline claim quietly became false.
+    // This asserts the freeze from INSIDE the application scope, which no fixture did.
+    seedClean();
+    g.freezeClock(1700000000000);
+    g.setPaperTradeIdSeq(0);
+    assert('Freeze.1: the freeze is visible to the APPLICATION, not just the fixture -- a fresh counter mints exactly frozenMs*1000',
+      g.paperNextTradeId()===1700000000000*1000,'minted='+g.getPaperTradeIdSeq());
+    const sameMs=[g.paperNextTradeId(),g.paperNextTradeId(),g.paperNextTradeId()];
+    assert('Freeze.2: and the clock does NOT advance between mints, so consecutive ids differ by exactly 1 -- this is genuinely one millisecond',
+      sameMs[1]===sameMs[0]+1&&sameMs[2]===sameMs[1]+1,JSON.stringify(sameMs));
+    g.restoreClock();
+    assert('Freeze.3: restoreClock puts the real clock back, so a frozen fixture cannot leak into the ones after it',
+      g.paperNextTradeId()>1700000000000*1000,'seq='+g.getPaperTradeIdSeq());
   }
   {
     // ── PROPERTY 4: ALEX and JVM cannot collide where they share infrastructure.

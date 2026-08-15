@@ -3686,3 +3686,75 @@ App version `12.23.0`.
 > surface, or that the third guarded the narrower of the two cases in its own comment. Only an
 > independent verifier attacking them found it — which is why re-running fixtures is not
 > re-verification.
+
+### 18.8 🔴 The trade-id floor was off by one — independent re-verification of §16A
+
+The v12.22.0 trade-id remediation was re-attacked from scratch: **39 mutations and a
+46-assertion probe harness the verifier wrote itself**, driving the real functions rather than
+re-running the shipped fixtures. The design held on thirteen attack angles — it does not wrap, does
+not regress across a restart, a rewound clock or a mid-session re-`loadSaved()`, never rewrites a
+persisted id, and cannot collide with ALEX. **The gate reproduced exactly (1,759/1,759, drift 0),
+and the one-expression protected diff was independently confirmed from the raw git diff** rather
+than from the re-issued baseline.
+
+One implementation defect survived that scrutiny, and four evidence defects.
+
+#### D1 🔴 `Number.MAX_SAFE_INTEGER` was accepted as a floor — and is instantly fatal
+
+`Number.isSafeInteger(2^53-1)` is **`true`**, so `MAX_SAFE_INTEGER` passed the guard. The very
+first mint then computes `max+1 = 2^53`, where `seq+1 === seq` **forever**:
+
+| | |
+|---|---|
+| ids in the session | **all identical, from mint one** |
+| consequence | three positions share one id, one journal record between them, and `findIndex(p => p.id === id)` resolves to the **wrong position** |
+| severity | **moves money** — wrong position closed, wrong P&L applied |
+
+The old guard **rejected `2^53+1` and admitted the one value that reaches `2^53` in a single step** —
+off by one, in the exact failure mode its own comment describes. `MAX_SAFE_INTEGER` is also the
+*likeliest* corrupt value of all: it is the canonical "max int" sentinel a naive export or migration
+writes. The `POISON` list tested `2^53+1` and never tested `2^53-1`, so nothing objected.
+
+The bound is now strictly **below** `Number.MAX_SAFE_INTEGER`, and a refused value is **surfaced**
+as a paper-engine error once per load rather than silently swallowed.
+
+> **Disclosed residual, deliberately not defended with an invented threshold.** A persisted floor
+> just below the bound still exhausts fast — `2^53-5` yields five distinct ids and then repeats. It
+> is not silent (the generator already records an error the moment the sequence leaves safe range),
+> but it is degradation rather than prevention. Any cut-off short of the arithmetic limit would be
+> an arbitrary number dressed up as an invariant, so the arithmetic limit is where it sits.
+
+#### D2–D5 The evidence defects — including a *sixth* vacuous fixture
+
+| | Defect | Repair |
+|---|---|---|
+| **D2** | **`TradeID.17` was VACUOUS** — the sixth, after the five the previous round caught. It ran with the clock frozen **above** the journal id it tested, so the clock term alone satisfied it and the floor contributed nothing. Dropping the journal scan killed `17i` and **not** it | clock rewound below the id, plus `TradeID.17p` stating the precondition explicitly |
+| **D3** | **The clock freeze was never asserted**, though the suite header claims every fixture *forces* "same millisecond". A no-op `freezeClock` killed **1 of 43** | `Freeze.1/2/3` assert it from **inside the application scope** |
+| **D4** | `TradeID.17k/17l` proved the seeder **reads** trade notes and the reconciliation audit while proving nothing about it being **reached** after they load — both called it directly | both now drive the real `loadSaved()` over real persisted bytes |
+| **D5** | `TradeID.17n/17o` compared `paperEngineErrors.LENGTH` against a log capped at 50 by `unshift`+`slice`. Firing the error on **every** mint — exactly the noise `17o` exists to detect — made `17n` fail spuriously (`50 > 50` is false) while **`17o` PASSED**. The negative control was blind precisely in its own failure case | both reset the log and match on **content** |
+
+**D3 is not a defect in the generator** — the monotonic counter makes ids unique whether or not the
+clock moves, which is the good news. But the *framing* was unverified, and a runner refactor that
+silently broke the freeze would have left the suite green while its headline claim became false.
+
+#### Mutation evidence
+
+15 fixtures added. Every mutation had a unique anchor and a non-zero byte diff.
+
+| Mutation | Kills |
+|---|---|
+| revert the floor bound to plain `isSafeInteger` | `MaxSafe.3`, `.4`, `.5` |
+| stop surfacing the refusal | `MaxSafe.5` |
+| make `freezeClock` a no-op | `Freeze.1`, `TradeID.15` |
+| drop the journal scan from the floor | `TradeID.17`, `.17i` — **`17` did not die before this repair** |
+| reorder `loadSaved()` so the seeder runs first | `TradeID.17k`, `.17l` — **neither died before** |
+| fire the safe-integer error on every mint | `TradeID.17o` — **it PASSED before** |
+
+> **One mutation of my own was wrong, and is recorded rather than quietly re-run.** My first D4
+> mutation *added* a seeder call at the top of `loadSaved()` instead of *moving* it, so the original
+> call still ran and picked the stores up anyway — it survived, and the survival meant nothing. The
+> true reorder kills both fixtures. An unapplied or mis-specified mutation is not evidence in either
+> direction.
+
+**Gate: 25 suites, 1,782 / 1,782. Protected drift 0 against the unchanged v12.22.0 baseline.**
+App version `12.24.0`.
