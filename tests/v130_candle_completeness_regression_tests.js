@@ -373,7 +373,15 @@ function runCandleCompletenessFixtures(g){
       ok(fromEngine!==fromChart,'the two must be distinguishable -- only one is what auto-trading acted on');
       return 'engine verdict and chart-local computation are told apart';
     });
-    await t('CHART-3 loadChart no longer scores raw candles without a completeness gate',async function(){
+    // MOGO-021 §18.17 RELABELLED. This slices ~9,000 characters of loadChart's SOURCE and does
+    // indexOf checks on it. It was the ONLY fixture in the repository claiming to protect the
+    // §10.1 chart-versus-engine authority property, and it survives every mutation that actually
+    // breaks that property -- rendering a re-computed verdict instead of the recorded one, and
+    // mislabelling the source -- while it would die on a harmless reformat. loadChart() was never
+    // once EXECUTED by the gate before the v1239 chart/AOI campaign. The behavioural coverage now
+    // lives in CAF-B1..B6 and CAF-TF.1..7, which run the real loadChart and assert the rendered
+    // values. Kept as a code-shape regression pin, retitled so it is not mistaken for coverage.
+    await t('CHART-3 (STRUCTURAL, source-text only -- behaviour is covered by CAF-B/CAF-TF in v1239): loadChart still contains its completeness gate and does not score raw candles',async function(){
       const raw=g.rawHtml();
       const start=raw.indexOf('async function loadChart(');
       ok(start!==-1,'loadChart must exist');

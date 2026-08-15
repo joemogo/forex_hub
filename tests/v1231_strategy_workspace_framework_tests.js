@@ -247,18 +247,27 @@ function runV1231Fixtures(g){
     // v12.3.1 changelog's own prose legitimately mentions in the APP_VERSION_LOG string) --
     // distinguishes a real call site from a descriptive text reference to the same phrase.
     const hasCallSite=/loadAndRenderTjrZones\(activePair\);/.test(g.appCodeSource);
-    assert('Fixture 26: loadChart() no longer calls loadAndRenderTjrZones(activePair) -- the shared chart no longer auto-renders TJR zones',
+    // §18.17: STRUCTURAL (source-text). Proving the ABSENCE of a call site has no behaviour to
+    // observe, so this form is legitimate here -- but it is labelled so it is not counted as
+    // behavioural coverage of the chart.
+    assert('Fixture 26 (STRUCTURAL, source-text only): loadChart() no longer calls loadAndRenderTjrZones(activePair) -- the shared chart no longer auto-renders TJR zones',
       hasCallSite===false,'');
   }
   {
     const hasFunctionDef=/function loadAndRenderTjrZones\s*\(/.test(g.appCodeSource);
     const hasDrawFn=/function drawTjrZoneOverlay\s*\(/.test(g.appCodeSource);
     const hasClearFn=/function clearTjrZoneOverlay\s*\(/.test(g.appCodeSource);
-    assert('Fixture 27: the Phase 1 rendering functions (loadAndRenderTjrZones/drawTjrZoneOverlay/clearTjrZoneOverlay) are still defined -- retained and reusable, not deleted',
+    // §18.17: STRUCTURAL (source-text) -- existence of a definition, not behaviour.
+    assert('Fixture 27 (STRUCTURAL, source-text only): the Phase 1 rendering functions are still defined -- retained and reusable, not deleted',
       hasFunctionDef&&hasDrawFn&&hasClearFn,'');
   }
   {
-    assert('Fixture 28: the retained Phase 1 drawTjrZoneOverlay is still directly callable and behaves identically (functionally unchanged)',
+    // 🔴 §18.17: THE TITLE CLAIMED BEHAVIOUR THIS FIXTURE NEVER CHECKED. It asserted only that
+    // two symbols are of type 'function' -- presence-only -- under the words "behaves identically
+    // (functionally unchanged)". drawTjrZoneOverlay had NO behavioural coverage anywhere until
+    // CAF-D1 in v1239, which drives it with a malformed zone and asserts the healthy zone is still
+    // drawn at exact prices. Retitled to what it actually asserts.
+    assert('Fixture 28 (PRESENCE-only): the retained Phase 1 drawTjrZoneOverlay and buildTjrSessionZones are still defined and callable -- behaviour is covered by CAF-D1 in v1239',
       typeof g.drawTjrZoneOverlay==='function'&&typeof g.buildTjrSessionZones==='function',
       '');
   }
