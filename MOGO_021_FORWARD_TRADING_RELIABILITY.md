@@ -2999,6 +2999,196 @@ twice, assert distinct — so it stops being a coin flip in both directions.
 
 ---
 
+## 16A. TRADE-ID INTEGRITY — the authorized protected change (§16.6 closed)
+
+**Owner-authorized**, narrowly scoped to identity generation. Recorded here in full because it is the
+only protected-function change of this milestone that touches the paper-execution path.
+
+### 16A.1 The defect, and why it was money rather than cosmetics
+
+`openPaperPosition` minted `id: Date.now() + Math.floor(Math.random()*1000)`. Two opens in the same
+millisecond collide with **p ≈ 1/1000**, and `checkAutoTrades` opens across eligible pairs via
+`Promise.all`, so same-millisecond opens are ordinary rather than contrived. `closePaperPosition`
+resolves its target with `findIndex(p => p.id === id)` — **a collision closes the wrong position** —
+and the same value is the journal `tradeId` that reconciliation and orphan detection match on.
+
+### 16A.2 The change: one expression, proven
+
+```js
+let paperTradeIdSeq=0;
+function paperNextTradeId(){
+  const t=Date.now()*1000;
+  paperTradeIdSeq=(t>paperTradeIdSeq)?t:paperTradeIdSeq+1;
+  return paperTradeIdSeq;
+}
+```
+
+The protected diff is **one line**: `id:Date.now()+Math.floor(Math.random()*1000)` → `id:paperNextTradeId()`.
+
+| | |
+|---|---|
+| pre-change `openPaperPosition` | sha1 `829154ba5b13e617f07e3bd5f5b6913408bf45d6`, length 3069 — **matches the committed baseline exactly**, confirming the pre-change state was pristine |
+| post-change | sha1 `06a704e5ec56d37097bdeee21fb297649377db90`, length 3046 |
+| lines changed inside the function | **1** |
+| protected items flagged by the drift check | **exactly `openPaperPosition`, nothing else** |
+
+Running the drift check *before* re-baselining is the positive control: it names the one function
+intended to change, which independently proves the other 62 functions and 4 constants were untouched.
+Sizing, entry, stop, target, direction, the zero-risk guard and the snapshot/rollback are
+byte-identical.
+
+### 16A.3 A second defect the fix would otherwise have introduced
+
+A monotonic clock is monotonic **only while the clock is**. Across a restart the counter starts at 0,
+so a system clock that moved **backwards** — an NTP correction, a hardware fault, a profile restored
+from backup — would re-mint ids at or below already-persisted ones: the same wrong-position-closed
+defect, through the back door. §17.3 already established that backwards intervals are a *recorded*
+condition here, not a hypothetical.
+
+`paperSeedTradeIdSeq()`, called at the end of `loadSaved()`, raises the floor above everything already
+durable. It reads all three stores — open positions, closed positions and the journal — because an id
+can legitimately exist in one without the others (that is what orphan detection exists to report).
+**It is read-only: no id is rewritten and no migration occurs.**
+
+### 16A.4 The rejected alternative, kept as a live control
+
+`Date.now()*1000 + (seq++ % 1000)` was tried first. It **passed the entire gate** and is wrong: a
+5,000-id burst yields only 2,000 distinct ids, because the modulo wraps after 1,000 opens inside one
+millisecond — reintroducing the same collision at a higher threshold. `TradeID.5` keeps that form as
+a **live control**, asserting the shipped generator does *not* behave like it, so a future
+"simplification" back to any bounded within-ms term fails here instead of silently regressing.
+
+### 16A.5 Evidence — 28 fixtures, every one against a FROZEN clock
+
+The clock is frozen in every fixture, so "same millisecond" is **forced rather than hoped for**. The
+old implementation's entire collision space was 1,000 ids per millisecond; these go 50× past it.
+
+* **50,000 ids in one frozen millisecond → 50,000 distinct**, strictly increasing, all safe integers,
+  ~229 years of headroom below `Number.MAX_SAFE_INTEGER`.
+* **500 real positions** opened through the real engine in one millisecond → 500 distinct ids, 500
+  distinct journal records, and `findIndex(p => p.id === id)` — the exact lookup `closePaperPosition`
+  uses — resolves every one to **itself**.
+* **The defect reproduced as a control**: force two ids equal and the same lookup resolves to the
+  *wrong* position. Without that control, `TradeID.9` would be a claim rather than a demonstration.
+* **Restart with the clock rewound an hour**: a clock-only generator would mint *below* the persisted
+  id (asserted as a precondition); the durable floor defeats it.
+* **ALEX vs JVM**: ALEX mints the *string* `AGT|<setupId>`, JVM a *number*. They cannot collide under
+  the exact-equality matching every association uses — pinned so a future change making them
+  type-compatible fails here.
+* **200-position book**: no duplicate account ids, no duplicate journal trade ids, no orphan on either
+  side, reconciliation `CLEAN`.
+
+**`TEST J.2` replaced.** The original was worthless in both directions and its own parenthetical said
+why — *"unique in practice"*. It ran two opens against the wall clock, so whichever side of a
+millisecond boundary they landed on decided the result: during the audit it **failed spuriously**
+against a genuine collision and then **passed** when the id was reduced to a bare `Date.now()` so
+collisions became systematic. It is now deterministic.
+
+### 16A.6 🔴 INDEPENDENT ADVERSARIAL VERIFICATION DEFEATED THE FIRST IMPLEMENTATION
+
+The verifier's brief was to break it, not review it. **It did.** Every finding is fixed.
+
+| Defeat | Mechanism | Fix |
+|---|---|---|
+| **A persisted id ≥ 2^53 makes every id in the session identical** | at 2^53, `seq+1 === seq`, so the increment is a **no-op forever**. Driven end-to-end: three positions, **one id**, **one journal record between them**, and the close lookup resolving to the wrong position | the floor requires `Number.isSafeInteger` |
+| `1e300`, and a non-integer such as `…000.5` propagating a fractional part through every later id | `isFinite()` admits both | same |
+| **One malformed store silently disabled the whole floor** | a single shared `try` — the *first* throw skipped the rest, leaving the floor at **0** while a real id sat in the journal | **one `try` per store** |
+| The generator could not report its own failure | every other integrity failure here records an error; this one degraded silently and permanently | records a paper-engine error when the sequence leaves safe-integer range |
+| Dead code | `[] || []` parses as a no-op and *reads* as null-protection while providing none; a `typeof` check on a same-scope `let` | removed |
+
+**The floor was a new failure surface.** The old `Date.now()+random` construction was *immune* to all
+of it — which is exactly why an unclamped floor is worse than no floor, and why this had to be found
+by someone trying to break it rather than by me checking my own work.
+
+**What held, under attack:** clock backwards mid-session; clock +1yr then back; `loadSaved()` again
+mid-session; burst spill then the clock advancing into already-issued range; `NaN`/`Infinity`/`-1`/
+`undefined`/`'abc'`/`{}`/`true` persisted; account-only reset then restart then rewind; the developer
+test-trade generator; reconciliation restoring an orphan under a rewound clock; two tabs (the version
+guard blocks the duplicate from reaching storage); and legacy ids loaded and used.
+
+### 16A.7 Three ledger defects found while attacking the change
+
+None is in the generator. All three are cases where a diagnostic goes blind **exactly when the
+condition it exists to detect is present**. Diagnostic-only; no protected function.
+
+* **`accountPositionsWithNoJournal` counted EXISTENCE, not cardinality.** Three positions sharing one
+  id with a single journal record between them satisfied `some()` for all three and reported **zero**
+  unjournalled — the detector for orphaned twins was green precisely in the case that creates them.
+  Now a count. Reduces to the old behaviour exactly when ids are unique.
+* **The duplicate counters used raw object keys.** A JS object key is always a string, so the number
+  `5` and the string `"5"` were reported as **duplicates of each other** — a false positive turning
+  the verdict red over two genuinely distinct records, while strict `===` treats them as different
+  everywhere else. Now type-tagged; the reported output shape is unchanged.
+* **`computeReconciliationPreview` matched by `String()`.** A brand-new live id could select a
+  *different* historical record that stored the string form and **restore the wrong trade** — which
+  moves real money in the paper account. Ambiguity now **fails closed**: neither is restored, and the
+  reason names the ambiguity.
+
+The floor also reads the two stores that outlive `confirmPaperResetFull` — trade notes (keyed
+`JVMJ|<id>`) and the reconciliation audit — so a re-minted id can never inherit another trade's note
+or be born already-reconciled.
+
+### 16A.8 🔴 Five of my own fixtures were caught vacuous — three of them tautologies
+
+The verifier's per-fixture mutation matrix found **three fixtures that could not fail at all**:
+
+* **`TradeID.12`**, presented as the strongest evidence here, was the weakest: it deep-copied the
+  account, **wrote the collision itself**, then ran a `findIndex` **written in the fixture** — an
+  assertion about `Array.prototype.findIndex`, not about this application. It now forces the
+  collision into the **real** account and drives the **real** ledger detector.
+* **`TradeID.19`** compared a fixture string literal against a number. False for no possible id.
+* **`TradeID.20`** asserted two journals were disjoint two lines after the fixture populated one.
+* `TradeID.5`'s first clause and `TradeID.18`'s second were hand-computed constants — dropped.
+
+And two proved the seeder *worked* while proving nothing about it being **wired**:
+
+
+
+Both are the *"covered but wired to nothing"* class this project keeps producing:
+
+* **Removing `paperSeedTradeIdSeq()` from `loadSaved()` killed nothing.** Every restart fixture called
+  the seeder **directly**, proving the function works and proving nothing about it being *reached*.
+  `TradeID.17a/b` now drive the real `loadSaved()` over real persisted bytes.
+* **Ignoring `closedPositions`, and separately `openPositions`, each killed nothing** — the wiring
+  fixture had the id in *both* stores, so it stayed green if either branch was deleted. `TradeID.17c/d`
+  seed from one store at a time.
+
+A third mutation reported nothing because its **anchor was not unique** (`return paperTradeIdSeq;`
+appears in both functions). It was re-anchored, not counted — an unapplied mutation is not a survivor.
+
+### 16A.9 Rebaseline — and the proof it hides nothing
+
+**18 mutations, all killed**, including every one the verifier found uncovered.
+
+| | |
+|---|---|
+| `openPaperPosition` | `829154ba…` (3069) → `06a704e5…` (3046) |
+| `closePaperPosition` | `b03719e4…` (6075) → **unchanged** |
+| `checkAutoTrades` | `01a78e29…` (1916) → **unchanged** |
+| all other 60 functions + 4 constants | **unchanged** |
+
+The rebaseline rewrote **one hash**. Every other recorded value in `regression-baseline.json` is
+byte-identical to what it was before this change — which is the check that the rebaseline was not
+used to launder unrelated drift. Gate **1,759/1,759**, drift **0** against the new v12.22.0 baseline.
+
+### 16A.10 Was it the smallest correct solution?
+
+The verifier's assessment, which I accept: **yes, and neither half is redundant.**
+
+* **The floor is necessary.** Deleting it kills six fixtures: with the clock rewound one hour across
+  a restart, a clock-only generator mints *below* an already-persisted id.
+* **The clock is necessary.** A pure seeded counter would be correct until
+  `confirmPaperResetFull` wipes every durable id — then it restarts at 1 and *unconditionally*
+  reuses ids still live in trade notes, the reconciliation audit and the evidence store. The clock
+  restarts above all history because it only moves forward.
+
+**One correction the verifier made to my own justification, which I accept:** my code comment cited
+§17.3 as evidence that backwards clocks are an *observed* condition here. That was overstated. §17.3
+added the ability to **report** a backwards interval; it did not record one occurring. The comment is
+corrected in place, and the justification now rests on the reproduction and the six dead fixtures.
+
+---
+
 ## 17. Continuity, alignment and observability integrity (completion items 1, 2, 11)
 
 Independent adversarial audit: **93 behaviour-changing mutations, 63 killed, 30 killed nothing.** A

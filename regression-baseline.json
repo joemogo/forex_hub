@@ -1,11 +1,11 @@
 {
-  "generatedFromAppVersion": "12.21.0",
+  "generatedFromAppVersion": "12.22.0",
   "knownGoodHtmlSha1": "31baa279ddc64fdfa90f052da195239bff9a0569",
   "protectedFunctionCount": 63,
   "protectedFunctions": {
     "openPaperPosition": {
-      "sha1": "829154ba5b13e617f07e3bd5f5b6913408bf45d6",
-      "length": 3069
+      "sha1": "06a704e5ec56d37097bdeee21fb297649377db90",
+      "length": 3046
     },
     "closePaperPosition": {
       "sha1": "b03719e4296496971d4bdf5d57ccd37922f057ae",

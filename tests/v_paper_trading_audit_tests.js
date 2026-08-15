@@ -189,10 +189,28 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     seedClean();
   }
   {
+    // TEST J.2 -- REPLACED (MOGO-021 §16.6). The original was worthless in BOTH directions and its
+    // own parenthetical said why: "unique in practice". It ran two opens against the live wall
+    // clock, so whichever side of a millisecond boundary they landed on decided the result. During
+    // the audit it FAILED SPURIOUSLY against a genuine collision (id1 === id2 === 1786748218934)
+    // and then PASSED when the id was reduced to a bare Date.now() so collisions became
+    // SYSTEMATIC. It was never evidence of uniqueness, and it randomly reddened the gate.
+    //
+    // Now deterministic: the clock is FROZEN, so both opens are forced into the same millisecond
+    // -- the exact condition the old id construction could not survive -- and uniqueness is a
+    // property of the generator rather than of timing luck.
+    seedClean();
+    g.setPairData(PAIR,1.1000);
+    g.freezeClock(1786748218934);
     const pos1=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
     const pos2=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
-    assert('TEST J.2: two distinct opens never collide on trade ID (Date.now()+random-based ids are unique in practice)',
-      pos1.id!==pos2.id,'id1='+pos1.id+' id2='+pos2.id);
+    assert('TEST J.2: REPLACED -- two opens forced into the SAME frozen millisecond receive different ids, deterministically rather than "in practice"',
+      pos1.id!==pos2.id&&pos2.id===pos1.id+1,'id1='+pos1.id+' id2='+pos2.id);
+    assert('TEST J.2b: and both are real, committed positions -- the fixture is not passing because one of the opens failed',
+      !pos1.error&&!pos2.error&&g.getPaperAccount().openPositions.length===2,
+      'open='+g.getPaperAccount().openPositions.length);
+    g.restoreClock();
+    seedClean();
   }
   {
     seedClean();
@@ -1025,6 +1043,493 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
       text);
     g.setCfg({key:'',accountId:'',env:'practice'});
     g.setAiChat({key:'',model:'test',messages:[]});
+  }
+
+  // ═══ §16.6 TRADE-ID INTEGRITY (owner-authorized protected change) ═══════════════════════════
+  // The defect: `id: Date.now() + Math.floor(Math.random()*1000)`. Two opens in the same
+  // millisecond collided with p ~ 1/1000, checkAutoTrades opens across pairs via Promise.all so
+  // that is ordinary, and closePaperPosition resolves by findIndex(p => p.id === id) -- SO A
+  // COLLISION CLOSES THE WRONG POSITION. The old fixture that appeared to guard this (TEST J.2)
+  // was worthless in BOTH directions: it failed spuriously against a real collision and PASSED
+  // when the id was reduced to a bare Date.now() so collisions became systematic. Whichever way
+  // two opens straddled a millisecond boundary decided the result.
+  //
+  // Every fixture below FREEZES THE CLOCK, so "same millisecond" is forced rather than hoped for.
+  // The old implementation's collision space was 1,000 ids per millisecond; these go far past it.
+  {
+    // ── PROPERTY 2 + 5: same-millisecond and rapid-sequential opens, well beyond the old space ──
+    g.freezeClock(1786748218934);
+    g.setPaperTradeIdSeq(0);
+    const N=50000;
+    const ids=[];
+    for(let i=0;i<N;i++) ids.push(g.paperNextTradeId());
+    const distinct=new Set(ids);
+    assert('TradeID.1: 50,000 ids minted inside ONE frozen millisecond are ALL distinct -- 50x beyond the old implementation\'s entire 1,000-per-ms collision space',
+      distinct.size===N,'distinct='+distinct.size+'/'+N);
+    let strictlyIncreasing=true;
+    for(let i=1;i<N;i++) if(!(ids[i]>ids[i-1])) { strictlyIncreasing=false; break; }
+    assert('TradeID.2: and they are strictly increasing, so ordering never depends on the clock ticking',
+      strictlyIncreasing,'first='+ids[0]+' last='+ids[N-1]);
+    assert('TradeID.3: every id is a NUMBER and a safe integer -- the close lookup and the journal tradeId both match by exact equality, which a float or a string would break',
+      ids.every(function(v){ return typeof v==='number'&&Number.isSafeInteger(v); }),
+      'typeof first='+(typeof ids[0])+' safe='+Number.isSafeInteger(ids[N-1]));
+    assert('TradeID.4: with ~229 years of headroom left below Number.MAX_SAFE_INTEGER',
+      ids[N-1]<Number.MAX_SAFE_INTEGER&&(Number.MAX_SAFE_INTEGER-ids[N-1])>7e15,
+      'headroom='+(Number.MAX_SAFE_INTEGER-ids[N-1]));
+    // THE REJECTED ALTERNATIVE, kept as a live control. `Date.now()*1000 + (seq++ % 1000)` passed
+    // the entire gate and is WRONG -- it wraps after 1,000 opens in one millisecond. This asserts
+    // the shipped generator does NOT behave like it, so a future "simplification" back to a
+    // bounded within-ms term fails here instead of silently reintroducing the defect.
+    // An earlier version of this also asserted `wrapped.size===1000` over a modulo sequence the
+    // FIXTURE computed -- hand-computed constants that cannot fail and control nothing about the
+    // shipped code. Dropped. What remains is the claim that actually bears weight: the shipped
+    // generator does not wrap, asserted at the exact burst size where the rejected form does.
+    assert('TradeID.5: 5,000 opens inside one millisecond yield 5,000 distinct ids -- the burst size at which the rejected bounded-modulo form collapses to 1,000',
+      new Set(ids.slice(0,5000)).size===5000,
+      'shipped form distinct='+new Set(ids.slice(0,5000)).size+'/5000');
+    g.restoreClock();
+  }
+  {
+    // ── PROPERTY 1 + 3: real positions, opened through the real engine, in one frozen millisecond.
+    // This is the concurrency shape that matters: checkAutoTrades opens across eligible pairs via
+    // Promise.all, and openPaperPosition is synchronous, so those opens genuinely interleave
+    // within a single clock reading.
+    seedClean();
+    g.setPairData(PAIR,1.1000);
+    g.freezeClock(1786748300000);
+    g.setPaperTradeIdSeq(0);
+    const opened=[];
+    for(let i=0;i<500;i++){
+      const p=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
+      if(!p.error) opened.push(p);
+    }
+    const posIds=new Set(opened.map(function(p){return p.id;}));
+    assert('TradeID.6: 500 REAL positions opened through the real engine inside one millisecond all receive distinct ids',
+      opened.length===500&&posIds.size===500,'opened='+opened.length+' distinct='+posIds.size);
+    assert('TradeID.7: and every one of them is present exactly once in the account',
+      g.getPaperAccount().openPositions.length===500&&
+      new Set(g.getPaperAccount().openPositions.map(function(p){return p.id;})).size===500,
+      'account open='+g.getPaperAccount().openPositions.length);
+    // PROPERTY 8: journals correctly associated -- one OPEN record per position, matched by id.
+    const journal=g.getJournalEntries();
+    const journalIds=new Set(journal.map(function(e){return e.tradeId;}));
+    assert('TradeID.8: each position has exactly one journal record carrying its own tradeId -- no record is shared between two positions',
+      journal.length===500&&journalIds.size===500&&
+      opened.every(function(p){ return journalIds.has(p.id); }),
+      'journal='+journal.length+' distinctTradeIds='+journalIds.size);
+    // PROPERTY 6 + 7: the lookup every lifecycle operation uses resolves to the RIGHT position.
+    let allResolveToThemselves=true,firstBad=null;
+    opened.forEach(function(p){
+      const idx=g.getPaperAccount().openPositions.findIndex(function(q){ return q.id===p.id; });
+      const found=g.getPaperAccount().openPositions[idx];
+      if(!found||found.id!==p.id||found.openedAt!==p.openedAt){ allResolveToThemselves=false; firstBad=firstBad||p.id; }
+    });
+    assert('TradeID.9: findIndex(p => p.id === id) -- the exact lookup closePaperPosition uses -- resolves every one of the 500 to ITSELF and never to a neighbour',
+      allResolveToThemselves,'first mismatch='+firstBad);
+    g.restoreClock();
+  }
+  {
+    // ── PROPERTY 7, driven rather than reasoned: the wrong-position-closed failure itself.
+    // A collision is SIMULATED by forcing two positions to share an id, and the lookup is shown to
+    // resolve to the wrong one -- establishing that the defect was real and that the assertion
+    // above is not vacuous. Nothing is closed through the async path here; this is the lookup.
+    seedClean();
+    g.setPairData(PAIR,1.1000);
+    g.freezeClock(1786748400000);
+    g.setPaperTradeIdSeq(0);
+    const a=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
+    const b=g.openPaperPosition(PAIR,'sell',1.2000,1.2050,1.1900,'manual');
+    assert('TradeID.10: PRECONDITION -- two positions opened in the same millisecond have different ids and different directions',
+      a.id!==b.id&&a.dir!=='sell'&&b.dir==='sell','a='+a.id+' b='+b.id);
+    const acct=g.getPaperAccount();
+    assert('TradeID.11: looking up B\'s id returns B -- the SELL at 1.2000, not the BUY that shares its millisecond',
+      acct.openPositions[acct.openPositions.findIndex(function(q){return q.id===b.id;})].dir==='sell',
+      'resolved dir='+acct.openPositions[acct.openPositions.findIndex(function(q){return q.id===b.id;})].dir);
+    // THE NEGATIVE CONTROL. An earlier version of this fixture deep-copied the account, wrote the
+    // collision itself and then ran a findIndex WRITTEN IN THE FIXTURE -- an assertion about
+    // Array.prototype.findIndex, not about this application, structurally unable to fail. It was
+    // presented as the strongest evidence here and was the weakest. (Caught by independent
+    // adversarial verification.) It now forces the collision into the REAL account and drives the
+    // REAL ledger detector, so it fails if the application stops noticing.
+    const collided={balance:acct.balance,
+      openPositions:JSON.parse(JSON.stringify(acct.openPositions)),closedPositions:[]};
+    collided.openPositions[1].id=collided.openPositions[0].id;
+    g.setPaperAccount(collided);
+    const integ=g.computePaperLedgerIntegrity();
+    assert('TradeID.12: CONTROL -- forcing the two ids equal, the REAL ledger detector reports the duplicate',
+      integ.duplicateAccountIds.length===1&&String(integ.duplicateAccountIds[0])===String(a.id),
+      JSON.stringify(integ.duplicateAccountIds));
+    assert('TradeID.12b: and the REAL health report turns red and NAMES it, rather than signing off CLEAN',
+      g.computePaperTradingHealthReport().combined.reconciliationIssues.indexOf('JVM duplicate account ids')!==-1,
+      JSON.stringify(g.computePaperTradingHealthReport().combined.reconciliationIssues));
+    // AND the orphan detector must notice too. Two positions now share one id but only ONE journal
+    // record exists for it, so exactly one position is unjournalled. An EXISTENCE check reports 0
+    // here -- which is what it did until this was found -- so this is the assertion that proves the
+    // detector counts rather than merely looks.
+    assert('TradeID.12c: the orphan detector counts CARDINALITY -- two positions sharing one id with one journal record between them leaves exactly ONE position unjournalled',
+      integ.accountPositionsWithNoJournal.length===1,
+      JSON.stringify(integ.accountPositionsWithNoJournal));
+    // POSITIVE CONTROL, one variable away: give the twin its own journal record and it clears.
+    const j=g.getJournalEntries().slice();
+    j.push({tradeId:collided.openPositions[1].id,strategyId:'current_strategy',status:'OPEN',
+      openedAt:new Date().toISOString()});
+    g.setJournalEntries(j);
+    assert('TradeID.12d: and with a second journal record present for that id, nothing is reported unjournalled -- the count is real, not a constant',
+      g.computePaperLedgerIntegrity().accountPositionsWithNoJournal.length===0,
+      JSON.stringify(g.computePaperLedgerIntegrity().accountPositionsWithNoJournal));
+    g.restoreClock();
+  }
+  {
+    // ── PROPERTY 11 + 12 + 13: RESTART. The counter is per-session; the floor is not.
+    seedClean();
+    g.freezeClock(1786748500000);
+    g.setPaperTradeIdSeq(0);
+    const before=g.paperNextTradeId();
+    // A restart: the session counter is gone, but the durable stores are not.
+    g.setPaperAccount({balance:10000,openPositions:[{id:before,pair:'GBP/USD',oPair:PAIR}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:before,strategyId:'current_strategy',status:'OPEN'}]);
+    g.setPaperTradeIdSeq(0);
+    g.paperSeedTradeIdSeq();
+    const after=g.paperNextTradeId();
+    assert('TradeID.13: after a restart the next id is still strictly greater than the persisted one',
+      after>before,'before='+before+' after='+after);
+    assert('TradeID.14: PROPERTY 13 -- and the persisted id was NOT rewritten; no migration occurred',
+      g.getPaperAccount().openPositions[0].id===before&&g.getJournalEntries()[0].tradeId===before,
+      'stored='+g.getPaperAccount().openPositions[0].id);
+    // THE ATTACK the seeding exists for: a system clock that moved BACKWARDS across the restart.
+    // Without the floor, the monotonic clock alone would re-mint ids at or below persisted ones.
+    g.freezeClock(1786748500000-3600000);          // one hour backwards
+    g.setPaperTradeIdSeq(0);
+    const naive=Date.now()*1000;
+    assert('TradeID.15: PRECONDITION -- with the clock rewound an hour, a clock-only generator would mint BELOW the already-persisted id',
+      naive<before,'naive='+naive+' persisted='+before);
+    g.paperSeedTradeIdSeq();
+    const afterRewind=g.paperNextTradeId();
+    assert('TradeID.16: the durable floor defeats the rewind -- the next id is still strictly greater than everything already persisted',
+      afterRewind>before,'afterRewind='+afterRewind+' persisted='+before);
+    // WIRING. Everything above calls paperSeedTradeIdSeq() DIRECTLY, which proves the function
+    // works and proves NOTHING about it being reached on a real load -- deleting the call from
+    // loadSaved() left every assertion above green. (Found by mutation, not by reading: the exact
+    // "covered but wired to nothing" defect this project keeps producing.) This drives the REAL
+    // loadSaved() over real persisted bytes instead.
+    g.freezeClock(1786748500000-3600000);          // still rewound, so only the floor can save us
+    const persistedId=1786748500000000;
+    g.setLocalStorageItem('fxhub_paper',JSON.stringify(
+      {balance:10000,openPositions:[{id:persistedId,pair:'GBP/USD',oPair:PAIR}],closedPositions:[]}));
+    g.setLocalStorageItem('fxhub_journal',JSON.stringify(
+      [{tradeId:persistedId,strategyId:'current_strategy',status:'OPEN'}]));
+    g.setPaperTradeIdSeq(0);
+    g.loadSaved();
+    assert('TradeID.17a: WIRING -- a real loadSaved() raises the floor by itself, with no fixture calling the seeder',
+      g.getPaperTradeIdSeq()>=persistedId,'seq after loadSaved='+g.getPaperTradeIdSeq()+' persisted='+persistedId);
+    assert('TradeID.17b: so the next id minted after a real restart with a REWOUND clock is still above everything persisted',
+      g.paperNextTradeId()>persistedId,'');
+    // Each of the three durable stores must raise the floor ON ITS OWN. 17a above has the id in
+    // BOTH the account and the journal, so it stays green if either branch is deleted -- it proves
+    // the wiring, not the coverage of each branch. (Mutation caught that too.) One store at a time:
+    seedClean();
+    g.setLocalStorageItem('fxhub_paper',JSON.stringify(
+      {balance:10000,openPositions:[{id:persistedId+7000,pair:'GBP/USD',oPair:PAIR}],closedPositions:[]}));
+    g.setLocalStorageItem('fxhub_journal',JSON.stringify([]));
+    g.setPaperTradeIdSeq(0);
+    g.loadSaved();
+    assert('TradeID.17d: an id held ONLY in openPositions -- nothing closed, no journal record -- still raises the floor',
+      g.getPaperTradeIdSeq()>=persistedId+7000&&g.paperNextTradeId()>persistedId+7000,
+      'seq='+g.getPaperTradeIdSeq());
+    // CLOSED positions are durable too, and are the store a long-running account mostly holds.
+    seedClean();
+    g.setLocalStorageItem('fxhub_paper',JSON.stringify(
+      {balance:10200,openPositions:[],closedPositions:[{id:persistedId+9000,pair:'GBP/USD',oPair:PAIR,pnl:200}]}));
+    g.setLocalStorageItem('fxhub_journal',JSON.stringify([]));
+    g.setPaperTradeIdSeq(0);
+    g.loadSaved();
+    assert('TradeID.17c: an id held ONLY in closedPositions -- no open position, no journal record -- still raises the floor',
+      g.getPaperTradeIdSeq()>=persistedId+9000&&g.paperNextTradeId()>persistedId+9000,
+      'seq='+g.getPaperTradeIdSeq());
+    // ── THE FLOOR MUST NEVER GO DOWN ──────────────────────────────────────────────────────────
+    // `let max=paperTradeIdSeq` is what makes the seed a FLOOR rather than an assignment. Change
+    // it to `let max=0` and a mid-session re-seed (loadSaved() is reachable more than once) drops
+    // the counter below ids this session has already MINTED but not yet persisted, and re-issues
+    // them. No fixture covered this until adversarial verification pointed at it.
+    seedClean();
+    g.freezeClock(1786749000000);
+    g.setPaperTradeIdSeq(0);
+    const minted1=g.paperNextTradeId();
+    const minted2=g.paperNextTradeId();
+    // Nothing is persisted: the two ids exist only in this session's counter.
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([]);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17e: re-seeding against EMPTY stores never lowers the counter -- ids already minted this session are not re-issued',
+      g.getPaperTradeIdSeq()>=minted2&&g.paperNextTradeId()>minted2,
+      'minted='+minted1+','+minted2+' seq after reseed='+g.getPaperTradeIdSeq());
+    // ── THE FLOOR MUST REJECT VALUES THAT WOULD BREAK THE GENERATOR ───────────────────────────
+    // The seed reads PERSISTED bytes, which can be corrupt, hand-edited or restored from backup.
+    // An unclamped floor is strictly WORSE than no floor: install a value at or above 2^53 and
+    // `seq+1 === seq` forever, so every id in the session comes out identical. Independent
+    // adversarial verification drove exactly that through the real engine -- three positions, one
+    // id, one journal record between them, and the close lookup resolving to the wrong position.
+    const POISON=[
+      ['2^53+1',9007199254740993],['1e300',1e300],['non-integer',1786749900000000.5],
+      ['NaN',NaN],['Infinity',Infinity],['-Infinity',-Infinity],['negative',-1],
+      ['numeric string','1786749900000000'],['object',{}],['true',true],['null',null]
+    ];
+    let allRejected=true,firstAccepted=null;
+    POISON.forEach(function(pair){
+      seedClean();
+      g.setPaperTradeIdSeq(0);
+      g.setPaperAccount({balance:10000,openPositions:[{id:pair[1],pair:'GBP/USD',oPair:PAIR}],closedPositions:[]});
+      g.setJournalEntries([{tradeId:pair[1],strategyId:'current_strategy',status:'OPEN'}]);
+      g.paperSeedTradeIdSeq();
+      if(g.getPaperTradeIdSeq()!==0){ allRejected=false; firstAccepted=firstAccepted||(pair[0]+' -> '+g.getPaperTradeIdSeq()); }
+    });
+    assert('TradeID.17f: every unusable persisted id -- 2^53+1, 1e300, a non-integer, NaN, +/-Infinity, a negative, a numeric STRING, an object, a boolean, null -- is refused as a floor, leaving the counter untouched',
+      allRejected,'first accepted: '+firstAccepted);
+    // The generator must still work normally after all that, and must produce SAFE INTEGERS.
+    g.freezeClock(1786749100000);
+    g.setPaperTradeIdSeq(0);
+    const afterPoison=[g.paperNextTradeId(),g.paperNextTradeId(),g.paperNextTradeId()];
+    assert('TradeID.17g: and the generator still yields distinct SAFE INTEGERS afterwards -- a poisoned store cannot make the sequence non-integer or repeating',
+      new Set(afterPoison).size===3&&afterPoison.every(Number.isSafeInteger),
+      JSON.stringify(afterPoison));
+    // ── THE GENERATOR MUST BE ABLE TO REPORT ITS OWN FAILURE ─────────────────────────────────
+    // At or above 2^53 the increment is a NO-OP -- seq+1 === seq -- so the generator would return
+    // the same id forever. The floor can no longer install such a value, but every other integrity
+    // failure in this engine records an error and this one used to degrade in total silence.
+    // (The signal was added and then found UNCOVERED by mutation: deleting it killed nothing.)
+    seedClean();
+    g.setPaperTradeIdSeq(9007199254740993);          // 2^53+1, forced past the floor's guard
+    const errsBefore=g.getPaperEngineErrors().length;
+    const repeat1=g.paperNextTradeId(), repeat2=g.paperNextTradeId();
+    assert('TradeID.17m: PRECONDITION -- at 2^53 the increment really is a no-op, so the generator genuinely does repeat',
+      repeat1===repeat2,'ids='+repeat1+','+repeat2);
+    assert('TradeID.17n: and it RECORDS a paper-engine error naming the condition, rather than degrading in silence',
+      g.getPaperEngineErrors().length>errsBefore&&
+      /safe integer range/.test(String(g.getPaperEngineErrors()[0].message||g.getPaperEngineErrors()[0])),
+      JSON.stringify(g.getPaperEngineErrors().slice(0,1)));
+    // NEGATIVE CONTROL: normal operation must NOT raise it, or the signal becomes noise.
+    seedClean();
+    g.freezeClock(1786749500000);
+    g.setPaperTradeIdSeq(0);
+    const errsClean=g.getPaperEngineErrors().length;
+    g.paperNextTradeId(); g.paperNextTradeId(); g.paperNextTradeId();
+    assert('TradeID.17o: NEGATIVE CONTROL -- ordinary minting records no error at all, so the signal means something when it appears',
+      g.getPaperEngineErrors().length===errsClean,
+      'errors added='+(g.getPaperEngineErrors().length-errsClean));
+    // POSITIVE CONTROL: a legitimate persisted id in the same position IS accepted, so the guard
+    // above is a filter and not a blanket refusal that would silently disable the floor entirely.
+    seedClean();
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:[{id:1786749200000000,pair:'GBP/USD',oPair:PAIR}],closedPositions:[]});
+    g.setJournalEntries([]);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17h: POSITIVE CONTROL -- a legitimate persisted id in that same slot IS accepted, so the guard filters rather than disabling the floor',
+      g.getPaperTradeIdSeq()===1786749200000000,'seq='+g.getPaperTradeIdSeq());
+    // ── ONE MALFORMED STORE MUST NOT SILENCE THE OTHERS ──────────────────────────────────────
+    // A single shared try/catch meant the FIRST throwing store skipped the rest, so a truthy
+    // non-array openPositions left the floor at 0 while a real id sat in the journal.
+    seedClean();
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:{},closedPositions:'not-an-array'});
+    g.setJournalEntries([{tradeId:1786749300000000,strategyId:'current_strategy',status:'OPEN'}]);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17i: with BOTH account arrays malformed, the journal still raises the floor -- one bad store cannot silence the others',
+      g.getPaperTradeIdSeq()===1786749300000000,'seq='+g.getPaperTradeIdSeq());
+    seedClean();
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:[{id:1786749400000000,pair:'GBP/USD',oPair:PAIR}],closedPositions:{}});
+    g.setJournalEntries(null);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17j: and with the journal null and closedPositions malformed, the open positions still raise it',
+      g.getPaperTradeIdSeq()===1786749400000000,'seq='+g.getPaperTradeIdSeq());
+    // ── STORES THAT OUTLIVE A FULL RESET ─────────────────────────────────────────────────────
+    // confirmPaperResetFull clears the account and every journal row carrying a tradeId, so a
+    // floor derived only from those drops back to the clock -- while ids keep living in stores no
+    // reset touches. A re-minted id would inherit the previous trade's NOTE, and would be
+    // permanently unreconcilable because the audit trail already lists it as restored. Both cases
+    // are driven here with the clock REWOUND, which is the only condition under which the clock
+    // term alone would not save it.
+    seedClean();
+    g.freezeClock(1786749000000);
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([]);
+    g.setTradeNotes({'JVMJ|1786749800000000':'a note attached to a long-gone trade'});
+    g.setPaperReconciliationAudit([]);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17k: an id surviving only as a TRADE NOTE key still raises the floor, so a re-minted id can never inherit another trade\'s note',
+      g.paperNextTradeId()>1786749800000000,'seq='+g.getPaperTradeIdSeq());
+    seedClean();
+    g.freezeClock(1786749000000);
+    g.setPaperTradeIdSeq(0);
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([]);
+    g.setTradeNotes({});
+    g.setPaperReconciliationAudit([{action:'restore',tradeId:1786749900000000,at:'2026-08-01T00:00:00.000Z'}]);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17l: an id recorded only in the RECONCILIATION AUDIT still raises the floor, so a re-minted id can never be born already-reconciled',
+      g.paperNextTradeId()>1786749900000000,'seq='+g.getPaperTradeIdSeq());
+    g.setTradeNotes({}); g.setPaperReconciliationAudit([]);
+    // And the floor reads BOTH stores: an id that exists only in the journal still raises it.
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([{tradeId:before+5000,strategyId:'current_strategy',status:'OPEN'}]);
+    g.setPaperTradeIdSeq(0);
+    g.paperSeedTradeIdSeq();
+    assert('TradeID.17: an id present ONLY in the journal (an orphan, with no account position) still raises the floor',
+      g.paperNextTradeId()>before+5000,'seq='+g.getPaperTradeIdSeq());
+    g.restoreClock();
+  }
+  {
+    // ── PROPERTY 4: ALEX and JVM cannot collide where they share infrastructure.
+    // They cannot, BY CONSTRUCTION rather than by luck: ALEX mints the STRING `AGT|<setupId>` and
+    // JVM mints a NUMBER. Every association is by exact equality, and 'AGT|x' === 12345 is false
+    // for every value of both. This pins that invariant so a future change to either generator
+    // that made them type-compatible would fail here.
+    seedClean();
+    g.freezeClock(1786748600000);
+    g.setPaperTradeIdSeq(0);
+    g.setPairData(PAIR,1.1000);
+    const jvm=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
+    const alexId='AGT|AGS|alex_g_sr_v1|EUR_USD|H1|Z1|A_repeatedReaction|R1';
+    // TradeID.19/20 were TAUTOLOGIES in an earlier version -- comparing a fixture's own string
+    // literal against a number, and asserting two journals were disjoint two lines after the
+    // fixture itself populated one of them. Both were unkillable. (Caught by independent
+    // adversarial verification.) They now drive the REAL generator for both engines.
+    const alexIdReal=g.alexGTradeId('AGS|alex_g_sr_v1|EUR_USD|H1|Z1|A_repeatedReaction|R1');
+    assert('TradeID.18: the two REAL generators produce different TYPES -- alexGTradeId returns a string, paperNextTradeId a number',
+      typeof alexIdReal==='string'&&typeof jvm.id==='number',
+      'alexGTradeId -> '+(typeof alexIdReal)+' ('+alexIdReal+'), paperNextTradeId -> '+(typeof jvm.id));
+    // Drive MANY of each and prove the two id spaces cannot intersect at all, rather than
+    // asserting it of one hand-picked pair.
+    const jvmIds=[],alexIds=[];
+    for(let i=0;i<200;i++){
+      jvmIds.push(g.paperNextTradeId());
+      alexIds.push(g.alexGTradeId('AGS|alex_g_sr_v1|EUR_USD|H1|Z'+i+'|A_repeatedReaction|R'+i));
+    }
+    const jvmSet=new Set(jvmIds.map(String));
+    assert('TradeID.19: across 200 ids from each engine, NO ALEX id collides with any JVM id -- even compared as strings, which is how reconciliation matches',
+      alexIds.every(function(v){ return !jvmSet.has(String(v)); })&&
+      new Set(alexIds).size===200&&new Set(jvmIds).size===200,
+      'jvm distinct='+new Set(jvmIds).size+' alex distinct='+new Set(alexIds).size);
+    assert('TradeID.20: and every ALEX id carries the AGT| prefix that keeps the two spaces structurally disjoint, so the separation is a property of the generator rather than of the values it happened to produce',
+      alexIds.every(function(v){ return v.indexOf('AGT|')===0; })&&
+      jvmIds.every(function(v){ return typeof v==='number'; }),alexIds[0]);
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|'+alexIdReal,tradeId:alexIdReal,strategyId:'alex_g_sr_v1',status:'OPEN'}]);
+    g.restoreClock();
+  }
+  {
+    // ── PROPERTY 9 + 10: ledger association and reconciliation, over a 200-position book that the
+    // OLD generator would very probably have collided inside (200 opens in one millisecond).
+    seedClean();
+    g.setPairData(PAIR,1.1000);
+    g.freezeClock(1786748700000);
+    g.setPaperTradeIdSeq(0);
+    for(let i=0;i<200;i++) g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
+    const report=g.computePaperTradingHealthReport();
+    const integ=report.jvm.integrity;
+    assert('TradeID.21: the ledger reports NO duplicate account ids and NO duplicate journal trade ids across 200 same-millisecond opens',
+      integ.duplicateAccountIds.length===0&&integ.duplicateJournalTradeIds.length===0,
+      JSON.stringify({dupAcct:integ.duplicateAccountIds.length,dupJournal:integ.duplicateJournalTradeIds.length}));
+    assert('TradeID.22: every position has its journal record and every journal record has its position -- no orphan on either side',
+      integ.accountPositionsWithNoJournal.length===0&&integ.journalWithNoAccountMatch.length===0,
+      JSON.stringify({noJournal:integ.accountPositionsWithNoJournal.length,noAccount:integ.journalWithNoAccountMatch.length}));
+    assert('TradeID.23: and reconciliation returns CLEAN over that book -- the verdict that now consults all nineteen detectors',
+      report.combined.reconciliationStatus.indexOf('CLEAN')===0,
+      report.combined.reconciliationStatus+' :: '+JSON.stringify(report.combined.reconciliationIssues));
+    g.restoreClock();
+  }
+  {
+    // ── PROPERTY 14: everything OTHER than the identifier is behaviourally unchanged. The
+    // authorization is scoped to identity only, so this asserts the sizing/risk/ratio/direction
+    // arithmetic against the same literals the pre-existing TEST A fixtures use.
+    seedClean();
+    g.setPairData(PAIR,1.1000);
+    g.freezeClock(1786748800000);
+    g.setPaperTradeIdSeq(0);
+    const pos=g.openPaperPosition(PAIR,'buy',1.1000,1.0950,1.1100,'manual');
+    assert('TradeID.24: sizing, risk, ratio and direction are byte-for-byte the same values as before the identity change (50 pip risk, 2:1, $100, 0.20 lots)',
+      !pos.error&&Math.abs(pos.riskPips-50)<1e-9&&Math.abs(pos.ratio-2)<1e-9&&
+      pos.riskAmount===100&&pos.lots===0.2&&pos.dir==='buy'&&
+      pos.entry===1.1000&&pos.stop===1.0950&&pos.target===1.1100,JSON.stringify(pos));
+    assert('TradeID.25: and the zero-risk guard still rejects stop===entry, with no id minted for a rejected trade',
+      (function(){ const seqBefore=g.getPaperTradeIdSeq();
+                   const bad=g.openPaperPosition(PAIR,'buy',1.1000,1.1000,1.1100,'manual');
+                   return !!bad.error&&g.getPaperTradeIdSeq()===seqBefore; })(),
+      'a rejected trade must not consume an id');
+    g.restoreClock();
+  }
+
+  // ═══ §16A.7 — three ledger defects found while ADVERSARIALLY ATTACKING the trade-id change ═══
+  // None of these is in the trade-id generator. All three were found by an independent verifier
+  // trying to defeat it, and all three are cases where a diagnostic goes blind exactly when the
+  // condition it exists to detect is present. Diagnostic/reporting code only -- no protected
+  // function, no trading semantics.
+  {
+    // (a) STRING vs NUMBER conflation in the duplicate counters. A JS object key is always a
+    // string, so the number 5 and the string "5" counted as two occurrences of ONE id and were
+    // reported as duplicates OF EACH OTHER -- a false positive that turns the verdict red over two
+    // genuinely distinct records. The authoritative identity elsewhere is strict === , which
+    // treats them as different.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:5,pair:'GBP/USD'}],closedPositions:[{id:'5',pair:'GBP/USD',pnl:0}]});
+    g.setJournalEntries([{tradeId:5,strategyId:'current_strategy',status:'OPEN'},
+                         {tradeId:'5',strategyId:'current_strategy',status:'OPEN'}]);
+    const mixed=g.computePaperLedgerIntegrity();
+    assert('Conflate.1: the number 5 and the string "5" are NOT reported as duplicate account ids -- they are distinct records under the strict equality the close path uses',
+      mixed.duplicateAccountIds.length===0,JSON.stringify(mixed.duplicateAccountIds));
+    assert('Conflate.2: nor as duplicate journal trade ids',
+      mixed.duplicateJournalTradeIds.length===0,JSON.stringify(mixed.duplicateJournalTradeIds));
+    assert('Conflate.3: and each position is matched to its OWN typed journal record, so neither is reported unjournalled',
+      mixed.accountPositionsWithNoJournal.length===0,JSON.stringify(mixed.accountPositionsWithNoJournal));
+    // POSITIVE CONTROL, one variable away: make them the SAME type and the duplicate IS reported.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:5,pair:'GBP/USD'}],closedPositions:[{id:5,pair:'GBP/USD',pnl:0}]});
+    g.setJournalEntries([{tradeId:5,strategyId:'current_strategy',status:'OPEN'}]);
+    assert('Conflate.4: POSITIVE CONTROL -- two records that really do share the id 5 ARE reported as duplicates, so the fix filters rather than disabling detection',
+      g.computePaperLedgerIntegrity().duplicateAccountIds.indexOf('5')!==-1,
+      JSON.stringify(g.computePaperLedgerIntegrity().duplicateAccountIds));
+  }
+  {
+    // (b) The orphan detector counted EXISTENCE, not cardinality -- proven above in TradeID.12c/d
+    // through the collision path. This drives the same defect from the other direction: many
+    // positions, too few journal records, WITHOUT any duplicate id involved.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[
+      {id:901,pair:'GBP/USD'},{id:902,pair:'GBP/USD'},{id:903,pair:'GBP/USD'}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:901,strategyId:'current_strategy',status:'OPEN'}]);
+    assert('Cardinality.1: three positions with only ONE journal record between them leaves exactly TWO reported unjournalled',
+      g.computePaperLedgerIntegrity().accountPositionsWithNoJournal.length===2,
+      JSON.stringify(g.computePaperLedgerIntegrity().accountPositionsWithNoJournal));
+    g.setJournalEntries([{tradeId:901,strategyId:'current_strategy',status:'OPEN'},
+                         {tradeId:902,strategyId:'current_strategy',status:'OPEN'},
+                         {tradeId:903,strategyId:'current_strategy',status:'OPEN'}]);
+    assert('Cardinality.2: give each its own record and none is reported -- the count tracks the books, it is not a constant',
+      g.computePaperLedgerIntegrity().accountPositionsWithNoJournal.length===0,'');
+  }
+  {
+    // (c) Reconciliation matched by String(), so a numeric selection could restore a DIFFERENT
+    // historical record that stored the string form of the same number. Restoring the wrong record
+    // moves real money in the paper account. Ambiguity now FAILS CLOSED.
+    seedClean();
+    const t='2026-08-01T00:00:00.000Z';
+    const rec=function(id){ return{tradeId:id,strategyId:'current_strategy',status:'CLOSED',
+      pair:'GBP/USD',direction:'buy',entry:1.1,stop:1.09,target:1.12,openedAt:t,closedAt:t,
+      result:'Win',pnl:200,exitPrice:1.12,riskAmount:100,positionSize:0.2}; };
+    // Two orphans whose ids differ ONLY by stored type, and a reset that leaves both unexplained.
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([rec(1786749300000000),rec('1786749300000000')]);
+    const preview=g.computeReconciliationPreview([1786749300000000]);
+    assert('Ambiguous.1: a selection matching TWO orphans that differ only by stored type restores NEITHER',
+      preview.items.length===0,JSON.stringify(preview.items.map(function(i){return i.tradeId;})));
+    assert('Ambiguous.2: and says so explicitly, naming the ambiguity rather than silently restoring one of them',
+      preview.skipped.length>0&&/Ambiguous trade ID/.test(String(preview.skipped[0].reason)),
+      JSON.stringify(preview.skipped));
+    // POSITIVE CONTROL, one variable away: remove the twin and the SAME selection restores cleanly.
+    g.setJournalEntries([rec(1786749300000000)]);
+    const clean=g.computeReconciliationPreview([1786749300000000]);
+    assert('Ambiguous.3: POSITIVE CONTROL -- with no twin, the identical selection previews exactly one restore, so the refusal above is the ambiguity and not a broken preview',
+      clean.items.length===1&&clean.items[0].tradeId===1786749300000000,
+      JSON.stringify(clean.items.map(function(i){return i.tradeId;})));
   }
 
   // ═══ §16.4 SURVIVORS — the three the ledger audit could not kill (MOGO-021) ═══

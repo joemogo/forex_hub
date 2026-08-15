@@ -1980,9 +1980,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.21.4';
+const APP_VERSION='12.22.0';
 const APP_VERSION_DATE='14 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.22.0 — PAPER TRADE-ID INTEGRITY (OWNER-AUTHORIZED PROTECTED-FUNCTION CHANGE, MOGO-021 section 16.6). THE DEFECT: openPaperPosition minted `id: Date.now() + Math.floor(Math.random()*1000)`. Two opens in the same millisecond collide with p about 1/1000, and checkAutoTrades opens across eligible pairs via Promise.all -- verified: `await Promise.all(eligible.map(async ...))` with the open AFTER the await, so at 28 pairs in one millisecond the old collision probability was about 31%, not a corner case. closePaperPosition resolves its target with findIndex(p => p.id === id), so A COLLISION CLOSES THE WRONG POSITION, and the same value is the journal tradeId reconciliation and orphan detection match on. THE CHANGE IS ONE EXPRESSION inside the protected function: `id:Date.now()+Math.floor(Math.random()*1000)` becomes `id:paperNextTradeId()`. Pre-change openPaperPosition sha1 829154ba5b13e617f07e3bd5f5b6913408bf45d6 length 3069 -- an EXACT match to the committed baseline, confirming the pre-change state was pristine; post-change 06a704e5ec56d37097bdeee21fb297649377db90 length 3046; exactly one line differs; the drift check named openPaperPosition AND NOTHING ELSE, which independently proves the other 62 protected functions and all 4 protected constants were untouched. Sizing, entry, stop, target, direction, the zero-risk guard and the snapshot/rollback are byte-identical. THE GENERATOR: a monotonic microsecond-scaled clock (Date.now()*1000, ~229 years of headroom below Number.MAX_SAFE_INTEGER) that increments within a millisecond, so N opens in one millisecond yield N distinct ids with NO WRAP. REJECTED FIRST CANDIDATE, kept as a live control: Date.now()*1000 + (seq++ % 1000) passed the entire gate and is WRONG -- a 5,000-id burst yields 2,000 distinct because the modulo wraps; any bounded within-ms term reintroduces the same collision at a higher threshold. A monotonic clock is monotonic only while the CLOCK is, so paperSeedTradeIdSeq() raises the floor above everything already durable at load -- read-only, no migration, no id rewritten. INDEPENDENT ADVERSARIAL VERIFICATION DEFEATED THE FIRST IMPLEMENTATION and every one of its findings is fixed here: (a) the floor accepted any isFinite number, so a persisted id at or above 2^53 made seq+1 a NO-OP and EVERY id in the session identical -- three positions, one id, one journal record between them, wrong-position close, driven end to end; a persisted non-integer propagated a fractional part through every later id. The floor now requires Number.isSafeInteger, and refuses 2^53+1, 1e300, non-integers, NaN, +/-Infinity, negatives, numeric STRINGS, objects, booleans and null. (b) A single shared try/catch meant the FIRST malformed store silently skipped the rest, leaving the floor at 0 while a real id sat in the journal -- one try PER STORE now. (c) The generator could not report its own failure; it now records a paper-engine error when the sequence leaves safe-integer range. (d) Dead code removed: `[] || []` and a `typeof` check on a same-scope let. THREE LEDGER DEFECTS FOUND WHILE ATTACKING THIS, all diagnostic-only, none protected: accountPositionsWithNoJournal counted EXISTENCE not CARDINALITY, so three positions sharing one id with a single journal record reported ZERO unjournalled -- the detector for orphaned twins was green precisely in the case that creates them; duplicate counters used raw object keys, so the number 5 and the string "5" were reported as duplicates OF EACH OTHER; and computeReconciliationPreview matched by String(), so a brand-new live id could select a DIFFERENT historical record storing the string form and restore the wrong trade -- ambiguity now FAILS CLOSED and restores neither. The floor also reads the two stores that outlive confirmPaperResetFull (trade notes, keyed JVMJ|<id>, and the reconciliation audit), so a re-minted id can never inherit another trade\'s note or be born already-reconciled. 43 new fixtures, every one against a FROZEN clock so same-millisecond is forced rather than hoped for: 50,000 ids in one millisecond all distinct and strictly increasing (50x beyond the old 1,000-per-ms collision space); 500 REAL positions through the real engine in one millisecond, each resolving to ITSELF under the exact findIndex the close path uses; the defect reproduced as a control through the REAL detector; restart with the clock rewound an hour; ALEX (string AGT|<setupId>) and JVM (number) proven disjoint across 200 ids each; a 200-position book reconciling CLEAN. TEST J.2 REPLACED -- it was worthless in both directions and its own parenthetical said why ("unique in practice"): it failed spuriously against a genuine collision and PASSED when ids were reduced to a bare Date.now(). FIVE OF THE NEW FIXTURES WERE THEMSELVES CAUGHT VACUOUS BY MUTATION and rebuilt: three were tautologies asserting Array.prototype.findIndex or the fixture\'s own string literals, and two proved the seeder worked while proving nothing about it being WIRED (deleting its call from loadSaved killed nothing). 18 mutations now die, including every one the verifier found uncovered. regression-baseline.json re-issued from this version FOR openPaperPosition ONLY, after the diff was independently verified. Gate: 25 suites, 1,759/1,759.',
   '12.21.4 — THE CONTINUITY SUMMARY IS NOW ON A SCREEN (autonomous reliability release, Diagnostics display only -- no strategy rules, no signal detection, no entries/stops/targets/risk/sizing, no JVM or ALEX methodology touched, zero drift in all 63 protected functions and 4 protected constants). evidenceSummarizeObservations appeared EXACTLY ONCE in the application: its own definition. Nothing consumed missedIntervals, maxGapMs, lastSuccessfulPollAt or the v12.21.3 ongoingOutage term, so the question the whole forward-observation ledger exists to answer -- is the poll loop still running? -- had no answer on any screen. A new Developer-Mode-gated Forward-Observation Continuity card on Diagnostics renders it from the real ledger. THREE STATES, RENDERED AS THREE DIFFERENT STRINGS: an outage in progress reports YES with the real elapsed time; a healthy loop reports no; and a summary built with NO clock reports \'not evaluated (no clock supplied)\' rather than \'no\' -- reporting healthy for a question nobody asked is the exact defect this card exists to end. A backwards clock is surfaced in the operator\'s own words with what it means for the figures, and the widest gap is marked STILL OPEN when it has not closed. DEFECT FOUND BY MUTATION DURING THIS RELEASE, and the reason the code is shaped as it is: removing Date.now() from the renderer\'s call -- the single line that makes the entire trailing-outage term work -- killed NOTHING, because it sat behind an await this offline harness cannot drain. The clock default was extracted into a pure evidenceContinuitySummaryFor() seam so the claim became reachable; both directions are now pinned (no argument uses now; an explicit clock is honoured over it). SECOND DEFECT, in my own fixture: the first version of the wiring test was an async function in a SYNCHRONOUS runner, where t() pushes PASS the moment fn() returns -- so it reported PASS for a promise nobody awaited and would have swallowed every assertion inside it. Rebuilt to assert only what this harness can genuinely observe (the Developer-Mode gate, which writes before the first await, proving the element the renderer targets really resolves), with the render OUTPUT covered by fixtures driving the exact expression the renderer uses. Same documented offline/live split already used for alexGCloseLivePosition, disclosed in the fixture itself. 5 new fixtures (L10e-i). Mutation-verified: seven mutations -- the outage question removed, an unasked question rendered as healthy, a backwards clock not surfaced, the still-open marker dropped, the Developer-Mode gate removed, the clock default removed, and an explicit clock ignored -- each kill 1 to 2 fixtures. Gate: 25 suites, 1,706/1,706.',
   '12.21.3 — ONGOING-OUTAGE VISIBILITY IN THE CONTINUITY SUMMARY (autonomous reliability release, evidence-summary arithmetic only -- no strategy rules, no signal detection, no entries/stops/targets/risk/sizing, no JVM or ALEX methodology touched, zero drift in all 63 protected functions and 4 protected constants). evidenceSummarizeObservations was structurally blind in the one direction an operator actually consults it for: a gap existed only BETWEEN TWO RECORDS THAT BOTH EXIST, so an outage was detectable only if the system CAME BACK. A tab dead for three hours reported missedIntervals 0 and maxGapMs 60000 -- reading as perfectly healthy. A frozen tab, a sleep that never wakes, or any ONGOING outage was invisible. FIX: an OPTIONAL, purely additive nowMs parameter adds a TRAILING term measured from the last poll to now, reported in its own fields (trailingGapMs, trailingMissedIntervals, trailingSince, ongoingOutage) so no existing figure changes meaning and every existing caller and fixture is unaffected -- omitting nowMs reports ongoingOutage null, which is NOT ASKED rather than false. The trailing term is folded into missedIntervals and maxGapMs as well, because those are the figures an operator actually glances at and an outage still happening must not be missed by reading the headline. It is measured from the last poll of ANY OUTCOME, not the last SUCCESSFUL one, because the question it answers is whether the loop is running at all -- which a failing poll still answers yes to; lastSuccessfulPollAt separately keeps the other question. Also fixed: a clock running BACKWARDS produced a negative interval that Math.max(0,...) silently clamped away, discarding the one sample proving the timeline is untrustworthy; negative intervals are now counted and reported while the missed-interval arithmetic still refuses to invent negatives. 4 new fixtures (L10a-d) including both directions -- a healthy loop thirty seconds past its last poll must NOT report an outage, and a short trailing gap must not displace the real widest historical gap. Mutation-verified: seven mutations (the trailing term removed; measured from the last success instead of the last poll; not folded into the headline; ongoingOutage forced true; the negative-interval counter disabled; the trailing gap always overwriting maxGapMs; and the missed-interval count off by one) each kill 1 to 3 fixtures. CORRECTION TO THE MOGO-021 REPORT, recorded because an audit finding that does not hold must not stand: section 17.3 also claimed a poll built with no outcome is recorded as OK and counted in pollsOk, and that a poll with no startedAt is stamped now, manufacturing continuity. Neither holds against the actual code -- evidenceBuildPollObservation defaults outcome to UNKNOWN (counted as neither pollsOk nor pollsFailed) and leaves startedAt null, and the continuity arithmetic keys on startedAt, so such a record contributes no interval at all. Only evidenceObservationBase stamps occurredAt, which the gap math never reads. Gate: 25 suites, 1,649/1,649.',
   '12.21.2 — EVIDENCE COMPLETENESS CONTRACT ENFORCED (autonomous reliability release, Decision Event validation only -- no strategy rules, no signal detection, no entries/stops/targets/risk/sizing, no JVM or ALEX methodology touched, zero drift in all 63 protected functions and 4 protected constants). jvmRecordCandidateRejected carried a comment stating the rule -- evaluateLiveTrigger short-circuits on its first failed gate, so the gates after the one that fired were never evaluated and a LIVE_TRIGGER rejection therefore CANNOT have complete evidence -- but nothing enforced it: the record could be edited to claim evidenceCompleteness COMPLETE and the entire 1,623-fixture gate stayed silent, the exact fabrication this ledger exists to prevent. validateDecisionEvent now enforces the contract the comment described. Deliberately an ERROR (the event is refused and the refusal recorded in decisionEventValidationFailures) rather than a silent downgrade to PARTIAL: rewriting a caller\'s completeness claim would conceal the very defect being checked for, and a record that never enters the ledger while its refusal IS surfaced is far safer than one sitting in the ledger with a false completeness claim. The rule is SCOPED to the short-circuiting LIVE_TRIGGER stage rather than a blanket ban, and that scoping has its own positive-control fixture -- broadening it to every CANDIDATE_REJECTED breaks 14 fixtures across four suites, because stages that genuinely do evaluate everything may legitimately claim COMPLETE. 7 new fixtures (JVM-32 to JVM-38): every real rejection claims PARTIAL; a false COMPLETE claim is refused and never enters the append-only ledger; the refusal is SURFACED rather than silently dropping an audit record; the identical record claiming PARTIAL is accepted; a rejection from a non-short-circuiting stage may still claim COMPLETE; and reasonCode/reasonText cannot contradict each other in the same record. DISCLOSED: the first version of the reasonText fixture was VACUOUS and its own mutation test caught it -- the scenario runs setMode("flat") where every pair rejects for the SAME reason, so a reasonText hard-coded to that one reason stayed self-consistent with its own code and survived all 1,644 fixtures. Rebuilt on a MIXED set driven through the real recorder with three of the eight reason strings evaluateLiveTrigger actually returns, so any single hard-coded text contradicts at least two records; no verdict is faked. Mutation-verified against the pre-fix code as a controlled experiment: claiming COMPLETE and hard-coding reasonText each killed ZERO of 1,623 fixtures before this release and kill 6 and 1 after. Gate: 25 suites, 1,645/1,645.',
@@ -2116,6 +2117,92 @@ let paperResetHistory=[];
 // alexGJournalEntries (no journal storage format change), never read by any
 // trading-logic function.
 let tradeNotes={};
+
+// ── MOGO-021 §16.6: PAPER TRADE-ID INTEGRITY (owner-authorized protected change) ──────────────
+// THE DEFECT: openPaperPosition minted `id: Date.now() + Math.floor(Math.random()*1000)`. Two
+// opens in the same millisecond collide with p ~ 1/1000, and checkAutoTrades opens across eligible
+// pairs via Promise.all, so same-millisecond opens are ordinary rather than contrived.
+// closePaperPosition resolves its target with findIndex(p => p.id === id), so A COLLISION CLOSES
+// THE WRONG POSITION. The same id is also the journal `tradeId` that reconciliation and orphan
+// detection match on, so a collision corrupts the ledger's association as well.
+//
+// THE CONSTRAINTS this replacement had to satisfy, not merely "be unique":
+//   * the id must stay a NUMBER and survive exact-equality matching (`p.id === r.tradeId`);
+//   * already-persisted ids must remain readable and valid -- no migration, no rewrite;
+//   * it must not regress across a restart, which is where a naive per-session counter fails.
+//
+// THE SHAPE: a monotonic microsecond-scaled clock. Date.now()*1000 gives ~1.79e15, leaving ~229
+// years of headroom below Number.MAX_SAFE_INTEGER (9.007e15), and the else-branch increments
+// within the same millisecond so N opens in one millisecond yield N distinct ids with NO WRAP.
+//
+// REJECTED ALTERNATIVE, and why -- a plain `Date.now()*1000 + (seq++ % 1000)` was tried first and
+// is WRONG: it passed the whole gate, but a 5,000-id burst produced only 2,000 distinct ids
+// because the modulo wraps after 1,000 opens inside one millisecond. Any bounded within-ms term
+// reintroduces exactly the collision this replaces, just at a higher threshold.
+let paperTradeIdSeq=0;
+function paperNextTradeId(){
+  const t=Date.now()*1000;
+  paperTradeIdSeq=(t>paperTradeIdSeq)?t:paperTradeIdSeq+1;
+  // Every other integrity failure in this engine records an error; this one used to degrade in
+  // total silence. At or above 2^53 the increment above is a NO-OP -- seq+1 === seq -- so the
+  // generator would return the same id forever, permanently, for the rest of the session. The
+  // floor below can no longer install such a value, but a generator that cannot report its own
+  // failure is exactly the class of defect this milestone exists to remove.
+  if(!Number.isSafeInteger(paperTradeIdSeq)){
+    try{ recordPaperEngineError('Paper trade-id generator is out of safe integer range ('+
+      paperTradeIdSeq+'). New trade identifiers may repeat. Do not continue paper trading until '+
+      'this is investigated — reload to re-derive the identifier floor from stored trades.'); }catch(e){}
+  }
+  return paperTradeIdSeq;
+}
+// A monotonic clock is monotonic only while the CLOCK is. Across a restart the counter starts at
+// 0, so a system clock that moved BACKWARDS (an NTP correction, a timezone/hardware fault, or a
+// profile restored from backup) would re-mint ids at or below ones already persisted -- the exact
+// wrong-position-closed defect, reintroduced through the back door. (An earlier version of this
+// comment cited §17.3 as evidence that backwards clocks are an OBSERVED condition here; that was
+// overstated and is withdrawn -- §17.3 added the ability to REPORT a backwards interval, it did not
+// record one occurring. The justification is the reproduction itself: with the clock rewound one
+// hour across a restart, a clock-only generator mints below an already-persisted id, and deleting
+// this seeding kills six fixtures.) Seeding the floor from what is already durable closes it
+// without any migration: existing ids are read, never rewritten.
+// Deliberately reads BOTH stores, because an id can legitimately exist in the journal while its
+// account position is missing (that is what orphan detection exists to report).
+function paperSeedTradeIdSeq(){
+  let max=paperTradeIdSeq;
+  // Number.isSafeInteger, NOT isFinite. This reads PERSISTED bytes, which may be corrupt,
+  // hand-edited or restored from a backup, and an unclamped floor is strictly worse than no floor:
+  // install a value at or above 2^53 and `seq+1 === seq` forever, so EVERY id in the session comes
+  // out identical -- three positions sharing one id, one journal record between them, and the close
+  // lookup resolving to the wrong position. isFinite() admits 2^53+1 and 1e300; a non-integer such
+  // as 1786749900000000.5 propagates a fractional part through every later id. The old
+  // Date.now()+random construction was immune to all of that, so the floor must not be the thing
+  // that reintroduces it. Found by independent adversarial verification, with a working reproduction.
+  const consider=v=>{ if(typeof v==='number'&&Number.isSafeInteger(v)&&v>max) max=v; };
+  // ONE try PER STORE. A single shared try meant the FIRST malformed store silently skipped the
+  // rest: a truthy non-array `openPositions` left the floor at 0 while a real id sat in the journal
+  // -- which, combined with a rewound clock, walks straight back into the collision this exists to
+  // prevent. Each store now fails independently and the others still raise the floor.
+  const scan=(arr,key)=>{ try{ if(Array.isArray(arr)) arr.forEach(o=>consider(o&&o[key])); }catch(e){} };
+  scan(paperAccount&&paperAccount.openPositions,'id');
+  scan(paperAccount&&paperAccount.closedPositions,'id');
+  scan(journalEntries,'tradeId');   // a module-scope `let`; JSON.parse('null') can make it null,
+                                    // which Array.isArray() rejects rather than throwing
+  // TWO MORE STORES THAT OUTLIVE A FULL RESET. confirmPaperResetFull clears the account and every
+  // journal row with a tradeId, so the floor derived from those alone drops back to the clock --
+  // but ids keep living in stores no reset touches. A re-minted id would silently inherit the old
+  // trade's NOTE, and would be permanently unreconcilable because the audit trail already records
+  // that id as restored. Both are read here and neither is written or migrated.
+  scan(paperReconciliationAudit,'tradeId');
+  try{
+    // tradeNotes is keyed 'JVMJ|<id>' / 'ALEXJ|<id>', so the id is recovered from the key.
+    Object.keys(tradeNotes||{}).forEach(k=>{
+      const m=/^JVMJ\|(\d+)$/.exec(String(k));
+      if(m) consider(Number(m[1]));
+    });
+  }catch(e){}
+  paperTradeIdSeq=max;
+  return paperTradeIdSeq;
+}
 // v11.0: PAPER LEDGER INTEGRITY -- fixes a real data-loss defect where a stale
 // in-memory paperAccount snapshot (e.g. an old/background browser tab that never
 // reloaded after a newer save happened elsewhere) could silently overwrite newer
@@ -6346,6 +6433,9 @@ function loadSaved(){
   loadStoredKey('fxhub_trade_notes',v=>{tradeNotes=JSON.parse(v);}); // v10.0
   loadStoredKey('fxhub_paper_reconciliation_audit',v=>{paperReconciliationAudit=JSON.parse(v);}); // v11.0
   loadStoredKey('fxhub_lock',v=>{mogoLock.locked=v==='1';}); // v12.1.3: non-sensitive UI-state flag only
+  // MOGO-021 §16.6: raise the trade-id floor above everything already durable, AFTER both stores
+  // are loaded. Read-only over them -- no id is rewritten and no migration occurs.
+  paperSeedTradeIdSeq();
 }
 function saveAiChatHistory(){
   try{localStorage.setItem('fxhub_ai_messages',JSON.stringify(aiChat.messages.slice(-40)));}catch(e){}
@@ -11810,20 +11900,47 @@ function computePaperLedgerIntegrity(){
     r.tradeId!=null&&!r.isLegacyManual&&!r.isDeveloperTrade&&allAccountIds.indexOf(r.tradeId)===-1
   );
 
+  // CARDINALITY, not existence. This was `!journalEntries.some(e => e.tradeId === p.id)` -- an
+  // EXISTENCE check, which is exactly right while ids are unique and goes BLIND the moment they are
+  // not. Three positions sharing one id, with a single journal record between them, satisfied
+  // some() for all three and reported ZERO positions missing a journal record: the detector that
+  // exists to catch orphaned twins was green precisely in the case that produces them. (Found by
+  // independent adversarial verification while attacking the trade-id change; duplicateAccountIds
+  // did still fire, so the condition was not invisible overall, but THIS detector certified it
+  // clean.) The contract is one journal record per position, so the comparison is a count.
+  // Reduces to the previous behaviour exactly when ids are unique: 1 vs 1 passes, 1 vs 0 reports.
   const accountPositionsWithNoJournal=[];
-  paperAccount.openPositions.forEach(p=>{
-    if(!journalEntries.some(e=>e.tradeId===p.id)) accountPositionsWithNoJournal.push({id:p.id,pair:p.pair,status:'open'});
-  });
-  paperAccount.closedPositions.forEach(p=>{
-    if(!journalEntries.some(e=>e.tradeId===p.id)) accountPositionsWithNoJournal.push({id:p.id,pair:p.pair,status:'closed'});
-  });
+  // Type-tagged for the same reason as the duplicate counters below: a numeric position id must
+  // not be considered journalled by a record whose tradeId is the STRING form of that number,
+  // because closePaperPosition's strict === would never match them to each other.
+  const idKey=v=>(typeof v)+':'+String(v);
+  const journalCountById={};
+  journalEntries.forEach(e=>{ if(e.tradeId!=null){ const k=idKey(e.tradeId); journalCountById[k]=(journalCountById[k]||0)+1; } });
+  const positionsSeenById={};
+  const checkPositionJournalled=(p,status)=>{
+    const k=idKey(p.id);
+    positionsSeenById[k]=(positionsSeenById[k]||0)+1;
+    if(positionsSeenById[k]>(journalCountById[k]||0)) accountPositionsWithNoJournal.push({id:p.id,pair:p.pair,status});
+  };
+  paperAccount.openPositions.forEach(p=>checkPositionJournalled(p,'open'));
+  paperAccount.closedPositions.forEach(p=>checkPositionJournalled(p,'closed'));
 
+  // TYPE-TAGGED keys. A JS object key is always a string, so the number 5 and the string "5"
+  // counted as two occurrences of the same id and were reported as DUPLICATES OF EACH OTHER --
+  // a false positive that turns the ledger verdict red over two genuinely distinct records. The
+  // authoritative identity everywhere else is strict === (closePaperPosition's findIndex), which
+  // treats them as different, so the counter must too. tradeIdKey keeps them apart while leaving
+  // the reported id its original value.
+  const tradeIdKey=v=>(typeof v)+':'+String(v);
   const idCounts={};
-  allAccountIds.forEach(id=>{idCounts[id]=(idCounts[id]||0)+1;});
-  const duplicateAccountIds=Object.keys(idCounts).filter(id=>idCounts[id]>1);
+  allAccountIds.forEach(id=>{const k=tradeIdKey(id);idCounts[k]=(idCounts[k]||{n:0,id:id});idCounts[k].n++;});
+  // Reported as the STRING form, exactly as Object.keys() produced before, so every existing
+  // consumer and fixture is unaffected -- only the KEYING changed, which is where the bug was.
+  const duplicateAccountIds=Object.keys(idCounts).filter(k=>idCounts[k].n>1).map(k=>String(idCounts[k].id));
   const journalIdCounts={};
-  journalEntries.forEach(e=>{ if(e.tradeId!=null) journalIdCounts[e.tradeId]=(journalIdCounts[e.tradeId]||0)+1; });
-  const duplicateJournalTradeIds=Object.keys(journalIdCounts).filter(id=>journalIdCounts[id]>1);
+  journalEntries.forEach(e=>{ if(e.tradeId!=null){ const k=tradeIdKey(e.tradeId);
+    journalIdCounts[k]=(journalIdCounts[k]||{n:0,id:e.tradeId}); journalIdCounts[k].n++; } });
+  const duplicateJournalTradeIds=Object.keys(journalIdCounts).filter(k=>journalIdCounts[k].n>1).map(k=>String(journalIdCounts[k].id));
 
   const closedJournalMissingPnl=jvmRecords.filter(r=>r.status==='CLOSED'&&r.tradeId!=null&&!r.isLegacyManual&&r.pnl==null);
 
@@ -16399,8 +16516,22 @@ function computeReconciliationPreview(tradeIds){
   const integrity=computePaperLedgerIntegrity();
   const alreadyReconciled=new Set(paperReconciliationAudit.filter(a=>a.action==='restore').map(a=>String(a.tradeId)));
   const candidates=integrity.newlyOrphanedAfterReset.filter(r=>ids.indexOf(String(r.tradeId))!==-1);
+  // The selection ids arrive from the UI as STRINGS, so matching has to normalise -- but that
+  // normalisation made a numeric id and its string form indistinguishable, and a brand-new live
+  // trade's id could select a DIFFERENT historical record that happened to store the string form.
+  // Restoring the wrong record moves real money in the paper account. Where two orphans share a
+  // string form, the selection is genuinely ambiguous: FAIL CLOSED and skip both with a named
+  // reason, rather than silently restoring whichever sorted first.
+  const stringFormCounts={};
+  integrity.newlyOrphanedAfterReset.forEach(r=>{
+    const k=String(r.tradeId); stringFormCounts[k]=(stringFormCounts[k]||0)+1;
+  });
   const items=[],skipped=[];
   candidates.forEach(r=>{
+    if(stringFormCounts[String(r.tradeId)]>1){
+      skipped.push({tradeId:r.tradeId,reason:'Ambiguous trade ID — more than one orphaned record shares this identifier (they differ only by stored type). Restoring one of them could restore the wrong trade, so none is restored.'});
+      return;
+    }
     if(alreadyReconciled.has(String(r.tradeId))){
       skipped.push({tradeId:r.tradeId,reason:'Already reconciled previously -- see the audit trail below.'});
       return;
@@ -17200,7 +17331,7 @@ function openPaperPosition(oPair,dir,entry,stop,target,source){
   const lots=riskAmount/(riskPips*pipVal);
   const units=Math.round(lots*100000);
   const pos={
-    id:Date.now()+Math.floor(Math.random()*1000),pair:oPair.replace('_','/'),oPair,dir,entry,stop,target,
+    id:paperNextTradeId(),pair:oPair.replace('_','/'),oPair,dir,entry,stop,target,
     riskPips,rewardPips,ratio,riskAmount,lots:parseFloat(lots.toFixed(2)),units,
     pipValueAtEntry:pipVal, // fixed at open so exits are consistent for this position's whole life,
                              // rather than silently drifting (or breaking) if conversion data is

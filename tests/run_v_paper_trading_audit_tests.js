@@ -116,6 +116,20 @@ const wrapped = new Function('g',
   'g.setEvidenceStorageBanner=function(v){evidenceStorageBanner=v;};' +
   'g.setEvidenceUnexportedCount=function(v){evidenceUnexportedCount=v;};' +
   'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):null; };' +
+  // -- MOGO-021 16.6 TRADE-ID INTEGRITY: the generator, its floor, and a freezable clock so a
+  //    fixture can force MANY opens into ONE millisecond deterministically rather than hoping --
+  'g.paperNextTradeId=paperNextTradeId;' +
+  'g.alexGTradeId=alexGTradeId;' +
+  'g.computeReconciliationPreview=computeReconciliationPreview;' +
+  'g.setTradeNotes=function(v){tradeNotes=v;};' +
+  'g.setPaperReconciliationAudit=function(v){paperReconciliationAudit=v;};' +
+  'g.setPaperResetHistoryList=function(v){paperResetHistory=v;};' +
+  'g.paperSeedTradeIdSeq=paperSeedTradeIdSeq;' +
+  'g.getPaperTradeIdSeq=function(){return paperTradeIdSeq;};' +
+  'g.setPaperTradeIdSeq=function(v){paperTradeIdSeq=v;};' +
+  'g.freezeClock=function(ms){ if(!g.__realNow){ g.__realNow=Date.now; } Date.now=function(){return ms;}; };' +
+  'g.restoreClock=function(){ if(g.__realNow){ Date.now=g.__realNow; g.__realNow=null; } };' +
+  'g.realNow=function(){ return (g.__realNow||Date.now)(); };' +
   'g.setPaperResetHistory=function(v){paperResetHistory=v;};' +
   'g.setAlexGSetupState=function(v){alexGSetupState=v;};' +
   // -- state get/set --
