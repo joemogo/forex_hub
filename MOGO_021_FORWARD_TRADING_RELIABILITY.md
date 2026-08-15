@@ -2899,7 +2899,7 @@ regular-series case. Both mutations now die.
 > irregular (`00:00 / 05:00 / 09:00`). The lesson is the audit's own: a fixture's *data* decides what
 > it can detect, not its title.
 
-### 17.2 🔴 The health check cannot report unhealthy about balance
+### 17.2 ✅ FIXED — the health check could not report unhealthy (v12.21.1)
 
 Five mutations, none of which kill anything:
 
@@ -2922,7 +2922,43 @@ duplicate account ids, newly-orphaned records and four mismatch arrays — but *
 ledger with account positions that have **no journal record at all** currently reports
 **"CLEAN — no reconciliation issues detected"**, and that line ends the copyable report.
 
-**Every warning banner can be silenced.** Five render functions — the two ledger-integrity banners,
+---
+
+**RESOLVED in v12.21.1.** The verdict is now assembled from a **named check per detector** and both
+flips correctly and states *which* detectors fired — `ISSUES DETECTED — JVM account positions with no
+journal record; invalid prices` — with the named list also returned as `reconciliationIssues` so a
+fixture can assert **which** detector fired rather than merely that a string changed.
+
+`legacyRecords` and `testArtifacts` are deliberately **excluded**: pre-v10.0 manual entries and
+explicitly-tagged developer trades are expected states, and a verdict permanently stuck on ISSUES is
+noise an operator learns to ignore — over-blocking is its own defect. Both exclusions have their own
+fixtures. JVM keeps the reset-explained-filtered orphan list by design; ALEX, which has no reset
+history, correctly uses its raw list.
+
+**15 fixtures (HealthCheck.16–30):** eleven negative controls, one per newly-wired detector, each
+requiring the verdict to flip *and* name that detector; two over-blocking controls; one proving the
+**copyable text** carries the named issues; one proving several simultaneous defects are **all**
+named rather than only the first.
+
+**Controlled experiment, both directions:**
+
+| Mutation | Pre-fix (1,623) | Post-fix (1,638) |
+|---|---|---|
+| `accountPositionsWithNoJournal` detector deleted outright | **0** | 3 |
+| verdict forced permanently `CLEAN` | **0** | 12 |
+| `expectedBalance = paperAccount.balance` (JVM self-comparison) | **0** | 2 |
+| `alexExpectedBalance = alexGAccount.balance` | **0** | 1 |
+| duplicate-journal-id omission re-introduced | — | 1 |
+| `invalidPrices` omission re-introduced | — | 2 |
+| issue list truncated to its first entry | — | 1 |
+| names stripped from the copied string | — | 12 |
+| informational categories made to turn the verdict red | — | 2 |
+
+The **first four rows are the finding**: against the pre-fix code, deleting an entire detector and
+forcing the sign-off line permanently CLEAN each killed **nothing**. `computePaperTradingHealthReport`
+is not protected; drift remained 0 across the change.
+
+**Still open from this section:** every warning banner can be silenced. Five render functions — the two ledger-integrity banners,
 the blocking banner, the evidence-storage banner ("⚠ EVIDENCE NOT BEING SAVED") and the unexported
 -packages warning — can each be made to render nothing forever with zero fixtures objecting. The
 underlying **detection** is covered; only the **display** is not. `sharedRiskStatus` can likewise be

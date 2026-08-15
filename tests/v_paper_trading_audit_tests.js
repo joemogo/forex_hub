@@ -1027,6 +1027,139 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setAiChat({key:'',model:'test',messages:[]});
   }
 
+  // ═══ HEALTH-CHECK VERDICT NEGATIVE CONTROLS (MOGO-021) ═══
+  // Every fixture above proves a DETECTOR populates its array. None of them ever asserted the
+  // VERDICT, and that is exactly where the defect lived: reconciliationStatus consulted ten of the
+  // nineteen detectors, so a ledger with account positions that had no journal record at all still
+  // signed off as "CLEAN — no reconciliation issues detected" -- the last line of the report an
+  // operator copies into a review. These are negative controls: each seeds ONE defect and requires
+  // the verdict to name it. HealthCheck.6 remains the positive control (clean state => CLEAN).
+  {
+    // Shared helper: assert the verdict flips AND names the right detector, and that a clean
+    // baseline of the same shape does not. Both directions, per the standing rule that a gate
+    // which cannot fail is not evidence.
+    const verdictCase=(label,id,seed,expectName)=>{
+      seedClean();
+      seed();
+      const c=g.computePaperTradingHealthReport().combined;
+      assert(label,
+        c.reconciliationStatus.indexOf('ISSUES DETECTED')===0&&
+        Array.isArray(c.reconciliationIssues)&&
+        c.reconciliationIssues.indexOf(expectName)!==-1&&
+        c.reconciliationStatus.indexOf(expectName)!==-1,
+        JSON.stringify({status:c.reconciliationStatus,issues:c.reconciliationIssues}));
+    };
+    const NOW=new Date().toISOString();
+
+    verdictCase('HealthCheck.16: a JVM account position with NO journal record at all makes the verdict ISSUES DETECTED and names it (this exact ledger previously reported CLEAN)',
+      16,()=>{ g.setPaperAccount({balance:10000,openPositions:[{id:601,pair:'GBP_USD'}],closedPositions:[]});
+               g.setJournalEntries([]); },
+      'JVM account positions with no journal record');
+
+    verdictCase('HealthCheck.17: an ALEX account position with no journal record makes the verdict ISSUES DETECTED and names it',
+      17,()=>{ g.setAlexGAccount({balance:10000,openPositions:[{tradeId:'A601',pair:'GBP_USD'}],closedPositions:[]});
+               g.setAlexGJournalEntries([]); },
+      'ALEX account positions with no journal record');
+
+    verdictCase('HealthCheck.18: duplicate JVM journal trade ids make the verdict ISSUES DETECTED and name it',
+      18,()=>{ g.setPaperAccount({balance:10000,openPositions:[{id:602,pair:'GBP_USD'}],closedPositions:[]});
+               g.setJournalEntries([{tradeId:602,strategyId:'current_strategy',status:'OPEN',openedAt:NOW},
+                                    {tradeId:602,strategyId:'current_strategy',status:'OPEN',openedAt:NOW}]); },
+      'JVM duplicate journal trade ids');
+
+    verdictCase('HealthCheck.19: duplicate ALEX journal trade ids make the verdict ISSUES DETECTED and name it',
+      19,()=>{ g.setAlexGAccount({balance:10000,openPositions:[{tradeId:'A602',pair:'GBP_USD'}],closedPositions:[]});
+               g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|A602',tradeId:'A602',strategyId:'alex_g_sr_v1',status:'OPEN'},
+                                         {journalEntryId:'ALEXJ|A602b',tradeId:'A602',strategyId:'alex_g_sr_v1',status:'OPEN'}]); },
+      'ALEX duplicate journal trade ids');
+
+    verdictCase('HealthCheck.20: a CLOSED JVM journal record with no P&L makes the verdict ISSUES DETECTED and names it',
+      20,()=>{ g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[{id:603,pair:'GBP_USD',result:'Win',pnl:0,openedAt:NOW,closedAt:NOW}]});
+               g.setJournalEntries([{tradeId:603,strategyId:'current_strategy',status:'CLOSED',result:'Win',openedAt:NOW,closedAt:NOW}]); },
+      'JVM closed journal records missing P&L');
+
+    verdictCase('HealthCheck.21: a closed JVM account position whose journal record is still OPEN makes the verdict ISSUES DETECTED and names it',
+      21,()=>{ g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[{id:604,pair:'GBP_USD',result:'Win',pnl:0,openedAt:NOW,closedAt:NOW}]});
+               g.setJournalEntries([{tradeId:604,strategyId:'current_strategy',status:'OPEN',pnl:0,openedAt:NOW}]); },
+      'JVM closed positions missing journal closure');
+
+    verdictCase('HealthCheck.22: an unparseable timestamp makes the verdict ISSUES DETECTED and names it',
+      22,()=>{ g.setPaperAccount({balance:10000,openPositions:[{id:605,pair:'GBP_USD'}],closedPositions:[]});
+               g.setJournalEntries([{tradeId:605,strategyId:'current_strategy',status:'OPEN',openedAt:'not-a-real-date'}]); },
+      'invalid timestamps');
+
+    verdictCase('HealthCheck.23: a non-positive price makes the verdict ISSUES DETECTED and names it',
+      23,()=>{ g.setPaperAccount({balance:10000,openPositions:[{id:606,pair:'GBP_USD'}],closedPositions:[]});
+               g.setJournalEntries([{tradeId:606,strategyId:'current_strategy',status:'OPEN',openedAt:NOW,entry:-1.5}]); },
+      'invalid prices');
+
+    verdictCase('HealthCheck.24: an engine-created record with no strategyId makes the verdict ISSUES DETECTED and names it',
+      24,()=>{ g.setPaperAccount({balance:10000,openPositions:[{id:607,pair:'GBP_USD'}],closedPositions:[]});
+               g.setJournalEntries([{tradeId:607,status:'OPEN',openedAt:NOW}]); },
+      'records missing strategyId');
+
+    verdictCase('HealthCheck.25: a balance that does not match the sum of closed P&L makes the verdict ISSUES DETECTED and names it (the check exists to be independent -- point expectedBalance at actual and this fixture dies)',
+      25,()=>{ g.setPaperAccount({balance:12345,openPositions:[],closedPositions:[]});
+               g.setJournalEntries([]); },
+      'JVM balance difference');
+
+    verdictCase('HealthCheck.26: an ALEX balance that does not match the sum of closed P&L makes the verdict ISSUES DETECTED and names it',
+      26,()=>{ g.setAlexGAccount({balance:9999,openPositions:[],closedPositions:[]});
+               g.setAlexGJournalEntries([]); },
+      'ALEX balance difference');
+  }
+  {
+    // The two INFORMATIONAL categories must NOT turn the verdict red -- otherwise any account
+    // carrying a pre-v10.0 manual entry or a tagged developer trade would report ISSUES forever
+    // and the verdict would become noise an operator learns to ignore. This is the other
+    // direction of the same guard: over-blocking is a defect too.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setJournalEntries([{pair:'GBP_USD',status:'CLOSED',result:'Win',pnl:0,
+      openedAt:new Date().toISOString(),closedAt:new Date().toISOString()}]); // legacy: no tradeId, no strategy
+    const c1=g.computePaperTradingHealthReport().combined;
+    assert('HealthCheck.27: a pre-v10.0 legacy manual entry is reported under legacyRecords but does NOT make the verdict ISSUES DETECTED',
+      c1.legacyRecords.length>0&&c1.reconciliationStatus.indexOf('CLEAN')===0,
+      JSON.stringify({legacy:c1.legacyRecords,status:c1.reconciliationStatus}));
+
+    seedClean();
+    g.setAlexGAccount({balance:10000,openPositions:[],closedPositions:[]});
+    g.setAlexGJournalEntries([{journalEntryId:'ALEXJ|DEV1',tradeId:'DEV1',strategyId:'alex_g_sr_v1',
+      status:'CLOSED',result:'Win',pnl:0,isDeveloperTrade:true,
+      openedAt:new Date().toISOString(),closedAt:new Date().toISOString()}]);
+    const c2=g.computePaperTradingHealthReport().combined;
+    assert('HealthCheck.28: an explicitly-tagged developer trade is reported under testArtifacts but does NOT make the verdict ISSUES DETECTED',
+      c2.testArtifacts.length>0&&c2.reconciliationStatus.indexOf('CLEAN')===0,
+      JSON.stringify({testArtifacts:c2.testArtifacts,status:c2.reconciliationStatus}));
+  }
+  {
+    // The copyable text an operator actually pastes must carry the named issues, not just the
+    // in-memory object -- the defect's real-world consequence was a misleading COPIED report.
+    seedClean();
+    g.setPaperAccount({balance:10000,openPositions:[{id:608,pair:'GBP_USD'}],closedPositions:[]});
+    g.setJournalEntries([]);
+    const report=g.computePaperTradingHealthReport();
+    const text=g.buildPaperTradingHealthReportText(report);
+    assert('HealthCheck.29: the copyable report TEXT states ISSUES DETECTED and names the failing detector, so the pasted bottom line cannot say CLEAN over a defective ledger',
+      text.indexOf('ISSUES DETECTED')!==-1&&text.indexOf('JVM account positions with no journal record')!==-1,
+      text.split('\n').filter(l=>l.indexOf('Reconciliation status')!==-1).join(' | '));
+  }
+  {
+    // Multiple simultaneous defects must ALL be named -- a verdict that reports only the first
+    // failure hides the rest of the work an operator has to do.
+    seedClean();
+    g.setPaperAccount({balance:12345,openPositions:[{id:609,pair:'GBP_USD'}],closedPositions:[]});
+    g.setJournalEntries([{tradeId:610,strategyId:'current_strategy',status:'OPEN',openedAt:'nope',entry:-2}]);
+    const c=g.computePaperTradingHealthReport().combined;
+    assert('HealthCheck.30: several simultaneous defects are ALL named in the verdict, not just the first one found',
+      c.reconciliationIssues.length>=4&&
+      c.reconciliationIssues.indexOf('JVM balance difference')!==-1&&
+      c.reconciliationIssues.indexOf('JVM account positions with no journal record')!==-1&&
+      c.reconciliationIssues.indexOf('invalid timestamps')!==-1&&
+      c.reconciliationIssues.indexOf('invalid prices')!==-1,
+      JSON.stringify(c.reconciliationIssues));
+  }
+
   // ═══ ALEX PERSISTENCE ATOMICITY (Final Ledger Atomicity Review) ═══
   // The account, its version counter, and its journal are now written as ONE logical,
   // all-or-nothing unit by saveAlexGAccountGuarded() -- every fixture below verifies the
