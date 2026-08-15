@@ -3192,7 +3192,30 @@ suites, because stages that genuinely do evaluate everything may legitimately cl
 > strings `evaluateLiveTrigger` actually returns, so any single hard-coded text contradicts at least
 > two records. The reasons are real strategy outputs; no verdict is faked.
 
-**Still open:** the entry-day gate has no FAIL-path fixture.
+#### 17.4a The entry-day gate's FAIL path — CLOSED
+
+The Mon–Wed gate had a PASS-path assertion (`E2E-1`) and **no FAIL-path fixture at all**. Its
+rejection could have stopped emitting `RULE_EVALUATED:FAIL`, stopped emitting the linked
+`CANDIDATE_REJECTED`, or stopped recording the permanent status row — with the gate still correctly
+blocking the trade and the whole gate green. **The block is the safe direction, which is exactly why
+the evidence half is the part that can rot unnoticed.**
+
+7 fixtures (`ENTRYDAY-F1…F7`). The clock moves to a **Thursday** and the series is rebuilt from the
+new `now`, so the setup stays ~5 minutes old and the staleness gate ahead of this one still **PASSes**
+— `F1` asserts that precondition explicitly, because otherwise the refusal would come from staleness
+and the fixture would prove nothing.
+
+| Mutation | Pre (1,694) | Post (1,701) |
+|---|---|---|
+| the rule always records `PASS` with no reason code | **0** | 2 |
+| the linked `CANDIDATE_REJECTED` is never emitted | **0** | 1 |
+| the `parentEventId` link is dropped | **0** | 1 |
+| the evaluated day is hard-coded to Monday | **0** | 1 |
+| the status row is no longer `liveEvaluationFinal` | **0** | 1 |
+
+`F3` is the one that matters most: the FAIL record must carry **the day it actually evaluated and the
+days it allows** (`entryDayUTC: 4`, `allowedDaysUTC: [1,2,3]`), not a bare unfalsifiable verdict.
+`F7` proves the chain stops there — the setup-execution rule after it never runs on that candidate.
 
 ### 17.5 A fourth fixture anti-pattern, added to the register
 

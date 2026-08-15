@@ -229,6 +229,7 @@ const results=[];
 const g={record:(id,desc,pass,detail)=>results.push({id,desc,pass,detail:detail||''})};
 g.setH1=c=>{__h1=c;};
 g.setT0=t=>{__t0=t;};
+g.setSimNow=t=>{__simNow=t;};      // MOGO-021 17.4: lets a fixture move the clock to a day the entry-day gate refuses
 g.setBidAsk=v=>{__bidask=v;};
 g.build=t0=>buildRepeatedReactionH1(t0);
 g.build6=t0=>buildSixTouchReactionH1(t0);
@@ -1443,6 +1444,53 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    (alexGLiveSetupStatuses||[]).length>0,\n' +
   '    "ledger faults raised="+__recHits+", tick threw="+__recThrew+", evaluation still advanced the H1 cursor and recorded "+\n' +
   '    (alexGLiveSetupStatuses||[]).length+" live setup status row(s)");\n' +
+  '  fullReset();\n' +
+  // ══ MOGO-021 §17.4 -- THE ENTRY-DAY GATE'S FAIL PATH ═══════════════════════════════════════
+  // The Mon-Wed entry-day gate had a PASS-path assertion (E2E-1) and no FAIL-path fixture at all:
+  // its rejection could have stopped emitting its RULE_EVALUATED:FAIL, stopped emitting the linked
+  // CANDIDATE_REJECTED, or stopped recording the permanent status row, with the gate still
+  // blocking the trade and the whole gate green. The block IS the safe direction, which is
+  // precisely why the evidence half is the part that can rot unnoticed.
+  //
+  // The clock moves to a THURSDAY and the series is rebuilt from the new now, so the setup stays
+  // ~5 minutes old and the staleness gate ahead of this one still PASSes -- otherwise the
+  // rejection would come from staleness and this fixture would prove nothing.
+  '  g.setSimNow(Date.UTC(2026,7,13,14,0,0));\n' +   // Thursday
+  '  {\n' +
+  '    const nowMs2=Date.now();\n' +
+  '    const tThu=nowMs2-48*3600000-5*60000;\n' +
+  '    g.setT0(tThu); g.setH1(g.build(tThu)); g.setBidAsk({bid:1.10595,ask:1.10605});\n' +
+  '    alexGLastEvaluatedCloseTime={EUR_USD:{H1:tThu+40*3600000}};\n' +
+  '    await alexGLivePollTick();\n' +
+  '    const rulesThu=decisionEventLog.filter(function(e){return e.eventType==="RULE_EVALUATED";})\n' +
+  '      .map(function(e){return e.ruleId+":"+e.ruleResult;});\n' +
+  '    const dayEvt=decisionEventLog.filter(function(e){return e.eventType==="RULE_EVALUATED"&&e.ruleId==="ALEX_V11_ENTRY_DAY";})[0];\n' +
+  '    const rejEvt=decisionEventLog.filter(function(e){return e.eventType==="CANDIDATE_REJECTED"&&e.stage==="ENTRY_DAY_ELIGIBILITY";})[0];\n' +
+  '    g.record("ENTRYDAY-F1","PRECONDITION: the gates BEFORE the entry-day gate still PASS, so the refusal below is genuinely the day rule",\n' +
+  '      rulesThu.indexOf("ALEX_ACTIVATION_CUTOFF:PASS")===0&&rulesThu.indexOf("ALEX_SIGNAL_STALENESS:PASS")===1,\n' +
+  '      rulesThu.join(" -> "));\n' +
+  '    g.record("ENTRYDAY-F2","on a Thursday the entry-day rule records ruleResult FAIL with its registered reason code",\n' +
+  '      !!dayEvt&&dayEvt.ruleResult==="FAIL"&&dayEvt.reasonCode==="CONFIG_ENTRY_DAY_NOT_ELIGIBLE",\n' +
+  '      "ruleResult="+String(dayEvt&&dayEvt.ruleResult)+" reasonCode="+String(dayEvt&&dayEvt.reasonCode));\n' +
+  '    g.record("ENTRYDAY-F3","and the FAIL record carries the day it actually evaluated and the days it allows -- not an unfalsifiable bare verdict",\n' +
+  '      !!dayEvt&&dayEvt.context&&dayEvt.context.entryDayUTC===4&&\n' +
+  '      Array.isArray(dayEvt.context.allowedDaysUTC)&&dayEvt.context.allowedDaysUTC.indexOf(4)===-1,\n' +
+  '      "entryDayUTC="+String(dayEvt&&dayEvt.context&&dayEvt.context.entryDayUTC)+\n' +
+  '      " allowed="+JSON.stringify(dayEvt&&dayEvt.context&&dayEvt.context.allowedDaysUTC));\n' +
+  '    g.record("ENTRYDAY-F4","a linked CANDIDATE_REJECTED is emitted at the ENTRY_DAY_ELIGIBILITY stage, parented to that rule evaluation",\n' +
+  '      !!rejEvt&&rejEvt.reasonCode==="CONFIG_ENTRY_DAY_NOT_ELIGIBLE"&&\n' +
+  '      !!dayEvt&&rejEvt.parentEventId===dayEvt.eventId,\n' +
+  '      "parentEventId matches the rule event: "+String(!!rejEvt&&!!dayEvt&&rejEvt.parentEventId===dayEvt.eventId));\n' +
+  '    g.record("ENTRYDAY-F5","the refused candidate gets a PERMANENT status row -- it is never silently reconsidered on a later poll",\n' +
+  '      (alexGLiveSetupStatuses||[]).some(function(r){\n' +
+  '        return r.reason==="ENTRY_DAY_NOT_ELIGIBLE"&&/ENTRY DAY NOT ELIGIBLE/.test(String(r.status))&&r.liveEvaluationFinal===true; }),\n' +
+  '      JSON.stringify((alexGLiveSetupStatuses||[]).map(function(r){return r.status;})));\n' +
+  '    g.record("ENTRYDAY-F6","and no position is opened",alexGAccount.openPositions.length===0,\n' +
+  '      "open="+alexGAccount.openPositions.length);\n' +
+  '    g.record("ENTRYDAY-F7","the gate stops the chain THERE -- the setup-execution rule after it never runs on this candidate",\n' +
+  '      rulesThu.indexOf("ALEX_V11_SETUP_EXECUTION_POLICY:FAIL")===-1&&\n' +
+  '      rulesThu.indexOf("ALEX_V11_ENTRY_DAY:FAIL")!==-1,rulesThu.join(" -> "));\n' +
+  '  }\n' +
   '  fullReset();\n' +
   '  return g;\n})();'
 );
