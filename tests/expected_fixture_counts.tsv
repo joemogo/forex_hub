@@ -15,7 +15,7 @@
 # reason.
 #
 # Regenerate with:  tests/update_expected_counts.sh
-run_v017_step2a_pipeline_observability_tests.js	53
+run_v017_step2a_pipeline_observability_tests.js	71
 run_v1027_strategy_fidelity_provenance_tests.js	61
 run_v120_tests.js	28
 run_v1211_tests.js	13

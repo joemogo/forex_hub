@@ -308,6 +308,19 @@ try{
     'var __isoEntryShapeOk=function(e){' +
     '  if(e===null||typeof e!=="object") return true;' +
     '  if(Object.prototype.hasOwnProperty.call(e,"toJSON")) return false;' +
+    // §18.33: defeated a NINTH time, and the ninth is the general case of the eighth. Comparing by
+    // JSON PROJECTION is LOSSY: any value whose serialisation discards its own properties passes.
+    // Proven three ways, all surviving 2,280/2,280 with drift 0: a `new String(<allowlisted msg>)`
+    // carrying jvmBalance/jvmOpenCount as attached properties; a plain object with a toJSON()
+    // returning the allowlisted message; and ONE call to the real production
+    // evidenceRecordWriteFailure whose `extra.toJSON()` returns null while the payload rides in
+    // evidenceWriteFailures[0].detail. The controls -- identical payloads under an ordinary key --
+    // killed ISO.2 and ISO.6 every time, so the site is reachable and observed; only the wrapper
+    // hid it. An entry may therefore carry PRIMITIVES ONLY: any object or function value means
+    // compare it, whatever its projection says.
+    '  var __ks=Object.keys(e);' +
+    '  for(var __i=0;__i<__ks.length;__i++){ var __v=e[__ks[__i]];' +
+    '    if(__v!==null&&(typeof __v==="object"||typeof __v==="function")) return false; }' +
     '  if(!Object.prototype.hasOwnProperty.call(e,"at")) return true;' +
     '  return typeof e.at==="string"&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$/.test(e.at);' +
     '};' +

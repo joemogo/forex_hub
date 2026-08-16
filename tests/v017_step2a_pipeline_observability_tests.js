@@ -65,8 +65,22 @@ function runStep2APipelineObservabilityFixtures(g){
     return candles;
   }
   // Network-boundary stub only. The REAL unmodified fetchCandlesRange / fetchBidAsk parse these.
-  function installFetchStub(candlesByGran,bidAskBox,m1Box){
+  // §18.33: `m1Exec` serves the EXECUTABLE bid/ask M1 series that alexGFetchExecutableCandles asks
+  // for. Its URL shape is `granularity=M1&price=BA&count=5000&from=...` -- a DIFFERENT parameter
+  // ORDER from every other candle request in this stub, which is why the existing matcher never saw
+  // it and the historical-reconstruction branch could not be driven from here at all. Without this
+  // the fetch simply fails and the code falls through to the live-snapshot branch, so a fixture
+  // believing it was testing reconstruction was testing the snapshot path a second time.
+  function installFetchStub(candlesByGran,bidAskBox,m1Box,m1Exec){
     globalThis.fetch=async function(url){
+      const em=url.match(/instruments\/[^/]+\/candles\?granularity=M1&price=BA/);
+      if(em){
+        if(!m1Exec) return{ok:false};
+        return{ok:true,json:async()=>({candles:m1Exec.map(c=>({
+          time:new Date(c.t).toISOString(),complete:true,
+          bid:{o:String(c.bo),h:String(c.bh),l:String(c.bl),c:String(c.bc)},
+          ask:{o:String(c.ao),h:String(c.ah),l:String(c.al),c:String(c.ac)}}))})};
+      }
       const cm=url.match(/instruments\/[^/]+\/candles\?count=(\d+)&granularity=(\w+)/);
       if(cm){
         const gran=cm[2];
@@ -300,6 +314,253 @@ function runStep2APipelineObservabilityFixtures(g){
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════════
+  // 🔴 ALEXEXIT (§18.33) -- WHAT the ALEX exit actually BOOKS, not merely that it closed
+  // ═══════════════════════════════════════════════════════════════════════════════════════
+  // Independent adversarial verification found FOURTEEN survivors in one subsystem. Both ALEX exit
+  // paths execute during the gate, and the gate observed only THAT a position closed -- never what
+  // was booked. Surviving the full 2,280-fixture gate with drift 0: the exit price replaced by the
+  // ENTRY or by the constant 1.5 on stop AND on target; the result inverted Loss->Win; the
+  // exitTriggerLevel replaced by the target; the exitDetectionSource relabelled; and the SHORT legs
+  // of the stop/target comparisons and of the MAE/MFE tracking, in both the snapshot and the
+  // historical-reconstruction branch.
+  //
+  // The controls prove this is a coverage hole and not dead code: deleting both close calls kills 4
+  // (2A.29-2A.32), and the JVM twin of the exit-price mutation kills 17. The JVM side is watched;
+  // ALEX was not. Every ALEX position is closed by the 60-second poller through one of these two
+  // branches, and resultR is plannedRR (+2.0R) for a Win against -1 for a Loss -- so A STOP-OUT
+  // RECORDED AS A +2R WINNER SURVIVED THE FULL GATE, moving the balance by an arbitrary amount and
+  // corrupting win rate, expectancy and profit factor.
+  //
+  // Seeded directly rather than opened organically: the point is the arithmetic of the close, and a
+  // hand-computed literal is only meaningful against known entry/stop/target/pipValue/size.
+  function alexSeedOpen(over){
+    const pos=Object.assign({
+      tradeId:'ALEXEXIT-1',pair:'EUR_USD',timeframe:'H1',setupLabel:'fixture',direction:'buy',
+      entry:1.10000,stop:1.09500,target:1.11000,plannedRR:2,riskAmount:100,positionSize:0.20,
+      pipValue:10,openedAt:new Date(Date.now()-3600000).toISOString(),status:'open',
+      maePips:0,mfePips:0,maeR:0,mfeR:0
+    },over||{});
+    g.setAlexGAccount({balance:10000,openPositions:[pos],closedPositions:[],journal:[]});
+    return pos;
+  }
+  // Drives the LIVE-SNAPSHOT branch: the M1 history fetch is made to fail, exactly as P6 does, so
+  // the real code falls through to its snapshot check -- a supported branch, not a bypass.
+  function alexDriveSnapshotExit(bid,ask){
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:bid,ask:ask}},{fail:true});
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      return g.getAlexGAccount();
+    });
+  }
+  function stepAlexExitBuyStop(){
+    resetAll();
+    alexSeedOpen();
+    // BUY stopped out. A buy is closed by SELLING, so the fill is the BID -- never the ask, never
+    // the mid. bid 1.09400 is 60 pips below the 1.10000 entry: 60 x $10 x 0.20 = -$120.00.
+    return alexDriveSnapshotExit(1.09400,1.09420).then(function(account){
+      const c=account.closedPositions[0]||null;
+      check('ALEXEXIT.1 (PRECONDITION): the seeded BUY really was closed by the live-snapshot branch',
+        !!c && account.openPositions.length===0,
+        JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length}));
+      check('ALEXEXIT.2 (FILL SIDE): a BUY is closed at the BID, the executable side -- filling at the ask or the mid overstates every losing exit by the spread',
+        !!c && Math.abs(c.exitPrice-1.09400)<1e-9,
+        c?('exitPrice='+c.exitPrice+' bid=1.09400 ask=1.09420'):'no closed position');
+      check('ALEXEXIT.3 (P&L, hand-computed): 60 pips against a 0.20 position at $10/pip books exactly -$120.00, and the balance moves by exactly that',
+        !!c && c.pnl===-120 && account.balance===9880,
+        c?('pnl='+c.pnl+' balance='+account.balance):'no closed position');
+      check('ALEXEXIT.4 (CLASSIFICATION): the stop-out is recorded as a Loss at exactly -1R -- not as a Win, and not at the planned +2R',
+        !!c && c.result==='Loss' && c.resultR===-1,
+        c?(c.result+' / '+c.resultR+'R'):'no closed position');
+      // The trigger LEVEL is the stop that was breached (1.09500); the FILL is where it actually
+      // executed (1.09400). My first draft asserted they were the same and failed honestly -- the
+      // code was right. Keeping them distinct is the stronger assertion: collapsing the two would
+      // hide slippage entirely, reporting every exit as having filled exactly at its level.
+      check('ALEXEXIT.5 (PROVENANCE): the exit is attributed to the live snapshot, and its trigger LEVEL is the stop that was breached -- distinct from the price it actually FILLED at, so slippage stays visible',
+        !!c && c.exitDetectionSource==='live_snapshot'
+            && Math.abs(c.exitTriggerLevel-1.09500)<1e-9
+            && Math.abs(c.exitPrice-1.09400)<1e-9
+            && c.exitTriggerLevel!==c.exitPrice,
+        c?(c.exitDetectionSource+' level='+c.exitTriggerLevel+' fill='+c.exitPrice):'no closed position');
+    });
+  }
+  function stepAlexExitBuyTarget(){
+    resetAll();
+    alexSeedOpen();
+    // BUY target hit. bid 1.11000 is 100 pips above entry: 100 x $10 x 0.20 = +$200.00, and a Win
+    // books the FROZEN plannedRR, not a ratio recomputed from the actual fill.
+    return alexDriveSnapshotExit(1.11000,1.11020).then(function(account){
+      const c=account.closedPositions[0]||null;
+      check('ALEXEXIT.6 (BUY target): the winning exit fills at the bid and books exactly +$200.00, leaving the balance at 10200.00',
+        !!c && Math.abs(c.exitPrice-1.11000)<1e-9 && c.pnl===200 && account.balance===10200,
+        c?('exit='+c.exitPrice+' pnl='+c.pnl+' balance='+account.balance):'no closed position');
+      check('ALEXEXIT.7 (BUY target classification): recorded as a Win at the FROZEN planned 2R',
+        !!c && c.result==='Win' && c.resultR===2,
+        c?(c.result+' / '+c.resultR+'R'):'no closed position');
+    });
+  }
+  function stepAlexExitSellStop(){
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXIT-S',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+    // SELL stopped out. A sell is closed by BUYING BACK, so the fill is the ASK. ask 1.10600 is 60
+    // pips above the entry, against a short: 60 x $10 x 0.20 = -$120.00.
+    // The SHORT legs of the stop/target comparisons were among the survivors, so they get their own
+    // fixtures rather than being assumed symmetric with the long side.
+    return alexDriveSnapshotExit(1.10580,1.10600).then(function(account){
+      const c=account.closedPositions[0]||null;
+      check('ALEXEXIT.8 (SELL fill side): a SELL is closed at the ASK, the executable side for buying back',
+        !!c && Math.abs(c.exitPrice-1.10600)<1e-9,
+        c?('exitPrice='+c.exitPrice+' bid=1.10580 ask=1.10600'):'no closed position');
+      check('ALEXEXIT.9 (SELL P&L and classification): 60 pips against the short books exactly -$120.00, a Loss at -1R, balance 9880.00',
+        !!c && c.pnl===-120 && c.result==='Loss' && c.resultR===-1 && account.balance===9880,
+        c?('pnl='+c.pnl+' '+c.result+' '+c.resultR+'R balance='+account.balance):'no closed position');
+    });
+  }
+  function stepAlexExitSellTarget(){
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXIT-ST',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+    // SELL target hit: ask 1.09000 is 100 pips in favour of the short: +$200.00.
+    return alexDriveSnapshotExit(1.08980,1.09000).then(function(account){
+      const c=account.closedPositions[0]||null;
+      check('ALEXEXIT.10 (SELL target): fills at the ask, books exactly +$200.00 and a Win at the frozen 2R, balance 10200.00',
+        !!c && Math.abs(c.exitPrice-1.09000)<1e-9 && c.pnl===200 && c.result==='Win' && c.resultR===2 && account.balance===10200,
+        c?('exit='+c.exitPrice+' pnl='+c.pnl+' '+c.result+' '+c.resultR+'R balance='+account.balance):'no closed position');
+    });
+  }
+  // ── the HISTORICAL RECONSTRUCTION branch, which nothing could drive until the stub learned the
+  //    executable URL shape. This is the branch that exists precisely because a stop touched and
+  //    reversed BETWEEN two 60-second polls is invisible to the snapshot check -- so a defect here
+  //    means a genuinely stopped-out trade goes on running, or is booked at the wrong level.
+  function alexExecBar(tMs,bidLow,bidHigh,askLow,askHigh){
+    return{t:tMs,bo:bidLow,bh:bidHigh,bl:bidLow,bc:bidHigh,ao:askLow,ah:askHigh,al:askLow,ac:askHigh};
+  }
+  function stepAlexExitHistoricalStop(){
+    resetAll();
+    const pos=alexSeedOpen({tradeId:'ALEXEXIT-H'});
+    // The LIVE snapshot is deliberately mid-range -- 1.10200 touches neither level -- so if the
+    // historical branch did not run, nothing would close and ALEXEXIT.12 would fail. The M1 history
+    // contains one bar whose BID LOW pierces the 1.09500 stop and then recovers.
+    const t0=Date.now()-10*60000;
+    const bars=[
+      alexExecBar(t0,        1.10100,1.10150,1.10120,1.10170),
+      alexExecBar(t0+60000,  1.09400,1.10050,1.09420,1.10070),   // pierces the stop, then recovers
+      alexExecBar(t0+120000, 1.10000,1.10120,1.10020,1.10140)
+    ];
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10200,ask:1.10220}},null,bars);
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      const account=g.getAlexGAccount();
+      const c=account.closedPositions[0]||null;
+      check('ALEXEXIT.12 (HISTORICAL BRANCH RUNS): a stop touched and REVERSED between two polls is caught from the M1 history -- the live snapshot alone sees only 1.10200, which touches nothing, so nothing would close without this branch',
+        !!c && account.openPositions.length===0,
+        JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length}));
+      check('ALEXEXIT.13 (HISTORICAL PROVENANCE): the close is attributed to the reconstructed candle, not to the live snapshot -- so an operator reviewing the trade can tell WHICH evidence closed it',
+        !!c && c.exitDetectionSource!=='live_snapshot',
+        c?('exitDetectionSource='+c.exitDetectionSource):'no closed position');
+      check('ALEXEXIT.14 (HISTORICAL BOOKING): the reconstructed stop books at the STOP LEVEL 1.09500 -- exactly -50 pips, -$100.00 on a 0.20 position at $10/pip -- classified a Loss at -1R, balance 9900.00',
+        !!c && Math.abs(c.exitPrice-1.09500)<1e-9 && c.pnl===-100
+             && c.result==='Loss' && c.resultR===-1 && account.balance===9900,
+        c?('exit='+c.exitPrice+' pnl='+c.pnl+' '+c.result+' '+c.resultR+'R balance='+account.balance):'no closed position');
+    });
+  }
+  function stepAlexExitHistoricalShortStop(){
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXIT-HS',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+    // The SHORT leg of the historical stop check. Written because breaking it killed ZERO while
+    // breaking the BUY leg killed three -- the same one-quadrant-of-two shape this milestone has
+    // now found on the exit boundaries, the stop buffer, the fallback target and the P&L sign.
+    // A short is stopped when the ASK rises through the stop, so the piercing bar is an ask HIGH.
+    const t0=Date.now()-10*60000;
+    const bars=[
+      alexExecBar(t0,       1.10100,1.10150,1.10120,1.10170),
+      alexExecBar(t0+60000, 1.10050,1.10560,1.10080,1.10600),   // ask high pierces the 1.10500 stop
+      alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+    ];
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10150,ask:1.10170}},null,bars);
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      const account=g.getAlexGAccount();
+      const c=account.closedPositions[0]||null;
+      check('ALEXEXIT.16 (HISTORICAL, SHORT leg): a SHORT stopped out by a reversing ask spike between polls is caught, booked at the 1.10500 stop for exactly -$100.00, a Loss at -1R, balance 9900.00. Breaking this leg alone killed nothing before',
+        !!c && account.openPositions.length===0 && Math.abs(c.exitPrice-1.10500)<1e-9
+             && c.pnl===-100 && c.result==='Loss' && c.resultR===-1 && account.balance===9900,
+        c?('exit='+c.exitPrice+' pnl='+c.pnl+' '+c.result+' '+c.resultR+'R balance='+account.balance)
+         :JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length}));
+    });
+  }
+  function stepAlexExitHistoricalTargets(){
+    // The two historical TARGET legs. Both quadrants of the historical stop check are covered
+    // above; these complete the matrix, because breaking the SHORT target leg alone killed nothing.
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXIT-HTB'});
+    const t0=Date.now()-10*60000;
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    // BUY target 1.11000 reached by a bid HIGH, then price falls back so the snapshot sees nothing.
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10200,ask:1.10220}},null,[
+      alexExecBar(t0,       1.10100,1.10150,1.10120,1.10170),
+      alexExecBar(t0+60000, 1.10050,1.11050,1.10070,1.11070),
+      alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+    ]);
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      const a1=g.getAlexGAccount(); const c1=a1.closedPositions[0]||null;
+      check('ALEXEXIT.17 (HISTORICAL, BUY target): a target touched and reversed between polls books at the 1.11000 target -- +100 pips, +$200.00, a Win at the frozen 2R, balance 10200.00',
+        !!c1 && Math.abs(c1.exitPrice-1.11000)<1e-9 && c1.pnl===200 && c1.result==='Win' && c1.resultR===2 && a1.balance===10200,
+        c1?('exit='+c1.exitPrice+' pnl='+c1.pnl+' '+c1.result+' '+c1.resultR+'R balance='+a1.balance):'no closed position');
+      resetAll();
+      alexSeedOpen({tradeId:'ALEXEXIT-HTS',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+      // SHORT target 1.09000 reached by an ask LOW.
+      installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10150,ask:1.10170}},null,[
+        alexExecBar(t0,       1.10100,1.10150,1.10120,1.10170),
+        alexExecBar(t0+60000, 1.08940,1.10050,1.08960,1.10070),
+        alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+      ]);
+      return g.alexGCheckLivePositions().then(function(){
+        installOfflineFetch();
+        const a2=g.getAlexGAccount(); const c2=a2.closedPositions[0]||null;
+        check('ALEXEXIT.18 (HISTORICAL, SHORT target): the short target leg books at the 1.09000 target -- +100 pips, +$200.00, a Win at the frozen 2R, balance 10200.00. Breaking this leg alone killed nothing before',
+          !!c2 && Math.abs(c2.exitPrice-1.09000)<1e-9 && c2.pnl===200 && c2.result==='Win' && c2.resultR===2 && a2.balance===10200,
+          c2?('exit='+c2.exitPrice+' pnl='+c2.pnl+' '+c2.result+' '+c2.resultR+'R balance='+a2.balance)
+           :JSON.stringify({open:a2.openPositions.length,closed:a2.closedPositions.length}));
+      });
+    });
+  }
+  function stepAlexExitHistoricalNoTouch(){
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXIT-HN'});
+    // NEGATIVE CONTROL for the historical branch: an M1 history that never reaches either level
+    // must close NOTHING, so ALEXEXIT.12-14 cannot pass merely because reconstruction closes
+    // whatever it is given.
+    const t0=Date.now()-10*60000;
+    const bars=[
+      alexExecBar(t0,       1.10100,1.10150,1.10120,1.10170),
+      alexExecBar(t0+60000, 1.10000,1.10200,1.10020,1.10220)
+    ];
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10150,ask:1.10170}},null,bars);
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      const account=g.getAlexGAccount();
+      check('ALEXEXIT.15 (NEGATIVE CONTROL, historical): an M1 history that never touches the stop or the target closes nothing and books nothing',
+        account.openPositions.length===1 && account.closedPositions.length===0 && account.balance===10000,
+        JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length,balance:account.balance}));
+    });
+  }
+  function stepAlexExitNoTouch(){
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXIT-N'});
+    // NEGATIVE CONTROL. A price strictly between the stop and the target must close nothing --
+    // otherwise every assertion above could pass simply because the poller closes unconditionally.
+    return alexDriveSnapshotExit(1.10200,1.10220).then(function(account){
+      check('ALEXEXIT.11 (NEGATIVE CONTROL): a price between the stop and the target closes NOTHING -- the position stays open, the balance is untouched, and nothing is booked',
+        account.openPositions.length===1 && account.closedPositions.length===0 && account.balance===10000,
+        JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length,balance:account.balance}));
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════
   // P6 -- CLOSED, through the real protected alexGCloseLivePosition.
   // ═══════════════════════════════════════════════════════════════════════════════════════
   function stepP6(){
@@ -495,7 +756,12 @@ function runStep2APipelineObservabilityFixtures(g){
     return Promise.resolve();
   }
 
-  const steps=[stepP1,stepP2,stepP3,stepP4,stepP5,stepP6,stepP7,stepP8,stepP9,stepP10];
+  const steps=[stepP1,stepP2,stepP3,stepP4,stepP5,stepP6,stepP7,stepP8,stepP9,stepP10,
+    // §18.33: the ALEX exit-booking group. Placed last so it cannot disturb the ordering the
+    // pipeline fixtures above depend on; each step reseeds the account itself.
+    stepAlexExitBuyStop,stepAlexExitBuyTarget,stepAlexExitSellStop,stepAlexExitSellTarget,
+    stepAlexExitNoTouch,stepAlexExitHistoricalStop,stepAlexExitHistoricalShortStop,
+    stepAlexExitHistoricalTargets,stepAlexExitHistoricalNoTouch];
   let chain=Promise.resolve();
   steps.forEach(function(step){ chain=chain.then(function(){ return step(); }); });
   return chain.then(function(){ return results; }).catch(function(e){
