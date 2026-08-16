@@ -374,6 +374,44 @@ function runV1212Fixtures(g){
     g.setMrModalAck(false); g.closeManualReviewModal();
   }
 
+  // ── 🔴 §18.31: the modal's POSITION SIZE was wrong by 10,000x ──────────────────────────
+  // It rendered `riskAmount/riskPips/100000`, omitting the pip value entirely, so a real 0.10-lot
+  // trade displayed as "0.00 lots (est.)". This is the screen the operator approves a discretionary
+  // Thursday/Friday trade from. It was a second copy of a formula whose original is pinned by 43
+  // fixtures -- mutating the engine's copy kills 43; mutating this one killed ZERO.
+  //
+  // These fixtures deliberately do NOT assert a hard-coded 0.10. They require the displayed size to
+  // equal what the ENGINE would actually open, computed here from the engine's own exported
+  // pipValuePerLot. A literal would have passed just as happily against the broken formula if I had
+  // derived the literal from the broken formula -- which is exactly how this survived review.
+  {
+    seedCleanState();
+    const b=g.evaluateSetupFullBreakdownCore(baseBreakdownInput({decisionTs:Date.parse(THU),sessionAt:THU,weekdayDate:THU}));
+    const c=g.classifySetupEligibility('EUR_USD',b);
+    g.setManualReviewCandidates({EUR_USD:c});
+    const riskAmount=g.getPaperAccount().balance*0.01;
+    const pipVal=g.pipValuePerLot('EUR_USD');
+    const riskPips=Math.abs(b.entry-b.stop)/0.0001;
+    const engineLots=riskAmount/(riskPips*pipVal);
+    const shown=g.mrModalEstimatedLots('EUR_USD',b.entry,b.stop,riskAmount);
+    assert('Fixture 38a (PRECONDITION): the engine\'s own sizing for this candidate is a real, non-trivial position -- so "the modal agrees with the engine" below is not two zeros agreeing',
+      isFinite(engineLots) && engineLots>0.001 && pipVal>0,
+      'engineLots='+engineLots+' pipVal='+pipVal+' riskPips='+riskPips+' risk='+riskAmount);
+    assert('Fixture 38b (kills the 10,000x display error): the size shown on the approval modal equals what openPaperPosition would actually open, to the cent. The old formula omitted pipValuePerLot and divided by 100000, so a 0.10-lot trade rendered as "0.00 lots (est.)" on the screen the operator decides from',
+      shown===engineLots.toFixed(2),
+      'shown='+shown+' engine='+engineLots.toFixed(2));
+    assert('Fixture 38c (it is not merely non-zero): the displayed size is a real quantity rather than the "0.00" every realistic candidate used to show',
+      shown!=='0.00' && shown!=='—',
+      'shown='+shown);
+    // The modal actually renders it -- not just the helper in isolation.
+    g.openManualReviewModal('EUR_USD');
+    const body=g.getMrModalBodyHtml();
+    assert('Fixture 38d (END-TO-END, RENDERED): the modal body really carries that size, so the helper is wired to the screen rather than merely correct in isolation',
+      body.indexOf(engineLots.toFixed(2)+' lots (est.)')!==-1,
+      'looking for "'+engineLots.toFixed(2)+' lots (est.)" in: '+body.slice(body.indexOf('Position size'),body.indexOf('Position size')+90));
+    g.closeManualReviewModal();
+  }
+
   // 39-51: guarded commit path -- exercised against real global state, using the real,
   // unmodified (now-synchronous) approveManualReviewTrade().
   //

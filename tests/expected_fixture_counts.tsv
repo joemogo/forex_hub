@@ -19,7 +19,7 @@ run_v017_step2a_pipeline_observability_tests.js	53
 run_v1027_strategy_fidelity_provenance_tests.js	61
 run_v120_tests.js	28
 run_v1211_tests.js	13
-run_v1212_tests.js	42
+run_v1212_tests.js	46
 run_v1213_tests.js	52
 run_v121_tests.js	30
 run_v122_tests.js	30
@@ -34,7 +34,7 @@ run_v1238_execution_reporting_display_tests.js	39
 run_v1238_execution_reporting_journal_tests.js	72
 run_v1238_execution_reporting_provenance_tests.js	41
 run_v1238_execution_reporting_stats_tests.js	24
-run_v1239_chart_aoi_fidelity_tests.js	51
+run_v1239_chart_aoi_fidelity_tests.js	57
 run_v1239_lifecycle_reconciliation_tests.js	51
 run_v1239_market_data_continuity_tests.js	25
 run_v1239_paper_trading_e2e_tests.js	81

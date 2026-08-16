@@ -137,6 +137,7 @@ async function runChartAoiFidelityFixtures(g){
     g.resetChartRec();
     g.clearFetchLog();
     g.setStructuralAOICache({});
+    g.clearStructuralAOIInflight();   // §18.31: the in-flight map is a second cache; resetting one without the other lets a stale promise serve a later fixture
     g.resetPairData();
     g.resetScanData();
     g.setActivePair('EUR_USD');
@@ -437,6 +438,28 @@ async function runChartAoiFidelityFixtures(g){
       lines.some(function(o){return Math.abs(o.price-1.19000)<1e-9;}) &&
       lines.some(function(o){return Math.abs(o.price-1.22000)<1e-9;}),
       'prices='+lines.map(function(o){return o.price;}).join(','));
+
+    // ── 🔴 §18.31 PD-3: focusChartOnTradeWindow had NO post-await freshness guard at all ────────
+    // Every sibling post-await drawing path in loadChart carries one; this one carried none, and it
+    // both fetched with the live globals and wrote straight into the shared candle series. Clicking
+    // a pair while a journal trade's "show on chart" fetch is in flight overwrote the NEW pair's
+    // candles with the OLD pair's window and drew the old trade's entry, stop and target lines on
+    // it -- under the new pair's header, price, verdict and AOI. Uncovered: two mutations survived.
+    g.setElHtml('chartTradeOverlayLegend','');
+    g.resetChartRec();
+    g.setActivePair('EUR_USD');
+    // The INNER function, so the pair click lands where it does in production -- after this
+    // function's own fetch has begun. Driving focusTradeOnChart instead is useless: it assigns
+    // activePair itself before calling this, so any earlier flip is simply overwritten, and the
+    // guard correctly sees a match. That is why the first draft of this fixture failed.
+    const pendingFocus=g.focusChartOnTradeWindow(WREC);
+    g.setActivePair('GBP_USD');        // the operator clicks another pair mid-fetch
+    await pendingFocus;
+    await settle();
+    const staleLines=(g.chartRec.priceLines||[]).map(function(l){return l.opts||{};});
+    assert('CAF-WIRE.2','PD-3: a pair switched DURING a trade-focus fetch leaves the new pair\'s chart alone -- the old trade\'s entry, stop and target lines are NOT drawn on it. Without the guard the overlay lands on whatever pair the operator moved to, under that pair\'s header and price',
+      !staleLines.some(function(o){return Math.abs(o.price-1.20000)<1e-9;}),
+      'prices='+staleLines.map(function(o){return o.price;}).join(',')+' n='+staleLines.length);
   }
   {
     // RE-ENTRANCY (§18.21). loadChart reads its globals across two awaits. An operator clicking a
@@ -454,8 +477,32 @@ async function runChartAoiFidelityFixtures(g){
     g.setActiveTf('H4');
     await pending;
     const st11=String(g.elHtml('chartEvaluationState'));
+    // 🔴 §18.31: CAF-TF.11 previously asserted only the ABSENCE of "scanner's own H4 verdict".
+    // Independent verification proved that FOUR behaviour-changing mutations of the timeframe axis
+    // all leave that literal absent, so all four passed: the guard itself (engineVerdict.timeframe
+    // compared against activeTf instead of chartTf), the LABEL itself (timeframe:activeTf), the
+    // signal basis (detectSignals with activePair), and the chart's PRIMARY CANDLE FETCH
+    // (fetchCandles with activePair/activeTf). Under the guard mutation the chart grants engine
+    // authority to an H4 verdict and labels it "scanner's own H1 verdict" -- the §18.17 defect in
+    // mirror image, rendered, and invisible. The pair axis was genuinely covered; the timeframe
+    // axis had no working coverage anywhere. That made this the 15th unkillable fixture of the
+    // milestone, sitting directly on the defect §18.21/§18.24 exist for.
+    //
+    // Replaced with POSITIVE assertions on what the state line must actually say, and on what was
+    // actually requested from the network. A must-not-contain that no mutation can produce is not
+    // evidence.
     assert('CAF-TF.11','a timeframe switched DURING the fetch cannot make the chart label H1 candles with an H4 verdict -- the timeframe is captured once, so the guard and the label read what the fetch actually used',
       st11.length>0 && st11.indexOf('scanner’s own H4 verdict')===-1, st11.slice(0,220));
+    assert('CAF-TF.11a','POSITIVE, kills the GUARD reading the live activeTf: the chart refuses engine authority and renders the explicit NOT EVALUATED state. If the guard compares the verdict against the live timeframe it matches the H4 verdict and renders a verdict instead of this',
+      st11.indexOf('NOT EVALUATED')!==-1 && st11.indexOf('has not been scanned yet')!==-1,
+      st11.replace(/<[^>]*>/g,' ').slice(0,200));
+    assert('CAF-TF.11b','POSITIVE, kills the LABEL reading the live activeTf: the state line names BOTH timeframes the right way round -- the verdict was computed on H4, and it is H1 that has not been scanned. Reading the live global here swaps them and misattributes the gap',
+      st11.indexOf('computed on H4')!==-1 && st11.indexOf('not on H1')!==-1,
+      st11.replace(/<[^>]*>/g,' ').slice(0,200));
+    const tfLog=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.count===500;});
+    assert('CAF-TF.11c','POSITIVE, kills the PRIMARY CANDLE FETCH reading the live globals: the chart\'s own 500-bar request went out on the CAPTURED pair and timeframe -- EUR_USD H1 -- not on whatever the operator switched to mid-load. This is the request whose candles are actually drawn, and no fixture watched it',
+      tfLog.length>0 && tfLog.every(function(f){return f.granularity==='H1'&&f.instrument==='EUR_USD';}),
+      'requests='+JSON.stringify(tfLog.map(function(f){return f.instrument+'/'+f.granularity;})));
   }
   {
     // ── 🔴 CAF-PAIR: the PAIR was never captured, only the timeframe (§18.24) ────────────────────
@@ -491,6 +538,38 @@ async function runChartAoiFidelityFixtures(g){
       confP.indexOf('71%')===-1 && confP.indexOf('SHORT')===-1,'confDir='+confP.slice(0,160));
     assert('CAF-PAIR.2','and the instrument the engine SUPPRESSED still renders its not-evaluated state rather than borrowing a confident verdict from the pair the operator moved to',
       stP.indexOf('NOT EVALUATED')!==-1,stP.slice(0,200));
+  }
+  {
+    // ── 🔴 §18.31 PD-2: the STRUCTURAL AOI was fetched for the LIVE pair ────────────────────────
+    // The third instance of the §18.24 defect and the one that matters most: this is the Daily/
+    // Weekly structure a stop is measured against, drawn as the support/resistance band. §18.24
+    // captured chartPair and named two residuals as closed (the fallback fetch, the live-trigger
+    // call) -- it MISSED this one, the only remaining post-await read of a live global in loadChart
+    // that INITIATES WORK. Nothing observed it: pointing it back at activePair killed 0 of 2,222.
+    //
+    // Own block, with a HEALTHY (non-suppressed) verdict, because the suppressed path CAF-PAIR uses
+    // does not reach the AOI fetch at all -- CAF-PAIR.3's precondition caught that this assertion
+    // was otherwise being applied to an empty request list, where `every` is vacuously true.
+    //
+    // Asserted on the NETWORK REQUEST, because that is where the wrong pair is chosen. In the
+    // A->B->A case the freshness guard passes and B's levels land on A's chart looking entirely
+    // plausible; in the simpler A->B case the guard returns and the chart silently renders with no
+    // band at all, saying nothing.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    g.setActivePair('EUR_USD');
+    g.setActiveTf('H1');
+    seedEngineVerdict({timeframe:'H1'});
+    const pendingAoi=g.loadChart();
+    g.setActivePair('GBP_USD');        // the operator clicks another pair mid-load
+    await pendingAoi;
+    await settle();
+    const aoiReq=g.fetchLog().filter(function(f){return f.kind==='candles'&&(f.granularity==='D'||f.granularity==='W');});
+    assert('CAF-PAIR.3','PRECONDITION: the structural D/W fetch actually went out on this run, so the instrument assertion below is about a real request rather than an absent one -- an empty request list would satisfy it vacuously',
+      aoiReq.length>0,'aoiRequests='+JSON.stringify(aoiReq.map(function(f){return f.instrument+'/'+f.granularity;})));
+    assert('CAF-PAIR.4','PD-2: the structural AOI -- the Daily/Weekly levels a stop is measured against -- is fetched for the CAPTURED pair, not for whichever pair the operator switched to mid-load. Reading the live global here draws GBP_USD support and resistance on the EUR_USD chart, labelled "Support AOI (D/W)"',
+      aoiReq.length>0 && aoiReq.every(function(f){return f.instrument==='EUR_USD';}),
+      'aoiRequests='+JSON.stringify(aoiReq.map(function(f){return f.instrument+'/'+f.granularity;})));
   }
   {
     // ── CAF-LABEL: the display helper must not drift from the frozen record (§18.17) ───────────

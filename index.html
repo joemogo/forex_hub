@@ -9936,6 +9936,31 @@ function dismissManualReviewUntilNextCandle(oPair){
 }
 
 let mrModalOpenPair=null;
+// v12.36.0 (MOGO-021 §18.31): the Manual Review modal's position size was WRONG BY 10,000x.
+//
+// It rendered `riskAmount / riskPips / 100000`, a formula that simply omits the pip value. The
+// engine sizes at `riskAmount / (riskPips * pipValuePerLot(oPair))` (openPaperPosition), and for
+// EUR/USD at $100 risk over a 100-pip stop that is 0.10 lots -- the modal showed 0.00001, printed
+// as "0.00 lots (est.)". Every realistic candidate displayed 0.00 lots. On JPY pairs the error is
+// 100x rather than 10,000x, so it is not even a constant offset a reader could learn to correct.
+//
+// This is the screen where the operator approves a discretionary Thursday/Friday trade. The
+// approve path itself sizes correctly through the engine, so no money moved INSIDE the app -- but
+// the figure is presented at the decision point, and it would move real money if copied to a
+// broker. It was a SECOND COPY of a formula whose original is pinned by 43 fixtures; mutating the
+// engine's copy kills 43, mutating this one killed ZERO.
+//
+// Extracted rather than inlined so the display has one named, testable seam instead of a formula
+// duplicated inside a template literal. Returns a string, already fixed to 2dp, or an em dash when
+// the inputs cannot produce a size -- never a silent NaN.
+function mrModalEstimatedLots(oPair,entry,stop,riskAmount){
+  const pip=pipSize(oPair);
+  const riskPips=Math.abs(entry-stop)/pip;
+  const pipVal=pipValuePerLot(oPair);
+  if(!(riskPips>0)||pipVal==null||!isFinite(pipVal)||!isFinite(riskAmount)) return '—';
+  const lots=riskAmount/(riskPips*pipVal);
+  return isFinite(lots)?lots.toFixed(2):'—';
+}
 function openManualReviewModal(oPair){
   const c=manualReviewCandidates[oPair];
   if(!c||c.state!=='MANUAL REVIEW ELIGIBLE') return;
@@ -9948,7 +9973,7 @@ function openManualReviewModal(oPair){
   document.getElementById('mrModalBody').innerHTML=`
     Pair: <strong>${c.pair}</strong> &nbsp; Strategy: <strong>JVM</strong> &nbsp; Direction: <strong>${b.direction==='buy'?'BUY':'SELL'}</strong><br>
     Entry: <strong>${b.entry.toFixed(5)}</strong> &nbsp; Stop: <strong>${b.stop.toFixed(5)}</strong> &nbsp; Target: <strong>${b.target.toFixed(5)}</strong><br>
-    Position size: <strong>${(riskAmount/(Math.abs(b.entry-b.stop)/pipSize(oPair))/100000).toFixed(2)} lots (est.)</strong><br>
+    Position size: <strong>${mrModalEstimatedLots(oPair,b.entry,b.stop,riskAmount)} lots (est.)</strong><br>
     Dollar risk: <strong>$${riskAmount.toFixed(2)}</strong> &nbsp; Account risk: <strong>1.00%</strong> &nbsp; R:R: <strong>${b.ratio.toFixed(2)}:1</strong><br>
     Confluence score: <strong style="color:${cColor(c.confluence)}">${c.confluence}%</strong> &nbsp; Grade: <strong>${c.grade}</strong><br>
     Passed rules: <strong>${b.passedGates.map(g=>g.label).join(', ')}</strong><br>
@@ -10590,11 +10615,22 @@ async function focusChartOnTradeWindow(rec){
   const anchorMs=rec.qualificationTimestamp!=null?rec.qualificationTimestamp:(rec.openedAt?new Date(rec.openedAt).getTime():null);
   if(anchorMs==null) return;
   const endMs=rec.closedAt?new Date(rec.closedAt).getTime():Date.now();
-  const tfMs=CHART_TF_MS[activeTf]||CHART_TF_MS.H1;
+  // v12.36.0 (MOGO-021 §18.31): capture the pair and timeframe ONCE, and re-check them after the
+  // await. Every sibling post-await drawing path in loadChart carries a freshness guard; this one
+  // carried NONE, and it both fetches with the live globals and writes straight into the shared
+  // candle series. Clicking a pair while a journal trade's "show on chart" fetch is in flight
+  // overwrote the NEW pair's candles with the OLD pair's window and drew the old trade's entry,
+  // stop and target lines on it -- under the new pair's header, price, verdict and AOI.
+  const focusPair=activePair,focusTf=activeTf;
+  const tfMs=CHART_TF_MS[focusTf]||CHART_TF_MS.H1;
   const fromMs=anchorMs-tfMs*(CHART_FOCUS_PRE_CANDLES+10);
   const toMs=endMs+tfMs*(CHART_FOCUS_POST_CANDLES+10);
-  const candles=await fetchCandlesAroundWindow(activePair,activeTf,fromMs,toMs);
+  const candles=await fetchCandlesAroundWindow(focusPair,focusTf,fromMs,toMs);
   if(!candles||!candles.length) return;
+  // The operator moved on while this was loading: drawing now would put THIS trade's window and
+  // overlay lines on a chart that is showing something else entirely. Do nothing instead.
+  if(activePair!==focusPair||activeTf!==focusTf) return;
+  if(!lwChart||!candleSeries) return; // the chart may also have been torn down mid-fetch
   currentChartCandles=candles;
   candleSeries.setData(candles.map(c=>({time:Math.floor(c.t.getTime()/1000),open:c.o,high:c.h,low:c.l,close:c.c})));
   let anchorIdx=candles.findIndex(c=>c.t.getTime()>=anchorMs);
@@ -11462,10 +11498,22 @@ async function loadChart(){
   // while the engine's AOI cache rolls every 15 minutes -- so without a stamp an operator can
   // measure a stop against a level the trade path has already superseded, with nothing on screen
   // saying so.
-  getStructuralAOI(activePair).then(({support,resistance,band,fetchedAt:aoiFetchedAt})=>{
+  // v12.36.0 (MOGO-021 §18.31): this read the LIVE activePair, not the captured chartPair -- the
+  // third instance of the §18.24 defect, and the one that matters most, because this is the D/W
+  // structure a stop is measured against and it is drawn as the support/resistance band.
+  //
+  // §18.24 captured chartPair and named two residuals as closed (the fallback fetch and the
+  // live-trigger call). It missed this one, which is the only remaining post-await read of a live
+  // global in loadChart that INITIATES WORK. Reproduced A->B->A, all unawaited: with loadChart(A)
+  // in flight, clicking B issues B's D/W fetch here; by the time it resolves activePair is back to
+  // A, so the freshness guard on the next line PASSES and B's support and resistance are drawn on
+  // A's chart, labelled "Support AOI (D/W)". Between two similarly-priced pairs the wrong levels
+  // look entirely plausible. In the simpler A->B case the guard returns and A's chart renders with
+  // no AOI band at all, with nothing on screen saying so.
+  getStructuralAOI(chartPair).then(({support,resistance,band,fetchedAt:aoiFetchedAt})=>{
     if(activePair.replace('_','/')!==name) return; // pair changed while this was loading
     if(!lwChart) return; // chart was torn down while this was loading
-    const zoneWidth=Math.max(band,pipSize(activePair)*3);
+    const zoneWidth=Math.max(band,pipSize(chartPair)*3);
     const zoneData=(price)=>candles.map(c=>({time:Math.floor(c.t.getTime()/1000),value:price}));
     // v6.0: autoscaleInfoProvider:()=>null opts these lines OUT of the shared right-
     // price-scale autoscale computation (they still render at their correct price

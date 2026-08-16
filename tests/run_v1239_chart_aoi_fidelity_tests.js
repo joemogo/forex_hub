@@ -192,6 +192,10 @@ const wrapped = new Function('g',
   'g.loadChart=loadChart;' +
   'g.drawTradeOverlay=drawTradeOverlay;' +
   'g.focusTradeOnChart=focusTradeOnChart;' +
+  // §18.31 PD-3: the INNER function, so a fixture can put the operator's pair click exactly where
+  // it lands in production -- after this function's own fetch has begun. Driving the outer
+  // focusTradeOnChart instead is useless, because it assigns activePair itself before calling this.
+  'g.focusChartOnTradeWindow=focusChartOnTradeWindow;' +
   'g.setJournalEntries=function(v){journalEntries=v;};' +
   'g.clearTradeOverlay=clearTradeOverlay;' +
   'g.renderAlexGLiveSetupsPanel=renderAlexGLiveSetupsPanel;' +
@@ -226,6 +230,12 @@ const wrapped = new Function('g',
   'g.setChartOverlayToggles=function(v){ chartOverlayToggles=v; };' +
   'g.setFocusedTradeRecord=function(v){ focusedTradeRecord=v; };' +
   'g.setStructuralAOICache=function(v){ structuralAOICache=v; };' +
+  // §18.31: the in-flight map is a SECOND cache and it was never reset. getStructuralAOI returns
+  // structuralAOIInflight[pair] before issuing any request, so a promise left behind by an earlier
+  // fixture silently served later ones -- and a fixture asserting on the AOI REQUEST saw no request
+  // at all. Adding a field to the reset and adding it to the snapshot are one change, not two;
+  // the same is true of a cache and its in-flight lock.
+  'g.clearStructuralAOIInflight=function(){ structuralAOIInflight={}; };' +
   'g.setAutoTradingEnabled=function(v){ autoTrading.enabled=v; };' +
   'g.setAlexGLiveSetupStatuses=function(v){ alexGLiveSetupStatuses=v; };' +
   'g.getAlexGLiveSetupStatuses=function(){ return alexGLiveSetupStatuses.slice(); };' +

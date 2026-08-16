@@ -95,6 +95,11 @@ const wrapped = new Function('g',
   'g.openManualReviewModal=openManualReviewModal;' +
   'g.closeManualReviewModal=closeManualReviewModal;' +
   'g.mrModalUpdateApproveEnabled=mrModalUpdateApproveEnabled;' +
+  // §18.31: the modal's estimated position size, and the ENGINE's own sizing, so the fixture can
+  // require them to agree rather than pinning a literal that could drift from the engine.
+  'g.mrModalEstimatedLots=mrModalEstimatedLots;' +
+  'g.pipValuePerLot=pipValuePerLot;' +
+  'g.getMrModalBodyHtml=function(){return String(document.getElementById("mrModalBody").innerHTML||"");};' +
   'g.setMrModalAck=function(v){document.getElementById("mrModalAckCheckbox").checked=!!v;};' +
   'g.getMrModalApproveDisabled=function(){return !!document.getElementById("mrModalApproveBtn").disabled;};' +
   'g.getMrModalDisabledReason=function(){return String(document.getElementById("mrModalDisabledReason").textContent||"");};' +
