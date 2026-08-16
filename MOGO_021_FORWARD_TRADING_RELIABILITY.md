@@ -4502,3 +4502,122 @@ exists to observe.
 > **Four consecutive independent rounds have each found real defects, including in my own
 > corrections.** That is the argument for the loop, and the reason CORE is still not declared GREEN:
 > a fifth round is the gate on that decision, not the fixture count.
+
+---
+
+## §18.29 — Round 5: a production surface that did not exist, and an exclusion filter that contradicted its own comment
+
+Fifth independent adversarial round. Two independent agents attacked the repaired production paths
+and the isolation/evidence machinery. Both found real defects.
+
+### PD-2 (PRODUCTION) — `alexGLedgerBlockingError` had no render site anywhere in the application
+
+`alexGLedgerBlockingError` is assigned on every rejected ALEX ledger commit, and its declaration
+comment says it mirrors `paperLedgerBlockingError`. The JVM twin renders an always-visible red card
+via `renderPaperLedgerBlockingBanner`. The ALEX one had **no read site at all** outside the
+assignment — the same shape as PD-1 (§18.18), one release later, and found the same way: by asking
+what actually consumes a variable rather than whether it is correctly set.
+
+**Consequence.** A cross-tab version conflict rolls an ALEX open back and emits a decision event.
+The operator, who believes the trade was placed, sees nothing on any screen.
+
+**Fix.** `renderAlexGLedgerBlockingBanner()` mirrors the JVM function and is called first in
+`renderAlexGLivePanel()`. Deliberately **not** Developer-Mode gated: Developer Mode is session-only
+and defaults OFF, so gating it would reproduce PD-1's invisibility on every fresh session.
+
+**Coverage.** `RSTDG-ALEXBLOCK.1` drives it with Developer Mode explicitly OFF and requires the
+operator-facing text and the error's own content. `RSTDG-ALEXBLOCK.2` is the negative control: a
+cleared error must clear the banner rather than leave a stale one.
+
+### The evidence-platform exclusion, defeated for the sixth time — by a 44-character prefix
+
+The §18.28 filter's own comment asserted:
+
+> Only those EXACT strings are excluded. A leak must smuggle its payload somewhere, and any payload
+> changes the message — so an excluded entry is one that provably carries no information.
+
+The code was `msg.indexOf("IndexedDB is not available in this context")===-1` — **substring
+containment**. Appending a payload leaves the phrase intact, so the entry is still dropped.
+
+Independently proven, then re-scored by me against a frozen tree:
+
+| Leak injected into `commitPaperLedger` | Old filter (`indexOf`) | New filter (`Set.has`) |
+|---|---|---|
+| `'R5B-CONTROL-CONSTANT'` (control) | KILLED ISO.2 + ISO.6 | KILLED ISO.2 + ISO.6 |
+| `'IndexedDB is not available in this context \| R5B-LEAK-CONSTANT'` | **SURVIVED** | **KILLED ISO.2 + ISO.6** |
+| `'IndexedDB is not available in this context'` (zero payload) | survived | survives *by design* |
+
+Version six was **strictly weaker than the version it replaced**: §18.24 at least required writing a
+second structure; this one required only choosing the right opening words — the original §18.20
+message-prefix defect, restored.
+
+**Fix.** The artifact message is built at exactly one site as
+`'Evidence platform ['+context+'] '+kind+': '+message`, where `context` comes from a finite set of
+literal call-site strings. The complete set of artifact messages is therefore enumerable, and
+membership is now tested with `Set.has` — true equality. **Fail-closed under drift:** a new
+production context that is not listed is *compared* rather than excluded, so a missing entry costs a
+false failure, never a false pass.
+
+*Methodology note.* My first two attack runs appeared to survive the repaired filter. They had not:
+the injected leak referenced an identifier that threw inside the swallowing `catch`, so nothing was
+ever recorded. A hit counter placed *before* the record call showed 66 invocations and concealed
+this. **An injection counter proves the hook fired, not that the payload landed.** The control leak
+was re-run with a constant message to establish that the hook could kill at all, before any survival
+was believed.
+
+### Fourteen fixtures that could not fail, across four suites
+
+Twelve `assert` sites in `tests/v1212_manual_review_and_replay_diagnostics_tests.js` passed the
+literal `true` (fourteen emitted PASS lines — one site is a three-mode `forEach`). Each printed a
+PASS line and was counted in the gate total.
+
+Two were **real safety gates** and are now driven end to end:
+
+- **Fixture 38** — "Approve Paper Trade is disabled until the acknowledgment checkbox is checked."
+  Now exercises `mrModalUpdateApproveEnabled()` in both directions, with a precondition proving the
+  modal opened on a genuinely eligible candidate. Mutation-proven by removing the acknowledgment gate
+  entirely. *The obvious mutation — dropping `||!ack` from `btn.disabled` — is an equivalent mutant,*
+  because the `else if(!ack)` branch already sets `reason`; it was scored as the no-op it is rather
+  than counted as a kill.
+- **Fixture 44** — "Cancel creates no trade." Now closes the modal on an acknowledged, approvable
+  candidate, with a positive control (`44pc`) that approves the identical setup and requires a trade
+  to appear — so "no trade" cannot pass because nothing was approvable. Mutation-proven by making
+  `closeManualReviewModal` commit.
+
+The remaining ten are disclosed on a **NOTE channel** that is printed separately and is not counted
+as a fixture. A claim a human checked by reading source is a note; only an executing assertion is a
+fixture.
+
+Two more in `v017_step2a`, both now real:
+
+- **2A.19** asserted `true` *inside* an `if`, so the enclosing guard did all the work and the
+  record's content was never checked — a record with the right stage but a null status or missing
+  `tradeId` passed. It now asserts the stage, the status, the count and the `tradeId`.
+- **2A.28** asserted `true` as a **precondition**. If no position had ever been opened, 2A.29's
+  "closed" would have passed on an empty account while this line still claimed a real position
+  existed. It now inspects the position under test.
+
+**Phase2C.34** claims that no JVM function appears in a past release's diff. That is provenance, not
+a runtime property, and no assertion can re-derive it at fixture time. It moves to the
+`source-verified` note channel rather than pretending to be a test.
+
+### Two more must-not-contain credential checks satisfied by emptiness
+
+The `RollbackFailure.15` defect (§18.18) was fixed for **one** fixture and never generalised.
+
+- **`HealthCheck.15`** — proven to pass when `buildPaperTradingHealthReportText` returns `''` (the
+  same mutation kills `HealthCheck.29` and `RSTDG-VERDICT.3`). `HealthCheck.15a` now requires the
+  report to carry its real structure before the credential check is applied.
+- **v12.3.1 `Fixture 20`** was worse. It asserted that the TJR Developer tab exposes no credentials
+  — *with no credentials configured anywhere*. There was nothing to leak, and no positive
+  precondition, so both an empty render and a leaking one passed. It now installs sentinel secrets
+  in live config and requires the tab to have genuinely rendered. Proven both ways: by an empty
+  renderer (kills `20pre`) and by a real `cfg.accountId` leak wired into the **taken** return path
+  (kills `20`) — the first leak attempt landed in an untaken early-return branch and was re-sited
+  before being scored.
+
+### Gate
+
+34 suites, **2,215 / 2,215**, 0 execution errors, protected drift **0**. Fixture-count manifest
+updated in both directions (v1212 52→42 as ten claims became notes and two real fixtures were added;
+v126 61→60; v1231 31→32; restart-diagnostics 38→40; paper-trading audit 295→296).

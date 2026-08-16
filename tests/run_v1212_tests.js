@@ -88,7 +88,17 @@ const wrapped = new Function('g',
   'g.setManualReviewApproved=function(v){manualReviewApprovedDecisionTs=v;};' +
   'g.getManualReviewApproved=function(){return manualReviewApprovedDecisionTs;};' +
   'g.getManualReviewDismissed=function(){return manualReviewDismissedUntilTs;};' +
-  'g.approveManualReviewTrade=approveManualReviewTrade;' + // now synchronous -- see index.html comment at its definition
+  'g.approveManualReviewTrade=approveManualReviewTrade;' +
+  // §18.29: the Manual Review MODAL gate. Fixtures 38 and 44 asserted literal `true` with a
+  // "confirmed by code inspection" detail string -- they could not fail. These exports let them
+  // drive the real functions instead.
+  'g.openManualReviewModal=openManualReviewModal;' +
+  'g.closeManualReviewModal=closeManualReviewModal;' +
+  'g.mrModalUpdateApproveEnabled=mrModalUpdateApproveEnabled;' +
+  'g.setMrModalAck=function(v){document.getElementById("mrModalAckCheckbox").checked=!!v;};' +
+  'g.getMrModalApproveDisabled=function(){return !!document.getElementById("mrModalApproveBtn").disabled;};' +
+  'g.getMrModalDisabledReason=function(){return String(document.getElementById("mrModalDisabledReason").textContent||"");};' +
+  'g.getMrModalOpenPair=function(){return mrModalOpenPair;};' + // now synchronous -- see index.html comment at its definition
   'g.passManualReviewSetup=passManualReviewSetup;' +
   'g.dismissManualReviewUntilNextCandle=dismissManualReviewUntilNextCandle;' +
   'g.computeManualReviewGroupedPerformance=computeManualReviewGroupedPerformance;' +
@@ -120,7 +130,19 @@ const wrapped = new Function('g',
   'return runV1212Fixtures(g);'
 );
 const results = wrapped(g);
-results.forEach(r=>console.log((r.pass?'PASS':'FAIL')+' -- '+r.name+(r.detail?' ('+r.detail+')':'')));
-const failCount=results.filter(r=>!r.pass).length;
+// §18.29: NOTES are printed on their own channel and are NOT counted as fixtures.
+// Twelve assert() sites in this suite passed a literal `true` as the condition -- "confirmed by
+// code inspection" claims and restatements of other fixtures' results. They could not fail under
+// any mutation, yet each printed a PASS line and was counted in the gate total. A claim a human
+// checked once is a note; only an executing assertion is a fixture.
+const executed=results.filter(r=>!r.note);
+const notes=results.filter(r=>r.note);
+notes.forEach(r=>console.log('NOTE -- '+r.name+(r.detail?' ('+r.detail+')':'')));
+executed.forEach(r=>console.log((r.pass?'PASS':'FAIL')+' -- '+r.name+(r.detail?' ('+r.detail+')':'')));
+const failCount=executed.filter(r=>!r.pass).length;
 console.log('---');
-console.log(failCount===0?'ALL v12.1.2 REPLAY DIAGNOSTICS + MANUAL REVIEW FIXTURES PASSED':('FAILURES: '+failCount+'/'+results.length));
+console.log(executed.length===0
+  ?'SUITE DID NOT RUN -- 0 fixtures executed. This is a FAILURE, not a pass.'
+  :(failCount===0
+    ?('ALL v12.1.2 REPLAY DIAGNOSTICS + MANUAL REVIEW FIXTURES PASSED ('+executed.length+' executed, '+notes.length+' disclosed notes)')
+    :('FAILURES: '+failCount+'/'+executed.length+' executed ('+notes.length+' disclosed notes)')));

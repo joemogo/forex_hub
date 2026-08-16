@@ -187,10 +187,25 @@ function runV1231Fixtures(g){
       '');
   }
   {
+    // §18.29: as written this fixture could not fail. It asserted only that certain substrings were
+    // ABSENT, with (a) no credentials configured -- so there was nothing to leak -- and (b) no
+    // positive precondition, so an empty string satisfied it. Making renderTjrWsDeveloperTab()
+    // return '' left it green. Real sentinel secrets are now installed in live config first, and
+    // the render is required to be substantial and to carry its real zone content, so absence is
+    // measured against a page that genuinely rendered.
+    g.setCfgSecrets('SECRET-OANDA-TOKEN-9911','101-001-77777777-009');
     const html=g.renderTjrWsDeveloperTab();
-    assert('Fixture 20: Developer tab never exposes credentials/tokens/account identifiers',
-      html.toLowerCase().indexOf('apikey')===-1&&html.toLowerCase().indexOf('accountid')===-1&&html.indexOf('cfg.key')===-1,
-      '');
+    assert('Fixture 20pre (PRECONDITION): the Developer tab actually rendered its raw session/zone content, so the credential check below is applied to a real page rather than to an empty string',
+      typeof html==='string'&&html.length>200&&html.indexOf('sourceSession')!==-1,
+      'len='+(typeof html==='string'?html.length:'not a string'));
+    assert('Fixture 20: Developer tab never exposes credentials/tokens/account identifiers -- with a real OANDA token and account id set in live config, neither the sentinel values nor the generic credential field names appear anywhere in the rendered tab',
+      html.indexOf('SECRET-OANDA-TOKEN-9911')===-1
+        &&html.indexOf('101-001-77777777-009')===-1
+        &&html.toLowerCase().indexOf('apikey')===-1
+        &&html.toLowerCase().indexOf('accountid')===-1
+        &&html.indexOf('cfg.key')===-1,
+      'len='+html.length);
+    g.setCfgSecrets('','');
   }
 
   // ═══ Dedicated chart isolation: workspace zone overlay never touches shared-chart state ═══

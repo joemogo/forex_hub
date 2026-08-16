@@ -115,6 +115,8 @@ try{
     'g.buildPaperTradingHealthReportText=buildPaperTradingHealthReportText;' +
     'g.renderPaperTradingHealthCheck=renderPaperTradingHealthCheck;' +
     'g.renderPaperLedgerIntegrity=renderPaperLedgerIntegrity;' +
+    'g.renderAlexGLivePanel=renderAlexGLivePanel;' +
+    'g.setAlexGLedgerBlockingError=function(v){alexGLedgerBlockingError=v;};' +
     'g.evidenceSummarizeObservations=evidenceSummarizeObservations;' +
     'g.evidenceContinuityHtml=evidenceContinuityHtml;' +
     'g.EVIDENCE_POLL_EXPECTED_INTERVAL_MS=EVIDENCE_POLL_EXPECTED_INTERVAL_MS;' +

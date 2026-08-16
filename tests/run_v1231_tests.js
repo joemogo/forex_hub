@@ -88,6 +88,10 @@ const wrapped = new Function('g',
   'g.renderTjrWsReplayTab=renderTjrWsReplayTab;' +
   'g.renderTjrWsJournalTab=renderTjrWsJournalTab;' +
   'g.renderTjrWsDeveloperTab=renderTjrWsDeveloperTab;' +
+  // §18.29: Fixture 20 is a credential-leak check that ran with NO credentials configured and no
+  // positive precondition -- an empty render passed it, and so would a leaking one, because there
+  // was nothing to leak. These setters let it seed real sentinel secrets first.
+  'g.setCfgSecrets=function(k,a){cfg.key=k;cfg.accountId=a;};' +
   'g.setTjrWsZoneState=function(v){tjrWsZoneState=v;};' +
   'g.getTjrWsZoneState=function(){return tjrWsZoneState;};' +
   'g.setTjrWsChartAndSeries=function(chart,series){tjrWsChart=chart;tjrWsCandleSeries=series;};' +

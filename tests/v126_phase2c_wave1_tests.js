@@ -13,6 +13,10 @@ function runPhase2CWave1Fixtures(g){
   const results=[];
   function check(name,cond,detail){ results.push({name,pass:!!cond,detail:detail||''}); }
   function note(name,detail){ results.push({name,pass:null,detail,method:'live-browser'}); }
+  // §18.29: a claim established by reading a release DIFF is provenance, not a runtime property --
+  // no assertion can re-derive it at fixture time. It was written as check(name,true,...) and
+  // counted as a passing fixture; it is now disclosed on the note channel instead.
+  function sourceNote(name,detail){ results.push({name,pass:null,detail,method:'source-verified'}); }
 
   // ── Candle generation: builds a synthetic H1 series that produces exactly one genuine
   // REPEATED ZONE REACTION setup via the real, unmodified zone/setup engine. Verified directly
@@ -561,8 +565,8 @@ function runPhase2CWave1Fixtures(g){
   // TIER C -- safety, isolation, mutation-boundary, and cross-feature checks
   // ═══════════════════════════════════════════════════════════════════════
   function stepC1(){
-    check('Phase2C.34: no JVM Decision Event behavior changed -- scanAll still emits only SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR',
-      true,'verified structurally: no JVM function appears in this release\'s diff (see pre-commit report)');
+    sourceNote('Phase2C.34: no JVM Decision Event behavior changed -- scanAll still emits only SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR',
+      'verified structurally against this release\'s diff: no JVM function appears in it (see pre-commit report). Runtime JVM scan-emission behaviour is covered behaviourally elsewhere; this line is provenance for THAT release and is not re-derivable at fixture time');
     const jvmFns=g.getBaselineJvmFunctions?g.getBaselineJvmFunctions():null;
     const alexFns=g.getBaselineAlexFunctions?g.getBaselineAlexFunctions():null;
     check('Phase2C.35/36: protected-function/constant list unchanged in shape (63 JVM+ALEX entries mirrored)',!!(jvmFns&&alexFns),'jvm='+ (jvmFns?jvmFns.length:'?') );

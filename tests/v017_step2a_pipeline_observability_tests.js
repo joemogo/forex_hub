@@ -242,8 +242,15 @@ function runStep2APipelineObservabilityFixtures(g){
       const account=g.getAlexGAccount();
       const commitRejected=pipe.filter(function(r){return r.stage==='REQUEST_FAILED'&&r.status==='LEDGER_COMMIT_REJECTED';});
       if(commitRejected.length){
-        check('2A.19: a rejected ledger commit records REQUEST_FAILED(LEDGER_COMMIT_REJECTED)',true,
-          JSON.stringify(commitRejected[0]&&{status:commitRejected[0].status,tradeId:commitRejected[0].tradeId}));
+        // §18.29: the condition was the literal `true` -- the enclosing `if` did all the work, so
+        // the record's CONTENT was never checked. A record with the right stage but a null status
+        // or a missing tradeId passed. Now the fields are asserted.
+        check('2A.19: a rejected ledger commit records REQUEST_FAILED(LEDGER_COMMIT_REJECTED) exactly once, carrying the status and the tradeId of the trade that did not persist',
+          commitRejected.length===1
+            && commitRejected[0].stage==='REQUEST_FAILED'
+            && commitRejected[0].status==='LEDGER_COMMIT_REJECTED'
+            && commitRejected[0].tradeId!=null && String(commitRejected[0].tradeId).length>0,
+          JSON.stringify({n:commitRejected.length,rec:commitRejected[0]&&{stage:commitRejected[0].stage,status:commitRejected[0].status,tradeId:commitRejected[0].tradeId}}));
         check('2A.20: a rejected ledger commit records NO OPENED -- a trade that did not persist is not open',
           pipe.filter(function(r){return r.stage==='OPENED';}).length===0,JSON.stringify(stages(pipe)));
         check('2A.21: the account was rolled back -- no phantom open position',
@@ -311,7 +318,12 @@ function runStep2APipelineObservabilityFixtures(g){
         const pipe=g.drainPipeline();
         const closedRec=pipe.filter(function(r){return r.stage==='CLOSED';});
         const account=g.getAlexGAccount();
-        check('2A.28: a real position was opened to close',true);
+        // §18.29: this PRECONDITION asserted the literal `true` -- so if no position had ever been
+        // opened, 2A.29's "closed" would have passed on an empty account and this line would still
+        // have said a real position existed. The position under test is now actually inspected.
+        check('2A.28 (PRECONDITION): a real position with a tradeId, a direction and a stop was genuinely opened, so the close assertions below are observing a real close rather than an empty account',
+          !!(pos&&pos.tradeId!=null&&(pos.direction==='buy'||pos.direction==='sell')&&typeof pos.stop==='number'),
+          JSON.stringify(pos&&{tradeId:pos.tradeId,direction:pos.direction,stop:pos.stop}));
         check('2A.29: the real protected close path closed the position',
           account.openPositions.length===0&&account.closedPositions.length===1,
           JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length}));

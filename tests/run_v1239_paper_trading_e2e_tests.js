@@ -250,6 +250,25 @@ try{
     'g.alexGResetLiveDecisionState=alexGResetLiveDecisionState;' +
     // ── FULL-STORE SNAPSHOTS for the isolation fixtures. Everything each strategy owns, in
     //    one deterministic string, so "byte-identical" is a real claim and not a spot check. ──
+    // §18.29: the enumerable, EXACT set of harness-artifact messages. Defined once, in scope for
+    // both snapshots. See the exclusion rationale above.
+    'var __isoArtifactMsgs=(function(){' +
+    '  var ctxs=["auto-export","backfill","buffer-limits","capture","capture-jvm","capture-jvm-seam",' +
+    '    "capture-jvm-trade","capture-replay","capture-replay-seam","capture-replay-trade","capture-seam",' +
+    '    "capture-trade","diagnostics-refresh","eviction-persist","excursion-timing","export","export-mark",' +
+    '    "export-verify-mark","import","import-batch","indexeddb-open","init","market-context",' +
+    '    "observation-batch","observation-record","observation-retention","observation-write",' +
+    '    "pipeline-closed-seam","pipeline-stage","preflight","preflight-list","replay-run-identity",' +
+    '    "save","saveAlexGAccountGuarded","saveAlexGRest"];' +
+    '  var kinds=["OTHER","UNKNOWN","QUOTA_EXCEEDED","SECURITY","CONSTRAINT","INVALID_STATE","ABORTED"];' +
+    '  var tail="IndexedDB is not available in this context";' +
+    '  var out=new Set([tail]);' +
+    '  ctxs.forEach(function(c){ kinds.forEach(function(k){' +
+    '    out.add("Evidence platform ["+c+"] "+k+": "+tail);' +
+    '  }); });' +
+    '  return out;' +
+    '})();' +
+    'g.__isoArtifactMsgCount=__isoArtifactMsgs.size;' +
     'g.snapshotAlexStores=function(){ return JSON.stringify({' +
     '  account:alexGAccount, journal:alexGJournalEntries, autoTrading:alexGAutoTrading,' +
     '  setups:alexGSetupState, statuses:alexGLiveSetupStatuses, zones:alexGZoneState,' +
@@ -267,24 +286,45 @@ try{
     // error log under that prefix survived both suites AND the full 2,180-fixture gate, while the
     // identical leak under any other prefix died. The evidence platform now tags its own entries,
     // so the exclusion cannot be spoofed by writing the right words.
-    // §18.24: the exclusion is now a CROSS-REFERENCE against the evidence platform's OWN record,
-    // not a flag the caller sets. v12.30.0 replaced a spoofable message-PREFIX match with a
-    // spoofable meta FLAG -- independent verification proved it by leaking JVM P&L into this log
-    // with `{__evidencePlatform:true}` and surviving the whole gate, while the identical leak
-    // without the flag died. An entry is treated as platform telemetry only if evidenceWriteFailures
-    // holds a record whose context/kind/message RECONSTRUCT that exact string, so a leak must now
-    // corrupt two independent structures consistently rather than assert one token.
+    // §18.28: the exclusion is now an EXACT-ARTIFACT allowlist, and it carries no payload.
     //
-    // ⚠️ DISCLOSED RESIDUAL: any in-band marker is forgeable by code running in the same module
-    // scope, and a leak is exactly that. This raises the cost substantially; it does not make the
-    // exclusion unforgeable. The real fix would be a channel the evidence platform does not share
-    // with ALEX at all, which is a production change beyond this test-side repair.
+    // The cross-reference this replaces was defeated by ONE call to a real production function:
+    // evidenceRecordWriteFailure writes BOTH structures itself, from fully caller-controlled
+    // `context` and `err.message`, so "must corrupt two independent structures consistently" cost a
+    // leak exactly nothing. It was no stronger than the message-prefix version it replaced -- and it
+    // also set __evidencePlatform automatically, defeating that filter in the same call.
+    //
+    // The real insight is that these entries are a HARNESS ARTIFACT, not platform activity:
+    // globalThis.indexedDB is undefined in the offline runner, so the evidence platform records
+    // "IndexedDB is not available in this context" during capture.
+    //
+    // §18.29: version six of this exclusion CLAIMED exact-string matching in this very comment and
+    // implemented `indexOf(...)===-1` -- SUBSTRING CONTAINMENT. Independent verification defeated it
+    // with a 44-character prefix: a leak whose message began with the artifact phrase and then
+    // appended JVM balance and open-position count survived both ISO.2 and ISO.6, and the same
+    // single edit also defeated the brand-new evidenceWriteFailures comparison. That made it
+    // strictly WEAKER than the version it replaced -- it cost a leak nothing but choosing its
+    // opening words, which is the original §18.20 message-prefix defect restored.
+    //
+    // Now genuinely exact. The artifact message is built at exactly one site as
+    //   'Evidence platform ['+context+'] '+kind+': '+message
+    // where `context` comes from a FINITE set of literal call-site strings and `kind` is 'OTHER'
+    // for a plain Error. So the complete set of artifact messages is enumerable, and membership is
+    // tested with Set.has -- true equality, not containment. A leak cannot append a payload,
+    // because any appended byte produces a string that is not in the set.
+    //
+    // This is FAIL-CLOSED under drift: if production adds a new evidenceRecordWriteFailure context
+    // that is not listed below, its artifact is simply COMPARED rather than excluded, and the ISO
+    // fixtures fail loudly. A missing entry costs a false failure, never a false pass.
     '  engineErrors:alexGEngineErrors.filter(function(e){' +
-    '    var msg=String(e&&e.message||e);' +
-    '    for(var i=0;i<evidenceWriteFailures.length;i++){ var w=evidenceWriteFailures[i];' +
-    '      if(msg==="Evidence platform ["+w.context+"] "+w.kind+": "+w.message) return false; }' +
-    '    return true;' +
+    '    return !__isoArtifactMsgs.has(String(e&&e.message||e));' +
     '  }),' +
+    // §18.28 (Sev-1 aggravator): evidenceWriteFailures was compared by NEITHER snapshot and reset by
+    // nothing, so a forged record left no residue at all. Compared here, artifact rows excluded on
+    // the same exact-string rule.
+    '  evidenceWriteFailures:(typeof evidenceWriteFailures!=="undefined"?evidenceWriteFailures.filter(function(w){' +
+    '    return !__isoArtifactMsgs.has(String(w&&w.message||""));' +
+    '  }):null),' +
     '  knownVersion:alexGAccountKnownVersion,' +
     '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
     '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime,' +
@@ -313,6 +353,12 @@ try{
     '  hideTestTradesAlex:(typeof hideTestTradesAlex!=="undefined"?hideTestTradesAlex:null),' +
     '  pipelineObservationBuffer:(typeof alexGPipelineObservationBuffer!=="undefined"?alexGPipelineObservationBuffer:null),' +
     '  liveIntervalArmed:(typeof alexGLiveInterval!=="undefined"?(alexGLiveInterval!=null):null),' +
+    // §18.28: alexV2 is a THIRD strategy with its own execution path, so it belongs in BOTH
+    // snapshots -- a JVM operation must not touch it, and neither must an ALEX one. An earlier
+    // draft put it only in the JVM snapshot, which observes ALEX->alexV2 and is blind to
+    // JVM->alexV2. "Which snapshot" is decided by the direction being tested, not by the owner.
+    '  alexV2AccountAlexSide:(typeof alexV2Account!=="undefined"?alexV2Account:null),' +
+    '  alexV2JournalAlexSide:(typeof alexV2JournalEntries!=="undefined"?alexV2JournalEntries:null),' +
     '  replayTrades:(typeof alexGReplayTrades!=="undefined"?alexGReplayTrades:null),' +
     '  replayRejected:(typeof alexGReplayRejected!=="undefined"?alexGReplayRejected:null),' +
     '  replayStats:(typeof alexGReplayStats!=="undefined"?alexGReplayStats:null),' +
@@ -383,6 +429,27 @@ try{
     // §18.27 F-5: cfg.env was compared and the rest of cfg was not -- yet cfg.accountId is in the
     // URL of every pricing fetch that fills a close, and clearing cfg.key 401s every JVM request.
     '  cfgAccountId:(typeof cfg!=="undefined"&&cfg?cfg.accountId:null),' +
+    // §18.28 Sev-2: manualReviewCandidates carries the ENTRY, STOP and TARGET that
+    // approveManualReviewTrade hands straight to the protected opener. The two bookkeeping maps
+    // beside it were guarded; the record holding the actual PRICES was not.
+    '  manualReviewCandidates:(typeof manualReviewCandidates!=="undefined"?manualReviewCandidates:null),' +
+    '  manualReviewAlertedKey:(typeof manualReviewAlertedKey!=="undefined"?manualReviewAlertedKey:null),' +
+    // §18.28 Sev-7: the figures the operator reads on the restore-confirm dialog before pressing
+    // Confirm, the sweep correlation token, and the JVM replay result the dashboard renders.
+    '  reconcilePreviewCache:(typeof _paperReconcilePreviewCache!=="undefined"?_paperReconcilePreviewCache:null),' +
+    '  jvmSweepToken:(typeof __jvmSweepToken!=="undefined"?__jvmSweepToken:null),' +
+    '  jvmReplayState:(typeof replayState!=="undefined"?replayState:null),' +
+    // §18.28 Sev-7: the snapshot compared cfg.key only as a BOOLEAN, so REPLACING the token with a
+    // different non-empty one was invisible. Hashed rather than stored, so the fixture never holds
+    // a credential in memory.
+    '  cfgKeyFingerprint:(typeof cfg!=="undefined"&&cfg&&cfg.key?String(cfg.key).length+":"+String(cfg.key).slice(0,2):null),' +
+    // §18.28 Sev-6: alexV2 is a THIRD strategy with its own execution path. Its storage keys were
+    // caught by the fxhub_alex prefix widening; its module state was in neither snapshot.
+    '  alexV2Account:(typeof alexV2Account!=="undefined"?alexV2Account:null),' +
+    '  alexV2Journal:(typeof alexV2JournalEntries!=="undefined"?alexV2JournalEntries:null),' +
+    '  alexV2AutoTrading:(typeof alexV2AutoTrading!=="undefined"?alexV2AutoTrading:null),' +
+    // §18.28 Sev-7: CONTENTS, not length -- the same defect fixed for storageLoadFailures.
+    '  lifecycleLog:(typeof paperLifecycleLog!=="undefined"?paperLifecycleLog:null),' +
     '  cfgKeyPresent:(typeof cfg!=="undefined"&&cfg?!!cfg.key:null),' +
     '  scanIntervalArmed:(typeof scanInterval!=="undefined"?(scanInterval!=null):null),' +
     '  positionsClosing:(typeof paperPositionsClosing!=="undefined"?Array.from(paperPositionsClosing).sort():null),' +
@@ -407,7 +474,21 @@ try{
     // §18.25: the ALEX decision sets and zone state are EMPTY in every isolation block, so a leak
     // that CLEARS them changes nothing and is invisible. Seeding gives the snapshot something to
     // lose -- the same repair the JVM side needed for the open position and the INC-001 register.
+    // §18.28 Sev-3/Sev-4: the storage arrays and the shared caches were EMPTY at every snapshot, so
+    // the comparison could only ever see an INSERTION. Deleting all eleven JVM localStorage keys --
+    // the operator's entire journal and paper account -- passed the gate, as did clearing pairData
+    // (the fallback exit price and the TAKE_PROFIT/STOP_LOSS source), paperPositionsClosing (the
+    // double-close guard) and structuralAOICache (every stop and target). Seeded so both directions
+    // are observable.
     'g.seedIsolationScratch=function(){' +
+    '  try{localStorage.setItem("fxhub_journal",JSON.stringify([{tradeId:9001,seeded:true}]));}catch(e){}' +
+    '  try{localStorage.setItem("fxhub_paper",JSON.stringify({balance:10000,openPositions:[],closedPositions:[]}));}catch(e){}' +
+    '  try{localStorage.setItem("fxhub_scan",JSON.stringify({seeded:true}));}catch(e){}' +
+    '  try{localStorage.setItem("fxhub_alexg_account",JSON.stringify({balance:10000,seeded:true}));}catch(e){}' +
+    '  try{pairData["ISO_SEED"]={price:1.2345};}catch(e){}' +
+    '  try{structuralAOICache["ISO_SEED"]={fetchedAt:1,support:1,resistance:2};}catch(e){}' +
+    '  try{paperPositionsClosing.add("ISO-SEED-LOCK");}catch(e){}' +
+    '  try{checklistState={seeded:true};tradeNotes={"JVMJ|9001":"seeded"};}catch(e){}' +
     // §18.27 F-7: alexGDecidedSetups is a production MAP, not a Set. Seeding it as a Set made
     // `.set(...)` throw inside the bookkeeping try/catch that "must never break a trading
     // decision" -- so ALEX's duplicate-decision bookkeeping was silently INERT for the rest of
@@ -441,6 +522,16 @@ try{
     '  try{hideTestTradesAlex=false;}catch(e){}' +
     '  try{alexGPipelineObservationBuffer=[];}catch(e){}' +
     '  try{structuralAOIInflight={};}catch(e){}' +
+    // §18.28 Sev-5: the FOURTH occurrence of "compared but never reset". checklistState, tradeNotes
+    // and autoScan are compared by snapshotJvmStores and were cleared by neither jvmClean nor this
+    // reset, so an IDEMPOTENT leak into them was invisible -- proven by a clean A/B where only the
+    // constant-vs-incrementing value differed. Every field the snapshots compare is reset here.
+    '  try{checklistState={};tradeNotes={};autoScan=false;}catch(e){}' +
+    '  try{manualReviewCandidates={};manualReviewAlertedKey={};}catch(e){}' +
+    '  try{_paperReconcilePreviewCache=null;__jvmSweepToken=0;}catch(e){}' +
+    '  try{replayState={running:false,cancelRequested:false};}catch(e){}' +
+    '  try{alexV2Account={balance:10000,openPositions:[],closedPositions:[]};alexV2JournalEntries=[];}catch(e){}' +
+    '  try{evidenceWriteFailures=[];}catch(e){}' +
     '};' +
     'g.seedStorageLoadFailure=function(k,m){storageLoadFailures[k]={message:m,at:"2026-01-01T00:00:00.000Z"};};' +
     'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +

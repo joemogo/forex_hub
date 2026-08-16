@@ -1062,6 +1062,18 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setAiChat({key:'sk-ant-SECRET-KEY-5678',model:'test',messages:[]});
     const report=g.computePaperTradingHealthReport();
     const text=g.buildPaperTradingHealthReportText(report);
+    // §18.28: a MUST-NOT-CONTAIN assertion with no positive precondition is satisfied by an
+    // EMPTY string. Proven: making buildPaperTradingHealthReportText return '' killed
+    // RSTDG-VERDICT.3 and HealthCheck.29 -- and left this one green. That is the
+    // RollbackFailure.15 defect, which was fixed one release earlier for ONE fixture and never
+    // generalised to its siblings. A credential check that passes on empty text is not a
+    // security control.
+    assert('HealthCheck.15a (PRECONDITION): the copied report text was actually produced and is non-trivial, so the credential check below is applied to real content rather than to an empty string',
+      typeof text==='string'&&text.length>200
+        &&text.indexOf('MOGO Paper Trading Health Check')!==-1
+        &&text.indexOf('JVM:')!==-1&&text.indexOf('ALEX:')!==-1
+        &&text.indexOf('Reconciliation status')!==-1,
+      'len='+(typeof text==='string'?text.length:'not a string'));
     assert('HealthCheck.15: copied report text contains no OANDA token, account ID, or Anthropic key even though both are set in live config',
       text.indexOf('SECRET-OANDA-TOKEN-1234')===-1&&text.indexOf('101-001-99999999-001')===-1&&text.indexOf('sk-ant-SECRET-KEY-5678')===-1,
       text);

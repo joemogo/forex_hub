@@ -22,6 +22,12 @@
 function runV1212Fixtures(g){
   const results=[];
   const assert=(name,cond,detail)=>{results.push({name,pass:!!cond,detail:detail||''});};
+  // §18.29: a DISCLOSED NOTE -- a claim a human checked by reading the source, or a restatement of
+  // another fixture's result. Recorded so the knowledge is not lost, printed on its own channel,
+  // and NOT counted as a fixture. Twelve of these were previously written as assert(name,true,...)
+  // and counted as passes; a literal `true` cannot fail under any mutation, so they were reporting
+  // coverage that did not exist.
+  const note=(name,detail)=>{results.push({name,note:true,pass:true,detail:detail||''});};
   const deepEq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 
   // ── Synthetic candle helpers ──
@@ -83,8 +89,7 @@ function runV1212Fixtures(g){
   // real run over the same candle span would report (m15Loaded-200 for the real loop's i=200
   // start offset), confirmed by code inspection of the counter's placement in
   // simulateTrueMTFReplay() (every reached bar increments it exactly once, before any gate).
-  assert('Fixture 1: M15 decision-candles-processed counter increments exactly once per bar reached, before any gate (confirmed by code inspection of its placement in simulateTrueMTFReplay())',
-    true, 'counter increment site precedes every continue/gate in the function body');
+  note('Fixture 1: M15 decision-candles-processed counter increments exactly once per bar reached, before any gate (confirmed by code inspection of its placement in simulateTrueMTFReplay())', 'counter increment site precedes every continue/gate in the function body');
 
   // 2: Deterministic candidate count -- mergeReplayDiag() (a pure, sync function) run twice on
   // identical per-pair diag inputs produces identical merged output.
@@ -152,23 +157,22 @@ function runV1212Fixtures(g){
   // by code inspection (a real end-to-end resolved-trade proof per mode requires a genuine
   // walk-forward outcome and is covered by live verification instead).
   ['conservative','optimistic','exclude'].forEach((mode,idx)=>{
-    assert(`Fixture ${8+idx}: ${mode} ambiguity mode is accepted as a valid simulateTrueMTFReplay() param (confirmed by code inspection)`,
-      true, 'params.ambiguousMode="'+mode+'" -- read once, threaded into every trade.ambiguousMode field unconditionally');
+    note(`Fixture ${8+idx}: ${mode} ambiguity mode is accepted as a valid simulateTrueMTFReplay() param (confirmed by code inspection)`, 'params.ambiguousMode="'+mode+'" -- read once, threaded into every trade.ambiguousMode field unconditionally');
   });
 
   // 11/12: structural AOI retest ON/OFF is reported accurately -- runTrueMTFReplay()/
   // simulateTrueMTFReplay() both return requireStructAOIRetest verbatim from the input params
   // (`return{...,requireStructAOIRetest,...}`), confirmed by code inspection of the return
   // statement, which is a pure passthrough with no transformation.
-  assert('Fixture 11: structural AOI retest ON is reported accurately (pure passthrough of params.requireStructAOIRetest, confirmed by code inspection)', true, '');
-  assert('Fixture 12: structural AOI retest OFF is reported accurately (same passthrough)', true, '');
+  note('Fixture 11: structural AOI retest ON is reported accurately (pure passthrough of params.requireStructAOIRetest, confirmed by code inspection)', '');
+  note('Fixture 12: structural AOI retest OFF is reported accurately (same passthrough)', '');
 
   // 13: no future candle affects diagnostics -- actualLastEvaluatedTs is only ever assigned
   // from decisionTs, which is derived from getCandleCloseTime(m15,i,'M15') for the CURRENT
   // bar i, never i+1 or later -- the same no-lookahead boundary validateNoLookahead() already
   // proves for trades[] -- confirmed by code inspection (diag.actualLastEvaluatedTs=decisionTs
   // is set at the very top of the loop body, before any candle beyond i is ever touched).
-  assert('Fixture 13: no future candle affects diagnostics -- actualLastEvaluatedTs is assigned only from the current bar\'s own close time (confirmed by code inspection)', true, '');
+  note('Fixture 13: no future candle affects diagnostics -- actualLastEvaluatedTs is assigned only from the current bar\'s own close time (confirmed by code inspection)', '');
 
   // 14/15: evaluator parity -- Live and Replay literally read the same SETUP_EVALUATOR_VERSION
   // constant, so MATCH is true by construction; a forced MISMATCH (developer-only demo
@@ -316,15 +320,14 @@ function runV1212Fixtures(g){
     const ids=c.gatesNotYetEnforced.map(x=>x.id);
     assert('Fixture 30: news blackout is disclosed as not-yet-enforced, never silently treated as passing',
       c.state==='MANUAL REVIEW ELIGIBLE'&&ids.includes('news_blackout'), 'ids='+JSON.stringify(ids));
-    assert('Fixture 31: stale-data protection has no dedicated gate beyond the existing 25-candle minimum (documented, not a bypass)',
-      true, 'evaluateLiveSetupFullBreakdown() returns error:"insufficient_data" for <25 candles -- verified by code inspection, not independently re-testable offline without a live fetch');
+    note('Fixture 31: stale-data protection has no dedicated gate beyond the existing 25-candle minimum (documented, not a bypass)', 'evaluateLiveSetupFullBreakdown() returns error:"insufficient_data" for <25 candles -- verified by code inspection, not independently re-testable offline without a live fetch');
     assert('Fixture 32: spread protection is disclosed as not-yet-enforced, never silently treated as passing',
       c.state==='MANUAL REVIEW ELIGIBLE'&&ids.includes('spread_protection'), 'ids='+JSON.stringify(ids));
     assert('Fixture 33: daily loss / account risk limits are disclosed as not-yet-enforced, never silently treated as passing',
       c.state==='MANUAL REVIEW ELIGIBLE'&&ids.includes('daily_loss_risk'), 'ids='+JSON.stringify(ids));
   }
   // 34: duplicate protection is enforced by approveManualReviewTrade -- see Fixture 41.
-  assert('Fixture 34: duplicate-trade protection is enforced (proven directly in Fixture 41 below)', true, '');
+  note('Fixture 34: duplicate-trade protection is enforced (proven directly in Fixture 41 below)', '');
   // 35/36: cooldown / correlated-exposure protections are not yet enforced anywhere, disclosed
   // the same way as 30/32/33.
   {
@@ -348,8 +351,28 @@ function runV1212Fixtures(g){
   // function itself (approveManualReviewTrade) does not re-derive the checkbox state (it's a
   // pure UI gate, not a trading-safety gate), so this is verified by code inspection of
   // mrModalUpdateApproveEnabled's disabled logic rather than re-implemented as a second check.
-  assert('Fixture 38: Approve Paper Trade is disabled until the acknowledgment checkbox is checked',
-    true, 'mrModalUpdateApproveEnabled() sets btn.disabled=true whenever !ack, confirmed by code inspection');
+  // §18.29: this now DRIVES mrModalUpdateApproveEnabled() instead of asserting `true`. Positive
+  // control included: with the box ticked the button must ENABLE, so "disabled" can never pass
+  // because the modal was never opened or the candidate was never eligible.
+  {
+    seedCleanState();
+    const b=g.evaluateSetupFullBreakdownCore(baseBreakdownInput({decisionTs:Date.parse(THU),sessionAt:THU,weekdayDate:THU}));
+    const c=g.classifySetupEligibility('EUR_USD',b);
+    g.setManualReviewCandidates({EUR_USD:c});
+    g.openManualReviewModal('EUR_USD');
+    assert('Fixture 38pre (PRECONDITION): the modal really opened on an eligible candidate, so the gate below is being read off a live modal rather than a default-disabled button',
+      g.getMrModalOpenPair()==='EUR_USD'&&c.state==='MANUAL REVIEW ELIGIBLE',
+      'openPair='+g.getMrModalOpenPair()+' state='+c.state);
+    g.setMrModalAck(false); g.mrModalUpdateApproveEnabled();
+    const disabledUnacked=g.getMrModalApproveDisabled();
+    const reasonUnacked=g.getMrModalDisabledReason();
+    g.setMrModalAck(true); g.mrModalUpdateApproveEnabled();
+    const disabledAcked=g.getMrModalApproveDisabled();
+    assert('Fixture 38: Approve Paper Trade is DISABLED until the acknowledgment checkbox is checked, and ENABLES once it is (both directions driven through the real mrModalUpdateApproveEnabled())',
+      disabledUnacked===true&&disabledAcked===false,
+      'unacked.disabled='+disabledUnacked+' acked.disabled='+disabledAcked+' reason='+JSON.stringify(reasonUnacked));
+    g.setMrModalAck(false); g.closeManualReviewModal();
+  }
 
   // 39-51: guarded commit path -- exercised against real global state, using the real,
   // unmodified (now-synchronous) approveManualReviewTrade().
@@ -432,8 +455,28 @@ function runV1212Fixtures(g){
   }
 
   // 44: Cancel creates no trade (Cancel is a pure UI close -- no approve call is ever made).
-  assert('Fixture 44: Cancel creates no trade',
-    true, 'closeManualReviewModal() never calls approveManualReviewTrade() -- confirmed by code inspection (Cancel/Pass/backdrop-click all route through close-only handlers)');
+  // §18.29: driven, not inspected. Cancel is exercised on a genuinely APPROVABLE candidate -- the
+  // positive control below approves the identical setup and requires a trade to appear -- so
+  // "no trade" cannot pass merely because nothing was approvable in the first place.
+  {
+    seedCleanState();
+    const b=g.evaluateSetupFullBreakdownCore(baseBreakdownInput({decisionTs:Date.parse(THU),sessionAt:THU,weekdayDate:THU}));
+    const c=g.classifySetupEligibility('EUR_USD',b);
+    g.setManualReviewCandidates({EUR_USD:c});
+    g.openManualReviewModal('EUR_USD');
+    g.setMrModalAck(true); g.mrModalUpdateApproveEnabled();
+    g.closeManualReviewModal();
+    const posAfterCancel=g.getPaperAccount().openPositions.length;
+    const jrnAfterCancel=g.getJournalEntries().length;
+    assert('Fixture 44: Cancel creates no trade -- closing the modal on an acknowledged, approvable candidate leaves the paper account and journal untouched, and clears the open-pair handle',
+      posAfterCancel===0&&jrnAfterCancel===0&&g.getMrModalOpenPair()==null,
+      'openPositions='+posAfterCancel+' journal='+jrnAfterCancel+' openPair='+g.getMrModalOpenPair());
+    const approved=g.approveManualReviewTrade('EUR_USD');
+    assert('Fixture 44pc (POSITIVE CONTROL for Fixture 44): the very same candidate DOES produce a trade when it is actually approved -- so Fixture 44 is observing Cancel, not an unapprovable setup',
+      approved&&approved.ok===true&&g.getPaperAccount().openPositions.length===1,
+      'ok='+(approved&&approved.ok)+' openPositions='+g.getPaperAccount().openPositions.length+' err='+JSON.stringify(approved&&approved.error));
+    seedCleanState();
+  }
 
   // 45: Dismiss-until-next-candle behaves correctly.
   {
@@ -491,13 +534,13 @@ function runV1212Fixtures(g){
   // 50/51: existing paper-account version guards / reconciliation tests still pass -- proven
   // by Fixture 42's rigged-staleness rejection above, plus the full pre-existing suite (v120/
   // v121/v1211) still passing unchanged via tests/run_all.sh.
-  assert('Fixture 50: existing paper-account version guards still function (proven by Fixture 42\'s rigged-staleness rejection above)', true, '');
-  assert('Fixture 51: existing reconciliation/commit-guard machinery is untouched (v11.0/v11.0.1 protected functions, zero drift confirmed by tests/run_all.sh)', true, '');
+  note('Fixture 50: existing paper-account version guards still function (proven by Fixture 42\'s rigged-staleness rejection above)', '');
+  note('Fixture 51: existing reconciliation/commit-guard machinery is untouched (v11.0/v11.0.1 protected functions, zero drift confirmed by tests/run_all.sh)', '');
 
   // 52: full regression suite passes with zero unintended strategy-result drift -- proven by
   // tests/run_all.sh's own protected-function/constant drift check, run as part of this
   // release's regression step (not re-implemented as a fixture here).
-  assert('Fixture 52: full regression suite passes with zero unintended strategy-result drift (proven by tests/run_all.sh, not re-implemented here)', true, '');
+  note('Fixture 52: full regression suite passes with zero unintended strategy-result drift (proven by tests/run_all.sh, not re-implemented here)', '');
 
   return results;
 }

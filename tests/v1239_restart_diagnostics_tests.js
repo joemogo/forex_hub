@@ -434,6 +434,25 @@ async function runV1239RestartDiagnosticsFixtures(g){
       g.toggleDeveloperMode(true);                    // the real toggle, nothing rendered by hand
       const toggledCard=g.elHtml('paperLedgerIntegrityCard')||'';
       g.setDeveloperMode(false);
+      // 🔴 §18.28: the ALEX arm had NO operator-visible blocked-action surface at all.
+      // alexGLedgerBlockingError is set on every rejected ALEX commit, its own comment says it
+      // "mirrors paperLedgerBlockingError", and the JVM twin renders an always-visible red card --
+      // but the ALEX one had no render site anywhere in the application. The AUTOMATED live-open
+      // path emitted a decision event and rolled back in total silence, so a two-tab version
+      // conflict silently lost an ALEX trade. Same shape as PD-1, one release later.
+      // Deliberately NOT Developer-Mode gated, exactly like the JVM twin.
+      g.setDeveloperMode(false);
+      g.setAlexGLedgerBlockingError('ALEX commit blocked: stale version, sentinel-8823');
+      g.renderAlexGLivePanel();
+      const alexBlocked=g.elHtml('alexGLedgerBlockingBanner')||'';
+      assert('RSTDG-ALEXBLOCK.1 (END-TO-END, RENDERED): a blocked ALEX commit reaches an always-visible operator banner -- with Developer Mode OFF, which is the default on every fresh session',
+        alexBlocked.indexOf('ALEX action blocked')!==-1 && alexBlocked.indexOf('sentinel-8823')!==-1,
+        'html='+alexBlocked.slice(0,180));
+      g.setAlexGLedgerBlockingError(null);
+      g.renderAlexGLivePanel();
+      assert('RSTDG-ALEXBLOCK.2 (NEGATIVE CONTROL): with no blocking error the banner is empty rather than showing a stale one',
+        String(g.elHtml('alexGLedgerBlockingBanner')||'').indexOf('sentinel-8823')===-1,
+        'stale='+(String(g.elHtml('alexGLedgerBlockingBanner')||'').indexOf('sentinel-8823')!==-1));
       assert('RSTDG-ALEXSURFACE.3 (END-TO-END, the real toggle): turning Developer Mode ON repaints the card, so a recorded ALEX error is visible WITHOUT the operator pressing Refresh or leaving the tab',
         toggledCard.indexOf('toggle-sentinel-4471')!==-1,
         'visibleAfterToggle='+(toggledCard.indexOf('toggle-sentinel-4471')!==-1));
