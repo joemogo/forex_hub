@@ -29,7 +29,7 @@ run_v1233_jvm_autotrade_reliability_tests.js	127
 run_v1234_candle_alignment_tests.js	30
 run_v1235_reconciliation_tests.js	24
 run_v1236_alex_live_path_e2e_tests.js	113
-run_v1237_detection_controls_tests.js	87
+run_v1237_detection_controls_tests.js	88
 run_v1238_execution_reporting_display_tests.js	39
 run_v1238_execution_reporting_journal_tests.js	72
 run_v1238_execution_reporting_provenance_tests.js	41

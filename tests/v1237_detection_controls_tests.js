@@ -1876,6 +1876,29 @@ function runV1237DetectionControlFixtures(g){
     return 'band='+spread.band.toFixed(5)+'; 3 touches spread over 10 pips merge to '+spread.support.toFixed(5);
   });
 
+  await t('AOI4-3 the clustering tolerance is bounded ABOVE as well as below -- a spread wider than it must NOT merge',async function(){
+    // §18.33: AOI4-1 pins the tolerance from below (shrink it and the zone disappears) but not from
+    // above. Independent verification bracketed it: x0, x3 and x8 all kill, and only DOUBLING it
+    // slipped through -- because AOI4-1's touches are 10 pips apart and merge at both the real
+    // ~11-pip tolerance and at 22. This fixture puts the spread BETWEEN the two.
+    //
+    // Touches 15 pips apart: at the real tolerance each consecutive gap exceeds it, so they stay
+    // three separate 1-touch levels and nothing reaches the 3-touch bar. At double the tolerance
+    // they all merge into one 3-touch zone and a support level appears where the strategy says
+    // there is none -- and that level becomes a real stop.
+    const WIDE=[{idx:5,l:1.09500},{idx:12,l:1.09650},{idx:19,l:1.09800}];
+    const wide=g.computeAOIWithTouches(shelfSeries(PLATEAU_S4,WIDE),100,3);
+    ok(wide.band<0.00150,'PRECONDITION: the real tolerance ('+wide.band.toFixed(5)+') is narrower than the 15-pip gaps between the touches');
+    ok(wide.band*2>0.00150,'PRECONDITION: and DOUBLE it is wider than those gaps -- so this series is exactly what distinguishes the two');
+    eq(wide.support,null,'three touches 15 pips apart must NOT be merged into one zone at the real tolerance');
+    // POSITIVE CONTROL: the identical construction at 10-pip gaps DOES form a zone, so the null
+    // above is the tolerance refusing to merge, not the series failing to produce touches at all.
+    const near10=g.computeAOIWithTouches(shelfSeries(PLATEAU_S4,[{idx:5,l:1.09500},{idx:12,l:1.09550},{idx:19,l:1.09600}]),100,3);
+    ok(near10.support!=null&&near10.supportTouches===3,
+      'CONTROL: the same shelf at 10-pip gaps still merges into a real 3-touch zone ('+String(near10.support)+')');
+    return 'band='+wide.band.toFixed(5)+'; 15-pip gaps stay separate, 10-pip gaps merge';
+  });
+
   await t('DS-AOI-1 detectSignals raises the AOI touch badge when price is AT the zone -- and not when it is away from it',async function(){
     // aoiSigTol = max(band, pipSize*12). The badge is the only thing that tells the operator the
     // engine believes price is at structure; it could be deleted outright with the gate silent.

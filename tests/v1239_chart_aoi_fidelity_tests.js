@@ -575,7 +575,12 @@ async function runChartAoiFidelityFixtures(g){
     // Replaced with POSITIVE assertions on what the state line must actually say, and on what was
     // actually requested from the network. A must-not-contain that no mutation can produce is not
     // evidence.
-    assert('CAF-TF.11','a timeframe switched DURING the fetch cannot make the chart label H1 candles with an H4 verdict -- the timeframe is captured once, so the guard and the label read what the fetch actually used',
+    // §18.33: relabelled on the same grounds as CAF-TF.2 and CAF-TF.11c. It survived ALL FOUR
+    // timeframe-axis mutations while 11a/11b died, because the string it forbids is structurally
+    // unproducible under the shipped guard. It is no longer vacuous -- the length precondition
+    // stops an empty state line satisfying it -- but it is a COMPANION to 11a/11b, not independent
+    // evidence, and counting it as evidence is the over-claim this milestone keeps finding.
+    assert('CAF-TF.11 (COMPANION to 11a/11b, not independent evidence): the state line is rendered and does not attribute an H4 verdict to this chart. The forbidden string is structurally unproducible under the shipped guard, so no single behaviour-changing mutation can make this line fail -- 11a and 11b are what actually pin the timeframe axis',
       st11.length>0 && st11.indexOf('scanner’s own H4 verdict')===-1, st11.slice(0,220));
     assert('CAF-TF.11a','POSITIVE, kills the GUARD reading the live activeTf: the chart refuses engine authority and renders the explicit NOT EVALUATED state. If the guard compares the verdict against the live timeframe it matches the H4 verdict and renders a verdict instead of this',
       st11.indexOf('NOT EVALUATED')!==-1 && st11.indexOf('has not been scanned yet')!==-1,
