@@ -220,6 +220,13 @@ try{
     // §18.33: the CLOSED table -- the immediate sibling of the open one, carrying the same two
     // defects the open table was fixed for, plus an UNGUARDED exitPrice that throws the whole table.
     'g.renderAlexGLiveClosedTable=renderAlexGLiveClosedTable;' +
+    // §18.34: the ALEX ledger finiteness refusal -- the twin of PTE2E-FINITE, which v12.36.0 added
+    // to the JVM side only while commitAlexGLedger's own comment claimed it "mirrors
+    // commitPaperLedger() exactly".
+    'g.commitAlexGLedger=commitAlexGLedger;' +
+    'g.forceAlexBalance=function(v){ alexGAccount.balance=v; };' +
+    'g.getAlexBlockingError=function(){ return alexGLedgerBlockingError; };' +
+    'g.getAlexEngineErrorMessages=function(){ return alexGEngineErrors.slice(0,3).map(function(e){return String(e&&e.message||e);}); };' +
     'g.setHideTestTradesAlex=function(v){hideTestTradesAlex=!!v;};' +
     'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):""; };' +
     'g.forceBalance=function(v){ paperAccount.balance=v; };' +

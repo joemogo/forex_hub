@@ -777,6 +777,46 @@ function runMarketDataContinuityFixtures(g){
     return 'fail-closed on HTTP error after '+page+' pages';
   });
 
+  await t('ALEXEXEC.6 (STILL-FORMING BAR): the in-progress minute is excluded from exit reconstruction',async function(){
+    // §18.34: `c.complete` is the ONLY thing excluding the in-progress bar -- it passes the <=toMs
+    // bound perfectly well. Dropping it survived the whole gate. The consequence is not merely a
+    // partial extreme: reconstruction then advances lastExitCheckTimestamp to the END of a minute
+    // that has not happened yet, so the remainder of that minute is NEVER re-examined and a stop
+    // touched inside it is missed PERMANENTLY -- exactly the "touched and reversed between polls"
+    // failure this whole reconstruction path exists to prevent.
+    g.route(function(){
+      const bars=m1Page(XFROM,10);
+      return {ok:true,status:200,json:function(){return Promise.resolve({candles:bars.map(function(c,i){
+        return{time:c.time,complete:i<bars.length-1,bid:c.bid,ask:c.ask};
+      })});},text:function(){return Promise.resolve('');}};
+    });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    ok(Array.isArray(r)&&r.length>0,'POSITIVE CONTROL: the walk returned bars at all (got '+(r?r.length:String(r))+')');
+    eq(r.length,9,'exactly the nine COMPLETE bars are reconstructed; the tenth is still forming and must not be used to decide an exit');
+    const last=r[r.length-1];
+    ok(last.t===XFROM+8*XM1,'and the newest reconstructed bar is the last COMPLETED minute, not the one in progress');
+    return '9 of 10 bars, forming bar excluded';
+  });
+
+  await t('ALEXEXEC.7 (MALFORMED RESPONSE): a 200-OK with no candles field abandons the reconstruction',async function(){
+    // §18.34: ALEXEXEC.2 covers the !r.ok half; this is the other half of the same fail-closed
+    // contract, and it survived. An OANDA error envelope, a proxy's JSON, or a schema change all
+    // return 200 with no `candles`. Returning the partial accumulation gives the caller something
+    // indistinguishable from success, so lastExitCheckTimestamp advances over an interval that was
+    // never actually examined.
+    let page=0;
+    g.route(function(){
+      page++;
+      if(page===1) return g.okPage(m1Page(XFROM,5000));
+      return {ok:true,status:200,json:function(){return Promise.resolve({errorMessage:'scripted envelope'});},
+              text:function(){return Promise.resolve('');}};
+    });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+10000*XM1);
+    eq(r,null,'a malformed page must abandon the whole reconstruction, exactly as an HTTP failure does');
+    ok(page>=2,'POSITIVE CONTROL: the walk really did attempt the second page (attempts='+page+')');
+    return 'fail-closed on a malformed 200 after '+page+' pages';
+  });
+
   await t('ALEXEXEC.3 (NO FORWARD PROGRESS): a stalled cursor terminates instead of looping',async function(){
     // Every page returns the SAME final bar time, so the cursor cannot advance. Without the
     // guard this spins to the iteration cap, re-requesting and re-concatenating the same window.

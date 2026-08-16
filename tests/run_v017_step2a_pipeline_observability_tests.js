@@ -100,6 +100,9 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // -- ALEX execution path under test (real, unmodified) --
   'g.alexGEvaluatePairForLiveSetups=alexGEvaluatePairForLiveSetups;' +
+  // §18.34 F4: the position constructor, so a fixture can drive the tradeId duplicate guard
+  // directly rather than trying to reproduce a full second qualification.
+  'g.alexGConstructLivePosition=alexGConstructLivePosition;' +
   'g.alexGAttemptOpenLivePosition=alexGAttemptOpenLivePosition;' +
   'g.alexGConstructLivePosition=alexGConstructLivePosition;' +   // PROTECTED -- called, never edited
   'g.alexGCheckLivePositions=alexGCheckLivePositions;' +

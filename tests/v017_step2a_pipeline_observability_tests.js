@@ -353,6 +353,26 @@ function runStep2APipelineObservabilityFixtures(g){
       return g.getAlexGAccount();
     });
   }
+  // ── §18.34 F4, DISCLOSED RESIDUAL: the closedPositions half of the ALEX tradeId duplicate
+  //    guard is UNWATCHED, and it is NOT redundant. I had assumed it was; independent verification
+  //    proved otherwise, and the reason is structural:
+  //        tradeId  = AGT|<setupId>
+  //        signalId = AGL|<strategy>|<pair>|<tf>|<setupId>|<qualificationTimestamp>
+  //    Two signalIds sharing a setupId COLLIDE on tradeId but not on signalId. And the signal-level
+  //    closed check is `closedPositions.some(p => p.signalId === signalId)`, which cannot match any
+  //    persisted closed position whose signalId is absent or null -- records predating the field,
+  //    and normalizers that write `signalId||null`. For those, this half is the ONLY thing stopping
+  //    an already-closed trade being re-opened, after which journalNoteCloseAlex -- which finds and
+  //    updates BY TRADEID -- overwrites the first trade's journal row.
+  //
+  //    The production code is CORRECT; only the coverage is missing. A fixture was attempted and
+  //    WITHDRAWN rather than shipped green for the wrong reason: driving alexGConstructLivePosition
+  //    directly is rejected at an earlier gate ("BLOCKED — INVALID DIRECTION") before the tradeId
+  //    guard is reached, and a version asserting only the seeded precondition would have been
+  //    asserting my own fixture data back to myself. Reaching this guard needs a fully-qualified
+  //    setup with real datasets, direction, AOI and pip value -- which is the work this residual
+  //    names. Not papered over.
+
   function stepAlexExitBuyStop(){
     resetAll();
     alexSeedOpen();
@@ -382,6 +402,22 @@ function runStep2APipelineObservabilityFixtures(g){
             && Math.abs(c.exitPrice-1.09400)<1e-9
             && c.exitTriggerLevel!==c.exitPrice,
         c?(c.exitDetectionSource+' level='+c.exitTriggerLevel+' fill='+c.exitPrice):'no closed position');
+      // §18.34: FOUR more fields in this same object literal were written and asserted by nothing --
+      // balanceAfter, exitBid/exitAsk, exitSpreadPips and exitCandleStart/End all survived the full
+      // gate while `pnl`, on the very same line as balanceAfter, kills 15. They are not incidental:
+      // evidenceBuildPackageFromTrade copies every one of them into the citable evidence package.
+      // balanceAfter is the per-trade equity ledger an operator reconciles against their broker,
+      // and exitSpreadPips is the execution-cost figure. Each could be arbitrarily wrong while green.
+      check('ALEXEXIT.19 (EVIDENCE FIELDS, equity ledger): the closed record stamps balanceAfter with the account balance AFTER this trade -- 9880.00, not 0 and not the pre-trade balance. This is the per-trade equity trail the evidence package cites',
+        !!c && c.balanceAfter===9880 && c.balanceAfter===account.balance,
+        c?('balanceAfter='+c.balanceAfter+' accountBalance='+account.balance):'no closed position');
+      check('ALEXEXIT.20 (EVIDENCE FIELDS, execution cost): the recorded bid and ask are the snapshot that filled it, and exitSpreadPips is their real distance -- 2.0 pips from 1.09400/1.09420, not 0',
+        !!c && Math.abs(c.exitBid-1.09400)<1e-9 && Math.abs(c.exitAsk-1.09420)<1e-9
+             && Math.abs(c.exitSpreadPips-2)<1e-6,
+        c?('bid='+c.exitBid+' ask='+c.exitAsk+' spreadPips='+c.exitSpreadPips):'no closed position');
+      check('ALEXEXIT.21 (EVIDENCE FIELDS, snapshot provenance): a live-snapshot exit carries NO candle window, because no candle detected it -- fabricating one would claim historical evidence that does not exist',
+        !!c && c.exitCandleStart===null && c.exitCandleEnd===null && !c.ambiguous,
+        c?('candleStart='+c.exitCandleStart+' candleEnd='+c.exitCandleEnd+' ambiguous='+c.ambiguous):'no closed position');
     });
   }
   function stepAlexExitBuyTarget(){
@@ -458,6 +494,9 @@ function runStep2APipelineObservabilityFixtures(g){
       check('ALEXEXIT.13 (HISTORICAL PROVENANCE): the close is attributed to the reconstructed candle, not to the live snapshot -- so an operator reviewing the trade can tell WHICH evidence closed it',
         !!c && c.exitDetectionSource!=='live_snapshot',
         c?('exitDetectionSource='+c.exitDetectionSource):'no closed position');
+      check('ALEXEXIT.22 (HISTORICAL EVIDENCE WINDOW): a reconstructed exit records the CANDLE WINDOW that detected it -- the minute bar starting at t0+60000 and ending 60s later. This is the evidence that proves WHEN the stop was touched, and it was written and asserted by nothing',
+        !!c && c.exitCandleStart===t0+60000 && c.exitCandleEnd===t0+120000,
+        c?('candleStart='+c.exitCandleStart+' expected='+(t0+60000)+' candleEnd='+c.exitCandleEnd+' expected='+(t0+120000)):'no closed position');
       check('ALEXEXIT.14 (HISTORICAL BOOKING): the reconstructed stop books at the STOP LEVEL 1.09500 -- exactly -50 pips, -$100.00 on a 0.20 position at $10/pip -- classified a Loss at -1R, balance 9900.00',
         !!c && Math.abs(c.exitPrice-1.09500)<1e-9 && c.pnl===-100
              && c.result==='Loss' && c.resultR===-1 && account.balance===9900,

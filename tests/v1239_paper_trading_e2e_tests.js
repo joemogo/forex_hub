@@ -447,6 +447,22 @@ async function runV1239PaperTradingE2EFixtures(g){
     g.setPairData('GBP_USD',1.3050);
     g.renderAlexGLiveOpenTable();
     const html=g.elHtml('alexgLiveOpenTable');
+    // §18.34: F5. ALEXOPEN.5 seeds `null`, which the `!=null` half already catches -- so removing
+    // the isFinite half survived. NaN is neither null nor usable, and v12.37.1 wrote the fixture for
+    // the JVM half of this exact pair and not the ALEX half: the unmirrored half, inside the commit
+    // that fixed an unmirrored half.
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos({pipValue:NaN})],closedPositions:[],journal:[]});
+    g.setPairData('GBP_USD',1.3050);
+    g.renderAlexGLiveOpenTable();
+    const nanAlexHtml=g.elHtml('alexgLiveOpenTable');
+    assert('PTE2E-ALEXOPEN.10 (NaN GUARD, the isFinite half): a NaN pip value renders a dash on the ALEX table -- the `!=null` half alone lets NaN straight through, because NaN is neither null nor usable',
+      nanAlexHtml.indexOf('NaN')===-1 && nanAlexHtml.indexOf('GBP_USD')!==-1,
+      'containsNaN='+(nanAlexHtml.indexOf('NaN')!==-1)+' rowPresent='+(nanAlexHtml.indexOf('GBP_USD')!==-1));
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos({pipValue:null})],closedPositions:[],journal:[]});
+    g.setPairData('GBP_USD',1.3050);
+    g.renderAlexGLiveOpenTable();
     assert('PTE2E-ALEXOPEN.5 (NULL GUARD): a position whose pip value is unavailable renders a DASH for unrealized P&L and R -- never NaN, and never a coerced "+$0.00" that reads as a real flat position',
       html.indexOf('NaN')===-1 && html.indexOf('+$0.00')===-1 && html.indexOf('+0.00R')===-1,
       'NaN='+(html.indexOf('NaN')!==-1)+' zeroPnl='+(html.indexOf('+$0.00')!==-1)+' zeroR='+(html.indexOf('+0.00R')!==-1));
@@ -545,6 +561,31 @@ async function runV1239PaperTradingE2EFixtures(g){
       closedThrew===null && nullHtml.indexOf('GBP_USD')!==-1,
       'threw='+String(closedThrew)+' rowPresent='+(nullHtml.indexOf('GBP_USD')!==-1));
     jvmClean(); alexClean();
+  }
+
+  // ── 🔴 §18.34: the ALEX twin of the ledger finiteness refusal ───────────────────────────────
+  {
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[],closedPositions:[],journal:[]});
+    const okRes=g.commitAlexGLedger();
+    assert('PTE2E-ALEXFINITE.0 (POSITIVE CONTROL): an ordinary ALEX commit still succeeds with the new refusal in place -- it rejects only non-finite values and does not block healthy trading',
+      !!okRes && okRes.ok===true && !g.getAlexBlockingError(),
+      'res='+JSON.stringify(okRes)+' blocking='+String(g.getAlexBlockingError()));
+    const storedBefore=g.getLocalStorageItem('fxhub_alexg_account');
+    g.forceAlexBalance(NaN);
+    const res=g.commitAlexGLedger();
+    assert('PTE2E-ALEXFINITE.1: a commit carrying a NaN ALEX balance is REFUSED -- ok:false with reasonCode NON_FINITE_LEDGER. commitAlexGLedger claimed to mirror commitPaperLedger exactly, and for one release it did not have this check at all',
+      !!res && res.ok===false && res.reasonCode==='NON_FINITE_LEDGER' && res.integrityCompromised===false,
+      'res='+JSON.stringify(res));
+    assert('PTE2E-ALEXFINITE.2 (nothing was written): storage still holds the last GOOD ALEX account, byte-identical to before the refused commit -- and loadAlexGSaved does no numeric validation, so a persisted NaN would reload as null forever',
+      g.getLocalStorageItem('fxhub_alexg_account')===storedBefore
+        && (function(){ try{ return Number.isFinite(JSON.parse(g.getLocalStorageItem('fxhub_alexg_account')).balance); }catch(e){ return false; } })(),
+      'stored='+String(g.getLocalStorageItem('fxhub_alexg_account')||'').slice(0,80));
+    assert('PTE2E-ALEXFINITE.3 (the operator is told): the refusal raises the ALEX blocking banner AND records an engine error naming the offending value, so a refused ALEX commit is not a silent no-op',
+      !!g.getAlexBlockingError()
+        && g.getAlexEngineErrorMessages().some(function(m){ return m.indexOf('non-finite')!==-1 && m.indexOf('balance=NaN')!==-1; }),
+      'banner='+String(g.getAlexBlockingError()).slice(0,60)+' errors='+JSON.stringify(g.getAlexEngineErrorMessages()).slice(0,140));
+    alexClean();
   }
 
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
@@ -1054,7 +1095,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===95, 'recorded='+results.length+' expected=95 (this fixture is the 96th)');
+    results.length===100, 'recorded='+results.length+' expected=100 (this fixture is the 101st)');
 
   return results;
 }
