@@ -67,7 +67,84 @@ globalThis.setInterval=()=>++__t;globalThis.clearInterval=()=>{};
 globalThis.ResizeObserver=function(){return{observe(){},disconnect(){}};};
 globalThis.LightweightCharts={LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}};
 globalThis.Notification=undefined;
-globalThis.indexedDB=undefined;
+// ── §18.36: an in-memory IndexedDB, and why it exists ────────────────────────────────────────
+// The evidence-platform artifact exclusion has now been defeated ELEVEN times, each time by the
+// commit that fixed the previous one: message prefix, meta flag, cross-reference, substring vs
+// exact, the `detail` field, engine meta, the `context` field, the `at` key, lossy JSON projection,
+// function/non-enumerable/prototype/Symbol shapes, and finally the COUNT of excluded entries. The
+// last of those cannot be closed by comparison at all: legitimate artifacts vary with capture
+// activity, so the legitimate and illegitimate variation are the SAME QUANTITY.
+//
+// The artifacts exist for exactly one reason -- `indexedDB` was undefined here, so every capture
+// attempt failed and the evidence platform faithfully recorded that failure into the ALEX engine
+// error log. Giving the harness a working store removes the artifacts entirely, which removes the
+// exclusion, which removes the thing being forged. There is nothing to imitate when nothing is
+// excluded: EVERY entry in alexGEngineErrors is compared, byte for byte.
+//
+// Deliberately minimal and honest: it implements only what the evidence layer actually calls
+// (open/upgrade, createObjectStore with keyPath, createIndex, transaction, objectStore, add, get,
+// getAll, put, delete, count, index.get), it is in-memory only, and it enforces the ONE semantic
+// the code depends on -- add() rejects a duplicate key, which is what makes the import path's
+// "never overwrite" contract real. Requests resolve asynchronously through the same
+// onsuccess/onerror model evidenceReq() awaits.
+(function installMemoryIndexedDB(){
+  function req(){ return {onsuccess:null,onerror:null,result:undefined,error:null}; }
+  function fire(r,value,err){
+    Promise.resolve().then(function(){
+      if(err){ r.error=err; if(r.onerror) r.onerror({target:r}); }
+      else { r.result=value; if(r.onsuccess) r.onsuccess({target:r}); }
+    });
+  }
+  function Store(name,keyPath){ this.name=name; this.keyPath=keyPath; this.rows=new Map(); this.indexes={}; }
+  Store.prototype.keyOf=function(v){ return this.keyPath?v[this.keyPath]:undefined; };
+  Store.prototype.createIndex=function(n){ this.indexes[n]=true; return {}; };
+  function StoreHandle(store){ this.s=store; }
+  StoreHandle.prototype.add=function(v){
+    const r=req(), k=this.s.keyOf(v);
+    if(this.s.rows.has(k)) fire(r,null,new Error('ConstraintError: key already exists'));
+    else { this.s.rows.set(k,v); fire(r,k); }
+    return r;
+  };
+  StoreHandle.prototype.put=function(v){ const r=req(),k=this.s.keyOf(v); this.s.rows.set(k,v); fire(r,k); return r; };
+  StoreHandle.prototype.get=function(k){ const r=req(); fire(r,this.s.rows.get(k)); return r; };
+  StoreHandle.prototype.getAll=function(){ const r=req(); fire(r,Array.from(this.s.rows.values())); return r; };
+  StoreHandle.prototype.delete=function(k){ const r=req(); this.s.rows.delete(k); fire(r,undefined); return r; };
+  StoreHandle.prototype.count=function(){ const r=req(); fire(r,this.s.rows.size); return r; };
+  StoreHandle.prototype.clear=function(){ const r=req(); this.s.rows.clear(); fire(r,undefined); return r; };
+  StoreHandle.prototype.index=function(){ const s=this.s; return {get:function(k){ const r=req();
+    let hit; s.rows.forEach(function(v){ if(hit===undefined){ for(const kk in v){ if(v[kk]===k){ hit=v; break; } } } });
+    fire(r,hit); return r; },
+    getAll:function(){ const r=req(); fire(r,Array.from(s.rows.values())); return r; },
+    openCursor:function(){ const r=req(); fire(r,null); return r; }};};
+  StoreHandle.prototype.openCursor=function(){ const r=req(); fire(r,null); return r; };
+  function DB(){ this.stores={}; this.objectStoreNames={contains:function(){return false;}}; }
+  DB.prototype.createObjectStore=function(name,opts){
+    const st=new Store(name,opts&&opts.keyPath); this.stores[name]=st;
+    this.objectStoreNames={contains:(function(self){return function(n){return !!self.stores[n];};})(this)};
+    return st;
+  };
+  DB.prototype.transaction=function(names){
+    const self=this, tx={oncomplete:null,onerror:null,onabort:null,
+      objectStore:function(n){ if(!self.stores[n]) self.stores[n]=new Store(n,null); return new StoreHandle(self.stores[n]); },
+      abort:function(){}};
+    Promise.resolve().then(function(){ if(tx.oncomplete) tx.oncomplete({target:tx}); });
+    return tx;
+  };
+  DB.prototype.close=function(){};
+  const db=new DB();
+  globalThis.indexedDB={
+    open:function(){
+      const r=req(); r.onupgradeneeded=null;
+      Promise.resolve().then(function(){
+        r.result=db;
+        if(r.onupgradeneeded) r.onupgradeneeded({target:r,oldVersion:0});
+        if(r.onsuccess) r.onsuccess({target:r});
+      });
+      return r;
+    },
+    deleteDatabase:function(){ const r=req(); fire(r,undefined); return r; }
+  };
+})();
 
 // ── FROZEN CLOCK ───────────────────────────────────────────────────────────────────────────
 // Monday 2026-08-10, 14:00 UTC. Inside the strategy's own Mon-Wed preferred entry window and
@@ -277,106 +354,11 @@ try{
     //    one deterministic string, so "byte-identical" is a real claim and not a spot check. ──
     // §18.29: the enumerable, EXACT set of harness-artifact messages. Defined once, in scope for
     // both snapshots. See the exclusion rationale above.
-    'var __isoArtifactCtxs=null,__isoArtifactKinds=null;' +
-    'var __isoArtifactMsgs=(function(){' +
-    '  var ctxs=["auto-export","backfill","buffer-limits","capture","capture-jvm","capture-jvm-seam",' +
-    '    "capture-jvm-trade","capture-replay","capture-replay-seam","capture-replay-trade","capture-seam",' +
-    '    "capture-trade","diagnostics-refresh","eviction-persist","excursion-timing","export","export-mark",' +
-    '    "export-verify-mark","import","import-batch","indexeddb-open","init","market-context",' +
-    '    "observation-batch","observation-record","observation-retention","observation-write",' +
-    '    "pipeline-closed-seam","pipeline-stage","preflight","preflight-list","replay-run-identity",' +
-    '    "save","saveAlexGAccountGuarded","saveAlexGRest"];' +
-    '  var kinds=["OTHER","UNKNOWN","QUOTA_EXCEEDED","SECURITY","CONSTRAINT","INVALID_STATE","ABORTED"];' +
-    '  var tail="IndexedDB is not available in this context";' +
-    '  var out=new Set([tail]);' +
-    '  ctxs.forEach(function(c){ kinds.forEach(function(k){' +
-    '    out.add("Evidence platform ["+c+"] "+k+": "+tail);' +
-    '  }); });' +
-    '  __isoArtifactCtxs=ctxs; __isoArtifactKinds=kinds;' +
-    '  return out;' +
-    '})();' +
-    // §18.30: message-only membership was still forgeable. evidenceRecordWriteFailure stores
-    // detail:extra||null from a fully caller-controlled argument, and recordAlexGEngineError merges
-    // an arbitrary meta object -- so a leak sends the EXACT allowlisted message and rides its payload
-    // in a field the filter never looked at. An entry is excluded only if its ENTIRE content, minus
-    // the timestamp, is one of the known artifact shapes.
-    // §18.32: the exclusion was defeated an EIGHTH time -- by the commit that fixed the seventh.
-    // __isoNormEntry drops the `at` key UNCONDITIONALLY, and `at` was caller-writable, so a leak
-    // simply put its payload there: live JVM balance and open-position counts rode into the ALEX
-    // error log on every JVM save, and both ISO fixtures saw nothing. The positive control -- the
-    // identical payload under a key named `leak` -- killed ISO.2 and ISO.6, so the site was
-    // reachable and observed; only the `at` strip hid it.
-    //
-    // A second, more general vector: JSON.stringify honours a `toJSON` own-property, so a caller
-    // could forge the ENTIRE normalised shape and the message need not be allowlisted at all.
-    //
-    // Both are closed by checking the entry's SHAPE as well as its content: no `toJSON`, and an
-    // `at` that is a real ISO timestamp rather than a payload. Production is hardened too --
-    // recordAlexGEngineError now writes `at` and `message` AFTER the meta merge and refuses
-    // `toJSON` -- but the harness must not depend on that, because the whole point of this filter
-    // is to be robust to code that can call anything.
-    // §18.35: defeated a TENTH time, by four independent vectors, all of which exploit the fact
-    // that Object.keys and JSON.stringify see ONLY own-enumerable string keys:
-    //   - the entry IS A FUNCTION with an own toString returning the allowlisted message. This
-    //     short-circuited on the first line, before the toJSON refusal and the primitives-only
-    //     loop ever ran -- and __isoNormEntry projects a non-object through String(e), which the
-    //     caller overrides. The loop added in §18.33 rejects functions as VALUES INSIDE an entry;
-    //     the entry BEING a function never reached it.
-    //   - the payload on a NON-ENUMERABLE own property.
-    //   - the payload on the PROTOTYPE CHAIN via Object.create.
-    //   - the payload under a SYMBOL key.
-    // All four survived 2,315/2,315 with drift 0 while the control -- the same payload under an
-    // ordinary key -- killed ISO.2 and ISO.6. Production cannot emit these shapes (the writers copy
-    // meta with for..in + hasOwnProperty and String()-coerce the message), but this filter's own
-    // comment sets the standard it failed: it must not depend on that, because the point of it is
-    // to be robust to code that can call anything.
-    'var __isoEntryShapeOk=function(e){' +
-    '  var __t=typeof e;' +
-    '  if(e===null||__t==="string"||__t==="number"||__t==="boolean"||__t==="undefined") return true;' +
-    '  if(__t!=="object") return false;' +            // functions and everything exotic: compare it
-    '  if(Object.getPrototypeOf(e)!==Object.prototype) return false;' +
-    '  if(Object.getOwnPropertySymbols(e).length) return false;' +
-    '  if(Object.getOwnPropertyNames(e).length!==Object.keys(e).length) return false;' +
-    '  if(Object.prototype.hasOwnProperty.call(e,"toJSON")) return false;' +
-    // §18.33: defeated a NINTH time, and the ninth is the general case of the eighth. Comparing by
-    // JSON PROJECTION is LOSSY: any value whose serialisation discards its own properties passes.
-    // Proven three ways, all surviving 2,280/2,280 with drift 0: a `new String(<allowlisted msg>)`
-    // carrying jvmBalance/jvmOpenCount as attached properties; a plain object with a toJSON()
-    // returning the allowlisted message; and ONE call to the real production
-    // evidenceRecordWriteFailure whose `extra.toJSON()` returns null while the payload rides in
-    // evidenceWriteFailures[0].detail. The controls -- identical payloads under an ordinary key --
-    // killed ISO.2 and ISO.6 every time, so the site is reachable and observed; only the wrapper
-    // hid it. An entry may therefore carry PRIMITIVES ONLY: any object or function value means
-    // compare it, whatever its projection says.
-    '  var __ks=Object.keys(e);' +
-    '  for(var __i=0;__i<__ks.length;__i++){ var __v=e[__ks[__i]];' +
-    '    if(__v!==null&&(typeof __v==="object"||typeof __v==="function")) return false; }' +
-    '  if(!Object.prototype.hasOwnProperty.call(e,"at")) return true;' +
-    '  return typeof e.at==="string"&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$/.test(e.at);' +
-    '};' +
-    'var __isoNormEntry=function(e){' +
-    '  if(e===null||typeof e!=="object") return JSON.stringify({message:String(e)});' +
-    '  var o={},ks=Object.keys(e).filter(function(k){return k!=="at";}).sort();' +
-    '  ks.forEach(function(k){o[k]=e[k];});' +
-    '  return JSON.stringify(o);' +
-    '};' +
-    'var __isoArtifactEntries=(function(){' +
-    '  var out=new Set();' +
-    '  __isoArtifactMsgs.forEach(function(m){' +
-    '    out.add(__isoNormEntry({message:m,__evidencePlatform:true}));' +
-    '    out.add(__isoNormEntry({message:m}));' +
-    '  });' +
-    '  return out;' +
-    '})();' +
-    'var __isoArtifactRecords=(function(){' +
-    '  var out=new Set(), tail="IndexedDB is not available in this context";' +
-    '  var ctxs=__isoArtifactCtxs, kinds=__isoArtifactKinds;' +
-    '  ctxs.forEach(function(c){ kinds.forEach(function(k){' +
-    '    out.add(__isoNormEntry({context:c,detail:null,kind:k,message:tail}));' +
-    '  }); });' +
-    '  return out;' +
-    '})();' +
-    'g.__isoArtifactMsgCount=__isoArtifactMsgs.size;' +
+    // §18.36: the artifact allowlist, the normaliser, the shape gate and the enumerated context
+    // list are all GONE -- roughly ninety lines of filter that eleven independent attacks defeated
+    // in turn. They were only ever compensating for an absent IndexedDB. The store now works, the
+    // platform captures successfully, no artifact is written, and the comparison is unconditional.
+    // The durable fix for a forgeable in-band marker is to stop needing the marker.
     'g.snapshotAlexStores=function(){ return JSON.stringify({' +
     '  account:alexGAccount, journal:alexGJournalEntries, autoTrading:alexGAutoTrading,' +
     '  setups:alexGSetupState, statuses:alexGLiveSetupStatuses, zones:alexGZoneState,' +
@@ -424,15 +406,13 @@ try{
     // This is FAIL-CLOSED under drift: if production adds a new evidenceRecordWriteFailure context
     // that is not listed below, its artifact is simply COMPARED rather than excluded, and the ISO
     // fixtures fail loudly. A missing entry costs a false failure, never a false pass.
-    '  engineErrors:alexGEngineErrors.filter(function(e){' +
-    '    return !(__isoArtifactEntries.has(__isoNormEntry(e))&&__isoEntryShapeOk(e));' +
-    '  }),' +
+    // §18.36: NO FILTER. Every entry is compared, byte for byte. See the in-memory IndexedDB at the
+    // top of this runner for why the exclusion this line used to carry no longer exists.
+    '  engineErrors:alexGEngineErrors,' +
     // §18.28 (Sev-1 aggravator): evidenceWriteFailures was compared by NEITHER snapshot and reset by
     // nothing, so a forged record left no residue at all. Compared here, artifact rows excluded on
     // the same exact-string rule.
-    '  evidenceWriteFailures:(typeof evidenceWriteFailures!=="undefined"?evidenceWriteFailures.filter(function(w){' +
-    '    return !(__isoArtifactRecords.has(__isoNormEntry(w))&&__isoEntryShapeOk(w));' +
-    '  }):null),' +
+    '  evidenceWriteFailures:(typeof evidenceWriteFailures!=="undefined"?evidenceWriteFailures:null),' +
     '  knownVersion:alexGAccountKnownVersion,' +
     '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
     '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime,' +
