@@ -592,6 +592,206 @@ function runMarketDataContinuityFixtures(g){
     return 'duplicate detector genuinely fires, and totalRaw counts it';
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴 AOISTRUCT — the Daily/Weekly levels that become a REAL stop and a REAL target
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // getStructuralAOI is not among the 63 protected functions, so neither the fixtures nor the drift
+  // hash watched it. Independent verification scored three mutations here and all three survived:
+  // the Daily-over-Weekly PRECEDENCE for support, the same for resistance, and the cache TTL
+  // stretched from 15 minutes to 2.5 hours. Precedence decides WHICH price becomes the stop;
+  // the TTL decides how stale that price may be when it does.
+  const AOI_PAIR='GBP_USD';
+  // Two clearly separated structures, so "which level won" is unambiguous. Daily support sits at
+  // 1.2000 and weekly support far below at 1.1000 -- if precedence inverted, the stop would be
+  // 1000 pips away, and every fixture that only checks "a level exists" would still pass.
+  // Built on the pattern the chart/AOI suite proved works: computeAOI needs genuine SWING pivots
+  // with repeated touches (its frozen minimum is 3), not an alternating high/low series. A first
+  // draft used alternating extremes and produced null levels -- caught by AOISTRUCT.0, which is
+  // why the positive control is written before the precedence assertions rather than after.
+  function aoiSeries(startMs,durMs,n,base,lowLevel,highLevel){
+    const out=[];
+    const push=(o,h,l,c)=>out.push({time:new Date(startMs+out.length*durMs).toISOString(),complete:true,
+      mid:{o:String(o),h:String(h),l:String(l),c:String(c)}});
+    const filler=k=>{ for(let i=0;i<k;i++) push(base,base+0.0040,base-0.0020,base); };
+    const swingLow=l=>push(base,base+0.0040,l,base);
+    const swingHigh=h=>push(base,h,base-0.0020,base);
+    filler(4);
+    [swingLow,swingLow,swingLow].forEach(f=>{ f(lowLevel); filler(4); });
+    [swingHigh,swingHigh,swingHigh].forEach(f=>{ f(highLevel); filler(4); });
+    while(out.length<n-1) filler(1);
+    push(base,base+0.0040,base-0.0020,base);
+    return out;
+  }
+  const AOI_D_START=Date.UTC(2026,0,1), DAY_MS=86400000, WEEK_MS=7*86400000;
+  function routeAoi(){
+    g.route(function(req){
+      if(req.granularity==='D') return g.okPage(aoiSeries(AOI_D_START,DAY_MS,100,1.2300,1.2000,1.2600));
+      if(req.granularity==='W') return g.okPage(aoiSeries(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1300,1.1000,1.1600));
+      return g.emptyPage();
+    });
+  }
+
+  await t('AOISTRUCT.0 (POSITIVE CONTROL): a complete D/W pair yields real, finite levels',async function(){
+    g.resetStructuralAOICache(); routeAoi();
+    const a=await g.getStructuralAOI(AOI_PAIR);
+    ok(a&&!a.incomplete,'the fetch must be COMPLETE, or every assertion below is about a null');
+    ok(typeof a.support==='number'&&isFinite(a.support),'support must be a real price, got '+a.support);
+    ok(typeof a.resistance==='number'&&isFinite(a.resistance),'resistance must be a real price, got '+a.resistance);
+    return 'support='+a.support+' resistance='+a.resistance;
+  });
+
+  await t('AOISTRUCT.1 (PRECEDENCE, support): the DAILY support wins over the weekly one',async function(){
+    // Daily structure sits around 1.20; weekly around 1.10. Inverting the precedence puts the stop
+    // ~1000 pips away from where the strategy intends it, on a real paper trade.
+    g.resetStructuralAOICache(); routeAoi();
+    const a=await g.getStructuralAOI(AOI_PAIR);
+    ok(Math.abs(a.support-1.2000)<0.0030,'the DAILY support 1.2000 must win, not the weekly 1.1000; got '+a.support);
+    return 'support='+a.support+' (daily)';
+  });
+
+  await t('AOISTRUCT.2 (PRECEDENCE, resistance): the DAILY resistance wins over the weekly one',async function(){
+    // Scored separately because the two are independent expressions -- verification found BOTH
+    // survivable, and a single fixture covering only one leaves the other free.
+    g.resetStructuralAOICache(); routeAoi();
+    const a=await g.getStructuralAOI(AOI_PAIR);
+    // A loose ">1.15" threshold passed here even with the precedence inverted, because the WEEKLY
+    // resistance (1.1600) also clears it. The mutation survived a fixture written to catch it.
+    // Pinned to the daily level itself: 1.1600 and 1.2600 are 1000 pips apart and cannot be
+    // confused by any tolerance worth using.
+    ok(Math.abs(a.resistance-1.2600)<0.0030,'the DAILY resistance 1.2600 must win, not the weekly 1.1600; got '+a.resistance);
+    return 'resistance='+a.resistance+' (daily)';
+  });
+
+  await t('AOISTRUCT.3 (TTL): a cached structure older than 15 minutes is REFETCHED',async function(){
+    // The cache TTL bounds how stale a level may be when it sets a live stop. Stretching it to
+    // 2.5 hours killed nothing -- no fixture touched fetchedAt at all.
+    g.resetStructuralAOICache(); routeAoi();
+    g.freezeClock(Date.UTC(2026,5,1,12,0,0));
+    await g.getStructuralAOI(AOI_PAIR);
+    const afterFirst=g.candleReqs().length;
+    // 14 minutes later: still fresh, must be served from cache with NO new request.
+    g.freezeClock(Date.UTC(2026,5,1,12,14,0));
+    await g.getStructuralAOI(AOI_PAIR);
+    eq(g.candleReqs().length,afterFirst,'inside the TTL the cache must be reused -- no refetch');
+    // 16 minutes later: expired, must refetch.
+    g.freezeClock(Date.UTC(2026,5,1,12,16,0));
+    await g.getStructuralAOI(AOI_PAIR);
+    ok(g.candleReqs().length>afterFirst,
+      'past 15 minutes the structure must be refetched, not served stale (requests before='+afterFirst+' after='+g.candleReqs().length+')');
+    g.restoreClock();
+    return 'fresh inside 15m, refetched past it';
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴 ALEXEXEC — the function that decides whether an ALEX position hit its STOP or its TARGET
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // alexGFetchExecutableCandles reconstructs the gap since the last exit check from real historical
+  // bid/ask M1 candles. Independent adversarial verification scored FIVE mutations against it and
+  // ALL FIVE survived the full 2,222-fixture gate, including one that introduces LOOKAHEAD into
+  // exit reconstruction. It is not in the 63 protected functions, so the drift hash did not watch
+  // it either -- and a drift hash proves bytes, never arithmetic.
+  //
+  // Every fixture below pairs its assertion with a positive control, because a function that
+  // returns null or [] would otherwise satisfy most of them.
+  const XPAIR='EUR_USD', XM1=60000;
+  function m1Page(startMs,n,opts){
+    const o=opts||{};
+    const out=[];
+    for(let i=0;i<n;i++){
+      const t=startMs+i*XM1;
+      const b=1.10000+i*0.00001;
+      out.push({time:new Date(t).toISOString(),complete:o.complete===false?false:true,
+        bid:{o:String(b),h:String(b+0.00005),l:String(b-0.00005),c:String(b)},
+        ask:{o:String(b+0.00020),h:String(b+0.00025),l:String(b+0.00015),c:String(b+0.00020)}});
+    }
+    return out;
+  }
+  const XFROM=Date.UTC(2026,5,1,0,0,0), XTO=XFROM+400*XM1;
+
+  await t('ALEXEXEC.0 (POSITIVE CONTROL): a normal walk returns real parsed bid/ask bars',async function(){
+    g.route(function(){ return g.okPage(m1Page(XFROM,120)); });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    ok(Array.isArray(r)&&r.length===120,'expected 120 reconstructed bars, got '+(r?r.length:String(r)));
+    ok(typeof r[0].bid.h==='number'&&typeof r[0].ask.l==='number','bid/ask must be parsed to numbers');
+    ok(r[0].bid.h<r[0].ask.h,'the ask side must be above the bid side -- the spread is what makes a stop fill differ from a target fill');
+    return '120 bars, bid/ask parsed';
+  });
+
+  await t('ALEXEXEC.1 (LOOKAHEAD): no reconstructed bar may lie beyond the requested window',async function(){
+    // The page deliberately runs PAST toMs, exactly as a real OANDA page does when the window ends
+    // mid-page. Dropping the `<=toMs` bound lets bars the position could not have seen decide
+    // whether it stopped out -- a look-ahead in EXIT reconstruction, which is the single most
+    // damaging error class in a backtest-adjacent path.
+    const shortTo=XFROM+50*XM1;
+    g.route(function(){ return g.okPage(m1Page(XFROM,200)); });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,shortTo);
+    ok(Array.isArray(r)&&r.length>0,'POSITIVE CONTROL: the walk returned bars at all (got '+(r?r.length:String(r))+')');
+    const beyond=r.filter(function(c){return c.t>shortTo;});
+    eq(beyond.length,0,'bars beyond toMs must be discarded; '+beyond.length+' leaked through');
+    eq(r.length,51,'and exactly the 51 bars from XFROM through shortTo inclusive are kept');
+    return 'no lookahead: '+r.length+' bars, none beyond the window';
+  });
+
+  await t('ALEXEXEC.2 (FAIL CLOSED): an HTTP error returns null, never a partial reconstruction',async function(){
+    // The v4.2.1 authorization explicitly forbids deciding an exit from a partial reconstruction.
+    // Returning what was accumulated so far looks like data and is missing exactly the bars that
+    // might contain the stop.
+    let page=0;
+    g.route(function(){ page++; return page===1?g.okPage(m1Page(XFROM,5000)):g.errPage(500); });
+    // The window must be WIDER than one full page, or the walk finishes on page one and never
+    // reaches the error -- the first draft used XTO (400 minutes) and the loop exited before the
+    // second request, so this assertion was about a walk that never failed.
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+10000*XM1);
+    eq(r,null,'a failed page must abandon the whole reconstruction, not return the first page');
+    ok(page>=2,'POSITIVE CONTROL: the walk really did attempt a second page (attempts='+page+')');
+    return 'fail-closed on HTTP error after '+page+' pages';
+  });
+
+  await t('ALEXEXEC.3 (NO FORWARD PROGRESS): a stalled cursor terminates instead of looping',async function(){
+    // Every page returns the SAME final bar time, so the cursor cannot advance. Without the
+    // guard this spins to the iteration cap, re-requesting and re-concatenating the same window.
+    g.route(function(){ return g.okPage(m1Page(XFROM,5000)); });
+    const before=g.candleReqs().length;
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+10*24*3600000);
+    const used=g.candleReqs().length-before;
+    ok(Array.isArray(r),'the walk still returns an array rather than hanging');
+    ok(used<=3,'a stalled cursor must stop almost immediately, not run to the iteration cap (requests='+used+')');
+    return 'terminated after '+used+' requests';
+  });
+
+  await t('ALEXEXEC.4 (SHORT PAGE): fewer bars than requested ends the walk',async function(){
+    g.route(function(){ return g.okPage(m1Page(XFROM,10)); });
+    const before=g.candleReqs().length;
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    const used=g.candleReqs().length-before;
+    eq(used,1,'a short page means we have caught up to now -- exactly one request, not a second');
+    ok(r&&r.length===10,'POSITIVE CONTROL: and the ten bars are returned (got '+(r?r.length:String(r))+')');
+    return 'single request on a short page';
+  });
+
+  await t('ALEXEXEC.5 (NO DUPLICATE BARS): the cursor advances a FULL bar between pages',async function(){
+    // Stepping less than one full M1 re-requests the last bar of the previous page, so the same
+    // minute is concatenated twice. A duplicated minute is scanned twice for stop/target touches.
+    // FROM-SENSITIVE router, modelling the real API: a page contains the M1 bars at or after the
+    // requested `from`, aligned to the minute. This is what makes a short cursor step observable at
+    // all -- a fixed page keyed on request ORDER cannot show a duplicate, because it returns the
+    // same bars no matter what was asked for.
+    g.route(function(req){
+      const from=req.from?Date.parse(req.from):XFROM;
+      const firstBar=Math.ceil(from/XM1)*XM1;          // the API serves bars with time >= from
+      const remaining=Math.max(0,Math.round((XFROM+5010*XM1-firstBar)/XM1));
+      return g.okPage(m1Page(firstBar,Math.min(5000,remaining)));
+    });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+6000*XM1);
+    ok(Array.isArray(r)&&r.length>5000,'POSITIVE CONTROL: both pages were walked (got '+(r?r.length:String(r))+')');
+    const times=r.map(function(c){return c.t;});
+    eq(new Set(times).size,times.length,'every reconstructed minute must appear exactly once');
+    let strictly=true;
+    for(let i=1;i<times.length;i++){ if(times[i]<=times[i-1]) strictly=false; }
+    ok(strictly,'and the series must be strictly increasing in time');
+    return r.length+' bars, all unique and ordered';
+  });
+
 
     return out;
   })();

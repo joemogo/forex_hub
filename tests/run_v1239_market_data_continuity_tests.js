@@ -84,12 +84,18 @@ function parseReq(url){
   const mc=u.match(/[?&]count=(\d+)/);
   const mg=u.match(/[?&]granularity=([A-Z0-9]+)/);
   const mt=u.match(/[?&]to=([^&]+)/);
+  // §18.31: alexGFetchExecutableCandles pages with `from=`, not `to=`. Without this the fixtures
+  // that drive ALEX exit reconstruction cannot see which window was actually requested.
+  const mf=u.match(/[?&]from=([^&]+)/);
+  const mpr=u.match(/[?&]price=([A-Z]+)/);
   const mp=u.match(/\/pricing\?instruments=([A-Z_]+)/);
   return{url:u,kind:mp?'pricing':(mi?'candles':'other'),
     instrument:mp?mp[1]:(mi?mi[1]:null),
     granularity:mg?mg[1]:null,
     count:mc?parseInt(mc[1],10):null,
-    to:mt?decodeURIComponent(mt[1]):null};
+    to:mt?decodeURIComponent(mt[1]):null,
+    from:mf?decodeURIComponent(mf[1]):null,
+    price:mpr?mpr[1]:null};
 }
 globalThis.fetch=function(url){
   const req=parseReq(url);
@@ -164,6 +170,11 @@ const wrapped = new Function('g',
   'g.resetStructuralAOICache=function(){structuralAOICache={};structuralAOIInflight={};};' +
   'g.alexGEvaluatePairForLiveSetups=alexGEvaluatePairForLiveSetups;' +
   'g.fetchAlexGReplayDatasets=fetchAlexGReplayDatasets;' +
+  // §18.31: the function that decides whether an ALEX position hit its stop or its target, by
+  // reconstructing the gap from real historical bid/ask M1 candles. Independent verification
+  // scored FIVE mutations against it -- including one that introduces LOOKAHEAD -- and all five
+  // survived the full gate. It is not protected, so the drift hash did not watch it either.
+  'g.alexGFetchExecutableCandles=alexGFetchExecutableCandles;' +
   // ── REAL, PROTECTED evaluators (called, never re-implemented, never modified) ──
   'g.detectSignals=detectSignals;' +
   'g.bestConfluence=bestConfluence;' +
