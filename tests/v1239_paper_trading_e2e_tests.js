@@ -626,6 +626,42 @@ async function runV1239PaperTradingE2EFixtures(g){
     alexClean();
   }
 
+  // ── 🔴 §18.36: the ALEX v2 shadow comparison read the OLDEST status, not the newest ─────────
+  {
+    // alexGLiveSetupStatuses is unshift-built and truncated from the tail, so index 0 is newest.
+    // Reading [length-1] froze the comparison on the FIRST status ever recorded for a pair -- and
+    // because entries are deduped by signalId and never re-evaluated, it stayed frozen forever.
+    // Seeded in production order: each new status is UNSHIFTED, exactly as the engine writes them.
+    alexClean();
+    g.setAlexGLiveSetupStatuses([]);
+    g.pushAlexGLiveSetupStatus({pair:'EUR/USD',status:'IGNORED — STALE SIGNAL',reason:'first ever',signalId:'S1'});
+    g.pushAlexGLiveSetupStatus({pair:'EUR/USD',status:'BLOCKED',reason:'second',signalId:'S2'});
+    g.pushAlexGLiveSetupStatus({pair:'EUR/USD',status:'TRADE OPENED',reason:'newest',signalId:'S3'});
+    const sum=g.alexV2BuildLegacyDecisionSummary('EUR_USD');
+    assert('PTE2E-SHADOW.0 (PRECONDITION): three statuses are recorded for this pair in production order, newest first -- so "latest" is a real choice between them and not the only entry',
+      g.getAlexGLiveSetupStatuses().length===3 && g.getAlexGLiveSetupStatuses()[0].signalId==='S3',
+      'n='+g.getAlexGLiveSetupStatuses().length+' head='+g.getAlexGLiveSetupStatuses()[0].signalId);
+    assert('PTE2E-SHADOW.1 (ORIENTATION): the shadow comparison reads the NEWEST status -- legacy ALEX TOOK this trade, so the summary must say ACCEPTED. Reading the tail reports the first status ever recorded and mis-bins every comparison from the second setup onward, systematically as "v2 finds trades legacy misses"',
+      !!sum && sum.legacyAlexDecision==='ACCEPTED',
+      'decision='+(sum&&sum.legacyAlexDecision)+' reasons='+JSON.stringify(sum&&sum.legacyAlexReasons));
+    assert('PTE2E-SHADOW.2 (and it cites the right reason): the reason quoted is the newest status, not the stale one it superseded',
+      !!sum && JSON.stringify(sum.legacyAlexReasons).indexOf('TRADE OPENED')!==-1
+            && JSON.stringify(sum.legacyAlexReasons).indexOf('STALE')===-1,
+      'reasons='+JSON.stringify(sum&&sum.legacyAlexReasons));
+    // NEGATIVE CONTROL: a genuine rejection must still read REJECTED, so .1 is not simply asserting
+    // that this function always says ACCEPTED.
+    g.setAlexGLiveSetupStatuses([]);
+    g.pushAlexGLiveSetupStatus({pair:'EUR/USD',status:'TRADE OPENED',reason:'older',signalId:'S1'});
+    g.pushAlexGLiveSetupStatus({pair:'EUR/USD',status:'BLOCKED',reason:'newest',signalId:'S2'});
+    const sum2=g.alexV2BuildLegacyDecisionSummary('EUR_USD');
+    assert('PTE2E-SHADOW.3 (NEGATIVE CONTROL): with the order reversed the newest status is a BLOCK, and the summary must read REJECTED -- so the assertion above is reading position, not a constant',
+      !!sum2 && sum2.legacyAlexDecision==='REJECTED'
+            && JSON.stringify(sum2.legacyAlexReasons).indexOf('BLOCKED')!==-1,
+      'decision='+(sum2&&sum2.legacyAlexDecision)+' reasons='+JSON.stringify(sum2&&sum2.legacyAlexReasons));
+    g.setAlexGLiveSetupStatuses([]);
+    alexClean();
+  }
+
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
   {
     jvmClean();
@@ -1133,7 +1169,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===103, 'recorded='+results.length+' expected=103 (this fixture is the 104th)');
+    results.length===107, 'recorded='+results.length+' expected=107 (this fixture is the 108th)');
 
   return results;
 }

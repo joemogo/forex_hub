@@ -98,6 +98,11 @@ const wrapped = new Function('g',
   'g.computeCanonicalPerformance=computeCanonicalPerformance;' +
   'g.computePaperLedgerIntegrity=computePaperLedgerIntegrity;' +
   'g.computePaperTradingHealthReport=computePaperTradingHealthReport;' +
+  // §18.36: setPaperBalance is a real, shipped, confirm-gated operator action that recorded nothing,
+  // so it poisoned the reconciliation verdict permanently. Driven here through the real function
+  // with the confirm dialog auto-accepted, exactly as an operator clicking through it.
+  'g.setPaperBalance=setPaperBalance;' +
+  'g.setBalanceInput=function(v){ document.getElementById("paperBalanceInput").value=String(v); };' +
   'g.buildPaperTradingHealthReportText=buildPaperTradingHealthReportText;' +
   'g.findStrategyEntry=findStrategyEntry;' +
   'g.getUnifiedJournalRecords=getUnifiedJournalRecords;' +

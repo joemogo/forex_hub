@@ -297,6 +297,12 @@ try{
     // §18.33: the CLOSED table -- the immediate sibling of the open one, carrying the same two
     // defects the open table was fixed for, plus an UNGUARDED exitPrice that throws the whole table.
     'g.renderAlexGLiveClosedTable=renderAlexGLiveClosedTable;' +
+    // §18.36: the ALEX v2 shadow comparison -- the evidentiary basis for deciding whether v2 should
+    // replace legacy ALEX. Its whole function had ZERO test references before this.
+    'g.alexV2BuildLegacyDecisionSummary=alexV2BuildLegacyDecisionSummary;' +
+    'g.setAlexGLiveSetupStatuses=function(v){ alexGLiveSetupStatuses=v; };' +
+    'g.pushAlexGLiveSetupStatus=function(e){ alexGLiveSetupStatuses.unshift(e); };' +
+    'g.getAlexGLiveSetupStatuses=function(){ return alexGLiveSetupStatuses; };' +
     // §18.34: the ALEX ledger finiteness refusal -- the twin of PTE2E-FINITE, which v12.36.0 added
     // to the JVM side only while commitAlexGLedger's own comment claimed it "mirrors
     // commitPaperLedger() exactly".

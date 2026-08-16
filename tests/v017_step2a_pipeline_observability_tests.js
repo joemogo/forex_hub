@@ -566,6 +566,103 @@ function runStep2APipelineObservabilityFixtures(g){
       });
     });
   }
+  // ── 🔴 §18.36: EXACT-TOUCH boundaries in the HISTORICAL reconstruction, three of four unpinned ──
+  // v12.34.0 fixed exactly this class for JVM (JVMEXIT-13/14/15) and F4.11/F4.12 pin it for the
+  // ALEX SNAPSHOT path -- but the ALEX HISTORICAL path was never mirrored. Weakening `>=` to `>` on
+  // the sell-stop, the buy-target and the sell-target each survived the full gate; only the
+  // buy-stop was covered. Reconstruction is the ONLY mechanism that sees a level touched and
+  // reversed between two 60-second polls, so a stop touched EXACTLY to the pip during a poll gap
+  // (tab throttling, sleep, a dropped connection) does not stop the position out and it runs on
+  // with NO BOUND.
+  function stepAlexExitExactTouch(){
+    const t0=Date.now()-10*60000;
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    // BUY, bid low EXACTLY at the 1.09500 stop.
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXACT-BS'});
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10200,ask:1.10220}},null,[
+      alexExecBar(t0,1.10100,1.10150,1.10120,1.10170),
+      alexExecBar(t0+60000,1.09500,1.10050,1.09520,1.10070),
+      alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+    ]);
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      const a=g.getAlexGAccount(), c=a.closedPositions[0]||null;
+      check('ALEXEXIT.24 (EXACT TOUCH, buy stop): a bid low EXACTLY at the stop stops the position out. `>=` weakened to `>` leaves it open with no bound',
+        !!c && Math.abs(c.exitPrice-1.09500)<1e-9 && c.result==='Loss' && a.openPositions.length===0,
+        c?('exit='+c.exitPrice+' '+c.result):JSON.stringify({open:a.openPositions.length}));
+      // SELL, ask high EXACTLY at the 1.10500 stop.
+      resetAll();
+      alexSeedOpen({tradeId:'ALEXEXACT-SS',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+      installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10150,ask:1.10170}},null,[
+        alexExecBar(t0,1.10100,1.10150,1.10120,1.10170),
+        alexExecBar(t0+60000,1.10050,1.10460,1.10080,1.10500),
+        alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+      ]);
+      return g.alexGCheckLivePositions().then(function(){
+        installOfflineFetch();
+        const a2=g.getAlexGAccount(), c2=a2.closedPositions[0]||null;
+        check('ALEXEXIT.25 (EXACT TOUCH, sell stop): an ask high EXACTLY at the stop stops the short out',
+          !!c2 && Math.abs(c2.exitPrice-1.10500)<1e-9 && c2.result==='Loss' && a2.openPositions.length===0,
+          c2?('exit='+c2.exitPrice+' '+c2.result):JSON.stringify({open:a2.openPositions.length}));
+        // BUY, bid high EXACTLY at the 1.11000 target.
+        resetAll();
+        alexSeedOpen({tradeId:'ALEXEXACT-BT'});
+        installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10200,ask:1.10220}},null,[
+          alexExecBar(t0,1.10100,1.10150,1.10120,1.10170),
+          alexExecBar(t0+60000,1.10050,1.11000,1.10070,1.11020),
+          alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+        ]);
+        return g.alexGCheckLivePositions().then(function(){
+          installOfflineFetch();
+          const a3=g.getAlexGAccount(), c3=a3.closedPositions[0]||null;
+          check('ALEXEXIT.26 (EXACT TOUCH, buy target): a bid high EXACTLY at the target takes profit -- weakened to `>` the winner is never booked and the trade runs back down',
+            !!c3 && Math.abs(c3.exitPrice-1.11000)<1e-9 && c3.result==='Win' && a3.openPositions.length===0,
+            c3?('exit='+c3.exitPrice+' '+c3.result):JSON.stringify({open:a3.openPositions.length}));
+          // SELL, ask low EXACTLY at the 1.09000 target.
+          resetAll();
+          alexSeedOpen({tradeId:'ALEXEXACT-ST',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+          installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10150,ask:1.10170}},null,[
+            alexExecBar(t0,1.10100,1.10150,1.10120,1.10170),
+            alexExecBar(t0+60000,1.08980,1.10050,1.09000,1.10070),
+            alexExecBar(t0+120000,1.10000,1.10120,1.10020,1.10140)
+          ]);
+          return g.alexGCheckLivePositions().then(function(){
+            installOfflineFetch();
+            const a4=g.getAlexGAccount(), c4=a4.closedPositions[0]||null;
+            check('ALEXEXIT.27 (EXACT TOUCH, sell target): an ask low EXACTLY at the target takes profit on the short',
+              !!c4 && Math.abs(c4.exitPrice-1.09000)<1e-9 && c4.result==='Win' && a4.openPositions.length===0,
+              c4?('exit='+c4.exitPrice+' '+c4.result):JSON.stringify({open:a4.openPositions.length}));
+          });
+        });
+      });
+    });
+  }
+  function stepAlexExitShortExcursion(){
+    // §18.36: the SHORT-side MAE/MFE in reconstruction was entirely unpinned -- inverting both
+    // extremes on the short branch survived, while the same inversion on the long branch kills two.
+    // A short that ran to within a pip of its stop would report MAE 0 -- "this trade never went
+    // against me" -- the exact opposite of the truth, and grounds for tightening a stop that was in
+    // fact nearly hit. These figures reach the closed record, the journal and the evidence package.
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEXC-S',direction:'sell',entry:1.10000,stop:1.10500,target:1.09000});
+    const t0=Date.now()-10*60000;
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.10150,ask:1.10170}},null,[
+      // ask high 1.10400 = 40 pips AGAINST the short; ask low 1.09700 = 30 pips IN FAVOUR.
+      alexExecBar(t0+60000,1.09650,1.10380,1.09700,1.10400)
+    ]);
+    return g.alexGCheckLivePositions().then(function(){
+      installOfflineFetch();
+      const pos=g.getAlexGAccount().openPositions[0];
+      check('ALEXEXIT.28 (SHORT EXCURSION): for a SHORT the adverse extreme is the ask HIGH and the favourable extreme is the ask LOW -- 40 pips MAE and 30 pips MFE here. Inverting them reports a trade that nearly hit its stop as never having gone against you',
+        !!pos && Math.abs(pos.maePips-40)<0.001 && Math.abs(pos.mfePips-30)<0.001,
+        pos?('maePips='+pos.maePips+' (expect 40) mfePips='+pos.mfePips+' (expect 30)'):'no open position');
+      check('ALEXEXIT.29 (SHORT EXCURSION, R multiples): those excursions are expressed against the position\'s own 50-pip risk -- 0.80R adverse and 0.60R favourable',
+        !!pos && Math.abs(pos.maeR-0.8)<0.001 && Math.abs(pos.mfeR-0.6)<0.001,
+        pos?('maeR='+pos.maeR+' mfeR='+pos.mfeR):'no open position');
+    });
+  }
   function stepAlexExitHistoricalNoTouch(){
     resetAll();
     alexSeedOpen({tradeId:'ALEXEXIT-HN'});
@@ -812,7 +909,8 @@ function runStep2APipelineObservabilityFixtures(g){
     // pipeline fixtures above depend on; each step reseeds the account itself.
     stepAlexExitBuyStop,stepAlexExitBuyTarget,stepAlexExitSellStop,stepAlexExitSellTarget,
     stepAlexExitNoTouch,stepAlexExitHistoricalStop,stepAlexExitHistoricalShortStop,
-    stepAlexExitHistoricalTargets,stepAlexExitHistoricalNoTouch];
+    stepAlexExitHistoricalTargets,stepAlexExitExactTouch,stepAlexExitShortExcursion,
+    stepAlexExitHistoricalNoTouch];
   let chain=Promise.resolve();
   steps.forEach(function(step){ chain=chain.then(function(){ return step(); }); });
   return chain.then(function(){ return results; }).catch(function(e){

@@ -1081,6 +1081,39 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setAiChat({key:'',model:'test',messages:[]});
   }
 
+  // ═══ 🔴 §18.36: a legitimate Set Balance must not poison the ledger verdict forever ══════════
+  {
+    seedClean();
+    g.setPaperAccount({balance:10200,openPositions:[],closedPositions:[
+      {id:1,pnl:200,result:'Win',closedAt:'2026-08-10T10:00:00.000Z'}
+    ]});
+    const before=g.computePaperTradingHealthReport();
+    assert('SETBAL.0 (PRECONDITION): the account reconciles cleanly before the adjustment -- 10000 start plus 200 of booked P&L equals the 10200 actual',
+      before.jvm.integrity.balanceDifference===0
+        && JSON.stringify(before.combined.reconciliationIssues||[]).toLowerCase().indexOf('balance')===-1,
+      'expected='+before.jvm.integrity.expectedBalance+' actual='+before.jvm.integrity.actualBalance+
+      ' issues='+JSON.stringify(before.combined.reconciliationIssues||[]).slice(0,120));
+    // The real, shipped operator action -- confirm() is stubbed true in this harness, exactly as a
+    // click-through. Nothing about the trade history changes; only the balance is set by hand.
+    g.setBalanceInput(25000);
+    g.setPaperBalance();
+    const after=g.computePaperTradingHealthReport();
+    assert('SETBAL.1: after a deliberate, confirm-gated Set Balance the ledger still reconciles -- the adjustment is RECORDED, so expected tracks actual instead of diverging by the amount the operator chose',
+      after.jvm.integrity.actualBalance===25000 && after.jvm.integrity.balanceDifference===0,
+      'expected='+after.jvm.integrity.expectedBalance+' actual='+after.jvm.integrity.actualBalance+' diff='+after.jvm.integrity.balanceDifference);
+    assert('SETBAL.2: and no BALANCE issue is raised at all -- asserted on the balance issue specifically rather than the overall verdict, because this fixture seeds a closed trade with no journal record, which raises an unrelated issue of its own. Without the recorded baseline it reads ISSUES DETECTED forever, so a REAL later discrepancy is indistinguishable from the operator\'s own action and the detector is lost to alarm fatigue',
+      JSON.stringify(after.combined.reconciliationIssues||[]).toLowerCase().indexOf('balance')===-1,
+      'issues='+JSON.stringify(after.combined.reconciliationIssues||[]).slice(0,160));
+    // NEGATIVE CONTROL: a genuine unexplained divergence must STILL be reported. The fix must
+    // explain the operator's action, not silence the detector.
+    const acct=g.getPaperAccount(); acct.balance=acct.balance+777;
+    const tampered=g.computePaperTradingHealthReport();
+    assert('SETBAL.3 (NEGATIVE CONTROL): an unexplained 777.00 divergence on top of the recorded adjustment is still DETECTED -- the repair explains the operator action, it does not disarm the check',
+      tampered.jvm.integrity.balanceDifference===777
+        && JSON.stringify(tampered.combined.reconciliationIssues||[]).toLowerCase().indexOf('balance')!==-1,
+      'diff='+tampered.jvm.integrity.balanceDifference+' issues='+JSON.stringify(tampered.combined.reconciliationIssues||[]).slice(0,160));
+    seedClean();
+  }
   // ═══ §16.6 TRADE-ID INTEGRITY (owner-authorized protected change) ═══════════════════════════
   // The defect: `id: Date.now() + Math.floor(Math.random()*1000)`. Two opens in the same
   // millisecond collided with p ~ 1/1000, checkAutoTrades opens across pairs via Promise.all so
