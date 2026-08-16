@@ -1986,7 +1986,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.36.3';
+const APP_VERSION='12.36.4';
 const APP_VERSION_DATE='16 Aug 2026';
 const APP_VERSION_LOG=[
   '12.36.0 — THE ONE LINE HOLDING THE ACCOUNT BALANCE UP HAD NO FIXTURE (MOGO-021 section 18.30). Two independent adversarial agents; 24 and 7 mutations scored gate-wide. THE CRITICAL FINDING: `if(!exitPrice)return;` in closePaperPosition was the SINGLE line preventing total, permanent destruction of the paper account, and NOTHING watched it. Deleting it survived all 2,215 fixtures with drift 0, while the control at the same line killed 85 -- the line runs constantly; its FAILURE path was unwitnessed. Driven end to end through the real engine, the deletion books the close at exitPrice=undefined, so pnl and then balance become NaN -- and JSON.stringify(NaN) is `null`, so {"balance":null} is written to storage and SURVIVES RELOAD. commitPaperLedger validated the storage write and never the numbers, so there was no second line of defence; the ALEX open path already checks isFinite and the JVM ledger commit did not. Reachable, and the two failures are CORRELATED not independent: checkPaperPositions decides the exit from a synchronous price read, closePaperPosition then yields at `await fetchBidAsk`, and during that await the sweep rewrites the shared pairData slot -- a failed fetchPrice writes price:null, and fetchBidAsk and fetchPrice hit the same host with the same credentials, so ONE outage produces both. The same missing coverage hid a second mutation: rewriting the auto branch as `live!=null?live:pos.entry` books a genuine +$300 take-profit winner at the entry -- pnl 0, result Win, closeReason TAKE_PROFIT -- destroying the gain and corrupting expectancy with a phantom 0R win. PTE2E-NOFILL.1-4 close both, and commitPaperLedger now REFUSES a non-finite ledger through the existing blocking-banner contract (PTE2E-FINITE.0-3). Because that refusal makes the guard deletion survivable, NOFILL.3b pins the upstream guard on the property that actually distinguishes them: a healthy refusal is SILENT, raising no banner and no engine error, because the close never reached the commit. UNREALIZED P&L HAD ZERO COVERAGE. Three mutations of the open-position P&L, INCLUDING REPLACING THE PIP VALUE WITH THE CONSTANT 987654, all survived the full gate -- so every floating P&L and R-multiple the operator reads while deciding whether to cut a live trade could be arbitrarily wrong while the gate stayed green. This is the unwatched SECOND COPY of the pip arithmetic; the realized path is pinned by JVMEXIT-11. PTE2E-UNREAL.1-6 assert hand-computed literals for a long and a short, and .5/.6 make a re-derived pip value differ from the entry-fixed one so the equivalent mutant in the first scenario becomes a real kill. THE EVIDENCE-PLATFORM EXCLUSION WAS DEFEATED FOR THE SEVENTH TIME, BY THE COMMIT THAT FIXED THE SIXTH. Version six matched the artifact MESSAGE exactly, as promised -- but discarded the WHOLE ENTRY, and evidenceRecordWriteFailure stores caller-controlled `context` and `detail:extra` while recordAlexGEngineError merges arbitrary meta. So ONE call to a real production function, with no forged strings at all, sends the exact allowlisted message and rides its payload in a field the filter never examined, poisoning both filtered structures at once. Found independently by me and by the verifier. An entry is now excluded only if its ENTIRE content, minus the timestamp, is a known artifact shape; all four channels -- message prefix, detail, engine meta and context -- now die, and a byte-identical zero-payload artifact still passes by design. TWO CREDENTIAL FIXTURES VACUOUS BY TIMING, NOT EMPTINESS: setCfg is a bare assignment and localStorage was read on the very next line, so ZERO production persistence ran while the sentinel was live and no persistence behaviour could make them fail. Leaks to an fxhub_ key and to a non-fxhub key both left them green. The real save/commit/persist surface now runs with the secret live, with a positive control that plants a sentinel and requires the same scan to find it. FOURTEEN MORE UNKILLABLE FIXTURES RETIRED and the harness that hid them fixed: t(name,fn) recorded a PASS whenever fn() did not throw SYNCHRONOUSLY, so a returned promise was stored as a detail string and discarded -- any async fixture would have passed unconditionally, proven by writing one that asserts false and passes. The same helper is copy-pasted in three suites; all three now fail closed. pnlUnavailable, computed and fixture-tested since v12.16.0 and RENDERED NOWHERE, is the third value this milestone recorded faithfully and never shown -- it is the number that EXPLAINS an UNEXPLAINED_DELTA, and without it the operator cannot tell missing data from wrong books. Gate: 34 suites, 2,235/2,235; protected drift 0.',
@@ -6025,23 +6025,46 @@ function renderAlexGLiveOpenTable(){
   tbl.innerHTML=`<thead><tr><th>Pair</th><th>TF</th><th>Setup</th><th>Dir</th><th>Entry</th><th>Stop</th><th>Target</th><th>R:R</th><th>Risk</th><th>Size</th><th>Opened</th><th>Current price</th><th>Current P&L</th><th>Current R</th><th>MAE</th><th>MFE</th><th>Action</th></tr></thead><tbody>`+
     positions.map(p=>{
       const live=pairData[p.pair]&&pairData[p.pair].price;
+      // v12.36.4 (MOGO-021 §18.32): this table is the ALEX twin of the JVM open-positions table,
+      // and it had NO fixture of any kind -- replacing its entire entry/stop/target cell block with
+      // a literal survived the whole gate. Two real defects lived in that unwatched block:
+      //
+      //  1. NO NULL GUARD on pipValue. The JVM twin guards with `if(pipVal!=null)`; this side did
+      //     not. The consequence is worse than a visible NaN: `null * positionSize` COERCES TO 0 in
+      //     JavaScript, so a position whose conversion rate was unavailable rendered a confident
+      //     "+$0.00 / +0.00R" -- indistinguishable from a genuinely flat trade, on the screen the
+      //     operator decides from. (An `undefined` pipValue does produce NaN; the guard covers both.)
+      //     A dash says the figure is unavailable. A zero says the trade is going nowhere.
+      //  2. EVERY PRICE HARDCODED TO 5 DECIMALS, including JPY pairs, so USD_JPY entry, stop, target
+      //     and current price rendered as 150.12300 -- two orders of magnitude of spurious precision
+      //     on the levels a stop is read from. The rest of the application uses the
+      //     `includes('JPY')?3:5` convention in six places.
+      //  3. `p.maePips.toFixed(1)` with no guard, while the record shape at the journal seam
+      //     initialises maePips/mfePips to NULL. A position missing those fields does not degrade
+      //     one cell -- it THROWS out of the map, so the ENTIRE ALEX open-positions table fails to
+      //     render and the operator sees nothing at all. Routed through fmtPipsVal, which is the
+      //     existing null-tolerant formatter used elsewhere for exactly this field.
+      const dec=String(p.pair||'').includes('JPY')?3:5;
       let curPriceHtml='—',curPnlHtml='—',curRHtml='—';
       if(live){
-        curPriceHtml=Number(live).toFixed(5);
-        const pip=pipSize(p.pair);
-        const movePips=(live-p.entry)/pip*(p.direction==='buy'?1:-1);
-        const pnl=movePips*p.pipValue*p.positionSize;
-        curPnlHtml=`<span style="color:${pnl>=0?'var(--green)':'var(--red)'};font-weight:600">${fmtCurrency(pnl)}</span>`;
-        curRHtml=p.riskAmount?fmtRMult(pnl/p.riskAmount):'—';
+        curPriceHtml=Number(live).toFixed(dec);
+        // Fail to a dash rather than to a coerced zero. Same contract as the JVM table.
+        if(p.pipValue!=null&&isFinite(p.pipValue)){
+          const pip=pipSize(p.pair);
+          const movePips=(live-p.entry)/pip*(p.direction==='buy'?1:-1);
+          const pnl=movePips*p.pipValue*p.positionSize;
+          curPnlHtml=`<span style="color:${pnl>=0?'var(--green)':'var(--red)'};font-weight:600">${fmtCurrency(pnl)}</span>`;
+          curRHtml=p.riskAmount?fmtRMult(pnl/p.riskAmount):'—';
+        }
       }
       return `<tr>
       <td>${escapeHtml(p.pair)}</td><td>${p.timeframe}</td><td style="font-size:11px">${escapeHtml(p.setupLabel)}${p.isDeveloperTrade?' <span class="badge" style="background:var(--gold);color:#000;font-size:9px" title="Developer test trade -- not a real signal">TEST</span>':''}</td>
       <td class="${p.direction==='buy'?'tag-long':'tag-short'} dir-tag" style="display:inline-block">${p.direction==='buy'?'BUY':'SELL'}</td>
-      <td>${p.entry.toFixed(5)}</td><td>${p.stop.toFixed(5)}</td><td>${p.target.toFixed(5)}</td>
+      <td>${p.entry.toFixed(dec)}</td><td>${p.stop.toFixed(dec)}</td><td>${p.target.toFixed(dec)}</td>
       <td>${p.plannedRR.toFixed(2)}:1</td><td>$${p.riskAmount.toFixed(2)}</td><td>${p.positionSize.toFixed(2)}</td>
       <td style="font-size:11px;white-space:nowrap">${fmtJournalDate(p.openedAt)}</td>
       <td>${curPriceHtml}</td><td>${curPnlHtml}</td><td>${curRHtml}</td>
-      <td>${p.maePips.toFixed(1)}p</td><td>${p.mfePips.toFixed(1)}p</td><td>—</td>
+      <td>${fmtPipsVal(p.maePips)}</td><td>${fmtPipsVal(p.mfePips)}</td><td>—</td>
     </tr>`;
     }).join('')+`</tbody>`;
 }

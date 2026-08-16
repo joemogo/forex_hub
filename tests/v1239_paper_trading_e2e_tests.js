@@ -391,6 +391,98 @@ async function runV1239PaperTradingE2EFixtures(g){
     jvmClean();
   }
 
+  // ── 🔴 §18.32: the ALEX open-positions table was the UNMIRRORED HALF of PTE2E-UNREAL ────────
+  // Independent verification made the paired observation that matters: inverting the direction sign
+  // in the unrealized-P&L calculation is KILLED on the JVM side by PTE2E-UNREAL.3/.4 and SURVIVED
+  // on the ALEX side, byte-for-byte the same mutation on the same money figure on the same kind of
+  // screen. The v12.36.0 repair had been applied to one side only. Replacing the entire
+  // entry/stop/target cell block with a literal also survived, so nothing read this table at all.
+  //
+  // Two real defects were living in that unwatched block, both now fixed and both asserted here:
+  // a missing pipValue null guard (the JVM twin has one; this side rendered "$NaN"), and every
+  // price hardcoded to 5 decimals including JPY pairs.
+  function alexOpenPos(over){
+    return Object.assign({
+      tradeId:'ALEXOPEN-1',pair:'GBP_USD',timeframe:'H1',setupLabel:'Test setup',direction:'buy',
+      entry:1.3000,stop:1.2900,target:1.3200,plannedRR:2,riskAmount:100,positionSize:0.10,
+      pipValue:10,openedAt:'2026-08-10T14:00:00.000Z',maePips:0,mfePips:0
+    },over||{});
+  }
+  {
+    jvmClean(); alexClean();
+    g.setHideTestTradesAlex(false);
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos()],closedPositions:[],journal:[]});
+    g.setPairData('GBP_USD',1.3050);            // +50 pips in favour
+    g.renderAlexGLiveOpenTable();
+    const html=g.elHtml('alexgLiveOpenTable');
+    assert('PTE2E-ALEXOPEN.0 (PRECONDITION): the ALEX open-positions table really rendered this position with its live price, so the assertions below read a real row rather than the empty-state message',
+      html.indexOf('1.30500')!==-1 && html.indexOf('GBP_USD')!==-1 && html.indexOf('No open Alex live positions')===-1,
+      'len='+html.length+' head='+html.slice(0,140));
+    assert('PTE2E-ALEXOPEN.1 (BUY, hand-computed): a buy 50 pips in profit at 0.10 size and $10 per pip shows exactly +$50.00 unrealized on the ALEX table -- the same figure, on the same kind of screen, as PTE2E-UNREAL.1 asserts for JVM',
+      html.indexOf('+$50.00')!==-1,
+      'has+$50.00='+(html.indexOf('+$50.00')!==-1));
+    assert('PTE2E-ALEXOPEN.2 (BUY, R multiple): that position reads exactly +0.50R against its $100.00 risk',
+      html.indexOf('+0.50R')!==-1,'has+0.50R='+(html.indexOf('+0.50R')!==-1));
+  }
+  {
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos({direction:'sell',stop:1.3100,target:1.2800})],closedPositions:[],journal:[]});
+    g.setPairData('GBP_USD',1.3050);            // 50 pips AGAINST a short
+    g.renderAlexGLiveOpenTable();
+    const html=g.elHtml('alexgLiveOpenTable');
+    assert('PTE2E-ALEXOPEN.3 (SELL, sign -- the mutation that survived on this side while dying on the JVM one): a short 50 pips OFFSIDE shows $-50.00, not +$50.00. An inverted direction sign reports a losing ALEX trade as a winning one',
+      html.indexOf('$-50.00')!==-1 && html.indexOf('+$50.00')===-1,
+      'neg='+(html.indexOf('$-50.00')!==-1)+' pos='+(html.indexOf('+$50.00')!==-1));
+    assert('PTE2E-ALEXOPEN.4 (SELL, R multiple): the same short reads -0.50R',
+      html.indexOf('-0.50R')!==-1,'has-0.50R='+(html.indexOf('-0.50R')!==-1));
+  }
+  {
+    // 🔴 The missing null guard. The JVM twin renders "—" when the pip value is unavailable; this
+    // side computed with it regardless. My first draft asserted the ABSENCE OF "NaN" and the
+    // mutation survived: `null * positionSize` coerces to 0 in JavaScript, so the unguarded code
+    // rendered a confident "+$0.00 / +0.00R" -- a plausible-looking wrong number rather than a
+    // visible fault, which is strictly harder for an operator to catch. Asserted on the dash.
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos({pipValue:null})],closedPositions:[],journal:[]});
+    g.setPairData('GBP_USD',1.3050);
+    g.renderAlexGLiveOpenTable();
+    const html=g.elHtml('alexgLiveOpenTable');
+    assert('PTE2E-ALEXOPEN.5 (NULL GUARD): a position whose pip value is unavailable renders a DASH for unrealized P&L and R -- never NaN, and never a coerced "+$0.00" that reads as a real flat position',
+      html.indexOf('NaN')===-1 && html.indexOf('+$0.00')===-1 && html.indexOf('+0.00R')===-1,
+      'NaN='+(html.indexOf('NaN')!==-1)+' zeroPnl='+(html.indexOf('+$0.00')!==-1)+' zeroR='+(html.indexOf('+0.00R')!==-1));
+    assert('PTE2E-ALEXOPEN.6 (and the row still renders): the position itself is still listed with its prices, so the guard degrades one cell rather than hiding the trade',
+      html.indexOf('1.30000')!==-1 && html.indexOf('No open Alex live positions')===-1,
+      'row present='+(html.indexOf('1.30000')!==-1));
+  }
+  {
+    // 🔴 JPY decimals. USD_JPY entry/stop/target/current price rendered as 150.12300.
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos({pair:'USD_JPY',entry:150.123,stop:149.123,target:152.123})],closedPositions:[],journal:[]});
+    g.setPairData('USD_JPY',150.623);
+    g.renderAlexGLiveOpenTable();
+    const html=g.elHtml('alexgLiveOpenTable');
+    assert('PTE2E-ALEXOPEN.7 (JPY PRECISION): a JPY pair renders its entry at 3 decimals, as every other price surface in the application does, not at 5',
+      html.indexOf('150.123')!==-1 && html.indexOf('150.12300')===-1,
+      'has3dp='+(html.indexOf('150.123')!==-1)+' has5dp='+(html.indexOf('150.12300')!==-1));
+    assert('PTE2E-ALEXOPEN.8 (JPY, the live price too): the current-price cell follows the same convention, so the stop and the price it is compared against are shown at the same precision',
+      html.indexOf('150.623')!==-1 && html.indexOf('150.62300')===-1,
+      'has3dp='+(html.indexOf('150.623')!==-1)+' has5dp='+(html.indexOf('150.62300')!==-1));
+    // 🔴 A legacy position with null excursion fields did not degrade one cell -- `null.toFixed(1)`
+    // THREW out of the map, so the entire ALEX open-positions table rendered nothing and the
+    // operator saw no open trades at all. The journal record shape initialises maePips/mfePips to
+    // null, so this is reachable from persisted state across a restart, not a hypothetical.
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[alexOpenPos({maePips:null,mfePips:null})],closedPositions:[],journal:[]});
+    g.setPairData('GBP_USD',1.3050);
+    let threw=null;
+    try{ g.renderAlexGLiveOpenTable(); }catch(e){ threw=(e&&e.message)?e.message:String(e); }
+    const legacyHtml=g.elHtml('alexgLiveOpenTable');
+    assert('PTE2E-ALEXOPEN.9 (LEGACY RECORD): a position with null excursion fields still renders the whole table -- it must not throw out of the row map and blank every open ALEX trade',
+      threw===null && legacyHtml.indexOf('1.30000')!==-1 && legacyHtml.indexOf('No open Alex live positions')===-1,
+      'threw='+String(threw)+' rowPresent='+(legacyHtml.indexOf('1.30000')!==-1));
+    jvmClean(); alexClean();
+  }
+
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
   {
     jvmClean();
@@ -898,7 +990,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===80, 'recorded='+results.length+' expected=80 (this fixture is the 81st)');
+    results.length===90, 'recorded='+results.length+' expected=90 (this fixture is the 91st)');
 
   return results;
 }

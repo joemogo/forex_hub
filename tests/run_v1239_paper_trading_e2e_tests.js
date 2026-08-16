@@ -213,6 +213,11 @@ try{
     // constant payload at the computation survived the whole gate. This is the second, unwatched
     // copy of the pip/P&L arithmetic; the realized close path is pinned by JVMEXIT-11.
     'g.renderPaper=renderPaper;' +
+    // §18.32: the ALEX twin of the open-positions table. Independent verification replaced its
+    // whole entry/stop/target cell block with a literal and the full gate stayed green -- it had no
+    // fixture of any kind, while its JVM mirror had just been covered by PTE2E-UNREAL.1-6.
+    'g.renderAlexGLiveOpenTable=renderAlexGLiveOpenTable;' +
+    'g.setHideTestTradesAlex=function(v){hideTestTradesAlex=!!v;};' +
     'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):""; };' +
     'g.forceBalance=function(v){ paperAccount.balance=v; };' +
     'g.getPaperBlockingError=function(){ return paperLedgerBlockingError; };' +
