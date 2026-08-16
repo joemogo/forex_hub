@@ -343,6 +343,45 @@ async function runV1239PaperTradingE2EFixtures(g){
       'EUR_USD positions='+openOn('EUR_USD')+' total='+(g.getPaperAccount().openPositions||[]).length);
   }
   {
+    // ── 🔴 PTE2E-RACE: THE INNER PRE-OPEN RE-CHECK (§18.22) ──────────────────────────────────────
+    // checkAutoTrades guards one-position-per-pair TWICE: once in the eligibility filter, and again
+    // immediately before opening, "in case another concurrent check (or a manual click) already
+    // acted on this pair". Only the OUTER guard was covered -- independent verification showed the
+    // inner re-check could be deleted with nothing objecting, because every fixture created the
+    // conflicting position BEFORE the tick, where the filter catches it first.
+    //
+    // Under genuinely overlapping ticks the inner guard is the one that matters, and it is the only
+    // thing standing between a concurrent manual click and a SECOND position on the same pair. This
+    // makes the position appear DURING the in-flight evaluation fetch -- after the filter has
+    // already passed the pair, before the re-check runs.
+    jvmClean(); alexClean(); seedConversions();
+    activeWatchAll();
+    g.setPricing('serve','1.09990','1.10000');
+    g.resetM15Calls();
+    let injected=null;
+    g.onMidFetch(function(inst){
+      if(inst!=='EUR_USD'||injected) return;   // once, and only for the pair under test
+      // A manual click lands mid-tick: EUR_USD now holds a position the filter never saw.
+      const acct=g.getPaperAccount();
+      injected={id:990777,pair:'EUR/USD',oPair:'EUR_USD',dir:'buy',entry:1.1000,stop:1.0900,target:1.1200,lots:0.1};
+      acct.openPositions.push(injected);
+      g.setPaperAccount(acct);
+    });
+    await g.checkAutoTrades();
+    g.onMidFetch(null);
+    const eu=(g.getPaperAccount().openPositions||[]).filter(p=>p.oPair==='EUR_USD');
+    assert('PTE2E-RACE.0 (PRECONDITION): the pair WAS evaluated this tick -- the outer filter passed it, so the assertions below test the inner pre-open re-check and not the filter',
+      g.m15Calls('EUR_USD')===1,'EUR_USD evaluations='+g.m15Calls('EUR_USD'));
+    assert('PTE2E-RACE.1 (PRECONDITION): the conflicting position really was injected DURING the in-flight evaluation, so it existed at the re-check and not at the filter',
+      !!injected,'injected='+(!!injected));
+    assert('PTE2E-RACE.2: a position appearing mid-tick is caught by the PRE-OPEN re-check -- EUR_USD still holds exactly the ONE injected position, so a concurrent manual click cannot produce a second position on the same pair',
+      eu.length===1 && eu[0].id===990777,
+      'EUR_USD positions='+eu.length+' ids='+eu.map(p=>p.id).join(','));
+    assert('PTE2E-RACE.3: and the rest of the tick is unaffected -- every other tradeable pair still opened exactly once, so the re-check rejects one pair rather than aborting the sweep',
+      (g.getPaperAccount().openPositions||[]).length===TRADEABLE.length,
+      'total open='+(g.getPaperAccount().openPositions||[]).length+' expected='+TRADEABLE.length);
+  }
+  {
     // EXCLUSION: a pair already traded today is not even evaluated (kills M15a).
     jvmClean(); seedConversions(); activeWatchAll();
     g.setMode('firing');
@@ -636,7 +675,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===56, 'recorded='+results.length+' expected=56 (this fixture is the 57th)');
+    results.length===60, 'recorded='+results.length+' expected=60 (this fixture is the 61st)');
 
   return results;
 }

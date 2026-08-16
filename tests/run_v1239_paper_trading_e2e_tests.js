@@ -144,6 +144,11 @@ let __mode='flat';
 // boundary -- how many times the engine actually went out to evaluate each pair on one tick --
 // not a wrapper around any app function.
 let __m15Calls={};
+// §18.22: a hook that fires DURING an in-flight fetch, so a fixture can make a position appear
+// between the eligibility filter and the pre-open re-check -- the concurrent manual click /
+// overlapping tick the inner guard exists for. Without an interleaving point that guard can
+// only ever be exercised by the outer filter, which is why it was uncovered.
+let __midFetch=null;
 globalThis.fetch=function(url){
   const u=String(url);
   if(/\/pricing/.test(u)){
@@ -158,6 +163,10 @@ globalThis.fetch=function(url){
   if(__mode==='firing'){
     if(gran==='D') return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(120)}));
     if(gran==='W') return Promise.resolve(makeResponse(true,200,{candles:structuralCandles(60)}));
+    // NOT self-consuming: instruments are fetched via Promise.all in an order the fixture does not
+    // control, so nulling the hook on the FIRST fetch fired it against whichever pair happened to
+    // go first -- never the one under test. The callback decides when it is done.
+    if(__midFetch){ try{ __midFetch(inst); }catch(e){} }
     return Promise.resolve(makeResponse(true,200,{candles:firingM15(wantN)}));
   }
   return Promise.resolve(makeResponse(true,200,{candles:flatM15(60)}));
@@ -166,6 +175,7 @@ globalThis.fetch=function(url){
 const g={};
 g.setMode=m=>{__mode=m;};
 g.setPricing=(mode,bid,ask)=>{__pricingMode=mode; if(bid!=null)__pbid=String(bid); if(ask!=null)__pask=String(ask);};
+g.onMidFetch=fn=>{__midFetch=fn;};
 g.resetM15Calls=()=>{__m15Calls={};};
 g.resetPricingCalls=()=>{__pricingCalls=0;};
 g.pricingCalls=()=>__pricingCalls;
