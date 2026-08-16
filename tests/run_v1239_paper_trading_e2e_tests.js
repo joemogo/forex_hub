@@ -293,7 +293,18 @@ try{
     '  decidedSetups:Array.from(alexGDecidedSetups).sort(),' +
     '  decidedEconomic:(typeof alexGDecidedEconomic!=="undefined"?Array.from(alexGDecidedEconomic).sort():null),' +
     '  signalInFlight:(typeof alexGSignalInFlight!=="undefined"?Array.from(alexGSignalInFlight).sort():null),' +
-    '  zoneState:(typeof alexGZoneState!=="undefined"?alexGZoneState:null),' +
+    // §18.25: the symmetric JVM->ALEX channels, including the two that silence ALEX's own
+    // integrity reporting.
+    '  identityDriftReported:(typeof alexGIdentityDriftReported!=="undefined"?alexGIdentityDriftReported:null),' +
+    '  cursorSanityReported:(typeof alexGCursorSanityReported!=="undefined"?alexGCursorSanityReported:null),' +
+    '  replayTrades:(typeof alexGReplayTrades!=="undefined"?alexGReplayTrades:null),' +
+    '  replayRejected:(typeof alexGReplayRejected!=="undefined"?alexGReplayRejected:null),' +
+    '  replayStats:(typeof alexGReplayStats!=="undefined"?alexGReplayStats:null),' +
+    // §18.25: the evidence-platform counters are NOT ALEX-owned state -- the platform is
+    // strategy-agnostic and legitimately records a JVM operation, so comparing them here reports a
+    // normal JVM write as an ALEX leak. Removed for the same reason the engine-error entries are
+    // cross-referenced rather than compared raw: shared platform telemetry is not strategy state.
+        '  zoneState:(typeof alexGZoneState!=="undefined"?alexGZoneState:null),' +
     // EVERY fxhub_alex* key, not just fxhub_alexg -- a leak into fxhub_alexv2_account sat outside
     // BOTH snapshots because one matched a narrower prefix than the family it was guarding.
     '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alex")===0;}).sort()' +
@@ -323,7 +334,27 @@ try{
     '  checklistState:(typeof checklistState!=="undefined"?checklistState:null),' +
     '  alertLog:(typeof alertLog!=="undefined"?alertLog:null),' +
     '  tradeNotes:(typeof tradeNotes!=="undefined"?tradeNotes:null),' +
-    '  storageLoadFailures:(typeof storageLoadFailures!=="undefined"?Object.keys(storageLoadFailures).sort():null),' +
+    // §18.25: the MODULE-STATE axis was still a hand-written allowlist with the same failure mode
+    // the storage allowlist had. An independent sweep injected 13+ cross-strategy channels that all
+    // survived 2,207/2,207. The two that MOVE MONEY are first:
+    //   paperTradeIdSeq  -- the JVM trade-ID space. Poisoned to MAX_SAFE_INTEGER, seq+1===seq
+    //                       forever, so EVERY subsequent JVM id is identical: positions sharing one
+    //                       id and the close lookup resolving to the wrong position. The
+    //                       paperSeedTradeIdSeq guard screens PERSISTED values only, not this.
+    //   structuralAOICache -- the shared D/W cache getStructuralAOI serves, which sets the real
+    //                       STOP and TARGET on a JVM paper trade.
+    //   cfg.env          -- flipping it to 'live' repoints apiBase() at the live OANDA host. Only
+    //                       the fxhub_env KEY was compared, so an in-memory flip was invisible.
+    '  tradeIdSeq:(typeof paperTradeIdSeq!=="undefined"?paperTradeIdSeq:null),' +
+    '  structuralAOICache:(typeof structuralAOICache!=="undefined"?structuralAOICache:null),' +
+    '  cfgEnv:(typeof cfg!=="undefined"&&cfg?cfg.env:null),' +
+    '  manualReviewApproved:(typeof manualReviewApprovedDecisionTs!=="undefined"?manualReviewApprovedDecisionTs:null),' +
+    '  manualReviewDismissed:(typeof manualReviewDismissedUntilTs!=="undefined"?manualReviewDismissedUntilTs:null),' +
+    '  healthReportCache:(typeof paperTradingHealthReportCache!=="undefined"?paperTradingHealthReportCache:null),' +
+    '  firedAlerts:(typeof firedAlerts!=="undefined"?Array.from(firedAlerts).sort():null),' +
+    '  hideTestTrades:(typeof hideTestTradesPaper!=="undefined"?hideTestTradesPaper:null),' +
+    '  lifecycleLogLen:(typeof paperLifecycleLog!=="undefined"?paperLifecycleLog.length:null),' +
+        '  storageLoadFailures:(typeof storageLoadFailures!=="undefined"?Object.keys(storageLoadFailures).sort():null),' +
     '  positionsClosing:(typeof paperPositionsClosing!=="undefined"?Array.from(paperPositionsClosing).sort():null),' +
     '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alex")!==0;}).sort()' +
     '           .map(function(k){return k+"="+localStorage.getItem(k);})' +
@@ -338,6 +369,32 @@ try{
     'g.setPaperLedgerBlockingError=function(v){paperLedgerBlockingError=v;};' +
     'g.setPaperLedgerIntegrityWarning=function(v){paperLedgerIntegrityWarning=v;};' +
     'g.clearStorageLoadFailures=function(){storageLoadFailures={};};' +
+    // §18.25: EVERY newly-snapshotted field needs a reset, or the snapshot has nothing to lose.
+    // Adding fields without resetting them reproduces the §18.20a defect exactly: a leak that
+    // writes a value an earlier block already wrote is identical before and after. Proven --
+    // alexGIdentityDriftReported was ALREADY true when ISO.2 snapshotted, so silencing ALEX's
+    // integrity reporting from the JVM side was invisible until this reset existed.
+    // §18.25: the ALEX decision sets and zone state are EMPTY in every isolation block, so a leak
+    // that CLEARS them changes nothing and is invisible. Seeding gives the snapshot something to
+    // lose -- the same repair the JVM side needed for the open position and the INC-001 register.
+    'g.seedIsolationScratch=function(){' +
+    '  try{alexGDecidedSetups=new Set(["AGS|ISO-SEED-1","AGS|ISO-SEED-2"]);}catch(e){}' +
+    '  try{alexGZoneState={"EUR_USD":{seeded:true}};}catch(e){}' +
+    '};' +
+    'g.resetIsolationScratch=function(){' +
+    '  try{alexGIdentityDriftReported=new Set();}catch(e){}' +
+    '  try{alexGCursorSanityReported=new Set();}catch(e){}' +
+    '  try{alexGReplayTrades=[];alexGReplayRejected=[];alexGReplayStats=null;}catch(e){}' +
+    '  try{evidenceUnexportedCount=0;evidenceStorageBanner=null;}catch(e){}' +
+    '  try{alexGZoneState={};alexGDecidedSetups=new Set();}catch(e){}' +
+    '  try{structuralAOICache={};}catch(e){}' +
+    '  try{firedAlerts=new Set();}catch(e){}' +
+    '  try{hideTestTradesPaper=false;}catch(e){}' +
+    '  try{paperLifecycleLog=[];}catch(e){}' +
+    '  try{manualReviewApprovedDecisionTs={};manualReviewDismissedUntilTs={};}catch(e){}' +
+    '  try{paperTradingHealthReportCache=null;}catch(e){}' +
+    '  try{cfg={key:"",accountId:"",env:"practice"};}catch(e){}' +
+    '};' +
     'g.seedStorageLoadFailure=function(k,m){storageLoadFailures[k]={message:m,at:"2026-01-01T00:00:00.000Z"};};' +
     'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +
     'g.clearLocalStorage=function(){localStorage.__clear();};' +

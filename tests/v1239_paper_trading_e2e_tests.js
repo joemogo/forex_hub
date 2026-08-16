@@ -99,10 +99,15 @@ async function runV1239PaperTradingE2EFixtures(g){
     // snapshots and passes. Proven: a JVM->ALEX write of a constant into alexGLastEvaluatedCloseTime
     // killed ZERO fixtures, while the same write with an incrementing value killed ISO.2 and ISO.6.
     // An idempotent leak is still a leak; the snapshot must start from a known-empty state.
+    g.resetIsolationScratch();   // §18.25: the newly-snapshotted fields need a known start
     g.setAlexGZoneState({});
     g.setAlexGLastEvaluatedCloseTime({});
     g.setAlexGLedgerBlockingError(null);
     g.setAlexGLedgerIntegrityWarning(null);
+    // SEEDED LAST, deliberately. An earlier ordering seeded before setAlexGZoneState({}) wiped it
+    // straight back to empty, so a leak that WIPES zone state stayed invisible -- the seeder has to
+    // be the final word or the snapshot has nothing to lose after all.
+    g.seedIsolationScratch();
   }
   // Conversion snapshot so every SCAN_PAIRS instrument can actually be sized. Without it
   // pipValuePerLot() correctly returns null for JPY/CAD/CHF-quoted pairs and they are skipped --
