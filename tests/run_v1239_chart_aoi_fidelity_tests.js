@@ -222,6 +222,7 @@ const wrapped = new Function('g',
   'g.setAlexGAutoTrading=function(v){ alexGAutoTrading=v; };' +
   'g.setAlexGZoneState=function(v){ alexGZoneState=v; };' +
   'g.setAlexGSetupState=function(v){ alexGSetupState=v; };' +
+  'g.getAlexGSetupState=function(){ return alexGSetupState; };' +
   'g.setAlexGLastEvaluatedCloseTime=function(v){ alexGLastEvaluatedCloseTime=v; };' +
   'g.getAlexGLastEvaluatedCloseTime=function(){ return alexGLastEvaluatedCloseTime; };' +
   'g.setAlexGAccount=function(v){ alexGAccount=v; };' +

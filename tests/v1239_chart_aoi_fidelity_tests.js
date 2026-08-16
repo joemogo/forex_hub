@@ -419,7 +419,12 @@ async function runChartAoiFidelityFixtures(g){
       detail.push(pr[0]+'->'+shown);
       if(shown!==pr[1]) agree=false;
     });
-    assert('CAF-LABEL.1','the live-setups display helper returns the SAME frozen user-facing label the setup record carries, for both setup types -- the duplicated mapping cannot drift',
+    // ⚠️ DISCLOSED SCOPE. CAF-LABEL.1 pins the duplication only for the setup type this engine run
+    // actually produces (A_repeatedReaction) -- verified: changing THAT branch inside the protected
+    // record kills it, while changing the B_breakRetest branch does not, because no real
+    // break-retest setup is constructed here. The B half below is still a literal comparison and is
+    // counted as such, not as drift protection.
+    assert('CAF-LABEL.1b','and it still returns the frozen label for BOTH setup types (LITERAL comparison -- only the A branch above is pinned against a real record)',
       agree, detail.join(' '));
     assert('CAF-LABEL.2','and an unknown setup type is shown verbatim rather than being given an invented label',
       g.alexGSetupDisplayLabel('Z_unknown')==='Z_unknown'&&g.alexGSetupDisplayLabel('')==='' ,
@@ -613,6 +618,20 @@ async function runChartAoiFidelityFixtures(g){
       rows.length===1&&first[0]==='EUR_USD'&&first[1]==='H1'&&first[2]==='REPEATED ZONE REACTION'&&
       first[5].indexOf('AGZ|AGC|EUR_USD|H1')===0,
       'rows='+rows.length+' cells='+JSON.stringify(first));
+    // §18.21: relocated here from the CAF-LABEL block, which runs BEFORE this engine run and
+    // therefore had no real setup record to compare against -- the precondition caught that.
+    // §18.21: this compared the helper against HAND-WRITTEN LITERALS, so changing the mapping
+    // inside the PROTECTED alexGCreateSetupRecord left it green -- it pinned the helper alone, not
+    // the DUPLICATION, which is the only thing that can actually drift. It now reads the label off
+    // a REAL setup record produced by the real engine run above and requires the helper to agree
+    // with THAT. If the protected record's mapping is ever changed, this fails.
+    const realSetups=g.getAlexGSetupState()||[];
+    const realSetup=realSetups.filter(function(x){return x&&x.setupType&&x.setupLabel;})[0]||null;
+    assert('CAF-LABEL.0','PRECONDITION: the real engine run produced a setup record carrying BOTH a setupType and the frozen setupLabel, so the comparison below has a real record to compare against',
+      !!realSetup, realSetup?(realSetup.setupType+' -> '+realSetup.setupLabel):'no real setup record');
+    assert('CAF-LABEL.1','the display helper agrees with the label a REAL setup record carries -- compared against the record the PROTECTED alexGCreateSetupRecord actually produced, not against a literal, so the duplicated mapping cannot drift',
+      !!realSetup && g.alexGSetupDisplayLabel(realSetup.setupType)===realSetup.setupLabel,
+      realSetup?('helper='+g.alexGSetupDisplayLabel(realSetup.setupType)+' record='+realSetup.setupLabel):'no real setup record');
     assert('CAF-E2','ALEX END-TO-END: the rendered zone touch number is the engine’s own 4th reaction -- exactly "4", not 3 and not 5',
       first[6]==='4','touchCell='+JSON.stringify(first[6])+' evaluated='+(outcome&&outcome.evaluated));
     assert('CAF-E3','ALEX END-TO-END: the rendered status is the engine’s own recorded verdict for this candidate, and no position was constructed',

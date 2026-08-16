@@ -431,6 +431,80 @@ function runMarketDataContinuityFixtures(g){
     return '219 bars re-derived identically after reload';
   });
 
+  // ══ 🔴 MDHIST — runHistoricalDataDiagnostic: a SECOND copy of the pagination arithmetic ══════
+  // Independent adversarial verification found this function had ZERO behavioural coverage: three
+  // separate behaviour-changing mutations each killed 0 of 2,180 fixtures. It is an entirely
+  // separate implementation of the backward walk from fetchCandlesRange, reached from the
+  // Diagnostics "Historical Data Diagnostic" button -- so the tool an operator uses to CHECK data
+  // continuity could report a reversed, duplicated or truncated window as healthy.
+  //
+  // Signature is (pair, granularity, totalCount, onProgress); the walk continues until it holds
+  // totalCount COMPLETE bars. Page 1 returns 10 raw bars whose newest is still FORMING -- 9
+  // complete -- so a second page is required for the 10th. Every timestamp is hand-computed.
+  const HIST_H=3600000;
+  const HIST_P1_END=Date.parse('2026-06-01T09:00:00.000Z');   // START of the newest (forming) bar
+  const HIST_P1_NEWEST_COMPLETE=HIST_P1_END-HIST_H;           // 2026-06-01T08:00Z
+  const HIST_P1_OLDEST=HIST_P1_END-9*HIST_H;                  // 2026-06-01T00:00Z
+  const HIST_P2_BAR=HIST_P1_OLDEST-HIST_H;                    // 2026-05-31T23:00Z
+
+  await t('MDHIST-1 the diagnostic pages BACKWARDS and merges older pages BEFORE newer ones',async function(){
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page===1) return g.okPage(g.bars(HIST_P1_END,HIST_H,10,true));
+      if(page===2) return g.okPage(g.bars(HIST_P2_BAR,HIST_H,1));
+      return g.emptyPage();
+    });
+    const diag=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
+    const reqs=g.candleReqs();
+    eq(diag.earliest,new Date(HIST_P2_BAR).toISOString(),
+      'the window must START at the second page\'s bar -- a reversed merge would start later');
+    eq(diag.latest,new Date(HIST_P1_NEWEST_COMPLETE).toISOString(),
+      'and END at the newest COMPLETE bar of the first page, never the forming one');
+    eq(reqs[1].to,new Date(HIST_P1_OLDEST-1000).toISOString(),
+      'page 2 must be requested one second before the OLDEST bar of page 1 -- reading the NEWEST end would re-request the window just walked');
+    eq(reqs.length,2,
+      'a page whose RAW count equals the requested count must NOT end the walk, so exactly two requests are made');
+    eq(diag.requestCount,2,'and the diagnostic reports both pages');
+    eq(diag.totalUnique,10,'the merged window holds exactly the 10 unique complete bars');
+    eq(diag.duplicates,0,'with no duplicate across the page boundary');
+    return 'backward walk, merge order, cursor and termination all pinned';
+  });
+
+  await t('MDHIST-2 (BOUNDARY) a SHORT page ends the walk immediately',async function(){
+    // Paired with MDHIST-1 this pins BOTH sides of the termination test, so neither `<` nor `<=`
+    // can be substituted without a fixture dying.
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page===1) return g.okPage(g.bars(HIST_P1_END,HIST_H,4));   // 4 raw for a request of 10
+      return g.okPage(g.bars(HIST_P1_END-20*HIST_H,HIST_H,4));
+    });
+    const short=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
+    eq(g.candleReqs().length,1,'one request only -- a short page means the history is exhausted');
+    eq(short.totalUnique,4,'and the diagnostic reports the 4 bars it genuinely has rather than walking on');
+    return 'short page terminates the walk';
+  });
+
+  await t('MDHIST-3 (POSITIVE CONTROL) a bar repeated across the page boundary IS counted',async function(){
+    // Without this, MDHIST-1's `duplicates === 0` would also be satisfied by a duplicate detector
+    // that never fires at all.
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page===1) return g.okPage(g.bars(HIST_P1_END,HIST_H,10,true));
+      if(page===2) return g.okPage(g.bars(HIST_P1_OLDEST,HIST_H,1));   // REPEATS page 1's oldest bar
+      return g.emptyPage();
+    });
+    const dup=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
+    eq(dup.duplicates,1,'the repeated bar must be counted, so MDHIST-1\'s zero is a real zero');
+    return 'duplicate detector genuinely fires';
+  });
+
+
     return out;
   })();
 }

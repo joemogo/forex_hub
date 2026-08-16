@@ -147,6 +147,7 @@ const wrapped = new Function('g',
   // ── the real, unmodified acquisition / continuity chain under test ──
   'g.fetchCandles=fetchCandles;' +
   'g.fetchCandlesRange=fetchCandlesRange;' +
+  'g.runHistoricalDataDiagnostic=runHistoricalDataDiagnostic;' +
   'g.marketDataCompletenessOf=marketDataCompletenessOf;' +
   'g.MARKET_DATA_COMPLETENESS=MARKET_DATA_COMPLETENESS;' +
   'g.MARKET_DATA_MIN_USABLE_CANDLES=MARKET_DATA_MIN_USABLE_CANDLES;' +
