@@ -4236,3 +4236,119 @@ disclosed as an attribution hazard.
 **CORE is NOT yet declared GREEN.** A consolidated independent adversarial pass over all five new
 suites and the three production fixes is running; every previous round of this milestone found that
 work passing its author's own checks failed an independent attack.
+
+## 18.20 Independent verification round 1 — the isolation snapshots were allowlists
+
+Two adversaries re-attacked the five §13 suites. **107 of 108 trading fixtures proven killable**, no
+tautology, no source-text assertion, **no un-awaited close**, no self-consistent balance assertion,
+and every claimed-closed survivor independently re-scored as genuinely closed. Then the isolation
+claim broke.
+
+**Six cross-strategy leaks passed the entire 2,180-fixture gate with zero protected-function drift**,
+because the snapshots were hand-written **allowlists** while `PTE2E-ISO.4` claimed to compare *"every
+JVM localStorage key"*. Two would move or block real money:
+
+| Leak | Why it matters |
+|---|---|
+| an ALEX close poisoning the shared `pairData` **price cache** | `closePaperPosition` fills its exit from it when live bid/ask is unavailable, and `checkPaperPositions` reads it to decide TAKE_PROFIT/STOP_LOSS |
+| an ALEX commit inserting open JVM ids into `paperPositionsClosing` | that is the in-flight close lock — those trades **can never close again** |
+
+The rest: a write to `fxhub_alexv2_account` (an ALEX-family key matching **neither** prefix);
+overwriting JVM-owned `fxhub_scan`/`fxhub_autoscan`; rewriting `alexGDecidedSetups` **contents** while
+preserving `.size`, which was all the snapshot recorded; and clearing `storageLoadFailures`,
+disarming the INC-001 guard.
+
+**The allowlist is now a denylist** — every key that is not ALEX-owned — so a new key is covered by
+default rather than needing to be remembered.
+
+### 18.20a The exclusion filter was spoofable, and the snapshot had nothing to lose
+
+**Spoofable:** evidence-platform entries were excluded from the ALEX error log by matching the
+**message prefix** — content a leak chooses for itself. Proven: JVM P&L written into that log under
+the right opening words survived the whole gate; the identical leak under any other prefix died.
+`recordAlexGEngineError` now takes an optional `meta` and the evidence platform tags its own entries,
+so the exclusion is **provenance recorded by the writer**, not inference by the reader.
+
+**Nothing to lose:** the reset helpers did not clear four fields the snapshots *compare*, so a leak
+writing the **same value twice** was identical before and after — an idempotent leak is still a leak.
+And a leak that *clears* shared state, or adds one entry per open JVM position, is invisible when the
+scenario has neither. The ALEX→JVM block now seeds a real open JVM position and a non-empty INC-001
+register **before** snapshotting. All six leaks are caught, each verified individually.
+
+## 18.21 Independent verification round 2 — the v12.28.0 chart fix was worse than the bug
+
+**89 of 92 fixtures proven killable**, no tautology, no source-text assertion, no un-awaited fixture.
+Then four code defects, **three of them in my own fixes**.
+
+### 🔴 The regression I introduced
+
+`setTf()` is `activeTf=tf; loadChart(); scanAll();` with neither awaited — so on **every timeframe
+click** the recorded verdict stops matching, and the v12.28.0 guard sent the chart down the
+chart-local path. For a pair the engine had **refused to evaluate on incomplete data**, the chart
+rendered an invented **"LONG 43%" and a "SETUP FORMING" recommendation banner** — verbatim what that
+block's own comment says it exists to prevent.
+
+| | state line | banner | confluence |
+|---|---|---|---|
+| on H1 (verdict matches) | `NOT EVALUATED — incomplete market data` | `AWAITING DATA` | — |
+| after clicking H4 | `Computed on this chart's H4 data…` | **`▲ SETUP FORMING`** | **`▲ LONG — 43%`** |
+
+**I traded a labelling error for a fabricated verdict**, and the banner carries no qualifier at all —
+only an 11px grey line did. A verdict recorded on a different timeframe now yields its own explicit
+state (*this timeframe has not been scanned yet*, naming both) and the chart shows **nothing**.
+
+### 🔴 Re-entrancy, also mine
+
+`loadChart` read the live `activeTf` across two awaits, so a mid-load timeframe click could have the
+**fetch** use one value while the guard and label read another — **H1 candles drawn under an H4
+verdict, labelled H4.** That is the exact property §18.17 claimed to have closed. The timeframe is
+now captured once, as the pair already was.
+
+### 🔴 PD-1 was unreachable by the sequence an operator uses
+
+`applyDeveloperModeVisibility` explicitly re-renders five Developer-Mode surfaces and **did not**
+re-render the Paper Ledger Integrity card — the only operator-visible view of `paperEngineErrors` and
+`alexGEngineErrors`. Turning Developer Mode ON left the card showing what it rendered while the flag
+was OFF. Developer Mode is session-only and defaults OFF, so the INC-001 load-time notice was
+invisible on every fresh session. **Surfacing errors is worth nothing if the surface is not repainted
+when it becomes visible.**
+
+Also: **D2 missed a third path** (`renderTradeOverlayLegend` fell through to the internal research id
+whenever `setupLabel` was null), and an **eleventh empty-log-satisfied assertion** (`RSTDG-RESTART.4`
+recorded a sentinel and never asserted it was recorded; a no-op recorder kills 13 fixtures gate-wide
+and left it green).
+
+### 18.21a The second unwatched copy of the pagination arithmetic
+
+`runHistoricalDataDiagnostic` is an **entirely separate implementation** of the backward walk from
+`fetchCandlesRange`, reached from the Diagnostics button — with **zero** behavioural coverage. Three
+mutations each killed 0 of 2,188. **The tool an operator uses to check data continuity could report a
+reversed, duplicated or truncated window as healthy.** `MDHIST-1/2/3` close it, pinning both sides of
+the termination test with a positive control proving the duplicate detector fires.
+
+`CAF-LABEL.1` compared the helper against **hand-written literals**, so changing the mapping inside
+the protected `alexGCreateSetupRecord` left it green — it pinned the helper, not the *duplication*.
+It now reads the label off a **real** setup record. *Disclosed scope:* only the setup type the engine
+actually produces is pinned; the other branch remains a literal comparison and is labelled as one.
+
+> **My own fixes failed independent attack three times in this programme** — a half-applied ledger
+> repair, an off-by-one floor, a symmetry fix that repeated its own error, and now a chart fix that
+> was worse than the bug. That is the argument for the loop, not against it.
+
+### 18.21b Still open, and named
+
+* **`drawTradeOverlay` / `drawTjrZoneOverlay` are reachable-but-unpinned** — deleting either call
+  site kills **zero** fixtures, so both can be disconnected from the render path at no cost to the
+  gate. Closing it needs the real draw path (`focusChartOnTradeWindow`), which requires a windowed
+  fetch the fixture router does not model. `CAF-LEGEND.1/.2` pin the **label** and say plainly that
+  they do not pin the wiring.
+* **The inner pre-open re-check** in the auto-trade path is uncovered — the outer eligibility filter
+  is pinned (`EXCL.1/.3`), but under genuinely overlapping ticks the inner re-check is the one that
+  matters.
+* **`CAF-LABEL.1b`** is a literal comparison for the `B_breakRetest` branch.
+
+**Gate: 34 suites, 2,193 / 2,193.** Platform **1,049 / 1,049**. Protected drift **0**. App `12.31.0`.
+
+**CORE is still NOT declared GREEN.** A final adversarial sweep and an independent completeness audit
+of the full operational chain are running; two prior rounds each found real defects in work that had
+passed its author's own checks.
