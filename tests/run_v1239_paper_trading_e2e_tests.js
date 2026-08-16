@@ -88,53 +88,124 @@ globalThis.Notification=undefined;
 // "never overwrite" contract real. Requests resolve asynchronously through the same
 // onsuccess/onerror model evidenceReq() awaits.
 (function installMemoryIndexedDB(){
-  function req(){ return {onsuccess:null,onerror:null,result:undefined,error:null}; }
-  function fire(r,value,err){
+  // §18.37: the FIRST version of this stub DEADLOCKED every evidence write, and the runner comment
+  // claiming "the platform captures successfully" was false -- it wrote no artifact because it
+  // never COMPLETED. DB.transaction fired `oncomplete` on a microtask at CREATION time, while
+  // production attaches its handler later, in evidenceTxDone(tx), after awaiting the request. By
+  // then the completion had already fired with oncomplete === null and the promise never settled:
+  // evidencePersistTradePackage never returned once in 75 seam calls, and the in-flight flag
+  // latched true after the first close. Replacing "no store" with "a store I wrote" traded one
+  // blind spot for a worse one, because this one asserted it was working.
+  //
+  // `oncomplete` is now an ACCESSOR: completion is recorded, and a handler attached AFTER the fact
+  // still fires. Completion waits for every request issued on the transaction to settle.
+  function req(tx){
+    const r={onsuccess:null,onerror:null,result:undefined,error:null};
+    if(tx) tx._pending++;
+    return r;
+  }
+  function fire(r,value,err,tx){
     Promise.resolve().then(function(){
       if(err){ r.error=err; if(r.onerror) r.onerror({target:r}); }
       else { r.result=value; if(r.onsuccess) r.onsuccess({target:r}); }
+      if(tx){ tx._pending--; if(tx._pending<=0) tx._settle(); }
     });
   }
   function Store(name,keyPath){ this.name=name; this.keyPath=keyPath; this.rows=new Map(); this.indexes={}; }
   Store.prototype.keyOf=function(v){ return this.keyPath?v[this.keyPath]:undefined; };
-  Store.prototype.createIndex=function(n){ this.indexes[n]=true; return {}; };
-  function StoreHandle(store){ this.s=store; }
+  Store.prototype.createIndex=function(n,kp,opts){ this.indexes[n]={keyPath:kp,unique:!!(opts&&opts.unique)}; return {}; };
+  function StoreHandle(store,tx){ this.s=store; this.tx=tx; }
+  // The ONE semantic production depends on: add() rejects a duplicate key, and a UNIQUE index
+  // rejects a duplicate indexed value. The import path's "never overwrite" contract and the
+  // duplicate-package protection are both built on exactly this.
   StoreHandle.prototype.add=function(v){
-    const r=req(), k=this.s.keyOf(v);
-    if(this.s.rows.has(k)) fire(r,null,new Error('ConstraintError: key already exists'));
-    else { this.s.rows.set(k,v); fire(r,k); }
+    const r=req(this.tx), k=this.s.keyOf(v), s=this.s;
+    let dup=this.s.rows.has(k);
+    if(!dup){
+      Object.keys(s.indexes).forEach(function(n){
+        const ix=s.indexes[n]; if(!ix.unique||dup) return;
+        const kp=ix.keyPath; if(!kp) return;
+        s.rows.forEach(function(row){ if(!dup&&row&&row[kp]!==undefined&&row[kp]===v[kp]) dup=true; });
+      });
+    }
+    if(dup) fire(r,null,Object.assign(new Error('ConstraintError'),{name:'ConstraintError'}),this.tx);
+    else { this.s.rows.set(k,v); fire(r,k,null,this.tx); }
     return r;
   };
-  StoreHandle.prototype.put=function(v){ const r=req(),k=this.s.keyOf(v); this.s.rows.set(k,v); fire(r,k); return r; };
-  StoreHandle.prototype.get=function(k){ const r=req(); fire(r,this.s.rows.get(k)); return r; };
-  StoreHandle.prototype.getAll=function(){ const r=req(); fire(r,Array.from(this.s.rows.values())); return r; };
-  StoreHandle.prototype.delete=function(k){ const r=req(); this.s.rows.delete(k); fire(r,undefined); return r; };
-  StoreHandle.prototype.count=function(){ const r=req(); fire(r,this.s.rows.size); return r; };
-  StoreHandle.prototype.clear=function(){ const r=req(); this.s.rows.clear(); fire(r,undefined); return r; };
-  StoreHandle.prototype.index=function(){ const s=this.s; return {get:function(k){ const r=req();
-    let hit; s.rows.forEach(function(v){ if(hit===undefined){ for(const kk in v){ if(v[kk]===k){ hit=v; break; } } } });
-    fire(r,hit); return r; },
-    getAll:function(){ const r=req(); fire(r,Array.from(s.rows.values())); return r; },
-    openCursor:function(){ const r=req(); fire(r,null); return r; }};};
-  StoreHandle.prototype.openCursor=function(){ const r=req(); fire(r,null); return r; };
-  function DB(){ this.stores={}; this.objectStoreNames={contains:function(){return false;}}; }
+  StoreHandle.prototype.put=function(v){ const r=req(this.tx); this.s.rows.set(this.s.keyOf(v),v); fire(r,this.s.keyOf(v),null,this.tx); return r; };
+  StoreHandle.prototype.get=function(k){ const r=req(this.tx); fire(r,this.s.rows.get(k),null,this.tx); return r; };
+  StoreHandle.prototype.getAll=function(range,count){
+    const r=req(this.tx);
+    let vals=Array.from(this.s.rows.values());
+    if(range&&typeof range.includes==='function') vals=vals.filter(function(v){ return range.includes(v); });
+    if(typeof count==='number') vals=vals.slice(0,count);
+    fire(r,vals,null,this.tx); return r;
+  };
+  StoreHandle.prototype.delete=function(k){ const r=req(this.tx); this.s.rows.delete(k); fire(r,undefined,null,this.tx); return r; };
+  StoreHandle.prototype.count=function(){ const r=req(this.tx); fire(r,this.s.rows.size,null,this.tx); return r; };
+  StoreHandle.prototype.clear=function(){ const r=req(this.tx); this.s.rows.clear(); fire(r,undefined,null,this.tx); return r; };
+  StoreHandle.prototype.openCursor=function(){
+    const r=req(this.tx), rows=Array.from(this.s.rows.values()), tx=this.tx;
+    let i=0;
+    function step(){
+      if(i>=rows.length){ fire(r,null,null,tx); return; }
+      const value=rows[i++];
+      const cursor={value:value,continue:function(){ tx._pending++; Promise.resolve().then(step); },
+        delete:function(){ return {onsuccess:null,onerror:null}; }};
+      fire(r,cursor,null,tx);
+    }
+    step();
+    return r;
+  };
+  StoreHandle.prototype.index=function(n){
+    const s=this.s, tx=this.tx, kp=(s.indexes[n]&&s.indexes[n].keyPath)||null;
+    return {
+      get:function(k){ const r=req(tx); let hit;
+        s.rows.forEach(function(v){ if(hit===undefined&&kp&&v&&v[kp]===k) hit=v; });
+        fire(r,hit,null,tx); return r; },
+      getAll:function(){ const r=req(tx); fire(r,Array.from(s.rows.values()),null,tx); return r; },
+      openCursor:function(){ const r=req(tx); fire(r,null,null,tx); return r; }
+    };
+  };
+  function DB(){ this.stores={}; }
+  Object.defineProperty(DB.prototype,'objectStoreNames',{get:function(){
+    const self=this; return {contains:function(n){ return !!self.stores[n]; }};
+  }});
   DB.prototype.createObjectStore=function(name,opts){
-    const st=new Store(name,opts&&opts.keyPath); this.stores[name]=st;
-    this.objectStoreNames={contains:(function(self){return function(n){return !!self.stores[n];};})(this)};
-    return st;
+    const st=new Store(name,opts&&opts.keyPath); this.stores[name]=st; return st;
   };
   DB.prototype.transaction=function(names){
-    const self=this, tx={oncomplete:null,onerror:null,onabort:null,
-      objectStore:function(n){ if(!self.stores[n]) self.stores[n]=new Store(n,null); return new StoreHandle(self.stores[n]); },
-      abort:function(){}};
-    Promise.resolve().then(function(){ if(tx.oncomplete) tx.oncomplete({target:tx}); });
+    const self=this;
+    const tx={_pending:0,_done:false,_oncomplete:null,onerror:null,onabort:null,error:null,
+      objectStore:function(n){
+        // A real IndexedDB throws NotFoundError for a store outside the transaction's scope.
+        // Auto-creating it would let a production typo pass silently.
+        if(!self.stores[n]) throw Object.assign(new Error('NotFoundError: no object store named '+n),{name:'NotFoundError'});
+        return new StoreHandle(self.stores[n],tx);
+      },
+      abort:function(){ tx._done=true; if(tx.onabort) tx.onabort({target:tx}); },
+      _settle:function(){
+        if(tx._done) return;
+        tx._done=true;
+        if(tx._oncomplete) tx._oncomplete({target:tx});
+      }};
+    Object.defineProperty(tx,'oncomplete',{
+      get:function(){ return tx._oncomplete; },
+      set:function(fn){
+        tx._oncomplete=fn;
+        // Attached AFTER completion -- which is exactly what evidenceTxDone does. Fire anyway.
+        if(tx._done&&fn) Promise.resolve().then(function(){ fn({target:tx}); });
+      }
+    });
+    // A transaction with no requests still completes.
+    Promise.resolve().then(function(){ if(tx._pending<=0) tx._settle(); });
     return tx;
   };
   DB.prototype.close=function(){};
   const db=new DB();
   globalThis.indexedDB={
     open:function(){
-      const r=req(); r.onupgradeneeded=null;
+      const r={onsuccess:null,onerror:null,onupgradeneeded:null,result:undefined,error:null};
       Promise.resolve().then(function(){
         r.result=db;
         if(r.onupgradeneeded) r.onupgradeneeded({target:r,oldVersion:0});
@@ -142,7 +213,14 @@ globalThis.Notification=undefined;
       });
       return r;
     },
-    deleteDatabase:function(){ const r=req(); fire(r,undefined); return r; }
+    deleteDatabase:function(){ const r={onsuccess:null,onerror:null}; Promise.resolve().then(function(){ if(r.onsuccess) r.onsuccess({target:r}); }); return r; }
+  };
+  // Production calls IDBKeyRange for observation retention; without it that path throws.
+  globalThis.IDBKeyRange={
+    upperBound:function(v,open){ return {includes:function(x){ return open?x<v:x<=v; }}; },
+    lowerBound:function(v,open){ return {includes:function(x){ return open?x>v:x>=v; }}; },
+    bound:function(a,b){ return {includes:function(x){ return x>=a&&x<=b; }}; },
+    only:function(v){ return {includes:function(x){ return x===v; }}; }
   };
 })();
 
@@ -300,6 +378,12 @@ try{
     // §18.36: the ALEX v2 shadow comparison -- the evidentiary basis for deciding whether v2 should
     // replace legacy ALEX. Its whole function had ZERO test references before this.
     'g.alexV2BuildLegacyDecisionSummary=alexV2BuildLegacyDecisionSummary;' +
+    // §18.37: the evidence CAPTURE layer. Independent verification made both capture seams
+    // `if(true) return;` and the entire 2,333-fixture gate stayed green -- the layer that produces
+    // the citable audit record had NO behavioural coverage at all. Its only "coverage" was
+    // source-text introspection, which any non-textual defect walks straight past.
+    'g.evidenceListPackages=evidenceListPackages;' +
+    'g.evidenceHasPackageForTrade=evidenceHasPackageForTrade;' +
     'g.setAlexGLiveSetupStatuses=function(v){ alexGLiveSetupStatuses=v; };' +
     'g.pushAlexGLiveSetupStatus=function(e){ alexGLiveSetupStatuses.unshift(e); };' +
     'g.getAlexGLiveSetupStatuses=function(){ return alexGLiveSetupStatuses; };' +

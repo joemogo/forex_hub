@@ -55,6 +55,18 @@
 async function runV1239PaperTradingE2EFixtures(g){
   const results=[];
   const assert=(name,cond,detail)=>{results.push({name,pass:!!cond,detail:detail==null?'':String(detail)});};
+
+  // 🔴 §18.37: DRAIN THE MICROTASK QUEUE before the "after" snapshot. Independent verification
+  // showed that ISO.6's claim -- "caught here and nowhere else in the gate" -- was FALSE for a
+  // leak deferred past the fixture's own await. Crediting alexGAccount.balance with JVM P&L four
+  // microtask turns later passed ISO.2, ISO.4, ISO.6 AND ISO.8; the only failure was a positive
+  // control in a LATER block tripped by accumulated residue, i.e. caught by accident of ordering
+  // rather than by the detector that claims to catch it. alexClean() then wiped the evidence.
+  //
+  // This is realistic precisely because the cross-strategy write risk is concentrated in the three
+  // fire-and-forget evidenceCapture* seams, which are dispatched and not awaited. Snapshotting the
+  // instant an await resolves measures a moment before those writes land.
+  const drainMicrotasks=async function(){ for(let i=0;i<50;i++) await Promise.resolve(); };
   // Numerical-precision floor for FX price arithmetic. See the header: this is 1/10000 of a pip.
   const EPS=1e-9;
   const near=(a,b)=>typeof a==='number'&&isFinite(a)&&Math.abs(a-b)<EPS;
@@ -662,6 +674,46 @@ async function runV1239PaperTradingE2EFixtures(g){
     alexClean();
   }
 
+  // ── 🔴 §18.37: the EVIDENCE CAPTURE seam -- the audit record, previously unwitnessed ────────
+  // Making BOTH evidenceCaptureClosedTrades and evidenceCaptureClosedPaperTrades `if(true) return;`
+  // survived the full gate. So did dropping every JVM trade's package on the floor. The evidence
+  // package is the citable record of what was traded and why; nothing observed whether it was ever
+  // written. It could not be observed before, either: the harness had no IndexedDB, so every write
+  // failed by construction. It has one now.
+  {
+    jvmClean(); alexClean();
+    // Drain FIRST: the capture seam is guarded by an in-flight flag, so a capture still pending from
+    // an earlier fixture makes this one skip silently -- which is exactly what happened on the first
+    // run of this fixture, and is itself worth knowing about the seam.
+    await drainMicrotasks();
+    const pkgsBefore=(await g.evidenceListPackages()).length;
+    g.setPricing('reject');
+    const evPos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(evPos.id,false,null);
+    await drainMicrotasks();
+    await drainMicrotasks();
+    const pkgs=await g.evidenceListPackages();
+    assert('PTE2E-EVCAP.1 (END-TO-END): a real JVM close produces a durable evidence package. The capture seam is fire-and-forget, so nothing downstream fails if it silently stops -- which is exactly why it must be asserted here',
+      Array.isArray(pkgs) && pkgs.length===pkgsBefore+1,
+      'before='+pkgsBefore+' after='+(Array.isArray(pkgs)?pkgs.length:String(pkgs)));
+    const hasIt=await g.evidenceHasPackageForTrade(String(evPos.id));
+    assert('PTE2E-EVCAP.2 (ATTRIBUTION): the package is filed against the tradeId that actually closed, not merely "a package exists" -- an audit record attributed to the wrong trade is worse than none',
+      !!hasIt,
+      'hasPackageFor('+evPos.id+')='+String(!!hasIt)+' ids='+JSON.stringify((pkgs||[]).map(function(p){return p&&(p.sourceTradeId||p.packageId);}).slice(0,4)));
+    assert('PTE2E-EVCAP.3 (CONTENT): the package carries the trade\'s own booked numbers rather than a placeholder -- its exit price and P&L match what the ledger recorded',
+      (function(){
+        const acct=g.getPaperAccount(); const closed=(acct.closedPositions||[])[0];
+        const pkg=(pkgs||[]).filter(function(p){ return p&&String(p.sourceTradeId)===String(evPos.id); })[0]
+               ||(pkgs||[])[0];
+        if(!pkg||!closed) return false;
+        const j=JSON.stringify(pkg);
+        return j.indexOf(String(closed.exitPrice))!==-1 && j.indexOf(String(closed.pnl))!==-1;
+      })(),
+      'closed='+JSON.stringify((function(){const c=(g.getPaperAccount().closedPositions||[])[0];return c?{exit:c.exitPrice,pnl:c.pnl}:null;})()));
+    jvmClean(); alexClean();
+  }
+
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
   {
     jvmClean();
@@ -1030,6 +1082,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // ════════════════════════════════════════════════════════════════════════════════════════
   // GROUP 7 — ALEX / JVM ISOLATION (first-class requirement)
   //
+
   // Each fixture snapshots EVERY store the other strategy owns -- account, journal, auto-trading
   // state, setups, statuses, zones, engine errors, version guard, blocking/integrity banners and
   // that strategy's own localStorage keys -- into one deterministic string, runs a real operation
@@ -1048,6 +1101,7 @@ async function runV1239PaperTradingE2EFixtures(g){
     const pos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
     g.setPairData('GBP_USD',1.3250);
     await g.closePaperPosition(pos.id,false,null);   // the manual GBP_USD trade, whose fallback exit price this fixture set
+    await drainMicrotasks();
     const alexAfter=g.snapshotAlexStores();
     const jvmAfter=g.snapshotJvmStores();
     assert('PTE2E-ISO.1 (POSITIVE CONTROL for PTE2E-ISO.2): the JVM side genuinely did a full day\'s work in that block -- an auto-trade tick, a manual open and a real close all landed, so its own store snapshot changed',
@@ -1075,6 +1129,7 @@ async function runV1239PaperTradingE2EFixtures(g){
     await g.alexGAttemptOpenLivePosition(alexSetup('SU|ISO1'),ALEX_DATASETS,{},'SCAN|ISO1');
     const p=(g.getAlexGAccount().openPositions||[])[0]||null;
     g.alexGCloseLivePosition(p?p.tradeId:'none','Win',1.12000,null,{});
+    await drainMicrotasks();
     const jvmAfter=g.snapshotJvmStores();
     const alexAfter=g.snapshotAlexStores();
     assert('PTE2E-ISO.3 (POSITIVE CONTROL for PTE2E-ISO.4): the ALEX side genuinely opened and closed a real live position in that block -- one closed position and a balance moved to exactly 10200.00 -- so its own store snapshot changed',
@@ -1094,6 +1149,7 @@ async function runV1239PaperTradingE2EFixtures(g){
     const alexBefore=g.snapshotAlexStores();
     const alexBalBefore=g.getAlexGAccount().balance;
     await g.closePaperPosition(pos.id,false,null);
+    await drainMicrotasks();
     const alexAfter=g.snapshotAlexStores();
     assert('PTE2E-ISO.5 (POSITIVE CONTROL for PTE2E-ISO.6): the JVM close under observation really did credit $250.00 to the JVM balance, taking it to exactly 10250.00',
       g.getPaperAccount().balance===10250 && (g.getPaperAccount().closedPositions||[])[0].pnl===250,
@@ -1147,6 +1203,7 @@ async function runV1239PaperTradingE2EFixtures(g){
     const p=(g.getAlexGAccount().openPositions||[])[0]||null;
     const jvmBefore=g.snapshotJvmStores();
     g.alexGCloseLivePosition(p?p.tradeId:'none','Win',1.12000,null,{});
+    await drainMicrotasks();
     const jvmAfter=g.snapshotJvmStores();
     assert('PTE2E-ISO.7 (POSITIVE CONTROL for PTE2E-ISO.8): the ALEX close under observation really did credit $200.00 to the ALEX balance, taking it to exactly 10200.00',
       g.getAlexGAccount().balance===10200,'alexBalance='+g.getAlexGAccount().balance);
@@ -1169,7 +1226,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===107, 'recorded='+results.length+' expected=107 (this fixture is the 108th)');
+    results.length===110, 'recorded='+results.length+' expected=110 (this fixture is the 111th)');
 
   return results;
 }
