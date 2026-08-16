@@ -4436,3 +4436,69 @@ context. It models both shapes now, and `CAF-WIRE.0/.1` drive `focusTradeOnChart
 **Gate: 34 suites, 2,219 / 2,219.** Platform **1,049 / 1,049**. Protected drift **0**. App `12.33.0`.
 A final independent falsification of this batch is running; **CORE is not declared GREEN until it
 returns clean.**
+
+## 18.27 Round four — one quadrant of four, and two channels compared against a constant
+
+### 🔴 Three of the four exit boundaries had no coverage — including both stop-loss sides
+
+`JVMEXIT-10` pinned **one** of the four comparisons in `checkPaperPositions`: the buy target. The
+other three each survived the whole gate.
+
+| Boundary | Before |
+|---|---|
+| buy target `>=` | covered by `JVMEXIT-10` |
+| **sell target `<=`** | **0 kills** |
+| **buy stop `<=`** | **0 kills** |
+| **sell stop `>=`** | **0 kills** |
+
+**Two of the three are the stop side.** A price that touches its stop *to the pip* does not stop out,
+and the position runs on past it **with no bound** — strictly worse than the target case the fixture
+was written for. I closed one quadrant of four and reported the boundary as covered.
+`JVMEXIT-13/14/15` pin the rest.
+
+### 🔴 Two of the fifteen isolation channels were compared against a constant
+
+`alexGIdentityDriftReported` and `alexGCursorSanityReported` are **`Set`s**, and
+`JSON.stringify(new Set([...]))` is `"{}"` for **every** possible content. So the two channels §18.25
+named as *"the two flags that silence ALEX's own integrity reporting"* were never compared at all.
+**"All 15 now die" was false — 13 did.** The hole was the **type**, not the reset.
+
+### 🔴 A sixteenth channel, and it moves money
+
+`structuralAOIInflight` is returned by `getStructuralAOI` **before any fetch and before the ADR-011
+completeness gate**, so a seeded promise puts a **fabricated stop and target** on a real JVM trade.
+§18.25 added its *cache* and missed the in-flight lock for that same cache — the exact sibling of
+`paperPositionsClosing`, which an earlier round had already added for the close path. My first
+attempt put it in the **ALEX** snapshot, the wrong side entirely; it stayed invisible until moved
+beside its cache in the JVM one.
+
+### Six more uncompared channels, and the same lesson a third time
+
+`cfg.accountId` (in the URL of every pricing fetch that fills a close) and `cfg.key`;
+`storageLoadFailures` **values** — keys alone were compared, so rewriting every INC-001 message to
+`"ALL CLEAR"` survived, which is the *same size-preserving rewrite* §18.20 named and fixed elsewhere;
+`alexGReplayState`; `hideTestTradesAlex`; `alexGPipelineObservationBuffer`.
+
+> **`alexGReplayState` and `hideTestTradesAlex` were added to the snapshot and NOT to the reset**, so
+> they were already polluted and their leaks stayed invisible. That is the third time in this
+> milestone. **Adding a field to a snapshot and adding it to the reset are one change, not two.**
+
+### 🔴 My §18.26 relabel created the fourteenth unkillable fixture
+
+Merging `CAF-TF.2`'s id and description turned a **4-arg** assert into a **3-arg** one, so the real
+check landed in the *description* slot and `cond` received a string its own precondition guarantees
+is non-empty. Proven dead in both directions. Restored.
+
+### A harness defect: a helper that disabled the guard it was meant to observe
+
+`seedIsolationScratch` replaced the production **`Map`** `alexGDecidedSetups` with a **`Set`**, so
+`.set(...)` threw inside the bookkeeping `try/catch` that *"must never break a trading decision"* —
+ALEX's duplicate-decision bookkeeping was silently **inert** for the rest of the suite. Latent rather
+than a live false green, but a helper that substitutes the **type** disables the guard the suite
+exists to observe.
+
+**Gate: 34 suites, 2,222 / 2,222.** Platform **1,049 / 1,049**. Protected drift **0**. App `12.34.0`.
+
+> **Four consecutive independent rounds have each found real defects, including in my own
+> corrections.** That is the argument for the loop, and the reason CORE is still not declared GREEN:
+> a fifth round is the gate on that decision, not the fixture count.
