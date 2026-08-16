@@ -206,6 +206,7 @@ const wrapped = new Function('g',
   'g.getActiveTf=function(){ return activeTf; };' +
   'g.pairDataEntry=function(p){ return pairData[p]; };' +
   'g.setChartEvaluationStateHtml=function(h){ var e=document.getElementById("chartEvaluationState"); if(e) e.innerHTML=h; };' +
+  'g.setElHtml=function(id,h){ var e=document.getElementById(id); if(e) e.innerHTML=h; };' +
   'g.alexGSetupDisplayLabel=alexGSetupDisplayLabel;' +
   'g.setPairDataEntry=function(p,v){ if(v===null) delete pairData[p]; else pairData[p]=v; };' +
   'g.resetPairData=function(){ pairData={}; };' +

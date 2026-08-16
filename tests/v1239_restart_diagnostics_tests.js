@@ -128,6 +128,14 @@ async function runV1239RestartDiagnosticsFixtures(g){
     seedClean();
     const SENTINEL='RSTDG-MEMONLY-SENTINEL-8321';
     g.recordPaperEngineError(SENTINEL);
+    // 🔴 §18.21 PRECONDITION. Without this the assertion below is a must-not-contain with NO
+    // positive precondition -- the ELEVENTH instance of the pattern this milestone keeps finding,
+    // and the second in a security-shaped assertion. Independent verification proved it: making
+    // recordPaperEngineError a no-op, so the log is ALWAYS empty, kills 13 fixtures gate-wide and
+    // leaves RESTART.4 green. "The sentinel never leaked" means nothing if the sentinel was never
+    // recorded in the first place.
+    const recordedBefore=g.getPaperEngineErrors().filter(function(e){
+      return String(e&&e.message||e).indexOf(SENTINEL)!==-1; }).length;
     g.commitPaperLedger();                       // persists everything that IS persistable
     const leaked=g.storageKeys().filter(k=>String(g.rawStorage()[k]||'').indexOf(SENTINEL)!==-1);
     g.setPaperEngineErrors([]);
@@ -135,9 +143,11 @@ async function runV1239RestartDiagnosticsFixtures(g){
     g.setPaperAccount({balance:0,openPositions:[],closedPositions:[]});
     g.resetLoadFailures();
     g.loadSaved();
+    assert('RSTDG-RESTART.4a (PRECONDITION): the sentinel error really was recorded before the restart, so the must-not-leak assertion below is applied to a log that actually contained it',
+      recordedBefore===1,'recorded='+recordedBefore);
     assert('RSTDG-RESTART.4 (MUST NOT COME BACK): the engine-error log is session-scoped -- a recorded error is never written to any storage key and is not resurrected by loadSaved()',
       leaked.length===0 && g.getPaperEngineErrors().length===0 && g.getPaperLifecycleLog().length===0,
-      'leakedKeys='+JSON.stringify(leaked)+' errors='+g.getPaperEngineErrors().length);
+      'recordedBefore='+recordedBefore+' leakedKeys='+JSON.stringify(leaked)+' errors='+g.getPaperEngineErrors().length);
   }
 
   {
@@ -409,6 +419,24 @@ async function runV1239RestartDiagnosticsFixtures(g){
       assert('RSTDG-ALEXSURFACE.2 (NEGATIVE CONTROL): with the ALEX error log empty the section still renders, and shows none rather than a stale or invented entry',
         emptyCard.indexOf('ALEX engine errors')!==-1 && emptyCard.indexOf('sentinel-9137')===-1,
         'stale='+(emptyCard.indexOf('sentinel-9137')!==-1));
+      // 🔴 §18.21: SURFACING IS WORTHLESS IF THE SURFACE IS NOT REPAINTED WHEN IT BECOMES VISIBLE.
+      // applyDeveloperModeVisibility() explicitly re-renders five Developer-Mode surfaces on toggle
+      // and did NOT re-render this card -- the one holding the ONLY operator-visible view of
+      // paperEngineErrors and alexGEngineErrors. Turning Developer Mode ON therefore left the card
+      // showing what it had rendered while the flag was OFF, and the operator had to press Refresh
+      // or leave and re-enter the tab. Developer Mode is session-only and defaults OFF, so the
+      // INC-001 load-time notice was invisible on every fresh session. Driven through the REAL
+      // toggle path, not by calling the renderer directly.
+      g.setDeveloperMode(false);
+      g.renderPaperLedgerIntegrity();                 // the card as it looks with the flag OFF
+      g.setAlexGEngineErrors([]);
+      g.recordAlexGEngineError('FATAL: strategy=ALEX, operation=commitAlexGLedger, toggle-sentinel-4471');
+      g.toggleDeveloperMode(true);                    // the real toggle, nothing rendered by hand
+      const toggledCard=g.elHtml('paperLedgerIntegrityCard')||'';
+      g.setDeveloperMode(false);
+      assert('RSTDG-ALEXSURFACE.3 (END-TO-END, the real toggle): turning Developer Mode ON repaints the card, so a recorded ALEX error is visible WITHOUT the operator pressing Refresh or leaving the tab',
+        toggledCard.indexOf('toggle-sentinel-4471')!==-1,
+        'visibleAfterToggle='+(toggledCard.indexOf('toggle-sentinel-4471')!==-1));
     }
 
     assert('RSTDG-BLOCKREPORT.4 (PERSISTENCE): the corrupt-but-real stored bytes and the stored version are byte-identical after the refused commit -- the refusal never degrades into "replace it with a default"',

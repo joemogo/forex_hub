@@ -1980,9 +1980,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.30.0';
+const APP_VERSION='12.31.0';
 const APP_VERSION_DATE='15 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.31.0 — THE v12.28.0 CHART FIX WAS WORSE THAN THE BUG IN ITS MOST COMMON CASE (MOGO-021 section 18.21). Independent adversarial verification of the market-data, chart/AOI and restart/diagnostics suites: 72 mutations, 89 of 92 fixtures proven killable, no tautology, no source-text assertion, no un-awaited fixture, and every claimed-closed survivor independently re-scored as genuinely closed. It then found four code defects, three of them in MY OWN fixes. REGRESSION, now fixed: setTf() is `activeTf=tf; loadChart(); scanAll();` with neither awaited, so on EVERY timeframe click the recorded verdict stops matching and the v12.28.0 guard sent the chart down the chart-local path. For a pair the engine had REFUSED to evaluate on incomplete data, the chart then rendered an invented LONG 43% AND a SETUP FORMING recommendation banner -- verbatim what that block\'s own comment says it exists to prevent. It traded a labelling error for a fabricated verdict, and the banner carries no qualifier at all. A verdict recorded on a DIFFERENT timeframe now yields its own explicit state -- this timeframe has not been scanned yet, naming both timeframes -- and the chart shows NOTHING rather than something it made up. The chart-local path is retained only for a pair with no recorded verdict at all. RE-ENTRANCY, now fixed: loadChart read the live activeTf across two awaits, so an operator clicking a new timeframe mid-load could have the fetch use one value while the guard and the label read another -- H1 candles drawn under an H4 verdict, labelled H4, the exact property section 18.17 claimed to close. The timeframe is now captured ONCE at the top, exactly as the pair already was. PD-1 WAS UNREACHABLE BY THE SEQUENCE AN OPERATOR USES: applyDeveloperModeVisibility explicitly re-renders five Developer-Mode surfaces on toggle and did NOT re-render the Paper Ledger Integrity card -- the one holding the ONLY operator-visible view of paperEngineErrors and alexGEngineErrors. Turning Developer Mode ON left the card showing what it rendered while the flag was OFF. Developer Mode is session-only and defaults OFF, so the INC-001 load-time notice was invisible on every fresh session. Surfacing errors is worth nothing if the surface is not repainted when it becomes visible. D2 MISSED A THIRD PATH: renderTradeOverlayLegend rendered rec.setupLabel||rec.setupType, and normalizeJournalRecord sets setupLabel to null, so the chart\'s own legend showed the internal research id. AN ELEVENTH EMPTY-LOG-SATISFIED ASSERTION: RSTDG-RESTART.4 recorded a sentinel and never asserted it was recorded, so a no-op recorder (which kills 13 fixtures gate-wide) left it green. RESTART.4a is the precondition. CAF-TF.4 was satisfied by an EMPTY state line and now requires it to be rendered. Gate: 34 suites, 2,188/2,188; protected drift 0.',
   '12.30.0 — THE ISOLATION SNAPSHOTS WERE ALLOWLISTS, AND THE FIXTURE TEXT OVERSTATED THEM (MOGO-021 section 18.20). Independent adversarial verification of the section 13 suites. It could NOT find a vacuous fixture beyond the one already disclosed -- 107 of 108 trading fixtures proven killable, no tautology, no source-text assertion, no un-awaited close, no self-consistent balance assertion -- and it independently re-scored every claimed-closed survivor as genuinely closed. Then it broke the isolation claim. SIX CROSS-STRATEGY LEAKS passed the entire 2,180-fixture gate with ZERO protected-function drift, because the snapshots were hand-written ALLOWLISTS while PTE2E-ISO.4 claimed it compared \'every JVM localStorage key\'. Two of the six would move or block real money if ever introduced: an ALEX close poisoning the shared pairData PRICE CACHE, which closePaperPosition fills its exit from when live bid/ask is unavailable and which checkPaperPositions reads to decide TAKE_PROFIT/STOP_LOSS; and an ALEX commit inserting open JVM position ids into paperPositionsClosing, the in-flight close lock, so those trades can never close again. The others: a write to fxhub_alexv2_account, an ALEX-family key matching NEITHER prefix; overwriting JVM-owned fxhub_scan/fxhub_autoscan, outside the six-key allowlist; rewriting alexGDecidedSetups contents while preserving .size, which was all the snapshot recorded; and clearing storageLoadFailures, disarming the INC-001 guard. FIXED: the JVM storage allowlist becomes a DENYLIST (every key that is not ALEX-owned), so a new key is covered by default instead of needing to be remembered; the ALEX prefix widens from fxhub_alexg to fxhub_alex; and the money-critical module state -- pairData, paperPositionsClosing, storageLoadFailures, scanData, autoScan, checklistState, alertLog, tradeNotes, and the CONTENTS of the ALEX decision sets -- is now compared. THE EXCLUSION FILTER WAS SPOOFABLE. Evidence-platform entries were excluded from the ALEX error log by MATCHING THE MESSAGE PREFIX -- content a leak can choose for itself. Proven: JVM P&L written into that log under the right opening words survived the whole gate, while the identical leak under any other prefix died. recordAlexGEngineError now takes an optional meta object and evidenceRecordWriteFailure tags its own entries, so the exclusion is by PROVENANCE recorded by the writer, not inferred by the reader. Additive; the {message,at} shape is unchanged for every existing caller and reader. THE SNAPSHOT MUST HAVE SOMETHING TO LOSE. alexClean/jvmClean did not reset four fields the snapshots COMPARE, so a leak writing the SAME value twice was identical before and after -- an idempotent leak is still a leak. And a leak that CLEARS shared state, or adds one entry per open JVM position, is invisible when the scenario has neither: the ALEX-to-JVM block now seeds a real open JVM position and a non-empty INC-001 register before snapshotting. All six leaks are now caught. THREE FIXTURE CLAIMS NARROWED to what they actually pin: ALEXDUP.1 (the overlap rule carries it; the four-term duplicate-signal guard could be deleted entirely), AUTO.4 (the open-position filter carries it; the traded-today stamp is unobserved), ALEX.5 (presence, not content). ALEXCLOSE.2 claimed fixed-R \'not recomputed from slippage\' while exiting exactly AT the target, where both formulas give the same number -- the exit now runs BEYOND the target so fixed-R 2.0 and recomputed 3.0 are distinguishable. ALIGN-21b is disclosed as a STRICT SUBSET of ALIGN-21 rather than counted as independent evidence. STILL UNCOVERED AND NAMED: the INNER pre-open re-check, which is the guard that matters under genuinely overlapping ticks. Gate: 34 suites, 2,180/2,180; protected drift 0.',
   '12.29.0 — ALEX ENGINE ERRORS WERE RECORDED AND NEVER SURFACED (MOGO-021 section 18.18). Display-only; no protected function touched; drift 0. Final section 13 area: restart/recovery and diagnostics. 25 mutations, SIX killed zero of 2,105 fixtures -- the ALEX ledger silently becoming an empty default across a restart; a restart CONCATENATING closed positions into open ones, re-opening every completed trade; the engine-error log keeping the OLDEST 50 so every NEW error is discarded while its LENGTH stays exactly 50 (both arms); the cap off by one; and the INC-001 commit refusal firing invisibly. PD-1, A REAL PRODUCTION DEFECT: alexGEngineErrors had exactly THREE sites in the entire application -- declaration, unshift, slice -- and NO READ SITE AT ALL, while its own declaration comment claimed \'surfaced in Diagnostics, mirrors paperEngineErrors\'. The ALEX arm was built by mirroring recordPaperEngineError; the matching RENDER block never was. Every ALEX failure written through that channel was invisible to the operator: commitAlexGLedger\'s ROLLBACK_FAILED FATAL, STALE_VERSION, LOAD_INTEGRITY_BLOCKED, and the INC-001 storage-load notice whose entire purpose is to tell the operator their data is being PRESERVED -- recordStorageLoadFailure deliberately fires BOTH channels for exactly that reason, and on the ALEX side the message went nowhere. Now rendered in the Diagnostics card beside the JVM block, under the same Developer Mode gate, and the misleading declaration comment is corrected in place. 36 fixtures added (tests/v1239_restart_diagnostics_tests.js, prefix RSTDG). The runner REFUSES to report anything unless the suite returns a Promise, so an un-awaited async suite cannot go false-green there -- a direct response to the ninth vacuous fixture, which was exactly that. The restart group awaits the real protected closePaperPosition, wipes memory, runs the real loadSaved() and asserts the exact recovered state INCLUDING what must NOT come back. Error-log fixtures assert message CONTENT and eviction, never length alone. A TENTH VACUOUS FIXTURE: RollbackFailure.15 asserted that the ALEX error log never contains the API key or account ID -- a pure must-not-contain check with NO POSITIVE PRECONDITION, so it is satisfied by an EMPTY log, which is precisely the condition its own title says it tests under (\'even while a rollback-failure attempt is actively being logged\'). Proven by mutation: making recordAlexGEngineError a no-op so the log is always empty kills four fixtures elsewhere and that one PASSES. A credential-leak assertion that passes when nothing was logged is not a security control. RollbackFailure.15a now requires the log to be non-empty and its newest entry to be the commitAlexGLedger FATAL before the leak check is applied. Gate: 34 suites, 2,180/2,180; protected drift 0.',
   '12.28.0 — THE CHART ATTRIBUTED THE ENGINE\'S VERDICT TO A TIMEFRAME IT NEVER EVALUATED (MOGO-021 section 18.17). Display-only; no protected function touched, no frozen rule, threshold, gate or trading decision altered, drift 0. Found by the chart/AOI mutation campaign, which scored 25 mutations of the render layer and found FIFTEEN that killed ZERO of 2,105 fixtures -- every AOI-drawing mutation, every chart-versus-engine authority mutation, every trade-marker mutation and every ALEX rendered-setup mutation survived. Section 10.3\'s "honest gap" was the entire render layer, and loadChart() had never once been EXECUTED by the gate. D1: pairData recorded conf/signals but NO timeframe, and loadChart granted engine authority on the mere PRESENCE of conf+signals, then labelled the result with activeTf -- the timeframe the CHART is on. setTf() assigns activeTf and calls loadChart() BEFORE scanAll(), so switching H1 to H4 rendered the H1 verdict under the words "Showing the scanner\'s own H4 verdict for this pair" -- reproduced end to end, confidence reading LONG 83% from H1 while the state line claimed H4. The verdict shown and the timeframe named came from different places. FIXED AT BOTH ENDS: scanPair now records the timeframe it evaluated on, and loadChart requires it to match the timeframe being displayed. A verdict with NO recorded timeframe (persisted before this version) FAILS CLOSED -- it is not attributed rather than attributed to a guess -- and the fallback is the pre-existing chart-local path, which labels itself honestly. D2: the live setups panel rendered ALEX\'s INTERNAL research ids (A_repeatedReaction / B_breakRetest) while every other ALEX surface renders the frozen user-facing setupLabel. The status rows carry only setupType, so the label is resolved at display time by a new helper. That DUPLICATES a mapping inside the PROTECTED alexGCreateSetupRecord, which cannot be refactored to share it -- so the duplication is PINNED by CAF-LABEL.1 rather than left to drift. 38 fixtures added (tests/v1239_chart_aoi_fidelity_tests.js, prefix CAF-), driving the real loadChart, drawTradeOverlay, drawTjrZoneOverlay, renderAlexGLiveSetupsPanel, scanAll and alexGLivePollTick with the network stubbed only at fetch() and a recording chart stub. AOI prices are hand-computed on paper (support 1.17000, resistance 1.24000, tolerance 0.00400 -> the four asserted literals 1.17400/1.16600/1.24400/1.23600). Controls: positive, negative (no qualifying cluster -> ZERO resistance series drawn while support is still drawn), boundary (2 touches below the minimum draws nothing; exactly 3 moves the band), failure isolation (a malformed zone is skipped and the healthy one still drawn), coverage (35/35 JVM instruments, 12/12 ALEX, both structural timeframes), and the section 10.1 AUTHORITY property with a DIVERGENCE CONTROL proving the recorded and recomputed verdicts genuinely differ. TWO SELF-CORRECTIONS during this work, both recorded rather than quietly fixed: an early draft of the timeframe fixtures moved activeTf to a granularity the chart router does not serve, so loadChart returned early and the assertions read STALE DOM from the previous fixture -- passing without the code under test running at all; every one now clears the element and asserts it was genuinely re-rendered. And deleting the RECORDING half of the D1 fix killed ZERO fixtures, because the authority fixtures seed pairData directly -- covered-but-wired-to-nothing, in the coverage of my own fix. CAF-TF.5/.7 now drive the real sweep and both halves are mutation-covered. FOUR EXISTING FIXTURES RELABELLED: v130 CHART-3 was the ONLY fixture claiming to protect chart-versus-engine authority and it slices loadChart\'s SOURCE, surviving every mutation that actually breaks the property while dying on a reformat; v1231 fixtures 26/27 are source-text; and v1231 fixture 28 asserted only that two symbols are of type function under the title "behaves identically (functionally unchanged)". Gate: 33 suites, 2,143/2,143; protected drift 0.',
@@ -10325,7 +10326,10 @@ function renderTradeOverlayLegend(rec){
   if(!legend) return;
   const rows=[
     ['Strategy',rec.strategyLabel],['Pair',rec.pair],['Timeframe',rec.timeframe||'—'],
-    ['Setup',rec.setupLabel||rec.setupType||'—'],['Direction',rec.direction?rec.direction.toUpperCase():'—'],
+    // v12.31.0 (§18.21): the THIRD raw-setupType path, missed by the v12.28.0 D2 fix.
+    // normalizeJournalRecord sets setupLabel to null, so whenever the label is absent this fell
+    // through to ALEX's internal research id ('A_repeatedReaction') on the chart's own legend.
+    ['Setup',rec.setupLabel||alexGSetupDisplayLabel(rec.setupType)||'—'],['Direction',rec.direction?rec.direction.toUpperCase():'—'],
     ['Entry',fmtNum(rec.entry)],['Stop',fmtNum(rec.stop)],['Target',fmtNum(rec.target)],
     ['Planned R:R',rec.plannedRR!=null?rec.plannedRR+':1':'—'],
     ['Result',rec.result||(rec.status==='OPEN'?'Open':'—')],['Result R',fmtRMult(rec.resultR)],
@@ -11131,6 +11135,11 @@ function handleDrawingKeyDown(e){
 async function loadChart(){
   flushChartDrawingsSave(); // v6.1: persist whatever was just drawn on the outgoing pair/timeframe before switching
   const name=activePair.replace('_','/');
+  // v12.31.0 (§18.21): the timeframe is captured ONCE, exactly as `name` captures the pair above.
+  // This function reads its globals across two awaits; an operator clicking a different timeframe
+  // mid-load previously let the fetch use one value while the verdict guard and the state line read
+  // another -- H1 candles drawn under an H4 verdict, labelled H4. Every read below uses chartTf.
+  const chartTf=activeTf;
   document.getElementById('chartPairName').textContent=name;
   const sd=scanData[name];
   const gradeEl=document.getElementById('chartGrade');
@@ -11149,11 +11158,11 @@ async function loadChart(){
   // instead of always fetching a fixed 200 -- falls back to the previous fixed count if the
   // larger, timeframe-specific request fails or is rejected, so this can never turn a
   // previously-working chart into a blank one.
-  const requestedCandleCount=getChartCandleCount(activeTf);
+  const requestedCandleCount=getChartCandleCount(chartTf);
   showChartLoadingState(true,requestedCandleCount);
-  let candles=await fetchCandles(activePair,activeTf,requestedCandleCount);
+  let candles=await fetchCandles(activePair,chartTf,requestedCandleCount);
   if((!candles||!candles.length)&&requestedCandleCount!==CHART_DISPLAY_CANDLE_COUNT_FALLBACK){
-    candles=await fetchCandles(activePair,activeTf,CHART_DISPLAY_CANDLE_COUNT_FALLBACK);
+    candles=await fetchCandles(activePair,chartTf,CHART_DISPLAY_CANDLE_COUNT_FALLBACK);
   }
   showChartLoadingState(false);
   if(!candles||!candles.length){
@@ -11191,11 +11200,29 @@ async function loadChart(){
   // honestly labelled. The fallback is the pre-existing chart-local path, which labels itself as
   // 'chart' and is therefore never misleading. Display attribution only: no frozen rule, threshold
   // or trading decision is affected, and scanAll() refreshes the verdict moments later anyway.
-  const usingEngineVerdict=!!(engineVerdict&&engineVerdict.conf&&engineVerdict.signals&&
-    engineVerdict.timeframe===activeTf);
+  // 🔴 v12.31.0 (§18.21): THE v12.28.0 FIX WAS WORSE THAN THE BUG IN ITS MOST COMMON CASE.
+  // setTf() is `activeTf=tf; loadChart(); scanAll();` with neither awaited, so on EVERY timeframe
+  // click the recorded verdict no longer matches and the chart fell through to computing its own
+  // signals and confluence. For a pair the engine had REFUSED to evaluate on incomplete data, the
+  // chart then rendered an invented "LONG 43%" and a SETUP FORMING recommendation banner -- exactly
+  // what the comment above says this block exists to prevent. It traded a labelling error for a
+  // fabricated verdict, and the banner carries no qualifier at all.
+  //
+  // A verdict recorded on a DIFFERENT timeframe now yields its own explicit state: this timeframe
+  // has not been scanned yet. The chart shows nothing rather than something it made up. The
+  // chart-local path is retained ONLY for a pair with no recorded verdict at all -- a genuinely
+  // never-scanned pair, which is what it was written for.
+  //
+  // chartTf is captured ONCE. loadChart reads the live global across two awaits, so an operator
+  // clicking a new timeframe mid-load could have the guard and the label read a DIFFERENT value
+  // than the fetch did -- H1 candles drawn under an H4 verdict labelled H4. The pair is already
+  // captured and re-checked this way (`name`); the timeframe never was.
+  const hasRecordedVerdict=!!(engineVerdict&&engineVerdict.conf&&engineVerdict.signals);
+  const usingEngineVerdict=hasRecordedVerdict&&engineVerdict.timeframe===chartTf;
+  const awaitingScanForTimeframe=hasRecordedVerdict&&!usingEngineVerdict;
   const evaluationSuppressed=usingEngineVerdict
     ? engineVerdict.completenessState!==MARKET_DATA_COMPLETENESS.COMPLETE
-    : chartCompleteness!==MARKET_DATA_COMPLETENESS.COMPLETE;
+    : (awaitingScanForTimeframe||chartCompleteness!==MARKET_DATA_COMPLETENESS.COMPLETE);
   const signals=usingEngineVerdict?engineVerdict.signals:detectSignals(evaluationSuppressed?null:candles,activePair);
   const conf=usingEngineVerdict?engineVerdict.conf:bestConfluence(evaluationSuppressed?null:candles,activePair);
   const sess=getSession();
@@ -11207,7 +11234,9 @@ async function loadChart(){
     source:usingEngineVerdict?'engine':'chart',
     requestedCount:usingEngineVerdict?engineVerdict.requestedCount:(candles?candles.requestedCount:null),
     receivedCount:usingEngineVerdict?engineVerdict.receivedCount:(candles?candles.receivedCount:null),
-    timeframe:activeTf});
+    timeframe:chartTf,
+    awaitingScanForTimeframe,
+    verdictTimeframe:engineVerdict?engineVerdict.timeframe:null});
 
   const dec=activePair.includes('JPY')?3:5;
   const last=candles[candles.length-1];
@@ -11438,6 +11467,22 @@ function renderChartEvaluationState(state){
   const el=document.getElementById('chartEvaluationState');
   if(!el) return;
   const st=state||{};
+  // v12.31.0 (§18.21): a verdict exists for this pair but was computed on ANOTHER timeframe. This
+  // is NOT "incomplete market data" and it is NOT a chart-local opinion -- the honest statement is
+  // that this timeframe has not been scored yet. It gets its own state precisely so the chart does
+  // not fill the gap with an invented verdict, which is what the v12.28.0 fix accidentally caused.
+  if(st.awaitingScanForTimeframe){
+    el.innerHTML='<div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:6px;'+
+      'padding:8px 10px;margin:4px 0;font-size:12px">'+
+      '<strong style="color:var(--gold)">NOT EVALUATED \u2014 this timeframe has not been scanned yet</strong>'+
+      '<div style="color:var(--text2);margin-top:3px;font-size:11px">'+
+      'The scanner\u2019s most recent verdict for this pair was computed on '+
+      escapeHtml(String(st.verdictTimeframe||'another timeframe'))+', not on '+
+      escapeHtml(String(st.timeframe||''))+'. No signal, confluence or recommendation is shown for '+
+      'this timeframe until the next sweep scores it. Nothing below is a strategy verdict.'+
+      '</div></div>';
+    return;
+  }
   if(!st.suppressed){
     // Not silent on the happy path: an operator must be able to tell a live engine verdict from a
     // chart-local one, because only the first is what auto-trading acted on.
@@ -18015,6 +18060,15 @@ function applyDeveloperModeVisibility(){
   if(evidencePlatformWrap) evidencePlatformWrap.style.display=developerModeEnabled?'block':'none';
   renderEvidencePlatformDiagnostics();
   try{ renderEvidenceContinuityDiagnostics(); }catch(e){}
+  // v12.31.0 (§18.21): the Paper Ledger Integrity card holds the ONLY operator-visible surface for
+  // paperEngineErrors and alexGEngineErrors, and it was the one Developer-Mode surface this
+  // function did NOT re-render on toggle. So turning Developer Mode ON left the card showing what
+  // it had rendered while the flag was OFF -- no engine errors -- and the operator had to press the
+  // card's own Refresh, or leave and re-enter the tab, to see them. Developer Mode is session-only
+  // and defaults OFF, so the INC-001 storage-load notice, which fires at LOAD and exists to tell
+  // the operator their data is being preserved, was invisible on every fresh session. Surfacing the
+  // errors (v12.29.0) is worth nothing if the surface is not repainted when it becomes visible.
+  try{ renderPaperLedgerIntegrity(); }catch(e){}
 }
 function generateTestPaperTrade(direction,forceResult){
   if(!developerModeEnabled)return;

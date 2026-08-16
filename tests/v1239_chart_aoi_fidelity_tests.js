@@ -310,8 +310,103 @@ async function runChartAoiFidelityFixtures(g){
     // FAIL CLOSED: a verdict persisted before v12.28.0 carries no timeframe at all. It cannot be
     // honestly attributed, so it must NOT be granted engine authority.
     const st=await renderStateWithVerdict(undefined);
-    assert('CAF-TF.4','a legacy verdict with NO recorded timeframe fails CLOSED -- it is not attributed to the scanner rather than being attributed to a guess',
-      st.indexOf('scanner’s own')===-1, st.slice(0,200));
+    // §18.21: the `length>0` clause is NOT decoration. Without it this assertion is satisfied by an
+    // EMPTY string -- independent verification proved it by blanking the state line only for the
+    // legacy no-timeframe case, which killed nothing. CAF-TF.0's precondition guards the M15 run,
+    // not this one.
+    assert('CAF-TF.4','a legacy verdict with NO recorded timeframe fails CLOSED -- it is not attributed to the scanner rather than being attributed to a guess, and the state line is genuinely rendered rather than left blank',
+      st.length>0 && st.indexOf('scanner’s own')===-1, 'len='+st.length+' '+st.slice(0,180));
+  }
+  {
+    // ── 🔴 CAF-TF.8-.10: THE v12.28.0 FIX WAS WORSE THAN THE BUG (§18.21) ───────────────────────
+    // setTf() is `activeTf=tf; loadChart(); scanAll();` with neither awaited, so on EVERY timeframe
+    // click the recorded verdict stops matching. Before v12.31.0 the chart then computed its OWN
+    // signals and confluence -- and for a pair the engine had REFUSED to evaluate on incomplete
+    // data it rendered an invented percentage AND a recommendation banner. It traded a labelling
+    // error for a fabricated verdict. These pin that the chart now shows NOTHING rather than
+    // something it made up.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    seedEngineVerdict({timeframe:'M15',completenessState:'PARTIAL',
+      requestedCount:220,receivedCount:137,evaluationSuppressed:true});
+    // Cleared FIRST. The suppressed path does not rewrite the confluence panel or the banner, so
+    // whatever the previous fixture left there would otherwise be read as this run's output -- the
+    // stale-DOM trap that already produced one false pass in this suite.
+    g.setChartEvaluationStateHtml('');
+    g.setElHtml('confDir',''); g.setElHtml('recBanner',''); g.setElHtml('signalsRow','');
+    await g.loadChart();
+    const st8=String(g.elHtml('chartEvaluationState'));
+    const conf8=String(g.elHtml('confDir')||'');
+    const banner8=String(g.elHtml('recBanner')||'');
+    assert('CAF-TF.8','a pair the ENGINE suppressed, viewed on a timeframe it has not scanned, renders an explicit not-scanned state naming BOTH timeframes -- not an invented verdict',
+      st8.indexOf('has not been scanned yet')!==-1 && st8.indexOf('M15')!==-1,
+      st8.slice(0,220));
+    assert('CAF-TF.9','and the confluence panel shows NO percentage and NO direction -- the chart does not fill the gap with a figure it computed itself',
+      conf8.indexOf('%')===-1 && conf8.indexOf('LONG')===-1 && conf8.indexOf('SHORT')===-1,
+      'confDir='+(conf8===''?'(empty -- cleared before the run and never rewritten)':conf8.slice(0,160)));
+    assert('CAF-TF.10','and NO recommendation banner is offered -- the banner carries no qualifier of its own, so an invented one there is the most misleading surface of all',
+      banner8.indexOf('SETUP FORMING')===-1 && banner8.indexOf('TAKE THE TRADE')===-1,
+      'banner='+banner8.slice(0,160));
+  }
+  {
+    // ── 🔴 CAF-LEGEND: the THIRD raw-setupType path, AND the wiring gap (§18.21) ────────────────
+    // Two findings in one fixture. (1) renderTradeOverlayLegend rendered
+    // `rec.setupLabel||rec.setupType`, and normalizeJournalRecord sets setupLabel to null -- so the
+    // chart's own legend showed ALEX's internal research id whenever the label was absent. The D2
+    // fix missed this path entirely. (2) The CAF-C/CAF-D overlay fixtures all call
+    // drawTradeOverlay/drawTjrZoneOverlay DIRECTLY, so deleting the call site inside loadChart
+    // killed NOTHING -- both helpers could be permanently disconnected from the real render path at
+    // zero cost to the gate. This drives loadChart() and reads the legend the renderer produced.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    const REC={
+      tradeId:'AGT|LEG1',journalEntryId:'ALEXJ|LEG1',pair:'EUR/USD',timeframe:'H1',
+      setupLabel:null,setupType:'A_repeatedReaction',      // exactly what the normalizer produces
+      direction:'buy',entry:1.20000,stop:1.19000,target:1.22000,
+      openedAt:'2026-05-29T12:00:00.000Z',closedAt:'2026-05-29T18:00:00.000Z',
+      status:'CLOSED',result:'Win',exitPrice:1.22000
+    };
+    g.setElHtml('chartTradeOverlayLegend','');
+    await g.loadChart();
+    // NOTE: loadChart's destroyChart() clears focusedTradeRecord, so loadChart does NOT draw the
+    // overlay -- focusChartOnTradeWindow does, after loadChart resolves. See the disclosure below.
+    g.drawTradeOverlay(REC);
+    const legend=String(g.elHtml('chartTradeOverlayLegend')||'');
+    // 4-arg signature (id, description, condition, detail). An earlier draft passed 3, which
+    // silently shifted the boolean into the description slot and the DETAIL STRING into the
+    // condition slot -- so the fixture passed on a truthy string regardless of the result.
+    assert('CAF-LEGEND.1','the trade-overlay legend renders a Setup row at all, so the assertion below is reading real rendered output rather than an empty element',
+      legend.length>0 && legend.indexOf('Setup')!==-1, 'len='+legend.length+' '+legend.slice(0,140));
+    assert('CAF-LEGEND.2','it shows the frozen user-facing label, never ALEX\'s internal research id, when the record carries no setupLabel -- the THIRD raw-setupType path, missed by the v12.28.0 D2 fix',
+      legend.indexOf('REPEATED ZONE REACTION')!==-1 && legend.indexOf('A_repeatedReaction')===-1,
+      legend.slice(0,200));
+    // ⚠️ DISCLOSED AND NOT CLOSED (§18.21). These two call drawTradeOverlay DIRECTLY, so they pin
+    // the LABEL but NOT the wiring. Independent verification showed that deleting the
+    // `if(focusedTradeRecord) drawTradeOverlay(focusedTradeRecord)` call site, and the
+    // drawTjrZoneOverlay call site, each kills ZERO fixtures -- both helpers can be permanently
+    // disconnected from the render path at no cost to the gate. Closing that needs the real draw
+    // path, focusChartOnTradeWindow, which requires the fixture router to serve a windowed
+    // fetchCandlesAroundWindow request it does not model. Recorded as an OPEN item rather than
+    // papered over with a fixture that would look like wiring coverage and not be it.
+  }
+  {
+    // RE-ENTRANCY (§18.21). loadChart reads its globals across two awaits. An operator clicking a
+    // different timeframe mid-load previously let the FETCH use one value while the verdict guard
+    // and the state line read another -- H1 candles drawn under an H4 verdict, labelled H4.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    seedEngineVerdict({timeframe:'H4'});
+    g.setActiveTf('H1');
+    g.setChartEvaluationStateHtml('');
+    // The interleaving needs no special plumbing: loadChart is async, so starting it WITHOUT
+    // awaiting and flipping activeTf before the await puts the change exactly where an operator's
+    // mid-load click lands -- after the fetch has begun, before the verdict guard and the label run.
+    const pending=g.loadChart();
+    g.setActiveTf('H4');
+    await pending;
+    const st11=String(g.elHtml('chartEvaluationState'));
+    assert('CAF-TF.11','a timeframe switched DURING the fetch cannot make the chart label H1 candles with an H4 verdict -- the timeframe is captured once, so the guard and the label read what the fetch actually used',
+      st11.length>0 && st11.indexOf('scanner’s own H4 verdict')===-1, st11.slice(0,220));
   }
   {
     // ── CAF-LABEL: the display helper must not drift from the frozen record (§18.17) ───────────

@@ -132,6 +132,7 @@ try{
     'g.getPaperAccountKnownVersion=function(){return paperAccountKnownVersion;};g.setPaperAccountKnownVersion=function(v){paperAccountKnownVersion=v;};' +
     'g.getAlexGAccountKnownVersion=function(){return alexGAccountKnownVersion;};g.setAlexGAccountKnownVersion=function(v){alexGAccountKnownVersion=v;};' +
     'g.setDeveloperMode=function(v){developerModeEnabled=!!v;};' +
+    'g.toggleDeveloperMode=function(v){developerModeEnabled=!!v; applyDeveloperModeVisibility();};' +
     'g.setPairData=function(pair,price){ if(price===null||price===undefined){ delete pairData[pair]; } else { pairData[pair]={price:price}; } };' +
     'g.resetPaperPositionsClosing=function(){paperPositionsClosing.clear();};' +
     // storageLoadFailures is module-level session state: a fixture must be able to put the
