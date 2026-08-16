@@ -208,6 +208,12 @@ try{
     'g.openPaperPosition=openPaperPosition;' +
     'g.closePaperPosition=closePaperPosition;' +
     'g.checkAutoTrades=checkAutoTrades;' +
+    // §18.23: the alerting path had ZERO behavioural coverage anywhere in the repository.
+    'g.scanPair=scanPair;' +
+    'g.getAlertLog=function(){return alertLog;};g.setAlertLog=function(v){alertLog=v;};' +
+    'g.ALERT_THRESHOLD=ALERT_THRESHOLD;' +
+    'g.resetFiredAlerts=function(){firedAlerts=new Set();};' +
+    'g.pairDataAll=function(){return pairData;};' +
     'g.evaluateLiveTrigger=evaluateLiveTrigger;' +
     'g.alexGAttemptOpenLivePosition=alexGAttemptOpenLivePosition;' +
     'g.alexGCloseLivePosition=alexGCloseLivePosition;' +

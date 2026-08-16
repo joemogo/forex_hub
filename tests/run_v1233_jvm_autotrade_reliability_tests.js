@@ -237,6 +237,9 @@ g.releaseHeld=()=>{__gatePair=null; if(__gateRelease){__gateRelease(); __gateRel
 // period, is the test: counting `ms===3600000` would also count any other hourly timer and would
 // still pass if the hourly handle were stranded and a second one created against a different fn.
 g.liveTimersFor=fn=>{ let n=0; __liveIntervals.forEach(v=>{ if(v.fn===fn) n++; }); return n; };
+// §18.23: the PERIOD, not just the handle count. Deleting either 60-second scanner timer, or
+// changing its period, previously killed nothing anywhere in the gate.
+g.liveTimerMsFor=fn=>{ let ms=null; __liveIntervals.forEach(v=>{ if(v.fn===fn) ms=v.ms; }); return ms; };
 g.liveTimerIds=()=>Array.from(__liveIntervals.keys());
 g.setNow=t=>{__simNow=t;};
 g.now=()=>__simNow;
@@ -1271,6 +1274,65 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __exOneRec.closeReason==="STOP_LOSS"&&__exOneRec.pnl===50&&paperAccount.balance===10050,\n' +
   '    "only the live price changed (1.10300 -> 1.10100): calls="+JSON.stringify(__exOne)+" record="+\n' +
   '    __exOneRec.result+" while pnl="+__exOneRec.pnl+" is POSITIVE -- the label follows the level crossed, not the money");\n' +
+  // ══ 🔴 MOGO-021 §18.23: JVM's SHORT side of checkPaperPositions had no fixture ══════════════
+  // Every jvmSeedPosition call above passes "buy". An independent completeness audit showed a
+  // sell-only mutation of the exit comparison therefore survives the entire gate -- on PROTECTED,
+  // money-moving code that decides TAKE_PROFIT vs STOP_LOSS. ALEX has both sides (F3.7-F3.9,
+  // F4.10-F4.12); JVM had one. A short position profits as price FALLS, so the target sits BELOW
+  // the entry and the stop ABOVE it -- the mirror of every fixture above.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-SELLWIN","sell",1.30000,1.31000,1.28000);\n' +
+  '  pairData["EUR_USD"]={price:1.27900};\n' +
+  '  g.setBidAsk("1.27900","1.27930");\n' +
+  '  const __exSellWin=await jvmExitSweep();\n' +
+  '  const __exSellWinRec=jvmClosedRec("JVMEXIT-SELLWIN");\n' +
+  '  g.record("JVMEXIT-8","a SHORT whose live price falls THROUGH its target closes exactly once as an AUTOMATIC Win -- the mirror of JVMEXIT-1, and the only fixture that exercises the sell branch of the exit comparison",\n' +
+  '    __exSellWin.length===1&&__exSellWin[0].id==="JVMEXIT-SELLWIN"&&__exSellWin[0].manual===false&&\n' +
+  '    __exSellWin[0].autoResult==="Win"&&__exSellWinRec.result==="Win"&&__exSellWinRec.closeReason==="TAKE_PROFIT",\n' +
+  '    "price 1.27900 vs SHORT target 1.28000 -> "+JSON.stringify(__exSellWin)+" record="+\n' +
+  '    __exSellWinRec.result+"/"+__exSellWinRec.closeReason);\n' +
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-SELLLOSS","sell",1.30000,1.31000,1.28000);\n' +
+  '  pairData["EUR_USD"]={price:1.31100};\n' +
+  '  g.setBidAsk("1.31100","1.31130");\n' +
+  '  const __exSellLoss=await jvmExitSweep();\n' +
+  '  const __exSellLossRec=jvmClosedRec("JVMEXIT-SELLLOSS");\n' +
+  '  g.record("JVMEXIT-9","SIBLING CONTROL: the SAME short whose price rises THROUGH its stop records a Loss with STOP_LOSS -- so JVMEXIT-8 is the direction being read correctly and not a branch that always says Win",\n' +
+  '    __exSellLoss.length===1&&__exSellLoss[0].autoResult==="Loss"&&\n' +
+  '    __exSellLossRec.result==="Loss"&&__exSellLossRec.closeReason==="STOP_LOSS",\n' +
+  '    "price 1.31100 vs SHORT stop 1.31000 -> "+JSON.stringify(__exSellLoss)+" record="+\n' +
+  '    __exSellLossRec.result+"/"+__exSellLossRec.closeReason);\n' +
+  // ══ 🔴 MOGO-021 §18.23: SCANNER CADENCE -- nothing knew the scanner is ever STARTED ═════════
+  // An independent completeness audit found both 60-second timers could be DELETED OUTRIGHT -- a
+  // total scanning outage in production -- and the whole gate stayed green. Every runner stubs
+  // setInterval and every fixture calls scanAll()/alexGLivePollTick() DIRECTLY, so the evidence
+  // proved ONE SWEEP, never that sweeps HAPPEN. The word "continuous" in the standard was untested.
+  // This harness is the only one that records {fn,ms}, so the assertions live here.
+  '  alexGLiveInterval=null;\n' +
+  // The starter is a no-op unless polling SHOULD run (auto-trading on, or an open ALEX position).
+  // Enabling it is the precondition, and JVMTMR-6 turns it back off as the negative control.
+  '  alexGAutoTrading=alexGAutoTrading||{}; alexGAutoTrading.enabled=true;\n' +
+  '  g.record("JVMTMR-2b","PRECONDITION: live polling SHOULD run in this state, so the starter below is not a no-op",\n' +
+  '    alexGLivePollingShouldRun()===true,"shouldRun="+alexGLivePollingShouldRun());\n' +
+  '  const __tmrBefore=g.liveTimersFor(alexGLivePollTick);\n' +
+  '  startAlexGLivePollingIfNeeded();\n' +
+  '  const __tmrAfter=g.liveTimersFor(alexGLivePollTick);\n' +
+  '  const __tmrMs=g.liveTimerMsFor(alexGLivePollTick);\n' +
+  '  g.record("JVMTMR-3","the ALEX live poller is ARMED by its own starter -- one live handle where there was none, so a deleted setInterval is a failure rather than a silent outage",\n' +
+  '    __tmrBefore===0&&__tmrAfter===1,\n' +
+  '    "handles before="+__tmrBefore+" after="+__tmrAfter);\n' +
+  '  g.record("JVMTMR-4","and it is armed at exactly 60000ms -- the period is asserted, not just the existence of a timer, so shortening or lengthening the sweep is caught",\n' +
+  '    __tmrMs===60000,"period="+__tmrMs);\n' +
+  '  startAlexGLivePollingIfNeeded();\n' +
+  '  g.record("JVMTMR-5","calling the starter a SECOND time does not strand a second sweep -- the double-start guard holds, so a re-entry cannot double every scan",\n' +
+  '    g.liveTimersFor(alexGLivePollTick)===1,"handles after a second start="+g.liveTimersFor(alexGLivePollTick));\n' +
+  '  const __alexIntervalBefore=alexGLiveInterval;\n' +
+  '  alexGAutoTrading.enabled=false;\n' +
+  '  stopAlexGLivePollingIfDone();\n' +
+  '  g.record("JVMTMR-6","NEGATIVE CONTROL: when live polling should no longer run the handle is CLEARED, so JVMTMR-3 is a real arming rather than a counter that only ever increases",\n' +
+  '    __alexIntervalBefore!=null&&g.liveTimersFor(alexGLivePollTick)===0&&alexGLiveInterval===null,\n' +
+  '    "before="+String(__alexIntervalBefore!=null)+" handles now="+g.liveTimersFor(alexGLivePollTick));\n' +
+  '  alexGAutoTrading.enabled=true; alexGLiveInterval=null;\n' +
   '  g.resetBidAsk(); jvmFreshAccount();\n' +
   // ══ MOGO-021 LEAKED HOURLY TIMER ══════════════════════════════════════════════════════════
   // disconnect() cleared scanInterval and countdownInterval but NOT autoScanTimer, and initAll then

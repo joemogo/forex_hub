@@ -450,9 +450,17 @@ function runV1212Fixtures(g){
       dismissedTs!==nextTs, 'dismissedTs='+dismissedTs+' nextCandleTs='+nextTs);
   }
 
-  // 46: Alert dedup works.
-  assert('Fixture 46: alert dedup works',
-    true, 'runManualReviewScan() only calls playManualReviewAlert()/addManualReviewAlertLogEntry() when manualReviewAlertedKey[oPair] differs from the current 5-minute-bucketed state+decisionTs key -- same dedup granularity as addAlert(), confirmed by code inspection');
+  // 46: 🔴 REMOVED (MOGO-021 §18.23). The condition was the LITERAL `true` -- the TWELFTH fixture
+  // this milestone has found that cannot fail, and it survived in the gate until an independent
+  // completeness audit read it. Its own detail string admitted the method: "confirmed by code
+  // inspection". It was also one of only two places in the repository that mentioned alert dedup,
+  // so the appearance of coverage was doing real harm.
+  // Alert dedup is now covered BEHAVIOURALLY by PTE2E-ALERT.2 in
+  // tests/v1239_paper_trading_e2e_tests.js, which runs the real scanPair twice on a series scoring
+  // 65 against the threshold of 55 and asserts the second sweep raises no second alert -- with
+  // PTE2E-ALERT.3 as the below-threshold negative control.
+  // Deleted rather than reworded: an assertion that cannot fail is not evidence, and leaving it
+  // under a truthful title would still inflate the fixture count with a fixture that proves nothing.
 
   // 48: Thursday and Friday trades remain separate in analytics.
   {

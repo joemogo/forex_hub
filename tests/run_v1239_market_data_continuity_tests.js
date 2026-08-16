@@ -182,6 +182,9 @@ const wrapped = new Function('g',
   'g.getAutoTrading=function(){return autoTrading;};' +
   'g.setAutoTradingEnabled=function(v){autoTrading.enabled=v;};' +
   'g.resetFiredAlerts=function(){firedAlerts.clear();};' +
+  'g.getAlertLog=function(){return alertLog;};' +
+  'g.setAlertLog=function(v){alertLog=v;};' +
+  'g.ALERT_THRESHOLD=ALERT_THRESHOLD;' +
   'g.getDecisionEvents=function(){return decisionEventLog.slice();};' +
   'g.clearDecisionEvents=function(){clearDecisionEvents();};' +
   // The DURABLE poll observation scanAll hands the forward-coverage ledger. Captured through the

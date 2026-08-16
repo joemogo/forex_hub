@@ -343,12 +343,22 @@ async function runV1239PaperTradingE2EFixtures(g){
       'EUR_USD positions='+openOn('EUR_USD')+' total='+(g.getPaperAccount().openPositions||[]).length);
   }
   {
-    // ── 🔴 PTE2E-RACE: THE INNER PRE-OPEN RE-CHECK (§18.22) ──────────────────────────────────────
+    // ── PTE2E-RACE: the inner pre-open re-check (§18.22) — REDUNDANT CONFIRMATION ────────────────
+    // ⚠️ CORRECTION. These were added believing the inner re-check was UNCOVERED. IT WAS NOT.
+    // An independent completeness audit showed JVMDUP-2/3/4 in run_v1233 already drive exactly this
+    // guard -- and JVMDUP-3/JVMDUP-4 isolate its open-position half and its traded-today half
+    // INDIVIDUALLY. They predate this suite; verified with `git show 4fd38a7:`. The earlier claim
+    // came from scoring the mutation against THIS suite alone rather than gate-wide, and I repeated
+    // it in the report without checking. §18.21b was wrong and is withdrawn.
+    //
+    // These fixtures are kept as redundant confirmation, NOT counted as a closed gap: they reach the
+    // same guard through a different mechanism (a position injected mid-fetch via the runner's
+    // interleaving hook rather than through a scripted concurrent tick), which is worth having. But
+    // the milestone's survivor count must not be inflated by them.
+    //
     // checkAutoTrades guards one-position-per-pair TWICE: once in the eligibility filter, and again
     // immediately before opening, "in case another concurrent check (or a manual click) already
-    // acted on this pair". Only the OUTER guard was covered -- independent verification showed the
-    // inner re-check could be deleted with nothing objecting, because every fixture created the
-    // conflicting position BEFORE the tick, where the filter catches it first.
+    // acted on this pair".
     //
     // Under genuinely overlapping ticks the inner guard is the one that matters, and it is the only
     // thing standing between a concurrent manual click and a SECOND position on the same pair. This
@@ -645,6 +655,43 @@ async function runV1239PaperTradingE2EFixtures(g){
       g.getAlexGAccount().balance===10000 && alexBalBefore===10000 && alexBefore===alexAfter,
       'alexBalance='+g.getAlexGAccount().balance+' identical='+(alexBefore===alexAfter));
   }
+  // ══ 🔴 ALERT — the operator-notification path had NO behavioural coverage (§18.23) ═══════════
+  // An independent completeness audit found playAlert, showToast, showAutoTradeToast and
+  // notifyAutoTrade appear in ZERO test files, and addAlert appears exactly once -- inside a
+  // comment. The only fixture in the repository naming alert dedup was
+  // `assert('Fixture 46: alert dedup works', true, ...)` -- the condition is the LITERAL `true`.
+  // That is the TWELFTH fixture this milestone has found that cannot fail, and it was still in the
+  // gate. Consequence: deleting the `conf.total >= ALERT_THRESHOLD` gate, or inverting it, left the
+  // whole gate green -- the operator is told nothing and nothing objects.
+  {
+    jvmClean(); alexClean(); seedConversions(); activeWatchAll();
+    g.setMode('firing'); g.setPricing('serve','1.09990','1.10000');
+    g.resetFiredAlerts(); g.setAlertLog([]);
+    await g.scanPair('EUR_USD');
+    const pdA=g.pairDataAll()['EUR_USD']||{};
+    const logA=g.getAlertLog();
+    assert('PTE2E-ALERT.0 (PRECONDITION): this series genuinely scores AT OR ABOVE the alert threshold, so the assertion below is not vacuous -- the frozen confluence engine produced 65 against a threshold of 55',
+      pdA.conf && pdA.conf.total>=g.ALERT_THRESHOLD && pdA.evaluationSuppressed===false,
+      'conf.total='+(pdA.conf&&pdA.conf.total)+' threshold='+g.ALERT_THRESHOLD+' suppressed='+pdA.evaluationSuppressed);
+    assert('PTE2E-ALERT.1: a sweep at or above the threshold raises exactly ONE alert, naming the pair that scored and carrying the score the engine actually produced',
+      logA.length===1 && logA[0].pair==='EUR/USD' && logA[0].pct===pdA.conf.total,
+      'alerts='+logA.length+' pair='+(logA[0]&&logA[0].pair)+' pct='+(logA[0]&&logA[0].pct));
+    await g.scanPair('EUR_USD');
+    assert('PTE2E-ALERT.2 (DEDUP): re-running the identical sweep in the same 5-minute bucket does NOT raise a second alert -- this replaces v1212 Fixture 46, whose condition was the literal true',
+      g.getAlertLog().length===1,'alerts after the second sweep='+g.getAlertLog().length);
+  }
+  {
+    // NEGATIVE CONTROL. Without it, ALERT.1 would also be satisfied by a gate that alerts
+    // unconditionally -- which is the mutation most likely to be introduced by a careless edit.
+    jvmClean(); alexClean(); seedConversions(); activeWatchAll();
+    g.setMode('flat'); g.setPricing('serve','1.09990','1.10000');
+    g.resetFiredAlerts(); g.setAlertLog([]);
+    await g.scanPair('EUR_USD');
+    const pdB=g.pairDataAll()['EUR_USD']||{};
+    assert('PTE2E-ALERT.3 (NEGATIVE CONTROL): a sweep scoring BELOW the threshold raises no alert at all, so the gate is a real threshold rather than an unconditional notify',
+      pdB.conf && pdB.conf.total<g.ALERT_THRESHOLD && g.getAlertLog().length===0,
+      'conf.total='+(pdB.conf&&pdB.conf.total)+' alerts='+g.getAlertLog().length);
+  }
   {
     // And the mirror at the finest grain: an ALEX close must not credit JVM.
     jvmClean(); alexClean();
@@ -675,7 +722,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===60, 'recorded='+results.length+' expected=60 (this fixture is the 61st)');
+    results.length===64, 'recorded='+results.length+' expected=64 (this fixture is the 65th)');
 
   return results;
 }
