@@ -585,6 +585,18 @@ function runStep2APipelineObservabilityFixtures(g){
       check('ALEXEXIT.15 (NEGATIVE CONTROL, historical): an M1 history that never touches the stop or the target closes nothing and books nothing',
         account.openPositions.length===1 && account.closedPositions.length===0 && account.balance===10000,
         JSON.stringify({open:account.openPositions.length,closed:account.closedPositions.length,balance:account.balance}));
+      // §18.35: the EXIT CURSOR itself. `pos.lastExitCheckTimestamp = lastProcessedTime` was
+      // unwatched -- adding an hour to it survived the full gate, while poisoning the same line
+      // with the balance killed 5, so the line demonstrably executes. The cursor never moves
+      // backwards, so an hour skipped is an hour NEVER reconstructed: a stop touched and reversed
+      // inside it is missed permanently and the position runs past its -1R exit with nothing else
+      // to catch it. ALEXEXEC.6 pins the fetcher's forming-bar filter and the pure function pins
+      // lastProcessedTime; the CALLER's write of that value into the position was the gap.
+      const openPos=account.openPositions[0];
+      check('ALEXEXIT.23 (EXIT CURSOR): after a clean reconstruction the position\'s exit cursor advances to the END of the last COMPLETED minute processed -- not beyond it, and never past now. Skipping even one minute leaves a window that is never re-examined',
+        !!openPos && openPos.lastExitCheckTimestamp===t0+120000
+          && openPos.lastExitCheckTimestamp<=Date.now(),
+        openPos?('cursor='+openPos.lastExitCheckTimestamp+' expected='+(t0+120000)+' now='+Date.now()):'no open position');
     });
   }
   function stepAlexExitNoTouch(){

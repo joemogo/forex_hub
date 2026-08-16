@@ -315,8 +315,28 @@ try{
     // recordAlexGEngineError now writes `at` and `message` AFTER the meta merge and refuses
     // `toJSON` -- but the harness must not depend on that, because the whole point of this filter
     // is to be robust to code that can call anything.
+    // §18.35: defeated a TENTH time, by four independent vectors, all of which exploit the fact
+    // that Object.keys and JSON.stringify see ONLY own-enumerable string keys:
+    //   - the entry IS A FUNCTION with an own toString returning the allowlisted message. This
+    //     short-circuited on the first line, before the toJSON refusal and the primitives-only
+    //     loop ever ran -- and __isoNormEntry projects a non-object through String(e), which the
+    //     caller overrides. The loop added in §18.33 rejects functions as VALUES INSIDE an entry;
+    //     the entry BEING a function never reached it.
+    //   - the payload on a NON-ENUMERABLE own property.
+    //   - the payload on the PROTOTYPE CHAIN via Object.create.
+    //   - the payload under a SYMBOL key.
+    // All four survived 2,315/2,315 with drift 0 while the control -- the same payload under an
+    // ordinary key -- killed ISO.2 and ISO.6. Production cannot emit these shapes (the writers copy
+    // meta with for..in + hasOwnProperty and String()-coerce the message), but this filter's own
+    // comment sets the standard it failed: it must not depend on that, because the point of it is
+    // to be robust to code that can call anything.
     'var __isoEntryShapeOk=function(e){' +
-    '  if(e===null||typeof e!=="object") return true;' +
+    '  var __t=typeof e;' +
+    '  if(e===null||__t==="string"||__t==="number"||__t==="boolean"||__t==="undefined") return true;' +
+    '  if(__t!=="object") return false;' +            // functions and everything exotic: compare it
+    '  if(Object.getPrototypeOf(e)!==Object.prototype) return false;' +
+    '  if(Object.getOwnPropertySymbols(e).length) return false;' +
+    '  if(Object.getOwnPropertyNames(e).length!==Object.keys(e).length) return false;' +
     '  if(Object.prototype.hasOwnProperty.call(e,"toJSON")) return false;' +
     // §18.33: defeated a NINTH time, and the ninth is the general case of the eighth. Comparing by
     // JSON PROJECTION is LOSSY: any value whose serialisation discards its own properties passes.

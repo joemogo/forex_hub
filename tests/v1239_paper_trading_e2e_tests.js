@@ -317,6 +317,23 @@ async function runV1239PaperTradingE2EFixtures(g){
         && g.getPaperEngineErrorMessages().some(function(m){ return m.indexOf('non-finite')!==-1 && m.indexOf('balance=NaN')!==-1; }),
       'banner='+String(g.getPaperBlockingError()).slice(0,60)+' errors='+JSON.stringify(g.getPaperEngineErrorMessages()).slice(0,140));
     jvmClean();
+    // §18.35: the JVM mirror of the pnl arm, with the same six-record shape. Written at the same
+    // time as its ALEX twin -- the unmirrored-half defect has now appeared four times in this
+    // milestone, and every one of them was a fixture written for one side and not the other.
+    jvmClean();
+    const jvmSix=[];
+    for(let i=0;i<6;i++) jvmSix.push({id:900000+i,pnl:i===0?NaN:10,result:'Win',
+      closedAt:'2026-08-0'+(i+1)+'T10:00:00.000Z'});
+    g.setPaperAccount({balance:10500,openPositions:[],closedPositions:jvmSix});
+    const jvmDeep=g.commitPaperLedger();
+    assert('PTE2E-FINITE.4 (JVM pnl ARM, newest of six): a NaN pnl on the NEWEST closed JVM trade is refused with a finite balance -- the arm every existing FINITE fixture left unexercised, and which slice(-5) made inert past the fifth record',
+      !!jvmDeep && jvmDeep.ok===false && jvmDeep.reasonCode==='NON_FINITE_LEDGER',
+      'res='+JSON.stringify(jvmDeep));
+    jvmClean();
+    g.setPricing('reject');
+    const posF=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(posF.id,false,null);
   }
 
   // ── 🔴 UNREALIZED P&L: the figure the operator watches while deciding to close (§18.30) ──
@@ -585,6 +602,27 @@ async function runV1239PaperTradingE2EFixtures(g){
       !!g.getAlexBlockingError()
         && g.getAlexEngineErrorMessages().some(function(m){ return m.indexOf('non-finite')!==-1 && m.indexOf('balance=NaN')!==-1; }),
       'banner='+String(g.getAlexBlockingError()).slice(0,60)+' errors='+JSON.stringify(g.getAlexEngineErrorMessages()).slice(0,140));
+    // 🔴 §18.35: the pnl ARM, on an account with MORE THAN FIVE closed trades. Every existing
+    // FINITE fixture forces a NaN BALANCE, so the balance arm carried them all and the pnl arm was
+    // never exercised at all -- deleting it survived the full gate on both strategies. And the arm
+    // was ALSO wrong: `.slice(-5)` took the OLDEST five, while closedPositions is unshift-built with
+    // the newest at index 0, so the trade that just closed was never inspected past the fifth.
+    // Six records with a FINITE balance is the exact shape that separates the two: a corrupt record
+    // whose damage has NOT propagated into the balance, which is what defence in depth is for.
+    alexClean();
+    const sixClosed=[];
+    for(let i=0;i<6;i++) sixClosed.push({tradeId:'AGT|OLD'+i,pnl:i===0?NaN:10,result:'Win',
+      closedAt:'2026-08-0'+(i+1)+'T10:00:00.000Z'});
+    g.setAlexGAccount({balance:10500,openPositions:[],closedPositions:sixClosed,journal:[]});
+    const deepRes=g.commitAlexGLedger();
+    assert('PTE2E-ALEXFINITE.4 (the pnl ARM, newest of six): a NaN pnl on the NEWEST closed trade is refused even though the BALANCE is perfectly finite -- the arm that exists for a corrupt record whose damage has not reached the balance yet',
+      !!deepRes && deepRes.ok===false && deepRes.reasonCode==='NON_FINITE_LEDGER',
+      'res='+JSON.stringify(deepRes)+' closedCount='+sixClosed.length+' balance=10500');
+    assert('PTE2E-ALEXFINITE.5 (ORIENTATION): the guard inspects the NEWEST records. closedPositions is unshift-built, so slice(-5) reads the OLDEST five and the just-closed trade escapes once the account holds more than five -- which every real account does within its first week',
+      (function(){ const older=sixClosed.slice(1).concat([]); older.unshift({tradeId:'AGT|CLEAN',pnl:5,result:'Win',closedAt:'2026-08-09T10:00:00.000Z'});
+        g.setAlexGAccount({balance:10500,openPositions:[],closedPositions:older,journal:[]});
+        return g.commitAlexGLedger().ok===true; })(),
+      'a clean newest record must still commit, so the refusal above is the NaN and not the record count');
     alexClean();
   }
 
@@ -1095,7 +1133,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===100, 'recorded='+results.length+' expected=100 (this fixture is the 101st)');
+    results.length===103, 'recorded='+results.length+' expected=103 (this fixture is the 104th)');
 
   return results;
 }
