@@ -154,10 +154,18 @@ const fetchLog=[];
 globalThis.fetch=async function(url){
   const u=String(url);
   const cm=u.match(/instruments\/([^/]+)\/candles\?count=(\d+)&granularity=([A-Za-z0-9]+)/);
+  // §18.26: fetchCandlesAroundWindow builds a DIFFERENT url shape --
+  // `?granularity=X&price=M&count=5000&from=...` -- so the regex above never matched it and the
+  // router was handed a null context. That is why the real overlay draw path
+  // (focusTradeOnChart -> focusChartOnTradeWindow -> drawTradeOverlay) could not be driven, and
+  // why deleting either overlay call site killed nothing.
+  const wm=u.match(/instruments\/([^/]+)\/candles\?granularity=([A-Za-z0-9]+)&price=M&count=(\d+)&from=([^&]+)/);
   if(cm) fetchLog.push({kind:'candles',instrument:cm[1],count:parseInt(cm[2],10),granularity:cm[3],paged:/&to=/.test(u)});
   const pm=u.match(/pricing\?instruments=([^&]+)/);
   if(pm) fetchLog.push({kind:'pricing',instrument:pm[1]});
-  if(fetchRouter){ const r=await fetchRouter(u,cm?{instrument:cm[1],count:parseInt(cm[2],10),granularity:cm[3],paged:/&to=/.test(u)}:null); if(r) return r; }
+  const ctx = cm?{instrument:cm[1],count:parseInt(cm[2],10),granularity:cm[3],paged:/&to=/.test(u)}
+          : (wm?{instrument:wm[1],granularity:wm[2],count:parseInt(wm[3],10),from:decodeURIComponent(wm[4]),windowed:true}:null);
+  if(fetchRouter){ const r=await fetchRouter(u,ctx); if(r) return r; }
   return{ok:false,status:503,json:async function(){return{};}};
 };
 
@@ -183,6 +191,8 @@ const wrapped = new Function('g',
   //    DOM, or is the genuine outer sweep boundary. ──
   'g.loadChart=loadChart;' +
   'g.drawTradeOverlay=drawTradeOverlay;' +
+  'g.focusTradeOnChart=focusTradeOnChart;' +
+  'g.setJournalEntries=function(v){journalEntries=v;};' +
   'g.clearTradeOverlay=clearTradeOverlay;' +
   'g.renderAlexGLiveSetupsPanel=renderAlexGLiveSetupsPanel;' +
   'g.renderAlexGDashboard=renderAlexGDashboard;' +

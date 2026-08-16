@@ -158,6 +158,9 @@ async function runChartAoiFidelityFixtures(g){
       if(c.granularity==='H1'&&c.count===500) return g.oandaCandles(chartCandles);
       if(c.granularity==='D'&&c.count===100) return g.oandaCandles(dailyAoiCandles(dailySpec));
       if(c.granularity==='W'&&c.count===60) return g.oandaCandles(flatWeekly(60));
+      // §18.26: the WINDOWED shape used by fetchCandlesAroundWindow, which the real overlay draw
+      // path depends on. Served from the same H1 series so the overlay lands on real bars.
+      if(c.windowed) return g.oandaCandles(chartCandles);
       return null;
     });
   }
@@ -295,7 +298,13 @@ async function runChartAoiFidelityFixtures(g){
       st.length>0, 'len='+st.length);
     assert('CAF-TF.1','a verdict computed on a DIFFERENT timeframe is NOT presented as this timeframe\'s scanner verdict -- the chart never claims H1 authority for an M15 evaluation',
       st.indexOf('scanner’s own H1 verdict')===-1, st.slice(0,200));
-    assert('CAF-TF.2','and it does not borrow the recorded timeframe\'s wording either -- an unattributable verdict is simply not attributed',
+    // ⚠️ DISCLOSED (§18.26): NOT independent evidence. Under the shipped guard a mismatched verdict
+    // never reaches the engine-wording branch at all, so the string this forbids is structurally
+    // unproducible -- an independent sweep showed no single behaviour-changing mutation can make it
+    // fail; it takes reverting the guard AND changing the wording together. It is a belt-and-braces
+    // companion to CAF-TF.1, kept for failure localisation and counted as one piece of evidence
+    // with it, not two.
+    assert('CAF-TF.2 (COMPANION to TF.1, not independent evidence): and it does not borrow the recorded timeframe\'s wording either -- an unattributable verdict is simply not attributed',
       st.indexOf('scanner’s own M15 verdict')===-1, st.slice(0,200));
   }
   {
@@ -390,14 +399,38 @@ async function runChartAoiFidelityFixtures(g){
     assert('CAF-LEGEND.2','it shows the frozen user-facing label, never ALEX\'s internal research id, when the record carries no setupLabel -- the THIRD raw-setupType path, missed by the v12.28.0 D2 fix',
       legend.indexOf('REPEATED ZONE REACTION')!==-1 && legend.indexOf('A_repeatedReaction')===-1,
       legend.slice(0,200));
-    // ⚠️ DISCLOSED AND NOT CLOSED (§18.21). These two call drawTradeOverlay DIRECTLY, so they pin
-    // the LABEL but NOT the wiring. Independent verification showed that deleting the
-    // `if(focusedTradeRecord) drawTradeOverlay(focusedTradeRecord)` call site, and the
-    // drawTjrZoneOverlay call site, each kills ZERO fixtures -- both helpers can be permanently
-    // disconnected from the render path at no cost to the gate. Closing that needs the real draw
-    // path, focusChartOnTradeWindow, which requires the fixture router to serve a windowed
-    // fetchCandlesAroundWindow request it does not model. Recorded as an OPEN item rather than
-    // papered over with a fixture that would look like wiring coverage and not be it.
+    // §18.26: the WIRING is now driven for real -- see CAF-WIRE below. These two remain a direct
+    // call because they isolate the LABEL; CAF-WIRE proves loadChart's sibling path reaches the
+    // renderer at all.
+  }
+  {
+    // ── 🔴 CAF-WIRE: the overlay helpers were reachable-but-unpinned (§18.26) ────────────────────
+    // Deleting `drawTradeOverlay(rec)` from focusChartOnTradeWindow, or the drawTjrZoneOverlay call
+    // site, killed ZERO fixtures across the whole gate: every overlay fixture called the helper
+    // DIRECTLY, so both could be permanently disconnected from the render path at no cost. The
+    // blocker was the fixture router, which did not model fetchCandlesAroundWindow's url shape.
+    // It does now, so the REAL path runs: focusTradeOnChart -> loadChart -> focusChartOnTradeWindow
+    // -> drawTradeOverlay.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    const WREC={journalEntryId:'JVMJ|WIRE1',tradeId:'WIRE1',strategyId:'current_strategy',
+      pair:'EUR/USD',timeframe:'H1',direction:'buy',status:'CLOSED',result:'Win',
+      entry:1.20000,stop:1.19000,target:1.22000,exitPrice:1.22000,
+      openedAt:new Date(T0+300*DAY).toISOString(),closedAt:new Date(T0+301*DAY).toISOString()};
+    g.setJournalEntries([WREC]);
+    g.setElHtml('chartTradeOverlayLegend','');
+    g.resetChartRec();
+    await g.focusTradeOnChart('JVMJ|WIRE1');
+    await settle();
+    const lines=(g.chartRec.priceLines||[]).map(function(l){return l.opts||{};});
+    const titles=lines.map(function(o){return String(o.title||'');}).join(' | ');
+    assert('CAF-WIRE.0','PRECONDITION: the real entry point ran and reached the chart -- price lines exist, so the assertions below are about WIRING and not about an empty chart',
+      lines.length>0, 'lines='+lines.length+' titles='+titles.slice(0,140));
+    assert('CAF-WIRE.1','WIRING: focusTradeOnChart() reaches drawTradeOverlay through the real path -- the entry, stop and target lines are drawn at the record\'s own recorded prices, so deleting the call site inside focusChartOnTradeWindow now fails',
+      lines.some(function(o){return Math.abs(o.price-1.20000)<1e-9;}) &&
+      lines.some(function(o){return Math.abs(o.price-1.19000)<1e-9;}) &&
+      lines.some(function(o){return Math.abs(o.price-1.22000)<1e-9;}),
+      'prices='+lines.map(function(o){return o.price;}).join(','));
   }
   {
     // RE-ENTRANCY (§18.21). loadChart reads its globals across two awaits. An operator clicking a

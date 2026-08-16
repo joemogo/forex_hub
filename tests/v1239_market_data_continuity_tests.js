@@ -502,6 +502,59 @@ function runMarketDataContinuityFixtures(g){
     return 'backward walk, merge order, cursor and termination all pinned';
   });
 
+  // §18.26 EQUIVALENT MUTANT, recorded rather than chased: taking requestCount from the loop
+  // `guard` instead of `pages.length` cannot be detected, because guard++ runs once per iteration
+  // and EVERY path through the body pushes exactly one pages entry before continuing or breaking.
+  // The two are equal by construction. An unkillable mutation is not a coverage gap when the
+  // substitution is provably behaviour-preserving -- it is reported as equivalent, like AG-21.
+  await t('MDHIST-4 the REPORTED coverage figures are the ones the operator reads, and each is pinned',async function(){
+    // §18.26: MDHIST-1..3 pinned the WALK -- the cursor, the merge order, the termination test --
+    // but every field the diagnostic actually REPORTS was unwatched. An independent sweep changed
+    // calendarDays by 7, made tradingDays count weekends, dropped duplicates from totalRaw, took
+    // requestCount from the loop guard instead of the page list, and resized every page request:
+    // each killed 0 of 2,207. That is the same "second unwatched copy" shape MDHIST-1 closed, one
+    // layer out -- the tool an operator uses to CHECK coverage can still misreport its own.
+    //
+    // Ten DAILY bars, 2026-06-01 (Mon) through 2026-06-10 (Wed), all complete. Every figure below
+    // is hand-computed from that window: Mon-Fri gives 8 trading days, the span is 9 calendar days.
+    const D=86400000;
+    const D_END=Date.parse('2026-06-10T00:00:00.000Z');
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page===1) return g.okPage(g.bars(D_END,D,10));   // exactly the requested count, all closed
+      return g.emptyPage();
+    });
+    const rep=await g.runHistoricalDataDiagnostic('EUR_USD','D',10,null);
+    eq(rep.earliest,'2026-06-01T00:00:00.000Z','the window starts at the Monday');
+    eq(rep.latest,'2026-06-10T00:00:00.000Z','and ends at the Wednesday nine days later');
+    eq(rep.calendarDays,9,'calendarDays is the SPAN (9), not the bar count (10)');
+    eq(rep.tradingDays,8,'tradingDays counts Mon-Fri only -- the Saturday and Sunday in that window are excluded');
+    eq(rep.totalUnique,10,'ten unique bars');
+    eq(rep.totalRaw,10,'and totalRaw includes every bar seen, duplicates included -- here there are none');
+    eq(rep.duplicates,0,'no duplicate across the single page');
+    eq(rep.requestCount,1,'one page was needed, and requestCount reports PAGES rather than loop iterations');
+    return '9 calendar days, 8 trading days, 10 unique bars, 1 page';
+  });
+
+  await t('MDHIST-5 (POSITIVE CONTROL) a window containing MORE weekend days reports fewer trading days',async function(){
+    // So MDHIST-4's 8 is the weekday filter working, not a constant that happens to match.
+    const D=86400000;
+    const D_END=Date.parse('2026-06-08T00:00:00.000Z');   // Mon 2026-06-01 .. Mon 2026-06-08
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page===1) return g.okPage(g.bars(D_END,D,8));
+      return g.emptyPage();
+    });
+    const rep2=await g.runHistoricalDataDiagnostic('EUR_USD','D',8,null);
+    eq(rep2.calendarDays,7,'a seven-day span');
+    eq(rep2.tradingDays,6,'containing one Saturday and one Sunday -- six trading days, not eight');
+    return '7 calendar days, 6 trading days';
+  });
+
   await t('MDHIST-2 (BOUNDARY) a SHORT page ends the walk immediately',async function(){
     // Paired with MDHIST-1 this pins BOTH sides of the termination test, so neither `<` nor `<=`
     // can be substituted without a fixture dying.
@@ -531,7 +584,12 @@ function runMarketDataContinuityFixtures(g){
     });
     const dup=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
     eq(dup.duplicates,1,'the repeated bar must be counted, so MDHIST-1\'s zero is a real zero');
-    return 'duplicate detector genuinely fires';
+    // §18.26: totalRaw must INCLUDE the duplicate. Asserted here and not in MDHIST-4 because that
+    // window has no duplicates, where `all.length + duplicates` and `all.length` are the same
+    // number -- the formulas only differ when there is something to lose.
+    eq(dup.totalRaw,dup.totalUnique+1,
+      'totalRaw counts every bar SEEN including the duplicate, so it exceeds totalUnique by exactly one here');
+    return 'duplicate detector genuinely fires, and totalRaw counts it';
   });
 
 

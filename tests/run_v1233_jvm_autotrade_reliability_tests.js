@@ -1274,6 +1274,52 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __exOneRec.closeReason==="STOP_LOSS"&&__exOneRec.pnl===50&&paperAccount.balance===10050,\n' +
   '    "only the live price changed (1.10300 -> 1.10100): calls="+JSON.stringify(__exOne)+" record="+\n' +
   '    __exOneRec.result+" while pnl="+__exOneRec.pnl+" is POSITIVE -- the label follows the level crossed, not the money");\n' +
+  // ══ 🔴 MOGO-021 §18.26: three MONEY-PATH mutations inside PROTECTED functions had no
+  //    behavioural coverage at all -- the drift baseline was their only control, and a drift hash
+  //    says the bytes did not change, never that the arithmetic is right. Each survived the full
+  //    2,207-fixture gate when an independent sweep injected it.
+  //
+  // (a) BOUNDARY: exactly AT the target. `live>=pos.target` -> `live>` means a price that touches
+  //     the target to the pip never takes profit, and the trade runs on to its stop.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-ATTARGET","buy",1.10000,1.09800,1.10600);\n' +
+  '  pairData["EUR_USD"]={price:1.10600};\n' +           // EXACTLY the target, not through it
+  '  g.setBidAsk("1.10600","1.10630");\n' +
+  '  const __exAt=await jvmExitSweep();\n' +
+  '  const __exAtRec=jvmClosedRec("JVMEXIT-ATTARGET");\n' +
+  '  g.record("JVMEXIT-10","a live price EXACTLY at the target takes profit -- the comparison is inclusive, so a trade that touches its target to the pip is not left running on to its stop",\n' +
+  '    __exAt.length===1&&__exAt[0].autoResult==="Win"&&__exAtRec.result==="Win"&&\n' +
+  '    __exAtRec.closeReason==="TAKE_PROFIT",\n' +
+  '    "live 1.10600 === target 1.10600 -> "+JSON.stringify(__exAt)+" record="+__exAtRec.result+"/"+__exAtRec.closeReason);\n' +
+  // (b) The pip value is FIXED AT ENTRY, never re-derived at close. Seeded deliberately at 25 --
+  //     a value pipValuePerLot would never produce for this pair -- so a recomputation at close
+  //     yields different money and this literal cannot be satisfied by both formulas.
+  '  jvmFreshAccount();\n' +
+  '  paperAccount.openPositions.push({id:"JVMEXIT-PIPFIX",pair:"EUR/USD",oPair:"EUR_USD",dir:"buy",\n' +
+  '    entry:1.10000,stop:1.09800,target:1.10600,lots:0.5,riskAmount:100,pipValueAtEntry:25,\n' +
+  '    openedAt:new Date().toISOString(),source:"fixture"});\n' +
+  '  pairData["EUR_USD"]={price:1.10700};\n' +
+  '  g.setBidAsk("1.10500","1.10530");\n' +
+  '  const __exPip=await jvmExitSweep();\n' +
+  '  const __exPipRec=jvmClosedRec("JVMEXIT-PIPFIX");\n' +
+  '  g.record("JVMEXIT-11","the close uses the pip value FIXED AT ENTRY, not one re-derived at close time -- 50 pips * $25 (the entry value) * 0.5 lots = exactly +$625.00, where a recomputation would have produced $250.00",\n' +
+  '    __exPipRec.pnl===625&&paperAccount.balance===10625,\n' +
+  '    "pnl="+__exPipRec.pnl+" balance="+paperAccount.balance+" (pipValueAtEntry 25, not the ~10 a re-derivation gives)");\n' +
+  // (c) A MANUAL close with no live bid/ask AND no cached price must still fill, at the entry --
+  //     collapsing the fallback makes it silently NO-OP and the position stays open forever.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-NOFEED","buy",1.10000,1.09800,1.10600);\n' +
+  '  delete pairData["EUR_USD"];\n' +
+  '  g.setPriceOk(false);\n' +
+  '  const __exNo=await closePaperPosition("JVMEXIT-NOFEED",true,null);\n' +
+  '  g.setPriceOk(true);\n' +
+  '  const __exNoRec=jvmClosedRec("JVMEXIT-NOFEED");\n' +
+  '  g.record("JVMEXIT-12","a MANUAL close with no live bid/ask and no cached price still closes, filled at the entry for exactly $0.00 -- it does not silently no-op and strand the position open",\n' +
+  '    !!__exNoRec&&__exNoRec.exitPrice===1.10000&&__exNoRec.pnl===0&&\n' +
+  '    paperAccount.openPositions.filter(function(p){return p.id==="JVMEXIT-NOFEED";}).length===0,\n' +
+  '    "exitPrice="+__exNoRec.exitPrice+" pnl="+__exNoRec.pnl+" stillOpen="+\n' +
+  '    paperAccount.openPositions.filter(function(p){return p.id==="JVMEXIT-NOFEED";}).length);\n' +
+  '  g.resetBidAsk(); jvmFreshAccount();\n' +
   // ══ 🔴 MOGO-021 §18.23: JVM's SHORT side of checkPaperPositions had no fixture ══════════════
   // Every jvmSeedPosition call above passes "buy". An independent completeness audit showed a
   // sell-only mutation of the exit comparison therefore survives the entire gate -- on PROTECTED,
