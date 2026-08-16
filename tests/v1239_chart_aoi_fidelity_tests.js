@@ -337,16 +337,26 @@ async function runChartAoiFidelityFixtures(g){
     await g.loadChart();
     const st8=String(g.elHtml('chartEvaluationState'));
     const conf8=String(g.elHtml('confDir')||'');
-    const banner8=String(g.elHtml('recBanner')||'');
+    // 🔴 §18.24: THIS READ AN ELEMENT THE APP NEVER WRITES. renderRecBanner writes #recLabel,
+    // #recDetail and #recScore, and sets only recBanner.className -- so `elHtml('recBanner')` was
+    // always the empty string and the assertion below could not fail. Worse, one of its two
+    // forbidden strings ('TAKE THE TRADE') appears NOWHERE in index.html. Proven: making loadChart
+    // render "SETUP FORMING" on EVERY load, including the suppressed path, killed 0 of 2,207 --
+    // the banner the §18.21 reproduction showed fabricating that exact string had no fixture
+    // anywhere that could see it. The THIRTEENTH unkillable fixture in this milestone, and mine,
+    // on the surface my own commit called "the most misleading surface of all".
+    const banner8=String(g.elText('recLabel')||'');
+    const bannerDetail8=String(g.elText('recDetail')||'');
     assert('CAF-TF.8','a pair the ENGINE suppressed, viewed on a timeframe it has not scanned, renders an explicit not-scanned state naming BOTH timeframes -- not an invented verdict',
       st8.indexOf('has not been scanned yet')!==-1 && st8.indexOf('M15')!==-1,
       st8.slice(0,220));
     assert('CAF-TF.9','and the confluence panel shows NO percentage and NO direction -- the chart does not fill the gap with a figure it computed itself',
       conf8.indexOf('%')===-1 && conf8.indexOf('LONG')===-1 && conf8.indexOf('SHORT')===-1,
       'confDir='+(conf8===''?'(empty -- cleared before the run and never rewritten)':conf8.slice(0,160)));
-    assert('CAF-TF.10','and NO recommendation banner is offered -- the banner carries no qualifier of its own, so an invented one there is the most misleading surface of all',
-      banner8.indexOf('SETUP FORMING')===-1 && banner8.indexOf('TAKE THE TRADE')===-1,
-      'banner='+banner8.slice(0,160));
+    assert('CAF-TF.10','and NO recommendation is offered -- the label reads AWAITING DATA rather than a SETUP FORMING or STRATEGY RECOMMENDS verdict, because the banner carries no qualifier of its own and an invented one there is the most misleading surface of all',
+      banner8==='AWAITING DATA' &&
+      banner8.indexOf('SETUP FORMING')===-1 && banner8.indexOf('STRATEGY RECOMMENDS')===-1,
+      'recLabel='+JSON.stringify(banner8)+' recDetail='+JSON.stringify(bannerDetail8.slice(0,80)));
   }
   {
     // ── 🔴 CAF-LEGEND: the THIRD raw-setupType path, AND the wiring gap (§18.21) ────────────────
@@ -407,6 +417,41 @@ async function runChartAoiFidelityFixtures(g){
     const st11=String(g.elHtml('chartEvaluationState'));
     assert('CAF-TF.11','a timeframe switched DURING the fetch cannot make the chart label H1 candles with an H4 verdict -- the timeframe is captured once, so the guard and the label read what the fetch actually used',
       st11.length>0 && st11.indexOf('scanner’s own H4 verdict')===-1, st11.slice(0,220));
+  }
+  {
+    // ── 🔴 CAF-PAIR: the PAIR was never captured, only the timeframe (§18.24) ────────────────────
+    // v12.31.0 captured chartTf and its comment claimed "exactly as `name` captures the pair
+    // above". That was FALSE: `name` is used only for the header text and the live-trigger badge's
+    // freshness guard, while the VERDICT block read the live activePair across both awaits. A
+    // pair-list click is `activePair=p; renderPairList(); loadChart();` -- unawaited, the same
+    // shape as setTf. Reproduced by an independent verifier: EUR/USD's candles and header rendered
+    // with GBP/USD's verdict, attributed to the scanner.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    g.setActivePair('EUR_USD');
+    g.setActiveTf('H1');
+    // EUR_USD was SUPPRESSED by the engine; GBP_USD is healthy with a confident verdict.
+    seedEngineVerdict({timeframe:'H1',completenessState:'PARTIAL',
+      requestedCount:220,receivedCount:137,evaluationSuppressed:true});
+    // A DISTINCTIVE value: seedEngineVerdict's own verdict is 83% LONG, so if GBP_USD were also
+    // 83% the assertion could not tell whose verdict was rendered. 71% SHORT belongs to GBP_USD
+    // and to nothing else in this suite.
+    g.setPairDataEntry('GBP_USD',{conf:{total:71,direction:'short',items:[]},signals:[],
+      completenessState:'COMPLETE',requestedCount:220,receivedCount:220,timeframe:'H1',
+      candles:null,price:1.30000,evaluationSuppressed:false});
+    g.setChartEvaluationStateHtml('');
+    g.setElHtml('confDir',''); g.setElHtml('recLabel','');
+    const pendingPair=g.loadChart();
+    g.setActivePair('GBP_USD');          // the operator clicks another pair mid-load
+    await pendingPair;
+    const stP=String(g.elHtml('chartEvaluationState'));
+    const confP=String(g.elHtml('confDir')||'');
+    assert('CAF-PAIR.0','PRECONDITION: the state line was re-rendered this run, so the assertions below are not reading stale DOM',
+      stP.length>0,'len='+stP.length);
+    assert('CAF-PAIR.1','a pair switched DURING the load cannot make the chart show the NEW pair\'s verdict on the OLD pair\'s chart -- GBP_USD\'s distinctive 71% SHORT must not appear on EUR_USD\'s chart',
+      confP.indexOf('71%')===-1 && confP.indexOf('SHORT')===-1,'confDir='+confP.slice(0,160));
+    assert('CAF-PAIR.2','and the instrument the engine SUPPRESSED still renders its not-evaluated state rather than borrowing a confident verdict from the pair the operator moved to',
+      stP.indexOf('NOT EVALUATED')!==-1,stP.slice(0,200));
   }
   {
     // ── CAF-LABEL: the display helper must not drift from the frozen record (§18.17) ───────────

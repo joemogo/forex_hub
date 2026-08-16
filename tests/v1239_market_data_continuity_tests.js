@@ -431,6 +431,36 @@ function runMarketDataContinuityFixtures(g){
     return '219 bars re-derived identically after reload';
   });
 
+  // ══ 🔴 MDSTAMP — the PRODUCER stamped the live activeTf after its own await (§18.24) ═════════
+  // v12.28.0 fixed the CONSUMER (loadChart refuses a verdict stamped with another timeframe) and
+  // v12.31.0 captured the timeframe there. But scanPair issued its fetch with activeTf and then
+  // wrote `timeframe:activeTf` AFTER the await -- so an operator switching timeframes mid-sweep
+  // made the stamp itself a lie, the consumer's guard matched, engine authority was granted, and
+  // awaitingScanForTimeframe could never fire. Reproduced by an independent verifier end to end:
+  // a 220-bar H1 series scored 53 and rendered as "the scanner's own H4 verdict", SHORT 53%.
+  await t('MDSTAMP-1 a timeframe switched DURING a sweep cannot mislabel the verdict that sweep produced',async function(){
+    g.setActiveTf('H1'); g.resetPairData(); g.resetFiredAlerts();
+    g.route(honest({dur:HOUR,formingLast:true}));
+    // Started WITHOUT awaiting, then the timeframe is switched -- exactly where an operator's click
+    // lands: after the fetch has begun, before the pairData write runs.
+    const pending=g.scanPair('EUR_USD');
+    g.setActiveTf('H4');
+    await pending;
+    const pd=g.pairData()['EUR_USD'];
+    eq(pd.timeframe,'H1',
+      'the verdict must carry the timeframe it was COMPUTED on, not the one the operator switched to');
+    return 'stamped H1 despite the mid-sweep switch to H4';
+  });
+
+  await t('MDSTAMP-2 (POSITIVE CONTROL) an undisturbed sweep still stamps the timeframe it ran on',async function(){
+    // So MDSTAMP-1 is the capture working, not a stamp pinned to a constant.
+    g.setActiveTf('H4'); g.resetPairData(); g.resetFiredAlerts();
+    g.route(honest({dur:HOUR,formingLast:true}));
+    await g.scanPair('EUR_USD');
+    eq(g.pairData()['EUR_USD'].timeframe,'H4','an H4 sweep stamps H4');
+    return 'stamp follows the sweep';
+  });
+
   // ══ 🔴 MDHIST — runHistoricalDataDiagnostic: a SECOND copy of the pagination arithmetic ══════
   // Independent adversarial verification found this function had ZERO behavioural coverage: three
   // separate behaviour-changing mutations each killed 0 of 2,180 fixtures. It is an entirely

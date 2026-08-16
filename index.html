@@ -1980,9 +1980,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.31.0';
+const APP_VERSION='12.32.0';
 const APP_VERSION_DATE='15 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.32.0 — THE PRODUCER WAS STAMPING THE LIE THE CONSUMER TRUSTED (MOGO-021 section 18.24). Display attribution only; no protected function touched; drift 0. A final independent adversarial sweep (126 mutations, ~60 scored against the full gate) plus an independent completeness audit of the whole operational chain. DEFECT 1: scanPair issued its fetch with activeTf and then wrote timeframe:activeTf AFTER the await. v12.28.0 fixed the CONSUMER and v12.31.0 captured the timeframe there -- but the guard compares against a stamp that was ITSELF A LIE, so it matched, granted engine authority, and awaitingScanForTimeframe could never fire. Reproduced end to end: a 220-bar H1 series scored 53, was stamped H4, and rendered as \'Showing the scanner\'s own H4 verdict for this pair\' with SHORT 53%. setTf calls loadChart and scanAll unawaited and scanInterval fires on a timer, so a sweep is routinely in flight when the operator clicks a timeframe. scanPair now captures sweepTf once, and the alert-dedup key uses it too. DEFECT 2: loadChart captured the timeframe but NOT the pair -- and the v12.31.0 comment asserting \'the pair is already captured this way (name)\' WAS FALSE. `name` reaches only the header text and the live-trigger badge freshness guard; the verdict block read the live activePair across both awaits. Reproduced: with EUR/USD engine-SUPPRESSED and GBP/USD healthy, clicking GBP/USD mid-load rendered EUR/USD\'s candles under EUR/USD\'s header with GBP/USD\'s LONG 83% verdict, attributed to the scanner. chartPair is now captured once, and two residuals the verifier flagged in the in-flight fix are closed with it: the FALLBACK fetch and the live-trigger call both read the live global. DEFECT 3, A FIXTURE OF MINE THAT COULD NOT FAIL: CAF-TF.10 read elHtml(\'recBanner\') -- an element the application NEVER writes. renderRecBanner writes recLabel/recDetail/recScore and only sets recBanner.className, and one of the fixture\'s two forbidden strings appears nowhere in index.html. Proven: forcing SETUP FORMING on every load, including the suppressed path, killed 0 of 2,207 -- the banner the section 18.21 reproduction showed fabricating that exact string had NO fixture anywhere that could see it. The THIRTEENTH unkillable fixture of this milestone, mine, on the surface my own commit called \'the most misleading surface of all\'. It now asserts recLabel reads AWAITING DATA. DEFECT 4: the provenance exclusion was still spoofable. v12.30.0 replaced a message-PREFIX match with a meta FLAG -- and meta is caller-supplied, so a leak setting {__evidencePlatform:true} survived 2,207/2,207 while the identical leak without it died. The snapshot now CROSS-REFERENCES the evidence platform\'s own evidenceWriteFailures record, so a leak must corrupt two independent structures consistently. All three spoof attempts now die. DISCLOSED RESIDUAL: any in-band marker is forgeable by code in the same module scope; this raises the cost, it does not eliminate the hazard. Also: CHART-3\'s source-text match broke on the pair-capture CORRECTNESS fix -- exactly the brittleness it was relabelled STRUCTURAL for -- and now matches the stable part. Gate: 34 suites, 2,212/2,212; drift 0.',
   '12.31.0 — THE v12.28.0 CHART FIX WAS WORSE THAN THE BUG IN ITS MOST COMMON CASE (MOGO-021 section 18.21). Independent adversarial verification of the market-data, chart/AOI and restart/diagnostics suites: 72 mutations, 89 of 92 fixtures proven killable, no tautology, no source-text assertion, no un-awaited fixture, and every claimed-closed survivor independently re-scored as genuinely closed. It then found four code defects, three of them in MY OWN fixes. REGRESSION, now fixed: setTf() is `activeTf=tf; loadChart(); scanAll();` with neither awaited, so on EVERY timeframe click the recorded verdict stops matching and the v12.28.0 guard sent the chart down the chart-local path. For a pair the engine had REFUSED to evaluate on incomplete data, the chart then rendered an invented LONG 43% AND a SETUP FORMING recommendation banner -- verbatim what that block\'s own comment says it exists to prevent. It traded a labelling error for a fabricated verdict, and the banner carries no qualifier at all. A verdict recorded on a DIFFERENT timeframe now yields its own explicit state -- this timeframe has not been scanned yet, naming both timeframes -- and the chart shows NOTHING rather than something it made up. The chart-local path is retained only for a pair with no recorded verdict at all. RE-ENTRANCY, now fixed: loadChart read the live activeTf across two awaits, so an operator clicking a new timeframe mid-load could have the fetch use one value while the guard and the label read another -- H1 candles drawn under an H4 verdict, labelled H4, the exact property section 18.17 claimed to close. The timeframe is now captured ONCE at the top, exactly as the pair already was. PD-1 WAS UNREACHABLE BY THE SEQUENCE AN OPERATOR USES: applyDeveloperModeVisibility explicitly re-renders five Developer-Mode surfaces on toggle and did NOT re-render the Paper Ledger Integrity card -- the one holding the ONLY operator-visible view of paperEngineErrors and alexGEngineErrors. Turning Developer Mode ON left the card showing what it rendered while the flag was OFF. Developer Mode is session-only and defaults OFF, so the INC-001 load-time notice was invisible on every fresh session. Surfacing errors is worth nothing if the surface is not repainted when it becomes visible. D2 MISSED A THIRD PATH: renderTradeOverlayLegend rendered rec.setupLabel||rec.setupType, and normalizeJournalRecord sets setupLabel to null, so the chart\'s own legend showed the internal research id. AN ELEVENTH EMPTY-LOG-SATISFIED ASSERTION: RSTDG-RESTART.4 recorded a sentinel and never asserted it was recorded, so a no-op recorder (which kills 13 fixtures gate-wide) left it green. RESTART.4a is the precondition. CAF-TF.4 was satisfied by an EMPTY state line and now requires it to be rendered. Gate: 34 suites, 2,188/2,188; protected drift 0.',
   '12.30.0 — THE ISOLATION SNAPSHOTS WERE ALLOWLISTS, AND THE FIXTURE TEXT OVERSTATED THEM (MOGO-021 section 18.20). Independent adversarial verification of the section 13 suites. It could NOT find a vacuous fixture beyond the one already disclosed -- 107 of 108 trading fixtures proven killable, no tautology, no source-text assertion, no un-awaited close, no self-consistent balance assertion -- and it independently re-scored every claimed-closed survivor as genuinely closed. Then it broke the isolation claim. SIX CROSS-STRATEGY LEAKS passed the entire 2,180-fixture gate with ZERO protected-function drift, because the snapshots were hand-written ALLOWLISTS while PTE2E-ISO.4 claimed it compared \'every JVM localStorage key\'. Two of the six would move or block real money if ever introduced: an ALEX close poisoning the shared pairData PRICE CACHE, which closePaperPosition fills its exit from when live bid/ask is unavailable and which checkPaperPositions reads to decide TAKE_PROFIT/STOP_LOSS; and an ALEX commit inserting open JVM position ids into paperPositionsClosing, the in-flight close lock, so those trades can never close again. The others: a write to fxhub_alexv2_account, an ALEX-family key matching NEITHER prefix; overwriting JVM-owned fxhub_scan/fxhub_autoscan, outside the six-key allowlist; rewriting alexGDecidedSetups contents while preserving .size, which was all the snapshot recorded; and clearing storageLoadFailures, disarming the INC-001 guard. FIXED: the JVM storage allowlist becomes a DENYLIST (every key that is not ALEX-owned), so a new key is covered by default instead of needing to be remembered; the ALEX prefix widens from fxhub_alexg to fxhub_alex; and the money-critical module state -- pairData, paperPositionsClosing, storageLoadFailures, scanData, autoScan, checklistState, alertLog, tradeNotes, and the CONTENTS of the ALEX decision sets -- is now compared. THE EXCLUSION FILTER WAS SPOOFABLE. Evidence-platform entries were excluded from the ALEX error log by MATCHING THE MESSAGE PREFIX -- content a leak can choose for itself. Proven: JVM P&L written into that log under the right opening words survived the whole gate, while the identical leak under any other prefix died. recordAlexGEngineError now takes an optional meta object and evidenceRecordWriteFailure tags its own entries, so the exclusion is by PROVENANCE recorded by the writer, not inferred by the reader. Additive; the {message,at} shape is unchanged for every existing caller and reader. THE SNAPSHOT MUST HAVE SOMETHING TO LOSE. alexClean/jvmClean did not reset four fields the snapshots COMPARE, so a leak writing the SAME value twice was identical before and after -- an idempotent leak is still a leak. And a leak that CLEARS shared state, or adds one entry per open JVM position, is invisible when the scenario has neither: the ALEX-to-JVM block now seeds a real open JVM position and a non-empty INC-001 register before snapshotting. All six leaks are now caught. THREE FIXTURE CLAIMS NARROWED to what they actually pin: ALEXDUP.1 (the overlap rule carries it; the four-term duplicate-signal guard could be deleted entirely), AUTO.4 (the open-position filter carries it; the traded-today stamp is unobserved), ALEX.5 (presence, not content). ALEXCLOSE.2 claimed fixed-R \'not recomputed from slippage\' while exiting exactly AT the target, where both formulas give the same number -- the exit now runs BEYOND the target so fixed-R 2.0 and recomputed 3.0 are distinguishable. ALIGN-21b is disclosed as a STRICT SUBSET of ALIGN-21 rather than counted as independent evidence. STILL UNCOVERED AND NAMED: the INNER pre-open re-check, which is the guard that matters under genuinely overlapping ticks. Gate: 34 suites, 2,180/2,180; protected drift 0.',
   '12.29.0 — ALEX ENGINE ERRORS WERE RECORDED AND NEVER SURFACED (MOGO-021 section 18.18). Display-only; no protected function touched; drift 0. Final section 13 area: restart/recovery and diagnostics. 25 mutations, SIX killed zero of 2,105 fixtures -- the ALEX ledger silently becoming an empty default across a restart; a restart CONCATENATING closed positions into open ones, re-opening every completed trade; the engine-error log keeping the OLDEST 50 so every NEW error is discarded while its LENGTH stays exactly 50 (both arms); the cap off by one; and the INC-001 commit refusal firing invisibly. PD-1, A REAL PRODUCTION DEFECT: alexGEngineErrors had exactly THREE sites in the entire application -- declaration, unshift, slice -- and NO READ SITE AT ALL, while its own declaration comment claimed \'surfaced in Diagnostics, mirrors paperEngineErrors\'. The ALEX arm was built by mirroring recordPaperEngineError; the matching RENDER block never was. Every ALEX failure written through that channel was invisible to the operator: commitAlexGLedger\'s ROLLBACK_FAILED FATAL, STALE_VERSION, LOAD_INTEGRITY_BLOCKED, and the INC-001 storage-load notice whose entire purpose is to tell the operator their data is being PRESERVED -- recordStorageLoadFailure deliberately fires BOTH channels for exactly that reason, and on the ALEX side the message went nowhere. Now rendered in the Diagnostics card beside the JVM block, under the same Developer Mode gate, and the misleading declaration comment is corrected in place. 36 fixtures added (tests/v1239_restart_diagnostics_tests.js, prefix RSTDG). The runner REFUSES to report anything unless the suite returns a Promise, so an un-awaited async suite cannot go false-green there -- a direct response to the ninth vacuous fixture, which was exactly that. The restart group awaits the real protected closePaperPosition, wipes memory, runs the real loadSaved() and asserts the exact recovered state INCLUDING what must NOT come back. Error-log fixtures assert message CONTENT and eviction, never length alone. A TENTH VACUOUS FIXTURE: RollbackFailure.15 asserted that the ALEX error log never contains the API key or account ID -- a pure must-not-contain check with NO POSITIVE PRECONDITION, so it is satisfied by an EMPTY log, which is precisely the condition its own title says it tests under (\'even while a rollback-failure attempt is actively being logged\'). Proven by mutation: making recordAlexGEngineError a no-op so the log is always empty kills four fixtures elsewhere and that one PASSES. A credential-leak assertion that passes when nothing was logged is not a security control. RollbackFailure.15a now requires the log to be non-empty and its newest entry to be the commitAlexGLedger FATAL before the leak check is applied. Gate: 34 suites, 2,180/2,180; protected drift 0.',
@@ -9565,7 +9566,18 @@ function jvmRecordCandidateRejected(oPair,result){
 // ledger exists to end. Purely additive: the token is read only by the observation code.
 let __jvmSweepToken=0;
 async function scanPair(pair,sweepToken,sweepResults){
-  const [candles,price]=await Promise.all([fetchCandles(pair,activeTf,220),fetchPrice(pair)]);
+  // 🔴 v12.32.0 (§18.24): THE PRODUCER STAMPED THE LIVE activeTf AFTER ITS OWN AWAIT, so the
+  // timeframe recorded on the verdict was the one the operator had switched TO, not the one the
+  // verdict was computed FROM. v12.28.0 fixed the CONSUMER (loadChart refuses a mismatched stamp)
+  // and v12.31.0 captured the timeframe there -- but the guard compares against a stamp that was
+  // itself a lie, so it matched, granted engine authority, and awaitingScanForTimeframe never
+  // fired. Reproduced end to end: a 220-bar H1 series produced conf 53, was stamped H4, and
+  // rendered as "Showing the scanner's own H4 verdict for this pair" with SHORT 53%.
+  // setTf() calls loadChart() and scanAll() unawaited and scanInterval fires on a timer, so a
+  // sweep is routinely in flight when the operator clicks a timeframe. Captured ONCE, exactly as
+  // loadChart now does. Display attribution only; no rule, gate or trading decision reads it.
+  const sweepTf=activeTf;
+  const [candles,price]=await Promise.all([fetchCandles(pair,sweepTf,220),fetchPrice(pair)]);
   // v12.8.3 ADR-011: gate evaluation on the ONE completeness abstraction. Anything short of
   // COMPLETE is evaluated as no data at all, by passing null into the evaluators -- which is
   // exactly what their own existing guards already handle. detectSignals() and bestConfluence()
@@ -9586,7 +9598,7 @@ async function scanPair(pair,sweepToken,sweepResults){
     // being displayed, and attributed it to whatever the chart happened to be on -- see the
     // matching guard in loadChart. Display attribution only: no rule, threshold, gate or trading
     // decision reads this field, and completenessState remains the sole evaluation contract.
-    timeframe:activeTf,
+    timeframe:sweepTf,
     candles,price,signals,conf,completenessState,
     requestedCount:candles?candles.requestedCount:220,
     receivedCount:candles?candles.receivedCount:0,
@@ -9607,7 +9619,7 @@ async function scanPair(pair,sweepToken,sweepResults){
   // The sweepToken stamped into pairData above is retained as a DIAGNOSTIC only (it says which sweep
   // last wrote the entry); no ledger arithmetic reads it any more.
   if(sweepResults) sweepResults[pair]=completenessState;
-  const alertKey=`${pair}_${activeTf}_${Math.floor(Date.now()/300000)}`;
+  const alertKey=`${pair}_${sweepTf}_${Math.floor(Date.now()/300000)}`;   // §18.24: same capture, same reason
   if(conf.total>=ALERT_THRESHOLD&&!firedAlerts.has(alertKey)){
     firedAlerts.add(alertKey);
     addAlert(pair,conf,price,getSession());
@@ -11135,11 +11147,20 @@ function handleDrawingKeyDown(e){
 async function loadChart(){
   flushChartDrawingsSave(); // v6.1: persist whatever was just drawn on the outgoing pair/timeframe before switching
   const name=activePair.replace('_','/');
-  // v12.31.0 (§18.21): the timeframe is captured ONCE, exactly as `name` captures the pair above.
-  // This function reads its globals across two awaits; an operator clicking a different timeframe
-  // mid-load previously let the fetch use one value while the verdict guard and the state line read
-  // another -- H1 candles drawn under an H4 verdict, labelled H4. Every read below uses chartTf.
+  // v12.31.0 (§18.21), CORRECTED v12.32.0 (§18.24): the timeframe is captured once because this
+  // function reads its globals across two awaits -- an operator switching mid-load let the fetch
+  // use one value while the verdict guard and the state line read another.
+  //
+  // 🔴 THE ORIGINAL COMMENT HERE CLAIMED "exactly as `name` captures the pair above". THAT WAS
+  // FALSE, and the falsehood hid a live defect. `name` is used only for the header text and the
+  // live-trigger badge's freshness guard; the VERDICT block read the live `activePair` across both
+  // awaits. A pair-list click is `activePair=p; renderPairList(); loadChart();` -- unawaited, the
+  // same shape as setTf. Reproduced: with EUR/USD suppressed by the engine and GBP/USD healthy,
+  // clicking GBP/USD mid-load rendered EUR/USD's candles under EUR/USD's header with GBP/USD's
+  // "LONG 83%" verdict, attributed to the scanner. The freshness guard that would have caught it
+  // sits eight lines below and protects only the badge.
   const chartTf=activeTf;
+  const chartPair=activePair;
   document.getElementById('chartPairName').textContent=name;
   const sd=scanData[name];
   const gradeEl=document.getElementById('chartGrade');
@@ -11160,9 +11181,11 @@ async function loadChart(){
   // previously-working chart into a blank one.
   const requestedCandleCount=getChartCandleCount(chartTf);
   showChartLoadingState(true,requestedCandleCount);
-  let candles=await fetchCandles(activePair,chartTf,requestedCandleCount);
+  let candles=await fetchCandles(chartPair,chartTf,requestedCandleCount);
   if((!candles||!candles.length)&&requestedCandleCount!==CHART_DISPLAY_CANDLE_COUNT_FALLBACK){
-    candles=await fetchCandles(activePair,chartTf,CHART_DISPLAY_CANDLE_COUNT_FALLBACK);
+    // §18.24 residual: the FALLBACK fetch read the live global too, so on a pair switch mid-load
+    // it could draw pair B's candles while everything downstream used chartPair = A.
+    candles=await fetchCandles(chartPair,chartTf,CHART_DISPLAY_CANDLE_COUNT_FALLBACK);
   }
   showChartLoadingState(false);
   if(!candles||!candles.length){
@@ -11187,7 +11210,7 @@ async function loadChart(){
   // computing locally only before the first scan has produced one. Both paths are gated on the
   // completeness contract, and a suppressed pair renders an explicit not-evaluated state instead of
   // a fabricated 0%. Display only: no rule, threshold or decision is changed by any of this.
-  const engineVerdict=pairData[activePair];
+  const engineVerdict=pairData[chartPair];
   const chartCompleteness=marketDataCompletenessOf(candles);
   // 🔴 v12.28.0 (§18.17): THE CHART ATTRIBUTED THE ENGINE'S VERDICT TO A TIMEFRAME THE ENGINE
   // NEVER EVALUATED. This tested only for the PRESENCE of conf+signals, and the attribution line
@@ -11223,8 +11246,8 @@ async function loadChart(){
   const evaluationSuppressed=usingEngineVerdict
     ? engineVerdict.completenessState!==MARKET_DATA_COMPLETENESS.COMPLETE
     : (awaitingScanForTimeframe||chartCompleteness!==MARKET_DATA_COMPLETENESS.COMPLETE);
-  const signals=usingEngineVerdict?engineVerdict.signals:detectSignals(evaluationSuppressed?null:candles,activePair);
-  const conf=usingEngineVerdict?engineVerdict.conf:bestConfluence(evaluationSuppressed?null:candles,activePair);
+  const signals=usingEngineVerdict?engineVerdict.signals:detectSignals(evaluationSuppressed?null:candles,chartPair);
+  const conf=usingEngineVerdict?engineVerdict.conf:bestConfluence(evaluationSuppressed?null:candles,chartPair);
   const sess=getSession();
   renderSignalBadges(signals);
   renderConfluencePanel(conf);
@@ -11238,7 +11261,7 @@ async function loadChart(){
     awaitingScanForTimeframe,
     verdictTimeframe:engineVerdict?engineVerdict.timeframe:null});
 
-  const dec=activePair.includes('JPY')?3:5;
+  const dec=chartPair.includes('JPY')?3:5;
   const last=candles[candles.length-1];
   const first=candles[0];
   const chg=((last.c-first.c)/first.c*100).toFixed(3);
@@ -11254,7 +11277,10 @@ async function loadChart(){
   // per-candle historical arrows guessing at what "might" be a signal.
   const badge=document.getElementById('liveTriggerBadge');
   badge.style.display='none';
-  evaluateLiveTrigger(activePair).then(result=>{
+  // §18.24 residual: fires a request for the pair the operator moved to rather than the one this
+  // load is rendering. Fail-safe today because the freshness guard below discards a stale result,
+  // but it is the wrong instrument being asked.
+  evaluateLiveTrigger(chartPair).then(result=>{
     if(activePair.replace('_','/')!==name) return; // pair changed while this was loading
     if(result.fires){
       badge.style.display='block';

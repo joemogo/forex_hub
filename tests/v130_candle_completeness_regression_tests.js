@@ -390,7 +390,13 @@ function runCandleCompletenessFixtures(g){
         'loadChart must not score its own raw fetch ungated -- that is the defect');
       ok(body.indexOf('marketDataCompletenessOf(candles)')!==-1,
         'it must consult the completeness contract');
-      ok(body.indexOf('pairData[activePair]')!==-1,
+      // §18.24: this matched the literal `pairData[activePair]` and broke the moment loadChart was
+      // corrected to capture the pair (`pairData[chartPair]`) -- a CORRECTNESS fix, on a live defect
+      // that rendered one pair's verdict on another pair's chart. That is precisely the brittleness
+      // this fixture was relabelled STRUCTURAL for: it dies on a rename and survives every
+      // behaviour-changing mutation. Matched on the stable part -- that the verdict is read out of
+      // pairData at all -- rather than on which variable holds the key.
+      ok(/pairData\[(activePair|chartPair)\]/.test(body),
         'and prefer the engine\u2019s own verdict, so the chart and the decision are the same object');
       return 'the chart reads the engine rather than forming a second opinion';
     });

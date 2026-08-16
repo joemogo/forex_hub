@@ -267,7 +267,24 @@ try{
     // error log under that prefix survived both suites AND the full 2,180-fixture gate, while the
     // identical leak under any other prefix died. The evidence platform now tags its own entries,
     // so the exclusion cannot be spoofed by writing the right words.
-    '  engineErrors:alexGEngineErrors.filter(function(e){return !(e&&e.__evidencePlatform===true);}),' +
+    // §18.24: the exclusion is now a CROSS-REFERENCE against the evidence platform's OWN record,
+    // not a flag the caller sets. v12.30.0 replaced a spoofable message-PREFIX match with a
+    // spoofable meta FLAG -- independent verification proved it by leaking JVM P&L into this log
+    // with `{__evidencePlatform:true}` and surviving the whole gate, while the identical leak
+    // without the flag died. An entry is treated as platform telemetry only if evidenceWriteFailures
+    // holds a record whose context/kind/message RECONSTRUCT that exact string, so a leak must now
+    // corrupt two independent structures consistently rather than assert one token.
+    //
+    // ⚠️ DISCLOSED RESIDUAL: any in-band marker is forgeable by code running in the same module
+    // scope, and a leak is exactly that. This raises the cost substantially; it does not make the
+    // exclusion unforgeable. The real fix would be a channel the evidence platform does not share
+    // with ALEX at all, which is a production change beyond this test-side repair.
+    '  engineErrors:alexGEngineErrors.filter(function(e){' +
+    '    var msg=String(e&&e.message||e);' +
+    '    for(var i=0;i<evidenceWriteFailures.length;i++){ var w=evidenceWriteFailures[i];' +
+    '      if(msg==="Evidence platform ["+w.context+"] "+w.kind+": "+w.message) return false; }' +
+    '    return true;' +
+    '  }),' +
     '  knownVersion:alexGAccountKnownVersion,' +
     '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
     '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime,' +
