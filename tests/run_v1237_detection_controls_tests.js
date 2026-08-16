@@ -143,14 +143,18 @@ function structuralCandles(n){
   }
   return out;
 }
-let __m15Bars=null,__bid=1.10025,__ask=1.10035;
+let __m15Bars=null,__bid=1.10025,__ask=1.10035,__structSeries=null;
 globalThis.fetch=function(url){
   const u=String(url);
   if(/\/pricing/.test(u)){
     return Promise.resolve(makeResponse(true,200,{prices:[{bids:[{price:__bid.toFixed(5)}],asks:[{price:__ask.toFixed(5)}]}]}));
   }
-  if(/granularity=D/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:toOanda(structuralCandles(120))}));
-  if(/granularity=W/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:toOanda(structuralCandles(60))}));
+  // §18.31: the structural series is overridable, so a fixture can construct a window in which
+  // ONE side has no AOI level at all. That is the only way to reach evaluateLiveTrigger's 2R
+  // FALLBACK target -- `target = aoi.resistance || (price+(price-stop)*2)` -- which had no
+  // coverage on either leg, so both fallback expressions could be rewritten with zero objection.
+  if(/granularity=D/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:toOanda((__structSeries||structuralCandles)(120))}));
+  if(/granularity=W/.test(u)) return Promise.resolve(makeResponse(true,200,{candles:toOanda((__structSeries||structuralCandles)(60))}));
   if(__m15Bars) return Promise.resolve(makeResponse(true,200,{candles:toOanda(__m15Bars)}));
   // No M15 series has been installed -- fail loudly rather than let an unscripted request fall
   // through to something that looks like data.
@@ -162,6 +166,7 @@ const g={};
 g.setM15Bars=function(bars){ __m15Bars=bars; };
 g.setBidAsk=function(bid,ask){ __bid=bid; __ask=ask; };
 g.structuralCandles=structuralCandles;
+g.setStructuralSeries=function(fn){ __structSeries=fn; };
 g.utc=function(y,mo,d,h,mi){ return new __RealDate(__RealDate.UTC(y,mo,d,h||0,mi||0,0)); };
 g.now=function(){ return __simNow; };
 

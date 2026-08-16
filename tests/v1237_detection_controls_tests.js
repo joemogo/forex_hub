@@ -238,6 +238,81 @@ function runV1237DetectionControlFixtures(g){
     return{bid:(aoi.support+ratio*stop)/(1+ratio),support:aoi.support,resistance:aoi.resistance,stop:stop};
   }
 
+  // ── 🔴 §18.31: the 2R FALLBACK TARGET had no coverage on either leg ─────────────────────────
+  // When the opposite AOI level is absent, evaluateLiveTrigger falls back to a 2R target:
+  //   buy : target = aoi.resistance || (price + (price - stop) * 2)
+  //   sell: target = aoi.support    || (price - (stop - price) * 2)
+  // Both fallback expressions could be rewritten with zero objection, because no fixture ever
+  // reached them -- the shared structural series always produced BOTH levels. This series keeps a
+  // genuine 3-touch support shelf and gives every bar a DISTINCT high, so no resistance cluster
+  // can form and the fallback is the only path to a target.
+  function supportOnlySeries(n){
+    const out=[];
+    for(let i=0;i<n;i++){
+      const lo=(i%6===0||i%6===1||i%6===2)?1.09900+(i%3)*0.00005:1.10500+(i%3)*0.00100;
+      const hi=1.11000+i*0.00050;   // strictly increasing: never three touches at one level
+      out.push({o:lo+0.0005,h:hi,l:lo,c:hi-0.0005});
+    }
+    return out;
+  }
+
+  await t('RR-FALLBACK.1 (BUY): with no resistance AOI the target is exactly 2R above the fill',async function(){
+    g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
+    g.setStructuralSeries(supportOnlySeries);
+    try{
+      g.setM15Bars(reversalM15());
+      g.resetScanData(); g.setScanData('EUR/USD',BULLISH_TABLE);
+      const aoi=g.findAOIs(supportOnlySeries(120));
+      ok(aoi.support!=null,'PRECONDITION: the constructed window still has a real support shelf, got '+aoi.support);
+      eq(aoi.resistance,null,'PRECONDITION: and NO resistance level, or the fallback is never reached');
+      const stop=aoi.support-g.pipSize('EUR_USD')*7;
+      const ask=1.10035;
+      g.setBidAsk(ask-0.0002,ask);
+      const v=await g.evaluateLiveTrigger('EUR_USD');
+      ok(v.fires,'the setup must fire so a target is produced at all: '+JSON.stringify(v));
+      near(v.target,ask+(ask-stop)*2,1e-9,
+        'the fallback target is the fill plus twice the risk distance; any other multiple silently changes every take-profit on a pair with no overhead structure');
+      near(v.ratio,2,1e-6,'and the resulting ratio is exactly 2.00 by construction');
+      return 'support='+aoi.support.toFixed(5)+' stop='+v.stop.toFixed(5)+' target='+v.target.toFixed(5)+' ratio='+v.ratio.toFixed(4);
+    } finally { g.setStructuralSeries(null); }
+  });
+
+  // The mirror: a genuine 3-touch resistance shelf, with strictly falling lows so no support
+  // cluster can form. Written separately rather than assumed symmetric with RR-FALLBACK.1 --
+  // the BUY fallback was covered by that fixture and the SELL fallback still survived, which is
+  // the same one-quadrant-of-two shape as the stop buffer.
+  function resistanceOnlySeries(n){
+    const out=[];
+    for(let i=0;i<n;i++){
+      const hi=(i%6===0||i%6===1||i%6===2)?1.12010-(i%3)*0.00005:1.11400-(i%3)*0.00100;
+      const lo=1.11000-i*0.00050;   // strictly decreasing: never three touches at one level
+      out.push({o:lo+0.0005,h:hi,l:lo,c:hi-0.0005});
+    }
+    return out;
+  }
+
+  await t('RR-FALLBACK.2 (SELL): with no support AOI the target is exactly 2R below the fill',async function(){
+    g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
+    g.setStructuralSeries(resistanceOnlySeries);
+    try{
+      g.setM15Bars(bearReversalM15());
+      g.resetScanData(); g.setScanData('EUR/USD',BEARISH_TABLE);
+      const aoi=g.findAOIs(resistanceOnlySeries(120));
+      ok(aoi.resistance!=null,'PRECONDITION: the constructed window still has a real resistance shelf, got '+aoi.resistance);
+      eq(aoi.support,null,'PRECONDITION: and NO support level, or the fallback is never reached');
+      const stop=aoi.resistance+g.pipSize('EUR_USD')*7;
+      const bid=1.11500;
+      g.setBidAsk(bid,bid+0.0002);
+      const v=await g.evaluateLiveTrigger('EUR_USD');
+      ok(v.fires,'the short must fire so a target is produced at all: '+JSON.stringify(v));
+      eq(v.dir,'sell','and it must be the SELL leg: '+JSON.stringify(v));
+      near(v.target,bid-(stop-bid)*2,1e-9,
+        'the short fallback target is the fill minus twice the risk distance');
+      near(v.ratio,2,1e-6,'and the resulting ratio is exactly 2.00 by construction');
+      return 'resistance='+aoi.resistance.toFixed(5)+' stop='+v.stop.toFixed(5)+' target='+v.target.toFixed(5);
+    } finally { g.setStructuralSeries(null); }
+  });
+
   await t('RR-SHORT.1 the SELL leg fires, and its stop sits exactly 7 pips ABOVE the resistance AOI',async function(){
     g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
     g.setM15Bars(bearReversalM15());
