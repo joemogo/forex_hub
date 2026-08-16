@@ -4621,3 +4621,234 @@ The `RollbackFailure.15` defect (§18.18) was fixed for **one** fixture and neve
 34 suites, **2,215 / 2,215**, 0 execution errors, protected drift **0**. Fixture-count manifest
 updated in both directions (v1212 52→42 as ten claims became notes and two real fixtures were added;
 v126 61→60; v1231 31→32; restart-diagnostics 38→40; paper-trading audit 295→296).
+
+---
+
+## §18.31 — Round 5/6 production findings: three shipped defects, and the arithmetic nothing watched
+
+Two independent adversarial agents ran against `2b4f67a`. Between them they scored 89 and 24
+mutations gate-wide. This section records what they found, what I repaired, and — equally — the
+places where I judged their finding wrong and proved it.
+
+### PD-1 (PRODUCTION) — the Manual Review modal's position size was wrong by 10,000×
+
+The trade-approval modal rendered `riskAmount / riskPips / 100000`. The engine sizes at
+`riskAmount / (riskPips × pipValuePerLot(oPair))`. The modal **omitted the pip value entirely**.
+
+| | $100 risk, 100-pip stop, EUR/USD |
+|---|---|
+| engine (`openPaperPosition`) | **0.10 lots** |
+| modal | 0.00001 → displayed **"0.00 lots (est.)"** |
+
+Every realistic Manual Review candidate displayed `0.00 lots`. On JPY pairs the error is 100× rather
+than 10,000×, so it is not even a constant offset a reader could learn to correct.
+
+This is the screen where the operator approves a discretionary Thursday/Friday trade. The approve
+path itself sizes correctly through the engine, so no money moved *inside* the app — but the figure
+is presented at the decision point, and it would move real money if copied to a broker.
+
+It was a **second copy** of a formula whose original is pinned by 43 fixtures. Mutating the engine's
+copy kills 43; mutating this one killed **zero**.
+
+Extracted to `mrModalEstimatedLots()`. Fixtures 38a–38d require the displayed size to equal what the
+engine would actually open, **computed from the engine's own `pipValuePerLot`** rather than from a
+literal — a literal derived from the broken formula would have passed just as happily, which is
+precisely how this survived review.
+
+### PD-2 (PRODUCTION) — the structural AOI was fetched for the live pair
+
+`loadChart` called `getStructuralAOI(activePair)` after two awaits, not the captured `chartPair`.
+The third instance of the §18.24 defect, and the one that matters most: these are the Daily/Weekly
+levels a stop is measured against, drawn as the support/resistance band.
+
+§18.24 captured `chartPair` and named two residuals as closed (the fallback fetch, the live-trigger
+call). It missed this one — the only remaining post-await read of a live global in `loadChart` that
+**initiates work**. Nothing observed it: pointing it back at `activePair` killed 0 of 2,222.
+
+In an A→B→A sequence the freshness guard *passes* and B's support and resistance are drawn on A's
+chart. Between two similarly-priced pairs the wrong levels look entirely plausible. In the simpler
+A→B case the guard returns and the chart renders with no band at all, saying nothing.
+
+### PD-3 (PRODUCTION) — `focusChartOnTradeWindow` had no post-await freshness guard at all
+
+Every sibling post-await drawing path in `loadChart` carries one. This one carried none, and it both
+fetched with the live globals and wrote straight into the shared candle series. Clicking a pair while
+a journal trade's "show on chart" fetch is in flight overwrote the new pair's candles with the old
+pair's window and drew the old trade's entry, stop and target lines on it — under the new pair's
+header, price, verdict and AOI.
+
+`CAF-WIRE.2` drives the **inner** function, because `focusTradeOnChart` assigns `activePair` itself
+before calling it, so a flip at the outer entry point is simply overwritten and the guard correctly
+sees a match. The first draft of that fixture failed for exactly that reason.
+
+### CAF-TF.11 — the 15th unkillable fixture, on the defect §18.21/§18.24 exist for
+
+It asserted only the **absence** of `"scanner's own H4 verdict"`. Four behaviour-changing mutations
+of the timeframe axis all leave that literal absent, so all four passed: the guard itself, the label
+itself, the signal basis, and the chart's primary candle fetch. Under the guard mutation the chart
+grants engine authority to an H4 verdict and labels it "scanner's own **H1** verdict" — the §18.17
+defect in mirror image, rendered, and invisible.
+
+Replaced with positive assertions on what the state line must **say** (`NOT EVALUATED`, "computed on
+H4", "not on H1") and on what was actually **requested** from the network.
+
+**One of the four is an equivalent mutant, and is recorded as such rather than chased.** Pointing the
+primary candle fetch at `activePair`/`activeTf` cannot change behaviour: there is no `await` between
+the capture at the top of `loadChart` and that fetch, so the globals are provably identical there. A
+survivor that cannot change observable behaviour is not a coverage gap.
+
+### The arithmetic nothing watched
+
+| Function | Protected? | Mutations that survived before this section |
+|---|---|---|
+| `alexGFetchExecutableCandles` | no | 5/5, **including one that introduces lookahead into exit reconstruction** |
+| `getStructuralAOI` | no | D-over-W precedence (support **and** resistance), 15-min cache TTL |
+| `evaluateLiveTrigger` SELL leg | no | stop buffer 7→6 pips (the BUY leg kills 2) |
+| 2R fallback target, both legs | no | both — no fixture ever reached the branch |
+| `closePaperPosition` splice index | **yes** | `splice(idx2)` → `splice(idx)` |
+| unrealized P&L in `renderPaper` | no | all, including a **constant** pip value |
+
+`alexGFetchExecutableCandles` decides whether an ALEX position hit its stop or its target. It is not
+protected, so neither the fixtures nor the drift hash watched it. ALEXEXEC.0–5 close four of the five
+(the fifth is an equivalent mutant, below), each with a positive control.
+
+`JVMCLOSE-18`'s own failure text claims it catches "reusing the pre-await index". It does not: it
+removes the *closing* position mid-await, so `idx2` is `-1` and the function returns **before** the
+splice. It pins the early return, never the index. JVMCLOSE-18b/18c add the quadrant that exercises
+it — the closing position survives and one *ahead* of it goes away, so a stale index splices nothing
+and the trade is credited **and left open** to be closed again.
+
+No fixture anywhere in the repository produced a firing **short**, which is why the SELL leg of the
+entry trigger was free. RR-SHORT.1/.2 build a bearish reversal series and solve the bid for a chosen
+ratio, mirroring the existing `askForRatio`.
+
+### Two findings I refuted, with proof
+
+1. **Cursor step of half a bar** (`lastTime+30000` instead of `+60000`) was reported as an uncovered
+   duplicate-bar hazard. It is an **equivalent mutant**: the API serves bars with time ≥ `from`, so
+   the first M1 bar at or after T+30s is the same bar T+60s already asks for. Proven with a
+   from-sensitive router *and* a positive control — stepping by **zero** is a real duplicate and dies
+   at ALEXEXEC.5.
+2. **The primary candle fetch reading live globals** — no await between capture and use, as above.
+
+### Two thresholds of my own that were too loose to catch what they named
+
+- The first resistance-precedence assertion used `>1.15`. The **inverted** precedence also cleared
+  it, because the weekly level was 1.1600. A fixture written to catch a mutation let it through.
+  Both are now pinned to the exact level, 1000 pips from their alternative.
+- `CAF-PAIR.4` used `arr.every(...)` on a request list that was **empty**, where `every` is
+  vacuously true. Its own precondition caught it on the first run. It now carries its own
+  non-emptiness.
+
+### PD-4 — a silent catch on a trade-eligibility gate (partially closed)
+
+`runAutoTopDownScan`'s per-pair handler ended in a bare `catch(e){}` — the same shape `scanAll` fixed
+in v11.0, but on a path that gates money: `checkAutoTrades` opens positions only for pairs marked
+`Active watch`, and a pair whose scan threw kept a **stale** eligibility mark and went on authorising
+live paper entries with nothing recorded anywhere.
+
+Now reported, and deliberately **reporting-only**: clearing the bucket would change which trades the
+strategy takes. That is a frozen-semantics decision and is raised as a governance item below.
+
+Its fixture was **attempted and withdrawn** rather than shipped green for the wrong reason. Three
+traps are recorded in the suite because each is worth knowing: an HTTP error page is *handled*
+(`fetchCandles` has its own try/catch and the ADR-011 gate takes an explicit branch, so the catch is
+never entered); injecting the fault at `getScore` makes it *escape the function*, because
+`renderScan` calls `getScore` after the `Promise.all` and outside the per-pair try; and injecting at
+`calcBiasFromCandles` is correct but the offline harness cannot get `runAutoTopDownScan` past its own
+completeness gate — W, D and H4 all classify `UNAVAILABLE`. Named as an open gap.
+
+### Defence in depth for the NaN balance
+
+`commitPaperLedger` now refuses a non-finite balance or closing P&L through the existing
+`paperLedgerBlockingError` contract. Because that refusal makes the upstream guard deletion
+*survivable*, `PTE2E-NOFILL.3b` pins the upstream guard on the property that still distinguishes the
+two: **a healthy refusal is silent**, raising no banner and no engine error, because the close never
+reached the commit.
+
+---
+
+## §18.32 — Round 7: the eighth bypass, and a claim of mine that was stronger than its implementation
+
+Two independent agents against `f58fb93`. **The production agent could not defeat a single MOGO-021
+repair** — 38 mutations scored gate-wide, every fix held, including a self-comparison specifically
+designed to fake the `focusChartOnTradeWindow` freshness guard. Everything it found was in code the
+milestone had *named* but not closed. That is the first round in this milestone where the repairs
+themselves survived scrutiny intact.
+
+### The isolation exclusion, defeated an eighth time — by the commit that fixed the seventh
+
+`__isoNormEntry` dropped the `at` key **unconditionally**. But `at` was caller-writable:
+`recordAlexGEngineError` set it first and merged the caller's `meta` **over** it. So "the entire
+content minus the timestamp" was really "the entire content minus whatever the leak chose to put in
+`at`" — a free, unexamined payload channel.
+
+| | Result |
+|---|---|
+| control — payload under a key named `leak` | **KILLED** ISO.2 + ISO.6 |
+| attack — identical payload under `at` | **2,261/2,261, drift 0** |
+| attack — `toJSON` own-property forging the whole normalised shape | **2,261/2,261, drift 0** |
+
+Live JVM balance and open-position counts rode into the ALEX error log on every JVM save.
+
+Closed at **both** layers, each proven independently sufficient:
+
+- **Production**: `recordAlexGEngineError` now writes `message` and `at` *after* the meta merge and
+  refuses `toJSON`. A caller cannot forge an engine error's timestamp. With this in place the `at`
+  attack carries nothing — the payload is overwritten before it is stored.
+- **Harness**: the filter checks entry **shape** as well as content — no `toJSON`, and an `at` that
+  is a real ISO-8601 timestamp. Verified by reverting the production hardening: the harness alone
+  still kills the attack.
+
+The harness must not depend on the production fix, because the entire purpose of this filter is to
+stay honest about code that can call anything.
+
+### A correction to my own claim
+
+`CAF-TF.11c` shipped labelled *"kills the PRIMARY CANDLE FETCH reading the live globals"*. It cannot,
+and I knew it: there is no `await` between the capture at the top of `loadChart` and that fetch, so
+its arguments are evaluated where the captured and live values are equal by construction. **I had
+proven that equivalence myself before writing the fixture and did not go back and relabel it** — the
+same claim-stronger-than-implementation pattern this milestone has repeatedly found in code written
+by others. Relabelled a companion.
+
+### The two §18.24 residuals that were fixed and never watched
+
+v12.32.0 named three post-await reads of a live global in `loadChart` and reported two of them
+closed. They *were* fixed — but nothing observed them. Pointing either back at the live global killed
+**0 of 2,261**. Only the AOI leg had a fixture.
+
+`CAF-RESID.1–4` cover both. They required a **frozen Monday clock**: `evaluateLiveTrigger`'s first
+line is `if(!isPreferredTradingDay()) return …`, which reads the real weekday — so a fixture driving
+it through `loadChart` would silently do nothing, and pass for the wrong reason, from Thursday to
+Sunday.
+
+### The ALEX open-positions table — the unmirrored half
+
+The sharpest paired result of the round: inverting the direction sign in the unrealized-P&L
+calculation is **killed on the JVM table** by PTE2E-UNREAL.3/.4 and **survived on the ALEX table** —
+byte-for-byte the same mutation, the same money figure, the same kind of screen. The v12.36.0 repair
+had been applied to one side only. Replacing the ALEX table's entire price-cell block with a literal
+also survived: nothing read it at all.
+
+Three real defects were living in that unwatched block:
+
+1. **No `pipValue` null guard.** Worse than a visible NaN: `null * positionSize` **coerces to 0**, so
+   a position with no conversion rate rendered a confident `+$0.00 / +0.00R` — indistinguishable
+   from a genuinely flat trade. *My first fixture asserted the absence of "NaN" and the mutation
+   survived*; corrected to assert the dash.
+2. **Every price hardcoded to 5 decimals**, so `USD_JPY` rendered `150.12300`.
+3. **`p.maePips.toFixed(1)` unguarded**, while the journal record shape initialises those fields to
+   `null`. That does not degrade one cell — it **throws out of the row map**, so the entire ALEX
+   open-positions table renders nothing. Reachable from persisted state across a restart.
+
+### Harness defects found in my own fixtures this round
+
+- **Windowed requests were never recorded** in the chart fetch log, so a fixture asserting on them
+  read an empty list — where `every()` is vacuously true.
+- `resetChartRec()` clears the *record* of the series objects while `setData` writes to the series
+  object itself, so data lands somewhere the recorder no longer tracks.
+- The candle series had to be selected **by shape**, not by position: "the last series with data" is
+  an AOI line series, whose data is `{time,value}`.
+- `paperLifecycleLog` was compared by **length only** — the size-preserving-rewrite pattern §18.27
+  fixed for `storageLoadFailures` and left live on its neighbour in the same commit.
