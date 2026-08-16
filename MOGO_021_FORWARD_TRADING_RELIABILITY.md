@@ -4352,3 +4352,87 @@ actually produces is pinned; the other branch remains a literal comparison and i
 **CORE is still NOT declared GREEN.** A final adversarial sweep and an independent completeness audit
 of the full operational chain are running; two prior rounds each found real defects in work that had
 passed its author's own checks.
+
+## 18.25 The module-state axis — 15 channels, two of which move money
+
+The v12.30.0 denylist closed the **storage** axis properly. The **module-state** axis was still a
+hand-written allowlist with the identical failure mode: 13+ cross-strategy channels injected into
+**non-protected** functions all survived 2,207/2,207 with zero drift.
+
+| Channel | Consequence |
+|---|---|
+| **`paperTradeIdSeq`** | the JVM **trade-ID space**. Poisoned to `MAX_SAFE_INTEGER`, `seq+1===seq` forever — **every** subsequent JVM id identical, and the close lookup resolves to the **wrong position**. The floor guard screens *persisted* values only |
+| **`structuralAOICache`** | the shared D/W cache `getStructuralAOI` serves, which sets the real **stop and target** on a JVM paper trade |
+| `cfg.env` | flipping to `'live'` repoints `apiBase()` at the live OANDA host; only the *storage key* was compared, so an in-memory flip was invisible |
+| `alexGIdentityDriftReported`, `alexGCursorSanityReported` | **silence ALEX's own integrity reporting** |
+| `firedAlerts`, `hideTestTradesPaper`, manual-review guards, health-report cache, lifecycle log, replay statistics | reporting, dedup and diagnostics |
+
+**All 15 now die.** The widening needed two repairs, and both were the same lesson recurring *on the
+fix for that lesson*:
+
+* **Adding a field is not enough if nothing resets it.** `alexGIdentityDriftReported` was *already*
+  `true` when the snapshot was taken — polluted by an earlier block — so the leak stayed invisible
+  even after the field was compared. That is §18.20a's "nothing to lose" defect, reproduced on the
+  fields added to fix §18.20a.
+* **Adding a field is not enough if the scenario leaves it EMPTY.** The ALEX decision sets are empty
+  in every isolation block, so a leak that *clears* them changes nothing — including the
+  **size-preserving rewrite §18.20 explicitly named and still could not detect.** And the first
+  seeding attempt ran *before* the cleanup wiped it back, so the wipe leak was still invisible until
+  the seeder ran **last**.
+
+> **One field was removed again after measurement.** The evidence-platform counters are **not**
+> ALEX-owned — the platform is strategy-agnostic and legitimately records a JVM operation, so
+> comparing them reported a normal JVM write as an ALEX leak and failed on a clean tree. Removed for
+> the same reason the engine-error entries are cross-referenced rather than compared raw.
+
+## 18.26 The last four CORE items
+
+### Three money-path mutations inside PROTECTED functions
+
+The drift baseline was their only control — and **a drift hash says the bytes did not change, never
+that the arithmetic is right.** Each survived the full gate:
+
+| Mutation | What it does |
+|---|---|
+| `>=` → `>` on the target test | a price that touches its target **to the pip** never takes profit, and the trade runs on to its stop |
+| pip value **re-derived** at close instead of fixed at entry | the JVM analogue of the fixed-vs-recomputed-R hole |
+| the manual-close fallback collapsed | a manual close with no bid/ask **and** no cached price silently **no-ops**, stranding the position open forever |
+
+`JVMEXIT-10/11/12` close all three by observing the protected functions' **output** rather than
+editing them: exactly-at-target takes profit; a position seeded with `pipValueAtEntry: 25` books
+**+$625.00** where a re-derivation would give $250.00; a feed-less manual close fills at the entry
+for **exactly $0.00** and leaves nothing open.
+
+### 🔴 A diagnostic that over-reported its own coverage
+
+`MDHIST-1..3` pinned the **walk**; every figure the operator actually **reads** was free.
+`calendarDays` and `tradingDays` are now hand-computed literals over a Monday→Wednesday window
+(9 calendar days, 8 trading days) with a positive control on a window containing proportionally more
+weekend.
+
+**And the fixture found a real defect.** `totalRaw` **double-counted every duplicate**: `all` is the
+merged array and already contains them, so `all.length + duplicates` reported one *more* bar than
+the pages returned for each repeat. A diagnostic whose job is to report coverage, over-reporting its
+own. Found because the hand-computed literal did not match the shipped arithmetic — **and the
+arithmetic was wrong.**
+
+### The chart overlay wiring, pinned at last
+
+Deleting `drawTradeOverlay`'s call site killed **zero** fixtures, because every overlay fixture
+called the helper **directly** — it could be permanently disconnected from the render path at no
+cost. The blocker was the fixture router: `fetchCandlesAroundWindow` builds a *different* URL shape
+(`granularity/price/count/from`), so the regex never matched and the router was handed a null
+context. It models both shapes now, and `CAF-WIRE.0/.1` drive `focusTradeOnChart` end to end.
+
+### Two items disclosed rather than closed — with proof, not assertion
+
+* **`requestCount` from the loop guard is an EQUIVALENT MUTANT.** `guard++` runs once per iteration
+  and *every* path through the body pushes exactly one `pages` entry, so the two are equal by
+  construction.
+* **`CAF-TF.2` is a COMPANION to `CAF-TF.1`, not independent evidence.** Under the shipped guard the
+  string it forbids is structurally unproducible, so no single behaviour-changing mutation can make
+  it fail.
+
+**Gate: 34 suites, 2,219 / 2,219.** Platform **1,049 / 1,049**. Protected drift **0**. App `12.33.0`.
+A final independent falsification of this batch is running; **CORE is not declared GREEN until it
+returns clean.**
