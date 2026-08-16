@@ -129,9 +129,28 @@ function runV1213Fixtures(g){
     g.setCfg({key:secretOandaKey,accountId:secretOandaAcct,env:'practice'});
     g.setElementValue('apiKey',secretOandaKey);
     g.setElementValue('accountId',secretOandaAcct);
+    // §18.30: these two assertions were vacuous BY TIMING, not by emptiness. setCfg is a bare
+    // in-memory assignment, and localStorage was read on the very next line -- an instrumented
+    // count showed ZERO production persistence calls occurred while the sentinel was live. So no
+    // behaviour of any persistence path could make them fail: leaking both secrets to fxhub_* keys
+    // and to a non-fxhub key each left them green. The same must-not-contain-with-no-precondition
+    // family as HealthCheck.15 and Fixture 20, in siblings the first fix did not reach.
+    const persistCalls=g.exercisePersistence();
+    assert('SEC-OANDA.0 (PRECONDITION): real production persistence actually ran while the sentinel token and account id were live in cfg and in the DOM fields, so the two assertions below observe persistence behaviour rather than the gap between two adjacent statements',
+      persistCalls>0 && g.getAllLocalStorageKeys().length>0,
+      'persistCalls='+persistCalls+' keys='+g.getAllLocalStorageKeys().length);
     const allValues=g.getAllLocalStorageKeys().map(k=>g.getLocalStorageItem(k)).join('\n');
-    assert('OANDA token never appears in any localStorage value', allValues.indexOf(secretOandaKey)===-1, '');
-    assert('OANDA account ID never appears in any localStorage value', allValues.indexOf(secretOandaAcct)===-1, '');
+    assert('OANDA token never appears in any localStorage value (asserted AFTER the real save/commit/persist surface ran with the token live)', allValues.indexOf(secretOandaKey)===-1, '');
+    assert('OANDA account ID never appears in any localStorage value (asserted AFTER the real save/commit/persist surface ran with the account id live)', allValues.indexOf(secretOandaAcct)===-1, '');
+    // POSITIVE CONTROL: the predicate must be capable of going false. Plant the sentinel into a
+    // real storage value and require the identical scan to find it -- otherwise "never appears"
+    // is indistinguishable from "we never looked anywhere it could be".
+    g.plantSentinelInStorage('fxhub_sec_positive_control','payload '+secretOandaKey+' / '+secretOandaAcct);
+    const controlValues=g.getAllLocalStorageKeys().map(k=>g.getLocalStorageItem(k)).join('\n');
+    assert('SEC-OANDA.3 (POSITIVE CONTROL): the very same scan DOES find the token and the account id once they are genuinely present in a localStorage value -- so the two assertions above are a real search, not a search of nowhere',
+      controlValues.indexOf(secretOandaKey)!==-1 && controlValues.indexOf(secretOandaAcct)!==-1,
+      'foundKey='+(controlValues.indexOf(secretOandaKey)!==-1)+' foundAcct='+(controlValues.indexOf(secretOandaAcct)!==-1));
+    g.plantSentinelInStorage('fxhub_sec_positive_control','');
     g.setCfg({key:'',accountId:'',env:'practice'});
   })();
 

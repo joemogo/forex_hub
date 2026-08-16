@@ -220,6 +220,177 @@ async function runV1239PaperTradingE2EFixtures(g){
       res?('committed='+res.committed):'close returned nothing');
   }
 
+  // ── 🔴 NO FILL AVAILABLE: the one branch holding the account balance up (§18.30) ────────
+  // Independent adversarial verification found that `if(!exitPrice)return;` in closePaperPosition
+  // had ZERO fixtures. Deleting it survived the entire 2,215-fixture gate with drift 0, while a
+  // control at the same line (`if(true)return;`) killed 85 -- so the line is executed constantly;
+  // it is its FAILURE path that was unwitnessed. Driven end to end through the real engine, the
+  // deletion books the trade at exitPrice=undefined, so pnl is NaN and the balance becomes NaN.
+  // JSON.stringify(NaN) is null, so `fxhub_paper` is written as {"balance":null} and the account
+  // is PERMANENTLY destroyed across reload -- commitPaperLedger performed no finiteness check, so
+  // there was no second line of defence (contrast the ALEX open path, which does check isFinite).
+  //
+  // Reachable in production, and the two failures are CORRELATED rather than independent:
+  // checkPaperPositions decides the exit from a synchronous `live` read, then closePaperPosition
+  // yields at `await fetchBidAsk(...)`. During that await the scanner sweep rewrites the shared
+  // pairData slot, and a failed fetchPrice writes price:null. fetchBidAsk and fetchPrice hit the
+  // same host with the same credentials, so ONE transient outage produces both.
+  //
+  // The same missing coverage hid a second mutation: rewriting the auto branch as
+  // `exitPrice = live!=null ? live : pos.entry` books a genuine +$300 take-profit winner at
+  // exitPrice=entry -- pnl 0, result "Win", closeReason TAKE_PROFIT -- destroying the gain and
+  // corrupting expectancy with a phantom 0R win. Also 2,215/2,215.
+  {
+    jvmClean();
+    g.setPricing('reject');           // fetchBidAsk fails -- no live bid/ask
+    const pos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    const balBefore=g.getPaperAccount().balance;
+    g.setPairData('GBP_USD',null);    // and the shared price cache has nothing either
+    const res=await g.closePaperPosition(pos.id,false,null);   // AUTO close (manual=false)
+    const acct=g.getPaperAccount();
+    const stillOpen=(acct.openPositions||[]).filter(p=>p.id===pos.id).length===1;
+    const jrn=(g.getJournalEntries()||[]).filter(e=>e.tradeId===pos.id)[0]||null;
+    assert('PTE2E-NOFILL.1 (FAILURE ISOLATION): with NO live bid/ask AND no cached price, an auto close REFUSES to fill -- the position stays open, nothing is booked, and the close reports no commit',
+      stillOpen && (acct.closedPositions||[]).length===0 && !(res&&res.committed),
+      'stillOpen='+stillOpen+' closed='+(acct.closedPositions||[]).length+' res='+JSON.stringify(res||null));
+    assert('PTE2E-NOFILL.2 (the money consequence): the balance is untouched and remains a FINITE number, and the position\'s journal row is still OPEN. This is the assertion that fails as NaN the moment the guard goes -- and NaN serialises to null, so the destroyed balance would survive a reload',
+      acct.balance===balBefore && Number.isFinite(acct.balance) && !!jrn && jrn.status==='OPEN',
+      'balance='+acct.balance+' finite='+Number.isFinite(acct.balance)+' before='+balBefore+' journal='+(jrn?jrn.status:'none'));
+    // §18.30: the two guards are DEFENCE IN DEPTH, and this fixture is what tells them apart.
+    // Since commitPaperLedger now refuses a non-finite ledger, deleting `if(!exitPrice)return`
+    // no longer destroys the account -- the downstream guard catches it. That is the point of
+    // defence in depth, and it also means "the position stayed open" can no longer distinguish
+    // the two. The observable difference is WHERE the refusal happens: correct code declines to
+    // price the exit and never asks the ledger to commit at all, so no blocking banner and no
+    // engine error are raised. With the guard gone, the close proceeds on a NaN and is stopped
+    // only at the commit, which necessarily raises both. Asserting the quiet path pins the
+    // upstream guard specifically, without weakening the downstream one.
+    assert('PTE2E-NOFILL.3b (kills the deletion of `if(!exitPrice)return` even with the commit-level guard in place): a healthy refusal is SILENT -- no ledger blocking banner and no engine error, because the close never reached the commit. If the exit-price guard is removed, the trade proceeds on a NaN and is caught one layer later, which necessarily raises both',
+      !g.getPaperBlockingError() && g.getPaperEngineErrorMessages().length===0,
+      'banner='+String(g.getPaperBlockingError())+' engineErrors='+JSON.stringify(g.getPaperEngineErrorMessages()).slice(0,160));
+    assert('PTE2E-NOFILL.3 (PERSISTED, not merely in memory): the stored fxhub_paper still parses and still carries a finite balance -- a NaN balance is written to disk as null, which no later load can distinguish from "never set"',
+      (function(){ try{ const raw=g.getLocalStorageItem('fxhub_paper'); if(!raw) return false;
+        const o=JSON.parse(raw); return Number.isFinite(o.balance)&&o.balance===balBefore; }catch(e){ return false; } })(),
+      'stored='+String(g.getLocalStorageItem('fxhub_paper')||'').slice(0,90));
+  }
+  {
+    // POSITIVE CONTROL for PTE2E-NOFILL.1-3. Identical setup except the cached price EXISTS, so the
+    // close must succeed and book the real winner. Without this, "stayed open" would pass just as
+    // well if the close path were never reached at all -- and it is exactly the +$300 take-profit
+    // that the auto-branch mutation silently books at $0.00.
+    jvmClean();
+    g.setPricing('reject');
+    const pos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3200);   // target reached, and the cache HAS it
+    await g.closePaperPosition(pos.id,false,null);
+    const acct=g.getPaperAccount();
+    const closed=(acct.closedPositions||[])[0]||null;
+    assert('PTE2E-NOFILL.4 (POSITIVE CONTROL): with a cached price present the very same auto close DOES fill -- at exactly 1.3200 for exactly +$200.00, leaving the balance at 10200.00. So PTE2E-NOFILL.1 is observing the refusal, not an unreachable close path, and an exit priced at the entry instead of the target would read $0.00 here',
+      !!closed && closed.exitPrice===1.32 && closed.pnl===200 && acct.balance===10200 && (acct.openPositions||[]).length===0,
+      closed?('exit='+closed.exitPrice+' pnl='+closed.pnl+' balance='+acct.balance):'no closed position');
+  }
+
+  // ── 🔴 DEFENCE IN DEPTH: the ledger commit must refuse a non-finite balance (§18.30) ────
+  {
+    jvmClean();
+    g.setPricing('reject');
+    const pos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(pos.id,false,null);
+    const okBalance=g.getPaperAccount().balance;
+    const storedBefore=g.getLocalStorageItem('fxhub_paper');
+    assert('PTE2E-FINITE.0 (POSITIVE CONTROL): an ordinary close still commits normally with the new refusal in place -- the guard rejects only non-finite values and does not block healthy trading',
+      Number.isFinite(okBalance) && okBalance===10100 && !g.getPaperBlockingError(),
+      'balance='+okBalance+' blocking='+String(g.getPaperBlockingError()));
+    // Now force the exact state the missing guard would have produced.
+    g.forceBalance(NaN);
+    const res=g.commitPaperLedger();
+    assert('PTE2E-FINITE.1 (kills the absence of a finiteness check): a commit carrying a NaN balance is REFUSED -- ok:false with reasonCode NON_FINITE_LEDGER -- rather than written. Without this the account persists as {"balance":null} and no later load can tell that from "never set"',
+      !!res && res.ok===false && res.reasonCode==='NON_FINITE_LEDGER' && res.integrityCompromised===false,
+      'res='+JSON.stringify(res));
+    assert('PTE2E-FINITE.2 (nothing was written): storage still holds the last GOOD balance, byte-identical to before the refused commit -- the refusal protects the file, not just the return value',
+      g.getLocalStorageItem('fxhub_paper')===storedBefore
+        && (function(){ try{ return Number.isFinite(JSON.parse(g.getLocalStorageItem('fxhub_paper')).balance); }catch(e){ return false; } })(),
+      'stored='+String(g.getLocalStorageItem('fxhub_paper')||'').slice(0,80));
+    assert('PTE2E-FINITE.3 (the operator is told): the refusal sets the blocking banner AND records an engine error naming the offending value, so a refused commit is not a silent no-op',
+      !!g.getPaperBlockingError()
+        && g.getPaperEngineErrorMessages().some(function(m){ return m.indexOf('non-finite')!==-1 && m.indexOf('balance=NaN')!==-1; }),
+      'banner='+String(g.getPaperBlockingError()).slice(0,60)+' errors='+JSON.stringify(g.getPaperEngineErrorMessages()).slice(0,140));
+    jvmClean();
+  }
+
+  // ── 🔴 UNREALIZED P&L: the figure the operator watches while deciding to close (§18.30) ──
+  // Independent verification mutated this computation three ways -- including replacing the pip
+  // value with the constant 987654 -- and ALL of them survived 2,215/2,215. A constant payload
+  // surviving means the honest finding is not "a subtle bug slips through" but the stronger one:
+  // the entire open-position P&L/R computation was unobserved. Every floating P&L and R-multiple
+  // an operator reads while deciding whether to cut a live trade could be arbitrarily wrong with
+  // the gate fully green. Hand-computed literals below, one long and one short.
+  {
+    jvmClean();
+    g.setPricing('reject');
+    // BUY: entry 1.3000, stop 1.2900 (100 pips risk), 1% of 10000 = $100 risk => 0.10 lots, $10/pip.
+    const pos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3050);           // +50 pips in favour
+    g.renderPaper();
+    const html=g.elHtml('paper-open');
+    assert('PTE2E-UNREAL.0 (PRECONDITION): the open-positions table really rendered this position with its live price, so the P&L assertions below read a real row rather than an empty table or a dash',
+      html.indexOf('1.30500')!==-1 && html.indexOf('GBP/USD')!==-1,
+      'len='+html.length+' head='+html.slice(0,120));
+    assert('PTE2E-UNREAL.1 (BUY, hand-computed): a buy 50 pips in profit at 0.10 lots and $10 per pip shows exactly +$50.00 unrealized -- not the realized-path number, not a re-derived pip value, and not a constant',
+      html.indexOf('+$50.00')!==-1,
+      'html has +$50.00 = '+(html.indexOf('+$50.00')!==-1)+' | '+html.slice(html.indexOf('1.30500'),html.indexOf('1.30500')+220));
+    assert('PTE2E-UNREAL.2 (BUY, R multiple): that same position reads exactly 0.50R against its $100.00 risk -- the R the operator judges the trade by, derived from the unrealized P&L rather than from the plan',
+      html.indexOf('0.50R')!==-1,
+      'html has 0.50R = '+(html.indexOf('0.50R')!==-1));
+  }
+  {
+    jvmClean();
+    g.setPricing('reject');
+    // SELL: the direction sign is where a P&L formula most often inverts, so the short side gets
+    // its own literal rather than being assumed symmetric with the long.
+    const pos=g.openPaperPosition('GBP_USD','sell',1.3000,1.3100,1.2800,'manual');
+    g.setPairData('GBP_USD',1.3050);           // 50 pips AGAINST a short
+    g.renderPaper();
+    const html=g.elHtml('paper-open');
+    // NOTE on the literal: fmtCurrency is `(v>=0?'+':'')+'$'+v.toFixed(2)`, so a negative renders
+    // as "$-50.00" -- the sign lands AFTER the dollar sign. Asserting the real shipped format
+    // rather than the one I assumed; my first draft asserted "-$50.00" and failed honestly.
+    assert('PTE2E-UNREAL.3 (SELL, sign): a short 50 pips OFFSIDE shows exactly $-50.00 unrealized, and NOT +$50.00 -- an inverted direction sign would report a losing trade as a winning one on the very screen the operator acts from',
+      html.indexOf('$-50.00')!==-1 && html.indexOf('+$50.00')===-1,
+      'neg='+(html.indexOf('$-50.00')!==-1)+' pos='+(html.indexOf('+$50.00')!==-1));
+    assert('PTE2E-UNREAL.4 (SELL, R multiple): the same short reads -0.50R against its $100.00 risk',
+      html.indexOf('-0.50R')!==-1,
+      'html has -0.50R = '+(html.indexOf('-0.50R')!==-1));
+    jvmClean();
+  }
+
+  {
+    // §18.30: U4 -- "re-derive the pip value at render instead of using pipValueAtEntry" -- survived
+    // the fixtures above, because for GBP_USD at 0.10 lots the re-derived value happens to equal the
+    // entry-fixed one. That makes it an EQUIVALENT MUTANT in that scenario, not a caught one. This
+    // fixture makes the two numbers differ, exactly as JVMEXIT-11 does for the realized close path:
+    // a position stamped pipValueAtEntry 25 with 0.50 lots, 50 pips in favour, must read
+    // 50 x 25 x 0.5 = +$625.00. A re-derivation would use $10/pip and read +$250.00.
+    jvmClean();
+    g.setPricing('reject');
+    g.setPaperAccount({balance:10000,openPositions:[{
+      id:990001,pair:'GBP/USD',oPair:'GBP_USD',dir:'buy',
+      entry:1.3000,stop:1.2900,target:1.3200,ratio:2,riskAmount:1250,lots:0.5,
+      pipValueAtEntry:25,openedAt:'2026-08-10T14:00:00.000Z',source:'manual'
+    }],closedPositions:[]});
+    g.setPairData('GBP_USD',1.3050);
+    g.renderPaper();
+    const html=g.elHtml('paper-open');
+    assert('PTE2E-UNREAL.5 (kills a pip value RE-DERIVED at render): a position stamped pipValueAtEntry 25 at 0.50 lots, 50 pips onside, shows exactly +$625.00 unrealized. Re-deriving the conversion at render time would read +$250.00 -- the position\'s own economics silently replaced by today\'s rate on the screen the operator acts from',
+      html.indexOf('+$625.00')!==-1 && html.indexOf('+$250.00')===-1,
+      'has625='+(html.indexOf('+$625.00')!==-1)+' has250='+(html.indexOf('+$250.00')!==-1));
+    assert('PTE2E-UNREAL.6 (its R multiple follows the same fixed economics): +$625.00 against the position\'s own $1250.00 risk reads exactly +0.50R',
+      html.indexOf('+0.50R')!==-1,
+      'has0.50R='+(html.indexOf('+0.50R')!==-1));
+    jvmClean();
+  }
+
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
   {
     jvmClean();
@@ -727,7 +898,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===64, 'recorded='+results.length+' expected=64 (this fixture is the 65th)');
+    results.length===80, 'recorded='+results.length+' expected=80 (this fixture is the 81st)');
 
   return results;
 }

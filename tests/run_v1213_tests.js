@@ -93,6 +93,21 @@ const wrapped = new Function('g',
   'g.toggleAlexGLiveTrading=toggleAlexGLiveTrading;' +
   'g.disconnect=disconnect;' +
   'g.saveAiKey=saveAiKey;' +
+  // §18.30: the OANDA-token fixtures installed a sentinel into cfg and read localStorage
+  // IMMEDIATELY -- zero production persistence ran in between, so no behaviour of any persistence
+  // path could make them fail. These exports let them exercise the REAL write surface while the
+  // sentinel is live, and give the assertion a positive control.
+  'g.exercisePersistence=function(){' +
+  '  var n=0;' +
+  '  try{ save(); n++; }catch(e){}' +
+  '  try{ saveAlexGRest(); n++; }catch(e){}' +
+  '  try{ commitPaperLedger(); n++; }catch(e){}' +
+  '  try{ saveChecklist(); n++; }catch(e){}' +
+  '  try{ saveTradeNotes(); n++; }catch(e){}' +
+  '  try{ persistStorageKey("fxhub_scan",JSON.stringify(scanData||{})); n++; }catch(e){}' +
+  '  return n;' +
+  '};' +
+  'g.plantSentinelInStorage=function(k,v){ try{ localStorage.setItem(k,v); }catch(e){} };' +
   'g.clearAiKey=clearAiKey;' +
   'g.clearAiChat=clearAiChat;' +
   'g.deleteEntry=deleteEntry;' +

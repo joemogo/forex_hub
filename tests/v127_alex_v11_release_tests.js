@@ -10,7 +10,19 @@
 function runAlexV11ReleaseFixtures(g){
   const out=[];
   function t(name,fn){
-    try{ const d=fn(); out.push({name,pass:true,detail:d||''}); }
+    try{
+      const d=fn();
+      // §18.30: this harness is SYNCHRONOUS -- it records a pass when fn() does not throw, and a
+      // returned promise was stored as `detail` and discarded, never awaited. Any async fixture
+      // added here would report a pass UNCONDITIONALLY, even with assertions that never ran.
+      // Proven by adding exactly that fixture: it passed. Fail CLOSED -- a thenable is harness
+      // misuse, not a pass. (The identical helper existed in three suites; all three are guarded.)
+      if(d&&typeof d.then==='function'){
+        out.push({name,pass:false,detail:'ASYNC FIXTURE IN A SYNCHRONOUS HARNESS: this fixture returned a promise, which t() cannot await -- its assertions would never be observed and it would report a pass regardless of outcome. Rewrite it synchronously, or move it to a suite whose runner awaits.'});
+        return;
+      }
+      out.push({name,pass:true,detail:d||''});
+    }
     catch(e){ out.push({name,pass:false,detail:(e&&e.message)?e.message:String(e)}); }
   }
   function eq(a,b,m){ if(a!==b) throw new Error((m||'')+' expected '+JSON.stringify(b)+', got '+JSON.stringify(a)); }

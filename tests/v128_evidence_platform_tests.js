@@ -14,7 +14,21 @@
 function runEvidencePlatformFixtures(g){
   const out=[];
   function t(name,fn){
-    try{ const d=fn(); out.push({name,pass:true,detail:d||''}); }
+    try{
+      const d=fn();
+      // §18.30: this harness is SYNCHRONOUS. It records a pass when fn() does not throw, and a
+      // returned promise was previously stored as `detail` and thrown away -- never awaited, its
+      // rejections never observed. Any async fixture added here would have passed UNCONDITIONALLY,
+      // including one whose assertions never ran at all. That is the "async fixture never awaited"
+      // false-green this milestone has already found elsewhere; here it was latent, waiting for the
+      // first author to write one. Proven by adding one: it passed with assertions that never ran.
+      // Fail CLOSED instead of silently greening: a thenable is a harness misuse, not a pass.
+      if(d&&typeof d.then==='function'){
+        out.push({name,pass:false,detail:'ASYNC FIXTURE IN A SYNCHRONOUS HARNESS: this fixture returned a promise, which t() cannot await -- its assertions would never be observed and it would report a pass regardless of outcome. Rewrite it synchronously, or move it to a suite whose runner awaits.'});
+        return;
+      }
+      out.push({name,pass:true,detail:d||''});
+    }
     catch(e){ out.push({name,pass:false,detail:(e&&e.message)?e.message:String(e)}); }
   }
   function eq(a,b,m){ if(a!==b) throw new Error((m||'')+' expected '+JSON.stringify(b)+', got '+JSON.stringify(a)); }
@@ -3905,6 +3919,38 @@ function runEvidencePlatformFixtures(g){
     eq(rep.generatedFrom.ledgerEvents.excluded,1);
     eq(rep.generatedFrom.ledgerEvents.included,1);
     eq(rep.readOnly,true,'the report must declare itself read-only');
+  });
+
+  // §18.30: pnlUnavailable was COMPUTED, fixture-tested (L9 dies when it is zeroed) and RENDERED
+  // NOWHERE -- the third instance this milestone of a value faithfully recorded and never shown,
+  // after PD-1 (ALEX engine errors) and PD-2 (the ALEX blocked-commit banner). It is the number
+  // that EXPLAINS an UNEXPLAINED_DELTA: an included event whose P&L is null is counted and never
+  // guessed at, so the derived balance legitimately falls short of the stored one, and the
+  // operator saw a red mismatch with no way to tell "data is missing" from "the books are wrong".
+  t('LR-PNLUNAVAIL.1 an included event with no recorded P&L is SURFACED, not just counted',function(){
+    g.setAlexGAccount({balance:10200,openPositions:[],closedPositions:[
+      ledgerTrade(),
+      ledgerTrade({tradeId:ledgerTrade().tradeId+'|NOPNL',pnl:null,resultR:null,
+        closedAt:'2026-04-08T03:00:00.000Z'})
+    ]});
+    g.renderLedgerReconciliation();
+    const html=String(g.elHtml('ledgerReconciliationCard')||'');
+    ok(html.length>200,'the reconciliation card actually rendered (len='+html.length+')');
+    ok(html.indexOf('2 ledger events')!==-1,
+      'both records must be INCLUDED, so the notice below is about an included event -- got: '+html.slice(0,200));
+    ok(html.indexOf('NO recorded P&amp;L')!==-1||html.indexOf('NO recorded P&L')!==-1,
+      'the card must tell the operator that an included event carries no P&L -- got: '+html.slice(0,300));
+    ok(html.indexOf('1 included event')!==-1,
+      'and must say HOW MANY, so the size of the gap is visible');
+  });
+  t('LR-PNLUNAVAIL.2 (NEGATIVE CONTROL) a clean ledger says nothing about missing P&L',function(){
+    g.setAlexGAccount({balance:10200,openPositions:[],closedPositions:[ledgerTrade()]});
+    g.renderLedgerReconciliation();
+    const html=String(g.elHtml('ledgerReconciliationCard')||'');
+    ok(html.length>200,'the card still rendered');
+    ok(html.indexOf('1 ledger events')!==-1||html.indexOf('1 ledger event')!==-1,'the record is included');
+    eq(html.indexOf('NO recorded P&L'),-1,'a healthy ledger must not display the missing-P&L notice');
+    eq(html.indexOf('NO recorded P&amp;L'),-1,'nor its escaped form');
   });
   t('R7 diagnostics replace NO stored total and write nothing',function(){
     const src=String(g.ledgerBuildReconciliationReport)+String(g.renderLedgerReconciliation)+

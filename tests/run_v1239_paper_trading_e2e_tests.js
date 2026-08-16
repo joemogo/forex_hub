@@ -207,6 +207,16 @@ try{
     // ── the REAL, unmodified execution entry points this suite drives end-to-end ──
     'g.openPaperPosition=openPaperPosition;' +
     'g.closePaperPosition=closePaperPosition;' +
+    // §18.30: the defence-in-depth finiteness refusal in commitPaperLedger.
+    'g.commitPaperLedger=commitPaperLedger;' +
+    // §18.30: the UNREALIZED P&L shown on every open position had zero gate coverage -- even a
+    // constant payload at the computation survived the whole gate. This is the second, unwatched
+    // copy of the pip/P&L arithmetic; the realized close path is pinned by JVMEXIT-11.
+    'g.renderPaper=renderPaper;' +
+    'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):""; };' +
+    'g.forceBalance=function(v){ paperAccount.balance=v; };' +
+    'g.getPaperBlockingError=function(){ return paperLedgerBlockingError; };' +
+    'g.getPaperEngineErrorMessages=function(){ return paperEngineErrors.slice(0,3).map(function(e){return String(e&&e.message||e);}); };' +
     'g.checkAutoTrades=checkAutoTrades;' +
     // §18.23: the alerting path had ZERO behavioural coverage anywhere in the repository.
     'g.scanPair=scanPair;' +
@@ -252,6 +262,7 @@ try{
     //    one deterministic string, so "byte-identical" is a real claim and not a spot check. ──
     // §18.29: the enumerable, EXACT set of harness-artifact messages. Defined once, in scope for
     // both snapshots. See the exclusion rationale above.
+    'var __isoArtifactCtxs=null,__isoArtifactKinds=null;' +
     'var __isoArtifactMsgs=(function(){' +
     '  var ctxs=["auto-export","backfill","buffer-limits","capture","capture-jvm","capture-jvm-seam",' +
     '    "capture-jvm-trade","capture-replay","capture-replay-seam","capture-replay-trade","capture-seam",' +
@@ -265,6 +276,34 @@ try{
     '  var out=new Set([tail]);' +
     '  ctxs.forEach(function(c){ kinds.forEach(function(k){' +
     '    out.add("Evidence platform ["+c+"] "+k+": "+tail);' +
+    '  }); });' +
+    '  __isoArtifactCtxs=ctxs; __isoArtifactKinds=kinds;' +
+    '  return out;' +
+    '})();' +
+    // §18.30: message-only membership was still forgeable. evidenceRecordWriteFailure stores
+    // detail:extra||null from a fully caller-controlled argument, and recordAlexGEngineError merges
+    // an arbitrary meta object -- so a leak sends the EXACT allowlisted message and rides its payload
+    // in a field the filter never looked at. An entry is excluded only if its ENTIRE content, minus
+    // the timestamp, is one of the known artifact shapes.
+    'var __isoNormEntry=function(e){' +
+    '  if(e===null||typeof e!=="object") return JSON.stringify({message:String(e)});' +
+    '  var o={},ks=Object.keys(e).filter(function(k){return k!=="at";}).sort();' +
+    '  ks.forEach(function(k){o[k]=e[k];});' +
+    '  return JSON.stringify(o);' +
+    '};' +
+    'var __isoArtifactEntries=(function(){' +
+    '  var out=new Set();' +
+    '  __isoArtifactMsgs.forEach(function(m){' +
+    '    out.add(__isoNormEntry({message:m,__evidencePlatform:true}));' +
+    '    out.add(__isoNormEntry({message:m}));' +
+    '  });' +
+    '  return out;' +
+    '})();' +
+    'var __isoArtifactRecords=(function(){' +
+    '  var out=new Set(), tail="IndexedDB is not available in this context";' +
+    '  var ctxs=__isoArtifactCtxs, kinds=__isoArtifactKinds;' +
+    '  ctxs.forEach(function(c){ kinds.forEach(function(k){' +
+    '    out.add(__isoNormEntry({context:c,detail:null,kind:k,message:tail}));' +
     '  }); });' +
     '  return out;' +
     '})();' +
@@ -317,13 +356,13 @@ try{
     // that is not listed below, its artifact is simply COMPARED rather than excluded, and the ISO
     // fixtures fail loudly. A missing entry costs a false failure, never a false pass.
     '  engineErrors:alexGEngineErrors.filter(function(e){' +
-    '    return !__isoArtifactMsgs.has(String(e&&e.message||e));' +
+    '    return !__isoArtifactEntries.has(__isoNormEntry(e));' +
     '  }),' +
     // §18.28 (Sev-1 aggravator): evidenceWriteFailures was compared by NEITHER snapshot and reset by
     // nothing, so a forged record left no residue at all. Compared here, artifact rows excluded on
     // the same exact-string rule.
     '  evidenceWriteFailures:(typeof evidenceWriteFailures!=="undefined"?evidenceWriteFailures.filter(function(w){' +
-    '    return !__isoArtifactMsgs.has(String(w&&w.message||""));' +
+    '    return !__isoArtifactRecords.has(__isoNormEntry(w));' +
     '  }):null),' +
     '  knownVersion:alexGAccountKnownVersion,' +
     '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
