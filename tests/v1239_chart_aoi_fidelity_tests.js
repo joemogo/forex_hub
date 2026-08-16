@@ -439,6 +439,90 @@ async function runChartAoiFidelityFixtures(g){
       lines.some(function(o){return Math.abs(o.price-1.22000)<1e-9;}),
       'prices='+lines.map(function(o){return o.price;}).join(','));
 
+    // ── 🔴 §18.32: the CONTENT of fetchCandlesAroundWindow had zero coverage ──────────────────
+    // A reachability control (returning [] instead of the array) KILLS CAF-WIRE.0/.1, proving the
+    // function runs and its result is consumed. A constant-payload control -- every OHLC value
+    // replaced by 9.99 -- SURVIVED the whole gate. So the array identity was checked and not one
+    // price in it was ever read. Three real mutations rode on that: dropping the still-forming
+    // filter, widening the paging step so bars are silently skipped, and turning the
+    // Math.min(toMs, Date.now()) cap into Math.max.
+    // Select the CANDLE series by SHAPE, not by position: the chart also carries AOI/overlay LINE
+    // series whose data is {time,value}, and taking "the last series with data" picked one of those.
+    const candleSeriesRec=(g.chartRec.series||[]).filter(function(x){
+      return x.data&&x.data.length&&x.data[0]&&x.data[0].open!==undefined;
+    });
+    const drawnData=candleSeriesRec.length?candleSeriesRec[candleSeriesRec.length-1].data:[];
+    assert('CAF-WIRE.3','CONTENT: the candles DRAWN on the chart carry the router\'s real OHLC values, not merely an array of the right shape -- a constant payload at the fetch survived the entire gate because no fixture read a single price out of it',
+      drawnData.length>0 && drawnData.every(function(c){return c.open!==9.99&&c.high!==9.99;}) &&
+      drawnData.some(function(c){return Math.abs(c.close-1.20000)<0.05;}),
+      'n='+drawnData.length+' first='+JSON.stringify(drawnData[0]||null));
+
+    // 🔴 §18.32: the STILL-FORMING filter. fetchCandlesAroundWindow filters on c.complete; without
+    // it a bar that has not closed yet enters currentChartCandles and the drawn series, so the
+    // operator reads a high/low that can still move as if it were settled -- and drawTradeOverlay's
+    // shading spans it. This is the same class ADR-011 exists to prevent on every other data path.
+    {
+      // NOT resetChartRec(): that clears the RECORD of the series objects, while setData writes to
+      // the series object itself -- so the data would land somewhere the recorder no longer tracks
+      // and the fixture would read zero drawn candles. A fresh loadChart re-creates and re-records
+      // the series instead.
+      baseReset();
+      g.setFetchRouter(function(url,c){
+        if(!c) return null;
+        if(c.windowed) return g.oandaCandlesWithForming(dullH1(40,T0+400*DAY));
+        if(c.granularity==='H1'&&c.count===500) return g.oandaCandles(dullH1(500,T0+400*DAY));
+        if(c.granularity==='D'&&c.count===100) return g.oandaCandles(dailyAoiCandles(AOI_SPEC_REFERENCE));
+        if(c.granularity==='W'&&c.count===60) return g.oandaCandles(flatWeekly(60));
+        return null;
+      });
+      g.setJournalEntries([WREC]);
+      await g.loadChart();          // creates and records a real chart + candle series
+      await settle();
+      await g.focusChartOnTradeWindow(WREC);
+      await settle();
+      const cs=(g.chartRec.series||[]).filter(function(x){
+        return x.data&&x.data.length&&x.data[0]&&x.data[0].open!==undefined;
+      });
+      const dd=cs.length?cs[cs.length-1].data:[];
+      const served=dullH1(40,T0+400*DAY);
+      assert('CAF-WIRE.4','PRECONDITION: the windowed fetch really was served and drawn, so the exclusion below is measured against a chart that rendered',
+        dd.length>0,'drawn='+dd.length);
+      assert('CAF-WIRE.5','STILL-FORMING EXCLUDED: the last bar of the page is not complete, and it must NOT reach the drawn series -- one fewer candle is drawn than the page contained. A forming bar shows a high and low that can still move, presented as settled',
+        dd.length===served.length-1,
+        'drawn='+dd.length+' served='+served.length+' (expected served-1)');
+    }
+
+    // 🔴 §18.32: the window CAP. `const cappedTo=Math.min(toMs,Date.now());` bounds the walk to the
+    // trade's own window. Turning it into Math.max makes cappedTo "now", so a focus on a trade that
+    // closed months ago pages forward from the trade to the present -- up to 20 requests of 5,000
+    // bars -- to draw a window a few dozen bars wide. Every page is served in full here, so the two
+    // are distinguishable by REQUEST COUNT: bounded stops almost immediately, unbounded runs to the
+    // iteration cap.
+    {
+      baseReset();
+      const fullPage=dullH1(5000,T0+400*DAY);
+      g.setFetchRouter(function(url,c){
+        if(!c) return null;
+        if(c.windowed) return g.oandaCandles(fullPage);
+        if(c.granularity==='H1'&&c.count===500) return g.oandaCandles(dullH1(500,T0+400*DAY));
+        if(c.granularity==='D'&&c.count===100) return g.oandaCandles(dailyAoiCandles(AOI_SPEC_REFERENCE));
+        if(c.granularity==='W'&&c.count===60) return g.oandaCandles(flatWeekly(60));
+        return null;
+      });
+      g.setJournalEntries([WREC]);
+      await g.loadChart();
+      await settle();
+      g.clearFetchLog();
+      await g.focusChartOnTradeWindow(WREC);
+      await settle();
+      const windowed=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.windowed;});
+      assert('CAF-WIRE.6','PRECONDITION: the windowed walk really issued requests on this router, so the bound below is measured against a walk that ran',
+        windowed.length>0,'windowedRequests='+windowed.length);
+      assert('CAF-WIRE.7','WINDOW BOUND: the walk stops at the trade\'s own window, not at "now". Every page here is served FULL, so an unbounded cap runs to the 20-request iteration limit -- paging months of 5,000-bar responses to draw a few dozen bars',
+        windowed.length<=3,
+        'windowedRequests='+windowed.length+' (bounded expects a handful; unbounded runs to 20)');
+    }
+
     // ── 🔴 §18.31 PD-3: focusChartOnTradeWindow had NO post-await freshness guard at all ────────
     // Every sibling post-await drawing path in loadChart carries one; this one carried none, and it
     // both fetched with the live globals and wrote straight into the shared candle series. Clicking
@@ -500,7 +584,15 @@ async function runChartAoiFidelityFixtures(g){
       st11.indexOf('computed on H4')!==-1 && st11.indexOf('not on H1')!==-1,
       st11.replace(/<[^>]*>/g,' ').slice(0,200));
     const tfLog=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.count===500;});
-    assert('CAF-TF.11c','POSITIVE, kills the PRIMARY CANDLE FETCH reading the live globals: the chart\'s own 500-bar request went out on the CAPTURED pair and timeframe -- EUR_USD H1 -- not on whatever the operator switched to mid-load. This is the request whose candles are actually drawn, and no fixture watched it',
+    // §18.32 CORRECTION, and it is a correction to MY OWN CLAIM. This was shipped labelled "kills
+    // the PRIMARY CANDLE FETCH reading the live globals". It does not, and cannot: there is NO
+    // await between the capture at the top of loadChart and that fetch, so its arguments are
+    // evaluated in the synchronous prefix where the captured and live values are equal BY
+    // CONSTRUCTION. No operator click can land there. I had proven that equivalence myself before
+    // writing this fixture and did not go back and relabel it -- exactly the "claim stronger than
+    // the implementation" pattern this milestone keeps finding in other people's work.
+    // Relabelled a COMPANION, like CAF-TF.2. The genuinely post-await reads are covered below.
+    assert('CAF-TF.11c','COMPANION (not independent evidence): the chart\'s own 500-bar request went out on EUR_USD H1. The mutation this once claimed to kill -- pointing that fetch at the live globals -- is an EQUIVALENT MUTANT, because no await separates the capture from it',
       tfLog.length>0 && tfLog.every(function(f){return f.granularity==='H1'&&f.instrument==='EUR_USD';}),
       'requests='+JSON.stringify(tfLog.map(function(f){return f.instrument+'/'+f.granularity;})));
   }
@@ -538,6 +630,57 @@ async function runChartAoiFidelityFixtures(g){
       confP.indexOf('71%')===-1 && confP.indexOf('SHORT')===-1,'confDir='+confP.slice(0,160));
     assert('CAF-PAIR.2','and the instrument the engine SUPPRESSED still renders its not-evaluated state rather than borrowing a confident verdict from the pair the operator moved to',
       stP.indexOf('NOT EVALUATED')!==-1,stP.slice(0,200));
+  }
+  {
+    // ── 🔴 §18.32: the OTHER TWO §18.24 residuals were fixed in code and never watched ──────────
+    // v12.32.0 named three post-await reads of a live global in loadChart and said two of them --
+    // the FALLBACK fetch and the LIVE-TRIGGER call -- were closed. They were fixed, but nothing
+    // observed them: pointing either back at activePair killed 0 of 2,261. Only the AOI leg got a
+    // fixture (CAF-PAIR.4). A regression on either would be silent, and both are the same defect
+    // class as PD-2 and PD-3.
+    //
+    // The fallback fetch runs only when the primary 500-bar request comes back EMPTY, so the
+    // router serves nothing for count=500 and a real series for count=200.
+    baseReset();
+    g.setActivePair('EUR_USD');
+    g.setActiveTf('H1');
+    seedEngineVerdict({timeframe:'H1'});
+    g.setFetchRouter(function(url,c){
+      if(!c) return null;
+      if(c.granularity==='H1'&&c.count===500) return g.oandaCandles([]);      // primary comes back empty
+      if(c.granularity==='H1'&&c.count===200) return g.oandaCandles(dullH1(200,T0+400*DAY));
+      if(c.granularity==='D'&&c.count===100) return g.oandaCandles(dailyAoiCandles(AOI_SPEC_REFERENCE));
+      if(c.granularity==='W'&&c.count===60) return g.oandaCandles(flatWeekly(60));
+      // evaluateLiveTrigger asks for M15; without it the call returns before issuing any request
+      // and the residual-2 assertion would have nothing to observe.
+      if(c.granularity==='M15') return g.oandaCandles(dullH1(60,T0+400*DAY));
+      if(c.windowed) return g.oandaCandles(dullH1(200,T0+400*DAY));
+      return null;
+    });
+    // Monday 2026-06-01 12:00Z. Without this the live-trigger leg silently does nothing from
+    // Thursday to Sunday and CAF-RESID.3/.4 would pass or fail depending on the day of the week.
+    g.freezeClock(Date.UTC(2026,5,1,12,0,0));
+    g.setScanData&&g.setScanData('EUR/USD',{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'A',notes:''});
+    const pendingFb=g.loadChart();
+    g.setActivePair('GBP_USD');        // the operator clicks another pair mid-load
+    await pendingFb;
+    await settle();
+    g.restoreClock();
+    const fb=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.count===200&&f.granularity==='H1';});
+    assert('CAF-RESID.1','PRECONDITION: the FALLBACK fetch actually ran on this router -- the primary came back empty, so the 200-bar request really was issued',
+      fb.length>0,'fallbackRequests='+JSON.stringify(fb.map(function(f){return f.instrument+'/'+f.count;})));
+    assert('CAF-RESID.2','§18.24 residual 1: the FALLBACK fetch uses the CAPTURED pair. Reading the live global here draws the pair the operator moved to while every downstream consumer -- header, verdict, AOI -- still refers to the captured one',
+      fb.length>0 && fb.every(function(f){return f.instrument==='EUR_USD';}),
+      'fallbackRequests='+JSON.stringify(fb.map(function(f){return f.instrument+'/'+f.count;})));
+    // Asserted on the M15 request rather than on pricing: evaluateLiveTrigger asks for M15 first
+    // and returns before pricing on several paths, so pricing is the weaker observation point.
+    // Only evaluateLiveTrigger requests M15 in this scenario, so the instrument is unambiguous.
+    const trig=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.granularity==='M15';});
+    assert('CAF-RESID.3','PRECONDITION: the live-trigger evaluation really ran, so the instrument assertion below is about a request that happened',
+      trig.length>0,'m15Requests='+JSON.stringify(trig.map(function(f){return f.instrument;})));
+    assert('CAF-RESID.4','§18.24 residual 2: evaluateLiveTrigger is called for the CAPTURED pair. Reading the live global here evaluates a DIFFERENT instrument\'s entry trigger and renders its badge on this chart',
+      trig.length>0 && trig.every(function(f){return f.instrument==='EUR_USD';}),
+      'm15Requests='+JSON.stringify(trig.map(function(f){return f.instrument;})));
   }
   {
     // ── 🔴 §18.31 PD-2: the STRUCTURAL AOI was fetched for the LIVE pair ────────────────────────

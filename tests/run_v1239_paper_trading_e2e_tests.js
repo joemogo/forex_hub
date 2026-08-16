@@ -290,6 +290,27 @@ try{
     // an arbitrary meta object -- so a leak sends the EXACT allowlisted message and rides its payload
     // in a field the filter never looked at. An entry is excluded only if its ENTIRE content, minus
     // the timestamp, is one of the known artifact shapes.
+    // §18.32: the exclusion was defeated an EIGHTH time -- by the commit that fixed the seventh.
+    // __isoNormEntry drops the `at` key UNCONDITIONALLY, and `at` was caller-writable, so a leak
+    // simply put its payload there: live JVM balance and open-position counts rode into the ALEX
+    // error log on every JVM save, and both ISO fixtures saw nothing. The positive control -- the
+    // identical payload under a key named `leak` -- killed ISO.2 and ISO.6, so the site was
+    // reachable and observed; only the `at` strip hid it.
+    //
+    // A second, more general vector: JSON.stringify honours a `toJSON` own-property, so a caller
+    // could forge the ENTIRE normalised shape and the message need not be allowlisted at all.
+    //
+    // Both are closed by checking the entry's SHAPE as well as its content: no `toJSON`, and an
+    // `at` that is a real ISO timestamp rather than a payload. Production is hardened too --
+    // recordAlexGEngineError now writes `at` and `message` AFTER the meta merge and refuses
+    // `toJSON` -- but the harness must not depend on that, because the whole point of this filter
+    // is to be robust to code that can call anything.
+    'var __isoEntryShapeOk=function(e){' +
+    '  if(e===null||typeof e!=="object") return true;' +
+    '  if(Object.prototype.hasOwnProperty.call(e,"toJSON")) return false;' +
+    '  if(!Object.prototype.hasOwnProperty.call(e,"at")) return true;' +
+    '  return typeof e.at==="string"&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[.][0-9]{3}Z$/.test(e.at);' +
+    '};' +
     'var __isoNormEntry=function(e){' +
     '  if(e===null||typeof e!=="object") return JSON.stringify({message:String(e)});' +
     '  var o={},ks=Object.keys(e).filter(function(k){return k!=="at";}).sort();' +
@@ -361,13 +382,13 @@ try{
     // that is not listed below, its artifact is simply COMPARED rather than excluded, and the ISO
     // fixtures fail loudly. A missing entry costs a false failure, never a false pass.
     '  engineErrors:alexGEngineErrors.filter(function(e){' +
-    '    return !__isoArtifactEntries.has(__isoNormEntry(e));' +
+    '    return !(__isoArtifactEntries.has(__isoNormEntry(e))&&__isoEntryShapeOk(e));' +
     '  }),' +
     // §18.28 (Sev-1 aggravator): evidenceWriteFailures was compared by NEITHER snapshot and reset by
     // nothing, so a forged record left no residue at all. Compared here, artifact rows excluded on
     // the same exact-string rule.
     '  evidenceWriteFailures:(typeof evidenceWriteFailures!=="undefined"?evidenceWriteFailures.filter(function(w){' +
-    '    return !__isoArtifactRecords.has(__isoNormEntry(w));' +
+    '    return !(__isoArtifactRecords.has(__isoNormEntry(w))&&__isoEntryShapeOk(w));' +
     '  }):null),' +
     '  knownVersion:alexGAccountKnownVersion,' +
     '  blockingError:alexGLedgerBlockingError, integrityWarning:alexGLedgerIntegrityWarning,' +
@@ -465,7 +486,10 @@ try{
     '  healthReportCache:(typeof paperTradingHealthReportCache!=="undefined"?paperTradingHealthReportCache:null),' +
     '  firedAlerts:(typeof firedAlerts!=="undefined"?Array.from(firedAlerts).sort():null),' +
     '  hideTestTrades:(typeof hideTestTradesPaper!=="undefined"?hideTestTradesPaper:null),' +
-    '  lifecycleLogLen:(typeof paperLifecycleLog!=="undefined"?paperLifecycleLog.length:null),' +
+    // §18.32: was `paperLifecycleLog.length`. Comparing a log by LENGTH is the size-preserving
+    // rewrite pattern §18.20 named and §18.27 fixed for storageLoadFailures -- left live on its
+    // neighbour by the same commit. Rewriting every entry while preserving the count was invisible.
+    '  lifecycleLog:(typeof paperLifecycleLog!=="undefined"?paperLifecycleLog:null),' +
         // §18.27 F-6: KEYS only left the register's CONTENTS free -- rewriting every entry's message to
     // "ALL CLEAR" survived the gate. That is the same size-preserving rewrite §18.20 named for the
     // decision sets and fixed there, still live on the register carrying the INC-001 message.

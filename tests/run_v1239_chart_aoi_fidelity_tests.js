@@ -161,6 +161,10 @@ globalThis.fetch=async function(url){
   // why deleting either overlay call site killed nothing.
   const wm=u.match(/instruments\/([^/]+)\/candles\?granularity=([A-Za-z0-9]+)&price=M&count=(\d+)&from=([^&]+)/);
   if(cm) fetchLog.push({kind:'candles',instrument:cm[1],count:parseInt(cm[2],10),granularity:cm[3],paged:/&to=/.test(u)});
+  // §18.32: the WINDOWED shape (granularity&price=M&count&from) was matched for routing but never
+  // RECORDED, so fetchCandlesAroundWindow's paging was invisible to any fixture reading the log.
+  // A fixture asserting on those requests saw an empty list, where `every` is vacuously true.
+  if(!cm&&wm) fetchLog.push({kind:'candles',instrument:wm[1],count:parseInt(wm[3],10),granularity:wm[2],windowed:true,from:decodeURIComponent(wm[4])});
   const pm=u.match(/pricing\?instruments=([^&]+)/);
   if(pm) fetchLog.push({kind:'pricing',instrument:pm[1]});
   const ctx = cm?{instrument:cm[1],count:parseInt(cm[2],10),granularity:cm[3],paged:/&to=/.test(u)}
@@ -181,6 +185,26 @@ g.oandaCandles=function(arr){
     return{time:c.t.toISOString(),complete:true,mid:{o:String(c.o),h:String(c.h),l:String(c.l),c:String(c.c)}};
   })};}};
 };
+// §18.32: a page in which the LAST bar is still forming. fetchCandlesAroundWindow filters on
+// c.complete, and removing that filter let a forming bar into the drawn chart series with nothing
+// objecting -- so the fixture needs a way to serve one.
+g.oandaCandlesWithForming=function(arr){
+  return{ok:true,status:200,json:async function(){return{candles:arr.map(function(c,i){
+    return{time:c.t.toISOString(),complete:i<arr.length-1,mid:{o:String(c.o),h:String(c.h),l:String(c.l),c:String(c.c)}};
+  })};}};
+};
+// §18.32: a MONDAY clock. evaluateLiveTrigger's first line is
+// `if(!isPreferredTradingDay()) return ...`, which reads the real clock -- so any fixture driving it
+// through loadChart silently does nothing from Thursday to Sunday and would be green for the wrong
+// reason on those days. Freezing removes the weekday dependence entirely.
+const __RealDate=Date, __realNow=Date.now;
+g.freezeClock=function(ms){
+  Date.now=function(){return ms;};
+  const F=function(){ return arguments.length===0?new __RealDate(ms):new __RealDate(...arguments); };
+  F.now=function(){return ms;}; F.parse=__RealDate.parse; F.UTC=__RealDate.UTC; F.prototype=__RealDate.prototype;
+  globalThis.Date=F;
+};
+g.restoreClock=function(){ globalThis.Date=__RealDate; Date.now=__realNow; };
 g.oandaPrice=function(bid,ask){
   return{ok:true,status:200,json:async function(){return{prices:[{bids:[{price:String(bid)}],asks:[{price:String(ask)}]}]};}};
 };
