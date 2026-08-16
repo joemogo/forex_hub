@@ -290,13 +290,29 @@ try{
     '  lastEvaluatedCloseTime:alexGLastEvaluatedCloseTime,' +
     // decidedCount recorded only .size -- rewriting every key while preserving the count was
     // invisible. The CONTENTS are compared now.
-    '  decidedSetups:Array.from(alexGDecidedSetups).sort(),' +
+    // A Map yields [key,value] pairs -- stringified per entry then sorted, so CONTENTS are
+    // compared and a size-preserving rewrite is still caught.
+    '  decidedSetups:Array.from(alexGDecidedSetups).map(function(e){return JSON.stringify(e);}).sort(),' +
     '  decidedEconomic:(typeof alexGDecidedEconomic!=="undefined"?Array.from(alexGDecidedEconomic).sort():null),' +
     '  signalInFlight:(typeof alexGSignalInFlight!=="undefined"?Array.from(alexGSignalInFlight).sort():null),' +
     // §18.25: the symmetric JVM->ALEX channels, including the two that silence ALEX's own
     // integrity reporting.
-    '  identityDriftReported:(typeof alexGIdentityDriftReported!=="undefined"?alexGIdentityDriftReported:null),' +
-    '  cursorSanityReported:(typeof alexGCursorSanityReported!=="undefined"?alexGCursorSanityReported:null),' +
+    // §18.27: these two are Sets, and JSON.stringify(new Set([...])) is "{}" for EVERY possible
+    // content -- so comparing them RAW compared them against a constant. The commit that added them
+    // named these two specifically as "the two flags that SILENCE ALEX'S OWN INTEGRITY REPORTING";
+    // adding to them, and replacing them wholesale, both survived the entire gate. The hole was the
+    // TYPE, not the reset. Serialised as sorted arrays, like every other Set in these snapshots.
+    '  identityDriftReported:(typeof alexGIdentityDriftReported!=="undefined"&&alexGIdentityDriftReported?Array.from(alexGIdentityDriftReported).sort():null),' +
+    '  cursorSanityReported:(typeof alexGCursorSanityReported!=="undefined"&&alexGCursorSanityReported?Array.from(alexGCursorSanityReported).sort():null),' +
+    // §18.27 F-4: the SIXTEENTH channel, and it moves money. getStructuralAOI returns
+    // structuralAOIInflight[oPair] BEFORE any fetch and BEFORE the ADR-011 completeness gate, so
+    // seeding it with a resolved promise puts a FABRICATED stop and target on a real JVM trade.
+    // Its own cache was added; the in-flight lock for that cache was missed -- the exact sibling of
+    // paperPositionsClosing, which a prior round added for the close path.
+    '  replayState:(typeof alexGReplayState!=="undefined"?alexGReplayState:null),' +
+    '  hideTestTradesAlex:(typeof hideTestTradesAlex!=="undefined"?hideTestTradesAlex:null),' +
+    '  pipelineObservationBuffer:(typeof alexGPipelineObservationBuffer!=="undefined"?alexGPipelineObservationBuffer:null),' +
+    '  liveIntervalArmed:(typeof alexGLiveInterval!=="undefined"?(alexGLiveInterval!=null):null),' +
     '  replayTrades:(typeof alexGReplayTrades!=="undefined"?alexGReplayTrades:null),' +
     '  replayRejected:(typeof alexGReplayRejected!=="undefined"?alexGReplayRejected:null),' +
     '  replayStats:(typeof alexGReplayStats!=="undefined"?alexGReplayStats:null),' +
@@ -347,6 +363,12 @@ try{
     //                       the fxhub_env KEY was compared, so an in-memory flip was invisible.
     '  tradeIdSeq:(typeof paperTradeIdSeq!=="undefined"?paperTradeIdSeq:null),' +
     '  structuralAOICache:(typeof structuralAOICache!=="undefined"?structuralAOICache:null),' +
+    // §18.27 F-4: the in-flight LOCK for that cache -- getStructuralAOI returns
+    // structuralAOIInflight[oPair] BEFORE any fetch and BEFORE the ADR-011 completeness gate, so
+    // a seeded promise puts a FABRICATED stop and target on a real JVM trade. It belongs in the
+    // JVM snapshot beside its cache: an earlier draft put it in the ALEX one, which is the wrong
+    // side entirely -- an ALEX->JVM leak is caught by comparing the JVM stores.
+    '  structuralAOIInflightKeys:(typeof structuralAOIInflight!=="undefined"&&structuralAOIInflight?Object.keys(structuralAOIInflight).sort():null),' +
     '  cfgEnv:(typeof cfg!=="undefined"&&cfg?cfg.env:null),' +
     '  manualReviewApproved:(typeof manualReviewApprovedDecisionTs!=="undefined"?manualReviewApprovedDecisionTs:null),' +
     '  manualReviewDismissed:(typeof manualReviewDismissedUntilTs!=="undefined"?manualReviewDismissedUntilTs:null),' +
@@ -354,7 +376,15 @@ try{
     '  firedAlerts:(typeof firedAlerts!=="undefined"?Array.from(firedAlerts).sort():null),' +
     '  hideTestTrades:(typeof hideTestTradesPaper!=="undefined"?hideTestTradesPaper:null),' +
     '  lifecycleLogLen:(typeof paperLifecycleLog!=="undefined"?paperLifecycleLog.length:null),' +
-        '  storageLoadFailures:(typeof storageLoadFailures!=="undefined"?Object.keys(storageLoadFailures).sort():null),' +
+        // §18.27 F-6: KEYS only left the register's CONTENTS free -- rewriting every entry's message to
+    // "ALL CLEAR" survived the gate. That is the same size-preserving rewrite §18.20 named for the
+    // decision sets and fixed there, still live on the register carrying the INC-001 message.
+    '  storageLoadFailures:(typeof storageLoadFailures!=="undefined"?JSON.stringify(storageLoadFailures):null),' +
+    // §18.27 F-5: cfg.env was compared and the rest of cfg was not -- yet cfg.accountId is in the
+    // URL of every pricing fetch that fills a close, and clearing cfg.key 401s every JVM request.
+    '  cfgAccountId:(typeof cfg!=="undefined"&&cfg?cfg.accountId:null),' +
+    '  cfgKeyPresent:(typeof cfg!=="undefined"&&cfg?!!cfg.key:null),' +
+    '  scanIntervalArmed:(typeof scanInterval!=="undefined"?(scanInterval!=null):null),' +
     '  positionsClosing:(typeof paperPositionsClosing!=="undefined"?Array.from(paperPositionsClosing).sort():null),' +
     '  storage:localStorage.__keys().filter(function(k){return k.indexOf("fxhub_alex")!==0;}).sort()' +
     '           .map(function(k){return k+"="+localStorage.getItem(k);})' +
@@ -378,7 +408,13 @@ try{
     // that CLEARS them changes nothing and is invisible. Seeding gives the snapshot something to
     // lose -- the same repair the JVM side needed for the open position and the INC-001 register.
     'g.seedIsolationScratch=function(){' +
-    '  try{alexGDecidedSetups=new Set(["AGS|ISO-SEED-1","AGS|ISO-SEED-2"]);}catch(e){}' +
+    // §18.27 F-7: alexGDecidedSetups is a production MAP, not a Set. Seeding it as a Set made
+    // `.set(...)` throw inside the bookkeeping try/catch that "must never break a trading
+    // decision" -- so ALEX's duplicate-decision bookkeeping was silently INERT for the rest of
+    // the suite. A test helper that substitutes the TYPE disables the guard the suite exists to
+    // observe. Latent rather than a live false green -- no fixture depended on it either way --
+    // but it is exactly the class of harness defect this milestone keeps finding.
+    '  try{alexGDecidedSetups=new Map([["AGS|ISO-SEED-1",{seeded:1}],["AGS|ISO-SEED-2",{seeded:2}]]);}catch(e){}' +
     '  try{alexGZoneState={"EUR_USD":{seeded:true}};}catch(e){}' +
     '};' +
     'g.resetIsolationScratch=function(){' +
@@ -386,14 +422,25 @@ try{
     '  try{alexGCursorSanityReported=new Set();}catch(e){}' +
     '  try{alexGReplayTrades=[];alexGReplayRejected=[];alexGReplayStats=null;}catch(e){}' +
     '  try{evidenceUnexportedCount=0;evidenceStorageBanner=null;}catch(e){}' +
-    '  try{alexGZoneState={};alexGDecidedSetups=new Set();}catch(e){}' +
+    '  try{alexGZoneState={};alexGDecidedSetups=new Map();}catch(e){}' +
     '  try{structuralAOICache={};}catch(e){}' +
     '  try{firedAlerts=new Set();}catch(e){}' +
     '  try{hideTestTradesPaper=false;}catch(e){}' +
     '  try{paperLifecycleLog=[];}catch(e){}' +
     '  try{manualReviewApprovedDecisionTs={};manualReviewDismissedUntilTs={};}catch(e){}' +
     '  try{paperTradingHealthReportCache=null;}catch(e){}' +
-    '  try{cfg={key:"",accountId:"",env:"practice"};}catch(e){}' +
+    // §18.27: a NON-EMPTY key and account id, so clearing either is observable. Comparing !!cfg.key
+    // against a key that is already empty is the "nothing to lose" defect once more.
+    '  try{cfg={key:"ISO-FIXTURE-KEY",accountId:"ISO-FIXTURE-ACCT",env:"practice"};}catch(e){}' +
+    // §18.27: EVERY field the snapshots compare must be reset here. alexGReplayState and
+    // hideTestTradesAlex were added to the snapshot and NOT to this reset, so they were already
+    // polluted by an earlier block and their leaks stayed invisible -- the third time in this
+    // milestone that a field was compared without being reset. Adding a field to a snapshot and
+    // adding it here are one change, not two.
+    '  try{alexGReplayState={running:false,cancelRequested:false,lastResult:null,lastStats:null,tradeIndex:{}};}catch(e){}' +
+    '  try{hideTestTradesAlex=false;}catch(e){}' +
+    '  try{alexGPipelineObservationBuffer=[];}catch(e){}' +
+    '  try{structuralAOIInflight={};}catch(e){}' +
     '};' +
     'g.seedStorageLoadFailure=function(k,m){storageLoadFailures[k]={message:m,at:"2026-01-01T00:00:00.000Z"};};' +
     'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +

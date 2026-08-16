@@ -304,7 +304,13 @@ async function runChartAoiFidelityFixtures(g){
     // fail; it takes reverting the guard AND changing the wording together. It is a belt-and-braces
     // companion to CAF-TF.1, kept for failure localisation and counted as one piece of evidence
     // with it, not two.
-    assert('CAF-TF.2 (COMPANION to TF.1, not independent evidence): and it does not borrow the recorded timeframe\'s wording either -- an unattributable verdict is simply not attributed',
+    // 🔴 §18.27: MY OWN §18.26 RELABEL BROKE THIS. Merging the id and the description into one
+    // string turned a 4-arg call into a 3-arg one, so `cond` received st.slice(0,200) -- a string
+    // CAF-TF.0 guarantees is non-empty -- and the real check landed in the description slot. Proven
+    // dead both ways: replacing the check with `false` left the suite 51/51. The FOURTEENTH fixture
+    // of this milestone that cannot fail, and the only one CREATED by the commit under review.
+    // Restored to the 4-arg form the suite's assert actually takes.
+    assert('CAF-TF.2','COMPANION to TF.1, not independent evidence: it does not borrow the recorded timeframe\'s wording either -- an unattributable verdict is simply not attributed',
       st.indexOf('scanner’s own M15 verdict')===-1, st.slice(0,200));
   }
   {

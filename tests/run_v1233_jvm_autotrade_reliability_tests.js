@@ -1291,6 +1291,41 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __exAt.length===1&&__exAt[0].autoResult==="Win"&&__exAtRec.result==="Win"&&\n' +
   '    __exAtRec.closeReason==="TAKE_PROFIT",\n' +
   '    "live 1.10600 === target 1.10600 -> "+JSON.stringify(__exAt)+" record="+__exAtRec.result+"/"+__exAtRec.closeReason);\n' +
+  // §18.27: JVMEXIT-10 closed ONE of the FOUR exit boundaries -- the buy target. Independent
+  //   verification showed the other three each survived the whole gate, and two of them are the
+  //   STOP side: a price that touches the stop to the pip does not stop out and the position runs
+  //   on past its stop with no bound. That is strictly worse than the target case the first
+  //   fixture was written for. All four quadrants are pinned here.
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-BUYSTOP","buy",1.10000,1.09800,1.10600);\n' +
+  '  pairData["EUR_USD"]={price:1.09800};\n' +           // EXACTLY the stop
+  '  g.setBidAsk("1.09800","1.09830");\n' +
+  '  const __exBS=await jvmExitSweep();\n' +
+  '  const __exBSRec=jvmClosedRec("JVMEXIT-BUYSTOP");\n' +
+  '  g.record("JVMEXIT-13","a LONG whose live price is EXACTLY at its stop stops out -- the comparison is inclusive, so a position that touches its stop to the pip is not left running on past it with no bound",\n' +
+  '    __exBS.length===1&&__exBS[0].autoResult==="Loss"&&__exBSRec.result==="Loss"&&\n' +
+  '    __exBSRec.closeReason==="STOP_LOSS",\n' +
+  '    "live 1.09800 === stop 1.09800 -> "+JSON.stringify(__exBS)+" record="+__exBSRec.result+"/"+__exBSRec.closeReason);\n' +
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-SELLTGT","sell",1.30000,1.31000,1.28000);\n' +
+  '  pairData["EUR_USD"]={price:1.28000};\n' +           // EXACTLY the short target
+  '  g.setBidAsk("1.28000","1.28030");\n' +
+  '  const __exST=await jvmExitSweep();\n' +
+  '  const __exSTRec=jvmClosedRec("JVMEXIT-SELLTGT");\n' +
+  '  g.record("JVMEXIT-14","a SHORT whose live price is EXACTLY at its target takes profit -- the inclusive comparison holds on the sell side too, not only the buy side JVMEXIT-10 pins",\n' +
+  '    __exST.length===1&&__exST[0].autoResult==="Win"&&__exSTRec.result==="Win"&&\n' +
+  '    __exSTRec.closeReason==="TAKE_PROFIT",\n' +
+  '    "live 1.28000 === short target 1.28000 -> "+JSON.stringify(__exST)+" record="+__exSTRec.result+"/"+__exSTRec.closeReason);\n' +
+  '  jvmFreshAccount();\n' +
+  '  jvmSeedPosition("JVMEXIT-SELLSTOP","sell",1.30000,1.31000,1.28000);\n' +
+  '  pairData["EUR_USD"]={price:1.31000};\n' +           // EXACTLY the short stop
+  '  g.setBidAsk("1.31000","1.31030");\n' +
+  '  const __exSS=await jvmExitSweep();\n' +
+  '  const __exSSRec=jvmClosedRec("JVMEXIT-SELLSTOP");\n' +
+  '  g.record("JVMEXIT-15","a SHORT whose live price is EXACTLY at its stop stops out -- the fourth and last exit boundary, and the second of the two RISK-LIMITING ones that had no coverage at all",\n' +
+  '    __exSS.length===1&&__exSS[0].autoResult==="Loss"&&__exSSRec.result==="Loss"&&\n' +
+  '    __exSSRec.closeReason==="STOP_LOSS",\n' +
+  '    "live 1.31000 === short stop 1.31000 -> "+JSON.stringify(__exSS)+" record="+__exSSRec.result+"/"+__exSSRec.closeReason);\n' +
   // (b) The pip value is FIXED AT ENTRY, never re-derived at close. Seeded deliberately at 25 --
   //     a value pipValuePerLot would never produce for this pair -- so a recomputation at close
   //     yields different money and this literal cannot be satisfied by both formulas.
