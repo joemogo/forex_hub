@@ -217,6 +217,9 @@ try{
     // whole entry/stop/target cell block with a literal and the full gate stayed green -- it had no
     // fixture of any kind, while its JVM mirror had just been covered by PTE2E-UNREAL.1-6.
     'g.renderAlexGLiveOpenTable=renderAlexGLiveOpenTable;' +
+    // §18.33: the CLOSED table -- the immediate sibling of the open one, carrying the same two
+    // defects the open table was fixed for, plus an UNGUARDED exitPrice that throws the whole table.
+    'g.renderAlexGLiveClosedTable=renderAlexGLiveClosedTable;' +
     'g.setHideTestTradesAlex=function(v){hideTestTradesAlex=!!v;};' +
     'g.elHtml=function(id){ var e=document.getElementById(id); return e?String(e.innerHTML||""):""; };' +
     'g.forceBalance=function(v){ paperAccount.balance=v; };' +

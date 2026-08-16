@@ -659,14 +659,20 @@ async function runChartAoiFidelityFixtures(g){
     });
     // Monday 2026-06-01 12:00Z. Without this the live-trigger leg silently does nothing from
     // Thursday to Sunday and CAF-RESID.3/.4 would pass or fail depending on the day of the week.
+    // §18.33: the freeze/restore pair had NO try/finally. Independent verification showed that
+    // making restoreClock a no-op survives the whole gate -- the frozen Monday simply leaks into
+    // every fixture after this block and nothing notices. Harmless today; it silently poisons the
+    // next fixture anyone adds below. The restore now runs even if an assertion throws.
     g.freezeClock(Date.UTC(2026,5,1,12,0,0));
-    g.setScanData&&g.setScanData('EUR/USD',{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'A',notes:''});
-    const pendingFb=g.loadChart();
-    g.setActivePair('GBP_USD');        // the operator clicks another pair mid-load
-    await pendingFb;
-    await settle();
-    g.restoreClock();
-    const fb=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.count===200&&f.granularity==='H1';});
+    let fb,priced;
+    try{
+      g.setScanData&&g.setScanData('EUR/USD',{weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'A',notes:''});
+      const pendingFb=g.loadChart();
+      g.setActivePair('GBP_USD');        // the operator clicks another pair mid-load
+      await pendingFb;
+      await settle();
+    } finally { g.restoreClock(); }
+    fb=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.count===200&&f.granularity==='H1';});
     assert('CAF-RESID.1','PRECONDITION: the FALLBACK fetch actually ran on this router -- the primary came back empty, so the 200-bar request really was issued',
       fb.length>0,'fallbackRequests='+JSON.stringify(fb.map(function(f){return f.instrument+'/'+f.count;})));
     assert('CAF-RESID.2','§18.24 residual 1: the FALLBACK fetch uses the CAPTURED pair. Reading the live global here draws the pair the operator moved to while every downstream consumer -- header, verdict, AOI -- still refers to the captured one',

@@ -480,6 +480,70 @@ async function runV1239PaperTradingE2EFixtures(g){
     assert('PTE2E-ALEXOPEN.9 (LEGACY RECORD): a position with null excursion fields still renders the whole table -- it must not throw out of the row map and blank every open ALEX trade',
       threw===null && legacyHtml.indexOf('1.30000')!==-1 && legacyHtml.indexOf('No open Alex live positions')===-1,
       'threw='+String(threw)+' rowPresent='+(legacyHtml.indexOf('1.30000')!==-1));
+    // §18.33: PARITY on the JVM side. Both gaps were left there when the ALEX table was fixed.
+    jvmClean();
+    g.setPricing('reject');
+    g.setPaperAccount({balance:10000,openPositions:[{
+      id:990002,pair:'USD/JPY',oPair:'USD_JPY',dir:'buy',
+      entry:150.123,stop:149.123,target:152.123,ratio:2,riskAmount:100,lots:0.10,
+      pipValueAtEntry:10,openedAt:'2026-08-10T14:00:00.000Z',source:'manual'
+    }],closedPositions:[]});
+    g.setPairData('USD_JPY',150.623);
+    g.renderPaper();
+    const jpyHtml=g.elHtml('paper-open');
+    assert('PTE2E-UNREAL.7 (JVM PARITY, JPY precision): the JVM open table renders a JPY live price at 3 decimals, as the ALEX table now does and as every other price surface in the application does',
+      jpyHtml.indexOf('150.623')!==-1 && jpyHtml.indexOf('150.62300')===-1,
+      'has3dp='+(jpyHtml.indexOf('150.623')!==-1)+' has5dp='+(jpyHtml.indexOf('150.62300')!==-1));
+    jvmClean();
+    g.setPricing('reject');
+    g.setPaperAccount({balance:10000,openPositions:[{
+      id:990003,pair:'GBP/USD',oPair:'GBP_USD',dir:'buy',
+      entry:1.3000,stop:1.2900,target:1.3200,ratio:2,riskAmount:100,lots:0.10,
+      pipValueAtEntry:NaN,openedAt:'2026-08-10T14:00:00.000Z',source:'manual'
+    }],closedPositions:[]});
+    g.setPairData('GBP_USD',1.3050);
+    g.renderPaper();
+    const nanHtml=g.elHtml('paper-open');
+    assert('PTE2E-UNREAL.8 (JVM PARITY, NaN guard): a NaN pip value renders a dash on the JVM table too -- the old `pipVal!=null` guard let NaN straight through, because NaN is neither null nor usable',
+      nanHtml.indexOf('NaN')===-1 && nanHtml.indexOf('GBP/USD')!==-1 && nanHtml.indexOf('No open paper positions')===-1,
+      'containsNaN='+(nanHtml.indexOf('NaN')!==-1)+' rowPresent='+(nanHtml.indexOf('GBP/USD')!==-1));
+    jvmClean(); alexClean();
+  }
+
+  // ── 🔴 §18.33: the ALEX CLOSED table, the sibling left behind by the v12.36.4 fix ──────────
+  {
+    function alexClosedPos(over){
+      return Object.assign({
+        tradeId:'ALEXCLOSED-1',pair:'USD_JPY',timeframe:'H1',setupLabel:'fixture',direction:'buy',
+        entry:150.123,exitPrice:151.123,stop:149.123,target:152.123,
+        result:'Win',resultR:2,pnl:200,positionSize:0.10,pipValue:10,riskAmount:100,
+        openedAt:'2026-08-10T12:00:00.000Z',closedAt:'2026-08-10T14:00:00.000Z',
+        maePips:0,mfePips:0,status:'closed'
+      },over||{});
+    }
+    alexClean();
+    g.setHideTestTradesAlex(false);
+    g.setAlexGAccount({balance:10200,openPositions:[],closedPositions:[alexClosedPos()],journal:[]});
+    g.renderAlexGLiveClosedTable();
+    const html=g.elHtml('alexgLiveClosedTable');
+    assert('PTE2E-ALEXCLOSED.0 (PRECONDITION): the closed-trades table rendered this record, so the assertions below read a real row',
+      html.indexOf('USD_JPY')!==-1 && html.length>200,'len='+html.length);
+    assert('PTE2E-ALEXCLOSED.1 (JPY PRECISION): a closed JPY trade shows its entry and EXIT at 3 decimals, not 5 -- the exit price is what the operator reconciles against their broker',
+      html.indexOf('150.123')!==-1 && html.indexOf('151.123')!==-1
+        && html.indexOf('150.12300')===-1 && html.indexOf('151.12300')===-1,
+      'entry3dp='+(html.indexOf('150.123')!==-1)+' exit3dp='+(html.indexOf('151.123')!==-1)+
+      ' entry5dp='+(html.indexOf('150.12300')!==-1));
+    // A closed record with no exit price threw out of the row map, so the ENTIRE closed-trades
+    // history rendered nothing -- the same shape as the open table's maePips defect.
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[],
+      closedPositions:[alexClosedPos({tradeId:'ALEXCLOSED-2',pair:'GBP_USD',exitPrice:null})],journal:[]});
+    let closedThrew=null;
+    try{ g.renderAlexGLiveClosedTable(); }catch(e){ closedThrew=(e&&e.message)?e.message:String(e); }
+    const nullHtml=g.elHtml('alexgLiveClosedTable');
+    assert('PTE2E-ALEXCLOSED.2 (MISSING EXIT PRICE): a closed record with no exit price still renders the whole table -- it must not throw out of the row map and erase every closed ALEX trade',
+      closedThrew===null && nullHtml.indexOf('GBP_USD')!==-1,
+      'threw='+String(closedThrew)+' rowPresent='+(nullHtml.indexOf('GBP_USD')!==-1));
     jvmClean(); alexClean();
   }
 
@@ -990,7 +1054,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===90, 'recorded='+results.length+' expected=90 (this fixture is the 91st)');
+    results.length===95, 'recorded='+results.length+' expected=95 (this fixture is the 96th)');
 
   return results;
 }
