@@ -210,6 +210,63 @@ function runV1237DetectionControlFixtures(g){
     return{ask:(aoi.resistance+ratio*stop)/(1+ratio),support:aoi.support,resistance:aoi.resistance,stop:stop};
   }
 
+  // ── 🔴 §18.31: the SHORT side of the entry trigger had NO fixture anywhere in the repository ──
+  // RR-1/RR-2 above exercise only the BUY leg. Independent verification proved the consequence:
+  // changing the BUY stop buffer from pip*7 to pip*6 kills RR-1/RR-2, while the identical change
+  // on the SELL leg killed ZERO of 2,222 fixtures. One quadrant of two, on the arithmetic that
+  // sets the actual stop price of a live short.
+  //
+  // A falling series with a bearish engulfing reversal at the high, so detectSignals reports a
+  // SHORT; the bid is then solved so the frozen formula lands exactly on the ratio wanted.
+  function fallingFiller(n,start,step){
+    const bars=[];
+    for(let k=0;k<n;k++){ const b=start-k*step; bars.push(bar(b,b+0.00010,b-0.00010,b-0.00005)); }
+    return bars;
+  }
+  function bearReversalM15(){
+    const bars=fallingFiller(57,1.10200,0.00003);
+    bars.push(bar(1.10035,1.10045,1.10010,1.10030));   // prev2
+    bars.push(bar(1.10005,1.10028,1.10002,1.10020));   // prev : bullish, inside
+    bars.push(bar(1.10030,1.10130,1.09990,1.10000));   // last : engulfs it, new LOW, long upper wick
+    return bars;
+  }
+  // Mirror of askForRatio. Short: stop = resistance + 7 pips, target = support, entry = bid.
+  //   ratio = (bid - support) / (stop - bid)  =>  bid = (support + ratio*stop) / (1 + ratio)
+  function bidForRatio(ratio){
+    const aoi=g.findAOIs(g.structuralCandles(120));
+    const stop=aoi.resistance+g.pipSize('EUR_USD')*7;
+    return{bid:(aoi.support+ratio*stop)/(1+ratio),support:aoi.support,resistance:aoi.resistance,stop:stop};
+  }
+
+  await t('RR-SHORT.1 the SELL leg fires, and its stop sits exactly 7 pips ABOVE the resistance AOI',async function(){
+    g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
+    g.setM15Bars(bearReversalM15());
+    g.resetScanData(); g.setScanData('EUR/USD',BEARISH_TABLE);
+    const s=bidForRatio(2.00);
+    g.setBidAsk(s.bid,s.bid+0.0002);
+    const v=await g.evaluateLiveTrigger('EUR_USD');
+    eq(v.fires,true,'the short must actually fire, or nothing below is being observed: '+JSON.stringify(v));
+    eq(v.dir,'sell','and it must be the SELL leg, not the buy one: '+JSON.stringify(v));
+    near(v.stop,s.resistance+g.pipSize('EUR_USD')*7,1e-9,
+      'the short stop is the resistance AOI plus exactly 7 pips of buffer; a 6-pip buffer moves the real stop of a live short');
+    return 'resistance='+s.resistance.toFixed(5)+' stop='+v.stop.toFixed(5)+' ratio='+v.ratio.toFixed(4);
+  });
+
+  await t('RR-SHORT.2 the SELL leg refuses just UNDER the 1.99 minimum, one half-pip from RR-SHORT.1',async function(){
+    g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
+    g.setM15Bars(bearReversalM15());
+    g.resetScanData(); g.setScanData('EUR/USD',BEARISH_TABLE);
+    const s=bidForRatio(1.98);
+    g.setBidAsk(s.bid,s.bid+0.0002);
+    const v=await g.evaluateLiveTrigger('EUR_USD');
+    eq(v.fires,false,'a short ratio below the minimum must be refused');
+    eq(v.reason,'R:R only 1.98:1','and the reason must name R:R and the ratio it computed on the SHORT side');
+    const over=bidForRatio(2.00);
+    ok(Math.abs(over.bid-s.bid)<0.0001,
+      'the accepted and refused shorts differ by less than one pip of live fill: '+over.bid.toFixed(5)+' vs '+s.bid.toFixed(5));
+    return 'bid='+s.bid.toFixed(5)+' -> "'+v.reason+'" REFUSED';
+  });
+
   await t('RR-2 a setup just OVER the 1.99 minimum is accepted, and the strategy states the ratio it accepted',async function(){
     g.setCfg(); g.resetPairData(); g.resetStructuralAOICache();
     g.setM15Bars(reversalM15());

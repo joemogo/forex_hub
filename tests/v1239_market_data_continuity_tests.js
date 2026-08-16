@@ -592,6 +592,24 @@ function runMarketDataContinuityFixtures(g){
     return 'duplicate detector genuinely fires, and totalRaw counts it';
   });
 
+  // ── §18.31 PD-4, DISCLOSED RESIDUAL: the auto-scan catch is now REPORTING but is NOT covered ──
+  // runAutoTopDownScan's per-pair handler ended in a bare `catch(e){}`, and its bucket is a
+  // TRADE-ELIGIBILITY gate -- checkAutoTrades opens real positions only for pairs marked
+  // 'Active watch', so a pair whose scan threw kept a stale eligibility mark and went on
+  // authorising live paper entries with nothing recorded anywhere. The production fix (record the
+  // failure and stamp the pair's row) is shipped and is deliberately reporting-only: clearing the
+  // bucket would change which trades the strategy takes, which is an owner decision.
+  //
+  // A fixture for it was attempted and WITHDRAWN rather than shipped green for the wrong reason.
+  // Two false starts are recorded because each is a trap worth knowing: (1) an HTTP error page is
+  // HANDLED -- fetchCandles has its own try/catch, returns null, and the ADR-011 gate takes its own
+  // explicit branch, so the catch is never entered; (2) injecting the fault at getScore makes it
+  // escape the function entirely, because renderScan calls getScore after the Promise.all and
+  // outside the per-pair try. Injecting at calcBiasFromCandles is correct, but in this offline
+  // harness runAutoTopDownScan's own completeness gate classifies W, D and H4 all UNAVAILABLE and
+  // returns before the handler body runs at all -- so the catch cannot be reached from here yet.
+  // Named as an open coverage gap rather than papered over.
+
   // ═══════════════════════════════════════════════════════════════════════════════════════════
   // 🔴 AOISTRUCT — the Daily/Weekly levels that become a REAL stop and a REAL target
   // ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -627,6 +645,18 @@ function runMarketDataContinuityFixtures(g){
     g.route(function(req){
       if(req.granularity==='D') return g.okPage(aoiSeries(AOI_D_START,DAY_MS,100,1.2300,1.2000,1.2600));
       if(req.granularity==='W') return g.okPage(aoiSeries(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1300,1.1000,1.1600));
+      return g.emptyPage();
+    });
+  }
+  // runAutoTopDownScan needs W, D AND H4 all COMPLETE, or its own ADR-011 gate returns before the
+  // bias calculation is ever reached -- so a fixture routing only D and W exercises the early
+  // return, not the handler. AUTOSCAN.1's first draft did exactly that and reported no failure
+  // because nothing had run.
+  function routeTopDown(){
+    g.route(function(req){
+      if(req.granularity==='D') return g.okPage(aoiSeries(AOI_D_START,DAY_MS,100,1.2300,1.2000,1.2600));
+      if(req.granularity==='W') return g.okPage(aoiSeries(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1300,1.1000,1.1600));
+      if(req.granularity==='H4') return g.okPage(aoiSeries(AOI_D_START,4*3600000,100,1.2300,1.2000,1.2600));
       return g.emptyPage();
     });
   }

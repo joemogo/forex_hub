@@ -187,6 +187,19 @@ const wrapped = new Function('g',
   'g.setActivePair=function(v){activePair=v;};' +
   'g.getScanData=function(){return scanData;};' +
   'g.setScanData=function(v){scanData=v;};' +
+  // §18.31 PD-4: the auto-scan's per-pair handler ended in a bare catch, and its bucket is a
+  // TRADE-ELIGIBILITY gate -- a stale 'Active watch' kept authorising live paper entries with
+  // nothing recording that the refresh had failed.
+  'g.getPaperEngineErrorMessages=function(){return paperEngineErrors.map(function(e){return String(e&&e.message||e);});};' +
+  'g.clearPaperEngineErrors=function(){paperEngineErrors=[];};' +
+  // The handler's catch cannot be reached through the fetch seam: fetchCandles has its own
+  // try/catch and returns null, and a null response is then taken by the completeness gate's own
+  // explicit branch. The catch exists for a fault in the handler's OWN logic, so the fault is
+  // injected there -- the same temporary-reassignment pattern the v12.3.3 suite uses for
+  // fetchBidAsk. Restored immediately; nothing is left stubbed.
+  'g.__origCalcBias=calcBiasFromCandles;' +
+  'g.breakBiasCalc=function(){ calcBiasFromCandles=function(){ throw new Error("scripted bias fault"); }; };' +
+  'g.restoreBiasCalc=function(){ calcBiasFromCandles=g.__origCalcBias; };' +
   'g.initScan=initScan;' +
   'g.loadSaved=loadSaved;' +
   'g.setCfg=function(v){cfg=v;};' +

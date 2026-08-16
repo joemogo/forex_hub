@@ -1122,6 +1122,39 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    "returned="+String(__rvRet)+" closedPositions="+paperAccount.closedPositions.length+" balance="+\n' +
   '    paperAccount.balance+" open="+JSON.stringify(paperAccount.openPositions.map(function(p){return String(p.id);}))+\n' +
   '    " (reusing the pre-await index splices the SIBLING out and books the vanished position anyway)");\n' +
+  // ── §18.31 F-2: the OTHER quadrant of the post-await index re-validation. JVMCLOSE-17/18 above
+  //    remove the CLOSING position mid-await, so idx2 === -1 and the function returns BEFORE the
+  //    splice -- they pin the early return, never the index. JVMCLOSE-18's own failure text says
+  //    'reusing the pre-await index splices the SIBLING out and books the vanished position
+  //    anyway', but independent verification proved that replacing splice(idx2,1) with
+  //    splice(idx,1) kills ZERO of 2,222 fixtures. The quadrant that exercises the index is the
+  //    one where the closing position SURVIVES and something BEFORE it goes away, shifting it.
+  //    Shipped behaviour is correct; nothing proved it.
+  //
+  //    A closes during B's bid/ask await, so [A,B] becomes [B]: B's captured idx was 1, its real
+  //    index is now 0. Under the mutant splice(1,1) removes NOTHING -- B is credited to the
+  //    balance, pushed to closedPositions, journalled closed, and LEFT OPEN to be closed again.
+  '  jvmFreshAccount();\n' +
+  '  const __ixA=openPaperPosition("EUR_USD","buy",1.10000,1.09800,1.10600,"fixture");\n' +
+  '  const __ixB=openPaperPosition("GBP_USD","buy",1.30000,1.29800,1.30600,"fixture");\n' +
+  '  const __ixIdxBefore=paperAccount.openPositions.findIndex(function(x){return x.id===__ixB.id;});\n' +
+  '  const __ixBalBefore=paperAccount.balance;\n' +
+  '  const __ixOrigFBA=fetchBidAsk; let __ixHits=0;\n' +
+  '  fetchBidAsk=async function(p){ const r=await __ixOrigFBA.apply(this,arguments);\n' +
+  '    if(++__ixHits===1){ const k=paperAccount.openPositions.findIndex(function(x){ return x.id===__ixA.id; });\n' +
+  '      if(k>-1) paperAccount.openPositions.splice(k,1); }\n' +
+  '    return r; };\n' +
+  '  g.setBidAsk("1.30500","1.30530");\n' +
+  '  const __ixRet=await closePaperPosition(__ixB.id,true);\n' +
+  '  fetchBidAsk=__ixOrigFBA;\n' +
+  '  g.record("JVMCLOSE-18b","PRECONDITION: the position being closed really did SHIFT during the await -- it was at index 1 and a position ahead of it was removed, so the pre-await index is now stale by one",\n' +
+  '    __ixHits===1&&__ixIdxBefore===1&&!jvmStillOpen(__ixA.id),\n' +
+  '    "fetchBidAsk calls="+__ixHits+" indexBefore="+__ixIdxBefore+" siblingRemovedMidAwait="+String(!jvmStillOpen(__ixA.id)));\n' +
+  '  g.record("JVMCLOSE-18c","the close uses the RE-VALIDATED index: the closed position is removed from openPositions exactly once, booked exactly once, and is NOT left open to be closed again",\n' +
+  '    !jvmStillOpen(__ixB.id)&&paperAccount.openPositions.length===0&&paperAccount.closedPositions.length===1&&\n' +
+  '    String(paperAccount.closedPositions[0].id)===String(__ixB.id)&&paperAccount.balance!==__ixBalBefore,\n' +
+  '    "stillOpen="+String(jvmStillOpen(__ixB.id))+" open="+JSON.stringify(paperAccount.openPositions.map(function(p){return String(p.id);}))+\n' +
+  '    " closed="+paperAccount.closedPositions.length+" balance="+paperAccount.balance+" (reusing the stale pre-await index splices NOTHING, so the trade is credited AND stays open)");\n' +
   // ── the failed-commit ROLLBACK. The commit is made to fail through STORAGE ONLY -- another tab
   //    is simulated by writing a newer fxhub_paper_version straight into the fixture localStorage.
   //    Nothing is stubbed: savePaperAccountGuarded reaches its own real STALE_VERSION branch.
