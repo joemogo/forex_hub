@@ -6,8 +6,15 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "sourceId", "sourceType", "registeredAt", "storageLocationType",
-    "provenanceStatus", "lifecycleStatus", "schemaVersion", "createdAt", "updatedAt"
+    "sourceId",
+    "sourceType",
+    "registeredAt",
+    "storageLocationType",
+    "provenanceStatus",
+    "lifecycleStatus",
+    "schemaVersion",
+    "createdAt",
+    "updatedAt"
   ],
   "properties": {
     "sourceId": {
@@ -18,56 +25,195 @@
     "sourceType": {
       "type": "string",
       "enum": [
-        "transcript", "video", "audio", "article", "book", "note", "strategy_document",
-        "paper_trade", "replay_observation", "live_trade_review", "journal_entry",
-        "market_observation", "owner_observation", "generated_analysis", "other"
+        "transcript",
+        "video",
+        "audio",
+        "article",
+        "book",
+        "note",
+        "strategy_document",
+        "paper_trade",
+        "replay_observation",
+        "screenshot",
+        "live_trade_review",
+        "journal_entry",
+        "market_observation",
+        "owner_observation",
+        "generated_analysis",
+        "other"
       ],
-      "description": "Extensible list. Listing a type here does not imply that type is currently ingestible -- see ADR-008 sec. 17 (Phase 1A implements no ingestion pipeline for any of these)."
+      "description": "Extensible list. Listing a type here does not imply that type is currently ingestible -- see ADR-008 sec. 17 (Phase 1A implements no ingestion pipeline for any of these). 'screenshot' added for operator-supplied image artifacts (MOGO-019 gap 1): Lane A could already preserve the bytes -- repositoryPath + contentHash require nothing textual -- but the enum forced an image to be mistyped as live_trade_review or other. Additive and backward-compatible; no existing record changes meaning."
     },
-    "title": { "type": ["string", "null"], "default": null },
-    "traderId": { "type": ["string", "null"], "pattern": "^[A-Z][A-Z0-9_]*$", "default": null },
-    "strategyFamilyId": { "type": ["string", "null"], "pattern": "^SF\\|", "default": null },
-    "canonicalReference": { "type": ["string", "null"], "default": null },
-    "externalReference": { "type": ["string", "null"], "default": null },
-    "contentHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "default": null },
-    "sourceDate": { "type": ["string", "null"], "format": "date", "default": null },
-    "acquiredAt": { "type": ["string", "null"], "format": "date-time", "default": null },
-    "registeredAt": { "type": "string", "format": "date-time" },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "traderId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "default": null
+    },
+    "strategyFamilyId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^SF\\|",
+      "default": null
+    },
+    "canonicalReference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "externalReference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "contentHash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$",
+      "default": null
+    },
+    "sourceDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date",
+      "default": null
+    },
+    "acquiredAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "default": null
+    },
+    "registeredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
     "storageLocationType": {
       "type": "string",
-      "enum": ["repository", "external"],
+      "enum": [
+        "repository",
+        "external"
+      ],
       "description": "repository: content lives under docs/trader-intelligence/evidence/ in version control. external: original media/large files live outside the repository; only reference/hash/metadata are kept here (hybrid canonical storage policy, ADR-008 sec. 4)."
     },
-    "repositoryPath": { "type": ["string", "null"], "default": null },
-    "externalAssetReference": { "type": ["string", "null"], "default": null },
-    "transcriptReference": { "type": ["string", "null"], "default": null },
-    "language": { "type": ["string", "null"], "default": null },
+    "repositoryPath": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "externalAssetReference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "transcriptReference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "language": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
     "licensingStatus": {
       "type": "string",
-      "enum": ["unknown", "owner_authored", "permitted_third_party", "restricted_third_party", "public_domain"],
+      "enum": [
+        "unknown",
+        "owner_authored",
+        "permitted_third_party",
+        "restricted_third_party",
+        "public_domain"
+      ],
       "default": "unknown"
     },
     "provenanceStatus": {
       "type": "string",
-      "enum": ["unverified", "partially_verified", "verified"]
+      "enum": [
+        "unverified",
+        "partially_verified",
+        "verified"
+      ]
     },
     "lifecycleStatus": {
       "type": "string",
-      "enum": ["registered", "under_review", "active", "superseded", "archived", "rejected"]
+      "enum": [
+        "registered",
+        "under_review",
+        "active",
+        "superseded",
+        "archived",
+        "rejected"
+      ]
     },
-    "metadata": { "type": "object", "additionalProperties": true, "default": {} },
-    "schemaVersion": { "type": "integer", "const": 1 },
-    "createdAt": { "type": "string", "format": "date-time" },
-    "updatedAt": { "type": "string", "format": "date-time" }
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "storageLocationType": { "const": "external" } } },
-      "then": {
-        "required": ["externalAssetReference", "canonicalReference"],
+      "if": {
         "properties": {
-          "externalAssetReference": { "type": "string" },
-          "canonicalReference": { "type": "string" }
+          "storageLocationType": {
+            "const": "external"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "externalAssetReference",
+          "canonicalReference"
+        ],
+        "properties": {
+          "externalAssetReference": {
+            "type": "string"
+          },
+          "canonicalReference": {
+            "type": "string"
+          }
         }
       }
     }

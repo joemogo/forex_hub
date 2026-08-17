@@ -22,7 +22,7 @@ import graph_common as gc  # noqa: E402  (canonical_json_bytes, sha256_hex, cont
 
 SOURCE_TYPES = [
     "transcript", "video", "audio", "article", "book", "note", "strategy_document",
-    "paper_trade", "replay_observation", "live_trade_review", "journal_entry",
+    "paper_trade", "replay_observation", "screenshot", "live_trade_review", "journal_entry",
     "market_observation", "owner_observation", "generated_analysis", "other",
 ]
 STORAGE_LOCATION_TYPES = ["repository", "external"]
@@ -464,6 +464,30 @@ def next_gap_id(gaps_dir, now):
     pattern = re.compile(r"^GAP_%s_(\d{3,})$" % re.escape(date_str))
     seq = _next_seq(gaps_dir, pattern)
     return "GAP|%s|%03d" % (date_str, seq)
+
+
+def observation_id_to_filename(observationId):
+    return observationId.replace("|", "_") + ".json"
+
+
+def next_observation_id(observations_dir, actor, now):
+    """TOBS|<HUMAN|MOGO>|<date>|<seq>.
+
+    The actor is IN the identifier because a trade observation is the one record
+    type that carries both an operator's screenshot of a human trade and MOGO's own
+    decision. Keeping the actor in the id means the two can never be silently
+    conflated when they are compared against each other (MOGO-019 gap 2), and the
+    sequence counters advance independently per actor.
+    """
+    if actor not in ("HUMAN", "MOGO"):
+        raise EvidenceValidationError(
+            "actor %r must be 'HUMAN' or 'MOGO'; a trade observation whose origin is "
+            "unknown cannot be used in a human-vs-MOGO comparison." % (actor,))
+    date_str = now.strftime("%Y%m%d")
+    pattern = re.compile(r"^TOBS_%s_%s_(\d{3,})$"
+                         % (re.escape(actor), re.escape(date_str)))
+    seq = _next_seq(observations_dir, pattern)
+    return "TOBS|%s|%s|%03d" % (actor, date_str, seq)
 
 
 def hypothesis_id_to_filename(hypothesisId):

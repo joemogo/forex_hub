@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mogo.internal/trader-intelligence/evidence/schema/trade-observation.schema.json",
+  "title": "TradeObservation",
+  "description": "A single observed trade, held as structured fields rather than prose. EvidenceItem already carries the CATEGORICAL trade context (marketSymbol, timeframe, session, direction) but has no numeric properties at all, so entry/stop/target/size/pnl had nowhere to live -- the gap MOGO-019 hit when six operator screenshots could not be ingested, and the same gap that leaves MOGO's own decisions absent from the corpus (0 of 416 evidence items are replay_result or paper_trade_result). One record type serves both, because a human's screenshotted trade and a MOGO decision are the same SHAPE; they differ only in actor and provenance. RESEARCH ONLY: a TradeObservation is evidence, never a rule and never an instruction to trade.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observationId",
+    "actor",
+    "sourceId",
+    "instrument",
+    "fieldClassification",
+    "unknowns",
+    "extractedBy",
+    "schemaVersion",
+    "createdAt"
+  ],
+  "properties": {
+    "observationId": {
+      "type": "string",
+      "pattern": "^TOBS\\|",
+      "description": "Format: TOBS|{actor}|{yyyymmdd}|{seq}."
+    },
+    "actor": {
+      "type": "string",
+      "enum": [
+        "HUMAN",
+        "MOGO"
+      ],
+      "description": "Who made this decision. The single field that lets one record type serve both operator-supplied trades and MOGO's own decisions."
+    },
+    "traderId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "For actor=HUMAN, e.g. TJR / ALEX_G."
+    },
+    "strategyId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "For actor=MOGO, e.g. alex_g_sr_v1 / current_strategy."
+    },
+    "sourceId": {
+      "type": "string",
+      "pattern": "^EVSRC\\|",
+      "description": "The EvidenceSource holding the preserved original (screenshot bytes, decision record). Lane A already preserves non-text bytes: repositoryPath + contentHash require nothing textual."
+    },
+    "evidenceItemIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Backing EvidenceItems, typically evidenceType chart_example or trade_example."
+    },
+    "instrument": {
+      "type": "string"
+    },
+    "timeframe": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "direction": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "buy",
+        "sell",
+        null
+      ],
+      "default": null
+    },
+    "entry": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "stop": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "target": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "exitPrice": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "positionSize": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "riskAmount": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "pnl": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "rMultiple": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "accountBalanceBefore": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "accountBalanceAfter": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null
+    },
+    "openedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "closedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "outcome": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "win",
+        "loss",
+        "breakeven",
+        "open",
+        "unknown",
+        null
+      ],
+      "default": null
+    },
+    "sequenceId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "Groups observations that belong to one trade sequence, e.g. a multi-screenshot series."
+    },
+    "decisionTaken": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "entered",
+        "declined",
+        "no_setup",
+        null
+      ],
+      "default": null,
+      "description": "For decision-difference work: a DECLINED or NO_SETUP observation is evidence too, and is the half usually missing."
+    },
+    "declineReason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "fieldClassification": {
+      "type": "object",
+      "description": "Per-field provenance classification. REQUIRED, and it is the point of this record type: a number read off a screenshot is DIRECTLY_OBSERVED, a number the trader said is SOURCE_STATED, a number MOGO computed is INFERRED. Flattening these is how an inference silently becomes a source-stated fact.",
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "DIRECTLY_OBSERVED",
+          "SOURCE_STATED",
+          "INFERRED",
+          "UNKNOWN"
+        ]
+      }
+    },
+    "inferenceReasons": {
+      "type": "object",
+      "description": "Maps each field classified INFERRED to the basis for the inference. Required for every INFERRED field and permitted for no other: an inference that cannot state its basis is not evidence, and must never be stored where a source-stated fact would sit.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "extractedBy": {
+      "type": "string",
+      "description": "What performed the extraction, e.g. 'claude-opus-5 vision (operator-supplied screenshot)' or 'mogo-engine 12.39.1'. Never omit: an extractor is part of provenance."
+    },
+    "extractionCertainty": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "certain",
+        "high",
+        "medium",
+        "low",
+        null
+      ],
+      "default": null
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "REQUIRED and may not be silently empty-by-default. What this observation does NOT establish. Mirrors the rule-candidate convention: a record with nothing unknown is usually a record that stopped looking."
+    },
+    "contradicts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "lane": {
+      "type": "string",
+      "enum": [
+        "RESEARCH"
+      ],
+      "default": "RESEARCH",
+      "description": "Pinned. A TradeObservation never promotes anything and never authorises a trade."
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    }
+  }
+}
