@@ -262,3 +262,40 @@ these two is required to ingest this case.
 **No strategy modification, freeze, backtest or paper activation was performed or is recommended.**
 
 **LIVE-MONEY TRADING REMAINS UNAUTHORIZED.**
+
+---
+
+## Addendum — 2026-08-17 (MOGO-022): two of the three blockers are now closed
+
+When this report was written, case 002 was blocked three ways. Two were structural
+gaps in the corpus itself, and both are now fixed (commit `c3f7f96`):
+
+| Blocker | Then | Now |
+|---|---|---|
+| No image `sourceType` — an EvidenceSource could not declare it was a screenshot | **blocking** | **CLOSED.** `"screenshot"` added to `evidence-source.schema.json` and to `evidence_common.SOURCE_TYPES`, kept in sync by a dedicated test. |
+| No structured record for *an observed trade*, as distinct from *a stated claim* | **blocking** | **CLOSED.** `TradeObservation` (`trade-observation.schema.json`, `scripts/trader_intelligence/trade_observation.py`, 34 tests). One record type for both `actor:HUMAN` and `actor:MOGO`, so a human trade and a MOGO decision compare as decisions rather than as two schemas. |
+| **The six screenshots do not exist anywhere reachable** | **blocking** | **STILL BLOCKING.** Unchanged. |
+
+### What this does and does not change
+
+It does **not** unblock ingestion. The remaining blocker is the one that always
+mattered most: there are no source bytes to preserve or hash. The conclusion in §0
+stands exactly as written — minting `ALEX-IG-2026-CASE-002` from the transcription
+alone would attach a `contentHash` computed over text typed into a prompt to a record
+claiming Instagram screenshots as its source. That is fabricated provenance whether or
+not a schema now exists to hold it. A better-shaped container for an unfounded record
+is not progress.
+
+What it does change is that the path is now clean the moment the images arrive: there
+is somewhere correct to put them, and the extracted values will carry per-field
+classification (`DIRECTLY_OBSERVED` / `SOURCE_STATED` / `INFERRED` / `UNKNOWN`) with
+every unreadable field named explicitly in `unknowns` rather than quietly omitted or
+defaulted.
+
+### What the operator needs to do
+
+Place the six image files anywhere under the repository — `imports/ALEX_IG/raw/` is the
+conventional location — and say so. Nothing else is needed; the transcription already in
+this report can then be checked against the images rather than substituted for them,
+and any value not legible in the image will be recorded as `UNKNOWN` rather than
+back-filled from the transcription.
