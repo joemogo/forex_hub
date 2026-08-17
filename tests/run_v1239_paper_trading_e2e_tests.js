@@ -419,6 +419,17 @@ try{
     // P1: setPaperBalance's rollback on a rejected commit -- its sibling in applyPaperReconciliation
     // is pinned and this one was not.
     'g.setPaperBalance=setPaperBalance;' +
+    // P1 (final sweep): placePaperTrade is the OPERATOR'S manual order-generation path -- the
+    // "Place Paper Trade" button -- and had zero behavioural coverage. Disabling the whole function
+    // killed nothing; its only test references use it as a vehicle to dirty state and then assert
+    // state is unchanged after restore, which passes trivially when it does nothing. It is not in
+    // the protected list either, so drift gave no cover.
+    'g.placePaperTrade=placePaperTrade;' +
+    'g.setRRFields=function(e,s2,t){' +
+    '  document.getElementById("rrEntry").value=String(e);' +
+    '  document.getElementById("rrStop").value=String(s2);' +
+    '  document.getElementById("rrTarget").value=String(t); };' +
+    'g.setActivePair=function(p){ activePair=p; };' +
     'g.setBalanceInput=function(v){ document.getElementById("paperBalanceInput").value=String(v); };' +
     'g.rigStalePaperVersion=function(){ localStorage.setItem("fxhub_paper_version",String(paperAccountKnownVersion+10)); };' +
     'g.getAutoTradingLog=function(){ return autoTrading.log; };' +

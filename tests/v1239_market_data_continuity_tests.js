@@ -777,6 +777,149 @@ function runMarketDataContinuityFixtures(g){
     return 'fail-closed on HTTP error after '+page+' pages';
   });
 
+  // 🔴 P1 (final sweep): the JVM AUTO-TRADE ADMISSION FILTER. checkAutoTrades opens real JVM paper
+  // positions only for pairs whose bucket is 'Active watch', and runAutoTopDownScan is the only
+  // code that computes it. Three independent mutations of that computation each survived the full
+  // gate -- score>=2 relaxed to >=1, the hasValidAOI requirement dropped, and getScore returning 2
+  // for two DISAGREEING timeframes. No killing control existed at the site at all: every fixture
+  // reaching runAutoTopDownScan took the ADR-011 suppression early return, so the success path was
+  // never exercised. The filter deciding which instruments JVM may auto-trade could be widened
+  // arbitrarily and nothing objected.
+  //
+  // A rising series with three touches of one shelf: aligned bias on all three timeframes AND a
+  // real AOI. Ranging/AOI-less variants below are the discriminators.
+  function trendShelf(startMs,durMs,n,base,step,shelf){
+    const out=[];
+    const push=(o,h,l,c)=>out.push({time:new Date(startMs+out.length*durMs).toISOString(),complete:true,
+      mid:{o:String(o),h:String(h),l:String(l),c:String(c)}});
+    for(let i=0;i<n;i++){
+      const b=base+i*step;
+      if(i===8||i===16||i===24) push(b,b+0.0040,shelf,b+0.0010);   // three touches of one shelf
+      else push(b,b+0.0040,b-0.0020,b+0.0010);
+    }
+    return out;
+  }
+  function flatNoShelf(startMs,durMs,n,base){
+    const out=[];
+    for(let i=0;i<n;i++){
+      const jitter=(i%5)*0.00007;                 // never three touches at one level
+      out.push({time:new Date(startMs+i*durMs).toISOString(),complete:true,
+        mid:{o:String(base+jitter),h:String(base+jitter+0.0009),l:String(base+jitter-0.0009),c:String(base+jitter)}});
+    }
+    return out;
+  }
+  // ALIGNED but AOI-LESS: the same rising trend as trendShelf with the three shelf touches removed,
+  // so every low is at a different price and no zone can reach the frozen 3-touch minimum. This is
+  // the discriminator for dropping the hasValidAOI requirement -- a FLAT series is refused on bias
+  // alone and cannot tell the two apart, which is how my first version of AUTOADMIT.2 let that
+  // mutation through.
+  function trendNoShelf(startMs,durMs,n,base,step){
+    const out=[];
+    for(let i=0;i<n;i++){
+      const b=base+i*step;
+      out.push({time:new Date(startMs+i*durMs).toISOString(),complete:true,
+        mid:{o:String(b),h:String(b+0.0040),l:String(b-0.0020),c:String(b+0.0010)}});
+    }
+    return out;
+  }
+  function routeTopDownWith(dSeries,wSeries,hSeries){
+    g.setCfg({key:'FIXTURE-KEY',accountId:'101-001-00000000-001',env:'practice'});
+    g.route(function(req){
+      if(req.granularity==='D') return g.okPage(dSeries);
+      if(req.granularity==='W') return g.okPage(wSeries);
+      if(req.granularity==='H4') return g.okPage(hSeries);
+      return g.emptyPage();
+    });
+  }
+
+  await t('AUTOADMIT.1 (POSITIVE): a 3/3-aligned pair with a real AOI is admitted to Active watch',async function(){
+    g.setScanData({});
+    routeTopDownWith(trendShelf(AOI_D_START,DAY_MS,100,1.2000,0.0012,1.1900),
+                     trendShelf(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1000,0.0030,1.0900),
+                     trendShelf(AOI_D_START,4*3600000,100,1.2000,0.0012,1.1900));
+    await g.runAutoTopDownScan();
+    const row=g.getScanData()['EUR/USD'];
+    ok(row&&row.completenessByTimeframe&&row.completenessByTimeframe.D==='COMPLETE',
+      'PRECONDITION: the scan ran on COMPLETE data rather than taking the ADR-011 suppression early return -- which is how this success path went unexercised: '+JSON.stringify(row&&row.completenessByTimeframe));
+    eq(row.weekly,'Bullish','all three timeframes agree'); eq(row.daily,'Bullish',''); eq(row.fh,'Bullish','');
+    eq(row.bucket,'Active watch','a 3/3-aligned pair with a valid AOI is eligible for JVM auto-entry');
+    eq(row.grade,'A','and is graded A');
+    return 'aligned + AOI -> Active watch / A';
+  });
+
+  await t('AUTOADMIT.2 (NEGATIVE, no AOI): the same aligned trend WITHOUT a shelf is NOT admitted',async function(){
+    // One variable: the shelf is removed, so hasValidAOI is false while the bias is unchanged.
+    // This is the discriminator for the mutation that drops the hasValidAOI requirement.
+    g.setScanData({});
+    routeTopDownWith(trendNoShelf(AOI_D_START,DAY_MS,100,1.2000,0.0012),
+                     trendNoShelf(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1000,0.0030),
+                     trendNoShelf(AOI_D_START,4*3600000,100,1.2000,0.0012));
+    await g.runAutoTopDownScan();
+    const row=g.getScanData()['EUR/USD'];
+    ok(row&&row.completenessByTimeframe&&row.completenessByTimeframe.D==='COMPLETE',
+      'PRECONDITION: this ran on COMPLETE data too, so the refusal is the rule and not a suppressed scan');
+    ok(row.weekly!=='Ranging'&&row.daily!=='Ranging',
+      'PRECONDITION: the bias is still ALIGNED -- this pair is refused on the AOI requirement alone, not on its score: '+row.weekly+'/'+row.daily+'/'+row.fh);
+    ok(row.bucket!=='Active watch',
+      'a pair with no valid AOI must NOT be admitted to JVM auto-entry, however well aligned -- got bucket='+row.bucket+' bias='+row.weekly+'/'+row.daily+'/'+row.fh);
+    return 'no AOI -> '+row.bucket;
+  });
+
+  await t('AUTOADMIT.3 (NEGATIVE, disagreeing timeframes): a pair whose timeframes conflict is NOT admitted',async function(){
+    // EXACTLY TWO directional timeframes, and they DISAGREE: weekly rises, daily falls, H4 is flat.
+    // My first draft had daily and H4 both falling -- two timeframes that AGREE, which the shipped
+    // score>=2 rule correctly admits, so the fixture was asserting a refusal the rule never makes.
+    // Two disagreeing directions is the discriminator for the mutation that returns 2 whenever two
+    // timeframes are directional, regardless of whether they point the same way.
+    g.setScanData({});
+    const falling=function(startMs,durMs,n,base){ return trendShelf(startMs,durMs,n,base,-0.0012,base-0.0100); };
+    routeTopDownWith(falling(AOI_D_START,DAY_MS,100,1.2000),
+                     trendShelf(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1000,0.0030,1.0900),
+                     flatNoShelf(AOI_D_START,4*3600000,100,1.2000));
+    await g.runAutoTopDownScan();
+    const row=g.getScanData()['EUR/USD'];
+    ok(row&&row.completenessByTimeframe&&row.completenessByTimeframe.D==='COMPLETE','PRECONDITION: complete data');
+    ok(row.weekly!==row.daily&&row.weekly!=='Ranging'&&row.daily!=='Ranging',
+      'PRECONDITION: exactly two timeframes are directional and they point OPPOSITE ways -- W '+row.weekly+' vs D '+row.daily+' (H4 '+row.fh+')');
+    ok(row.bucket!=='Active watch',
+      'conflicting timeframes must not be admitted to JVM auto-entry -- got bucket='+row.bucket+' grade='+row.grade);
+    return 'weekly '+row.weekly+' vs daily '+row.daily+' -> '+row.bucket;
+  });
+
+  await t('AOISTRUCT.4 (ADR-011 WITHHOLDING): incomplete D/W yields NO levels at all',async function(){
+    // 🔴 P1 (final sweep): removing all three completeness guards from getStructuralAOI's return
+    // survived the full gate. AOISTRUCT.0-3 only ever route COMPLETE pages, so nothing asserted
+    // what happens when the structure is NOT provably complete.
+    //
+    // evaluateLiveTrigger reads `aoi.incomplete` and so stays closed, but two other consumers read
+    // only support/resistance/band and never `incomplete`: the chart draws the Support/Resistance
+    // (D/W) band an operator measures a stop against, and evaluateLiveSetupFullBreakdown feeds
+    // those levels into classifySetupEligibility -> MANUAL REVIEW ELIGIBLE ->
+    // approveManualReviewTrade, which opens a REAL paper position whose stop comes from that level.
+    // Today that path fails closed only because support is null -- an emergent consequence of the
+    // withholding, never an asserted one. This asserts it.
+    g.resetStructuralAOICache();
+    g.route(function(req){
+      // Daily comes back SHORT: 40 bars against the 100 requested, so it cannot classify COMPLETE.
+      if(req.granularity==='D') return g.okPage(aoiSeries(AOI_D_START,DAY_MS,40,1.2300,1.2000,1.2600));
+      if(req.granularity==='W') return g.okPage(aoiSeries(AOI_D_START-60*WEEK_MS,WEEK_MS,60,1.1300,1.1000,1.1600));
+      return g.emptyPage();
+    });
+    const a=await g.getStructuralAOI(AOI_PAIR);
+    ok(a&&a.incomplete===true,'PRECONDITION: the short Daily page really did classify as incomplete, got incomplete='+(a&&a.incomplete));
+    eq(a.support,null,'no support level may be published from data that is not provably complete');
+    eq(a.resistance,null,'nor a resistance level');
+    eq(a.band,0,'and the zone band is zero, so nothing is drawn on the chart as if it were structure');
+    // POSITIVE CONTROL: the identical construction at full length DOES publish levels, so the nulls
+    // above are the withholding and not a series that could never produce structure.
+    g.resetStructuralAOICache();
+    routeAoi();
+    const b=await g.getStructuralAOI(AOI_PAIR);
+    ok(b&&!b.incomplete&&b.support!=null&&b.resistance!=null,
+      'CONTROL: the same shelf at full length publishes real levels ('+String(b&&b.support)+'/'+String(b&&b.resistance)+')');
+    return 'incomplete D/W withholds support, resistance and band';
+  });
+
   await t('ALEXEXEC.6 (STILL-FORMING BAR): the in-progress minute is excluded from exit reconstruction',async function(){
     // §18.34: `c.complete` is the ONLY thing excluding the in-progress bar -- it passes the <=toMs
     // bound perfectly well. Dropping it survived the whole gate. The consequence is not merely a

@@ -4852,3 +4852,77 @@ Three real defects were living in that unwatched block:
   an AOI line series, whose data is `{time,value}`.
 - `paperLifecycleLog` was compared by **length only** — the size-preserving-rewrite pattern §18.27
   fixed for `storageLoadFailures` and left live on its neighbour in the same commit.
+
+---
+
+## §18.39 — Risk-based convergence, and the final critical-path sweep
+
+The milestone switched to a risk-based convergence policy: MOGO-021 CORE is complete when no known
+unresolved trading-critical defect exists **and** the trading-critical chain has independently
+verified behavioural evidence — not when no defect of any severity can exist anywhere.
+
+Every open finding was classified P0/P1/P2/P3. **No P0 was found at any point.** The P1 queue was
+six items, every one a *coverage* gap on production code that was already correct:
+
+1. Both paper-reset paths entirely unexercised — the one fixture that called a reset did so *while
+   locked* and asserted nothing changed, which a permanently inert function satisfies.
+2. Evidence trade-validity fields: stop and target interchangeable, `stopManagementPolicy`
+   forgeable, strategy attribution unpinned at its real site.
+3. Capture-snapshot orientation — the §18.35 `slice` defect class in two functions it was never
+   applied to.
+4. INC-001 refusal-list *membership* of the version key (the mechanism was pinned; the membership
+   was not).
+5. `setPaperBalance` rollback — its sibling in `applyPaperReconciliation` was pinned and it was not.
+6. The finiteness guard's **null** form — which is what a NaN becomes across a JSON round-trip, and
+   every existing fixture seeded NaN.
+
+### The final sweep
+
+One campaign, split across the chain: execution (39 mutations) and market data (35 mutations),
+each bounded and scoped to P0/P1 properties only.
+
+**Both returned PASS on shipped behaviour.** Every mutation applied to production logic in scope was
+killed by fixtures. Four P1 findings were raised, and all four were *missing detectors* rather than
+live defects:
+
+| Finding | Property | Why it mattered |
+|---|---|---|
+| `placePaperTrade` unexercised | order generation matches the decision | Disabling the operator's manual order path killed nothing. A direction regression books the opposite side; a swapped bracket derives `riskPips` from the reward leg and sizes ~3× too large. |
+| Reset rollback unverified | rollback on rejected commit | Deleting either rollback block survived. On a refused commit the account is left **wiped** in memory while storage holds the real data — the INC-001 shape, where a later successful commit persists the wipe. |
+| ADR-011 withholding in `getStructuralAOI` | AOI correctness | Removing all three completeness guards survived. Two consumers read the levels without reading `incomplete`: the chart band an operator measures a stop against, and the manual-review path that opens a real paper position. |
+| JVM auto-trade admission filter | qualification/rejection | `score>=2 && hasValidAOI` could be widened arbitrarily. **No killing control existed at the site at all** — every fixture reaching `runAutoTopDownScan` took the ADR-011 suppression early return, so the success path had never been exercised. |
+
+All four are closed: `PTE2E-PLACE.0-5`, `PTE2E-RESETRB.1-4`, `AOISTRUCT.4`, `AUTOADMIT.1-3`.
+
+### Two fixtures of mine that did not discriminate on the first attempt
+
+Both are recorded because the failure mode is the milestone's own recurring one — a fixture that
+looks like it pins a rule but cannot distinguish it from the mutant:
+
+- `AUTOADMIT.2` first used a **flat** series for the "no AOI" case. Flat is refused on *bias*, so it
+  could not tell the AOI requirement from the score requirement, and dropping `hasValidAOI` still
+  survived. Rebuilt as **aligned but AOI-less** — the same rising trend with the three shelf touches
+  removed.
+- `AUTOADMIT.3` first had the daily and H4 timeframes both falling — two timeframes that *agree*,
+  which the shipped `score>=2` rule correctly admits. It was asserting a refusal the rule never
+  makes. Rebuilt on exactly two **disagreeing** directional timeframes.
+
+### The P0 property, verified structurally
+
+Unauthorized live trading is impossible in this build **by absence of capability**. Every OANDA
+request is a `GET`; the only two `POST` calls in the file go to `api.anthropic.com`. There is no
+`/orders` endpoint, no order body, no broker write path. `cfg.env` selects which host market data is
+*read* from — it cannot cause an order, because no code sends one. Enabling live trading would
+require new code, not a setting.
+
+### Gates at the final checkpoint
+
+| Gate | Result |
+|---|---|
+| Canonical JS | 34 suites, **2,376 / 2,376**, 0 execution errors, protected drift **0** |
+| Platform (Python) | 25 suites, **1,049 / 1,049** |
+| Strategy fidelity | **87 / 87** |
+
+Deferred P2/P3 items — 20 of them — are recorded in `POST_MOGO_021_HARDENING_BACKLOG.md`, kept
+deliberately separate from readiness. Four governance decisions are documented there too; none
+blocks paper operation, and current behaviour is preserved in all four.

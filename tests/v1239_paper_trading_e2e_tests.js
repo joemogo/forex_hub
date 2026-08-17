@@ -985,6 +985,96 @@ async function runV1239PaperTradingE2EFixtures(g){
     jvmClean();
   }
 
+  // ── 🔴 P1 (final sweep): the OPERATOR'S manual order-generation path ────────────────────────
+  // placePaperTrade reads Entry/Stop/Target from the R:R calculator and derives the DIRECTION from
+  // them. A direction regression books the opposite side of the operator's decision; swapping the
+  // stop and target arguments makes riskPips derive from |entry-target|, so a 3:1 setup is sized
+  // roughly 3x too large with an inverted bracket -- the "stop" sitting where the target should be.
+  // Both corrupt the journal, every derived statistic and the evidence corpus, undetectably.
+  {
+    jvmClean();
+    g.setPricing('reject');
+    g.setActivePair('GBP_USD');
+    // LONG: target ABOVE entry. 100 risk pips, 200 reward pips, 1% of 10000 => 0.10 lots.
+    g.setRRFields(1.3000,1.2900,1.3200);
+    g.placePaperTrade(true);
+    const longPos=(g.getPaperAccount().openPositions||[])[0]||null;
+    assert('PTE2E-PLACE.0 (PRECONDITION): the manual path actually opened a position from the R:R fields -- disabling the whole function previously killed nothing anywhere in the gate',
+      !!longPos,
+      'open='+((g.getPaperAccount().openPositions||[]).length));
+    assert('PTE2E-PLACE.1 (DIRECTION): a target ABOVE the entry is a BUY. Inverted, the operator gets the opposite side of the trade they decided on',
+      !!longPos && longPos.dir==='buy',
+      'dir='+(longPos&&longPos.dir));
+    assert('PTE2E-PLACE.2 (BRACKET NOT SWAPPED): the stop is 1.29000 and the target 1.32000, on the fields the close path actually reads. Swapped, riskPips derives from the reward distance and the position is sized on the wrong leg',
+      !!longPos && Math.abs(longPos.stop-1.2900)<1e-9 && Math.abs(longPos.target-1.3200)<1e-9,
+      'entry='+(longPos&&longPos.entry)+' stop='+(longPos&&longPos.stop)+' target='+(longPos&&longPos.target));
+    assert('PTE2E-PLACE.3 (SIZING): 100 risk pips at $10/pip on a $100.00 risk budget is exactly 0.10 lots. A swapped bracket would size this on 200 pips and get it wrong by a factor of two',
+      !!longPos && longPos.lots===0.1 && longPos.riskAmount===100,
+      'lots='+(longPos&&longPos.lots)+' riskAmount='+(longPos&&longPos.riskAmount));
+    jvmClean();
+    // SHORT: target BELOW entry. Written separately -- the unmirrored half has been this
+    // milestone's most persistent defect shape, and direction is exactly where it bites.
+    g.setPricing('reject');
+    g.setActivePair('GBP_USD');
+    g.setRRFields(1.3000,1.3100,1.2800);
+    g.placePaperTrade(true);
+    const shortPos=(g.getPaperAccount().openPositions||[])[0]||null;
+    assert('PTE2E-PLACE.4 (DIRECTION, short): a target BELOW the entry is a SELL, with its stop above and its target below',
+      !!shortPos && shortPos.dir==='sell'
+        && Math.abs(shortPos.stop-1.3100)<1e-9 && Math.abs(shortPos.target-1.2800)<1e-9,
+      'dir='+(shortPos&&shortPos.dir)+' stop='+(shortPos&&shortPos.stop)+' target='+(shortPos&&shortPos.target));
+    assert('PTE2E-PLACE.5 (SOURCE ATTRIBUTION): the position is stamped "manual", so an operator-placed trade is distinguishable from an auto-traded one in the journal and the corpus',
+      !!shortPos && shortPos.source==='manual',
+      'source='+(shortPos&&shortPos.source));
+    jvmClean();
+  }
+
+  // ── 🔴 P1 (final sweep): rejected-commit ROLLBACK on both reset paths ───────────────────────
+  // Deleting either rollback block survived the whole gate, while a control at the identical site
+  // killed -- so the omission is real. On a rejected commit (a second tab's STALE_VERSION, an
+  // INC-001 LOAD_INTEGRITY_BLOCKED, or a transient WRITE_FAILED) the in-memory account is left
+  // WIPED while storage still holds the real data, and the next successful commit -- the next
+  // trade, a Set Balance, a reconciliation -- persists the wiped state over the real history.
+  // That is precisely the INC-001 shape: an in-memory default overwriting real stored data.
+  //
+  // A coverage ASYMMETRY is what makes it notable: every sibling rollback is covered
+  // (openPaperPosition, closePaperPosition, applyPaperReconciliation, setPaperBalance). The two
+  // most destructive operations in the application were the only ones without.
+  {
+    jvmClean();
+    g.setPricing('reject');
+    const rbPos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(rbPos.id,false,null);
+    g.setJournalEntries([{journalEntryId:'JVMJ|rb',tradeId:rbPos.id,status:'CLOSED',strategyId:'current_strategy'}]);
+    const beforeAcct=JSON.stringify(g.getPaperAccount());
+    const beforeJournal=(g.getJournalEntries()||[]).length;
+    const beforeResets=(g.getPaperResetHistory()||[]).length;
+    g.rigStalePaperVersion();          // the next commit will be refused
+    g.confirmPaperResetAccountOnly();
+    assert('PTE2E-RESETRB.1 (ACCOUNT-ONLY ROLLBACK): when the commit is REFUSED the account is restored exactly as it was -- balance, open and closed positions all intact. Left wiped, the next successful commit persists an empty account over the real stored history',
+      JSON.stringify(g.getPaperAccount())===beforeAcct,
+      'restored='+(JSON.stringify(g.getPaperAccount())===beforeAcct)+' now='+JSON.stringify(g.getPaperAccount()).slice(0,120));
+    assert('PTE2E-RESETRB.2 (the audit trail rolls back too): a refused reset must NOT leave a reset entry claiming it happened, or reconciliation would explain away a discrepancy that no reset caused',
+      (g.getPaperResetHistory()||[]).length===beforeResets,
+      'before='+beforeResets+' after='+((g.getPaperResetHistory()||[]).length));
+    g.confirmPaperResetFull();
+    assert('PTE2E-RESETRB.3 (FULL RESET ROLLBACK): the same refusal restores the account AND the journal. The full reset deletes every journal row, so an unrolled-back failure loses the entire trade history in memory while storage still holds it',
+      JSON.stringify(g.getPaperAccount())===beforeAcct
+        && (g.getJournalEntries()||[]).length===beforeJournal,
+      'acctRestored='+(JSON.stringify(g.getPaperAccount())===beforeAcct)+
+      ' journal='+((g.getJournalEntries()||[]).length)+' expected='+beforeJournal);
+    g.resetPaperVersionGuard();
+    // POSITIVE CONTROL: with the rig cleared the same reset SUCCEEDS, so the assertions above are
+    // observing the rollback and not a reset that never runs.
+    g.confirmPaperResetAccountOnly();
+    assert('PTE2E-RESETRB.4 (POSITIVE CONTROL): with the version guard cleared the identical reset goes through and the account IS cleared -- so the three assertions above are about the refusal path, not an inert function',
+      (g.getPaperAccount().closedPositions||[]).length===0 && g.getPaperAccount().balance===10000,
+      'balance='+g.getPaperAccount().balance+' closed='+((g.getPaperAccount().closedPositions||[]).length));
+    g.setJournalEntries([]);
+    jvmClean();
+  }
+
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
   {
     jvmClean();
@@ -1497,7 +1587,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===133, 'recorded='+results.length+' expected=133 (this fixture is the 134th)');
+    results.length===143, 'recorded='+results.length+' expected=143 (this fixture is the 144th)');
 
   return results;
 }
