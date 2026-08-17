@@ -674,14 +674,76 @@ class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
                         "coverage caveat in MOGO_022_TJR_EVIDENCE_REQUIREMENTS.md "
                         "and B-22 should be revisited rather than this test deleted")
 
-    def test_the_most_recent_close_reconciles_with_the_live_account(self):
-        """Cross-validation against state observed independently in the browser:
-        the newest preserved close must land on the live balance."""
+    def test_balances_reconcile_once_concurrent_positions_are_accounted_for(self):
+        """The forward evidence is internally consistent -- but NOT trade-by-trade.
+
+        Two earlier drafts of this assertion were wrong, and both errors are worth
+        keeping visible:
+
+        1. It first pinned the live balance at 9756.23. That is a snapshot, not an
+           invariant, and it broke within the hour when GBP/USD stopped out and the
+           account moved to 9658.67 -- normal operation reported as a test failure.
+        2. It then asserted balanceAfter == balanceBefore + pnl. That is false here:
+           `balanceBefore` is stamped at ENTRY and `balanceAfter` at EXIT, and this
+           account runs up to FIVE concurrent positions, so other trades closing in
+           between move the balance. 12 of 26 records "failed" a rule that was never
+           true.
+
+        The real invariant, verified: the residual equals the summed P&L of the other
+        preserved trades that closed inside this trade's lifetime. Anyone
+        reconstructing an equity curve by chaining these fields trade-by-trade would
+        get a wrong answer, which is why this is pinned rather than left implicit.
+        """
         obs, sources = to.load_observations(), to.load_sources()
         forward = [r for r in to.select_population(obs, sources, to.FORWARD).values()
-                   if r.get("strategyId") == "alex_g_sr_v1"]
-        latest = max(forward, key=lambda r: r["closedAt"])
-        self.assertAlmostEqual(latest["accountBalanceAfter"], 9756.23, places=2)
+                   if None not in (r.get("accountBalanceBefore"),
+                                   r.get("accountBalanceAfter"), r.get("pnl"))
+                   and r.get("openedAt") and r.get("closedAt")]
+        self.assertTrue(forward)
+        earliest_close = min(r["closedAt"] for r in forward)
+
+        checked = 0
+        for record in forward:
+            # Only trades whose whole lifetime lies inside the preserved window can
+            # be reconciled: for anything opened before the first preserved close, an
+            # UNPRESERVED earlier trade may have moved the balance (backlog B-22).
+            if record["openedAt"] < earliest_close:
+                continue
+            residual = (record["accountBalanceAfter"]
+                        - record["accountBalanceBefore"] - record["pnl"])
+            contributors = [other["pnl"] for other in forward if other is not record
+                            and record["openedAt"] < other["closedAt"]
+                            < record["closedAt"]]
+            concurrent = sum(contributors)
+            # Each pnl is stored rounded to a cent, so a sum of k of them can drift
+            # by up to half a cent per term. The tolerance scales with the number of
+            # terms rather than being loosened globally -- one record here missed a
+            # flat 2-place check by exactly 0.01 across 2 contributors. Real
+            # corruption is orders of magnitude larger, and the mutation fixtures
+            # (a 50.00 shift, a flipped sign) confirm this still discriminates.
+            tolerance = 0.005 * (len(contributors) + 2)
+            self.assertAlmostEqual(
+                residual, concurrent, delta=tolerance,
+                msg="%s: residual %.2f is not explained by concurrent closes %.2f "
+                    "(%d contributors, tolerance %.3f)"
+                    % (record["observationId"], residual, concurrent,
+                       len(contributors), tolerance))
+            checked += 1
+        self.assertGreater(checked, 10,
+                           "too few fully-covered trades to be meaningful")
+
+    def test_the_account_really_does_run_concurrent_positions(self):
+        """Precondition for the test above. If this became false, the simpler
+        trade-by-trade rule would apply and the reconciliation above would be
+        weaker than it looks."""
+        obs, sources = to.load_observations(), to.load_sources()
+        forward = [r for r in to.select_population(obs, sources, to.FORWARD).values()
+                   if r.get("openedAt") and r.get("closedAt")]
+        overlap = max(sum(1 for o in forward
+                          if o["openedAt"] <= r["openedAt"] < o["closedAt"])
+                      for r in forward)
+        self.assertGreater(overlap, 1,
+                           "no concurrent positions found; revisit the model")
 
 
 if __name__ == "__main__":
