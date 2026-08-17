@@ -750,6 +750,61 @@ async function runV1239PaperTradingE2EFixtures(g){
     jvmClean(); alexClean();
   }
 
+  // ── 🔴 §18.38: the Total P&L tile hardcoded a 10000 starting balance ────────────────────────
+  {
+    jvmClean();
+    g.setPricing('reject');
+    // A deliberate Set Balance, recorded on startingBalance by §18.36. The panel read a hardcoded
+    // 10000 regardless, so it showed a permanent phantom Total P&L while Diagnostics reconciled to
+    // zero -- two surfaces disagreeing forever about the same account, with nothing objecting.
+    g.setPaperAccount({balance:25000,startingBalance:25000,openPositions:[],closedPositions:[]});
+    g.renderPaper();
+    const tiles=g.elHtml('paper-stats')||g.elHtml('paperStats')||'';
+    assert('PTE2E-STARTBAL.1: with a recorded starting balance of 25000 and no closed trades, the Total P&L tile reads $0.00 -- not the +$15,000.00 phantom a hardcoded 10000 baseline produces',
+      tiles.indexOf('+$15000.00')===-1 && tiles.indexOf('+$15,000.00')===-1,
+      'phantom15k='+(tiles.indexOf('15000')!==-1||tiles.indexOf('15,000')!==-1)+' len='+tiles.length);
+    // POSITIVE CONTROL: a real profit must still show. Otherwise "no phantom" would pass on a tile
+    // that renders nothing at all.
+    g.setPaperAccount({balance:25300,startingBalance:25000,openPositions:[],
+      closedPositions:[{id:1,pnl:300,result:'Win',closedAt:'2026-08-10T10:00:00.000Z'}]});
+    g.renderPaper();
+    const tiles2=g.elHtml('paper-stats')||g.elHtml('paperStats')||'';
+    assert('PTE2E-STARTBAL.2 (POSITIVE CONTROL): a genuine +$300.00 against that same recorded baseline IS shown -- so the assertion above is reading a live tile, not an empty one',
+      tiles2.indexOf('300.00')!==-1,
+      'len='+tiles2.length+' snippet='+tiles2.slice(0,160));
+    jvmClean();
+  }
+
+  // ── 🔴 §18.38: the backfill branch that could never fire ────────────────────────────────────
+  {
+    alexClean();
+    g.setAlexGAccount({balance:10000,openPositions:[],closedPositions:[],journal:[]});
+    g.setAlexGJournalEntries([{
+      tradeId:'AGT|ORPHAN-1',signalId:'AGL|ORPHAN-1',status:'CLOSED',strategy:'ALEX_G',
+      pair:'EUR_USD',direction:'buy',entry:1.10000,stop:1.09500,target:1.11000,
+      exitPrice:1.11000,pnl:200,result:'Win',resultR:2,
+      openedAt:'2026-08-10T10:00:00.000Z',closedAt:'2026-08-10T12:00:00.000Z'
+    }]);
+    const bf=await g.evidenceBackfillFromLocalStorage();
+    assert('PTE2E-BACKFILL.1: a CLOSED journal record with no matching account position is examined by backfill. The branch compared lower-case "closed" while every journal writer stores "CLOSED", so it could never fire -- and that orphan class is exactly what the ledger-integrity subsystem exists to detect',
+      !!bf && bf.examined>=1 && bf.created>=1,
+      'result='+JSON.stringify(bf||{}));
+    g.setAlexGJournalEntries([{
+      tradeId:'AGT|STILLOPEN',signalId:'AGL|STILLOPEN',status:'OPEN',strategy:'ALEX_G',
+      pair:'EUR_USD',direction:'buy',entry:1.10000,stop:1.09500,target:1.11000,
+      openedAt:'2026-08-10T10:00:00.000Z'
+    }]);
+    const bf2=await g.evidenceBackfillFromLocalStorage();
+    assert('PTE2E-BACKFILL.2 (NEGATIVE CONTROL): an OPEN journal record is NOT adopted -- the case-insensitive comparison must not become a match-anything one',
+      // Asserted on the COUNT, not on the absence of an id string: the return is a summary, so
+      // searching it for the id was vacuously true either way -- the first draft of this control
+      // passed for exactly that wrong reason.
+      !!bf2 && bf2.examined===0 && bf2.created===0,
+      'result='+JSON.stringify(bf2||{}));
+    g.setAlexGJournalEntries([]);
+    alexClean();
+  }
+
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
   {
     jvmClean();
@@ -1262,7 +1317,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===113, 'recorded='+results.length+' expected=113 (this fixture is the 114th)');
+    results.length===117, 'recorded='+results.length+' expected=117 (this fixture is the 118th)');
 
   return results;
 }

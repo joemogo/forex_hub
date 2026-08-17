@@ -2197,6 +2197,19 @@ function runEvidencePlatformFixtures(g){
   });
 
   // ══ GROUP 8 — HISTORICAL BACKFILL ═════════════════════════════════════════════════════
+  // 🔴 §18.38: the branch that adopts a JOURNAL-ONLY CLOSED record compared against lower-case
+  // 'closed', while every journal writer stores 'OPEN'/'CLOSED'. It could therefore NEVER fire --
+  // and fixing it to 'CLOSED' killed nothing, so the branch was unpinned in both directions. That
+  // orphan class -- a closed journal record with no matching account position -- is exactly what
+  // the ledger-integrity subsystem exists to detect, and backfill is the one route that brings it
+  // into the evidence corpus.
+  // §18.38: the journal-only-closed backfill branch is covered by PTE2E-BACKFILL.1/.2 in the
+  // paper-trading e2e suite instead of here. This harness is SYNCHRONOUS -- its own §18.30 guard
+  // fails a fixture that returns a promise -- and the real evidenceBackfillFromLocalStorage is
+  // async, so driving it here would have meant reimplementing its logic in the runner. My first
+  // attempt did exactly that, and reverting production to the old lower-case comparison killed
+  // nothing: the fixture was testing my copy, not the shipped branch.
+
   t('F1 backfill is READ-ONLY -- it never writes any existing store',function(){
     const src=String(g.evidenceBackfillFromLocalStorage);
     eq(src.indexOf('localStorage.setItem'),-1,'backfill must not write localStorage');

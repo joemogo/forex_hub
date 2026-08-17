@@ -424,6 +424,10 @@ try{
     // source-text introspection, which any non-textual defect walks straight past.
     'g.evidenceListPackages=evidenceListPackages;' +
     'g.evidenceHasPackageForTrade=evidenceHasPackageForTrade;' +
+    // §18.38: the historical backfill, whose journal-only-closed branch compared a lower-case
+    // status that no writer ever produces -- so it could never fire, in either direction.
+    'g.evidenceBackfillFromLocalStorage=evidenceBackfillFromLocalStorage;' +
+    'g.setAlexGJournalEntries=function(v){alexGJournalEntries=v;};' +
     'g.setAlexGLiveSetupStatuses=function(v){ alexGLiveSetupStatuses=v; };' +
     'g.pushAlexGLiveSetupStatus=function(e){ alexGLiveSetupStatuses.unshift(e); };' +
     'g.getAlexGLiveSetupStatuses=function(){ return alexGLiveSetupStatuses; };' +
