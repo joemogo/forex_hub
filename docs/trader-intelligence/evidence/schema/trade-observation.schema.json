@@ -51,6 +51,14 @@
       "pattern": "^EVSRC\\|",
       "description": "The EvidenceSource holding the preserved original (screenshot bytes, decision record). Lane A already preserves non-text bytes: repositoryPath + contentHash require nothing textual."
     },
+    "sourcePackageId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "The exact source artifact this observation was derived from, e.g. an evidence package id (PKG|...). sourceId identifies the registered EvidenceSource; this identifies the individual record inside it, so provenance is exact rather than only file-level."
+    },
     "evidenceItemIds": {
       "type": "array",
       "items": {

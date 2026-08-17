@@ -51,6 +51,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import trade_observation as to      # noqa: E402
 import research_understanding as ru                  # noqa: E402
 from query_evidence import EvidenceIndex             # noqa: E402
 
@@ -437,12 +438,20 @@ def build_position_from_observation(record, side):
     }
 
 
-def observation_difference(human_record, mogo_record):
+def observation_difference(human_record, mogo_record, sources,
+                           allow_cross_population=False):
     """Classify one human decision against one MOGO decision. Read-only.
 
     Refuses same-actor pairs: the taxonomy describes two DECIDERS, and comparing
     two human trades (or two MOGO trades) to each other would produce a verdict
     that reads like a human-vs-MOGO finding while being nothing of the kind.
+
+    `sources` is REQUIRED so the evidence population of each side is resolved, not
+    assumed. Comparing a human's live trade against a MOGO REPLAY is a materially
+    weaker claim than live-against-live, and 221 of the 222 imported MOGO records
+    are replay -- so that comparison is the one a caller would fall into by
+    default. It is available, but only by asking for it: pass
+    allow_cross_population=True and the caveat is recorded in the result.
     """
     for record, expected in ((human_record, "HUMAN"), (mogo_record, "MOGO")):
         if record is not None and record.get("actor") != expected:
@@ -452,19 +461,46 @@ def observation_difference(human_record, mogo_record):
                 "same actor is not this analysis."
                 % (expected, record.get("actor")))
 
+    if sources is None:
+        raise DecisionDifferenceRefused(
+            "sources is required: without it the evidence population of each side "
+            "cannot be resolved, and a replay decision is indistinguishable from a "
+            "forward one.")
+
+    population_a = (to.observation_population(human_record, sources)
+                    if human_record is not None else to.UNKNOWN_POPULATION)
+    population_b = (to.observation_population(mogo_record, sources)
+                    if mogo_record is not None else to.UNKNOWN_POPULATION)
+    cross = population_a != population_b
+    if cross and not allow_cross_population:
+        raise DecisionDifferenceRefused(
+            "the two sides are different evidence populations (%s vs %s). A human "
+            "live trade against a MOGO replay is not the same claim as "
+            "live-against-live. Select one population, or pass "
+            "allow_cross_population=True to record the comparison with its caveat."
+            % (population_a, population_b))
+
     position_a = build_position_from_observation(human_record, "HUMAN")
     position_b = build_position_from_observation(mogo_record, "MOGO")
     verdict, basis = classify(position_a, position_b)
-    return {
+    result = {
         "schemaVersion": DECISION_DIFFERENCE_SCHEMA_VERSION,
         "lane": "RESEARCH",
         "comparisonType": "HUMAN_VS_MOGO_OBSERVATION",
         "classification": verdict,
         "classificationMeaning": CLASSIFICATION_MEANING[verdict],
         "adjudicates": False,
+        "evidencePopulations": {"HUMAN": population_a, "MOGO": population_b},
+        "crossPopulation": cross,
         "positions": [position_a, position_b],
         "basis": basis,
     }
+    if cross:
+        result["populationCaveat"] = (
+            "Compared across evidence populations (%s vs %s). Any conclusion is "
+            "weaker than a like-for-like comparison and must not be reported as a "
+            "forward/live result." % (population_a, population_b))
+    return result
 
 
 def render(result):

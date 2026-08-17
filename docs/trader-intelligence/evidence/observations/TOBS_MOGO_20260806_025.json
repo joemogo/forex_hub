@@ -1,0 +1,41 @@
+{
+  "actor": "MOGO",
+  "closedAt": "2026-08-06T13:11:15.575Z",
+  "createdAt": "2026-08-17T15:43:05Z",
+  "direction": "buy",
+  "entry": 1.085,
+  "exitPrice": 1.089,
+  "extractedBy": "mogo:import_mogo_observations",
+  "fieldClassification": {
+    "closedAt": "DIRECTLY_OBSERVED",
+    "direction": "DIRECTLY_OBSERVED",
+    "entry": "DIRECTLY_OBSERVED",
+    "exitPrice": "DIRECTLY_OBSERVED",
+    "instrument": "DIRECTLY_OBSERVED",
+    "openedAt": "DIRECTLY_OBSERVED",
+    "outcome": "DIRECTLY_OBSERVED",
+    "positionSize": "DIRECTLY_OBSERVED",
+    "riskAmount": "DIRECTLY_OBSERVED",
+    "stop": "DIRECTLY_OBSERVED",
+    "target": "DIRECTLY_OBSERVED"
+  },
+  "instrument": "EUR/USD",
+  "lane": "RESEARCH",
+  "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade",
+  "observationId": "TOBS|MOGO|20260806|025",
+  "openedAt": "2026-08-06T13:11:15.571Z",
+  "outcome": "Win",
+  "positionSize": 0.5,
+  "riskAmount": 100,
+  "schemaVersion": "mogo.trade-observation.v1",
+  "sequenceId": "1786021876135",
+  "sourceId": "EVSRC|MOGO|20260817|001",
+  "sourcePackageId": "PKG|current_strategy|20260806|1",
+  "stop": 1.083,
+  "strategyId": "current_strategy",
+  "target": 1.089,
+  "unknowns": [
+    "accountBalanceBefore",
+    "timeframe"
+  ]
+}

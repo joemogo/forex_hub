@@ -68,6 +68,32 @@ ACTORS = ("HUMAN", "MOGO")
 
 CLASSIFICATIONS = ("DIRECTLY_OBSERVED", "SOURCE_STATED", "INFERRED", "UNKNOWN")
 
+# ---------------------------------------------------------------------------
+# Evidence population -- replay/historical vs forward/live
+# ---------------------------------------------------------------------------
+#
+# NO NEW TAXONOMY. The distinction already exists in the provenance model: an
+# observation points at an EvidenceSource, and that source's `sourceType` says what
+# kind of artifact it is. `replay_observation` and `paper_trade` are both already in
+# evidence_common.SOURCE_TYPES. So the population is DERIVED from provenance rather
+# than asserted on the record, which means it cannot disagree with the source it
+# came from -- a denormalized flag could.
+#
+# The consequence, deliberately: population is not knowable from an observation
+# alone. Every function below that could blend populations REQUIRES the source map,
+# so producing a forward statistic without the provenance that distinguishes forward
+# from replay is not something a caller can do by forgetting.
+HISTORICAL = "HISTORICAL"
+FORWARD = "FORWARD"
+UNKNOWN_POPULATION = "UNKNOWN"
+POPULATIONS = (HISTORICAL, FORWARD, UNKNOWN_POPULATION)
+
+# Deliberately a small allowlist on the FORWARD side and UNKNOWN for everything
+# unlisted. Fail closed in the direction that matters: a source type nobody has
+# classified must never silently count as forward evidence.
+HISTORICAL_SOURCE_TYPES = ("replay_observation", "generated_analysis")
+FORWARD_SOURCE_TYPES = ("paper_trade", "live_trade_review")
+
 # The fields that describe the trade itself and therefore require classification.
 # Metadata (ids, timestamps, lane, notes) is not evidence about a trade and is
 # deliberately excluded.
@@ -111,6 +137,19 @@ def validate_observation(record):
             _refuse("%s is required and must be a non-empty string (got %r). An "
                     "observation with no %s cannot be traced back to what was seen."
                     % (field, value, field))
+
+    # sourceId must be a real EvidenceSource, not some other artifact's identifier.
+    # This is what makes the evidence population derivable: the source carries the
+    # sourceType that says whether this was replay or forward. An importer pointing
+    # sourceId straight at a package id (PKG|...) looks traceable and is not -- it
+    # resolves to nothing, so the population is unknowable and the schema pattern
+    # `^EVSRC\|` is violated silently.
+    if not record["sourceId"].startswith("EVSRC|"):
+        _refuse("sourceId %r must be an EvidenceSource id beginning 'EVSRC|'. The "
+                "population of an observation (replay vs forward) is derived from its "
+                "source's sourceType, so a sourceId that resolves to no source makes "
+                "the observation unusable in either analysis."
+                % (record["sourceId"],))
 
     lane = record.get("lane", LANE)
     if lane != LANE:
@@ -249,29 +288,88 @@ def load_observations(observations_dir=None):
     return out
 
 
-def summarize(observations):
+def observation_population(record, sources):
+    """HISTORICAL / FORWARD / UNKNOWN, derived from the source's sourceType.
+
+    `sources` maps sourceId -> EvidenceSource record. Fails closed: an observation
+    whose source is not present resolves to UNKNOWN rather than being assumed
+    forward, because assuming forward is the error that contaminates live results.
+    """
+    source = (sources or {}).get(record.get("sourceId"))
+    if source is None:
+        return UNKNOWN_POPULATION
+    source_type = source.get("sourceType")
+    if source_type in HISTORICAL_SOURCE_TYPES:
+        return HISTORICAL
+    if source_type in FORWARD_SOURCE_TYPES:
+        return FORWARD
+    return UNKNOWN_POPULATION
+
+
+def select_population(observations, sources, population):
+    """The sanctioned way to obtain one evidence population.
+
+    Callers name the population they mean, so a forward-performance question can
+    never be answered from replay records by omission.
+    """
+    if population not in POPULATIONS:
+        _refuse("population %r must be one of %s" % (population, list(POPULATIONS)))
+    return {k: v for k, v in (observations or {}).items()
+            if observation_population(v, sources) == population}
+
+
+def summarize(observations, sources):
     """A read-only view: how much of each side exists, and how well-evidenced.
+
+    `sources` is REQUIRED, not optional. That is the structural guarantee behind
+    invariant 3: this function cannot produce a count without the provenance that
+    separates replay from forward, so there is no signature by which a caller
+    accidentally gets a blended total. Every figure is reported per population, and
+    no aggregate across populations is offered at all -- a combined "222 trades"
+    number is exactly the artifact that would mislead.
 
     Reports UNKNOWN coverage rather than hiding it -- the number of unknowns is
     the honest measure of how far a screenshot actually got.
     """
-    by_actor = {}
-    for record in observations.values():
-        bucket = by_actor.setdefault(record["actor"], {
+    if sources is None:
+        _refuse("summarize() requires the EvidenceSource map. Without it, replay and "
+                "forward observations are indistinguishable and any total mixes them.")
+    by_population = {}
+    for record in (observations or {}).values():
+        population = observation_population(record, sources)
+        group = by_population.setdefault(population, {"total": 0, "byActor": {}})
+        group["total"] += 1
+        bucket = group["byActor"].setdefault(record["actor"], {
             "count": 0, "byClassification": {}, "unknownFields": 0})
         bucket["count"] += 1
         bucket["unknownFields"] += len(record.get("unknowns") or [])
         for how in (record.get("fieldClassification") or {}).values():
             bucket["byClassification"][how] = \
                 bucket["byClassification"].get(how, 0) + 1
+    for group in by_population.values():
+        # Comparability is per population: a human trade and a MOGO REPLAY are not
+        # a comparable pair, so pairing them across populations is never counted.
+        group["comparable"] = min(group["byActor"].get("HUMAN", {}).get("count", 0),
+                                  group["byActor"].get("MOGO", {}).get("count", 0))
     return {
         "lane": LANE,
         "schemaVersion": SCHEMA_VERSION,
-        "total": len(observations),
-        "byActor": by_actor,
-        "comparable": min(by_actor.get("HUMAN", {}).get("count", 0),
-                          by_actor.get("MOGO", {}).get("count", 0)),
+        "byPopulation": by_population,
+        "populationsPresent": sorted(by_population),
     }
+
+
+def load_sources(sources_dir=None):
+    """Read every EvidenceSource. Read-only. The population map for summarize()."""
+    target_dir = sources_dir or os.path.join(EVIDENCE_ROOT, "sources")
+    out = {}
+    if not os.path.isdir(target_dir):
+        return out
+    for path in sorted(globmod.glob(os.path.join(target_dir, "*.json"))):
+        with open(path, "r", encoding="utf-8") as handle:
+            record = json.load(handle)
+        out[record["sourceId"]] = record
+    return out
 
 
 def main(argv=None):
@@ -280,7 +378,8 @@ def main(argv=None):
                         help="print a read-only summary of recorded observations")
     args = parser.parse_args(argv)
     if args.summary:
-        print(json.dumps(summarize(load_observations()), indent=2, sort_keys=True))
+        print(json.dumps(summarize(load_observations(), load_sources()),
+                         indent=2, sort_keys=True))
         return 0
     parser.print_help()
     return 0

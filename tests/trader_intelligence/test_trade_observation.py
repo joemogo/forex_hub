@@ -250,6 +250,57 @@ class TestAbsentIsNotZero(unittest.TestCase):
         self.assertEqual(record["pnl"], 0.0)
 
 
+class TestProvenanceCarriesThePopulation(unittest.TestCase):
+    """The replay-vs-forward distinction is DERIVED from the source, so these are
+    the guards that keep it derivable and keep it failing closed."""
+
+    def test_a_sourceid_that_is_not_an_evidence_source_is_refused(self):
+        """The importer originally pointed sourceId straight at a package id. That
+        looks traceable, resolves to nothing, and silently violates the schema's
+        `^EVSRC\\|` pattern -- so the population becomes unknowable."""
+        for bad in ("PKG|alex_g_sr_v1|20260427|1", "TOBS|MOGO|1", "just-a-string"):
+            with self.subTest(sourceId=bad):
+                with self.assertRaises(to.ObservationRefused):
+                    to.validate_observation(base(sourceId=bad))
+
+    def test_positive_control_an_evidence_source_id_is_accepted(self):
+        to.validate_observation(base(sourceId="EVSRC|TJR|20260817|001"))
+
+    def test_an_unlisted_source_type_is_unknown_not_forward(self):
+        """Fail closed in the direction that matters: a source type nobody has
+        classified must never silently count as forward evidence."""
+        for source_type in ("transcript", "note", "screenshot", "video", None):
+            with self.subTest(sourceType=source_type):
+                sources = {"EVSRC|TJR|20260817|001": {
+                    "sourceId": "EVSRC|TJR|20260817|001", "sourceType": source_type}}
+                self.assertEqual(to.observation_population(base(), sources),
+                                 to.UNKNOWN_POPULATION)
+
+    def test_positive_control_the_two_classified_types_resolve(self):
+        for source_type, expected in (("replay_observation", to.HISTORICAL),
+                                      ("paper_trade", to.FORWARD),
+                                      ("live_trade_review", to.FORWARD)):
+            with self.subTest(sourceType=source_type):
+                sources = {"EVSRC|TJR|20260817|001": {
+                    "sourceId": "EVSRC|TJR|20260817|001", "sourceType": source_type}}
+                self.assertEqual(to.observation_population(base(), sources), expected)
+
+    def test_summarize_refuses_without_the_source_map(self):
+        """Invariant 3, structurally: there is no signature by which a caller gets
+        a total that silently mixes replay with forward."""
+        with self.assertRaises(to.ObservationRefused):
+            to.summarize({}, None)
+
+    def test_select_population_names_the_population_it_returns(self):
+        sources = {"EVSRC|A": {"sourceId": "EVSRC|A", "sourceType": "replay_observation"},
+                   "EVSRC|B": {"sourceId": "EVSRC|B", "sourceType": "paper_trade"}}
+        obs = {"r": base(sourceId="EVSRC|A"), "f": base(sourceId="EVSRC|B")}
+        self.assertEqual(list(to.select_population(obs, sources, to.HISTORICAL)), ["r"])
+        self.assertEqual(list(to.select_population(obs, sources, to.FORWARD)), ["f"])
+        with self.assertRaises(to.ObservationRefused):
+            to.select_population(obs, sources, "LIVE_MONEY")
+
+
 class TestLaneIsPinned(unittest.TestCase):
 
     def test_a_non_research_lane_is_refused(self):
@@ -299,6 +350,16 @@ class TestWritingIsSafe(unittest.TestCase):
             to.load_observations(os.path.join(self.tmp, "nope")), {})
 
 
+SOURCES = {
+    "EVSRC|TJR|20260817|001": {"sourceId": "EVSRC|TJR|20260817|001",
+                               "sourceType": "live_trade_review"},
+    "EVSRC|MOGO|20260817|001": {"sourceId": "EVSRC|MOGO|20260817|001",
+                                "sourceType": "paper_trade"},
+    "EVSRC|MOGO|20260817|009": {"sourceId": "EVSRC|MOGO|20260817|009",
+                                "sourceType": "replay_observation"},
+}
+
+
 class TestSummaryIsHonest(unittest.TestCase):
 
     def setUp(self):
@@ -310,11 +371,12 @@ class TestSummaryIsHonest(unittest.TestCase):
         to.write_observation(
             base(actor="MOGO", observationId="TOBS|MOGO|20260817|001"),
             observations_dir=self.tmp)
-        summary = to.summarize(to.load_observations(self.tmp))
-        self.assertEqual(summary["total"], 2)
-        self.assertEqual(summary["byActor"]["HUMAN"]["count"], 1)
-        self.assertEqual(summary["byActor"]["MOGO"]["count"], 1)
-        self.assertEqual(summary["byActor"]["HUMAN"]["unknownFields"], 2)
+        summary = to.summarize(to.load_observations(self.tmp), SOURCES)
+        forward = summary["byPopulation"]["FORWARD"]
+        self.assertEqual(forward["total"], 2)
+        self.assertEqual(forward["byActor"]["HUMAN"]["count"], 1)
+        self.assertEqual(forward["byActor"]["MOGO"]["count"], 1)
+        self.assertEqual(forward["byActor"]["HUMAN"]["unknownFields"], 2)
         self.assertEqual(summary["lane"], "RESEARCH")
 
     def test_comparable_is_the_lesser_side_not_the_total(self):
@@ -323,9 +385,10 @@ class TestSummaryIsHonest(unittest.TestCase):
         to.write_observation(base(), observations_dir=self.tmp)
         to.write_observation(base(observationId="TOBS|HUMAN|20260817|002"),
                              observations_dir=self.tmp)
-        summary = to.summarize(to.load_observations(self.tmp))
-        self.assertEqual(summary["total"], 2)
-        self.assertEqual(summary["comparable"], 0)
+        summary = to.summarize(to.load_observations(self.tmp), SOURCES)
+        forward = summary["byPopulation"]["FORWARD"]
+        self.assertEqual(forward["total"], 2)
+        self.assertEqual(forward["comparable"], 0)
 
 
 class TestStaysInSyncWithTheSchema(unittest.TestCase):
