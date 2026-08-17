@@ -15,7 +15,7 @@
 # reason.
 #
 # Regenerate with:  tests/update_expected_counts.sh
-run_v017_step2a_pipeline_observability_tests.js	82
+run_v017_step2a_pipeline_observability_tests.js	85
 run_v1027_strategy_fidelity_provenance_tests.js	61
 run_v120_tests.js	28
 run_v1211_tests.js	13
@@ -37,7 +37,7 @@ run_v1238_execution_reporting_stats_tests.js	24
 run_v1239_chart_aoi_fidelity_tests.js	66
 run_v1239_lifecycle_reconciliation_tests.js	51
 run_v1239_market_data_continuity_tests.js	37
-run_v1239_paper_trading_e2e_tests.js	111
+run_v1239_paper_trading_e2e_tests.js	114
 run_v1239_restart_diagnostics_tests.js	40
 run_v123_tests.js	48
 run_v124_baseline_registry_tests.js	31

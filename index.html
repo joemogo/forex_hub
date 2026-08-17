@@ -1986,7 +1986,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.38.2';
+const APP_VERSION='12.38.3';
 const APP_VERSION_DATE='16 Aug 2026';
 const APP_VERSION_LOG=[
   '12.36.0 — THE ONE LINE HOLDING THE ACCOUNT BALANCE UP HAD NO FIXTURE (MOGO-021 section 18.30). Two independent adversarial agents; 24 and 7 mutations scored gate-wide. THE CRITICAL FINDING: `if(!exitPrice)return;` in closePaperPosition was the SINGLE line preventing total, permanent destruction of the paper account, and NOTHING watched it. Deleting it survived all 2,215 fixtures with drift 0, while the control at the same line killed 85 -- the line runs constantly; its FAILURE path was unwitnessed. Driven end to end through the real engine, the deletion books the close at exitPrice=undefined, so pnl and then balance become NaN -- and JSON.stringify(NaN) is `null`, so {"balance":null} is written to storage and SURVIVES RELOAD. commitPaperLedger validated the storage write and never the numbers, so there was no second line of defence; the ALEX open path already checks isFinite and the JVM ledger commit did not. Reachable, and the two failures are CORRELATED not independent: checkPaperPositions decides the exit from a synchronous price read, closePaperPosition then yields at `await fetchBidAsk`, and during that await the sweep rewrites the shared pairData slot -- a failed fetchPrice writes price:null, and fetchBidAsk and fetchPrice hit the same host with the same credentials, so ONE outage produces both. The same missing coverage hid a second mutation: rewriting the auto branch as `live!=null?live:pos.entry` books a genuine +$300 take-profit winner at the entry -- pnl 0, result Win, closeReason TAKE_PROFIT -- destroying the gain and corrupting expectancy with a phantom 0R win. PTE2E-NOFILL.1-4 close both, and commitPaperLedger now REFUSES a non-finite ledger through the existing blocking-banner contract (PTE2E-FINITE.0-3). Because that refusal makes the guard deletion survivable, NOFILL.3b pins the upstream guard on the property that actually distinguishes them: a healthy refusal is SILENT, raising no banner and no engine error, because the close never reached the commit. UNREALIZED P&L HAD ZERO COVERAGE. Three mutations of the open-position P&L, INCLUDING REPLACING THE PIP VALUE WITH THE CONSTANT 987654, all survived the full gate -- so every floating P&L and R-multiple the operator reads while deciding whether to cut a live trade could be arbitrarily wrong while the gate stayed green. This is the unwatched SECOND COPY of the pip arithmetic; the realized path is pinned by JVMEXIT-11. PTE2E-UNREAL.1-6 assert hand-computed literals for a long and a short, and .5/.6 make a re-derived pip value differ from the entry-fixed one so the equivalent mutant in the first scenario becomes a real kill. THE EVIDENCE-PLATFORM EXCLUSION WAS DEFEATED FOR THE SEVENTH TIME, BY THE COMMIT THAT FIXED THE SIXTH. Version six matched the artifact MESSAGE exactly, as promised -- but discarded the WHOLE ENTRY, and evidenceRecordWriteFailure stores caller-controlled `context` and `detail:extra` while recordAlexGEngineError merges arbitrary meta. So ONE call to a real production function, with no forged strings at all, sends the exact allowlisted message and rides its payload in a field the filter never examined, poisoning both filtered structures at once. Found independently by me and by the verifier. An entry is now excluded only if its ENTIRE content, minus the timestamp, is a known artifact shape; all four channels -- message prefix, detail, engine meta and context -- now die, and a byte-identical zero-payload artifact still passes by design. TWO CREDENTIAL FIXTURES VACUOUS BY TIMING, NOT EMPTINESS: setCfg is a bare assignment and localStorage was read on the very next line, so ZERO production persistence ran while the sentinel was live and no persistence behaviour could make them fail. Leaks to an fxhub_ key and to a non-fxhub key both left them green. The real save/commit/persist surface now runs with the secret live, with a positive control that plants a sentinel and requires the same scan to find it. FOURTEEN MORE UNKILLABLE FIXTURES RETIRED and the harness that hid them fixed: t(name,fn) recorded a PASS whenever fn() did not throw SYNCHRONOUSLY, so a returned promise was stored as a detail string and discarded -- any async fixture would have passed unconditionally, proven by writing one that asserts false and passes. The same helper is copy-pasted in three suites; all three now fail closed. pnlUnavailable, computed and fixture-tested since v12.16.0 and RENDERED NOWHERE, is the third value this milestone recorded faithfully and never shown -- it is the number that EXPLAINS an UNEXPLAINED_DELTA, and without it the operator cannot tell missing data from wrong books. Gate: 34 suites, 2,235/2,235; protected drift 0.',
@@ -15658,6 +15658,9 @@ function evidenceBuildPackageFromTrade(trade,opts){
         positionSize:pick('positionSize'),pipValue:pick('pipValue'),
         balanceBefore:pick('balanceAtEntry'),
         stopManagementPolicy:'NONE_BY_DESIGN',
+        // §18.38: fabricated trades are LABELLED in the corpus, so a consumer can exclude them.
+        isDeveloperTrade:has('isDeveloperTrade')?!!trade.isDeveloperTrade:false,
+        tradeSource:pick('tradeSource'),
         evidenceCompleteness:completeness.level
       }],
       outcomes:[{
@@ -15665,6 +15668,8 @@ function evidenceBuildPackageFromTrade(trade,opts){
         positionId:pick('tradeId'),
         exitPrice:pick('exitPrice'),exitTimestamp:pick('closedAt'),
         exitReasonCode:pick('result'),
+        // §18.38: the real close reason, beside the Win/Loss code rather than instead of it.
+        exitReasonDetail:pick('exitReasonDetail'),
         exitDetectionSource:pick('exitDetectionSource'),
         exitTriggerLevel:pick('exitTriggerLevel'),
         exitDetectedAt:pick('exitDetectedAt'),
@@ -16233,7 +16238,21 @@ function evidenceNormalizeJvmTrade(pos){
     openedAt:pos.openedAt,
     exitPrice:pos.exitPrice,closedAt:pos.closedAt,result:pos.result,
     pnl:pos.pnl,
-    exitReason:pos.closeReason
+    // v12.38.3 (MOGO-021 §18.38): `exitReason` was mapped here and READ NOWHERE. The builder uses
+    // exitReasonCode:pick('result'), so TAKE_PROFIT, STOP_LOSS, MANUAL_CLOSE, BREAK_EVEN and
+    // SYSTEM_CLOSE all exported as "Win" or "Loss" -- a genuine take-profit, a discretionary manual
+    // close and a developer test trade became the same record. Renamed to the key the builder
+    // actually reads, so the reason survives into the corpus.
+    exitReasonDetail:pos.closeReason,
+    // 🔴 A DEVELOPER TEST TRADE WAS INDISTINGUISHABLE FROM A REAL ONE. isDeveloperTrade appeared
+    // NOWHERE in the evidence platform, so generateTestPaperTrade's fabricated trades entered the
+    // exported corpus with no field that could filter them out -- silently contaminating win rate,
+    // expectancy and sample size in the very corpus this milestone exists to produce.
+    // ledgerDeriveAccountState already excludes them and fixture L10 asserts it; the evidence layer
+    // never got the same treatment. Carried, not dropped: the record stays in the corpus and is
+    // LABELLED, which preserves the forensic history while letting any consumer exclude it.
+    isDeveloperTrade:!!pos.isDeveloperTrade,
+    tradeSource:pos.tradeSource!=null?pos.tradeSource:(pos.source!=null?pos.source:null)
   };
   // JVM genuinely has no timeframe, setupId, zone structure, MAE/MFE or balance snapshots. Those
   // keys are deliberately NOT added -- the builder's pick() then records an explicit null and the

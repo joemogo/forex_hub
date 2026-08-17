@@ -697,8 +697,13 @@ async function runV1239PaperTradingE2EFixtures(g){
     assert('PTE2E-EVCAP.1 (END-TO-END): a real JVM close produces a durable evidence package. The capture seam is fire-and-forget, so nothing downstream fails if it silently stops -- which is exactly why it must be asserted here',
       Array.isArray(pkgs) && pkgs.length===pkgsBefore+1,
       'before='+pkgsBefore+' after='+(Array.isArray(pkgs)?pkgs.length:String(pkgs)));
-    const hasIt=await g.evidenceHasPackageForTrade(String(evPos.id));
-    assert('PTE2E-EVCAP.2 (ATTRIBUTION): the package is filed against the tradeId that actually closed, not merely "a package exists" -- an audit record attributed to the wrong trade is worse than none',
+    // §18.38: this asserted attribution by calling evidenceHasPackageForTrade -- THE FUNCTION UNDER
+    // TEST -- as its own oracle. Proven vacuous: hardwiring that function to return true means no
+    // package is ever captured, EVCAP.1 and EVCAP.3 fail, and this one PASSES. A fixture whose
+    // oracle is the code it is testing cannot fail for the reason it names. Asserted against the
+    // stored records instead, which are already in hand two lines above.
+    const hasIt=(pkgs||[]).some(function(p){ return p&&String(p.sourceTradeId)===String(evPos.id); });
+    assert('PTE2E-EVCAP.2 (ATTRIBUTION): a stored package carries the tradeId that actually closed, not merely "a package exists" -- an audit record attributed to the wrong trade is worse than none',
       !!hasIt,
       'hasPackageFor('+evPos.id+')='+String(!!hasIt)+' ids='+JSON.stringify((pkgs||[]).map(function(p){return p&&(p.sourceTradeId||p.packageId);}).slice(0,4)));
     assert('PTE2E-EVCAP.3 (CONTENT): the package carries the trade\'s own booked numbers rather than a placeholder -- its exit price and P&L match what the ledger recorded',
@@ -711,6 +716,37 @@ async function runV1239PaperTradingE2EFixtures(g){
         return j.indexOf(String(closed.exitPrice))!==-1 && j.indexOf(String(closed.pnl))!==-1;
       })(),
       'closed='+JSON.stringify((function(){const c=(g.getPaperAccount().closedPositions||[])[0];return c?{exit:c.exitPrice,pnl:c.pnl}:null;})()));
+    // 🔴 §18.38: a DEVELOPER TEST TRADE must be labelled in the corpus. isDeveloperTrade appeared
+    // NOWHERE in the evidence platform, so generateTestPaperTrade's fabricated trades entered the
+    // exported corpus with no field that could filter them out -- silently contaminating win rate,
+    // expectancy and sample size in the corpus this milestone exists to produce. Proven end to end
+    // before the fix: a TEST trade produced a package whose JSON contained neither
+    // "isDeveloperTrade" nor "TEST". ledgerDeriveAccountState already excludes them (fixture L10);
+    // the evidence layer never got the same treatment.
+    jvmClean(); alexClean();
+    await drainMicrotasks(); await drainMicrotasks();
+    const beforeTest=(await g.evidenceListPackages()).length;
+    g.setPricing('reject');
+    const tPos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'test');
+    const acctT=g.getPaperAccount();
+    acctT.openPositions[acctT.openPositions.length-1].isDeveloperTrade=true;
+    acctT.openPositions[acctT.openPositions.length-1].tradeSource='TEST';
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(tPos.id,false,null);
+    await drainMicrotasks(); await drainMicrotasks();
+    const pkgsT=await g.evidenceListPackages();
+    const tPkg=(pkgsT||[]).filter(function(p){ return p&&String(p.sourceTradeId)===String(tPos.id); })[0];
+    assert('PTE2E-EVCAP.4 (PRECONDITION): the developer test trade really was captured into the corpus -- so the labelling assertion below is about a package that exists',
+      pkgsT.length===beforeTest+1 && !!tPkg,
+      'before='+beforeTest+' after='+pkgsT.length+' found='+(!!tPkg));
+    assert('PTE2E-EVCAP.5 (FABRICATED TRADES ARE LABELLED): the package carries isDeveloperTrade true and its TEST source, so a consumer of the exported corpus can exclude it. Without this a fabricated trade is arithmetically indistinguishable from a real one in every statistic derived from the corpus',
+      !!tPkg && JSON.stringify(tPkg).indexOf('isDeveloperTrade')!==-1
+             && /"isDeveloperTrade"\s*:\s*true/.test(JSON.stringify(tPkg)),
+      'json='+JSON.stringify(tPkg||{}).slice(0,240));
+    assert('PTE2E-EVCAP.6 (REAL EXIT REASON): the package records WHY the trade closed, not only Win or Loss. exitReason was mapped in the normalizer and read nowhere, so a take-profit, a discretionary manual close and a system close all exported identically',
+      !!tPkg && JSON.stringify(tPkg).indexOf('exitReasonDetail')!==-1
+             && JSON.stringify(tPkg).indexOf('SYSTEM_CLOSE')!==-1,
+      'json='+JSON.stringify(tPkg||{}).slice(0,240));
     jvmClean(); alexClean();
   }
 
@@ -1226,7 +1262,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===110, 'recorded='+results.length+' expected=110 (this fixture is the 111th)');
+    results.length===113, 'recorded='+results.length+' expected=113 (this fixture is the 114th)');
 
   return results;
 }

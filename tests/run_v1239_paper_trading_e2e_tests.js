@@ -104,10 +104,19 @@ globalThis.Notification=undefined;
     if(tx) tx._pending++;
     return r;
   }
+  // §18.38 (L3): a failed request now ABORTS its transaction. The previous version called onerror
+  // and then still completed the transaction, so evidenceReq's reject path and evidenceTxDone's
+  // onerror/onabort paths were DEAD CODE in all 34 suites -- a real quota or disk write failure
+  // would have been reported as success and evidenceRecordWriteFailure would never have fired.
   function fire(r,value,err,tx){
     Promise.resolve().then(function(){
-      if(err){ r.error=err; if(r.onerror) r.onerror({target:r}); }
-      else { r.result=value; if(r.onsuccess) r.onsuccess({target:r}); }
+      if(err){
+        r.error=err;
+        if(r.onerror) r.onerror({target:r});
+        if(tx){ tx._pending--; tx._fail(err); }
+        return;
+      }
+      r.result=value; if(r.onsuccess) r.onsuccess({target:r});
       if(tx){ tx._pending--; if(tx._pending<=0) tx._settle(); }
     });
   }
@@ -118,7 +127,17 @@ globalThis.Notification=undefined;
   // The ONE semantic production depends on: add() rejects a duplicate key, and a UNIQUE index
   // rejects a duplicate indexed value. The import path's "never overwrite" contract and the
   // duplicate-package protection are both built on exactly this.
+  // §18.38 (L1): the previous signature was `function(names)` -- the MODE was ignored entirely, so
+  // add/put/delete succeeded on a readonly transaction. In a browser that throws ReadOnlyError and
+  // no evidence package is ever stored, which means EVCAP.1/2/3 were passing on a behaviour a real
+  // IndexedDB does not have.
+  function assertWritable(h){
+    if(h.tx&&h.tx._mode!=='readwrite'){
+      throw Object.assign(new Error('ReadOnlyError: transaction is '+h.tx._mode),{name:'ReadOnlyError'});
+    }
+  }
   StoreHandle.prototype.add=function(v){
+    assertWritable(this);
     const r=req(this.tx), k=this.s.keyOf(v), s=this.s;
     let dup=this.s.rows.has(k);
     if(!dup){
@@ -132,7 +151,7 @@ globalThis.Notification=undefined;
     else { this.s.rows.set(k,v); fire(r,k,null,this.tx); }
     return r;
   };
-  StoreHandle.prototype.put=function(v){ const r=req(this.tx); this.s.rows.set(this.s.keyOf(v),v); fire(r,this.s.keyOf(v),null,this.tx); return r; };
+  StoreHandle.prototype.put=function(v){ assertWritable(this); const r=req(this.tx); this.s.rows.set(this.s.keyOf(v),v); fire(r,this.s.keyOf(v),null,this.tx); return r; };
   StoreHandle.prototype.get=function(k){ const r=req(this.tx); fire(r,this.s.rows.get(k),null,this.tx); return r; };
   StoreHandle.prototype.getAll=function(range,count){
     const r=req(this.tx);
@@ -141,9 +160,9 @@ globalThis.Notification=undefined;
     if(typeof count==='number') vals=vals.slice(0,count);
     fire(r,vals,null,this.tx); return r;
   };
-  StoreHandle.prototype.delete=function(k){ const r=req(this.tx); this.s.rows.delete(k); fire(r,undefined,null,this.tx); return r; };
+  StoreHandle.prototype.delete=function(k){ assertWritable(this); const r=req(this.tx); this.s.rows.delete(k); fire(r,undefined,null,this.tx); return r; };
   StoreHandle.prototype.count=function(){ const r=req(this.tx); fire(r,this.s.rows.size,null,this.tx); return r; };
-  StoreHandle.prototype.clear=function(){ const r=req(this.tx); this.s.rows.clear(); fire(r,undefined,null,this.tx); return r; };
+  StoreHandle.prototype.clear=function(){ assertWritable(this); const r=req(this.tx); this.s.rows.clear(); fire(r,undefined,null,this.tx); return r; };
   StoreHandle.prototype.openCursor=function(){
     const r=req(this.tx), rows=Array.from(this.s.rows.values()), tx=this.tx;
     let i=0;
@@ -163,7 +182,17 @@ globalThis.Notification=undefined;
       get:function(k){ const r=req(tx); let hit;
         s.rows.forEach(function(v){ if(hit===undefined&&kp&&v&&v[kp]===k) hit=v; });
         fire(r,hit,null,tx); return r; },
-      getAll:function(){ const r=req(tx); fire(r,Array.from(s.rows.values()),null,tx); return r; },
+      // §18.38 (L4): range and count were both IGNORED, and production depends on them:
+      // index('bySeq').getAll(IDBKeyRange.lowerBound(0), plan.evictCount). Rows are also ordered by
+      // the index key, as a real index is -- insertion order is not the same thing.
+      getAll:function(range,count){
+        const r=req(tx);
+        let vals=Array.from(s.rows.values());
+        if(kp) vals=vals.slice().sort(function(a,b){ return a[kp]<b[kp]?-1:(a[kp]>b[kp]?1:0); });
+        if(range&&typeof range.includes==='function'&&kp) vals=vals.filter(function(v){ return range.includes(v[kp]); });
+        if(typeof count==='number') vals=vals.slice(0,count);
+        fire(r,vals,null,tx); return r;
+      },
       openCursor:function(){ const r=req(tx); fire(r,null,null,tx); return r; }
     };
   };
@@ -174,13 +203,24 @@ globalThis.Notification=undefined;
   DB.prototype.createObjectStore=function(name,opts){
     const st=new Store(name,opts&&opts.keyPath); this.stores[name]=st; return st;
   };
-  DB.prototype.transaction=function(names){
+  DB.prototype.transaction=function(names,mode){
     const self=this;
     const tx={_pending:0,_done:false,_oncomplete:null,onerror:null,onabort:null,error:null,
+      _scope:(Array.isArray(names)?names:[names]),_mode:mode||'readonly',
+      _fail:function(err){
+        if(tx._done) return;
+        tx._done=true; tx.error=err;
+        if(tx.onerror) tx.onerror({target:tx});
+        if(tx.onabort) tx.onabort({target:tx});
+      },
       objectStore:function(n){
-        // A real IndexedDB throws NotFoundError for a store outside the transaction's scope.
-        // Auto-creating it would let a production typo pass silently.
+        // §18.38 (L2): this checked only that the store EXISTS, while the comment above it claimed
+        // it enforced the transaction's SCOPE. It did not -- a comment stronger than the code
+        // beneath it, in my own harness. A real IndexedDB throws NotFoundError for a store outside
+        // the scope named at transaction() time, and production reading `packages` from a
+        // [meta]-scoped transaction would take the export banner and reconciliation down with it.
         if(!self.stores[n]) throw Object.assign(new Error('NotFoundError: no object store named '+n),{name:'NotFoundError'});
+        if(tx._scope.indexOf(n)===-1) throw Object.assign(new Error('NotFoundError: '+n+' is outside this transaction scope'),{name:'NotFoundError'});
         return new StoreHandle(self.stores[n],tx);
       },
       abort:function(){ tx._done=true; if(tx.onabort) tx.onabort({target:tx}); },

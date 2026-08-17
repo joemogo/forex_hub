@@ -574,6 +574,49 @@ function runStep2APipelineObservabilityFixtures(g){
   // reversed between two 60-second polls, so a stop touched EXACTLY to the pip during a poll gap
   // (tab throttling, sleep, a dropped connection) does not stop the position out and it runs on
   // with NO BOUND.
+  // ── 🔴 §18.38 B1: the ALEX EVIDENCE-CAPTURE seam, previously unwitnessed ────────────────────
+  // Making evidenceCaptureClosedTrades `if(true) return;` survived the entire 2,336-fixture gate,
+  // while the identical edit to its JVM twin killed three. ALEX is the arm actually running live
+  // paper trades, so the audit-capture path this milestone exists to produce could stop emitting
+  // packages, silently and for the whole session, with the gate fully green. The most likely
+  // production trigger is the in-flight flag latching true on a request that never settles (tab
+  // suspension, a versionchange-blocked open) -- there is no watchdog on it.
+  //
+  // The only thing that DID kill was three source-text fixtures asserting where the seam SITS in
+  // the file. That it produces anything was asserted by nothing.
+  function stepAlexEvidenceCapture(){
+    resetAll();
+    alexSeedOpen({tradeId:'ALEXEV-1'});
+    const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
+    return g.evidenceListPackages().then(function(before){
+      const n0=(before||[]).length;
+      // A real ALEX close, driven through the live tick -- which is the ONLY path the seam sits on.
+      installFetchStub({H1:[],H4:htf,D:htf,W:htf},{value:{bid:1.09400,ask:1.09420}},{fail:true});
+      return g.alexGCheckLivePositions().then(function(){
+        installOfflineFetch();
+        // The seam is fire-and-forget, so its write lands after the tick resolves.
+        let chain=Promise.resolve();
+        for(let i=0;i<200;i++) chain=chain.then(function(){});
+        return chain.then(function(){ return g.evidenceListPackages(); }).then(function(after){
+          const acct=g.getAlexGAccount();
+          const closed=(acct.closedPositions||[])[0]||null;
+          check('ALEXEV.0 (PRECONDITION): the ALEX position really closed through the live tick, so the capture assertion below is about a real close',
+            !!closed && acct.openPositions.length===0,
+            JSON.stringify({open:acct.openPositions.length,closed:acct.closedPositions.length}));
+          const mine=(after||[]).filter(function(p){ return p&&String(p.sourceTradeId)===String('ALEXEV-1'); });
+          check('ALEXEV.1 (END-TO-END): a real ALEX close produces a durable evidence package filed against its own tradeId. The seam is fire-and-forget, so nothing downstream fails when it stops -- which is precisely why it must be asserted here',
+            (after||[]).length===n0+1 && mine.length===1,
+            'before='+n0+' after='+((after||[]).length)+' mine='+mine.length+
+            ' ids='+JSON.stringify((after||[]).map(function(x){return String(x.sourceTradeId);}).slice(0,5)));
+          check('ALEXEV.2 (CONTENT): that package carries the trade\'s own booked exit price and P&L rather than a placeholder',
+            mine.length===1 && closed
+              && JSON.stringify(mine[0]).indexOf(String(closed.exitPrice))!==-1
+              && JSON.stringify(mine[0]).indexOf(String(closed.pnl))!==-1,
+            closed?('exit='+closed.exitPrice+' pnl='+closed.pnl):'no closed position');
+        });
+      });
+    });
+  }
   function stepAlexExitExactTouch(){
     const t0=Date.now()-10*60000;
     const htf=buildMinimalHTF(Date.now()-30*24*3600000,20);
@@ -826,8 +869,16 @@ function runStep2APipelineObservabilityFixtures(g){
   // P9 -- isolation from genuine forward and research evidence. Requirements 9 and 10.
   // ═══════════════════════════════════════════════════════════════════════════════════════
   function stepP9(){
-    check('2A.43: this process has no IndexedDB, so no observation or evidence package can be written',
-      typeof globalThis.indexedDB==='undefined');
+    // §18.38: this asserted the HARNESS had no IndexedDB -- a fixture pinning a limitation of the
+    // runner rather than a property of the system. That limitation was itself the reason the ALEX
+    // evidence-capture seam could not be observed at all, so removing it was the point. The P9
+    // header states the real requirement: isolation from genuine forward and research evidence.
+    // Asserted the way 2A.44 asserts it for localStorage -- the store is runner-owned and
+    // in-memory, so nothing here can reach the operator's real evidence database.
+    check('2A.43: the evidence store in this process is a runner-owned in-memory stub, never the operator\'s real IndexedDB -- so no genuine forward or research evidence can be written or read',
+      typeof globalThis.indexedDB==='object'&&globalThis.indexedDB!==null
+        &&typeof globalThis.indexedDB.__isTestStub==='function'
+        &&globalThis.indexedDB.__isTestStub()===true);
     check('2A.44: localStorage is a runner-owned stub, never the operator\'s real browser storage',
       typeof globalThis.localStorage.__isTestStub==='function'&&globalThis.localStorage.__isTestStub()===true);
     check('2A.45: the durable observation writer was never reached -- records were drained from memory only',
@@ -907,7 +958,7 @@ function runStep2APipelineObservabilityFixtures(g){
   const steps=[stepP1,stepP2,stepP3,stepP4,stepP5,stepP6,stepP7,stepP8,stepP9,stepP10,
     // §18.33: the ALEX exit-booking group. Placed last so it cannot disturb the ordering the
     // pipeline fixtures above depend on; each step reseeds the account itself.
-    stepAlexExitBuyStop,stepAlexExitBuyTarget,stepAlexExitSellStop,stepAlexExitSellTarget,
+    stepAlexEvidenceCapture,stepAlexExitBuyStop,stepAlexExitBuyTarget,stepAlexExitSellStop,stepAlexExitSellTarget,
     stepAlexExitNoTouch,stepAlexExitHistoricalStop,stepAlexExitHistoricalShortStop,
     stepAlexExitHistoricalTargets,stepAlexExitExactTouch,stepAlexExitShortExcursion,
     stepAlexExitHistoricalNoTouch];
