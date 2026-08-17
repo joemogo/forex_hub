@@ -44,6 +44,26 @@ def index():
     return EvidenceIndex.load(rc.EVIDENCE_ROOT)
 
 
+def open_acceptance(idx):
+    """The acceptance questions that are still UNANSWERED.
+
+    candidate_search.search() refuses an answered question by design -- candidate
+    search exists to find evidence for open questions. EQ|20260727|014 was answered
+    on 2026-08-13 by the governed MOGO-020 TJR adjudication, so iterating the raw
+    tuple raised SearchRefused: the corpus moving forward, not a regression. The
+    tuple above is kept intact as the declared acceptance set, so if 014 is ever
+    reopened it returns to these tests automatically.
+
+    This is deliberately NOT `assertGreater(len, 0)`-free: a filter that silently
+    empties would turn every loop below into a vacuous pass.
+    """
+    open_ids = [q for q in ACCEPTANCE
+                if idx.questions[q].get("answerStatus") != "answered"]
+    assert open_ids, ("every acceptance question is answered -- these loops would "
+                      "pass vacuously; choose new open questions")
+    return open_ids
+
+
 class SearchCase(unittest.TestCase):
 
     @classmethod
@@ -55,7 +75,7 @@ class TestAcceptanceCases(SearchCase):
     """Real TJR questions from MOGO-019 Step 9."""
 
     def test_every_acceptance_question_surfaces_candidates(self):
-        for question_id in ACCEPTANCE:
+        for question_id in open_acceptance(self.idx):
             with self.subTest(question=question_id):
                 result = cs.search(self.idx, question_id, limit=None)
                 self.assertEqual(result["traderId"], TJR)
@@ -93,7 +113,7 @@ class TestCorpusIsolation(SearchCase):
     def test_a_tjr_question_returns_only_tjr_evidence(self):
         alex_sources = {s["sourceId"] for s in self.idx.sources.values()
                         if s.get("traderId") == ALEX}
-        for question_id in ACCEPTANCE:
+        for question_id in open_acceptance(self.idx):
             with self.subTest(question=question_id):
                 result = cs.search(self.idx, question_id, limit=None)
                 for candidate in result["candidates"]:
@@ -186,7 +206,7 @@ class TestDeterministicRanking(SearchCase):
         self.assertEqual(a, b)
 
     def test_governed_relationships_rank_above_lexical_ones(self):
-        for question_id in ACCEPTANCE:
+        for question_id in open_acceptance(self.idx):
             with self.subTest(question=question_id):
                 result = cs.search(self.idx, question_id, limit=None)
                 ranks = [cs._TIER_RANK[c["tier"]] for c in result["candidates"]]
@@ -284,7 +304,7 @@ class TestNoStateChange(SearchCase):
             return out
 
         before = digest()
-        for question_id in ACCEPTANCE:
+        for question_id in open_acceptance(self.idx):
             cs.render(cs.search(index(), question_id, limit=None))
         self.assertEqual(digest(), before)
 
@@ -293,36 +313,44 @@ class TestNoStateChange(SearchCase):
                                                   "*.json")))
         answered_before = sum(1 for q in index().questions.values()
                               if q.get("answerStatus") == "answered")
-        for question_id in ACCEPTANCE:
+        for question_id in open_acceptance(self.idx):
             cs.search(index(), question_id, limit=None)
         after = index()
         self.assertEqual(sum(1 for q in after.questions.values()
                              if q.get("answerStatus") == "answered"),
                          answered_before)
-        self.assertEqual(answered_before, 0)
         self.assertEqual(len(glob.glob(os.path.join(rc.EVIDENCE_ROOT, "links",
                                                     "*.json"))), links_before)
-        self.assertEqual(links_before, 416)
+        # `answered_before == 0` and `links_before == 416` asserted facts about one
+        # moment of the corpus, not anything searching does. Both before/after
+        # comparisons above are the actual invariant and remain.
 
     def test_no_proposal_or_contradiction_state_changes(self):
         before = {c["contradictionId"]: (c["status"], c.get("resolution"))
                   for c in index().contradictions.values()}
-        for question_id in ACCEPTANCE:
+        proposals_before = sorted(glob.glob(os.path.join(rc.EVIDENCE_ROOT,
+                                                         "proposals", "*.json")))
+        for question_id in open_acceptance(self.idx):
             cs.search(index(), question_id, limit=None)
         self.assertEqual({c["contradictionId"]: (c["status"], c.get("resolution"))
                           for c in index().contradictions.values()}, before)
-        self.assertEqual(
-            glob.glob(os.path.join(rc.EVIDENCE_ROOT, "proposals", "*.json")), [])
+        # Before/after, matching the contradiction check above. Global emptiness was a
+        # proxy that broke once the first authorized rule candidates existed, and could
+        # not have caught a write after that point either.
+        self.assertEqual(sorted(glob.glob(os.path.join(rc.EVIDENCE_ROOT,
+                                                       "proposals", "*.json"))),
+                         proposals_before)
 
     def test_eligibility_is_unchanged_by_searching(self):
         before = ru.eligibility(ru.corpus_view(index(), TJR))
-        for question_id in ACCEPTANCE:
+        for question_id in open_acceptance(self.idx):
             cs.search(index(), question_id, limit=None)
         after = ru.eligibility(ru.corpus_view(index(), TJR))
         self.assertEqual(after["eligibility"], before["eligibility"])
         self.assertEqual(after["blockerCount"], before["blockerCount"])
         self.assertEqual(after["eligibility"], ru.BLOCKED)
-        self.assertEqual(after["blockerCount"], 17)
+        # The two before/after comparisons above are what "unchanged by searching"
+        # means; pinning the literal 17 tested the corpus instead.
 
 
 class TestFirewall(SearchCase):
@@ -674,18 +702,31 @@ class TestClaimSearchChangesNothing(ClaimSearchCase):
                        if q.get("answerStatus") == "answered")
         claims = {c["claimId"]: c.get("normalizedClaim")
                   for c in before.claims.values()}
+        links_before = sorted(glob.glob(os.path.join(rc.EVIDENCE_ROOT, "links",
+                                                     "*.json")))
+        proposals_before = sorted(glob.glob(os.path.join(rc.EVIDENCE_ROOT,
+                                                         "proposals", "*.json")))
         for question_id in self.QUESTIONS:
             cs.search_claims(index(), question_id, limit=None)
         after = index()
+        # This test asks whether SEARCHING changes anything, so every assertion below
+        # compares after-to-before. It previously also pinned three absolute corpus
+        # snapshots -- answered==0, len(links)==416, proposals==[] -- as proxies for
+        # "unchanged". Those are not invariants of searching: they are facts about one
+        # moment of the corpus, and they broke on legitimate research progress (the
+        # governed MOGO-020 adjudication answered EQ|20260727|014, and the first
+        # authorized rule candidates were created). Each proxy was also weaker than the
+        # comparison it sat next to, since it could not detect a change once the corpus
+        # moved off the pinned value.
         self.assertEqual(sum(1 for q in after.questions.values()
                              if q.get("answerStatus") == "answered"), answered)
-        self.assertEqual(answered, 0)
         self.assertEqual({c["claimId"]: c.get("normalizedClaim")
                           for c in after.claims.values()}, claims)
-        self.assertEqual(len(glob.glob(os.path.join(rc.EVIDENCE_ROOT, "links",
-                                                    "*.json"))), 416)
-        self.assertEqual(
-            glob.glob(os.path.join(rc.EVIDENCE_ROOT, "proposals", "*.json")), [])
+        self.assertEqual(sorted(glob.glob(os.path.join(rc.EVIDENCE_ROOT, "links",
+                                                       "*.json"))), links_before)
+        self.assertEqual(sorted(glob.glob(os.path.join(rc.EVIDENCE_ROOT,
+                                                       "proposals", "*.json"))),
+                         proposals_before)
 
     def test_xcontra_is_untouched(self):
         for question_id in self.QUESTIONS:
@@ -696,11 +737,17 @@ class TestClaimSearchChangesNothing(ClaimSearchCase):
         self.assertIsNone(record["resolution"])
 
     def test_tjr_eligibility_is_unchanged(self):
+        # "Unchanged" needs a before. Asserting an absolute blockerCount of 17 never
+        # established that searching left eligibility alone -- it only pinned one
+        # moment of the corpus, and it broke when the governed MOGO-020 adjudication
+        # answered EQ|20260727|014 and legitimately retired a blocker.
+        before = ru.eligibility(ru.corpus_view(index(), TJR))
         for question_id in self.QUESTIONS:
             cs.search_claims(index(), question_id, limit=None)
         result = ru.eligibility(ru.corpus_view(index(), TJR))
         self.assertEqual(result["eligibility"], "BLOCKED")
-        self.assertEqual(result["blockerCount"], 17)
+        self.assertEqual(result["blockerCount"], before["blockerCount"])
+        self.assertEqual(result["eligibility"], before["eligibility"])
 
     def test_authorization_is_unchanged(self):
         sys.path.insert(0, os.path.join(REPO_ROOT, "platform", "src"))

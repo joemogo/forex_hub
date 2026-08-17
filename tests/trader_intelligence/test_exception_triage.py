@@ -364,7 +364,11 @@ class TestFirewall(TriageCase):
         eligibility = ru.eligibility(view)
         self.assertEqual(self.result["eligibility"], eligibility["eligibility"])
         self.assertEqual(self.result["eligibility"], ru.BLOCKED)
-        self.assertEqual(self.result["blockerCount"], 17)
+        # The property is that the triage packet REPORTS what the eligibility engine
+        # computes -- two separate code paths, so this is a real cross-check, not a
+        # tautology. Pinning the literal 17 tested the corpus instead of the packet and
+        # broke when the governed MOGO-020 adjudication retired a blocker.
+        self.assertEqual(self.result["blockerCount"], eligibility["blockerCount"])
 
     def test_the_packet_offers_a_decision_but_records_none(self):
         text = "\n".join(et.render_packets(self.result, limit=1))
