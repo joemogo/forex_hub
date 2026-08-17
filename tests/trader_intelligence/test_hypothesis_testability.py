@@ -17,6 +17,7 @@ The properties under test:
 
 import glob
 import hashlib
+import json
 import os
 import sys
 import unittest
@@ -166,6 +167,54 @@ class TestAgainstTheRealCorpus(unittest.TestCase):
         self.assertIn("alex_g_sr_v1", held)
         for human in ("TJR", "ALEX_G", "RAYNER_TEO"):
             self.assertNotIn(human, held)
+
+
+class TestTheAcquisitionQueueCoversTheBindingConstraint(unittest.TestCase):
+    """MOGO-022 priority 7. The queue is only useful if it records what is actually
+    blocking research. Every trader whose hypotheses are untestable for want of
+    OBSERVED TRADES must have an acquisition gap saying so -- otherwise the queue
+    describes the rule questions while omitting the constraint that dominates them."""
+
+    def setUp(self):
+        self.results = ht.triage()
+        self.gaps = [json.load(open(f)) for f in sorted(glob.glob(
+            os.path.join(ht.EVIDENCE_ROOT, "gaps", "*.json")))]
+
+    def blocked_traders(self):
+        out = set()
+        for result in self.results.values():
+            if any(b["blocker"] == ht.NO_EVIDENCE_POPULATION
+                   for b in result["blockers"]):
+                out |= set(result["claimActors"])
+        return out
+
+    def test_every_blocked_trader_has_an_observed_trade_evidence_gap(self):
+        covered = {g["traderId"] for g in self.gaps
+                   if g.get("category") == "observed_trade_evidence"}
+        missing = self.blocked_traders() - covered
+        self.assertEqual(missing, set(),
+                         "no acquisition gap records the missing trade evidence for: "
+                         "%s" % sorted(missing))
+
+    def test_the_precondition_holds_there_are_blocked_traders(self):
+        """Without this, the test above passes vacuously the moment the triage
+        stops finding anything."""
+        self.assertTrue(self.blocked_traders())
+
+    def test_those_gaps_ask_for_trade_records_not_another_transcript(self):
+        """A further transcript cannot close this class of gap. If the recommended
+        next source were another transcript, the queue would send acquisition effort
+        somewhere that cannot resolve it."""
+        for gap in self.gaps:
+            if gap.get("category") != "observed_trade_evidence":
+                continue
+            recommended = (gap.get("recommendedNextSourceType") or "").lower()
+            self.assertTrue(
+                any(k in recommended for k in ("screenshot", "trade record",
+                                               "journal")),
+                "%s recommends %r, which cannot close an observed-trade gap"
+                % (gap["gapId"], gap.get("recommendedNextSourceType")))
+            self.assertEqual(gap.get("answerStatus"), "unanswered")
 
 
 class TestItWritesNothing(unittest.TestCase):

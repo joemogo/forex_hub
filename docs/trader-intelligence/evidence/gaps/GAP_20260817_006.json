@@ -1,0 +1,26 @@
+{
+  "affectedSections": [
+    "Hypothesis validation",
+    "Human-vs-MOGO decision difference"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "observed_trade_evidence",
+  "confidence": "none",
+  "createdAt": "2026-08-17T16:45:00Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260817|006",
+  "proposedValidationMethod": "Ingest as TradeObservation records with actor=HUMAN via the Lane A intake path, then compare against MOGO observations of the same population using decision_difference.observation_difference().",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": []
+  },
+  "question": "What trades did TJR actually TAKE? No observed trade record exists for this trader in any form.",
+  "recommendedNextSourceType": "operator-supplied screenshots or trade records of TJR's own executed trades (EvidenceSource sourceType 'screenshot' or 'journal_entry'; the TradeObservation ingestion path exists and is tested)",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "This is the binding constraint on 47 hypotheses attributed to TJR: every one is NOT_TESTABLE_NO_EVIDENCE_POPULATION because nothing in the corpus records what this trader did, only what they said. The corpus holds 247 TradeObservations and all 247 are MOGO's own decisions. MOGO's implementation (e.g. alex_g_sr_v1) is NOT evidence about the person -- replaying it measures whether the implementation exhibits a property, which is a different question with a different answer. This gap also blocks all human-vs-MOGO decision-difference analysis, which needs one HUMAN and one MOGO observation of the same shape and currently has zero on the human side."
+}

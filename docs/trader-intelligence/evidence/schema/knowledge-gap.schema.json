@@ -6,38 +6,167 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "gapId", "traderId", "blueprintId", "category", "question", "answerStatus",
-    "confidence", "researchPriority", "createdAt", "schemaVersion"
+    "gapId",
+    "traderId",
+    "blueprintId",
+    "category",
+    "question",
+    "answerStatus",
+    "confidence",
+    "researchPriority",
+    "createdAt",
+    "schemaVersion"
   ],
   "properties": {
-    "gapId": { "type": "string", "pattern": "^GAP\\|\\d{8}\\|\\d{3,}$" },
-    "traderId": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
-    "blueprintId": { "type": "string", "pattern": "^BLUEPRINT\\|.*$" },
-    "category": { "type": "string",
-      "enum": ["instrument", "session", "higher_timeframe_bias", "execution_timeframe", "setup_sequence",
-        "entry_trigger", "confirmation", "invalidation", "stop_placement", "risk_percentage",
-        "target_selection", "trade_management", "news_handling", "spread_handling",
-        "volatility_handling", "no_trade_conditions", "exception_handling"] },
-    "question": { "type": "string" },
-    "whyItMatters": { "type": ["string", "null"], "default": null },
-    "affectedSections": { "type": "array", "items": { "type": "string" }, "default": [] },
-    "evidenceSearched": { "type": "array", "items": { "type": "string", "pattern": "^EV\\|" }, "default": [] },
-    "currentBestAnswer": { "type": ["string", "null"], "default": null },
-    "answerStatus": { "type": "string", "enum": ["unanswered", "partially_answered", "answered"], "default": "unanswered" },
-    "confidence": { "type": "string", "enum": ["none", "low", "moderate", "high"], "default": "none",
-      "description": "Confidence in currentBestAnswer -- 'none' whenever currentBestAnswer is null." },
-    "researchPriority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-    "recommendedNextSourceType": { "type": ["string", "null"], "default": null },
-    "proposedValidationMethod": { "type": ["string", "null"], "default": null },
+    "gapId": {
+      "type": "string",
+      "pattern": "^GAP\\|\\d{8}\\|\\d{3,}$"
+    },
+    "traderId": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "blueprintId": {
+      "type": "string",
+      "pattern": "^BLUEPRINT\\|.*$"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "instrument",
+        "session",
+        "higher_timeframe_bias",
+        "execution_timeframe",
+        "setup_sequence",
+        "entry_trigger",
+        "confirmation",
+        "invalidation",
+        "stop_placement",
+        "risk_percentage",
+        "target_selection",
+        "trade_management",
+        "news_handling",
+        "spread_handling",
+        "volatility_handling",
+        "no_trade_conditions",
+        "exception_handling",
+        "observed_trade_evidence"
+      ],
+      "description": "observed_trade_evidence covers a gap in OBSERVED TRADES rather than in a stated rule: what the trader actually did, as opposed to what they said. It is a distinct acquisition class -- a further transcript cannot close it, only trade records can."
+    },
+    "question": {
+      "type": "string"
+    },
+    "whyItMatters": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "affectedSections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "evidenceSearched": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^EV\\|"
+      },
+      "default": []
+    },
+    "currentBestAnswer": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "answerStatus": {
+      "type": "string",
+      "enum": [
+        "unanswered",
+        "partially_answered",
+        "answered"
+      ],
+      "default": "unanswered"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "none",
+        "low",
+        "moderate",
+        "high"
+      ],
+      "default": "none",
+      "description": "Confidence in currentBestAnswer -- 'none' whenever currentBestAnswer is null."
+    },
+    "researchPriority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "recommendedNextSourceType": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "proposedValidationMethod": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
     "provenance": {
-      "type": "object", "additionalProperties": false, "default": {},
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
       "properties": {
-        "evidenceQuestionId": { "type": ["string", "null"], "pattern": "^EQ\\|.*$", "default": null },
-        "relatedClaimIds": { "type": "array", "items": { "type": "string", "pattern": "^CLAIM\\|" }, "default": [] }
+        "evidenceQuestionId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^EQ\\|.*$",
+          "default": null
+        },
+        "relatedClaimIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CLAIM\\|"
+          },
+          "default": []
+        }
       }
     },
-    "createdAt": { "type": "string", "format": "date-time" },
-    "resolvedAt": { "type": ["string", "null"], "format": "date-time", "default": null },
-    "schemaVersion": { "type": "integer", "minimum": 1 }
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resolvedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "default": null
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    }
   }
 }
