@@ -404,6 +404,24 @@ try{
     'g.closePaperPosition=closePaperPosition;' +
     // §18.30: the defence-in-depth finiteness refusal in commitPaperLedger.
     'g.commitPaperLedger=commitPaperLedger;' +
+    // P1: both paper-account reset paths change DURABLE account state and had zero behavioural
+    // coverage -- making either a no-op survived the full gate, and the only fixture calling one
+    // did so while LOCKED and asserted nothing changed, which a permanently inert function
+    // satisfies. Reset is a ledger/account operation, so it is trading-critical.
+    'g.confirmPaperResetAccountOnly=confirmPaperResetAccountOnly;' +
+    'g.confirmPaperResetFull=confirmPaperResetFull;' +
+    'g.getPaperResetHistory=function(){ return paperResetHistory; };' +
+    // P1: the INC-001 refusal list's MEMBERSHIP. The mechanism is pinned, but whether the VERSION
+    // key is in the list was not -- and dropping it would let a corrupt version key be overwritten,
+    // disarming the stale-version guard that protects durable ledger state.
+    'g.markStorageLoadFailure=function(k){ storageLoadFailures[k]={message:"fixture-injected unreadable key"}; };' +
+    'g.clearStorageLoadFailures=function(){ storageLoadFailures={}; };' +
+    // P1: setPaperBalance's rollback on a rejected commit -- its sibling in applyPaperReconciliation
+    // is pinned and this one was not.
+    'g.setPaperBalance=setPaperBalance;' +
+    'g.setBalanceInput=function(v){ document.getElementById("paperBalanceInput").value=String(v); };' +
+    'g.rigStalePaperVersion=function(){ localStorage.setItem("fxhub_paper_version",String(paperAccountKnownVersion+10)); };' +
+    'g.getAutoTradingLog=function(){ return autoTrading.log; };' +
     // §18.30: the UNREALIZED P&L shown on every open position had zero gate coverage -- even a
     // constant payload at the computation survived the whole gate. This is the second, unwatched
     // copy of the pip/P&L arithmetic; the realized close path is pinned by JVMEXIT-11.

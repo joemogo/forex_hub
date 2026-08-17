@@ -341,6 +341,19 @@ async function runV1239PaperTradingE2EFixtures(g){
     assert('PTE2E-FINITE.4 (JVM pnl ARM, newest of six): a NaN pnl on the NEWEST closed JVM trade is refused with a finite balance -- the arm every existing FINITE fixture left unexercised, and which slice(-5) made inert past the fifth record',
       !!jvmDeep && jvmDeep.ok===false && jvmDeep.reasonCode==='NON_FINITE_LEDGER',
       'res='+JSON.stringify(jvmDeep));
+    // P1: NULL specifically, not just NaN. `null` is exactly what a NaN BECOMES across a
+    // JSON.stringify round-trip, so it is the form the value actually takes once it has been
+    // persisted and reloaded -- the very path the guard exists to catch. Every other FINITE fixture
+    // seeds NaN, so exempting null from the guard survived the whole gate.
+    jvmClean();
+    const jvmNull=[];
+    for(let i=0;i<6;i++) jvmNull.push({id:910000+i,pnl:i===0?null:10,result:'Win',
+      closedAt:'2026-08-0'+(i+1)+'T10:00:00.000Z'});
+    g.setPaperAccount({balance:10500,openPositions:[],closedPositions:jvmNull});
+    const jvmNullRes=g.commitPaperLedger();
+    assert('PTE2E-FINITE.5 (the NULL form): a null pnl on the newest closed trade is refused too. null is what a NaN becomes after a JSON round-trip, so it is the form the corruption takes once it has been written and reloaded -- the guard must not exempt it',
+      !!jvmNullRes && jvmNullRes.ok===false && jvmNullRes.reasonCode==='NON_FINITE_LEDGER',
+      'res='+JSON.stringify(jvmNullRes));
     jvmClean();
     g.setPricing('reject');
     const posF=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
@@ -743,6 +756,33 @@ async function runV1239PaperTradingE2EFixtures(g){
       !!tPkg && JSON.stringify(tPkg).indexOf('isDeveloperTrade')!==-1
              && /"isDeveloperTrade"\s*:\s*true/.test(JSON.stringify(tPkg)),
       'json='+JSON.stringify(tPkg||{}).slice(0,240));
+    // ── P1: the evidence package's TRADE-VALIDITY fields. Independent verification showed the
+    //    normalizer could swap stop and target, file a JVM trade under the ALEX strategy id, and
+    //    claim the strategy MANAGES stops when its policy is NONE_BY_DESIGN -- all surviving the
+    //    full gate. Each corrupts the record used to determine whether a trade was valid; the
+    //    strategy id additionally mis-attributes a trade across strategies in the corpus.
+    assert('PTE2E-EVCAP.7 (STOP AND TARGET ARE NOT INTERCHANGEABLE): the package records the trade\'s own stop 1.29000 and target 1.32000 the right way round. Swapped, a losing trade reads as if its risk and reward were inverted and no reconstruction of the decision is possible',
+      (function(){
+        const j=JSON.stringify(tPkg||{});
+        return j.indexOf('"originalStop":1.29')!==-1 && j.indexOf('"target":1.32')!==-1;
+      })(),
+      'stopField='+JSON.stringify((tPkg&&tPkg.positions&&tPkg.positions[0])?{stop:tPkg.positions[0].originalStop,target:tPkg.positions[0].target}:null));
+    assert('PTE2E-EVCAP.8 (STRATEGY ATTRIBUTION): a JVM trade is filed under current_strategy, never under the ALEX id. Mis-filing puts one strategy\'s trades in the other\'s corpus, which is the exact defect the v12.8.4 fail-closed guard was added for -- the guard is pinned, the call site passing the id was not',
+      // Asserted on the ATTRIBUTION field, not a substring scan of the whole package: a JVM
+      // package legitimately carries strategyVersion "alex_g_sr_v1 (inferred, unstamped)" as
+      // honest provenance, which my first draft mistook for a mis-filing. (That a JVM package
+      // references the ALEX ruleset version at all is odd, but it is explicitly labelled inferred
+      // and unstamped -- logged to the P2 backlog rather than treated as a defect here.)
+      (function(){
+        const ident=(tPkg&&tPkg.trades&&tPkg.trades[0]&&tPkg.trades[0].identity)
+                  ||(tPkg&&tPkg.identity)||null;
+        return !!ident && ident.strategyId==='current_strategy';
+      })(),
+      'identity='+JSON.stringify((tPkg&&tPkg.trades&&tPkg.trades[0]&&tPkg.trades[0].identity)||(tPkg&&tPkg.identity)||null).slice(0,160));
+    assert('PTE2E-EVCAP.9 (STOP-MANAGEMENT POLICY): the package states NONE_BY_DESIGN -- the strategy does not move stops. A package asserting MANAGED would claim an active risk-management behaviour the engine does not have',
+      JSON.stringify(tPkg||{}).indexOf('NONE_BY_DESIGN')!==-1
+        && JSON.stringify(tPkg||{}).indexOf('MANAGED')===-1,
+      'policy='+JSON.stringify(tPkg||{}).slice(0,160));
     assert('PTE2E-EVCAP.6 (REAL EXIT REASON): the package records WHY the trade closed, not only Win or Loss. exitReason was mapped in the normalizer and read nowhere, so a take-profit, a discretionary manual close and a system close all exported identically',
       !!tPkg && JSON.stringify(tPkg).indexOf('exitReasonDetail')!==-1
              && JSON.stringify(tPkg).indexOf('SYSTEM_CLOSE')!==-1,
@@ -803,6 +843,146 @@ async function runV1239PaperTradingE2EFixtures(g){
       'result='+JSON.stringify(bf2||{}));
     g.setAlexGJournalEntries([]);
     alexClean();
+  }
+
+  // ── 🔴 P1: the capture SNAPSHOT ORIENTATION ─────────────────────────────────────────────────
+  // closedPositions is unshift-built, so slice(0,25) is the NEWEST 25 and slice(-25) would be the
+  // oldest -- the §18.35 defect class, in two functions it was never applied to. Every real account
+  // crosses 25 closed trades within weeks, after which a reversed slice means the trade that JUST
+  // closed is never captured and its evidence silently never exists. Seeded past the window so the
+  // two orientations are distinguishable.
+  {
+    jvmClean(); alexClean();
+    const many=[];
+    for(let i=0;i<30;i++) many.push({id:800000+i,pnl:10,result:'Win',exitPrice:1.3100,
+      openedAt:'2026-08-01T09:00:00.000Z',
+      closedAt:'2026-08-'+String((i%28)+1).padStart(2,'0')+'T10:00:00.000Z'});
+    many.reverse();   // newest first, exactly as unshift builds it
+    g.setPaperAccount({balance:10300,openPositions:[],closedPositions:many});
+    await drainMicrotasks();
+    const beforeWin=(await g.evidenceListPackages()).length;
+    g.commitPaperLedger();
+    // 25 sequential package writes, each several awaits deep -- two 50-turn drains reached only the
+    // first eight. The loop runs OLDEST first (so the sequence follows time), which is why a
+    // shallow drain captures the oldest and misses exactly the newest trade this fixture is about.
+    for(let d=0;d<20;d++) await drainMicrotasks();
+    const afterWin=await g.evidenceListPackages();
+    const newestId=String(many[0].id);
+    assert('PTE2E-EVCAP.10 (SNAPSHOT ORIENTATION): the capture window takes the NEWEST closed trades. With 30 closed positions it captures the most recent one; a reversed slice would capture the oldest, and the trade that just closed would never be evidenced at all',
+      (afterWin||[]).some(function(p){ return p&&String(p.sourceTradeId)===newestId; }),
+      'newest='+newestId+' before='+beforeWin+' captured='+
+      'n='+((afterWin||[]).length)+' all='+JSON.stringify((afterWin||[]).map(function(p){return String(p.sourceTradeId);})).slice(0,300));
+    jvmClean(); alexClean();
+  }
+
+  // ── 🔴 P1: the paper-account RESET paths, previously unexercised ────────────────────────────
+  // confirm() is stubbed true in this harness, exactly as an operator clicking through. Reset
+  // clears open and closed positions, clears the auto-trade log, restores the starting balance and
+  // records an audit entry -- every one of those is durable account state, and making either
+  // function a no-op survived the entire gate.
+  {
+    jvmClean();
+    g.setPricing('reject');
+    const rPos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(rPos.id,false,null);
+    const openAnother=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    const preAcct=g.getPaperAccount();
+    const preResets=(g.getPaperResetHistory()||[]).length;
+    assert('PTE2E-RESET.0 (PRECONDITION): the account genuinely has an open position, a closed position and a moved balance before the reset, so "cleared" below cannot pass on an already-empty account',
+      preAcct.openPositions.length===1 && preAcct.closedPositions.length===1 && preAcct.balance!==10000 && !!openAnother,
+      'open='+preAcct.openPositions.length+' closed='+preAcct.closedPositions.length+' balance='+preAcct.balance);
+    g.confirmPaperResetAccountOnly();
+    const post=g.getPaperAccount();
+    assert('PTE2E-RESET.1 (ACCOUNT-ONLY RESET): open and closed positions are cleared and the balance returns to exactly 10000.00 -- the durable account state the dialog promises to restore',
+      post.openPositions.length===0 && post.closedPositions.length===0 && post.balance===10000,
+      'open='+post.openPositions.length+' closed='+post.closedPositions.length+' balance='+post.balance);
+    assert('PTE2E-RESET.2 (AUDIT ENTRY): the reset is RECORDED in paperResetHistory. Without it, ledger reconciliation cannot distinguish a deliberate reset from silent data loss -- which is the entire purpose of that history',
+      (g.getPaperResetHistory()||[]).length===preResets+1,
+      'before='+preResets+' after='+((g.getPaperResetHistory()||[]).length));
+    assert('PTE2E-RESET.3 (AUTO-TRADE LOG): the auto-trade log is cleared with the account, so a stale traded-today record cannot suppress a fresh entry after a reset',
+      (g.getAutoTradingLog()||[]).length===0,
+      'logLength='+((g.getAutoTradingLog()||[]).length));
+    // The reset must PERSIST -- an in-memory-only reset would reappear on reload.
+    assert('PTE2E-RESET.4 (PERSISTED): the cleared account is written to storage, not merely to memory. A reset that survives only until reload is not a reset',
+      (function(){ try{ const o=JSON.parse(g.getLocalStorageItem('fxhub_paper')); 
+        return o&&o.balance===10000&&(o.openPositions||[]).length===0&&(o.closedPositions||[]).length===0; }catch(e){ return false; } })(),
+      'stored='+String(g.getLocalStorageItem('fxhub_paper')||'').slice(0,110));
+    jvmClean();
+  }
+  {
+    // FULL reset -- the second path, equally unexercised. Written separately rather than assumed
+    // symmetric: the unmirrored half has been this milestone's most persistent defect shape.
+    jvmClean();
+    g.setPricing('reject');
+    const fPos=g.openPaperPosition('GBP_USD','buy',1.3000,1.2900,1.3200,'manual');
+    g.setPairData('GBP_USD',1.3100);
+    await g.closePaperPosition(fPos.id,false,null);
+    g.setJournalEntries([{journalEntryId:'JVMJ|1',tradeId:1,status:'CLOSED',strategyId:'current_strategy'}]);
+    const preJournal=(g.getJournalEntries()||[]).length;
+    const preResetsF=(g.getPaperResetHistory()||[]).length;
+    assert('PTE2E-RESET.5 (PRECONDITION): there is a closed position AND a journal record to clear, so the full reset has both of the things it claims to remove',
+      (g.getPaperAccount().closedPositions||[]).length===1 && preJournal===1,
+      'closed='+((g.getPaperAccount().closedPositions||[]).length)+' journal='+preJournal);
+    g.confirmPaperResetFull();
+    const postF=g.getPaperAccount();
+    assert('PTE2E-RESET.6 (FULL RESET): the account is cleared to exactly 10000.00 AND the journal is emptied -- the full reset removes the trade history the account-only reset deliberately leaves behind',
+      postF.balance===10000 && (postF.closedPositions||[]).length===0
+        && (g.getJournalEntries()||[]).length===0,
+      'balance='+postF.balance+' closed='+((postF.closedPositions||[]).length)+' journal='+((g.getJournalEntries()||[]).length));
+    assert('PTE2E-RESET.7 (FULL RESET IS AUDITED TOO): it records its own history entry, so both reset kinds remain distinguishable from data loss',
+      (g.getPaperResetHistory()||[]).length===preResetsF+1,
+      'before='+preResetsF+' after='+((g.getPaperResetHistory()||[]).length));
+    jvmClean();
+  }
+
+  // ── 🔴 P1: INC-001 refusal-list MEMBERSHIP, and the setPaperBalance rollback ────────────────
+  {
+    jvmClean();
+    g.clearStorageLoadFailures();
+    // The VERSION key alone is unreadable: the account and journal are fine. The commit must still
+    // be refused, because writing a fresh version over a version that could not be read is exactly
+    // how the stale-version guard gets disarmed and a concurrent tab's ledger is lost.
+    g.markStorageLoadFailure('fxhub_paper_version');
+    const blocked=g.commitPaperLedger();
+    assert('PTE2E-INC001.1 (VERSION KEY IN THE REFUSAL LIST): a commit is REFUSED when only fxhub_paper_version is unreadable. The INC-001 mechanism is pinned elsewhere; this pins the version key\'s MEMBERSHIP of the list, without which the stale-version guard can be silently overwritten',
+      // Asserted on the recorded engine error, which NAMES the blocked key. commitPaperLedger
+      // flattens savePaperAccountGuarded's LOAD_INTEGRITY_BLOCKED into the generic blocking-banner
+      // text and drops both the reason code and blockedKeys -- so the return value cannot
+      // distinguish an INC-001 refusal from an ordinary stale-version rejection. (That flattening
+      // is logged to the P2 backlog: the operator is told "a newer version may exist in another
+      // tab" when the real cause is an unreadable key, which is a different remedy.)
+      !!blocked && blocked.ok===false
+        && g.getPaperEngineErrorMessages().some(function(m){
+             return m.indexOf('BLOCKED to prevent data loss')!==-1 && m.indexOf('fxhub_paper_version')!==-1; }),
+      'res='+JSON.stringify(blocked).slice(0,90)+' errors='+JSON.stringify(g.getPaperEngineErrorMessages()).slice(0,200));
+    g.clearStorageLoadFailures();
+    const okAgain=g.commitPaperLedger();
+    assert('PTE2E-INC001.2 (NEGATIVE CONTROL): with nothing unreadable the same commit succeeds -- so the refusal above is the blocked key and not a permanently broken commit path',
+      !!okAgain && okAgain.ok===true,
+      'res='+JSON.stringify(okAgain));
+    jvmClean();
+  }
+  {
+    // setPaperBalance's rollback on a rejected commit. Its sibling in applyPaperReconciliation is
+    // pinned; this one was not, so a failed balance change could leave the in-memory account
+    // holding a value that was never persisted.
+    jvmClean();
+    g.setPaperAccount({balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]});
+    g.rigStalePaperVersion&&g.rigStalePaperVersion();
+    g.setBalanceInput&&g.setBalanceInput(55000);
+    if(g.setBalanceInput&&g.rigStalePaperVersion){
+      g.setPaperBalance();
+      const after=g.getPaperAccount();
+      assert('PTE2E-SETBAL-RB.1 (ROLLBACK): when the commit is rejected, the in-memory balance is restored to 10000.00 -- it must not keep a value that was never written to storage, or the panel and the file disagree until the next reload',
+        after.balance===10000,
+        'balance='+after.balance);
+      g.resetPaperVersionGuard&&g.resetPaperVersionGuard();
+    } else {
+      assert('PTE2E-SETBAL-RB.1 (ROLLBACK): skipped -- the harness lacks the version-rig or input setter',
+        false,'missing exports');
+    }
+    jvmClean();
   }
 
   // ── BOUNDARY: exactly at the risk limit ────────────────────────────────────────────────
@@ -1317,7 +1497,7 @@ async function runV1239PaperTradingE2EFixtures(g){
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===117, 'recorded='+results.length+' expected=117 (this fixture is the 118th)');
+    results.length===133, 'recorded='+results.length+' expected=133 (this fixture is the 134th)');
 
   return results;
 }
