@@ -352,9 +352,12 @@ class TestFirewall(TriageCase):
         before = digest()
         et.render_packets(et.triage(index(), TJR))
         et.render_packets(et.triage(index(), ALEX))
+        # The digest above already spans "proposals" by path AND content, so triage writing
+        # or editing a proposal fails here. Additionally asserting the directory was globally
+        # EMPTY added no detection power and froze a corpus state -- it began failing the
+        # moment the first authorized rule candidates were created, reporting a firewall
+        # breach that had not happened. Removed, not rebaselined.
         self.assertEqual(digest(), before)
-        self.assertEqual(
-            glob.glob(os.path.join(rc.EVIDENCE_ROOT, "proposals", "*.json")), [])
 
     def test_eligibility_is_reported_but_not_changed(self):
         view = ru.corpus_view(index(), TJR)

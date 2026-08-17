@@ -526,8 +526,16 @@ class TestExecutionFirewall(ViewCase):
 
     def test_no_rule_candidate_proposal_record_is_created(self):
         """Step 2 produces a VIEW, not a stored proposal."""
-        self.assertEqual(
-            glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
+        # The claim is that the STEP writes no proposal -- not that the repository
+        # contains none. Asserting the directory is empty conflated the two: it began
+        # failing the moment the first authorized rule candidates were created (reporting
+        # a firewall breach that had not happened), and it would not have detected a write
+        # at all once any proposal legitimately exists. Before/after is the actual invariant
+        # and is strictly stronger in both directions.
+        pattern = os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")
+        before = sorted(glob.glob(pattern))
+        ru.corpus_view(index(), TJR)
+        self.assertEqual(sorted(glob.glob(pattern)), before)
         self.assertNotIn("proposalId", json.dumps(self.view))
 
 
@@ -833,9 +841,11 @@ class TestEligibilityFreezeFirewall(EligibilityCase):
             return out
         before = digest()
         ru.eligibility(ru.corpus_view(index(), TJR))
+        # The digest above already covers "proposals" by path AND content, so it fails if
+        # this step creates or edits a proposal. A trailing assertion that the directory is
+        # globally EMPTY added no detection power and instead froze a corpus state, breaking
+        # once the first authorized rule candidates existed. Removed, not rebaselined.
         self.assertEqual(digest(), before)
-        self.assertEqual(
-            glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
 
 
 # ---------------------------------------------------------------------------
@@ -1101,9 +1111,10 @@ class TestPlannerIsolationAndSideEffects(PlannerCase):
         before = digest()
         self.replanned()
         ru.render_plan(self.plan)
+        # As above: the digest already spans "proposals" by path and content, so planning
+        # writing a proposal fails here. The global-emptiness assertion that followed was
+        # redundant and corpus-frozen. Removed, not rebaselined.
         self.assertEqual(digest(), before)
-        self.assertEqual(
-            glob.glob(os.path.join(ru.EVIDENCE_ROOT, "proposals", "*.json")), [])
 
     def test_the_plan_states_it_is_not_an_authorization(self):
         self.assertIs(self.plan["planningOnly"], True)

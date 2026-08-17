@@ -407,6 +407,8 @@ class TestFirewall(unittest.TestCase):
                                for c in idx_before.contradictions.values()}
         answered = {q["questionId"]: q.get("answerStatus")
                     for q in idx_before.questions.values()}
+        proposals_pattern = os.path.join(rc.EVIDENCE_ROOT, "proposals", "*.json")
+        proposals_before = sorted(glob.glob(proposals_pattern))
         rc.conformance_report(index(), TJR)
         idx_after = index()
         self.assertEqual({c["contradictionId"]: c["status"]
@@ -414,8 +416,11 @@ class TestFirewall(unittest.TestCase):
                          open_contradictions)
         self.assertEqual({q["questionId"]: q.get("answerStatus")
                           for q in idx_after.questions.values()}, answered)
-        self.assertEqual(
-            glob.glob(os.path.join(rc.EVIDENCE_ROOT, "proposals", "*.json")), [])
+        # Compare before/after, exactly like the two assertions above. Asserting this
+        # directory was EMPTY was a proxy for "conformance_report wrote no proposal" that
+        # held only while the corpus contained none: it failed once the first authorized
+        # rule candidates were created, and it could never have caught a write after that.
+        self.assertEqual(sorted(glob.glob(proposals_pattern)), proposals_before)
 
 
 if __name__ == "__main__":
