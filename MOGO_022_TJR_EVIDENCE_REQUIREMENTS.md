@@ -106,7 +106,7 @@ Blockers, counted across all 641 (a hypothesis may carry more than one):
 
 ### Why "no evidence population" applies to all 641
 
-The corpus now holds 222 TradeObservations, but they are all **MOGO's own decisions**:
+The corpus now holds 247 TradeObservations, but they are all **MOGO's own decisions**:
 
 | Held for | Population |
 |---|---|
