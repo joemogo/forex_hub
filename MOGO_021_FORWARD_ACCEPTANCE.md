@@ -110,3 +110,46 @@ To confirm from the live tab in ~10 seconds, read-only, in its console:
   jvmAutoTrading: autoTrading.enabled,
   activeWatch: Object.entries(scanData).filter(([,v])=>v&&v.bucket==='Active watch').map(([k])=>k)})
 ```
+
+---
+
+## CLOSURE — 2026-08-17 09:27 EDT — GREEN
+
+The operator ran "Run Auto Top-Down Scan Now". Re-checked from a fresh read-only LevelDB copy; the
+live session was again never touched.
+
+**Correction to the section above:** the stale value's authoritative string is
+`2026-08-04T23:41:54.361Z` (04 Aug, 19:41 EDT). The earlier "2026-08-05 19:21" line came from
+decoding a guessed epoch rather than the stored string; the staleness was ~12.5 days, not ~11.
+
+| Check | Result |
+|---|---|
+| `fxhub_autoscan` | `{"enabled":true,"lastRunAt":"2026-08-17T13:27:45.771Z"}` — **09:27:45 EDT**, and enabled |
+| Universe | **12 of 12** configured pairs persisted; none missing, none unexpected |
+| Scan cycle | one stamp across every pair: `Auto-scanned 17 Aug, 09:27` |
+| Completeness | W/D/H4 **COMPLETE** on all 12; `completenessSuppressed:false` everywhere |
+| Failures | zero `Auto-scan FAILED`, zero `Not assessed`, zero suppressed |
+| Active watch (JVM eligible) | GBP/USD, GBP/JPY, AUD/USD, AUD/JPY, USD/CHF — recomputed 09:27 today |
+| ALEX GBP/USD | intact — tradeId and entry 1.35565 still present, engine 12.39.1, undisturbed |
+| JVM USD/CHF | unchanged, still the 2026-07-20 position |
+
+Bucket assignments are internally consistent with the frozen rule (`score>=2 && hasValidAOI`):
+AUD/USD 3/3-aligned with a valid AOI → grade A / Active watch; EUR/USD aligned but AOI-less →
+"Ranging / no break"; USD/JPY score 1 → "—". That is the rule pinned by AUTOADMIT.1-3 behaving
+correctly in production.
+
+**The P1 from the previous run is resolved.** JVM eligibility now derives from a scan completed
+minutes ago, and the UI indicator is consistent with `autoScan.enabled:true`. G-2 semantics were
+**not** modified — no age bound was added; the operator's manual run restored currency.
+
+**Paper-only safety unchanged, and it does not depend on the `env` setting:** no order-placement code
+exists at all. `apiBase()` only chooses which host market data is *read* from; every OANDA call is a
+`GET` and the only two `POST`s go to `api.anthropic.com`. The running build stamps
+`createdByEngineVersion 12.39.1`, identical to the verified checkpoint, and the repository is
+unchanged since (drift 0). *Note: `cfg.env` could not be read cleanly from compressed storage — the
+`prod`-looking strings are compression artifacts from other origins — but the property holds
+structurally regardless.*
+
+**MOGO-021 CLOSED — GREEN FOR AUTONOMOUS FORWARD PAPER OBSERVATION AND PAPER TRADING.**
+PAPER only. Live-money trading remains unauthorized. Deferred backlog and the four governance items
+carry forward unchanged.
