@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 9597.374930559432,
   "accountBalanceBefore": 9694.318111676193,
   "actor": "MOGO",
   "closedAt": "2026-06-05T13:00:00.000Z",
@@ -8,6 +9,7 @@
   "exitPrice": 1.8637716071428572,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -17,6 +19,7 @@
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -29,6 +32,7 @@
   "openedAt": "2026-06-05T09:00:00.000Z",
   "outcome": "Loss",
   "positionSize": 0.27402461554893376,
+  "rMultiple": -1,
   "riskAmount": 96.94318111676193,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|ca6c0038a27b|AGT|AGS|alex_g_sr_v1|GBP_CAD|H4|AGZ|AGC|GBP_CAD|H4|high|1776027600000|v1779728400000|B_breakRetest|AGR|GBP_CAD|H4|low|1780606800000",
@@ -39,5 +43,7 @@
   "strategyId": "alex_g_sr_v1",
   "target": 1.8786467857142857,
   "timeframe": "H4",
-  "unknowns": []
+  "unknowns": [
+    "pnl"
+  ]
 }

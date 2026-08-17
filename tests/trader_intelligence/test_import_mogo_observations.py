@@ -565,5 +565,124 @@ class TestASourceIsNeverRepointed(unittest.TestCase):
         self.assertTrue(result["reused"])
 
 
+class TestRealizedPerformanceIsObservedNotDerived(unittest.TestCase):
+    """pnl / accountBalanceAfter / rMultiple are COPIED from the package. Deriving
+    P&L from prices would convert an observed quantity into an inferred one, which
+    is the conversion this subsystem exists to prevent."""
+
+    def setUp(self):
+        # Drive the MAPPING, not the corpus already on disk. Reading the written
+        # records would assert stored state: every mutation of the importer below
+        # survived that way, because the files do not change when the code does.
+        records, _skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
+        self.records = records
+        self.sources = imp.source_map(sources)
+
+    def forward(self):
+        return {r["observationId"]: r for r in self.records
+                if to.observation_population(r, self.sources) == to.FORWARD}
+
+    def historical(self):
+        return {r["observationId"]: r for r in self.records
+                if to.observation_population(r, self.sources) == to.HISTORICAL}
+
+    def test_every_forward_record_carries_realized_pnl(self):
+        self.assertTrue(self.forward())
+        for record in self.forward().values():
+            self.assertIsNotNone(record.get("pnl"),
+                                 "%s has no pnl" % record["observationId"])
+            self.assertEqual(record["fieldClassification"]["pnl"],
+                             "DIRECTLY_OBSERVED")
+
+    def test_replay_records_declare_pnl_unknown_rather_than_zero(self):
+        """A replay produces no realized P&L. Recording 0 would make 221 losing
+        trades look break-even in any aggregate."""
+        self.assertTrue(self.historical())
+        for record in self.historical().values():
+            self.assertNotIn("pnl", record)
+            self.assertIn("pnl", record.get("unknowns") or [])
+
+    def test_r_multiple_is_recorded_from_the_observed_exit_not_the_plan(self):
+        """`realizedR` carries realizedRProvenance OBSERVED_FROM_EXIT. `plannedR`
+        is intent, not result, and must not be what lands here."""
+        for record in self.records:
+            self.assertIsNotNone(record.get("rMultiple"))
+        planned = {2, 2.0}
+        forward_r = {r["rMultiple"] for r in self.forward().values()}
+        self.assertTrue(forward_r - planned,
+                        "every rMultiple equals plannedR -- the plan was mapped, "
+                        "not the realized result")
+
+
+class TestTheWideningGuardActuallyGuards(unittest.TestCase):
+    """_assert_widening_only is what makes the backfill safe to run against
+    committed evidence. It is a pure function, so it is tested directly -- the live
+    corpus is already backfilled, so no realistic run exercises its failure path."""
+
+    BEFORE = {"observationId": "TOBS|MOGO|1", "entry": 1.2345, "outcome": "Win",
+              "unknowns": ["pnl"],
+              "fieldClassification": {"entry": "DIRECTLY_OBSERVED"}}
+
+    def test_a_valid_widening_is_permitted(self):
+        after = dict(self.BEFORE, pnl=10.0, unknowns=["pnl", "rMultiple"],
+                     fieldClassification={"entry": "DIRECTLY_OBSERVED",
+                                          "pnl": "DIRECTLY_OBSERVED"})
+        imp._assert_widening_only("TOBS|MOGO|1", self.BEFORE, after)   # must not raise
+
+    def test_changing_an_existing_value_is_refused(self):
+        after = dict(self.BEFORE, entry=9.9999)
+        with self.assertRaises(to.ObservationRefused):
+            imp._assert_widening_only("TOBS|MOGO|1", self.BEFORE, after)
+
+    def test_removing_a_key_is_refused(self):
+        after = {k: v for k, v in self.BEFORE.items() if k != "outcome"}
+        with self.assertRaises(to.ObservationRefused):
+            imp._assert_widening_only("TOBS|MOGO|1", self.BEFORE, after)
+
+    def test_shrinking_unknowns_is_refused(self):
+        """An unknown silently disappearing is how a field that was never observed
+        starts looking like one that was."""
+        after = dict(self.BEFORE, unknowns=[])
+        with self.assertRaises(to.ObservationRefused):
+            imp._assert_widening_only("TOBS|MOGO|1", self.BEFORE, after)
+
+    def test_changing_an_existing_classification_is_refused(self):
+        after = dict(self.BEFORE,
+                     fieldClassification={"entry": "INFERRED"})
+        with self.assertRaises(to.ObservationRefused):
+            imp._assert_widening_only("TOBS|MOGO|1", self.BEFORE, after)
+
+
+class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
+    """The forward population covers only the closes that minted a package. It is
+    NOT the account's full history, and a performance figure computed from it must
+    not be presented as the account's performance."""
+
+    def test_the_balance_chain_has_gaps_and_that_is_expected(self):
+        obs, sources = to.load_observations(), to.load_sources()
+        forward = [r for r in to.select_population(obs, sources, to.FORWARD).values()
+                   if r.get("strategyId") == "alex_g_sr_v1"]
+        forward.sort(key=lambda r: r["closedAt"])
+        breaks = [a["observationId"] for a, b in zip(forward, forward[1:])
+                  if abs(a["accountBalanceAfter"] - b["accountBalanceBefore"]) > 0.005]
+        # Documented, not asserted away: the packages cover a subset of the
+        # account's closes (B-22 -- the oldest closes predate the evidence DB being
+        # recreated), so the chain is expected to be discontinuous. Pinning this
+        # stops a future reader treating the set as a complete account history.
+        self.assertTrue(breaks,
+                        "no gaps found -- if the package set became complete, the "
+                        "coverage caveat in MOGO_022_TJR_EVIDENCE_REQUIREMENTS.md "
+                        "and B-22 should be revisited rather than this test deleted")
+
+    def test_the_most_recent_close_reconciles_with_the_live_account(self):
+        """Cross-validation against state observed independently in the browser:
+        the newest preserved close must land on the live balance."""
+        obs, sources = to.load_observations(), to.load_sources()
+        forward = [r for r in to.select_population(obs, sources, to.FORWARD).values()
+                   if r.get("strategyId") == "alex_g_sr_v1"]
+        latest = max(forward, key=lambda r: r["closedAt"])
+        self.assertAlmostEqual(latest["accountBalanceAfter"], 9756.23, places=2)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 10280.97,
   "accountBalanceBefore": 10386.83,
   "actor": "MOGO",
   "closedAt": "2026-07-23T02:28:37.449Z",
@@ -8,6 +9,7 @@
   "exitPrice": 186.238,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -16,7 +18,9 @@
     "instrument": "DIRECTLY_OBSERVED",
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
+    "pnl": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -28,7 +32,9 @@
   "observationId": "TOBS|MOGO|20260817|005",
   "openedAt": "2026-07-22T11:01:11.820Z",
   "outcome": "Loss",
+  "pnl": -105.86,
   "positionSize": 0.49588840505468773,
+  "rMultiple": -1.01914,
   "riskAmount": 103.8683,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "AGT|AGS|alex_g_sr_v1|EUR_JPY|H1|AGZ|AGC|EUR_JPY|H1|high|1781607600000|v1784664000000|A_repeatedReaction|AGR|EUR_JPY|H1|high|1784707200000",

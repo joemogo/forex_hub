@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 10173.05,
   "accountBalanceBefore": 10280.1,
   "actor": "MOGO",
   "closedAt": "2026-07-28T05:14:34.674Z",
@@ -8,6 +9,7 @@
   "exitPrice": 1.13614,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -16,7 +18,9 @@
     "instrument": "DIRECTLY_OBSERVED",
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
+    "pnl": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -28,7 +32,9 @@
   "observationId": "TOBS|MOGO|20260817|015",
   "openedAt": "2026-07-28T00:00:48.549Z",
   "outcome": "Loss",
+  "pnl": -107.05,
   "positionSize": 1.390209128229749,
+  "rMultiple": -1.041294,
   "riskAmount": 102.801,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1784818800000|v1784923200000|A_repeatedReaction|AGR|EUR_USD|H1|low|1785186000000",

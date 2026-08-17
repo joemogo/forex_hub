@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 10493.441693348788,
   "accountBalanceBefore": 10287.687934655674,
   "actor": "MOGO",
   "closedAt": "2026-07-17T11:00:00.000Z",
@@ -8,6 +9,7 @@
   "exitPrice": 185.62853571428576,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -17,6 +19,7 @@
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -29,6 +32,7 @@
   "openedAt": "2026-07-16T16:00:00.000Z",
   "outcome": "Win",
   "positionSize": 1.0562059630890743,
+  "rMultiple": 2,
   "riskAmount": 102.87687934655675,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|8f70d403fae1|AGT|AGS|alex_g_sr_v1|EUR_JPY|H1|AGZ|AGC|EUR_JPY|H1|high|1781528400000|v1784167200000|A_repeatedReaction|AGR|EUR_JPY|H1|high|1784206800000",
@@ -39,5 +43,7 @@
   "strategyId": "alex_g_sr_v1",
   "target": 185.62853571428576,
   "timeframe": "H1",
-  "unknowns": []
+  "unknowns": [
+    "pnl"
+  ]
 }

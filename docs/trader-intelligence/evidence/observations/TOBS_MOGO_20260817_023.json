@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 9666.75,
   "accountBalanceBefore": 9764.39,
   "actor": "MOGO",
   "closedAt": "2026-07-30T23:39:13.445Z",
@@ -8,6 +9,7 @@
   "exitPrice": 112.39878571428572,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -16,7 +18,9 @@
     "instrument": "DIRECTLY_OBSERVED",
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
+    "pnl": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -28,7 +32,9 @@
   "observationId": "TOBS|MOGO|20260817|023",
   "openedAt": "2026-07-30T21:00:23.207Z",
   "outcome": "Loss",
+  "pnl": -97.64,
   "positionSize": 0.6019958001275014,
+  "rMultiple": -1.0,
   "riskAmount": 97.6439,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "AGT|AGS|alex_g_sr_v1|AUD_JPY|H1|AGZ|AGC|AUD_JPY|H1|low|1783440000000|v1783933200000|B_breakRetest|AGR|AUD_JPY|H1|high|1785434400000",

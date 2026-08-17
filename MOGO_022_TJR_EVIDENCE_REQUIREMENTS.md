@@ -110,8 +110,23 @@ The corpus now holds 222 TradeObservations, but they are all **MOGO's own decisi
 
 | Held for | Population |
 |---|---|
-| `alex_g_sr_v1` | HISTORICAL (replay) |
-| `current_strategy` | FORWARD (one paper close) |
+| `alex_g_sr_v1` | HISTORICAL (221 replay) **and** FORWARD (25 paper closes) |
+| `current_strategy` | FORWARD (1 paper close) |
+
+**Update, same day:** 25 forward closes were recovered from browser storage and
+preserved, taking the FORWARD population from 1 to 26. This does not change the
+conclusion below — those are still MOGO's decisions, not TJR's — but forward
+analysis of MOGO's own behaviour is now possible where it was not.
+
+**Coverage caveat, which any forward figure must carry:** the 25 preserved ALEX
+closes are a SUBSET of that account's closed positions (~38). The balance chain
+across them breaks 11 times, and summed realized P&L does not reach the live
+balance, because the oldest closes minted no evidence package (backlog B-22 — the
+evidence database was recreated from scratch on 2026-08-17). The most recent close
+does reconcile exactly with the independently-observed live balance of 9756.23,
+which is what confirms the preserved set is real and current rather than stale.
+**Forward-performance statistics computed on this set are the performance of the
+preserved subset, not of the account.**
 
 Hypotheses blocked purely on missing evidence for their actor: **ALEX_G 587, TJR 47,
 RAYNER_TEO 33.**

@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 9666.39,
   "accountBalanceBefore": 10173.05,
   "actor": "MOGO",
   "closedAt": "2026-07-29T21:26:07.342Z",
@@ -8,6 +9,7 @@
   "exitPrice": 1.0911273214285715,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -16,7 +18,9 @@
     "instrument": "DIRECTLY_OBSERVED",
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
+    "pnl": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -28,7 +32,9 @@
   "observationId": "TOBS|MOGO|20260817|020",
   "openedAt": "2026-07-28T21:00:24.653Z",
   "outcome": "Loss",
+  "pnl": -101.73,
   "positionSize": 0.32849937586316974,
+  "rMultiple": -1.0,
   "riskAmount": 101.73049999999999,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "AGT|AGS|alex_g_sr_v1|GBP_CHF|H4|AGZ|AGC|GBP_CHF|H4|high|1784797200000|v1785186000000|A_repeatedReaction|AGR|GBP_CHF|H4|high|1785229200000",

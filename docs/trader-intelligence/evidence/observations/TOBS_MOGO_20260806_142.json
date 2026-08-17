@@ -1,4 +1,5 @@
 {
+  "accountBalanceAfter": 10187.847033725167,
   "accountBalanceBefore": 10290.754579520371,
   "actor": "MOGO",
   "closedAt": "2026-07-06T02:00:00.000Z",
@@ -8,6 +9,7 @@
   "exitPrice": 0.5687633928571428,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
+    "accountBalanceAfter": "DIRECTLY_OBSERVED",
     "accountBalanceBefore": "DIRECTLY_OBSERVED",
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
@@ -17,6 +19,7 @@
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED",
@@ -29,6 +32,7 @@
   "openedAt": "2026-07-03T04:00:00.000Z",
   "outcome": "Loss",
   "positionSize": 0.47717335137297306,
+  "rMultiple": -1,
   "riskAmount": 102.90754579520372,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|80a17b22e3f8|AGT|AGS|alex_g_sr_v1|NZD_USD|H1|AGZ|AGC|NZD_USD|H1|low|1775530800000|v1783026000000|A_repeatedReaction|AGR|NZD_USD|H1|low|1783040400000",
@@ -39,5 +43,7 @@
   "strategyId": "alex_g_sr_v1",
   "target": 0.5752332142857143,
   "timeframe": "H1",
-  "unknowns": []
+  "unknowns": [
+    "pnl"
+  ]
 }

@@ -14,7 +14,9 @@
     "instrument": "DIRECTLY_OBSERVED",
     "openedAt": "DIRECTLY_OBSERVED",
     "outcome": "DIRECTLY_OBSERVED",
+    "pnl": "DIRECTLY_OBSERVED",
     "positionSize": "DIRECTLY_OBSERVED",
+    "rMultiple": "DIRECTLY_OBSERVED",
     "riskAmount": "DIRECTLY_OBSERVED",
     "stop": "DIRECTLY_OBSERVED",
     "target": "DIRECTLY_OBSERVED"
@@ -25,7 +27,9 @@
   "observationId": "TOBS|MOGO|20260806|025",
   "openedAt": "2026-08-06T13:11:15.571Z",
   "outcome": "Win",
+  "pnl": 200,
   "positionSize": 0.5,
+  "rMultiple": 2,
   "riskAmount": 100,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "1786021876135",
@@ -36,6 +40,7 @@
   "strategyId": "current_strategy",
   "target": 1.089,
   "unknowns": [
+    "accountBalanceAfter",
     "accountBalanceBefore",
     "timeframe"
   ]

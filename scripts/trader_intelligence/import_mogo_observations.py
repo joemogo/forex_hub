@@ -70,6 +70,15 @@ OUTCOME_MAP = (
     ("exitPrice", "exitPrice"),
     ("closedAt", "exitTimestamp"),
     ("outcome", "exitReasonCode"),
+    # Realized performance. `pnl` is present on exactly the 26 LIVE_CLOSE packages
+    # and absent from all 221 REPLAY_RUN ones -- a replay produces no realized P&L,
+    # so it becomes an explicit UNKNOWN there rather than a zero.
+    ("pnl", "pnl"),
+    ("accountBalanceAfter", "balanceAfter"),
+    # `realizedR` carries realizedRProvenance OBSERVED_FROM_EXIT on all 247, so it
+    # is recorded as DIRECTLY_OBSERVED. `plannedR` is the intent, not the result,
+    # and is deliberately NOT mapped here.
+    ("rMultiple", "realizedR"),
 )
 
 
@@ -371,6 +380,107 @@ def backfill_content_hashes(observations_dir=None, sources_dir=None, write=False
     return {"resolved": len(updated), "unresolved": unresolved, "wrote": bool(write)}
 
 
+def backfill_mapped_fields(observations_dir=None, sources_dir=None, write=False):
+    """Add fields the mapping gained after a record was written.
+
+    STRICTLY WIDENING. An existing key's value is never changed and nothing is ever
+    removed: the only permitted edits are adding a mapped field that was absent, and
+    APPENDING to `unknowns`. Both are proven per record before anything is written,
+    not asserted in a comment.
+
+    Needed because OUTCOME_MAP gained pnl / accountBalanceAfter / rMultiple after the
+    247 records were imported. Without this, forward-performance analysis would have
+    to re-derive P&L from prices -- turning an observed quantity into an inferred
+    one, which is the conversion this whole subsystem exists to prevent.
+    """
+    observations = to.load_observations(observations_dir)
+    sources = to.load_sources(sources_dir)
+    by_file, updated, unresolved = {}, [], []
+
+    for observation_id in sorted(observations):
+        record = observations[observation_id]
+        source = sources.get(record.get("sourceId"))
+        package_id = record.get("sourcePackageId")
+        content_hash = record.get("sourceContentHash")
+        if source is None or not package_id:
+            unresolved.append({"observationId": observation_id,
+                               "reason": "NO_SOURCE_OR_PACKAGE_ID"})
+            continue
+        rel = source.get("repositoryPath")
+        if rel not in by_file:
+            try:
+                with open(os.path.join(REPO_ROOT, rel), "r", encoding="utf-8") as h:
+                    by_file[rel] = json.load(h)
+            except (OSError, ValueError, TypeError):
+                by_file[rel] = None
+        packages = by_file.get(rel)
+        if packages is None:
+            unresolved.append({"observationId": observation_id,
+                               "reason": "SOURCE_ARTIFACT_UNREADABLE|%s" % (rel,)})
+            continue
+        # Match on contentHash where we have it -- the package id is not unique.
+        matches = [p for p in packages
+                   if (p.get("contentHash") == content_hash if content_hash
+                       else p.get("packageId") == package_id)]
+        if len(matches) != 1:
+            unresolved.append({"observationId": observation_id,
+                               "reason": "AMBIGUOUS|%d" % len(matches)})
+            continue
+        package = matches[0]
+        outcome = (package.get("objects") or {}).get("outcomes") or [{}]
+        additions, new_unknowns = {}, []
+        for field, key in OUTCOME_MAP:
+            if field in record or field in (record.get("unknowns") or []):
+                continue
+            value = outcome[0].get(key)
+            if value is None:
+                new_unknowns.append(field)
+            else:
+                additions[field] = value
+        if not additions and not new_unknowns:
+            continue
+        updated.append((observation_id, additions, new_unknowns))
+
+    if write:
+        target_dir = observations_dir or to.OBSERVATIONS_DIR
+        for observation_id, additions, new_unknowns in updated:
+            record = observations[observation_id]
+            before = json.loads(json.dumps(record))
+            for field, value in additions.items():
+                record[field] = value
+                record["fieldClassification"][field] = "DIRECTLY_OBSERVED"
+            record["unknowns"] = sorted(set(record.get("unknowns") or [])
+                                        | set(new_unknowns))
+            _assert_widening_only(observation_id, before, record)
+            to.validate_observation(record)
+            gc.atomic_write_text(
+                os.path.join(target_dir,
+                             ec.observation_id_to_filename(observation_id)),
+                gc.pretty_json(record))
+
+    return {"updated": len(updated), "unresolved": unresolved, "wrote": bool(write)}
+
+
+def _assert_widening_only(observation_id, before, after):
+    """No existing value changed; nothing removed; `unknowns` only grew."""
+    for key, value in before.items():
+        if key in ("unknowns", "fieldClassification"):
+            continue
+        if key not in after or after[key] != value:
+            raise to.ObservationRefused(
+                "backfill would change %r on %s" % (key, observation_id))
+    if not set(before.get("unknowns") or []) <= set(after.get("unknowns") or []):
+        raise to.ObservationRefused(
+            "backfill would remove an unknown from %s" % observation_id)
+    old_class = before.get("fieldClassification") or {}
+    new_class = after.get("fieldClassification") or {}
+    for field, how in old_class.items():
+        if new_class.get(field) != how:
+            raise to.ObservationRefused(
+                "backfill would change the classification of %r on %s"
+                % (field, observation_id))
+
+
 def convert_all(package_glob=None, now=None, skip_imported=True,
                 observations_dir=None):
     """Read every package file and map it. Writes nothing.
@@ -499,7 +609,15 @@ def main(argv=None):
     parser.add_argument("--backfill-content-hashes", action="store_true",
                         help="add sourceContentHash to records written before that "
                              "field existed (additive only; combine with --write)")
+    parser.add_argument("--backfill-mapped-fields", action="store_true",
+                        help="add fields the mapping gained after import "
+                             "(widening only; combine with --write)")
     args = parser.parse_args(argv)
+
+    if args.backfill_mapped_fields:
+        result = backfill_mapped_fields(write=args.write)
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
 
     if args.backfill_content_hashes:
         result = backfill_content_hashes(write=args.write)
