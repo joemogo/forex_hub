@@ -1341,6 +1341,39 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    "instrumentsEvaluated="+((isoObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length+\n' +
   '    " attempted="+isoObs.instrumentsAttempted+" outcome="+String(isoObs.outcome)+\n' +
   '    " (unwrapped, this tick aborted with 0 evaluated and outcome ERROR)");\n' +
+  // ══ MOGO-022 -- A FAILING EXIT MONITOR MUST NOT BE INVISIBLE ═════════════════════════════
+  // alexGCheckLivePositions' per-position catch was bare. Continuing to the next position is
+  // correct and is NOT changed here -- one pair's bad tick must not stop the others being
+  // monitored -- but the error was discarded, and nothing else recorded it: the per-tick exit
+  // state this function mutates (lastExitCheckTimestamp, MAE/MFE) is never persisted, because
+  // saveAlexG()/saveAlexGRest() write only the auto/zone/setup keys. So a repeatedly failing
+  // candle or bid/ask fetch left the position open, the poll still reporting OK, and NO trace
+  // on disk -- observed during MOGO-022 forward operation, where the on-disk exit cursor sat
+  // frozen at openedAt for two hours with no way to tell healthy from broken.
+  //
+  // The fault is armed for ONE call. alexGCheckLivePositions is awaited before the pair loop and
+  // is the tick's first fetchBidAsk caller, so the one-shot hits the exit monitor and leaves the
+  // pair loop's own calls intact -- which is what lets EXITERR-1 assert all twelve still evaluate.
+  '  fullReset(); isoOpenPosition(); alexGEngineErrors=[];\n' +
+  '  const __xmFBA=fetchBidAsk; let __xmArm=true,__xmCalls=0;\n' +
+  '  fetchBidAsk=function(){ if(__xmArm){ __xmArm=false; __xmCalls++;\n' +
+  '    throw new Error("fixture exit-monitor fetch fault"); } return __xmFBA.apply(this,arguments); };\n' +
+  '  let __xmTickThrew=false;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __xmTickThrew=true; }\n' +
+  '  fetchBidAsk=__xmFBA;\n' +
+  '  const xmObs=g.lastObs();\n' +
+  '  const xmErr=alexGEngineErrors.filter(function(e){\n' +
+  '    return /fixture exit-monitor fetch fault/.test(String(e&&e.message))\n' +
+  '      &&e.stage==="alexGCheckLivePositions"; });\n' +
+  '  g.record("EXITERR-1","PRECONDITION: the exit monitor really threw for the open position, the tick did NOT abort, and all twelve instruments still evaluated",\n' +
+  '    __xmCalls===1&&__xmTickThrew===false&&xmObs.outcome==="OK"&&\n' +
+  '    (xmObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
+  '    "armed calls="+__xmCalls+" tick threw="+__xmTickThrew+" outcome="+String(xmObs.outcome)+\n' +
+  '    " evaluated="+((xmObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length);\n' +
+  '  g.record("EXITERR-2","the swallowed exit-monitor failure is RECORDED against the position that failed -- with the bare catch this was ZERO and the failure left no trace in any durable channel",\n' +
+  '    xmErr.length===1&&xmErr[0].tradeId==="ISO-FIXTURE-1"&&xmErr[0].pair==="EUR_USD",\n' +
+  '    "recorded="+xmErr.length+" tradeId="+String((xmErr[0]||{}).tradeId)+\n' +
+  '    " pair="+String((xmErr[0]||{}).pair));\n' +
   // ══ MOGO-021 -- EVERY CONFIGURED INSTRUMENT ACCOUNTED FOR ON EVERY OUTCOME PATH ═══════════
   // __obsSkipped is only pushed from inside the pair loop, so anything throwing BEFORE or DURING it
   // left instrumentsSkipped EMPTY beside instrumentsConfigured:12 -- 0 of 12 accounted for, the same
