@@ -277,7 +277,21 @@ def _observation_id(package, counters):
     return "TOBS|MOGO|%s|%03d" % (date, counters[date])
 
 
-def convert_all(package_glob=None, now=None):
+def already_imported(observations_dir=None):
+    """sourcePackageId -> observationId, for packages already recorded.
+
+    Import must be repeatable: a forward close mints a new package, and that
+    package has to reach the observation corpus without disturbing the 222 records
+    already there. Keying on the package's own id -- not on position in a walk --
+    is what makes a re-run additive instead of a renumbering.
+    """
+    existing = to.load_observations(observations_dir)
+    return {r["sourcePackageId"]: r["observationId"]
+            for r in existing.values() if r.get("sourcePackageId")}
+
+
+def convert_all(package_glob=None, now=None, skip_imported=True,
+                observations_dir=None):
     """Read every package file and map it. Writes nothing.
 
     Returns (records, skipped, sources).
@@ -285,12 +299,21 @@ def convert_all(package_glob=None, now=None):
     now = now or datetime.datetime(2026, 1, 1)
     sources = build_sources(now, package_glob)
     records, skipped, seen = [], [], set()
+    imported = already_imported(observations_dir) if skip_imported else {}
+    # Continue each date's sequence from what is already recorded, so a second run
+    # appends rather than colliding with -- or renumbering -- existing records.
     counters = {}
+    for observation_id in imported.values():
+        parts = observation_id.split("|")
+        if len(parts) == 4 and parts[3].isdigit():
+            counters[parts[2]] = max(counters.get(parts[2], 0), int(parts[3]))
     for path in sorted(globmod.glob(package_glob or PACKAGE_GLOB)):
         rel = os.path.relpath(path, REPO_ROOT)
         with open(path, "r", encoding="utf-8") as handle:
             packages = json.load(handle)
         for package in packages:
+            if package.get("packageId") in imported:
+                continue          # already recorded; never re-minted, never rewritten
             source = sources.get((rel, package.get("captureBasis")))
             record, reason = observation_from_package(package, now, counters, source)
             if record is None:
@@ -348,19 +371,24 @@ def report(records, skipped, sources):
 
 
 def write_sources(sources, sources_dir=None):
-    """Persist the EvidenceSources. Refuses to overwrite an existing one."""
+    """Persist the EvidenceSources. Never overwrites an existing one.
+
+    An already-registered source is left exactly as it is and reported as reused.
+    Rewriting it would change registeredAt/contentHash on a record other
+    observations already point at -- a silent mutation of preserved evidence.
+    """
     target_dir = sources_dir or os.path.join(to.EVIDENCE_ROOT, "sources")
     os.makedirs(target_dir, exist_ok=True)
-    written = []
+    written, reused = [], []
     for source in sorted(sources.values(), key=lambda s: s["sourceId"]):
         path = os.path.join(target_dir,
                             ec.source_id_to_filename(source["sourceId"]))
         if os.path.exists(path):
-            raise to.ObservationRefused(
-                "%s already exists; refusing to overwrite a registered source." % path)
+            reused.append(source["sourceId"])
+            continue
         gc.atomic_write_text(path, gc.pretty_json(source))
         written.append(source["sourceId"])
-    return written
+    return {"written": written, "reused": reused}
 
 
 def main(argv=None):
@@ -376,7 +404,7 @@ def main(argv=None):
     summary = report(records, skipped, sources)
 
     if args.write:
-        summary["sourcesWritten"] = write_sources(sources)
+        summary["sources"] = write_sources(sources)
         written = 0
         for record in records:
             try:
@@ -386,8 +414,7 @@ def main(argv=None):
                 skipped.append({"packageId": record.get("sourcePackageId"),
                                 "reason": "REFUSED_ON_WRITE|%s" % (exc,)})
         summary = dict(report(records, skipped, sources),
-                       sourcesWritten=summary["sourcesWritten"],
-                       wrote=True, written=written)
+                       sources=summary["sources"], wrote=True, written=written)
 
     print(json.dumps(summary, indent=2, sort_keys=True) if args.json
           else _human(summary))

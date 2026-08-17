@@ -32,6 +32,11 @@ import trade_observation as to            # noqa: E402
 
 NOW = datetime.datetime(2026, 8, 17, 12, 0, 0)
 
+# `skip_imported=False` in the mapping tests below: convert_all() is INCREMENTAL by
+# default and the real corpus is already imported, so the default would correctly
+# return zero records and every mapping assertion would pass vacuously. These tests
+# are about the mapping; TestImportIsIncrementalAndAdditive covers the skipping.
+
 
 SOURCE = {"sourceId": "EVSRC|MOGO|20260817|001", "sourceType": "replay_observation"}
 
@@ -87,7 +92,7 @@ class TestItInventsNothing(unittest.TestCase):
 
     def test_nothing_is_ever_classified_inferred(self):
         """These are MOGO's own recorded values -- observed or unknown, no middle."""
-        records, _, _sources = imp.convert_all(now=NOW)
+        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
         for record in records:
             self.assertNotIn("INFERRED", set(record["fieldClassification"].values()),
                              "%s carries an INFERRED classification"
@@ -141,20 +146,20 @@ class TestIdentifiersAreUniqueAcrossTheRealCorpus(unittest.TestCase):
     across pairs and produced 7 usable records out of 222."""
 
     def test_every_converted_record_has_a_distinct_id(self):
-        records, skipped, sources = imp.convert_all(now=NOW)
+        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
         ids = [r["observationId"] for r in records]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual([s for s in skipped if "DUPLICATE" in s["reason"]], [])
 
     def test_the_real_corpus_converts_without_loss(self):
-        records, skipped, sources = imp.convert_all(now=NOW)
+        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
         self.assertGreater(len(records), 200,
                            "the package corpus should convert in full")
         self.assertEqual(skipped, [], "nothing should be silently dropped")
 
     def test_conversion_is_deterministic_across_runs(self):
-        first, _, _s1 = imp.convert_all(now=NOW)
-        second, _, _s2 = imp.convert_all(now=NOW)
+        first, _, _s1 = imp.convert_all(now=NOW, skip_imported=False)
+        second, _, _s2 = imp.convert_all(now=NOW, skip_imported=False)
         self.assertEqual([r["observationId"] for r in first],
                          [r["observationId"] for r in second])
 
@@ -162,12 +167,12 @@ class TestIdentifiersAreUniqueAcrossTheRealCorpus(unittest.TestCase):
 class TestEveryProducedRecordIsValid(unittest.TestCase):
 
     def test_the_whole_corpus_passes_trade_observation_validation(self):
-        records, _, _sources = imp.convert_all(now=NOW)
+        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
         for record in records:
             to.validate_observation(record)     # raises on any violation
 
     def test_every_record_is_the_mogo_side_and_stays_in_the_research_lane(self):
-        records, _, _sources = imp.convert_all(now=NOW)
+        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
         for record in records:
             self.assertEqual(record["actor"], "MOGO")
             self.assertEqual(record["lane"], "RESEARCH")
@@ -186,17 +191,17 @@ class TestItWritesNothing(unittest.TestCase):
             return out
 
         before = digest()
-        imp.convert_all(now=NOW)
+        imp.convert_all(now=NOW, skip_imported=False)
         self.assertEqual(digest(), before)
 
     def test_the_dry_run_report_says_it_wrote_nothing(self):
-        records, skipped, sources = imp.convert_all(now=NOW)
+        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
         summary = imp.report(records, skipped, sources)
         self.assertFalse(summary["wrote"])
         self.assertNotIn("written", summary)
 
     def test_the_report_states_unknowns_rather_than_hiding_them(self):
-        records, skipped, sources = imp.convert_all(now=NOW)
+        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
         summary = imp.report(records, skipped, sources)
         self.assertIn("unknownFieldCounts", summary)
         # Reported by evidence POPULATION, derived from source provenance -- not by
@@ -213,14 +218,14 @@ class TestWritingIsExplicitAndSafe(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
     def test_records_can_be_written_and_reloaded(self):
-        records, _, _sources = imp.convert_all(now=NOW)
+        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
         for record in records[:5]:
             to.write_observation(record, observations_dir=self.tmp)
         loaded = to.load_observations(self.tmp)
         self.assertEqual(len(loaded), 5)
 
     def test_a_second_write_of_the_same_record_is_refused(self):
-        records, _, _sources = imp.convert_all(now=NOW)
+        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
         to.write_observation(records[0], observations_dir=self.tmp)
         with self.assertRaises(to.ObservationRefused):
             to.write_observation(records[0], observations_dir=self.tmp)
@@ -232,7 +237,7 @@ class TestTheScientificBoundarySurvivesImport(unittest.TestCase):
     repository two red tests; the MAPPING is what must never drift."""
 
     def setUp(self):
-        self.records, _, sources = imp.convert_all(now=NOW)
+        self.records, _, sources = imp.convert_all(now=NOW, skip_imported=False)
         self.sources = imp.source_map(sources)
 
     def population(self, record):
@@ -279,6 +284,73 @@ class TestTheScientificBoundarySurvivesImport(unittest.TestCase):
                 self.assertIn(family, known)
             # the raw engine id is still retained, just not as a reference
             self.assertIn("engineStrategyId", source["metadata"])
+
+
+class TestImportIsIncrementalAndAdditive(unittest.TestCase):
+    """A forward close mints a new package. It has to reach the observation corpus
+    WITHOUT renumbering or rewriting the records already there."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def test_a_second_run_against_an_imported_corpus_converts_nothing(self):
+        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        for record in records:
+            to.write_observation(record, observations_dir=self.tmp)
+        again, skipped, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        self.assertEqual(again, [], "a re-run must be a no-op, not a re-mint")
+        self.assertEqual(skipped, [])
+
+    def test_positive_control_the_first_run_is_not_empty(self):
+        """Otherwise the idempotence test above would pass against a function that
+        always returns nothing."""
+        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        self.assertGreater(len(records), 200)
+
+    def test_an_already_imported_package_is_recognised_by_its_package_id(self):
+        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        to.write_observation(records[0], observations_dir=self.tmp)
+        mapping = imp.already_imported(self.tmp)
+        self.assertEqual(mapping[records[0]["sourcePackageId"]],
+                         records[0]["observationId"])
+
+    def test_a_partial_corpus_imports_only_what_is_missing(self):
+        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        for record in records[:10]:
+            to.write_observation(record, observations_dir=self.tmp)
+        remaining, _, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        self.assertEqual(len(remaining), len(records) - 10)
+        already = {r["sourcePackageId"] for r in records[:10]}
+        self.assertEqual(already & {r["sourcePackageId"] for r in remaining}, set())
+
+    def test_new_ids_continue_the_sequence_and_never_collide(self):
+        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        for record in records[:10]:
+            to.write_observation(record, observations_dir=self.tmp)
+        remaining, _, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        written = {r["observationId"] for r in records[:10]}
+        self.assertEqual(written & {r["observationId"] for r in remaining}, set(),
+                         "a re-run must not reissue an id already on disk")
+
+    def test_an_existing_source_is_reused_not_overwritten(self):
+        _r, _s, sources = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        first = imp.write_sources(sources, sources_dir=self.tmp)
+        self.assertTrue(first["written"])
+        self.assertEqual(first["reused"], [])
+        second = imp.write_sources(sources, sources_dir=self.tmp)
+        self.assertEqual(second["written"], [])
+        self.assertEqual(sorted(second["reused"]), sorted(first["written"]))
+
+    def test_a_reused_source_file_is_byte_identical_afterwards(self):
+        _r, _s, sources = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        imp.write_sources(sources, sources_dir=self.tmp)
+        before = {p: hashlib.sha256(open(p, "rb").read()).hexdigest()
+                  for p in glob.glob(os.path.join(self.tmp, "*.json"))}
+        imp.write_sources(sources, sources_dir=self.tmp)
+        after = {p: hashlib.sha256(open(p, "rb").read()).hexdigest()
+                 for p in glob.glob(os.path.join(self.tmp, "*.json"))}
+        self.assertEqual(after, before)
 
 
 if __name__ == "__main__":
