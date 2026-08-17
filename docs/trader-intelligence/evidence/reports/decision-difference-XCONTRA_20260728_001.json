@@ -1,0 +1,141 @@
+{
+  "adjudicatesNothing": true,
+  "changesNoStrategyRule": true,
+  "citedClaimIds": [
+    "CLAIM|ALEX_G|20260728|025",
+    "CLAIM|TJR|20260727|006"
+  ],
+  "citedEvidenceIds": [
+    "EV|EVSRC|ALEX_G|20260728|002|013",
+    "EV|EVSRC|TJR|20260727|001|008"
+  ],
+  "citedSourceIds": [
+    "EVSRC|ALEX_G|20260728|002",
+    "EVSRC|TJR|20260727|001"
+  ],
+  "classification": "INTERPRETATION_HYPOTHESIS",
+  "classificationBasis": [
+    {
+      "detail": "gaps: none",
+      "fired": false,
+      "test": "PROVENANCE_COMPLETE_BOTH_SIDES"
+    },
+    {
+      "detail": "[]",
+      "fired": false,
+      "test": "STATED_DATA_DIMENSION_DIFFERS"
+    },
+    {
+      "detail": "{\"contradictionType\": \"DIRECTIONAL\", \"differing\": []}",
+      "fired": false,
+      "test": "STATED_TIMING_DIMENSION_DIFFERS_OR_TEMPORAL_DRIFT"
+    },
+    {
+      "detail": "{\"bothRuleCategory\": true, \"contradictionType\": \"DIRECTIONAL\"}",
+      "fired": false,
+      "test": "NUMERIC_THRESHOLD_ON_RULE_BEARING_POSITIONS"
+    },
+    {
+      "detail": "{\"agreeingDimensions\": [], \"bothRuleCategory\": true}",
+      "fired": false,
+      "test": "BOTH_RULE_BEARING_WITH_SHARED_STATED_SCOPE"
+    },
+    {
+      "detail": "{\"bothRuleCategory\": true, \"statedByA\": [], \"statedByB\": []}",
+      "fired": true,
+      "test": "NO_STATED_DIMENSION_SEPARATES_THE_POSITIONS"
+    }
+  ],
+  "classificationMeaning": "The disagreement is real and both sides are provenance-complete, but no dimension either actor STATED separates them. Any reconciliation is MOGO's reading, not either actor's statement.",
+  "decisionDifferenceId": "XDD|20260728|001",
+  "derivedFrom": {
+    "contradictionId": "XCONTRA|20260728|001",
+    "contradictionType": "DIRECTIONAL",
+    "recordedRationale": "CROSS-EDUCATOR, FOUNDATIONAL. Alex G: 'There's no way that you can have a specific strategy to trade solely off of these sweeps' \u2014 and that anyone claiming otherwise 'is 100% lying to you'. TJR: 'My strategy is based off of liquidity sweeps' and 'I'm looking for a liquidity sweep every single time'. This is not a disagreement about a parameter; one educator's entire method is the thing the other says cannot be done consistently. PARTIAL RECONCILIATION WORTH NOTING: Alex G's explicit target is ANTICIPATING a sweep before it happens, whereas TJR identifies a sweep that has already occurred and then requires a separate confirmation confluence. The two are closer in practice than the words suggest. Recorded as blocking rather than resolved because the reconciliation is MOGO's reading, not either educator's statement.",
+    "scopeOverlap": "unknown",
+    "severity": "blocking",
+    "status": "open"
+  },
+  "lane": "RESEARCH",
+  "positionA": {
+    "actorId": "ALEX_G",
+    "claimId": "CLAIM|ALEX_G|20260728|025",
+    "claimStatus": "pending_review",
+    "claimType": "failure_condition",
+    "decisionScope": {
+      "marketCondition": null,
+      "marketSymbol": null,
+      "session": null,
+      "strategyFamilyId": null,
+      "timeframe": null
+    },
+    "evidence": [
+      {
+        "directness": "direct_explicit",
+        "directnessClass": "SOURCE_SAID",
+        "evidenceId": "EV|EVSRC|ALEX_G|20260728|002|013",
+        "evidenceType": "explicit_statement",
+        "exactExcerpt": "There's no way that you can have a specific strategy to trade solely off of these sweeps.",
+        "extractionCertainty": "certain",
+        "relationshipType": "supports",
+        "sourceId": "EVSRC|ALEX_G|20260728|002",
+        "sourceLocator": "TSEG|INTAKE|ALEX_G|20260728|002|007"
+      }
+    ],
+    "evidenceIds": [
+      "EV|EVSRC|ALEX_G|20260728|002|013"
+    ],
+    "isRuleCategory": true,
+    "normalizedClaim": "No consistent strategy can be built on trading liquidity sweeps themselves.",
+    "provenanceComplete": true,
+    "provenanceGaps": [],
+    "side": "A",
+    "sourceIds": [
+      "EVSRC|ALEX_G|20260728|002"
+    ],
+    "statedDimensions": []
+  },
+  "positionB": {
+    "actorId": "TJR",
+    "claimId": "CLAIM|TJR|20260727|006",
+    "claimStatus": "pending_review",
+    "claimType": "setup_requirement",
+    "decisionScope": {
+      "marketCondition": null,
+      "marketSymbol": null,
+      "session": null,
+      "strategyFamilyId": null,
+      "timeframe": null
+    },
+    "evidence": [
+      {
+        "directness": "direct_explicit",
+        "directnessClass": "SOURCE_SAID",
+        "evidenceId": "EV|EVSRC|TJR|20260727|001|008",
+        "evidenceType": "explicit_statement",
+        "exactExcerpt": "My strategy is based off of liquidity sweeps.",
+        "extractionCertainty": "certain",
+        "relationshipType": "supports",
+        "sourceId": "EVSRC|TJR|20260727|001",
+        "sourceLocator": "TSEG|INTAKE|TJR|20260727|001|003"
+      }
+    ],
+    "evidenceIds": [
+      "EV|EVSRC|TJR|20260727|001|008"
+    ],
+    "isRuleCategory": true,
+    "normalizedClaim": "The strategy is based on liquidity sweeps.",
+    "provenanceComplete": true,
+    "provenanceGaps": [],
+    "side": "B",
+    "sourceIds": [
+      "EVSRC|TJR|20260727|001"
+    ],
+    "statedDimensions": []
+  },
+  "promotionStatus": "NOT_A_TRADING_RULE",
+  "provenanceComplete": true,
+  "question": "Why do ALEX_G and TJR reach different decisions here, and what would have to change for them to agree?",
+  "reconciliationIsMogoReading": true,
+  "schemaVersion": "mogo.decision-difference.v1"
+}

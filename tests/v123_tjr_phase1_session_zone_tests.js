@@ -382,5 +382,86 @@ function runV123Fixtures(g){
       g.getDefaultTjrZonesToggle()===true,'');
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════════
+  // MOGO-022 (research): BODY-vs-WICK behavioural pins.
+  //
+  // Fixtures 35-38 above pin the four zone formulas as NUMBERS. These four fixtures pin
+  // the SEMANTIC CHOICE those numbers encode, because that choice is the subject of an
+  // open, recorded cross-educator contradiction (XCONTRA|20260727|003): TJR marks a
+  // structure point at the WICK extreme (CLAIM|TJR|20260727|065, and the candle anatomy
+  // definitions CLAIM|TJR|20260727|061 / |062), while Alex G marks it at the BODY and
+  // says so explicitly (CLAIM|ALEX_G|20260727|020: "I'm placing it at the body of that
+  // candlestick, not at the wick").
+  //
+  // The shipped Phase 1 engine implements the TJR (wick) reading: findTjrSessionExtremes()
+  // ranks candles by c.h / c.l, and each zone's OUTER edge is the wick extreme while its
+  // INNER edge is the body extreme (max/min of open,close). These fixtures are DISCRIMINATING
+  // -- each one fails if the engine is switched to a body-based reading -- so the choice is
+  // documented and regression-protected rather than resting on the numeric fixtures alone.
+  //
+  // These fixtures are strictly READ-ONLY and assert current behaviour. They are NOT an
+  // endorsement of either educator's rule; resolving XCONTRA|20260727|003 is an owner
+  // decision, and nothing here promotes anything to a StrategyRule.
+  // ═══════════════════════════════════════════════════════════════════════════════════
+  {
+    // Candle A has the highest WICK but a LOWER body top; candle B has the highest BODY
+    // top but a lower wick. A wick-based selector must choose A; a body-based one would
+    // choose B. This is the whole contradiction, reduced to one assertion.
+    const b=g.resolveTjrSessionBoundaries('LONDON','2026-01-05');
+    const candleA={o:1.1000,c:1.1005,h:1.1080,l:1.0995}; // body top 1.1005, wick 1.1080  <- highest wick
+    const candleB={o:1.1050,c:1.1060,h:1.1070,l:1.1040}; // body top 1.1060, wick 1.1070  <- highest body
+    const candles=buildSessionCandles(b,DEFAULT_OHLC,{4:candleA,8:candleB});
+    const sc=g.getCandlesForResolvedSession(candles,b,b.utcEnd+1000).candles;
+    const ex=g.findTjrSessionExtremes(sc,'GBP_USD');
+    assert('Fixture 49: the session HIGH is located at the WICK extreme, not the body extreme -- the candle with the highest wick (1.1080) is selected as source even though another candle has a higher body top (1.1060)',
+      almostEqual(ex.high,1.1080)&&ex.highSource.time===sc[4].time&&Math.max(sc[8].o,sc[8].c)>Math.max(sc[4].o,sc[4].c),
+      'high='+ex.high+' sourceTime='+(ex.highSource&&ex.highSource.time)+' expectedTime='+sc[4].time);
+  }
+  {
+    // Symmetric low-side proof: lowest WICK wins over lowest body bottom.
+    const b=g.resolveTjrSessionBoundaries('LONDON','2026-01-05');
+    const candleA={o:1.1000,c:1.1005,h:1.1010,l:1.0920}; // body bottom 1.1000, wick 1.0920 <- lowest wick
+    const candleB={o:1.0950,c:1.0940,h:1.1010,l:1.0930}; // body bottom 1.0940, wick 1.0930 <- lowest body
+    const candles=buildSessionCandles(b,DEFAULT_OHLC,{3:candleA,7:candleB});
+    const sc=g.getCandlesForResolvedSession(candles,b,b.utcEnd+1000).candles;
+    const ex=g.findTjrSessionExtremes(sc,'GBP_USD');
+    assert('Fixture 50: the session LOW is located at the WICK extreme, not the body extreme -- the candle with the lowest wick (1.0920) is selected as source even though another candle has a lower body bottom (1.0940)',
+      almostEqual(ex.low,1.0920)&&ex.lowSource.time===sc[3].time&&Math.min(sc[7].o,sc[7].c)<Math.min(sc[3].o,sc[3].c),
+      'low='+ex.low+' sourceTime='+(ex.lowSource&&ex.lowSource.time)+' expectedTime='+sc[3].time);
+  }
+  {
+    // The zone's OUTER edge is wick-driven: moving ONLY the wick moves upper/lower and
+    // leaves the body-driven inner edge untouched. A body-based engine would be invariant
+    // to this change, so this fixture fails under that reading.
+    const b=g.resolveTjrSessionBoundaries('LONDON','2026-01-05');
+    const base={time:b.utcStart,o:1.1000,h:1.1040,l:1.0990,c:1.1020};
+    const longerWick=Object.assign({},base,{h:1.1090,l:1.0940});
+    const hz0=g.buildTjrHighZone(b,base,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    const hz1=g.buildTjrHighZone(b,longerWick,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    const lz0=g.buildTjrLowZone(b,base,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    const lz1=g.buildTjrLowZone(b,longerWick,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    assert('Fixture 51: zone OUTER edges are wick-driven -- extending only the wicks moves the high zone upper (1.1040->1.1090) and the low zone lower (1.0990->1.0940) while both body-driven inner edges stay fixed',
+      almostEqual(hz0.upper,1.1040)&&almostEqual(hz1.upper,1.1090)&&almostEqual(hz0.lower,hz1.lower)&&almostEqual(hz1.lower,1.1020)&&
+      almostEqual(lz0.lower,1.0990)&&almostEqual(lz1.lower,1.0940)&&almostEqual(lz0.upper,lz1.upper)&&almostEqual(lz1.upper,1.1000),
+      'hzUpper '+hz0.upper+'->'+hz1.upper+' hzLower '+hz0.lower+'->'+hz1.lower+' lzLower '+lz0.lower+'->'+lz1.lower+' lzUpper '+lz0.upper+'->'+lz1.upper);
+  }
+  {
+    // The zone's INNER edge is body-driven: moving ONLY the body (open/close, wicks held
+    // constant) moves the inner edge and leaves the wick-driven outer edge untouched.
+    // Together with Fixture 51 this pins the zone as spanning body extreme -> wick extreme,
+    // i.e. the engine uses BOTH, with a defined role for each -- it does not pick one.
+    const b=g.resolveTjrSessionBoundaries('LONDON','2026-01-05');
+    const base={time:b.utcStart,o:1.1000,h:1.1040,l:1.0990,c:1.1020};
+    const biggerBody=Object.assign({},base,{o:1.0995,c:1.1035});
+    const hz0=g.buildTjrHighZone(b,base,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    const hz1=g.buildTjrHighZone(b,biggerBody,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    const lz0=g.buildTjrLowZone(b,base,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    const lz1=g.buildTjrLowZone(b,biggerBody,'GBP_USD',b.utcEnd+1000,{datasetComplete:true});
+    assert('Fixture 52: zone INNER edges are body-driven -- widening only the body moves the high zone lower (1.1020->1.1035) and the low zone upper (1.1000->1.0995) while both wick-driven outer edges stay fixed',
+      almostEqual(hz0.lower,1.1020)&&almostEqual(hz1.lower,1.1035)&&almostEqual(hz0.upper,hz1.upper)&&almostEqual(hz1.upper,1.1040)&&
+      almostEqual(lz0.upper,1.1000)&&almostEqual(lz1.upper,1.0995)&&almostEqual(lz0.lower,lz1.lower)&&almostEqual(lz1.lower,1.0990),
+      'hzLower '+hz0.lower+'->'+hz1.lower+' hzUpper '+hz0.upper+'->'+hz1.upper+' lzUpper '+lz0.upper+'->'+lz1.upper+' lzLower '+lz0.lower+'->'+lz1.lower);
+  }
+
   return results;
 }

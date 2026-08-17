@@ -1,0 +1,39 @@
+{
+  "claimType": "setup_requirement",
+  "confidenceState": "emerging",
+  "contradictingEvidenceIds": [],
+  "contradictionStatus": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "directnessDistribution": {
+    "direct_explicit": 1
+  },
+  "evidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|012"
+  ],
+  "extractionCertaintyDistribution": {
+    "high": 1
+  },
+  "marketCondition": null,
+  "originatingClaimIds": [
+    "CLAIM|TJR|20260727|009"
+  ],
+  "ownerReviewStatus": "not_reviewed",
+  "paperTradingStatus": "not_available",
+  "proposalId": "RCPROP|20260817|005",
+  "proposalRationale": "TJR draw-on-liquidity level set: 1-hour, 4-hour and session highs and lows.\n\nCLASSIFICATION: SOURCE-STATED enumeration; INCOMPLETE as a specification. 1 supporting evidence\nitem, 0 contradicting. Proposed separately from the target rule because this level set is a shared\nprimitive -- the same set feeds target selection (CLAIM|TJR|20260727|029), the step-1 liquidity\nsweep that starts the setup (CLAIM|TJR|20260727|008), and the leading-index test\n(CLAIM|TJR|20260727|005). Specifying it once is worth more than specifying it three times.\n\nMECHANICAL SPECIFICATION: aggregate the instrument to H1, H4 and session buckets; for each\ncompleted bucket in the lookback window emit its high and its low, located at the wick extreme per\nCLAIM|TJR|20260727|065; session buckets use New York time per CLAIM|TJR|20260727|055. The result is\na timestamped, deduplicated level set. This part is fully deterministic and testable today.\n\nDATA REQUIRED: H1 and H4 OHLC series plus session boundaries. All obtainable from a single M1 or\nM30 series by aggregation; no external feed needed.\n\nFALSIFICATION: generate the level set for a date TJR has charted and compare against the levels he\nactually marked. Levels he marks that are absent from the generated set refute the enumeration's\ncompleteness; generated levels he visibly ignores point at the missing eligibility filter rather\nthan at the enumeration.\n\nUNKNOWN: (a) LOOKBACK WINDOW -- unstated, and blocking, as above; (b) whether daily and weekly\nhighs/lows are also draws -- the enumeration reads as exhaustive but is never stated to be, and\nCLAIM|TJR|20260727|010 (mark out the session opens as the first daily preparation step) suggests\nsession OPENS are also marked levels, which this enumeration omits entirely; (c) whether the\nalready-swept filter of CLAIM|TJR|20260727|011 applies to all three level classes or only to\nsession levels -- |011 mentions only session highs and lows.",
+  "proposalVersion": 1,
+  "replayStatus": "not_available",
+  "schemaVersion": 1,
+  "session": null,
+  "status": "proposed",
+  "strategyFamilyId": null,
+  "supersedesProposalId": null,
+  "supportingSourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ],
+  "symbols": [],
+  "timeframe": null,
+  "traderId": "TJR",
+  "unresolvedQuestionIds": [],
+  "updatedAt": "2026-08-17T00:00:00Z"
+}

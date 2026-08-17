@@ -1,0 +1,30 @@
+{
+  "affectedSections": [
+    "Target Selection",
+    "Setup Sequence"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "target_selection",
+  "confidence": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260817|002",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|TJR|20260727|009",
+      "CLAIM|TJR|20260727|010",
+      "CLAIM|TJR|20260727|029"
+    ]
+  },
+  "question": "How far back does a 1-hour, 4-hour or session high/low remain eligible as a draw on liquidity -- what is the lookback window?",
+  "recommendedNextSourceType": "direct question to trader",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "CLAIM|TJR|20260727|009 enumerates the level classes (1H, 4H, session highs and lows) but states no lookback. Without one the candidate draw set is unbounded, so both the target rule (CLAIM|TJR|20260727|029) and the step-1 sweep detection (CLAIM|TJR|20260727|008) compute nothing. Also unresolved: whether daily and weekly levels are draws, and whether session OPENS are marked levels -- CLAIM|TJR|20260727|010 says session opens are marked first each day, but the enumeration in |009 omits them entirely."
+}

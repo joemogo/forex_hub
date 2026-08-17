@@ -1,0 +1,41 @@
+{
+  "claimType": "setup_requirement",
+  "confidenceState": "emerging",
+  "contradictingEvidenceIds": [],
+  "contradictionStatus": "open_contradiction",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "directnessDistribution": {
+    "direct_explicit": 1
+  },
+  "evidenceIds": [
+    "EV|EVSRC|TJR|20260727|002|020"
+  ],
+  "extractionCertaintyDistribution": {
+    "high": 1
+  },
+  "marketCondition": null,
+  "originatingClaimIds": [
+    "CLAIM|TJR|20260727|065"
+  ],
+  "ownerReviewStatus": "not_reviewed",
+  "paperTradingStatus": "not_available",
+  "proposalId": "RCPROP|20260817|001",
+  "proposalRationale": "TJR structure-point location: a swing high/low is marked at the WICK extreme.\n\nCLASSIFICATION: SOURCE-STATED (TJR). Evidence EV|EVSRC|TJR|20260727|002|020 is an explicit\nstatement, directness=direct_explicit, extractionCertainty=high. Note the verbatim excerpt is\n\"We take the highest point of those two candlesticks\" -- it does not contain the word \"wick\".\nThe wick reading is supplied by TJR's own candle-anatomy definition in the same source,\nEV|EVSRC|TJR|20260727|002|016 (certain): \"The top of the top wick is the high and the bottom of\nthe bottom wick is the low.\" So \"highest point\" = high = upper wick tip is SOURCE-STATED, but it\nis a two-step reading, not a single verbatim sentence. Flagged so the distinction is not lost.\n\nMECHANICAL SPECIFICATION: given an ordered candle series, a swing high is formed by an up candle\nat index i followed by a down candle at index i+1 (CLAIM|TJR|20260727|064); the marked level is\nmax(candle[i].high, candle[i+1].high). A swing low is a down candle followed by an up candle;\nthe marked level is min(candle[i].low, candle[i+1].low). Open/close are used only to classify a\ncandle as up (close>open) or down (close<open).\n\nDATA REQUIRED: OHLC series at the working timeframe. Nothing else. No session data, no volume.\n\nFALSIFICATION: annotate a sample of TJR's own charted examples and compare each marked level\nagainst both candidates. If a material share of his marked levels sit at max(open,close) rather\nthan at the wick tip, this candidate is refuted. A single unambiguous counter-example on a candle\nwith a large wick is sufficient to move it to contested-within-source.\n\nCONFLICTING EVIDENCE (already recorded, unresolved): XCONTRA|20260727|003 pairs this claim with\nCLAIM|ALEX_G|20260727|020, where Alex G states the opposite for his own strategy\n(\"So, I base my highs and lows to the bodies of the candlesticks\" / \"I'm placing it at the body\nof that candlestick, not at the wick\"). This is a CROSS-EDUCATOR disagreement, NOT evidence that\nTJR is internally inconsistent: within the TJR corpus the wick reading is unanimous across\nCLAIM|TJR|20260727|061, |062 and |065, with zero contradicting evidence items. The contradiction\nmust not be resolved by preferring one educator; it is only resolvable per-strategy.\n\nIMPLEMENTATION CROSS-CHECK (informational, not evidence about TJR): the shipped MOGO Phase 1\nengine already implements the wick reading -- findTjrSessionExtremes() ranks candles by c.h/c.l,\nand each session zone spans from the body extreme (inner edge) to the wick extreme (outer edge).\nPinned by Fixtures 49-52 in tests/v123_tjr_phase1_session_zone_tests.js. The engine agreeing with\nthe claim is a consistency observation only; it is not independent confirmation of the claim,\nsince the engine was built from this same research.\n\nUNKNOWN: (a) whether the two-candle pattern in |064 is TJR's only structure-point definition or\njust a teaching simplification -- |063 states the more general \"move up followed by a move down\";\n(b) whether the same wick rule governs BREAK detection as governs MARKING (CLAIM|TJR|20260727|015\ndefines a break of structure as price CLOSING beyond the level, which is a body-based test -- so\nmarking and breaking may deliberately use different price components; no source statement\nreconciles them); (c) tie-breaking when both candles share the identical high is unstated.",
+  "proposalVersion": 1,
+  "replayStatus": "not_available",
+  "schemaVersion": 1,
+  "session": null,
+  "status": "proposed",
+  "strategyFamilyId": null,
+  "supersedesProposalId": null,
+  "supportingSourceIds": [
+    "EVSRC|TJR|20260727|002"
+  ],
+  "symbols": [],
+  "timeframe": null,
+  "traderId": "TJR",
+  "unresolvedQuestionIds": [
+    "EQ|20260727|017"
+  ],
+  "updatedAt": "2026-08-17T00:00:00Z"
+}

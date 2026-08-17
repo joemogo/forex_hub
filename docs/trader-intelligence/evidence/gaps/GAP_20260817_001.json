@@ -1,0 +1,27 @@
+{
+  "affectedSections": [
+    "Stop Placement"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "stop_placement",
+  "confidence": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260817|001",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|TJR|20260727|028"
+    ]
+  },
+  "question": "How far BEYOND the swing extreme is the stop placed -- what is the exact buffer distance (ticks, points, ATR multiple, or exactly at the wick tip)?",
+  "recommendedNextSourceType": "direct question to trader",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "CLAIM|TJR|20260727|028 states direction and anchor ('underneath the low' / 'above the highs') but never a distance. 'Beyond' is directional, not metric. This single missing number determines stop distance, therefore position size under any fixed-fractional risk model, therefore realised risk-to-reward, therefore every performance figure the strategy would be judged on. The stop rule cannot be executed or backtested until it is answered, and a default of zero (stop exactly at the wick) would be a guess, not a reading of the evidence."
+}

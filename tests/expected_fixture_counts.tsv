@@ -39,7 +39,7 @@ run_v1239_lifecycle_reconciliation_tests.js	51
 run_v1239_market_data_continuity_tests.js	41
 run_v1239_paper_trading_e2e_tests.js	144
 run_v1239_restart_diagnostics_tests.js	40
-run_v123_tests.js	48
+run_v123_tests.js	52
 run_v124_baseline_registry_tests.js	31
 run_v125_decision_event_tests.js	40
 run_v126_phase2c_wave1_tests.js	60

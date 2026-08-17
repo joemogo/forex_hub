@@ -1,0 +1,43 @@
+{
+  "claimType": "stop_rule",
+  "confidenceState": "emerging",
+  "contradictingEvidenceIds": [],
+  "contradictionStatus": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "directnessDistribution": {
+    "direct_explicit": 2
+  },
+  "evidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|039",
+    "EV|EVSRC|TJR|20260727|001|040"
+  ],
+  "extractionCertaintyDistribution": {
+    "high": 1,
+    "moderate": 1
+  },
+  "marketCondition": null,
+  "originatingClaimIds": [
+    "CLAIM|TJR|20260727|028"
+  ],
+  "ownerReviewStatus": "not_reviewed",
+  "paperTradingStatus": "not_available",
+  "proposalId": "RCPROP|20260817|003",
+  "proposalRationale": "TJR stop placement: beyond the swing extreme the entry is taken against.\n\nCLASSIFICATION: SOURCE-STATED as to DIRECTION and ANCHOR; UNKNOWN as to DISTANCE. 2 supporting\nevidence items, 0 contradicting.\n\nMECHANICAL SPECIFICATION (partial, and deliberately not completed): for a long entry the stop is\nplaced below the low of the swing the entry is taken against; for a short entry, above the high.\nThe anchor level is located by the structure-point rule in the companion candidate for\nCLAIM|TJR|20260727|065, i.e. at the wick extreme, so: longStop = swingLow - delta,\nshortStop = swingHigh + delta.\n\nDATA REQUIRED: OHLC series at the entry timeframe (one-minute per CLAIM|TJR|20260727|027) plus the\nidentified swing the entry is taken against.\n\nFALSIFICATION: this candidate is falsifiable on direction and anchor independently of delta. If\nany charted TJR example places a long stop ABOVE the entry swing low, or anchors the stop to a\nlevel other than the swing being traded against (e.g. a fixed point/ATR distance unrelated to\nstructure), the claim is refuted. Delta cannot be falsified until it is specified -- see UNKNOWN.\n\nBLOCKING UNKNOWN -- delta is not stated anywhere in the corpus. \"Beyond\" is directional, not\nmetric. No source states a tick buffer, a percentage, an ATR multiple, or \"at the wick tip\nexactly\". This single missing number makes the rule non-executable: it determines stop distance,\ntherefore position size for any fixed-fractional risk model, therefore realised risk-to-reward,\ntherefore every performance figure the strategy would be judged on. This is recorded as a gap and\nmust NOT be filled by choosing a plausible default. A delta of zero (stop exactly at the wick) is\na guess, not a reading of the evidence.\n\nFURTHER UNKNOWN: (a) which swing \"the entry is taken against\" refers to when several swings exist\nbetween the sweep and the entry -- the corpus does not disambiguate; (b) whether the stop is ever\nmoved before break-even (CLAIM|TJR|20260727|030 states the runner is left to stop at break even,\nbut not when it is moved there, nor after which take-profit level).",
+  "proposalVersion": 1,
+  "replayStatus": "not_available",
+  "schemaVersion": 1,
+  "session": null,
+  "status": "proposed",
+  "strategyFamilyId": null,
+  "supersedesProposalId": null,
+  "supportingSourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ],
+  "symbols": [],
+  "timeframe": "1m",
+  "traderId": "TJR",
+  "unresolvedQuestionIds": [
+    "EQ|20260727|002"
+  ],
+  "updatedAt": "2026-08-17T00:00:00Z"
+}

@@ -1,0 +1,28 @@
+{
+  "affectedSections": [
+    "Setup Sequence",
+    "Target Selection"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "invalidation",
+  "confidence": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260817|003",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|TJR|20260727|011"
+    ]
+  },
+  "question": "What mechanically constitutes a 'reaction' at a swept level, such that a level swept WITHOUT one is excluded from the draw set?",
+  "recommendedNextSourceType": "direct question to trader",
+  "researchPriority": "critical",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "CLAIM|TJR|20260727|011 makes the eligibility of every draw on liquidity conditional on whether a prior sweep 'produced a reaction', but no source defines reaction: no displacement threshold, no timeframe, no candle-count. This is the filter that decides which levels survive, so it gates targets, sweep detection and the leading-index test alike. It also carries a circularity risk: 'reaction' is close to the very thing the strategy's own confirmation step (CLAIM|TJR|20260727|012/013) exists to detect, so defining it without source support would silently invent the core of the strategy rather than extract it."
+}

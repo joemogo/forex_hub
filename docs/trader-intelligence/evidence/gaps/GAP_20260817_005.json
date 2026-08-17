@@ -1,0 +1,27 @@
+{
+  "affectedSections": [
+    "Trade Management"
+  ],
+  "answerStatus": "unanswered",
+  "blueprintId": "BLUEPRINT|TJR|20260727|001",
+  "category": "trade_management",
+  "confidence": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "currentBestAnswer": null,
+  "evidenceSearched": [],
+  "gapId": "GAP|20260817|005",
+  "proposedValidationMethod": "direct question to trader",
+  "provenance": {
+    "evidenceQuestionId": null,
+    "relatedClaimIds": [
+      "CLAIM|TJR|20260727|030"
+    ]
+  },
+  "question": "What fraction of the position is closed at each take-profit level, and at which level is the stop moved to break even?",
+  "recommendedNextSourceType": "direct question to trader",
+  "researchPriority": "high",
+  "resolvedAt": null,
+  "schemaVersion": 1,
+  "traderId": "TJR",
+  "whyItMatters": "CLAIM|TJR|20260727|030 states that profits are taken in partials across multiple take-profit levels and the remainder is left to stop out at break even, but specifies neither the partial sizes nor the trigger for moving the stop. Without both, realised R per trade is not reconstructible from the rules, so the strategy's own reported results (CLAIM|TJR|20260727|044-046) cannot be reproduced or checked."
+}

@@ -1,0 +1,45 @@
+{
+  "claimType": "target_rule",
+  "confidenceState": "emerging",
+  "contradictingEvidenceIds": [],
+  "contradictionStatus": "none",
+  "createdAt": "2026-08-17T00:00:00Z",
+  "directnessDistribution": {
+    "direct_demonstrated": 1,
+    "direct_explicit": 2
+  },
+  "evidenceIds": [
+    "EV|EVSRC|TJR|20260727|001|041",
+    "EV|EVSRC|TJR|20260727|001|042",
+    "EV|EVSRC|TJR|20260727|001|043"
+  ],
+  "extractionCertaintyDistribution": {
+    "high": 3
+  },
+  "marketCondition": null,
+  "originatingClaimIds": [
+    "CLAIM|TJR|20260727|029"
+  ],
+  "ownerReviewStatus": "not_reviewed",
+  "paperTradingStatus": "not_available",
+  "proposalId": "RCPROP|20260817|004",
+  "proposalRationale": "TJR target selection: targets are the previous draws on liquidity in the trade direction.\n\nCLASSIFICATION: SOURCE-STATED but DEFINITIONALLY DEPENDENT. 3 supporting evidence items, 0\ncontradicting -- the best-supported target statement in the TJR corpus. It is nonetheless not\nindependently computable, because it is stated entirely in terms of \"draw on liquidity\", whose\nenumeration lives in a separate claim (CLAIM|TJR|20260727|009: 1-hour highs/lows, 4-hour\nhighs/lows, or session highs/lows) and whose eligibility filter lives in another\n(CLAIM|TJR|20260727|011).\n\nMECHANICAL SPECIFICATION: build the candidate draw set as the 1H, 4H and session highs and lows\nper |009, located by the wick rule per |065; filter out any level already swept without producing\na reaction per |011; then take, in trade direction, the ordered sequence of surviving levels\nbeyond entry as the take-profit ladder, consistent with partial-taking across multiple levels\n(CLAIM|TJR|20260727|030).\n\nDATA REQUIRED: 1H, 4H and session-aggregated OHLC series over a stated lookback, plus prior price\nhistory sufficient to evaluate the |011 already-swept filter.\n\nFALSIFICATION: for a charted TJR trade, compute the surviving draw set and compare against his\nactual marked targets. If his targets are levels absent from the computed set, or if he skips\nsurviving nearer levels without a stated reason, the mechanical form is refuted even though the\nverbal claim stands.\n\nBLOCKING UNKNOWNS, both inherited: (a) LOOKBACK is unstated -- |009 says 1H/4H/session highs and\nlows but never says how far back levels remain eligible. Without a lookback the candidate draw set\nis unbounded and the rule computes nothing. (b) \"REACTION\" in |011 is undefined -- the filter that\ndecides which levels survive has no mechanical form anywhere in the corpus; no threshold, no\ntimeframe, no displacement measure. Both are recorded as gaps. Note that (b) is a genuine\ncircularity risk for any implementation: \"reaction\" is the same notion the strategy's own\nconfirmation step is trying to detect, so defining it here without source support would silently\ninvent the core of the strategy.\n\nFURTHER UNKNOWN: partial sizing per level is unstated -- |030 says profits are taken in partials\nacross multiple take-profit levels, but not what fraction is closed at each.",
+  "proposalVersion": 1,
+  "replayStatus": "not_available",
+  "schemaVersion": 1,
+  "session": null,
+  "status": "proposed",
+  "strategyFamilyId": null,
+  "supersedesProposalId": null,
+  "supportingSourceIds": [
+    "EVSRC|TJR|20260727|001"
+  ],
+  "symbols": [],
+  "timeframe": null,
+  "traderId": "TJR",
+  "unresolvedQuestionIds": [
+    "EQ|20260727|003",
+    "EQ|20260727|014"
+  ],
+  "updatedAt": "2026-08-17T00:00:00Z"
+}
