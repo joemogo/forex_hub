@@ -32,6 +32,7 @@
   "riskAmount": 96.85653973710487,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|ca6c0038a27b|AGT|AGS|alex_g_sr_v1|GBP_CAD|H1|AGZ|AGC|GBP_CAD|H1|low|1782784800000|v1782918000000|A_repeatedReaction|AGR|GBP_CAD|H1|low|1784113200000",
+  "sourceContentHash": "84406b3069173ddb48f6fa2834539d622532975aad41cb12b7c1957de0ecc90b",
   "sourceId": "EVSRC|MOGO|20260817|007",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260723|2",
   "stop": 1.8811682142857145,

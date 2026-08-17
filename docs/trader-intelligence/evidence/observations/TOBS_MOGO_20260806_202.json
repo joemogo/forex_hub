@@ -32,6 +32,7 @@
   "riskAmount": 120.60853274963006,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|367dd27fd6b8|AGT|AGS|alex_g_sr_v1|USD_CAD|H1|AGZ|AGC|USD_CAD|H1|low|1784707200000|v1785261600000|A_repeatedReaction|AGR|USD_CAD|H1|low|1785308400000",
+  "sourceContentHash": "4fe3b38ecc0ee2eb664098d5c6ecaabb195af440faf71f886e851bc656a8be48",
   "sourceId": "EVSRC|MOGO|20260817|011",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260729|7",
   "stop": 1.4078944642857143,

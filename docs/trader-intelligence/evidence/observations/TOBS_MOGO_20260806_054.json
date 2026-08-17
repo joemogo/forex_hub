@@ -32,6 +32,7 @@
   "riskAmount": 97.86405211086729,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|88d924c0be04|AGT|AGS|alex_g_sr_v1|AUD_USD|H1|AGZ|AGC|AUD_USD|H1|high|1783288800000|v1783486800000|A_repeatedReaction|AGR|AUD_USD|H1|high|1783580400000",
+  "sourceContentHash": "f371c0314bc7675f0c19502b4d669c81e5e56716cb5a21b9ad888c1ea8561340",
   "sourceId": "EVSRC|MOGO|20260817|004",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260710|1",
   "stop": 0.6948594642857143,

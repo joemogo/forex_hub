@@ -32,6 +32,7 @@
   "riskAmount": 102.90754579520372,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|80a17b22e3f8|AGT|AGS|alex_g_sr_v1|NZD_USD|H1|AGZ|AGC|NZD_USD|H1|low|1775530800000|v1783026000000|A_repeatedReaction|AGR|NZD_USD|H1|low|1783040400000",
+  "sourceContentHash": "198b897c9c43d6ee8a15c1b42909876e9e4ce027da3b76badfa70fe5863e2f27",
   "sourceId": "EVSRC|MOGO|20260817|008",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260706|4",
   "stop": 0.5687633928571428,

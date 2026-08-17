@@ -32,6 +32,7 @@
   "riskAmount": 94.95739189912246,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|4689c3d17f80|AGT|AGS|alex_g_sr_v1|USD_JPY|H1|AGZ|AGC|USD_JPY|H1|high|1782781200000|v1783479600000|B_breakRetest|AGR|USD_JPY|H1|low|1783533600000",
+  "sourceContentHash": "998d79f9d38382501d240a5cec9860e53b2b9fdc731192a8f24dbfc4650e76dc",
   "sourceId": "EVSRC|MOGO|20260817|005",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260709|1",
   "stop": 162.36739285714285,

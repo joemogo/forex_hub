@@ -32,6 +32,7 @@
   "riskAmount": 105.99436053887663,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|3b36727d5694|AGT|AGS|alex_g_sr_v1|AUD_JPY|H1|AGZ|AGC|AUD_JPY|H1|high|1777467600000|v1784898000000|A_repeatedReaction|AGR|AUD_JPY|H1|high|1784908800000",
+  "sourceContentHash": "4ff28d6543a7c5cf56bce7f6d28eb608313ea2962f4c8256122f67f960149427",
   "sourceId": "EVSRC|MOGO|20260817|009",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260726|1",
   "stop": 114.60898214285714,

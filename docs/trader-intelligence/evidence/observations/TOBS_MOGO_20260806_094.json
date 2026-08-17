@@ -32,6 +32,7 @@
   "riskAmount": 108.1464753993232,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|ff5dd403ea8d|AGT|AGS|alex_g_sr_v1|GBP_CHF|H1|AGZ|AGC|GBP_CHF|H1|high|1777618800000|v1781683200000|A_repeatedReaction|AGR|GBP_CHF|H1|high|1781773200000",
+  "sourceContentHash": "d1f3035578ea0bed750509ec4cf941586daaef996a7158a0531f0f700653863e",
   "sourceId": "EVSRC|MOGO|20260817|006",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260619|1",
   "stop": 1.064851607142857,

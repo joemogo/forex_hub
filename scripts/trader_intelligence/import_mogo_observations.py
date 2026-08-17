@@ -248,6 +248,8 @@ def observation_from_package(package, now, counters=None, source=None):
         # Exact artifact provenance: sourceId names the registered EvidenceSource,
         # sourcePackageId names the individual package inside it.
         sourcePackageId=package.get("packageId"),
+        # The GLOBAL key. See already_imported() for why the package id is not one.
+        sourceContentHash=package.get("contentHash"),
         notes="captureBasis=%s sourceType=%s" % (basis, source_type),
     )
     return record, None
@@ -281,13 +283,92 @@ def already_imported(observations_dir=None):
     """sourcePackageId -> observationId, for packages already recorded.
 
     Import must be repeatable: a forward close mints a new package, and that
-    package has to reach the observation corpus without disturbing the 222 records
-    already there. Keying on the package's own id -- not on position in a walk --
-    is what makes a re-run additive instead of a renumbering.
+    package has to reach the observation corpus without disturbing the records
+    already there. Keying on the artifact -- not on position in a walk -- is what
+    makes a re-run additive instead of a renumbering.
+
+    Keyed on contentHash, NOT packageId. A packageId is
+    `PKG|<strategy>|<date>|<ordinal>` and the ordinal only counts within one capture
+    run, so it is not a global primary key: 21 of the 25 forward LIVE_CLOSE packages
+    share a packageId with an unrelated REPLAY_RUN package already imported. Keyed on
+    packageId this function would have reported those 21 as already-imported and
+    silently dropped exactly the forward evidence it exists to preserve. contentHash
+    is unique across all 247 artifacts.
     """
     existing = to.load_observations(observations_dir)
-    return {r["sourcePackageId"]: r["observationId"]
-            for r in existing.values() if r.get("sourcePackageId")}
+    return {r["sourceContentHash"]: r["observationId"]
+            for r in existing.values() if r.get("sourceContentHash")}
+
+
+def backfill_content_hashes(observations_dir=None, sources_dir=None, write=False):
+    """Add `sourceContentHash` to observations recorded before it existed.
+
+    STRICTLY ADDITIVE. The observationId, every recorded value, every
+    classification and every unknown is left exactly as written; the only change is
+    the addition of one provenance field that was missing. Any record where the
+    hash cannot be resolved UNAMBIGUOUSLY is left untouched and reported, never
+    guessed -- a wrong hash here would silently merge two distinct decisions.
+
+    Resolution goes through the observation's OWN source, not a global packageId
+    search: sourceId -> source.repositoryPath -> that file's packages -> packageId.
+    A global search would now be ambiguous for the 21 package ids that a forward
+    LIVE_CLOSE package shares with an unrelated REPLAY_RUN one. Within a single
+    file, package ids are unique (verified across all 12 files).
+    """
+    observations = to.load_observations(observations_dir)
+    sources = to.load_sources(sources_dir)
+    by_file = {}
+    updated, unresolved = [], []
+
+    for observation_id in sorted(observations):
+        record = observations[observation_id]
+        if record.get("sourceContentHash"):
+            continue
+        source = sources.get(record.get("sourceId"))
+        package_id = record.get("sourcePackageId")
+        if source is None or not package_id:
+            unresolved.append({"observationId": observation_id,
+                               "reason": "NO_SOURCE_OR_PACKAGE_ID"})
+            continue
+        rel = source.get("repositoryPath")
+        if rel not in by_file:
+            path = os.path.join(REPO_ROOT, rel) if rel else None
+            try:
+                with open(path, "r", encoding="utf-8") as handle:
+                    by_file[rel] = json.load(handle)
+            except (OSError, ValueError, TypeError):
+                by_file[rel] = None
+        packages = by_file.get(rel)
+        if packages is None:
+            unresolved.append({"observationId": observation_id,
+                               "reason": "SOURCE_ARTIFACT_UNREADABLE|%s" % (rel,)})
+            continue
+        matches = [p for p in packages if p.get("packageId") == package_id]
+        if len(matches) != 1 or not matches[0].get("contentHash"):
+            unresolved.append({
+                "observationId": observation_id,
+                "reason": "AMBIGUOUS_OR_MISSING_HASH|%d match(es)" % len(matches)})
+            continue
+        updated.append((observation_id, matches[0]["contentHash"]))
+
+    if write:
+        target_dir = observations_dir or to.OBSERVATIONS_DIR
+        for observation_id, content_hash in updated:
+            record = observations[observation_id]
+            before = dict(record)
+            record["sourceContentHash"] = content_hash
+            # Prove additivity rather than trusting it: everything except the one
+            # new key must be identical to what was on disk.
+            if {k: v for k, v in record.items() if k != "sourceContentHash"} != before:
+                raise to.ObservationRefused(
+                    "backfill would change more than sourceContentHash on %s"
+                    % observation_id)
+            to.validate_observation(record)
+            path = os.path.join(
+                target_dir, ec.observation_id_to_filename(observation_id))
+            gc.atomic_write_text(path, gc.pretty_json(record))
+
+    return {"resolved": len(updated), "unresolved": unresolved, "wrote": bool(write)}
 
 
 def convert_all(package_glob=None, now=None, skip_imported=True,
@@ -312,7 +393,7 @@ def convert_all(package_glob=None, now=None, skip_imported=True,
         with open(path, "r", encoding="utf-8") as handle:
             packages = json.load(handle)
         for package in packages:
-            if package.get("packageId") in imported:
+            if package.get("contentHash") in imported:
                 continue          # already recorded; never re-minted, never rewritten
             source = sources.get((rel, package.get("captureBasis")))
             record, reason = observation_from_package(package, now, counters, source)
@@ -384,6 +465,24 @@ def write_sources(sources, sources_dir=None):
         path = os.path.join(target_dir,
                             ec.source_id_to_filename(source["sourceId"]))
         if os.path.exists(path):
+            # Source ids are assigned by position in a sorted glob, so adding a file
+            # that sorts EARLIER would shift every later id by one and quietly make
+            # this "reuse" point at a different artifact than the one it describes.
+            # Verify identity before reusing; refuse loudly rather than mismatch.
+            with open(path, "r", encoding="utf-8") as handle:
+                existing = json.load(handle)
+            same = (existing.get("repositoryPath") == source["repositoryPath"]
+                    and existing.get("sourceType") == source["sourceType"]
+                    and existing.get("contentHash") == source["contentHash"])
+            if not same:
+                raise to.ObservationRefused(
+                    "%s already exists but describes a different artifact "
+                    "(recorded %s/%s, would now be %s/%s). Source ids are positional; "
+                    "a file added earlier in sort order has shifted them. Refusing "
+                    "rather than repointing a source that observations already cite."
+                    % (source["sourceId"], existing.get("repositoryPath"),
+                       existing.get("sourceType"), source["repositoryPath"],
+                       source["sourceType"]))
             reused.append(source["sourceId"])
             continue
         gc.atomic_write_text(path, gc.pretty_json(source))
@@ -397,7 +496,15 @@ def main(argv=None):
                         help="actually write the sources and observations "
                              "(default: dry run)")
     parser.add_argument("--json", action="store_true", help="machine-readable report")
+    parser.add_argument("--backfill-content-hashes", action="store_true",
+                        help="add sourceContentHash to records written before that "
+                             "field existed (additive only; combine with --write)")
     args = parser.parse_args(argv)
+
+    if args.backfill_content_hashes:
+        result = backfill_content_hashes(write=args.write)
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
 
     records, skipped, sources = convert_all(
         now=datetime.datetime.now(datetime.timezone.utc))

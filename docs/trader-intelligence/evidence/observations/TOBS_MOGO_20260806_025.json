@@ -29,6 +29,7 @@
   "riskAmount": 100,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "1786021876135",
+  "sourceContentHash": "a4371e75cee623bc41e92738e7c4bb3aa0fe3c3688eb4418d1a09680dc8c5f0d",
   "sourceId": "EVSRC|MOGO|20260817|001",
   "sourcePackageId": "PKG|current_strategy|20260806|1",
   "stop": 1.083,

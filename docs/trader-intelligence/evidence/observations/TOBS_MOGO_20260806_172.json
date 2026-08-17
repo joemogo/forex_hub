@@ -32,6 +32,7 @@
   "riskAmount": 100.91982488742794,
   "schemaVersion": "mogo.trade-observation.v1",
   "sequenceId": "REPLAY|8f70d403fae1|AGT|AGS|alex_g_sr_v1|EUR_JPY|H1|AGZ|AGC|EUR_JPY|H1|high|1779872400000|v1780020000000|B_breakRetest|AGR|EUR_JPY|H1|low|1780351200000",
+  "sourceContentHash": "605665343f6745ca4c76909ee691db267b28640fda51d2bd4c44eaf2d44f289c",
   "sourceId": "EVSRC|MOGO|20260817|010",
   "sourcePackageId": "PKG|alex_g_sr_v1|20260602|2",
   "stop": 185.61864285714287,

@@ -59,6 +59,14 @@
       "default": null,
       "description": "The exact source artifact this observation was derived from, e.g. an evidence package id (PKG|...). sourceId identifies the registered EvidenceSource; this identifies the individual record inside it, so provenance is exact rather than only file-level."
     },
+    "sourceContentHash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "SHA-256 of the source artifact, copied as stored and never recomputed. This is the GLOBAL identity of the record an observation was derived from. sourcePackageId is NOT globally unique -- a package id is PKG|<strategy>|<date>|<ordinal> where the ordinal only counts within one capture run, so a REPLAY_RUN and a LIVE_CLOSE package can share one. Deduplicating an import on the package id therefore silently drops genuinely distinct decisions."
+    },
     "evidenceItemIds": {
       "type": "array",
       "items": {

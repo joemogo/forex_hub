@@ -207,8 +207,12 @@ class TestItWritesNothing(unittest.TestCase):
         # Reported by evidence POPULATION, derived from source provenance -- not by
         # a label carried on the record, which could disagree with its own source.
         self.assertIn("byPopulation", summary)
-        self.assertEqual(summary["byPopulation"],
-                         {"HISTORICAL": 221, "FORWARD": 1})
+        # The INVARIANT, not the counts: both populations are present, they account
+        # for every converted record, and nothing lands in UNKNOWN. Pinning "221/1"
+        # would break the moment a forward close is imported -- which is exactly what
+        # happened, and is normal operation rather than a regression.
+        self.assertEqual(set(summary["byPopulation"]), {"HISTORICAL", "FORWARD"})
+        self.assertEqual(sum(summary["byPopulation"].values()), summary["converted"])
 
 
 class TestWritingIsExplicitAndSafe(unittest.TestCase):
@@ -308,11 +312,13 @@ class TestImportIsIncrementalAndAdditive(unittest.TestCase):
         records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
         self.assertGreater(len(records), 200)
 
-    def test_an_already_imported_package_is_recognised_by_its_package_id(self):
+    def test_an_already_imported_package_is_recognised_by_its_content_hash(self):
+        # Keyed on contentHash, NOT packageId. See TestTheDeduplicationKeyIsGlobal
+        # for why a package id cannot serve as the key.
         records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
         to.write_observation(records[0], observations_dir=self.tmp)
         mapping = imp.already_imported(self.tmp)
-        self.assertEqual(mapping[records[0]["sourcePackageId"]],
+        self.assertEqual(mapping[records[0]["sourceContentHash"]],
                          records[0]["observationId"])
 
     def test_a_partial_corpus_imports_only_what_is_missing(self):
@@ -351,6 +357,212 @@ class TestImportIsIncrementalAndAdditive(unittest.TestCase):
         after = {p: hashlib.sha256(open(p, "rb").read()).hexdigest()
                  for p in glob.glob(os.path.join(self.tmp, "*.json"))}
         self.assertEqual(after, before)
+
+
+class TestTheDeduplicationKeyIsGlobal(unittest.TestCase):
+    """REGRESSION. `packageId` is PKG|<strategy>|<date>|<ordinal> and the ordinal
+    only counts within one capture run, so it is NOT a global primary key: 21 of the
+    25 forward LIVE_CLOSE packages share a packageId with an unrelated REPLAY_RUN
+    package. Keyed on packageId, the import reported those 21 as already-imported
+    and silently dropped exactly the forward evidence it exists to preserve."""
+
+    def test_package_ids_really_do_collide_across_capture_runs(self):
+        """The precondition. If this ever stops holding, the regression below is
+        no longer testing anything and should be re-examined, not deleted."""
+        by_basis = {}
+        for path in glob.glob(os.path.join(imp.REPO_ROOT, "evidence",
+                                           "*-PACKAGES.json")):
+            with open(path, "r", encoding="utf-8") as handle:
+                for package in json.load(handle):
+                    by_basis.setdefault(package["captureBasis"], set()).add(
+                        package["packageId"])
+        replay = by_basis.get("REPLAY_RUN", set())
+        live = by_basis.get("LIVE_CLOSE", set())
+        self.assertTrue(replay & live,
+                        "expected packageId collisions across capture bases")
+
+    def test_content_hash_is_unique_across_every_package(self):
+        hashes = []
+        for path in glob.glob(os.path.join(imp.REPO_ROOT, "evidence",
+                                           "*-PACKAGES.json")):
+            with open(path, "r", encoding="utf-8") as handle:
+                hashes += [p["contentHash"] for p in json.load(handle)]
+        self.assertEqual(len(hashes), len(set(hashes)))
+
+    def test_already_imported_is_keyed_on_content_hash(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        records, _, _s = imp.convert_all(now=NOW, skip_imported=False,
+                                         observations_dir=tmp)
+        to.write_observation(records[0], observations_dir=tmp)
+        mapping = imp.already_imported(tmp)
+        self.assertIn(records[0]["sourceContentHash"], mapping)
+        self.assertNotIn(records[0]["sourcePackageId"], mapping)
+
+    def test_a_colliding_package_id_does_not_suppress_a_distinct_decision(self):
+        """The bug, reproduced end to end: two packages sharing a packageId but
+        carrying different content must both convert."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        records, _, _s = imp.convert_all(now=NOW, skip_imported=False,
+                                         observations_dir=tmp)
+        by_pkg = {}
+        for record in records:
+            by_pkg.setdefault(record["sourcePackageId"], []).append(record)
+        shared = [v for v in by_pkg.values() if len(v) > 1]
+        self.assertTrue(shared, "expected at least one shared packageId")
+        for group in shared:
+            hashes = {r["sourceContentHash"] for r in group}
+            self.assertEqual(len(hashes), len(group),
+                             "records sharing a packageId must differ by hash")
+
+    def test_every_imported_record_carries_a_content_hash(self):
+        records, _, _s = imp.convert_all(now=NOW, skip_imported=False)
+        for record in records:
+            self.assertTrue(record.get("sourceContentHash"),
+                            "%s has no sourceContentHash" % record["observationId"])
+
+
+class TestBackfillIsStrictlyAdditive(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+    def test_it_resolves_the_real_corpus_with_nothing_left_unresolved(self):
+        result = imp.backfill_content_hashes()
+        self.assertEqual(result["unresolved"], [])
+        self.assertFalse(result["wrote"])
+
+    def test_a_dry_run_changes_no_file(self):
+        root = to.OBSERVATIONS_DIR
+
+        def digest():
+            return {p: hashlib.sha256(open(p, "rb").read()).hexdigest()
+                    for p in sorted(glob.glob(os.path.join(root, "*.json")))}
+
+        before = digest()
+        imp.backfill_content_hashes()
+        self.assertEqual(digest(), before)
+
+    def test_a_record_that_cannot_be_resolved_is_left_alone_not_guessed(self):
+        record = {"observationId": "TOBS|MOGO|20260101|001", "actor": "MOGO",
+                  "sourceId": "EVSRC|GHOST|1", "instrument": "EUR/USD",
+                  "sourcePackageId": "PKG|nope|1",
+                  "fieldClassification": {"instrument": "DIRECTLY_OBSERVED"},
+                  "unknowns": [], "extractedBy": "t", "lane": "RESEARCH",
+                  "schemaVersion": to.SCHEMA_VERSION, "createdAt": "2026-01-01T00:00:00Z"}
+        to.write_observation(record, observations_dir=self.tmp)
+        result = imp.backfill_content_hashes(observations_dir=self.tmp, write=True)
+        self.assertEqual(result["resolved"], 0)
+        self.assertEqual(len(result["unresolved"]), 1)
+        reloaded = to.load_observations(self.tmp)["TOBS|MOGO|20260101|001"]
+        self.assertNotIn("sourceContentHash", reloaded)
+
+
+class TestBackfillResolvesThroughItsOwnSource(unittest.TestCase):
+    """Exercised on a purpose-built corpus. The live corpus now carries a hash on
+    every record, so these code paths are unreachable there and a mutation to them
+    would survive against real data alone."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.obs_dir = os.path.join(self.tmp, "observations")
+        self.src_dir = os.path.join(self.tmp, "sources")
+        os.makedirs(self.obs_dir)
+        os.makedirs(self.src_dir)
+
+    def _packages(self, name, content_hash, package_id="PKG|SHARED|1"):
+        path = os.path.join(self.tmp, name)
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump([{"packageId": package_id, "captureBasis": "REPLAY_RUN",
+                        "contentHash": content_hash}], handle)
+        return path
+
+    def _source(self, source_id, path):
+        record = {"sourceId": source_id, "sourceType": "replay_observation",
+                  "repositoryPath": path, "contentHash": "x",
+                  "registeredAt": "2026-01-01T00:00:00Z",
+                  "storageLocationType": "repository",
+                  "provenanceStatus": "verified", "lifecycleStatus": "registered",
+                  "schemaVersion": 1, "createdAt": "2026-01-01T00:00:00Z",
+                  "updatedAt": "2026-01-01T00:00:00Z"}
+        with open(os.path.join(self.src_dir, source_id.replace("|", "_") + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def _observation(self, source_id, package_id="PKG|SHARED|1"):
+        record = {"observationId": "TOBS|MOGO|20260101|001", "actor": "MOGO",
+                  "sourceId": source_id, "instrument": "EUR/USD",
+                  "sourcePackageId": package_id,
+                  "fieldClassification": {"instrument": "DIRECTLY_OBSERVED"},
+                  "unknowns": [], "extractedBy": "t", "lane": "RESEARCH",
+                  "schemaVersion": to.SCHEMA_VERSION,
+                  "createdAt": "2026-01-01T00:00:00Z"}
+        to.write_observation(record, observations_dir=self.obs_dir)
+
+    def test_it_takes_the_hash_from_the_file_its_own_source_names(self):
+        """Two files share a packageId with DIFFERENT content. A global search would
+        take whichever sorts first; only the source-scoped lookup is correct."""
+        self._packages("A-PACKAGES.json", "hash_from_A")
+        second = self._packages("B-PACKAGES.json", "hash_from_B")
+        self._source("EVSRC|MOGO|1", second)          # points at B, not A
+        self._observation("EVSRC|MOGO|1")
+        result = imp.backfill_content_hashes(observations_dir=self.obs_dir,
+                                             sources_dir=self.src_dir, write=True)
+        self.assertEqual(result["resolved"], 1)
+        record = to.load_observations(self.obs_dir)["TOBS|MOGO|20260101|001"]
+        self.assertEqual(record["sourceContentHash"], "hash_from_B")
+
+    def test_a_package_with_no_hash_is_left_unresolved_not_written_as_null(self):
+        path = self._packages("A-PACKAGES.json", None)
+        self._source("EVSRC|MOGO|1", path)
+        self._observation("EVSRC|MOGO|1")
+        result = imp.backfill_content_hashes(observations_dir=self.obs_dir,
+                                             sources_dir=self.src_dir, write=True)
+        self.assertEqual(result["resolved"], 0)
+        self.assertEqual(len(result["unresolved"]), 1)
+        record = to.load_observations(self.obs_dir)["TOBS|MOGO|20260101|001"]
+        self.assertNotIn("sourceContentHash", record)
+
+    def test_backfill_adds_that_field_and_changes_nothing_else(self):
+        path = self._packages("A-PACKAGES.json", "hash_from_A")
+        self._source("EVSRC|MOGO|1", path)
+        self._observation("EVSRC|MOGO|1")
+        before = dict(to.load_observations(self.obs_dir)["TOBS|MOGO|20260101|001"])
+        imp.backfill_content_hashes(observations_dir=self.obs_dir,
+                                    sources_dir=self.src_dir, write=True)
+        after = dict(to.load_observations(self.obs_dir)["TOBS|MOGO|20260101|001"])
+        self.assertEqual(after.pop("sourceContentHash"), "hash_from_A")
+        self.assertEqual(after, before, "backfill must be strictly additive")
+
+
+class TestASourceIsNeverRepointed(unittest.TestCase):
+
+    def test_reuse_is_refused_when_the_id_describes_a_different_artifact(self):
+        """Source ids are positional. A file added earlier in sort order shifts
+        them, and a blind reuse would repoint a source that observations cite."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        _r, _s, sources = imp.convert_all(now=NOW, skip_imported=False,
+                                          observations_dir=tmp)
+        imp.write_sources(sources, sources_dir=tmp)
+        shifted = {}
+        for key, source in sources.items():
+            shifted[key] = dict(source, repositoryPath="evidence/SOMETHING-ELSE.json")
+        with self.assertRaises(to.ObservationRefused):
+            imp.write_sources(shifted, sources_dir=tmp)
+
+    def test_positive_control_an_identical_source_reuses_cleanly(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        _r, _s, sources = imp.convert_all(now=NOW, skip_imported=False,
+                                          observations_dir=tmp)
+        imp.write_sources(sources, sources_dir=tmp)
+        result = imp.write_sources(sources, sources_dir=tmp)
+        self.assertEqual(result["written"], [])
+        self.assertTrue(result["reused"])
 
 
 if __name__ == "__main__":
