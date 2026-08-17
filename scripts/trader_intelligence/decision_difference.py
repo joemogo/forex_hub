@@ -335,6 +335,138 @@ def decision_differences(idx):
     return [decision_difference(idx, cid) for cid in sorted(idx.contradictions)]
 
 
+# ---------------------------------------------------------------------------
+# Human-vs-MOGO differences, from TradeObservation records (MOGO-022)
+# ---------------------------------------------------------------------------
+#
+# The path above compares two CLAIMS -- what two educators SAID. This one compares
+# two OBSERVATIONS -- what a human and MOGO actually DID. Both feed the same
+# classify() procedure rather than growing a second taxonomy, because two
+# classifiers drift and then nobody can say which verdict is authoritative.
+#
+# The mapping is deliberately lossy in one direction: an observation is NEVER
+# rule-bearing. Two trades differing does not demonstrate that two RULES differ --
+# you cannot see a rule in a fill price. So `isRuleCategory` is False on both
+# sides, which means the observation path can reach DATA_DIFFERENCE,
+# TIMING_DIFFERENCE, INTERPRETATION_HYPOTHESIS or INSUFFICIENT_EVIDENCE, and
+# structurally cannot reach RULE_DIFFERENCE or IMPLEMENTATION_DIFFERENCE. That
+# ceiling is the honest one: a difference in behaviour is a hypothesis about the
+# rules, not evidence of them.
+
+# Fields that must be known for a comparison to mean anything. A trade whose
+# direction or instrument was not legible cannot be compared to anything.
+_OBSERVATION_REQUIRED = ("instrument", "direction")
+
+# Fields whose value feeds a scope dimension, so an UNKNOWN or INFERRED reading
+# of one is a provenance gap rather than a difference.
+_OBSERVATION_SCOPE_SOURCES = ("instrument", "timeframe", "direction")
+
+
+def _observation_scope(record):
+    """Map a TradeObservation onto the SAME scope dimensions a claim uses.
+
+    No new vocabulary: these are the existing DATA/TIMING/SCOPE dimension names.
+    """
+    return {
+        "marketSymbol": record.get("instrument"),
+        "marketCondition": None,      # not carried by an observation
+        "timeframe": record.get("timeframe"),
+        "session": None,              # not carried by an observation
+        "strategyFamilyId": record.get("strategyId"),
+    }
+
+
+def build_position_from_observation(record, side):
+    """One side of a human-vs-MOGO difference, from a TradeObservation.
+
+    Produces the same shape build_position() does, so classify() consumes it
+    unchanged. Fails closed on anything the observation did not actually establish.
+    """
+    if record is None:
+        return {
+            "side": side, "observationId": None, "claimId": None, "actorId": None,
+            "claimType": None, "isRuleCategory": False, "normalizedClaim": None,
+            "claimStatus": None,
+            "decisionScope": {name: None for name in SCOPE_DIMENSIONS},
+            "statedDimensions": [], "evidence": [], "evidenceIds": [], "sourceIds": [],
+            "provenanceComplete": False,
+            "provenanceGaps": ["OBSERVATION_NOT_IN_CORPUS"],
+        }
+
+    gaps = []
+    classification = record.get("fieldClassification") or {}
+    unknowns = set(record.get("unknowns") or [])
+
+    if not record.get("sourceId"):
+        gaps.append("NO_SOURCE_ID")
+
+    for field in _OBSERVATION_REQUIRED:
+        if record.get(field) is None:
+            gaps.append("REQUIRED_FIELD_UNKNOWN|%s" % (field,))
+
+    for field in _OBSERVATION_SCOPE_SOURCES:
+        if field in unknowns:
+            gaps.append("FIELD_UNKNOWN|%s" % (field,))
+        elif classification.get(field) == "INFERRED":
+            # An inferred reading is the EXTRACTOR's reading, not the actor's
+            # action -- the same reason a claim resting only on MOGO_INFERRED
+            # evidence is NOT_ATTRIBUTABLE_TO_ACTOR above.
+            gaps.append("FIELD_INFERRED|%s" % (field,))
+
+    if record.get("decisionTaken") is None and record.get("direction") is None:
+        gaps.append("NO_DECISION_RECORDED")
+
+    scope = _observation_scope(record)
+    return {
+        "side": side,
+        "observationId": record.get("observationId"),
+        "claimId": None,
+        "actorId": record.get("actor"),
+        "claimType": None,
+        # Structurally never rule-bearing -- see the note above.
+        "isRuleCategory": False,
+        "normalizedClaim": None,
+        "claimStatus": None,
+        "decisionScope": scope,
+        "statedDimensions": sorted(k for k, v in scope.items() if v is not None),
+        "evidence": [],
+        "evidenceIds": sorted(record.get("evidenceItemIds") or []),
+        "sourceIds": [record["sourceId"]] if record.get("sourceId") else [],
+        "provenanceComplete": not gaps,
+        "provenanceGaps": sorted(set(gaps)),
+    }
+
+
+def observation_difference(human_record, mogo_record):
+    """Classify one human decision against one MOGO decision. Read-only.
+
+    Refuses same-actor pairs: the taxonomy describes two DECIDERS, and comparing
+    two human trades (or two MOGO trades) to each other would produce a verdict
+    that reads like a human-vs-MOGO finding while being nothing of the kind.
+    """
+    for record, expected in ((human_record, "HUMAN"), (mogo_record, "MOGO")):
+        if record is not None and record.get("actor") != expected:
+            raise DecisionDifferenceRefused(
+                "expected a %s observation on that side, got actor=%r. A "
+                "human-vs-MOGO difference needs one of each; comparing two of the "
+                "same actor is not this analysis."
+                % (expected, record.get("actor")))
+
+    position_a = build_position_from_observation(human_record, "HUMAN")
+    position_b = build_position_from_observation(mogo_record, "MOGO")
+    verdict, basis = classify(position_a, position_b)
+    return {
+        "schemaVersion": DECISION_DIFFERENCE_SCHEMA_VERSION,
+        "lane": "RESEARCH",
+        "comparisonType": "HUMAN_VS_MOGO_OBSERVATION",
+        "classification": verdict,
+        "classificationMeaning": CLASSIFICATION_MEANING[verdict],
+        "adjudicates": False,
+        "positions": [position_a, position_b],
+        "basis": basis,
+    }
+
+
 def render(result):
     """The human-readable form. Same content, no extra analysis."""
     out = ["MOGO decision difference -- DERIVED, READ-ONLY, ADJUDICATES NOTHING",
