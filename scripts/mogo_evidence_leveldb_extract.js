@@ -489,6 +489,11 @@ function verifyStore(storeDir, indexHtmlPath) {
     algorithms: [...new Set([...pkgs.values()].map(p => p.contentHashAlgorithm))],
     packageHashes: hashes,
     hashRollup: rollup,
+    // Only packages whose stored hash RE-DERIVED from the bytes. A package that
+    // failed verification is deliberately absent: the import path must never be
+    // fed a payload this tool could not prove it read correctly.
+    verifiedPackages: [...pkgs.values()].filter(
+      p => p.contentHash && hashes.includes(p.contentHash)),
   };
 }
 
@@ -659,6 +664,48 @@ function selftest() {
     ck(sawVersionProblem, 'a baseline with the wrong version is REFUSED');
   })();
 
+  (function () {
+    // verifyStore must EXPOSE the verified payloads, and must expose only those.
+    // The --packages mode feeds the observation import path, so a package whose
+    // hash did not re-derive must never appear in it -- otherwise an unverifiable
+    // record reaches an append-only evidence store.
+    const v8 = require('v8');
+    const repo = path.resolve(__dirname, '..');
+    const idx = path.join(repo, 'index.html');
+    if (!fs.existsSync(idx)) { ck(false, 'index.html reachable for --packages check'); return; }
+    const canon = loadCommittedCanonicalizer(idx);
+    const good = { packageSchemaVersion: 'mogo.evidence-package.v1', packageId: 'PKG|s|20260101|1',
+      sourceTradeId: 'AGT|EUR_USD|1', objects: { positions: [{ pnl: 1 }] },
+      createdAt: '2026-01-01T00:00:00.000Z' };
+    good.contentHash = crypto.createHash('sha256')
+      .update(Buffer.from(canon.canonicalize(good), 'utf8')).digest('hex');
+    // Same shape, but its stored hash is a lie.
+    const bad = Object.assign({}, good, { packageId: 'PKG|s|20260101|2',
+      sourceTradeId: 'AGT|EUR_USD|2', contentHash: 'deadbeef'.repeat(8) });
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mogo-pkgmode-'));
+    try {
+      // Frame both as WAL records so verifyStore reads them from a store directory.
+      const walRecord = buf => {
+        const head = Buffer.alloc(7);
+        head.writeUInt16LE(buf.length, 4);
+        head.writeUInt8(1, 6);
+        return Buffer.concat([head, buf]);
+      };
+      fs.writeFileSync(path.join(dir, '000001.log'),
+        Buffer.concat([walRecord(v8.serialize(good)), walRecord(v8.serialize(bad))]));
+      const r = verifyStore(dir, idx);
+      ck(Array.isArray(r.verifiedPackages), 'verifyStore exposes verifiedPackages');
+      const ids = (r.verifiedPackages || []).map(p => p.packageId);
+      ck(ids.includes('PKG|s|20260101|1'), 'a package whose hash re-derives IS exposed');
+      ck(!ids.includes('PKG|s|20260101|2'),
+         'a package whose hash does NOT re-derive is withheld (fail closed)');
+      const exposed = (r.verifiedPackages || [])[0];
+      ck(!!exposed && !!exposed.objects,
+         'the exposed payload carries `objects` -- the trade fields the import path needs');
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  })();
+
   console.log(f === 0 ? 'SELFTEST PASS -- record splitting, decoy rejection, version dedup, live refusal, '
                       + 'snappy, canonicalizer extraction, V8 round trip, fail-closed baseline'
                       : 'SELFTEST FAIL -- ' + f + ' check(s) failed');
@@ -672,13 +719,52 @@ function main() {
   const store = get('--store'), origin = get('--origin') || '(unspecified)', out = get('--out');
   const indexHtml = get('--index-html') || path.resolve(__dirname, '..', 'index.html');
 
+  // ── --packages <file>: write the full, hash-VERIFIED package payloads ─────────────────────
+  // The manifest mode above emits package METADATA only -- packageId, contentHash, sourceTradeId
+  // and friends -- which is enough to detect that a close happened but NOT enough to import an
+  // observation, because the trade fields live in `objects`. That gap is why forward capture
+  // still needed a live browser read. Full deserialization already exists here for --verify, so
+  // this reuses it rather than adding a second parser.
+  //
+  // FAIL CLOSED: a package whose stored hash does not re-derive from the bytes is never written.
+  // Feeding the import path a payload this tool could not prove it read correctly would put an
+  // unverifiable record into an append-only evidence store.
+  const packagesOut = get('--packages');
+  if (packagesOut) {
+    if (!store) { console.error('FAIL: --store <CHECKPOINT_LEVELDB_DIR> required'); process.exit(2); }
+    let r;
+    try { r = verifyStore(store, indexHtml); }
+    catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
+    if (r.mismatched !== 0) {
+      console.error('FAIL CLOSED: ' + r.mismatched + ' package(s) failed hash re-derivation; refusing to write.');
+      process.exit(1);
+    }
+    if (r.verifiedPackages.length === 0) {
+      console.error('FAIL CLOSED: no verified packages recovered from ' + store);
+      process.exit(1);
+    }
+    const dest = path.resolve(packagesOut);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, JSON.stringify(r.verifiedPackages, null, 2) + '\n');
+    console.log(JSON.stringify({
+      storeDir: r.storeDir,
+      packagesRecovered: r.packagesRecovered,
+      verified: r.verified,
+      mismatched: r.mismatched,
+      uniqueSourceTradeIds: r.uniqueSourceTradeIds,
+      hashRollup: r.hashRollup,
+      written: dest,
+    }, null, 2));
+    process.exit(0);
+  }
+
   // ── --verify: reconstruct and re-derive every package hash ────────────────────────────────
   if (a.includes('--verify')) {
     if (!store) { console.error('FAIL: --store <CHECKPOINT_LEVELDB_DIR> required'); process.exit(2); }
     let r;
     try { r = verifyStore(store, indexHtml); }
     catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
-    const { packageHashes, ...summary } = r;
+    const { packageHashes, verifiedPackages, ...summary } = r;
     console.log(JSON.stringify(summary, null, 2));
     if (out) { fs.writeFileSync(path.resolve(out), JSON.stringify(r, null, 2)); console.log('written to ' + path.resolve(out)); }
     if (r.mismatched !== 0) { console.error('FAIL CLOSED: ' + r.mismatched + ' package(s) failed hash re-derivation.'); process.exit(1); }

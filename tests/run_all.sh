@@ -170,6 +170,12 @@ else
 fi
 echo ""
 
+echo "--- Evidence extractor selftest ---"
+if ! node scripts/mogo_evidence_leveldb_extract.js --selftest; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Evidence checkpoint selftest ---"
 if ! bash scripts/mogo_evidence_checkpoint.sh --selftest; then
   OVERALL_EXIT=1
