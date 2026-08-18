@@ -114,16 +114,45 @@ ledger = [json.load(open(p)) for p in sorted(glob('.../ledger/*.json'))]
 → hypothesis verdicts {NOT_TESTABLE_NO_EVIDENCE_POPULATION: 641}
 ```
 
-## 8. The next close needs no prompting
+## 8. What "automatic" does and does not mean here
 
-`scripts/forward_capture.sh` runs detect → preserve → recover → import → **assimilate**.
-The assimilation step is unconditional; the exactly-once guarantee makes it safe to invoke
-on every capture.
+`scripts/forward_capture.sh` runs detect → preserve → recover → import → **assimilate**,
+and the assimilation step runs on **every exit path**, including the quiet one — so a run
+interrupted between import and assimilation is repaired by the next invocation instead of
+being stranded.
 
-**Exactly-once scientific effect.** The key is the corpus fingerprint — observation ids
-paired with their source content hash *and* derived population. A retry, a restart, a
-double invocation, or an interrupted run records nothing further, and a record silently
-rewritten in place still changes the fingerprint.
+**Stated precisely, because an earlier draft of this document overclaimed it:** that is one
+command replacing a remembered six-step procedure. **Nothing schedules it.** The only
+installed launchd agent is `com.mogo.research.collect`, which runs a different program;
+no scheduler invokes `forward_capture.sh`. Installing one is persistent configuration and
+therefore an operator decision, not something to arrange unilaterally. Until then,
+"automatic" means *the pipeline needs no human judgement*, not *it fires by itself*.
+
+**Exactly-once scientific effect.** The key is the corpus fingerprint: each observation
+record hashed IN FULL, plus the source record its population derives from. A retry, a
+restart, a double invocation, or an interrupted run records nothing further.
+
+The first version of this key was wrong, and an independent verifier demonstrated it on
+the real corpus. It hashed the id, the stored `sourceContentHash` and the derived
+population — but `sourceContentHash` is a COPY of the upstream package's hash, not a hash
+of the observation. Editing `rMultiple`, `outcome` and `pnl` in place left the fingerprint
+identical, and the `already_recorded` short-circuit then OVERRODE the classifier: forward
+mean R moved from −0.149302 to +0.172127 while the ledger asserted *"no change"*. That is
+worse than a missed detection — a real computed change was actively suppressed, with no
+self-healing path.
+
+Not hypothetical: `import_mogo_observations.backfill_mapped_fields` performs exactly that
+class of edit, and its widening-only guard *requires* `sourceContentHash` to be unchanged.
+
+The test that should have caught it was circular — it mutated `sourceContentHash` itself,
+proving only that the hash function reads its argument. The tests now edit the trade data.
+
+**Interruption.** Ledger records are named by the transition they record
+(`LEARN_<date>_<fingerprint12>.json`), not by a counter. The old counter version wrote the
+ledger first and the state second, so a crash between them left the effect recorded and
+the suppressor absent — and the retry wrote a SECOND record asserting the same transition.
+A content-derived name makes the retry land on the same file, and removes a same-day
+sequence collision that could silently overwrite an "append-only" record.
 
 ## 9. Evidence classes stay separate
 

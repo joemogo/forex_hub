@@ -70,20 +70,46 @@ class AssimilationRefused(Exception):
     """Raised rather than guessing."""
 
 
-def corpus_fingerprint(observations, sources):
-    """Identity of the evidence set. Changes only when the evidence changes.
+def _canonical(obj):
+    """Canonical bytes for hashing: keys sorted recursively, arrays left alone."""
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
 
-    Built from observation ids paired with their source content hash, so a record
-    that is silently rewritten in place changes the fingerprint too -- an important
-    property, because the ledger's exactly-once guarantee rests on it.
+
+def corpus_fingerprint(observations, sources):
+    """Identity of the evidence set. Changes when ANY of it changes.
+
+    Hashes each observation RECORD IN FULL, plus the source record its population
+    is derived from. Both halves were learned the hard way.
+
+    The first version hashed the id, the stored `sourceContentHash`, and the derived
+    population. That looked sufficient and was not: `sourceContentHash` is a COPY of
+    the upstream package's hash, not a hash of the observation, so editing
+    `rMultiple`, `outcome` or `pnl` in place left the fingerprint identical. Worse
+    than a missed detection -- the `already_recorded` short-circuit then OVERRODE
+    classify(), so a real computed change was actively suppressed and the ledger
+    asserted "no change" while forward meanR moved from -0.149302 to +0.172127.
+    Demonstrated on the real corpus by an independent verifier.
+
+    That is not hypothetical: `import_mogo_observations.backfill_mapped_fields`
+    performs exactly this class of edit, and its widening-only guard REQUIRES
+    `sourceContentHash` to be unchanged.
+
+    The source record is folded in because population is derived from it -- a source
+    retyped within its own class changes what the evidence means without touching
+    any observation.
     """
     parts = []
     for observation_id in sorted(observations or {}):
         record = observations[observation_id]
-        parts.append("%s|%s|%s" % (observation_id,
-                                    record.get("sourceContentHash") or "",
-                                    to.observation_population(record, sources)))
-    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+        source = (sources or {}).get(record.get("sourceId")) or {}
+        parts.append(b"|".join([
+            observation_id.encode("utf-8"),
+            hashlib.sha256(_canonical(record)).hexdigest().encode("utf-8"),
+            hashlib.sha256(_canonical(source)).hexdigest().encode("utf-8"),
+            to.observation_population(record, sources).encode("utf-8"),
+        ]))
+    return hashlib.sha256(b"\n".join(parts)).hexdigest()
 
 
 def _population_stats(records):
@@ -261,8 +287,12 @@ def assimilate(now, observations=None, sources=None, write=False,
     state_path = state_path or CURRENT_STATE
     ledger_dir = ledger_dir or LEDGER_DIR
 
-    after = research_state(observations, sources)
+    # `before` is read FIRST. Computing `after` first opened a window in which a
+    # concurrent run could record and update the state, leaving this run to compare
+    # a fresh `after` against a newer `before` and emit a ledger record asserting
+    # the forward cohort SHRANK -- a transition that never happened.
     before = load_current_state(state_path)
+    after = research_state(observations, sources)
 
     already_recorded = bool(before) and before.get("corpusFingerprint") == after["corpusFingerprint"]
     kinds, changes = ([NO_SCIENTIFIC_CHANGE], {}) if already_recorded else classify(before, after)
@@ -289,8 +319,19 @@ def assimilate(now, observations=None, sources=None, write=False,
 
     if write and not already_recorded:
         os.makedirs(ledger_dir, exist_ok=True)
-        seq = len(globmod.glob(os.path.join(ledger_dir, "*.json"))) + 1
-        name = "LEARN_%s_%03d.json" % (now.strftime("%Y%m%d"), seq)
+        # NAMED BY THE TRANSITION IT RECORDS, not by a counter. Two consequences,
+        # both of which were real defects in the counter version:
+        #
+        #  * Interruption cannot double-record. The old order wrote the ledger
+        #    first and current-state.json second; crashing between them left the
+        #    scientific effect recorded and the suppressor absent, so the retry
+        #    wrote a SECOND record asserting the same transition. Verified. A
+        #    content-derived name makes the retry land on the same file.
+        #  * `len(glob(...)) + 1` was computed non-atomically, so two same-day runs
+        #    picked the same sequence and the second silently replaced the first --
+        #    falsifying "append-only" -- and removing any file reused a name.
+        name = "LEARN_%s_%s.json" % (now.strftime("%Y%m%d"),
+                                      after["corpusFingerprint"][:12])
         with open(os.path.join(ledger_dir, name), "w", encoding="utf-8") as handle:
             json.dump(record, handle, indent=2, sort_keys=True)
             handle.write("\n")
