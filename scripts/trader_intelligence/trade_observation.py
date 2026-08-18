@@ -99,7 +99,7 @@ FORWARD_SOURCE_TYPES = ("paper_trade", "live_trade_review")
 # population, NOT a flavour of FORWARD and NOT folded into UNKNOWN: forward means
 # captured live as it happened, and UNKNOWN must keep meaning "cannot be
 # determined" rather than doubling as a bucket for a class we chose deliberately.
-RECONSTRUCTED_SOURCE_TYPES = ()
+RECONSTRUCTED_SOURCE_TYPES = ("journal_entry",)
 
 # The fields that describe the trade itself and therefore require classification.
 # Metadata (ids, timestamps, lane, notes) is not evidence about a trade and is

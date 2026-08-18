@@ -56,6 +56,24 @@ cd "$REPO_ROOT" || { echo "FAIL: cannot reach repository root" >&2; exit 1; }
 
 say() { echo "[forward-capture] $*"; }
 
+# ── ASSIMILATE ───────────────────────────────────────────────────────────────────────────────
+# Called before EVERY exit, not only when new evidence arrived. Preservation and import were
+# already automatic; assimilation was not, so a close became a stored record and stopped there.
+#
+# Unconditional on purpose. It is exactly-once by construction (the corpus fingerprint is the
+# key), so on a quiet run it costs one read and records nothing -- and if a PREVIOUS run was
+# interrupted between import and assimilation, this is what repairs it. Gating it on "did we
+# import something this run" would leave that interruption permanently unassimilated, which is
+# precisely the failure mode the exactly-once design exists to survive.
+assimilate_then() {
+  say "assimilate: updating research state and recording what changed"
+  python3 scripts/trader_intelligence/research_assimilation.py --write 2>&1 | sed 's/^/    /'
+  local rc=${PIPESTATUS[0]}
+  [ "${rc:-0}" -eq 0 ] || { echo "FAIL: assimilation failed" >&2; exit 1; }
+  say "done."
+  exit "${1:-0}"
+}
+
 # ── 1. DETECT ────────────────────────────────────────────────────────────────────────────────
 # Cheap: fingerprints the store and compares against the last checkpoint. Costs nothing when
 # the market is idle, which is most of the time.
@@ -67,8 +85,7 @@ if [ $DETECT_RC -ne 0 ]; then
   echo "FAIL: detection step failed" >&2; exit 1
 fi
 if echo "$DETECT" | grep -q 'UNCHANGED'; then
-  say "nothing new since the last checkpoint. Done."
-  exit 0
+  assimilate_then 0
 fi
 
 # ── 2. PRESERVE ──────────────────────────────────────────────────────────────────────────────
@@ -124,8 +141,8 @@ fi
 say "store reconstructed; $NEW_COUNT package(s) not yet preserved as observations"
 
 if [ "$NEW_COUNT" = "0" ]; then
-  say "no new forward evidence to import. Checkpoint retained. Done."
-  exit 0
+  say "no new forward evidence to import. Checkpoint retained."
+  assimilate_then 0
 fi
 if [ $WRITE -eq 0 ]; then
   # A dry run reports and leaves NOTHING behind. Leaving the capture file was how
@@ -133,7 +150,7 @@ if [ $WRITE -eq 0 ]; then
   rm -f "$PKG_FILE"
   say "DRY RUN -- $NEW_COUNT new package(s) would be imported. Nothing written."
   say "Re-run with --write to capture them."
-  exit 0
+  assimilate_then 0
 fi
 say "wrote $NEW_COUNT new package(s) to $PKG_FILE"
 
@@ -148,16 +165,4 @@ if [ $WRITE -eq 1 ]; then
   python3 -m unittest tests.trader_intelligence.test_import_mogo_observations 2>&1 | tail -3 | sed 's/^/    /'
 fi
 
-# ── 6. ASSIMILATE ────────────────────────────────────────────────────────────────────────────
-# Preservation and import were already automatic; ASSIMILATION was not. Without this
-# step a close became a stored record and stopped there, and every statement about what
-# the corpus now supports had to be produced by hand. Storage is not learning.
-#
-# Exactly-once by construction: the corpus fingerprint is the key, so re-running against
-# an unchanged corpus records nothing. Safe to invoke on every capture.
-say "assimilate: updating research state and recording what changed"
-python3 scripts/trader_intelligence/research_assimilation.py --write 2>&1 | sed 's/^/    /'
-ASSIM_RC=${PIPESTATUS[0]}
-[ "${ASSIM_RC:-0}" -eq 0 ] || { echo "FAIL: assimilation failed" >&2; exit 1; }
-
-say "done."
+assimilate_then 0
