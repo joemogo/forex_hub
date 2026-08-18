@@ -520,9 +520,45 @@ class TestDuplicateIdDetection(unittest.TestCase):
             promoted, manifest, report, nodes, edges = repo.build()
             self.assertFalse(promoted)
             categories = {f["category"] for f in report["findings"]}
-            self.assertTrue({"DUPLICATE_ENTITY_ID", "DUPLICATE_NODE_ID"} & categories)
+            # Asserted SPECIFICALLY, not as an OR over two categories. The OR read
+            # as though either guard would do; in fact this fixture never produces
+            # DUPLICATE_ENTITY_ID at all, so the whole assertion rested on
+            # DUPLICATE_NODE_ID while appearing to allow an alternative. Naming the
+            # category that actually fires is what makes deleting it fail.
+            self.assertIn("DUPLICATE_NODE_ID", categories)
         finally:
             repo.cleanup()
+
+    def test_validate_graph_catches_a_duplicate_node_id_directly(self):
+        """The VALIDATOR's guard, which the fixture test above does not reach.
+
+        DUPLICATE_NODE_ID is emitted twice in this codebase: at construction
+        (graph_common) and at validation (validate_graph). The fixture test goes
+        through build_graph, so it exercises the construction one only -- deleting
+        the validator's guard outright changed nothing anywhere in the suite. Both
+        are guards; both need a control that fails when they are removed.
+        """
+        import validate_graph as vg
+        node = self.minimal_node()
+        report = vg.run_integrity_checks([node, dict(node)], [], {}, [], "TEST")
+        self.assertIn("DUPLICATE_NODE_ID", {f["category"] for f in report["findings"]})
+
+    def minimal_node(self):
+        return {"nodeId": "NODE|TRADER|T", "nodeType": "TRADER", "entityId": "T",
+                "sourceFile": "x.json", "contentHash": "h", "traderId": "T",
+                "strategyFamilyId": None, "label": "", "status": "active",
+                "createdAt": "", "updatedAt": None, "metadata": {}, "generated": True}
+
+    def test_duplicate_edge_id_is_caught(self):
+        """The sibling guard, which had no coverage of any kind."""
+        import validate_graph as vg
+        node = self.minimal_node()
+        edge = {"edgeId": "EDGE|SAME", "edgeType": "BELONGS_TO_TRADER",
+                "fromNodeId": "NODE|TRADER|T", "toNodeId": "NODE|TRADER|T",
+                "entityId": "T", "traderId": "T", "sourceFile": "x.json",
+                "createdAt": "", "metadata": {}, "generated": True}
+        report = vg.run_integrity_checks([node], [edge, dict(edge)], {}, [], "TEST")
+        self.assertIn("DUPLICATE_EDGE_ID", {f["category"] for f in report["findings"]})
 
 
 # ---------------------------------------------------------------------------
