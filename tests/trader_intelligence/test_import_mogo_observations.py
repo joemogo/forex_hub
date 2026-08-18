@@ -748,3 +748,54 @@ class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBackfillDoesNotContaminateForward(unittest.TestCase):
+    """The capture-basis mapping is the contamination boundary (B-22).
+
+    Lane A's review called this load-bearing: without a test here, changing
+    HISTORICAL_BACKFILL's mapping to `paper_trade` is a one-character edit that
+    silently merges reconstructed evidence into the genuine forward population,
+    and every forward statistic afterwards is computed over a mixed set.
+
+    Verified as a real gap: mutating that mapping killed nothing in
+    test_trade_observation, because that module does not exercise the importer.
+    """
+
+    def test_backfill_maps_to_a_source_type_that_is_not_forward(self):
+        source_type = imp.CAPTURE_BASIS_SOURCE_TYPE["HISTORICAL_BACKFILL"]
+        self.assertNotIn(source_type, to.FORWARD_SOURCE_TYPES,
+                         "HISTORICAL_BACKFILL maps to %r, which derives the FORWARD "
+                         "population -- reconstructed evidence would be pooled with "
+                         "live-captured evidence" % source_type)
+
+    def test_backfill_derives_the_RECONSTRUCTED_population(self):
+        source_type = imp.CAPTURE_BASIS_SOURCE_TYPE["HISTORICAL_BACKFILL"]
+        population = to.observation_population(
+            {"sourceId": "EVSRC|B|1"},
+            {"EVSRC|B|1": {"sourceId": "EVSRC|B|1", "sourceType": source_type}})
+        self.assertEqual(population, to.RECONSTRUCTED)
+
+    def test_live_close_still_derives_FORWARD(self):
+        """Positive control: the boundary test above must not pass merely because
+        the mapping is broken in both directions."""
+        source_type = imp.CAPTURE_BASIS_SOURCE_TYPE["LIVE_CLOSE"]
+        population = to.observation_population(
+            {"sourceId": "EVSRC|F|1"},
+            {"EVSRC|F|1": {"sourceId": "EVSRC|F|1", "sourceType": source_type}})
+        self.assertEqual(population, to.FORWARD)
+
+    def test_every_capture_basis_maps_to_a_distinct_population(self):
+        seen = {}
+        for basis, source_type in imp.CAPTURE_BASIS_SOURCE_TYPE.items():
+            population = to.observation_population(
+                {"sourceId": "S"}, {"S": {"sourceId": "S", "sourceType": source_type}})
+            self.assertNotEqual(population, to.UNKNOWN_POPULATION,
+                                "%s maps to %r which derives no known population"
+                                % (basis, source_type))
+            seen[basis] = population
+        self.assertEqual(len(set(seen.values())), len(seen),
+                         "two capture bases share a population: %r" % seen)
+
+    def test_an_unrecognised_basis_is_still_refused(self):
+        self.assertNotIn("SOMETHING_NEW", imp.CAPTURE_BASIS_SOURCE_TYPE)

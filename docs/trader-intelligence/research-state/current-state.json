@@ -1,0 +1,91 @@
+{
+  "adjudicates": false,
+  "byPopulation": {
+    "FORWARD": {
+      "bestR": 2.055506,
+      "byOutcome": {
+        "Loss": 20,
+        "Win": 8
+      },
+      "meanR": -0.149302,
+      "n": 28,
+      "rMultipleCount": 28,
+      "unknownFieldCounts": {
+        "accountBalanceAfter": 2,
+        "accountBalanceBefore": 2,
+        "timeframe": 2
+      },
+      "winCount": 8,
+      "winShareOfPreserved": 0.285714,
+      "worstR": -1.117834
+    },
+    "HISTORICAL": {
+      "bestR": 2,
+      "byOutcome": {
+        "Loss": 135,
+        "Win": 86
+      },
+      "meanR": 0.167421,
+      "n": 221,
+      "rMultipleCount": 221,
+      "unknownFieldCounts": {
+        "pnl": 221
+      },
+      "winCount": 86,
+      "winShareOfPreserved": 0.38914,
+      "worstR": -1
+    }
+  },
+  "byStrategyAndPopulation": {
+    "alex_g_sr_v1|FORWARD": 26,
+    "alex_g_sr_v1|HISTORICAL": 221,
+    "current_strategy|FORWARD": 2
+  },
+  "corpusFingerprint": "836e14718bb37bf43f964ed6c66a2ab8ca1d242eda29200766a625ee877b90b5",
+  "fidelity": {
+    "alex_g_sr_v1": {
+      "agreements": [
+        "RISK_SIZING_AGREES"
+      ],
+      "findings": [
+        "REPLAY_IDEALIZES_EXITS",
+        "REPLAY_IS_BAR_QUANTIZED"
+      ],
+      "populationsPresent": [
+        "FORWARD",
+        "HISTORICAL"
+      ]
+    },
+    "current_strategy": {
+      "agreements": [],
+      "findings": [],
+      "populationsPresent": [
+        "FORWARD"
+      ]
+    }
+  },
+  "hypotheses": {
+    "byBlocker": {
+      "NOT_TESTABLE_NON_DISCRIMINATING_TEST": 637,
+      "NOT_TESTABLE_NO_EVIDENCE_POPULATION": 641,
+      "NOT_TESTABLE_UNRESOLVED_CONTRADICTION": 59
+    },
+    "byVerdict": {
+      "NOT_TESTABLE_NO_EVIDENCE_POPULATION": 641
+    },
+    "discriminatingSpecifications": 4,
+    "evidenceHeldFor": {
+      "alex_g_sr_v1": [
+        "FORWARD",
+        "HISTORICAL"
+      ],
+      "current_strategy": [
+        "FORWARD"
+      ]
+    },
+    "total": 641
+  },
+  "lane": "RESEARCH",
+  "observationTotal": 249,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}

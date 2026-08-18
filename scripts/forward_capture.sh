@@ -148,4 +148,16 @@ if [ $WRITE -eq 1 ]; then
   python3 -m unittest tests.trader_intelligence.test_import_mogo_observations 2>&1 | tail -3 | sed 's/^/    /'
 fi
 
+# ── 6. ASSIMILATE ────────────────────────────────────────────────────────────────────────────
+# Preservation and import were already automatic; ASSIMILATION was not. Without this
+# step a close became a stored record and stopped there, and every statement about what
+# the corpus now supports had to be produced by hand. Storage is not learning.
+#
+# Exactly-once by construction: the corpus fingerprint is the key, so re-running against
+# an unchanged corpus records nothing. Safe to invoke on every capture.
+say "assimilate: updating research state and recording what changed"
+python3 scripts/trader_intelligence/research_assimilation.py --write 2>&1 | sed 's/^/    /'
+ASSIM_RC=${PIPESTATUS[0]}
+[ "${ASSIM_RC:-0}" -eq 0 ] || { echo "FAIL: assimilation failed" >&2; exit 1; }
+
 say "done."

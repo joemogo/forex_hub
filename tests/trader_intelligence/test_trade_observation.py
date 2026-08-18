@@ -419,3 +419,81 @@ class TestStaysInSyncWithTheSchema(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestReconstructedIsItsOwnPopulation(unittest.TestCase):
+    """B-22: backfilled records must never be pooled with genuine forward evidence.
+
+    A package minted by the app's backfill carries captureBasis HISTORICAL_BACKFILL
+    and completenessReport level MINIMAL with `*` marked UNSAFE_TO_RECONSTRUCT.
+    Filing that alongside a live-captured record under one population would make
+    the two indistinguishable forever and retroactively weaken all 26 genuine
+    forward records.
+    """
+
+    def sources(self):
+        return {
+            "EVSRC|R|1": {"sourceId": "EVSRC|R|1", "sourceType": "replay_observation"},
+            "EVSRC|F|1": {"sourceId": "EVSRC|F|1", "sourceType": "paper_trade"},
+            "EVSRC|B|1": {"sourceId": "EVSRC|B|1", "sourceType": "journal_entry"},
+            "EVSRC|X|1": {"sourceId": "EVSRC|X|1", "sourceType": "not_a_real_type"},
+        }
+
+    def population(self, source_id):
+        return to.observation_population({"sourceId": source_id}, self.sources())
+
+    def test_a_backfilled_source_is_RECONSTRUCTED(self):
+        self.assertEqual(self.population("EVSRC|B|1"), to.RECONSTRUCTED)
+
+    def test_it_is_not_FORWARD(self):
+        """The contamination boundary. This is the assertion that stops a
+        one-character edit in CAPTURE_BASIS_SOURCE_TYPE from silently merging
+        reconstructed evidence into the forward population."""
+        self.assertNotEqual(self.population("EVSRC|B|1"), to.FORWARD)
+
+    def test_it_is_not_HISTORICAL_either(self):
+        self.assertNotEqual(self.population("EVSRC|B|1"), to.HISTORICAL)
+
+    def test_UNKNOWN_still_means_cannot_determine(self):
+        """RECONSTRUCTED must not be implemented by widening UNKNOWN. An
+        unrecognised source type still fails closed to UNKNOWN, and a deliberate
+        third class is distinguishable from an unresolvable one."""
+        self.assertEqual(self.population("EVSRC|X|1"), to.UNKNOWN_POPULATION)
+        self.assertNotEqual(self.population("EVSRC|B|1"), to.UNKNOWN_POPULATION)
+
+    def test_a_source_absent_from_the_map_is_UNKNOWN_not_RECONSTRUCTED(self):
+        """Fail-closed on an ABSENT source, distinct from an unrecognised type.
+        Both paths return UNKNOWN and both must: an observation whose source
+        cannot be found is unresolvable, and quietly calling it reconstructed
+        would invent a provenance class for it."""
+        self.assertEqual(
+            to.observation_population({"sourceId": "EVSRC|NOT|PRESENT"}, self.sources()),
+            to.UNKNOWN_POPULATION)
+        self.assertEqual(to.observation_population({}, self.sources()),
+                         to.UNKNOWN_POPULATION)
+
+    def test_the_three_known_populations_are_mutually_exclusive(self):
+        got = {self.population(s) for s in ("EVSRC|R|1", "EVSRC|F|1", "EVSRC|B|1")}
+        self.assertEqual(got, {to.HISTORICAL, to.FORWARD, to.RECONSTRUCTED})
+
+    def test_select_population_isolates_reconstructed(self):
+        observations = {
+            "a": {"observationId": "a", "sourceId": "EVSRC|F|1"},
+            "b": {"observationId": "b", "sourceId": "EVSRC|B|1"},
+            "c": {"observationId": "c", "sourceId": "EVSRC|R|1"},
+        }
+        forward = to.select_population(observations, self.sources(), to.FORWARD)
+        self.assertEqual([r["observationId"] for r in forward.values()], ["a"])
+        reconstructed = to.select_population(observations, self.sources(), to.RECONSTRUCTED)
+        self.assertEqual([r["observationId"] for r in reconstructed.values()], ["b"])
+
+    def test_summarize_reports_reconstructed_separately_and_offers_no_blended_total(self):
+        observations = {
+            "a": {"observationId": "a", "sourceId": "EVSRC|F|1", "actor": "MOGO"},
+            "b": {"observationId": "b", "sourceId": "EVSRC|B|1", "actor": "MOGO"},
+        }
+        report = to.summarize(observations, self.sources())
+        self.assertEqual(set(report["populationsPresent"]), {to.FORWARD, to.RECONSTRUCTED})
+        self.assertEqual(report["byPopulation"][to.FORWARD]["total"], 1)
+        self.assertEqual(report["byPopulation"][to.RECONSTRUCTED]["total"], 1)
+        self.assertNotIn("total", report)

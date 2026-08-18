@@ -1,0 +1,289 @@
+{
+  "generated": true,
+  "schemaVersion": "mogo.paper-ledger-preservation.v1",
+  "windowSize": 25,
+  "balance": 9658.67,
+  "openPositions": 1,
+  "closedTotal": 39,
+  "closedReal": 35,
+  "closedDeveloperTest": 4,
+  "withinAutomaticReMintWindow": 25,
+  "outsideAutomaticReMintWindow": 14,
+  "outsideWindowReal": 10,
+  "identities": [
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_USD|H1|AGZ|AGC|GBP_USD|H1|high|1776348000000|v1778587200000|B_breakRetest|AGR|GBP_USD|H1|low|1786957200000",
+      "pair": "GBP_USD",
+      "closedAt": "2026-08-17T17:39:10.849Z",
+      "pnl": -97.56,
+      "hash": "28fd90d2e2e4e69de3c92d3a6ab37bb8c77be8388c3e96da08f3e491b8d33d11"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_JPY|H4|AGZ|AGC|GBP_JPY|H4|high|1784538000000|v1784840400000|A_repeatedReaction|AGR|GBP_JPY|H4|high|1785416400000",
+      "pair": "GBP_JPY",
+      "closedAt": "2026-08-17T12:56:09.819Z",
+      "pnl": 193.34,
+      "hash": "07e4c57d283bc9e507f294f9e380f4e69d565f3678e9a2666147246a65af6137"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|NZD_USD|D|AGZ|AGC|NZD_USD|D|high|1773954000000|v1781643600000|A_repeatedReaction|AGR|NZD_USD|D|high|1784667600000",
+      "pair": "NZD_USD",
+      "closedAt": "2026-08-17T12:56:08.675Z",
+      "pnl": -103.85,
+      "hash": "adb7c0b7e0dc0a4895bf27eedbc77deba9a4c93a9aa20628be9d0eca6b7e68bf"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|AUD_JPY|H1|AGZ|AGC|AUD_JPY|H1|low|1783440000000|v1783933200000|B_breakRetest|AGR|AUD_JPY|H1|high|1785434400000",
+      "pair": "AUD_JPY",
+      "closedAt": "2026-07-30T23:39:13.445Z",
+      "pnl": -97.64,
+      "hash": "f80fbff282ccf7f6cb7335af867798c35d88c37f644b4b89efcc52b52630f39a"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CAD|H1|AGZ|AGC|USD_CAD|H1|low|1784595600000|v1784862000000|B_breakRetest|AGR|USD_CAD|H1|high|1785398400000",
+      "pair": "USD_CAD",
+      "closedAt": "2026-07-30T17:00:37.277Z",
+      "pnl": 196.67,
+      "hash": "c608ca0ad0f4036f7590bb145822394aec3846ea0a055cb200bbdb515a26cedf"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_JPY|H4|AGZ|AGC|EUR_JPY|H4|high|1784797200000|v1785157200000|A_repeatedReaction|AGR|EUR_JPY|H4|high|1785258000000",
+      "pair": "EUR_JPY",
+      "closedAt": "2026-07-29T21:26:07.649Z",
+      "pnl": -98.67,
+      "hash": "1c04c247afb9bfa8728ba5f34f071ecd51a06d20b700d82253372519a8ffca7e"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CHF|H4|AGZ|AGC|GBP_CHF|H4|high|1784797200000|v1785186000000|A_repeatedReaction|AGR|GBP_CHF|H4|high|1785229200000",
+      "pair": "GBP_CHF",
+      "closedAt": "2026-07-29T21:26:07.342Z",
+      "pnl": -101.73,
+      "hash": "b5fbcfa88895523c6ae08e0368695e8a16b8ce03738283cb6e4a1b3f245e69d0"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CAD|H1|AGZ|AGC|USD_CAD|H1|low|1784707200000|v1785261600000|A_repeatedReaction|AGR|USD_CAD|H1|low|1785308400000",
+      "pair": "USD_CAD",
+      "closedAt": "2026-07-29T15:05:03.708Z",
+      "pnl": -98.67,
+      "hash": "10b7bf3eb7df9d28d02e339b0387e6eb4ac19e25b481e1d5d1a0d7985a9b0fc7"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_USD|H1|AGZ|AGC|GBP_USD|H1|low|1775073600000|v1784826000000|B_breakRetest|AGR|GBP_USD|H1|high|1785276000000",
+      "pair": "GBP_USD",
+      "closedAt": "2026-07-29T04:38:30.860Z",
+      "pnl": -101.73,
+      "hash": "16a894f7f26a83f3bc90efabf307783d28cf355c5e1726436ed31dbb54e81e37"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_JPY|H1|AGZ|AGC|GBP_JPY|H1|low|1783558800000|v1784646000000|A_repeatedReaction|AGR|GBP_JPY|H1|low|1785196800000",
+      "pair": "GBP_JPY",
+      "closedAt": "2026-07-29T04:01:30.637Z",
+      "pnl": -102.8,
+      "hash": "4929d4eee8a92ab3d9dae7a00f4935b4c1ea68121b240273dc68d8d236658a1f"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_JPY|H1|AGZ|AGC|USD_JPY|H1|low|1784880000000|v1785211200000|A_repeatedReaction|AGR|USD_JPY|H1|low|1785222000000",
+      "pair": "USD_JPY",
+      "closedAt": "2026-07-29T03:39:30.904Z",
+      "pnl": -101.73,
+      "hash": "a529dad7ddb265556a31b24e9b6cbfc17cb121e4710df809404357f9be346db9"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1784818800000|v1784923200000|A_repeatedReaction|AGR|EUR_USD|H1|low|1785186000000",
+      "pair": "EUR_USD",
+      "closedAt": "2026-07-28T05:14:34.674Z",
+      "pnl": -107.05,
+      "hash": "7b1c14d3e16b5ff216fc9f71bc6539e93f2c7353f95110b22b925391989c9504"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CHF|H1|AGZ|AGC|GBP_CHF|H1|high|1784239200000|v1784797200000|A_repeatedReaction|AGR|GBP_CHF|H1|high|1785160800000",
+      "pair": "GBP_CHF",
+      "closedAt": "2026-07-27T21:06:49.570Z",
+      "pnl": -103.84,
+      "hash": "bf7ca6aa961ed5b99b120ead8059e4f8cfc4d61955d000757a2a835819418e7b"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CHF|H1|AGZ|AGC|USD_CHF|H1|high|1782331200000|v1784649600000|B_breakRetest|AGR|USD_CHF|H1|low|1784782800000",
+      "pair": "USD_CHF",
+      "closedAt": "2026-07-27T14:35:50.374Z",
+      "pnl": 205.69,
+      "hash": "947ca4f0f8ce7db1aa28788c8f4173e7ca3d9fafdb685f34467881e4b229611f"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_JPY|H4|AGZ|AGC|GBP_JPY|H4|low|1784293200000|v1784739600000|A_repeatedReaction|AGR|GBP_JPY|H4|low|1784898000000",
+      "pair": "GBP_JPY",
+      "closedAt": "2026-07-27T11:34:18.906Z",
+      "pnl": -102.81,
+      "hash": "c9683d91de5cfdd59002548357d80ec5fc3c4cf268111a450f57995a4fe517ca"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|AUD_JPY|H1|AGZ|AGC|AUD_JPY|H1|high|1777467600000|v1784898000000|A_repeatedReaction|AGR|AUD_JPY|H1|high|1784908800000",
+      "pair": "AUD_JPY",
+      "closedAt": "2026-07-26T22:12:54.647Z",
+      "pnl": -103.85,
+      "hash": "b332fb6a2a422cf56b22673fdcc535a7bd3b27e138510d6da57acd3dd03e4da1"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CHF|H1|AGZ|AGC|GBP_CHF|H1|high|1784239200000|v1784797200000|A_repeatedReaction|AGR|GBP_CHF|H1|high|1784811600000",
+      "pair": "GBP_CHF",
+      "closedAt": "2026-07-24T18:02:58.788Z",
+      "pnl": -107.38,
+      "hash": "1a39949988a341de9ce8c1f4ad36b7957cb28f0fd5c21aaa5ea8def6123c6393"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_JPY|H1|AGZ|AGC|USD_JPY|H1|high|1782838800000|v1782957600000|B_breakRetest|AGR|USD_JPY|H1|low|1784707200000",
+      "pair": "USD_JPY",
+      "closedAt": "2026-07-23T14:00:10.892Z",
+      "pnl": 207.74,
+      "hash": "c93a269cda80ca2f23636681a6a3a05ffd4731992530b6cc22fb188131333fe2"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CHF|D|AGZ|AGC|USD_CHF|D|high|1768514400000|v1775595600000|B_breakRetest|AGR|USD_CHF|D|low|1783890000000",
+      "pair": "USD_CHF",
+      "closedAt": "2026-07-23T07:47:14.638Z",
+      "pnl": 212.46,
+      "hash": "71c184df6ecb4cacb65544de3b22ac836cb0cc375dbcd0efd9754e52442af09a"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CAD|H4|AGZ|AGC|GBP_CAD|H4|low|1784062800000|v1784494800000|A_repeatedReaction|AGR|GBP_CAD|H4|low|1784653200000",
+      "pair": "GBP_CAD",
+      "closedAt": "2026-07-23T07:09:14.972Z",
+      "pnl": -103.87,
+      "hash": "e130f74a8a65cb508d3962cc69dd081253c32b103cebe580965faee3a38468f3"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CAD|H1|AGZ|AGC|GBP_CAD|H1|low|1782784800000|v1782918000000|A_repeatedReaction|AGR|GBP_CAD|H1|low|1784113200000",
+      "pair": "GBP_CAD",
+      "closedAt": "2026-07-23T06:42:14.749Z",
+      "pnl": -105.01,
+      "hash": "e047a2f49481af17eb5c2a4a9a698f6cd7d00664f69d4214d9c3a74bef75ae4f"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_JPY|H1|AGZ|AGC|EUR_JPY|H1|high|1781607600000|v1784664000000|A_repeatedReaction|AGR|EUR_JPY|H1|high|1784707200000",
+      "pair": "EUR_JPY",
+      "closedAt": "2026-07-23T02:28:37.449Z",
+      "pnl": -105.86,
+      "hash": "17563f408387dd04cc7889670f2ff93aa74a7f9dc9a4008184a936707b59323b"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_JPY|H1|AGZ|AGC|EUR_JPY|H1|high|1781528400000|v1784167200000|A_repeatedReaction|AGR|EUR_JPY|H1|high|1784646000000",
+      "pair": "EUR_JPY",
+      "closedAt": "2026-07-21T18:41:50.058Z",
+      "pnl": -113.13,
+      "hash": "9669d0b74dd712d3ad9b9c3c7c7b677415f75a36a1470617b231c8da866ab473"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_JPY|H1|AGZ|AGC|USD_JPY|H1|high|1782838800000|v1782957600000|A_repeatedReaction|AGR|USD_JPY|H1|high|1784566800000",
+      "pair": "USD_JPY",
+      "closedAt": "2026-07-21T18:25:50.484Z",
+      "pnl": -106.06,
+      "hash": "183fc327855863ea04416aa99885a6e3c38125e32a688de8d7f9903a98818d2f"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|NZD_USD|H1|AGZ|AGC|NZD_USD|H1|high|1774461600000|v1784084400000|B_breakRetest|AGR|NZD_USD|H1|low|1784282400000",
+      "pair": "NZD_USD",
+      "closedAt": "2026-07-17T14:58:58.036Z",
+      "pnl": 207.96,
+      "hash": "b97b19bb3c54e41ab3efe90e86179fddba34ffab02ff494d2fbdfb5a8da5b0b8"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_JPY|H1|AGZ|AGC|EUR_JPY|H1|high|1781528400000|v1784167200000|A_repeatedReaction|AGR|EUR_JPY|H1|high|1784206800000",
+      "pair": "EUR_JPY",
+      "closedAt": "2026-07-17T11:28:00.220Z",
+      "pnl": 207.97,
+      "hash": "1c1cd90fe352e96a1590735e7e74c67b3a23051acf26be6e5aa44b6f2e54a971"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|NZD_USD|H1|AGZ|AGC|NZD_USD|H1|low|1774018800000|v1784174400000|A_repeatedReaction|AGR|NZD_USD|H1|low|1784224800000",
+      "pair": "NZD_USD",
+      "closedAt": "2026-07-17T09:00:28.782Z",
+      "pnl": -104.51,
+      "hash": "bdecd6c0f754a1c226378f12fdadffdb777f614e96c3cabcd59c0863973c0c02"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|AUD_USD|H1|AGZ|AGC|AUD_USD|H1|low|1781168400000|v1784138400000|A_repeatedReaction|AGR|AUD_USD|H1|low|1784224800000",
+      "pair": "AUD_USD",
+      "closedAt": "2026-07-17T01:50:11.858Z",
+      "pnl": -103.99,
+      "hash": "10f76efea0ff77625148d3924e62d1d1f6a502a7a8bfddf4dff28f2662b0a88e"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1781830800000|v1783065600000|A_repeatedReaction|AGR|EUR_USD|H1|high|1784034000000",
+      "pair": "EUR_USD",
+      "closedAt": "2026-07-15T17:42:53.470Z",
+      "pnl": -101.99,
+      "hash": "e0f595c15d6915d1ce1b2e7f13a4649293b33528e78515ffa95994f512f1c17a"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|NZD_USD|H1|AGZ|AGC|NZD_USD|H1|high|1774461600000|v1784084400000|A_repeatedReaction|AGR|NZD_USD|H1|high|1784098800000",
+      "pair": "NZD_USD",
+      "closedAt": "2026-07-15T12:35:54.634Z",
+      "pnl": -106.07,
+      "hash": "745d78f4221bb9f35812eccfa5dbfe68400bc2571d2d8ab6ca8174618940ece2"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|AUD_JPY|H1|AGZ|AGC|AUD_JPY|H1|low|1781168400000|v1783443600000|A_repeatedReaction|AGR|AUD_JPY|H1|low|1783929600000",
+      "pair": "AUD_JPY",
+      "closedAt": "2026-07-15T08:03:43.609Z",
+      "pnl": 199.96,
+      "hash": "82c2097620ae8b983a893946818ea1277a213d28763473be2372cfadb13c81af"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CAD|H1|AGZ|AGC|GBP_CAD|H1|low|1782784800000|v1782918000000|A_repeatedReaction|AGR|GBP_CAD|H1|low|1784073600000",
+      "pair": "GBP_CAD",
+      "closedAt": "2026-07-15T06:53:44.291Z",
+      "pnl": 207.75,
+      "hash": "4796c67240a17c4b99e0793d82cd81e631b0cc2fb125d7f09927ea307884f54d"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1783476000000|v1783530000000|B_breakRetest|AGR|EUR_USD|H1|high|1784001600000",
+      "pair": "EUR_USD",
+      "closedAt": "2026-07-14T08:28:08.172Z",
+      "pnl": -100.98,
+      "hash": "fb47d0545c617da1a73f4e51648bc29d9b7079c835fc3ff80895f5b339c809e5"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CAD|H1|AGZ|AGC|USD_CAD|H1|low|1783058400000|v1783562400000|B_breakRetest|AGR|USD_CAD|H1|high|1783972800000",
+      "pair": "USD_CAD",
+      "closedAt": "2026-07-14T07:10:08.370Z",
+      "pnl": 201.96,
+      "hash": "a59a571d15213c4500894bb85db96bbae17b0773131bc88dd3a0277c4d9aded1"
+    },
+    {
+      "tradeId": "AGT|TEST|1783897893481-429023",
+      "pair": "GBP_USD",
+      "closedAt": "2026-07-13T19:12:25.894Z",
+      "pnl": -100,
+      "hash": "f34fd9efe927a18d4807a01cc012e77a4e4023b010d9fb5dfab0bd1a05f38627"
+    },
+    {
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CHF|H1|AGZ|AGC|USD_CHF|H1|high|1781884800000|v1783602000000|B_breakRetest|AGR|USD_CHF|H1|low|1783933200000",
+      "pair": "USD_CHF",
+      "closedAt": "2026-07-13T16:38:32.475Z",
+      "pnl": 199.96,
+      "hash": "a6275356b66692b429a79ceda8393065e259bda79159881edc29fe62de61c0f5"
+    },
+    {
+      "tradeId": "AGT|TEST|1783897896514-752478",
+      "pair": "GBP_USD",
+      "closedAt": "2026-07-13T06:33:28.835Z",
+      "pnl": -100,
+      "hash": "c39e36bd93459df8efa32ebba27fc04fc1411c654df93d43e73df76560dcf5eb"
+    },
+    {
+      "tradeId": "AGT|TEST|1783897900066-459503",
+      "pair": "GBP_USD",
+      "closedAt": "2026-07-12T23:11:40.104Z",
+      "pnl": -102,
+      "hash": "a8cc82b221d4328485bcbf9b93a5469f9e5bb45f9a62ef0655a0cd84b9570142"
+    },
+    {
+      "tradeId": "AGT|TEST|1783897898716-465735",
+      "pair": "GBP_USD",
+      "closedAt": "2026-07-12T23:11:38.757Z",
+      "pnl": 200,
+      "hash": "c8a55403253dd452de96ad5553f821ed75a7f4d7f7304516e6fb1be327f87713"
+    }
+  ],
+  "ledgerRollup": "0191ec43d89a6d5af63d67687f2fcdfaf3b17021156608af070cc3e7e916e3cb"
+}

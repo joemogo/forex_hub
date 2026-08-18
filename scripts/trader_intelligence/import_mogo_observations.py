@@ -51,6 +51,12 @@ PACKAGE_GLOB = os.path.join(REPO_ROOT, "evidence", "*-PACKAGES.json")
 CAPTURE_BASIS_SOURCE_TYPE = {
     "REPLAY_RUN": "replay_observation",
     "LIVE_CLOSE": "paper_trade",
+    # Minted by the app's own backfill from the account journal, long after the
+    # close, because no package was captured at the time (B-22). It maps to a
+    # DISTINCT sourceType so it derives the RECONSTRUCTED population -- never
+    # `paper_trade`, which would file a MINIMAL/UNSAFE_TO_RECONSTRUCT record
+    # alongside live-captured ones and retroactively weaken all of them.
+    "HISTORICAL_BACKFILL": "journal_entry",
 }
 
 # TradeObservation field <- (package object, key). Order is the report order.

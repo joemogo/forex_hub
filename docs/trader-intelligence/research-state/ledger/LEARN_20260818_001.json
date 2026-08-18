@@ -1,0 +1,22 @@
+{
+  "adjudicates": false,
+  "assimilatedAt": "2026-08-18T21:59:32Z",
+  "changedState": {},
+  "corpusChanged": true,
+  "corpusFingerprintAfter": "836e14718bb37bf43f964ed6c66a2ab8ca1d242eda29200766a625ee877b90b5",
+  "corpusFingerprintBefore": null,
+  "generated": true,
+  "lane": "RESEARCH",
+  "learningKinds": [
+    "BASELINE_ESTABLISHED"
+  ],
+  "legitimateConclusion": "Baseline established. No prior state existed to compare against, so this run asserts no learning.",
+  "nonConclusion": [
+    "Forward statistics describe the PRESERVED subset, not the account: the oldest closes minted no evidence package (backlog B-22).",
+    "Nothing here is evidence about any human trader. `alex_g_sr_v1` is MOGO's implementation of a published method, not the person who published it.",
+    "A change in descriptive statistics is not a finding about strategy performance; no strategy rule is altered by any observation."
+  ],
+  "observationTotalAfter": 249,
+  "observationTotalBefore": null,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}

@@ -84,15 +84,22 @@ CLASSIFICATIONS = ("DIRECTLY_OBSERVED", "SOURCE_STATED", "INFERRED", "UNKNOWN")
 # so producing a forward statistic without the provenance that distinguishes forward
 # from replay is not something a caller can do by forgetting.
 HISTORICAL = "HISTORICAL"
+RECONSTRUCTED = "RECONSTRUCTED"
 FORWARD = "FORWARD"
 UNKNOWN_POPULATION = "UNKNOWN"
-POPULATIONS = (HISTORICAL, FORWARD, UNKNOWN_POPULATION)
+POPULATIONS = (HISTORICAL, FORWARD, RECONSTRUCTED, UNKNOWN_POPULATION)
 
 # Deliberately a small allowlist on the FORWARD side and UNKNOWN for everything
 # unlisted. Fail closed in the direction that matters: a source type nobody has
 # classified must never silently count as forward evidence.
 HISTORICAL_SOURCE_TYPES = ("replay_observation", "generated_analysis")
 FORWARD_SOURCE_TYPES = ("paper_trade", "live_trade_review")
+# Reconstructed after the fact from the account's own journal, because the evidence
+# package that would have been minted at close time does not exist. Its own
+# population, NOT a flavour of FORWARD and NOT folded into UNKNOWN: forward means
+# captured live as it happened, and UNKNOWN must keep meaning "cannot be
+# determined" rather than doubling as a bucket for a class we chose deliberately.
+RECONSTRUCTED_SOURCE_TYPES = ("journal_entry",)
 
 # The fields that describe the trade itself and therefore require classification.
 # Metadata (ids, timestamps, lane, notes) is not evidence about a trade and is
@@ -303,6 +310,8 @@ def observation_population(record, sources):
         return HISTORICAL
     if source_type in FORWARD_SOURCE_TYPES:
         return FORWARD
+    if source_type in RECONSTRUCTED_SOURCE_TYPES:
+        return RECONSTRUCTED
     return UNKNOWN_POPULATION
 
 
