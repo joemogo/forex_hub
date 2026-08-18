@@ -111,32 +111,16 @@ fi
 # capture run, so packageId is not a global identity and de-duplicating on it silently drops
 # real records.
 PKG_FILE="evidence/FWD-${STAMP}-PACKAGES.json"
-NEW_COUNT="$(python3 - "$SCRATCH" "$PKG_FILE" <<'PY'
-import json, glob, sys
-recovered = json.load(open(sys.argv[1]))
-known = set()
-for path in glob.glob("docs/trader-intelligence/evidence/observations/*.json"):
-    record = json.load(open(path))
-    if record.get("sourceContentHash"):
-        known.add(record["sourceContentHash"])
-# Also anything already staged in a capture file. A leftover file from an earlier
-# run otherwise presents the same package a second time and the importer mints a
-# SECOND observation for it -- same contentHash, different observationId. Observed
-# exactly once, on the run that added this guard.
-for path in glob.glob("evidence/*-PACKAGES.json"):
-    for staged in json.load(open(path)):
-        if staged.get("contentHash"):
-            known.add(staged["contentHash"])
-fresh = [p for p in recovered
-         if p.get("contentHash") and p["contentHash"] not in known]
-if fresh:
-    with open(sys.argv[2], "w", encoding="utf-8") as handle:
-        json.dump(fresh, handle, indent=2)
-        handle.write("\n")
-print(len(fresh))
-PY
-)"
+# The novelty rule lives in scripts/trader_intelligence/forward_novelty.py rather
+# than inline here. It used to be a heredoc, where nothing could test it, and it
+# carried two defects that both reached live use. It now has its own fixtures and
+# mutation coverage.
+NEW_COUNT="$(python3 scripts/trader_intelligence/forward_novelty.py "$SCRATCH" --out "$PKG_FILE")"
+NOVELTY_RC=$?
 rm -f "$SCRATCH"
+if [ $NOVELTY_RC -ne 0 ]; then
+  echo "FAIL: novelty check refused; nothing imported" >&2; exit 1
+fi
 say "store reconstructed; $NEW_COUNT package(s) not yet preserved as observations"
 
 if [ "$NEW_COUNT" = "0" ]; then
