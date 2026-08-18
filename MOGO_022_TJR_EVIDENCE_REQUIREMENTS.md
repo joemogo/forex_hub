@@ -9,8 +9,33 @@
 ## 0. The short answer
 
 TJR is **BLOCKED**, on **16 blockers**, and the gap is not one of analysis effort.
-It is that **the source material does not contain the information a mechanical
+It is that **the acquired corpus does not contain the information a mechanical
 strategy requires**, and **no TJR trade evidence exists at all**.
+
+**Correction, 2026-08-18.** This document previously said "the source material does
+not contain the information". That was wrong in a specific and important way, and
+an acquisition pass established it: it is the **acquired corpus** that lacks the
+information. Free, public, primary sources that plausibly state it DO exist — the
+candidate set now includes videos titled *Boot Camp Day 38: Stop Losses*, *Day 39:
+Calculating Lot Size*, *Day 13: Risk Management* and *TJR's Strategy Explained*,
+all registered with publisher-verified metadata (`CAND|MOGO|20260818|001`–`036`).
+
+The distinction matters because it changes what would unblock TJR. It is not an
+analysis problem and it is not an "the information was never published" problem —
+it is a **content-retrieval** problem.
+
+**Held to the same standard in the other direction:** a video *titled* "Stop
+Losses" is NOT evidence that it states a mechanical stop rule. Whether these
+sources state entry trigger, stop placement and risk per trade is **UNKNOWN** until
+the content is actually retrieved and read. The candidates carry no authority and
+close nothing; they are leads, and they are marked as such.
+
+**What blocks retrieval, precisely:** the caption endpoint returns HTTP 200 with 0
+bytes, re-confirmed 2026-08-18T15:12Z. Every priority TJR video carries an `en/asr`
+track only — **no publisher-authored captions anywhere in the set** — so even a
+route that worked would yield machine-generated text of unverified fidelity to the
+audio. That ceiling is itself a finding: it bounds the best evidence quality
+obtainable from this source without the operator supplying content another way.
 
 Nothing in this document is a judgement about TJR's trading. It is a statement
 about what the corpus can and cannot currently support.
@@ -153,9 +178,12 @@ the other would be the single easiest way to manufacture a false result here.
 
 In order of how much each would move the position:
 
-1. **A source that states entry trigger, stop placement and risk per trade explicitly.**
-   Without these three, mechanisation is impossible regardless of how much other
-   material is added. This is an acquisition problem, not an analysis problem.
+1. **RETRIEVAL of the candidate sources that plausibly state entry trigger, stop
+   placement and risk per trade.** The leads exist and are free and public
+   (`CAND|MOGO|20260818|001`–`036`); what does not exist is a route to their
+   content. This is a retrieval problem, not an analysis problem and not an
+   absence-of-publication problem. Whether they actually state the three rules is
+   UNKNOWN until read.
 2. **An owner decision on `XCONTRA|20260728|001`**, or evidence qualifying the scope of
    the two conflicting claims.
 3. **TJR trade evidence** — actual observed trades, as `TradeObservation` records with
