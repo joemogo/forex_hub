@@ -50,6 +50,28 @@ LANE = "RESEARCH"
 LATTICE_TOLERANCE = 0.005
 
 REPLAY_IDEALIZES_EXITS = "REPLAY_IDEALIZES_EXITS"
+REPLAY_IS_BAR_QUANTIZED = "REPLAY_IS_BAR_QUANTIZED"
+
+
+def timestamp_granularity(timestamps):
+    """How fine the clock actually is, counted rather than assumed.
+
+    An ISO timestamp landing exactly on the hour, every time and across hundreds
+    of records, is not a coincidence -- it is a grid. Reported as a distribution
+    so the evidence is visible instead of inferred from a sample.
+    """
+    counts = {"exactHour": 0, "exactMinute": 0, "exactSecond": 0, "subSecond": 0}
+    for stamp in timestamps:
+        tail = stamp[11:] if len(stamp) > 11 else ""
+        if not tail.endswith(".000Z"):
+            counts["subSecond"] += 1
+        elif tail.endswith(":00:00.000Z"):
+            counts["exactHour"] += 1
+        elif tail.endswith(":00.000Z"):
+            counts["exactMinute"] += 1
+        else:
+            counts["exactSecond"] += 1
+    return counts
 
 
 def off_lattice(values, lattice, tolerance=LATTICE_TOLERANCE):
@@ -81,6 +103,9 @@ def population_stats(records):
         "instruments": sorted({r["instrument"] for r in records if r.get("instrument")}),
         "closedAtRange": [closed[0], closed[-1]] if closed else None,
         "unknownFieldTotal": sum(len(r.get("unknowns") or []) for r in records),
+        "timestampGranularity": timestamp_granularity(
+            [r[field] for r in records for field in ("openedAt", "closedAt")
+             if r.get(field)]),
     }
     return stats
 
@@ -154,6 +179,29 @@ def compare(observations, sources, strategy_id):
                     "expectancy. Overshoot occurs on BOTH sides -- adverse on some "
                     "losses, favourable on some wins -- so this establishes a "
                     "mechanism difference in the simulator, not an effect size.",
+            })
+
+        # A second structural difference, and the one that EXPLAINS the first.
+        historical_grid = historical["timestampGranularity"]
+        forward_grid = forward["timestampGranularity"]
+        if historical_grid["subSecond"] == 0 and forward_grid["subSecond"] > 0:
+            findings.append({
+                "code": REPLAY_IS_BAR_QUANTIZED,
+                "statement":
+                    "Every replay entry and exit falls on an exact bar boundary; "
+                    "every forward fill is sub-second. Replay's timing resolution "
+                    "IS the bar grid, so it cannot represent an intra-bar fill -- "
+                    "which is the mechanism behind the off-lattice realized R above.",
+                "basis": {
+                    "historicalGranularity": historical_grid,
+                    "forwardGranularity": forward_grid,
+                },
+                "doesNotSupport":
+                    "Any claim that replay results are wrong. A bar-resolution "
+                    "simulator is a legitimate instrument; what does not follow is "
+                    "a conclusion about exit timing, MAE/MFE, or intra-bar "
+                    "behaviour drawn from it, since those are properties of the "
+                    "grid rather than of the market.",
             })
 
     return {

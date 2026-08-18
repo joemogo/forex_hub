@@ -41,6 +41,26 @@ realized R takes only two exact values is not modelling where the exit fills; it
 is asserting it. The claim is established by the values themselves, so no
 significance test applies and none is offered.
 
+## 1b. The second finding, which explains the first
+
+**Replay's timing resolution IS the bar grid.** Across all 221 replay observations,
+*every* entry and *every* exit falls on an exact hour boundary. Across all 26
+forward observations, every entry and exit is sub-second:
+
+| | exact hour | sub-second |
+|---|---|---|
+| HISTORICAL (442 timestamps) | 442 | 0 |
+| FORWARD (52 timestamps) | 0 | 52 |
+
+A simulator that can only act on H1 bar boundaries **cannot represent an intra-bar
+fill** — which is precisely the mechanism producing the off-lattice realized R
+above. The two findings are one phenomenon seen from two angles.
+
+This does not make replay wrong. A bar-resolution simulator is a legitimate
+instrument. What does not follow is any conclusion about **exit timing, MAE/MFE, or
+intra-bar behaviour** drawn from replay: those are properties of the grid, not of
+the market.
+
 ## 2. What it does NOT establish — stated because the tempting reading is wrong
 
 **The overshoot runs in both directions.** 4 of 19 forward losses exceed −1R, and
@@ -97,7 +117,10 @@ python3 scripts/trader_intelligence/population_fidelity.py --json
 python3 -m unittest tests.trader_intelligence.test_population_fidelity
 ```
 
-Read-only; mutates nothing. 19 tests, mutation-verified 11/11 — including both
+Read-only; mutates nothing. 26 tests, mutation-verified 16/16 — including both
 directions of the tolerance (too tight reports rounding noise as gapping, too loose
-swallows real gapping) and a positive control that a purely favourable overshoot
-still fires.
+swallows real gapping), a positive control that a purely favourable overshoot still
+fires, and a fixture where a replay trade ENTERS mid-bar so that dropping `openedAt`
+from the granularity computation is caught. That last mutation survived until the
+fixture existed, because every real record happens to share one granularity across
+both timestamps.

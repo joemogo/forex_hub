@@ -27,7 +27,8 @@ SOURCES = {
 
 
 def observation(obs_id, source_id, r_multiple, outcome="Loss",
-                strategy_id="alex_g_sr_v1", instrument="GBP/USD"):
+                strategy_id="alex_g_sr_v1", instrument="GBP/USD", stamp=None,
+                opened=None):
     return {
         "observationId": obs_id,
         "sourceId": source_id,
@@ -36,7 +37,8 @@ def observation(obs_id, source_id, r_multiple, outcome="Loss",
         "instrument": instrument,
         "rMultiple": r_multiple,
         "outcome": outcome,
-        "closedAt": "2026-08-0%dT00:00:00.000Z" % ((abs(hash(obs_id)) % 9) + 1),
+        "openedAt": opened or stamp or "2026-08-01T00:00:00.000Z",
+        "closedAt": stamp or ("2026-08-0%dT00:00:00.000Z" % ((abs(hash(obs_id)) % 9) + 1)),
         "unknowns": [],
     }
 
@@ -205,3 +207,78 @@ class TestAgainstTheRealCorpus(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBarQuantization(unittest.TestCase):
+    """Replay's timing resolution is the bar grid; forward fills are continuous."""
+
+    def build(self, replay_stamp, forward_stamp):
+        records = {}
+        for i, (src, stamp) in enumerate([("EVSRC|REPLAY|1", replay_stamp),
+                                          ("EVSRC|FWD|1", forward_stamp)]):
+            obs_id = "TOBS|MOGO|%03d" % i
+            records[obs_id] = observation(obs_id, src, -1.0, stamp=stamp)
+        return pf.compare(records, SOURCES, "alex_g_sr_v1")
+
+    def codes(self, report):
+        return {f["code"] for f in report["findings"]}
+
+    def test_it_fires_when_replay_is_on_the_grid_and_forward_is_not(self):
+        report = self.build("2026-08-01T09:00:00.000Z", "2026-08-01T09:17:32.412Z")
+        self.assertIn(pf.REPLAY_IS_BAR_QUANTIZED, self.codes(report))
+
+    def test_it_does_not_fire_when_forward_is_also_on_the_grid(self):
+        """The negative case. If both are bar-quantized there is no difference to
+        report -- and this is what stops the finding from being automatic."""
+        report = self.build("2026-08-01T09:00:00.000Z", "2026-08-01T10:00:00.000Z")
+        self.assertNotIn(pf.REPLAY_IS_BAR_QUANTIZED, self.codes(report))
+
+    def test_it_does_not_fire_when_replay_is_also_sub_second(self):
+        report = self.build("2026-08-01T09:00:03.117Z", "2026-08-01T09:17:32.412Z")
+        self.assertNotIn(pf.REPLAY_IS_BAR_QUANTIZED, self.codes(report))
+
+    def test_entry_timestamps_are_counted_too_not_just_exits(self):
+        """The finding says "every entry AND exit". A replay record that ENTERS
+        mid-bar and exits on the boundary must therefore suppress it -- if only
+        closedAt were counted, that record would look bar-quantized and the
+        finding would overstate what the evidence shows. Dropping openedAt from
+        the computation changed nothing until this fixture existed."""
+        records = {}
+        records["TOBS|MOGO|000"] = observation(
+            "TOBS|MOGO|000", "EVSRC|REPLAY|1", -1.0,
+            opened="2026-08-01T09:14:07.881Z", stamp="2026-08-01T10:00:00.000Z")
+        records["TOBS|MOGO|001"] = observation(
+            "TOBS|MOGO|001", "EVSRC|FWD|1", -1.0, stamp="2026-08-01T09:17:32.412Z")
+        report = pf.compare(records, SOURCES, "alex_g_sr_v1")
+        self.assertEqual(
+            report["byPopulation"]["HISTORICAL"]["timestampGranularity"]["subSecond"], 1,
+            "the replay ENTRY is sub-second and must be counted")
+        self.assertNotIn(pf.REPLAY_IS_BAR_QUANTIZED,
+                         {f["code"] for f in report["findings"]})
+
+    def test_granularity_is_counted_not_sampled(self):
+        counts = pf.timestamp_granularity([
+            "2026-08-01T09:00:00.000Z", "2026-08-01T09:30:00.000Z",
+            "2026-08-01T09:30:05.000Z", "2026-08-01T09:30:05.123Z"])
+        self.assertEqual(counts, {"exactHour": 1, "exactMinute": 1,
+                                  "exactSecond": 1, "subSecond": 1})
+
+
+class TestBarQuantizationOnTheRealCorpus(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.report = pf.compare(to.load_observations(), to.load_sources(),
+                                "alex_g_sr_v1")
+
+    def test_replay_has_no_sub_second_timestamps_and_forward_is_entirely_sub_second(self):
+        historical = self.report["byPopulation"]["HISTORICAL"]["timestampGranularity"]
+        forward = self.report["byPopulation"]["FORWARD"]["timestampGranularity"]
+        self.assertEqual(historical["subSecond"], 0)
+        self.assertGreater(historical["exactHour"], 0)
+        self.assertEqual(forward["exactHour"], 0)
+        self.assertGreater(forward["subSecond"], 0)
+
+    def test_the_quantization_finding_holds_on_the_real_corpus(self):
+        self.assertIn(pf.REPLAY_IS_BAR_QUANTIZED,
+                      {f["code"] for f in self.report["findings"]})
