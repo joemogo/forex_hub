@@ -51,6 +51,25 @@ LATTICE_TOLERANCE = 0.005
 
 REPLAY_IDEALIZES_EXITS = "REPLAY_IDEALIZES_EXITS"
 REPLAY_IS_BAR_QUANTIZED = "REPLAY_IS_BAR_QUANTIZED"
+RISK_SIZING_DIVERGES = "RISK_SIZING_DIVERGES"
+RISK_SIZING_AGREES = "RISK_SIZING_AGREES"
+
+# Risk is expressed as a percentage of the balance at entry. The tolerance absorbs
+# rounding in the recorded amounts, not a change in the sizing rule.
+RISK_PCT_TOLERANCE = 0.01
+
+
+def risk_pct_of_balance(records):
+    """Risk as a percentage of balance-at-entry, per record. Records missing
+    either field are skipped rather than defaulted -- a missing balance is not
+    a zero balance."""
+    out = []
+    for record in records:
+        risk = record.get("riskAmount")
+        balance = record.get("accountBalanceBefore")
+        if risk and balance:
+            out.append(risk / balance * 100.0)
+    return out
 
 
 def timestamp_granularity(timestamps):
@@ -103,6 +122,7 @@ def population_stats(records):
         "instruments": sorted({r["instrument"] for r in records if r.get("instrument")}),
         "closedAtRange": [closed[0], closed[-1]] if closed else None,
         "unknownFieldTotal": sum(len(r.get("unknowns") or []) for r in records),
+        "riskPctOfBalance": sorted({round(v, 4) for v in risk_pct_of_balance(records)}),
         "timestampGranularity": timestamp_granularity(
             [r[field] for r in records for field in ("openedAt", "closedAt")
              if r.get(field)]),
@@ -136,6 +156,7 @@ def compare(observations, sources, strategy_id):
     forward = by_population.get(to.FORWARD)
 
     findings = []
+    agreements = []
     if historical and forward:
         # Structural, not statistical. A simulator whose realized R takes only a
         # handful of exact values is not modelling the exit, it is asserting it --
@@ -204,6 +225,38 @@ def compare(observations, sources, strategy_id):
                     "grid rather than of the market.",
             })
 
+        # WHERE THE POPULATIONS AGREE, reported alongside where they differ.
+        # A tool that only ever emits differences reads as though it found
+        # something wrong every time it runs, and gives no credit to a property
+        # that genuinely holds across both. It is also a regression detector: if
+        # sizing ever drifts between replay and forward, this flips to a finding.
+        h_risk, f_risk = historical["riskPctOfBalance"], forward["riskPctOfBalance"]
+        if h_risk and f_risk:
+            spread = max(h_risk + f_risk) - min(h_risk + f_risk)
+            if spread <= RISK_PCT_TOLERANCE:
+                agreements.append({
+                    "code": RISK_SIZING_AGREES,
+                    "statement":
+                        "Position sizing is identical across both populations: risk "
+                        "is %.4f%% of balance-at-entry in every observation, replay "
+                        "and forward alike." % h_risk[0],
+                    "basis": {"historicalRiskPct": h_risk, "forwardRiskPct": f_risk,
+                              "spread": round(spread, 6)},
+                })
+            else:
+                findings.append({
+                    "code": RISK_SIZING_DIVERGES,
+                    "statement":
+                        "Position sizing differs between replay and forward. The "
+                        "simulator is not sizing trades the way the live path does, "
+                        "so realized R is not comparable across the two.",
+                    "basis": {"historicalRiskPct": h_risk, "forwardRiskPct": f_risk,
+                              "spread": round(spread, 6)},
+                    "doesNotSupport":
+                        "Which of the two is correct. This says they disagree, not "
+                        "which one implements the intended rule.",
+                })
+
     return {
         "lane": LANE,
         "schemaVersion": SCHEMA_VERSION,
@@ -212,6 +265,7 @@ def compare(observations, sources, strategy_id):
         "byPopulation": by_population,
         "populationsPresent": sorted(by_population),
         "findings": findings,
+        "agreements": agreements,
         # Stated in the output itself, so a reader of the JSON cannot come away
         # with a comparison the evidence does not support.
         "doesNotSupport": [
@@ -236,6 +290,11 @@ def render(report):
         lines.append("    off the replay lattice: %s"
                      % (stats.get("offReplayLattice") or "none"))
         lines.append("    period: %s" % (stats["closedAtRange"],))
+    if report.get("agreements"):
+        lines.append("  agreements:")
+        for agreement in report["agreements"]:
+            lines.append("    %s" % agreement["code"])
+            lines.append("      %s" % agreement["statement"])
     if report["findings"]:
         lines.append("  findings:")
         for finding in report["findings"]:

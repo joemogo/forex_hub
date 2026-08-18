@@ -28,7 +28,7 @@ SOURCES = {
 
 def observation(obs_id, source_id, r_multiple, outcome="Loss",
                 strategy_id="alex_g_sr_v1", instrument="GBP/USD", stamp=None,
-                opened=None):
+                opened=None, risk=None, balance=None):
     return {
         "observationId": obs_id,
         "sourceId": source_id,
@@ -39,6 +39,8 @@ def observation(obs_id, source_id, r_multiple, outcome="Loss",
         "outcome": outcome,
         "openedAt": opened or stamp or "2026-08-01T00:00:00.000Z",
         "closedAt": stamp or ("2026-08-0%dT00:00:00.000Z" % ((abs(hash(obs_id)) % 9) + 1)),
+        "riskAmount": risk,
+        "accountBalanceBefore": balance,
         "unknowns": [],
     }
 
@@ -282,3 +284,56 @@ class TestBarQuantizationOnTheRealCorpus(unittest.TestCase):
     def test_the_quantization_finding_holds_on_the_real_corpus(self):
         self.assertIn(pf.REPLAY_IS_BAR_QUANTIZED,
                       {f["code"] for f in self.report["findings"]})
+
+
+class TestRiskSizingAgreement(unittest.TestCase):
+    """Where the populations AGREE is reported too -- and it is a drift detector."""
+
+    def build(self, replay_risk, replay_balance, forward_risk, forward_balance):
+        records = {}
+        for i, (src, risk, balance) in enumerate([
+                ("EVSRC|REPLAY|1", replay_risk, replay_balance),
+                ("EVSRC|FWD|1", forward_risk, forward_balance)]):
+            obs_id = "TOBS|MOGO|%03d" % i
+            records[obs_id] = observation(obs_id, src, -1.0, risk=risk, balance=balance)
+        return pf.compare(records, SOURCES, "alex_g_sr_v1")
+
+    def codes(self, report, key):
+        return {entry["code"] for entry in report[key]}
+
+    def test_identical_sizing_is_reported_as_an_agreement_not_a_finding(self):
+        report = self.build(100.0, 10000.0, 97.56, 9756.0)   # both exactly 1%
+        self.assertIn(pf.RISK_SIZING_AGREES, self.codes(report, "agreements"))
+        self.assertNotIn(pf.RISK_SIZING_DIVERGES, self.codes(report, "findings"))
+
+    def test_divergent_sizing_becomes_a_finding(self):
+        """The positive control. An agreement that cannot flip to a finding is not
+        a detector, it is a decoration."""
+        report = self.build(100.0, 10000.0, 200.0, 10000.0)  # 1% vs 2%
+        self.assertIn(pf.RISK_SIZING_DIVERGES, self.codes(report, "findings"))
+        self.assertNotIn(pf.RISK_SIZING_AGREES, self.codes(report, "agreements"))
+
+    def test_a_missing_balance_is_skipped_not_treated_as_zero(self):
+        report = self.build(100.0, None, 97.56, 9756.0)
+        self.assertEqual(report["byPopulation"]["HISTORICAL"]["riskPctOfBalance"], [])
+        self.assertNotIn(pf.RISK_SIZING_AGREES, self.codes(report, "agreements"))
+        self.assertNotIn(pf.RISK_SIZING_DIVERGES, self.codes(report, "findings"))
+
+
+class TestRiskSizingOnTheRealCorpus(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.report = pf.compare(to.load_observations(), to.load_sources(),
+                                "alex_g_sr_v1")
+
+    def test_sizing_is_one_percent_in_both_populations(self):
+        for population in ("HISTORICAL", "FORWARD"):
+            pcts = self.report["byPopulation"][population]["riskPctOfBalance"]
+            self.assertEqual(pcts, [1.0],
+                             "%s sizing is no longer a single 1%% value: %s"
+                             % (population, pcts))
+
+    def test_the_agreement_is_reported(self):
+        self.assertIn(pf.RISK_SIZING_AGREES,
+                      {a["code"] for a in self.report["agreements"]})

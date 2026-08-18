@@ -61,6 +61,20 @@ instrument. What does not follow is any conclusion about **exit timing, MAE/MFE,
 intra-bar behaviour** drawn from replay: those are properties of the grid, not of
 the market.
 
+## 1c. Where the two populations AGREE
+
+Reported deliberately, because a tool that only ever emits differences reads as
+though something is wrong every time it runs.
+
+**Position sizing is identical.** Risk is exactly **1.0000% of balance-at-entry** in
+all 247 observations — 221 replay and 26 forward — with zero spread. Whatever else
+differs, the simulator sizes trades the way the live path does.
+
+This doubles as a regression detector: if sizing ever drifts between replay and
+forward, `RISK_SIZING_AGREES` flips to a `RISK_SIZING_DIVERGES` finding. A fixture
+with 1% against 2% sizing proves it can flip — an agreement that cannot become a
+finding is a decoration, not a detector.
+
 ## 2. What it does NOT establish — stated because the tempting reading is wrong
 
 **The overshoot runs in both directions.** 4 of 19 forward losses exceed −1R, and
@@ -117,7 +131,7 @@ python3 scripts/trader_intelligence/population_fidelity.py --json
 python3 -m unittest tests.trader_intelligence.test_population_fidelity
 ```
 
-Read-only; mutates nothing. 26 tests, mutation-verified 16/16 — including both
+Read-only; mutates nothing. 31 tests, mutation-verified 20/20 — including both
 directions of the tolerance (too tight reports rounding noise as gapping, too loose
 swallows real gapping), a positive control that a purely favourable overshoot still
 fires, and a fixture where a replay trade ENTERS mid-bar so that dropping `openedAt`

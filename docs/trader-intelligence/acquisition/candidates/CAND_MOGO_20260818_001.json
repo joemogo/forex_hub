@@ -1,0 +1,84 @@
+{
+  "acquisitionStatus": "METADATA_VERIFIED",
+  "authenticityStatus": "LIKELY_PRIMARY",
+  "candidateId": "CAND|MOGO|20260818|001",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T15:16:57Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T15:16:57Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    }
+  ],
+  "channelOrPublisher": "TJR",
+  "claimedTraderId": "TJR",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-08-18T15:16:57Z",
+  "creatorName": "TJR",
+  "description": "TJR primary channel. Targets GAP|20260817|001 (stop buffer) and TJR stop_rule AMBIGUOUS. Retrieved metadata 2026-08-18: publishDate 2023-07-03, length 795s, captions: en/asr only (no publisher-authored captions). Content NOT acquired: youtube timedtext endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18).",
+  "discoveredAt": "2026-08-18T15:16:57Z",
+  "discoveryMethod": "MANUAL_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": null,
+  "language": "en",
+  "metadataConfidence": "owner_provided",
+  "normalizedUrl": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "YOUTUBE",
+  "playlistId": null,
+  "playlistPosition": null,
+  "priorityAssessments": [],
+  "processingStatus": "metadata_processed",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": null,
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "VIDEO",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
+  "title": "Boot Camp Day 38: Stop Losses",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-08-18T15:16:57Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "target",
+      "topic": "TARGETS"
+    },
+    {
+      "assessedAt": "2026-08-18T15:16:57Z",
+      "classifiedFrom": "TITLE_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "stop loss",
+      "topic": "STOP_PLACEMENT"
+    }
+  ],
+  "updatedAt": "2026-08-18T15:16:57Z",
+  "url": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "verifiedTraderId": null
+}
