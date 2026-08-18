@@ -91,51 +91,72 @@ fi
 STORE="$(ls -1d "$CKPT_DIR"/IndexedDB/*.indexeddb.leveldb 2>/dev/null | head -1)"
 [ -n "$STORE" ] || { echo "FAIL: no leveldb store inside $CKPT_DIR" >&2; exit 1; }
 
-# ── 3. RECOVER ───────────────────────────────────────────────────────────────────────────────
+# ── 3. RECOVER ─────────────────────────────────────────────
 # Full payloads, and ONLY those whose stored hash re-derives from the preserved bytes.
+# Recovered to SCRATCH first. The whole store is reconstructed on every run, so writing that
+# straight into evidence/ re-presents every already-preserved package as though it were a fresh
+# capture. Not a duplicate-observation risk -- the importer keys on contentHash and skips them --
+# but it breaks the corpus invariant that a package appears in exactly ONE capture file, and it
+# grows every capture file to the size of the entire store. Caught by
+# test_content_hash_is_unique_across_every_package, which is how this was found.
 STAMP="$(basename "$CKPT_DIR")"
-PKG_FILE="evidence/FWD-${STAMP}-PACKAGES.json"
+SCRATCH="${TMPDIR:-/tmp}/mogo-fwd-$$.json"
 say "recover: reconstructing hash-verified packages from the checkpoint"
-if ! node scripts/mogo_evidence_leveldb_extract.js --store "$STORE" --packages "$PKG_FILE" 2>&1 | sed 's/^/    /'; then
-  echo "FAIL: package recovery failed or a hash did not re-derive" >&2; exit 1
+if ! node scripts/mogo_evidence_leveldb_extract.js --store "$STORE" --packages "$SCRATCH" 2>&1 | sed 's/^/    /'; then
+  echo "FAIL: package recovery failed or a hash did not re-derive" >&2; rm -f "$SCRATCH"; exit 1
 fi
 
-# ── 4. IS ANY OF IT ACTUALLY NEW? ────────────────────────────────────────────────────────────
+# ── 4. IS ANY OF IT ACTUALLY NEW? ──────────────────────────────────
 # Keyed on contentHash, never packageId: the ordinal in a packageId only counts within one
 # capture run, so packageId is not a global identity and de-duplicating on it silently drops
 # real records.
-NEW_COUNT="$(python3 - "$PKG_FILE" <<'PY'
+PKG_FILE="evidence/FWD-${STAMP}-PACKAGES.json"
+NEW_COUNT="$(python3 - "$SCRATCH" "$PKG_FILE" <<'PY'
 import json, glob, sys
-packages = json.load(open(sys.argv[1]))
-live = {p["contentHash"] for p in packages if p.get("contentHash")}
+recovered = json.load(open(sys.argv[1]))
 known = set()
 for path in glob.glob("docs/trader-intelligence/evidence/observations/*.json"):
     record = json.load(open(path))
     if record.get("sourceContentHash"):
         known.add(record["sourceContentHash"])
-print(len(live - known))
+# Also anything already staged in a capture file. A leftover file from an earlier
+# run otherwise presents the same package a second time and the importer mints a
+# SECOND observation for it -- same contentHash, different observationId. Observed
+# exactly once, on the run that added this guard.
+for path in glob.glob("evidence/*-PACKAGES.json"):
+    for staged in json.load(open(path)):
+        if staged.get("contentHash"):
+            known.add(staged["contentHash"])
+fresh = [p for p in recovered
+         if p.get("contentHash") and p["contentHash"] not in known]
+if fresh:
+    with open(sys.argv[2], "w", encoding="utf-8") as handle:
+        json.dump(fresh, handle, indent=2)
+        handle.write("\n")
+print(len(fresh))
 PY
 )"
-say "recovered $(python3 -c "import json,sys; print(len(json.load(open('$PKG_FILE'))))") package(s); $NEW_COUNT not yet preserved as observations"
+rm -f "$SCRATCH"
+say "store reconstructed; $NEW_COUNT package(s) not yet preserved as observations"
 
 if [ "$NEW_COUNT" = "0" ]; then
-  # Keeping a capture file that adds nothing just accumulates noise; the checkpoint is the
-  # durable artifact and it has already been taken.
-  rm -f "$PKG_FILE"
   say "no new forward evidence to import. Checkpoint retained. Done."
   exit 0
 fi
+if [ $WRITE -eq 0 ]; then
+  # A dry run reports and leaves NOTHING behind. Leaving the capture file was how
+  # the same package came to be staged twice.
+  rm -f "$PKG_FILE"
+  say "DRY RUN -- $NEW_COUNT new package(s) would be imported. Nothing written."
+  say "Re-run with --write to capture them."
+  exit 0
+fi
+say "wrote $NEW_COUNT new package(s) to $PKG_FILE"
 
 # ── 5. IMPORT + RECONCILE ────────────────────────────────────────────────────────────────────
-say "import: converting packages to TradeObservations ($([ $WRITE -eq 1 ] && echo WRITE || echo 'DRY RUN'))"
-if [ $WRITE -eq 1 ]; then
-  python3 scripts/trader_intelligence/import_mogo_observations.py --write 2>&1 | tail -20 | sed 's/^/    /'
-  IMPORT_RC=${PIPESTATUS[0]}
-else
-  python3 scripts/trader_intelligence/import_mogo_observations.py 2>&1 | tail -20 | sed 's/^/    /'
-  IMPORT_RC=${PIPESTATUS[0]}
-  say "DRY RUN -- nothing written. Re-run with --write to import."
-fi
+say "import: converting packages to TradeObservations (WRITE)"
+python3 scripts/trader_intelligence/import_mogo_observations.py --write 2>&1 | tail -20 | sed 's/^/    /'
+IMPORT_RC=${PIPESTATUS[0]}
 [ "${IMPORT_RC:-0}" -eq 0 ] || { echo "FAIL: import step failed" >&2; exit 1; }
 
 if [ $WRITE -eq 1 ]; then

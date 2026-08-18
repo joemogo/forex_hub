@@ -1,7 +1,1407 @@
 {
   "builderVersion": "1.0.0",
   "generated": true,
-  "generatedAt": "2026-07-25T15:21:04Z",
-  "queueBuildId": "QUEUE|20260725|005",
-  "rows": []
+  "generatedAt": "2026-08-18T15:19:48Z",
+  "queueBuildId": "QUEUE|20260818|001",
+  "rows": [
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|001|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|001"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|004|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|004"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|007|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|007"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|009|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|009"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|010|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|010"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|011|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|011"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|012|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|012"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|013|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|013"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|015|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|015"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|016|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|016"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|017|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|017"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|019|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|019"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|021|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|021"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|022|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|022"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|023|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|023"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|027|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 81.11,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|027"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|002|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": 75,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=80.0 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 80.0,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|002"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|003|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": 75,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=80.0 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 80.0,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|003"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|005|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": 75,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=80.0 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 80.0,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|005"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|008|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": 75,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=80.0 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 80.0,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|008"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|018|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": 60,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=77.27272727272727 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, paperTradingLearningPotential=60, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 77.27,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|018"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|020|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": 60,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=77.27272727272727 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, paperTradingLearningPotential=60, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 77.27,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|020"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|025|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": 60,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=77.27272727272727 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, paperTradingLearningPotential=60, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 77.27,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|025"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|026|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": 60,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=77.27272727272727 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, paperTradingLearningPotential=60, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 77.27,
+        "scoringConfidence": 0.444,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|026"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|024|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": 60,
+          "promotionalContentScore": null,
+          "replayModelingPotential": 70,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=75.92592592592592 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, replayModelingPotential=70, paperTradingLearningPotential=60, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 75.93,
+        "scoringConfidence": 0.556,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|024"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|032|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": 75,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=68.57142857142857 from populated positive dims [creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 68.57,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|032"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|028|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=66.0 from populated positive dims [creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 66.0,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|028"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|029|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=66.0 from populated positive dims [creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 66.0,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|029"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|030|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=66.0 from populated positive dims [creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 66.0,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|030"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|031|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=66.0 from populated positive dims [creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 66.0,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|031"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|033|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=66.0 from populated positive dims [creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 66.0,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|033"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|034|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=66.0 from populated positive dims [creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 66.0,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|034"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|006|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": 80,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.267 from [promotionalContentScore=80, duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 59.48,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|006"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|014|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 70,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 0,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": 80,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": 100,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.267 from [promotionalContentScore=80, duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 59.48,
+        "scoringConfidence": 0.333,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|014"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|036|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 15,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 60,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": null,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=33.0 from populated positive dims [creatorAuthenticity=15, noveltyScore=60]; penaltyFraction=0.300 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=60]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "promotionalContentScore",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 23.1,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|036"
+    },
+    {
+      "assessment": {
+        "assessmentId": "SCORE|CAND|MOGO|20260818|035|001",
+        "computedAt": "2026-08-18T15:19:33Z",
+        "dimensions": {
+          "chartExampleDensity": null,
+          "creatorAuthenticity": 15,
+          "duplicationPenalty": 0,
+          "genericMotivationScore": null,
+          "lifestyleContentScore": null,
+          "lowAuthoritySummaryPenalty": 60,
+          "noveltyScore": 60,
+          "paperTradingLearningPotential": null,
+          "promotionalContentScore": 80,
+          "replayModelingPotential": null,
+          "repositoryGapRelevance": null,
+          "riskManagementRelevance": null,
+          "ruleExtractionPotential": null,
+          "tradeFailureInsightPotential": null
+        },
+        "explanation": "base=33.0 from populated positive dims [creatorAuthenticity=15, noveltyScore=60]; penaltyFraction=0.467 from [promotionalContentScore=80, duplicationPenalty=0, lowAuthoritySummaryPenalty=60]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'lifestyleContentScore', 'genericMotivationScore']",
+        "missingDimensions": [
+          "ruleExtractionPotential",
+          "repositoryGapRelevance",
+          "tradeFailureInsightPotential",
+          "replayModelingPotential",
+          "paperTradingLearningPotential",
+          "chartExampleDensity",
+          "riskManagementRelevance",
+          "lifestyleContentScore",
+          "genericMotivationScore"
+        ],
+        "recommendationScore": 17.6,
+        "scoringConfidence": 0.222,
+        "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+        "weightProfileVersion": 1
+      },
+      "candidateId": "CAND|MOGO|20260818|035"
+    }
+  ]
 }

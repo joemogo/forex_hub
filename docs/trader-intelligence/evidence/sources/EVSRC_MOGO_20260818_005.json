@@ -1,0 +1,29 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": null,
+  "contentHash": "c2ffef7d73764b2845b4d76cfbcbb90e91d4b857f43081b080524ebc07925c04",
+  "contentHashAlgorithm": "sha256",
+  "createdAt": "2026-08-18T15:32:44Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": null,
+  "licensingStatus": "owned",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "captureBasis": "REPLAY_RUN",
+    "engineStrategyId": "alex_g_sr_v1",
+    "importedBy": "import_mogo_observations",
+    "packageCount": 24
+  },
+  "provenanceStatus": "verified",
+  "registeredAt": "2026-08-18T15:32:44Z",
+  "repositoryPath": "evidence/C1-04-USD_JPY-PACKAGES.json",
+  "schemaVersion": 1,
+  "sourceId": "EVSRC|MOGO|20260818|005",
+  "sourceType": "replay_observation",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "C1-04-USD_JPY-PACKAGES.json (REPLAY_RUN)",
+  "traderId": null,
+  "updatedAt": "2026-08-18T15:32:44Z"
+}

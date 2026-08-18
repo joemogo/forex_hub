@@ -1,27 +1,27 @@
 {
   "acquisitionStatus": "OWNER_REVIEW",
   "authenticityStatus": "LIKELY_PRIMARY",
-  "candidateId": "CAND|MOGO|20260818|001",
+  "candidateId": "CAND|MOGO|20260818|032",
   "canonicalCandidateId": null,
   "changeLog": [
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:19:29Z",
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "REGISTERED",
       "priorStatus": "DISCOVERED",
       "reason": "Candidate successfully validated and durably registered."
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:19:29Z",
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "METADATA_VERIFIED",
       "priorStatus": "REGISTERED",
       "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
@@ -32,7 +32,7 @@
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "DUPLICATE_REVIEW",
       "priorStatus": "METADATA_VERIFIED",
       "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
@@ -50,10 +50,10 @@
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "PRIORITIZED",
       "priorStatus": "DUPLICATE_REVIEW",
-      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|001|001"
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|032|001"
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
@@ -61,37 +61,37 @@
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
     }
   ],
-  "channelOrPublisher": "TJR",
-  "claimedTraderId": "TJR",
+  "channelOrPublisher": "Rayner Teo",
+  "claimedTraderId": "RAYNER_TEO",
   "contentHash": null,
   "contentOrigin": "UNKNOWN_ORIGIN",
   "contentReference": null,
   "contentSizeBytes": null,
   "contentType": null,
-  "createdAt": "2026-08-18T15:16:57Z",
-  "creatorName": "TJR",
-  "description": "TJR primary channel. Targets GAP|20260817|001 (stop buffer) and TJR stop_rule AMBIGUOUS. Retrieved metadata 2026-08-18: publishDate 2023-07-03, length 795s, captions: en/asr only (no publisher-authored captions). Content NOT acquired: youtube timedtext endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18).",
-  "discoveredAt": "2026-08-18T15:16:57Z",
-  "discoveryMethod": "MANUAL_URL",
+  "createdAt": "2026-08-18T15:19:29Z",
+  "creatorName": "Rayner Teo",
+  "description": "PRIMARY, AUTHOR-ATTRIBUTED, MACHINE-READABLE TEXT. tradingwithrayner.com publishes a full written 'Transcript' section under each episode, bylined 'By Rayner Teo'. Retrieved 2026-08-18 by curl with a browser User-Agent: HTTP 200, full text present, no login/paywall/consent wall. This is the ONLY text corpus found in this session for any of the three traders where the trader's own stated rules are directly readable rather than locked behind a blocked caption endpoint. Storage remains METADATA_ONLY: the text is third-party copyrighted and must not be committed without an owner storage decision. || TARGETS RAYNER_TEO stop placement. Verified 2026-08-18: byline 'By Rayner Teo', Last Updated May 11, 2022, sha256 7f0b8f8ac29a3c22a0a2d350bf206a9b1eadbdf0687f76106bbc3e2cb4a47b79. NOTE: the page body is thin (the substance is in the embedded video, whose captions are not retrievable), but the AUTHOR'S OWN REPLIES in the public comment thread state explicit rules in the first person -- a '2 ATR stop loss', 'I use the current ATR values when placing my initial stop loss', 'I don't shift my stops to break even. Rather I trail my stops when there's a new structure high/low', and 'you can widen your stop loss but you will reduce your position size accordingly'. Author-comment provenance is weaker than article body and must be recorded as such.",
+  "discoveredAt": "2026-08-18T15:19:29Z",
+  "discoveryMethod": "ARTICLE_URL",
   "duplicateStatus": "NONE",
   "durationSeconds": null,
   "language": "en",
   "metadataConfidence": "owner_provided",
-  "normalizedUrl": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "normalizedUrl": "https://www.tradingwithrayner.com/how-to-use-atr-indicator-set-stoploss/",
   "ownerDecisionIds": [],
   "ownerReviewStatus": "not_reviewed",
-  "platform": "YOUTUBE",
+  "platform": "ARTICLE_WEB",
   "playlistId": null,
   "playlistPosition": null,
   "priorityAssessments": [
     {
-      "assessmentId": "SCORE|CAND|MOGO|20260818|001|001",
+      "assessmentId": "SCORE|CAND|MOGO|20260818|032|001",
       "computedAt": "2026-08-18T15:19:33Z",
       "dimensions": {
         "chartExampleDensity": null,
@@ -104,24 +104,24 @@
         "paperTradingLearningPotential": null,
         "promotionalContentScore": null,
         "replayModelingPotential": null,
-        "repositoryGapRelevance": 100,
-        "riskManagementRelevance": null,
+        "repositoryGapRelevance": null,
+        "riskManagementRelevance": 75,
         "ruleExtractionPotential": null,
         "tradeFailureInsightPotential": null
       },
-      "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "explanation": "base=68.57142857142857 from populated positive dims [creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
       "missingDimensions": [
         "ruleExtractionPotential",
+        "repositoryGapRelevance",
         "tradeFailureInsightPotential",
         "replayModelingPotential",
         "paperTradingLearningPotential",
         "chartExampleDensity",
-        "riskManagementRelevance",
         "promotionalContentScore",
         "lifestyleContentScore",
         "genericMotivationScore"
       ],
-      "recommendationScore": 81.11,
+      "recommendationScore": 68.57,
       "scoringConfidence": 0.333,
       "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
       "weightProfileVersion": 1
@@ -134,28 +134,42 @@
   "publicationDate": null,
   "rejectionReason": null,
   "relatedCandidateIds": [],
-  "sourceType": "VIDEO",
+  "sourceType": "ARTICLE",
   "storagePolicy": "METADATA_ONLY",
   "strategyFamilyCandidates": [],
   "submittedBy": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-  "title": "Boot Camp Day 38: Stop Losses",
+  "title": "How to Use the ATR Indicator To Set Your Stoploss",
   "topicCandidates": [
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
+      "assessedAt": "2026-08-18T15:19:29Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "stop loss",
+      "topic": "STOP_PLACEMENT"
+    },
+    {
+      "assessedAt": "2026-08-18T15:19:29Z",
       "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
       "evidenceReference": "target",
       "topic": "TARGETS"
     },
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
-      "classifiedFrom": "TITLE_DERIVED",
+      "assessedAt": "2026-08-18T15:19:29Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
-      "evidenceReference": "stop loss",
-      "topic": "STOP_PLACEMENT"
+      "evidenceReference": "position size",
+      "topic": "RISK_MANAGEMENT"
+    },
+    {
+      "assessedAt": "2026-08-18T15:19:29Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
     }
   ],
   "updatedAt": "2026-08-18T15:19:33Z",
-  "url": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "url": "https://www.tradingwithrayner.com/how-to-use-atr-indicator-set-stoploss/",
   "verifiedTraderId": null
 }

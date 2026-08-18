@@ -1,12 +1,12 @@
 {
   "acquisitionStatus": "OWNER_REVIEW",
   "authenticityStatus": "LIKELY_PRIMARY",
-  "candidateId": "CAND|MOGO|20260818|001",
+  "candidateId": "CAND|MOGO|20260818|027",
   "canonicalCandidateId": null,
   "changeLog": [
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:18:23Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -17,7 +17,7 @@
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:18:23Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -53,7 +53,7 @@
       "discoveryMethod": "MANUAL_URL",
       "newStatus": "PRIORITIZED",
       "priorStatus": "DUPLICATE_REVIEW",
-      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|001|001"
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|027|001"
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
@@ -74,16 +74,16 @@
   "contentReference": null,
   "contentSizeBytes": null,
   "contentType": null,
-  "createdAt": "2026-08-18T15:16:57Z",
+  "createdAt": "2026-08-18T15:18:23Z",
   "creatorName": "TJR",
-  "description": "TJR primary channel. Targets GAP|20260817|001 (stop buffer) and TJR stop_rule AMBIGUOUS. Retrieved metadata 2026-08-18: publishDate 2023-07-03, length 795s, captions: en/asr only (no publisher-authored captions). Content NOT acquired: youtube timedtext endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18).",
-  "discoveredAt": "2026-08-18T15:16:57Z",
+  "description": "TJR primary channel, observed-trade candidate for GAP|20260817|006. WHY THIS ONE: Zero-outcome session with a stated non-methodological cause (execution/infrastructure), relevant to separating strategy failure from execution failure. The stated P&L is a publisher claim in the title, not an observed execution. Content NOT acquired: YouTube timedtext caption endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18T15:12Z). Captions present are en/asr (auto-generated) only -- no publisher-authored caption track exists, so any transcript obtained by any route carries unverified fidelity to the spoken audio.",
+  "discoveredAt": "2026-08-18T15:18:23Z",
   "discoveryMethod": "MANUAL_URL",
   "duplicateStatus": "NONE",
   "durationSeconds": null,
   "language": "en",
   "metadataConfidence": "owner_provided",
-  "normalizedUrl": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "normalizedUrl": "https://www.youtube.com/watch?v=3onHs8WBAQc",
   "ownerDecisionIds": [],
   "ownerReviewStatus": "not_reviewed",
   "platform": "YOUTUBE",
@@ -91,7 +91,7 @@
   "playlistPosition": null,
   "priorityAssessments": [
     {
-      "assessmentId": "SCORE|CAND|MOGO|20260818|001|001",
+      "assessmentId": "SCORE|CAND|MOGO|20260818|027|001",
       "computedAt": "2026-08-18T15:19:33Z",
       "dimensions": {
         "chartExampleDensity": null,
@@ -138,24 +138,24 @@
   "storagePolicy": "METADATA_ONLY",
   "strategyFamilyCandidates": [],
   "submittedBy": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-  "title": "Boot Camp Day 38: Stop Losses",
+  "title": "Live Day Trading Making $0 (MY WIFI MADE ME LOSE THOUSANDS)",
   "topicCandidates": [
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
+      "assessedAt": "2026-08-18T15:18:23Z",
       "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
-      "evidenceReference": "target",
+      "evidenceReference": "tp ",
       "topic": "TARGETS"
     },
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
-      "classifiedFrom": "TITLE_DERIVED",
+      "assessedAt": "2026-08-18T15:18:23Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
-      "evidenceReference": "stop loss",
-      "topic": "STOP_PLACEMENT"
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
     }
   ],
   "updatedAt": "2026-08-18T15:19:33Z",
-  "url": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "url": "https://www.youtube.com/watch?v=3onHs8WBAQc",
   "verifiedTraderId": null
 }

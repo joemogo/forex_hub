@@ -1,12 +1,12 @@
 {
   "acquisitionStatus": "OWNER_REVIEW",
   "authenticityStatus": "LIKELY_PRIMARY",
-  "candidateId": "CAND|MOGO|20260818|001",
+  "candidateId": "CAND|MOGO|20260818|003",
   "canonicalCandidateId": null,
   "changeLog": [
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:18:20Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -17,7 +17,7 @@
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:18:20Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -53,7 +53,7 @@
       "discoveryMethod": "MANUAL_URL",
       "newStatus": "PRIORITIZED",
       "priorStatus": "DUPLICATE_REVIEW",
-      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|001|001"
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|003|001"
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
@@ -74,16 +74,16 @@
   "contentReference": null,
   "contentSizeBytes": null,
   "contentType": null,
-  "createdAt": "2026-08-18T15:16:57Z",
+  "createdAt": "2026-08-18T15:18:20Z",
   "creatorName": "TJR",
-  "description": "TJR primary channel. Targets GAP|20260817|001 (stop buffer) and TJR stop_rule AMBIGUOUS. Retrieved metadata 2026-08-18: publishDate 2023-07-03, length 795s, captions: en/asr only (no publisher-authored captions). Content NOT acquired: youtube timedtext endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18).",
-  "discoveredAt": "2026-08-18T15:16:57Z",
+  "description": "TJR primary channel (youtube.com/@TJRTrades), free/public. TARGETS: GAP|20260727|003 risk_percentage (risk_rule MISSING).. Verified metadata retrieved 2026-08-18 from the watch page ytInitialPlayerResponse: publishDate=2023-06-07, lengthSeconds=1007, author=TJR.  Content NOT acquired: YouTube timedtext caption endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18T15:12Z). Captions present are en/asr (auto-generated) only -- no publisher-authored caption track exists, so any transcript obtained by any route carries unverified fidelity to the spoken audio.",
+  "discoveredAt": "2026-08-18T15:18:20Z",
   "discoveryMethod": "MANUAL_URL",
   "duplicateStatus": "NONE",
   "durationSeconds": null,
   "language": "en",
   "metadataConfidence": "owner_provided",
-  "normalizedUrl": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "normalizedUrl": "https://www.youtube.com/watch?v=RkMBoqbeUq8",
   "ownerDecisionIds": [],
   "ownerReviewStatus": "not_reviewed",
   "platform": "YOUTUBE",
@@ -91,7 +91,7 @@
   "playlistPosition": null,
   "priorityAssessments": [
     {
-      "assessmentId": "SCORE|CAND|MOGO|20260818|001|001",
+      "assessmentId": "SCORE|CAND|MOGO|20260818|003|001",
       "computedAt": "2026-08-18T15:19:33Z",
       "dimensions": {
         "chartExampleDensity": null,
@@ -105,24 +105,23 @@
         "promotionalContentScore": null,
         "replayModelingPotential": null,
         "repositoryGapRelevance": 100,
-        "riskManagementRelevance": null,
+        "riskManagementRelevance": 75,
         "ruleExtractionPotential": null,
         "tradeFailureInsightPotential": null
       },
-      "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "explanation": "base=80.0 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, riskManagementRelevance=75, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
       "missingDimensions": [
         "ruleExtractionPotential",
         "tradeFailureInsightPotential",
         "replayModelingPotential",
         "paperTradingLearningPotential",
         "chartExampleDensity",
-        "riskManagementRelevance",
         "promotionalContentScore",
         "lifestyleContentScore",
         "genericMotivationScore"
       ],
-      "recommendationScore": 81.11,
-      "scoringConfidence": 0.333,
+      "recommendationScore": 80.0,
+      "scoringConfidence": 0.444,
       "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
       "weightProfileVersion": 1
     }
@@ -138,24 +137,24 @@
   "storagePolicy": "METADATA_ONLY",
   "strategyFamilyCandidates": [],
   "submittedBy": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-  "title": "Boot Camp Day 38: Stop Losses",
+  "title": "Boot Camp Day 13: Risk Management",
   "topicCandidates": [
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
+      "assessedAt": "2026-08-18T15:18:20Z",
       "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
       "evidenceReference": "target",
       "topic": "TARGETS"
     },
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
+      "assessedAt": "2026-08-18T15:18:20Z",
       "classifiedFrom": "TITLE_DERIVED",
       "confidence": "medium",
-      "evidenceReference": "stop loss",
-      "topic": "STOP_PLACEMENT"
+      "evidenceReference": "risk management",
+      "topic": "RISK_MANAGEMENT"
     }
   ],
   "updatedAt": "2026-08-18T15:19:33Z",
-  "url": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "url": "https://www.youtube.com/watch?v=RkMBoqbeUq8",
   "verifiedTraderId": null
 }

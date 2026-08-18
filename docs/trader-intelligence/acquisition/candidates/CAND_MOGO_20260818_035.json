@@ -1,27 +1,27 @@
 {
   "acquisitionStatus": "OWNER_REVIEW",
-  "authenticityStatus": "LIKELY_PRIMARY",
-  "candidateId": "CAND|MOGO|20260818|001",
+  "authenticityStatus": "UNVERIFIED",
+  "candidateId": "CAND|MOGO|20260818|035",
   "canonicalCandidateId": null,
   "changeLog": [
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:19:29Z",
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "REGISTERED",
       "priorStatus": "DISCOVERED",
       "reason": "Candidate successfully validated and durably registered."
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:16:57Z",
+      "changedAt": "2026-08-18T15:19:29Z",
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "METADATA_VERIFIED",
       "priorStatus": "REGISTERED",
       "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
@@ -32,7 +32,7 @@
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "DUPLICATE_REVIEW",
       "priorStatus": "METADATA_VERIFIED",
       "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
@@ -50,10 +50,10 @@
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "PRIORITIZED",
       "priorStatus": "DUPLICATE_REVIEW",
-      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|001|001"
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|035|001"
     },
     {
       "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
@@ -61,68 +61,68 @@
       "changedFields": [
         "acquisitionStatus"
       ],
-      "discoveryMethod": "MANUAL_URL",
+      "discoveryMethod": "ARTICLE_URL",
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
     }
   ],
-  "channelOrPublisher": "TJR",
-  "claimedTraderId": "TJR",
+  "channelOrPublisher": "tjrtrades.com / TJR LLC affiliate site",
+  "claimedTraderId": null,
   "contentHash": null,
   "contentOrigin": "UNKNOWN_ORIGIN",
   "contentReference": null,
   "contentSizeBytes": null,
   "contentType": null,
-  "createdAt": "2026-08-18T15:16:57Z",
-  "creatorName": "TJR",
-  "description": "TJR primary channel. Targets GAP|20260817|001 (stop buffer) and TJR stop_rule AMBIGUOUS. Retrieved metadata 2026-08-18: publishDate 2023-07-03, length 795s, captions: en/asr only (no publisher-authored captions). Content NOT acquired: youtube timedtext endpoint returns HTTP 200 / 0 bytes from this environment (re-confirmed 2026-08-18).",
-  "discoveredAt": "2026-08-18T15:16:57Z",
-  "discoveryMethod": "MANUAL_URL",
+  "createdAt": "2026-08-18T15:19:29Z",
+  "creatorName": "tjrtrades.com / TJR LLC affiliate site",
+  "description": "ATTRIBUTION TRAP -- DO NOT TREAT AS TJR-STATED. Retrieved 2026-08-18, HTTP 200, public. The page presents 'Never risk more than 1-2% per trade', 'Is the risk/reward at least 2:1?', 'Use maximum 2-3 indicators' as TJR's principles, which if taken at face value would appear to close GAP|20260727|003 (risk_percentage). IT DOES NOT. The page's own footer states: 'Affiliate Disclosure: This website (tjrtrades.com) is an affiliate of TJR LLC through Whop.com ... all opinions are our own.' The content is therefore a third-party affiliate marketer's paraphrase, with no quotation, citation, timestamp or source video for any of the numbers. Registering the specific figure 1-2% as a TJR risk_rule on this basis would be promoting a secondary paraphrase into a source-stated fact. claimedTraderId deliberately left unset.",
+  "discoveredAt": "2026-08-18T15:19:29Z",
+  "discoveryMethod": "ARTICLE_URL",
   "duplicateStatus": "NONE",
   "durationSeconds": null,
   "language": "en",
   "metadataConfidence": "owner_provided",
-  "normalizedUrl": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "normalizedUrl": "https://www.jointjrtrades.com/philosophy",
   "ownerDecisionIds": [],
   "ownerReviewStatus": "not_reviewed",
-  "platform": "YOUTUBE",
+  "platform": "ARTICLE_WEB",
   "playlistId": null,
   "playlistPosition": null,
   "priorityAssessments": [
     {
-      "assessmentId": "SCORE|CAND|MOGO|20260818|001|001",
+      "assessmentId": "SCORE|CAND|MOGO|20260818|035|001",
       "computedAt": "2026-08-18T15:19:33Z",
       "dimensions": {
         "chartExampleDensity": null,
-        "creatorAuthenticity": 70,
+        "creatorAuthenticity": 15,
         "duplicationPenalty": 0,
         "genericMotivationScore": null,
         "lifestyleContentScore": null,
-        "lowAuthoritySummaryPenalty": 0,
+        "lowAuthoritySummaryPenalty": 60,
         "noveltyScore": 60,
         "paperTradingLearningPotential": null,
-        "promotionalContentScore": null,
+        "promotionalContentScore": 80,
         "replayModelingPotential": null,
-        "repositoryGapRelevance": 100,
+        "repositoryGapRelevance": null,
         "riskManagementRelevance": null,
         "ruleExtractionPotential": null,
         "tradeFailureInsightPotential": null
       },
-      "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "explanation": "base=33.0 from populated positive dims [creatorAuthenticity=15, noveltyScore=60]; penaltyFraction=0.467 from [promotionalContentScore=80, duplicationPenalty=0, lowAuthoritySummaryPenalty=60]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'lifestyleContentScore', 'genericMotivationScore']",
       "missingDimensions": [
         "ruleExtractionPotential",
+        "repositoryGapRelevance",
         "tradeFailureInsightPotential",
         "replayModelingPotential",
         "paperTradingLearningPotential",
         "chartExampleDensity",
         "riskManagementRelevance",
-        "promotionalContentScore",
         "lifestyleContentScore",
         "genericMotivationScore"
       ],
-      "recommendationScore": 81.11,
-      "scoringConfidence": 0.333,
+      "recommendationScore": 17.6,
+      "scoringConfidence": 0.222,
       "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
       "weightProfileVersion": 1
     }
@@ -134,28 +134,28 @@
   "publicationDate": null,
   "rejectionReason": null,
   "relatedCandidateIds": [],
-  "sourceType": "VIDEO",
+  "sourceType": "ARTICLE",
   "storagePolicy": "METADATA_ONLY",
   "strategyFamilyCandidates": [],
   "submittedBy": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-  "title": "Boot Camp Day 38: Stop Losses",
+  "title": "TJR Trading Philosophy (jointjrtrades.com)",
   "topicCandidates": [
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
+      "assessedAt": "2026-08-18T15:19:29Z",
       "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
-      "evidenceReference": "target",
+      "evidenceReference": "tp ",
       "topic": "TARGETS"
     },
     {
-      "assessedAt": "2026-08-18T15:16:57Z",
-      "classifiedFrom": "TITLE_DERIVED",
+      "assessedAt": "2026-08-18T15:19:29Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
-      "evidenceReference": "stop loss",
-      "topic": "STOP_PLACEMENT"
+      "evidenceReference": "affiliate",
+      "topic": "PROMOTIONAL_CONTENT"
     }
   ],
   "updatedAt": "2026-08-18T15:19:33Z",
-  "url": "https://www.youtube.com/watch?v=1FunNCUw_jM",
+  "url": "https://www.jointjrtrades.com/philosophy",
   "verifiedTraderId": null
 }

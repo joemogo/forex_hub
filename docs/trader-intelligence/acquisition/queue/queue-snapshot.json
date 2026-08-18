@@ -1,8 +1,369 @@
 {
   "builderVersion": "1.0.0",
-  "builtAt": "2026-07-25T15:21:04Z",
-  "candidateCount": 0,
-  "entries": [],
+  "builtAt": "2026-08-18T15:19:48Z",
+  "candidateCount": 36,
+  "entries": [
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|001",
+      "discoveredAt": "2026-08-18T15:16:57Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp Day 38: Stop Losses"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|004",
+      "discoveredAt": "2026-08-18T15:18:20Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Path to Profitability: TJR's Strategy Explained"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|007",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp 2.0 Day 3: Risk"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|009",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp 2.0 Day 9: Leveraging Risk"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|010",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp 2.0 Day 8: How to split positions"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|011",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp 2.0 Day 11: Where to Take Profit"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|012",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp Day 37: Taking Profits"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|013",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp Day 29: Trading Plan"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|015",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Path to Profitability: How To Find Daily Bias"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|016",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Path to Profitability: Time Theory Explained"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|017",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp Day 19: How to Read News Data"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|019",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Boot Camp Day 54: Daily Bias + No Trades Today"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|021",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Live Day Trading Losing $5,325 (MY STRATEGY NO LONGER WORKS)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|022",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Live Day Trading Making $7,052 (I BROKE MY TRADING RULES)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|023",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Live Day Trading Making $21,415 (I FULLPORTED MY ACCOUNT FOR THIS)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|027",
+      "discoveredAt": "2026-08-18T15:18:23Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "title": "Live Day Trading Making $0 (MY WIFI MADE ME LOSE THOUSANDS)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|002",
+      "discoveredAt": "2026-08-18T15:18:20Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 80.0,
+      "scoringConfidence": 0.444,
+      "title": "Boot Camp Day 39: Calculating Lot Size"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|003",
+      "discoveredAt": "2026-08-18T15:18:20Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 80.0,
+      "scoringConfidence": 0.444,
+      "title": "Boot Camp Day 13: Risk Management"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|005",
+      "discoveredAt": "2026-08-18T15:18:20Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 80.0,
+      "scoringConfidence": 0.444,
+      "title": "Path to Profitability: Risk Management & Psychology"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|008",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 80.0,
+      "scoringConfidence": 0.444,
+      "title": "Boot Camp 2.0 Day 7: Risk Management and Probabilities"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|018",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 77.27,
+      "scoringConfidence": 0.444,
+      "title": "TJR -- Trade Recaps (playlist, 100 videos)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|020",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 77.27,
+      "scoringConfidence": 0.444,
+      "title": "Live Day Trading Losing $33,814 (trade recap)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|025",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 77.27,
+      "scoringConfidence": 0.444,
+      "title": "Boot Camp Day 52: Daily Bias + Break Even Trading Recap"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|026",
+      "discoveredAt": "2026-08-18T15:18:23Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 77.27,
+      "scoringConfidence": 0.444,
+      "title": "Boot Camp Day 53: Daily Bias + $19k Profit GBPJPY Recap"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|024",
+      "discoveredAt": "2026-08-18T15:18:22Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 75.93,
+      "scoringConfidence": 0.556,
+      "title": "Boot Camp Day 49: Daily Bias/Backtesting + $9k Loss SPX Trade Recap"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|032",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 68.57,
+      "scoringConfidence": 0.333,
+      "title": "How to Use the ATR Indicator To Set Your Stoploss"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|028",
+      "discoveredAt": "2026-08-18T15:19:28Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 66.0,
+      "scoringConfidence": 0.222,
+      "title": "5 Things I Look For Before I Enter a Trade"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|029",
+      "discoveredAt": "2026-08-18T15:19:28Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 66.0,
+      "scoringConfidence": 0.222,
+      "title": "7 Critical Things to Look For Before You Enter a Trade"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|030",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 66.0,
+      "scoringConfidence": 0.222,
+      "title": "When Should You Not Put On a Trade"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|031",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 66.0,
+      "scoringConfidence": 0.222,
+      "title": "Multiple Timeframe Cheat Sheet"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|033",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 66.0,
+      "scoringConfidence": 0.222,
+      "title": "Free Forex Trading Course (landing page)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|034",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 66.0,
+      "scoringConfidence": 0.222,
+      "title": "tradingwithrayner.com post sitemap (762 URLs)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|006",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 59.48,
+      "scoringConfidence": 0.333,
+      "title": "My UPDATED Day Trading Strategy (2026)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|014",
+      "discoveredAt": "2026-08-18T15:18:21Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 59.48,
+      "scoringConfidence": 0.333,
+      "title": "The ONLY Liquidity Guide You'll Ever Need"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|036",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 23.1,
+      "scoringConfidence": 0.222,
+      "title": "The Best Stop Loss Strategy (An Essential Guide)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|035",
+      "discoveredAt": "2026-08-18T15:19:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 17.6,
+      "scoringConfidence": 0.222,
+      "title": "TJR Trading Philosophy (jointjrtrades.com)"
+    }
+  ],
   "generated": true,
-  "queueBuildId": "QUEUE|20260725|005"
+  "queueBuildId": "QUEUE|20260818|001"
 }

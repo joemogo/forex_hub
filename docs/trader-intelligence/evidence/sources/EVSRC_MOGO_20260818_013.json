@@ -1,0 +1,29 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": null,
+  "contentHash": "77f47b16f4f6b86e491f0b86492ecbac3fa8f41aa5a7347bf880a3a994ae20d6",
+  "contentHashAlgorithm": "sha256",
+  "createdAt": "2026-08-18T15:32:44Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": null,
+  "licensingStatus": "owned",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "captureBasis": "LIVE_CLOSE",
+    "engineStrategyId": "alex_g_sr_v1",
+    "importedBy": "import_mogo_observations",
+    "packageCount": 25
+  },
+  "provenanceStatus": "verified",
+  "registeredAt": "2026-08-18T15:32:44Z",
+  "repositoryPath": "evidence/C2-LIVE-CLOSE-PACKAGES.json",
+  "schemaVersion": 1,
+  "sourceId": "EVSRC|MOGO|20260818|013",
+  "sourceType": "paper_trade",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "C2-LIVE-CLOSE-PACKAGES.json (LIVE_CLOSE)",
+  "traderId": null,
+  "updatedAt": "2026-08-18T15:32:44Z"
+}
