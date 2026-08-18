@@ -1374,6 +1374,68 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    xmErr.length===1&&xmErr[0].tradeId==="ISO-FIXTURE-1"&&xmErr[0].pair==="EUR_USD",\n' +
   '    "recorded="+xmErr.length+" tradeId="+String((xmErr[0]||{}).tradeId)+\n' +
   '    " pair="+String((xmErr[0]||{}).pair));\n' +
+  // ══ MOGO-022 B-21 -- EXIT-MONITOR OBSERVABILITY MIRROR ═══════════════════════════════════
+  // The mirror exists because per-tick exit state reaches disk only when some OTHER position
+  // opens or closes. It is WRITE-ONLY: the engine must never read it back. B-21 was approved
+  // as observability ONLY, and the difference between that and persisting the cursor as
+  // authoritative state is the self-heal -- on reload the in-memory cursor reverts to
+  // openedAt and re-walks a superset, so no exit can be missed. XMIRROR-3 is the fixture that
+  // stops this becoming the rejected option by accident.
+  '  fullReset(); isoOpenPosition(); alexGEngineErrors=[];\n' +
+  '  localStorage.removeItem("fxhub_alexg_exit_monitor");\n' +
+  '  await alexGLivePollTick();\n' +
+  '  let __xmm=null; try{ __xmm=JSON.parse(localStorage.getItem("fxhub_alexg_exit_monitor")); }catch(e){}\n' +
+  '  const __xmPos=(__xmm&&__xmm.positions)||[];\n' +
+  '  g.record("XMIRROR-1","the exit monitor writes an observability mirror for the open position -- before this, a healthy monitor and a dead one were indistinguishable on disk",\n' +
+  '    !!__xmm&&__xmm.schemaVersion==="mogo.exit-monitor-mirror.v1"&&__xmPos.length===1&&\n' +
+  '    __xmPos[0].tradeId==="ISO-FIXTURE-1",\n' +
+  '    "mirror="+(!!__xmm)+" positions="+__xmPos.length+" tradeId="+String((__xmPos[0]||{}).tradeId));\n' +
+  '  g.record("XMIRROR-2","the mirror carries the cursor and excursions actually held in memory, not construction defaults",\n' +
+  '    __xmPos.length===1&&__xmPos[0].lastExitCheckTimestamp!=null&&\n' +
+  '    ("maePips" in __xmPos[0])&&("mfePips" in __xmPos[0]),\n' +
+  '    "cursor="+String((__xmPos[0]||{}).lastExitCheckTimestamp)+\n' +
+  '    " mae="+String((__xmPos[0]||{}).maePips)+" mfe="+String((__xmPos[0]||{}).mfePips));\n' +
+  // THE LOAD-BEARING ONE. A mirror on disk holding a cursor AHEAD of the account's must not
+  // change what the next tick re-walks. If the engine ever reads the mirror back, B-21
+  // silently becomes the rejected "persist the cursor" option and the self-heal is gone.
+  '  fullReset(); isoOpenPosition();\n' +
+  '  const __xmAhead=Date.now()+86400000;\n' +
+  '  localStorage.setItem("fxhub_alexg_exit_monitor",JSON.stringify({generated:true,\n' +
+  '    schemaVersion:"mogo.exit-monitor-mirror.v1",positions:[{tradeId:"ISO-FIXTURE-1",\n' +
+  '    pair:"EUR_USD",lastExitCheckTimestamp:__xmAhead,maePips:999,mfePips:999}]}));\n' +
+  '  const __xmBefore=(alexGAccount.openPositions[0]||{}).lastExitCheckTimestamp;\n' +
+  // Observe the FETCH RANGE, not the resulting cursor. An engine reading the mirror back
+  // would start its walk from the mirror's timestamp and SKIP every candle between -- while
+  // leaving the account cursor untouched, because a future range returns no candles and the
+  // cursor only advances over candles actually walked. Asserting on the cursor therefore
+  // passed against exactly the defect it existed to catch; asserting on `sinceMs` is what
+  // constrains it. Found by mutating the engine to read the mirror and watching this survive.
+  '  const __xmFetch=alexGFetchExecutableCandles; const __xmSince=[];\n' +
+  '  alexGFetchExecutableCandles=function(pair,sinceMs,nowMs){ __xmSince.push(sinceMs);\n' +
+  '    return __xmFetch.apply(this,arguments); };\n' +
+  '  await alexGLivePollTick();\n' +
+  '  alexGFetchExecutableCandles=__xmFetch;\n' +
+  '  const __xmAfter=(alexGAccount.openPositions[0]||{}).lastExitCheckTimestamp;\n' +
+  '  g.record("XMIRROR-3","ENGINE-INPUT ISOLATION: with a mirror holding a cursor a day AHEAD, the exit walk still starts from the ACCOUNT cursor -- the engine never reads the mirror back, so no candle is skipped and the reload self-heal survives",\n' +
+  '    __xmSince.length>=1&&__xmSince.every(function(v){ return v!==__xmAhead&&v<__xmAhead; })&&\n' +
+  '    __xmSince[0]===__xmBefore,\n' +
+  '    "mirrorAhead="+__xmAhead+" accountCursor="+String(__xmBefore)+\n' +
+  '    " fetchedSince="+JSON.stringify(__xmSince)+" accountAfter="+String(__xmAfter));\n' +
+  // A write failure must not stop monitoring or block a close, and must not be swallowed --
+  // discarding it is the exact defect this file already fixed once, at EXITERR-2.
+  '  fullReset(); isoOpenPosition(); alexGEngineErrors=[];\n' +
+  '  const __xmSetItem=localStorage.setItem.bind(localStorage);\n' +
+  '  localStorage.setItem=function(k,v){ if(k==="fxhub_alexg_exit_monitor")\n' +
+  '    throw new Error("fixture mirror quota fault"); return __xmSetItem(k,v); };\n' +
+  '  let __xmWriteThrew=false;\n' +
+  '  try{ await alexGLivePollTick(); }catch(e){ __xmWriteThrew=true; }\n' +
+  '  localStorage.setItem=__xmSetItem;\n' +
+  '  const __xmWriteErr=alexGEngineErrors.filter(function(e){\n' +
+  '    return e.stage==="alexGExitMonitorMirror"; });\n' +
+  '  g.record("XMIRROR-4","a mirror write failure is REPORTED and does not abort the tick -- observability must never be able to break monitoring",\n' +
+  '    __xmWriteThrew===false&&__xmWriteErr.length===1,\n' +
+  '    "tick threw="+__xmWriteThrew+" recorded="+__xmWriteErr.length);\n' +
+
   // ══ MOGO-021 -- EVERY CONFIGURED INSTRUMENT ACCOUNTED FOR ON EVERY OUTCOME PATH ═══════════
   // __obsSkipped is only pushed from inside the pair loop, so anything throwing BEFORE or DURING it
   // left instrumentsSkipped EMPTY beside instrumentsConfigured:12 -- 0 of 12 accounted for, the same

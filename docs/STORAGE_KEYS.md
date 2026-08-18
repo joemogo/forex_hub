@@ -60,6 +60,7 @@ Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-s
 | `fxhub_alexg_auto` | `alexGAutoTrading` | `saveAlexGRest()` | |
 | `fxhub_alexg_zones` | `alexGZoneState` | `saveAlexGRest()` | |
 | `fxhub_alexg_setups` | `alexGSetupState` | `saveAlexGRest()` | |
+| `fxhub_alexg_exit_monitor` | *(none — write-only)* | `alexGCheckLivePositions()` | **Observability mirror, never read back by the engine (MOGO-022 B-21).** Per-tick exit state (`lastExitCheckTimestamp`, MAE/MFE) is mutated every tick but reaches disk only when another position opens or closes, so a healthy monitor and a dead one were indistinguishable on disk. This reports that state; it does not record it. The authoritative cursor stays in `alexGAccount`, where it self-heals on reload — reading this key back would make an over-advance permanent and is pinned against by fixture XMIRROR-3. |
 
 ## Non-trading feature state
 
