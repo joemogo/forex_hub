@@ -147,6 +147,24 @@ if ! python3 regression-baseline-tools.py; then
 fi
 echo ""
 
+echo "--- Evidence checkpoint selftest ---"
+if ! bash scripts/mogo_evidence_checkpoint.sh --selftest; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
+# The auto-mode governance block lives in the USER settings file and its sections REPLACE the
+# shipped defaults rather than merging, so every rule a newer Claude Code ships is silently
+# absent until the generator is re-run. Nothing else would ever say so.
+echo "--- Auto-mode governance config drift check ---"
+if ! command -v claude >/dev/null 2>&1; then
+  echo "SKIPPED: the 'claude' CLI is not on PATH, so the shipped defaults cannot be read."
+  echo "         This check is skipped, NOT passed."
+elif ! python3 scripts/auto_mode/build_auto_mode_config.py --check; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "================================================================"
 echo "SUMMARY (repository-owned permanent suites only)"
 echo "  Suites run:       $TOTAL_SUITES"

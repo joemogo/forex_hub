@@ -85,8 +85,72 @@ if [ "${1:-}" = "--selftest" ]; then
   ck "$([ "$(cat "$T/profile/Default/IndexedDB/http_localhost_1.indexeddb.leveldb/000001.ldb")" = "alphabeta" ] && echo 1 || echo 0)" \
      "the SOURCE store is byte-unchanged by checkpointing (read-only)"
 
-  rm -rf "$T" "$DROOT"
-  [ "$fails" = "0" ] && { echo "SELFTEST PASS -- refusal, verification, manifest, idempotence, read-only source"; exit 0; }
+  # ── Profile-path resolution. ────────────────────────────────────────────────────────────────
+  # The live MOGO instance runs in `Profile 2` of the operator's own Chrome, not in a `Default`
+  # profile of a dedicated user-data directory. Appending `Default` unconditionally resolved to
+  # the wrong store, or to nothing at all -- and "nothing at all" exited 0, which reads as
+  # success. All three outcomes are pinned here.
+  mkdir -p "$T/profile2/IndexedDB/https_joemogo.github.io_0.indexeddb.leveldb"
+  printf 'gamma' > "$T/profile2/IndexedDB/https_joemogo.github.io_0.indexeddb.leveldb/000001.ldb"
+  set +e; out="$("$SELF" --profile "$T/profile2" --root "$DROOT" 2>&1)"; rc=$?; set -e
+  ck "$([ $rc -eq 0 ] && echo 1 || echo 0)" "a PROFILE directory holding IndexedDB directly is checkpointed"
+  ck "$(echo "$out" | grep -q "profile2/IndexedDB" && echo 1 || echo 0)" \
+     "it copies the profile's OWN store, not a sibling Default profile's"
+
+  # A user-data directory whose Default profile has the store must still resolve -- and must not
+  # be shadowed by a sibling profile.
+  mkdir -p "$T/udd/Default/IndexedDB/http_localhost_1.indexeddb.leveldb" "$T/udd/Profile 2/IndexedDB"
+  printf 'delta' > "$T/udd/Default/IndexedDB/http_localhost_1.indexeddb.leveldb/000001.ldb"
+  set +e; out="$("$SELF" --profile "$T/udd" --root "$DROOT" 2>&1)"; rc=$?; set -e
+  ck "$([ $rc -eq 0 ] && echo 1 || echo 0)" "a user-data directory still resolves via Default (back-compatible)"
+
+  # The defect this replaced: a path with no store exited 0, so a scheduled run reported healthy
+  # while preserving nothing.
+  mkdir -p "$T/notaprofile"
+  set +e; out="$("$SELF" --profile "$T/notaprofile" --root "$DROOT" 2>&1)"; rc=$?; set -e
+  ck "$([ $rc -eq 2 ] && echo 1 || echo 0)" "a path with no store and no Preferences is a usage ERROR, not a silent skip"
+  ck "$([ $rc -ne 0 ] && echo 1 || echo 0)" "-- and specifically does not exit 0 (the old silent-success defect)"
+
+  # A real profile that genuinely has not written IndexedDB yet is still a legitimate skip.
+  mkdir -p "$T/fresh"; printf '{}' > "$T/fresh/Preferences"
+  set +e; out="$("$SELF" --profile "$T/fresh" --root "$DROOT" 2>&1)"; rc=$?; set -e
+  ck "$([ $rc -eq 0 ] && echo 1 || echo 0)" "a real profile with no store yet is still a clean SKIP"
+  ck "$(echo "$out" | grep -q 'SKIPPED' && echo 1 || echo 0)" "-- and says SKIPPED rather than claiming a checkpoint"
+
+  # ── Origin scoping. ─────────────────────────────────────────────────────────────────────────
+  # `--origin` used to be recorded and ignored. The live instance now shares the operator's own
+  # Chrome profile with ~100 unrelated origins, so an unscoped copy is an over-collection of
+  # personal data. These pin that the flag actually restricts the copy.
+  mkdir -p "$T/multi/IndexedDB/https_joemogo.github.io_0.indexeddb.leveldb" \
+           "$T/multi/IndexedDB/https_bank.example.com_0.indexeddb.leveldb"
+  printf 'mogo' > "$T/multi/IndexedDB/https_joemogo.github.io_0.indexeddb.leveldb/000001.ldb"
+  printf 'private' > "$T/multi/IndexedDB/https_bank.example.com_0.indexeddb.leveldb/000001.ldb"
+
+  SROOT="$DROOT-scoped"
+  set +e; out="$("$SELF" --profile "$T/multi" --origin https://joemogo.github.io --root "$SROOT" 2>&1)"; rc=$?; set -e
+  ck "$([ $rc -eq 0 ] && echo 1 || echo 0)" "an origin-scoped checkpoint VERIFIES"
+  SCOPED="$(ls -1d "$SROOT"/*/IndexedDB 2>/dev/null | tail -1)"
+  ck "$([ -n "$SCOPED" ] && echo 1 || echo 0)" "-- and actually produced a checkpoint to inspect (guards the two checks below)"
+  ck "$([ -d "$SCOPED/https_joemogo.github.io_0.indexeddb.leveldb" ] && echo 1 || echo 0)" \
+     "the named origin's store IS copied"
+  ck "$([ ! -e "$SCOPED/https_bank.example.com_0.indexeddb.leveldb" ] && echo 1 || echo 0)" \
+     "an UNRELATED origin's store is NOT copied (over-collection refused)"
+
+  set +e; out="$("$SELF" --profile "$T/multi" --origin https://typo.example.org --root "$SROOT" 2>&1)"; rc=$?; set -e
+  # Assert the REFUSAL MESSAGE, not merely a nonzero status. Without the message check this
+  # passes for the wrong reason: `${SCOPE[*]}` on an empty array under `set -u` aborts bash 3.2
+  # by itself, so removing the guard entirely still exits nonzero -- and the guard would look
+  # tested while doing nothing. Found by mutating the guard away and watching the check survive.
+  ck "$([ $rc -ne 0 ] && echo 1 || echo 0)" "an origin matching no store FAILS rather than preserving nothing quietly"
+  ck "$(echo "$out" | grep -q 'matched no store' && echo 1 || echo 0)" "-- and refuses by name, not by an unbound-variable crash"
+
+  mkdir -p "$T/ported/IndexedDB/http_localhost_8744.indexeddb.leveldb"
+  printf 'p' > "$T/ported/IndexedDB/http_localhost_8744.indexeddb.leveldb/000001.ldb"
+  set +e; out="$("$SELF" --profile "$T/ported" --origin http://localhost:8744 --root "$DROOT-ported" 2>&1)"; rc=$?; set -e
+  ck "$([ $rc -eq 0 ] && echo 1 || echo 0)" "an origin WITH an explicit port resolves (no spurious _0 suffix)"
+
+  rm -rf "$T" "$DROOT" "$DROOT-scoped" "$DROOT-ported"
+  [ "$fails" = "0" ] && { echo "SELFTEST PASS -- refusal, resolution, scoping, verification, manifest, idempotence, read-only source"; exit 0; }
   echo "SELFTEST FAIL -- $fails check(s) failed"; exit 1
 fi
 
@@ -105,10 +169,31 @@ fail() { echo "CHECKPOINT FAIL: $*" >&2; exit 1; }
 [ -n "$PROFILE" ] || fail "--profile is required."
 [ -d "$PROFILE" ] || fail "profile directory does not exist: $PROFILE"
 
-SRC="$PROFILE/Default/IndexedDB"
-if [ ! -d "$SRC" ]; then
-  echo "CHECKPOINT SKIPPED: no IndexedDB tree yet at $SRC (nothing has been captured)."
+# ── Resolve the IndexedDB tree. ───────────────────────────────────────────────────────────────
+# `--profile` is accepted BOTH as a Chrome profile directory (".../Chrome/Profile 2") and, for
+# back-compatibility, as a user-data directory whose Default profile holds the store -- which is
+# what the dedicated capture profiles looked like when this was written.
+#
+# The profile directory is tried FIRST, deliberately. Appending `Default` unconditionally is what
+# made the old behaviour dangerous: the live MOGO instance now runs in `Profile 2` of the
+# operator's own Chrome, so pointing at that Chrome resolved to a DIFFERENT profile's storage --
+# which would have been copied and reported VERIFIED. Preserving the wrong store is worse than
+# preserving nothing, because it looks like success.
+#
+# And a path that is neither is now a usage ERROR rather than a silent skip. Exit 0 on a
+# mismatched path is how a scheduled checkpoint reports healthy while preserving nothing.
+if [ -d "$PROFILE/IndexedDB" ]; then
+  SRC="$PROFILE/IndexedDB"
+elif [ -d "$PROFILE/Default/IndexedDB" ]; then
+  SRC="$PROFILE/Default/IndexedDB"
+elif [ -f "$PROFILE/Preferences" ] || [ -f "$PROFILE/Default/Preferences" ]; then
+  echo "CHECKPOINT SKIPPED: no IndexedDB tree yet under $PROFILE (nothing has been captured)."
   exit 0
+else
+  echo "CHECKPOINT FAIL: '$PROFILE' holds no IndexedDB tree and does not look like a Chrome" >&2
+  echo "  profile. Looked for: $PROFILE/IndexedDB, $PROFILE/Default/IndexedDB, and a" >&2
+  echo "  Preferences file. Pass the profile directory itself, e.g. '.../Chrome/Profile 2'." >&2
+  exit 2
 fi
 
 # ── Refuse to checkpoint INTO a temporary directory. ──────────────────────────────────────────
@@ -119,10 +204,48 @@ case "$ROOT" in
        lost (D-15). Use a durable path under \$HOME." ;;
 esac
 
+# ── Scope the checkpoint to ONE origin when asked. ────────────────────────────────────────────
+# `--origin` used to be recorded in the manifest and nothing else: every origin in the profile was
+# copied regardless of it. That was harmless while MOGO ran in a dedicated capture profile that
+# held a single origin. It is not harmless now. The live instance runs in the operator's OWN
+# Chrome profile, alongside ~100 unrelated origins -- banking, tax, medical, retail -- and copying
+# those into a durable evidence directory would be a serious over-collection of personal data for
+# zero research benefit. The flag now restricts what is copied, which is what it always read as.
+SCOPE=()
+if [ -n "$ORIGIN" ]; then
+  # Chrome names a store directory after the origin: `https://joemogo.github.io` becomes
+  # `https_joemogo.github.io_0`, where the trailing field is the port and 0 means the default.
+  # Either the origin URL or that encoded prefix is accepted.
+  case "$ORIGIN" in
+    *://*)
+      PREFIX="$(printf '%s' "$ORIGIN" | sed -e 's#/*$##' -e 's#://#_#' -e 's#:#_#')"
+      case "$ORIGIN" in *://*:*) ;; *) PREFIX="${PREFIX}_0" ;; esac ;;
+    *) PREFIX="$ORIGIN" ;;
+  esac
+  for entry in "$SRC/$PREFIX".indexeddb.*; do
+    [ -e "$entry" ] || continue
+    SCOPE[${#SCOPE[@]}]="$(basename "$entry")"
+  done
+  [ ${#SCOPE[@]} -gt 0 ] || fail "origin '$ORIGIN' matched no store under $SRC
+       (looked for ${PREFIX}.indexeddb.*). Refusing: preserving nothing because a flag was
+       mistyped is precisely the silent failure this script exists to prevent."
+  echo "scope         : $ORIGIN -> ${SCOPE[*]}"
+else
+  echo "scope         : ENTIRE profile ($(ls -1 "$SRC" | grep -c . || true) origins)"
+  echo "                pass --origin to copy one origin only"
+fi
+
 # ── Fingerprint the SOURCE tree: every file's path, size and SHA-256. ─────────────────────────
+# Honours the scope, so the before/after/copy comparison is over exactly what was preserved.
 fingerprint() {
   local dir="$1"
-  ( cd "$dir" && find . -type f -print0 | sort -z | xargs -0 shasum -a 256 2>/dev/null )
+  if [ ${#SCOPE[@]} -eq 0 ]; then
+    ( cd "$dir" && find . -type f -print0 | sort -z | xargs -0 shasum -a 256 2>/dev/null )
+  else
+    ( cd "$dir" && for e in "${SCOPE[@]}"; do
+        [ -e "./$e" ] && find "./$e" -type f -print0
+      done | sort -z | xargs -0 shasum -a 256 2>/dev/null )
+  fi
 }
 
 BEFORE="$(fingerprint "$SRC")"
@@ -165,7 +288,14 @@ if [ -e "$DEST" ]; then
 fi
 mkdir -p "$DEST" || fail "cannot create checkpoint directory: $DEST"
 
-cp -R "$SRC" "$DEST/IndexedDB" || fail "copy failed into $DEST"
+if [ ${#SCOPE[@]} -eq 0 ]; then
+  cp -R "$SRC" "$DEST/IndexedDB" || fail "copy failed into $DEST"
+else
+  mkdir -p "$DEST/IndexedDB" || fail "cannot create $DEST/IndexedDB"
+  for e in "${SCOPE[@]}"; do
+    cp -R "$SRC/$e" "$DEST/IndexedDB/$e" || fail "copy failed for '$e' into $DEST"
+  done
+fi
 
 # ── Re-fingerprint the SOURCE. If it moved, the copy may be torn. ────────────────────────────
 AFTER="$(fingerprint "$SRC")"
