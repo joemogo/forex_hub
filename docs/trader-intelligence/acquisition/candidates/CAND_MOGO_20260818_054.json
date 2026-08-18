@@ -1,0 +1,167 @@
+{
+  "acquisitionStatus": "OWNER_REVIEW",
+  "authenticityStatus": "LIKELY_PRIMARY",
+  "candidateId": "CAND|MOGO|20260818|054",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:02:59Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:02:59Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:36Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "DUPLICATE_REVIEW",
+      "priorStatus": "METADATA_VERIFIED",
+      "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
+    },
+    {
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "priorityAssessments"
+      ],
+      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "PRIORITIZED",
+      "priorStatus": "DUPLICATE_REVIEW",
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|054|001"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "OWNER_REVIEW",
+      "priorStatus": "PRIORITIZED",
+      "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    }
+  ],
+  "channelOrPublisher": "ALEX G",
+  "claimedTraderId": "ALEX_G",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-08-18T16:02:59Z",
+  "creatorName": "ALEX G",
+  "description": "GAP|20260817|007 target. Most recent ALEX_G trading-content video as of 2026-08-18 and the freshest test of the retrieval ceiling. Description retrieved in full: affiliate links, a prop-firm code, and the blanket CFTC 4.41 disclaimer -- NO narrative, NO chapters, NO instrument. Registered because its recency makes it the best single operator-paste target if per-trade detail is wanted for the current period; NOT because its title states anything. Retrieval ceiling (ALEX_G-specific, checked this session): watch pages HTTP 200; caption inventory en/asr ONLY on all 17 videos sampled 2024-07-14..2026-06-22; freshly-signed timedtext URL returned HTTP 200 / 0 bytes at 2026-08-18T15:57Z. Spoken content NOT acquired.",
+  "discoveredAt": "2026-08-18T16:02:59Z",
+  "discoveryMethod": "MANUAL_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": 1595,
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://www.youtube.com/watch?v=DsPLtzjTONI",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "YOUTUBE",
+  "playlistId": null,
+  "playlistPosition": null,
+  "priorityAssessments": [
+    {
+      "assessmentId": "SCORE|CAND|MOGO|20260818|054|001",
+      "computedAt": "2026-08-18T16:03:37Z",
+      "dimensions": {
+        "chartExampleDensity": null,
+        "creatorAuthenticity": 70,
+        "duplicationPenalty": 0,
+        "genericMotivationScore": null,
+        "lifestyleContentScore": null,
+        "lowAuthoritySummaryPenalty": 0,
+        "noveltyScore": 60,
+        "paperTradingLearningPotential": null,
+        "promotionalContentScore": 80,
+        "replayModelingPotential": null,
+        "repositoryGapRelevance": 0,
+        "riskManagementRelevance": null,
+        "ruleExtractionPotential": null,
+        "tradeFailureInsightPotential": null
+      },
+      "explanation": "base=36.666666666666664 from populated positive dims [repositoryGapRelevance=0, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.267 from [promotionalContentScore=80, duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'lifestyleContentScore', 'genericMotivationScore']",
+      "missingDimensions": [
+        "ruleExtractionPotential",
+        "tradeFailureInsightPotential",
+        "replayModelingPotential",
+        "paperTradingLearningPotential",
+        "chartExampleDensity",
+        "riskManagementRelevance",
+        "lifestyleContentScore",
+        "genericMotivationScore"
+      ],
+      "recommendationScore": 26.89,
+      "scoringConfidence": 0.333,
+      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+      "weightProfileVersion": 1
+    }
+  ],
+  "processingStatus": "prioritized",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": "2026-06-22",
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "VIDEO",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+  "title": "I Tried to Make $1 Million Trading in 24 Hours to Prove It's Not Luck",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "target",
+      "topic": "TARGETS"
+    },
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
+    },
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "affiliate",
+      "topic": "PROMOTIONAL_CONTENT"
+    }
+  ],
+  "updatedAt": "2026-08-18T16:03:37Z",
+  "url": "https://www.youtube.com/watch?v=DsPLtzjTONI",
+  "verifiedTraderId": null
+}

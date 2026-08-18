@@ -1,0 +1,168 @@
+{
+  "acquisitionStatus": "OWNER_REVIEW",
+  "authenticityStatus": "LIKELY_PRIMARY",
+  "candidateId": "CAND|MOGO|20260818|055",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:02:59Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:02:59Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:36Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "DUPLICATE_REVIEW",
+      "priorStatus": "METADATA_VERIFIED",
+      "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
+    },
+    {
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "priorityAssessments"
+      ],
+      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "PRIORITIZED",
+      "priorStatus": "DUPLICATE_REVIEW",
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|055|001"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "OWNER_REVIEW",
+      "priorStatus": "PRIORITIZED",
+      "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    }
+  ],
+  "channelOrPublisher": "ALEX G",
+  "claimedTraderId": "ALEX_G",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-08-18T16:02:59Z",
+  "creatorName": "ALEX G",
+  "description": "GAP|20260817|007 -- the defined population for the 2024 serial challenge. Enumerated in full 2026-08-18, HTTP 200: 13 videos, 789,560 views, published weekly 2024-07-14 to 2024-10-18. All 13 registered individually as CAND|MOGO|20260818|037-049. This playlist is the ONLY ALEX_G artefact found with a publisher-authored,週-by-week balance ledger in retrievable text. It is NOT an observed-trade population: weeks 1-12 state balances and (on 4 weeks) an instrument, but no week states entry, exit, stop, size, direction or fill time, week 11 is missing entirely, and at least four stated figures are internally inconsistent (see the individual candidates).",
+  "discoveredAt": "2026-08-18T16:02:59Z",
+  "discoveryMethod": "PLAYLIST_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": null,
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://www.youtube.com/playlist?list=PL3wdfj84a2fk53i3JdpCB9WEbuXpA3Fbd",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "YOUTUBE",
+  "playlistId": "PL3wdfj84a2fk53i3JdpCB9WEbuXpA3Fbd",
+  "playlistPosition": null,
+  "priorityAssessments": [
+    {
+      "assessmentId": "SCORE|CAND|MOGO|20260818|055|001",
+      "computedAt": "2026-08-18T16:03:37Z",
+      "dimensions": {
+        "chartExampleDensity": null,
+        "creatorAuthenticity": 70,
+        "duplicationPenalty": 0,
+        "genericMotivationScore": null,
+        "lifestyleContentScore": null,
+        "lowAuthoritySummaryPenalty": 0,
+        "noveltyScore": 60,
+        "paperTradingLearningPotential": null,
+        "promotionalContentScore": null,
+        "replayModelingPotential": null,
+        "repositoryGapRelevance": 0,
+        "riskManagementRelevance": null,
+        "ruleExtractionPotential": null,
+        "tradeFailureInsightPotential": null
+      },
+      "explanation": "base=36.666666666666664 from populated positive dims [repositoryGapRelevance=0, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "missingDimensions": [
+        "ruleExtractionPotential",
+        "tradeFailureInsightPotential",
+        "replayModelingPotential",
+        "paperTradingLearningPotential",
+        "chartExampleDensity",
+        "riskManagementRelevance",
+        "promotionalContentScore",
+        "lifestyleContentScore",
+        "genericMotivationScore"
+      ],
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+      "weightProfileVersion": 1
+    }
+  ],
+  "processingStatus": "prioritized",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": null,
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "PLAYLIST",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+  "title": "Turning $100 into a $1,000,000 (2.0)",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "entry",
+      "topic": "ENTRIES"
+    },
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "exit",
+      "topic": "EXITS"
+    },
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "tp ",
+      "topic": "TARGETS"
+    }
+  ],
+  "updatedAt": "2026-08-18T16:03:37Z",
+  "url": "https://www.youtube.com/playlist?list=PL3wdfj84a2fk53i3JdpCB9WEbuXpA3Fbd",
+  "verifiedTraderId": null
+}

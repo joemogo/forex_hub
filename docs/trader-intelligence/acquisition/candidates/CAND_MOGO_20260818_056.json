@@ -1,0 +1,161 @@
+{
+  "acquisitionStatus": "OWNER_REVIEW",
+  "authenticityStatus": "LIKELY_PRIMARY",
+  "candidateId": "CAND|MOGO|20260818|056",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:00Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:00Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:36Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "DUPLICATE_REVIEW",
+      "priorStatus": "METADATA_VERIFIED",
+      "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
+    },
+    {
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "priorityAssessments"
+      ],
+      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "PRIORITIZED",
+      "priorStatus": "DUPLICATE_REVIEW",
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|056|001"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "PLAYLIST_URL",
+      "newStatus": "OWNER_REVIEW",
+      "priorStatus": "PRIORITIZED",
+      "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    }
+  ],
+  "channelOrPublisher": "ALEX G",
+  "claimedTraderId": "ALEX_G",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-08-18T16:03:00Z",
+  "creatorName": "ALEX G",
+  "description": "GAP|20260817|007 -- population handle for the FIRST (2023) challenge, the one CAND|MOGO|20260818|050 records as having ended in a blown account. Enumerated in full 2026-08-18, HTTP 200: 13 videos, 432,161 views. Member videoIds: dVCbyu6kDm0, M8OcMuD_eEQ, okx_3_Uxht0, uOtKqV9HQss, OyfI83yU0KM, 7kOPNrRw0jM, 7dcJ2WZYDDQ, HmlA-Ro_k9k, kb3t0xHbpGQ, DZ9l_dpmbyM, plus f-7_8hmb0M0/njvjjOgiLKo/ILJ5_ZbB5r0 which are shared with the 2.0 playlist. DESCRIPTIONS OF THE 9 UNIQUE 2023 EPISODES WERE NOT RETRIEVED THIS SESSION -- registered as a handle so the boundary is explicit and a future session knows exactly what is left.",
+  "discoveredAt": "2026-08-18T16:03:00Z",
+  "discoveryMethod": "PLAYLIST_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": null,
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://www.youtube.com/playlist?list=PL3wdfj84a2flucy4Bif28-rrKIuYmWCkQ",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "YOUTUBE",
+  "playlistId": "PL3wdfj84a2flucy4Bif28-rrKIuYmWCkQ",
+  "playlistPosition": null,
+  "priorityAssessments": [
+    {
+      "assessmentId": "SCORE|CAND|MOGO|20260818|056|001",
+      "computedAt": "2026-08-18T16:03:37Z",
+      "dimensions": {
+        "chartExampleDensity": null,
+        "creatorAuthenticity": 70,
+        "duplicationPenalty": 0,
+        "genericMotivationScore": null,
+        "lifestyleContentScore": null,
+        "lowAuthoritySummaryPenalty": 0,
+        "noveltyScore": 60,
+        "paperTradingLearningPotential": null,
+        "promotionalContentScore": null,
+        "replayModelingPotential": null,
+        "repositoryGapRelevance": 0,
+        "riskManagementRelevance": null,
+        "ruleExtractionPotential": null,
+        "tradeFailureInsightPotential": null
+      },
+      "explanation": "base=36.666666666666664 from populated positive dims [repositoryGapRelevance=0, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "missingDimensions": [
+        "ruleExtractionPotential",
+        "tradeFailureInsightPotential",
+        "replayModelingPotential",
+        "paperTradingLearningPotential",
+        "chartExampleDensity",
+        "riskManagementRelevance",
+        "promotionalContentScore",
+        "lifestyleContentScore",
+        "genericMotivationScore"
+      ],
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+      "weightProfileVersion": 1
+    }
+  ],
+  "processingStatus": "prioritized",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": null,
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "PLAYLIST",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+  "title": "Turning $100 into $1,000,000 (first challenge, 2023)",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-08-18T16:03:00Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "tp ",
+      "topic": "TARGETS"
+    },
+    {
+      "assessedAt": "2026-08-18T16:03:00Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
+    }
+  ],
+  "updatedAt": "2026-08-18T16:03:37Z",
+  "url": "https://www.youtube.com/playlist?list=PL3wdfj84a2flucy4Bif28-rrKIuYmWCkQ",
+  "verifiedTraderId": null
+}

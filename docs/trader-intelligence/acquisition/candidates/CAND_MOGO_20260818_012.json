@@ -65,6 +65,13 @@
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    },
+    {
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "priorityAssessments"
+      ],
+      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
     }
   ],
   "channelOrPublisher": "TJR",
@@ -125,6 +132,42 @@
       "scoringConfidence": 0.333,
       "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
       "weightProfileVersion": 1
+    },
+    {
+      "assessmentId": "SCORE|CAND|MOGO|20260818|012|002",
+      "computedAt": "2026-08-18T16:03:37Z",
+      "dimensions": {
+        "chartExampleDensity": null,
+        "creatorAuthenticity": 70,
+        "duplicationPenalty": 0,
+        "genericMotivationScore": null,
+        "lifestyleContentScore": null,
+        "lowAuthoritySummaryPenalty": 0,
+        "noveltyScore": 60,
+        "paperTradingLearningPotential": null,
+        "promotionalContentScore": null,
+        "replayModelingPotential": null,
+        "repositoryGapRelevance": 100,
+        "riskManagementRelevance": null,
+        "ruleExtractionPotential": null,
+        "tradeFailureInsightPotential": null
+      },
+      "explanation": "base=81.11111111111111 from populated positive dims [repositoryGapRelevance=100, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "missingDimensions": [
+        "ruleExtractionPotential",
+        "tradeFailureInsightPotential",
+        "replayModelingPotential",
+        "paperTradingLearningPotential",
+        "chartExampleDensity",
+        "riskManagementRelevance",
+        "promotionalContentScore",
+        "lifestyleContentScore",
+        "genericMotivationScore"
+      ],
+      "recommendationScore": 81.11,
+      "scoringConfidence": 0.333,
+      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+      "weightProfileVersion": 1
     }
   ],
   "processingStatus": "prioritized",
@@ -148,7 +191,7 @@
       "topic": "TARGETS"
     }
   ],
-  "updatedAt": "2026-08-18T15:19:33Z",
+  "updatedAt": "2026-08-18T16:03:37Z",
   "url": "https://www.youtube.com/watch?v=FjSiLFrg5fo",
   "verifiedTraderId": null
 }

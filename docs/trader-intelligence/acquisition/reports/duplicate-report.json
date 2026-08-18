@@ -1,7 +1,260 @@
 {
   "builderVersion": "1.0.0",
   "generated": true,
-  "generatedAt": "2026-08-18T15:19:33Z",
-  "groupCount": 0,
-  "groups": []
+  "generatedAt": "2026-08-18T16:03:36Z",
+  "groupCount": 18,
+  "groups": [
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|001",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|038",
+        "CAND|MOGO|20260818|041"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|002",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|038",
+        "CAND|MOGO|20260818|042"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|003",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|038",
+        "CAND|MOGO|20260818|044"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|004",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|038",
+        "CAND|MOGO|20260818|046"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|005",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|039",
+        "CAND|MOGO|20260818|040"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|006",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|039",
+        "CAND|MOGO|20260818|045"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|007",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|039",
+        "CAND|MOGO|20260818|048"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|008",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|040",
+        "CAND|MOGO|20260818|041"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|009",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|040",
+        "CAND|MOGO|20260818|042"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|010",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|040",
+        "CAND|MOGO|20260818|044"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|011",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|040",
+        "CAND|MOGO|20260818|046"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|012",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|041",
+        "CAND|MOGO|20260818|042"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|013",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|041",
+        "CAND|MOGO|20260818|044"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|014",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|041",
+        "CAND|MOGO|20260818|046"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|015",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|042",
+        "CAND|MOGO|20260818|044"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|016",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|042",
+        "CAND|MOGO|20260818|046"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|017",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|043",
+        "CAND|MOGO|20260818|048"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    },
+    {
+      "canonicalCandidateId": null,
+      "createdAt": "2026-08-18T16:03:36Z",
+      "generated": true,
+      "groupId": "DUPGROUP|20260818|018",
+      "matchBasis": "TITLE_SIMILARITY",
+      "memberCandidateIds": [
+        "CAND|MOGO|20260818|044",
+        "CAND|MOGO|20260818|046"
+      ],
+      "ownerDecisionId": null,
+      "status": "pending_owner_review",
+      "updatedAt": "2026-08-18T16:03:36Z"
+    }
+  ]
 }

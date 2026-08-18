@@ -267,6 +267,33 @@ does not disappear, it changes shape.
 
 ---
 
+## Addendum — the corpus already outlives the store, demonstrably
+
+Measured 2026-08-18T16:0xZ, after the decision packages above were written. Every FORWARD
+observation was joined against the packages currently recoverable from the live store:
+
+```
+FORWARD observations                                          28
+  package still present and hash-verifying in the live store  27
+  package NO LONGER in the live store                          1
+    TOBS|MOGO|20260806|025  current_strategy  closed 2026-08-06T13:11:15.575Z
+store packages with no corresponding observation               0
+```
+
+Two things follow, both bearing directly on the B-22 recommendation.
+
+**The preservation mechanism is already the sole record for a real trade.** The package behind
+`TOBS|MOGO|20260806|025` no longer exists in the browser — it predates the 2026-08-17 store
+recreation. The observation survives only because it had been imported into the tracked corpus
+first. This is not a hypothetical about what a future wipe would cost; it is the same loss,
+already suffered, and survived only where preservation had happened in time.
+
+**Nothing currently in the store is unpreserved.** Zero store packages lack an observation, so
+the corpus is fully caught up with what the browser holds today. The 9 missing trades of B-22
+are therefore not a backlog of un-imported evidence — they are trades whose packages never
+existed to import, which is exactly why minting them requires the operator decision above
+rather than another capture run.
+
 ## Open UNKNOWNs, stated rather than filled in
 
 - Whether OANDA can return a short forward page for a reason other than "caught up to now".

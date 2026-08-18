@@ -1,0 +1,161 @@
+{
+  "acquisitionStatus": "OWNER_REVIEW",
+  "authenticityStatus": "LIKELY_PRIMARY",
+  "candidateId": "CAND|MOGO|20260818|051",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:02:59Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:02:59Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:36Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "DUPLICATE_REVIEW",
+      "priorStatus": "METADATA_VERIFIED",
+      "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
+    },
+    {
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "priorityAssessments"
+      ],
+      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "PRIORITIZED",
+      "priorStatus": "DUPLICATE_REVIEW",
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|051|001"
+    },
+    {
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "MANUAL_URL",
+      "newStatus": "OWNER_REVIEW",
+      "priorStatus": "PRIORITIZED",
+      "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    }
+  ],
+  "channelOrPublisher": "ALEX G",
+  "claimedTraderId": "ALEX_G",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-08-18T16:02:59Z",
+  "creatorName": "ALEX G",
+  "description": "GAP|20260817|007 -- candidate for the rejected/skipped-setup sub-question, and a NEGATIVE result on inspection. Chapters retrieved 2026-08-18: '02:06 23 Days without taking any trades', '12:34 Not taking a trade in 31 days.' The title reads as abstention evidence; the publisher's own description states the actual reason is unrelated to trading: 'I have been victim of a rob in my own house'. Chapters are about Las Vegas, Miami and personal events. This is ABSENCE OF TRADING FOR NON-METHOD REASONS, not a rejected setup, and must not be scored as selectivity. Registered so a future session does not re-open it on the strength of the title. Retrieval ceiling (ALEX_G-specific, checked this session): watch pages HTTP 200; caption inventory en/asr ONLY on all 17 videos sampled 2024-07-14..2026-06-22; freshly-signed timedtext URL returned HTTP 200 / 0 bytes at 2026-08-18T15:57Z. Spoken content NOT acquired.",
+  "discoveredAt": "2026-08-18T16:02:59Z",
+  "discoveryMethod": "MANUAL_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": 1018,
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://www.youtube.com/watch?v=KnZ03FjD-i0",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "YOUTUBE",
+  "playlistId": null,
+  "playlistPosition": null,
+  "priorityAssessments": [
+    {
+      "assessmentId": "SCORE|CAND|MOGO|20260818|051|001",
+      "computedAt": "2026-08-18T16:03:37Z",
+      "dimensions": {
+        "chartExampleDensity": null,
+        "creatorAuthenticity": 70,
+        "duplicationPenalty": 0,
+        "genericMotivationScore": null,
+        "lifestyleContentScore": null,
+        "lowAuthoritySummaryPenalty": 0,
+        "noveltyScore": 60,
+        "paperTradingLearningPotential": null,
+        "promotionalContentScore": null,
+        "replayModelingPotential": null,
+        "repositoryGapRelevance": 0,
+        "riskManagementRelevance": null,
+        "ruleExtractionPotential": null,
+        "tradeFailureInsightPotential": null
+      },
+      "explanation": "base=36.666666666666664 from populated positive dims [repositoryGapRelevance=0, creatorAuthenticity=70, noveltyScore=60]; penaltyFraction=0.000 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=0]; missing=['ruleExtractionPotential', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
+      "missingDimensions": [
+        "ruleExtractionPotential",
+        "tradeFailureInsightPotential",
+        "replayModelingPotential",
+        "paperTradingLearningPotential",
+        "chartExampleDensity",
+        "riskManagementRelevance",
+        "promotionalContentScore",
+        "lifestyleContentScore",
+        "genericMotivationScore"
+      ],
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+      "weightProfileVersion": 1
+    }
+  ],
+  "processingStatus": "prioritized",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": "2023-12-21",
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "VIDEO",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+  "title": "Why I haven't taken a trade in 30 Days...",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "tp ",
+      "topic": "TARGETS"
+    },
+    {
+      "assessedAt": "2026-08-18T16:02:59Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
+    }
+  ],
+  "updatedAt": "2026-08-18T16:03:37Z",
+  "url": "https://www.youtube.com/watch?v=KnZ03FjD-i0",
+  "verifiedTraderId": null
+}

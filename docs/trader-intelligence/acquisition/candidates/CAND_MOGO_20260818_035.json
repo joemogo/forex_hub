@@ -65,6 +65,13 @@
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    },
+    {
+      "changedAt": "2026-08-18T16:03:37Z",
+      "changedFields": [
+        "priorityAssessments"
+      ],
+      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
     }
   ],
   "channelOrPublisher": "tjrtrades.com / TJR LLC affiliate site",
@@ -93,6 +100,42 @@
     {
       "assessmentId": "SCORE|CAND|MOGO|20260818|035|001",
       "computedAt": "2026-08-18T15:19:33Z",
+      "dimensions": {
+        "chartExampleDensity": null,
+        "creatorAuthenticity": 15,
+        "duplicationPenalty": 0,
+        "genericMotivationScore": null,
+        "lifestyleContentScore": null,
+        "lowAuthoritySummaryPenalty": 60,
+        "noveltyScore": 60,
+        "paperTradingLearningPotential": null,
+        "promotionalContentScore": 80,
+        "replayModelingPotential": null,
+        "repositoryGapRelevance": null,
+        "riskManagementRelevance": null,
+        "ruleExtractionPotential": null,
+        "tradeFailureInsightPotential": null
+      },
+      "explanation": "base=33.0 from populated positive dims [creatorAuthenticity=15, noveltyScore=60]; penaltyFraction=0.467 from [promotionalContentScore=80, duplicationPenalty=0, lowAuthoritySummaryPenalty=60]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'lifestyleContentScore', 'genericMotivationScore']",
+      "missingDimensions": [
+        "ruleExtractionPotential",
+        "repositoryGapRelevance",
+        "tradeFailureInsightPotential",
+        "replayModelingPotential",
+        "paperTradingLearningPotential",
+        "chartExampleDensity",
+        "riskManagementRelevance",
+        "lifestyleContentScore",
+        "genericMotivationScore"
+      ],
+      "recommendationScore": 17.6,
+      "scoringConfidence": 0.222,
+      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
+      "weightProfileVersion": 1
+    },
+    {
+      "assessmentId": "SCORE|CAND|MOGO|20260818|035|002",
+      "computedAt": "2026-08-18T16:03:37Z",
       "dimensions": {
         "chartExampleDensity": null,
         "creatorAuthenticity": 15,
@@ -155,7 +198,7 @@
       "topic": "PROMOTIONAL_CONTENT"
     }
   ],
-  "updatedAt": "2026-08-18T15:19:33Z",
+  "updatedAt": "2026-08-18T16:03:37Z",
   "url": "https://www.jointjrtrades.com/philosophy",
   "verifiedTraderId": null
 }

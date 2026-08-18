@@ -1,12 +1,12 @@
 {
   "acquisitionStatus": "OWNER_REVIEW",
   "authenticityStatus": "UNVERIFIED",
-  "candidateId": "CAND|MOGO|20260818|036",
+  "candidateId": "CAND|MOGO|20260818|058",
   "canonicalCandidateId": null,
   "changeLog": [
     {
-      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:19:29Z",
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:29Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -16,8 +16,8 @@
       "reason": "Candidate successfully validated and durably registered."
     },
     {
-      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:19:29Z",
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:29Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -27,8 +27,8 @@
       "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
     },
     {
-      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:19:33Z",
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:36Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -38,26 +38,26 @@
       "reason": "detect_duplicates.py has processed this candidate (duplicateStatus=NONE)"
     },
     {
-      "changedAt": "2026-08-18T15:19:33Z",
+      "changedAt": "2026-08-18T16:03:37Z",
       "changedFields": [
         "priorityAssessments"
       ],
       "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
     },
     {
-      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:19:33Z",
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
       "changedFields": [
         "acquisitionStatus"
       ],
       "discoveryMethod": "ARTICLE_URL",
       "newStatus": "PRIORITIZED",
       "priorStatus": "DUPLICATE_REVIEW",
-      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|036|001"
+      "reason": "prioritize_sources.py computed assessment SCORE|CAND|MOGO|20260818|058|001"
     },
     {
-      "actor": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-      "changedAt": "2026-08-18T15:19:33Z",
+      "actor": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+      "changedAt": "2026-08-18T16:03:37Z",
       "changedFields": [
         "acquisitionStatus"
       ],
@@ -65,32 +65,25 @@
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
-    },
-    {
-      "changedAt": "2026-08-18T16:03:37Z",
-      "changedFields": [
-        "priorityAssessments"
-      ],
-      "reason": "prioritize_sources.py re-score under PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1"
     }
   ],
-  "channelOrPublisher": "Jet Toyco (staff writer, tradingwithrayner.com)",
+  "channelOrPublisher": "Swing Trading Lab LLC",
   "claimedTraderId": null,
   "contentHash": null,
   "contentOrigin": "UNKNOWN_ORIGIN",
   "contentReference": null,
   "contentSizeBytes": null,
   "contentType": null,
-  "createdAt": "2026-08-18T15:19:29Z",
-  "creatorName": "Jet Toyco (staff writer, tradingwithrayner.com)",
-  "description": "ATTRIBUTION TRAP -- NOT RAYNER_TEO. Retrieved 2026-08-18, HTTP 200, sha256 1ce8afeab1831876b9153c309e91c481e8324179afd9574655bfaac975b29f7c. Hosted on Rayner Teo's domain and surfaced by search as a Rayner stop-loss source, but the byline is 'By Jet Toyco', not Rayner Teo. Rules stated here are NOT attributable to RAYNER_TEO. claimedTraderId deliberately left unset. Only 'By Rayner Teo' bylines on this domain may carry RAYNER_TEO attribution.",
-  "discoveredAt": "2026-08-18T15:19:29Z",
+  "createdAt": "2026-08-18T16:03:29Z",
+  "creatorName": "Swing Trading Lab LLC",
+  "description": "ATTRIBUTION TRAP -- claimedTraderId DELIBERATELY UNSET. Retrieved 2026-08-18T15:58Z, HTTP 200, public, no login. ALEX_G's own business site, and it is a paid-course sales funnel. Its only performance content is STUDENT testimonials -- 'Officially funded $25k after passing Quant Tekels 3-step evaluation in 43 days', 'First big payout using only the Set and Forget strategy: $3,677.81', 'Another 2 payouts with funded accounts $691.13 and $573.76... from FundedNext'. THESE ARE OTHER PEOPLE'S TRADES. Attributing any of them to ALEX_G would be exactly the WRONG_ATTRIBUTION failure recorded for TJR at NEGATIVE_ACQUISITION_LOG N-3. The site states NO trade of ALEX_G's own, publishes NO broker statement and NO verified track record. It does confirm two identity facts: ALEX_G's legal name is Alex Gonzalez, and the operating entity is Swing Trading Lab LLC. Checked against GAP|20260817|007: SOURCE_DOES_NOT_STATE.",
+  "discoveredAt": "2026-08-18T16:03:29Z",
   "discoveryMethod": "ARTICLE_URL",
   "duplicateStatus": "NONE",
   "durationSeconds": null,
-  "language": "en",
-  "metadataConfidence": "owner_provided",
-  "normalizedUrl": "https://www.tradingwithrayner.com/best-stop-loss-strategy/",
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://swingtradinglab.com/",
   "ownerDecisionIds": [],
   "ownerReviewStatus": "not_reviewed",
   "platform": "ARTICLE_WEB",
@@ -98,44 +91,7 @@
   "playlistPosition": null,
   "priorityAssessments": [
     {
-      "assessmentId": "SCORE|CAND|MOGO|20260818|036|001",
-      "computedAt": "2026-08-18T15:19:33Z",
-      "dimensions": {
-        "chartExampleDensity": null,
-        "creatorAuthenticity": 15,
-        "duplicationPenalty": 0,
-        "genericMotivationScore": null,
-        "lifestyleContentScore": null,
-        "lowAuthoritySummaryPenalty": 60,
-        "noveltyScore": 60,
-        "paperTradingLearningPotential": null,
-        "promotionalContentScore": null,
-        "replayModelingPotential": null,
-        "repositoryGapRelevance": null,
-        "riskManagementRelevance": null,
-        "ruleExtractionPotential": null,
-        "tradeFailureInsightPotential": null
-      },
-      "explanation": "base=33.0 from populated positive dims [creatorAuthenticity=15, noveltyScore=60]; penaltyFraction=0.300 from [duplicationPenalty=0, lowAuthoritySummaryPenalty=60]; missing=['ruleExtractionPotential', 'repositoryGapRelevance', 'tradeFailureInsightPotential', 'replayModelingPotential', 'paperTradingLearningPotential', 'chartExampleDensity', 'riskManagementRelevance', 'promotionalContentScore', 'lifestyleContentScore', 'genericMotivationScore']",
-      "missingDimensions": [
-        "ruleExtractionPotential",
-        "repositoryGapRelevance",
-        "tradeFailureInsightPotential",
-        "replayModelingPotential",
-        "paperTradingLearningPotential",
-        "chartExampleDensity",
-        "riskManagementRelevance",
-        "promotionalContentScore",
-        "lifestyleContentScore",
-        "genericMotivationScore"
-      ],
-      "recommendationScore": 23.1,
-      "scoringConfidence": 0.222,
-      "weightProfileId": "PRIORITY_PROFILE|MOGO_RESEARCH_V1|V1",
-      "weightProfileVersion": 1
-    },
-    {
-      "assessmentId": "SCORE|CAND|MOGO|20260818|036|002",
+      "assessmentId": "SCORE|CAND|MOGO|20260818|058|001",
       "computedAt": "2026-08-18T16:03:37Z",
       "dimensions": {
         "chartExampleDensity": null,
@@ -182,18 +138,11 @@
   "sourceType": "ARTICLE",
   "storagePolicy": "METADATA_ONLY",
   "strategyFamilyCandidates": [],
-  "submittedBy": "claude-opus-5 (MOGO-022 acquisition session 2026-08-18)",
-  "title": "The Best Stop Loss Strategy (An Essential Guide)",
+  "submittedBy": "claude-opus-5 (MOGO-022 ALEX_G acquisition session 2026-08-18)",
+  "title": "Swing Trading Lab -- course funnel (Alex Gonzalez)",
   "topicCandidates": [
     {
-      "assessedAt": "2026-08-18T15:19:29Z",
-      "classifiedFrom": "DESCRIPTION_DERIVED",
-      "confidence": "medium",
-      "evidenceReference": "stop-loss",
-      "topic": "STOP_PLACEMENT"
-    },
-    {
-      "assessedAt": "2026-08-18T15:19:29Z",
+      "assessedAt": "2026-08-18T16:03:29Z",
       "classifiedFrom": "DESCRIPTION_DERIVED",
       "confidence": "medium",
       "evidenceReference": "tp ",
@@ -201,6 +150,6 @@
     }
   ],
   "updatedAt": "2026-08-18T16:03:37Z",
-  "url": "https://www.tradingwithrayner.com/best-stop-loss-strategy/",
+  "url": "https://swingtradinglab.com/",
   "verifiedTraderId": null
 }
