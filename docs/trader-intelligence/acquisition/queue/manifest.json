@@ -1,159 +1,247 @@
 {
-  "buildId": "QUEUE|20260818|001",
+  "buildId": "QUEUE|20260818|002",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-08-18T15:19:48Z",
-  "candidateCount": 36,
+  "builtAt": "2026-08-18T16:09:54Z",
+  "candidateCount": 58,
   "generated": true,
   "inputFiles": [
     {
-      "contentHash": "ad857babee43e6ff6186bcfe72280d73828e40ecd35f07e3fddcfd181b8fbaac",
+      "contentHash": "fe6e18b79b02ae8b975338c4cca999d255d9b1f77de37f7c0cef8ec02fe5749e",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_001.json"
     },
     {
-      "contentHash": "747b4a2e36a9a27ab6636450282ee9e0416243604820c263aa66ee4fa31d7681",
+      "contentHash": "339523bba5d54fb5016dfc6a160d9dbd454332b60ff4726f4ced19a67ac95eae",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_002.json"
     },
     {
-      "contentHash": "b53cd612a19ecdb10ae39749085c7206fbdd0cefab81913baec98adbfe743d04",
+      "contentHash": "0e70b7495c9d792f49a6ac122741488b133df4f0979e85b383ccfbbfad1db623",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_003.json"
     },
     {
-      "contentHash": "f0a7e7a391c3d6fd18f3c35b385b23259a480c1233dad3a790e6465d0cba854e",
+      "contentHash": "03a8bca62222fd39b71ec43a033c7e6106222f7354c81c3aa6c302c8924abfbd",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_004.json"
     },
     {
-      "contentHash": "1962b54467e6d955519699d2a9e6dda420f5ff95eefa3c8687bad315d97500fb",
+      "contentHash": "9c7655bb6fb6e8e6e8055f8e2af6839ac6fc16ede6e168096a2c211718adea95",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_005.json"
     },
     {
-      "contentHash": "13ab7a417ba9c8f756f41ce1e8c84f24153defa2d80149bd6e537a04af6124ed",
+      "contentHash": "8d78c6ac253e7521642ffb1e76d5842778a8f8abb9417dfef18c221075f48bcf",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_006.json"
     },
     {
-      "contentHash": "88659e9b5993e6b3017942936a55ee98cd9ad8a9f07fc32b0f7e456bcaf1e951",
+      "contentHash": "e897cf15de8b6bcdc9826b4634a3f74a0bd22f8cc5eff97db4d129aba0454f08",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_007.json"
     },
     {
-      "contentHash": "41e6902e7b632b42abc31fed50def7261835b6958c7b32b72b03cd271caca3bc",
+      "contentHash": "04f249d1dd7515454db49a4a39eb237e46ca409ff5f67f7dcea4d96fbbdadabd",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_008.json"
     },
     {
-      "contentHash": "eb321f8de08cc093502a76a0c0d2c85ad8c87203ab5479ff7427ca581b8d1b12",
+      "contentHash": "b565b20e59e4fece55720aa76a6473dd1aaaadf0c42d76f6d12f926430fe67c9",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_009.json"
     },
     {
-      "contentHash": "5494ba615352165e9bb8ed52106690983fd0c35f50b0d62d8d4f741a031aa611",
+      "contentHash": "e5abfd209e79e7af13f125761e162ffd72f98aa4ab391301694cccbf1fe8ef29",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_010.json"
     },
     {
-      "contentHash": "007b649ed412120fecd5850e850dc7cf32ce21efc4c1b7aeea48761ddd73c225",
+      "contentHash": "289e4a908fc40585dcaf2e94f7bd62a863be52daddca6335d263ebc15ba57b3b",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_011.json"
     },
     {
-      "contentHash": "b2b36a1ccf04e606d5f1cd2cde208f7529eadfb07aec7c0873d04ec027c296fb",
+      "contentHash": "f97093b2c3701f5c57d505ba7a20f74c454c440e352de378bfbd17bbcb00e6f2",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_012.json"
     },
     {
-      "contentHash": "c5d3828f4be1b57edda27b37e997262cd19442216ccb3a7783d03d50142552fe",
+      "contentHash": "94dd4afb1dff396144959c5ed76241c186a638d04d19e6d113a48b0d513e2a37",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_013.json"
     },
     {
-      "contentHash": "ea8c62f03d3989ee5e3c77e2aa7069e350a0b6974e8e938b3032677a2e566043",
+      "contentHash": "0bde4878cc3375be2fc038b27b70c9d5a9915b4f6a052f84a368469f5a5d0749",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_014.json"
     },
     {
-      "contentHash": "be151e9534afea6858b9f4f86f323f2a427cbcd6a2c7525e3d05f8b9c0671dd3",
+      "contentHash": "bfd2a91434a5afa555b19683b9c7bf7705f0b380130bdf2dde7db3ee7aeb16b8",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_015.json"
     },
     {
-      "contentHash": "29673fa987e681d545fcf1725c4e348fd78a4075aed21e6894eb5b812eee5e9f",
+      "contentHash": "e0673a3e5ee613e5b2ab3403b3ea5b718536fbc57e038e7781b225425a7ca178",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_016.json"
     },
     {
-      "contentHash": "17e900fe42d8a7415b616be3a54562cddb341443ca502a5e6cad38ccd3d9ecd6",
+      "contentHash": "099be1720350bfaa0d4aa82671b329972e64aa5efbf948ee1e37334a49e74ace",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_017.json"
     },
     {
-      "contentHash": "9154ede319b6d4d07fbc078406d7255aae3cfce219226b68b22d659a873ea6fc",
+      "contentHash": "b04316d8033e33ccc29c43c12b8647e434f9d0cb6688fb680c8a64dadfc50ecf",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_018.json"
     },
     {
-      "contentHash": "5e16b002ef292f3b4713a969d7757e9a206de96002e062391f6aa0646fdafd33",
+      "contentHash": "1db7cd1faf9f4b4082062050b715010db647a339baeb199e1c277bb59a7e0ee3",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_019.json"
     },
     {
-      "contentHash": "651e2937e5e8d429c58a4c89ae1f1073d0a5663db61f880add9b52688ba714ed",
+      "contentHash": "8d5489c789536521da8db880bf480c3024424e662c1d44ee4b700c5e29beb184",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_020.json"
     },
     {
-      "contentHash": "905fa6127a46983fb430faad2046d0293064a43a31a26421d689c53fe95dfac3",
+      "contentHash": "409c3e0561f12f72a0c403edfed51b7d72fce35635f488c3628783814e787981",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_021.json"
     },
     {
-      "contentHash": "f7932063dd325917726bb642c69dba5663c02fc59227c134d3989605ead135f2",
+      "contentHash": "6efe4f11468d91068efce823ad0a898a8e043968fb40507c6745216ad59b3bc7",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_022.json"
     },
     {
-      "contentHash": "bad629e8358ccea594910b468e66cd3551323e700a445fb179dfa4754d37efff",
+      "contentHash": "00cb728cc06f78cc35eb3057b4a405a76090b1fdbc9e0649feeb39e6ebe07eb4",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_023.json"
     },
     {
-      "contentHash": "a4747a8cc5cbbf458f13b2e123920a765d9f25763ab8f48dc0c4c1b5b83a826e",
+      "contentHash": "c17699b19c1bce6d17f7fe276d80bcb1e4ff6709f23eb814dd45e7649dd95581",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_024.json"
     },
     {
-      "contentHash": "7e960ded2cc433e8cfe141f027c8790713a437f3513ffefad4d1c245e3e0a229",
+      "contentHash": "aa2ea8c8626f1e8666b58f4b62d93db4a3a27ed16055e4071b162a55bef5c258",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_025.json"
     },
     {
-      "contentHash": "23f681a73dfa362813641849625b0e7211ea1af099b808ea3583c364ee7d320e",
+      "contentHash": "3a25d36d18c6ea5a9d61c991c8fa4388c838b8fd4ddc42c9a6d1d87d1997fe8b",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_026.json"
     },
     {
-      "contentHash": "fcdc7a83895eb234306cb7e01e8c7d00f59bb4b437bf7186d1b57b1931bf6333",
+      "contentHash": "e06cf97c4391f363f6674315eab19511280202ffdc49e081556b6809fee10120",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_027.json"
     },
     {
-      "contentHash": "23d4aed733bfc2efb0b93354e4434636916d6cc498c111aa94080e6a32d382be",
+      "contentHash": "9eb63791035a23b15d993c3ba9e2d8f39afb82552597694b82ba85b407130e5d",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_028.json"
     },
     {
-      "contentHash": "26cd4347c65bcf1d58ef36ddbd9d01ffdba4cd885776108179a08322302ab349",
+      "contentHash": "07edf4f73b62a52c864e0fd9964559572beb16167373c398defb6c1c894dc407",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_029.json"
     },
     {
-      "contentHash": "f5a40329068e595b2e4c733d1628373858c530f87bb93551b896ff08335d1d4e",
+      "contentHash": "99048d60ae31099138e73d150e6c150c71b00553c3976dd518b7268848154e6b",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_030.json"
     },
     {
-      "contentHash": "1488c60c9c8abfcb896c3276748d6614d5eb3969155cc129995e008c2f9a96bc",
+      "contentHash": "d86b0b8a8d5de338d62219c265e773545cadf031d38266fb6de0c7f8484982b3",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_031.json"
     },
     {
-      "contentHash": "ee008b028638c5e4d8baa5caca4f68d3b8ab9bcab7e5402ebf7859c4112a0718",
+      "contentHash": "bde51433c6071f15f577d488fb9734f03c5cd0d19f28c53e1d4eeb522a3c3efe",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_032.json"
     },
     {
-      "contentHash": "85e133e3e94d547dbf6f309e181bc57267102b63ffe2051bb0998089b4fc758e",
+      "contentHash": "cc5a346285429e501aacb2fabd7cf2be504a9d3c753b5b0093e667c55ae83227",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_033.json"
     },
     {
-      "contentHash": "9733af8b949577537b63343164820300d15e39dcc4ac0185fc177d47f1e1f820",
+      "contentHash": "d1667e0ee74e7e718cb7ac0373d8d25907648a8c64adca310dbb8e1de73268b1",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_034.json"
     },
     {
-      "contentHash": "9ee7eeba684cbb759720a0dbc0425970142b70f0b50a93799348ab9bd456c6e6",
+      "contentHash": "ea4906677d871d8e18fa7d606d442e62b6ca234020c3046bdcc73809a558c6ae",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_035.json"
     },
     {
-      "contentHash": "9d401b2e3852f7638fb44489e0c9f9bbde1185159c45750fe84f916af775e9ae",
+      "contentHash": "29aa77db479c90e0d00e8144d2f01c9a38fbea5f81c3fefad36fb5195492ed65",
       "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_036.json"
+    },
+    {
+      "contentHash": "23a3a16ea1d4fde618a468014f14b9a47a7fdeb16bb81bc801eeddaf878cea47",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_037.json"
+    },
+    {
+      "contentHash": "b7d2b73178de99686bae83c1272695d0f919f10d5a16d909aae1708de9f62c69",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_038.json"
+    },
+    {
+      "contentHash": "21aee1265abc65f806c58ca36cb75d71ae6b7ba5b95d8d61a9e8e7097150507a",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_039.json"
+    },
+    {
+      "contentHash": "5c6c79c47282a9559a4b9cc03f2c1531f5d5cdb4c83f0260765f36d6c3a2ce47",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_040.json"
+    },
+    {
+      "contentHash": "046f8c1362afcdd725c510e59787812427c65e8864a86e17a95bb041b78dcf41",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_041.json"
+    },
+    {
+      "contentHash": "aa9ade8dfca13a445aaae08e039fd6f3859c7da01527b96abaff4919189716ea",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_042.json"
+    },
+    {
+      "contentHash": "1a03c9a3297df3746b89a3d74846283a7b2b0766fa965d2ddcb6b175eb283efe",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_043.json"
+    },
+    {
+      "contentHash": "f285daaabcd26583afe4a0bfd930c96cd103a1225b80d143b4e06f928547578e",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_044.json"
+    },
+    {
+      "contentHash": "9be282be1f7a6b218619d16e012bb82a772933d4f68765ef8e5b134ee306202b",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_045.json"
+    },
+    {
+      "contentHash": "8e3adfb45cbb6b4ed26168db1bfad7b587cd6da517d527dc4ac04e7b617f275b",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_046.json"
+    },
+    {
+      "contentHash": "2998be6f347b5827ecdaa2182cd10c26b6c400750f40bc97fb2b2a4e340fbed9",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_047.json"
+    },
+    {
+      "contentHash": "14b4703aa440b1bd927b0a4821311b1c9b0829a4b84070426e12b21f36feb89b",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_048.json"
+    },
+    {
+      "contentHash": "636fb2e8f725705a4397ee5f1984e589ebfad00ff825341dd74ad65864ad8fbe",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_049.json"
+    },
+    {
+      "contentHash": "7b40698c53f8a1a714180d66fc9ca987f05da63ccd6ab17083de828144c29f36",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_050.json"
+    },
+    {
+      "contentHash": "39a926c5bcbc8c0b96e6201e1220f093d0b9c6fc0bdf54f21432acd7db605c12",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_051.json"
+    },
+    {
+      "contentHash": "aa0942ee5b6990a56b5cf7a624241a5cc27cf79b0a026530c396f3a9b8d55e92",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_052.json"
+    },
+    {
+      "contentHash": "7e7d1b581a0abc04e34af3d9e731ffae690a6a45032b736a862b30ed16940766",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_053.json"
+    },
+    {
+      "contentHash": "ae6e216651927314b39f7c1c13f1c2a437d6c3302fccf83e8e7292df1d553925",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_054.json"
+    },
+    {
+      "contentHash": "8313402d2d3601aedec72f5b2106dc1c68cc48b53def8838752975935fa576a4",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_055.json"
+    },
+    {
+      "contentHash": "eea377c6c2b4965d69dde5c5a2fefec0984271ee9e63100c5fd734b265d63650",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_056.json"
+    },
+    {
+      "contentHash": "e56cacc88791a6871d47982b001365efd4fe1007cc29fa9506bfa6129d929f7d",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_057.json"
+    },
+    {
+      "contentHash": "3dfb28462162e1adde4f2aee44cf930037d2a126d254880cb12835e83c914068",
+      "path": "docs/trader-intelligence/acquisition/candidates/CAND_MOGO_20260818_058.json"
     }
   ],
   "loadErrors": [],
   "outputFiles": [
     {
-      "contentHash": "b5e1c70e505f6d9ef26ae8a8ab17669a8cad3c7b78d8a15e1ea7975291f99fcb",
+      "contentHash": "eb7dad2ef6ebfb9fa49ba92c6edbb51b20d0a3a9813bad9e874c54b8a82ed28b",
       "path": "docs/trader-intelligence/acquisition/queue/queue-snapshot.json"
     }
   ],

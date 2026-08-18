@@ -72,6 +72,13 @@
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    },
+    {
+      "changedAt": "2026-08-18T16:08:57Z",
+      "changedFields": [
+        "duplicateStatus"
+      ],
+      "reason": "near-duplicate flag cleared: no duplicate group contains this candidate in the current run"
     }
   ],
   "channelOrPublisher": "ALEX G",
@@ -86,7 +93,7 @@
   "description": "GAP|20260817|007 target -- HIGHEST VALUE OF THE SERIES for the rejected/skipped-setup sub-question. Week 5 of 12. Publisher-authored description states SOURCE_STATED: 'We started at $8,949 ... with the goal of reaching $18,000 ... But this week there was no clear opportunity to enter, so we closed anyway.' This is the ONLY explicit publisher statement of a NON-ENTRY / skipped week found anywhere in ALEX_G's public material this session. Still NOT a rejected-setup record: it names no setup, no instrument, no criterion that failed. The reason for non-entry, if stated at all, is in the spoken content, which is not retrievable. Retrieval ceiling (checked this session, ALEX_G-specific): watch page HTTP 200 with full ytInitialPlayerResponse; caption track inventory is en/asr ONLY -- no publisher-authored caption track; a freshly-signed timedtext URL for a03Vmo_d9Tk returned HTTP 200 / 0 bytes at 2026-08-18T15:57Z. Spoken content NOT acquired. Title and description are publisher-authored text and ARE retrievable.",
   "discoveredAt": "2026-08-18T16:02:09Z",
   "discoveryMethod": "MANUAL_URL",
-  "duplicateStatus": "POSSIBLE_NEAR_DUPLICATE",
+  "duplicateStatus": "NONE",
   "durationSeconds": 4582,
   "language": null,
   "metadataConfidence": "verified",
@@ -175,7 +182,7 @@
       "topic": "SESSIONS"
     }
   ],
-  "updatedAt": "2026-08-18T16:03:37Z",
+  "updatedAt": "2026-08-18T16:08:57Z",
   "url": "https://www.youtube.com/watch?v=oJvao6Ca4aA",
   "verifiedTraderId": null
 }

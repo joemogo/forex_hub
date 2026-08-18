@@ -72,6 +72,13 @@
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    },
+    {
+      "changedAt": "2026-08-18T16:08:57Z",
+      "changedFields": [
+        "duplicateStatus"
+      ],
+      "reason": "near-duplicate flag cleared: no duplicate group contains this candidate in the current run"
     }
   ],
   "channelOrPublisher": "ALEX G",
@@ -86,7 +93,7 @@
   "description": "GAP|20260817|007 target. Week 12 of 12 -- the richest single description in the series. SOURCE_STATED, TWO NAMED INSTRUMENTS AND A LOSS-THEN-RECOVERY SEQUENCE: 'started with a balance of $201,940', 'the market surprised us with the USD/JPY pair, where we suffered a loss that left us at $131,550', then 'I decided to take back control and trade the GBP/CHF pair, making an impressive profit of $332,588'. Week 11 is MISSING from the published chain (week 10 ended ~$45k, week 12 opens at $201,940 -- unexplained). Entry, exit, stop, size, direction and fill times all absent. Retrieval ceiling (checked this session, ALEX_G-specific): watch page HTTP 200 with full ytInitialPlayerResponse; caption track inventory is en/asr ONLY -- no publisher-authored caption track; a freshly-signed timedtext URL for a03Vmo_d9Tk returned HTTP 200 / 0 bytes at 2026-08-18T15:57Z. Spoken content NOT acquired. Title and description are publisher-authored text and ARE retrievable.",
   "discoveredAt": "2026-08-18T16:02:10Z",
   "discoveryMethod": "MANUAL_URL",
-  "duplicateStatus": "POSSIBLE_NEAR_DUPLICATE",
+  "duplicateStatus": "NONE",
   "durationSeconds": 3464,
   "language": null,
   "metadataConfidence": "verified",
@@ -179,7 +186,7 @@
       "topic": "SESSIONS"
     }
   ],
-  "updatedAt": "2026-08-18T16:03:37Z",
+  "updatedAt": "2026-08-18T16:08:57Z",
   "url": "https://www.youtube.com/watch?v=a03Vmo_d9Tk",
   "verifiedTraderId": null
 }

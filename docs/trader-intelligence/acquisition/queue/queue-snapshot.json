@@ -1,7 +1,7 @@
 {
   "builderVersion": "1.0.0",
-  "builtAt": "2026-08-18T15:19:48Z",
-  "candidateCount": 36,
+  "builtAt": "2026-08-18T16:09:54Z",
+  "candidateCount": 58,
   "entries": [
     {
       "acquisitionStatus": "OWNER_REVIEW",
@@ -345,6 +345,106 @@
     },
     {
       "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|047",
+      "discoveredAt": "2026-08-18T16:02:10Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "I Turned $42,000 to $107,351 in 3 Days Trading Forex, but..."
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|050",
+      "discoveredAt": "2026-08-18T16:02:59Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "The Truth Behind The $100 to $1,000,000 Challenge"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|051",
+      "discoveredAt": "2026-08-18T16:02:59Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "Why I haven't taken a trade in 30 Days..."
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|052",
+      "discoveredAt": "2026-08-18T16:02:59Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "How I Turned $1,111 into $3,461 in 7 Days Forex Trading"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|053",
+      "discoveredAt": "2026-08-18T16:02:59Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "I Turned $1,100 Into $17,000 in 1 Month Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|055",
+      "discoveredAt": "2026-08-18T16:02:59Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "Turning $100 into a $1,000,000 (2.0)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|056",
+      "discoveredAt": "2026-08-18T16:03:00Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 36.67,
+      "scoringConfidence": 0.333,
+      "title": "Turning $100 into $1,000,000 (first challenge, 2023)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|037",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 26.89,
+      "scoringConfidence": 0.333,
+      "title": "I'm going to turn $100 into a $1,000,000"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|049",
+      "discoveredAt": "2026-08-18T16:02:10Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 26.89,
+      "scoringConfidence": 0.333,
+      "title": "How I Turned $100 into $1 Million In 90 Days"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|054",
+      "discoveredAt": "2026-08-18T16:02:59Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 26.89,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to Make $1 Million Trading in 24 Hours to Prove It's Not Luck"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
       "candidateId": "CAND|MOGO|20260818|036",
       "discoveredAt": "2026-08-18T15:19:29Z",
       "duplicateStatus": "NONE",
@@ -355,6 +455,116 @@
     },
     {
       "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|058",
+      "discoveredAt": "2026-08-18T16:03:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 23.1,
+      "scoringConfidence": 0.222,
+      "title": "Swing Trading Lab -- course funnel (Alex Gonzalez)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|038",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to turn $100 Into $200 in a Week Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|039",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Turned $100 Into $3,074 in 14 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|040",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to Flip $100 Into $6,000 in 21 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|041",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to Turn $100 into $30,000 in 30 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|042",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to Turn $100 Into $1,000,000 in 37 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|043",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Turned $100 Into $22,696 in 6 Weeks Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|044",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to Turn $100 Into $40,000 in 49 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|045",
+      "discoveredAt": "2026-08-18T16:02:09Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Turned $20,000 Into $90,278 in 7 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|046",
+      "discoveredAt": "2026-08-18T16:02:10Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Tried to Turn $90,000 Into $200,000 in 7 Days Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|048",
+      "discoveredAt": "2026-08-18T16:02:10Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 22.5,
+      "scoringConfidence": 0.333,
+      "title": "I Turned $100 Into $332,588 in 12 Weeks Trading Forex"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
       "candidateId": "CAND|MOGO|20260818|035",
       "discoveredAt": "2026-08-18T15:19:29Z",
       "duplicateStatus": "NONE",
@@ -362,8 +572,18 @@
       "recommendationScore": 17.6,
       "scoringConfidence": 0.222,
       "title": "TJR Trading Philosophy (jointjrtrades.com)"
+    },
+    {
+      "acquisitionStatus": "OWNER_REVIEW",
+      "candidateId": "CAND|MOGO|20260818|057",
+      "discoveredAt": "2026-08-18T16:03:29Z",
+      "duplicateStatus": "NONE",
+      "ownerReviewStatus": "not_reviewed",
+      "recommendationScore": 17.5,
+      "scoringConfidence": 0.333,
+      "title": "Alex Gonzalez (@FXAlexGI) on X -- public profile"
     }
   ],
   "generated": true,
-  "queueBuildId": "QUEUE|20260818|001"
+  "queueBuildId": "QUEUE|20260818|002"
 }

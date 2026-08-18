@@ -13,6 +13,7 @@ to DERIVATIVE/EXCERPT/UPDATED_VERSION, requires an OwnerDecision.
 """
 import argparse
 import difflib
+import re
 import glob as globmod
 import json
 import os
@@ -39,6 +40,39 @@ def _load_candidates(candidates_dir):
 def _record_change(candidate, now_iso, changed_fields, reason):
     candidate["changeLog"].append({"changedAt": now_iso, "changedFields": changed_fields, "reason": reason})
     candidate["updatedAt"] = now_iso
+
+
+
+def numeric_tokens(title):
+    """The numbers in a title, commas stripped, as a multiset-ish sorted list.
+
+    In serially published content the numbers ARE the discriminating content:
+    "$100 Into $200 in a Week" and "$100 into $30,000 in 30 Days" share nearly all
+    their words and almost none of their meaning. A re-upload keeps its numbers; a
+    different episode changes them.
+    """
+    return sorted(re.findall(r"\d+", (title or "").replace(",", "")))
+
+
+def titles_are_near_duplicates(title_a, title_b, threshold):
+    """Similar wording AND no contradicting numbers.
+
+    Title similarity exists to catch re-uploads at a different URL, so a differing
+    URL cannot be the disqualifier. Differing NUMBERS can: they are what a serial
+    title varies. Without this, 22 ALEX_G challenge episodes produced 18
+    near-duplicate groups, every one a distinct week with a distinct balance --
+    and rubber-stamping them would have merged distinct trading weeks into one.
+    """
+    ratio = difflib.SequenceMatcher(None, (title_a or "").lower(),
+                                    (title_b or "").lower()).ratio()
+    if ratio < threshold:
+        return False, ratio
+    numbers_a, numbers_b = numeric_tokens(title_a), numeric_tokens(title_b)
+    # Only decisive when BOTH carry numbers. A title with none says nothing either
+    # way, so the ratio still governs.
+    if numbers_a and numbers_b and numbers_a != numbers_b:
+        return False, ratio
+    return True, ratio
 
 
 def detect_duplicates(candidates_dir, now):
@@ -111,8 +145,9 @@ def detect_duplicates(candidates_dir, now):
             if pair_key in considered_pairs:
                 continue
             considered_pairs.add(pair_key)
-            ratio = difflib.SequenceMatcher(None, ci["title"].lower(), cj["title"].lower()).ratio()
-            if ratio >= NEAR_DUPLICATE_TITLE_THRESHOLD:
+            is_near, ratio = titles_are_near_duplicates(
+                ci["title"], cj["title"], NEAR_DUPLICATE_TITLE_THRESHOLD)
+            if is_near:
                 for c in (ci, cj):
                     if c["duplicateStatus"] not in ("POSSIBLE_NEAR_DUPLICATE",):
                         c["duplicateStatus"] = "POSSIBLE_NEAR_DUPLICATE"
@@ -133,6 +168,21 @@ def detect_duplicates(candidates_dir, now):
                     "status": "pending_owner_review", "ownerDecisionId": None,
                     "createdAt": now_iso, "updatedAt": now_iso,
                 })
+
+    # Clear a near-duplicate flag that no longer has a group behind it.
+    # Without this the status is a RATCHET: the heuristic can set it and nothing
+    # can ever unset it, so a candidate stays flagged after the heuristic that
+    # flagged it has been corrected -- leaving the records contradicting the
+    # report. Observed exactly that way: 18 groups collapsed to 0 while 10
+    # candidates still read POSSIBLE_NEAR_DUPLICATE.
+    still_grouped = {cid for g in groups for cid in g["memberCandidateIds"]}
+    for _path, c in loaded:
+        if (c.get("duplicateStatus") == "POSSIBLE_NEAR_DUPLICATE"
+                and c["candidateId"] not in still_grouped):
+            c["duplicateStatus"] = "NONE"
+            _record_change(c, now_iso, ["duplicateStatus"],
+                            "near-duplicate flag cleared: no duplicate group contains "
+                            "this candidate in the current run")
 
     # Advance any candidate that has passed metadata verification into
     # DUPLICATE_REVIEW now that dedup has actually run against it.

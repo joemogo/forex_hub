@@ -874,3 +874,79 @@ class TestVerifiedSourceMetadata(unittest.TestCase):
             self.register(publication_date="not-a-date")
         after = set(globmod.glob(os.path.join(self.repo.candidates_dir, "*.json")))
         self.assertEqual(before, after, "a refused registration left a file behind")
+
+
+class TestSerialTitlesAreNotNearDuplicates(unittest.TestCase):
+    """Differing NUMBERS disqualify a title match; differing URLs must not.
+
+    Title similarity exists to catch a re-upload at a different URL, so the URL
+    cannot be the disqualifier. In serially published content the numbers are the
+    discriminating content: 22 ALEX_G challenge episodes produced 18 near-duplicate
+    groups, every one a distinct week with a distinct balance. Rubber-stamping
+    those groups would have merged distinct trading weeks into one record.
+    """
+
+    THRESHOLD = 0.82
+
+    def near(self, a, b):
+        return dd.titles_are_near_duplicates(a, b, self.THRESHOLD)[0]
+
+    def test_serial_episodes_with_different_numbers_are_not_duplicates(self):
+        self.assertFalse(self.near(
+            "I Tried to turn $100 Into $200 in a Week Trading Forex",
+            "I Tried to Turn $100 into $30,000 in 30 Days Trading Forex"))
+
+    def test_commas_do_not_hide_a_difference(self):
+        self.assertFalse(self.near("Turning $1,000 into $2,000 this week",
+                                    "Turning $1,000 into $2,500 this week"))
+
+    def test_a_genuine_reupload_IS_still_caught(self):
+        """The positive control, and the one that matters most. If this stops
+        firing, the fix has disabled duplicate detection rather than corrected it."""
+        self.assertTrue(self.near(
+            "I Tried to Turn $100 into $30,000 in 30 Days Trading Forex",
+            "I Tried to Turn $100 into $30,000 in 30 Days Trading Forex (reupload)"))
+
+    def test_similar_titles_with_no_numbers_still_match_on_wording_alone(self):
+        self.assertTrue(self.near("My Complete Trading Strategy Explained",
+                                    "My Complete Trading Strategy, Explained"))
+
+    def test_identical_numbers_but_different_wording_still_match(self):
+        self.assertTrue(self.near("Turning 100 into 200 in a week",
+                                    "Turning 100 into 200 in a  week"))
+
+    def test_wording_that_is_simply_different_is_not_rescued_by_matching_numbers(self):
+        self.assertFalse(self.near("Risk management for 100 dollar accounts",
+                                    "Why I blew up my 100 dollar account"))
+
+    def test_numeric_tokens_ignore_commas_and_currency(self):
+        self.assertEqual(dd.numeric_tokens("$1,000,000 in 37 Days"), ["1000000", "37"])
+        self.assertEqual(dd.numeric_tokens("no numbers here"), [])
+
+
+class TestNearDuplicateFlagIsClearable(unittest.TestCase):
+    """A status that can be set but never unset is a ratchet."""
+
+    def setUp(self):
+        self.repo = TempAcquisitionRepo()
+
+    def tearDown(self):
+        self.repo.cleanup()
+
+    def test_a_flag_with_no_group_behind_it_is_cleared(self):
+        a = self.repo.register(discovery_method="MANUAL_URL",
+                               url="https://example.com/one",
+                               title="Turning $100 into $200 in a week")
+        # Flag it as a previous, defective heuristic run would have.
+        path = os.path.join(self.repo.candidates_dir,
+                            a["candidateId"].replace("|", "_") + ".json")
+        record = json.load(open(path))
+        record["duplicateStatus"] = "POSSIBLE_NEAR_DUPLICATE"
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+        self.repo.detect_duplicates()
+
+        after = json.load(open(path))
+        self.assertEqual(after["duplicateStatus"], "NONE",
+                         "the flag survived a run that produced no group for it")

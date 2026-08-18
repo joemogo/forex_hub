@@ -148,3 +148,185 @@ Recorded so the boundary is honest, not so it looks complete:
 - The TJR **Boot Camp** (56 videos) and **Boot Camp 2.0** (14 videos) playlists were
   enumerated in full but only 9 episodes were registered as candidates. The remainder are
   known and reachable; they were left unregistered to keep the queue signal-bearing.
+
+---
+
+## Session 2026-08-18 (second pass) — MOGO-022 ALEX_G acquisition
+
+Scope: the single gap `GAP|20260817|007` (ALEX_G observed trades), which N-7 above recorded as
+untouched and which carries 587 of the 641 blocked hypotheses.
+
+Method: `curl` with a normal browser User-Agent, plus one web search for discovery. No login was
+used, no paywall or bot protection was bypassed, no consent banner was accepted, and no
+third-party transcript mirror was touched.
+
+Identity established from primary sources this session: the channel is `@fxalexg__`
+(channelId `UCgPeeHdxYRal0HTNeAkjqLg`, YouTube-verified, display name "fxalexg"); the person is
+**Alex Gonzalez**; the operating entity is **Swing Trading Lab LLC**. Three sibling channels exist
+and were checked (below).
+
+### N-8. Does ALEX_G's retrieval ceiling differ from TJR's? — **No. It is identical.**
+
+This was the session's primary question, because a publisher-authored caption track would have
+been a materially better evidence source than ASR.
+
+| # | Source | Retrieved | Result | Checked against | Class |
+|---|---|---|---|---|---|
+| N-8.1 | Caption-track inventory via `ytInitialPlayerResponse` on **17 ALEX_G videos** spanning 2023-10-24 → 2026-06-22 (`DZ9l_dpmbyM`, `XJ6lNP_Ihkg`, `KnZ03FjD-i0`, `7otxB9VIiDs`, `b80QhvUHHoU`, `f-7_8hmb0M0`, `njvjjOgiLKo`, `ILJ5_ZbB5r0`, `iFs8BmHYnks`, `oJvao6Ca4aA`, `JiEJMpdraG4`, `hiad0PbI47o`, `yGkd32dirJ8`, `f0Us3YBL1tg`, `qGNeo8RvV50`, `a03Vmo_d9Tk`, `xAJT6cmJ5gs`, `EEpfmQo2Ars`, `ithXhNOITTA`, `1fGzVHI7rN0`, `M8wDlKjaQRk`, `DsPLtzjTONI`) | 2026-08-18 | HTTP 200 on every watch page. **Every single video carries exactly one caption track: `kind=asr`, `lang=en`, "English (auto-generated)". Zero publisher-authored caption tracks.** | `GAP\|20260817\|007` | — (finding) |
+| N-8.2 | `https://www.youtube.com/api/timedtext?v=a03Vmo_d9Tk&…&kind=asr&lang=en` (signed caption URL taken from the live watch page) | 2026-08-18T15:57:02Z | **HTTP 200, 0 bytes** | `GAP\|20260817\|007` | `CONTENT_NOT_RETRIEVABLE` |
+
+Checked **once**, deliberately, not retried. **Conclusion: ALEX_G is structurally identical to TJR
+on the caption question.** No route found this session raises the `partially_verified` /
+ASR-fidelity ceiling the corpus already records on the nine existing `EVSRC|ALEX_G|*` transcripts.
+Spoken content remains the place where per-trade detail lives, and it remains unobtainable.
+
+### N-9. Where ALEX_G **does** differ from TJR — and why it still does not close the gap
+
+This is the one substantive asymmetry found, and it is worth recording precisely so a future
+session neither rediscovers it nor overreads it.
+
+**TJR's video descriptions are byte-identical boilerplate with zero chapter markers (N-2.1).
+ALEX_G's are not.** The 2024 serial challenge playlist `PL3wdfj84a2fk53i3JdpCB9WEbuXpA3Fbd`
+("Turning $100 into a $1,000,000 (2.0)", 13 videos, 2024-07-14 → 2024-10-18) carries, in
+**publisher-authored, fully retrievable description text**, a week-by-week account-balance ledger,
+and four of the twelve weeks name a currency pair. Several other videos carry publisher-authored
+**chapter markers** naming balances and per-trade updates. All are registered as
+`CAND|MOGO|20260818|037`–`056`.
+
+What was retrieved, in full, per week (all `SOURCE_STATED` by ALEX_G, none `OBSERVED`):
+
+| Wk | Candidate | Stated start → end | Instrument named? |
+|---|---|---|---|
+| 1 | `CAND\|MOGO\|20260818\|038` | $100 → "more than $200" | no |
+| 2 | `…\|039` | "$400 to $900" hoped → "$3,000" (title: $3,074) | no |
+| 3 | `…\|040` | $3,000 → "$15,000 in a single trade" (title: $6,000) | no |
+| 4 | `…\|041` | $15,000 → **$8,949 (loss)** | no |
+| 5 | `…\|042` | $8,949 → **no entry taken** | no |
+| 6 | `…\|043` | → $22,696 | no |
+| 7 | `…\|044` | $22,696 → **$20,380 (loss)** | **GBP/CHF** |
+| 8 | `…\|045` | $20,388 → $90,278 (+$70,027) | no |
+| 9 | `…\|046` | $90,278 → **$44,262 (−$46,459)** | **NZD/CAD** |
+| 10 | `…\|047` | $44,262 → +$882, "broke even" (title: $107,351) | **USD/CAD** |
+| 11 | — | **missing from the published series entirely** | — |
+| 12 | `…\|048` | $201,940 → $131,550 **(loss)** → $332,588 | **USD/JPY, GBP/CHF** |
+
+**Six independent reasons this does not close `GAP|20260817|007`:**
+
+1. **It is a publisher claim, not an observation.** Same reasoning as N-4.1. Recording any of
+   these balances as `OBSERVED` would be the exact promotion of inference into observation this
+   corpus exists to prevent.
+2. **No `TradeObservation` can be minted from it.** Not one week states an entry price, an exit
+   price, a stop, a position size, a direction, or a fill time. Four weeks name an instrument and
+   nothing else. Minting a record would require inventing every remaining field.
+3. **The stated figures are internally inconsistent.** Week 3's description contradicts its own
+   title ($15,000 vs $6,000). Week 10's description ("broke even, +$882") contradicts its own
+   title ("$107,351"). Week 7 closes at $20,380 while week 8 opens at $20,388. Week 8's own
+   arithmetic is off by $137 ($20,388 + $70,027 = $90,415, not $90,278); week 9's by $443. **An
+   equity curve chained from these numbers would be wrong**, and week 11 is missing outright —
+   week 10 ends near $45,144 and week 12 opens at $201,940 with no published bridge.
+4. **The publisher's own blanket disclaimer declines to affirm the trades were executed.** Every
+   ALEX_G description checked this session (n=17) carries: *"CFTC RULE 4.41 - Hypothetical or
+   simulated performance results have certain limitations. Unlike an actual performance record,
+   simulated results do not represent actual trading. Also, since the trades have not been
+   executed…"* This is generic legal boilerplate applied blanket-style and it is **ambiguous**
+   whether ALEX_G intends it to cover the trading shown in the videos. That ambiguity is not a
+   detail — it means the publisher himself does not assert on the record that these were real
+   executions, which is precisely the assertion a `TradeObservation` with `actor: HUMAN` requires.
+5. **The publisher states he does not show his broker.** `DZ9l_dpmbyM`
+   (`CAND|MOGO|20260818|050`) carries the publisher-authored chapter *"19:12 Why I Don't Show Up
+   my Broker?"*. What he says under it is not retrievable, but the chapter title alone is
+   **primary** support for treating the absence of a verified ALEX_G account record as a genuine
+   absence rather than a failed search.
+6. **The first challenge ended in a blown account.** The same video's chapters read *"01:18 I
+   Officially Blew Up the Account"* and *"10:20 Thoughts on Blowing Up the Account"*. Escalating
+   balance titles elsewhere on the channel are therefore not a sustained record, and publication
+   selection bias (N-4.3) applies here too and is unquantified.
+
+### N-10. Rejected / skipped setups — the sub-question the gap most needs
+
+Searched specifically, because `GAP|20260817|007` calls out rejected setups. **Two hits, both
+negative on inspection:**
+
+| # | Source | Retrieved | What was found | Class |
+|---|---|---|---|---|
+| N-10.1 | `oJvao6Ca4aA` (`CAND\|MOGO\|20260818\|042`) | 2026-08-18 | The only explicit publisher statement of a non-entry found anywhere: *"this week there was no clear opportunity to enter, so we closed anyway."* **It names no setup, no instrument, and no criterion that failed.** A skipped *week* is not a rejected *setup*, and the reason, if given, is in the spoken content. | `SOURCE_DOES_NOT_STATE` |
+| N-10.2 | `KnZ03FjD-i0` (`CAND\|MOGO\|20260818\|051`) | 2026-08-18 | Titled *"Why I haven't taken a trade in 30 Days…"* and chaptered *"02:06 23 Days without taking any trades"*. **A title is not evidence.** The description states the actual cause is non-method: *"I've been victim of a rob in my own house."* Chapters are Las Vegas, Miami and personal events. **Must not be scored as selectivity or discipline.** | `SOURCE_DOES_NOT_STATE` |
+
+**No source found anywhere states a setup ALEX_G evaluated and declined for a rule-based reason.**
+
+### N-11. Other ALEX_G surfaces retrieved
+
+| # | Source | Retrieved | What was found | Checked against | Class |
+|---|---|---|---|---|---|
+| N-11.1 | `https://swingtradinglab.com/` (`CAND\|MOGO\|20260818\|058`) | 2026-08-18T15:58Z | HTTP 200, public, no login. A paid-course sales funnel. Its only performance content is **student** testimonials ("passing Quant Tekels 3-step evaluation in 43 days", "$3,677.81", "$691.13 and $573.76… from FundedNext"). **These are other people's trades.** No ALEX_G trade, no broker statement, no verified record. Confirms two identity facts only: Alex Gonzalez; Swing Trading Lab LLC. | `GAP\|20260817\|007` | `WRONG_ATTRIBUTION` |
+| N-11.2 | `https://www.myfxbook.com/members/fxalexg` | 2026-08-18T15:58Z | **HTTP 403**, body is a Cloudflare interstitial ("Just a moment… Enable JavaScript and cookies to continue"). Bot protection. **Not bypassed.** | `GAP\|20260817\|007` | `ACCESS_BLOCKED` |
+| N-11.3 | `https://www.instagram.com/fxalexg/` | 2026-08-18T15:59Z | HTTP 200 but the no-JS body contains the single word "Instagram" — all content is client-rendered behind a login wall. This is also where the six **MOGO-019 `ALEX-IG-2026-CASE-002`** screenshots came from; they remain unobtainable, exactly as that report recorded. Note ALEX_G's own YouTube boilerplate states *"MY only instagram VERIFIED are @ fxalexg and @ swingtradinglab"* — so the handle is publisher-confirmed even though the content is not readable. | `GAP\|20260817\|007` | `ACCESS_BLOCKED` |
+| N-11.4 | `https://x.com/FXAlexGI` (`CAND\|MOGO\|20260818\|057`) | 2026-08-18T15:59Z | HTTP 200, public. Unlike TJR's handle (N-2.4) this one **resolves**: "Alex González", Miami FL, links `swingtradinglab.com`, 651 posts, 66K followers. **Only 5 posts of 651 render without login**; systematic reading is login-walled and was not attempted. See N-12 for the two items retrieved and why they are traps. | `GAP\|20260817\|007` | `ACCESS_BLOCKED` (for the timeline) |
+| N-11.5 | Sibling channels named on ALEX_G's own "My other channels" shelf: **Swing Trading Lab** (`UCkmdhHHIcTlrZlFtOLz8pbQ`, 36.7K subs) and **Alex G Was Here** (`UCpdBp-4L-vOXUV8uPgvh82w`, 118K subs) | 2026-08-18 | Both enumerated, HTTP 200. Swing Trading Lab is 15 short generic-education videos (candlesticks, order blocks, Fibonacci) — **no trades, no recaps**. Alex G Was Here is 30 pure lifestyle videos (Bugatti, Vegas, Jake Paul) — **no trading content at all**. A third, *Swing Trading Lab Podcast* (`UCsWTXkPbOVvbPNo7EHa35tg`), was identified but not enumerated. | `GAP\|20260817\|007` | `SOURCE_DOES_NOT_STATE` |
+| N-11.6 | `@fxalexg__` channel structure: `/videos` (30), `/shorts`, `/playlists` (8), `/streams` | 2026-08-18 | All HTTP 200. **The channel has no Live/Streams tab at all** — `/streams` serves the Home tab. There is therefore **no live-trading stream archive** for ALEX_G, which is the one format that would have carried unnarrated execution footage. The 30 recent videos are dominated by lifestyle and funnel content; the trading-relevant material is the challenge playlists already enumerated. | `GAP\|20260817\|007` | `SOURCE_DOES_NOT_STATE` |
+
+### N-12. Attribution traps — retrieved, informative, and NOT usable
+
+| # | Source | Retrieved | Why it is a trap | Class |
+|---|---|---|---|---|
+| N-12.1 | The `@FXAlexGI` X **bio**, verbatim: *"I'm a really really really good demo trader"* | 2026-08-18 | Read literally this looks like a decisive publisher admission that ALEX_G's trading is simulated, which would resolve §N-9.4 outright. **It does not, and it must not be used that way.** The register is ambiguous — it reads equally as literal self-description or as self-deprecating irony — and this session did **not** resolve which. Separately, the X account is **not publisher-confirmed**: ALEX_G's own boilerplate names only *Instagram* handles as verified and is silent on X. Two unresolved layers stacked; promoting this to a `SOURCE_STATED` fact about ALEX_G would be a fabrication. | `WRONG_ATTRIBUTION` |
+| N-12.2 | The `@FXAlexGI` post of 2025-12-23, verbatim: *"I set and forget a little to hard boys… I let a winning position, turned into a losing position. No new lesson learned here, I know the risk of these decisions and I am responsible for the outcomes. I just decided that I was OK with risking it"* | 2026-08-18 | The closest thing to a first-person ALEX_G trade account found this session, and it names the Set-and-Forget behaviour as the cause. **Still not a trade record**: no instrument, direction, entry, exit, stop, size, or fill date. Same unresolved account-attribution caveat as N-12.1. | `SOURCE_DOES_NOT_STATE` |
+| N-12.3 | Web-search returns for an audited ALEX_G track record (trustpilot.com, scampulse.com, coinspot.io, photontradingfx.com, forexinfluencersreviews.com, gumroad.com) | 2026-08-18 | Uniformly **secondary commentary and review-farm content**, asserting that no MyFXBook or audited broker record exists and repeating third-hand allegations about the challenge accounts. **None are primary. None were registered.** Identical trap class to the TJR content farms in N-2. An assertion that appears only in a review farm cannot become a fact about ALEX_G — including the convenient negative one. | `WRONG_ATTRIBUTION` |
+
+**Search terms used for ALEX_G discovery** (so they are not repeated): *Alex Gonzalez fxalexg Swing
+Trading Lab verified track record myfxbook broker statement audited proof*.
+
+**No independently verified performance record was found for ALEX_G.** The primary support for
+treating this as a genuine absence rather than a failed search is ALEX_G's own chapter title
+*"Why I Don't Show Up my Broker?"* (N-9.5) — a publisher-side statement, not a commentator's.
+
+### N-13. Verdict on `GAP|20260817|007`
+
+**Not closable from public ALEX_G material.** The gap decomposes into three distinct failures and
+they must not be blurred into one:
+
+- **`CONTENT_NOT_RETRIEVABLE`** — the per-trade detail (entry, exit, stop, size, direction, and the
+  reasoning behind any skipped setup) exists only in spoken video content. `en/asr`-only, timedtext
+  HTTP 200 / 0 bytes (N-8).
+- **`SOURCE_DOES_NOT_STATE`** — everything that *was* retrieved in full (13 challenge descriptions,
+  6 chapter-marker sets, the funnel site, two sibling channels) states balances, outcomes and four
+  instrument names, and states **no** entry, exit, stop, size, direction or fill time anywhere
+  (N-9, N-10, N-11).
+- **`ACCESS_BLOCKED`** — MyFXBook (403 Cloudflare), Instagram (login wall, and the origin of the
+  still-unobtainable MOGO-019 six screenshots), the X timeline (login wall). None bypassed (N-11).
+
+**What would actually close it**, in descending order of how much each would move the position:
+
+1. **Operator-supplied ALEX_G trade records** — the six MOGO-019 `ALEX-IG-2026-CASE-002`
+   screenshots, or any broker/statement artefact. This remains the only route that produces a
+   `TradeObservation` with `actor: HUMAN`. `GAP|20260817|007`'s own
+   `recommendedNextSourceType` already says so and this session found nothing to displace it.
+2. **Owner-pasted transcripts of `CAND|MOGO|20260818|050`, `042`, `052`, `053`, `048`** — in that
+   order. 050 is first because its chapter list promises the two facts that most change the
+   corpus's posture (the blown account, and why no broker is shown); 042 is the only skipped-week
+   candidate; 052/053 carry per-trade chapter timestamps that index exactly where to look. Any
+   transcript obtained this way is still `provenanceStatus: partially_verified` with the
+   ASR-fidelity caveat, exactly as the nine existing `EVSRC|ALEX_G|*` records are.
+3. **An owner ruling on whether the CFTC 4.41 blanket disclaimer (N-9.4) is dispositive.** If it
+   is read as covering the challenge videos, then *no* amount of transcript retrieval can ever
+   produce an ALEX_G `TradeObservation` from this material, and items 1–2 collapse to item 1
+   alone. This is a governance question, not a research one, and it is **the** decision that
+   determines whether further ALEX_G acquisition is worth any effort at all.
+
+**What deliberately was NOT done:** no `TradeObservation` was created, no evidence record was
+created, no claim was minted, and the week-by-week balance table in N-9 was **not** chained into
+an equity curve — it does not chain, and §3 of `MOGO_022_TJR_EVIDENCE_REQUIREMENTS.md` records
+the same failure mode for MOGO's own preserved trades.
+
+### N-14. What was NOT searched this session
+
+- The **9 unique 2023-challenge episodes** in `PL3wdfj84a2flucy4Bif28-rrKIuYmWCkQ`
+  (`dVCbyu6kDm0`, `M8OcMuD_eEQ`, `okx_3_Uxht0`, `uOtKqV9HQss`, `OyfI83yU0KM`, `7kOPNrRw0jM`,
+  `7dcJ2WZYDDQ`, `HmlA-Ro_k9k`, `kb3t0xHbpGQ`) — enumerated and registered as a population handle
+  (`CAND|MOGO|20260818|056`), **descriptions not retrieved.** Given N-9.6 (that challenge ended in
+  a blown account) they are lower value than the 2024 series, but they are reachable.
+- The **Swing Trading Lab Podcast** channel (`UCsWTXkPbOVvbPNo7EHa35tg`) — identified, not enumerated.
+- The **Telegram** channel advertised in every description (`go.swingtradinglab.com/*` redirectors,
+  which resolve to interstitials rather than to `t.me` from this environment). Not pursued.
+- **`GAP|20260817|006`** (TJR) and **`GAP|20260817|008`** (RAYNER_TEO) were out of scope and are
+  untouched by this session.

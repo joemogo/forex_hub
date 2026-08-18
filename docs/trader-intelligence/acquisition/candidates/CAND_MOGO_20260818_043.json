@@ -72,6 +72,13 @@
       "newStatus": "OWNER_REVIEW",
       "priorStatus": "PRIORITIZED",
       "reason": "Candidate is scored and ready for owner review -- no further automatic step in Phase 1."
+    },
+    {
+      "changedAt": "2026-08-18T16:08:57Z",
+      "changedFields": [
+        "duplicateStatus"
+      ],
+      "reason": "near-duplicate flag cleared: no duplicate group contains this candidate in the current run"
     }
   ],
   "channelOrPublisher": "ALEX G",
@@ -86,7 +93,7 @@
   "description": "GAP|20260817|007 target. Week 6 of 12. SOURCE_STATED: target $16,000, ended $22,696, 'Set and Forget'. NO instrument/entry/exit/stop/size. Blanket CFTC 4.41 disclaimer present. Retrieval ceiling (checked this session, ALEX_G-specific): watch page HTTP 200 with full ytInitialPlayerResponse; caption track inventory is en/asr ONLY -- no publisher-authored caption track; a freshly-signed timedtext URL for a03Vmo_d9Tk returned HTTP 200 / 0 bytes at 2026-08-18T15:57Z. Spoken content NOT acquired. Title and description are publisher-authored text and ARE retrievable.",
   "discoveredAt": "2026-08-18T16:02:09Z",
   "discoveryMethod": "MANUAL_URL",
-  "duplicateStatus": "POSSIBLE_NEAR_DUPLICATE",
+  "duplicateStatus": "NONE",
   "durationSeconds": 3171,
   "language": null,
   "metadataConfidence": "verified",
@@ -178,7 +185,7 @@
       "topic": "SESSIONS"
     }
   ],
-  "updatedAt": "2026-08-18T16:03:37Z",
+  "updatedAt": "2026-08-18T16:08:57Z",
   "url": "https://www.youtube.com/watch?v=JiEJMpdraG4",
   "verifiedTraderId": null
 }
