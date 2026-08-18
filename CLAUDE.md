@@ -64,6 +64,18 @@ lost to compaction within hours. Preserving promptly is the priority; `evidence/
 gitignored by design, so **import into `docs/trader-intelligence/evidence/` IS the
 preservation mechanism**.
 
+That whole chain is one command — detect → preserve → recover → import → reconcile:
+
+```
+scripts/forward_capture.sh            # dry run: reports, writes nothing
+scripts/forward_capture.sh --write    # imports any new closes
+```
+
+It is read-only with respect to the running instance, scoped to MOGO's own origin, and
+fails closed: a package whose stored contentHash does not re-derive from the preserved
+bytes is never written and never imported. Run it when the store may have changed; it
+costs almost nothing when nothing has (it exits at the detect step).
+
 ## Anti-loop
 
 - Verification must answer a **bounded material question**. No repo-wide audits, no
