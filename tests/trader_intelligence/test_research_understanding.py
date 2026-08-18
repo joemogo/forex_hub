@@ -11,6 +11,7 @@ that cannot fail is not a proof.
 
 import ast
 import copy
+import types
 import glob
 import hashlib
 import json
@@ -730,10 +731,40 @@ class TestCategoryStatusSemantics(EligibilityCase):
 
 class TestEligibilityBlockersAreActionable(EligibilityCase):
 
-    def test_all_twelve_blocking_questions_surface_with_their_identity(self):
+    def test_every_blocking_unanswered_question_in_scope_surfaces(self):
+        """The set is DERIVED from the corpus, not pinned at a number.
+
+        This previously asserted exactly 12. That was one afternoon's corpus: a
+        question has since been answered through the governed intake path, so the
+        real total is 11 and the count began failing for the system working
+        correctly. Worse, a count cannot tell a MISSING blocker from a spurious
+        one -- 12 of the wrong questions would have passed.
+
+        The specification is restated instead: a question that is in scope, marked
+        blocking, and not answered must surface. That is independent of how
+        eligibility() computes it, so it remains a real oracle rather than a
+        restatement of the implementation.
+        """
         questions = [b for b in self.result["blockers"]
                      if b["blockerType"] == "BLOCKING_QUESTION"]
-        self.assertEqual(len(questions), 12)
+
+        in_scope = {e["claimId"] for e in self.entries()}
+        expected = {qid for qid, q in self.idx.questions.items()
+                    if q["claimId"] in in_scope
+                    and q["blockingStatus"] != "non_blocking"
+                    and q["answerStatus"] != "answered"}
+        self.assertGreater(len(expected), 0,
+                           "no blocking questions in scope -- this test would be vacuous")
+        self.assertEqual({b["questionId"] for b in questions}, expected)
+        self.assertEqual(len(questions), len(expected), "a question surfaced twice")
+
+        # The blocker's PAYLOAD, not just its identity. `affectedClaimId` is what
+        # makes a blocker actionable -- which claim is blocked -- and re-attributing
+        # every blocker to one wrong claim left the identity check above green.
+        for blocker in questions:
+            self.assertEqual(blocker["affectedClaimId"],
+                             self.idx.questions[blocker["questionId"]]["claimId"],
+                             "%s is attributed to the wrong claim" % blocker["questionId"])
         for blocker in questions:
             self.assertTrue(blocker["questionId"].startswith("EQ|"))
             self.assertIn(blocker["blockingStatus"],
@@ -743,6 +774,49 @@ class TestEligibilityBlockersAreActionable(EligibilityCase):
             # the research NEED is stated; the question is NOT answered
             self.assertTrue(blocker["researchNeed"])
             self.assertNotIn("answer", blocker)
+
+    def test_it_is_answerStatus_that_gates_a_blocker_not_researchStatus(self):
+        """A positive control for the FIELD, not just the value.
+
+        The derived-set check above filters on `answerStatus != "answered"`, which
+        is the same expression corpus_view() uses, so it proves plumbing rather
+        than correctness. In this corpus the two status fields happen to agree on
+        every question -- an independent verifier swapped the implementation to
+        read `researchStatus` instead and every corpus-derived assertion stayed
+        green.
+
+        A stub index forces them to disagree. The filter runs at VIEW
+        CONSTRUCTION, not in eligibility(), so the control has to be applied
+        there: mutating a built view cannot exercise it.
+        """
+        def index_with(answer_status, research_status):
+            claim = {"claimId": "CLAIM|X|1", "traderId": "X", "claimType": "stop_rule",
+                     "claimText": "the stop goes under the low",
+                     "confidenceState": "single_source", "sourceIds": ["EVSRC|X|1"]}
+            question = {"questionId": "EQ|X|1", "claimId": "CLAIM|X|1",
+                        "questionText": "which low?",
+                        "questionType": "missing_stop_placement",
+                        "blockingStatus": "blocks_rule_candidate",
+                        "answerStatus": answer_status,
+                        "researchStatus": research_status,
+                        "reason": "unstated", "priority": "high"}
+            return types.SimpleNamespace(
+                claims={"CLAIM|X|1": claim}, links={}, items={},
+                questions={"EQ|X|1": question}, contradictions={}, hypotheses={})
+
+        def blockers_for(answer_status, research_status):
+            view = ru.corpus_view(index_with(answer_status, research_status), "X")
+            return {b["questionId"] for b in ru.eligibility(view)["blockers"]
+                    if b["blockerType"] == "BLOCKING_QUESTION"}
+
+        # Answered, but research still open: it must NOT block.
+        self.assertEqual(blockers_for("answered", "open"), set(),
+                         "an ANSWERED question still blocks -- researchStatus is "
+                         "being read where answerStatus was intended")
+        # Unanswered, but research closed: it must still block.
+        self.assertEqual(blockers_for("unanswered", "complete"), {"EQ|X|1"},
+                         "an UNANSWERED question stopped blocking because research "
+                         "was closed -- the wrong field is gating the blocker")
 
     def test_blocking_questions_are_resolved_by_identifier_not_text(self):
         surfaced = {b["questionId"] for b in self.result["blockers"]

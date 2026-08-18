@@ -11,6 +11,7 @@ docs/trader-intelligence/evidence/ tree or the synthetic_tjr_demo fixture's
 own generation (that fixture is loaded read-only in category K).
 """
 import glob as globmod
+import hashlib
 import json
 import os
 import re
@@ -45,6 +46,21 @@ import validate_evidence as ve            # noqa: E402
 import validate_graph                     # noqa: E402
 
 FIXED_NOW = datetime(2026, 7, 26, 12, 0, 0, tzinfo=timezone.utc)
+
+
+def independent_content_hash(entity):
+    """The expected contentHash, computed WITHOUT gc.content_hash_of.
+
+    Deliberate duplication. Computing the expected value with the same function
+    the builder used proves only that both sides called the same function: an
+    independent verifier gutted `content_hash_of` so it dropped every list- and
+    dict-valued field, and every "contentHash matches" assertion in this
+    repository stayed green. Writing the rule out here means a change to it has
+    to be made twice, on purpose.
+    """
+    return hashlib.sha256(
+        json.dumps(entity, sort_keys=True, separators=(",", ":"),
+                   ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
 
 
 class TempPhase1BRepo:
@@ -1064,15 +1080,42 @@ class TestKnowledgeGraphPhase1B(unittest.TestCase):
         # against the real repo root -- it lives under tests/, not docs/trader-intelligence/.
         self.assertFalse(SYNTHETIC_TJR_ROOT.startswith(TI_ROOT))
 
-    def test_production_graph_unchanged_without_real_corpus(self):
+    def test_every_phase1b_node_traces_to_a_real_file_on_disk(self):
+        """No Phase 1B node is fabricated: each matches a file that exists.
+
+        Replaces an assertion that the production graph held ZERO Phase 1B nodes.
+        That was a snapshot of an empty corpus, not an invariant -- once real
+        intake landed it reported the intended state as a failure, and before that
+        it would have "passed" for any change at all. The provenance relation it
+        was proxying is asserted directly and survives corpus growth.
+        """
         graph_root = os.path.join(TI_ROOT, "graph")
         nodes, edges, findings, _raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, graph_root)
         blocking = [f for f in findings if f.get("severity") in ("ERROR", "FATAL")]
         self.assertEqual(blocking, [])
+
         phase1b_nodes = [n for n in nodes if n["nodeType"] in
                           ("TRANSCRIPT_SEGMENT", "INTAKE_MANIFEST", "EVIDENCE_QUESTION",
                            "REVIEW_QUEUE_ENTRY", "RULE_CANDIDATE_PROPOSAL")]
-        self.assertEqual(phase1b_nodes, [])
+        # Per NODE TYPE, not over the union. A union guard is satisfied while one
+        # type has silently dropped to zero -- breaking a single discovery glob
+        # removed an entire type and this check still passed.
+        for node_type in ("TRANSCRIPT_SEGMENT", "INTAKE_MANIFEST", "EVIDENCE_QUESTION",
+                          "REVIEW_QUEUE_ENTRY", "RULE_CANDIDATE_PROPOSAL"):
+            self.assertTrue(any(n["nodeType"] == node_type for n in phase1b_nodes),
+                            "no %s nodes in the production graph -- the checks "
+                            "below would skip that type entirely" % node_type)
+
+        for node in phase1b_nodes:
+            path = os.path.join(REPO_ROOT, node["sourceFile"])
+            self.assertTrue(os.path.isfile(path),
+                            "%s cites sourceFile %s, which does not exist"
+                            % (node["nodeId"], node["sourceFile"]))
+            with open(path, "r", encoding="utf-8") as handle:
+                entity = json.load(handle)
+            self.assertEqual(node["contentHash"], independent_content_hash(entity),
+                             "%s does not match the current content of %s"
+                             % (node["nodeId"], node["sourceFile"]))
 
     def test_reproducible_manifests(self):
         graph_root = os.path.join(TI_ROOT, "graph")

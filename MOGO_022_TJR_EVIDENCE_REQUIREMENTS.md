@@ -106,27 +106,37 @@ Blockers, counted across all 641 (a hypothesis may carry more than one):
 
 ### Why "no evidence population" applies to all 641
 
-The corpus now holds 247 TradeObservations, but they are all **MOGO's own decisions**:
+The corpus now holds 248 TradeObservations, but they are all **MOGO's own decisions**:
 
-| Held for | Population |
-|---|---|
-| `alex_g_sr_v1` | HISTORICAL (221 replay) **and** FORWARD (25 paper closes) |
-| `current_strategy` | FORWARD (1 paper close) |
+| Held for | Population | Count |
+|---|---|---|
+| `alex_g_sr_v1` | HISTORICAL (replay) | 221 |
+| `alex_g_sr_v1` | FORWARD (paper closes) | 26 |
+| `current_strategy` | FORWARD (paper close) | 1 |
 
-**Update, same day:** 25 forward closes were recovered from browser storage and
-preserved, taking the FORWARD population from 1 to 26. This does not change the
-conclusion below — those are still MOGO's decisions, not TJR's — but forward
-analysis of MOGO's own behaviour is now possible where it was not.
+Forward closes were recovered from browser storage and preserved, taking the
+FORWARD population from 1 to 27. This does not change the conclusion below — those
+are still MOGO's decisions, not TJR's — but forward analysis of MOGO's own
+behaviour is now possible where it was not.
 
-**Coverage caveat, which any forward figure must carry:** the 25 preserved ALEX
-closes are a SUBSET of that account's closed positions (~38). The balance chain
-across them breaks 11 times, and summed realized P&L does not reach the live
-balance, because the oldest closes minted no evidence package (backlog B-22 — the
-evidence database was recreated from scratch on 2026-08-17). The most recent close
-does reconcile exactly with the independently-observed live balance of 9756.23,
-which is what confirms the preserved set is real and current rather than stale.
-**Forward-performance statistics computed on this set are the performance of the
-preserved subset, not of the account.**
+**Coverage caveat, which any forward figure must carry:** the preserved ALEX
+closes are a SUBSET of that account's closed positions (39 as of the most recent
+observation). The oldest closes minted no evidence package (backlog B-22 — the
+evidence database was recreated from scratch on 2026-08-17), so the preserved set
+begins partway through the account's history. **Forward-performance statistics
+computed on this set are the performance of the preserved subset, not of the
+account.**
+
+Balances do NOT chain trade-by-trade across this set, and an equity curve built by
+chaining them is wrong. The account runs up to five concurrent positions, with
+`accountBalanceBefore` stamped at entry and `accountBalanceAfter` at exit, so a
+trade's residual equals the summed P&L of the other trades that closed inside its
+lifetime. That relation holds for all 23 records whose lifetime falls entirely
+within the preserved window; the three exceptions all opened before the earliest
+preserved close, which is the B-22 gap showing through rather than a discrepancy.
+The most recent close (`TOBS|MOGO|20260817|026`, a clean 1R loss) reconciles
+exactly with the independently-observed live balance of 9658.67, which is what
+confirms the preserved set is real and current rather than stale.
 
 Hypotheses blocked purely on missing evidence for their actor: **ALEX_G 587, TJR 47,
 RAYNER_TEO 33.**

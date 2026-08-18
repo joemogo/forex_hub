@@ -11,6 +11,8 @@ Gap / Hypothesis (Deliverable 9 categories A-D), transcript-integration
 (category E), and safety-regression (category F) are tracked separately and
 land alongside knowledge_library_report.py.
 """
+import hashlib
+import json
 import os
 import shutil
 import sys
@@ -41,6 +43,21 @@ import annotation_pipeline as ap       # noqa: E402
 import validate_evidence as ve         # noqa: E402
 
 FIXED_NOW = datetime(2026, 7, 26, 12, 0, 0, tzinfo=timezone.utc)
+
+
+def independent_content_hash(entity):
+    """The expected contentHash, computed WITHOUT gc.content_hash_of.
+
+    Deliberate duplication. Computing the expected value with the same function
+    the builder used proves only that both sides called the same function: an
+    independent verifier gutted `content_hash_of` so it dropped every list- and
+    dict-valued field, and every "contentHash matches" assertion in this
+    repository stayed green. Writing the rule out here means a change to it has
+    to be made twice, on purpose.
+    """
+    return hashlib.sha256(
+        json.dumps(entity, sort_keys=True, separators=(",", ":"),
+                   ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
 
 
 class TempKnowledgeLibraryRepo:
@@ -166,19 +183,47 @@ class TestKnowledgeGraphPhase7A(unittest.TestCase):
                    "CLAIM_SUPPORTS_HYPOTHESIS", "CLAIM_CONTRADICTS_HYPOTHESIS"):
             self.assertIn(t, gc.EDGE_TYPES)
 
-    def test_production_graph_unchanged_without_real_knowledge_library(self):
-        # No real transcript has been processed into the committed repository
-        # yet (Deliverable 5 produced an explicit SOURCE_REQUIRED report
-        # instead) -- so the real evidence/{profiles,blueprints,gaps,hypotheses}
-        # directories must still be empty, and the production graph build must
-        # produce zero Phase 7A nodes and zero blocking findings.
+    def test_every_phase7a_node_traces_to_a_real_file_on_disk(self):
+        """No Phase 7A node is fabricated: each matches a file that exists.
+
+        This replaces an assertion that the production graph held ZERO Phase 7A
+        nodes. That held only while no real transcript had been processed; several
+        have been since, so the snapshot began reporting the intended state as a
+        failure -- and, worse, it would have gone on "passing" for any change made
+        while the corpus happened to be empty.
+
+        The intent it stood in for was "a change that accidentally adds data here
+        gets caught". That is asserted directly here, and it keeps working as the
+        corpus grows: a synthesized node cites no file that exists, and a node
+        built from a tampered entity does not match that file's content hash.
+        """
         graph_root = os.path.join(TI_ROOT, "graph")
         nodes, edges, findings, _raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, graph_root)
         blocking = [f for f in findings if f.get("severity") in ("ERROR", "FATAL")]
         self.assertEqual(blocking, [])
+
         phase7a_nodes = [n for n in nodes if n["nodeType"] in
                           ("TRADER_PROFILE", "STRATEGY_BLUEPRINT", "KNOWLEDGE_GAP", "HYPOTHESIS")]
-        self.assertEqual(phase7a_nodes, [])
+        # Without this the loop below passes vacuously on an empty corpus, which is
+        # exactly how the assertion it replaces came to mean nothing.
+        # Per NODE TYPE, not over the union. A union guard is satisfied while one
+        # type has silently dropped to zero -- breaking a single discovery glob
+        # removed an entire type and this check still passed.
+        for node_type in ("TRADER_PROFILE", "STRATEGY_BLUEPRINT", "KNOWLEDGE_GAP", "HYPOTHESIS"):
+            self.assertTrue(any(n["nodeType"] == node_type for n in phase7a_nodes),
+                            "no %s nodes in the production graph -- the checks "
+                            "below would skip that type entirely" % node_type)
+
+        for node in phase7a_nodes:
+            path = os.path.join(REPO_ROOT, node["sourceFile"])
+            self.assertTrue(os.path.isfile(path),
+                            "%s cites sourceFile %s, which does not exist"
+                            % (node["nodeId"], node["sourceFile"]))
+            with open(path, "r", encoding="utf-8") as handle:
+                entity = json.load(handle)
+            self.assertEqual(node["contentHash"], independent_content_hash(entity),
+                             "%s does not match the current content of %s"
+                             % (node["nodeId"], node["sourceFile"]))
 
     def test_reproducible_manifests_unaffected(self):
         graph_root = os.path.join(TI_ROOT, "graph")

@@ -20,6 +20,7 @@ Organized into the 9 categories the milestone specifies:
   I. Regression (existing suites + graph build stability)
 """
 import glob as globmod
+import hashlib
 import json
 import os
 import shutil
@@ -835,14 +836,61 @@ class TestKnowledgeGraphIntegration(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class TestRegression(unittest.TestCase):
-    def test_production_evidence_tree_is_still_genuinely_empty(self):
-        """Phase 1A ships zero real evidence -- this pins that fact down so a
-        future change that accidentally adds data here gets caught."""
+    def test_reading_the_production_evidence_tree_does_not_modify_it(self):
+        """The read paths are read-only: the corpus is untouched afterwards.
+
+        Replaces an assertion that the tree held ZERO records, whose docstring
+        stated the intent plainly -- "so a future change that accidentally adds
+        data here gets caught". That intent is a BEFORE/AFTER relation; the count
+        was only a proxy, and one that stopped working the moment the corpus was
+        deliberately populated.
+
+        Two details are load-bearing, both found by an independent verifier that
+        defeated the first version of this test:
+
+        * EVERY subdirectory is fingerprinted, discovered from disk. The first
+          version listed five of the nineteen, leaving every Phase 1B and Phase 7A
+          entity directory unwatched -- a build that rewrote `evidence/hypotheses/`
+          passed while `git status` showed the file modified.
+        * mtime is compared as well as content. A sibling test in this class runs
+          a production build BEFORE this one, so an idempotent rewrite has already
+          been applied by the time the `before` snapshot is taken and the content
+          hashes agree. mtime moves anyway.
+        """
         evidence_root = os.path.join(TI_ROOT, "evidence")
-        for sub in ("sources", "items", "claims", "links", "contradictions"):
-            d = os.path.join(evidence_root, sub)
-            count = len(globmod.glob(os.path.join(d, "*.json"))) if os.path.isdir(d) else 0
-            self.assertEqual(count, 0, "Expected zero real records under evidence/%s in Phase 1A." % sub)
+
+        def snapshot():
+            out = {}
+            for path in sorted(globmod.glob(os.path.join(evidence_root, "**", "*.json"),
+                                            recursive=True)):
+                stat = os.stat(path)
+                with open(path, "rb") as handle:
+                    digest = hashlib.sha256(handle.read()).hexdigest()
+                out[os.path.relpath(path, evidence_root)] = (digest, stat.st_mtime_ns)
+            return out
+
+        before = snapshot()
+        # Not a corpus-size assertion -- proof the comparison has something to
+        # compare. An empty tree would make it vacuous.
+        self.assertGreater(len(before), 0,
+                           "no records under evidence/ -- this test would pass "
+                           "without reading anything")
+        directories = {os.path.dirname(rel).split(os.sep)[0] for rel in before}
+        self.assertGreater(len(directories), 5,
+                           "fingerprinting only %d directories -- the first version "
+                           "of this test watched five of nineteen and missed writes "
+                           "into the rest" % len(directories))
+
+        graph_root = os.path.join(TI_ROOT, "graph")
+        nodes, edges, findings, raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, graph_root)
+        validate_graph.run_integrity_checks(nodes, edges, raw, findings, "TEST")
+
+        after = snapshot()
+        changed = sorted(k for k in set(before) | set(after)
+                         if before.get(k) != after.get(k))
+        self.assertEqual(changed, [],
+                         "the production evidence corpus changed while merely being "
+                         "read: %s" % changed[:5])
 
     def test_production_graph_build_unaffected_by_empty_evidence_corpus(self):
         repo_root = REPO_ROOT

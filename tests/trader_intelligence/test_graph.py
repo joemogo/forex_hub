@@ -13,8 +13,10 @@ fixtures (tests/trader_intelligence/fixtures/) into a temporary copy for
 everything the real repository has no data for yet -- these fixtures never
 touch docs/trader-intelligence/.
 """
+import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -60,6 +62,70 @@ def clear_scratch_evidence_tree(ti_root):
         if os.path.isdir(d):
             shutil.rmtree(d)
         os.makedirs(d, exist_ok=True)
+
+
+def independent_content_hash(entity):
+    """The expected contentHash, computed WITHOUT gc.content_hash_of.
+
+    Deliberate duplication. Computing the expected value with the function the
+    builder used proves only that both sides called the same function: an
+    independent verifier gutted `content_hash_of` so it dropped every list- and
+    dict-valued field, and every "contentHash matches" assertion in this
+    repository stayed green.
+    """
+    return hashlib.sha256(
+        json.dumps(entity, sort_keys=True, separators=(",", ":"),
+                   ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+
+
+# Pinned by IDENTITY, not by count, and listed here rather than derived from
+# graph_common so that a discovery glob silently matching nothing is visible.
+# Breaking one glob removed an entire node type from the production graph while
+# every structural assertion stayed green, because the test rebuilt its
+# expectation from the same generator the build had used.
+EXPECTED_ENTITY_DIRS = {
+    "docs/trader-intelligence/evidence/blueprints",
+    "docs/trader-intelligence/evidence/claims",
+    "docs/trader-intelligence/evidence/contradictions",
+    "docs/trader-intelligence/evidence/gaps",
+    "docs/trader-intelligence/evidence/hypotheses",
+    "docs/trader-intelligence/evidence/intake",
+    "docs/trader-intelligence/evidence/items",
+    "docs/trader-intelligence/evidence/profiles",
+    "docs/trader-intelligence/evidence/proposals",
+    "docs/trader-intelligence/evidence/questions",
+    "docs/trader-intelligence/evidence/review-queue",
+    "docs/trader-intelligence/evidence/segments",
+    "docs/trader-intelligence/evidence/sources",
+    "docs/trader-intelligence/graph/decisions",
+    "docs/trader-intelligence/traders/*/open-questions",
+    "docs/trader-intelligence/traders/*/strategy-families",
+    "docs/trader-intelligence/traders/alex-g",
+    "docs/trader-intelligence/traders/ict",
+    "docs/trader-intelligence/traders/jvm",
+    "docs/trader-intelligence/traders/rayner-teo",
+    "docs/trader-intelligence/traders/tjr",
+}
+
+# Every edge type the production build is expected to derive. Pinned by identity
+# so that an entire derivation silently producing nothing is caught -- a build
+# emitting one edge instead of five thousand satisfied `len(edges) > 0`.
+EXPECTED_EDGE_TYPES = {
+    "BELONGS_TO_TRADER", "BLOCKED_BY", "BLOCKS", "BLUEPRINT_DERIVED_FROM_CLAIM",
+    "BLUEPRINT_HAS_GAP", "CLAIM_SUPPORTS_HYPOTHESIS", "CONTEXTUALIZES",
+    "CONTRADICTS", "DERIVED_FROM", "EVIDENCE_FROM_SEGMENT", "PROPOSES_RULE",
+    "RAISES_QUESTION", "REFERENCES", "REQUIRES_REVIEW", "RESOLVED_BY_EVIDENCE",
+    "SEGMENT_OF", "SUPPORTS",
+}
+
+# OwnerDecision records are governance artifacts: a new one appearing in the
+# graph is an authorization event, not corpus growth. Pinned by identity so that
+# adding one is a deliberate edit here rather than something that slips in.
+EXPECTED_OWNER_DECISIONS = {
+    "DECISION|MOGO|20260725|001", "DECISION|MOGO|20260725|002",
+    "DECISION|MOGO|20260727|003", "DECISION|MOGO|20260727|004",
+    "DECISION|MOGO|20260727|005", "DECISION|MOGO|20260727|006",
+}
 
 
 class TempRepo:
@@ -170,21 +236,97 @@ class TestRealProductionBuild(unittest.TestCase):
         self.assertEqual(report["summary"]["ERROR"], 0, report["findings"])
         self.assertEqual(report["summary"]["FATAL"], 0, report["findings"])
 
-    def test_expected_node_and_edge_counts(self):
+    def test_production_build_is_structurally_sound_and_fully_sourced(self):
+        """Every node traces to a file, nothing is duplicated, no edge dangles.
+
+        This replaces four absolute counts (43 nodes, 79 edges, 35 questions, and
+        so on). Those pinned one afternoon's corpus, so every legitimate addition
+        broke them, and they said nothing about whether the graph was CORRECT --
+        a build that emitted 43 fabricated nodes would have passed.
+
+        What the counts were reaching for is structural: the graph is a faithful
+        1:1 projection of the entity files on disk. That is asserted here directly,
+        and it keeps holding as the corpus grows.
+        """
         nodes, edges, findings, raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, GRAPH_ROOT)
-        counts = {}
-        for n in nodes:
-            counts[n["nodeType"]] = counts.get(n["nodeType"], 0) + 1
-        self.assertEqual(counts.get("TRADER"), 3)
-        self.assertEqual(counts.get("STRATEGY_FAMILY"), 3)
-        self.assertEqual(counts.get("UNRESOLVED_QUESTION"), 35)
-        # OWNER_DECISION is 2 as of PROGRAM-004 Phase 1 (the original PROGRAM-003
-        # authorization decision, plus the additive PROGRAM-004 authorization
-        # decision) -- both are real, generic OwnerDecision records under
-        # graph/decisions/, picked up by the same unmodified node-discovery logic.
-        self.assertEqual(counts.get("OWNER_DECISION"), 2)
-        self.assertEqual(len(nodes), 43)
-        self.assertEqual(len(edges), 79)
+        self.assertGreater(len(nodes), 0, "empty graph -- the checks below would be vacuous")
+        self.assertGreater(len(edges), 0, "no edges -- the edge checks below would be vacuous")
+
+        node_ids = [n["nodeId"] for n in nodes]
+        self.assertEqual(len(node_ids), len(set(node_ids)),
+                         "duplicate nodeId: the same entity was emitted more than once")
+        edge_ids = [e["edgeId"] for e in edges]
+        self.assertEqual(len(edge_ids), len(set(edge_ids)), "duplicate edgeId")
+
+        # Compare against the entities the discovery pass actually found, rather
+        # than re-loading each sourceFile: UNRESOLVED_QUESTION records live as
+        # array items inside one cross-reference file, so a whole-file hash is
+        # simply the wrong quantity for them. Reading it back through
+        # discover_entities also makes this an exact 1:1 correspondence -- it
+        # catches an OMITTED entity, which no count of nodes ever could.
+        discovered = {}
+        entity_by_id = {}
+        for node_type, entity, source_file in gc.discover_entities(
+                REPO_ROOT, TI_ROOT, GRAPH_ROOT):
+            node_id = gc.make_node_id(node_type, entity[gc.NODE_TYPE_FIELD_MAP[node_type]["id_field"]])
+            discovered[node_id] = (node_type, source_file, gc.content_hash_of(entity))
+            entity_by_id[node_id] = entity
+
+        self.assertEqual(set(node_ids), set(discovered),
+                         "the graph's nodes are not exactly the entities on disk")
+
+        for node in nodes:
+            self.assertIn(node["nodeType"], gc.NODE_TYPES,
+                          "%s has unregistered nodeType %s" % (node["nodeId"], node["nodeType"]))
+            node_type, source_file, content_hash = discovered[node["nodeId"]]
+            self.assertEqual(node["nodeType"], node_type)
+            self.assertEqual(node["sourceFile"], source_file)
+            self.assertEqual(node["contentHash"], content_hash,
+                             "%s does not match the entity discovered in %s"
+                             % (node["nodeId"], source_file))
+            self.assertEqual(node["contentHash"], independent_content_hash(entity_by_id[node["nodeId"]]),
+                             "%s's contentHash does not cover its entity"
+                             % node["nodeId"])
+            self.assertTrue(os.path.isfile(os.path.join(REPO_ROOT, node["sourceFile"])),
+                            "%s cites sourceFile %s, which does not exist"
+                            % (node["nodeId"], node["sourceFile"]))
+
+        known = set(node_ids)
+        for edge in edges:
+            self.assertIn(edge["edgeType"], gc.EDGE_TYPES,
+                          "%s has unregistered edgeType %s" % (edge["edgeId"], edge["edgeType"]))
+            for end in ("fromNodeId", "toNodeId"):
+                self.assertIn(edge[end], known,
+                              "%s points at %s, which is not a node in this graph"
+                              % (edge["edgeId"], edge[end]))
+
+        # --- Oracles that do NOT flow from discover_entities ------------------
+        # Everything above compares the graph against the same generator the
+        # build itself used, so a bug INSIDE discovery is invisible to it. These
+        # three constrain it from outside.
+        emitted_dirs = {re.sub(r"/traders/[^/]+/", "/traders/*/", os.path.dirname(n["sourceFile"]))
+                        for n in nodes}
+        self.assertEqual(emitted_dirs, EXPECTED_ENTITY_DIRS,
+                         "the set of directories contributing entities changed; a "
+                         "discovery glob that matches nothing looks exactly like this")
+
+        self.assertEqual({e["edgeType"] for e in edges}, EXPECTED_EDGE_TYPES,
+                         "an edge derivation produced nothing at all")
+
+        self.assertEqual({n["entityId"] for n in nodes if n["nodeType"] == "OWNER_DECISION"},
+                         EXPECTED_OWNER_DECISIONS,
+                         "the set of OwnerDecision records changed -- that is a "
+                         "governance event and must be an explicit edit here")
+
+        # Independent count for one edge type, derived from the NODES rather than
+        # from the edge builder: every node carrying a traderId that resolves to a
+        # TRADER node must have exactly one BELONGS_TO_TRADER edge. Without this a
+        # build emitting a single edge satisfies every assertion above.
+        traders = {n["entityId"] for n in nodes if n["nodeType"] == "TRADER"}
+        expected_belongs = sum(1 for n in nodes
+                               if n.get("traderId") in traders and n["nodeType"] != "TRADER")
+        actual_belongs = sum(1 for e in edges if e["edgeType"] == "BELONGS_TO_TRADER")
+        self.assertEqual(actual_belongs, expected_belongs)
 
     def test_no_trader_self_belongs_to_trader_edge(self):
         nodes, edges, findings, raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, GRAPH_ROOT)

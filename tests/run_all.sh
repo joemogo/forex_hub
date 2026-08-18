@@ -2,7 +2,9 @@
 # Canonical repository test runner for MOGO Trading OS.
 #
 # Runs EVERY permanent, repository-owned fixture suite under tests/ (files matching
-# tests/run_*_tests.js), plus the protected-function/constant drift check.
+# tests/run_*_tests.js), the Python research suites (tests/trader_intelligence/test_*.py,
+# enumerated from disk rather than listed by hand), the evidence-checkpoint selftest,
+# the auto-mode governance drift check, and the protected-function/constant drift check.
 #
 # SCOPE: this runs ONLY repository-owned permanent suites. It does NOT run, and does
 # NOT claim to run, the ~22 historical suites that still exist only in an ephemeral
@@ -144,6 +146,27 @@ done
 echo "--- Protected-function / protected-constant drift check ---"
 if ! python3 regression-baseline-tools.py; then
   OVERALL_EXIT=1
+fi
+echo ""
+
+# The Python research suites were never in this runner. That is why five failing
+# tests sat unnoticed and why a hand-typed module list under-reported the total:
+# discovery is not importable here (the test packages have no __init__ chain from
+# the repo root), so the modules are enumerated from the filesystem instead of
+# being listed by hand, and a new suite file is picked up automatically.
+echo "--- Python research suites (trader intelligence) ---"
+PY_MODULES="$(find tests/trader_intelligence -name 'test_*.py' \
+  | sed 's#/#.#g; s#\.py$##' | sort)"
+PY_COUNT="$(printf '%s\n' "$PY_MODULES" | grep -c .)"
+if [ "$PY_COUNT" -eq 0 ]; then
+  echo "FAIL: no Python test modules found -- the enumeration above is broken."
+  OVERALL_EXIT=1
+else
+  echo "$PY_COUNT module(s)"
+  find . -name __pycache__ -type d -not -path "./node_modules/*" -exec rm -rf {} + 2>/dev/null
+  if ! python3 -m unittest $PY_MODULES; then
+    OVERALL_EXIT=1
+  fi
 fi
 echo ""
 
