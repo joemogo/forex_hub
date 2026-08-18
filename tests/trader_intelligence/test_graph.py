@@ -287,9 +287,20 @@ class TestRealProductionBuild(unittest.TestCase):
             self.assertEqual(node["contentHash"], independent_content_hash(entity_by_id[node["nodeId"]]),
                              "%s's contentHash does not cover its entity"
                              % node["nodeId"])
-            self.assertTrue(os.path.isfile(os.path.join(REPO_ROOT, node["sourceFile"])),
+            path = os.path.join(REPO_ROOT, node["sourceFile"])
+            self.assertTrue(os.path.isfile(path),
                             "%s cites sourceFile %s, which does not exist"
                             % (node["nodeId"], node["sourceFile"]))
+            # The cited file must actually contain this entity. Existence alone is
+            # satisfied by a path pointing at a DIFFERENT real file, which is what
+            # a wrong relpath computation looks like. A substring check over the
+            # raw text handles both shapes uniformly -- one entity per file, and
+            # the cross-reference file whose entities are array items.
+            with open(path, "r", encoding="utf-8") as handle:
+                raw = handle.read()
+            self.assertIn(node["entityId"], raw,
+                          "%s cites %s, but that file does not contain the entity"
+                          % (node["nodeId"], node["sourceFile"]))
 
         known = set(node_ids)
         for edge in edges:
@@ -318,15 +329,47 @@ class TestRealProductionBuild(unittest.TestCase):
                          "the set of OwnerDecision records changed -- that is a "
                          "governance event and must be an explicit edit here")
 
-        # Independent count for one edge type, derived from the NODES rather than
-        # from the edge builder: every node carrying a traderId that resolves to a
-        # TRADER node must have exactly one BELONGS_TO_TRADER edge. Without this a
-        # build emitting a single edge satisfies every assertion above.
+        # Independent COUNTS, derived from the entities' own reference fields
+        # rather than from the edge builder. Identity-pinning the edge types above
+        # catches a derivation that produces nothing at all, but not one that drops
+        # most of its edges -- a build emitting 1 edge instead of 5142 satisfied
+        # every other assertion here.
         traders = {n["entityId"] for n in nodes if n["nodeType"] == "TRADER"}
         expected_belongs = sum(1 for n in nodes
                                if n.get("traderId") in traders and n["nodeType"] != "TRADER")
-        actual_belongs = sum(1 for e in edges if e["edgeType"] == "BELONGS_TO_TRADER")
-        self.assertEqual(actual_belongs, expected_belongs)
+        self.assertEqual(sum(1 for e in edges if e["edgeType"] == "BELONGS_TO_TRADER"),
+                         expected_belongs)
+
+        # (edgeType, source nodeType, reference field, target nodeType). A
+        # reference that does not resolve produces a MISSING_REFERENCE finding
+        # instead of an edge, so only resolving references are counted.
+        derivations = [
+            ("CLAIM_SUPPORTS_HYPOTHESIS", "HYPOTHESIS", ("sourceClaimIds",), "CLAIM"),
+            ("BLUEPRINT_DERIVED_FROM_CLAIM", "STRATEGY_BLUEPRINT",
+             ("sourceLineage", "claimIds"), "CLAIM"),
+            ("RAISES_QUESTION", "EVIDENCE_QUESTION", ("claimId",), "CLAIM"),
+        ]
+        checked = 0
+        for edge_type, source_type, path, target_type in derivations:
+            targets = {n["entityId"] for n in nodes if n["nodeType"] == target_type}
+            expected = 0
+            for node_id, entity in entity_by_id.items():
+                if discovered[node_id][0] != source_type:
+                    continue
+                value = entity
+                for key in path:
+                    value = (value or {}).get(key)
+                refs = value if isinstance(value, list) else ([value] if value else [])
+                expected += sum(1 for ref in refs if ref in targets)
+            self.assertGreater(expected, 0,
+                               "%s derives nothing from the corpus -- this check "
+                               "would be vacuous" % edge_type)
+            self.assertEqual(sum(1 for e in edges if e["edgeType"] == edge_type),
+                             expected,
+                             "%s edge count does not match what the entities declare"
+                             % edge_type)
+            checked += 1
+        self.assertEqual(checked, len(derivations))
 
     def test_no_trader_self_belongs_to_trader_edge(self):
         nodes, edges, findings, raw = gc.build_nodes_and_edges(REPO_ROOT, TI_ROOT, GRAPH_ROOT)
