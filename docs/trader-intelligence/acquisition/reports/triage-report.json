@@ -1,0 +1,108 @@
+{
+  "acquisitionDecisionsByTrader": {
+    "ALEX_G": 19,
+    "RAYNER_TEO": 6,
+    "TJR": 26
+  },
+  "adjudicates": false,
+  "bucketMeaning": {
+    "AWAITING_OWNER_ACQUISITION_DECISION": "A real acquisition decision. The gate sits BEFORE content exists by design, so these are decidable now -- approving attributes nothing and creates no evidence. Grouped by trader, because the decision is per-trader effort allocation rather than per-video.",
+    "DURABLE_NEGATIVE_RECORD_UNATTRIBUTED": "Registered deliberately WITHOUT a claimed trader, so the attribution trap itself is durable. The adjudication is already recorded; the queue simply has no state meaning 'kept as a negative record, never to be acquired'.",
+    "NOT_ACQUIRABLE_NO_EXPANSION_CONNECTOR": "A population handle -- a playlist or sitemap, not an acquirable document. Approving it would authorise an expansion step that does not exist (per-item expansion needs a connector that was never built). It sits in OWNER_REVIEW because the pipeline has one terminal state, not because a judgement is pending."
+  },
+  "buckets": {
+    "AWAITING_OWNER_ACQUISITION_DECISION": {
+      "byTrader": {
+        "ALEX_G": 19,
+        "RAYNER_TEO": 6,
+        "TJR": 26
+      },
+      "candidateIds": [
+        "CAND|MOGO|20260818|001",
+        "CAND|MOGO|20260818|002",
+        "CAND|MOGO|20260818|003",
+        "CAND|MOGO|20260818|004",
+        "CAND|MOGO|20260818|005",
+        "CAND|MOGO|20260818|006",
+        "CAND|MOGO|20260818|007",
+        "CAND|MOGO|20260818|008",
+        "CAND|MOGO|20260818|009",
+        "CAND|MOGO|20260818|010",
+        "CAND|MOGO|20260818|011",
+        "CAND|MOGO|20260818|012",
+        "CAND|MOGO|20260818|013",
+        "CAND|MOGO|20260818|014",
+        "CAND|MOGO|20260818|015",
+        "CAND|MOGO|20260818|016",
+        "CAND|MOGO|20260818|017",
+        "CAND|MOGO|20260818|019",
+        "CAND|MOGO|20260818|020",
+        "CAND|MOGO|20260818|021",
+        "CAND|MOGO|20260818|022",
+        "CAND|MOGO|20260818|023",
+        "CAND|MOGO|20260818|024",
+        "CAND|MOGO|20260818|025",
+        "CAND|MOGO|20260818|026",
+        "CAND|MOGO|20260818|027",
+        "CAND|MOGO|20260818|028",
+        "CAND|MOGO|20260818|029",
+        "CAND|MOGO|20260818|030",
+        "CAND|MOGO|20260818|031",
+        "CAND|MOGO|20260818|032",
+        "CAND|MOGO|20260818|033",
+        "CAND|MOGO|20260818|037",
+        "CAND|MOGO|20260818|038",
+        "CAND|MOGO|20260818|039",
+        "CAND|MOGO|20260818|040",
+        "CAND|MOGO|20260818|041",
+        "CAND|MOGO|20260818|042",
+        "CAND|MOGO|20260818|043",
+        "CAND|MOGO|20260818|044",
+        "CAND|MOGO|20260818|045",
+        "CAND|MOGO|20260818|046",
+        "CAND|MOGO|20260818|047",
+        "CAND|MOGO|20260818|048",
+        "CAND|MOGO|20260818|049",
+        "CAND|MOGO|20260818|050",
+        "CAND|MOGO|20260818|051",
+        "CAND|MOGO|20260818|052",
+        "CAND|MOGO|20260818|053",
+        "CAND|MOGO|20260818|054",
+        "CAND|MOGO|20260818|057"
+      ],
+      "count": 51
+    },
+    "DURABLE_NEGATIVE_RECORD_UNATTRIBUTED": {
+      "byTrader": {
+        "(unattributed)": 3
+      },
+      "candidateIds": [
+        "CAND|MOGO|20260818|035",
+        "CAND|MOGO|20260818|036",
+        "CAND|MOGO|20260818|058"
+      ],
+      "count": 3
+    },
+    "NOT_ACQUIRABLE_NO_EXPANSION_CONNECTOR": {
+      "byTrader": {
+        "ALEX_G": 2,
+        "RAYNER_TEO": 1,
+        "TJR": 1
+      },
+      "candidateIds": [
+        "CAND|MOGO|20260818|018",
+        "CAND|MOGO|20260818|034",
+        "CAND|MOGO|20260818|055",
+        "CAND|MOGO|20260818|056"
+      ],
+      "count": 4
+    }
+  },
+  "candidatesInOwnerReview": 58,
+  "distinctAcquisitionDecisions": 3,
+  "generated": true,
+  "lane": "RESEARCH",
+  "mutatesCandidates": false,
+  "note": "Every candidate remains in OWNER_REVIEW. Governance requires an active OwnerDecision to leave it, and this tool neither writes one nor advances any status.",
+  "schemaVersion": "mogo.acquisition-triage.v1"
+}
