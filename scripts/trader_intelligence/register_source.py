@@ -55,7 +55,9 @@ def register_candidate(candidates_dir, ti_root, discovery_method, submitted_by, 
                         url=None, title=None, creator_name=None, claimed_trader_id=None,
                         description=None, language=None, text_content=None,
                         local_file_path=None, uploads_root=None, storage_policy=None,
-                        content_origin=None, source_type_override=None):
+                        content_origin=None, source_type_override=None,
+                        publication_date=None, duration_seconds=None,
+                        metadata_confidence=None):
     """Validates and, on success, atomically writes one new candidate JSON
     file. Raises RegistrationError (never writes anything) on any failure --
     this is the DISCOVERED->REGISTERED boundary."""
@@ -155,7 +157,39 @@ def register_candidate(candidates_dir, ti_root, discovery_method, submitted_by, 
             "storagePolicy %r requires content (text_content or local_file_path)" % (resolved_storage_policy,),
             _discovery_event(discovery_method, now, submitted_by, "storage policy set with no content"))
 
-    metadata_confidence = "owner_provided" if (title or creator_name or description) else "unverified"
+    # `verified` means the metadata was checked against the PUBLISHER's own page,
+    # not merely supplied. Without a way to say so, publisher-confirmed dates and
+    # durations were indistinguishable from asserted ones, and in practice had
+    # nowhere structured to live at all -- they ended up as prose in `description`,
+    # where nothing can query them.
+    if metadata_confidence is not None:
+        if metadata_confidence not in ac.METADATA_CONFIDENCE_LEVELS:
+            raise RegistrationError(
+                "metadataConfidence %r is not one of %s"
+                % (metadata_confidence, ", ".join(sorted(ac.METADATA_CONFIDENCE_LEVELS))))
+    else:
+        metadata_confidence = ("owner_provided"
+                               if (title or creator_name or description) else "unverified")
+
+    if publication_date is not None:
+        # Refuse rather than coerce: a date the schema will reject is better caught
+        # here, where nothing has been written yet.
+        # strptime alone is too lenient: it accepts "2023-7-3", which the schema's
+        # `format: date` rejects. Round-tripping the parse is what enforces the
+        # zero-padded ISO form the schema actually requires.
+        try:
+            parsed = datetime.strptime(publication_date, "%Y-%m-%d")
+            round_trips = parsed.strftime("%Y-%m-%d") == publication_date
+        except (ValueError, TypeError):
+            round_trips = False
+        if not round_trips:
+            raise RegistrationError(
+                "publicationDate %r is not a zero-padded ISO date (YYYY-MM-DD)"
+                % (publication_date,))
+    if duration_seconds is not None:
+        if not isinstance(duration_seconds, int) or duration_seconds < 0:
+            raise RegistrationError(
+                "durationSeconds %r must be a non-negative integer" % (duration_seconds,))
     authenticity_status = ac.assess_authenticity_heuristic(creator_name, claimed_trader_id, ti_root)
     assert authenticity_status in ac.HEURISTIC_ALLOWED_AUTHENTICITY
 
@@ -183,8 +217,8 @@ def register_candidate(candidates_dir, ti_root, discovery_method, submitted_by, 
         "claimedTraderId": claimed_trader_id,
         "verifiedTraderId": None,
         "channelOrPublisher": creator_name,
-        "publicationDate": None,
-        "durationSeconds": None,
+        "publicationDate": publication_date,
+        "durationSeconds": duration_seconds,
         "playlistId": playlist_id,
         "playlistPosition": None,
         "language": language,
@@ -243,6 +277,13 @@ def main():
     parser.add_argument("--claimed-trader-id")
     parser.add_argument("--description")
     parser.add_argument("--language")
+    parser.add_argument("--publication-date",
+                        help="ISO date (YYYY-MM-DD) the source was published")
+    parser.add_argument("--duration-seconds", type=int,
+                        help="Runtime in seconds, for time-based media")
+    parser.add_argument("--metadata-confidence", choices=sorted(ac.METADATA_CONFIDENCE_LEVELS),
+                        help="Use 'verified' when the metadata was confirmed against "
+                             "the publisher's own page")
     parser.add_argument("--text-file", help="Path to a local text file whose contents become text_content")
     parser.add_argument("--local-file", help="Path (relative to --uploads-root) for PDF_REFERENCE")
     parser.add_argument("--storage-policy", choices=ac.STORAGE_POLICIES,
@@ -267,6 +308,9 @@ def main():
             language=args.language, text_content=text_content, local_file_path=args.local_file,
             uploads_root=args.uploads_root, storage_policy=args.storage_policy,
             content_origin=args.content_origin,
+            publication_date=args.publication_date,
+            duration_seconds=args.duration_seconds,
+            metadata_confidence=args.metadata_confidence,
         )
     except RegistrationError as e:
         print("REGISTRATION FAILED: %s" % e, file=sys.stderr)

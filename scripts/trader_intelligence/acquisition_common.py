@@ -88,6 +88,10 @@ AUTOMATIC_ALLOWED_DUPLICATE_STATUSES = {"NONE", "EXACT_DUPLICATE", "POSSIBLE_NEA
 
 STORAGE_POLICIES = ["METADATA_ONLY", "REFERENCED_LOCAL_CONTENT", "COMMITTED_OWNER_CONTENT"]
 
+# Mirrors the enum in research-source-candidate.schema.json. `verified` means the
+# metadata was confirmed against the publisher's own page, not merely supplied.
+METADATA_CONFIDENCE_LEVELS = ("unverified", "owner_provided", "heuristic", "verified")
+
 TOPICS = [
     "OVERALL_STRATEGY", "MARKET_STRUCTURE", "LIQUIDITY", "SESSIONS", "ENTRIES", "EXITS",
     "STOP_PLACEMENT", "TARGETS", "RISK_MANAGEMENT", "TRADE_MANAGEMENT", "PSYCHOLOGY",

@@ -809,3 +809,68 @@ class TestKnowledgeGraphBoundary(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestVerifiedSourceMetadata(unittest.TestCase):
+    """publicationDate / durationSeconds / metadataConfidence are recordable.
+
+    All three exist in research-source-candidate.schema.json, but the registrar
+    had no way to set the first two and hard-coded the third. The consequence was
+    not cosmetic: an acquisition pass that verified publish dates and runtimes
+    against the publisher's own pages could only write them into free-text
+    `description`, where nothing can query them, and could not record that they
+    had been verified at all.
+    """
+
+    def setUp(self):
+        self.repo = TempAcquisitionRepo()
+
+    def tearDown(self):
+        self.repo.cleanup()
+
+    def register(self, **kwargs):
+        kwargs.setdefault("discovery_method", "MANUAL_URL")
+        kwargs.setdefault("url", "https://example.com/a-video")
+        kwargs.setdefault("title", "Boot Camp Day 38: Stop Losses")
+        return self.repo.register(**kwargs)
+
+    def test_publication_date_and_duration_are_recorded_as_fields(self):
+        candidate = self.register(publication_date="2023-07-03", duration_seconds=795)
+        self.assertEqual(candidate["publicationDate"], "2023-07-03")
+        self.assertEqual(candidate["durationSeconds"], 795)
+
+    def test_they_default_to_null_when_not_supplied(self):
+        """The positive control for the two tests above: absent stays absent, so
+        those assertions are testing the arguments rather than a constant."""
+        candidate = self.register()
+        self.assertIsNone(candidate["publicationDate"])
+        self.assertIsNone(candidate["durationSeconds"])
+
+    def test_verified_confidence_can_be_recorded(self):
+        candidate = self.register(metadata_confidence="verified")
+        self.assertEqual(candidate["metadataConfidence"], "verified")
+
+    def test_confidence_still_defaults_when_not_supplied(self):
+        candidate = self.register()
+        self.assertEqual(candidate["metadataConfidence"], "owner_provided")
+
+    def test_a_malformed_date_is_REFUSED_not_coerced(self):
+        for bad in ("03/07/2023", "2023-7-3", "2023-13-01", "yesterday", ""):
+            with self.assertRaises(rs.RegistrationError, msg="accepted %r" % bad):
+                self.register(publication_date=bad)
+
+    def test_a_negative_or_non_integer_duration_is_REFUSED(self):
+        for bad in (-1, "795", 795.5):
+            with self.assertRaises(rs.RegistrationError, msg="accepted %r" % bad):
+                self.register(duration_seconds=bad)
+
+    def test_an_unknown_confidence_level_is_REFUSED(self):
+        with self.assertRaises(rs.RegistrationError):
+            self.register(metadata_confidence="publisher_says_so")
+
+    def test_a_refused_registration_writes_nothing(self):
+        before = set(globmod.glob(os.path.join(self.repo.candidates_dir, "*.json")))
+        with self.assertRaises(rs.RegistrationError):
+            self.register(publication_date="not-a-date")
+        after = set(globmod.glob(os.path.join(self.repo.candidates_dir, "*.json")))
+        self.assertEqual(before, after, "a refused registration left a file behind")
