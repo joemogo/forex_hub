@@ -176,6 +176,12 @@ if ! node scripts/mogo_evidence_leveldb_extract.js --selftest; then
 fi
 echo ""
 
+echo "--- Observation coverage selftest ---"
+if ! node scripts/mogo_observation_coverage.js --selftest; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Evidence checkpoint selftest ---"
 if ! bash scripts/mogo_evidence_checkpoint.sh --selftest; then
   OVERALL_EXIT=1
