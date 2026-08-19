@@ -1,20 +1,23 @@
 {
-  "buildId": "BUILD|20260729|003",
+  "buildId": "BUILD|20260819|003",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-07-29T23:48:44Z",
+  "builtAt": "2026-08-19T13:34:39Z",
   "edgeCounts": {
-    "BELONGS_TO_TRADER": 535,
+    "BELONGS_TO_TRADER": 548,
+    "BLOCKED_BY": 5,
     "BLOCKS": 35,
     "BLUEPRINT_DERIVED_FROM_CLAIM": 1231,
-    "BLUEPRINT_HAS_GAP": 110,
+    "BLUEPRINT_HAS_GAP": 118,
     "CLAIM_SUPPORTS_HYPOTHESIS": 1101,
     "CONTEXTUALIZES": 1,
     "CONTRADICTS": 32,
     "DERIVED_FROM": 416,
     "EVIDENCE_FROM_SEGMENT": 416,
+    "PROPOSES_RULE": 5,
     "RAISES_QUESTION": 270,
     "REFERENCES": 25,
     "REQUIRES_REVIEW": 325,
+    "RESOLVED_BY_EVIDENCE": 2,
     "SEGMENT_OF": 197,
     "SUPPORTS": 415
   },
@@ -1441,7 +1444,7 @@
       "path": "docs/trader-intelligence/evidence/contradictions/XCONTRA_20260727_003.json"
     },
     {
-      "contentHash": "7dcc5382b43e00c9fae5f3e28c443294e52ddd5e65473510449ee269af470f64",
+      "contentHash": "5436befebdf930fe2df759063d13e20001049ae515077ddd04255bd022175954",
       "path": "docs/trader-intelligence/evidence/contradictions/XCONTRA_20260728_001.json"
     },
     {
@@ -1931,6 +1934,38 @@
     {
       "contentHash": "8a7984791fbe2679bc0561bdb8c6c69b4819aa284768180b97e32fb103844a48",
       "path": "docs/trader-intelligence/evidence/gaps/GAP_20260729_017.json"
+    },
+    {
+      "contentHash": "87f43bfe379dc89a936489b3ee5f6ed0b5e73578e554e1faf3fea19528e56897",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_001.json"
+    },
+    {
+      "contentHash": "97e57bec32e1cc7cde056b85b51046eeff15d03e118fe226eca8680275735ad0",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_002.json"
+    },
+    {
+      "contentHash": "94d61da1ceefc47cd48cf150a05caa453f619d87c8002bed6ec0bff4eacc23f4",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_003.json"
+    },
+    {
+      "contentHash": "199743b9283e6ff2a94976d47167919ceffbc7642af3872e8bad8ac48cf488e5",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_004.json"
+    },
+    {
+      "contentHash": "81f18b19e7d3cdc8907679b6ed62d3b1331cb8caed9947b7ad1c7d5d817438f9",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_005.json"
+    },
+    {
+      "contentHash": "cc817842192d4ad758deb6b8d5b7575d085c514aec9b618d0bf809720de811b8",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_006.json"
+    },
+    {
+      "contentHash": "d0c95280d8c996f42d604d1d9d52b0ad5dcb67de93a2637bd36c7343dbfc50fd",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_007.json"
+    },
+    {
+      "contentHash": "9a9161839f1e3b61fd96580be83c70db563e925259b9e2a658375cae2be78385",
+      "path": "docs/trader-intelligence/evidence/gaps/GAP_20260817_008.json"
     },
     {
       "contentHash": "c0acb358e1127d028bc15643fa090743f8aa0d5e784b8570d7f2a663eebbbc3a",
@@ -6253,6 +6288,26 @@
       "path": "docs/trader-intelligence/evidence/profiles/PROFILE_TJR_20260727_001.json"
     },
     {
+      "contentHash": "76b872c43165a75a00c77333bfc0154b5f78e83013e30d1a5b4b984da843f9c7",
+      "path": "docs/trader-intelligence/evidence/proposals/RCPROP_20260817_001.json"
+    },
+    {
+      "contentHash": "d7d36695057234a2158f67710b7bd356f56574e13f15f88db4725779281b46dc",
+      "path": "docs/trader-intelligence/evidence/proposals/RCPROP_20260817_002.json"
+    },
+    {
+      "contentHash": "72c0589e9a5e410b5cac130ae41c00b5a6975a916692908ad3d0bb711c8d1b34",
+      "path": "docs/trader-intelligence/evidence/proposals/RCPROP_20260817_003.json"
+    },
+    {
+      "contentHash": "663388243565042c07e81b994a40a83c2ba3bcdae122a9f33e4ce79ea49b94c6",
+      "path": "docs/trader-intelligence/evidence/proposals/RCPROP_20260817_004.json"
+    },
+    {
+      "contentHash": "da016429e5b4b9106c8caf7e19390e5ed75df5ee9d875e9c92b0049f154e4a36",
+      "path": "docs/trader-intelligence/evidence/proposals/RCPROP_20260817_005.json"
+    },
+    {
       "contentHash": "2592a49ab936f33ca0f1096a9ceea2769bf58f96cf36b9f7a94736635d749c12",
       "path": "docs/trader-intelligence/evidence/questions/EQ_20260727_001.json"
     },
@@ -6305,7 +6360,7 @@
       "path": "docs/trader-intelligence/evidence/questions/EQ_20260727_013.json"
     },
     {
-      "contentHash": "e8245740b4803af4a0c841d52d26cdccbf439e87d0048d902b236bab2988b639",
+      "contentHash": "4f91b3c11332ca97a46f02d4c4299822cec5a8004f826358fbd1b60c9c55bc30",
       "path": "docs/trader-intelligence/evidence/questions/EQ_20260727_014.json"
     },
     {
@@ -9501,6 +9556,194 @@
       "path": "docs/trader-intelligence/evidence/sources/EVSRC_ALEX_G_20260729_001.json"
     },
     {
+      "contentHash": "15b5ddb26678bf297a6b019f0fd6a25b2ffcdc59cabd5838f4c37a86e58ae536",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_001.json"
+    },
+    {
+      "contentHash": "2edbc6307fe2b062f03ea920b94e937cd46144b3b7068f9e945aae7f9a08234f",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_002.json"
+    },
+    {
+      "contentHash": "ce6a537a5f46a4e7c3067fb79633b52bb61d5837b30fad40ca37daff7e2da9f9",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_003.json"
+    },
+    {
+      "contentHash": "9a3ffdc5d1efea5b4422407afc866512edacf278d27c2e3d8f853672f45a068a",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_004.json"
+    },
+    {
+      "contentHash": "c532c013f6fda440147d7688d5ec6f435a6bebf67bd12dedfcb20cc78c9971b8",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_005.json"
+    },
+    {
+      "contentHash": "b4e135e815f749ae98462379758a858d017c7381984d09112cd0b726eedc1922",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_006.json"
+    },
+    {
+      "contentHash": "623e3e8c62f0a2a2dc43250e7f6e039167d0061ef4f52aeee18205ba5a2ae7ed",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_007.json"
+    },
+    {
+      "contentHash": "7443dcfbb7cf60ac71ff7fa1559623717cc9017caaca801a8f9da66b097ea361",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_008.json"
+    },
+    {
+      "contentHash": "a3c004936b4e9b88317fbc594de51bf8d6019fdd1d88e25cd093da6c9d34ce59",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_009.json"
+    },
+    {
+      "contentHash": "d1dfad8e9d6627bb342981213919ffa4937c77c2ed1a35b5e22f58db45d35a65",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_010.json"
+    },
+    {
+      "contentHash": "3382e9091ea6c37fc2f9796439d19f7dee88dfa34911c58488b4a45b9454a3d1",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_011.json"
+    },
+    {
+      "contentHash": "17dd7f3af8c19db934f176ff2e8d53022e09d474376be269390f57a99a52abb2",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_012.json"
+    },
+    {
+      "contentHash": "ad8335cc34e94d70c5f85ea5c66e715f269d0fdb569cd57da87f9570f76f9f8f",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_013.json"
+    },
+    {
+      "contentHash": "4bc2586d922f20412aed1f96538cca6ec745ac597a13e98cbf117ff223d77f78",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260817_014.json"
+    },
+    {
+      "contentHash": "80ffab6912937059aec743971bc310abd38d0cf67a49c7db87e3f9dd226a716b",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_001.json"
+    },
+    {
+      "contentHash": "476000263ab9ea65172762e438972d8fdc7fdd12c476364a30abd3371975278e",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_002.json"
+    },
+    {
+      "contentHash": "086d108155609bd681c6b5489f0e507edcd83f9cd44cb9599b50ca4966ccef33",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_003.json"
+    },
+    {
+      "contentHash": "01004140830f4fe44edf7943b73e3977a798b7a673b11fdba75b794360c011e1",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_004.json"
+    },
+    {
+      "contentHash": "fe6b8153a38a3cac4d8729264a824070ea25fab14e391580778a31946d84b9f0",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_005.json"
+    },
+    {
+      "contentHash": "2b3dfd252b16d59bc7337c804831f943154092d6dd20dd21ed846c0e86c46155",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_006.json"
+    },
+    {
+      "contentHash": "9aea763c1ae954418f5d16ef7916dedf178c45b296bc30e52d61d5ad8ad9e759",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_007.json"
+    },
+    {
+      "contentHash": "b522fbf0366e0f6ad4c51982b5855b9b84204f2ff0a26bbb054037d8afc9b304",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_008.json"
+    },
+    {
+      "contentHash": "b6b2b8548ccbaa5493de3720f6d798bec4346d0c69e2be02b04457eaeb8055db",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_009.json"
+    },
+    {
+      "contentHash": "7da8262d01da647c03f03569d46aeb3ef59902e6bb219e5877b9c246c114ae90",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_010.json"
+    },
+    {
+      "contentHash": "70a6871040f967ace72bfdcdbae0beeb68b4e3c294a409e6af7651a339042621",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_011.json"
+    },
+    {
+      "contentHash": "d08ea57dc59b31b652fc393fbce92f0e1c3f9673f59b445bdbec9e24fb4c8177",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_012.json"
+    },
+    {
+      "contentHash": "448afbfbec49a8598df9244d1a567c7c1decac8d00b9dfbca72dea25e20d7c6f",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_013.json"
+    },
+    {
+      "contentHash": "b2aa27d67b2ca42e18c923e30d93a787851e441b1b3cce843d01e390a1398602",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_014.json"
+    },
+    {
+      "contentHash": "21001fe79cac9182675bc1e725757f8eba2a5266780d019396edca4611440110",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_015.json"
+    },
+    {
+      "contentHash": "3dcfba3b4b631bbd4e3309656d45d31e12ac4e19412b3870eae07066519a9f58",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_016.json"
+    },
+    {
+      "contentHash": "f18bd3cb94fcf6d741eec7e6880387d44e46ae50bca0ae65f831d2c02d5f41fa",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_001.json"
+    },
+    {
+      "contentHash": "66eb605453c1b1c63380b0cb249263f34feae95e72be938881425d579a813d30",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_002.json"
+    },
+    {
+      "contentHash": "fc17e1e5d0d37377d02607f6b0653ada2ec5001535648e9b755c065a093ef6c8",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_003.json"
+    },
+    {
+      "contentHash": "7f8eae51912009d139b3a6188a3b2c025932291a27605de09284bafbc1c5c055",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_004.json"
+    },
+    {
+      "contentHash": "bd6c39f15fdb985a626b4593a70aac75dd7f9570b50d94ee3cd53ed25767090a",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_005.json"
+    },
+    {
+      "contentHash": "00986e1bbb7da163f341a099811f35a3d0c1152476efaf84804fab70dfa70b8b",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_006.json"
+    },
+    {
+      "contentHash": "6a590c12564a303ab3acdf2b15e86df4f73ba5ee531ddb5ff27bbaa68b44d6ed",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_007.json"
+    },
+    {
+      "contentHash": "187fb66205f3a039647a2d2f5df1b67f1d648578238fb570f0a98954957bcfb4",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_008.json"
+    },
+    {
+      "contentHash": "2070e52cf1258194db88e1bd9125361407373c85cdfa2ff5261edd73da6aaed2",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_009.json"
+    },
+    {
+      "contentHash": "ee32f0294f56f848eb514b17a9c8e3e8232453f84349e7563b916f0dc6646573",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_010.json"
+    },
+    {
+      "contentHash": "9d338d962683deb48a743c901cebdd38a47762936065b7ac456c68f53adc55c8",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_011.json"
+    },
+    {
+      "contentHash": "ff910154f1ceb2e1dd14fa525f563135339e29cc8e3316ec5fe0a15522ada38a",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_012.json"
+    },
+    {
+      "contentHash": "54c886834bb24532ad544e8bceb0de3ee55f993f8914ac45b61aaa1b28382f16",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_013.json"
+    },
+    {
+      "contentHash": "276a743648081993fa6065bb4ceda3ed44675c676bb8059d257dbdefd28c693e",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_014.json"
+    },
+    {
+      "contentHash": "0e143919f71c8502ef1c2784cac21d7377e4f7c08b7b71ef421d67e21665dfb7",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_015.json"
+    },
+    {
+      "contentHash": "e427fb4ec698c831641b7a6d13f37acf7ff6454cece55451380d8959f5ba3f53",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_016.json"
+    },
+    {
+      "contentHash": "a91da67a8a60128f528c87061ef85f2876af20be31d890daa2c578d952364276",
+      "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260819_017.json"
+    },
+    {
       "contentHash": "77363a9484988a532a0260a83a90c3cf55106cdb6a4d98f38caa513a3326a794",
       "path": "docs/trader-intelligence/evidence/sources/EVSRC_RAYNER_TEO_20260729_001.json"
     },
@@ -9573,18 +9816,19 @@
       "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
     }
   ],
-  "integrityReportId": "INTEGRITY|BUILD|20260729|003",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|003",
   "nodeCounts": {
     "CLAIM": 341,
     "CONTRADICTION_RECORD": 16,
     "EVIDENCE_ITEM": 416,
     "EVIDENCE_QUESTION": 281,
-    "EVIDENCE_SOURCE": 12,
+    "EVIDENCE_SOURCE": 59,
     "HYPOTHESIS": 641,
     "INTAKE_MANIFEST": 12,
-    "KNOWLEDGE_GAP": 110,
+    "KNOWLEDGE_GAP": 118,
     "OWNER_DECISION": 6,
     "REVIEW_QUEUE_ENTRY": 325,
+    "RULE_CANDIDATE_PROPOSAL": 5,
     "STRATEGY_BLUEPRINT": 11,
     "STRATEGY_FAMILY": 3,
     "TRADER": 5,
@@ -9595,11 +9839,11 @@
   "notes": "",
   "outputFiles": [
     {
-      "contentHash": "7ffbeb49c2879e2c0219747572214adb7d02b9ca152fca968e1adf5eaca35c42",
+      "contentHash": "0bc398d407b60d5b0eb7e8b1c37d3fce92d678b43a8054c64c6e9e23047033fc",
       "path": "docs/trader-intelligence/graph/build/nodes.json"
     },
     {
-      "contentHash": "08551d995d612ba604028faf589524ddeb77b7adabcd47097140fdf8f8d8de7f",
+      "contentHash": "4b2110fa183e8b09b281bb4e73ed9c6558680e24500e03c8615592846d2167d8",
       "path": "docs/trader-intelligence/graph/build/edges.json"
     }
   ],

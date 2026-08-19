@@ -1,13 +1,26 @@
 {
-  "findings": [],
+  "findings": [
+    {
+      "detectedAt": "2026-08-19T13:34:00Z",
+      "entityId": "EVSRC|MOGO|20260818|015",
+      "entityType": "EVIDENCE_SOURCE",
+      "findingId": "EVF0001",
+      "findingType": "UNRESOLVABLE_ARTIFACT",
+      "message": "repositoryPath 'evidence/FWD-20260818T153216Z-PACKAGES.json' does not exist, so this source cannot be walked back to the artifact it describes.",
+      "metadata": {},
+      "resolutionNotes": null,
+      "resolutionStatus": "open",
+      "severity": "WARNING"
+    }
+  ],
   "generated": true,
-  "generatedAt": "2026-08-19T00:48:53Z",
+  "generatedAt": "2026-08-19T13:34:00Z",
   "integrityReportId": "EVIDENCE_INTEGRITY|20260819|001",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
-    "WARNING": 0
+    "WARNING": 1
   },
   "validatorVersion": "1.0.0"
 }

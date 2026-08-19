@@ -1,13 +1,484 @@
 {
-  "buildId": "BUILD|20260729|003",
-  "findings": [],
+  "buildId": "BUILD|20260819|003",
+  "findings": [
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|001"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0001",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|001 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|002"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0002",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|002 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|003"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0003",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|003 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|004"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0004",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|004 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|005"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0005",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|005 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|006"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0006",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|006 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|007"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0007",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|007 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|008"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0008",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|008 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|009"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0009",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|009 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|010"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0010",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|010 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|011"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0011",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|011 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|012"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0012",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|012 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|013"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0013",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|013 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|014"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0014",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|014 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|001"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0015",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|001 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|002"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0016",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|002 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|003"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0017",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|003 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|004"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0018",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|004 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|005"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0019",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|005 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|006"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0020",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|006 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|007"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0021",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|007 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|008"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0022",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|008 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|009"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0023",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|009 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|010"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0024",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|010 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|011"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0025",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|011 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|012"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0026",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|012 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|013"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0027",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|013 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|014"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0028",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|014 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|015"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0029",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|015 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|016"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0030",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|016 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|001"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0031",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|001 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|002"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0032",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|002 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|003"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0033",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|003 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|004"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0034",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|004 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|005"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0035",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|005 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|006"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0036",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|006 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|007"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0037",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|007 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|008"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0038",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|008 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|009"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0039",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|009 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|010"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0040",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|010 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|011"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0041",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|011 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|012"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0042",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|012 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|013"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0043",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|013 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|014"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0044",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|014 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|015"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0045",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|015 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|016"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0046",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|016 has zero edges of any kind.",
+      "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|017"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0047",
+      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|017 has zero edges of any kind.",
+      "severity": "WARNING"
+    }
+  ],
   "generated": true,
-  "generatedAt": "2026-07-30T01:38:25Z",
-  "integrityReportId": "INTEGRITY|BUILD|20260729|003",
+  "generatedAt": "2026-08-19T13:34:39Z",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|003",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
-    "WARNING": 0
+    "WARNING": 47
   }
 }
