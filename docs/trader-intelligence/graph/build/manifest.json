@@ -1,7 +1,7 @@
 {
-  "buildId": "BUILD|20260819|003",
+  "buildId": "BUILD|20260819|004",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-08-19T13:34:39Z",
+  "builtAt": "2026-08-19T13:34:57Z",
   "edgeCounts": {
     "BELONGS_TO_TRADER": 548,
     "BLOCKED_BY": 5,
@@ -9780,6 +9780,10 @@
       "path": "docs/trader-intelligence/graph/decisions/decision-mogo-20260727-006.json"
     },
     {
+      "contentHash": "e2fb550d6485aad94f8f7ed40ebc35cbd4f9bf4a3d43fea60c85752106ecdec2",
+      "path": "docs/trader-intelligence/graph/decisions/decision-mogo-20260819-007.json"
+    },
+    {
       "contentHash": "932541d94d2400c6595b0b955e8864d122fa405e0facd79c516f317a454df242",
       "path": "docs/trader-intelligence/traders/alex-g/profile.json"
     },
@@ -9816,7 +9820,7 @@
       "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
     }
   ],
-  "integrityReportId": "INTEGRITY|BUILD|20260819|003",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|004",
   "nodeCounts": {
     "CLAIM": 341,
     "CONTRADICTION_RECORD": 16,
@@ -9826,7 +9830,7 @@
     "HYPOTHESIS": 641,
     "INTAKE_MANIFEST": 12,
     "KNOWLEDGE_GAP": 118,
-    "OWNER_DECISION": 6,
+    "OWNER_DECISION": 7,
     "REVIEW_QUEUE_ENTRY": 325,
     "RULE_CANDIDATE_PROPOSAL": 5,
     "STRATEGY_BLUEPRINT": 11,
@@ -9839,7 +9843,7 @@
   "notes": "",
   "outputFiles": [
     {
-      "contentHash": "0bc398d407b60d5b0eb7e8b1c37d3fce92d678b43a8054c64c6e9e23047033fc",
+      "contentHash": "3d2e3c1c45f2eaf0e247ad0cfbc504eaea9ce388bf9c2403392665f9b74f85bd",
       "path": "docs/trader-intelligence/graph/build/nodes.json"
     },
     {

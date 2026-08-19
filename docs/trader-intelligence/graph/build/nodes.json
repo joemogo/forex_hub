@@ -28350,6 +28350,21 @@
     "updatedAt": "2026-07-27T00:00:00Z"
   },
   {
+    "contentHash": "ff9582654f9a1a205217c4c7307b22a36efa29d8651430c6be143a053a214367",
+    "createdAt": "2026-08-19T00:00:00Z",
+    "entityId": "DECISION|MOGO|20260819|007",
+    "generated": true,
+    "label": "TradingView's robots.txt names ClaudeBot and disallows /ideas/*, /u/*, /chart/*, /scripts/* -- exactly the paths its pu…",
+    "metadata": {},
+    "nodeId": "NODE|OWNER_DECISION|DECISION|MOGO|20260819|007",
+    "nodeType": "OWNER_DECISION",
+    "sourceFile": "docs/trader-intelligence/graph/decisions/decision-mogo-20260819-007.json",
+    "status": "active",
+    "strategyFamilyId": null,
+    "traderId": null,
+    "updatedAt": "2026-08-19T00:00:00Z"
+  },
+  {
     "contentHash": "1424cc9ae369ce3e8c0597ae7fe7b71a80be735fcda56e7c9a6e44405223feb7",
     "createdAt": "2026-07-27T03:56:30Z",
     "entityId": "RQ|AMBIGUOUS_EVIDENCE|20260727|001",

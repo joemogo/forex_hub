@@ -1,5 +1,5 @@
 {
-  "buildId": "BUILD|20260819|003",
+  "buildId": "BUILD|20260819|004",
   "findings": [
     {
       "affectedIds": [
@@ -470,15 +470,25 @@
       "findingId": "F0047",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|017 has zero edges of any kind.",
       "severity": "WARNING"
+    },
+    {
+      "affectedIds": [
+        "NODE|OWNER_DECISION|DECISION|MOGO|20260819|007"
+      ],
+      "blocksArtifactReplacement": false,
+      "category": "ORPHAN_NODE",
+      "findingId": "F0048",
+      "message": "Node NODE|OWNER_DECISION|DECISION|MOGO|20260819|007 has zero edges of any kind.",
+      "severity": "WARNING"
     }
   ],
   "generated": true,
-  "generatedAt": "2026-08-19T13:34:39Z",
-  "integrityReportId": "INTEGRITY|BUILD|20260819|003",
+  "generatedAt": "2026-08-19T13:34:59Z",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|004",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
-    "WARNING": 47
+    "WARNING": 48
   }
 }

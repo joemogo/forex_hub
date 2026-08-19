@@ -1,0 +1,31 @@
+{
+  "decisionId": "DECISION|MOGO|20260819|007",
+  "owner": "Joe Mogollon",
+  "decisionDate": "2026-08-19",
+  "affectedEntityIds": ["TRADINGVIEW"],
+  "decisionType": "research",
+  "decisionScopeNote": "Applies to autonomous acquisition only. Does not discard TradingView scientifically, and does not bar a later legitimate access path.",
+  "question": "TradingView's robots.txt names ClaudeBot and disallows /ideas/*, /u/*, /chart/*, /scripts/* -- exactly the paths its published-idea corpus requires. Is that exclusion dispositive for MOGO's autonomous acquisition?",
+  "optionsConsidered": [
+    "Treat the exclusion as dispositive: stop autonomous acquisition, preserve the measured findings, and allow reconsideration only via a legitimate access path.",
+    "Continue retrieving under an ordinary browser User-Agent, on the basis that `User-agent: *` permits the paths and only the named AI-agent block forbids them.",
+    "Discard TradingView from the research programme entirely."
+  ],
+  "selectedOption": "Treat the exclusion as dispositive for autonomous acquisition, while preserving TradingView as a HIGH-VALUE / ACCESS_BLOCKED research source with its measured findings intact.",
+  "rationale": "Owner ruling of 2026-08-19: 'treat TradingView's explicit ClaudeBot robots.txt exclusion as dispositive for autonomous acquisition. Do NOT bypass, evade, masquerade around, or substitute another User-Agent to circumvent that restriction. However, do NOT discard TradingView scientifically.' The second option was rejected as masquerade: retrieving under a browser User-Agent in order to sidestep a rule that names ClaudeBot is precisely the circumvention the operating charter forbids, and the permissive `*` block does not make it legitimate. The third was rejected because the evidence gathered before the exclusion was read is real and worth keeping: TradingView published ideas are the only source class found in this environment carrying publisher-stamped pre-trade timestamps, machine-readable instrument and direction, and typed outcomes -- which together would allow outcomes to be derived from price history rather than trusted from the author, defeating hindsight and self-reporting bias simultaneously. Measured base rates are preserved in NEGATIVE_ACQUISITION_LOG.md N-15.1 and N-15.2.",
+  "supportingEvidenceIds": [],
+  "dissentingEvidenceIds": [],
+  "approvalScope": "research_only",
+  "implementationAuthorization": false,
+  "replayAuthorization": false,
+  "shadowAuthorization": false,
+  "paperAuthorization": false,
+  "productionAuthorization": false,
+  "liveAuthorization": false,
+  "reviewDate": null,
+  "expiresAt": null,
+  "supersedesDecisionId": null,
+  "status": "active",
+  "createdAt": "2026-08-19T00:00:00Z",
+  "updatedAt": "2026-08-19T00:00:00Z"
+}

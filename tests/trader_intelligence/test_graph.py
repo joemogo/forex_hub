@@ -125,6 +125,11 @@ EXPECTED_OWNER_DECISIONS = {
     "DECISION|MOGO|20260725|001", "DECISION|MOGO|20260725|002",
     "DECISION|MOGO|20260727|003", "DECISION|MOGO|20260727|004",
     "DECISION|MOGO|20260727|005", "DECISION|MOGO|20260727|006",
+    # 007 records the TradingView ClaudeBot-exclusion ruling. It authorizes
+    # NOTHING -- approvalScope research_only, every authorization flag false --
+    # so it is a governance record of a REFUSAL, not a grant. Listed here for the
+    # same reason as the grants: the set must change only by an explicit edit.
+    "DECISION|MOGO|20260819|007",
 }
 
 

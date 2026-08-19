@@ -352,10 +352,22 @@ Disallow: /symbols/*/minds/*   /u/*   /chat/*   /chart/*   /watchlists/*
 `User-agent: *` permits these paths; the AI-agent block does not. **Every candidate in the
 shortlist below depends on `/ideas/*` and `/u/*`.**
 
-**Status: NOT PURSUED — publisher AI-agent exclusion. This is an owner decision, not a
-research one.** Continuing under a browser User-Agent in order to sidestep a rule that names
-ClaudeBot is masquerade, which the operating charter forbids outright. Recorded rather than
-routed around.
+**Status: NOT PURSUED — publisher AI-agent exclusion. DECIDED by the owner 2026-08-19,
+`DECISION|MOGO|20260819|007`.** The ruling: the ClaudeBot exclusion is **dispositive for
+autonomous acquisition**. No bypass, evasion, masquerade, or User-Agent substitution.
+Continuing under a browser User-Agent in order to sidestep a rule that names ClaudeBot is
+masquerade, which the operating charter forbids outright. Recorded rather than routed around.
+
+The same ruling directs that TradingView **not** be discarded scientifically. It is classified
+**HIGH-VALUE / ACCESS_BLOCKED**: the measured findings in N-15.2 stand as results, and the
+reconstructability advantage recorded there is why this source stays on the books rather than
+being struck. What is blocked is the *acquisition path*, not the *scientific interest*.
+
+**Reconsideration is possible only through a legitimate path** — operator-supplied artifacts,
+an authorized API, a permitted access mechanism, or an explicitly permitted export/download.
+Nothing that circumvents the publisher's restriction qualifies, however it is dressed up. The
+specific artifacts that would unlock this source are enumerated in
+`HUMAN_ASSISTED_ACQUISITION_QUEUE.md` (HAQ-1); **no operator action is requested now.**
 
 **Disclosure:** during discovery, before robots.txt was read, roughly 90 tag-feed pages and
 82 idea pages were fetched under a normal browser UA. Crawling stopped immediately once the
