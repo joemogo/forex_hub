@@ -3,6 +3,7 @@
 Fixtures only. No real paper trade is written or read as the subject of a test --
 the production corpus is used in exactly one integration check, read-only.
 """
+import json
 import os
 import sys
 import unittest
@@ -370,8 +371,13 @@ class TestReconstructedDoesNotDistortTheComparison(unittest.TestCase):
         baseline = self.report(self.corpus_with())
         withrecon = self.report(self.corpus_with(
             {"r1": observation("r1", "EVSRC|RECON|1", 47.0, outcome="Win")}))
-        self.assertEqual([f["code"] for f in baseline["findings"]],
-                         [f["code"] for f in withrecon["findings"]])
+        # Scoped to the replay-vs-forward findings. Adding reconstructed evidence
+        # legitimately ADDS a coverage finding -- that is the corpus becoming
+        # knowably incomplete, not the comparison being distorted.
+        def comparison_findings(report):
+            return [f["code"] for f in report["findings"]
+                    if f["code"] != pf.PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT]
+        self.assertEqual(comparison_findings(baseline), comparison_findings(withrecon))
         self.assertEqual(baseline["byPopulation"]["FORWARD"],
                          withrecon["byPopulation"]["FORWARD"],
                          "a reconstructed record moved FORWARD statistics")
@@ -389,3 +395,61 @@ class TestReconstructedDoesNotDistortTheComparison(unittest.TestCase):
             {"r1": observation("r1", "EVSRC|RECON|1", 47.0, outcome="Win")}))
         for finding in report["findings"]:
             self.assertNotIn(47.0, finding.get("basis", {}).get("forwardOffLattice", []))
+
+
+class TestCoverageBiasIsReportedNotConcluded(unittest.TestCase):
+    """The forward set is knowably incomplete wherever reconstructed evidence
+    exists. Reporting that is the point; concluding from it is not."""
+
+    def sources(self):
+        s = dict(SOURCES)
+        s["EVSRC|RECON|1"] = source("EVSRC|RECON|1", "journal_entry")
+        return s
+
+    def corpus(self, with_reconstructed=True):
+        records = {
+            "f1": observation("f1", "EVSRC|FWD|1", -1.0),
+            "f2": observation("f2", "EVSRC|FWD|1", -1.0),
+            "f3": observation("f3", "EVSRC|FWD|1", 2.0, outcome="Win"),
+        }
+        if with_reconstructed:
+            records["r1"] = observation("r1", "EVSRC|RECON|1", 2.0, outcome="Win")
+            records["r2"] = observation("r2", "EVSRC|RECON|1", 2.0, outcome="Win")
+        return records
+
+    def codes(self, records):
+        report = pf.compare(records, self.sources(), "alex_g_sr_v1")
+        return {f["code"] for f in report["findings"]}, report
+
+    def test_it_fires_when_reconstructed_evidence_exists_alongside_forward(self):
+        codes, _ = self.codes(self.corpus())
+        self.assertIn(pf.PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT, codes)
+
+    def test_it_does_NOT_fire_when_the_forward_set_is_complete(self):
+        """The negative case that gives the finding meaning: with no reconstructed
+        evidence there is no known gap to report."""
+        codes, _ = self.codes(self.corpus(with_reconstructed=False))
+        self.assertNotIn(pf.PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT, codes)
+
+    def test_it_reports_both_populations_separately_and_offers_no_combined_figure(self):
+        _codes, report = self.codes(self.corpus())
+        finding = [f for f in report["findings"]
+                   if f["code"] == pf.PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT][0]
+        self.assertIn("forward", finding["basis"])
+        self.assertIn("reconstructed", finding["basis"])
+        blob = json.dumps(finding["basis"])
+        self.assertNotIn("combined", blob.lower())
+
+    def test_it_refuses_to_claim_the_difference_is_real(self):
+        _codes, report = self.codes(self.corpus())
+        finding = [f for f in report["findings"]
+                   if f["code"] == pf.PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT][0]
+        self.assertIn("confounded", finding["doesNotSupport"])
+        self.assertIn("not random", finding["doesNotSupport"])
+
+    def test_the_reconstructed_records_still_do_not_move_forward_statistics(self):
+        _codes, with_recon = self.codes(self.corpus())
+        _codes2, without = self.codes(self.corpus(with_reconstructed=False))
+        self.assertEqual(with_recon["byPopulation"]["FORWARD"],
+                         without["byPopulation"]["FORWARD"],
+                         "reporting coverage changed the forward statistics")

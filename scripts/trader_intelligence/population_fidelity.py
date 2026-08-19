@@ -53,6 +53,7 @@ REPLAY_IDEALIZES_EXITS = "REPLAY_IDEALIZES_EXITS"
 REPLAY_IS_BAR_QUANTIZED = "REPLAY_IS_BAR_QUANTIZED"
 RISK_SIZING_DIVERGES = "RISK_SIZING_DIVERGES"
 RISK_SIZING_AGREES = "RISK_SIZING_AGREES"
+PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT = "PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT"
 
 # Risk is expressed as a percentage of the balance at entry. The tolerance absorbs
 # rounding in the recorded amounts, not a change in the sizing rule.
@@ -258,6 +259,45 @@ def compare(observations, sources, strategy_id):
                         "Which of the two is correct. This says they disagree, not "
                         "which one implements the intended rule.",
                 })
+
+    # COVERAGE. Deliberately OUTSIDE the historical/forward guard: this is a
+# statement about FORWARD versus RECONSTRUCTED and does not need replay
+# evidence to be true. Nesting it there meant it could not fire for a corpus
+# that holds only live and reconstructed records.
+# Reported because the forward set is knowably incomplete.
+    # Reconstructed records exist precisely for trades whose evidence packages
+    # were lost, so wherever they exist the FORWARD population is a subset of
+    # the account rather than its record. Stating both, and refusing to say
+    # which is "right", is the whole point: the numbers below differ, and a
+    # reader quoting the forward-only figure as the account's performance would
+    # be wrong in a direction this measures.
+    reconstructed = by_population.get(to.RECONSTRUCTED)
+    if reconstructed and forward:
+        findings.append({
+            "code": PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT,
+            "statement":
+                "Reconstructed evidence exists for %d trade(s) whose packages "
+                "were lost, alongside %d live-captured. Forward-only statistics "
+                "therefore describe the PRESERVED SUBSET, not the account, and "
+                "the two differ."
+                % (reconstructed["n"], forward["n"]),
+            "basis": {
+                "forward": {k: forward.get(k) for k in
+                             ("n", "meanR", "winShareOfPreserved", "closedAtRange")},
+                "reconstructed": {k: reconstructed.get(k) for k in
+                                   ("n", "meanR", "winShareOfPreserved", "closedAtRange")},
+            },
+            "doesNotSupport":
+                "That the difference is real, or that performance changed. The "
+                "reconstructed set is small, covers a different and earlier "
+                "period, and carries MINIMAL completeness -- so the gap is "
+                "confounded with time and with evidence quality. What it "
+                "establishes is that the forward set is INCOMPLETE in a way that "
+                "is not random: it is missing a contiguous oldest block. No "
+                "combined figure is offered here, because averaging evidence of "
+                "two different provenance strengths is exactly the pooling this "
+                "module exists to prevent.",
+        })
 
     return {
         "lane": LANE,
