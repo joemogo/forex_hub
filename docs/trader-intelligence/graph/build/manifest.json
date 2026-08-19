@@ -1,7 +1,7 @@
 {
-  "buildId": "BUILD|20260819|005",
+  "buildId": "BUILD|20260819|007",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-08-19T13:57:28Z",
+  "builtAt": "2026-08-19T15:33:30Z",
   "edgeCounts": {
     "BELONGS_TO_TRADER": 548,
     "BLOCKED_BY": 5,
@@ -11,7 +11,7 @@
     "CLAIM_SUPPORTS_HYPOTHESIS": 1101,
     "CONTEXTUALIZES": 1,
     "CONTRADICTS": 32,
-    "DERIVED_FROM": 416,
+    "DERIVED_FROM": 675,
     "EVIDENCE_FROM_SEGMENT": 416,
     "PROPOSES_RULE": 5,
     "RAISES_QUESTION": 270,
@@ -6244,6 +6244,1042 @@
       "path": "docs/trader-intelligence/evidence/items/EV_EVSRC_TJR_20260727_002_024.json"
     },
     {
+      "contentHash": "5559288b18a7f31f45e4bf4200afe06c5b4b61b8620f29a0631bfcf345501671",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_001.json"
+    },
+    {
+      "contentHash": "091f81540edc2bd1a0b6dac2e85f485ddfd6c6ca70f3104f5b5e4ddf0620fe37",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_002.json"
+    },
+    {
+      "contentHash": "7eae580a740a65d9358af3801d7a7163bdb934c5d07dcc2ae682e8b5e7410531",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_003.json"
+    },
+    {
+      "contentHash": "26b96e75d33f3e6cee80ab7b6d0c3e405daf9dec124e23f4dd4f45c87510c4a5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_004.json"
+    },
+    {
+      "contentHash": "1ccaa388a3e93b36afa9d3ac9dfb924a3a1665d06099e5a1d4172d94d44664bf",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_005.json"
+    },
+    {
+      "contentHash": "0b43c8f1df10d53262165647a81531f9ccfa3716d59074c3f024ea5d0292cca7",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_006.json"
+    },
+    {
+      "contentHash": "88e22ff937861d8541b39e29cbdfd02e355caecfe5ff3ea6e4ef60d6cffee634",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_007.json"
+    },
+    {
+      "contentHash": "30723ee8a16385d4f4ab3dc28a9e3a453c5ac64e3ca4ad7caffb1c032459ecf4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_008.json"
+    },
+    {
+      "contentHash": "5b37c79f857450db3210ef1eb0ee2d9ae0e377869fae084604386eb4de3fef60",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_009.json"
+    },
+    {
+      "contentHash": "01398af3cc1a2fd081a1cc315bb228e9850b1e52fbefaf007931860ccb93f465",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_010.json"
+    },
+    {
+      "contentHash": "6a42868f30edbd357ecae5fbc90762734ab296ab784fcd3401fb3ccadd9d56c1",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_011.json"
+    },
+    {
+      "contentHash": "3ace66f56d575edb999714a3056c9ca2ba0bd828b6acb44484d6cc3e57689fad",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_012.json"
+    },
+    {
+      "contentHash": "e18ec8ffeb7d7c62cba1f184b3a307ec2628d63b00623b27498175c6aad6613b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_013.json"
+    },
+    {
+      "contentHash": "260a29a76b9342a4066ce0962aa2c010499ece672038182bafe01f55ba77b532",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_014.json"
+    },
+    {
+      "contentHash": "177022dbb35942bf414408171a85cc33cdb7074b20730f7d9989a739ccfe7e87",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_015.json"
+    },
+    {
+      "contentHash": "222ec2ed9bc60d43b7858223ee0129d9dced0da5b3153e36f0364b1becd1ee7b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_016.json"
+    },
+    {
+      "contentHash": "cef057e1af9de9d51460baf9bcac72dea20e9c390f81df0ed4b3acba03e1d203",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_017.json"
+    },
+    {
+      "contentHash": "dc01509ef82042b9d301825058b349d486b83f02bd22f085782369c379f3765a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_018.json"
+    },
+    {
+      "contentHash": "e046786a48402a05b17b201fd002b452b4a935b31c672b45f3bbab01f743d6cd",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_019.json"
+    },
+    {
+      "contentHash": "c731054a56e17f60a5b6bf8daa64e370147fdb97119ecaa785350e4cbd723a20",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_020.json"
+    },
+    {
+      "contentHash": "465d246047abb5d5027569992e1266a68a048c80d20494adff83bf71abf09342",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_021.json"
+    },
+    {
+      "contentHash": "323a8f639981aa7c7a6afa6c69c8098778ee46c00754c636d355d6b38935a2c4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_022.json"
+    },
+    {
+      "contentHash": "fe4cd8136089c281f289a67263d708046cce581c07030b6a46d30f3c519fd184",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_023.json"
+    },
+    {
+      "contentHash": "fd64b691f927016aae573dd6ee10b47a1e49947d16061b900f5c2df2d4a156ec",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_024.json"
+    },
+    {
+      "contentHash": "41f6c9a2083e627b3f23950ebc76bac3a1e310da0925c925b26d6c6fed25122e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_025.json"
+    },
+    {
+      "contentHash": "ec2046aa006a0310f2c1591b60026c15a60fa03fe5e339a6804140c1ad260f0e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_026.json"
+    },
+    {
+      "contentHash": "d4b1965dd61b5ae98810da8525fa44fd9a2eba79d508f0f050c3d4bde79cc6b4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_027.json"
+    },
+    {
+      "contentHash": "f63865071e1b87af51a375c2ef17d4c5e42479e0bd66c2d65dc1eafdc669c7ec",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_028.json"
+    },
+    {
+      "contentHash": "1409c7ee52834274600c46e4e4637e7b1cd1a00954e4281b963a9a70fb6ec47b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_029.json"
+    },
+    {
+      "contentHash": "3da6f49b59bc367737e35e0a914c6ba3f39b33b78d8d9178d98bfc8e225dd329",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_030.json"
+    },
+    {
+      "contentHash": "9746d37e7fd6ca5ed035107db2ae949fe280842fcba9d2e4d36f078c2de022bf",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_031.json"
+    },
+    {
+      "contentHash": "e82ff9faee070c33aa3b422ce0afb5ce4b67cfb9b9619dd4f71daab815784f7e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_032.json"
+    },
+    {
+      "contentHash": "b0e0d4eeb24b8f7e14613578b3c96563111ff8576b619d1309c176733ba04415",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_033.json"
+    },
+    {
+      "contentHash": "dec697ae48657c05095f4485c772dffae70a2098013e30c154827dd4ca15b8eb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_034.json"
+    },
+    {
+      "contentHash": "3e91cf18b6c00518be83784da3324dddedeffd7b14de0a62082f7ca24b2adacb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_035.json"
+    },
+    {
+      "contentHash": "bd6cddade5df7807afa13aa19ec3cc63963f546b390a7a209cf50ed1998be14e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_036.json"
+    },
+    {
+      "contentHash": "aae778d178385b34a2bc7a8cf4fa0049e59558b05a92c4128a675d5928e53378",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_037.json"
+    },
+    {
+      "contentHash": "83c8d566dbe36c7987c153d9bf5f8d1664d430cb9a9eca7c4878912f2ef6eef7",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_038.json"
+    },
+    {
+      "contentHash": "42936c0fb181c7339b4dd4f9025329ebc56b1299f936e46fe2be49cfc575c4b6",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_039.json"
+    },
+    {
+      "contentHash": "e1f865b6291615880b1e8b926a1b13d83cf2b539c5a1e467b92fc8ae4d5f0638",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_040.json"
+    },
+    {
+      "contentHash": "27a05cbe0e958b790ad9e0929985a9c45430b611909ad9123d2b98e036034b91",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_041.json"
+    },
+    {
+      "contentHash": "d6d4fb7190bd1dd5736f8478937eaefe83b30983b0852c36f58a93f5e6cd9b17",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_042.json"
+    },
+    {
+      "contentHash": "a6b956757d2b96cf47d60e2d86402f30a2d4bd208e9dbd65903542a61868b064",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_043.json"
+    },
+    {
+      "contentHash": "e2521ef707f08237ce387839f4812df37129eb5adc456b861c52d56eae3ae725",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_044.json"
+    },
+    {
+      "contentHash": "90c1be6c8ff29ee6f93001c3f92be33f4d4f8cde4609590157d5ded03c8ac10b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_045.json"
+    },
+    {
+      "contentHash": "94b9f82d753b5130292645c6deb2c2e899e1ac6f3fa066721e45ce73c8429dad",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_046.json"
+    },
+    {
+      "contentHash": "56b0035f3e114d820f14b5317fd995e9ff0f8d1f33a6771a2d00bbb5cfffa95c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_047.json"
+    },
+    {
+      "contentHash": "bfac54b6e402bcf3f422355c871cc48eb2b4f46356f90534d375e2a6273fd5d3",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_048.json"
+    },
+    {
+      "contentHash": "4ab10985917e246a9b3d1405105de0a94c38bbde1ff0356bb13ced48ebf3116a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_049.json"
+    },
+    {
+      "contentHash": "ba9ce99a597cb405c9c23192de91c70d232280e8a6efdf00d5a98bff44beffad",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_050.json"
+    },
+    {
+      "contentHash": "1a0208264c8b744262afb3f1b2a0b5e69e88efdf6a9f081849bb7254ee90ed4b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_051.json"
+    },
+    {
+      "contentHash": "d6f1127d5692bad67ad7e7333d920e7b8d16350440c632869336a185e42bb7d8",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_052.json"
+    },
+    {
+      "contentHash": "b951dc48ee913a31b095cd77715e78d3b6167c9631154350e0ac0e6bffea86f4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_053.json"
+    },
+    {
+      "contentHash": "2c71866bbb78e2b4480d41f72b74207e1bb8e61eec936036f888b81807e2a6a9",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_054.json"
+    },
+    {
+      "contentHash": "c94d6efed8d7f6c53fb42ce0ad5b572cbbda560f00622482ead90c27aa62b020",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_055.json"
+    },
+    {
+      "contentHash": "5fc15b4e0f3ffd579fa9b9045d7cfcf338de78c3a70d5bcb26bc94e55d601454",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_056.json"
+    },
+    {
+      "contentHash": "e2c322fe4d3cd8a8316b2e4ea3fb2f11bc2dc16f9736e7255f0bf4490385d9a6",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_057.json"
+    },
+    {
+      "contentHash": "65a9010a5c66103b4b5e4b60b56cf31f92240e5de44a4d9bfcd02fc55adcae3a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_058.json"
+    },
+    {
+      "contentHash": "22c99aa5f01583f3c0684e2bd725b227d7833ce4e035243bf23fe4127ad085d0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_059.json"
+    },
+    {
+      "contentHash": "5ccdf02d5a2f47c96718c279a881b363752bd5ffa0ffb4c096c33ba3111eb4d1",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_060.json"
+    },
+    {
+      "contentHash": "0fdbf399aded7e559894ab1fc5861a5c53fb941aa8d7bdecd39ce1779736e2a3",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_061.json"
+    },
+    {
+      "contentHash": "38100d4f0f7ddc11e0bd588c1caf04b16b8f48f501a08a18a3b13885461f80dd",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_062.json"
+    },
+    {
+      "contentHash": "fb2af41154e380a598673c68e47a68b7fb9cd2793ffad1fe19da83901830dd0f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_063.json"
+    },
+    {
+      "contentHash": "c05087dae60b8fc636fdca1bdfa2fefe3d6e586f9dd957e9cde9b38f1171b48a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_064.json"
+    },
+    {
+      "contentHash": "32ebfd4213f3290cdf42227cb4c03901073298af470d45b1e9b3f78ccdc5d93a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_065.json"
+    },
+    {
+      "contentHash": "5dd093ed6dd8ac1b30bd8b23ef22202fd5730656dc315b31b2d5cf285cdf4f14",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_066.json"
+    },
+    {
+      "contentHash": "76de36fcca75d28ce779f517dfa5e163e7328ecbd2bd3885fa543d459cd5df25",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_067.json"
+    },
+    {
+      "contentHash": "97afaddb88e450104f243df2d51039cff10283034e903dba2d0915b13684fe9a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_068.json"
+    },
+    {
+      "contentHash": "4664637c0b678eda158453216f4164a40235e6df42ebe9f680d7458ecf110442",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_069.json"
+    },
+    {
+      "contentHash": "1d29830e385a8e767d5a31b63cf2355a1f196bf38e0ea7bc991f02d375bb623e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_070.json"
+    },
+    {
+      "contentHash": "7fb123a4497deedbbb4de499d90ff483916a7a656f0f4925d8b7c33eb0366f0b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_071.json"
+    },
+    {
+      "contentHash": "684fdfe16ec7a9991e845290a7b38d32b5b8be40276390d5e3f317d55c99fb06",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_072.json"
+    },
+    {
+      "contentHash": "66579fe353b651b59784ea51c3a69ff8a413758044bdb5dd0de2733316ccd328",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_073.json"
+    },
+    {
+      "contentHash": "cc3f6f12451f87cffe0cdc21ae37f57dee9801d05c07ffcd06bb424a98c3bd45",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_074.json"
+    },
+    {
+      "contentHash": "cd918c7bd62bbb5fee449c36d2596c10034195ce5d0b13efd898d73d531f070f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_075.json"
+    },
+    {
+      "contentHash": "6a22f4d9c04a0173fc6b9da810859aab0f0fd736791c23638f45612d946ce5e5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_076.json"
+    },
+    {
+      "contentHash": "a090a0115033a030b27595b24de9c0eb1ed39c562e81869d3a6f17c16e1d3d23",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_077.json"
+    },
+    {
+      "contentHash": "c3a004287693bf859e9db252cf3ec066d37c38ab59ed6030dcf23e858064016d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_078.json"
+    },
+    {
+      "contentHash": "8a6364f76b96897340e9b35a05ba8dc4a0fe925fc5f0dc0fad332130406102f6",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_079.json"
+    },
+    {
+      "contentHash": "67408228ce730a304fe17c37731bdd19a49072dea48c6089929b1c1f4666dbfb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_080.json"
+    },
+    {
+      "contentHash": "273671a8a265392032f30055bca9dce20e7881c73be3fa6d4492ccbe42f6214c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_081.json"
+    },
+    {
+      "contentHash": "f7d5be9f034b9cfb6ce5b70b4609921835d370f20ede31e452b49fe1481477f7",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_082.json"
+    },
+    {
+      "contentHash": "cf78f04b709a99ad131dc106c8213ccf5f8cbb7446cf1fb5e6b22ae2f0034241",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_083.json"
+    },
+    {
+      "contentHash": "fdf37b109683046a67bd1c7078717fdbe3c7fdb2272bc94a54df7f803ee70230",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_084.json"
+    },
+    {
+      "contentHash": "fc1a55c1b188bdb2d3cb2e878ce728eb7042c79ab71cd2d37878bb7aad94edb8",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_085.json"
+    },
+    {
+      "contentHash": "d7e90dcafe44c572fa6b6b6d69ade8dce024451f5cb1c29451365bf89e27584a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_086.json"
+    },
+    {
+      "contentHash": "3720e719952e62cad9a9fae1c39cb82784613e5ceae8b8a199768921d117d947",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_087.json"
+    },
+    {
+      "contentHash": "8b70ac338955e7656fcc0982ad82060711056cf70fb7ddaf21d456c7e5e2f05e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_088.json"
+    },
+    {
+      "contentHash": "bc30d512200db3aee3ea4e9ac823112bd2476ffb8aaaac4a1119725b13586d01",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_089.json"
+    },
+    {
+      "contentHash": "dc872fc8648fb1937a68f9b75a2819d15c90e95551ef5ac6f822da075052018c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_090.json"
+    },
+    {
+      "contentHash": "af352bc25b5bbdeb76b57b5223aa4236326550a08c18c947b853a35ce0963ec5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_091.json"
+    },
+    {
+      "contentHash": "2b0f76b16ba605d98ed8e0de6d410ba48a6cc176adceec66276fae1f21dcca43",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_092.json"
+    },
+    {
+      "contentHash": "f2e41e414a16324dee77a91867192a9b4c5b1b9a94e2652646cae34afd6328e9",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_093.json"
+    },
+    {
+      "contentHash": "3df9038a1e334fb24da42ded42808ef489d9cb3e5dd18fcf02ccc29d67d19377",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_094.json"
+    },
+    {
+      "contentHash": "17a5afeaefe6abf84c3f78dda903e678e176c73dd79e07183ba64ec147f3fc3e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_095.json"
+    },
+    {
+      "contentHash": "a19aad28959ac2480a3050046903c3a3a9b7420022e2af0b76c304e7bfc16db0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_096.json"
+    },
+    {
+      "contentHash": "b4f19394aa398973b91576efea7222861d05ae9943514070eaecfd964447b56f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_097.json"
+    },
+    {
+      "contentHash": "eeded2ac06baecbc7ac25bb3181d48bc93a8d29a2cacf7ee89222d7f81d4dd91",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_098.json"
+    },
+    {
+      "contentHash": "7d1a22efb90333b03181eb2ac816751929204031947ab204ec1cd693abf25818",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_099.json"
+    },
+    {
+      "contentHash": "fca7a15cfd8c493858fc387945599b96c6ac0b6bd02e9adc6c6ff04e0a520ff5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_100.json"
+    },
+    {
+      "contentHash": "476d7706299c6d8012ed1d56e44842256a23d3f7e49bff12bf061a1b36c045d5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_101.json"
+    },
+    {
+      "contentHash": "94aedac6012818ff9f2fbf19673ac5c222f31804154084da8b3cc81e0469c625",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_102.json"
+    },
+    {
+      "contentHash": "b5cfc11fb2c255781849a20013881ed49633a4a4c354eb3d4cfeeafe49ef00bd",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_103.json"
+    },
+    {
+      "contentHash": "a38b25620633e551b4517e5afa2d1541cad2555d9329fdff888bf766331f116a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_104.json"
+    },
+    {
+      "contentHash": "74f11bc899825edde982d793f5157d9c87bcf39b77c62f729ee542298b888084",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_105.json"
+    },
+    {
+      "contentHash": "8694b4ab03d198b8e391c955ffaca6b1b83291dbe0bfe29f5c020f37d552116b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_106.json"
+    },
+    {
+      "contentHash": "116550a5ead1a57c355c9431ca4e4404b9f69314b6049e86caffbf62525b67eb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_107.json"
+    },
+    {
+      "contentHash": "5c24dfad5e0f5daa3f58e61c4080ee9acdacd8d8302b5763408d7c0e74cbb5d2",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_108.json"
+    },
+    {
+      "contentHash": "80898ff6c879fcaa341d6435cbdcb7ae124e780b142aabb0cfa103439f2b121b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_109.json"
+    },
+    {
+      "contentHash": "2f1d4d5bfa9056d1c23e4f1d785d8c8c57b7d623030dbb9d172d4be9e7bdcfd9",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_110.json"
+    },
+    {
+      "contentHash": "c6df74164ec68fe492e6780e10c0ba9d84a9687cf209688611e0ef1e972f4c65",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_111.json"
+    },
+    {
+      "contentHash": "72f7c82e853dfaebc0f849c4414508adb0a5c9b743e30aa1dcf76e18fee50481",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_112.json"
+    },
+    {
+      "contentHash": "b77419c985a68d8191d2c0d6012754ea956ac215792a00f73eb41210f5ae2227",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_113.json"
+    },
+    {
+      "contentHash": "04388c91213b3d6e7396f641ae921161046eae23527ad2cc925fdd7a75dbdb61",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_114.json"
+    },
+    {
+      "contentHash": "a4edfb557de4ee36a9729adb3fedb053d6df5c5afd0f5944303157406b2ef5cb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_115.json"
+    },
+    {
+      "contentHash": "2830b8de9be9997d71c45190a5e5c24a04840a539779cb3b0cfcd8858f503ef6",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_116.json"
+    },
+    {
+      "contentHash": "e317a7b8329066b5994b482d97014e78e96a307d2fac4e7d7ac500f7a602ecbb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_117.json"
+    },
+    {
+      "contentHash": "d20e03129787a419e7e2981d190ea7106a9ad176f4db9e3bcb1336fb1dddc687",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_118.json"
+    },
+    {
+      "contentHash": "bb5e48d2ad70ae37f3d4aa9c95b4d9b98d6ba818603637fc479e0536317781de",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_119.json"
+    },
+    {
+      "contentHash": "d8edfc05f687a271a18cef150d9030ac47e2aee520b4c60a21956ff87043b2ae",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_120.json"
+    },
+    {
+      "contentHash": "a74f577ef366ad69b84161cd02b7a4c9a0541672dbcfedd8ee4a43f5b9ee1f63",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_121.json"
+    },
+    {
+      "contentHash": "906c7462b40d0a5f7278671920bcc9f70348d59dc91e406eae1dcb174928af97",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_122.json"
+    },
+    {
+      "contentHash": "5b360c5805a0db48b7118ed13485b2d7b76c71fc6073950a0af54a269113d4c1",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_123.json"
+    },
+    {
+      "contentHash": "0de66b2b489f389f5e0841c76a7b15f91814f304a72097ac8596fe953cbcebc5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_124.json"
+    },
+    {
+      "contentHash": "0bf1ea525df6f9717046d73c1bb24256111dd331993595de87d7dd7953f7f9a1",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_125.json"
+    },
+    {
+      "contentHash": "c91c278c4098df0ecdc8116b6a87637649953694e67cf6046393d8e7a7c5e9e5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_126.json"
+    },
+    {
+      "contentHash": "30b0764adbab011b426ea615666e4de775fe16b04eb415bba76af772f9e4e99a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_127.json"
+    },
+    {
+      "contentHash": "11c2053435d0946505bb0a72f7657287ea02585277a0645f5e5d24f36eaafcc0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_128.json"
+    },
+    {
+      "contentHash": "1a9667d2b8733037ae6b48770fd9939bb497a2c41fc4639946efa1efad2bd098",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_129.json"
+    },
+    {
+      "contentHash": "eb7ba3a78f38be4f76bec7ff9deb1cf2122ef370853f4bea7f4158d7a03eed60",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_130.json"
+    },
+    {
+      "contentHash": "fd583192463f80aaba9ff309c4ae606bd490d56dd27654fcbe88dce7dcfcea9c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_131.json"
+    },
+    {
+      "contentHash": "8b58048c35e5fb445ea976ee57e6fc9fdc7567e21a5d3e2530a4aa1285cb2866",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_132.json"
+    },
+    {
+      "contentHash": "2dd98e196105793edc2a6271abcdda86cb6bab41a700ca56bc3cc90615eafafd",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_133.json"
+    },
+    {
+      "contentHash": "16d73c4e0d5ca2311439c6d7ff3c85909174bdc712425fa10789b898bd3be258",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_134.json"
+    },
+    {
+      "contentHash": "f03e27ecd2d136beff67c95a87a8e97796608dce8bf4bee3e4c8c654614706d8",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_135.json"
+    },
+    {
+      "contentHash": "78440756fbf1105c509268e5b0a03d9ae892b402ed22288f486a3d6d08faecbc",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_136.json"
+    },
+    {
+      "contentHash": "3af184e1bbf0cf3150830cc5c6f8f06b6d831d1f666c356c3ba706755a591675",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_137.json"
+    },
+    {
+      "contentHash": "49215d9d44e3ff9be228e2bc6214e64fe98fb4728d52e590a05fee3c864f8a11",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_138.json"
+    },
+    {
+      "contentHash": "4ca107bb811a9ebf95357fcaf1bee999db94f743727bffd6f06562a8c8c11680",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_139.json"
+    },
+    {
+      "contentHash": "e7bebb8ef23d703183322e6186fad9c0bd63afe1d130ae138ae8223048b22223",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_140.json"
+    },
+    {
+      "contentHash": "216e39981e0e4430ca2e2d947bcd13010a0f03b0c9857d580a58dad6d70b5cd4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_141.json"
+    },
+    {
+      "contentHash": "333062c58862cb0e44f4237eb8edba6061a2622d1f6e8bf9e460955bbe6b696a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_142.json"
+    },
+    {
+      "contentHash": "26736fec475bf3c156a2e7c33e094fb4f7627dda38e8e8805f05c750546d7c5f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_143.json"
+    },
+    {
+      "contentHash": "50ae14ce3be400837b1c8a6265d329e69cc33e030b56a6d4ee6bac550ff3929d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_144.json"
+    },
+    {
+      "contentHash": "a5c8277d6aa928767f67cac95495a19818303e85c602e3e3ea9a13d80a65cfd1",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_145.json"
+    },
+    {
+      "contentHash": "f09ff2471e539bf8944e66b90e585d7098f7393e2a31d6db23432cfbc0e3ee3e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_146.json"
+    },
+    {
+      "contentHash": "e2fb8e1d1444294039fcaf41ce99fd2fef69e02badbe98710850ef28ac0b9721",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_147.json"
+    },
+    {
+      "contentHash": "706220c5cf58705ac6876c91f4c36381164692033a2ce23c560ca6efe5558d17",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_148.json"
+    },
+    {
+      "contentHash": "3023bfe596701b37c9e859a13a9c1371d10a0d342bdc2270260dc68bf1a3bdc5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_149.json"
+    },
+    {
+      "contentHash": "3a992843ab4e59f31a6a29729c53702b8a973c27152fc85a91016f90c08f1ddc",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_150.json"
+    },
+    {
+      "contentHash": "7d775ed0b9bcd014f98e83a1c18df53ebf2f166da40225846ea69a85eacafce9",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_151.json"
+    },
+    {
+      "contentHash": "b5484745ce8ffe38f9141a756e96509805ccc0747c6187329eabf417230ebbeb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_152.json"
+    },
+    {
+      "contentHash": "a8a637d43a9c6700139f6c3f2073da1461ae1a2f16dc44df5dfd928e17457be7",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_153.json"
+    },
+    {
+      "contentHash": "a60a382fbd2005e1579ca2ba2ccf3b8aadb2440d73e7e7f57ce7f2910c22199d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_154.json"
+    },
+    {
+      "contentHash": "4cb1d779a4a5de94a536bbc8d65aa017ea3f5426528ae12bcd6010e16d8d32ab",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_155.json"
+    },
+    {
+      "contentHash": "7377d2e5d173f9cbb1c9738a8964a2cc6f45a0754944e024e8e437b8e17b5cfb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_156.json"
+    },
+    {
+      "contentHash": "624e5bdf4633baa71a637105c7b410b3561e0915daa10a4c8c94bde7eb1c6cd6",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_157.json"
+    },
+    {
+      "contentHash": "ab6c61f6ed9337cd723e9bcac596fb7d777e206a37b1baec1c53b5d3210b9b2a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_158.json"
+    },
+    {
+      "contentHash": "d0d0431c503d0192c3a8d82b735c2a618096501967e328fc8974d85df5502171",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_159.json"
+    },
+    {
+      "contentHash": "cf6f4c329b8b3e171ca64518349a075009b8226a6d55f81734ec2830129f2613",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_160.json"
+    },
+    {
+      "contentHash": "60911c85cd0452cbd98a5583f2350f81b20801a16c6093d537918d0275567b7d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_161.json"
+    },
+    {
+      "contentHash": "c761fa5fe08407f232f17b0f6dbc3edba226575884c9b25ce5e81a893006f029",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_162.json"
+    },
+    {
+      "contentHash": "68fa2c8e6df2bb299995bcf50f910668c8d6872e9e9b32bea53ee399038de110",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_163.json"
+    },
+    {
+      "contentHash": "7c2abce345b13b47bf2aff55b0ec461d7123f04f8a4dd9f4e93a179198c7bdcc",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_164.json"
+    },
+    {
+      "contentHash": "6cc82bfb02c3ccc7df7deb58d1f6f7830416aed9fef679e890f0d046eb8118e9",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_165.json"
+    },
+    {
+      "contentHash": "95d4b3a4b014075da512c9fa97c603fdff6e415eddd72f01a77af4c1217e831f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_166.json"
+    },
+    {
+      "contentHash": "98bd655cd4f687fe0617140c1b886aa38d0782e01ed6c65379766aa4908cf9a4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_167.json"
+    },
+    {
+      "contentHash": "a9935a579f488b266e4e95a12520493886304bba9ccc257d02aaf92db989e3d0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_168.json"
+    },
+    {
+      "contentHash": "0aadfaedfe1eafc9abd42ee0d23ac819d71cb6199a2311eee39242db867bff02",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_169.json"
+    },
+    {
+      "contentHash": "174693bacc56b1e9867e64028ba4722ffc557561cd89fa504b965b96bd7e8a16",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_170.json"
+    },
+    {
+      "contentHash": "1be1985b81fd95af69e80b18f8d373def6c550b66286b1a874570d0976734f35",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_171.json"
+    },
+    {
+      "contentHash": "8dd5a5d337ba092d7a44e8b08cf0e13683b7cad337e6b335814e528e0d95609a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_172.json"
+    },
+    {
+      "contentHash": "64f3e243c55aa9ad1b182ff68886bfe05ee7b4023386cc6f1e3dd6e30c1bbbfc",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_173.json"
+    },
+    {
+      "contentHash": "2004b7103c3a5081d58570be02987eb2f4ff1f76c5d139cf9473712d07413c95",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_174.json"
+    },
+    {
+      "contentHash": "a1327438348439595a3da0d19fc8ccd2e8ef4f9546ba3af2e20bcd39d90afe53",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_175.json"
+    },
+    {
+      "contentHash": "b57bad3936aeb2b04a32e1cfebd898359b9f384dea9756e0145aca9f18443f25",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_176.json"
+    },
+    {
+      "contentHash": "a7b6bc85636404827f827543515bd9f11ba4c054976c9596b8db18b5d5850ede",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_177.json"
+    },
+    {
+      "contentHash": "f5b6022ce857442b13ba59a5ae223d44a860c60b5f41b8f6afa9de508b6a8f11",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_178.json"
+    },
+    {
+      "contentHash": "5302be6583398f3ba5255f6f90f4dfde0652a26177f2e38d090b3fdc6fa87e1d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_179.json"
+    },
+    {
+      "contentHash": "a509a329f6404fe859058fb912264ed3c13e812e5a0e0eba5dd4f4177cc2c3db",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_180.json"
+    },
+    {
+      "contentHash": "d007de717c77084f4b785fb4ef9723f64fc44184df6c1bb8e3d414b8d65aa6f3",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_181.json"
+    },
+    {
+      "contentHash": "f41226d19290c9664cb6463c721ca58c7e4c9fabd0811a51b209a630861088fb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_182.json"
+    },
+    {
+      "contentHash": "7b182fb36d0c2fa9834664e0bb81a1fd81481af67acbbfe0a265d72f7a83d11b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_183.json"
+    },
+    {
+      "contentHash": "115bbac1fda672c84247553303fe0917472ec51fbec094889c999dfbadf55a9c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_184.json"
+    },
+    {
+      "contentHash": "8a13aee62d68e64587e41e44ae0ba6d54223c2c7f890162c978c405efe25c92a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_185.json"
+    },
+    {
+      "contentHash": "9abbb8380c4ad0e150dc23ec4932d7fc9c4e2befebca67b8a686b408d23e96ba",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_186.json"
+    },
+    {
+      "contentHash": "18c2ac012cca0dacaee3df7b2ed093d4a35056f1a43d05b42b69aaf069b30abf",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_187.json"
+    },
+    {
+      "contentHash": "64aab648703caff542bd7c690aa4cfabd3ccfa149cd149058fdbb6329648dbea",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_188.json"
+    },
+    {
+      "contentHash": "bb7139b0665c4fe1d438090e00f99b00ee2fcd39b9700af496d4a279b6d1cefc",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_189.json"
+    },
+    {
+      "contentHash": "15fa9838346b9e4e3b8075dd6fc0ab8f9017c566eedc86ee4b38679539509d1d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_190.json"
+    },
+    {
+      "contentHash": "b40ca33b190cc4a1901f3c4386ef4f7d8939e02408cec90098f0391392b5ac8c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_191.json"
+    },
+    {
+      "contentHash": "7c5dc3d2e626720556abc0d84f6ec94849e39dfe6adc145ac5d6a2140894e3a3",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_192.json"
+    },
+    {
+      "contentHash": "68d9fceb42b18ed898105daaf7e1fc4dadacdaabe4066b965f42177a0c1a3371",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_193.json"
+    },
+    {
+      "contentHash": "c88ddc9ab6c13fb685873cfd8c0b1dbda7bb5b164293073b13e6bccb9a9afada",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_194.json"
+    },
+    {
+      "contentHash": "e07b30728c44f11d943973117924576146fa45c9a5448a39266a8de7c0c26b59",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_195.json"
+    },
+    {
+      "contentHash": "ef674f015d912772401174c3fdde89ea8778436c6ba2caa9a7553a92f35c8361",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_196.json"
+    },
+    {
+      "contentHash": "77970d0310c16cbd710cdee706ee85372d16692916a0d267dc6ff331da51ca36",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_197.json"
+    },
+    {
+      "contentHash": "246ab9256f4035e052d7d2f8ad27027371e062cca6f198a73083428fa9ba46db",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_198.json"
+    },
+    {
+      "contentHash": "07b1c405096fb16292f23e901fe97e34b56a2c2f804827ae3f8377cdd9350e2d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_199.json"
+    },
+    {
+      "contentHash": "39b539a83af6c424f9fcfc82a7f6bf7d79fa94da8c6f18283adec6ca97afa524",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_200.json"
+    },
+    {
+      "contentHash": "69988c006861066f6d7782c92b0f9e8553d2d0f75cfdd0b8ac37a7c17d3638c2",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_201.json"
+    },
+    {
+      "contentHash": "f2818f2f6213125e59051d5a1900b2ccbba54b92d2f7865d9394eb2950cadf30",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_202.json"
+    },
+    {
+      "contentHash": "dddbe55d86ca4924f730c6150da2e470ef6cee425fdd6aaca5ee83235ad2a300",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_203.json"
+    },
+    {
+      "contentHash": "4ddd535070022c0c79d8a15320dd1b85e993f5458f22a6eac1bd1b06c7651349",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_204.json"
+    },
+    {
+      "contentHash": "fb02ae6ad1a54ebb0df7fe43a7b8b37831dfba9b7b4cbb87cc0f2a9f57cbed5d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_205.json"
+    },
+    {
+      "contentHash": "6af2f6494e9c20cb3def66fc910d1ff41f0f4e139f3649a51e985415a5094158",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_206.json"
+    },
+    {
+      "contentHash": "2da5b76472ef432f2866ea33b1205beff30895947b772685fc28f4f627965490",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_207.json"
+    },
+    {
+      "contentHash": "d146c48f2ae52a8e5fa11556c7211153b3fa4cf70b59c9a832d68a2832c4598d",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_208.json"
+    },
+    {
+      "contentHash": "9df89d8936dbcd667777fb0c939fba2d119fe154d8343831e04d2d812031094f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_209.json"
+    },
+    {
+      "contentHash": "4bdf140d2929dfb9b8372690fc3d068baa234d0c68d4977d472d1f4f389a2d89",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_210.json"
+    },
+    {
+      "contentHash": "2ffcc61bfe068abc884631bb76b93c18eff1ed167c9d6db48b780b54601a7b43",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_211.json"
+    },
+    {
+      "contentHash": "b2ac048f5247b05ad800328adc7e028a414c1f43c07f3f09e949be4100ee8e7a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_212.json"
+    },
+    {
+      "contentHash": "ada20cd8f84129ec422a33709f6a35d334a903403652802631ea5942a834ef40",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_213.json"
+    },
+    {
+      "contentHash": "3390f9d9157535596fa81cad0d829ac21c9877e8a7e905a4aea7e932fd33cafb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_214.json"
+    },
+    {
+      "contentHash": "ca8384718ea25cdbd3c292f31a523fdd9088ba4b16f9d1d7f4976a819c3ec7d0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_215.json"
+    },
+    {
+      "contentHash": "fe9c50353bf99f45a09cd8fc0e8f0f8479e8eec9e88dad948037d2b933b035a4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_216.json"
+    },
+    {
+      "contentHash": "0a722f729e00289b7ddd4a33b31d2695834beb0d3475c6a049178216e13e5650",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_217.json"
+    },
+    {
+      "contentHash": "1280b77c45b6311526628d95a140623ac76434304ca8c748208da53e11209048",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_218.json"
+    },
+    {
+      "contentHash": "b4471a2c2cabac802582698098c1da630bd369d42020a424ad7ba5ac0d10eeeb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_219.json"
+    },
+    {
+      "contentHash": "492b671d512bcbfac22b4fe6e531f31b508ec1d3e1e8bc87f9f0abf19d38a11c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_220.json"
+    },
+    {
+      "contentHash": "44eb5ea981300a601052eca06ea16468e34a3c81adc5011d0a112c34916b95dd",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_221.json"
+    },
+    {
+      "contentHash": "6dbe2a340bd9b3edb17027aae03bad1b0cc2b7eb975e3cf24aba971b867a056a",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260806_222.json"
+    },
+    {
+      "contentHash": "5b41d0ad5e0b61cda33d2092d5e1c111568707b60fbfaec362d800623c12d7e0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_001.json"
+    },
+    {
+      "contentHash": "8a5d163d0ede16ee2b317207e073cfc357e1bab6c2953b70421d7e06bd09f348",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_002.json"
+    },
+    {
+      "contentHash": "c9382b787b07c3f89fa949c071f1cfb8f4e6d626ebbcc2bb0da68aa4401dd202",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_003.json"
+    },
+    {
+      "contentHash": "14023143bfe62262eeb08f4d36541c226ed322407450d457c1cb2082c19d1108",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_004.json"
+    },
+    {
+      "contentHash": "6c792115546aaae53c86e3d76240240077c778fc517d76bfe72c4f7675ee2aaf",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_005.json"
+    },
+    {
+      "contentHash": "b13cfaa6e8ae49e44a8a08130f213bae155a39deef0cb9c255cb8eb4b8705002",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_006.json"
+    },
+    {
+      "contentHash": "bfabb6f1eb6fcaae40ecf7ca45fc29b2b5fab8b4a2e28f03f0adff949f281515",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_007.json"
+    },
+    {
+      "contentHash": "377104ad239758339f5f54c668aa61df8914e8c40f471a91ae7b7f9e707e5f50",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_008.json"
+    },
+    {
+      "contentHash": "9d39af3f31fede02f9184d402ddb98e2c77c7f259582c24bce582069a10859ba",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_009.json"
+    },
+    {
+      "contentHash": "e3e9776f2912e1145492bf44ff8f52c9c5f84bb6a50c8bc08cb5eb4572ac2c3c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_010.json"
+    },
+    {
+      "contentHash": "84da95eb2327fa06065814bc84737c0779ee39e9549112c9b41255b5a664dc52",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_011.json"
+    },
+    {
+      "contentHash": "82284ef2053eefa3fb7fff717c1d7f582ad22c6c0c5101e993a7cfaaf5a26e4b",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_012.json"
+    },
+    {
+      "contentHash": "9041154837858479268bf6869ab379e24b3371fb00959e80de793b83eec94454",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_013.json"
+    },
+    {
+      "contentHash": "4994c0a320c81e14b3300ae86cfa007ee5b8fd8b516d05744259dad4595106dc",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_014.json"
+    },
+    {
+      "contentHash": "b597e8da674659bfbf2267a596753fb97ad8fd18e607de709aab69d7a7072c41",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_015.json"
+    },
+    {
+      "contentHash": "dc8fe98e72e310cc1a8c6f46524f4852a5af86074c700a2bea0dc7f17aae9edb",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_016.json"
+    },
+    {
+      "contentHash": "5dc92bab1c7983ae5f94afaa096e6e9d2b79e39c1af8b24e486c942f44ef46ea",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_017.json"
+    },
+    {
+      "contentHash": "b75a19a255f9efe948403d8b62d724763d88b27c895ae8bb1c8b6d0d17f953f5",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_018.json"
+    },
+    {
+      "contentHash": "a5cf5cf11516af919eca9b368a8cfc718678a33e87a05aa84c676d5945f33748",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_019.json"
+    },
+    {
+      "contentHash": "314209ac28a58633a1d5c0d9f3cd8a5129a90b5315630280c16b5b7c48a94d05",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_020.json"
+    },
+    {
+      "contentHash": "5a2d44b733b486c6f807981857ff519fd2d3bc9123e30f21b8c38159aa8353bd",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_021.json"
+    },
+    {
+      "contentHash": "bc05247701a3843f41f12716c086bf8574f48148c6c3cefb7dca2681a556bcb3",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_022.json"
+    },
+    {
+      "contentHash": "98a41766a3821dd7b97f70c5a621e0785fd2e999772292ff8ebc28c795ea5516",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_023.json"
+    },
+    {
+      "contentHash": "f22c4d1d3fbebcedf50418b3f464db0d6565ac65941dcd6d3133c7d15ee0a04e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_024.json"
+    },
+    {
+      "contentHash": "91bb9b2fee7cf49c49c89afba8bcb849689659b5353d8dba613860a76c32d401",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_025.json"
+    },
+    {
+      "contentHash": "2d52728a97c3a2436a9eacff8b9ca3ea40a42675097235c5754a7e89851210a0",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260817_026.json"
+    },
+    {
+      "contentHash": "98f3d8f3477ffb7dafa4051f5bd862c16efb4d2f37833e555927e2e7094f6d6c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260818_001.json"
+    },
+    {
+      "contentHash": "365452fbe8f3a06f6ec8665039a321e82163e78cb2c07a27e77ab39c4a729774",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_001.json"
+    },
+    {
+      "contentHash": "887097a5b627330bedae844ffa207dee4c76ca1fa1f2145dd41f22460784569f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_002.json"
+    },
+    {
+      "contentHash": "071e2345c7468d2f815f0c7d67f43e4b762d600c7f7ef1483b1d7eb16c666380",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_003.json"
+    },
+    {
+      "contentHash": "4815e33b0f7e445cd37c45bbb3febf9daa491cd1dcc5efef5d43e999eabaee14",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_004.json"
+    },
+    {
+      "contentHash": "f3f84475a50a7628957027bf04049fd6c50217eac46e78c072cc7a1194b0125e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_005.json"
+    },
+    {
+      "contentHash": "2ea91081ac2bf8d1539167911659978a0cbd7a442041ebe5955e63e8207f8dc4",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_006.json"
+    },
+    {
+      "contentHash": "9c4cf6a93c452a1578ef208e3a85259c5fdc09d6ec469598cf557c3455f52847",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_007.json"
+    },
+    {
+      "contentHash": "a69fb73159b66409a6b43b7065ed7778be8d54c65fc9db4f8eb50bf53005222f",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_008.json"
+    },
+    {
+      "contentHash": "994ee0082aefc9aeadc457507bfa5c3565f955527dea60d39eb202af9d7c493e",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_009.json"
+    },
+    {
+      "contentHash": "df496905a2fb91c8f565a78f556713be1152f76545f9473c8bd31a0b16a5b69c",
+      "path": "docs/trader-intelligence/evidence/observations/TOBS_MOGO_20260819_010.json"
+    },
+    {
       "contentHash": "6e5b03758e8c6d9f18d4cf06042e7c11eb014373521492c8deebc3dcc60b147b",
       "path": "docs/trader-intelligence/evidence/profiles/PROFILE_ALEX_G_20260727_001.json"
     },
@@ -9820,7 +10856,7 @@
       "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
     }
   ],
-  "integrityReportId": "INTEGRITY|BUILD|20260819|005",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|007",
   "nodeCounts": {
     "CLAIM": 341,
     "CONTRADICTION_RECORD": 16,
@@ -9837,17 +10873,18 @@
     "STRATEGY_FAMILY": 3,
     "TRADER": 5,
     "TRADER_PROFILE": 11,
+    "TRADE_OBSERVATION": 259,
     "TRANSCRIPT_SEGMENT": 197,
     "UNRESOLVED_QUESTION": 35
   },
   "notes": "",
   "outputFiles": [
     {
-      "contentHash": "4da7cf8a5fe08cabeae776c6f894676f28f16464684a1f85cfd639f69db400ec",
+      "contentHash": "a772c5bdfb56f7f37fa9116488a5ad52f86a2804efa02c5c30dd69151f50e76a",
       "path": "docs/trader-intelligence/graph/build/nodes.json"
     },
     {
-      "contentHash": "4b2110fa183e8b09b281bb4e73ed9c6558680e24500e03c8615592846d2167d8",
+      "contentHash": "7c0bd30ce3c0d067bae9d3912f76ae3c203bceb96e8eae5c66825404169d8bf0",
       "path": "docs/trader-intelligence/graph/build/edges.json"
     }
   ],

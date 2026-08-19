@@ -42,6 +42,18 @@ NODE_TYPES = [
     # would proliferate node types without a concrete cross-blueprint query
     # that requires it.
     "TRADER_PROFILE", "STRATEGY_BLUEPRINT", "KNOWLEDGE_GAP", "HYPOTHESIS",
+    # B-32: MOGO's own preserved TradeObservations. Before this they were a
+    # PARALLEL evidence store -- validated by validate_evidence.py, invisible to
+    # the graph -- and the 47 EvidenceSources they cite surfaced as ORPHAN_NODE
+    # warnings because the entities citing them were not here. That buried the
+    # real signal: a genuinely uncited source arrived as the 48th warning and
+    # could not be told from the noise.
+    #
+    # No Outcome node type is added. `outcome` is a field on the observation
+    # (Win/Loss), not an entity with independent identity, and giving it one
+    # would proliferate 259 nodes carrying a single enum -- the same reasoning
+    # that keeps blueprint workflow stages as embedded fields above.
+    "TRADE_OBSERVATION",
 ]
 
 EDGE_TYPES = [
@@ -212,6 +224,10 @@ NODE_TYPE_FIELD_MAP = {
     "STRATEGY_BLUEPRINT": {"id_field": "blueprintId", "label_fields": ["strategyName"], "status_fields": ["status"]},
     "KNOWLEDGE_GAP": {"id_field": "gapId", "label_fields": ["question"], "status_fields": ["answerStatus"]},
     "HYPOTHESIS": {"id_field": "hypothesisId", "label_fields": ["statement"], "status_fields": ["status"]},
+    # B-32. status_fields is deliberately EMPTY: `outcome` (Win/Loss) is a
+    # result, not a lifecycle status, and surfacing it as node["status"] would
+    # let a graph reader treat "Loss" as a workflow state.
+    "TRADE_OBSERVATION": {"id_field": "observationId", "label_fields": ["instrument"], "status_fields": []},
 }
 
 
@@ -226,6 +242,39 @@ def _relpath(path, repo_root):
 def _load_json(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+# B-32. The authoritative list of evidence record collections that become graph
+# entities. Lifted to module level because it had been duplicated by hand into
+# three test scratch-tree cleaners, and adding TRADE_OBSERVATION to discovery
+# without adding it to all three seeded every fixture with 259 production
+# observations whose sources had just been deleted. Tests now DERIVE the entity
+# part of that list from here, so a new collection cannot be forgotten again.
+EVIDENCE_ENTITY_SPEC = [
+        ("EVIDENCE_SOURCE", ("sources", "*.json")),
+        ("EVIDENCE_ITEM", ("items", "*.json")),
+        ("CLAIM", ("claims", "*.json")),
+        ("CONTRADICTION_RECORD", ("contradictions", "*.json")),
+        # PROGRAM-006 Phase 1B (ADR-009):
+        ("TRANSCRIPT_SEGMENT", ("segments", "*.json")),
+        ("INTAKE_MANIFEST", ("intake", "*.json")),
+        ("EVIDENCE_QUESTION", ("questions", "*.json")),
+        ("REVIEW_QUEUE_ENTRY", ("review-queue", "*.json")),
+        ("RULE_CANDIDATE_PROPOSAL", ("proposals", "*.json")),
+        # PROGRAM-007 Phase 7A (Knowledge Library vertical slice):
+        ("TRADER_PROFILE", ("profiles", "*.json")),
+        ("STRATEGY_BLUEPRINT", ("blueprints", "*.json")),
+        ("KNOWLEDGE_GAP", ("gaps", "*.json")),
+        ("HYPOTHESIS", ("hypotheses", "*.json")),
+        # B-32: the same authoritative records validate_evidence.py checks. The
+        # graph DERIVES from them and never becomes a second source of truth --
+        # nothing here writes an observation, and observationIds/hashes are read
+        # exactly as preserved.
+        ("TRADE_OBSERVATION", ("observations", "*.json")),
+    ]
+
+#: Just the directory names, for callers that only need those.
+EVIDENCE_ENTITY_COLLECTIONS = tuple(parts[0] for _t, parts in EVIDENCE_ENTITY_SPEC)
 
 
 def discover_entities(repo_root, ti_root, graph_root):
@@ -269,23 +318,7 @@ def discover_entities(repo_root, ti_root, graph_root):
     # PROGRAM-006 (ADR-008): evidence entities live under ti_root/evidence/,
     # a sibling of traders/ and graph/, not nested under either.
     evidence_root = os.path.join(ti_root, "evidence")
-    evidence_simple = [
-        ("EVIDENCE_SOURCE", ("sources", "*.json")),
-        ("EVIDENCE_ITEM", ("items", "*.json")),
-        ("CLAIM", ("claims", "*.json")),
-        ("CONTRADICTION_RECORD", ("contradictions", "*.json")),
-        # PROGRAM-006 Phase 1B (ADR-009):
-        ("TRANSCRIPT_SEGMENT", ("segments", "*.json")),
-        ("INTAKE_MANIFEST", ("intake", "*.json")),
-        ("EVIDENCE_QUESTION", ("questions", "*.json")),
-        ("REVIEW_QUEUE_ENTRY", ("review-queue", "*.json")),
-        ("RULE_CANDIDATE_PROPOSAL", ("proposals", "*.json")),
-        # PROGRAM-007 Phase 7A (Knowledge Library vertical slice):
-        ("TRADER_PROFILE", ("profiles", "*.json")),
-        ("STRATEGY_BLUEPRINT", ("blueprints", "*.json")),
-        ("KNOWLEDGE_GAP", ("gaps", "*.json")),
-        ("HYPOTHESIS", ("hypotheses", "*.json")),
-    ]
+    evidence_simple = EVIDENCE_ENTITY_SPEC
     for node_type, parts in evidence_simple:
         for path in _sorted_glob(evidence_root, *parts):
             yield node_type, _load_json(path), _relpath(path, repo_root)
@@ -450,6 +483,37 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
             target = resolve(family_id, "BELONGS_TO_STRATEGY_FAMILY", eid, category="INVALID_STRATEGY_FAMILY_REFERENCE")
             if target:
                 add_edge("BELONGS_TO_STRATEGY_FAMILY", from_node_id, target, eid, family_id, source_file, created_at)
+
+        # B-32. The ONLY relationship a TradeObservation actually states.
+        #
+        # `sourceId` is present on all 259 preserved records and names the
+        # EvidenceSource the observation was minted from, so this edge is read
+        # from the record rather than inferred. It is also what makes those 47
+        # sources genuinely referenced instead of merely un-warned.
+        #
+        # Deliberately NOT derived, and this is the substantive decision here:
+        #
+        #   strategyId -> STRATEGY_FAMILY. Every observation carries
+        #   strategyId=alex_g_sr_v1, and SF|ALEX_G|SUPPORT_RESISTANCE_V1 exists.
+        #   Joining them would assert that MOGO's IMPLEMENTATION and the human
+        #   trader's stated method are the same subject. They are not:
+        #   alex_g_sr_v1 is MOGO's code, ALEX_G is a person, and replaying the
+        #   former measures the implementation rather than whether the trader's
+        #   rule holds. That edge would let a query walk from MOGO's own paper
+        #   trades to a human trader's evidence and count one as evidence for
+        #   the other -- OBSERVED data silently answering a SOURCE_STATED
+        #   question. The ids do not match anyway; making them match would be
+        #   fabricating the relationship, not discovering it.
+        #
+        #   Trader/Claim/Hypothesis links. No observation record carries a
+        #   traderId, claimId or hypothesisId. Nothing states those relations,
+        #   so nothing derives them. They stay UNKNOWN rather than guessed.
+        if node_type == "TRADE_OBSERVATION":
+            src = entity.get("sourceId")
+            if src:
+                target = resolve(src, "DERIVED_FROM", eid)
+                if target:
+                    add_edge("DERIVED_FROM", from_node_id, target, eid, src, source_file, created_at)
 
         if node_type == "SOURCE_SEGMENT":
             src = entity.get("sourceId")

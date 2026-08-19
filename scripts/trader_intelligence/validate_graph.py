@@ -95,7 +95,13 @@ _EDGE_DIRECTION_TABLE = {
                                     ("CLAIM", "STRATEGY_FAMILY")},
     "DERIVED_FROM": {("SOURCE_SEGMENT", "RESEARCH_SOURCE"), ("STRATEGY_ASSERTION", "RESEARCH_SOURCE"),
                       ("CHART_EXAMPLE", "RESEARCH_SOURCE"), ("RESEARCH_INTAKE_REPORT", "RESEARCH_SOURCE"),
-                      ("EVIDENCE_ITEM", "EVIDENCE_SOURCE"), ("EVIDENCE_ITEM", "EVIDENCE_ITEM")},
+                      ("EVIDENCE_ITEM", "EVIDENCE_SOURCE"), ("EVIDENCE_ITEM", "EVIDENCE_ITEM"),
+                      # B-32. Mirrors EVIDENCE_ITEM -> EVIDENCE_SOURCE: an observation
+                      # is derived from the source it was minted from. Enumerated as an
+                      # explicit pair rather than loosening the table, so the direction
+                      # gate keeps rejecting every combination nobody has justified --
+                      # it caught this edge on the first build, which is the point of it.
+                      ("TRADE_OBSERVATION", "EVIDENCE_SOURCE")},
     "SEGMENT_OF": {("SOURCE_SEGMENT", "RESEARCH_SOURCE"),
                    ("TRANSCRIPT_SEGMENT", "INTAKE_MANIFEST")},  # PROGRAM-006 Phase 1B
     "ASSERTED_IN": {("STRATEGY_ASSERTION", "SOURCE_SEGMENT")},

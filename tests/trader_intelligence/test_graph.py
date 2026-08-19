@@ -42,11 +42,14 @@ def _copy_fixture(name, dest_dir, dest_filename=None):
 
 # Every evidence/ record collection that a *scratch* copy of the tree must
 # start empty. evidence/schema/ is structural, not data, so it is kept.
-SCRATCH_EVIDENCE_COLLECTIONS = (
-    "sources", "items", "claims", "links", "contradictions", "lifecycle", "questions",
-    "proposals", "review-queue", "intake", "segments", "annotations",
-    "profiles", "blueprints", "gaps", "hypotheses", "reports",
-)
+SCRATCH_EVIDENCE_COLLECTIONS = tuple(sorted(
+    # B-32: the ENTITY collections are derived from graph_common so a new graph
+    # entity type cannot be added to discovery and forgotten here -- that omission
+    # seeded every fixture with 259 production observations. The extras below are
+    # collections that are NOT graph entities (links are edges; lifecycle,
+    # annotations and reports are not nodes) and so must stay listed by hand.
+    set(gc.EVIDENCE_ENTITY_COLLECTIONS)
+    | {"links", "lifecycle", "annotations", "reports"}))
 
 
 def clear_scratch_evidence_tree(ti_root):
@@ -91,6 +94,7 @@ EXPECTED_ENTITY_DIRS = {
     "docs/trader-intelligence/evidence/hypotheses",
     "docs/trader-intelligence/evidence/intake",
     "docs/trader-intelligence/evidence/items",
+    "docs/trader-intelligence/evidence/observations",   # B-32
     "docs/trader-intelligence/evidence/profiles",
     "docs/trader-intelligence/evidence/proposals",
     "docs/trader-intelligence/evidence/questions",
@@ -624,3 +628,300 @@ class TestNoRuntimeCoupling(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+# ---------------------------------------------------------------------------
+# B-32: TradeObservation as a first-class graph node
+# ---------------------------------------------------------------------------
+
+class TradeObservationCase(unittest.TestCase):
+    """Shared fixture: a scratch tree holding only what each test writes.
+
+    Everything here builds from records the test authored itself. Copying the
+    live corpus would make these assertions depend on whatever the running
+    instance happened to preserve that hour -- the failure mode that has already
+    been found repeatedly in this repository.
+    """
+
+    def setUp(self):
+        self.repo = TempRepo()
+
+    def tearDown(self):
+        self.repo.cleanup()
+
+    def _evdir(self, name):
+        d = os.path.join(self.repo.ti_root, "evidence", name)
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def source(self, source_id="EVSRC|MOGO|20260819|001", source_type="paper_trade", **extra):
+        rec = {"sourceId": source_id, "sourceType": source_type,
+               "title": "capture " + source_id, "storageLocationType": "repository",
+               "provenanceStatus": "owner_supplied", "createdAt": "2026-08-19T00:00:00Z"}
+        rec.update(extra)
+        name = source_id.replace("|", "_") + ".json"
+        with open(os.path.join(self._evdir("sources"), name), "w", encoding="utf-8") as h:
+            json.dump(rec, h)
+        return rec
+
+    def observation(self, obs_id="TOBS|MOGO|20260819|001",
+                    source_id="EVSRC|MOGO|20260819|001", **extra):
+        rec = {"observationId": obs_id, "sourceId": source_id, "actor": "MOGO",
+               "lane": "RESEARCH", "instrument": "GBP/USD", "direction": "sell",
+               "outcome": "Loss", "rMultiple": -1, "strategyId": "alex_g_sr_v1",
+               "sourceContentHash": "a" * 64, "createdAt": "2026-08-19T00:00:00Z",
+               "schemaVersion": "mogo.trade-observation.v1"}
+        rec.update(extra)
+        name = obs_id.replace("|", "_") + ".json"
+        with open(os.path.join(self._evdir("observations"), name), "w", encoding="utf-8") as h:
+            json.dump(rec, h)
+        return rec
+
+    def build(self):
+        # build_nodes_and_edges returns (nodes, edges, findings, raw_by_entity_id);
+        # the fourth is not needed here.
+        nodes, edges, findings, _raw = gc.build_nodes_and_edges(
+            self.repo.root, self.repo.ti_root, self.repo.graph_root)
+        return nodes, edges, findings
+
+    def obs_nodes(self, nodes):
+        return [n for n in nodes if n["nodeType"] == "TRADE_OBSERVATION"]
+
+    def derived_edges(self, edges):
+        return [e for e in edges if e["edgeType"] == "DERIVED_FROM"]
+
+
+class TestTradeObservationIsAFirstClassNode(TradeObservationCase):
+
+    def test_an_observation_becomes_a_node_linked_to_its_source(self):
+        self.source()
+        self.observation()
+        nodes, edges, findings = self.build()
+        self.assertEqual(len(self.obs_nodes(nodes)), 1)
+        obs_node = gc.make_node_id("TRADE_OBSERVATION", "TOBS|MOGO|20260819|001")
+        src_node = gc.make_node_id("EVIDENCE_SOURCE", "EVSRC|MOGO|20260819|001")
+        edge = [e for e in self.derived_edges(edges) if e["fromNodeId"] == obs_node]
+        self.assertEqual(len(edge), 1)
+        self.assertEqual(edge[0]["toNodeId"], src_node)
+        self.assertEqual([f for f in findings if f["severity"] in ("ERROR", "FATAL")], [])
+
+    def test_the_node_preserves_the_observation_id_verbatim(self):
+        # The graph must not mint its own identity for a preserved record.
+        self.source()
+        self.observation(obs_id="TOBS|MOGO|20260819|042")
+        nodes, _edges, _f = self.build()
+        self.assertEqual(self.obs_nodes(nodes)[0]["entityId"], "TOBS|MOGO|20260819|042")
+
+    def test_the_node_hash_is_of_the_preserved_record_not_a_projection(self):
+        # Computed independently of gc.content_hash_of -- see independent_content_hash.
+        self.source()
+        rec = self.observation()
+        nodes, _e, _f = self.build()
+        self.assertEqual(self.obs_nodes(nodes)[0]["contentHash"],
+                         independent_content_hash(rec))
+
+    def test_outcome_is_NOT_surfaced_as_node_status(self):
+        # "Loss" is a result, not a lifecycle state. Surfacing it as status would
+        # let a reader filter the graph for "active" work and silently drop every
+        # losing trade.
+        self.source()
+        self.observation(outcome="Loss")
+        nodes, _e, _f = self.build()
+        self.assertEqual(self.obs_nodes(nodes)[0]["status"], "active")
+
+
+class TestNoFabricatedRelationships(TradeObservationCase):
+    """The edges that must NOT exist, which is the substantive part of B-32."""
+
+    def test_strategyId_does_NOT_link_an_observation_to_a_strategy_family(self):
+        # alex_g_sr_v1 is MOGO's IMPLEMENTATION; SF|ALEX_G|... is the human
+        # trader's method. An edge here would let a query walk from MOGO's own
+        # paper trades into a human trader's evidence and count one as evidence
+        # for the other -- OBSERVED data answering a SOURCE_STATED question.
+        self.source()
+        self.observation(strategyId="alex_g_sr_v1")
+        nodes, edges, _f = self.build()
+        obs_node = self.obs_nodes(nodes)[0]
+        touching = [e for e in edges if obs_node["nodeId"] in (e["fromNodeId"], e["toNodeId"])]
+        self.assertEqual([e["edgeType"] for e in touching], ["DERIVED_FROM"],
+                         "an observation must have exactly one relationship: its source")
+
+    def test_an_observation_never_gains_a_trader_edge(self):
+        # No observation record carries a traderId. If one ever did, attributing
+        # MOGO's own execution to a human trader is the contamination this guards.
+        self.source()
+        self.observation()
+        nodes, edges, _f = self.build()
+        obs_node = self.obs_nodes(nodes)[0]
+        self.assertIsNone(obs_node["traderId"])
+        self.assertEqual(
+            [e for e in edges
+             if e["edgeType"] == "BELONGS_TO_TRADER" and e["fromNodeId"] == obs_node["nodeId"]],
+            [])
+
+    def test_a_missing_source_produces_a_FINDING_not_a_synthesized_node(self):
+        # Fabricating a placeholder source would make the lineage look whole while
+        # the artifact it claims to describe does not exist.
+        self.observation(source_id="EVSRC|MOGO|20260819|999")
+        nodes, edges, findings = self.build()
+        self.assertEqual([n for n in nodes if n["nodeType"] == "EVIDENCE_SOURCE"], [])
+        self.assertEqual(self.derived_edges(edges), [])
+        self.assertTrue(any(f["category"] == "MISSING_REFERENCE" for f in findings))
+
+    def test_an_observation_with_no_sourceId_yields_no_edge_and_no_guess(self):
+        self.source()
+        rec = self.observation()
+        del rec["sourceId"]
+        with open(os.path.join(self._evdir("observations"),
+                               "TOBS_MOGO_20260819_001.json"), "w", encoding="utf-8") as h:
+            json.dump(rec, h)
+        _n, edges, findings = self.build()
+        self.assertEqual(self.derived_edges(edges), [])
+        self.assertEqual([f for f in findings if f["severity"] in ("ERROR", "FATAL")], [])
+
+
+class TestPopulationSeparationSurvivesTheGraph(TradeObservationCase):
+    """HISTORICAL / FORWARD / RECONSTRUCTED must not be merged or inverted."""
+
+    def test_observations_of_different_populations_stay_on_separate_sources(self):
+        self.source("EVSRC|MOGO|20260819|001", source_type="replay_observation")   # HISTORICAL
+        self.source("EVSRC|MOGO|20260819|002", source_type="paper_trade")          # FORWARD
+        self.source("EVSRC|MOGO|20260819|003", source_type="journal_entry")        # RECONSTRUCTED
+        self.observation("TOBS|MOGO|20260819|001", "EVSRC|MOGO|20260819|001")
+        self.observation("TOBS|MOGO|20260819|002", "EVSRC|MOGO|20260819|002")
+        self.observation("TOBS|MOGO|20260819|003", "EVSRC|MOGO|20260819|003")
+        _n, edges, _f = self.build()
+        pairs = {(e["fromNodeId"], e["toNodeId"]) for e in self.derived_edges(edges)}
+        expected = {(gc.make_node_id("TRADE_OBSERVATION", "TOBS|MOGO|20260819|00%d" % i),
+                     gc.make_node_id("EVIDENCE_SOURCE", "EVSRC|MOGO|20260819|00%d" % i))
+                    for i in (1, 2, 3)}
+        self.assertEqual(pairs, expected,
+                         "an observation must point at ITS OWN source; a crossed edge "
+                         "silently reclassifies replay evidence as forward evidence")
+
+    def test_the_graph_does_not_denormalise_population_onto_the_node(self):
+        # Population is derived from the source's sourceType, never stored on the
+        # observation. A copy on the node would be a second source of truth that
+        # can disagree with the source record.
+        self.source("EVSRC|MOGO|20260819|001", source_type="replay_observation")
+        self.observation()
+        nodes, _e, _f = self.build()
+        node = self.obs_nodes(nodes)[0]
+        self.assertNotIn("population", node)
+        self.assertNotIn("population", node["metadata"])
+
+    def test_evidence_class_mutation_on_the_source_does_not_alter_the_observation_node(self):
+        # Changing the SOURCE's type changes the derived population; it must not
+        # rewrite the observation node's own identity or hash.
+        self.source("EVSRC|MOGO|20260819|001", source_type="replay_observation")
+        rec = self.observation()
+        before = self.obs_nodes(self.build()[0])[0]
+        self.source("EVSRC|MOGO|20260819|001", source_type="paper_trade")
+        after = self.obs_nodes(self.build()[0])[0]
+        self.assertEqual(before["contentHash"], after["contentHash"])
+        self.assertEqual(before["entityId"], after["entityId"])
+        self.assertEqual(before["contentHash"], independent_content_hash(rec))
+
+
+class TestAdversarialInputs(TradeObservationCase):
+
+    def test_two_observations_with_the_same_id_are_a_FATAL_duplicate(self):
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001")
+        # Same observationId, different filename -- an identity collision.
+        rec = dict(self.observation("TOBS|MOGO|20260819|001"))
+        with open(os.path.join(self._evdir("observations"), "zz_collision.json"),
+                  "w", encoding="utf-8") as h:
+            json.dump(rec, h)
+        nodes, _e, findings = self.build()
+        self.assertEqual(len(self.obs_nodes(nodes)), 1)
+        self.assertTrue(any(f["category"] == "DUPLICATE_NODE_ID" and f["severity"] == "FATAL"
+                            for f in findings))
+
+    def test_distinct_observations_sharing_one_source_all_link(self):
+        self.source()
+        for i in range(1, 6):
+            self.observation("TOBS|MOGO|20260819|00%d" % i)
+        _n, edges, findings = self.build()
+        self.assertEqual(len(self.derived_edges(edges)), 5)
+        self.assertEqual([f for f in findings if f["severity"] in ("ERROR", "FATAL")], [])
+
+    def test_file_ordering_does_not_change_the_graph(self):
+        # Discovery is a sorted glob; nothing may depend on directory order.
+        self.source()
+        for i in (3, 1, 2):
+            self.observation("TOBS|MOGO|20260819|00%d" % i)
+        n1, e1, _f = self.build()
+        first = ([n["nodeId"] for n in self.obs_nodes(n1)],
+                 sorted(e["edgeId"] for e in self.derived_edges(e1)))
+        # Rewrite the same records in the opposite order.
+        shutil.rmtree(self._evdir("observations"))
+        for i in (2, 1, 3):
+            self.observation("TOBS|MOGO|20260819|00%d" % i)
+        n2, e2, _f2 = self.build()
+        second = ([n["nodeId"] for n in self.obs_nodes(n2)],
+                  sorted(e["edgeId"] for e in self.derived_edges(e2)))
+        self.assertEqual(first, second)
+
+    def test_a_partial_corpus_builds_without_inventing_the_rest(self):
+        # One source, one of its two observations present. The absent one must
+        # simply not exist -- no placeholder, no error.
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001")
+        nodes, edges, findings = self.build()
+        self.assertEqual(len(self.obs_nodes(nodes)), 1)
+        self.assertEqual(len(self.derived_edges(edges)), 1)
+        self.assertEqual([f for f in findings if f["severity"] in ("ERROR", "FATAL")], [])
+
+    def test_a_corrupted_source_reference_does_not_silently_attach_elsewhere(self):
+        # Two real sources; the observation points at neither. It must NOT fall
+        # back to "the only source available".
+        self.source("EVSRC|MOGO|20260819|001")
+        self.source("EVSRC|MOGO|20260819|002")
+        self.observation(source_id="EVSRC|MOGO|20260819|BAD")
+        _n, edges, findings = self.build()
+        self.assertEqual(self.derived_edges(edges), [])
+        self.assertTrue(any(f["category"] == "MISSING_REFERENCE" for f in findings))
+
+    def test_rebuilding_is_idempotent(self):
+        self.source()
+        for i in range(1, 4):
+            self.observation("TOBS|MOGO|20260819|00%d" % i)
+        runs = []
+        for _ in range(3):
+            nodes, edges, findings = self.build()
+            runs.append((sorted(n["nodeId"] + n["contentHash"] for n in nodes),
+                         sorted(e["edgeId"] for e in edges),
+                         len(findings)))
+        self.assertEqual(runs[0], runs[1])
+        self.assertEqual(runs[1], runs[2])
+        # And no duplication crept in across rebuilds.
+        self.assertEqual(len(runs[0][1]), len(set(runs[0][1])))
+
+
+class TestGenuineOrphanDetectionSurvives(TradeObservationCase):
+    """B-32 exists to stop 47 FALSE orphans burying real ones. Proving the real
+    ones still surface is the whole point, so both controls are here."""
+
+    def orphan_ids(self, nodes, edges):
+        touched = {e["fromNodeId"] for e in edges} | {e["toNodeId"] for e in edges}
+        return {n["entityId"] for n in nodes if n["nodeId"] not in touched}
+
+    def test_POSITIVE_CONTROL_a_source_nothing_cites_is_still_an_orphan(self):
+        self.source("EVSRC|MOGO|20260819|001")
+        self.source("EVSRC|MOGO|20260819|002")          # cited by nobody
+        self.observation(source_id="EVSRC|MOGO|20260819|001")
+        nodes, edges, _f = self.build()
+        self.assertIn("EVSRC|MOGO|20260819|002", self.orphan_ids(nodes, edges))
+
+    def test_NEGATIVE_CONTROL_a_cited_source_is_not_an_orphan(self):
+        self.source("EVSRC|MOGO|20260819|001")
+        self.observation(source_id="EVSRC|MOGO|20260819|001")
+        nodes, edges, _f = self.build()
+        self.assertNotIn("EVSRC|MOGO|20260819|001", self.orphan_ids(nodes, edges))
+
+    def test_the_observation_itself_is_never_an_orphan_when_its_source_exists(self):
+        self.source()
+        self.observation()
+        nodes, edges, _f = self.build()
+        self.assertNotIn("TOBS|MOGO|20260819|001", self.orphan_ids(nodes, edges))

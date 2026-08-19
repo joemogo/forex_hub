@@ -1,153 +1,13 @@
 {
-  "buildId": "BUILD|20260819|005",
+  "buildId": "BUILD|20260819|007",
   "findings": [
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|001"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0001",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|001 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|002"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0002",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|002 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|003"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0003",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|003 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|004"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0004",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|004 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|005"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0005",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|005 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|006"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0006",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|006 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|007"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0007",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|007 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|008"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0008",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|008 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|009"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0009",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|009 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|010"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0010",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|010 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|011"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0011",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|011 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|012"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0012",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|012 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|013"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0013",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|013 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|014"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0014",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260817|014 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
     {
       "affectedIds": [
         "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|001"
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0015",
+      "findingId": "F0001",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|001 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -157,7 +17,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0016",
+      "findingId": "F0002",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|002 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -167,7 +27,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0017",
+      "findingId": "F0003",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|003 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -177,7 +37,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0018",
+      "findingId": "F0004",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|004 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -187,7 +47,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0019",
+      "findingId": "F0005",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|005 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -197,7 +57,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0020",
+      "findingId": "F0006",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|006 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -207,7 +67,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0021",
+      "findingId": "F0007",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|007 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -217,7 +77,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0022",
+      "findingId": "F0008",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|008 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -227,7 +87,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0023",
+      "findingId": "F0009",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|009 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -237,7 +97,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0024",
+      "findingId": "F0010",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|010 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -247,7 +107,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0025",
+      "findingId": "F0011",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|011 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -257,7 +117,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0026",
+      "findingId": "F0012",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|012 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -267,7 +127,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0027",
+      "findingId": "F0013",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|013 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -277,18 +137,8 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0028",
+      "findingId": "F0014",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|014 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|015"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0029",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|015 has zero edges of any kind.",
       "severity": "WARNING"
     },
     {
@@ -297,7 +147,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0030",
+      "findingId": "F0015",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260818|016 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -307,7 +157,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0031",
+      "findingId": "F0016",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|001 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -317,7 +167,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0032",
+      "findingId": "F0017",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|002 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -327,7 +177,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0033",
+      "findingId": "F0018",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|003 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -337,7 +187,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0034",
+      "findingId": "F0019",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|004 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -347,7 +197,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0035",
+      "findingId": "F0020",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|005 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -357,7 +207,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0036",
+      "findingId": "F0021",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|006 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -367,7 +217,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0037",
+      "findingId": "F0022",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|007 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -377,7 +227,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0038",
+      "findingId": "F0023",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|008 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -387,7 +237,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0039",
+      "findingId": "F0024",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|009 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -397,7 +247,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0040",
+      "findingId": "F0025",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|010 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -407,7 +257,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0041",
+      "findingId": "F0026",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|011 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -417,7 +267,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0042",
+      "findingId": "F0027",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|012 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -427,7 +277,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0043",
+      "findingId": "F0028",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|013 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -437,7 +287,7 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0044",
+      "findingId": "F0029",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|014 has zero edges of any kind.",
       "severity": "WARNING"
     },
@@ -447,28 +297,8 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0045",
+      "findingId": "F0030",
       "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|015 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|016"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0046",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|016 has zero edges of any kind.",
-      "severity": "WARNING"
-    },
-    {
-      "affectedIds": [
-        "NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|017"
-      ],
-      "blocksArtifactReplacement": false,
-      "category": "ORPHAN_NODE",
-      "findingId": "F0047",
-      "message": "Node NODE|EVIDENCE_SOURCE|EVSRC|MOGO|20260819|017 has zero edges of any kind.",
       "severity": "WARNING"
     },
     {
@@ -477,18 +307,18 @@
       ],
       "blocksArtifactReplacement": false,
       "category": "ORPHAN_NODE",
-      "findingId": "F0048",
+      "findingId": "F0031",
       "message": "Node NODE|OWNER_DECISION|DECISION|MOGO|20260819|007 has zero edges of any kind.",
       "severity": "WARNING"
     }
   ],
   "generated": true,
-  "generatedAt": "2026-08-19T13:57:30Z",
-  "integrityReportId": "INTEGRITY|BUILD|20260819|005",
+  "generatedAt": "2026-08-19T15:33:31Z",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|007",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
-    "WARNING": 48
+    "WARNING": 31
   }
 }

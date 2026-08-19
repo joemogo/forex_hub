@@ -138,6 +138,7 @@ scripts/mogo_evidence_checkpoint.sh --selftest preservation is read-only and ver
 python3 scripts/trader_intelligence/research_assimilation.py   what changed, and what did not
 python3 scripts/trader_intelligence/forward_coverage.py        is a missing cohort rarity or starvation?
 python3 scripts/trader_intelligence/reconstructability.py      could a strategy be rebuilt from a candidate?
+python3 scripts/trader_intelligence/observation_graph_reconcile.py  do the preserved observations and the graph agree?
 ```
 
 A diagnostic must test reality, not restate a dashboard. If reality contradicts a report, a test,

@@ -80,9 +80,12 @@ class TempKnowledgeLibraryRepo:
         # exists on disk, copytree would seed this fixture with production
         # records and silently invalidate every assertion below. Emptying each
         # record collection makes the scratch guarantee explicit.
-        for name in ("sources", "items", "claims", "links", "contradictions", "lifecycle",
-                     "questions", "proposals", "review-queue", "profiles", "blueprints",
-                     "gaps", "hypotheses", "intake", "segments", "annotations", "reports"):
+        # B-32: the ENTITY collections are derived from graph_common so a new graph
+        # entity type cannot be added to discovery and forgotten here -- that omission
+        # seeded every fixture with 259 production observations. The extras are
+        # collections that are NOT graph entities and so stay listed by hand.
+        for name in sorted(set(gc.EVIDENCE_ENTITY_COLLECTIONS)
+                           | {"links", "lifecycle", "annotations", "reports"}):
             d = os.path.join(self.evidence_root, name)
             if os.path.isdir(d):
                 shutil.rmtree(d)

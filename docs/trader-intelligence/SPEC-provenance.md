@@ -157,3 +157,61 @@ Worth stating plainly, because the chain's rigour invites over-reading:
   `unknown` for the only source in the library.
 - **Not completeness.** `transcriptCompleteness: unknown` means the chain is sound over what was
   ingested, while whether anything was missing upstream remains unestablished.
+
+---
+
+## 7. The evidence lineage the graph can represent, and where it genuinely breaks
+
+B-32 made `TradeObservation` a first-class graph node, so MOGO's own preserved evidence
+participates in the lineage instead of sitting in a parallel store. The obvious next question is
+whether the intended end-to-end chain can now be represented **without fabricating anything**.
+
+Assessed against the target chain, link by link, as of 2026-08-19:
+
+| link | edge | status |
+|---|---|---|
+| Trader/Publisher → Source Artifact | `BELONGS_TO_TRADER` | **representable** |
+| Source Artifact → Evidence | `DERIVED_FROM` (`EVIDENCE_ITEM` → `EVIDENCE_SOURCE`) | **representable** |
+| Evidence → Strategy/Rule Claim | `SUPPORTS` / `CONTRADICTS` / `CONTEXTUALIZES` (EvidenceClaimLink) | **representable** |
+| Strategy/Rule Claim → Trade Observation | — | **BROKEN — see below** |
+| Trade Observation → Outcome | `outcome` field on the observation | representable as an attribute; deliberately not a node |
+| Claim → Hypothesis | `CLAIM_SUPPORTS_HYPOTHESIS` / `CLAIM_CONTRADICTS_HYPOTHESIS` | **representable** |
+| Hypothesis → Supporting/Contradicting Evidence | `supportingEvidenceIds` / `contradictingEvidenceIds` | **representable** |
+| Research Finding | — | not an entity; generated reports are documents by standing convention |
+
+### 7.1 The break is epistemic, not an oversight
+
+**No record anywhere in this corpus references an `observationId`** — measured, not assumed:
+zero hits across `claims/`, `hypotheses/`, `items/`, `links/`, `gaps/` and `blueprints/`. Nothing
+states that any trade was taken *because of* any claim, so no such edge can be derived.
+
+It would be easy to manufacture one. Every observation carries `strategyId=alex_g_sr_v1`, and
+`SF|ALEX_G|SUPPORT_RESISTANCE_V1` exists as a node. Joining them looks like completing the chain
+and is in fact the single most damaging thing that could be done to this corpus:
+
+> `alex_g_sr_v1` is MOGO's **implementation**. `ALEX_G` is a **person**. An observation records
+> what MOGO's code did. A claim records what a human said. Linking them asserts they are the same
+> subject, and lets a query walk from MOGO's own paper trades into a human trader's evidence and
+> count one as evidence for the other — OBSERVED data silently answering a SOURCE_STATED question.
+
+The ids do not match, and making them match would be inventing the relationship rather than
+discovering it. The graph therefore leaves this link absent, and **absent is the correct
+representation of UNKNOWN**.
+
+### 7.2 What would close it legitimately
+
+Only a record that *states* the attribution: MOGO recording, at trade time, which rule caused an
+entry — a `claimId` or `ruleId` stamped onto the observation by the engine that took the trade.
+
+That is a **strategy-semantic change** requiring operator governance, not a graph change, and it
+is out of scope for any derivation work. Until such a record exists, the chain is whole from both
+ends and open in the middle, which is an honest description of what MOGO actually knows.
+
+### 7.3 Two consequences worth stating plainly
+
+- A query cannot currently answer *"which trades did this trader's stated rule produce?"* for any
+  human trader. That is not a graph limitation to be engineered around; it is the same absence
+  recorded throughout the acquisition log — no trader in this corpus has trade-level evidence.
+- `orphanSources` in the reconciliation diagnostic counts EvidenceSources no observation cites.
+  These are **genuine** and must stay visible. Making the number zero by attaching edges nothing
+  states would recreate, in a new form, exactly the defect B-32 removed.

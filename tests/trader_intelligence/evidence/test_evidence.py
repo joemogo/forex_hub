@@ -133,11 +133,14 @@ class TempEvidenceRepo:
 # Every evidence/ record collection that a *scratch* copy of the tree must
 # start empty. evidence/schema/ is structural, not data, so it is kept. See
 # tests/trader_intelligence/test_graph.py for the same guarantee.
-_SCRATCH_EVIDENCE_COLLECTIONS = (
-    "sources", "items", "claims", "links", "contradictions", "lifecycle", "questions",
-    "proposals", "review-queue", "intake", "segments", "annotations",
-    "profiles", "blueprints", "gaps", "hypotheses", "reports",
-)
+_SCRATCH_EVIDENCE_COLLECTIONS = tuple(sorted(
+    # B-32: the ENTITY collections are derived from graph_common so a new graph
+    # entity type cannot be added to discovery and forgotten here -- that omission
+    # seeded every fixture with 259 production observations. The extras below are
+    # collections that are NOT graph entities (links are edges; lifecycle,
+    # annotations and reports are not nodes) and so must stay listed by hand.
+    set(gc.EVIDENCE_ENTITY_COLLECTIONS)
+    | {"links", "lifecycle", "annotations", "reports"}))
 
 
 def _clear_scratch_evidence_tree(ti_root):
