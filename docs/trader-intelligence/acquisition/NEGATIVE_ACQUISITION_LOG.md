@@ -330,3 +330,123 @@ the same failure mode for MOGO's own preserved trades.
   which resolve to interstitials rather than to `t.me` from this environment). Not pursued.
 - **`GAP|20260817|006`** (TJR) and **`GAP|20260817|008`** (RAYNER_TEO) were out of scope and are
   untouched by this session.
+
+---
+
+## N-15 — External trader discovery sweep, 2026-08-19
+
+~30 candidate hosts probed with real fetches. Recorded so none of this is searched again
+without new evidence.
+
+### N-15.1 — GOVERNANCE BLOCK: TradingView asks AI agents not to take the paths we need
+
+`https://www.tradingview.com/robots.txt`, retrieved and **independently re-verified
+2026-08-19**, contains a named block listing `ClaudeBot` (alongside Google-Extended,
+PerplexityBot, Bytespider and others) whose rules are:
+
+```
+Disallow: /ideas/*   /scripts/*   /script/*   /v/*
+Disallow: /symbols/*/minds/*   /u/*   /chat/*   /chart/*   /watchlists/*
+```
+
+`User-agent: *` permits these paths; the AI-agent block does not. **Every candidate in the
+shortlist below depends on `/ideas/*` and `/u/*`.**
+
+**Status: NOT PURSUED — publisher AI-agent exclusion. This is an owner decision, not a
+research one.** Continuing under a browser User-Agent in order to sidestep a rule that names
+ClaudeBot is masquerade, which the operating charter forbids outright. Recorded rather than
+routed around.
+
+**Disclosure:** during discovery, before robots.txt was read, roughly 90 tag-feed pages and
+82 idea pages were fetched under a normal browser UA. Crawling stopped immediately once the
+file was read. Nothing was registered, acquired into the corpus, or committed.
+
+### N-15.2 — What was lost to that block, so the cost of the decision is legible
+
+TradingView published ideas are, on the evidence gathered, **the only publicly retrievable
+source class found anywhere that is genuinely mechanically reconstructable**. A server-side
+JSON blob carries `created_at` stamped to the microsecond (publisher-stamped, not an author
+claim), `symbol.pro_symbol`, `interval`, `direction`, the description carrying entry/stop/
+target, and `updates[]` with typed outcomes (`close_position` → `target_reached` /
+`stop_reached`).
+
+Why that matters more than the levels themselves: because instrument, direction, levels and a
+**pre-trade** timestamp are all present, the outcome does not have to come from the author at
+all — it can be derived from price history. That defeats hindsight bias and self-reporting
+bias together, which are the two failure modes that blocked TJR and ALEX_G. Ideas whose entry
+never filled would also form an observable population of **skipped setups** — the thing
+`GAP|20260817|007` asks for and no video source can supply.
+
+Measured base rates (not estimates): **110–135 of 1,572** forex ideas carry entry + stop +
+target (~7–9%). Of 82 idea pages sampled, **22 carried a structured outcome: 17
+`target_reached`, 5 `stop_reached`** — a 3.4:1 skew in *self-marked* outcomes, which is itself
+a quantified reporting-bias figure and an argument for deriving outcomes mechanically.
+
+Shortlist held pending the governance decision, NOT registered: `FXCM`, `VantageMarkets`,
+`EliteTradingSignals`, `YenSensei`, `UnitedSignals`.
+
+Two findings worth keeping even if the answer is no:
+- **`EliteTradingSignals` and `UnitedSignals` state position sizing** (`Suggested risk: 1%`,
+  `Our Risk - 1%`) in structured form — the exact fact class `GAP|20260727|003` is blocked on.
+- **`YenSensei` states a setup evaluated and DECLINED with the rule-based reason**
+  (*"Selling without confirmation is not considered, as the technical trend remains
+  bullish"*). N-10 records that no such statement exists anywhere in ALEX_G's material.
+
+**UNRESOLVED, and it must not be assumed away:** FXCM and VantageMarkets publish in a
+near-identical analytical lexicon with byte-similar boilerplate but name *different* providers
+(TFA Global Pte Ltd vs Everest Fortune Group). Whether they are one analyst under two brands is
+**UNKNOWN**. Treating them as independent would double-count the same calls.
+
+### N-15.3 — Other publisher AI-agent exclusions
+
+| Host | Directive | Verified |
+|---|---|---|
+| `elitetrader.com` | `ClaudeBot → Disallow: /`, plus `Content-Signal: ai-train=no` | yes, re-verified |
+| `forexlive.com` | reported as `ClaudeBot`/`anthropic-ai`/`Claude-Web → Disallow: /` | **NOT reproduced** — robots.txt returned empty on re-check. Treat as UNCONFIRMED and re-verify before relying on it either way. |
+
+### N-15.4 — NETWORK EGRESS, a class distinct from ACCESS_BLOCKED
+
+DNS resolves but TCP times out (curl exit 28) from this environment for: `t.me`,
+`www.fxblue.com`, `www.fxstat.com`, `www.tradervue.com`, `www.actionforex.com`,
+`tapi.fxbrokersignals.com`, `fxsignals.fxleaders.de`.
+
+**This is an environment constraint, not a publisher refusal**, and is logged separately
+because a different network might succeed. Two of these are high value and deserve one
+re-check rather than being written off:
+
+- **`fxleaders.com`** — robots fully permissive, no AI directive. Its page template exposes
+  exactly the wanted schema (`signal.pair`, `.action`, `.status`, `.entryPrice`, `.stopLoss`,
+  `.takeProfit`, `.analyst`), free-tier signals showing all three levels. Killed only because
+  both of its API hosts time out.
+- **`t.me/s/{channel}`** — public Telegram previews carry full timestamped history without
+  login. Untestable here.
+
+### N-15.5 — Rejected on content: the source does not state trades
+
+| Source | Evidence | Class |
+|---|---|---|
+| `fxstreet.com/analysis` | Retrieved in full. `stop loss` 0, `take profit` 0, `entry` 0; `target` 6, `support` 99. States bias + invalidation + target only. **Retained as a weaker bias/level source, rejected as a trade source** — the distinction must not be blurred. Entry would have to be INFERRED as price-at-publication and marked as such. Robots clean, no AI directive (re-verified). | `SOURCE_DOES_NOT_STATE` |
+| `fxempire.com/forecasts` | Same shape as FXStreet, plus a paywalled premium tier. Strictly dominated. | `SOURCE_DOES_NOT_STATE` |
+| `darwinex.com` | Publishes DARWIN quote series and risk metrics, **not trades**. Zero occurrences of open/close price, stop loss, take profit. | `SOURCE_DOES_NOT_STATE` |
+| `etoro.com` portfolios | Portfolio composition and aggregate stats, not per-trade levels. | `SOURCE_DOES_NOT_STATE` |
+| TradingView author pages `/u/{name}/` | Entirely client-rendered: 0 chart URLs, 0 `created_at`, no item JSON. **No server-rendered author-scoped feed exists**, so per-author totals are only ever lower bounds from tag feeds. A cost finding. | `SOURCE_DOES_NOT_STATE` |
+
+### N-15.6 — Rejected on access
+
+`mql5.com/en/signals` is the strongest evidence quality found anywhere — **broker-monitored
+rather than self-reported**, with public per-symbol trade counts, win rate, Sharpe and
+drawdown. The `Trading history` tab is replaced by *"To see trades in realtime, please log in
+or register"*. Per-trade levels are behind login. **Not bypassed.**
+
+Also `ACCESS_BLOCKED`, all 2026-08-19: `zulutrade.com` (API 401), `babypips.com` (403
+Cloudflare, robots.txt itself blocked), `reddit.com` (403), `investing.com`,
+`dailyforex.com`, `signalstart.com`, `collective2.com`, `forexfactory.com` (403/404),
+`public.api.bsky.app` (403). `championship.mql5.com` archive redirects to marketing — gone.
+
+### N-15.7 — A constraint on ANY published-idea source, if one is ever authorised
+
+A published idea is **a stated plan, not an executed trade**. No broker statement or verified
+record exists for any author found — the same genuine absence as TJR and ALEX_G. Any
+observation minted from one must record that it is not an execution claim, and **survivorship
+is unbounded**: authors may silently delete losing ideas, which is invisible from outside and
+would corrupt any win rate computed from marked outcomes.
