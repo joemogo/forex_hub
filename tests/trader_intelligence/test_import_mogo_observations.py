@@ -1422,3 +1422,181 @@ class TestCaptureBasisMappingIsInjective(unittest.TestCase):
         self.assertEqual(len(values), len(set(values)),
                          "two capture bases map to one sourceType: %r"
                          % imp.CAPTURE_BASIS_SOURCE_TYPE)
+
+
+class TestObservationIdentityIsIndependentOfFileOrdering(unittest.TestCase):
+    """B-29. Sequences are assigned in CONTENT order, not file-discovery order.
+
+    The mechanism was already bounded -- contentHash-keyed dedup, counters
+    continuing from the recorded maximum, and write_observation refusing to
+    overwrite -- so no CITED identity could ever move. What was unguarded was which
+    sequence two same-date pending packages received: reversing the package glob
+    passed the entire suite before these existed.
+    """
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_obsid_")
+        self.pkg_dir = os.path.join(self.root, "packages")
+        self.obs_dir = os.path.join(self.root, "observations")
+        self.src_dir = os.path.join(self.root, "sources")
+        for d in (self.pkg_dir, self.obs_dir, self.src_dir):
+            os.makedirs(d)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def package(self, tag, created="2026-08-19T00:00:00.000Z", basis="LIVE_CLOSE"):
+        return {"packageId": "PKG|s|20260819|1", "sourceTradeId": "AGT|X|" + tag,
+                "captureBasis": basis, "contentHash": "hash-" + tag,
+                "createdAt": created, "identity": {"strategyId": "alex_g_sr_v1"},
+                "objects": {"positions": [{"instrument": "GBP_USD", "direction": "buy",
+                                            "entryPrice": 1.0, "originalStop": 0.99,
+                                            "target": 1.02, "riskAmount": 100.0,
+                                            "balanceBefore": 10000.0}],
+                             "outcomes": [{"exitPrice": 0.99, "pnl": -100.0,
+                                            "exitReasonCode": "Loss", "realizedR": -1.0,
+                                            "exitTimestamp": "2026-08-19T01:00:00.000Z",
+                                            "balanceAfter": 9900.0}]}}
+
+    def write_capture(self, name, tags, **kw):
+        with open(os.path.join(self.pkg_dir, name), "w", encoding="utf-8") as handle:
+            json.dump([self.package(t, **kw) for t in tags], handle)
+
+    def convert(self):
+        records, skipped, _sources = imp.convert_all(
+            package_glob=os.path.join(self.pkg_dir, "*.json"), now=self.NOW,
+            observations_dir=self.obs_dir, sources_dir=self.src_dir)
+        return {r["sourceContentHash"]: r["observationId"] for r in records}, skipped
+
+    def convert_and_record(self):
+        """Convert, then PERSIST -- which is what a real --write run does.
+
+        Without persisting, every run re-mints the whole corpus from scratch, so a
+        test can appear to show renumbering that `--write` can never produce. The
+        invariant that matters is that a RECORDED identity never moves.
+        """
+        mapping, skipped = self.convert()
+        for content_hash, observation_id in mapping.items():
+            name = observation_id.replace("|", "_") + ".json"
+            with open(os.path.join(self.obs_dir, name), "w", encoding="utf-8") as handle:
+                json.dump({"observationId": observation_id,
+                           "sourceContentHash": content_hash,
+                           "sourceId": "EVSRC|MOGO|20260819|001"}, handle)
+        return mapping, skipped
+
+    # ---- ordering attacks -------------------------------------------------
+
+    def test_reordering_files_changes_no_identity(self):
+        """Renaming files to invert sort order must change nothing."""
+        self.write_capture("A-PACKAGES.json", ["a"])
+        self.write_capture("B-PACKAGES.json", ["b"])
+        first, _ = self.convert()
+        os.rename(os.path.join(self.pkg_dir, "A-PACKAGES.json"),
+                  os.path.join(self.pkg_dir, "Z-PACKAGES.json"))
+        second, _ = self.convert()
+        self.assertEqual(first, second, "file order changed an observation identity")
+
+    def test_inserting_a_file_that_sorts_first_moves_no_RECORDED_identity(self):
+        self.write_capture("M-PACKAGES.json", ["m"])
+        self.write_capture("N-PACKAGES.json", ["n"])
+        before, _ = self.convert_and_record()
+        self.write_capture("A-PACKAGES.json", ["a"])
+        after, _ = self.convert()
+        after = dict(before, **after)
+        for content_hash, observation_id in before.items():
+            self.assertEqual(after[content_hash], observation_id,
+                             "inserting a file moved %s" % content_hash)
+
+    def test_deleting_a_file_moves_no_RECORDED_identity(self):
+        self.write_capture("A-PACKAGES.json", ["a"])
+        self.write_capture("M-PACKAGES.json", ["m"])
+        before, _ = self.convert_and_record()
+        os.remove(os.path.join(self.pkg_dir, "A-PACKAGES.json"))
+        after, _ = self.convert()
+        # Everything was already recorded, so a re-run must convert nothing at all.
+        self.assertEqual(after, {}, "a recorded observation was re-minted")
+        recorded = {json.load(open(os.path.join(self.obs_dir, n)))["observationId"]
+                    for n in os.listdir(self.obs_dir)}
+        self.assertEqual(recorded, set(before.values()),
+                         "a recorded identity changed when a file was deleted")
+
+    def test_splitting_the_same_packages_across_different_files_changes_nothing(self):
+        """Same content, different file layout."""
+        self.write_capture("ONE-PACKAGES.json", ["a", "b", "c"])
+        together, _ = self.convert()
+        os.remove(os.path.join(self.pkg_dir, "ONE-PACKAGES.json"))
+        self.write_capture("X-PACKAGES.json", ["c"])
+        self.write_capture("Y-PACKAGES.json", ["a"])
+        self.write_capture("Z-PACKAGES.json", ["b"])
+        apart, _ = self.convert()
+        self.assertEqual(together, apart)
+
+    # ---- identity and dedup ----------------------------------------------
+
+    def test_identical_content_in_two_files_yields_one_observation(self):
+        self.write_capture("A-PACKAGES.json", ["dup"])
+        self.write_capture("B-PACKAGES.json", ["dup"])
+        records, skipped = self.convert()
+        self.assertEqual(len(records), 1)
+        self.assertTrue(any(s["reason"].startswith("DUPLICATE_CONTENT_HASH")
+                            for s in skipped),
+                        "one package's content was minted twice: %r" % skipped)
+
+    def test_same_content_hash_different_source_file_is_still_one_observation(self):
+        self.write_capture("A-PACKAGES.json", ["same"])
+        self.write_capture("B-PACKAGES.json", ["same"])
+        records, _ = self.convert()
+        self.assertEqual(len(set(records.values())), 1)
+
+    def test_every_identity_is_unique(self):
+        self.write_capture("A-PACKAGES.json", ["a", "b", "c", "d"])
+        records, _ = self.convert()
+        self.assertEqual(len(set(records.values())), len(records))
+
+    # ---- sequence boundaries ---------------------------------------------
+
+    def test_sequences_pass_999_without_collision_or_truncation(self):
+        prior = {}
+        for n in range(1, 1002):
+            prior["h%04d" % n] = "TOBS|MOGO|20260819|%03d" % n
+        with open(os.path.join(self.obs_dir, "seed.json"), "w", encoding="utf-8") as h:
+            json.dump({"observationId": "TOBS|MOGO|20260819|1001",
+                       "sourceContentHash": "h1001", "sourceId": "EVSRC|MOGO|1"}, h)
+        self.write_capture("A-PACKAGES.json", ["past999"])
+        records, _ = self.convert()
+        new_id = list(records.values())[0]
+        self.assertEqual(new_id, "TOBS|MOGO|20260819|1002",
+                         "the sequence did not continue past 999 correctly")
+
+    # ---- population isolation --------------------------------------------
+
+    def test_a_reconstructed_package_does_not_renumber_forward_ones(self):
+        self.write_capture("A-PACKAGES.json", ["fwd1"])
+        self.write_capture("B-PACKAGES.json", ["fwd2"])
+        before, _ = self.convert()
+        self.write_capture("AA-PACKAGES.json", ["recon"], basis="HISTORICAL_BACKFILL")
+        after, _ = self.convert()
+        for content_hash, observation_id in before.items():
+            self.assertEqual(after[content_hash], observation_id,
+                             "a reconstructed package renumbered forward evidence")
+
+    # ---- idempotence / retry ---------------------------------------------
+
+    def test_repeated_conversion_is_byte_identical(self):
+        self.write_capture("A-PACKAGES.json", ["a", "b"])
+        self.assertEqual(self.convert()[0], self.convert()[0])
+
+    def test_an_already_recorded_observation_is_never_re_minted(self):
+        self.write_capture("A-PACKAGES.json", ["a"])
+        records, _ = self.convert()
+        content_hash, observation_id = list(records.items())[0]
+        with open(os.path.join(self.obs_dir, "rec.json"), "w", encoding="utf-8") as h:
+            json.dump({"observationId": observation_id,
+                       "sourceContentHash": content_hash, "sourceId": "EVSRC|MOGO|1"}, h)
+        self.write_capture("B-PACKAGES.json", ["b"])
+        again, _ = self.convert()
+        self.assertNotIn(content_hash, again, "an already-recorded package was re-minted")
+        self.assertNotIn(observation_id, set(again.values()),
+                         "a recorded identity was reissued to different content")

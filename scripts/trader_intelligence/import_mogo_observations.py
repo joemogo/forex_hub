@@ -656,7 +656,7 @@ def convert_all(package_glob=None, now=None, skip_imported=True,
     now = now or datetime.datetime(2026, 1, 1)
     sources = build_sources(now, package_glob, sources_dir=sources_dir,
                             observations_dir=observations_dir)
-    records, skipped, seen = [], [], set()
+    records, skipped, seen, seen_hashes = [], [], set(), set()
     imported = already_imported(observations_dir) if skip_imported else {}
     # Continue each date's sequence from what is already recorded, so a second run
     # appends rather than colliding with -- or renumbering -- existing records.
@@ -665,6 +665,25 @@ def convert_all(package_glob=None, now=None, skip_imported=True,
         parts = observation_id.split("|")
         if len(parts) == 4 and parts[3].isdigit():
             counters[parts[2]] = max(counters.get(parts[2], 0), int(parts[3]))
+    # B-29. Sequences are assigned in CONTENT order, not file-discovery order.
+    #
+    # The mechanism was already bounded -- `imported` is contentHash-keyed so a
+    # recorded observation is never re-minted, each date's counter continues from
+    # the recorded maximum, and write_observation refuses to overwrite -- so no
+    # identity that anything cites could ever move. But WHICH sequence two
+    # same-date pending packages received depended on the order their files
+    # happened to be globbed, and reversing that order passed the entire suite.
+    #
+    # Migrating the id format was considered and REJECTED: `observationId` is
+    # embedded in 259 preserved records and cited across the corpus, so a
+    # content-derived id would mean renaming preserved evidence to make a
+    # migration convenient. Sorting the pending set by a key the PACKAGE carries
+    # removes the ordering dependence without touching a single recorded id.
+    #
+    # (createdAt, contentHash) is a total order: contentHash is unique per package
+    # -- it is the corpus-wide identity used for deduplication everywhere else --
+    # so the sort is deterministic even when timestamps collide.
+    pending = []
     for path in sorted(globmod.glob(package_glob or PACKAGE_GLOB)):
         rel = os.path.relpath(path, REPO_ROOT)
         with open(path, "r", encoding="utf-8") as handle:
@@ -672,15 +691,36 @@ def convert_all(package_glob=None, now=None, skip_imported=True,
         for package in packages:
             if package.get("contentHash") in imported:
                 continue          # already recorded; never re-minted, never rewritten
+            pending.append((package.get("createdAt") or "",
+                            package.get("contentHash") or "", rel, package))
+
+    for _created, _hash, rel, package in sorted(pending, key=lambda x: (x[0], x[1])):
             source = sources.get((rel, package.get("captureBasis")))
             record, reason = observation_from_package(package, now, counters, source)
             if record is None:
-                skipped.append({"file": os.path.basename(path),
+                skipped.append({"file": os.path.basename(rel),
                                 "packageId": package.get("packageId"),
                                 "reason": reason})
                 continue
+            # WITHIN-RUN dedup on contentHash, not just on the assigned id.
+            #
+            # `imported` catches a package already RECORDED, and `seen` catches an id
+            # collision -- but two packages carrying the SAME contentHash in one run
+            # receive DIFFERENT sequence numbers, so neither check fired and BOTH were
+            # minted: one package's content became two observations. That is the
+            # duplicate-mint defect which already reached the live corpus once, via two
+            # capture files holding one package. It was fixed in the pipeline's novelty
+            # check; the importer -- the authoritative gate -- still allowed it.
+            content_hash = record.get("sourceContentHash")
+            if content_hash and content_hash in seen_hashes:
+                skipped.append({"file": os.path.basename(rel),
+                                "packageId": package.get("packageId"),
+                                "reason": "DUPLICATE_CONTENT_HASH|%s" % content_hash})
+                continue
+            if content_hash:
+                seen_hashes.add(content_hash)
             if record["observationId"] in seen:
-                skipped.append({"file": os.path.basename(path),
+                skipped.append({"file": os.path.basename(rel),
                                 "packageId": package.get("packageId"),
                                 "reason": "DUPLICATE_OBSERVATION_ID|%s"
                                           % record["observationId"]})
