@@ -1,0 +1,960 @@
+{
+  "adjudicates": false,
+  "assessableOnContent": 0,
+  "bindingConstraint": "ACQUISITION -- 58 of 58 candidates hold no acquired content, so reconstructability is UNKNOWN for them and cannot rank them. Analysis effort cannot change this; only obtaining content can.",
+  "byTrader": {
+    "(unattributed)": {
+      "UNKNOWN_CONTENT_NOT_ACQUIRED": 3
+    },
+    "ALEX_G": {
+      "UNKNOWN_CONTENT_NOT_ACQUIRED": 21
+    },
+    "RAYNER_TEO": {
+      "UNKNOWN_CONTENT_NOT_ACQUIRED": 7
+    },
+    "TJR": {
+      "UNKNOWN_CONTENT_NOT_ACQUIRED": 27
+    }
+  },
+  "byVerdict": {
+    "UNKNOWN_CONTENT_NOT_ACQUIRED": 58
+  },
+  "candidates": 58,
+  "generated": true,
+  "lane": "RESEARCH",
+  "mutatesCandidates": false,
+  "rows": [
+    {
+      "candidateId": "CAND|MOGO|20260818|001",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|002",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|003",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|004",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|005",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|006",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|007",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|008",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|009",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|010",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|011",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|012",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|013",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|014",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|015",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|016",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|017",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|018",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|019",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|020",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|021",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|022",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|023",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|024",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|025",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|026",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|027",
+      "claimedTraderId": "TJR",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|028",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|029",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|030",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|031",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|032",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|033",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|034",
+      "claimedTraderId": "RAYNER_TEO",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|035",
+      "claimedTraderId": null,
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|036",
+      "claimedTraderId": null,
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|037",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|038",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|039",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|040",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|041",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|042",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|043",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|044",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|045",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|046",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|047",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|048",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|049",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|050",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|051",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|052",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|053",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|054",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|055",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|056",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|057",
+      "claimedTraderId": "ALEX_G",
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    },
+    {
+      "candidateId": "CAND|MOGO|20260818|058",
+      "claimedTraderId": null,
+      "knownTradeFacts": [],
+      "unknownTradeFacts": [
+        "entry",
+        "stop",
+        "target",
+        "outcome",
+        "direction",
+        "instrument",
+        "timeframe",
+        "timestamp"
+      ],
+      "verdict": "UNKNOWN_CONTENT_NOT_ACQUIRED"
+    }
+  ],
+  "schemaVersion": "mogo.reconstructability.v1",
+  "verdictMeaning": {
+    "UNKNOWN_CONTENT_NOT_ACQUIRED": "The content was never acquired, so reconstructability is UNKNOWN. It is not low -- it is unmeasured, and inferring it from a title would be exactly the mistake this assessment exists to avoid."
+  }
+}
