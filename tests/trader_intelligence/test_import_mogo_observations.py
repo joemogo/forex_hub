@@ -1132,3 +1132,138 @@ class TestAnExplicitUnknownIsNeverOverwritten(unittest.TestCase):
         self.assertIn("marketExitAt", written["unknowns"])
         self.assertNotIn("marketExitAt", {k: v for k, v in written.items()
                                            if k != "unknowns"})
+
+
+class TestSourceIdentityFollowsTheArtifactNotThePosition(unittest.TestCase):
+    """B-27. Ids were assigned by position in a sorted glob, so inserting or
+    deleting any capture file shifted every id after it; write_sources then
+    correctly refused to repoint a cited source and the whole import was blocked.
+    That happened twice in one session -- once removing a duplicate artifact, once
+    restoring it.
+    """
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_srcid_")
+        self.pkg_dir = os.path.join(self.root, "packages")
+        self.src_dir = os.path.join(self.root, "sources")
+        os.makedirs(self.pkg_dir)
+        os.makedirs(self.src_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write_capture(self, name, trade_id):
+        package = {"packageId": "PKG|s|20260819|1", "sourceTradeId": trade_id,
+                   "captureBasis": "LIVE_CLOSE", "contentHash": "h-" + trade_id,
+                   "identity": {"strategyId": "alex_g_sr_v1"},
+                   "objects": {"positions": [{"instrument": "GBP_USD"}],
+                                "outcomes": [{}]}}
+        with open(os.path.join(self.pkg_dir, name), "w", encoding="utf-8") as handle:
+            json.dump([package], handle)
+
+    def build(self):
+        return imp.build_sources(self.NOW,
+                                  package_glob=os.path.join(self.pkg_dir, "*.json"),
+                                  sources_dir=self.src_dir)
+
+    def persist(self, sources):
+        imp.write_sources(sources, sources_dir=self.src_dir)
+
+    def ids_by_path(self, sources):
+        return {key[0]: value["sourceId"] for key, value in sources.items()}
+
+    def test_inserting_a_file_that_sorts_FIRST_moves_no_existing_identity(self):
+        self.write_capture("B-PACKAGES.json", "T-B")
+        self.write_capture("C-PACKAGES.json", "T-C")
+        before = self.ids_by_path(self.build())
+        self.persist(self.build())
+
+        self.write_capture("A-PACKAGES.json", "T-A")   # sorts before both
+        after = self.ids_by_path(self.build())
+
+        for path, source_id in before.items():
+            self.assertEqual(after[path], source_id,
+                             "%s changed identity because a file was inserted "
+                             "before it" % path)
+        new = set(after) - set(before)
+        self.assertEqual(len(new), 1)
+        self.assertNotIn(after[new.pop()], set(before.values()),
+                         "the new artifact reused an existing id")
+
+    def test_removing_a_file_moves_no_other_identity(self):
+        for name, trade in (("A-PACKAGES.json", "T-A"), ("B-PACKAGES.json", "T-B"),
+                            ("C-PACKAGES.json", "T-C")):
+            self.write_capture(name, trade)
+        before = self.ids_by_path(self.build())
+        self.persist(self.build())
+
+        os.remove(os.path.join(self.pkg_dir, "A-PACKAGES.json"))
+        after = self.ids_by_path(self.build())
+
+        for path, source_id in after.items():
+            self.assertEqual(source_id, before[path],
+                             "%s changed identity because another file was "
+                             "removed" % path)
+
+    def test_a_removed_file_can_be_restored_without_blocking_the_import(self):
+        """The exact sequence that blocked the pipeline twice."""
+        for name, trade in (("A-PACKAGES.json", "T-A"), ("B-PACKAGES.json", "T-B")):
+            self.write_capture(name, trade)
+        self.persist(self.build())
+        original = self.ids_by_path(self.build())
+
+        os.remove(os.path.join(self.pkg_dir, "A-PACKAGES.json"))
+        self.persist(self.build())            # must not refuse
+        self.write_capture("A-PACKAGES.json", "T-A")
+        self.persist(self.build())            # must not refuse either
+
+        self.assertEqual(self.ids_by_path(self.build()), original,
+                         "identities did not survive a remove/restore cycle")
+
+    def test_an_existing_recorded_source_is_reused_whatever_scheme_minted_it(self):
+        """Backward compatibility. A source recorded under the old positional
+        scheme keeps its id -- observations already cite it, and rewriting it would
+        silently reinterpret preserved evidence."""
+        self.write_capture("B-PACKAGES.json", "T-B")
+        built = self.build()
+        artifact = list(built.values())[0]
+        legacy = dict(artifact)
+        legacy["sourceId"] = "EVSRC|MOGO|20260101|042"
+        with open(os.path.join(self.src_dir,
+                               "EVSRC_MOGO_20260101_042.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(legacy, handle)
+
+        rebuilt = list(self.build().values())[0]
+        self.assertEqual(rebuilt["sourceId"], "EVSRC|MOGO|20260101|042")
+
+    def test_a_new_artifact_never_reuses_a_sequence_already_on_disk(self):
+        self.write_capture("A-PACKAGES.json", "T-A")
+        self.persist(self.build())
+        first = list(self.build().values())[0]["sourceId"]
+
+        self.write_capture("B-PACKAGES.json", "T-B")
+        ids = {v["sourceId"] for v in self.build().values()}
+        self.assertIn(first, ids)
+        self.assertEqual(len(ids), 2, "the second artifact collided with the first")
+
+    def test_two_new_artifacts_in_one_run_get_distinct_ids(self):
+        self.write_capture("A-PACKAGES.json", "T-A")
+        self.write_capture("B-PACKAGES.json", "T-B")
+        ids = [v["sourceId"] for v in self.build().values()]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_the_real_corpus_mints_nothing_new(self):
+        """Against the live corpus: every artifact already has a recorded id, so
+        the migration changes no identity that any observation cites."""
+        built = imp.build_sources(self.NOW)
+        recorded = set()
+        for path in glob.glob(os.path.join(
+                REPO_ROOT, "docs", "trader-intelligence", "evidence", "sources", "*.json")):
+            with open(path, encoding="utf-8") as handle:
+                recorded.add(json.load(handle)["sourceId"])
+        minted = {v["sourceId"] for v in built.values()} - recorded
+        self.assertEqual(minted, set(),
+                         "the migration would mint new ids for existing artifacts")

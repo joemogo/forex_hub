@@ -36,6 +36,7 @@ import glob as globmod
 import hashlib
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -120,7 +121,45 @@ def _file_content_hash(path):
         return hashlib.sha256(handle.read()).hexdigest()
 
 
-def build_sources(now, package_glob=None):
+def existing_sources_by_artifact(sources_dir=None):
+    """Recorded sources, keyed by the ARTIFACT they describe.
+
+    The key is (repositoryPath, sourceType, contentHash) -- exactly the triple
+    write_sources already verifies before reusing an id. Reading it back here is
+    what lets an id follow its artifact instead of its position.
+    """
+    target = sources_dir or os.path.join(to.EVIDENCE_ROOT, "sources")
+    out = {}
+    for path in sorted(globmod.glob(os.path.join(target, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                record = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        key = (record.get("repositoryPath"), record.get("sourceType"),
+               record.get("contentHash"))
+        if all(k is not None for k in key) and record.get("sourceId"):
+            # First writer wins. Two records describing one artifact is B-26's
+            # orphan-accumulation symptom; picking the lowest id keeps the choice
+            # deterministic rather than filesystem-order dependent.
+            if key not in out or record["sourceId"] < out[key]:
+                out[key] = record["sourceId"]
+    return out
+
+
+def _highest_recorded_seq(sources_dir, date_str):
+    """The largest sequence already used on `date_str`, across recorded sources."""
+    target = sources_dir or os.path.join(to.EVIDENCE_ROOT, "sources")
+    pattern = re.compile(r"^EVSRC_[A-Z0-9_]+_%s_(\d{3,})$" % re.escape(date_str))
+    highest = 0
+    for path in globmod.glob(os.path.join(target, "*.json")):
+        match = pattern.match(os.path.splitext(os.path.basename(path))[0])
+        if match:
+            highest = max(highest, int(match.group(1)))
+    return highest
+
+
+def build_sources(now, package_glob=None, sources_dir=None):
     """One EvidenceSource per (package file, captureBasis). Returns a dict.
 
     Per FILE and captureBasis, not per file alone: C1-01-GBP_USD-PACKAGES.json holds
@@ -133,7 +172,21 @@ def build_sources(now, package_glob=None):
 
     Writes nothing. The caller decides whether these are persisted.
     """
-    sources, seq = {}, {}
+    # B-27. Ids used to be assigned by POSITION in the sorted glob, so inserting or
+    # deleting any capture file shifted every id after it -- write_sources then
+    # correctly refused to repoint a source that observations already cite, and the
+    # whole import was blocked until the file layout was restored. That happened
+    # twice in one session, from removing a duplicate artifact and from restoring it.
+    #
+    # An id now follows its ARTIFACT. A source already recorded for this exact
+    # (path, type, contentHash) keeps the id it was given, whatever scheme minted
+    # it, so no existing record changes and no observation's citation moves. Only a
+    # genuinely new artifact is allocated an id, and it takes the next sequence not
+    # already used that day rather than a positional one.
+    recorded = existing_sources_by_artifact(sources_dir)
+    date_str = now.strftime("%Y%m%d")
+    next_seq = _highest_recorded_seq(sources_dir, date_str) + 1
+    sources = {}
     for path in sorted(globmod.glob(package_glob or PACKAGE_GLOB)):
         with open(path, "r", encoding="utf-8") as handle:
             packages = json.load(handle)
@@ -143,9 +196,10 @@ def build_sources(now, package_glob=None):
             source_type = CAPTURE_BASIS_SOURCE_TYPE.get(basis)
             if source_type is None:
                 continue
-            date_str = now.strftime("%Y%m%d")
-            seq[date_str] = seq.get(date_str, 0) + 1
-            source_id = "EVSRC|MOGO|%s|%03d" % (date_str, seq[date_str])
+            source_id = recorded.get((rel, source_type, content_hash))
+            if source_id is None:
+                source_id = "EVSRC|MOGO|%s|%03d" % (date_str, next_seq)
+                next_seq += 1
             stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
             # Derived from the packages in THIS group, never assumed. The single
             # LIVE_CLOSE package is `current_strategy`, not `alex_g_sr_v1`, so a
@@ -545,13 +599,13 @@ def _assert_widening_only(observation_id, before, after):
 
 
 def convert_all(package_glob=None, now=None, skip_imported=True,
-                observations_dir=None):
+                observations_dir=None, sources_dir=None):
     """Read every package file and map it. Writes nothing.
 
     Returns (records, skipped, sources).
     """
     now = now or datetime.datetime(2026, 1, 1)
-    sources = build_sources(now, package_glob)
+    sources = build_sources(now, package_glob, sources_dir=sources_dir)
     records, skipped, seen = [], [], set()
     imported = already_imported(observations_dir) if skip_imported else {}
     # Continue each date's sequence from what is already recorded, so a second run
