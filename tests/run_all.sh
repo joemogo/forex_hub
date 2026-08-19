@@ -191,6 +191,26 @@ echo ""
 # The auto-mode governance block lives in the USER settings file and its sections REPLACE the
 # shipped defaults rather than merging, so every rule a newer Claude Code ships is silently
 # absent until the generator is re-run. Nothing else would ever say so.
+# B-32. The observation<->graph reconciliation was a diagnostic an operator runs by
+# hand and CI never did -- so the one check that compares the PRESERVED records
+# against the DERIVED graph could drift indefinitely between manual runs. It is
+# read-only, writes nothing, and fails closed on an empty corpus, so it is safe to
+# run here and meaningless to skip.
+echo "--- Observation <-> graph reconciliation ---"
+if ! python3 scripts/trader_intelligence/observation_graph_reconcile.py; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
+# The evidence corpus's own integrity report. Its CLI now exits nonzero on an ERROR
+# (it gated on FATAL only, so population rebindings exited 0), which is what makes it
+# usable as a gate at all.
+echo "--- Evidence corpus integrity ---"
+if ! python3 scripts/trader_intelligence/validate_evidence.py; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Auto-mode governance config drift check ---"
 if ! command -v claude >/dev/null 2>&1; then
   echo "SKIPPED: the 'claude' CLI is not on PATH, so the shipped defaults cannot be read."
