@@ -683,3 +683,78 @@ constraint is not one obstacle but three distinct ones, which matters because th
 different remedies: an exclusion may be lifted by an operator-supplied artifact (HAQ-1), a bot
 challenge cannot be, and a paywall is a commercial question rather than a technical one.
 
+---
+
+## N-19 — Verified track-record platforms: the highest-value class, and a FOURTH obstacle
+
+N-18.1 identified executed account histories as the most valuable target available anywhere,
+because every other source in this programme supplies stated plans and no author found has a
+verified execution record (N-15.7). This sweep went after that class directly: the copy-trading
+and signal-marketplace platforms whose entire product is a published, broker-verified track
+record.
+
+**Swept 2026-08-19:** `darwinex.com`, `zulutrade.com`, `collective2.com`, `signalstart.com`,
+`etoro.com`, `fxblue.com`, `fxstat.com`, `tradervue.com`.
+
+**Not one of them carries an Anthropic exclusion.** This class is, on the evidence, the most
+robots-permissive encountered so far — SignalStart's `robots.txt` has zero `Disallow` lines,
+Collective2's has four. The publisher-refusal problem that killed TradingView, fxleaders and
+forexlive simply is not present here.
+
+They fail anyway, and mostly for a reason not seen before.
+
+### N-19.1 — The fourth obstacle: public data that is not in the page
+
+`zulutrade.com/traders` returns HTTP 200 and 88KB, of which **5.4KB is visible text and none of
+it is trader data** — the leaderboard is client-rendered. `signalstart.com` is the same shape:
+71KB, 4.7KB of visible text, and not one internal path in an `href` because navigation is
+JS-driven.
+
+This is **not a refusal**. Nothing is being withheld, no protection is being enforced, and
+robots explicitly permits the paths. The data is public; it is simply not in the document that
+is served. It therefore belongs in neither the exclusion class nor the server-refusal class,
+and conflating it with them would misstate what would fix it.
+
+`api.zulutrade.com` returns the web application's own HTML rather than an API, and its
+`robots.txt` 502s — there is no documented public API to be found this way.
+`darwinex.com/api` returns **401**, and `robots.txt` disallows `/api` besides, so it is closed
+on both counts.
+
+**Deliberately not attempted:** the internal XHR endpoints these front-ends call. They are
+undocumented interfaces intended for the site's own client, and reaching for them because the
+documented surface yields nothing is the same move as substituting a User-Agent — technically
+available, and against the intent of `DECISION|MOGO|20260819|007`. If a documented public API
+exists for any of these platforms, that is the legitimate route and it has not been found yet.
+
+### N-19.2 — Collective2: server refusal
+
+HTTP 403 on `/strategies`, `/api-docs` and `api.collective2.com` alike, despite a permissive
+`robots.txt`. Same class as ForexFactory (N-18.1). Its robots also disallows `/strategy/csv/*`,
+which is the bulk-export path — so even reachable, the CSV route is closed by the publisher's
+own stated wishes and is not to be used.
+
+### N-19.3 — Still network-egress blocked, unchanged
+
+`fxblue.com`, `fxstat.com`, `tradervue.com` — TCP still fails from this environment, consistent
+with N-15.4. These are trade-journal and account-analytics services, so they remain high value
+whenever the environment changes. No further retry warranted until it does.
+
+### N-19.4 — The standing table, corrected to four obstacles
+
+| obstacle | sources | what would lift it |
+|---|---|---|
+| publisher AI-agent exclusion | TradingView, fxleaders, forexlive/investinglive | operator-supplied artifact, authorized API, permitted export (HAQ-1, HAQ-2) |
+| server refusal / bot challenge | ForexFactory, Collective2, myfxbook, babypips, dailyfx | nothing autonomous; operator-supplied export only (HAQ-3) |
+| gated / paywalled content | investing.com | a commercial question, not a technical one |
+| **client-rendered, no documented API** | **ZuluTrade, SignalStart** | **a documented public API, or an operator-supplied export** |
+| network egress (environment) | t.me, fxblue, fxstat, tradervue | a different network |
+| acquired and measured — fails on content | FXStreet (no entry level, N-17) | nothing; the source does not carry it |
+
+**The conclusion has not moved, and it has sharpened.** The binding constraint is still
+acquisition, as `reconstructability.py` reports for all 58 candidates. But the most valuable
+class available is blocked by *rendering*, not by permission — which is the least adversarial
+obstacle of the five and the one most likely to have a legitimate solution. That makes a
+documented public API for a verified-track-record platform the single highest-value thing to
+look for next, and the reason HAQ-3's remedy is an operator-supplied export rather than
+anything autonomous.
+

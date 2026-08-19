@@ -62,13 +62,14 @@
     "alex_g_sr_v1|RECONSTRUCTED": 9,
     "current_strategy|FORWARD": 2
   },
-  "corpusFingerprint": "6b61f6f8a49087b0516a8426e4d63816a86ec3a3cfc07de099593eaeb54f4744",
+  "corpusFingerprint": "c7a53309a3d697f1065cd1456b2830e31da17eb05cf2aad48ad768f13cabb433",
   "fidelity": {
     "alex_g_sr_v1": {
       "agreements": [
         "RISK_SIZING_AGREES"
       ],
       "findings": [
+        "PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT",
         "REPLAY_IDEALIZES_EXITS",
         "REPLAY_IS_BAR_QUANTIZED"
       ],

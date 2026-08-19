@@ -1,0 +1,35 @@
+{
+  "adjudicates": false,
+  "assimilatedAt": "2026-08-19T14:36:18Z",
+  "changedState": {
+    "fidelity.alex_g_sr_v1.findings": {
+      "after": [
+        "PRESERVED_SUBSET_IS_NOT_THE_ACCOUNT",
+        "REPLAY_IDEALIZES_EXITS",
+        "REPLAY_IS_BAR_QUANTIZED"
+      ],
+      "before": [
+        "REPLAY_IDEALIZES_EXITS",
+        "REPLAY_IS_BAR_QUANTIZED"
+      ]
+    }
+  },
+  "corpusChanged": true,
+  "corpusFingerprintAfter": "c7a53309a3d697f1065cd1456b2830e31da17eb05cf2aad48ad768f13cabb433",
+  "corpusFingerprintBefore": "6b61f6f8a49087b0516a8426e4d63816a86ec3a3cfc07de099593eaeb54f4744",
+  "generated": true,
+  "lane": "RESEARCH",
+  "learningKinds": [
+    "G_GENERATES_CANDIDATE_QUESTION",
+    "F_LEAVES_HYPOTHESES_UNCHANGED"
+  ],
+  "legitimateConclusion": "Forward observations: 29. No hypothesis changed verdict: the corpus still holds no trade evidence for any human trader, which is what blocks them.",
+  "nonConclusion": [
+    "Forward statistics describe the PRESERVED subset, not the account: the oldest closes minted no evidence package (backlog B-22).",
+    "Nothing here is evidence about any human trader. `alex_g_sr_v1` is MOGO's implementation of a published method, not the person who published it.",
+    "A change in descriptive statistics is not a finding about strategy performance; no strategy rule is altered by any observation."
+  ],
+  "observationTotalAfter": 259,
+  "observationTotalBefore": 259,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}
