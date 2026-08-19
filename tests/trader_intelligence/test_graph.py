@@ -846,22 +846,40 @@ class TestAdversarialInputs(TradeObservationCase):
         self.assertEqual(len(self.derived_edges(edges)), 5)
         self.assertEqual([f for f in findings if f["severity"] in ("ERROR", "FATAL")], [])
 
-    def test_file_ordering_does_not_change_the_graph(self):
-        # Discovery is a sorted glob; nothing may depend on directory order.
+    def test_discovery_is_sorted_so_the_build_cannot_inherit_directory_order(self):
+        # Asserts the PROPERTY, not two runs of the same code.
+        #
+        # The previous version of this test wrote the same records in a different
+        # sequence and compared the two builds. That could never fail: the build
+        # sorts, so reversing discovery order produced a byte-identical graph and
+        # the mutation survived as an equivalent mutant. It duplicated the
+        # idempotency test while claiming to check something else.
         self.source()
         for i in (3, 1, 2):
             self.observation("TOBS|MOGO|20260819|00%d" % i)
-        n1, e1, _f = self.build()
-        first = ([n["nodeId"] for n in self.obs_nodes(n1)],
-                 sorted(e["edgeId"] for e in self.derived_edges(e1)))
-        # Rewrite the same records in the opposite order.
-        shutil.rmtree(self._evdir("observations"))
-        for i in (2, 1, 3):
-            self.observation("TOBS|MOGO|20260819|00%d" % i)
-        n2, e2, _f2 = self.build()
-        second = ([n["nodeId"] for n in self.obs_nodes(n2)],
-                  sorted(e["edgeId"] for e in self.derived_edges(e2)))
-        self.assertEqual(first, second)
+        found = gc._sorted_glob(self._evdir("observations"), "*.json")
+        self.assertEqual(found, sorted(found),
+                         "discovery must return a sorted listing; unsorted, node "
+                         "identity would depend on filesystem enumeration order")
+        self.assertEqual(len(found), 3)
+
+    def test_node_identity_survives_renaming_the_file_that_carries_it(self):
+        # The real property behind "ordering does not matter": identity and content
+        # come from the RECORD, not from where it happens to live. Only sourceFile,
+        # which exists to say where it was read from, may differ.
+        self.source()
+        self.observation()
+        before = self.obs_nodes(self.build()[0])[0]
+        d = self._evdir("observations")
+        os.rename(os.path.join(d, "TOBS_MOGO_20260819_001.json"),
+                  os.path.join(d, "zzz_renamed.json"))
+        after = self.obs_nodes(self.build()[0])[0]
+        self.assertEqual(before["nodeId"], after["nodeId"])
+        self.assertEqual(before["entityId"], after["entityId"])
+        self.assertEqual(before["contentHash"], after["contentHash"])
+        self.assertNotEqual(before["sourceFile"], after["sourceFile"])
+        self.assertEqual({k: v for k, v in before.items() if k != "sourceFile"},
+                         {k: v for k, v in after.items() if k != "sourceFile"})
 
     def test_a_partial_corpus_builds_without_inventing_the_rest(self):
         # One source, one of its two observations present. The absent one must
@@ -900,12 +918,27 @@ class TestAdversarialInputs(TradeObservationCase):
 
 
 class TestGenuineOrphanDetectionSurvives(TradeObservationCase):
-    """B-32 exists to stop 47 FALSE orphans burying real ones. Proving the real
-    ones still surface is the whole point, so both controls are here."""
+    """B-32 exists to stop FALSE orphans burying real ones. Proving the real ones
+    still surface is the whole point, so both controls are here.
+
+    These call the PRODUCTION check, `validate_graph.check_orphans`. An earlier
+    version of this class reimplemented orphan detection in a local helper, which
+    made every assertion below true of the test's own code and true of nothing
+    else: an independent verifier disarmed the real check by skipping
+    EVIDENCE_SOURCE nodes, live ORPHAN_NODE warnings fell from 31 to 1, and the
+    whole suite still passed. Verifying a parallel approximation of a check is
+    indistinguishable from not verifying it.
+    """
 
     def orphan_ids(self, nodes, edges):
-        touched = {e["fromNodeId"] for e in edges} | {e["toNodeId"] for e in edges}
-        return {n["entityId"] for n in nodes if n["nodeId"] not in touched}
+        """entityIds the PRODUCTION orphan check reports, resolved back from nodeIds."""
+        findings = []
+        validate_graph.check_orphans(nodes, edges, findings)
+        reported = set()
+        for finding in findings:
+            self.assertEqual(finding["category"], "ORPHAN_NODE")
+            reported.update(finding["affectedIds"])
+        return {n["entityId"] for n in nodes if n["nodeId"] in reported}
 
     def test_POSITIVE_CONTROL_a_source_nothing_cites_is_still_an_orphan(self):
         self.source("EVSRC|MOGO|20260819|001")
@@ -925,3 +958,73 @@ class TestGenuineOrphanDetectionSurvives(TradeObservationCase):
         self.observation()
         nodes, edges, _f = self.build()
         self.assertNotIn("TOBS|MOGO|20260819|001", self.orphan_ids(nodes, edges))
+
+
+class TestProductionOrphanCheckItself(unittest.TestCase):
+    """Direct tests of `validate_graph.check_orphans`.
+
+    This exists because of a surviving mutation. Widening its TRADER exemption to
+    `("TRADER", "EVIDENCE_SOURCE")` dropped live ORPHAN_NODE warnings from 31 to 1
+    and the entire suite still passed -- nothing anywhere under tests/ referenced
+    ORPHAN_NODE or check_orphans. The suppressor that B-32 removed the NEED for was
+    itself untested in both directions, so the "30 remaining orphans are genuine"
+    claim rested on a check nothing was watching.
+
+    Built from hand-authored node/edge dicts rather than a corpus copy, so these
+    assert the RULE and cannot rot when the live corpus changes.
+    """
+
+    def node(self, node_type, entity_id):
+        return {"nodeId": gc.make_node_id(node_type, entity_id),
+                "nodeType": node_type, "entityId": entity_id}
+
+    def edge(self, from_node, to_node):
+        return {"edgeId": "EDGE|X|%s|%s" % (from_node["entityId"], to_node["entityId"]),
+                "edgeType": "DERIVED_FROM",
+                "fromNodeId": from_node["nodeId"], "toNodeId": to_node["nodeId"]}
+
+    def orphans(self, nodes, edges):
+        findings = []
+        validate_graph.check_orphans(nodes, edges, findings)
+        return {f["affectedIds"][0] for f in findings if f["category"] == "ORPHAN_NODE"}
+
+    def test_an_uncited_EVIDENCE_SOURCE_is_reported(self):
+        # THE case the surviving mutation silenced.
+        lonely = self.node("EVIDENCE_SOURCE", "EVSRC|MOGO|20260819|001")
+        self.assertIn(lonely["nodeId"], self.orphans([lonely], []))
+
+    def test_a_cited_EVIDENCE_SOURCE_is_NOT_reported(self):
+        # Negative control: the report must be caused by having no edges.
+        src = self.node("EVIDENCE_SOURCE", "EVSRC|MOGO|20260819|001")
+        obs = self.node("TRADE_OBSERVATION", "TOBS|MOGO|20260819|001")
+        self.assertEqual(self.orphans([src, obs], [self.edge(obs, src)]), set())
+
+    def test_an_uncited_TRADE_OBSERVATION_is_reported(self):
+        lonely = self.node("TRADE_OBSERVATION", "TOBS|MOGO|20260819|001")
+        self.assertIn(lonely["nodeId"], self.orphans([lonely], []))
+
+    def test_TRADER_is_the_ONLY_exempt_node_type(self):
+        # The exemption is legitimate -- traders are graph roots -- but it must stay
+        # exactly one node type wide. Widening it is how the check was disarmed, and
+        # a widened exemption looks identical to a clean corpus from the outside.
+        edgeless = [self.node(t, "ID|%s" % t) for t in gc.NODE_TYPES]
+        reported = self.orphans(edgeless, [])
+        exempt = [n["nodeType"] for n in edgeless if n["nodeId"] not in reported]
+        self.assertEqual(exempt, ["TRADER"],
+                         "exactly one node type may be exempt from orphan reporting; "
+                         "any other exemption silently hides real provenance gaps")
+
+    def test_every_orphan_finding_is_a_WARNING_naming_its_node(self):
+        lonely = self.node("EVIDENCE_SOURCE", "EVSRC|MOGO|20260819|001")
+        findings = []
+        validate_graph.check_orphans([lonely], [], findings)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["severity"], "WARNING")
+        self.assertEqual(findings[0]["affectedIds"], [lonely["nodeId"]])
+
+    def test_an_edge_in_EITHER_direction_clears_the_orphan(self):
+        # Orphan means zero edges of ANY kind, incoming or outgoing.
+        a = self.node("EVIDENCE_SOURCE", "EVSRC|MOGO|20260819|001")
+        b = self.node("TRADE_OBSERVATION", "TOBS|MOGO|20260819|001")
+        self.assertEqual(self.orphans([a, b], [self.edge(b, a)]), set())
+        self.assertEqual(self.orphans([a, b], [self.edge(a, b)]), set())

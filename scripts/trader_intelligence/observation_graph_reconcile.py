@@ -31,6 +31,8 @@ REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 
 import graph_common as gc          # noqa: E402
+import validate_evidence as ve     # noqa: E402
+import validate_graph              # noqa: E402
 import trade_observation as to     # noqa: E402
 
 TI_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence")
@@ -140,10 +142,33 @@ def reconcile():
         problems.append("population was copied onto %d node(s); it must stay derived from "
                         "the source's sourceType" % len(leaked))
 
+    # Populations above are a SNAPSHOT, and a snapshot cannot tell you an observation
+    # moved between populations -- the totals simply read differently and nothing
+    # objects. Repointing one replay observation at a paper_trade source shifted
+    # 221/29/9 to 220/30/9 while this script printed RECONCILED. The authoritative
+    # check is the validator's, called here rather than restated.
+    rebinding = []
+    ve.check_observation_population_rebinding(
+        list(observations.values()), list(sources.values()), rebinding, "")
+    report["populationRebindings"] = len(rebinding)
+    if rebinding:
+        problems.append("%d observation(s) no longer point at the source they were MINTED "
+                        "from, which moves them between evidence populations: %s"
+                        % (len(rebinding), [f["entityId"] for f in rebinding][:3]))
+
     # 5. Orphans, split into the two kinds. The FALSE ones are what B-32 removed;
     #    the genuine ones must survive, or the check has been disarmed.
-    touched = {e["fromNodeId"] for e in edges} | {e["toNodeId"] for e in edges}
-    orphan_sources = [n["entityId"] for n in src_nodes if n["nodeId"] not in touched]
+    #
+    # Asks the PRODUCTION check rather than recomputing "nodes with no edges" here.
+    # This script used to reimplement it, and a second implementation of a check is
+    # a second thing that can be right while the real one is wrong: an independent
+    # verifier widened validate_graph's exemption to skip EVIDENCE_SOURCE, live
+    # warnings fell from 31 to 1, and this script still printed RECONCILED.
+    orphan_findings = []
+    validate_graph.check_orphans(nodes, edges, orphan_findings)
+    orphan_node_ids = {f["affectedIds"][0] for f in orphan_findings
+                       if f.get("category") == "ORPHAN_NODE"}
+    orphan_sources = [n["entityId"] for n in src_nodes if n["nodeId"] in orphan_node_ids]
     cited = {rec.get("sourceId") for rec in observations.values()}
     report["orphanSources"] = len(orphan_sources)
     report["orphanSourcesAlsoUncitedByAnyObservation"] = sum(

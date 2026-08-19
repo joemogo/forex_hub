@@ -14,6 +14,7 @@ import argparse
 import glob as globmod
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -117,6 +118,61 @@ def _finding(findings, finding_type, severity, entity_type, entity_id, message, 
 # ---------------------------------------------------------------------------
 # 1. Orphans (ORPHANED_EVIDENCE / ORPHANED_LINK / ORPHANED_CLAIM)
 # ---------------------------------------------------------------------------
+
+def check_observation_population_rebinding(observations, sources, findings, now):
+    """Does an observation still point at the source it was MINTED from?
+
+    Population -- HISTORICAL / FORWARD / RECONSTRUCTED -- is derived from the
+    source's `sourceType` and deliberately never stored on the observation. That
+    keeps one source of truth, and it has a consequence nothing was checking:
+    repointing an observation's `sourceId` at a source of a different type silently
+    MOVES it between populations. A replay trade becomes a forward trade, forward
+    performance statistics absorb simulated fills, and every diagnostic stays green
+    because each one individually is still self-consistent.
+
+    Demonstrated, not hypothesised: repointing one replay observation at a
+    paper_trade source moved populations from 221/29/9 to 220/30/9 while the graph
+    reconciliation printed RECONCILED and this validator reported zero findings.
+
+    The cross-check is the observation's OWN record. The importer stamps
+    `notes: "captureBasis=... sourceType=..."` at mint time, so the record carries
+    what its source was WHEN THE OBSERVATION WAS CREATED -- present on all 259
+    preserved records. If that disagrees with the source's type today, one of them
+    changed after the fact, and which one is not knowable from here.
+
+    ERROR, not WARNING: this is the corpus's most consequential silent failure, and
+    it is reported rather than repaired. Nothing here rewrites `sourceId`, `notes`
+    or any source record -- a mismatch is a contradiction for a human to resolve,
+    not something to normalise away.
+
+    Absent or unparseable `notes` is NOT reported. It is a pre-existing,
+    schema-permitted state, and inventing a mint-time type for a record that never
+    recorded one would be the fabrication this check exists to catch.
+    """
+    by_id = {s["sourceId"]: s for s in sources if s.get("sourceId")}
+    for obs in observations:
+        match = _MINTED_SOURCE_TYPE_RE.search(obs.get("notes") or "")
+        if not match:
+            continue
+        minted = match.group(1)
+        source = by_id.get(obs.get("sourceId"))
+        if source is None:
+            continue          # already reported as a missing reference elsewhere
+        actual = source.get("sourceType")
+        if actual and actual != minted:
+            _finding(findings, "POPULATION_REBINDING", "ERROR", "TRADE_OBSERVATION",
+                      obs.get("observationId"),
+                      "Observation was minted from a %r source but its sourceId now names "
+                      "%s, whose sourceType is %r. Population is derived from sourceType, so "
+                      "this moves the observation between evidence populations."
+                      % (minted, obs.get("sourceId"), actual), now)
+
+
+#: The importer stamps "captureBasis=<basis> sourceType=<type>" into notes at
+#: mint time. That string is the only record of what the source was WHEN the
+#: observation was created, which is what makes the rebinding check possible.
+_MINTED_SOURCE_TYPE_RE = re.compile(r"sourceType=([A-Za-z_]+)")
+
 
 def check_orphans(sources, items, claims, links, findings, now):
     source_ids = {s["sourceId"] for s in sources}
@@ -776,9 +832,11 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     blueprints = _load_dir(os.path.join(evidence_root, "blueprints"), "blueprintId")
     gaps = _load_dir(os.path.join(evidence_root, "gaps"), "gapId")
     hypotheses = _load_dir(os.path.join(evidence_root, "hypotheses"), "hypothesisId")
+    observations = _load_dir(os.path.join(evidence_root, "observations"), "observationId")
 
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
+    check_observation_population_rebinding(observations, sources, findings, now)
     check_duplicate_ids(sources, items, claims, links, contradictions, findings, now, extra=[
         ("TRANSCRIPT_SEGMENT", segments, "segmentId"), ("INTAKE_MANIFEST", intakes, "intakeId"),
         ("MANUAL_ANNOTATION", annotations, "annotationId"), ("EVIDENCE_QUESTION", questions, "questionId"),

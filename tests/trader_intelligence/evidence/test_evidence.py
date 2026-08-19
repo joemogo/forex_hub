@@ -1119,3 +1119,95 @@ class TestSupersededArtifactResolution(unittest.TestCase):
         self.assertEqual(rec["repositoryPath"],
                          "evidence/FWD-20260818T153216Z-PACKAGES.json")
         self.assertEqual(rec["artifactSupersededBy"], "EVSRC|MOGO|20260818|016")
+
+
+class TestPopulationRebindingIsDetected(unittest.TestCase):
+    """An observation must still point at the source it was MINTED from.
+
+    Population (HISTORICAL / FORWARD / RECONSTRUCTED) is derived from the source's
+    sourceType and deliberately never stored on the observation. The consequence
+    nothing was checking: repointing `sourceId` at a source of a different type
+    silently MOVES the observation between populations. Demonstrated on the live
+    corpus -- repointing one replay observation at a paper_trade source shifted
+    221/29/9 to 220/30/9 while this validator reported zero findings, the graph
+    reconciliation printed RECONCILED, and population_fidelity.py said nothing.
+
+    The cross-check is the observation's own `notes`, stamped by the importer at
+    mint time and present on all 259 preserved records.
+
+    Everything below is hand-authored. Reading the live corpus would make these
+    assertions depend on what the running instance happened to preserve.
+    """
+
+    def obs(self, minted_type, source_id="EVSRC|MOGO|20260819|001"):
+        return {"observationId": "TOBS|MOGO|20260819|001", "sourceId": source_id,
+                "notes": "captureBasis=REPLAY_RUN sourceType=%s" % minted_type}
+
+    def src(self, source_type, source_id="EVSRC|MOGO|20260819|001"):
+        return {"sourceId": source_id, "sourceType": source_type}
+
+    def findings_for(self, observations, sources):
+        findings = []
+        ve.check_observation_population_rebinding(observations, sources, findings, FIXED_NOW)
+        return findings
+
+    def test_a_replay_observation_repointed_at_a_paper_trade_source_is_an_ERROR(self):
+        # THE failure mode: HISTORICAL evidence entering the FORWARD population.
+        findings = self.findings_for([self.obs("replay_observation")],
+                                     [self.src("paper_trade")])
+        self.assertEqual([f["findingType"] for f in findings], ["POPULATION_REBINDING"])
+        self.assertEqual(findings[0]["severity"], "ERROR")
+
+    def test_POSITIVE_CONTROL_a_matching_source_type_is_NOT_reported(self):
+        # Without this, a check that flagged everything would pass every case above.
+        self.assertEqual(
+            self.findings_for([self.obs("replay_observation")],
+                              [self.src("replay_observation")]), [])
+
+    def test_every_cross_population_rebinding_is_caught_in_both_directions(self):
+        # All six ordered pairs across the three populations. A check that caught
+        # only "into FORWARD" would leave replay <- forward and every RECONSTRUCTED
+        # crossing silent.
+        types = ["replay_observation", "paper_trade", "journal_entry"]
+        for minted in types:
+            for actual in types:
+                if minted == actual:
+                    continue
+                with self.subTest(minted=minted, actual=actual):
+                    findings = self.findings_for([self.obs(minted)], [self.src(actual)])
+                    self.assertEqual([f["findingType"] for f in findings],
+                                     ["POPULATION_REBINDING"],
+                                     "%s -> %s went undetected" % (minted, actual))
+
+    def test_notes_without_a_sourceType_are_NOT_reported(self):
+        # A record that never stated its mint-time type cannot be checked against
+        # one. Inventing a value here would be the fabrication this guards against.
+        obs = self.obs("replay_observation")
+        obs["notes"] = "captureBasis=REPLAY_RUN"
+        self.assertEqual(self.findings_for([obs], [self.src("paper_trade")]), [])
+
+    def test_a_missing_notes_field_is_NOT_reported(self):
+        obs = self.obs("replay_observation")
+        del obs["notes"]
+        self.assertEqual(self.findings_for([obs], [self.src("paper_trade")]), [])
+
+    def test_an_unresolvable_sourceId_is_left_to_the_reference_checks(self):
+        # Reporting it here too would double-count one defect under two names.
+        self.assertEqual(
+            self.findings_for([self.obs("replay_observation", "EVSRC|MOGO|20260819|999")],
+                              [self.src("paper_trade")]), [])
+
+    def test_the_finding_names_both_types_so_the_direction_is_readable(self):
+        findings = self.findings_for([self.obs("replay_observation")],
+                                     [self.src("paper_trade")])
+        self.assertIn("replay_observation", findings[0]["message"])
+        self.assertIn("paper_trade", findings[0]["message"])
+
+    def test_the_check_reports_and_does_NOT_repair(self):
+        # A mismatch is a contradiction for a human to resolve. Silently rewriting
+        # sourceId or notes to agree would destroy the evidence of the rebinding.
+        obs = self.obs("replay_observation")
+        src = self.src("paper_trade")
+        before = (dict(obs), dict(src))
+        self.findings_for([obs], [src])
+        self.assertEqual((obs, src), before)

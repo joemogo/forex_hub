@@ -44,10 +44,16 @@ NODE_TYPES = [
     "TRADER_PROFILE", "STRATEGY_BLUEPRINT", "KNOWLEDGE_GAP", "HYPOTHESIS",
     # B-32: MOGO's own preserved TradeObservations. Before this they were a
     # PARALLEL evidence store -- validated by validate_evidence.py, invisible to
-    # the graph -- and the 47 EvidenceSources they cite surfaced as ORPHAN_NODE
+    # the graph -- so the 17 EvidenceSources they cite surfaced as ORPHAN_NODE
     # warnings because the entities citing them were not here. That buried the
-    # real signal: a genuinely uncited source arrived as the 48th warning and
-    # could not be told from the noise.
+    # real signal: those 17 sat among 30 GENUINELY uncited sources, and a new
+    # provenance gap arriving as the 48th warning could not be told from them.
+    #
+    # (The arithmetic matters and was got wrong once: 48 warnings before = 47
+    # EVIDENCE_SOURCE + 1 OWNER_DECISION. Of the 47, only 17 were false and were
+    # removed by representing this relationship; 30 remain and are real. "47 false
+    # orphans removed" is impossible on its face -- 47 + 30 exceeds the 59 sources
+    # that exist.)
     #
     # No Outcome node type is added. `outcome` is a field on the observation
     # (Win/Loss), not an entity with independent identity, and giving it one
