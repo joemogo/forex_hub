@@ -1,7 +1,7 @@
 {
-  "buildId": "BUILD|20260819|004",
+  "buildId": "BUILD|20260819|005",
   "builderVersion": "1.0.0",
-  "builtAt": "2026-08-19T13:34:57Z",
+  "builtAt": "2026-08-19T13:57:28Z",
   "edgeCounts": {
     "BELONGS_TO_TRADER": 548,
     "BLOCKED_BY": 5,
@@ -9668,7 +9668,7 @@
       "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_014.json"
     },
     {
-      "contentHash": "21001fe79cac9182675bc1e725757f8eba2a5266780d019396edca4611440110",
+      "contentHash": "9d4c6c934c44f13c0d3474180925456d9e278bd85c2d679dc0e6b35f0abf0cb0",
       "path": "docs/trader-intelligence/evidence/sources/EVSRC_MOGO_20260818_015.json"
     },
     {
@@ -9820,7 +9820,7 @@
       "path": "docs/trader-intelligence/traders/tjr/strategy-families/session-zone-reaction.json"
     }
   ],
-  "integrityReportId": "INTEGRITY|BUILD|20260819|004",
+  "integrityReportId": "INTEGRITY|BUILD|20260819|005",
   "nodeCounts": {
     "CLAIM": 341,
     "CONTRADICTION_RECORD": 16,
@@ -9843,7 +9843,7 @@
   "notes": "",
   "outputFiles": [
     {
-      "contentHash": "3d2e3c1c45f2eaf0e247ad0cfbc504eaea9ce388bf9c2403392665f9b74f85bd",
+      "contentHash": "4da7cf8a5fe08cabeae776c6f894676f28f16464684a1f85cfd639f69db400ec",
       "path": "docs/trader-intelligence/graph/build/nodes.json"
     },
     {

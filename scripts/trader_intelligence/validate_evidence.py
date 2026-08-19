@@ -38,6 +38,67 @@ def _load_dir(dir_path, id_field):
     return records
 
 
+def _check_missing_artifact(findings, source, rel, sources_by_id, now):
+    """A repository source whose artifact is gone -- resolvable, or not.
+
+    A missing artifact is not always lost evidence. The real case (B-28): a DRY RUN
+    wrote a capture file, a source was registered for it, the dry-run cleanup deleted
+    the file, and the --write run 27 seconds later produced a BYTE-IDENTICAL artifact
+    registered under a different sourceId. The observation citing the first source is
+    undamaged and its evidence demonstrably survives -- at another path.
+
+    Recording that with `artifactSupersededBy` keeps provenance walkable without
+    rewriting anything: the original repositoryPath still says what this source
+    described, and the supersession is a new fact ABOUT the record.
+
+    But a supersession field is also a new way to LAUNDER broken provenance -- point a
+    dangling source at any healthy one and the warning disappears. So the claim is
+    never taken at its word. It resolves only when the named source exists, ITS artifact
+    exists, and the two contentHashes are equal, which is what makes "the same artifact
+    survives elsewhere" a checkable fact rather than an assertion.
+
+    A supersession that fails any of those is an ERROR, not a warning, and deliberately
+    louder than the plain missing artifact it replaced: a dangling path is a visible
+    gap, while a false supersession is a gap wearing a resolution.
+    """
+    superseded_by = source.get("artifactSupersededBy")
+    if not superseded_by:
+        _finding(findings, "UNRESOLVABLE_ARTIFACT", "WARNING", "EVIDENCE_SOURCE",
+                  source["sourceId"],
+                  "repositoryPath %r does not exist, so this source cannot be "
+                  "walked back to the artifact it describes." % (rel,), now)
+        return
+
+    target = sources_by_id.get(superseded_by)
+    if target is None:
+        _finding(findings, "UNVERIFIED_SUPERSESSION", "ERROR", "EVIDENCE_SOURCE",
+                  source["sourceId"],
+                  "artifactSupersededBy names %r, which is not a registered "
+                  "EvidenceSource." % (superseded_by,), now)
+        return
+
+    target_rel = target.get("repositoryPath")
+    if not target_rel or not os.path.exists(os.path.join(REPO_ROOT, target_rel)):
+        _finding(findings, "UNVERIFIED_SUPERSESSION", "ERROR", "EVIDENCE_SOURCE",
+                  source["sourceId"],
+                  "artifactSupersededBy names %s, whose own artifact %r is missing -- "
+                  "the supersession resolves to nothing."
+                  % (superseded_by, target_rel), now)
+        return
+
+    own_hash = source.get("contentHash")
+    target_hash = target.get("contentHash")
+    if not own_hash or not target_hash or own_hash != target_hash:
+        _finding(findings, "UNVERIFIED_SUPERSESSION", "ERROR", "EVIDENCE_SOURCE",
+                  source["sourceId"],
+                  "artifactSupersededBy names %s, but the contentHashes differ (%s vs "
+                  "%s), so the surviving artifact is NOT the one this source described."
+                  % (superseded_by, (own_hash or "unset")[:12],
+                     (target_hash or "unset")[:12]), now)
+        return
+    # Resolved: identical content exists at a recorded path. No finding.
+
+
 def _finding(findings, finding_type, severity, entity_type, entity_id, message, now, metadata=None):
     findings.append({
         "findingId": "EVF%04d" % (len(findings) + 1),
@@ -149,6 +210,8 @@ def check_inconsistent_hash(items, findings, now):
 # ---------------------------------------------------------------------------
 
 def check_malformed_provenance(sources, items, findings, now):
+    # Needed to verify an artifactSupersededBy claim against the source it names.
+    sources_by_id = {src["sourceId"]: src for src in sources if src.get("sourceId")}
     for source in sources:
         if source.get("storageLocationType") == "external" and not (
             source.get("externalAssetReference") and source.get("canonicalReference")
@@ -170,10 +233,7 @@ def check_malformed_provenance(sources, items, findings, now):
         if source.get("storageLocationType") == "repository":
             rel = source.get("repositoryPath")
             if rel and not os.path.exists(os.path.join(REPO_ROOT, rel)):
-                _finding(findings, "UNRESOLVABLE_ARTIFACT", "WARNING", "EVIDENCE_SOURCE",
-                          source["sourceId"],
-                          "repositoryPath %r does not exist, so this source cannot be "
-                          "walked back to the artifact it describes." % (rel,), now)
+                _check_missing_artifact(findings, source, rel, sources_by_id, now)
         if source.get("provenanceStatus") not in evc.PROVENANCE_STATUSES:
             _finding(findings, "MALFORMED_PROVENANCE", "ERROR", "EVIDENCE_SOURCE", source["sourceId"],
                       "Unknown provenanceStatus %r." % (source.get("provenanceStatus"),), now)

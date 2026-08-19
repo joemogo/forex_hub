@@ -25,5 +25,8 @@
   "strategyFamilyId": null,
   "title": "FWD-20260818T153216Z-PACKAGES.json (LIVE_CLOSE)",
   "traderId": null,
-  "updatedAt": "2026-08-18T15:32:44Z"
+  "updatedAt": "2026-08-18T15:32:44Z",
+  "artifactStatus": "DELETED",
+  "artifactSupersededBy": "EVSRC|MOGO|20260818|016",
+  "artifactSupersessionNote": "The artifact this source described was a capture file written by a DRY RUN at 15:32:16Z and removed by the dry-run cleanup that was added to stop the same package being staged twice. The --write run 27 seconds later produced evidence/FWD-20260818T153243Z-PACKAGES.json, registered as EVSRC|MOGO|20260818|016. The two are byte-identical: both records carry contentHash f31505ff876a4c404e2c7b5c6f073d208d19f37b29ffc23ad7804e9bbfad4753, and re-hashing the surviving file reproduces it. That equality is what makes this a verifiable fact rather than a claim, and the validator re-checks it rather than trusting this note. repositoryPath above is left pointing at the deleted file on purpose: it records what this source actually described, and repointing it would assert this source was always about the other artifact. TOBS|MOGO|20260818|001 continues to cite this source (B-28)."
 }

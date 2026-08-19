@@ -1007,3 +1007,112 @@ class TestUnresolvableArtifactIsReported(unittest.TestCase):
     def test_an_existing_repository_path_is_NOT_reported(self):
         """Positive control: the check must be caused by the file being absent."""
         self.assertNotIn("UNRESOLVABLE_ARTIFACT", self.findings_for("index.html"))
+
+
+class TestSupersededArtifactResolution(unittest.TestCase):
+    """B-28. A missing artifact is not always lost evidence.
+
+    A dry run wrote a capture file, a source was registered for it, the dry-run
+    cleanup deleted it, and the --write run 27 seconds later produced a
+    BYTE-IDENTICAL artifact under a different sourceId. The observation citing the
+    first source is undamaged and its evidence demonstrably survives.
+
+    `artifactSupersededBy` records that without rewriting anything -- but it is also
+    a new way to LAUNDER broken provenance, so every case below exists to prove the
+    claim is verified rather than believed. The resolution must be caused by the
+    hashes matching and the target artifact existing, not by the field being present.
+    """
+
+    HASH_A = "a" * 64
+    HASH_B = "b" * 64
+
+    def source(self, sid, rel, **extra):
+        d = {"sourceId": sid, "storageLocationType": "repository",
+             "repositoryPath": rel, "provenanceStatus": "owner_supplied",
+             "contentHash": self.HASH_A}
+        d.update(extra)
+        return d
+
+    def findings_for(self, sources):
+        findings = []
+        ve.check_malformed_provenance(sources, [], findings, FIXED_NOW)
+        return {f["findingType"] for f in findings}
+
+    def broken(self, **extra):
+        return self.source("EVSRC|MOGO|20260819|001",
+                           "evidence/does-not-exist-PACKAGES.json", **extra)
+
+    def survivor(self, **extra):
+        # index.html is used only because it is a file that reliably exists in the
+        # repository; nothing here depends on its contents.
+        return self.source("EVSRC|MOGO|20260819|002", "index.html", **extra)
+
+    def test_a_verified_supersession_resolves_the_missing_artifact(self):
+        found = self.findings_for([
+            self.broken(artifactSupersededBy="EVSRC|MOGO|20260819|002"),
+            self.survivor()])
+        self.assertNotIn("UNRESOLVABLE_ARTIFACT", found)
+        self.assertNotIn("UNVERIFIED_SUPERSESSION", found)
+
+    def test_POSITIVE_CONTROL_without_the_field_it_is_still_reported(self):
+        # Proves the resolution above is caused by the supersession, not by the
+        # fixture happening to pass for some other reason.
+        self.assertIn("UNRESOLVABLE_ARTIFACT", self.findings_for([self.broken()]))
+
+    def test_a_supersession_naming_an_unregistered_source_is_an_ERROR(self):
+        findings = []
+        ve.check_malformed_provenance(
+            [self.broken(artifactSupersededBy="EVSRC|MOGO|20260819|999")],
+            [], findings, FIXED_NOW)
+        types = {f["findingType"] for f in findings}
+        self.assertIn("UNVERIFIED_SUPERSESSION", types)
+        # The message must say the source is UNREGISTERED. Removing that branch still
+        # produced an error, via the missing-artifact branch -- so the invariant held
+        # but the diagnostic became "whose own artifact None is missing", which sends
+        # the reader looking for a file rather than for a typo in the id.
+        message = " ".join(f["message"] for f in findings)
+        self.assertIn("not a registered", message)
+
+    def test_a_supersession_whose_own_artifact_is_missing_is_an_ERROR(self):
+        # Chaining a dangling source to another dangling source resolves nothing.
+        found = self.findings_for([
+            self.broken(artifactSupersededBy="EVSRC|MOGO|20260819|002"),
+            self.source("EVSRC|MOGO|20260819|002", "evidence/also-gone-PACKAGES.json")])
+        self.assertIn("UNVERIFIED_SUPERSESSION", found)
+
+    def test_a_supersession_with_a_DIFFERENT_content_hash_is_an_ERROR(self):
+        # THE case that matters. Pointing a dangling source at any healthy artifact
+        # would otherwise silence the warning while the described evidence stays lost.
+        found = self.findings_for([
+            self.broken(artifactSupersededBy="EVSRC|MOGO|20260819|002"),
+            self.survivor(contentHash=self.HASH_B)])
+        self.assertIn("UNVERIFIED_SUPERSESSION", found)
+
+    def test_a_supersession_with_no_hash_on_either_side_is_an_ERROR(self):
+        # Absent hashes must not compare equal to each other and pass.
+        broken = self.broken(artifactSupersededBy="EVSRC|MOGO|20260819|002")
+        broken.pop("contentHash")
+        survivor = self.survivor()
+        survivor.pop("contentHash")
+        self.assertIn("UNVERIFIED_SUPERSESSION", self.findings_for([broken, survivor]))
+
+    def test_the_error_is_LOUDER_than_the_warning_it_replaces(self):
+        # A dangling path is a visible gap; a false supersession is a gap wearing a
+        # resolution, so it must not be reported at the same severity.
+        findings = []
+        ve.check_malformed_provenance(
+            [self.broken(artifactSupersededBy="EVSRC|MOGO|20260819|999")],
+            [], findings, FIXED_NOW)
+        sev = {f["findingType"]: f["severity"] for f in findings}
+        self.assertEqual(sev.get("UNVERIFIED_SUPERSESSION"), "ERROR")
+
+    def test_the_LIVE_B28_record_resolves_and_is_not_repointed(self):
+        # The real record: its repositoryPath must still name the file it described.
+        # Repointing it would assert this source was always about the other artifact.
+        path = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "sources", "EVSRC_MOGO_20260818_015.json")
+        with open(path, encoding="utf-8") as handle:
+            rec = json.load(handle)
+        self.assertEqual(rec["repositoryPath"],
+                         "evidence/FWD-20260818T153216Z-PACKAGES.json")
+        self.assertEqual(rec["artifactSupersededBy"], "EVSRC|MOGO|20260818|016")
