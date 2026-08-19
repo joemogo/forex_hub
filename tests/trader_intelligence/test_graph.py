@@ -857,11 +857,23 @@ class TestAdversarialInputs(TradeObservationCase):
         self.source()
         for i in (3, 1, 2):
             self.observation("TOBS|MOGO|20260819|00%d" % i)
-        found = gc._sorted_glob(self._evdir("observations"), "*.json")
+        # The filesystem must not be allowed to supply the property for free. On
+        # this machine raw glob.glob already returns lexical order for a 3-file
+        # directory, so simply asserting the output is sorted passes even with
+        # sorted() DELETED from _sorted_glob -- verified: that mutation survived.
+        # The underlying glob is replaced with one that returns reverse order, so
+        # the assertion can only hold if _sorted_glob sorts.
+        real_glob = gc.globmod.glob
+        try:
+            gc.globmod.glob = lambda pattern: list(reversed(sorted(real_glob(pattern))))
+            found = gc._sorted_glob(self._evdir("observations"), "*.json")
+        finally:
+            gc.globmod.glob = real_glob
+        self.assertEqual(len(found), 3, "the fixture must be non-empty or this passes "
+                                        "vacuously")
         self.assertEqual(found, sorted(found),
-                         "discovery must return a sorted listing; unsorted, node "
-                         "identity would depend on filesystem enumeration order")
-        self.assertEqual(len(found), 3)
+                         "discovery must SORT; unsorted, node identity would depend on "
+                         "filesystem enumeration order")
 
     def test_node_identity_survives_renaming_the_file_that_carries_it(self):
         # The real property behind "ordering does not matter": identity and content

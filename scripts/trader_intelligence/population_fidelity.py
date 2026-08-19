@@ -206,7 +206,18 @@ def compare(observations, sources, strategy_id):
         # A second structural difference, and the one that EXPLAINS the first.
         historical_grid = historical["timestampGranularity"]
         forward_grid = forward["timestampGranularity"]
-        if historical_grid["subSecond"] == 0 and forward_grid["subSecond"] > 0:
+        # Guarded on ALL forward fills being sub-second, not merely one.
+        #
+        # The condition was `subSecond > 0` while the statement below says "every
+        # forward fill is sub-second". Adversarial verification moved 24
+        # bar-quantised replay observations into the forward population; the
+        # condition still held on the one remaining genuine sub-second fill, and this
+        # diagnostic went on asserting "every" about a population that now contained
+        # contamination. Requiring ALL makes this an independent detector of exactly
+        # that: contamination breaks the claim instead of hiding inside it.
+        forward_total = sum(forward_grid.values())
+        if (historical_grid["subSecond"] == 0 and forward_total > 0
+                and forward_grid["subSecond"] == forward_total):
             findings.append({
                 "code": REPLAY_IS_BAR_QUANTIZED,
                 "statement":

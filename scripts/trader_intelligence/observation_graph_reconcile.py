@@ -68,11 +68,23 @@ def reconcile():
     src_nodes = [n for n in nodes if n["nodeType"] == "EVIDENCE_SOURCE"]
     node_ids = {n["nodeId"] for n in nodes}
 
+    # A corpus that loaded NOTHING passes every check below -- eight comparisons
+    # over zero rows, all true. That is the exact anti-pattern this repository has
+    # been bitten by repeatedly ("assert filters are non-empty, or the loop passes
+    # vacuously"), and it was live here: emptying evidence/observations/ printed
+    # RECONCILED and exited 0, which is what a discovery glob that stops matching
+    # looks like from the outside.
     report = {"preservedObservations": len(observations),
               "observationNodes": len(obs_nodes),
               "preservedSources": len(sources),
               "sourceNodes": len(src_nodes)}
     problems = []
+    if not observations:
+        problems.append("no preserved observations were loaded at all -- every check "
+                        "below would pass vacuously, so this is reported as a failure "
+                        "rather than a clean run")
+    if not sources:
+        problems.append("no EvidenceSources were loaded at all")
 
     # 1. One node per preserved record, and no node without a record.
     preserved_ids = set(observations)
@@ -159,16 +171,30 @@ def reconcile():
     # 5. Orphans, split into the two kinds. The FALSE ones are what B-32 removed;
     #    the genuine ones must survive, or the check has been disarmed.
     #
-    # Asks the PRODUCTION check rather than recomputing "nodes with no edges" here.
-    # This script used to reimplement it, and a second implementation of a check is
-    # a second thing that can be right while the real one is wrong: an independent
-    # verifier widened validate_graph's exemption to skip EVIDENCE_SOURCE, live
-    # warnings fell from 31 to 1, and this script still printed RECONCILED.
+    # The PRODUCTION check answers, and an independent recount CROSS-CHECKS it.
+    #
+    # This script used to reimplement orphan detection outright, which is a second
+    # thing that can be right while the real one is wrong. Merely calling the
+    # production check instead is not enough either: an adversarial verifier
+    # disarmed `check_orphans` and this script still printed RECONCILED, because it
+    # faithfully reported the disarmed answer. So both are computed and compared --
+    # the production check is the ANSWER, the recount is a WITNESS, and disagreement
+    # between them is itself the finding. Neither alone can be quietly switched off.
     orphan_findings = []
     validate_graph.check_orphans(nodes, edges, orphan_findings)
     orphan_node_ids = {f["affectedIds"][0] for f in orphan_findings
                        if f.get("category") == "ORPHAN_NODE"}
     orphan_sources = [n["entityId"] for n in src_nodes if n["nodeId"] in orphan_node_ids]
+
+    touched_nodes = {e["fromNodeId"] for e in edges} | {e["toNodeId"] for e in edges}
+    witness = {n["nodeId"] for n in nodes
+               if n["nodeId"] not in touched_nodes and n["nodeType"] != "TRADER"}
+    report["orphanCheckDisagreement"] = len(witness ^ orphan_node_ids)
+    if witness != orphan_node_ids:
+        problems.append(
+            "the production orphan check and an independent recount disagree on %d "
+            "node(s); one of them is wrong and a disarmed orphan check looks exactly "
+            "like a clean corpus" % len(witness ^ orphan_node_ids))
     cited = {rec.get("sourceId") for rec in observations.values()}
     report["orphanSources"] = len(orphan_sources)
     report["orphanSourcesAlsoUncitedByAnyObservation"] = sum(

@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph_common as gc            # noqa: E402
 import evidence_common as evc        # noqa: E402
 import evidence_confidence as conf   # noqa: E402
+import trade_observation as to       # noqa: E402
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 TI_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence")
@@ -119,59 +120,112 @@ def _finding(findings, finding_type, severity, entity_type, entity_id, message, 
 # 1. Orphans (ORPHANED_EVIDENCE / ORPHANED_LINK / ORPHANED_CLAIM)
 # ---------------------------------------------------------------------------
 
+#: The importer stamps "captureBasis=<basis> sourceType=<type>" into notes at mint
+#: time. That string is the only record of what the source was WHEN the observation
+#: was created, which is what makes the rebinding check possible. Deliberately
+#: tolerant of spacing and case: a stamp written "sourceType = X" must be READ, not
+#: missed -- a stamp the reader skips is a stamp an attacker can hide behind.
+_MINTED_SOURCE_TYPE_RE = re.compile(r"sourceType\s*=\s*([A-Za-z_-]*)", re.IGNORECASE)
+
+
 def check_observation_population_rebinding(observations, sources, findings, now):
-    """Does an observation still point at the source it was MINTED from?
+    """Does an observation still point at the source it was MINTED from -- and can
+    its population still be resolved at all?
 
     Population -- HISTORICAL / FORWARD / RECONSTRUCTED -- is derived from the
     source's `sourceType` and deliberately never stored on the observation. That
     keeps one source of truth, and it has a consequence nothing was checking:
     repointing an observation's `sourceId` at a source of a different type silently
     MOVES it between populations. A replay trade becomes a forward trade, forward
-    performance statistics absorb simulated fills, and every diagnostic stays green
-    because each one individually is still self-consistent.
+    performance absorbs bar-quantised simulated fills, and every diagnostic stays
+    green because each one individually is still self-consistent.
 
-    Demonstrated, not hypothesised: repointing one replay observation at a
-    paper_trade source moved populations from 221/29/9 to 220/30/9 while the graph
-    reconciliation printed RECONCILED and this validator reported zero findings.
-
-    The cross-check is the observation's OWN record. The importer stamps
+    The cross-check is the observation's OWN record: the importer stamps
     `notes: "captureBasis=... sourceType=..."` at mint time, so the record carries
-    what its source was WHEN THE OBSERVATION WAS CREATED -- present on all 259
-    preserved records. If that disagrees with the source's type today, one of them
-    changed after the fact, and which one is not knowable from here.
+    what its source was WHEN THE OBSERVATION WAS CREATED.
 
-    ERROR, not WARNING: this is the corpus's most consequential silent failure, and
-    it is reported rather than repaired. Nothing here rewrites `sourceId`, `notes`
-    or any source record -- a mismatch is a contradiction for a human to resolve,
-    not something to normalise away.
+    THIS CHECK FAILS CLOSED, and that is the whole design. The first version simply
+    skipped any record whose stamp it could not read, which made the stamp itself
+    the attack surface -- adversarial verification moved 24 replay observations into
+    FORWARD by blanking the stamps and retyping one source, with every diagnostic
+    still green. Silence has to mean "checked and fine", never "could not tell".
+    So four distinct conditions are reported:
 
-    Absent or unparseable `notes` is NOT reported. It is a pre-existing,
-    schema-permitted state, and inventing a mint-time type for a record that never
-    recorded one would be the fabrication this check exists to catch.
+      POPULATION_REBINDING     (ERROR)   minted type != the source's type today.
+      UNRESOLVED_POPULATION    (ERROR)   the population does not resolve to a real
+                                         one. Catches the source-side attack: blank
+                                         or delete `sourceType` on a cited source
+                                         and its observations fall into UNKNOWN,
+                                         which nothing else objected to.
+      MISSING_MINT_PROVENANCE  (WARNING) no readable stamp, so no rebinding check is
+                                         possible for this record. Loud rather than
+                                         open. All 259 preserved records carry one,
+                                         so this is anomalous today; it is a WARNING
+                                         and not an ERROR because a record that never
+                                         recorded one is a gap, not a contradiction.
+      AMBIGUOUS_MINT_PROVENANCE (ERROR)  more than one `sourceType=` in `notes`.
+                                         Prepending a decoy made the first match win.
+
+    Nothing here repairs anything. A mismatch is a contradiction for a human to
+    resolve; rewriting `sourceId` or `notes` to agree would destroy the evidence of
+    the rebinding, and inventing a mint-time type for a record that never recorded
+    one is precisely the fabrication this exists to catch.
     """
     by_id = {s["sourceId"]: s for s in sources if s.get("sourceId")}
     for obs in observations:
-        match = _MINTED_SOURCE_TYPE_RE.search(obs.get("notes") or "")
-        if not match:
-            continue
-        minted = match.group(1)
+        obs_id = obs.get("observationId")
         source = by_id.get(obs.get("sourceId"))
+
+        # 1. Can the population be resolved at all? Independent of the stamp, so a
+        #    source-side edit cannot hide behind a missing or blinded one.
+        if source is not None:
+            population = to.observation_population(obs, by_id)
+            # Compared against UNKNOWN_POPULATION explicitly, NOT `not in POPULATIONS`.
+            # UNKNOWN is itself a member of POPULATIONS -- it is a legitimate value of
+            # the enum, not an absence from it -- so the membership test could never
+            # fire, and this check silently passed the source-side attack it exists to
+            # catch. Found by re-running that attack rather than by any fixture.
+            if population == to.UNKNOWN_POPULATION:
+                _finding(findings, "UNRESOLVED_POPULATION", "ERROR", "TRADE_OBSERVATION",
+                          obs_id,
+                          "Population does not resolve (%r) because source %s has "
+                          "sourceType %r. An observation whose population is unknown "
+                          "silently leaves every population total it belonged to."
+                          % (population, obs.get("sourceId"), source.get("sourceType")),
+                          now)
+
+        # 2. The mint-time stamp. `notes` is not guaranteed to be a string, and a
+        #    non-string one used to raise TypeError and abort the ENTIRE validator
+        #    run, losing every other finding with it.
+        notes = obs.get("notes")
+        matches = _MINTED_SOURCE_TYPE_RE.findall(notes) if isinstance(notes, str) else []
+        matches = [m for m in matches if m]
+
+        if len(matches) > 1:
+            _finding(findings, "AMBIGUOUS_MINT_PROVENANCE", "ERROR", "TRADE_OBSERVATION",
+                      obs_id,
+                      "notes records %d different sourceType stamps (%s); which one the "
+                      "observation was minted from is not decidable."
+                      % (len(matches), ", ".join(sorted(set(matches)))), now)
+            continue
+        if not matches:
+            _finding(findings, "MISSING_MINT_PROVENANCE", "WARNING", "TRADE_OBSERVATION",
+                      obs_id,
+                      "notes carries no readable sourceType stamp, so this observation "
+                      "cannot be checked against the source it was minted from.", now)
+            continue
+
+        minted = matches[0]
         if source is None:
             continue          # already reported as a missing reference elsewhere
         actual = source.get("sourceType")
         if actual and actual != minted:
             _finding(findings, "POPULATION_REBINDING", "ERROR", "TRADE_OBSERVATION",
-                      obs.get("observationId"),
+                      obs_id,
                       "Observation was minted from a %r source but its sourceId now names "
                       "%s, whose sourceType is %r. Population is derived from sourceType, so "
                       "this moves the observation between evidence populations."
                       % (minted, obs.get("sourceId"), actual), now)
-
-
-#: The importer stamps "captureBasis=<basis> sourceType=<type>" into notes at
-#: mint time. That string is the only record of what the source was WHEN the
-#: observation was created, which is what makes the rebinding check possible.
-_MINTED_SOURCE_TYPE_RE = re.compile(r"sourceType=([A-Za-z_]+)")
 
 
 def check_orphans(sources, items, claims, links, findings, now):
@@ -920,6 +974,21 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     return report
 
 
+def exit_code_for(summary):
+    """Nonzero when the corpus carries an ERROR or worse.
+
+    This gated on FATAL only, so a corpus with 24 POPULATION_REBINDING ERRORs --
+    replay evidence sitting in the forward population -- exited 0 and nothing in CI
+    could notice. A check nothing can gate on is documentation.
+
+    WARNINGs deliberately do NOT fail: they are open questions rather than
+    contradictions (B-28's unresolvable artifact lived there for days while being
+    investigated), and failing on them trains the next person to silence warnings
+    instead of resolving them.
+    """
+    return 1 if (summary.get("FATAL") or summary.get("ERROR")) else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="Validate PROGRAM-006 Evidence Intelligence Engine data integrity.")
     parser.add_argument("--repo-root", default=REPO_ROOT)
@@ -944,7 +1013,7 @@ def main():
     gc.atomic_write_text(out_path, gc.pretty_json(report))
     print("Wrote %s" % out_path)
     print("Summary: %r" % (report["summary"],))
-    return 0 if report["summary"]["FATAL"] == 0 else 1
+    return exit_code_for(report["summary"])
 
 
 if __name__ == "__main__":

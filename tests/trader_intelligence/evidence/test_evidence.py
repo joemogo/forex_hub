@@ -1179,17 +1179,87 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
                                      ["POPULATION_REBINDING"],
                                      "%s -> %s went undetected" % (minted, actual))
 
-    def test_notes_without_a_sourceType_are_NOT_reported(self):
-        # A record that never stated its mint-time type cannot be checked against
-        # one. Inventing a value here would be the fabrication this guards against.
+    def test_notes_without_a_sourceType_are_reported_LOUDLY_not_skipped(self):
+        # DECISION REVERSED, and the reversal is the repair. The first version
+        # skipped any record whose stamp it could not read, which made the stamp
+        # the attack surface: delete it and the rebinding went unreported. Silence
+        # must mean "checked and fine", never "could not tell".
         obs = self.obs("replay_observation")
         obs["notes"] = "captureBasis=REPLAY_RUN"
-        self.assertEqual(self.findings_for([obs], [self.src("paper_trade")]), [])
+        findings = self.findings_for([obs], [self.src("paper_trade")])
+        self.assertEqual([f["findingType"] for f in findings], ["MISSING_MINT_PROVENANCE"])
 
-    def test_a_missing_notes_field_is_NOT_reported(self):
+    def test_a_missing_notes_field_is_reported_LOUDLY(self):
         obs = self.obs("replay_observation")
         del obs["notes"]
-        self.assertEqual(self.findings_for([obs], [self.src("paper_trade")]), [])
+        findings = self.findings_for([obs], [self.src("paper_trade")])
+        self.assertEqual([f["findingType"] for f in findings], ["MISSING_MINT_PROVENANCE"])
+
+    def test_blinding_every_stamp_cannot_buy_silence(self):
+        # The whole-corpus attack: rename the stamp on every record, then retype one
+        # source. It moved 24 replay observations into FORWARD with everything green.
+        # The point is not that it is blocked -- it is that it is now NOISY.
+        blinded = []
+        for i in range(5):
+            obs = self.obs("replay_observation")
+            obs["observationId"] = "TOBS|MOGO|20260819|00%d" % i
+            obs["notes"] = obs["notes"].replace("sourceType=", "sourceTypeX=")
+            blinded.append(obs)
+        findings = self.findings_for(blinded, [self.src("paper_trade")])
+        self.assertEqual(len(findings), 5)
+        self.assertEqual({f["findingType"] for f in findings}, {"MISSING_MINT_PROVENANCE"})
+
+    def test_a_decoy_stamp_prepended_to_notes_is_AMBIGUOUS_not_accepted(self):
+        # `.search` took the first match, so prepending "sourceType=paper_trade "
+        # made a replay observation look forward-minted.
+        obs = self.obs("replay_observation")
+        obs["notes"] = "sourceType=paper_trade " + obs["notes"]
+        findings = self.findings_for([obs], [self.src("paper_trade")])
+        self.assertEqual([f["findingType"] for f in findings], ["AMBIGUOUS_MINT_PROVENANCE"])
+
+    def test_a_source_with_a_BLANK_sourceType_is_an_UNRESOLVED_POPULATION_error(self):
+        # The source-side attack, and the one that survived the first repair: blank
+        # sourceType on a cited source and its observations fall into UNKNOWN --
+        # leaving every population total they belonged to, with nothing objecting.
+        findings = self.findings_for([self.obs("replay_observation")], [self.src("")])
+        self.assertIn("UNRESOLVED_POPULATION", [f["findingType"] for f in findings])
+
+    def test_a_source_MISSING_sourceType_entirely_is_also_caught(self):
+        src = self.src("replay_observation")
+        del src["sourceType"]
+        findings = self.findings_for([self.obs("replay_observation")], [src])
+        self.assertIn("UNRESOLVED_POPULATION", [f["findingType"] for f in findings])
+
+    def test_POSITIVE_CONTROL_a_resolvable_population_is_not_reported(self):
+        # Guards the two cases above from a check that flags every observation.
+        self.assertEqual(
+            self.findings_for([self.obs("replay_observation")],
+                              [self.src("replay_observation")]), [])
+
+    def test_a_non_string_notes_field_does_not_abort_the_whole_validator(self):
+        # A non-string `notes` raised TypeError out of the regex and killed the
+        # entire run, losing every other finding in the corpus with it.
+        for bad in (123, {"a": 1}, ["x"], True, None):
+            with self.subTest(notes=bad):
+                obs = self.obs("replay_observation")
+                obs["notes"] = bad
+                findings = self.findings_for([obs], [self.src("replay_observation")])
+                self.assertEqual([f["findingType"] for f in findings],
+                                 ["MISSING_MINT_PROVENANCE"])
+
+    def test_spacing_and_case_variants_of_the_stamp_are_READ_not_missed(self):
+        # A stamp the reader skips is a stamp an attacker can hide behind, so the
+        # pattern is deliberately tolerant. Each of these must be compared, not
+        # skipped -- i.e. produce a REBINDING error, never MISSING.
+        for notes in ("sourceType = replay_observation", "SOURCETYPE=replay_observation",
+                      "sourcetype=replay_observation", "sourceType=replay_observation"):
+            with self.subTest(notes=notes):
+                obs = self.obs("replay_observation")
+                obs["notes"] = notes
+                findings = self.findings_for([obs], [self.src("paper_trade")])
+                self.assertEqual([f["findingType"] for f in findings],
+                                 ["POPULATION_REBINDING"],
+                                 "%r was not read as a stamp" % notes)
 
     def test_an_unresolvable_sourceId_is_left_to_the_reference_checks(self):
         # Reporting it here too would double-count one defect under two names.
@@ -1211,3 +1281,96 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
         before = (dict(obs), dict(src))
         self.findings_for([obs], [src])
         self.assertEqual((obs, src), before)
+
+
+class TestPopulationChecksAreWiredIntoTheValidator(unittest.TestCase):
+    """Testing a check is not testing that anything CALLS it.
+
+    Round 1 of adversarial verification found tests that reimplemented a check
+    instead of calling it. Round 2 found the sequel: every rebinding test called
+    `check_observation_population_rebinding` directly, so deleting its single call
+    site in `run_integrity_checks` left the whole 1124-test suite green while
+    `evidence/reports/integrity-report.json` -- the artifact an operator actually
+    reads -- silently stopped reporting the corpus's most consequential failure.
+
+    These go through `run_integrity_checks` on a scratch corpus written here, so
+    they fail if the wiring is removed, whatever the unit tests say.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_wiring_")
+        self.evidence_root = os.path.join(self.root, "evidence")
+        for name in ("sources", "observations"):
+            os.makedirs(os.path.join(self.evidence_root, name))
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, collection, name, record):
+        with open(os.path.join(self.evidence_root, collection, name + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def corpus(self, minted, actual):
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": actual,
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "owner_supplied"})
+        self.write("observations", "obs", {
+            "observationId": "TOBS|MOGO|20260819|001",
+            "sourceId": "EVSRC|MOGO|20260819|001",
+            "notes": "captureBasis=REPLAY_RUN sourceType=%s" % minted})
+
+    def finding_types(self):
+        report = ve.run_integrity_checks(self.evidence_root, is_production=False)
+        # Non-vacuity: a run that loaded nothing would report nothing and every
+        # assertion below would pass for the wrong reason.
+        self.assertTrue(os.listdir(os.path.join(self.evidence_root, "observations")))
+        return [f["findingType"] for f in report["findings"]]
+
+    def test_run_integrity_checks_REPORTS_a_rebinding(self):
+        self.corpus(minted="replay_observation", actual="paper_trade")
+        self.assertIn("POPULATION_REBINDING", self.finding_types())
+
+    def test_run_integrity_checks_REPORTS_an_unresolved_population(self):
+        self.corpus(minted="replay_observation", actual="")
+        self.assertIn("UNRESOLVED_POPULATION", self.finding_types())
+
+    def test_run_integrity_checks_REPORTS_a_missing_mint_stamp(self):
+        self.corpus(minted="replay_observation", actual="replay_observation")
+        self.write("observations", "obs", {
+            "observationId": "TOBS|MOGO|20260819|001",
+            "sourceId": "EVSRC|MOGO|20260819|001", "notes": "captureBasis=REPLAY_RUN"})
+        self.assertIn("MISSING_MINT_PROVENANCE", self.finding_types())
+
+    def test_POSITIVE_CONTROL_a_consistent_corpus_reports_none_of_them(self):
+        # Without this, a validator that emitted these findings unconditionally
+        # would satisfy all three tests above.
+        self.corpus(minted="replay_observation", actual="replay_observation")
+        found = set(self.finding_types())
+        self.assertEqual(found & {"POPULATION_REBINDING", "UNRESOLVED_POPULATION",
+                                  "MISSING_MINT_PROVENANCE"}, set())
+
+
+class TestValidatorExitCodeGatesOnErrors(unittest.TestCase):
+    """An ERROR must fail the CLI.
+
+    `main()` returned 0 unless a FATAL was present, so a corpus carrying 24
+    POPULATION_REBINDING ERRORs exited 0 and no CI gate could ever notice. A check
+    nothing can gate on is documentation.
+    """
+
+    def test_a_report_with_errors_exits_nonzero(self):
+        self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": 1, "WARNING": 0, "INFO": 0}), 1)
+
+    def test_a_report_with_fatals_exits_nonzero(self):
+        self.assertEqual(ve.exit_code_for({"FATAL": 1, "ERROR": 0, "WARNING": 0, "INFO": 0}), 1)
+
+    def test_warnings_alone_do_NOT_fail_the_run(self):
+        # Positive control, and a deliberate boundary: WARNINGs are open questions
+        # (B-28's supersession lived there for days). Failing on them would push the
+        # next person to silence warnings rather than resolve them.
+        self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": 0, "WARNING": 9, "INFO": 3}), 0)
+
+    def test_a_clean_report_exits_zero(self):
+        self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": 0, "WARNING": 0, "INFO": 0}), 0)
