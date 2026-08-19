@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -1457,12 +1458,16 @@ class TestCaptureBasisIsTheSecondStamp(unittest.TestCase):
             with self.subTest(basis=basis):
                 self.assertEqual(self.types([self.obs(basis, right)], [self.src(right)]), [])
 
-    def test_an_unrecognised_basis_is_not_guessed_at(self):
-        # Inventing an expected sourceType for a basis the importer does not know
-        # would be fabrication. It simply is not cross-checked.
+    def test_an_unrecognised_basis_is_REPORTED_but_still_not_guessed_at(self):
+        # DECISION REVERSED. This asserted silence, which was the fail-open half of
+        # the attack: `[A-Za-z_]+` truncated "REPLAY-RUN" to "REPLAY", which maps to
+        # nothing, so one hyphen silently disabled the cross-check. "Genuinely new
+        # basis" and "mangled to evade" are indistinguishable from here and only one
+        # is harmless, so it is reported -- but no population is INFERRED from it,
+        # which is the part that would have been fabrication.
         self.assertEqual(
             self.types([self.obs("SOME_NEW_BASIS", "paper_trade")], [self.src("paper_trade")]),
-            [])
+            ["UNRECOGNISED_CAPTURE_BASIS"])
 
     def test_the_mapping_is_the_IMPORTERS_not_a_copy(self):
         # Two tables would drift, and the drift that matters -- the validator
@@ -1530,3 +1535,166 @@ class TestAbsentSourceIdIsReported(unittest.TestCase):
              {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "replay_observation"}],
             findings, FIXED_NOW)
         self.assertEqual(findings, [])
+
+
+class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
+    """`exit_code_for` is unit-tested four ways and was still bypassable.
+
+    Deleting its call from `main()` left the entire suite green: nothing asserted
+    that the CLI USES it. With that mutation, a corpus carrying 24
+    POPULATION_REBINDING ERRORs exited 0 and the `run_all.sh` gate passed. Third
+    recurrence of one shape -- testing a copy of a check, then testing a check
+    nothing calls, now testing a helper the entry point need not use.
+
+    Runs the real CLI as a subprocess against a scratch corpus, so only the actual
+    exit status can satisfy it.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_cli_")
+        self.evidence = os.path.join(self.root, "evidence")
+        for name in ("sources", "observations"):
+            os.makedirs(os.path.join(self.evidence, name))
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, collection, name, record):
+        with open(os.path.join(self.evidence, collection, name + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def corpus(self, source_type):
+        # Schema-valid on purpose: a malformed fixture raises unrelated ERRORs, which
+        # would make the positive control fail for a reason that has nothing to do
+        # with the exit code under test.
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1})
+        self.write("observations", "obs", {
+            "observationId": "TOBS|MOGO|20260819|001",
+            "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
+            "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
+
+    def run_cli(self):
+        script = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
+                              "validate_evidence.py")
+        return subprocess.run(
+            [sys.executable, script, "--evidence-root", self.evidence],
+            capture_output=True, text=True)
+
+    def test_a_contaminated_corpus_makes_the_CLI_exit_nonzero(self):
+        self.corpus(source_type="paper_trade")     # replay-minted, forward source
+        result = self.run_cli()
+        self.assertNotEqual(result.returncode, 0,
+                            "CLI exited 0 on a corpus with population ERRORs; the "
+                            "run_all.sh gate would pass. stdout=%s" % result.stdout[-400:])
+
+    def test_POSITIVE_CONTROL_a_clean_corpus_makes_the_CLI_exit_zero(self):
+        # Without this, a CLI that always failed would satisfy the test above.
+        self.corpus(source_type="replay_observation")
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 0, result.stdout[-400:])
+
+
+class TestTheThirdAndFourthAnchors(unittest.TestCase):
+    """Both stamps the rebinding check reads live in ONE field of ONE record, so a
+    rewrite thorough enough to change both defeats them together -- and retyping a
+    source in place needs no observation edit at all. These two anchors live on the
+    SOURCE, where an edit to an observation cannot reach them."""
+
+    def src(self, source_type, basis=None, engine=None, sid="EVSRC|MOGO|20260819|001"):
+        rec = {"sourceId": sid, "sourceType": source_type, "metadata": {}}
+        if basis:
+            rec["metadata"]["captureBasis"] = basis
+        if engine:
+            rec["metadata"]["engineStrategyId"] = engine
+        return rec
+
+    def obs(self, strategy="alex_g_sr_v1", basis="REPLAY_RUN",
+            minted="replay_observation", sid="EVSRC|MOGO|20260819|001"):
+        return {"observationId": "TOBS|MOGO|20260819|001", "sourceId": sid,
+                "strategyId": strategy,
+                "notes": "captureBasis=%s sourceType=%s" % (basis, minted)}
+
+    def obs_types(self, observations, sources):
+        findings = []
+        ve.check_observation_population_rebinding(observations, sources, findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def src_types(self, sources):
+        findings = []
+        ve.check_source_capture_basis_agrees_with_type(sources, findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_retyping_a_source_IN_PLACE_is_caught_by_its_own_metadata(self):
+        # No observation is touched at all in this attack.
+        self.assertEqual(
+            self.src_types([self.src("paper_trade", basis="REPLAY_RUN")]),
+            ["SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS"])
+
+    def test_POSITIVE_CONTROL_an_agreeing_source_is_not_reported(self):
+        self.assertEqual(
+            self.src_types([self.src("replay_observation", basis="REPLAY_RUN")]), [])
+
+    def test_a_source_without_the_stamp_is_not_guessed_at(self):
+        # 12 of 59 predate it; inventing one would be the fabrication this prevents.
+        self.assertEqual(self.src_types([self.src("paper_trade")]), [])
+
+    def test_repointing_at_a_source_from_a_DIFFERENT_ENGINE_is_caught(self):
+        # The fully consistent rewrite: sourceId repointed and BOTH notes stamps
+        # rewritten to agree. engineStrategyId lives on the source and was untouched.
+        self.assertEqual(
+            self.obs_types([self.obs(strategy="alex_g_sr_v1", basis="LIVE_CLOSE",
+                                     minted="paper_trade")],
+                           [self.src("paper_trade", engine="current_strategy")]),
+            ["ENGINE_STRATEGY_MISMATCH"])
+
+    def test_POSITIVE_CONTROL_a_matching_engine_is_not_reported(self):
+        self.assertEqual(
+            self.obs_types([self.obs(strategy="alex_g_sr_v1", basis="LIVE_CLOSE",
+                                     minted="paper_trade")],
+                           [self.src("paper_trade", engine="alex_g_sr_v1")]), [])
+
+    def test_a_source_without_engineStrategyId_is_not_guessed_at(self):
+        self.assertEqual(
+            self.obs_types([self.obs(basis="LIVE_CLOSE", minted="paper_trade")],
+                           [self.src("paper_trade")]), [])
+
+
+class TestCaptureBasisStampIsSymmetricWithTheOther(unittest.TestCase):
+    """The decoy attack was caught on the `sourceType` stamp and not on the
+    `captureBasis` one, because the first used findall + ambiguity and the second
+    used `.search`. Prepending 24 characters defeated it while the true stamp sat
+    untouched in the record."""
+
+    def types(self, notes, source_type="paper_trade"):
+        findings = []
+        ve.check_observation_population_rebinding(
+            [{"observationId": "TOBS|MOGO|20260819|001",
+              "sourceId": "EVSRC|MOGO|20260819|001", "notes": notes}],
+            [{"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type}],
+            findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_a_decoy_captureBasis_is_AMBIGUOUS_not_first_match_wins(self):
+        self.assertEqual(
+            self.types("captureBasis=LIVE_CLOSE captureBasis=REPLAY_RUN "
+                       "sourceType=paper_trade"),
+            ["AMBIGUOUS_MINT_PROVENANCE"])
+
+    def test_a_MANGLED_basis_fails_closed_rather_than_silently_no_op(self):
+        # `[A-Za-z_]+` truncated "REPLAY-RUN" to "REPLAY", which maps to nothing, so
+        # the check silently did nothing. One hyphen defeated it.
+        self.assertEqual(self.types("captureBasis=REPLAY-RUN sourceType=paper_trade"),
+                         ["UNRECOGNISED_CAPTURE_BASIS"])
+
+    def test_an_unknown_basis_is_reported_but_NOT_guessed_at(self):
+        # Reported because "genuinely new basis" and "mangled to evade" are
+        # indistinguishable from here -- but no population is inferred from it.
+        found = self.types("captureBasis=SOME_NEW_BASIS sourceType=paper_trade")
+        self.assertEqual(found, ["UNRECOGNISED_CAPTURE_BASIS"])
+
+    def test_POSITIVE_CONTROL_a_single_valid_agreeing_basis_is_silent(self):
+        self.assertEqual(self.types("captureBasis=LIVE_CLOSE sourceType=paper_trade"), [])

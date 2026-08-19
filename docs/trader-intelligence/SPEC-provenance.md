@@ -215,3 +215,32 @@ ends and open in the middle, which is an honest description of what MOGO actuall
 - `orphanSources` in the reconciliation diagnostic counts EvidenceSources no observation cites.
   These are **genuine** and must stay visible. Making the number zero by attaching edges nothing
   states would recreate, in a new form, exactly the defect B-32 removed.
+
+### 7.4 What consistency checking cannot do, stated so nobody assumes otherwise
+
+Four rounds of adversarial verification drove the population checks to four independent
+anchors — the observation's `sourceType=` stamp, its `captureBasis=` stamp, the source's
+`metadata.captureBasis`, and the source's `metadata.engineStrategyId`. Every attack that
+*edits* a preserved record now contradicts at least one of them.
+
+Two things remain outside the reach of any consistency check, and both are worth naming
+plainly rather than leaving for someone to discover as a surprise:
+
+- **A record fabricated whole.** Adding new observation files that are internally consistent
+  and cite a genuine source produces a corpus that agrees with itself at every point. There is
+  nothing to contradict, because nothing was contradicted. No validator can distinguish a
+  fabricated import from a legitimate one by inspection.
+- **A coordinated rewrite of every anchor at once.** If all four stamps and both records are
+  edited to agree, the corpus is again self-consistent.
+
+Detection of both belongs to a different mechanism: `research_assimilation.corpus_fingerprint`
+hashes each record in full together with its source record, so either change moves the
+fingerprint, and the learning ledger records the transition. Git history shows exactly which
+bytes moved.
+
+The honest framing is that **consistency checks establish that the corpus does not contradict
+itself; they do not establish that it is true.** Provenance for that claim rests on the
+capture chain — a package hash that re-derives from preserved bytes, an import that refuses
+what it cannot verify, and a ledger that records every corpus transition — not on cross-field
+agreement. Cross-field agreement is what catches the accident and the casual edit, which is
+the overwhelming majority of what actually goes wrong.

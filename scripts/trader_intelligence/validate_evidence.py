@@ -134,7 +134,46 @@ _MINTED_SOURCE_TYPE_RE = re.compile(r"sourceType\s*=\s*([A-Za-z_-]*)", re.IGNORE
 #: via the importer's own table. Measured across all 259 preserved records:
 #: 221 REPLAY_RUN -> HISTORICAL, 29 LIVE_CLOSE -> FORWARD, 9 HISTORICAL_BACKFILL
 #: -> RECONSTRUCTED, zero missing, zero contradictions.
-_CAPTURE_BASIS_RE = re.compile(r"captureBasis\s*=\s*([A-Za-z_]+)", re.IGNORECASE)
+#: Deliberately SYMMETRIC with _MINTED_SOURCE_TYPE_RE, including the character
+#: class. `[A-Za-z_]+` truncated "REPLAY-RUN" to "REPLAY", which maps to nothing
+#: and silently no-opped -- so a mangled stamp was indistinguishable from an
+#: unknown one, and one hyphen defeated the check.
+_CAPTURE_BASIS_RE = re.compile(r"captureBasis\s*=\s*([A-Za-z_-]*)", re.IGNORECASE)
+
+
+def check_source_capture_basis_agrees_with_type(sources, findings, now):
+    """A THIRD stamp, on the source record itself, that nothing was reading.
+
+    Both stamps the rebinding check uses live in one field of one record -- the
+    observation's `notes` -- so a rewrite thorough enough to change both defeats
+    them together. Adversarial verification did exactly that, and also retyped a
+    source IN PLACE, which needs no observation edit at all.
+
+    `EvidenceSource.metadata.captureBasis` is written by the importer and, until
+    now, never read back. It sits on the OTHER record, so no edit to an observation
+    can reach it, and it maps onto `sourceType` through the importer's own table.
+    Measured on the live corpus: 47 of 59 sources carry it -- 33 REPLAY_RUN ->
+    replay_observation, 13 LIVE_CLOSE -> paper_trade, 1 HISTORICAL_BACKFILL ->
+    journal_entry -- with zero disagreements, so this costs no false positives.
+
+    Sources without the stamp are NOT reported: 12 predate it, and inventing a
+    capture basis for a record that never recorded one is the fabrication this
+    whole layer exists to prevent.
+    """
+    for source in sources:
+        basis = (source.get("metadata") or {}).get("captureBasis")
+        if not isinstance(basis, str) or not basis:
+            continue
+        expected = CAPTURE_BASIS_SOURCE_TYPE.get(basis.upper())
+        actual = source.get("sourceType")
+        if expected and actual and expected != actual:
+            _finding(findings, "SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS", "ERROR",
+                      "EVIDENCE_SOURCE", source.get("sourceId"),
+                      "Source records metadata.captureBasis=%s, which the importer "
+                      "captures as %r, but its sourceType is %r. Population is derived "
+                      "from sourceType, so retyping a source in place moves every "
+                      "observation citing it between populations."
+                      % (basis, expected, actual), now)
 
 
 def check_observation_population_rebinding(observations, sources, findings, now):
@@ -282,17 +321,62 @@ def check_observation_population_rebinding(observations, sources, findings, now)
         # This is defence in depth, not proof: both stamps live in one field, so a
         # thorough enough rewrite still defeats it. What it removes is the cheap
         # version of the attack.
-        basis_match = _CAPTURE_BASIS_RE.search(notes) if isinstance(notes, str) else None
-        if basis_match and actual:
-            expected = CAPTURE_BASIS_SOURCE_TYPE.get(basis_match.group(1).upper())
-            if expected and expected != actual:
+        # A FOURTH anchor, and the only one that lives on the OTHER record.
+        #
+        # Every stamp above sits in the observation's own `notes`, so a rewrite
+        # thorough enough to change them all defeats them together -- and repointing
+        # `sourceId` needs no source edit at all. The source's
+        # `metadata.engineStrategyId` records which engine produced the trades in that
+        # capture, and it matches the observation's `strategyId` on 259 of 259
+        # preserved records with zero disagreements. Repointing an observation at a
+        # source produced by a DIFFERENT engine therefore contradicts a field the
+        # attacker never touched.
+        #
+        # Not a complete defence, and the limit is worth stating: 7 paper_trade
+        # sources carry engineStrategyId=alex_g_sr_v1, so a replay observation
+        # repointed at one of those still agrees here. What this removes is the
+        # freedom to repoint at ANY forward source.
+        engine = (source.get("metadata") or {}).get("engineStrategyId")
+        if engine and obs.get("strategyId") and engine != obs.get("strategyId"):
+            _finding(findings, "ENGINE_STRATEGY_MISMATCH", "ERROR", "TRADE_OBSERVATION",
+                      obs_id,
+                      "Observation was produced by strategy %r but its source %s records "
+                      "engineStrategyId %r -- the observation does not belong to the "
+                      "capture it cites."
+                      % (obs.get("strategyId"), obs.get("sourceId"), engine), now)
+
+        bases = [b for b in (_CAPTURE_BASIS_RE.findall(notes)
+                             if isinstance(notes, str) else []) if b]
+        if len(bases) > 1:
+            # The decoy attack, which the sourceType stamp already caught and this one
+            # did not: `.search` took the first match, so prepending 24 characters
+            # defeated the check while the true stamp sat untouched in the record.
+            # Both stamps now use findall and both report ambiguity.
+            _finding(findings, "AMBIGUOUS_MINT_PROVENANCE", "ERROR", "TRADE_OBSERVATION",
+                      obs_id,
+                      "notes records %d different captureBasis stamps (%s); which one "
+                      "the observation was captured under is not decidable."
+                      % (len(bases), ", ".join(sorted(set(bases)))), now)
+        elif bases and actual:
+            expected = CAPTURE_BASIS_SOURCE_TYPE.get(bases[0].upper())
+            if expected is None:
+                # FAILS CLOSED, where it used to fall through. A basis the importer
+                # does not know is still not GUESSED at -- no population is inferred
+                # from it -- but it is reported, because "genuinely new basis" and
+                # "stamp mangled to evade the check" are indistinguishable from here
+                # and only one of them is harmless.
+                _finding(findings, "UNRECOGNISED_CAPTURE_BASIS", "ERROR",
+                          "TRADE_OBSERVATION", obs_id,
+                          "captureBasis=%r is not one the importer produces (%s), so this "
+                          "observation's population cannot be cross-checked against it."
+                          % (bases[0], ", ".join(sorted(CAPTURE_BASIS_SOURCE_TYPE))), now)
+            elif expected != actual:
                 _finding(findings, "CAPTURE_BASIS_CONTRADICTS_SOURCE", "ERROR",
                           "TRADE_OBSERVATION", obs_id,
                           "Observation records captureBasis=%s, which is captured as %r, "
                           "but its source %s has sourceType %r. The two stamps in this "
                           "record disagree about which population it belongs to."
-                          % (basis_match.group(1), expected, obs.get("sourceId"), actual),
-                          now)
+                          % (bases[0], expected, obs.get("sourceId"), actual), now)
 
 
 def check_orphans(sources, items, claims, links, findings, now):
@@ -958,6 +1042,7 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
     check_observation_population_rebinding(observations, sources, findings, now)
+    check_source_capture_basis_agrees_with_type(sources, findings, now)
     check_duplicate_ids(sources, items, claims, links, contradictions, findings, now, extra=[
         ("TRANSCRIPT_SEGMENT", segments, "segmentId"), ("INTAKE_MANIFEST", intakes, "intakeId"),
         ("MANUAL_ANNOTATION", annotations, "annotationId"), ("EVIDENCE_QUESTION", questions, "questionId"),

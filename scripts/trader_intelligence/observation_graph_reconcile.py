@@ -20,6 +20,7 @@ it writes nothing and never repairs anything.
 
 Exit: 0 reconciled - 1 discrepancy.
 """
+import datetime
 import glob
 import glob as globmod
 import hashlib
@@ -161,8 +162,16 @@ def reconcile():
     # 221/29/9 to 220/30/9 while this script printed RECONCILED. The authoritative
     # check is the validator's, called here rather than restated.
     rebinding = []
+    # A real timestamp, not "". `_finding` calls `now.strftime(...)`, so passing a
+    # string killed this function the moment ANY population finding fired -- and it
+    # died at check 4, so checks 5-8 (the orphan floor, the witness, the
+    # fabricated-edge check, dangling edges, determinism) never ran. It failed
+    # closed, so the gate still fired, but the report stopped naming what else was
+    # wrong. Exactly the class of defect the validator was hardened against
+    # internally, left standing at this call site.
     ve.check_observation_population_rebinding(
-        list(observations.values()), list(sources.values()), rebinding, "")
+        list(observations.values()), list(sources.values()), rebinding,
+        datetime.datetime.now(datetime.timezone.utc))
     report["populationRebindings"] = len(rebinding)
     if rebinding:
         problems.append("%d observation(s) no longer point at the source they were MINTED "
