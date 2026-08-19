@@ -426,10 +426,14 @@ DNS resolves but TCP times out (curl exit 28) from this environment for: `t.me`,
 because a different network might succeed. Two of these are high value and deserve one
 re-check rather than being written off:
 
-- **`fxleaders.com`** — robots fully permissive, no AI directive. Its page template exposes
-  exactly the wanted schema (`signal.pair`, `.action`, `.status`, `.entryPrice`, `.stopLoss`,
-  `.takeProfit`, `.analyst`), free-tier signals showing all three levels. Killed only because
-  both of its API hosts time out.
+- **`fxleaders.com`** — ~~robots fully permissive, no AI directive~~ **CORRECTED 2026-08-19,
+  see N-16.1.** Its page template exposes exactly the wanted schema (`signal.pair`, `.action`,
+  `.status`, `.entryPrice`, `.stopLoss`, `.takeProfit`, `.analyst`), free-tier signals showing
+  all three levels. The egress block has since lifted — and the re-check found that robots.txt
+  **does** carry an AI directive, disallowing every Anthropic agent site-wide. The claim above
+  was wrong at the time it was written or the file has changed since; which one is **UNKNOWN**,
+  and it is struck through rather than deleted so the correction is visible. This host is now
+  ACCESS_BLOCKED, not egress-blocked.
 - **`t.me/s/{channel}`** — public Telegram previews carry full timestamped history without
   login. Untestable here.
 
@@ -462,3 +466,148 @@ record exists for any author found — the same genuine absence as TJR and ALEX_
 observation minted from one must record that it is not an execution claim, and **survivorship
 is unbounded**: authors may silently delete losing ideas, which is invisible from outside and
 would corrupt any win rate computed from marked outcomes.
+
+---
+
+## N-16 — Re-check of blocked sources, 2026-08-19 (post-ruling)
+
+One re-check per host, not a retry loop. Two of the three questions N-15 left open are now
+answered, and one answer overturns a recorded finding.
+
+### N-16.1 — `fxleaders.com`: the block was never really the network
+
+Egress has recovered — `https://fxleaders.com/robots.txt` now returns 200 in ~0.5s from this
+environment. The file it returns is decisive:
+
+```
+User-agent: ClaudeBot          Disallow: /
+User-agent: Claude-User        Disallow: /
+User-agent: Claude-SearchBot   Disallow: /
+User-agent: anthropic-ai       Disallow: /
+```
+
+**The whole site, to every Anthropic agent.** The same file explicitly *allows* `CCBot`,
+`GPTBot`, `Google-Extended`, `Cohere-ai`, `Amazonbot` and `Applebot-Extended` with `Allow: /`.
+That is not a generic anti-bot posture that happens to catch us — it is a publisher naming
+Anthropic specifically while permitting its peers, which makes the intent unusually legible.
+
+**Status: NOT PURSUED — publisher AI-agent exclusion.** Identical in kind to TradingView, so
+`DECISION|MOGO|20260819|007` governs it by the same reasoning: dispositive for autonomous
+acquisition, no User-Agent substitution, reconsideration only through a legitimate path.
+
+This is the more painful loss of the two. N-15.4 had established that fxleaders exposes
+`entryPrice` / `stopLoss` / `takeProfit` / `analyst` as **structured fields** — the schema this
+programme wants, without the parsing that every prose source demands. Only `robots.txt` was
+retrieved today; no page, signal, or analyst content was fetched.
+
+### N-16.2 — `forexlive.com`: the UNCONFIRMED report is now CONFIRMED, and the domain moved
+
+An earlier attempt could not reproduce a reported ClaudeBot block here, and it was logged
+UNCONFIRMED rather than repeated as fact. That was the right call, and the reason it could not
+be reproduced is now visible: **`forexlive.com` 301-redirects to `investinglive.com`.** The
+robots file at the destination carries, under the heading `# Bot-Specific Restrictions`:
+
+```
+User-agent: ClaudeBot     Disallow: /
+User-agent: anthropic-ai  Disallow: /
+User-agent: Claude-Web    Disallow: /
+```
+
+**Status: NOT PURSUED — publisher AI-agent exclusion**, same governing decision.
+
+### N-16.3 — `t.me`: still network egress, unchanged
+
+TCP still times out at 20s. Environment constraint, not a publisher refusal. Left in N-15.4's
+class. No further retry is warranted until the environment itself changes.
+
+### N-16.4 — Server-level refusal, a third class
+
+`myfxbook.com`, `babypips.com` and `dailyfx.com` return **HTTP 403 to `robots.txt` itself**
+under an honest ClaudeBot User-Agent. Since robots.txt is the file that *communicates* the
+crawl policy, a 403 on it is the server declining to talk to this agent at all — an access
+control, and the charter forbids bypassing access controls. Recorded as refused rather than
+retried, and distinct from both classes above: it is enforced at the server, not declared in a
+file, so there is nothing to read and no permitted subset to fall back to.
+
+### N-16.5 — Permitted by robots, as measured today
+
+`fxstreet.com`, `forexfactory.com`, `investing.com` — robots.txt retrievable, no Anthropic
+directive, no blanket `Disallow: /` under `*`. FXStreet is evaluated on content in N-17.
+
+---
+
+## N-17 — FXStreet, evaluated on measured content rather than on being accessible
+
+FXStreet is permitted by robots (N-16.5), which after TradingView and fxleaders makes it the
+most accessible remaining candidate. That is precisely why it was measured rather than
+adopted: **accessibility is not evidence quality**, and the risk here was adopting the best
+*reachable* source and quietly treating it as the best source.
+
+**Sample:** 17 articles from `/analysis` and `/analysis/latest`, retrieved 2026-08-19 under an
+honest ClaudeBot User-Agent, 2s apart.
+
+### What it has, and it is genuinely good
+
+- **`datePublished` on 17/17**, publisher-stamped to the second, in JSON-LD `NewsArticle`.
+- **A named author on 17/17** — real analysts (Gregor Horvat, Charalampos Pissouros, Mohamad
+  Gharib, Alexander Kuptsikevich), not an anonymous desk in most cases.
+- **Directional bias derivable in 17/17**, and an instrument in the title.
+
+On provenance metadata FXStreet is the strongest source found anywhere. That is worth stating
+plainly, because it is the half of the problem TradingView also solved and no video source has.
+
+### What it does not have, and this is decisive
+
+| field | present |
+|---|---|
+| entry level | **0/17** |
+| stop / invalidation level | 4/17 |
+| target level | 2/17 |
+| position sizing | **0/17** |
+| entry + stop + target together | **0/17** |
+| structured scenario table | 1/17 |
+
+**No entry level, anywhere in the sample.** Without an entry, R-multiple is not computable,
+and R is the unit every comparison in this corpus is denominated in. A stop and a target
+without an entry do not describe a trade; they describe an opinion about a chart. This is a
+structural difference from TradingView, not a matter of degree.
+
+There is also **no outcome mechanism at all** — no equivalent of TradingView's `updates[]`, so
+nothing marks whether a view played out. That half could have been solved by deriving outcomes
+from price history, which is exactly what made TradingView attractive; but derivation needs an
+entry too, so the missing field defeats both routes at once.
+
+### A correction to this measurement, recorded because it nearly went the other way
+
+The first pass searched for `stop loss` / `take profit` / `target` and returned **0/17 for
+everything**. A control read of two full article bodies found that the gold piece by Mohamad
+Gharib carries a structured table reading `Primary Target Zone 4,560` and `Scenario
+Invalidation Sustained close below 4,330` — a target and a stop in vocabulary the regex did not
+know. The census above is the corrected one.
+
+The lesson is not that the number moved. It is that **a null result from one's own pattern is
+not a null result about the source**, and the only thing that caught it was reading the raw
+text. Any future source census must include the same control.
+
+### Verdict
+
+**NOT_RECONSTRUCTABLE_NO_TRADE_LEVEL_DETAIL** for 16/17; **PARTIALLY_RECONSTRUCTABLE** at best
+for the single structured-scenario author, and still not fully, because his entry is absent
+too. FXStreet is **not** adopted as a primary reconstruction source.
+
+It is **not** struck either. It remains the best available source of *publisher-stamped,
+attributed, timestamped market commentary*, which is a different question than reconstruction —
+if a future question needs "what did named analysts say about EUR/USD before this move," this
+is where to go.
+
+### What a source superior to FXStreet must have
+
+The search continues, and this is the bar it must clear — FXStreet fails only the first line,
+which is why it is the line that matters:
+
+1. **A stated entry level.** Non-negotiable: no entry, no R, no reconstruction.
+2. A stop and a target, in any vocabulary.
+3. A publisher-stamped pre-trade timestamp (FXStreet and TradingView both have this).
+4. An instrument and direction in machine-readable form.
+5. Ideally position sizing — still only ever seen on two TradingView authors.
+
