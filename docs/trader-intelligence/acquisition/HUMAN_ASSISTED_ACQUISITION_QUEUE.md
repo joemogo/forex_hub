@@ -110,3 +110,86 @@ temptation is to just ingest it.
 Retrieving the same pages under a different User-Agent, via a proxy or third-party mirror, or
 through a cache that exists to serve automated clients around the exclusion. These are the same
 act as crawling it directly, and the ruling forecloses them by intent, not merely by wording.
+
+---
+
+## HAQ-2 — fxleaders.com signals
+
+- **Status:** OPEN — awaiting a lawful artifact. No action requested.
+- **Classification:** HIGH-VALUE / ACCESS_BLOCKED
+- **Governance:** `DECISION|MOGO|20260819|007` governs by the same reasoning as HAQ-1 — the
+  robots.txt exclusion names Anthropic agents specifically.
+- **Evidence of value:** `NEGATIVE_ACQUISITION_LOG.md` N-15.4, N-16.1.
+
+### Why it qualifies
+
+Its page template exposes `signal.pair`, `.action`, `.status`, `.entryPrice`, `.stopLoss`,
+`.takeProfit` and `.analyst` as **structured fields**, with free-tier signals showing all three
+levels. That is the schema this programme wants without the prose parsing every other source
+demands — and critically it carries an **entry price**, the single field whose absence
+disqualified FXStreet (N-17).
+
+`robots.txt` disallows `ClaudeBot`, `Claude-User`, `Claude-SearchBot` and `anthropic-ai` with
+`Disallow: /` while explicitly allowing `CCBot`, `GPTBot`, `Google-Extended` and `Cohere-ai`.
+Only `robots.txt` was ever fetched; no signal or analyst page was retrieved.
+
+### What artifact would unlock it
+
+1. An authorized API key, or a permitted export of the signals history.
+2. Saved signal pages carrying the fields above, with the **analyst attribution and the
+   publication timestamp** — attribution is what makes a signal a *trader's* record rather than
+   an anonymous feed, and without it the reconstruction has no subject.
+3. A publisher statement permitting automated access.
+
+### Caution to carry into any future intake
+
+A signals feed is a **marketed product**. Unlike a published idea, its `status` field is
+maintained by the vendor who is selling the service, which makes self-marked outcomes a
+commercial artifact as well as a trading one. Derive outcomes from price history using the
+entry, stop and target; treat `status` as a claim to compare against, never as the outcome.
+Survivorship applies as in HAQ-1: a vendor can retire a losing signal, and that is invisible
+from outside.
+
+---
+
+## HAQ-3 — ForexFactory Trade Explorer
+
+- **Status:** OPEN — awaiting a lawful artifact. No action requested.
+- **Classification:** HIGHEST-VALUE / ACCESS_BLOCKED (bot challenge)
+- **Evidence of value:** `NEGATIVE_ACQUISITION_LOG.md` N-18.1, and the standing objection in
+  N-15.7.
+
+### Why this is the most valuable entry in the queue
+
+Every source examined in this programme — TradingView, fxleaders, FXStreet, and both traders
+already in the corpus — supplies **stated plans**. N-15.7 records the resulting hard limit: a
+published idea is not an executed trade, no author found anywhere has a verified execution
+record, and survivorship is unbounded because an author can delete what went wrong.
+
+Trade Explorer publishes **executed account histories** — real fills, with entry, exit, size
+and timestamps, from the account rather than from the author's description of it. That answers
+the objection directly rather than working around it, and no other source found does.
+
+**Access:** `robots.txt` is the most permissive encountered anywhere (a single `Sitemap:` line,
+no `Disallow`). Every content URL nevertheless returns HTTP 403 with a Cloudflare "Just a
+moment" interstitial. This is bot detection, which is prohibited to work around outright —
+so unlike HAQ-1 and HAQ-2 there is no publisher ruling to revisit and **nothing an exclusion
+being lifted would change**.
+
+### What artifact would unlock it
+
+1. **An exported account history** the operator obtains through normal interactive use, or one
+   an account owner publishes for download. This is the realistic path.
+2. An authorized API, if one exists.
+
+Wanted fields, in priority order: instrument, direction, **entry price and entry time**, exit
+price and exit time, position size, and account balance or equity at entry — the last being
+what makes risk-per-trade computable rather than assumed.
+
+### Caution to carry into any future intake
+
+An executed history removes hindsight and self-reporting bias; it does **not** remove selection
+bias. Accounts are published because they look good, and a published account is a survivor of
+whatever the author chose not to publish. It also says what was traded, not why — so it can
+establish performance and risk behaviour, and cannot by itself reconstruct a decision rule.
+

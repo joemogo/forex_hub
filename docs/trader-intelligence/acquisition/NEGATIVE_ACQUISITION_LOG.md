@@ -611,3 +611,75 @@ which is why it is the line that matters:
 4. An instrument and direction in machine-readable form.
 5. Ideally position sizing — still only ever seen on two TradingView authors.
 
+---
+
+## N-18 — The two remaining permitted sources, and why neither clears the bar
+
+N-16.5 left three hosts permitted by robots. N-17 measured FXStreet. These are the other two,
+and in both cases robots turned out not to be the operative constraint.
+
+### N-18.1 — `forexfactory.com`: permissive robots, Cloudflare challenge on every page
+
+Its `robots.txt` is a single `Sitemap:` line — **no `Disallow`, no user-agent block at all**,
+the most permissive file encountered in this sweep. Every content URL nevertheless returns
+**HTTP 403 carrying a Cloudflare "Just a moment" interstitial**: `/sitemap-index.xml`,
+`/trades`, `/trade-explorer`.
+
+**Status: NOT PURSUED — bot detection.** A JS challenge is exactly the protection the charter
+forbids working around, and solving one is prohibited outright regardless of what robots.txt
+permits. Recorded rather than attempted.
+
+This one is worth naming as a specific loss. ForexFactory's Trade Explorer publishes
+**executed account histories** — real fills, not stated plans — which is the one thing that
+would answer N-15.7's standing objection that a published idea is a plan and no author found
+anywhere has a verified execution record. It is the single most valuable target identified so
+far, and it is behind a bot challenge.
+
+**Lesson for the sweep, and it cuts both ways:** a permissive `robots.txt` predicts nothing
+about access. fxleaders declared its refusal in a file and served pages; ForexFactory declares
+nothing and refuses at the edge. Robots must be checked because it carries the publisher's
+*stated* wishes, but reachability has to be measured separately.
+
+### N-18.2 — `investing.com`: reachable, but the article bodies are not served
+
+Robots permits it and pages return HTTP 200 at ~1MB. The bodies are not in them: a sample of 14
+`/analysis/` pages yielded **~79 characters** of article text each, the `<article>` element
+holds 474 bytes of chrome, there is **no `articleBody`** in the embedded `__NEXT_DATA__`, and
+the markup carries paywall markers. What is served is 17.7KB of navigation.
+
+**Status: UNKNOWN — content not acquired.** This is explicitly *not* a content rejection: no
+claim is made about investing.com's evidence quality, because none was observed. Gated content
+is recorded as unavailable and not worked around.
+
+### N-18.3 — A measurement failure caught, and it is the same one as N-17
+
+The first census of these 14 pages reported `entry 0/14, stop 0/14, target 0/14` — a clean,
+plausible, completely meaningless result. It was **not** evidence that investing.com omits trade
+levels; it was evidence that the extractor found no text. The tell was the character count:
+79 characters per article, identical across 14 files.
+
+N-17 recorded that a null result from one's own pattern is not a null result about the source.
+Here the same failure recurred within the hour in a different disguise — vocabulary mismatch
+there, empty extraction here — and what caught it was the same habit: **look at the raw text
+before believing a zero.** Any census must therefore carry both controls: read a full body, and
+report the extracted length alongside the counts, so an empty extraction cannot masquerade as a
+finding about the publisher.
+
+### N-18.4 — Where the search stands
+
+Every source measured or attempted so far fails at one of three points:
+
+| failure | sources |
+|---|---|
+| publisher AI-agent exclusion | TradingView, fxleaders, forexlive/investinglive |
+| server refusal or bot challenge | ForexFactory, myfxbook, babypips, dailyfx |
+| gated or absent content | investing.com |
+| **acquired and measured — no entry level** | **FXStreet** |
+
+Only one source in the entire sweep has been measured on its actual content, and it fails the
+first line of the bar in N-17. The binding constraint remains **acquisition**, exactly as
+`reconstructability.py` reports for all 58 registered candidates — and it is now clear the
+constraint is not one obstacle but three distinct ones, which matters because they have
+different remedies: an exclusion may be lifted by an operator-supplied artifact (HAQ-1), a bot
+challenge cannot be, and a paywall is a commercial question rather than a technical one.
+
