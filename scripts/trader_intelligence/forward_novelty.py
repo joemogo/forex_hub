@@ -73,12 +73,27 @@ def staged_hashes(staged_glob=None):
     return out
 
 
-def select_new(recovered, observations_glob=None, staged_glob=None):
-    """The packages worth writing. Order preserved for reproducibility."""
+def classify_recovered(recovered, observations_glob=None, staged_glob=None):
+    """Split recovered packages into FRESH, PENDING and DONE.
+
+    Three states, not two, and conflating the middle one caused a real loss:
+
+      fresh   -- neither imported nor staged. Needs a capture file AND an import.
+      pending -- already staged in a capture file but NOT yet an observation.
+                 Must NOT be staged again (that mints a duplicate observation),
+                 but MUST still be imported.
+      done    -- already an observation. Nothing to do.
+
+    Treating `pending` as simply "known" is what stranded a real forward close: it
+    was staged by a run whose import did not complete, and every subsequent run then
+    reported "0 new" and skipped the import entirely, so the close sat in
+    `evidence/` unimported with nothing left to notice it.
+    """
     if recovered is None:
         raise NoveltyRefused("no recovered package list was supplied")
-    known = imported_hashes(observations_glob) | staged_hashes(staged_glob)
-    fresh = []
+    imported = imported_hashes(observations_glob)
+    staged = staged_hashes(staged_glob)
+    fresh, pending, seen = [], [], set()
     for package in recovered:
         content_hash = package.get("contentHash")
         if not content_hash:
@@ -87,10 +102,19 @@ def select_new(recovered, observations_glob=None, staged_glob=None):
             raise NoveltyRefused(
                 "package %r has no contentHash; refusing to classify it"
                 % (package.get("packageId"),))
-        if content_hash in known:
+        if content_hash in imported or content_hash in seen:
             continue
-        known.add(content_hash)          # a duplicate WITHIN one batch is not new either
-        fresh.append(package)
+        seen.add(content_hash)           # a duplicate WITHIN one batch is not new either
+        if content_hash in staged:
+            pending.append(package)
+        else:
+            fresh.append(package)
+    return fresh, pending
+
+
+def select_new(recovered, observations_glob=None, staged_glob=None):
+    """The packages worth WRITING to a new capture file. Order preserved."""
+    fresh, _pending = classify_recovered(recovered, observations_glob, staged_glob)
     return fresh
 
 
@@ -103,7 +127,7 @@ def main(argv=None):
     with open(args.recovered, "r", encoding="utf-8") as handle:
         recovered = json.load(handle)
     try:
-        fresh = select_new(recovered)
+        fresh, pending = classify_recovered(recovered)
     except NoveltyRefused as exc:
         print("REFUSED: %s" % exc, file=sys.stderr)
         return 1
@@ -111,7 +135,9 @@ def main(argv=None):
         with open(args.out, "w", encoding="utf-8") as handle:
             json.dump(fresh, handle, indent=2)
             handle.write("\n")
-    print(len(fresh))
+    # Printed as "fresh pending". The caller must import when EITHER is non-zero:
+    # pending packages are already staged and would otherwise never be imported.
+    print("%d %d" % (len(fresh), len(pending)))
     return 0
 
 

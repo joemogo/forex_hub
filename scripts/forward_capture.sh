@@ -84,23 +84,38 @@ echo "$DETECT" | sed 's/^/    /'
 if [ $DETECT_RC -ne 0 ]; then
   echo "FAIL: detection step failed" >&2; exit 1
 fi
+# "The store has not changed" is NOT "there is nothing to import". Those came apart
+# the first time a DRY RUN preceded a --write run: the dry run's preserve step
+# advanced the checkpoint marker, so the very next --write saw UNCHANGED, exited
+# here, and never imported a close it had itself just reported as new. The cheap
+# detect still earns its keep -- it decides whether a new CHECKPOINT is needed --
+# but it no longer decides whether there is work to do.
+UNCHANGED=0
 if echo "$DETECT" | grep -q 'UNCHANGED'; then
-  assimilate_then 0
+  UNCHANGED=1
 fi
 
 # ── 2. PRESERVE ──────────────────────────────────────────────────────────────────────────────
 # A verified, byte-identical copy, taken BEFORE anything is parsed. If the rest of this script
 # fails, the evidence still survives -- that ordering is the whole point.
-say "preserve: taking a verified checkpoint"
-CKPT_OUT="$(scripts/mogo_evidence_checkpoint.sh --profile "$PROFILE" --origin "$ORIGIN" 2>&1)"
-CKPT_RC=$?
-echo "$CKPT_OUT" | sed 's/^/    /'
-if [ $CKPT_RC -ne 0 ] && [ $CKPT_RC -ne 3 ]; then
-  echo "FAIL: checkpoint failed" >&2; exit 1
+if [ $UNCHANGED -eq 1 ]; then
+  say "preserve: store unchanged; reusing the most recent checkpoint"
+  CKPT_DIR="$(ls -1dt "$HOME"/MOGO-EVIDENCE-PRESERVED/2026* 2>/dev/null | head -1)"
+  if [ -z "$CKPT_DIR" ]; then
+    say "no checkpoint exists yet and the store is unchanged; nothing to do."
+    assimilate_then 0
+  fi
+else
+  say "preserve: taking a verified checkpoint"
+  CKPT_OUT="$(scripts/mogo_evidence_checkpoint.sh --profile "$PROFILE" --origin "$ORIGIN" 2>&1)"
+  CKPT_RC=$?
+  echo "$CKPT_OUT" | sed 's/^/    /'
+  if [ $CKPT_RC -ne 0 ] && [ $CKPT_RC -ne 3 ]; then
+    echo "FAIL: checkpoint failed" >&2; exit 1
+  fi
+  [ $CKPT_RC -eq 3 ] && say "WARNING: checkpoint is TORN (source moved mid-copy). Kept, not blessed."
+  CKPT_DIR="$(echo "$CKPT_OUT" | awk '/^checkpoint    :/ {print $3}')"
 fi
-[ $CKPT_RC -eq 3 ] && say "WARNING: checkpoint is TORN (source moved mid-copy). Kept, not blessed."
-
-CKPT_DIR="$(echo "$CKPT_OUT" | awk '/^checkpoint    :/ {print $3}')"
 if [ -z "$CKPT_DIR" ]; then
   say "no new checkpoint directory was written; using the most recent one"
   CKPT_DIR="$(ls -1dt "$HOME"/MOGO-EVIDENCE-PRESERVED/2026* 2>/dev/null | head -1)"
@@ -132,15 +147,22 @@ PKG_FILE="evidence/FWD-${STAMP}-PACKAGES.json"
 # than inline here. It used to be a heredoc, where nothing could test it, and it
 # carried two defects that both reached live use. It now has its own fixtures and
 # mutation coverage.
-NEW_COUNT="$(python3 scripts/trader_intelligence/forward_novelty.py "$SCRATCH" --out "$PKG_FILE")"
+NOVELTY="$(python3 scripts/trader_intelligence/forward_novelty.py "$SCRATCH" --out "$PKG_FILE")"
 NOVELTY_RC=$?
 rm -f "$SCRATCH"
 if [ $NOVELTY_RC -ne 0 ]; then
   echo "FAIL: novelty check refused; nothing imported" >&2; exit 1
 fi
-say "store reconstructed; $NEW_COUNT package(s) not yet preserved as observations"
+NEW_COUNT="$(echo "$NOVELTY" | awk '{print $1}')"
+PENDING_COUNT="$(echo "$NOVELTY" | awk '{print $2}')"
+say "store reconstructed; $NEW_COUNT fresh, $PENDING_COUNT already staged but not yet imported"
 
-if [ "$NEW_COUNT" = "0" ]; then
+# PENDING counts as work. A package staged by a run whose import did not complete is
+# invisible to a fresh-only check -- it is neither new (it is staged) nor done (it is
+# not an observation) -- so every later run reported "0 new", skipped the import, and
+# left a real forward close sitting in evidence/ with nothing left to notice it.
+# Observed exactly once, on a GBP/JPY close.
+if [ "$NEW_COUNT" = "0" ] && [ "$PENDING_COUNT" = "0" ]; then
   say "no new forward evidence to import. Checkpoint retained."
   assimilate_then 0
 fi
@@ -148,7 +170,7 @@ if [ $WRITE -eq 0 ]; then
   # A dry run reports and leaves NOTHING behind. Leaving the capture file was how
   # the same package came to be staged twice.
   rm -f "$PKG_FILE"
-  say "DRY RUN -- $NEW_COUNT new package(s) would be imported. Nothing written."
+  say "DRY RUN -- $NEW_COUNT fresh + $PENDING_COUNT pending would be imported. Nothing written."
   say "Re-run with --write to capture them."
   assimilate_then 0
 fi

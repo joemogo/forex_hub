@@ -1,0 +1,54 @@
+{
+  "adjudicates": false,
+  "assimilatedAt": "2026-08-19T01:13:12Z",
+  "changedState": {
+    "byPopulation.FORWARD.byOutcome.Loss": {
+      "after": 21,
+      "before": 20
+    },
+    "byPopulation.FORWARD.meanR": {
+      "after": -0.178636,
+      "before": -0.149302
+    },
+    "byPopulation.FORWARD.n": {
+      "after": 29,
+      "before": 28
+    },
+    "byPopulation.FORWARD.rMultipleCount": {
+      "after": 29,
+      "before": 28
+    },
+    "byPopulation.FORWARD.winShareOfPreserved": {
+      "after": 0.275862,
+      "before": 0.285714
+    },
+    "byStrategyAndPopulation.alex_g_sr_v1|FORWARD": {
+      "after": 27,
+      "before": 26
+    },
+    "observationTotal": {
+      "after": 259,
+      "before": 258
+    }
+  },
+  "corpusChanged": true,
+  "corpusFingerprintAfter": "6b61f6f8a49087b0516a8426e4d63816a86ec3a3cfc07de099593eaeb54f4744",
+  "corpusFingerprintBefore": "5f600e56a9f56930606e82cf652baa7a4c7703e7ef335a8f4348f86cd8c9cf0b",
+  "generated": true,
+  "lane": "RESEARCH",
+  "learningKinds": [
+    "A_UPDATES_DESCRIPTIVE_STATISTICS",
+    "B_CHANGES_COMPARISON_COHORT",
+    "I_WINNER_LOSER_EVIDENCE",
+    "F_LEAVES_HYPOTHESES_UNCHANGED"
+  ],
+  "legitimateConclusion": "Forward observations: 29. Descriptive statistics over the PRESERVED forward subset moved. No hypothesis changed verdict: the corpus still holds no trade evidence for any human trader, which is what blocks them.",
+  "nonConclusion": [
+    "Forward statistics describe the PRESERVED subset, not the account: the oldest closes minted no evidence package (backlog B-22).",
+    "Nothing here is evidence about any human trader. `alex_g_sr_v1` is MOGO's implementation of a published method, not the person who published it.",
+    "A change in descriptive statistics is not a finding about strategy performance; no strategy rule is altered by any observation."
+  ],
+  "observationTotalAfter": 259,
+  "observationTotalBefore": 258,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}
