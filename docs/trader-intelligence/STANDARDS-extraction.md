@@ -315,3 +315,81 @@ narrative elegance.
 (~51 minutes). A dense instructional transcript should yield roughly one claim per 8–10 source
 lines. Far fewer suggests under-extraction; far more suggests you are splitting one rule across
 many claims, which fragments evidence and depresses confidence for every fragment.
+
+---
+
+## 12. Merging artifacts: when two records may describe one trade
+
+Asked directly: **can several artifacts from the same trader be combined to fill in fields that
+no single artifact states, without inventing them?**
+
+Yes — but only under a condition that is much narrower than it first appears, and the narrow
+version is worth stating precisely, because the wide version is indistinguishable from
+fabrication at read time.
+
+**Status of this section: written in advance of need.** As of 2026-08-19 there is not one pair
+of artifacts in this corpus describing the same trade — no trader directory holds trade-level
+sources at all, and `reconstructability.py` returns `UNKNOWN_CONTENT_NOT_ACQUIRED` for all 58
+registered candidates. The rule is recorded now precisely *because* nothing depends on it yet.
+A merge rule invented later, while looking at a specific intake one wants to succeed, will be
+shaped by that intake.
+
+### 12.1 The invariant
+
+> **Merging never creates a field.**
+
+A field absent from every artifact stays `UNKNOWN` after a merge, however many artifacts are
+combined and however obvious the value seems. Two artifacts that each omit the stop do not
+jointly imply a stop. This is the line between reconstruction and invention, and it is not
+subject to judgement.
+
+### 12.2 The link must be stated, not computed
+
+The merge is only as sound as the claim that both artifacts describe **the same trade**. That
+claim is itself evidence, and it is classified like any other:
+
+- **SOURCE-STATED link** — an artifact refers to the other explicitly: *"closing the EUR/USD
+  long I posted Monday"*, a quoted or embedded prior post, a shared trade or idea id. The link
+  is the author's assertion, not ours. Fields merged across it keep their own epistemic class:
+  a stop that was SOURCE-STATED in artifact A is still SOURCE-STATED in the merged record.
+
+- **INFERRED link** — the artifacts merely *match*: same trader, same instrument, same
+  direction, compatible timestamps, non-contradictory levels. This is a hypothesis about
+  identity, and no amount of agreement upgrades it. The merged record as a whole becomes
+  **INFERRED**, every field in it included, and it may never be counted alongside OBSERVED
+  records in any statistic.
+
+Matching is not identity. A trader who takes EUR/USD longs weekly produces many artifact pairs
+that match on every available field and describe different trades.
+
+### 12.3 Contradiction is a finding, not a tie to break
+
+If two artifacts state *different* values for the same field, the merge **stops** and a
+`ContradictionRecord` is authored (§8). It is not resolved by recency, by the more detailed
+artifact, or by the one that makes the trade look complete. A contradiction is usually the
+strongest available evidence that the link in §12.2 was wrong.
+
+### 12.4 Two symmetric failures, and the second is easier to miss
+
+- **False join** — two different trades merged into one record that never existed. The
+  fabricated trade will look *better* than either real one, because it has more fields.
+- **False split** — one trade counted twice because the link went unrecognised. This inflates
+  n, and the duplicate agrees with itself, which reads as consistency.
+
+Both are caused by getting §12.2 wrong, in opposite directions. A pipeline tuned to avoid one
+will produce the other.
+
+### 12.5 Merging selects, so it biases
+
+A trade discussed in several artifacts is not a random trade. Authors return to trades that
+were memorable, instructive, or profitable. Any population assembled from multi-artifact merges
+is therefore **selected on discussion frequency**, and its win rate is not the author's win
+rate. Record the selection with the population; it does not go away by being acknowledged, but
+an unacknowledged version silently becomes a performance claim.
+
+### 12.6 What a merged record must carry
+
+Every merged observation records: which artifacts contributed, **which field came from which
+artifact**, whether the link was SOURCE-STATED or INFERRED, and the resulting class of the
+record. A merged record that cannot be decomposed back into its sources is not auditable, and
+an unauditable reconstruction is indistinguishable from an assertion.
