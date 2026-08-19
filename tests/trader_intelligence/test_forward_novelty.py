@@ -134,3 +134,86 @@ class TestItRefusesRatherThanGuesses(NoveltyCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def developer_package(content_hash, marker="tradeId", package_id="PKG|s|20260101|1"):
+    """A package the importer refuses. `marker` selects WHICH of the three
+    independent markers is present, because any one of them may be the only one on
+    an older record."""
+    pkg = package(content_hash, package_id)
+    if marker == "tradeId":
+        pkg["sourceTradeId"] = "AGT|TEST|1783897900066-459503"
+    elif marker == "isDeveloperTrade":
+        pkg["objects"]["positions"] = [{"isDeveloperTrade": True}]
+    elif marker == "tradeSource":
+        pkg["objects"]["positions"] = [{"tradeSource": "TEST"}]
+    else:
+        raise AssertionError("unknown marker %r" % marker)
+    return pkg
+
+
+class TestRefusedIsNotPending(NoveltyCase):
+    """B-31. Four developer test trades sat in `pending` forever because the importer
+    refuses them by policy and they could therefore never clear.
+
+    Why that mattered more than the noise: PENDING is the alarm that says a real close
+    was stranded, and an alarm with a permanent floor of 4 cannot ring. The next
+    stranded close would have read "5 pending" and looked like the steady state."""
+
+    def classify(self, recovered):
+        return fn.classify_recovered(
+            recovered,
+            observations_glob=os.path.join(self.obs_dir, "*.json"),
+            staged_glob=os.path.join(self.staged_dir, "*-PACKAGES.json"))
+
+    def test_a_staged_developer_trade_is_refused_NOT_pending(self):
+        # The live condition exactly: staged, unimported, unimportable.
+        self.staged("cap", [])
+        path = os.path.join(self.staged_dir, "cap-PACKAGES.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump([developer_package("dd")], handle)
+        fresh, pending, refused = self.classify([developer_package("dd")])
+        self.assertEqual(len(refused), 1)
+        self.assertEqual(len(pending), 0, "a package that can never import is not pending work")
+        self.assertEqual(len(fresh), 0)
+
+    def test_an_unstaged_developer_trade_is_refused_NOT_fresh(self):
+        # Excluded from fresh too: staging one creates a capture file that can never
+        # import, which is how the permanent-pending state arose in the first place.
+        fresh, pending, refused = self.classify([developer_package("dd")])
+        self.assertEqual((len(fresh), len(pending), len(refused)), (0, 0, 1))
+
+    def test_each_of_the_three_markers_independently_refuses(self):
+        for marker in ("tradeId", "isDeveloperTrade", "tradeSource"):
+            with self.subTest(marker=marker):
+                fresh, _pending, refused = self.classify(
+                    [developer_package("dd", marker=marker)])
+                self.assertEqual(len(refused), 1, "marker %s did not refuse" % marker)
+                self.assertEqual(len(fresh), 0)
+
+    def test_POSITIVE_CONTROL_a_real_package_is_still_fresh(self):
+        # Without this, a predicate that refused EVERYTHING would pass every
+        # assertion above and silently stop capturing real forward closes.
+        fresh, pending, refused = self.classify([package("aa")])
+        self.assertEqual((len(fresh), len(pending), len(refused)), (1, 0, 0))
+
+    def test_POSITIVE_CONTROL_a_real_package_survives_alongside_a_refused_one(self):
+        # The discriminating case: same batch, one refused and one kept, so the
+        # exclusion is shown to be selective rather than total.
+        fresh, _pending, refused = self.classify(
+            [developer_package("dd"), package("aa", package_id="PKG|s|20260101|2")])
+        self.assertEqual([p["contentHash"] for p in fresh], ["aa"])
+        self.assertEqual([p["contentHash"] for p in refused], ["dd"])
+
+    def test_a_real_staged_package_is_still_pending(self):
+        # The B-31 fix must not disarm the stranded-close alarm it exists to protect.
+        self.staged("cap", ["aa"])
+        fresh, pending, refused = self.classify([package("aa")])
+        self.assertEqual((len(fresh), len(pending), len(refused)), (0, 1, 0))
+
+    def test_the_refusal_test_is_the_IMPORTERS_not_a_copy(self):
+        # Two definitions of "developer trade" would drift, and the direction that
+        # matters -- the pipeline believing one is importable -- is unnoticeable.
+        import import_mogo_observations as importer
+        self.assertIs(fn.is_developer_test_package,
+                      importer.is_developer_test_package)

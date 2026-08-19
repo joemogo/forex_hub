@@ -340,6 +340,28 @@ def _normalize_instrument(value):
     return value
 
 
+def is_developer_test_package(package):
+    """Is this package a Developer Mode test trade rather than an observation?
+
+    THE AUTHORITATIVE definition, deliberately singular. It lives here because this
+    is the module that refuses such a package, but the capture pipeline needs the
+    same answer for a different reason: a package refused on policy will never
+    become an observation, so counting it as work "awaiting import" makes it
+    pending forever (B-31). Two copies of this test would drift, and the direction
+    of drift that matters -- the pipeline believing a developer trade is importable
+    -- is the one nobody would notice.
+
+    Three independent markers, per the reasoning at the call site: any one may be
+    absent on an older record.
+    """
+    positions = (package.get("objects") or {}).get("positions") or []
+    position = positions[0] if positions else {}
+    trade_id = str(package.get("sourceTradeId") or "")
+    return bool(position.get("isDeveloperTrade")
+                or position.get("tradeSource") == "TEST"
+                or trade_id.startswith("AGT|TEST|"))
+
+
 def observation_from_package(package, now, counters=None, source=None):
     """Map one package to a TradeObservation, or return (None, reason).
 
@@ -370,10 +392,7 @@ def observation_from_package(package, now, counters=None, source=None):
     # Three independent markers are checked because any one of them could be
     # absent on an older record, and a developer trade slipping through is worse
     # than a real trade being skipped -- which would be caught as a missing record.
-    trade_id = str(package.get("sourceTradeId") or "")
-    if (position.get("isDeveloperTrade")
-            or position.get("tradeSource") == "TEST"
-            or trade_id.startswith("AGT|TEST|")):
+    if is_developer_test_package(package):
         return None, "DEVELOPER_TEST_TRADE"
 
     fields, classification, unknowns = {}, {}, []

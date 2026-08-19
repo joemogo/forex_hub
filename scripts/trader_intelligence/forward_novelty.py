@@ -41,6 +41,9 @@ OBSERVATIONS_GLOB = os.path.join(
 STAGED_GLOB = os.path.join(REPO_ROOT, "evidence", "*-PACKAGES.json")
 
 
+from import_mogo_observations import is_developer_test_package
+
+
 class NoveltyRefused(Exception):
     """Raised rather than guessing. A capture run that cannot establish what is
     already preserved must stop, not import."""
@@ -74,26 +77,44 @@ def staged_hashes(staged_glob=None):
 
 
 def classify_recovered(recovered, observations_glob=None, staged_glob=None):
-    """Split recovered packages into FRESH, PENDING and DONE.
+    """Split recovered packages into FRESH, PENDING, REFUSED and DONE.
 
-    Three states, not two, and conflating the middle one caused a real loss:
+    Four states, and conflating any two of them has now caused a real defect:
 
       fresh   -- neither imported nor staged. Needs a capture file AND an import.
       pending -- already staged in a capture file but NOT yet an observation.
                  Must NOT be staged again (that mints a duplicate observation),
                  but MUST still be imported.
+      refused -- the importer will never accept it on policy grounds, so it can
+                 never become an observation. Not work. See below.
       done    -- already an observation. Nothing to do.
 
     Treating `pending` as simply "known" is what stranded a real forward close: it
     was staged by a run whose import did not complete, and every subsequent run then
     reported "0 new" and skipped the import entirely, so the close sat in
     `evidence/` unimported with nothing left to notice it.
+
+    REFUSED exists because `pending` then acquired the opposite failure (B-31). Four
+    developer test trades were staged and the importer refuses them by policy, so they
+    could never clear -- every run reported "4 pending" forever. That is worse than
+    noise: PENDING is the signal that a real close was stranded, and it only works
+    while it reads zero. A permanent floor of 4 means the next stranded close shows up
+    as "5 pending" and looks exactly like the steady state.
+
+    The refusal test is imported from the importer rather than restated here, so the
+    pipeline and the gate cannot disagree about what a developer trade is.
+
+    Refused packages are excluded from `fresh` as well, not just `pending`: staging one
+    would create a capture file that can never import, which is how this state arose in
+    the first place. They are returned rather than dropped so the caller can report
+    them -- if this predicate is ever wrong, the mistake must be visible rather than a
+    real close silently vanishing from capture.
     """
     if recovered is None:
         raise NoveltyRefused("no recovered package list was supplied")
     imported = imported_hashes(observations_glob)
     staged = staged_hashes(staged_glob)
-    fresh, pending, seen = [], [], set()
+    fresh, pending, refused, seen = [], [], [], set()
     for package in recovered:
         content_hash = package.get("contentHash")
         if not content_hash:
@@ -105,16 +126,19 @@ def classify_recovered(recovered, observations_glob=None, staged_glob=None):
         if content_hash in imported or content_hash in seen:
             continue
         seen.add(content_hash)           # a duplicate WITHIN one batch is not new either
+        if is_developer_test_package(package):
+            refused.append(package)
+            continue
         if content_hash in staged:
             pending.append(package)
         else:
             fresh.append(package)
-    return fresh, pending
+    return fresh, pending, refused
 
 
 def select_new(recovered, observations_glob=None, staged_glob=None):
     """The packages worth WRITING to a new capture file. Order preserved."""
-    fresh, _pending = classify_recovered(recovered, observations_glob, staged_glob)
+    fresh, _pending, _refused = classify_recovered(recovered, observations_glob, staged_glob)
     return fresh
 
 
@@ -127,7 +151,7 @@ def main(argv=None):
     with open(args.recovered, "r", encoding="utf-8") as handle:
         recovered = json.load(handle)
     try:
-        fresh, pending = classify_recovered(recovered)
+        fresh, pending, refused = classify_recovered(recovered)
     except NoveltyRefused as exc:
         print("REFUSED: %s" % exc, file=sys.stderr)
         return 1
@@ -135,9 +159,11 @@ def main(argv=None):
         with open(args.out, "w", encoding="utf-8") as handle:
             json.dump(fresh, handle, indent=2)
             handle.write("\n")
-    # Printed as "fresh pending". The caller must import when EITHER is non-zero:
-    # pending packages are already staged and would otherwise never be imported.
-    print("%d %d" % (len(fresh), len(pending)))
+    # Printed as "fresh pending refused". The caller must import when either of the
+    # first two is non-zero: pending packages are already staged and would otherwise
+    # never be imported. REFUSED must NOT trigger an import -- it is reported so a
+    # misclassification is visible, not because there is anything to do about it.
+    print("%d %d %d" % (len(fresh), len(pending), len(refused)))
     return 0
 
 

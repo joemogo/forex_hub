@@ -155,7 +155,20 @@ if [ $NOVELTY_RC -ne 0 ]; then
 fi
 NEW_COUNT="$(echo "$NOVELTY" | awk '{print $1}')"
 PENDING_COUNT="$(echo "$NOVELTY" | awk '{print $2}')"
+REFUSED_COUNT="$(echo "$NOVELTY" | awk '{print $3}')"
 say "store reconstructed; $NEW_COUNT fresh, $PENDING_COUNT already staged but not yet imported"
+
+# REFUSED is reported and is NOT work. These are packages the importer will never
+# accept on policy grounds -- developer test trades. They used to be counted as
+# PENDING, which made the pending count read 4 forever and destroyed the only signal
+# that says a real close was stranded (B-31).
+#
+# Reported rather than silently dropped: if the refusal predicate is ever wrong, a
+# real close would disappear from capture with nothing to notice it, which is the
+# same class of loss the pending state exists to prevent.
+if [ "${REFUSED_COUNT:-0}" != "0" ]; then
+  say "note: $REFUSED_COUNT package(s) refused by import policy (developer test trades) -- not work, not imported"
+fi
 
 # PENDING counts as work. A package staged by a run whose import did not complete is
 # invisible to a fresh-only check -- it is neither new (it is staged) nor done (it is
