@@ -1,0 +1,54 @@
+{
+  "adjudicates": false,
+  "cohortKey": "timeframe",
+  "configured": [
+    "D",
+    "H1",
+    "H4",
+    "W"
+  ],
+  "doesNotSupport": [
+    "The historical base rate is used ONLY to predict how OFTEN a cohort should appear. It says nothing about how that cohort performs, and no performance figure may be derived from it here.",
+    "An absence consistent with rarity is not proof that evaluation ran. It means the evidence does not distinguish rarity from failure at this sample size -- engine-side coverage answers that, not this report."
+  ],
+  "forwardTotal": 27,
+  "generated": true,
+  "historicalTotal": 221,
+  "lane": "RESEARCH",
+  "rows": [
+    {
+      "cohort": "D",
+      "expectedForwardCount": null,
+      "forwardCount": 2,
+      "historicalCount": 6,
+      "verdict": "PRESENT"
+    },
+    {
+      "cohort": "H1",
+      "expectedForwardCount": null,
+      "forwardCount": 20,
+      "historicalCount": 161,
+      "verdict": "PRESENT"
+    },
+    {
+      "cohort": "H4",
+      "expectedForwardCount": null,
+      "forwardCount": 5,
+      "historicalCount": 52,
+      "verdict": "PRESENT"
+    },
+    {
+      "cohort": "W",
+      "expectedForwardCount": 0.244,
+      "forwardCount": 0,
+      "historicalCount": 2,
+      "verdict": "ABSENT_CONSISTENT_WITH_RARITY"
+    }
+  ],
+  "schemaVersion": "mogo.forward-coverage.v1",
+  "unexplainedAbsences": [],
+  "verdictMeaning": {
+    "ABSENT_CONSISTENT_WITH_RARITY": "No forward evidence, and none is expected yet: the historical base rate predicts fewer than 3.0 trades at the current forward sample size. This is rarity, not starvation.",
+    "PRESENT": "Forward evidence exists for this cohort."
+  }
+}

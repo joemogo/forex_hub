@@ -136,6 +136,8 @@ scripts/forward_capture.sh                     detect -> preserve -> import -> a
 scripts/mogo_observation_coverage.js --store   are all configured instruments actually observed?
 scripts/mogo_evidence_checkpoint.sh --selftest preservation is read-only and verified
 python3 scripts/trader_intelligence/research_assimilation.py   what changed, and what did not
+python3 scripts/trader_intelligence/forward_coverage.py        is a missing cohort rarity or starvation?
+python3 scripts/trader_intelligence/reconstructability.py      could a strategy be rebuilt from a candidate?
 ```
 
 A diagnostic must test reality, not restate a dashboard. If reality contradicts a report, a test,
