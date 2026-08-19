@@ -34,14 +34,29 @@
       "winCount": 86,
       "winShareOfPreserved": 0.38914,
       "worstR": -1
+    },
+    "RECONSTRUCTED": {
+      "bestR": 2.036975,
+      "byOutcome": {
+        "Loss": 5,
+        "Win": 4
+      },
+      "meanR": 0.336882,
+      "n": 9,
+      "rMultipleCount": 9,
+      "unknownFieldCounts": {},
+      "winCount": 4,
+      "winShareOfPreserved": 0.444444,
+      "worstR": -1.005034
     }
   },
   "byStrategyAndPopulation": {
     "alex_g_sr_v1|FORWARD": 26,
     "alex_g_sr_v1|HISTORICAL": 221,
+    "alex_g_sr_v1|RECONSTRUCTED": 9,
     "current_strategy|FORWARD": 2
   },
-  "corpusFingerprint": "f151601c63334020771d2f8b4d2b34e32d82933cb214cecb63dc86f03f902802",
+  "corpusFingerprint": "071c65e0cdcfde3ac46da71d168d6af9b6b6817108e1d4de04da493a7041eb28",
   "fidelity": {
     "alex_g_sr_v1": {
       "agreements": [
@@ -53,7 +68,8 @@
       ],
       "populationsPresent": [
         "FORWARD",
-        "HISTORICAL"
+        "HISTORICAL",
+        "RECONSTRUCTED"
       ]
     },
     "current_strategy": {
@@ -77,7 +93,8 @@
     "evidenceHeldFor": {
       "alex_g_sr_v1": [
         "FORWARD",
-        "HISTORICAL"
+        "HISTORICAL",
+        "RECONSTRUCTED"
       ],
       "current_strategy": [
         "FORWARD"
@@ -86,6 +103,6 @@
     "total": 641
   },
   "lane": "RESEARCH",
-  "observationTotal": 249,
+  "observationTotal": 258,
   "schemaVersion": "mogo.research-assimilation.v1"
 }

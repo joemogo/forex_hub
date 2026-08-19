@@ -1,0 +1,29 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": null,
+  "contentHash": "c2b08fe4768384b8cbc6d6bdde2815805e395a2875d28dc3bcf83260fe34ee41",
+  "contentHashAlgorithm": "sha256",
+  "createdAt": "2026-08-19T00:18:09Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": null,
+  "licensingStatus": "owned",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "captureBasis": "LIVE_CLOSE",
+    "engineStrategyId": "current_strategy",
+    "importedBy": "import_mogo_observations",
+    "packageCount": 1
+  },
+  "provenanceStatus": "verified",
+  "registeredAt": "2026-08-19T00:18:09Z",
+  "repositoryPath": "evidence/C1-01-GBP_USD-PACKAGES.json",
+  "schemaVersion": 1,
+  "sourceId": "EVSRC|MOGO|20260819|001",
+  "sourceType": "paper_trade",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "C1-01-GBP_USD-PACKAGES.json (LIVE_CLOSE)",
+  "traderId": null,
+  "updatedAt": "2026-08-19T00:18:09Z"
+}

@@ -191,8 +191,12 @@ class TestAgainstTheRealCorpus(unittest.TestCase):
         cls.report = pf.compare(to.load_observations(), to.load_sources(),
                                 "alex_g_sr_v1")
 
-    def test_both_populations_are_present_for_the_implementation(self):
-        self.assertEqual(set(self.report["populationsPresent"]), {"HISTORICAL", "FORWARD"})
+    def test_the_compared_populations_are_present_for_the_implementation(self):
+        """Was pinned to exactly two. The B-22 backfill added RECONSTRUCTED for this
+        same strategy, which is reported alongside them and compared with neither."""
+        present = set(self.report["populationsPresent"])
+        self.assertTrue({"HISTORICAL", "FORWARD"}.issubset(present))
+        self.assertNotIn(to.UNKNOWN_POPULATION, present)
 
     def test_replay_books_fewer_distinct_outcomes_than_forward(self):
         historical = self.report["byPopulation"]["HISTORICAL"]
@@ -337,3 +341,51 @@ class TestRiskSizingOnTheRealCorpus(unittest.TestCase):
     def test_the_agreement_is_reported(self):
         self.assertIn(pf.RISK_SIZING_AGREES,
                       {a["code"] for a in self.report["agreements"]})
+
+
+class TestReconstructedDoesNotDistortTheComparison(unittest.TestCase):
+    """The replay-vs-forward finding must be computed from those two populations
+    ONLY. Reconstructed evidence is MINIMAL/UNSAFE_TO_RECONSTRUCT; letting it move
+    a finding about the simulator would be the contamination this whole separation
+    exists to prevent -- just one layer further up than the importer.
+    """
+
+    def corpus_with(self, extra=None):
+        records = {
+            "h1": observation("h1", "EVSRC|REPLAY|1", -1.0),
+            "h2": observation("h2", "EVSRC|REPLAY|1", 2.0, outcome="Win"),
+            "f1": observation("f1", "EVSRC|FWD|1", -1.0774),
+            "f2": observation("f2", "EVSRC|FWD|1", 2.0, outcome="Win"),
+        }
+        if extra:
+            records.update(extra)
+        return records
+
+    def report(self, records):
+        sources = dict(SOURCES)
+        sources["EVSRC|RECON|1"] = source("EVSRC|RECON|1", "journal_entry")
+        return pf.compare(records, sources, "alex_g_sr_v1")
+
+    def test_a_wildly_off_lattice_reconstructed_record_changes_no_finding(self):
+        baseline = self.report(self.corpus_with())
+        withrecon = self.report(self.corpus_with(
+            {"r1": observation("r1", "EVSRC|RECON|1", 47.0, outcome="Win")}))
+        self.assertEqual([f["code"] for f in baseline["findings"]],
+                         [f["code"] for f in withrecon["findings"]])
+        self.assertEqual(baseline["byPopulation"]["FORWARD"],
+                         withrecon["byPopulation"]["FORWARD"],
+                         "a reconstructed record moved FORWARD statistics")
+        self.assertEqual(baseline["byPopulation"]["HISTORICAL"],
+                         withrecon["byPopulation"]["HISTORICAL"])
+
+    def test_it_is_reported_as_its_own_population(self):
+        report = self.report(self.corpus_with(
+            {"r1": observation("r1", "EVSRC|RECON|1", 2.0, outcome="Win")}))
+        self.assertIn("RECONSTRUCTED", report["populationsPresent"])
+        self.assertEqual(report["byPopulation"]["RECONSTRUCTED"]["n"], 1)
+
+    def test_the_finding_basis_never_cites_a_reconstructed_value(self):
+        report = self.report(self.corpus_with(
+            {"r1": observation("r1", "EVSRC|RECON|1", 47.0, outcome="Win")}))
+        for finding in report["findings"]:
+            self.assertNotIn(47.0, finding.get("basis", {}).get("forwardOffLattice", []))

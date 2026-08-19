@@ -1,0 +1,29 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": null,
+  "contentHash": "0b8d43b82a9aea7acb6e48a6411bd6f0c03053c66dce2f6fe6328fcb17ae338b",
+  "contentHashAlgorithm": "sha256",
+  "createdAt": "2026-08-19T00:18:09Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": null,
+  "licensingStatus": "owned",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "captureBasis": "REPLAY_RUN",
+    "engineStrategyId": "alex_g_sr_v1",
+    "importedBy": "import_mogo_observations",
+    "packageCount": 12
+  },
+  "provenanceStatus": "verified",
+  "registeredAt": "2026-08-19T00:18:09Z",
+  "repositoryPath": "evidence/C1-02-GBP_JPY-PACKAGES.json",
+  "schemaVersion": 1,
+  "sourceId": "EVSRC|MOGO|20260819|003",
+  "sourceType": "replay_observation",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "C1-02-GBP_JPY-PACKAGES.json (REPLAY_RUN)",
+  "traderId": null,
+  "updatedAt": "2026-08-19T00:18:09Z"
+}

@@ -155,7 +155,13 @@ class TestIdentifiersAreUniqueAcrossTheRealCorpus(unittest.TestCase):
         records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
         self.assertGreater(len(records), 200,
                            "the package corpus should convert in full")
-        self.assertEqual(skipped, [], "nothing should be silently dropped")
+        # A skip is acceptable ONLY when it is a deliberate refusal. Asserting an
+        # empty list stopped being right once developer TEST trades began being
+        # refused -- but relaxing it to "any skip is fine" would hide a genuine
+        # conversion loss, which is what this test exists to catch.
+        unexpected = [x for x in skipped if x.get("reason") != "DEVELOPER_TEST_TRADE"]
+        self.assertEqual(unexpected, [], "a package was dropped for a reason that is "
+                                          "not a deliberate refusal")
 
     def test_conversion_is_deterministic_across_runs(self):
         first, _, _s1 = imp.convert_all(now=NOW, skip_imported=False)
@@ -211,7 +217,11 @@ class TestItWritesNothing(unittest.TestCase):
         # for every converted record, and nothing lands in UNKNOWN. Pinning "221/1"
         # would break the moment a forward close is imported -- which is exactly what
         # happened, and is normal operation rather than a regression.
-        self.assertEqual(set(summary["byPopulation"]), {"HISTORICAL", "FORWARD"})
+        # Derived from what the corpus actually holds, not a pinned pair. A third
+        # population (RECONSTRUCTED) arrived with the B-22 backfill; a fourth would
+        # arrive the same way.
+        self.assertTrue(set(summary["byPopulation"]).issubset(set(to.POPULATIONS)))
+        self.assertNotIn(to.UNKNOWN_POPULATION, summary["byPopulation"])
         self.assertEqual(sum(summary["byPopulation"].values()), summary["converted"])
 
 
@@ -249,34 +259,57 @@ class TestTheScientificBoundarySurvivesImport(unittest.TestCase):
 
     def test_no_imported_record_has_an_unresolvable_population(self):
         for record in self.records:
-            self.assertIn(self.population(record), (to.HISTORICAL, to.FORWARD),
+            self.assertNotEqual(self.population(record), to.UNKNOWN_POPULATION,
                           "%s has no resolvable evidence population"
                           % record["observationId"])
 
-    def test_replay_maps_to_historical_and_live_close_to_forward(self):
-        """The mapping that keeps replay out of forward results."""
+    def test_every_capture_basis_maps_to_its_own_population(self):
+        """The mapping that keeps replay out of forward results -- and now keeps
+        reconstructed evidence out of both.
+
+        Was pinned to two bases. The B-22 backfill added HISTORICAL_BACKFILL, whose
+        whole purpose is to be neither: a MINIMAL/UNSAFE_TO_RECONSTRUCT record filed
+        as `paper_trade` would retroactively weaken every live-captured one.
+        """
+        expected = {"REPLAY_RUN": to.HISTORICAL,
+                    "LIVE_CLOSE": to.FORWARD,
+                    "HISTORICAL_BACKFILL": to.RECONSTRUCTED}
         seen = set()
         for record in self.records:
             basis = self.sources[record["sourceId"]]["metadata"]["captureBasis"]
             population = self.population(record)
-            seen.add((basis, population))
-            if basis == "REPLAY_RUN":
-                self.assertEqual(population, to.HISTORICAL)
-            elif basis == "LIVE_CLOSE":
-                self.assertEqual(population, to.FORWARD)
-        # Both bases must actually appear, or the assertions above are vacuous for
-        # whichever one is missing.
-        self.assertEqual({b for b, _ in seen}, {"REPLAY_RUN", "LIVE_CLOSE"})
+            seen.add(basis)
+            self.assertIn(basis, expected, "unmapped capture basis %r" % basis)
+            self.assertEqual(population, expected[basis],
+                             "%s (%s) landed in %s" % (record["observationId"], basis,
+                                                        population))
+        # Non-vacuity: assertions inside a loop prove nothing if the loop is thin.
+        self.assertGreaterEqual(len(seen), 2,
+                                "only %r present -- the mapping is barely exercised" % seen)
+        self.assertEqual(len(set(expected[b] for b in seen)), len(seen),
+                         "two capture bases share a population")
 
-    def test_the_two_populations_are_disjoint_and_cover_everything(self):
-        historical = {r["observationId"] for r in self.records
-                      if self.population(r) == to.HISTORICAL}
-        forward = {r["observationId"] for r in self.records
-                   if self.population(r) == to.FORWARD}
-        self.assertEqual(historical & forward, set())
-        self.assertEqual(len(historical) + len(forward), len(self.records))
-        self.assertTrue(forward, "the forward population must not be empty")
-        self.assertTrue(historical, "the historical population must not be empty")
+    def test_the_populations_are_disjoint_and_cover_everything(self):
+        """Every record lands in exactly one population, and none is UNKNOWN.
+
+        Was "the TWO populations". A third (RECONSTRUCTED) arrived with the B-22
+        backfill, so the invariant is stated over whatever populations are present
+        rather than over a pinned pair -- the count was never the point.
+        """
+        buckets = {}
+        for record in self.records:
+            buckets.setdefault(self.population(record), set()).add(record["observationId"])
+        self.assertNotIn(to.UNKNOWN_POPULATION, buckets,
+                         "a record has no resolvable population")
+        self.assertGreaterEqual(len(buckets), 2,
+                                "fewer than two populations -- disjointness would be vacuous")
+        seen = set()
+        for population, ids in buckets.items():
+            self.assertEqual(seen & ids, set(), "%s overlaps another population" % population)
+            seen |= ids
+        self.assertEqual(len(seen), len(self.records), "a record was counted twice or not at all")
+        self.assertTrue(buckets.get(to.FORWARD), "the forward population must not be empty")
+        self.assertTrue(buckets.get(to.HISTORICAL), "the historical population must not be empty")
 
     def test_no_source_asserts_an_unregistered_strategy_family(self):
         """A dangling BELONGS_TO_STRATEGY_FAMILY edge is a fabricated reference;
@@ -304,7 +337,8 @@ class TestImportIsIncrementalAndAdditive(unittest.TestCase):
             to.write_observation(record, observations_dir=self.tmp)
         again, skipped, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
         self.assertEqual(again, [], "a re-run must be a no-op, not a re-mint")
-        self.assertEqual(skipped, [])
+        unexpected = [x for x in skipped if x.get("reason") != "DEVELOPER_TEST_TRADE"]
+        self.assertEqual(unexpected, [])
 
     def test_positive_control_the_first_run_is_not_empty(self):
         """Otherwise the idempotence test above would pass against a function that
@@ -799,3 +833,70 @@ class TestBackfillDoesNotContaminateForward(unittest.TestCase):
 
     def test_an_unrecognised_basis_is_still_refused(self):
         self.assertNotIn("SOMETHING_NEW", imp.CAPTURE_BASIS_SOURCE_TYPE)
+
+
+class TestDeveloperTradesAreNotEvidence(unittest.TestCase):
+    """Synthetic Developer-Mode trades must never enter the research corpus.
+
+    They travel the real paper-engine code path, so they mint real packages -- but
+    they never observed a market. The B-22 backfill minted 13 packages, 4 of them
+    `AGT|TEST|` developer trades, and the importer had no filter at the time.
+    """
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+    def package(self, **position_extra):
+        position = {"instrument": "GBP_USD", "direction": "buy", "entryPrice": 1.0,
+                    "originalStop": 0.99, "target": 1.02, "riskAmount": 100.0,
+                    "balanceBefore": 10000.0}
+        position.update(position_extra)
+        return {"packageId": "PKG|s|20260713|1",
+                "sourceTradeId": position_extra.pop("_tradeId", "AGT|GBP_USD|1"),
+                "captureBasis": "HISTORICAL_BACKFILL", "contentHash": "h1",
+                "objects": {"positions": [position],
+                             "outcomes": [{"exitPrice": 0.99, "pnl": -100.0,
+                                            "exitReasonCode": "Loss",
+                                            "exitTimestamp": "2026-07-13T00:00:00.000Z",
+                                            "balanceAfter": 9900.0, "realizedR": -1.0}]}}
+
+    SOURCE = {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "journal_entry"}
+
+    def convert(self, package):
+        return imp.observation_from_package(package, self.NOW, counters={},
+                                             source=self.SOURCE)
+
+    def test_isDeveloperTrade_is_refused(self):
+        record, reason = self.convert(self.package(isDeveloperTrade=True))
+        self.assertIsNone(record)
+        self.assertEqual(reason, "DEVELOPER_TEST_TRADE")
+
+    def test_tradeSource_TEST_is_refused(self):
+        record, reason = self.convert(self.package(tradeSource="TEST"))
+        self.assertIsNone(record)
+        self.assertEqual(reason, "DEVELOPER_TEST_TRADE")
+
+    def test_an_AGT_TEST_trade_id_is_refused(self):
+        package = self.package()
+        package["sourceTradeId"] = "AGT|TEST|1783897893481-42902"
+        record, reason = self.convert(package)
+        self.assertIsNone(record)
+        self.assertEqual(reason, "DEVELOPER_TEST_TRADE")
+
+    def test_each_marker_is_checked_independently(self):
+        """Any one marker could be absent on an older record, so no single one may
+        be load-bearing on its own."""
+        for extra in ({"isDeveloperTrade": True}, {"tradeSource": "TEST"}):
+            record, reason = self.convert(self.package(**extra))
+            self.assertEqual(reason, "DEVELOPER_TEST_TRADE", "marker %r not checked" % extra)
+
+    def test_a_REAL_trade_is_still_converted(self):
+        """Positive control. Without it, the refusals above would pass against an
+        importer that rejects everything."""
+        record, reason = self.convert(self.package())
+        self.assertIsNotNone(record, "a real trade was refused: %s" % reason)
+        self.assertEqual(record["instrument"], "GBP/USD")
+
+    def test_a_real_trade_with_the_flag_explicitly_false_is_converted(self):
+        record, reason = self.convert(self.package(isDeveloperTrade=False,
+                                                    tradeSource="LIVE"))
+        self.assertIsNotNone(record, "refused a genuine trade: %s" % reason)

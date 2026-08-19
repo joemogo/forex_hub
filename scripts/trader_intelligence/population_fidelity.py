@@ -237,9 +237,11 @@ def compare(observations, sources, strategy_id):
                 agreements.append({
                     "code": RISK_SIZING_AGREES,
                     "statement":
-                        "Position sizing is identical across both populations: risk "
-                        "is %.4f%% of balance-at-entry in every observation, replay "
-                        "and forward alike." % h_risk[0],
+                        "Position sizing is identical in the two populations "
+                        "compared here: risk is %.4f%% of balance-at-entry in every "
+                        "replay and every forward observation. Other populations, "
+                        "where present, are reported separately and not compared."
+                        % h_risk[0],
                     "basis": {"historicalRiskPct": h_risk, "forwardRiskPct": f_risk,
                               "spread": round(spread, 6)},
                 })

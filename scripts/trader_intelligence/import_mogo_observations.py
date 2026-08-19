@@ -217,6 +217,26 @@ def observation_from_package(package, now, counters=None, source=None):
         return None, "NO_OUTCOME_OBJECT"
 
     position, outcome = positions[0], outcomes[0]
+
+    # DEVELOPER TEST TRADES ARE NOT EVIDENCE. They are synthetic BUY/SELL/WIN/LOSS
+    # trades the operator generates from Developer Mode to exercise the paper
+    # engine's UI; they travel the real code path, so they mint real packages, but
+    # they never observed a market. Importing one would put a fabricated trade into
+    # a research corpus as an observation of trading, which is the one thing this
+    # corpus may never contain.
+    #
+    # Found when the B-22 backfill minted 13 packages: 9 real closes and 4
+    # `AGT|TEST|` developer trades. The importer had no filter, and index.html
+    # already excludes them from trade-integrity checks by the same id prefix.
+    # Three independent markers are checked because any one of them could be
+    # absent on an older record, and a developer trade slipping through is worse
+    # than a real trade being skipped -- which would be caught as a missing record.
+    trade_id = str(package.get("sourceTradeId") or "")
+    if (position.get("isDeveloperTrade")
+            or position.get("tradeSource") == "TEST"
+            or trade_id.startswith("AGT|TEST|")):
+        return None, "DEVELOPER_TEST_TRADE"
+
     fields, classification, unknowns = {}, {}, []
 
     for target_field, source_key in POSITION_MAP:

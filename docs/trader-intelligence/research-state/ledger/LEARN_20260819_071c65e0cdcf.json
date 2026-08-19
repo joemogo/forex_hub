@@ -1,0 +1,93 @@
+{
+  "adjudicates": false,
+  "assimilatedAt": "2026-08-19T00:18:20Z",
+  "changedState": {
+    "byPopulation.RECONSTRUCTED.bestR": {
+      "after": 2.036975,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.byOutcome.Loss": {
+      "after": 5,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.byOutcome.Win": {
+      "after": 4,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.meanR": {
+      "after": 0.336882,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.n": {
+      "after": 9,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.rMultipleCount": {
+      "after": 9,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.winCount": {
+      "after": 4,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.winShareOfPreserved": {
+      "after": 0.444444,
+      "before": null
+    },
+    "byPopulation.RECONSTRUCTED.worstR": {
+      "after": -1.005034,
+      "before": null
+    },
+    "byStrategyAndPopulation.alex_g_sr_v1|RECONSTRUCTED": {
+      "after": 9,
+      "before": null
+    },
+    "fidelity.alex_g_sr_v1.populationsPresent": {
+      "after": [
+        "FORWARD",
+        "HISTORICAL",
+        "RECONSTRUCTED"
+      ],
+      "before": [
+        "FORWARD",
+        "HISTORICAL"
+      ]
+    },
+    "hypotheses.evidenceHeldFor.alex_g_sr_v1": {
+      "after": [
+        "FORWARD",
+        "HISTORICAL",
+        "RECONSTRUCTED"
+      ],
+      "before": [
+        "FORWARD",
+        "HISTORICAL"
+      ]
+    },
+    "observationTotal": {
+      "after": 258,
+      "before": 249
+    }
+  },
+  "corpusChanged": true,
+  "corpusFingerprintAfter": "071c65e0cdcfde3ac46da71d168d6af9b6b6817108e1d4de04da493a7041eb28",
+  "corpusFingerprintBefore": "f151601c63334020771d2f8b4d2b34e32d82933cb214cecb63dc86f03f902802",
+  "generated": true,
+  "lane": "RESEARCH",
+  "learningKinds": [
+    "A_UPDATES_DESCRIPTIVE_STATISTICS",
+    "B_CHANGES_COMPARISON_COHORT",
+    "I_WINNER_LOSER_EVIDENCE",
+    "G_GENERATES_CANDIDATE_QUESTION",
+    "F_LEAVES_HYPOTHESES_UNCHANGED"
+  ],
+  "legitimateConclusion": "Forward observations: 28. Descriptive statistics over the PRESERVED forward subset moved. No hypothesis changed verdict: the corpus still holds no trade evidence for any human trader, which is what blocks them.",
+  "nonConclusion": [
+    "Forward statistics describe the PRESERVED subset, not the account: the oldest closes minted no evidence package (backlog B-22).",
+    "Nothing here is evidence about any human trader. `alex_g_sr_v1` is MOGO's implementation of a published method, not the person who published it.",
+    "A change in descriptive statistics is not a finding about strategy performance; no strategy rule is altered by any observation."
+  ],
+  "observationTotalAfter": 258,
+  "observationTotalBefore": 249,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}

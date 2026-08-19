@@ -1,0 +1,29 @@
+{
+  "acquiredAt": null,
+  "canonicalReference": null,
+  "contentHash": "185bd9faefd7b5d25e9d4c501466347608995fc62a17e259f73ad541170ff9c7",
+  "contentHashAlgorithm": "sha256",
+  "createdAt": "2026-08-19T00:18:09Z",
+  "externalAssetReference": null,
+  "externalReference": null,
+  "language": null,
+  "licensingStatus": "owned",
+  "lifecycleStatus": "registered",
+  "metadata": {
+    "captureBasis": "HISTORICAL_BACKFILL",
+    "engineStrategyId": "alex_g_sr_v1",
+    "importedBy": "import_mogo_observations",
+    "packageCount": 13
+  },
+  "provenanceStatus": "verified",
+  "registeredAt": "2026-08-19T00:18:09Z",
+  "repositoryPath": "evidence/FWD-20260819T001808Z-PACKAGES.json",
+  "schemaVersion": 1,
+  "sourceId": "EVSRC|MOGO|20260819|016",
+  "sourceType": "journal_entry",
+  "storageLocationType": "repository",
+  "strategyFamilyId": null,
+  "title": "FWD-20260819T001808Z-PACKAGES.json (HISTORICAL_BACKFILL)",
+  "traderId": null,
+  "updatedAt": "2026-08-19T00:18:09Z"
+}
