@@ -13,6 +13,8 @@
       "unknownFieldCounts": {
         "accountBalanceAfter": 2,
         "accountBalanceBefore": 2,
+        "exitDetectionSource": 2,
+        "marketExitAt": 8,
         "timeframe": 2
       },
       "winCount": 8,
@@ -29,6 +31,8 @@
       "n": 221,
       "rMultipleCount": 221,
       "unknownFieldCounts": {
+        "exitDetectionSource": 221,
+        "marketExitAt": 221,
         "pnl": 221
       },
       "winCount": 86,
@@ -44,7 +48,9 @@
       "meanR": 0.336882,
       "n": 9,
       "rMultipleCount": 9,
-      "unknownFieldCounts": {},
+      "unknownFieldCounts": {
+        "marketExitAt": 2
+      },
       "winCount": 4,
       "winShareOfPreserved": 0.444444,
       "worstR": -1.005034
@@ -56,7 +62,7 @@
     "alex_g_sr_v1|RECONSTRUCTED": 9,
     "current_strategy|FORWARD": 2
   },
-  "corpusFingerprint": "071c65e0cdcfde3ac46da71d168d6af9b6b6817108e1d4de04da493a7041eb28",
+  "corpusFingerprint": "5f600e56a9f56930606e82cf652baa7a4c7703e7ef335a8f4348f86cd8c9cf0b",
   "fidelity": {
     "alex_g_sr_v1": {
       "agreements": [

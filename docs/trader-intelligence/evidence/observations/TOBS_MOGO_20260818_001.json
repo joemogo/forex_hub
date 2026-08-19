@@ -42,6 +42,8 @@
   "unknowns": [
     "accountBalanceAfter",
     "accountBalanceBefore",
+    "exitDetectionSource",
+    "marketExitAt",
     "timeframe"
   ]
 }

@@ -108,6 +108,13 @@ OBSERVABLE_FIELDS = (
     "instrument", "timeframe", "direction", "entry", "stop", "target",
     "exitPrice", "positionSize", "riskAmount", "pnl", "rMultiple",
     "accountBalanceBefore", "accountBalanceAfter", "openedAt", "closedAt",
+    # `closedAt` is when the exit was RECORDED. For an exit reconstructed from
+    # candles it is when MOGO noticed, which can be far later than when the market
+    # actually filled -- observed up to 351.8 hours later, making one record's
+    # apparent holding period 567.9h against a true 216.1h. `marketExitAt` carries
+    # the candle the exit actually occurred on, so a holding period can be computed
+    # honestly. Both are kept: neither is a correction of the other.
+    "marketExitAt", "exitDetectionSource",
     "outcome", "decisionTaken", "declineReason",
 )
 

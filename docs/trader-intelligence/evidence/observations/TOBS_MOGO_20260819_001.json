@@ -6,6 +6,7 @@
   "createdAt": "2026-08-19T00:18:09Z",
   "direction": "buy",
   "entry": 0.58444,
+  "exitDetectionSource": "live_snapshot",
   "exitPrice": 0.5828,
   "extractedBy": "mogo:import_mogo_observations",
   "fieldClassification": {
@@ -14,6 +15,7 @@
     "closedAt": "DIRECTLY_OBSERVED",
     "direction": "DIRECTLY_OBSERVED",
     "entry": "DIRECTLY_OBSERVED",
+    "exitDetectionSource": "DIRECTLY_OBSERVED",
     "exitPrice": "DIRECTLY_OBSERVED",
     "instrument": "DIRECTLY_OBSERVED",
     "openedAt": "DIRECTLY_OBSERVED",
@@ -45,5 +47,7 @@
   "strategyId": "alex_g_sr_v1",
   "target": 0.5877035714285713,
   "timeframe": "H1",
-  "unknowns": []
+  "unknowns": [
+    "marketExitAt"
+  ]
 }

@@ -75,6 +75,16 @@ POSITION_MAP = (
 OUTCOME_MAP = (
     ("exitPrice", "exitPrice"),
     ("closedAt", "exitTimestamp"),
+    # THE TRUE MARKET EXIT, which the corpus was discarding. `exitTimestamp` is the
+    # moment the close was RECORDED; for an exit reconstructed from candles that is
+    # when the re-walk noticed it. Every package in the store carries
+    # exitDetectionSource `historical_candle`, and on 6 of 29 the recorded exit is
+    # more than an hour after the true one -- worst case 351.8 hours, which turned a
+    # 216.1h holding period into an apparent 567.9h. Nothing is inferred here: the
+    # candle boundary is stated by the package, in epoch milliseconds, and only the
+    # unit is converted.
+    ("marketExitAt", "exitCandleEnd"),
+    ("exitDetectionSource", "exitDetectionSource"),
     ("outcome", "exitReasonCode"),
     # Realized performance. `pnl` is present on exactly the 26 LIVE_CLOSE packages
     # and absent from all 221 REPLAY_RUN ones -- a replay produces no realized P&L,
@@ -190,6 +200,32 @@ def build_sources(now, package_glob=None):
     return sources
 
 
+def map_outcome_value(field, value):
+    """The single place an OUTCOME_MAP value is transformed.
+
+    Both the conversion path and the widening-backfill path read the same package
+    field, and until this existed only the conversion path applied the epoch->ISO
+    transformation -- so the backfill wrote raw milliseconds into `marketExitAt`
+    for 258 records. Two mapping paths with one transformation between them is the
+    defect; this removes the second path's ability to diverge.
+    """
+    if field == "marketExitAt":
+        return _epoch_ms_to_iso(value)
+    return value
+
+
+def _epoch_ms_to_iso(value):
+    """Epoch milliseconds -> ISO-8601 Z. A unit conversion, not an inference.
+
+    Returns None (which becomes an explicit UNKNOWN) for anything that is not a
+    number, rather than guessing.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return (datetime.datetime.fromtimestamp(value / 1000.0, datetime.timezone.utc)
+            .strftime("%Y-%m-%dT%H:%M:%S.") + "%03dZ" % (int(value) % 1000))
+
+
 def _normalize_instrument(value):
     """GBP_USD -> GBP/USD, matching how the human side records an instrument.
 
@@ -251,6 +287,7 @@ def observation_from_package(package, now, counters=None, source=None):
 
     for target_field, source_key in OUTCOME_MAP:
         value = outcome.get(source_key)
+        value = map_outcome_value(target_field, value)
         if value is None:
             unknowns.append(target_field)
         else:
@@ -458,7 +495,7 @@ def backfill_mapped_fields(observations_dir=None, sources_dir=None, write=False)
         for field, key in OUTCOME_MAP:
             if field in record or field in (record.get("unknowns") or []):
                 continue
-            value = outcome[0].get(key)
+            value = map_outcome_value(field, outcome[0].get(key))
             if value is None:
                 new_unknowns.append(field)
             else:

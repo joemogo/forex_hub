@@ -900,3 +900,235 @@ class TestDeveloperTradesAreNotEvidence(unittest.TestCase):
         record, reason = self.convert(self.package(isDeveloperTrade=False,
                                                     tradeSource="LIVE"))
         self.assertIsNotNone(record, "refused a genuine trade: %s" % reason)
+
+
+class TestTheTrueMarketExitIsPreserved(unittest.TestCase):
+    """`closedAt` is when the close was RECORDED, not when the market filled.
+
+    Every package in the store carries exitDetectionSource `historical_candle` --
+    the exit was reconstructed on a re-walk. On 6 of 29 the recorded exit is more
+    than an hour after the true one; the worst is 351.8 hours, turning a 216.1h
+    holding period into an apparent 567.9h. The candle boundary was stated by the
+    package all along and the corpus was discarding it.
+    """
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+    SOURCE = {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "paper_trade"}
+
+    def package(self, **outcome_extra):
+        outcome = {"exitPrice": 0.99, "pnl": -100.0, "exitReasonCode": "Loss",
+                   "exitTimestamp": "2026-08-17T12:56:08.675Z", "balanceAfter": 9900.0,
+                   "realizedR": -1.0, "exitCandleEnd": 1785704940000,
+                   "exitDetectionSource": "historical_candle"}
+        outcome.update(outcome_extra)
+        return {"packageId": "PKG|s|20260817|1", "sourceTradeId": "AGT|NZD_USD|1",
+                "captureBasis": "LIVE_CLOSE", "contentHash": "h1",
+                "objects": {"positions": [{"instrument": "NZD_USD", "direction": "sell",
+                                            "entryPrice": 0.57, "originalStop": 0.59,
+                                            "target": 0.55, "riskAmount": 100.0,
+                                            "balanceBefore": 10000.0,
+                                            "entryTimestamp": "2026-07-24T21:00:37.145Z"}],
+                             "outcomes": [outcome]}}
+
+    def convert(self, package):
+        record, reason = imp.observation_from_package(package, self.NOW, counters={},
+                                                       source=self.SOURCE)
+        self.assertIsNotNone(record, "conversion refused: %s" % reason)
+        return record
+
+    def test_the_true_market_exit_is_recorded_as_ISO(self):
+        record = self.convert(self.package())
+        self.assertEqual(record["marketExitAt"], "2026-08-02T21:09:00.000Z")
+
+    def test_it_is_distinct_from_closedAt_and_both_are_kept(self):
+        """Neither corrects the other: closedAt is a real fact about when MOGO
+        recorded the close, and marketExitAt is a real fact about the fill."""
+        record = self.convert(self.package())
+        self.assertEqual(record["closedAt"], "2026-08-17T12:56:08.675Z")
+        self.assertNotEqual(record["marketExitAt"], record["closedAt"])
+
+    def test_the_detection_source_is_recorded(self):
+        self.assertEqual(self.convert(self.package())["exitDetectionSource"],
+                         "historical_candle")
+
+    def test_an_absent_candle_boundary_becomes_UNKNOWN_not_a_guess(self):
+        record = self.convert(self.package(exitCandleEnd=None))
+        self.assertIn("marketExitAt", record.get("unknowns") or [])
+        self.assertNotIn("marketExitAt", record)
+
+    def test_a_non_numeric_candle_boundary_becomes_UNKNOWN(self):
+        for bad in ("2026-08-02", True, {}):
+            record = self.convert(self.package(exitCandleEnd=bad))
+            self.assertIn("marketExitAt", record.get("unknowns") or [],
+                          "accepted %r" % (bad,))
+
+    def test_the_conversion_and_backfill_paths_share_one_transformation(self):
+        """The defect that made this necessary: the backfill read the package field
+        raw, so it wrote 1785704940000.0 into marketExitAt on 258 records while the
+        conversion path wrote ISO. Two mapping paths, one transformation."""
+        raw = 1785704940000
+        self.assertEqual(imp.map_outcome_value("marketExitAt", raw),
+                         "2026-08-02T21:09:00.000Z")
+        # A field with no transformation passes through untouched.
+        self.assertEqual(imp.map_outcome_value("pnl", -100.0), -100.0)
+
+
+class TestRecordedDurationIsNotAssumedToBeTheHoldingPeriod(unittest.TestCase):
+    """A relation over the real corpus, asserted rather than a pinned count."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sources = to.load_sources()
+        cls.observations = to.load_observations()
+
+    def test_where_a_true_exit_exists_it_is_never_after_the_recorded_close(self):
+        checked = 0
+        for record in self.observations.values():
+            market, closed = record.get("marketExitAt"), record.get("closedAt")
+            if not (isinstance(market, str) and closed):
+                continue
+            self.assertLessEqual(market, closed,
+                                 "%s: the market exit is AFTER the recorded close"
+                                 % record["observationId"])
+            checked += 1
+        self.assertGreater(checked, 10, "too few records carry a true exit to be meaningful")
+
+    def test_every_recorded_true_exit_is_an_ISO_timestamp(self):
+        for record in self.observations.values():
+            market = record.get("marketExitAt")
+            if market is None:
+                continue
+            self.assertIsInstance(market, str,
+                                  "%s carries a non-ISO market exit: %r"
+                                  % (record["observationId"], market))
+            self.assertTrue(market.endswith("Z"))
+
+
+class TestTheBackfillPathAppliesTheSameTransformation(unittest.TestCase):
+    """Drives backfill_mapped_fields itself, not the helper it should call.
+
+    Testing `map_outcome_value` directly proves the helper works; it does NOT prove
+    the backfill calls it. The backfill read the package field raw and wrote
+    1785704940000.0 into `marketExitAt` on 258 records while the conversion path
+    wrote ISO -- and a mutation reintroducing exactly that survived a suite that
+    tested the helper. This is the test that fails when the paths diverge.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_backfill_")
+        self.obs_dir = os.path.join(self.root, "observations")
+        self.src_dir = os.path.join(self.root, "sources")
+        os.makedirs(self.obs_dir)
+        os.makedirs(self.src_dir)
+        self.capture = os.path.join(REPO_ROOT, "evidence",
+                                    "TEST-BACKFILL-%d-PACKAGES.json" % os.getpid())
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+        if os.path.exists(self.capture):
+            os.remove(self.capture)
+
+    def test_a_backfilled_market_exit_is_ISO_not_raw_milliseconds(self):
+        package = {"packageId": "PKG|s|20260817|9", "contentHash": "hbf1",
+                   "captureBasis": "LIVE_CLOSE", "sourceTradeId": "AGT|X|9",
+                   "objects": {"positions": [{"instrument": "NZD_USD"}],
+                                "outcomes": [{"exitCandleEnd": 1785704940000,
+                                               "exitDetectionSource": "historical_candle"}]}}
+        with open(self.capture, "w", encoding="utf-8") as handle:
+            json.dump([package], handle)
+        rel = os.path.relpath(self.capture, REPO_ROOT)
+
+        with open(os.path.join(self.src_dir, "EVSRC_MOGO_20260817_001.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"sourceId": "EVSRC|MOGO|20260817|001", "sourceType": "paper_trade",
+                       "repositoryPath": rel, "contentHash": "irrelevant"}, handle)
+        record = {"observationId": "TOBS|MOGO|20260817|900",
+                  "sourceId": "EVSRC|MOGO|20260817|001",
+                  "actor": "MOGO", "sourcePackageId": "PKG|s|20260817|9",
+                  "sourceContentHash": "hbf1",
+                  "schemaVersion": to.SCHEMA_VERSION, "lane": "RESEARCH",
+                  "recordedAt": "2026-08-17T00:00:00Z", "extractedBy": "test-fixture",
+                  "strategyId": "alex_g_sr_v1",
+                  "instrument": "NZD/USD", "direction": "sell",
+                  "fieldClassification": {"instrument": "DIRECTLY_OBSERVED",
+                                           "direction": "DIRECTLY_OBSERVED"},
+                  # marketExitAt deliberately NOT listed: the field did not exist
+                  # when records like this were written, which is the situation the
+                  # backfill exists for. An already-explicit UNKNOWN is a different
+                  # case and is pinned separately below.
+                  "unknowns": [f for f in to.OBSERVABLE_FIELDS
+                                if f not in ("instrument", "direction", "marketExitAt")]}
+        with open(os.path.join(self.obs_dir, "TOBS_MOGO_20260817_900.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+        report = imp.backfill_mapped_fields(observations_dir=self.obs_dir,
+                                             sources_dir=self.src_dir, write=True)
+        self.assertEqual(report["unresolved"], [])
+        with open(os.path.join(self.obs_dir, "TOBS_MOGO_20260817_900.json"),
+                  encoding="utf-8") as handle:
+            written = json.load(handle)
+        self.assertEqual(written.get("marketExitAt"), "2026-08-02T21:09:00.000Z",
+                         "the backfill path did not apply the epoch conversion")
+        self.assertIsInstance(written.get("marketExitAt"), str)
+        self.assertNotIn("marketExitAt", written.get("unknowns") or [],
+                         "the field stayed UNKNOWN after being filled")
+
+
+class TestAnExplicitUnknownIsNeverOverwritten(unittest.TestCase):
+    """The widening rule cuts both ways.
+
+    A field the record already declares UNKNOWN stays UNKNOWN. Filling it from a
+    package later would silently convert a recorded absence into a value, which is
+    the opposite of what "UNKNOWN remains UNKNOWN" means.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_bf_unknown_")
+        self.obs_dir = os.path.join(self.root, "observations")
+        self.src_dir = os.path.join(self.root, "sources")
+        os.makedirs(self.obs_dir)
+        os.makedirs(self.src_dir)
+        self.capture = os.path.join(REPO_ROOT, "evidence",
+                                    "TEST-UNKNOWN-%d-PACKAGES.json" % os.getpid())
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+        if os.path.exists(self.capture):
+            os.remove(self.capture)
+
+    def test_a_declared_unknown_survives_a_backfill_that_could_fill_it(self):
+        package = {"packageId": "PKG|s|20260817|8", "contentHash": "hbf2",
+                   "captureBasis": "LIVE_CLOSE", "sourceTradeId": "AGT|X|8",
+                   "objects": {"positions": [{"instrument": "NZD_USD"}],
+                                "outcomes": [{"exitCandleEnd": 1785704940000}]}}
+        with open(self.capture, "w", encoding="utf-8") as handle:
+            json.dump([package], handle)
+        with open(os.path.join(self.src_dir, "EVSRC_MOGO_20260817_002.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"sourceId": "EVSRC|MOGO|20260817|002", "sourceType": "paper_trade",
+                       "repositoryPath": os.path.relpath(self.capture, REPO_ROOT),
+                       "contentHash": "irrelevant"}, handle)
+        record = {"observationId": "TOBS|MOGO|20260817|901",
+                  "sourceId": "EVSRC|MOGO|20260817|002", "actor": "MOGO",
+                  "sourcePackageId": "PKG|s|20260817|8", "sourceContentHash": "hbf2",
+                  "schemaVersion": to.SCHEMA_VERSION, "lane": "RESEARCH",
+                  "recordedAt": "2026-08-17T00:00:00Z", "strategyId": "alex_g_sr_v1",
+                  "extractedBy": "test-fixture",
+                  "instrument": "NZD/USD", "direction": "sell",
+                  "fieldClassification": {"instrument": "DIRECTLY_OBSERVED",
+                                           "direction": "DIRECTLY_OBSERVED"},
+                  "unknowns": [f for f in to.OBSERVABLE_FIELDS
+                                if f not in ("instrument", "direction")]}
+        with open(os.path.join(self.obs_dir, "TOBS_MOGO_20260817_901.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+        imp.backfill_mapped_fields(observations_dir=self.obs_dir,
+                                    sources_dir=self.src_dir, write=True)
+        with open(os.path.join(self.obs_dir, "TOBS_MOGO_20260817_901.json"),
+                  encoding="utf-8") as handle:
+            written = json.load(handle)
+        self.assertIn("marketExitAt", written["unknowns"])
+        self.assertNotIn("marketExitAt", {k: v for k, v in written.items()
+                                           if k != "unknowns"})

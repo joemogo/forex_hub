@@ -44,6 +44,8 @@
   "target": 1.084265357142857,
   "timeframe": "H4",
   "unknowns": [
+    "exitDetectionSource",
+    "marketExitAt",
     "pnl"
   ]
 }

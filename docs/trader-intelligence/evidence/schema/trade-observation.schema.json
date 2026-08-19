@@ -306,6 +306,22 @@
         "null"
       ],
       "default": null
+    },
+    "marketExitAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "The candle boundary on which the exit ACTUALLY occurred, as stated by the evidence package (exitCandleEnd), converted from epoch milliseconds. Distinct from closedAt, which is when the close was RECORDED: for an exit reconstructed from candles that is when the re-walk noticed it, observed up to 351.8 hours later. Both are kept; neither corrects the other. Holding periods must be computed from this field, not from closedAt. UNKNOWN when the package states no candle boundary."
+    },
+    "exitDetectionSource": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "How the exit was detected -- e.g. historical_candle (reconstructed on a re-walk) or live_snapshot. Recorded because it determines whether closedAt can be read as a market time at all."
     }
   }
 }
