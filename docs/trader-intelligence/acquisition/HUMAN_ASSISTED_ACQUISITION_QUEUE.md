@@ -193,3 +193,53 @@ bias. Accounts are published because they look good, and a published account is 
 whatever the author chose not to publish. It also says what was traded, not why — so it can
 establish performance and risk behaviour, and cannot by itself reconstruct a decision rule.
 
+---
+
+## HAQ-4 — Myfxbook, and the credential boundary this whole class runs into
+
+- **Status:** OPEN — blocked by a boundary I cannot cross, not by a publisher ruling.
+- **Classification:** HIGH-VALUE / CREDENTIAL-GATED
+- **Evidence of value:** `NEGATIVE_ACQUISITION_LOG.md` N-16.4, N-19.
+
+### What was measured
+
+`myfxbook.com/robots.txt` returns **403** to an honest ClaudeBot User-Agent, while
+`myfxbook.com/api` and `myfxbook.com/api/login.json` return **200**. Two consequences, and the
+first governs:
+
+1. **The crawl policy is unreadable.** When `robots.txt` cannot be retrieved, the publisher's
+   stated wishes cannot be established, and the conservative reading is *not permitted* rather
+   than *permitted by default*. No Myfxbook content has been or will be fetched on that basis.
+2. **The API's entry point is `login.json`.** Access is authenticated with a Myfxbook account's
+   own credentials.
+
+### Why this is a boundary rather than a task
+
+Entering credentials, authenticating, or creating an account is prohibited outright — it is not
+a matter of scope or authorization level, and it stays prohibited if the credentials are
+offered. So this source cannot be unlocked by me under any framing.
+
+**What would work, and requires nothing from anyone right now:** the operator holds or can
+create the account, runs the query themselves, and supplies the resulting export. The data
+never passes through a credential I handle.
+
+### What to request, if it is ever worth requesting
+
+Myfxbook publishes *verified* account histories — broker-linked, which is a stronger claim than
+any self-published record found anywhere else in this programme. The wanted export is the same
+field set as HAQ-3: instrument, direction, entry price and time, exit price and time, position
+size, and balance or equity at entry.
+
+The same caution as HAQ-3 applies and is worth repeating because verification makes it easy to
+forget: broker verification establishes that the trades *happened*. It does not establish that
+the account is representative, because accounts are published when they look good, and it says
+nothing about *why* each trade was taken — so it can support performance and risk-behaviour
+findings, and cannot by itself reconstruct a decision rule.
+
+### The general shape, recorded once here
+
+Every remaining path to executed track records terminates in one of two places: an
+operator-supplied artifact (HAQ-1, HAQ-2, HAQ-3) or an operator-held credential (HAQ-4). None
+terminates anywhere I can reach autonomously. That is the honest state of the acquisition lane,
+and it is a boundary rather than a to-do list.
+
