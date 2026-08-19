@@ -499,8 +499,9 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
         #
         # Deliberately NOT derived, and this is the substantive decision here:
         #
-        #   strategyId -> STRATEGY_FAMILY. Every observation carries
-        #   strategyId=alex_g_sr_v1, and SF|ALEX_G|SUPPORT_RESISTANCE_V1 exists.
+        #   strategyId -> STRATEGY_FAMILY. 257 observations carry
+        #   strategyId=alex_g_sr_v1 (the other 2 carry `current_strategy`), and
+        #   SF|ALEX_G|SUPPORT_RESISTANCE_V1 exists as a node.
         #   Joining them would assert that MOGO's IMPLEMENTATION and the human
         #   trader's stated method are the same subject. They are not:
         #   alex_g_sr_v1 is MOGO's code, ALEX_G is a person, and replaying the

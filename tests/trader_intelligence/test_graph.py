@@ -769,6 +769,13 @@ class TestNoFabricatedRelationships(TradeObservationCase):
         self.assertTrue(any(f["category"] == "MISSING_REFERENCE" for f in findings))
 
     def test_an_observation_with_no_sourceId_yields_no_edge_and_no_guess(self):
+        # SCOPE, and it was read too broadly once. This asserts only that the GRAPH
+        # invents nothing: no edge, no placeholder source. It is NOT a statement that
+        # the record is acceptable -- an observation with no sourceId has no derivable
+        # population, and adversarial verification used exactly that to move 24
+        # observations into UNKNOWN. That is the evidence validator's job and it now
+        # reports UNRESOLVED_POPULATION for it; see
+        # TestPopulationRebindingIsDetected.test_an_absent_sourceId_is_an_error.
         self.source()
         rec = self.observation()
         del rec["sourceId"]

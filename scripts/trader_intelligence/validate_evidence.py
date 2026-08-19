@@ -23,6 +23,7 @@ import graph_common as gc            # noqa: E402
 import evidence_common as evc        # noqa: E402
 import evidence_confidence as conf   # noqa: E402
 import trade_observation as to       # noqa: E402
+from import_mogo_observations import CAPTURE_BASIS_SOURCE_TYPE  # noqa: E402
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 TI_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence")
@@ -127,6 +128,14 @@ def _finding(findings, finding_type, severity, entity_type, entity_id, message, 
 #: missed -- a stamp the reader skips is a stamp an attacker can hide behind.
 _MINTED_SOURCE_TYPE_RE = re.compile(r"sourceType\s*=\s*([A-Za-z_-]*)", re.IGNORECASE)
 
+#: The SECOND stamp in the same notes string, and it was being discarded.
+#: `captureBasis` records HOW the observation was captured -- REPLAY_RUN,
+#: LIVE_CLOSE, HISTORICAL_BACKFILL -- and maps 1:1 onto the expected sourceType
+#: via the importer's own table. Measured across all 259 preserved records:
+#: 221 REPLAY_RUN -> HISTORICAL, 29 LIVE_CLOSE -> FORWARD, 9 HISTORICAL_BACKFILL
+#: -> RECONSTRUCTED, zero missing, zero contradictions.
+_CAPTURE_BASIS_RE = re.compile(r"captureBasis\s*=\s*([A-Za-z_]+)", re.IGNORECASE)
+
 
 def check_observation_population_rebinding(observations, sources, findings, now):
     """Does an observation still point at the source it was MINTED from -- and can
@@ -180,10 +189,19 @@ def check_observation_population_rebinding(observations, sources, findings, now)
     the rebinding, and inventing a mint-time type for a record that never recorded
     one is precisely the fabrication this exists to catch.
     """
-    by_id = {s["sourceId"]: s for s in sources if s.get("sourceId")}
+    # Only STRING ids are indexed or looked up. A list- or dict-valued sourceId
+    # raised `TypeError: unhashable type` out of the dict access below and aborted
+    # the ENTIRE validator run -- losing every other finding in the corpus with it,
+    # including the population findings this function exists to produce. That is the
+    # same defect already fixed for `notes`; the hardening had not been carried
+    # across to the id. An unhashable id is not skipped silently: it falls through
+    # to the missing-sourceId branch and is reported.
+    by_id = {s["sourceId"]: s for s in sources
+             if isinstance(s.get("sourceId"), str) and s["sourceId"]}
     for obs in observations:
         obs_id = obs.get("observationId")
-        source = by_id.get(obs.get("sourceId"))
+        obs_source_id = obs.get("sourceId")
+        source = by_id.get(obs_source_id) if isinstance(obs_source_id, str) else None
 
         # 1. Can the population be resolved at all? Independent of the stamp, so a
         #    source-side edit cannot hide behind a missing or blinded one.
@@ -226,7 +244,21 @@ def check_observation_population_rebinding(observations, sources, findings, now)
 
         minted = matches[0]
         if source is None:
-            continue          # already reported as a missing reference elsewhere
+            # NOT "reported elsewhere". That comment was true for a sourceId that
+            # names a source which does not exist -- the graph build reports that as
+            # MISSING_REFERENCE -- and FALSE for a sourceId that is absent, blank or
+            # unhashable, where there is no dangling reference for anything to catch.
+            # Deleting `sourceId` from 24 observations moved them all into UNKNOWN
+            # while this validator reported nothing, and a test of mine positively
+            # asserted that silence, which is how the hole got enshrined.
+            if not isinstance(obs.get("sourceId"), str) or not obs.get("sourceId").strip():
+                _finding(findings, "UNRESOLVED_POPULATION", "ERROR", "TRADE_OBSERVATION",
+                          obs_id,
+                          "sourceId is %r, so this observation names no source and its "
+                          "population cannot be derived at all -- it silently leaves "
+                          "every population total it belonged to."
+                          % (obs.get("sourceId"),), now)
+            continue
         actual = source.get("sourceType")
         if actual and actual != minted:
             _finding(findings, "POPULATION_REBINDING", "ERROR", "TRADE_OBSERVATION",
@@ -235,6 +267,32 @@ def check_observation_population_rebinding(observations, sources, findings, now)
                       "%s, whose sourceType is %r. Population is derived from sourceType, so "
                       "this moves the observation between evidence populations."
                       % (minted, obs.get("sourceId"), actual), now)
+            continue
+
+        # THE SECOND STAMP. `sourceType=` alone is defeated by a CONSISTENT rewrite:
+        # repoint sourceId AND rewrite the stamp to agree, and the two sides match
+        # while 24 replay observations sit in FORWARD. Adversarial verification did
+        # exactly that with every tool green.
+        #
+        # `captureBasis` is the same notes string's other half and was being thrown
+        # away. It says HOW the trade was captured, which the importer maps 1:1 onto
+        # a sourceType, so it independently implies the population. An attacker must
+        # now rewrite BOTH stamps consistently rather than one.
+        #
+        # This is defence in depth, not proof: both stamps live in one field, so a
+        # thorough enough rewrite still defeats it. What it removes is the cheap
+        # version of the attack.
+        basis_match = _CAPTURE_BASIS_RE.search(notes) if isinstance(notes, str) else None
+        if basis_match and actual:
+            expected = CAPTURE_BASIS_SOURCE_TYPE.get(basis_match.group(1).upper())
+            if expected and expected != actual:
+                _finding(findings, "CAPTURE_BASIS_CONTRADICTS_SOURCE", "ERROR",
+                          "TRADE_OBSERVATION", obs_id,
+                          "Observation records captureBasis=%s, which is captured as %r, "
+                          "but its source %s has sourceType %r. The two stamps in this "
+                          "record disagree about which population it belongs to."
+                          % (basis_match.group(1), expected, obs.get("sourceId"), actual),
+                          now)
 
 
 def check_orphans(sources, items, claims, links, findings, now):

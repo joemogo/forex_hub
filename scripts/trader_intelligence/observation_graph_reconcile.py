@@ -21,6 +21,7 @@ it writes nothing and never repairs anything.
 Exit: 0 reconciled - 1 discrepancy.
 """
 import glob
+import glob as globmod
 import hashlib
 import json
 import os
@@ -195,6 +196,37 @@ def reconcile():
             "the production orphan check and an independent recount disagree on %d "
             "node(s); one of them is wrong and a disarmed orphan check looks exactly "
             "like a clean corpus" % len(witness ^ orphan_node_ids))
+
+    # A FLOOR derived from the RECORDS, not from the graph.
+    #
+    # The witness above recounts the same rule over the same edge set, so it is a
+    # second implementation rather than a second opinion: adversarial verification
+    # disarmed the production check and the witness together, and both agreed that
+    # 30 real orphans were 0 while `orphanCheckDisagreement` read 0.
+    #
+    # This asks a question the graph cannot answer for itself. A source that no
+    # observation cites and no evidence item references HAS no relationship to
+    # represent, so it MUST come out orphaned however the graph was built. Reading
+    # the records directly means an edit to the graph layer cannot move it.
+    item_referenced = set()
+    for path in sorted(globmod.glob(os.path.join(TI_ROOT, "evidence", "items", "*.json"))):
+        with open(path, "r", encoding="utf-8") as handle:
+            item = json.load(handle)
+        if isinstance(item.get("sourceId"), str):
+            item_referenced.add(item["sourceId"])
+    cited_by_observations = {rec.get("sourceId") for rec in observations.values()}
+    unreferenced = {sid for sid in sources
+                    if sid not in cited_by_observations and sid not in item_referenced}
+    report["sourcesUnreferencedByAnyRecord"] = len(unreferenced)
+    missed = {sid for sid in unreferenced
+              if gc.make_node_id("EVIDENCE_SOURCE", sid) not in orphan_node_ids}
+    report["orphansTheGraphFailedToReport"] = len(missed)
+    if missed:
+        problems.append(
+            "%d source(s) are referenced by NO observation and NO evidence item, yet "
+            "the orphan check does not report them (%s). Derived from the records "
+            "rather than the graph, so a disarmed graph-side check cannot hide it."
+            % (len(missed), sorted(missed)[:3]))
     cited = {rec.get("sourceId") for rec in observations.values()}
     report["orphanSources"] = len(orphan_sources)
     report["orphanSourcesAlsoUncitedByAnyObservation"] = sum(
@@ -251,8 +283,14 @@ def main():
         for p in problems:
             print("  - " + p)
         return 1
-    print("\nRECONCILED: every preserved observation appears once, with the provenance it "
-          "names, and nothing else.")
+    print("\nRECONCILED (STRUCTURE ONLY): every observation record ON DISK appears once in "
+          "the graph, linked to the source it names, and carries no relationship it does "
+          "not state.")
+    print("This is NOT a soundness verdict on the evidence. It compares the graph against "
+          "the records; it cannot tell you a record was DELETED, or that an outcome or "
+          "rMultiple inside one was altered -- both were demonstrated to pass. Those are "
+          "questions for the corpus fingerprint and git history, not for a structural "
+          "reconciliation.")
     print("Note: orphanSources counts sources no observation cites. Those are GENUINE and "
           "must stay visible -- suppressing them was the defect B-32 fixed.")
     return 0

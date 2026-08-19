@@ -1400,3 +1400,133 @@ class TestValidatorExitCodeGatesOnErrors(unittest.TestCase):
 
     def test_a_clean_report_exits_zero(self):
         self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": 0, "WARNING": 0, "INFO": 0}), 0)
+
+
+class TestCaptureBasisIsTheSecondStamp(unittest.TestCase):
+    """`sourceType=` alone is defeated by a CONSISTENT rewrite.
+
+    Repoint an observation's sourceId AND rewrite its sourceType stamp to agree:
+    the two sides match, and 24 replay observations sit in the FORWARD population
+    with every tool green. Adversarial verification did precisely that.
+
+    `captureBasis` is the other half of the same notes string and was being thrown
+    away. It records HOW the trade was captured, which the importer maps 1:1 onto a
+    sourceType, so it independently implies the population. Measured across all 259
+    preserved records: 221 REPLAY_RUN, 29 LIVE_CLOSE, 9 HISTORICAL_BACKFILL, zero
+    missing, zero contradictions -- so this costs no false positives.
+
+    Defence in depth, not proof: both stamps live in one field, so a thorough enough
+    rewrite still defeats it. What it removes is the cheap version of the attack.
+    """
+
+    def obs(self, basis, minted):
+        return {"observationId": "TOBS|MOGO|20260819|001",
+                "sourceId": "EVSRC|MOGO|20260819|001",
+                "notes": "captureBasis=%s sourceType=%s" % (basis, minted)}
+
+    def src(self, source_type):
+        return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type}
+
+    def types(self, observations, sources):
+        findings = []
+        ve.check_observation_population_rebinding(observations, sources, findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_a_CONSISTENT_repoint_is_caught_by_the_second_stamp(self):
+        # THE attack: sourceType stamp rewritten to match the new source, so the
+        # rebinding check sees agreement. captureBasis still says REPLAY_RUN.
+        self.assertEqual(
+            self.types([self.obs("REPLAY_RUN", "paper_trade")], [self.src("paper_trade")]),
+            ["CAPTURE_BASIS_CONTRADICTS_SOURCE"])
+
+    def test_every_basis_is_checked_not_just_replay(self):
+        # A check that only knew REPLAY_RUN would let RECONSTRUCTED evidence pass.
+        for basis, wrong in (("REPLAY_RUN", "paper_trade"),
+                             ("LIVE_CLOSE", "replay_observation"),
+                             ("HISTORICAL_BACKFILL", "paper_trade")):
+            with self.subTest(basis=basis):
+                self.assertIn("CAPTURE_BASIS_CONTRADICTS_SOURCE",
+                              self.types([self.obs(basis, wrong)], [self.src(wrong)]),
+                              "%s -> %s went undetected" % (basis, wrong))
+
+    def test_POSITIVE_CONTROL_an_agreeing_basis_is_not_reported(self):
+        # Without this, a check that fired on every record would satisfy the above.
+        for basis, right in (("REPLAY_RUN", "replay_observation"),
+                             ("LIVE_CLOSE", "paper_trade"),
+                             ("HISTORICAL_BACKFILL", "journal_entry")):
+            with self.subTest(basis=basis):
+                self.assertEqual(self.types([self.obs(basis, right)], [self.src(right)]), [])
+
+    def test_an_unrecognised_basis_is_not_guessed_at(self):
+        # Inventing an expected sourceType for a basis the importer does not know
+        # would be fabrication. It simply is not cross-checked.
+        self.assertEqual(
+            self.types([self.obs("SOME_NEW_BASIS", "paper_trade")], [self.src("paper_trade")]),
+            [])
+
+    def test_the_mapping_is_the_IMPORTERS_not_a_copy(self):
+        # Two tables would drift, and the drift that matters -- the validator
+        # believing a basis maps to the wrong type -- is invisible.
+        from import_mogo_observations import CAPTURE_BASIS_SOURCE_TYPE as importer_map
+        self.assertIs(ve.CAPTURE_BASIS_SOURCE_TYPE, importer_map)
+
+
+#: Sentinel distinguishing "the field is missing" from "the field is None".
+_ABSENT = object()
+
+
+class TestAbsentSourceIdIsReported(unittest.TestCase):
+    """An observation that names no source has no derivable population.
+
+    Deleting `sourceId` from 24 observations moved them all into UNKNOWN while the
+    validator reported nothing: the code fell through on `source is None` with a
+    comment claiming it was "already reported as a missing reference elsewhere".
+    True for an id naming a source that does not exist; FALSE for an id that is
+    absent, blank or unhashable, where there is no dangling reference to catch.
+    """
+
+    def findings_for(self, source_id):
+        obs = {"observationId": "TOBS|MOGO|20260819|001",
+               "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"}
+        if source_id is not _ABSENT:
+            obs["sourceId"] = source_id
+        findings = []
+        ve.check_observation_population_rebinding(
+            [obs], [{"sourceId": "EVSRC|MOGO|20260819|001",
+                     "sourceType": "replay_observation"}], findings, FIXED_NOW)
+        return findings
+
+    def test_an_absent_sourceId_is_an_error(self):
+        self.assertEqual([f["findingType"] for f in self.findings_for(_ABSENT)],
+                         ["UNRESOLVED_POPULATION"])
+
+    def test_a_blank_or_whitespace_sourceId_is_an_error(self):
+        for value in ("", "   "):
+            with self.subTest(value=repr(value)):
+                self.assertEqual([f["findingType"] for f in self.findings_for(value)],
+                                 ["UNRESOLVED_POPULATION"])
+
+    def test_an_unhashable_sourceId_is_reported_not_raised(self):
+        # A list- or dict-valued id raised TypeError out of the dict lookup and
+        # aborted the ENTIRE validator run, losing every other finding with it --
+        # including the population findings. Same defect already fixed for `notes`.
+        for value in ([], {}, None, 123, True):
+            with self.subTest(value=repr(value)):
+                self.assertEqual([f["findingType"] for f in self.findings_for(value)],
+                                 ["UNRESOLVED_POPULATION"])
+
+    def test_POSITIVE_CONTROL_a_resolvable_sourceId_is_not_reported(self):
+        self.assertEqual(self.findings_for("EVSRC|MOGO|20260819|001"), [])
+
+    def test_an_unhashable_SOURCE_id_does_not_abort_the_run(self):
+        # The other side of the same hazard: a source record whose own id is
+        # unhashable must not poison the index built from it.
+        findings = []
+        ve.check_observation_population_rebinding(
+            [{"observationId": "TOBS|MOGO|20260819|001",
+              "sourceId": "EVSRC|MOGO|20260819|001",
+              "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"}],
+            [{"sourceId": [], "sourceType": "paper_trade"},
+             {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "replay_observation"}],
+            findings, FIXED_NOW)
+        self.assertEqual(findings, [])
