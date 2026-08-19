@@ -121,14 +121,64 @@ def _file_content_hash(path):
         return hashlib.sha256(handle.read()).hexdigest()
 
 
-def existing_sources_by_artifact(sources_dir=None):
+SOURCE_ID_RE = re.compile(r"^EVSRC\|([A-Z0-9_]+)\|(\d{8})\|(\d{3,})$")
+
+
+def _source_id_rank(source_id, cited_ids):
+    """Rank for choosing between several records describing ONE artifact.
+
+    Lower sorts first. Three deliberate components, each fixing a real defect:
+
+      * A CITED id always wins. The whole point of the migration is that no
+        observation's citation moves, so an id some observation already points at
+        outranks any other by construction.
+      * The scope is compared explicitly, and a foreign scope loses. A raw string
+        minimum silently preferred any other trader's record, because
+        "EVSRC|ALEX_G|..." < "EVSRC|MOGO|...".
+      * The sequence is compared NUMERICALLY. A raw string minimum picked |1000
+        over |999, so the comment claiming "first writer wins" became false the
+        moment a sequence reached four digits.
+    """
+    match = SOURCE_ID_RE.match(source_id or "")
+    if not match:
+        # Unparseable ids sort last rather than being dropped: they are still real
+        # records, and discarding one silently would hide it.
+        return (1, 1, "", 0, source_id or "")
+    scope, date_str, seq = match.group(1), match.group(2), int(match.group(3))
+    return (0 if source_id in cited_ids else 1,
+            0 if scope == "MOGO" else 1,
+            date_str, seq, source_id)
+
+
+def observation_cited_source_ids(observations_dir=None):
+    """Every sourceId that a recorded observation actually points at."""
+    target = observations_dir or os.path.join(to.EVIDENCE_ROOT, "observations")
+    out = set()
+    for path in globmod.glob(os.path.join(target, "*.json")):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                record = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        if record.get("sourceId"):
+            out.add(record["sourceId"])
+    return out
+
+
+def existing_sources_by_artifact(sources_dir=None, observations_dir=None):
     """Recorded sources, keyed by the ARTIFACT they describe.
 
     The key is (repositoryPath, sourceType, contentHash) -- exactly the triple
     write_sources already verifies before reusing an id. Reading it back here is
     what lets an id follow its artifact instead of its position.
+
+    `contentHash` is load-bearing in that key, not decoration: without it, a file
+    whose CONTENT changes while its path stays the same would be handed the old
+    id, write_sources would refuse, and the import would be blocked -- which is
+    B-27's own failure mode returning by a different route.
     """
     target = sources_dir or os.path.join(to.EVIDENCE_ROOT, "sources")
+    cited = observation_cited_source_ids(observations_dir)
     out = {}
     for path in sorted(globmod.glob(os.path.join(target, "*.json"))):
         try:
@@ -138,12 +188,11 @@ def existing_sources_by_artifact(sources_dir=None):
             continue
         key = (record.get("repositoryPath"), record.get("sourceType"),
                record.get("contentHash"))
-        if all(k is not None for k in key) and record.get("sourceId"):
-            # First writer wins. Two records describing one artifact is B-26's
-            # orphan-accumulation symptom; picking the lowest id keeps the choice
-            # deterministic rather than filesystem-order dependent.
-            if key not in out or record["sourceId"] < out[key]:
-                out[key] = record["sourceId"]
+        source_id = record.get("sourceId")
+        if not all(k is not None for k in key) or not source_id:
+            continue
+        if key not in out or _source_id_rank(source_id, cited) < _source_id_rank(out[key], cited):
+            out[key] = source_id
     return out
 
 
@@ -159,7 +208,7 @@ def _highest_recorded_seq(sources_dir, date_str):
     return highest
 
 
-def build_sources(now, package_glob=None, sources_dir=None):
+def build_sources(now, package_glob=None, sources_dir=None, observations_dir=None):
     """One EvidenceSource per (package file, captureBasis). Returns a dict.
 
     Per FILE and captureBasis, not per file alone: C1-01-GBP_USD-PACKAGES.json holds
@@ -183,7 +232,7 @@ def build_sources(now, package_glob=None, sources_dir=None):
     # it, so no existing record changes and no observation's citation moves. Only a
     # genuinely new artifact is allocated an id, and it takes the next sequence not
     # already used that day rather than a positional one.
-    recorded = existing_sources_by_artifact(sources_dir)
+    recorded = existing_sources_by_artifact(sources_dir, observations_dir)
     date_str = now.strftime("%Y%m%d")
     next_seq = _highest_recorded_seq(sources_dir, date_str) + 1
     sources = {}
@@ -605,7 +654,8 @@ def convert_all(package_glob=None, now=None, skip_imported=True,
     Returns (records, skipped, sources).
     """
     now = now or datetime.datetime(2026, 1, 1)
-    sources = build_sources(now, package_glob, sources_dir=sources_dir)
+    sources = build_sources(now, package_glob, sources_dir=sources_dir,
+                            observations_dir=observations_dir)
     records, skipped, seen = [], [], set()
     imported = already_imported(observations_dir) if skip_imported else {}
     # Continue each date's sequence from what is already recorded, so a second run

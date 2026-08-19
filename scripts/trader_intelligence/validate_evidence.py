@@ -156,6 +156,24 @@ def check_malformed_provenance(sources, items, findings, now):
             _finding(findings, "MALFORMED_PROVENANCE", "ERROR", "EVIDENCE_SOURCE", source["sourceId"],
                       "storageLocationType='external' requires both externalAssetReference and "
                       "canonicalReference to be set.", now)
+        # A repository-stored source whose artifact is GONE. The validator never
+        # looked at repositoryPath, so a source pointing at a deleted or renamed
+        # capture file passed cleanly -- and one did: EVSRC|MOGO|20260818|015 cites
+        # a file removed during a duplicate cleanup, while the observation that
+        # cites it is intact. Provenance that cannot be walked back to an artifact
+        # is not provenance, and WARNING rather than ERROR because the observation
+        # itself is undamaged and its content survives under another path.
+        # Only a path that is SET but missing is reported. An absent repositoryPath
+        # is a pre-existing, schema-permitted state that several fixtures rely on;
+        # turning it into an error here would be changing a rule while fixing a
+        # different one.
+        if source.get("storageLocationType") == "repository":
+            rel = source.get("repositoryPath")
+            if rel and not os.path.exists(os.path.join(REPO_ROOT, rel)):
+                _finding(findings, "UNRESOLVABLE_ARTIFACT", "WARNING", "EVIDENCE_SOURCE",
+                          source["sourceId"],
+                          "repositoryPath %r does not exist, so this source cannot be "
+                          "walked back to the artifact it describes." % (rel,), now)
         if source.get("provenanceStatus") not in evc.PROVENANCE_STATUSES:
             _finding(findings, "MALFORMED_PROVENANCE", "ERROR", "EVIDENCE_SOURCE", source["sourceId"],
                       "Unknown provenanceStatus %r." % (source.get("provenanceStatus"),), now)

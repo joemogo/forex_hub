@@ -979,3 +979,31 @@ class TestSyntheticFixtureDemo(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestUnresolvableArtifactIsReported(unittest.TestCase):
+    """Provenance that cannot be walked back to an artifact is not provenance.
+
+    The validator never inspected `repositoryPath`, so a source pointing at a
+    deleted or renamed capture file passed cleanly -- and one does in the live
+    corpus, created when a duplicate capture artifact was removed.
+    """
+
+    def sources(self, rel):
+        return [{"sourceId": "EVSRC|MOGO|20260819|001",
+                 "storageLocationType": "repository", "repositoryPath": rel,
+                 "provenanceStatus": "owner_supplied"}]
+
+    def findings_for(self, rel):
+        findings = []
+        ve.check_malformed_provenance(
+            self.sources(rel), [], findings, FIXED_NOW)
+        return {f["findingType"] for f in findings}
+
+    def test_a_missing_repository_path_is_reported(self):
+        self.assertIn("UNRESOLVABLE_ARTIFACT",
+                      self.findings_for("evidence/does-not-exist-PACKAGES.json"))
+
+    def test_an_existing_repository_path_is_NOT_reported(self):
+        """Positive control: the check must be caused by the file being absent."""
+        self.assertNotIn("UNRESOLVABLE_ARTIFACT", self.findings_for("index.html"))

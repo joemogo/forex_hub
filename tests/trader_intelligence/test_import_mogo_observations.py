@@ -1267,3 +1267,158 @@ class TestSourceIdentityFollowsTheArtifactNotThePosition(unittest.TestCase):
         minted = {v["sourceId"] for v in built.values()} - recorded
         self.assertEqual(minted, set(),
                          "the migration would mint new ids for existing artifacts")
+
+
+class TestTheTieBreakWhenOneArtifactHasSeveralRecords(unittest.TestCase):
+    """15 of 30 live artifacts carry more than one recorded source (successive
+    import generations), so the tie-break decides most identities in the corpus --
+    and flipping it from min to max passed all 83 tests before these existed.
+    """
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_tiebreak_")
+        self.pkg_dir = os.path.join(self.root, "packages")
+        self.src_dir = os.path.join(self.root, "sources")
+        self.obs_dir = os.path.join(self.root, "observations")
+        for d in (self.pkg_dir, self.src_dir, self.obs_dir):
+            os.makedirs(d)
+        self.capture = os.path.join(self.pkg_dir, "A-PACKAGES.json")
+        with open(self.capture, "w", encoding="utf-8") as handle:
+            json.dump([{"packageId": "PKG|s|1", "sourceTradeId": "T-A",
+                        "captureBasis": "LIVE_CLOSE", "contentHash": "h-A",
+                        "identity": {"strategyId": "alex_g_sr_v1"},
+                        "objects": {"positions": [{}], "outcomes": [{}]}}], handle)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def record_source(self, source_id, content_hash="FILLED"):
+        built = list(self.build().values())[0]
+        record = dict(built)
+        record["sourceId"] = source_id
+        if content_hash != "FILLED":
+            record["contentHash"] = content_hash
+        with open(os.path.join(self.src_dir,
+                               source_id.replace("|", "_") + ".json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def record_observation(self, source_id):
+        with open(os.path.join(self.obs_dir, "TOBS_X.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"observationId": "TOBS|MOGO|20260819|001",
+                       "sourceId": source_id}, handle)
+
+    def build(self):
+        return imp.build_sources(self.NOW,
+                                  package_glob=os.path.join(self.pkg_dir, "*.json"),
+                                  sources_dir=self.src_dir,
+                                  observations_dir=self.obs_dir)
+
+    def resolved(self):
+        return list(self.build().values())[0]["sourceId"]
+
+    def test_the_id_an_observation_CITES_wins(self):
+        """The migration's entire promise is that no citation moves."""
+        self.record_source("EVSRC|MOGO|20260817|001")
+        self.record_source("EVSRC|MOGO|20260819|009")
+        self.record_observation("EVSRC|MOGO|20260819|009")
+        self.assertEqual(self.resolved(), "EVSRC|MOGO|20260819|009")
+
+    def test_without_a_citation_the_oldest_record_wins(self):
+        self.record_source("EVSRC|MOGO|20260819|009")
+        self.record_source("EVSRC|MOGO|20260817|001")
+        self.assertEqual(self.resolved(), "EVSRC|MOGO|20260817|001")
+
+    def test_sequences_are_compared_NUMERICALLY_not_as_strings(self):
+        """A raw string minimum picks |1000 over |999, so "first writer wins" was
+        false the moment a sequence reached four digits."""
+        self.record_source("EVSRC|MOGO|20260819|999")
+        self.record_source("EVSRC|MOGO|20260819|1000")
+        self.assertEqual(self.resolved(), "EVSRC|MOGO|20260819|999")
+
+    def test_a_foreign_trader_scope_never_hijacks_the_identity(self):
+        """'EVSRC|ALEX_G|...' < 'EVSRC|MOGO|...' as a string, so a raw minimum
+        handed the identity to another scope's record silently -- write_sources
+        would not object, because the (path, type, hash) triple still matches."""
+        # The foreign record is deliberately OLDER. With an earlier date it would
+        # win on the date component alone, so only the scope component can save
+        # the identity here -- an earlier fixture had the MOGO record older and so
+        # never exercised the scope check at all.
+        self.record_source("EVSRC|ALEX_G|20260101|001")
+        self.record_source("EVSRC|MOGO|20260817|002")
+        self.assertEqual(self.resolved(), "EVSRC|MOGO|20260817|002")
+
+    def test_a_citation_outranks_even_an_older_record(self):
+        self.record_source("EVSRC|MOGO|20260101|001")
+        self.record_source("EVSRC|MOGO|20260819|050")
+        self.record_observation("EVSRC|MOGO|20260819|050")
+        self.assertEqual(self.resolved(), "EVSRC|MOGO|20260819|050")
+
+
+class TestContentChangeAtTheSamePath(unittest.TestCase):
+    """contentHash is load-bearing in the artifact key, not decoration."""
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_contentchange_")
+        self.pkg_dir = os.path.join(self.root, "packages")
+        self.src_dir = os.path.join(self.root, "sources")
+        os.makedirs(self.pkg_dir)
+        os.makedirs(self.src_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, trade_id):
+        with open(os.path.join(self.pkg_dir, "A-PACKAGES.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump([{"packageId": "PKG|s|1", "sourceTradeId": trade_id,
+                        "captureBasis": "LIVE_CLOSE", "contentHash": "h-" + trade_id,
+                        "identity": {"strategyId": "alex_g_sr_v1"},
+                        "objects": {"positions": [{}], "outcomes": [{}]}}], handle)
+
+    def build(self):
+        return imp.build_sources(self.NOW,
+                                  package_glob=os.path.join(self.pkg_dir, "*.json"),
+                                  sources_dir=self.src_dir)
+
+    def test_different_content_at_the_same_path_gets_a_NEW_id(self):
+        """Reusing the old id here would hand a recorded identity to different
+        content; write_sources would then refuse and the import would be blocked --
+        B-27's own failure mode arriving by another route."""
+        self.write("T-A")
+        first = list(self.build().values())[0]
+        imp.write_sources(self.build(), sources_dir=self.src_dir)
+
+        self.write("T-B")               # same path, different content
+        second = list(self.build().values())[0]
+        self.assertNotEqual(second["sourceId"], first["sourceId"])
+        self.assertNotEqual(second["contentHash"], first["contentHash"])
+
+    def test_identical_content_at_the_same_path_reuses_the_id(self):
+        """Positive control: the check above must be caused by the content
+        changing, not by rebuilding."""
+        self.write("T-A")
+        first = list(self.build().values())[0]
+        imp.write_sources(self.build(), sources_dir=self.src_dir)
+        self.assertEqual(list(self.build().values())[0]["sourceId"], first["sourceId"])
+
+
+class TestCaptureBasisMappingIsInjective(unittest.TestCase):
+    """`sources` is keyed by captureBasis; the lookup is keyed by sourceType.
+
+    Correctness silently depends on the mapping being injective. If two bases ever
+    shared a sourceType they would collapse onto one sourceId and source_map(),
+    keyed by sourceId, would drop one group -- a non-idempotent import with no
+    error. Not reachable today; nothing asserted it either.
+    """
+
+    def test_no_two_capture_bases_share_a_source_type(self):
+        values = list(imp.CAPTURE_BASIS_SOURCE_TYPE.values())
+        self.assertEqual(len(values), len(set(values)),
+                         "two capture bases map to one sourceType: %r"
+                         % imp.CAPTURE_BASIS_SOURCE_TYPE)
