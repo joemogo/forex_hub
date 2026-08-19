@@ -157,12 +157,21 @@ def check_observation_population_rebinding(observations, sources, findings, now)
                                          or delete `sourceType` on a cited source
                                          and its observations fall into UNKNOWN,
                                          which nothing else objected to.
-      MISSING_MINT_PROVENANCE  (WARNING) no readable stamp, so no rebinding check is
-                                         possible for this record. Loud rather than
-                                         open. All 259 preserved records carry one,
-                                         so this is anomalous today; it is a WARNING
-                                         and not an ERROR because a record that never
-                                         recorded one is a gap, not a contradiction.
+      MISSING_MINT_PROVENANCE  (ERROR)   no readable stamp, so no rebinding check is
+                                         possible for this record.
+
+    MISSING_MINT_PROVENANCE was a WARNING at first, on the reasoning that a record
+    which never recorded a stamp is a gap rather than a contradiction. That was the
+    remaining hole, and it was the whole attack: blinding every stamp and retyping
+    one source moved replay trades into FORWARD while producing WARNINGS ONLY -- and
+    WARNINGs exit 0, so no CI gate could ever fire on the contamination.
+
+    It is an ERROR because an observation whose population cannot be VERIFIED still
+    participates in population totals that claim to be separated. That is a breach of
+    the separation guarantee, not an open question about one record. Every preserved
+    record carries a stamp, so this is anomalous rather than legacy; if some future
+    import path mints records without one, the right response is to fix that path,
+    not to tolerate an unverifiable population.
       AMBIGUOUS_MINT_PROVENANCE (ERROR)  more than one `sourceType=` in `notes`.
                                          Prepending a decoy made the first match win.
 
@@ -209,7 +218,7 @@ def check_observation_population_rebinding(observations, sources, findings, now)
                       % (len(matches), ", ".join(sorted(set(matches)))), now)
             continue
         if not matches:
-            _finding(findings, "MISSING_MINT_PROVENANCE", "WARNING", "TRADE_OBSERVATION",
+            _finding(findings, "MISSING_MINT_PROVENANCE", "ERROR", "TRADE_OBSERVATION",
                       obs_id,
                       "notes carries no readable sourceType stamp, so this observation "
                       "cannot be checked against the source it was minted from.", now)

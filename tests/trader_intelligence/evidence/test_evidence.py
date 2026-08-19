@@ -1195,6 +1195,32 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
         findings = self.findings_for([obs], [self.src("paper_trade")])
         self.assertEqual([f["findingType"] for f in findings], ["MISSING_MINT_PROVENANCE"])
 
+    def test_a_missing_stamp_is_an_ERROR_so_it_cannot_hide_behind_the_exit_code(self):
+        # The remaining hole after the first repair: blinding every stamp produced
+        # WARNINGS ONLY, and WARNINGs exit 0, so contamination passed any CI gate
+        # while sitting in plain sight. An observation whose population cannot be
+        # VERIFIED still counts toward totals that claim to be separated.
+        obs = self.obs("replay_observation")
+        del obs["notes"]
+        findings = self.findings_for([obs], [self.src("paper_trade")])
+        self.assertEqual(findings[0]["severity"], "ERROR")
+        self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": len(findings),
+                                           "WARNING": 0, "INFO": 0}), 1)
+
+    def test_blinding_every_stamp_now_FAILS_the_run_rather_than_warning(self):
+        # End to end on the exact attack: stamps blinded corpus-wide, one source
+        # retyped. Previously 259 warnings and exit 0.
+        blinded = []
+        for i in range(4):
+            obs = self.obs("replay_observation")
+            obs["observationId"] = "TOBS|MOGO|20260819|00%d" % i
+            obs["notes"] = obs["notes"].replace("sourceType=", "sourceTypeX=")
+            blinded.append(obs)
+        findings = self.findings_for(blinded, [self.src("paper_trade")])
+        self.assertEqual({f["severity"] for f in findings}, {"ERROR"})
+        summary = {"FATAL": 0, "ERROR": len(findings), "WARNING": 0, "INFO": 0}
+        self.assertEqual(ve.exit_code_for(summary), 1)
+
     def test_blinding_every_stamp_cannot_buy_silence(self):
         # The whole-corpus attack: rename the stamp on every record, then retype one
         # source. It moved 24 replay observations into FORWARD with everything green.
