@@ -5,6 +5,20 @@ trading only**, plus a Python research corpus under `scripts/trader_intelligence
 `docs/trader-intelligence/`. A live PAPER instance runs continuously in the operator's
 Chrome and is the sole source of forward evidence.
 
+## What MOGO is for
+
+An autonomous scientific trading laboratory running three concurrent missions:
+
+1. **Forward PAPER operations** — observe every configured instrument, evaluate setups under
+   frozen semantics, paper trade, detect the real market exit, preserve every close.
+2. **Post-trade learning** — every legitimate close becomes durable evidence and is assimilated,
+   compared against the corpus, and classified. Storage is not learning.
+3. **External trader research** — discover, acquire and reconstruct other traders' methods well
+   enough to test them.
+
+**LIVE-money trading is prohibited.** Quiet markets are a valid result; never manufacture trades
+or loosen a rule to create activity.
+
 ## Where the governance gates actually live
 
 The hard boundaries are **enforced**, not documented: `scripts/auto_mode/mogo_rules.json`
@@ -33,6 +47,42 @@ when to stop.
 - A human example disagreeing with MOGO is not grounds to change a rule.
 - Any forward figure carries its coverage caveat: the preserved set is a subset of the
   account's closed positions (backlog B-22).
+
+## Researching other traders
+
+The target is **scientifically reconstructable trading behaviour**, not popular traders.
+
+Prioritise by **expected information value × evidence quality × reconstructability ÷ cost**.
+What earns effort: real trades carrying entry, stop, target and outcome; **published before the
+outcome is known**; showing losers and skipped setups as well as winners; repeated across enough
+examples to reconstruct mechanically. What does not: commentary, motivational content,
+hindsight-only winning screenshots, unverifiable signals, affiliate material.
+
+- **"Said" is not "did."** A stated rule is `SOURCE_STATED`; a trade you can see is `OBSERVED`.
+  Never let one become the other. A video's title is not evidence of its contents.
+- Self-reported profitability, follower counts, lifestyle marketing and claimed win rates are
+  **not evidence of trading success** and never enter a performance figure.
+- One authoritative candidate registry (`docs/trader-intelligence/acquisition/`). Never start a
+  competing list.
+- Never bypass authentication, paywalls, private communities, rate limits or platform
+  protections. Record the source as unavailable and move on.
+- **Record negative results.** A source adequately classified as unavailable or low-value is not
+  searched again without new evidence — see `NEGATIVE_ACQUISITION_LOG.md`.
+
+## Strategy discovery, and where it stops
+
+The intended end state is several independently derived strategies paper trading at once. The
+pipeline is: trader discovery → evidence acquisition → rule reconstruction → ambiguity analysis →
+mechanical specification → replay testing where scientifically valid → adversarial verification →
+promotion candidate.
+
+**Discovery is not authorisation.** Promoting any strategy into PAPER is an operator governance
+boundary. A candidate arrives with a dossier — evidence, reconstructed rules, what remains
+UNKNOWN, sample size, test methodology and results, failure cases, contamination checks, and the
+reasons both for and against — and the operator decides.
+
+The right thing to bring the operator is *"candidate X has earned consideration, here is the
+evidence"*, never *"what should I research next?"*.
 
 ## Testing
 
@@ -75,6 +125,23 @@ It is read-only with respect to the running instance, scoped to MOGO's own origi
 fails closed: a package whose stored contentHash does not re-derive from the preserved
 bytes is never written and never imported. Run it when the store may have changed; it
 costs almost nothing when nothing has (it exits at the detect step).
+
+## Prefer a diagnostic to a reconstruction
+
+When an operational property has to be established by hand more than once, build a small reusable
+diagnostic instead of reinventing the check. Existing ones:
+
+```
+scripts/forward_capture.sh                     detect -> preserve -> import -> assimilate
+scripts/mogo_observation_coverage.js --store   are all configured instruments actually observed?
+scripts/mogo_evidence_checkpoint.sh --selftest preservation is read-only and verified
+python3 scripts/trader_intelligence/research_assimilation.py   what changed, and what did not
+```
+
+A diagnostic must test reality, not restate a dashboard. If reality contradicts a report, a test,
+or a previous conclusion, **trust the evidence and investigate.**
+
+Distinguish, always: *no trade because no setup* from *no trade because evaluation failed*.
 
 ## Anti-loop
 
