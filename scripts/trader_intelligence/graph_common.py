@@ -364,8 +364,18 @@ def build_node(node_type, entity, source_file):
         "nodeId": make_node_id(node_type, entity_id),
         "nodeType": node_type,
         "entityId": entity_id,
-        "traderId": entity.get("traderId"),
-        "strategyFamilyId": entity.get("strategyFamilyId"),
+        # TRADE_OBSERVATION carries NEITHER attribution field, as a builder rule.
+        #
+        # B-32.4 stopped observations gaining a BELONGS_TO_TRADER *edge*. The node
+        # still carried the raw `traderId`, and `query_graph.known_facts_about_trader`
+        # filters on THE ATTRIBUTE, not on edges -- so adding one field to one record
+        # made MOGO's own paper trade come back as a "known fact about ALEX_G" while
+        # the edge count stayed correctly at zero. Fixing the edge and leaving the
+        # attribute fixed half the leak, and the half left was the half the shipped
+        # query actually reads.
+        "traderId": None if node_type == "TRADE_OBSERVATION" else entity.get("traderId"),
+        "strategyFamilyId": (None if node_type == "TRADE_OBSERVATION"
+                             else entity.get("strategyFamilyId")),
         "label": label,
         "status": status,
         "sourceFile": source_file,

@@ -146,6 +146,64 @@ _EDGE_DIRECTION_TABLE = {
 }
 
 
+def check_observation_trader_isolation(nodes, edges, findings):
+    """No TRADE_OBSERVATION may reach a TRADER or STRATEGY_FAMILY at ANY hop.
+
+    Stated as a REACHABILITY invariant rather than another builder exclusion,
+    because the builder exclusions kept being right about one hop and silent about
+    the next. Excluding TRADE_OBSERVATION from BELONGS_TO_TRADER stopped the direct
+    edge; adding `traderId` to one cited SOURCE then produced
+
+        observation --DERIVED_FROM--> source --BELONGS_TO_TRADER--> ALEX_G
+
+    in two hops with every gate silent, because a source may legitimately belong to
+    a trader. Every edge-construction fix answers "may THIS node type link to a
+    trader"; none answers the question that matters -- whether MOGO's execution
+    record can be walked to a human trader's evidence by any route at all.
+
+    Why it matters, from CLAUDE.md: `alex_g_sr_v1` is MOGO's implementation, `ALEX_G`
+    is a person. A path between them lets a query count OBSERVED paper trades as
+    evidence for a SOURCE_STATED claim -- "the easiest way to manufacture a false
+    result here". Two hops contaminate exactly as much as one.
+
+    ERROR, and it names the path, because "an observation reaches a trader somehow"
+    is not actionable without knowing which edge to look at.
+    """
+    by_id = {n["nodeId"]: n for n in nodes}
+    adjacency = {}
+    for edge in edges:
+        adjacency.setdefault(edge["fromNodeId"], []).append((edge["toNodeId"], edge["edgeType"]))
+        adjacency.setdefault(edge["toNodeId"], []).append((edge["fromNodeId"], edge["edgeType"]))
+
+    forbidden = {"TRADER", "STRATEGY_FAMILY"}
+    for start in [n for n in nodes if n["nodeType"] == "TRADE_OBSERVATION"]:
+        # Undirected: direction is irrelevant to contamination -- a query walking
+        # either way joins the two populations just the same.
+        seen = {start["nodeId"]}
+        queue = [(start["nodeId"], [])]
+        while queue:
+            current, path = queue.pop(0)
+            for neighbour, edge_type in adjacency.get(current, []):
+                if neighbour in seen:
+                    continue
+                seen.add(neighbour)
+                node = by_id.get(neighbour)
+                if node is None:
+                    continue
+                trail = path + [edge_type]
+                if node["nodeType"] in forbidden:
+                    _finding(findings, "OBSERVATION_TRADER_CONTAMINATION", "ERROR",
+                             "%s reaches %s %s in %d hop(s) via %s. MOGO's own execution "
+                             "record must not be walkable to a human trader's evidence by "
+                             "any route -- one is what MOGO's code did, the other is what a "
+                             "person said." % (start["entityId"], node["nodeType"],
+                                               node["entityId"], len(trail), " -> ".join(trail)),
+                             [start["nodeId"], node["nodeId"]])
+                    queue = []
+                    break
+                queue.append((neighbour, trail))
+
+
 def check_orphans(nodes, edges, findings):
     touched = set()
     for e in edges:
@@ -321,6 +379,7 @@ def run_integrity_checks(nodes, edges, raw_by_entity_id, construction_findings, 
     check_duplicates(nodes, edges, findings)
     check_types_and_direction(nodes, edges, findings)
     check_orphans(nodes, edges, findings)
+    check_observation_trader_isolation(nodes, edges, findings)
     check_circular_supersession(nodes, edges, findings)
     check_version_chains(nodes, edges, raw_by_entity_id, findings)
     check_provenance(edges, findings)

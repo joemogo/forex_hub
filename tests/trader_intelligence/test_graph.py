@@ -677,6 +677,20 @@ class TradeObservationCase(unittest.TestCase):
             json.dump(rec, h)
         return rec
 
+    def write_trader(self, trader_id):
+        d = os.path.join(self.repo.ti_root, "traders", trader_id.lower())
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "profile.json"), "w", encoding="utf-8") as handle:
+            json.dump({"traderId": trader_id, "displayName": trader_id}, handle)
+
+    def write_strategy_family(self, family_id, trader_id):
+        d = os.path.join(self.repo.ti_root, "traders", trader_id.lower(),
+                         "strategy-families")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "fam.json"), "w", encoding="utf-8") as handle:
+            json.dump({"strategyFamilyId": family_id, "name": "fam",
+                       "traderId": trader_id}, handle)
+
     def build(self):
         # build_nodes_and_edges returns (nodes, edges, findings, raw_by_entity_id);
         # the fourth is not needed here.
@@ -1066,3 +1080,107 @@ class TestProductionOrphanCheckItself(unittest.TestCase):
         b = self.node("TRADE_OBSERVATION", "TOBS|MOGO|20260819|001")
         self.assertEqual(self.orphans([a, b], [self.edge(b, a)]), set())
         self.assertEqual(self.orphans([a, b], [self.edge(a, b)]), set())
+
+
+class TestObservationTraderIsolationAtAnyHop(TradeObservationCase):
+    """The guarantee stated as REACHABILITY, not as another builder exclusion.
+
+    Every previous fix answered "may this node type link to a trader" and was right
+    about one hop while silent about the next. Excluding TRADE_OBSERVATION from
+    BELONGS_TO_TRADER stopped the direct edge; adding `traderId` to one cited SOURCE
+    then produced
+
+        observation --DERIVED_FROM--> source --BELONGS_TO_TRADER--> ALEX_G
+
+    with every gate silent, because a source may legitimately belong to a trader.
+    A two-hop path contaminates exactly as much as a one-hop path: it lets a query
+    count MOGO's OBSERVED paper trades as evidence for a human trader's
+    SOURCE_STATED claim.
+    """
+
+    def isolation_findings(self, nodes, edges):
+        findings = []
+        validate_graph.check_observation_trader_isolation(nodes, edges, findings)
+        return findings
+
+    def test_a_traderId_on_the_CITED_SOURCE_is_caught_at_two_hops(self):
+        self.source()
+        self.observation()
+        # The source legitimately may belong to a trader; the PATH is what is illegal.
+        path = os.path.join(self._evdir("sources"), "EVSRC_MOGO_20260819_001.json")
+        with open(path, encoding="utf-8") as handle:
+            rec = json.load(handle)
+        rec["traderId"] = "ALEX_G"
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(rec, handle)
+        self.write_trader("ALEX_G")
+        nodes, edges, _f = self.build()
+        findings = self.isolation_findings(nodes, edges)
+        self.assertEqual(len(findings), 1, "a two-hop path to a trader went unreported")
+        self.assertEqual(findings[0]["severity"], "ERROR")
+        self.assertIn("2 hop", findings[0]["message"])
+
+    def test_POSITIVE_CONTROL_a_clean_corpus_reports_no_contamination(self):
+        # Without this, a check that fired on every observation would pass above.
+        self.source()
+        self.observation()
+        self.write_trader("ALEX_G")
+        nodes, edges, _f = self.build()
+        self.assertEqual(self.isolation_findings(nodes, edges), [])
+
+    def test_a_strategyFamilyId_on_the_cited_source_is_also_caught(self):
+        self.source()
+        self.observation()
+        path = os.path.join(self._evdir("sources"), "EVSRC_MOGO_20260819_001.json")
+        with open(path, encoding="utf-8") as handle:
+            rec = json.load(handle)
+        rec["strategyFamilyId"] = "SF|ALEX_G|SUPPORT_RESISTANCE_V1"
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(rec, handle)
+        self.write_strategy_family("SF|ALEX_G|SUPPORT_RESISTANCE_V1", "ALEX_G")
+        self.write_trader("ALEX_G")
+        nodes, edges, _f = self.build()
+        self.assertTrue(self.isolation_findings(nodes, edges),
+                        "a path to a strategy family is the same contamination -- "
+                        "alex_g_sr_v1 is MOGO's implementation, not the trader's method")
+
+
+class TestObservationNodesCarryNoAttributionAttributes(TradeObservationCase):
+    """The edge fix covered half the leak; the shipped query reads the other half.
+
+    `query_graph.known_facts_about_trader` filters on the node's `traderId`
+    ATTRIBUTE, not on edges. After the edge exclusion shipped, adding `traderId` to
+    one observation record still produced zero edges -- and returned MOGO's own
+    paper trade as a known fact about a human trader.
+    """
+
+    def test_a_traderId_on_the_record_never_reaches_the_node(self):
+        self.source()
+        self.observation(traderId="ALEX_G")
+        node = self.obs_nodes(self.build()[0])[0]
+        self.assertIsNone(node["traderId"],
+                          "the node carries the attribute the trader query filters on")
+
+    def test_a_strategyFamilyId_on_the_record_never_reaches_the_node(self):
+        self.source()
+        self.observation(strategyFamilyId="SF|ALEX_G|SUPPORT_RESISTANCE_V1")
+        node = self.obs_nodes(self.build()[0])[0]
+        self.assertIsNone(node["strategyFamilyId"])
+
+    def test_POSITIVE_CONTROL_other_node_types_still_carry_their_attribution(self):
+        # Blanking these fields for EVERY node type would satisfy the two tests above
+        # and destroy the graph's ability to attribute anything to anyone.
+        self.source()
+        self.observation()
+        self.write_trader("ALEX_G")
+        path = os.path.join(self._evdir("sources"), "EVSRC_MOGO_20260819_001.json")
+        with open(path, encoding="utf-8") as handle:
+            rec = json.load(handle)
+        rec["traderId"] = "ALEX_G"
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(rec, handle)
+        nodes, _e, _f = self.build()
+        source_node = next(n for n in nodes if n["nodeType"] == "EVIDENCE_SOURCE")
+        self.assertEqual(source_node["traderId"], "ALEX_G",
+                         "only TRADE_OBSERVATION is stripped; a source may belong to "
+                         "a trader and the graph must still say so")
