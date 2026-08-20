@@ -21,6 +21,7 @@ Organized into the 9 categories the milestone specifies:
 """
 import glob as globmod
 import hashlib
+import ast
 import json
 import os
 import shutil
@@ -1892,3 +1893,76 @@ class TestAMalformedRecordIsReportedNotFatal(unittest.TestCase):
         self.assertIn("POPULATION_REBINDING", types,
                       "a malformed record suppressed the population finding")
         self.assertEqual(ve.exit_code_for(report["summary"]), 1)
+
+
+class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
+    """One invariant instead of one wiring test per check.
+
+    "The check is unit-tested but nothing asserts anything CALLS it" was the
+    highest-yield adversarial finding three rounds running -- the rebinding check,
+    `exit_code_for` inside `main()`, and `check_source_capture_basis_agrees_with_type`
+    each shipped fully tested and fully bypassable. Each was then fixed by adding one
+    more wiring test, which fixes the instance and leaves the SHAPE open: the next
+    check added will have the same hole, and the round after that will find it.
+
+    This asserts the property for every `check_*` in the module at once, so a new
+    check cannot be added-but-not-called, and an existing call site cannot be
+    deleted, without a test failing. Structural rather than behavioural on purpose:
+    a behavioural test can only cover checks somebody remembered to write one for.
+    """
+
+    def _module(self):
+        path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
+                            "validate_evidence.py")
+        with open(path, "r", encoding="utf-8") as handle:
+            return ast.parse(handle.read())
+
+    def _functions(self, tree):
+        return [n for n in tree.body if isinstance(n, ast.FunctionDef)]
+
+    def test_every_check_function_is_called_by_run_integrity_checks(self):
+        tree = self._module()
+        checks = [f.name for f in self._functions(tree) if f.name.startswith("check_")]
+        runner = next(f for f in self._functions(tree) if f.name == "run_integrity_checks")
+        called = {n.func.id for n in ast.walk(runner)
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+        # Non-vacuity: if the discovery ever stops finding checks, this test would
+        # pass over an empty list and mean nothing.
+        self.assertGreater(len(checks), 20,
+                           "check discovery found almost nothing; the assertion below "
+                           "would pass vacuously")
+        unwired = sorted(set(checks) - called)
+        self.assertEqual(unwired, [],
+                         "these checks exist but run_integrity_checks never calls them, "
+                         "so they can never report on a real corpus: %s" % unwired)
+
+    def test_main_delegates_its_exit_status_to_exit_code_for(self):
+        # `exit_code_for` was unit-tested four ways and `main()` was free not to use
+        # it; with the call removed, a corpus of population ERRORs exited 0 and the
+        # run_all.sh gate passed. The subprocess test elsewhere covers the behaviour;
+        # this covers the wiring for the same reason as the check above.
+        tree = self._module()
+        main = next(f for f in self._functions(tree) if f.name == "main")
+        called = {n.func.id for n in ast.walk(main)
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+        self.assertIn("exit_code_for", called,
+                      "main() computes its own exit status; exit_code_for can then be "
+                      "correct and irrelevant")
+
+    def test_the_runner_passes_findings_to_every_check_it_calls(self):
+        # A check wired in but handed a throwaway list would report into the void --
+        # the same defect one layer down, and it would pass the wiring test above.
+        tree = self._module()
+        runner = next(f for f in self._functions(tree) if f.name == "run_integrity_checks")
+        checked = 0
+        for node in ast.walk(runner):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+                continue
+            if not node.func.id.startswith("check_"):
+                continue
+            names = {a.id for a in node.args if isinstance(a, ast.Name)}
+            self.assertIn("findings", names,
+                          "%s is called without the shared findings list, so anything "
+                          "it reports is discarded" % node.func.id)
+            checked += 1
+        self.assertGreater(checked, 20, "found almost no check calls to inspect")
