@@ -218,12 +218,22 @@ ends and open in the middle, which is an honest description of what MOGO actuall
 
 ### 7.4 What consistency checking cannot do, stated so nobody assumes otherwise
 
-Four rounds of adversarial verification drove the population checks to four independent
+Five rounds of adversarial verification drove the population checks to four independent
 anchors — the observation's `sourceType=` stamp, its `captureBasis=` stamp, the source's
-`metadata.captureBasis`, and the source's `metadata.engineStrategyId`. Every attack that
-*edits* a preserved record now contradicts at least one of them.
+`metadata.captureBasis`, and the source's `metadata.engineStrategyId` — each of which now
+fails **closed**, reporting when it cannot evaluate rather than skipping.
 
-Two things remain outside the reach of any consistency check, and both are worth naming
+> **A correction.** An earlier version of this section claimed *"every attack that edits a
+> preserved record now contradicts at least one of them."* That was **false**, and round 5
+> refuted it with the cheapest evasion found in the whole exercise: the engine anchor read
+> `if engine and strategyId and engine != strategyId`, so **deleting one field** made it
+> evaluate False and disappear. Dropping `strategyId` moved 24 replay observations into
+> FORWARD with every tool green and flipped the sign of the headline forward mean-R. The
+> anchor now fails closed, but the lesson is the claim itself: a blanket "nothing gets past
+> this" is the sentence most likely to be wrong, and stating it discouraged exactly the test
+> that would have caught it.
+
+Three things remain outside the reach of any consistency check, and all are worth naming
 plainly rather than leaving for someone to discover as a surprise:
 
 - **A record fabricated whole.** Adding new observation files that are internally consistent
@@ -232,6 +242,18 @@ plainly rather than leaving for someone to discover as a surprise:
   fabricated import from a legitimate one by inspection.
 - **A coordinated rewrite of every anchor at once.** If all four stamps and both records are
   edited to agree, the corpus is again self-consistent.
+- **An observation rewritten to be wholly consistent with a DIFFERENT legitimate source.**
+  This is narrower than the previous item and cheaper than it sounds, so it is listed
+  separately: it needs no source edit at all. Repoint `sourceId`, rewrite both `notes` stamps,
+  and set `strategyId` to the target source's `engineStrategyId` — or simply choose one of the
+  7 `paper_trade` sources that already record `engineStrategyId=alex_g_sr_v1`. Every anchor
+  then agrees, because every anchor asks whether the record is consistent with the source it
+  *names*, and it now is.
+
+  Closing this would require an anchor tying an observation to the specific PACKAGE it was
+  minted from — the observation carries `sourceContentHash` and `sourcePackageId`, but nothing
+  in the corpus maps packages to sources, and the capture artifacts that would are gitignored
+  by design. It is recorded as a known limit rather than papered over.
 
 Detection of both belongs to a different mechanism: `research_assimilation.corpus_fingerprint`
 hashes each record in full together with its source record, so either change moves the

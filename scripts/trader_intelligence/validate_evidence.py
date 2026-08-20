@@ -161,12 +161,24 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
     whole layer exists to prevent.
     """
     for source in sources:
-        basis = (source.get("metadata") or {}).get("captureBasis")
-        if not isinstance(basis, str) or not basis:
+        metadata = source.get("metadata")
+        # A non-dict `metadata` raised AttributeError and aborted the whole run.
+        basis = metadata.get("captureBasis") if isinstance(metadata, dict) else None
+        if not isinstance(basis, str) or not basis.strip():
             continue
-        expected = CAPTURE_BASIS_SOURCE_TYPE.get(basis.upper())
+        expected = CAPTURE_BASIS_SOURCE_TYPE.get(basis.strip().upper())
         actual = source.get("sourceType")
-        if expected and actual and expected != actual:
+        if actual and expected is None:
+            # FAILS CLOSED, mirroring the observation side. Without this the same
+            # one-hyphen defect repaired there survived here: "REPLAY-RUN", a
+            # trailing space, or an unknown basis all made the anchor silently
+            # no-op, so retyping a source in place went unreported.
+            _finding(findings, "UNRECOGNISED_CAPTURE_BASIS", "ERROR", "EVIDENCE_SOURCE",
+                      source.get("sourceId"),
+                      "metadata.captureBasis=%r is not one the importer produces (%s), "
+                      "so this source's type cannot be cross-checked against it."
+                      % (basis, ", ".join(sorted(CAPTURE_BASIS_SOURCE_TYPE))), now)
+        elif expected and actual and expected != actual:
             _finding(findings, "SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS", "ERROR",
                       "EVIDENCE_SOURCE", source.get("sourceId"),
                       "Source records metadata.captureBasis=%s, which the importer "
@@ -290,13 +302,24 @@ def check_observation_population_rebinding(observations, sources, findings, now)
             # Deleting `sourceId` from 24 observations moved them all into UNKNOWN
             # while this validator reported nothing, and a test of mine positively
             # asserted that silence, which is how the hole got enshrined.
-            if not isinstance(obs.get("sourceId"), str) or not obs.get("sourceId").strip():
+            raw = obs.get("sourceId")
+            if not isinstance(raw, str) or not raw.strip():
                 _finding(findings, "UNRESOLVED_POPULATION", "ERROR", "TRADE_OBSERVATION",
                           obs_id,
                           "sourceId is %r, so this observation names no source and its "
                           "population cannot be derived at all -- it silently leaves "
-                          "every population total it belonged to."
-                          % (obs.get("sourceId"),), now)
+                          "every population total it belonged to." % (raw,), now)
+            else:
+                # A well-formed id naming a source that does not exist. This fell
+                # through on the reasoning that the graph build reports it as
+                # MISSING_REFERENCE -- but that finding never reaches
+                # integrity-report.json, which is the artifact an operator reads, and
+                # deleting one cited source file moved 24 observations into UNKNOWN
+                # while this validator reported a clean corpus.
+                _finding(findings, "UNRESOLVED_POPULATION", "ERROR", "TRADE_OBSERVATION",
+                          obs_id,
+                          "sourceId %r names no registered EvidenceSource, so this "
+                          "observation's population cannot be derived." % (raw,), now)
             continue
         actual = source.get("sourceType")
         if actual and actual != minted:
@@ -336,8 +359,23 @@ def check_observation_population_rebinding(observations, sources, findings, now)
         # sources carry engineStrategyId=alex_g_sr_v1, so a replay observation
         # repointed at one of those still agrees here. What this removes is the
         # freedom to repoint at ANY forward source.
-        engine = (source.get("metadata") or {}).get("engineStrategyId")
-        if engine and obs.get("strategyId") and engine != obs.get("strategyId"):
+        metadata = source.get("metadata")
+        engine = metadata.get("engineStrategyId") if isinstance(metadata, dict) else None
+        strategy = obs.get("strategyId")
+        if engine and not strategy:
+            # FAILS CLOSED. The condition used to read `if engine and strategy and
+            # engine != strategy`, so deleting or blanking `strategyId` made the
+            # anchor evaluate to False and vanish -- the cheapest evasion found in
+            # five rounds: drop one field and 24 replay observations enter FORWARD
+            # with every tool green. All 259 preserved records carry a strategyId, so
+            # its absence is anomalous, and an observation that cannot be attributed
+            # to an engine cannot be cross-checked against the capture it cites.
+            _finding(findings, "MISSING_STRATEGY_ATTRIBUTION", "ERROR", "TRADE_OBSERVATION",
+                      obs_id,
+                      "strategyId is %r, so this observation cannot be checked against "
+                      "the engineStrategyId (%r) of the source it cites."
+                      % (strategy, engine), now)
+        elif engine and strategy and engine != strategy:
             _finding(findings, "ENGINE_STRATEGY_MISMATCH", "ERROR", "TRADE_OBSERVATION",
                       obs_id,
                       "Observation was produced by strategy %r but its source %s records "
@@ -385,9 +423,14 @@ def check_orphans(sources, items, claims, links, findings, now):
     claim_ids = {c["claimId"] for c in claims}
 
     for item in items:
-        if item["sourceId"] not in source_ids:
+        # `.get`, not `[...]`. `check_orphans` runs FIRST, so a single EvidenceItem
+        # missing this key raised KeyError and aborted the entire run before any
+        # population check executed -- no report written, every other finding lost.
+        # Fourth instance of the defect already fixed for `notes`, `sourceId` and
+        # `metadata`; a malformed record must be REPORTED, never fatal to the run.
+        if item.get("sourceId") not in source_ids:
             _finding(findings, "ORPHANED_EVIDENCE", "ERROR", "EVIDENCE_ITEM", item["evidenceId"],
-                      "EvidenceItem references nonexistent sourceId %r." % (item["sourceId"],), now)
+                      "EvidenceItem references nonexistent sourceId %r." % (item.get("sourceId"),), now)
 
     for link in links:
         if link["evidenceId"] not in item_ids:

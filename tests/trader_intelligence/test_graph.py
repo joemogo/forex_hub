@@ -746,6 +746,25 @@ class TestNoFabricatedRelationships(TradeObservationCase):
         self.assertEqual([e["edgeType"] for e in touching], ["DERIVED_FROM"],
                          "an observation must have exactly one relationship: its source")
 
+    def test_an_observation_never_gains_a_trader_edge_EVEN_IF_IT_CLAIMS_ONE(self):
+        # The fixture deliberately CARRIES a traderId. Without one, this test passed
+        # while the exclusion was absent from the builder -- the guarantee rested on
+        # the data happening not to contain the field, and adding it to one record
+        # built a real edge putting MOGO's paper trades three hops from a trader's
+        # evidence.
+        self.source()
+        self.observation(traderId="ALEX_G")
+        nodes, edges, _f = self.build()
+        obs_node = self.obs_nodes(nodes)[0]
+        self.assertEqual(
+            [e for e in edges
+             if e["edgeType"] == "BELONGS_TO_TRADER" and e["fromNodeId"] == obs_node["nodeId"]],
+            [], "an observation must not belong to a human trader even when the record "
+                "claims one -- it is MOGO's execution, not the trader's")
+        self.assertEqual([e["edgeType"] for e in edges
+                          if obs_node["nodeId"] in (e["fromNodeId"], e["toNodeId"])],
+                         ["DERIVED_FROM"])
+
     def test_an_observation_never_gains_a_trader_edge(self):
         # No observation record carries a traderId. If one ever did, attributing
         # MOGO's own execution to a human trader is the contamination this guards.

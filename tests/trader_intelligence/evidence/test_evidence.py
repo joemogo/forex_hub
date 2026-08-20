@@ -1288,11 +1288,17 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
                                  ["POPULATION_REBINDING"],
                                  "%r was not read as a stamp" % notes)
 
-    def test_an_unresolvable_sourceId_is_left_to_the_reference_checks(self):
-        # Reporting it here too would double-count one defect under two names.
+    def test_a_sourceId_naming_no_registered_source_is_an_ERROR(self):
+        # DECISION REVERSED. This deferred to "the reference checks", which live in
+        # the GRAPH build -- their MISSING_REFERENCE finding never reaches
+        # integrity-report.json, the artifact an operator reads. Deleting one cited
+        # source file moved 24 observations into UNKNOWN while this validator
+        # reported a clean corpus, and this test asserted that silence.
         self.assertEqual(
-            self.findings_for([self.obs("replay_observation", "EVSRC|MOGO|20260819|999")],
-                              [self.src("paper_trade")]), [])
+            [f["findingType"] for f in
+             self.findings_for([self.obs("replay_observation", "EVSRC|MOGO|20260819|999")],
+                               [self.src("paper_trade")])],
+            ["UNRESOLVED_POPULATION"])
 
     def test_the_finding_names_both_types_so_the_direction_is_readable(self):
         findings = self.findings_for([self.obs("replay_observation")],
@@ -1698,3 +1704,191 @@ class TestCaptureBasisStampIsSymmetricWithTheOther(unittest.TestCase):
 
     def test_POSITIVE_CONTROL_a_single_valid_agreeing_basis_is_silent(self):
         self.assertEqual(self.types("captureBasis=LIVE_CLOSE sourceType=paper_trade"), [])
+
+
+class TestAnchorsFailClosedNotOpen(unittest.TestCase):
+    """Five rounds of verification produced one repeated lesson: an anchor that
+    SKIPS when it cannot evaluate is an anchor an attacker deletes its input to
+    defeat. Each case here is an evasion that worked."""
+
+    def obs(self, **extra):
+        rec = {"observationId": "TOBS|MOGO|20260819|001",
+               "sourceId": "EVSRC|MOGO|20260819|001",
+               "strategyId": "alex_g_sr_v1",
+               "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"}
+        rec.update(extra)
+        return rec
+
+    def src(self, engine="current_strategy", source_type="paper_trade"):
+        return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
+                "metadata": {"engineStrategyId": engine}}
+
+    def types(self, observations, sources):
+        findings = []
+        ve.check_observation_population_rebinding(observations, sources, findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_deleting_strategyId_does_not_disable_the_engine_anchor(self):
+        # THE cheapest evasion found in five rounds. The condition read
+        # `if engine and strategy and engine != strategy`, so dropping one field made
+        # the anchor evaluate False and vanish: 24 replay observations entered
+        # FORWARD with every tool green and the forward mean-R sign flipped.
+        obs = self.obs()
+        del obs["strategyId"]
+        self.assertEqual(self.types([obs], [self.src()]),
+                         ["MISSING_STRATEGY_ATTRIBUTION"])
+
+    def test_blanking_strategyId_does_not_disable_it_either(self):
+        self.assertEqual(self.types([self.obs(strategyId="")], [self.src()]),
+                         ["MISSING_STRATEGY_ATTRIBUTION"])
+
+    def test_POSITIVE_CONTROL_a_matching_strategy_is_silent(self):
+        self.assertEqual(self.types([self.obs()], [self.src(engine="alex_g_sr_v1")]), [])
+
+    def test_a_mismatching_strategy_is_still_caught(self):
+        self.assertEqual(self.types([self.obs()], [self.src(engine="current_strategy")]),
+                         ["ENGINE_STRATEGY_MISMATCH"])
+
+    def test_a_non_dict_metadata_does_not_raise(self):
+        # A list-valued metadata raised AttributeError and aborted the entire run.
+        for bad in ([], "x", 5, None):
+            with self.subTest(metadata=bad):
+                src = self.src()
+                src["metadata"] = bad
+                self.assertEqual(self.types([self.obs()], [src]), [])
+
+
+class TestSourceSideAnchorFailsClosed(unittest.TestCase):
+    """Anchor 3 kept the exact defect repaired on the observation side: an
+    unreadable capture basis silently no-opped, so one hyphen re-enabled the
+    retype-in-place attack."""
+
+    def src(self, basis, source_type="paper_trade"):
+        return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
+                "metadata": {"captureBasis": basis}}
+
+    def types(self, sources):
+        findings = []
+        ve.check_source_capture_basis_agrees_with_type(sources, findings, FIXED_NOW)
+        return [f["findingType"] for f in sources and findings]
+
+    def test_a_mangled_basis_is_reported_not_skipped(self):
+        self.assertEqual(self.types([self.src("REPLAY-RUN")]),
+                         ["UNRECOGNISED_CAPTURE_BASIS"])
+
+    def test_a_trailing_space_does_not_disable_the_anchor(self):
+        # " REPLAY_RUN " must still be READ and still contradict paper_trade.
+        self.assertEqual(self.types([self.src(" REPLAY_RUN ")]),
+                         ["SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS"])
+
+    def test_an_unknown_basis_is_reported(self):
+        self.assertEqual(self.types([self.src("SOME_NEW_BASIS")]),
+                         ["UNRECOGNISED_CAPTURE_BASIS"])
+
+    def test_POSITIVE_CONTROL_an_agreeing_basis_is_silent(self):
+        self.assertEqual(self.types([self.src("LIVE_CLOSE")]), [])
+
+    def test_a_source_with_no_basis_at_all_is_not_guessed_at(self):
+        # 12 of 59 predate the field; inventing one would be fabrication.
+        self.assertEqual(
+            self.types([{"sourceId": "EVSRC|MOGO|20260819|001",
+                         "sourceType": "paper_trade", "metadata": {}}]), [])
+
+
+class TestBothSourceAnchorsAreWIRED(unittest.TestCase):
+    """M10: deleting `check_source_capture_basis_agrees_with_type`'s call site left
+    all 1175 tests green -- the check was unit-tested and its wiring was not. Third
+    recurrence of the same shape, so both source-side anchors get a wiring test."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_wire2_")
+        self.evidence = os.path.join(self.root, "evidence")
+        for name in ("sources", "observations"):
+            os.makedirs(os.path.join(self.evidence, name))
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, collection, name, record):
+        with open(os.path.join(self.evidence, collection, name + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def finding_types(self):
+        report = ve.run_integrity_checks(self.evidence, is_production=False)
+        self.assertTrue(os.listdir(os.path.join(self.evidence, "sources")),
+                        "vacuous run: nothing was loaded")
+        return [f["findingType"] for f in report["findings"]]
+
+    def test_run_integrity_checks_REPORTS_a_retyped_source(self):
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "paper_trade",
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1,
+            "metadata": {"captureBasis": "REPLAY_RUN"}})
+        self.assertIn("SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS", self.finding_types())
+
+    def test_run_integrity_checks_REPORTS_a_missing_strategy_attribution(self):
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "paper_trade",
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1,
+            "metadata": {"engineStrategyId": "current_strategy"}})
+        self.write("observations", "obs", {
+            "observationId": "TOBS|MOGO|20260819|001", "schemaVersion": 1,
+            "sourceId": "EVSRC|MOGO|20260819|001",
+            "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"})
+        self.assertIn("MISSING_STRATEGY_ATTRIBUTION", self.finding_types())
+
+    def test_POSITIVE_CONTROL_a_consistent_corpus_reports_neither(self):
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "paper_trade",
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1,
+            "metadata": {"captureBasis": "LIVE_CLOSE",
+                         "engineStrategyId": "alex_g_sr_v1"}})
+        self.write("observations", "obs", {
+            "observationId": "TOBS|MOGO|20260819|001", "schemaVersion": 1,
+            "sourceId": "EVSRC|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
+            "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"})
+        found = set(self.finding_types())
+        self.assertEqual(found & {"SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS",
+                                  "MISSING_STRATEGY_ATTRIBUTION",
+                                  "ENGINE_STRATEGY_MISMATCH"}, set())
+
+
+class TestAMalformedRecordIsReportedNotFatal(unittest.TestCase):
+    """`check_orphans` runs FIRST and used `item["sourceId"]`, so one EvidenceItem
+    missing that key aborted the whole run before any population check executed --
+    no report written, every finding lost. Fourth instance of a defect already
+    fixed three times elsewhere."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_malformed_")
+        self.evidence = os.path.join(self.root, "evidence")
+        for name in ("sources", "observations", "items"):
+            os.makedirs(os.path.join(self.evidence, name))
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, collection, name, record):
+        with open(os.path.join(self.evidence, collection, name + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def test_a_malformed_item_does_not_suppress_a_real_population_finding(self):
+        self.write("items", "bad", {"evidenceId": "EV|BAD|1"})     # no sourceId
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "paper_trade",
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1})
+        self.write("observations", "obs", {
+            "observationId": "TOBS|MOGO|20260819|001", "schemaVersion": 1,
+            "sourceId": "EVSRC|MOGO|20260819|001",
+            "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
+        report = ve.run_integrity_checks(self.evidence, is_production=False)
+        types = [f["findingType"] for f in report["findings"]]
+        self.assertIn("POPULATION_REBINDING", types,
+                      "a malformed record suppressed the population finding")
+        self.assertEqual(ve.exit_code_for(report["summary"]), 1)

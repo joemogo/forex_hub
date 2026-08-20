@@ -479,7 +479,19 @@ def build_nodes_and_edges(repo_root, ti_root, graph_root):
         trader_id = entity.get("traderId")
         family_id = entity.get("strategyFamilyId")
 
-        if node_type not in ("OWNER_DECISION", "TRADER") and trader_id:
+        # TRADE_OBSERVATION is excluded as a BUILDER RULE, not left to a data
+        # assumption. Every preserved observation happens to carry no traderId, so
+        # the generic rule below produced no trader edge and the fabrication
+        # guarantee looked airtight -- but it held only because of what the records
+        # happen to contain. Adding `traderId: "ALEX_G"` to ONE record built a real
+        # BELONGS_TO_TRADER edge and put MOGO's own paper trades three hops from a
+        # human trader's evidence, which is exactly the contamination this whole
+        # design exists to prevent.
+        #
+        # An observation is MOGO's execution record. It never belongs to a human
+        # trader, whatever a record claims, so the builder refuses rather than
+        # trusting the field to be absent.
+        if node_type not in ("OWNER_DECISION", "TRADER", "TRADE_OBSERVATION") and trader_id:
             target = resolve(trader_id, "BELONGS_TO_TRADER", eid, category="INVALID_TRADER_REFERENCE")
             if target:
                 add_edge("BELONGS_TO_TRADER", from_node_id, target, eid, trader_id, source_file, created_at)
