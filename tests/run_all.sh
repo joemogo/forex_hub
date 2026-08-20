@@ -211,6 +211,22 @@ if ! python3 scripts/trader_intelligence/validate_evidence.py; then
 fi
 echo ""
 
+# The graph validator was NOT a gate, which meant the observation/trader
+# contamination guarantee -- the strongest integrity rule in the repository -- had no
+# CI gate at all. It also exited 0 on ERRORs until the shared exit_code_for landed, so
+# wiring it here before that fix would have gated on nothing.
+echo "--- Knowledge graph integrity ---"
+if ! python3 scripts/trader_intelligence/validate_graph.py; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
+echo "--- Acquisition registry integrity ---"
+if ! python3 scripts/trader_intelligence/validate_acquisition.py; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Auto-mode governance config drift check ---"
 if ! command -v claude >/dev/null 2>&1; then
   echo "SKIPPED: the 'claude' CLI is not on PATH, so the shipped defaults cannot be read."

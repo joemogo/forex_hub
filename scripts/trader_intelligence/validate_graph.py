@@ -430,7 +430,7 @@ def main():
     gc.atomic_write_text(out_path, gc.pretty_json(report))
     print("Wrote %s" % out_path)
     print("Summary: %r" % (report["summary"],))
-    return 0 if report["summary"]["FATAL"] == 0 else 1
+    return gc.exit_code_for(report["summary"])
 
 
 if __name__ == "__main__":

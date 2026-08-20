@@ -355,14 +355,51 @@ def check_observation_population_rebinding(observations, sources, findings, now)
         # source produced by a DIFFERENT engine therefore contradicts a field the
         # attacker never touched.
         #
-        # Not a complete defence, and the limit is worth stating: 7 paper_trade
-        # sources carry engineStrategyId=alex_g_sr_v1, so a replay observation
-        # repointed at one of those still agrees here. What this removes is the
-        # freedom to repoint at ANY forward source.
+        # Not a complete defence, and the limit is worth stating carefully, because
+        # the first attempt at stating it was falsified. It said this "removes the
+        # freedom to repoint at ANY forward source" -- it did not, until the source
+        # side also failed closed: deleting `metadata.engineStrategyId` from one
+        # source made the whole anchor evaporate and restored that freedom against
+        # every forward source. With MISSING_SOURCE_ATTRIBUTION above, deleting the
+        # field is itself reported.
+        #
+        # The residual limit is narrower and real: 7 paper_trade sources carry
+        # engineStrategyId=alex_g_sr_v1, so a replay observation repointed at one of
+        # THOSE agrees here legitimately. That is documented in SPEC-provenance 7.4
+        # as the third out-of-scope case, not claimed as covered.
         metadata = source.get("metadata")
         engine = metadata.get("engineStrategyId") if isinstance(metadata, dict) else None
         strategy = obs.get("strategyId")
-        if engine and not strategy:
+
+        # THE SOURCE SIDE FAILS CLOSED TOO -- symmetrically, and once.
+        #
+        # The observation side was hardened so deleting `strategyId` could not make
+        # this anchor evaporate. The same anchor was left fail-open on the other
+        # record: with `engine` falsy the comparison evaluated away in silence, so
+        # deleting `metadata.engineStrategyId` from ONE source restored the freedom to
+        # repoint at any forward source -- 24 replay observations into FORWARD, zero
+        # findings, exit 0. Hardening one side of a two-sided comparison is hardening
+        # neither.
+        #
+        # Framed as a CLAIM and its CORROBORATION, which is what makes it one finding
+        # rather than a field checklist: the observation states which engine produced
+        # it, the source states which engine produced the capture. Either side missing
+        # means the claim cannot be verified.
+        #
+        # Deliberately scoped to `engineStrategyId` alone. Requiring the source's
+        # `captureBasis` here too duplicated an anchor that
+        # check_source_capture_basis_agrees_with_type already owns, and doubled the
+        # findings per observation for no additional coverage.
+        source_meta = metadata if isinstance(metadata, dict) else {}
+        if strategy and not source_meta.get("engineStrategyId"):
+            _finding(findings, "MISSING_SOURCE_ATTRIBUTION", "ERROR",
+                      "TRADE_OBSERVATION", obs_id,
+                      "Observation claims strategy %r but its cited source %s records no "
+                      "metadata.engineStrategyId, so the claim cannot be corroborated "
+                      "against the capture it comes from."
+                      % (strategy, obs.get("sourceId")), now)
+
+        if not strategy:
             # FAILS CLOSED. The condition used to read `if engine and strategy and
             # engine != strategy`, so deleting or blanking `strategyId` made the
             # anchor evaluate to False and vanish -- the cheapest evasion found in
@@ -1169,19 +1206,10 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     return report
 
 
-def exit_code_for(summary):
-    """Nonzero when the corpus carries an ERROR or worse.
-
-    This gated on FATAL only, so a corpus with 24 POPULATION_REBINDING ERRORs --
-    replay evidence sitting in the forward population -- exited 0 and nothing in CI
-    could notice. A check nothing can gate on is documentation.
-
-    WARNINGs deliberately do NOT fail: they are open questions rather than
-    contradictions (B-28's unresolvable artifact lived there for days while being
-    investigated), and failing on them trains the next person to silence warnings
-    instead of resolving them.
-    """
-    return 1 if (summary.get("FATAL") or summary.get("ERROR")) else 0
+#: Re-exported from graph_common so all four validators share ONE definition.
+#: Two of them hand-rolled it and got it wrong identically; see the canonical
+#: docstring. `ve.exit_code_for` stays importable for the tests that pin it.
+exit_code_for = gc.exit_code_for
 
 
 def main():

@@ -110,6 +110,23 @@ _LABEL_MAX_LEN = 120
 # Canonical serialization / hashing / deterministic IDs
 # ---------------------------------------------------------------------------
 
+def exit_code_for(summary):
+    """Nonzero when a report carries an ERROR or worse. THE canonical gate.
+
+    Three validators hand-rolled this and two got it wrong the same way -- `return 0
+    if summary["FATAL"] == 0 else 1` -- so `validate_graph` exited 0 while reporting
+    24 OBSERVATION_TRADER_CONTAMINATION ERRORs, and `validate_acquisition` exited 0
+    on an invalid platform. `validate_evidence` had already documented repairing
+    exactly this defect; the repair simply was not shared. It lives here now because
+    every validator imports this module.
+
+    WARNINGs deliberately do NOT fail: they are open questions rather than
+    contradictions, and failing on them trains the next person to silence warnings
+    instead of resolving them.
+    """
+    return 1 if (summary.get("FATAL") or summary.get("ERROR")) else 0
+
+
 def canonical_json_bytes(obj):
     """Canonical serialization used ONLY for hashing: object keys sorted
     recursively, arrays never reordered (order may carry meaning), compact

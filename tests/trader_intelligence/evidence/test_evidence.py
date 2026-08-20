@@ -1123,6 +1123,15 @@ class TestSupersededArtifactResolution(unittest.TestCase):
         self.assertEqual(rec["artifactSupersededBy"], "EVSRC|MOGO|20260818|016")
 
 
+#: Fixture sources carry the attribution metadata a REAL capture source carries.
+#: They did not, so every observation in these fixtures cited a source that could
+#: not be cross-checked -- which MISSING_SOURCE_ATTRIBUTION correctly reports. The
+#: fixtures were modelling a source MOGO's importer never produces. Tests that
+#: exercise ABSENCE override these explicitly.
+FIXTURE_SOURCE_METADATA = {"captureBasis": "REPLAY_RUN",
+                           "engineStrategyId": "alex_g_sr_v1"}
+
+
 class TestPopulationRebindingIsDetected(unittest.TestCase):
     """An observation must still point at the source it was MINTED from.
 
@@ -1143,10 +1152,14 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
 
     def obs(self, minted_type, source_id="EVSRC|MOGO|20260819|001"):
         return {"observationId": "TOBS|MOGO|20260819|001", "sourceId": source_id,
+                "strategyId": "alex_g_sr_v1",
                 "notes": "captureBasis=REPLAY_RUN sourceType=%s" % minted_type}
 
     def src(self, source_type, source_id="EVSRC|MOGO|20260819|001"):
-        return {"sourceId": source_id, "sourceType": source_type}
+        basis = {"replay_observation": "REPLAY_RUN", "paper_trade": "LIVE_CLOSE",
+                 "journal_entry": "HISTORICAL_BACKFILL"}.get(source_type, "REPLAY_RUN")
+        return {"sourceId": source_id, "sourceType": source_type,
+                "metadata": {"captureBasis": basis, "engineStrategyId": "alex_g_sr_v1"}}
 
     def findings_for(self, observations, sources):
         findings = []
@@ -1349,9 +1362,10 @@ class TestPopulationChecksAreWiredIntoTheValidator(unittest.TestCase):
         self.write("sources", "src", {
             "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": actual,
             "title": "capture", "storageLocationType": "repository",
-            "provenanceStatus": "owner_supplied"})
+            "provenanceStatus": "owner_supplied",
+            "metadata": {"engineStrategyId": "alex_g_sr_v1"}})
         self.write("observations", "obs", {
-            "observationId": "TOBS|MOGO|20260819|001",
+            "observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
             "sourceId": "EVSRC|MOGO|20260819|001",
             "notes": "captureBasis=REPLAY_RUN sourceType=%s" % minted})
 
@@ -1429,11 +1443,12 @@ class TestCaptureBasisIsTheSecondStamp(unittest.TestCase):
 
     def obs(self, basis, minted):
         return {"observationId": "TOBS|MOGO|20260819|001",
-                "sourceId": "EVSRC|MOGO|20260819|001",
+                "sourceId": "EVSRC|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
                 "notes": "captureBasis=%s sourceType=%s" % (basis, minted)}
 
     def src(self, source_type):
-        return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type}
+        return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
+                "metadata": {"engineStrategyId": "alex_g_sr_v1"}}
 
     def types(self, observations, sources):
         findings = []
@@ -1498,14 +1513,15 @@ class TestAbsentSourceIdIsReported(unittest.TestCase):
     """
 
     def findings_for(self, source_id):
-        obs = {"observationId": "TOBS|MOGO|20260819|001",
+        obs = {"observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
                "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"}
         if source_id is not _ABSENT:
             obs["sourceId"] = source_id
         findings = []
         ve.check_observation_population_rebinding(
             [obs], [{"sourceId": "EVSRC|MOGO|20260819|001",
-                     "sourceType": "replay_observation"}], findings, FIXED_NOW)
+                     "sourceType": "replay_observation",
+                     "metadata": dict(FIXTURE_SOURCE_METADATA)}], findings, FIXED_NOW)
         return findings
 
     def test_an_absent_sourceId_is_an_error(self):
@@ -1535,11 +1551,12 @@ class TestAbsentSourceIdIsReported(unittest.TestCase):
         # unhashable must not poison the index built from it.
         findings = []
         ve.check_observation_population_rebinding(
-            [{"observationId": "TOBS|MOGO|20260819|001",
+            [{"observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
               "sourceId": "EVSRC|MOGO|20260819|001",
               "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"}],
             [{"sourceId": [], "sourceType": "paper_trade"},
-             {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "replay_observation"}],
+             {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "replay_observation",
+              "metadata": dict(FIXTURE_SOURCE_METADATA)}],
             findings, FIXED_NOW)
         self.assertEqual(findings, [])
 
@@ -1578,9 +1595,10 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
         self.write("sources", "src", {
             "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
             "title": "capture", "storageLocationType": "repository",
-            "provenanceStatus": "verified", "schemaVersion": 1})
+            "provenanceStatus": "verified", "schemaVersion": 1,
+            "metadata": {"engineStrategyId": "alex_g_sr_v1"}})
         self.write("observations", "obs", {
-            "observationId": "TOBS|MOGO|20260819|001",
+            "observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
             "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
             "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
 
@@ -1612,7 +1630,11 @@ class TestTheThirdAndFourthAnchors(unittest.TestCase):
     SOURCE, where an edit to an observation cannot reach them."""
 
     def src(self, source_type, basis=None, engine=None, sid="EVSRC|MOGO|20260819|001"):
-        rec = {"sourceId": sid, "sourceType": source_type, "metadata": {}}
+        # Defaults present so the fixture is realistic; each test overrides the one
+        # field it is actually about.
+        rec = {"sourceId": sid, "sourceType": source_type,
+               "metadata": {"captureBasis": "LIVE_CLOSE",
+                            "engineStrategyId": "alex_g_sr_v1"}}
         if basis:
             rec["metadata"]["captureBasis"] = basis
         if engine:
@@ -1679,9 +1701,10 @@ class TestCaptureBasisStampIsSymmetricWithTheOther(unittest.TestCase):
     def types(self, notes, source_type="paper_trade"):
         findings = []
         ve.check_observation_population_rebinding(
-            [{"observationId": "TOBS|MOGO|20260819|001",
+            [{"observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
               "sourceId": "EVSRC|MOGO|20260819|001", "notes": notes}],
-            [{"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type}],
+            [{"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
+              "metadata": {"engineStrategyId": "alex_g_sr_v1"}}],
             findings, FIXED_NOW)
         return [f["findingType"] for f in findings]
 
@@ -1722,7 +1745,7 @@ class TestAnchorsFailClosedNotOpen(unittest.TestCase):
 
     def src(self, engine="current_strategy", source_type="paper_trade"):
         return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
-                "metadata": {"engineStrategyId": engine}}
+                "metadata": {"engineStrategyId": engine, "captureBasis": "LIVE_CLOSE"}}
 
     def types(self, observations, sources):
         findings = []
@@ -1750,13 +1773,18 @@ class TestAnchorsFailClosedNotOpen(unittest.TestCase):
         self.assertEqual(self.types([self.obs()], [self.src(engine="current_strategy")]),
                          ["ENGINE_STRATEGY_MISMATCH"])
 
-    def test_a_non_dict_metadata_does_not_raise(self):
-        # A list-valued metadata raised AttributeError and aborted the entire run.
+    def test_a_non_dict_metadata_is_reported_rather_than_RAISING(self):
+        # Two properties, and the second changed deliberately. It must not raise --
+        # a list-valued metadata used to throw AttributeError and abort the entire
+        # validator run. And it must not be SILENT: a source whose metadata cannot be
+        # read corroborates nothing, which is the same fail-open that let deleting
+        # one field move 24 replay observations into FORWARD.
         for bad in ([], "x", 5, None):
             with self.subTest(metadata=bad):
                 src = self.src()
                 src["metadata"] = bad
-                self.assertEqual(self.types([self.obs()], [src]), [])
+                self.assertEqual(self.types([self.obs()], [src]),
+                                 ["MISSING_SOURCE_ATTRIBUTION"])
 
 
 class TestSourceSideAnchorFailsClosed(unittest.TestCase):
@@ -1766,7 +1794,7 @@ class TestSourceSideAnchorFailsClosed(unittest.TestCase):
 
     def src(self, basis, source_type="paper_trade"):
         return {"sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
-                "metadata": {"captureBasis": basis}}
+                "metadata": {"captureBasis": basis, "engineStrategyId": "alex_g_sr_v1"}}
 
     def types(self, sources):
         findings = []
@@ -1917,7 +1945,8 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
     #: passed every test, because the tests call it directly. FOURTH recurrence of
     #: this shape. A per-module invariant has the same flaw as a per-check test, so
     #: the module list is what gets extended, once.
-    VALIDATOR_MODULES = ("validate_evidence.py", "validate_graph.py")
+    VALIDATOR_MODULES = ("validate_evidence.py", "validate_graph.py",
+                         "validate_acquisition.py")
 
     def _module(self, filename="validate_evidence.py"):
         path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence", filename)
@@ -1951,32 +1980,49 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
         self.assertGreater(total, 40, "both modules together should expose many checks")
 
     def test_main_delegates_its_exit_status_to_exit_code_for(self):
-        # `exit_code_for` was unit-tested four ways and `main()` was free not to use
-        # it; with the call removed, a corpus of population ERRORs exited 0 and the
-        # run_all.sh gate passed. The subprocess test elsewhere covers the behaviour;
-        # this covers the wiring for the same reason as the check above.
-        tree = self._module()
-        main = next(f for f in self._functions(tree) if f.name == "main")
-        called = {n.func.id for n in ast.walk(main)
-                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-        self.assertIn("exit_code_for", called,
-                      "main() computes its own exit status; exit_code_for can then be "
-                      "correct and irrelevant")
+        # Iterates ALL validator modules. When this covered only validate_evidence,
+        # validate_graph and validate_acquisition were both still hand-rolling
+        # `return 0 if FATAL == 0 else 1` -- so validate_graph exited 0 while
+        # reporting 24 contamination ERRORs, which is the very guarantee the previous
+        # commit added. Extending one of three tests fixed one third of the hole.
+        for filename in self.VALIDATOR_MODULES:
+            with self.subTest(module=filename):
+                tree = self._module(filename)
+                main = next(f for f in self._functions(tree) if f.name == "main")
+                names = {n.func.id for n in ast.walk(main)
+                         if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+                attrs = {n.func.attr for n in ast.walk(main)
+                         if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
+                self.assertIn("exit_code_for", names | attrs,
+                              "%s: main() computes its own exit status, so a report "
+                              "full of ERRORs can still exit 0" % filename)
 
     def test_the_runner_passes_findings_to_every_check_it_calls(self):
         # A check wired in but handed a throwaway list would report into the void --
         # the same defect one layer down, and it would pass the wiring test above.
-        tree = self._module("validate_evidence.py")
-        runner = next(f for f in self._functions(tree) if f.name == "run_integrity_checks")
-        checked = 0
-        for node in ast.walk(runner):
-            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
-                continue
-            if not node.func.id.startswith("check_"):
-                continue
-            names = {a.id for a in node.args if isinstance(a, ast.Name)}
-            self.assertIn("findings", names,
-                          "%s is called without the shared findings list, so anything "
-                          "it reports is discarded" % node.func.id)
-            checked += 1
-        self.assertGreater(checked, 20, "found almost no check calls to inspect")
+        # Iterates ALL validator modules, for the reason above. While this covered
+        # only validate_evidence, the contamination check could be called as
+        # `check_observation_trader_isolation(nodes, edges, [])` -- it ran, produced
+        # its findings, and dropped them into a throwaway list, with every test green.
+        total = 0
+        for filename in self.VALIDATOR_MODULES:
+            with self.subTest(module=filename):
+                tree = self._module(filename)
+                runner = next(f for f in self._functions(tree)
+                              if f.name == "run_integrity_checks")
+                checked = 0
+                for node in ast.walk(runner):
+                    if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+                        continue
+                    if not node.func.id.startswith("check_"):
+                        continue
+                    names = {a.id for a in node.args if isinstance(a, ast.Name)}
+                    self.assertIn("findings", names,
+                                  "%s: %s is called without the shared findings list, so "
+                                  "anything it reports is discarded"
+                                  % (filename, node.func.id))
+                    checked += 1
+                self.assertGreater(checked, 5,
+                                   "%s: found almost no check calls to inspect" % filename)
+                total += checked
+        self.assertGreater(total, 40, "all modules together should expose many checks")

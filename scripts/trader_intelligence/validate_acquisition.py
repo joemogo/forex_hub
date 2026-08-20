@@ -230,7 +230,7 @@ def main():
     print("Summary: %r" % (summary,))
     for f in findings:
         print("%s %s: %s" % (f["severity"], f["category"], f["message"]))
-    return 0 if summary["FATAL"] == 0 else 1
+    return gc.exit_code_for(summary)
 
 
 if __name__ == "__main__":
