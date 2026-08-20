@@ -1,5 +1,5 @@
 {
-  "buildId": "BUILD|20260820|002",
+  "buildId": "BUILD|20260820|003",
   "findings": [
     {
       "affectedIds": [
@@ -313,8 +313,8 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-08-20T22:28:41Z",
-  "integrityReportId": "INTEGRITY|BUILD|20260820|002",
+  "generatedAt": "2026-08-20T23:49:07Z",
+  "integrityReportId": "INTEGRITY|BUILD|20260820|003",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,

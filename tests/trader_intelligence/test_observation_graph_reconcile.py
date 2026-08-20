@@ -48,16 +48,22 @@ class ReconcileCase(unittest.TestCase):
             json.dump(record, handle)
 
     def source(self, sid="EVSRC|MOGO|20260819|001", source_type="replay_observation"):
+        # Carries the attribution metadata a real capture source carries. Without it
+        # the observation citing it makes a strategy claim nothing can corroborate,
+        # which MISSING_SOURCE_ATTRIBUTION correctly reports -- the fixture was
+        # modelling a source MOGO's importer never produces.
         self.write("sources", sid.replace("|", "_"), {
             "sourceId": sid, "sourceType": source_type, "title": "capture",
             "storageLocationType": "repository", "provenanceStatus": "owner_supplied",
-            "createdAt": "2026-08-19T00:00:00Z"})
+            "createdAt": "2026-08-19T00:00:00Z",
+            "metadata": {"captureBasis": "REPLAY_RUN",
+                         "engineStrategyId": "alex_g_sr_v1"}})
 
     def observation(self, oid="TOBS|MOGO|20260819|001",
                     sid="EVSRC|MOGO|20260819|001", basis="REPLAY_RUN",
                     minted="replay_observation", **extra):
         rec = {"observationId": oid, "sourceId": sid, "instrument": "GBP/USD",
-               "createdAt": "2026-08-19T00:00:00Z",
+               "createdAt": "2026-08-19T00:00:00Z", "strategyId": "alex_g_sr_v1",
                "notes": "captureBasis=%s sourceType=%s" % (basis, minted)}
         rec.update(extra)
         self.write("observations", oid.replace("|", "_"), rec)
