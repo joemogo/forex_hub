@@ -1911,9 +1911,16 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
     a behavioural test can only cover checks somebody remembered to write one for.
     """
 
-    def _module(self):
-        path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
-                            "validate_evidence.py")
+    #: Both validator modules. The invariant was written for validate_evidence and
+    #: left validate_graph uncovered, so unwiring
+    #: `check_observation_trader_isolation` -- the contamination guarantee itself --
+    #: passed every test, because the tests call it directly. FOURTH recurrence of
+    #: this shape. A per-module invariant has the same flaw as a per-check test, so
+    #: the module list is what gets extended, once.
+    VALIDATOR_MODULES = ("validate_evidence.py", "validate_graph.py")
+
+    def _module(self, filename="validate_evidence.py"):
+        path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence", filename)
         with open(path, "r", encoding="utf-8") as handle:
             return ast.parse(handle.read())
 
@@ -1921,20 +1928,27 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
         return [n for n in tree.body if isinstance(n, ast.FunctionDef)]
 
     def test_every_check_function_is_called_by_run_integrity_checks(self):
-        tree = self._module()
-        checks = [f.name for f in self._functions(tree) if f.name.startswith("check_")]
-        runner = next(f for f in self._functions(tree) if f.name == "run_integrity_checks")
-        called = {n.func.id for n in ast.walk(runner)
-                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-        # Non-vacuity: if the discovery ever stops finding checks, this test would
-        # pass over an empty list and mean nothing.
-        self.assertGreater(len(checks), 20,
-                           "check discovery found almost nothing; the assertion below "
-                           "would pass vacuously")
-        unwired = sorted(set(checks) - called)
-        self.assertEqual(unwired, [],
-                         "these checks exist but run_integrity_checks never calls them, "
-                         "so they can never report on a real corpus: %s" % unwired)
+        total = 0
+        for filename in self.VALIDATOR_MODULES:
+            with self.subTest(module=filename):
+                tree = self._module(filename)
+                checks = [f.name for f in self._functions(tree)
+                          if f.name.startswith("check_")]
+                runner = next(f for f in self._functions(tree)
+                              if f.name == "run_integrity_checks")
+                called = {n.func.id for n in ast.walk(runner)
+                          if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+                # Non-vacuity per module: discovery that stops finding checks would
+                # make this pass over an empty list and mean nothing.
+                self.assertGreater(len(checks), 5,
+                                   "%s: check discovery found almost nothing" % filename)
+                unwired = sorted(set(checks) - called)
+                self.assertEqual(unwired, [],
+                                 "%s: these checks exist but run_integrity_checks never "
+                                 "calls them, so they can never report on a real corpus: "
+                                 "%s" % (filename, unwired))
+                total += len(checks)
+        self.assertGreater(total, 40, "both modules together should expose many checks")
 
     def test_main_delegates_its_exit_status_to_exit_code_for(self):
         # `exit_code_for` was unit-tested four ways and `main()` was free not to use
@@ -1952,7 +1966,7 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
     def test_the_runner_passes_findings_to_every_check_it_calls(self):
         # A check wired in but handed a throwaway list would report into the void --
         # the same defect one layer down, and it would pass the wiring test above.
-        tree = self._module()
+        tree = self._module("validate_evidence.py")
         runner = next(f for f in self._functions(tree) if f.name == "run_integrity_checks")
         checked = 0
         for node in ast.walk(runner):
