@@ -2441,6 +2441,38 @@ class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
                         "vacuous run: no observations were loaded")
         return [f["findingType"] for f in report["findings"]]
 
+    def preservation(self, identities):
+        d = os.path.join(self.evidence, "ledger-preservation")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "PAPER_LEDGER.json"), "w", encoding="utf-8") as h:
+            json.dump({"schemaVersion": "mogo.paper-ledger-preservation.v1",
+                       "identities": identities}, h)
+
+    def test_the_runner_REPORTS_a_missing_preserved_identity(self):
+        # Gate wired AND aimed. Unwiring it, or aiming it at a path that does not
+        # exist, both survived every test -- the gate was only ever called directly,
+        # so nothing asserted PRESERVED_IDENTITY_MISSING emerges from the runner.
+        # This is the class round 11 built for exactly that, which the round-13 gate
+        # was never added to.
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64, sequence_id="SEQ|present")
+        self.preservation([{"tradeId": "AGT|AGS|GONE|1", "pnl": -97.5}])
+        self.assertIn("PRESERVED_IDENTITY_MISSING", self.finding_types())
+
+    def test_the_runner_REPORTS_an_absent_preservation_manifest(self):
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        # no preservation directory at all
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.finding_types())
+
+    def test_the_runner_REPORTS_a_manifest_with_no_requirable_identities(self):
+        # Re-prefixing every tradeId AGT|TEST| leaves a non-empty manifest that
+        # requires nothing -- an anchor that requires nothing is not there.
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.preservation([{"tradeId": "AGT|TEST|1", "pnl": -1}])
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.finding_types())
+
     def test_the_runner_REPORTS_a_duplicated_package(self):
         # Gate 1 wired: DELETE-AND-PAD collides on sourceContentHash.
         self.source()
@@ -2485,6 +2517,7 @@ class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
                 rec = json.load(handle)
             sources[rec["sourceId"]] = rec
         self.state(len(observations), ra.corpus_fingerprint(observations, sources))
+        self.preservation([{"tradeId": "SEQ|a" * 1, "pnl": 1.0}])
         found = set(self.finding_types())
         self.assertEqual(found & {"DUPLICATE_SOURCE_CONTENT_HASH", "RESEARCH_STATE_MISSING",
                                   "CORPUS_CONTENT_DIVERGED", "EVIDENCE_REMOVED",
@@ -2782,11 +2815,27 @@ class TestPreservedIdentitiesMustStillExist(unittest.TestCase):
         self.assertEqual(self.types(self.observations()),
                          ["UNREADABLE_PRESERVED_IDENTITIES"])
 
-    def test_an_absent_preservation_directory_is_silent(self):
-        # A corpus that never preserved a ledger has no identities to require, and
-        # inventing some would be the fabrication this layer exists to prevent.
+    def test_an_absent_preservation_directory_is_silent_FOR_THIS_GATE_ONLY(self):
+        # REPLACED, not amended. The old version asserted an absent manifest was
+        # correct behaviour outright -- "a corpus that never preserved a ledger has
+        # no identities to require" -- which pinned `rm -rf ledger-preservation/` as
+        # intended, one of eleven one-touch bypasses that restored full exit-0
+        # substitution.
+        #
+        # This gate stays silent because it has nothing to require; AVAILABILITY is
+        # not its job and is now asserted by check_corpus_anchors_are_available,
+        # which reports the absence as an ERROR. The scoping problem the old comment
+        # was worried about was already solved there ("scoped to a corpus that HOLDS
+        # evidence") and this gate simply failed to reuse it.
         shutil.rmtree(self.preservation)
         self.assertEqual(self.types(self.observations()), [])
+        findings = []
+        ve.check_corpus_anchors_are_available(
+            self.observations("SEQ|1"), findings, FIXED_NOW,
+            state_path=None, ledger_dir=None, preservation_dir=self.preservation)
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE",
+                      [f["findingType"] for f in findings],
+                      "absence must be reported by the availability invariant")
 
     def test_the_LIVE_manifest_is_fully_satisfied_by_the_LIVE_corpus(self):
         # Relationship, not a snapshot: every non-developer identity ever preserved is

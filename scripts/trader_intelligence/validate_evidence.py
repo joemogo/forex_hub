@@ -232,6 +232,8 @@ CORPUS_ANCHORS = (
     ("current-state.json:observationTotal", "int"),
     ("current-state.json:corpusFingerprint", "str"),
     ("research-state/ledger/", "non-empty directory"),
+    ("evidence/ledger-preservation/", "non-empty directory"),
+    ("ledger-preservation:identities", "non-empty list of objects"),
 )
 
 
@@ -304,8 +306,64 @@ def check_preserved_identities_still_present(observations, findings, now,
                           % (trade_id, os.path.basename(path), row.get("pnl")), now)
 
 
+def _check_preservation_anchor(preservation_dir, report):
+    # THE PRESERVATION MANIFEST IS AN ANCHOR AND WAS NOT IN THIS TABLE.
+    #
+    # The identity gate opened with `if not preservation_dir ... : return` -- the
+    # exact shape rounds 9-12 spent four rounds eliminating, reintroduced in the
+    # commit that cited the lesson. Eleven one-touch bypasses followed: remove the
+    # directory, empty it, rename the extension, move it into a subdirectory, make
+    # the document `null` or a list, rename `identities`, or re-prefix every tradeId
+    # `AGT|TEST|`. Each restored full exit-0 substitution. A test of mine asserted
+    # the first of them was correct behaviour.
+    #
+    # Availability belongs here, once, like every other anchor -- which is what the
+    # comment at the top of this table already said.
+    if not preservation_dir or not os.path.isdir(preservation_dir):
+        report("evidence/ledger-preservation/", "absent")
+    else:
+        manifests = globmod.glob(os.path.join(preservation_dir, "*.json"))
+        if not manifests:
+            report("evidence/ledger-preservation/", "empty")
+        else:
+            identities = 0
+            for path in sorted(manifests):
+                try:
+                    with open(path, "r", encoding="utf-8") as handle:
+                        manifest = json.load(handle)
+                except (ValueError, OSError):
+                    report("evidence/ledger-preservation/",
+                           "unreadable (%s)" % os.path.basename(path))
+                    continue
+                if not isinstance(manifest, dict):
+                    report("evidence/ledger-preservation/",
+                           "not a JSON object in %s (%s)"
+                           % (os.path.basename(path), type(manifest).__name__))
+                    continue
+                rows = manifest.get("identities")
+                if not isinstance(rows, list):
+                    report("ledger-preservation:identities",
+                           "absent or not a list in %s" % os.path.basename(path))
+                    continue
+                # Counts only identities the gate will actually REQUIRE, i.e. the
+                # non-developer ones. Counting all of them left a bypass: re-prefix
+                # every tradeId `AGT|TEST|` and the manifest is still "non-empty"
+                # while the gate excludes every row, so it requires nothing. An
+                # anchor that requires nothing is an anchor that is not there.
+                identities += sum(
+                    1 for r in rows
+                    if isinstance(r, dict) and isinstance(r.get("tradeId"), str)
+                    and r["tradeId"]
+                    and not is_developer_test_package({"sourceTradeId": r["tradeId"]}))
+            if identities == 0 and manifests:
+                report("ledger-preservation:identities",
+                       "no requirable trade identities in any manifest (every row is "
+                       "absent, malformed, or a developer test trade)")
+
+
 def check_corpus_anchors_are_available(observations, findings, now,
-                                       state_path=None, ledger_dir=None):
+                                       state_path=None, ledger_dir=None,
+                                       preservation_dir=None, sources=None):
     """Every anchor the corpus-integrity gates depend on must BE THERE.
 
     Rounds 9, 10, 11 and 12 each repaired one instance of a single shape: a gate
@@ -327,6 +385,8 @@ def check_corpus_anchors_are_available(observations, findings, now,
     """
     if not observations:
         return
+    sources_by_id = {src["sourceId"]: src for src in (sources or [])
+                     if isinstance(src.get("sourceId"), str)}
 
     def report(anchor, detail):
         _finding(findings, "CORPUS_ANCHOR_UNAVAILABLE", "ERROR", "TRADE_OBSERVATION",
@@ -402,6 +462,20 @@ def check_corpus_anchors_are_available(observations, findings, now,
         total = entry.get("observationTotalAfter")
         if isinstance(total, int) and not isinstance(total, bool):
             high_water = total if high_water is None else max(high_water, total)
+    # Required only of a corpus that actually holds FORWARD evidence. The manifest
+    # records the PAPER account's closed trades, so a corpus with no forward
+    # observations has none to preserve, and demanding one would fire on every
+    # replay-only or synthetic corpus -- the same over-reach that would train people
+    # to ignore this. Same scoping principle as the "corpus that HOLDS evidence"
+    # guard above, applied to the population the anchor is actually about.
+    # A LOCAL guard, not an early return. Returning here also skipped the
+    # cross-anchor comparison below, which has nothing to do with forward evidence --
+    # a scoping fix that silently disabled an unrelated check is the same
+    # availability bug in miniature.
+    if any(to.observation_population(obs, sources_by_id) == "FORWARD"
+           for obs in observations):
+        _check_preservation_anchor(preservation_dir, report)
+
     if high_water is not None and recorded_total < high_water:
         _finding(findings, "STATE_CONTRADICTS_LEDGER", "ERROR", "TRADE_OBSERVATION",
                   "corpus",
@@ -1646,7 +1720,10 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     check_corpus_anchors_are_available(
         observations, findings, now,
         state_path=os.path.join(_state_root, "research-state", "current-state.json"),
-        ledger_dir=os.path.join(_state_root, "research-state", "ledger"))
+        ledger_dir=os.path.join(_state_root, "research-state", "ledger"),
+        preservation_dir=os.path.join(os.path.abspath(evidence_root),
+                                      "ledger-preservation"),
+        sources=sources)
     check_observation_source_content_unique(observations, findings, now)
     check_observation_sequence_ids_unique(observations, findings, now)
     check_corpus_matches_recorded_state(
