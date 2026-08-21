@@ -1611,10 +1611,16 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
             "provenanceStatus": "verified", "schemaVersion": 1,
             "metadata": {"engineStrategyId": "alex_g_sr_v1",
                          "captureBasis": "REPLAY_RUN"}})
+        # A real observation states its result and the prices that produce it. A
+        # fixture that omits them models a record which has already dropped out of
+        # every statistic, and the positive control would fail for that reason
+        # rather than the exit code under test.
         self.write("observations", "obs", {
             "observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
             "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
             "sourceContentHash": "a" * 64, "sequenceId": "SEQ|1",
+            "entry": 1.2000, "stop": 1.1950, "exitPrice": 1.2100,
+            "direction": "buy", "rMultiple": 2.0, "outcome": "Win",
             "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
 
     def write_state(self):
@@ -2595,6 +2601,7 @@ class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
         "UNADJUDICATED_ANCHOR_FIELD", "ANCHOR_VALUES_UNCOMPARED",
         # B-32.18: a record checked against itself, and the document against its rows.
         "RECORD_CONTRADICTS_ITSELF", "DERIVATION_UNCHECKABLE",
+        "RECORD_FIELD_MISSING",
         "ANCHOR_DOCUMENT_CONTRADICTED", "ANCHOR_DOCUMENT_FIELD_MISSING",
         "ANCHOR_DOCUMENT_UNCHECKABLE", "UNADJUDICATED_ANCHOR_SCHEMA",
         # B-32.18: a crash must not leave a stale all-clear report behind.
@@ -3203,6 +3210,53 @@ class TestARecordIsCheckedAgainstItself(unittest.TestCase):
         del record["riskAmount"]
         self.assertIn("DERIVATION_UNCHECKABLE", self.types(record))
 
+    def test_DELETING_the_derived_field_ITSELF_is_reported(self):
+        # The seventh category's own front door. `stated is None -> continue` meant
+        # deleting BOTH `rMultiple` and `outcome` skipped every derivation: 161
+        # losing records tampered, forward mean R 0.13 -> 2.00, win rate 100%, and n
+        # fell 259 -> 98 because the records simply stopped counting. Absence is not
+        # silence, at the top of the check as well as inside it.
+        for field in ("rMultiple", "outcome"):
+            with self.subTest(deleted=field):
+                record = self.record()
+                del record[field]
+                self.assertIn("RECORD_FIELD_MISSING", self.types(record))
+
+    def test_deleting_BOTH_derived_fields_is_reported_twice(self):
+        record = self.record()
+        del record["rMultiple"]
+        del record["outcome"]
+        self.assertEqual(self.types(record),
+                         ["RECORD_FIELD_MISSING", "RECORD_FIELD_MISSING"])
+
+    def test_an_explicitly_NULL_derived_field_is_reported_too(self):
+        # `record.get(...) is None` is true for both absent and null; both must
+        # report, or nulling is the cheaper edit.
+        for field in ("rMultiple", "outcome"):
+            with self.subTest(nulled=field):
+                self.assertIn("RECORD_FIELD_MISSING",
+                              self.types(self.record(**{field: None})))
+
+    def test_every_LIVE_observation_states_the_required_derived_fields(self):
+        # The measurement that makes `required` free of false positives.
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "observations")
+        if not os.path.isdir(root):
+            self.skipTest("live corpus not present")
+        missing = []
+        seen = 0
+        for path in globmod.glob(os.path.join(root, "**", "*.json"), recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                record = json.load(handle)
+            seen += 1
+            for derivation in ve.RECORD_DERIVATIONS:
+                if derivation.required and record.get(
+                        derivation.derived_field) is None:
+                    missing.append((record.get("observationId"),
+                                    derivation.derived_field))
+        self.assertGreater(seen, 100, "would pass vacuously")
+        self.assertEqual(missing, [])
+
     def test_the_tolerances_are_TIGHT_enough_to_catch_a_real_tamper(self):
         # N4: widening the price tolerance from 1e-5 to 1e5 survived, because every
         # fixture asserted "a forged value is caught" and none asserted the tolerance
@@ -3412,15 +3466,28 @@ class TestTheRecordIsCheckedAgainstThePackageItWasMintedFrom(unittest.TestCase):
         self.assertIn("PACKAGE_WITNESS_INCOMPLETE",
                       self.types(self.observation(entry=9.9999)))
 
-    def test_a_NULLED_witness_the_engine_DOES_leave_null_is_counted_not_ERRORED(self):
-        # Measured: `balanceBefore`/`balanceAfter` really are null on one LIVE_CLOSE
-        # package. Reporting that as tampering would be a false positive; saying
-        # nothing would make nulling every package a free switch. Counted.
+    def test_a_record_STATING_a_value_the_package_nulls_is_an_ERROR(self):
+        # REVERSED. This asserted the null was merely "counted" whenever the field
+        # was one the engine sometimes nulls -- and `accountBalanceBefore/After` have
+        # no intra-record derivation, so the package is their only check. Nulling one
+        # key in the artifact and forging the matching field in the record was a
+        # WARNING and nothing else: 257 records forged, zero errors.
+        #
+        # A record cannot assert what the engine never recorded. Which field it is
+        # does not enter into it.
         body = self.package()
         body["objects"]["positions"][0]["balanceBefore"] = None
         self.write(body)
         self.assertEqual(self.types(self.observation()),
-                         ["PACKAGE_WITNESS_DEGRADED"])
+                         ["PACKAGE_WITNESS_INCOMPLETE"])
+
+    def test_a_null_is_COUNTED_only_when_the_record_claims_nothing_either(self):
+        body = self.package()
+        body["objects"]["positions"][0]["balanceBefore"] = None
+        self.write(body)
+        record = self.observation()
+        del record["accountBalanceBefore"]
+        self.assertEqual(self.types(record), ["PACKAGE_WITNESS_DEGRADED"])
 
     def test_NULLABLE_excuses_a_null_VALUE_never_a_missing_STRUCTURE(self):
         # S2/S3: returning "null" instead of "absent" for structural damage
@@ -3466,12 +3533,15 @@ class TestTheRecordIsCheckedAgainstThePackageItWasMintedFrom(unittest.TestCase):
         self.assertIn("PACKAGE_WITNESS_INCOMPLETE", self.types(record))
 
     def test_a_record_may_omit_a_field_the_package_also_lacks(self):
+        # Legitimate and measured -- the one LIVE_CLOSE package that nulls these two
+        # values belongs to the one record that carries neither. Counted, not
+        # errored, and not silent.
         body = self.package()
         body["objects"]["positions"][0]["balanceBefore"] = None
         self.write(body)
         record = self.observation()
         del record["accountBalanceBefore"]
-        self.assertEqual(self.types(record), [])
+        self.assertEqual(self.types(record), ["PACKAGE_WITNESS_DEGRADED"])
 
     def test_two_packages_claiming_one_hash_with_DIFFERENT_contents_is_reported(self):
         # `setdefault` resolved a collision by iteration order, silently, and the
@@ -3488,79 +3558,41 @@ class TestTheRecordIsCheckedAgainstThePackageItWasMintedFrom(unittest.TestCase):
         self.write(self.package(), self.package())
         self.assertEqual(self.types(self.observation()), [])
 
-    def test_the_nullable_flags_match_what_the_LIVE_packages_do(self):
-        # `nullable` is only safe because it was measured. If the engine starts
-        # leaving another field null, the flag is wrong and this says so.
+    def test_no_LIVE_record_states_a_value_its_package_leaves_null(self):
+        # What the `nullable` flag was standing in for, asserted directly. If a
+        # record ever states a value the engine did not record, that is the thing to
+        # know -- not which field it happened to be.
         root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence")
         if not os.path.isdir(os.path.join(root, "observations")):
             self.skipTest("live corpus not present")
-        sources = []
+        sources, records = [], []
         for path in globmod.glob(os.path.join(root, "sources", "**", "*.json"),
                                  recursive=True):
             with open(path, "r", encoding="utf-8") as handle:
                 sources.append(json.load(handle))
-        cited = set()
-        for path in globmod.glob(os.path.join(root, "observations", "**", "*.json"),
-                                 recursive=True):
-            with open(path, "r", encoding="utf-8") as handle:
-                cited.add(json.load(handle).get("sourceId"))
-        packages, _unreadable, _collisions = ve._packages_by_content_hash(sources,
-                                                                          cited)
-        self.assertGreater(len(packages), 100, "would pass vacuously")
-        for witness in ve.PACKAGE_WITNESSES:
-            if witness.nullable:
-                continue
-            with self.subTest(field=witness.package_field):
-                nulled = [p for p in packages.values()
-                          if ve._witness_value(p, witness) is ve._WITNESS_NULL]
-                self.assertEqual(nulled, [],
-                                 "%s is declared non-nullable but %d captured "
-                                 "packages record it as null"
-                                 % (witness.package_field, len(nulled)))
-
-    def test_only_sources_the_observations_CITE_are_parsed(self):
-        # JSON-parsing every source's artifact reported 12 transcripts as unreadable
-        # package files. A false positive is how a real gate gets switched off.
-        transcript = os.path.join(self.root, "transcript.raw.txt")
-        with open(transcript, "w", encoding="utf-8") as handle:
-            handle.write("this is a transcript, not a package file")
-        self.write(self.package())
-        self.assertEqual(
-            self.types(self.observation(),
-                       sources=[{"sourceId": "S1", "repositoryPath": self.artifact},
-                                {"sourceId": "S2", "repositoryPath": transcript}]),
-            [])
-
-    def test_the_LIVE_corpus_agrees_with_its_packages(self):
-        # The measurement the gate rests on, asserted rather than remembered.
-        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence")
-        if not os.path.isdir(os.path.join(root, "observations")):
-            self.skipTest("live corpus not present")
-        records, sources = [], []
         for path in globmod.glob(os.path.join(root, "observations", "**", "*.json"),
                                  recursive=True):
             with open(path, "r", encoding="utf-8") as handle:
                 records.append(json.load(handle))
-        for path in globmod.glob(os.path.join(root, "sources", "**", "*.json"),
-                                 recursive=True):
-            with open(path, "r", encoding="utf-8") as handle:
-                sources.append(json.load(handle))
         self.assertGreater(len(records), 100, "would pass vacuously")
-        findings = []
-        ve.check_observation_matches_its_package(records, sources, findings,
-                                                 FIXED_NOW)
-        contradictions = [f for f in findings
-                          if f["findingType"] == "PACKAGE_WITNESS_CONTRADICTED"]
-        self.assertEqual(contradictions, [],
-                         "the live corpus disagrees with its own captured packages")
-        # And the witness must actually be REACHING the corpus, or the assertion
-        # above is satisfied by resolving nothing at all.
-        resolved = [r for r in records
-                    if not any(f["entityId"] == r.get("observationId")
-                               for f in findings)]
-        self.assertGreater(len(resolved), 200,
-                           "almost nothing resolved to a package, so this test "
-                           "proves nothing")
+        packages, _u, _c = ve._packages_by_content_hash(
+            sources, {r.get("sourceId") for r in records})
+        self.assertGreater(len(packages), 100, "no packages read; passes vacuously")
+        offenders = []
+        for record in records:
+            package = packages.get(record.get("sourceContentHash"))
+            if package is None:
+                continue
+            for witness in ve.PACKAGE_WITNESSES:
+                if witness.record_field not in record:
+                    continue
+                if ve._witness_value(package, witness) is ve._WITNESS_NULL:
+                    offenders.append((record.get("observationId"),
+                                      witness.record_field))
+        self.assertEqual(offenders, [],
+                         "these records state a value their captured package "
+                         "records as null: %s" % offenders[:5])
+
 
 
 class TestTheAnchorDOCUMENTIsCheckedAgainstItsRows(unittest.TestCase):

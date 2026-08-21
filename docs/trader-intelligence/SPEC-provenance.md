@@ -637,3 +637,44 @@ an invariant, which is the oracle class CLAUDE.md names. Measurement corrected i
 **25 of 262 packages do appear in more than one artifact**, because a capture run re-exports what
 an earlier run wrote. Identical copies agree by definition, so only a *disagreement* is
 ambiguous; reporting the duplication itself would have been 25 false positives on a clean corpus.
+
+### 7.14 An exemption is a bypass with a reason attached (B-32.21)
+
+§7.13 separated "the engine recorded nothing" from "this cannot be read", and excused the first
+with a `nullable` flag on the witness. The flag was wrong, and wrong in the way exemptions
+usually are: it took a fact about **one package** — the engine really does leave
+`balanceBefore`/`balanceAfter` null on one LIVE_CLOSE capture — and turned it into a licence
+covering all 262.
+
+Those two fields have no intra-record derivation, so the package is their only check. Nulling one
+key in the artifact and forging the matching field in the record was a WARNING and nothing else:
+**257 records forged, zero errors.** And `accountBalanceBefore` feeds
+`population_fidelity.risk_pct_of_balance`, which produces the `RISK_SIZING_AGREES` conclusion —
+so this forges a scientific finding, not a cosmetic number.
+
+Three things made it worse than an ordinary gap, and all three are the general lesson:
+
+1. **It had no true positives.** Measured on the clean corpus, the exemption fired **zero**
+   times. It excused nothing and only opened surface — because the one record whose package nulls
+   those fields carries no value for them either.
+2. **Its test pinned it in one direction.** Understating nullability failed; overstating it
+   passed. Overstating is the direction that disables gates, and a mutation flipping
+   `positionSize` to nullable took the same attack from 258 errors to zero.
+3. **The counter it fell back on was a snapshot doing an invariant's job** — the class corrected
+   in `_packages_by_content_hash` one commit earlier. It went 0 → 514 and stayed a WARNING.
+
+The flag is gone. What legitimises a null is not *which field it is* but that **the record claims
+nothing either** — a record cannot assert a value the engine never recorded. That is one rule,
+with no list to keep, and it costs nothing: measured, the only two nulls that reach it are on the
+one record carrying neither field. Nulling the witness now costs exactly what forging it costs.
+
+**And the seventh category's own front door.** `check_record_is_internally_consistent` opened with
+`stated = record.get(...); if stated is None: continue` — so deleting **both** `rMultiple` and
+`outcome` skipped every derivation. 161 losing records tampered: forward mean R 0.13 → 2.00, win
+rate 100%, and n fell 259 → 98 because the tampered records simply stopped counting. Absence is
+not silence at the top of a check as well as inside it; all 259 preserved observations state both
+fields, so requiring them costs nothing. Now 322 `RECORD_FIELD_MISSING`.
+
+That makes three sites where this one shape has now been found: package resolution, witness
+value, and the derived field itself. It is not a lesson that generalises by being written down —
+each new check has to be read for it specifically.

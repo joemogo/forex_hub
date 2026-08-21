@@ -664,23 +664,35 @@ def _derive(name, record):
 
 #: What the CAPTURED PACKAGE says about a trade, and the observation field minted
 #: from it. Every entry measured across the live corpus before being wired.
-#: `nullable` is MEASURED. Every witness field's key is present on all 262 captured
-#: packages; only `balanceBefore`/`balanceAfter` are ever null, and only on one
-#: LIVE_CLOSE package. So a null anywhere else is not a gap in the engine's record,
-#: it is an edit to it.
+#: THERE IS NO `nullable` FLAG. The first version had one and it was a bypass.
+#:
+#: It marked `balanceBefore`/`balanceAfter` nullable because the engine really does
+#: leave them null on one LIVE_CLOSE package -- a fact about ONE PACKAGE turned into
+#: a licence covering all 262. Those two fields have no intra-record derivation, so
+#: the package is their only check: nulling one key in the artifact and forging the
+#: matching field in the record was a WARNING and nothing else. Measured, the
+#: exemption never fired on a clean corpus at all -- 0 findings -- so it excused
+#: nothing and only opened surface. And a test pinned the flag in ONE direction:
+#: understating nullability failed, overstating it passed, and overstating is the
+#: direction that disables gates.
+#:
+#: What legitimises a null is not the field. It is that the RECORD claims nothing
+#: either -- see check_observation_matches_its_package.
 PackageWitness = collections.namedtuple(
-    "PackageWitness", "record_field object_kind package_field nullable agreement")
+    "PackageWitness", "record_field object_kind package_field agreement")
 
 PACKAGE_WITNESSES = (
-    PackageWitness("entry", "positions", "entryPrice", False, "258/258"),
-    PackageWitness("stop", "positions", "originalStop", False, "258/258"),
-    PackageWitness("direction", "positions", "direction", False, "258/258"),
-    PackageWitness("positionSize", "positions", "positionSize", False, "258/258"),
-    PackageWitness("accountBalanceBefore", "positions", "balanceBefore", True,
-                   "257/258; null on 1 LIVE_CLOSE package"),
-    PackageWitness("exitPrice", "outcomes", "exitPrice", False, "258/258"),
-    PackageWitness("accountBalanceAfter", "outcomes", "balanceAfter", True,
-                   "257/258; null on 1 LIVE_CLOSE package"),
+    PackageWitness("entry", "positions", "entryPrice", "258/258"),
+    PackageWitness("stop", "positions", "originalStop", "258/258"),
+    PackageWitness("direction", "positions", "direction", "258/258"),
+    PackageWitness("positionSize", "positions", "positionSize", "258/258"),
+    PackageWitness("accountBalanceBefore", "positions", "balanceBefore",
+                   "257/258; null on 1 LIVE_CLOSE package, whose record also "
+                   "carries no value"),
+    PackageWitness("exitPrice", "outcomes", "exitPrice", "258/258"),
+    PackageWitness("accountBalanceAfter", "outcomes", "balanceAfter",
+                   "257/258; null on 1 LIVE_CLOSE package, whose record also "
+                   "carries no value"),
 )
 
 
@@ -840,7 +852,12 @@ def check_observation_matches_its_package(observations, sources, findings, now):
                 # Measured: the only two records missing a witnessed field are
                 # missing it where the package has nothing either, so requiring the
                 # rest costs no false positive.
-                if captured is not _WITNESS_ABSENT and captured is not _WITNESS_NULL:
+                if captured is _WITNESS_NULL:
+                    # The legitimate case, and the ONLY one: the engine recorded
+                    # nothing and the importer minted nothing. Counted so a jump is
+                    # visible rather than treated as agreement.
+                    degraded += 1
+                elif captured is not _WITNESS_ABSENT:
                     _finding(findings, "PACKAGE_WITNESS_INCOMPLETE", "ERROR",
                               "TRADE_OBSERVATION", record.get("observationId"),
                               "The captured package records %s=%r and the observation "
@@ -861,18 +878,16 @@ def check_observation_matches_its_package(observations, sources, findings, now):
                              witness.record_field), now)
                 continue
             if captured is _WITNESS_NULL:
-                if witness.nullable:
-                    # Measured: the engine really does leave these null on one
-                    # LIVE_CLOSE package. Counted so that a jump is visible, not
-                    # treated as agreement.
-                    degraded += 1
-                    continue
+                # We are here only because the RECORD states a value. A record cannot
+                # assert what the engine never recorded, whichever field it is --
+                # that is what the `nullable` exemption got wrong.
                 _finding(findings, "PACKAGE_WITNESS_INCOMPLETE", "ERROR",
                           "TRADE_OBSERVATION", record.get("observationId"),
-                          "The captured package records %s as null, and the engine "
-                          "never does for this field. A nulled witness certifies "
-                          "nothing while still looking present."
-                          % (witness.package_field,), now)
+                          "Observation states %s=%r, but the captured package records "
+                          "%s as null -- the engine wrote no value there. Nulling the "
+                          "witness must not be cheaper than forging it."
+                          % (witness.record_field, stated, witness.package_field),
+                          now)
                 continue
             if isinstance(captured, bool) or not isinstance(captured, (int, float)):
                 agrees = str(stated).strip().lower() == str(captured).strip().lower()
@@ -972,6 +987,20 @@ def check_record_is_internally_consistent(observations, findings, now):
         for derivation in RECORD_DERIVATIONS:
             stated = record.get(derivation.derived_field)
             if stated is None:
+                if not derivation.required:
+                    continue
+                # ABSENCE IS NOT SILENCE, at the top of this check too. Deleting
+                # `rMultiple` AND `outcome` from 161 losing records skipped every
+                # derivation: forward mean R 0.13 -> 2.00, win rate 100%, with n
+                # falling 259 -> 98 because the tampered records simply stopped
+                # counting. Measured: all 259 preserved observations state both, so
+                # requiring them costs nothing.
+                _finding(findings, "RECORD_FIELD_MISSING", "ERROR",
+                          "TRADE_OBSERVATION", record.get("observationId"),
+                          "Observation states no %s, so %s has nothing to check and "
+                          "the record drops out of every statistic in silence. Every "
+                          "preserved observation states it."
+                          % (derivation.derived_field, derivation.name), now)
                 continue
             if not all(field in record for field in derivation.inputs):
                 if not derivation.required:

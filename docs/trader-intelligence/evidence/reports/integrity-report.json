@@ -1,10 +1,22 @@
 {
   "findings": [
     {
-      "detectedAt": "2026-08-21T16:46:15Z",
+      "detectedAt": "2026-08-21T17:48:01Z",
       "entityId": "corpus",
       "entityType": "TRADE_OBSERVATION",
       "findingId": "EVF0001",
+      "findingType": "PACKAGE_WITNESS_DEGRADED",
+      "message": "2 witnessed field comparisons could not be made because the captured package records the value as null. Expected to be small and non-zero; it is the number that says how many fields are standing on the corpus's own word.",
+      "metadata": {},
+      "resolutionNotes": null,
+      "resolutionStatus": "open",
+      "severity": "WARNING"
+    },
+    {
+      "detectedAt": "2026-08-21T17:48:01Z",
+      "entityId": "corpus",
+      "entityType": "TRADE_OBSERVATION",
+      "findingId": "EVF0002",
       "findingType": "PACKAGE_WITNESS_UNAVAILABLE",
       "message": "1 of 259 observations cannot be resolved to a captured package, so their values rest on the corpus alone. The artifacts are perishable and gitignored by design, so this is expected to be non-zero -- but it is the count that says how much of the corpus is standing on its own word, and a jump in it means the witness was removed.",
       "metadata": {},
@@ -14,13 +26,13 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-08-21T16:46:15Z",
+  "generatedAt": "2026-08-21T17:48:01Z",
   "integrityReportId": "EVIDENCE_INTEGRITY|20260821|001",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
-    "WARNING": 1
+    "WARNING": 2
   },
   "validatorVersion": "1.0.0"
 }
