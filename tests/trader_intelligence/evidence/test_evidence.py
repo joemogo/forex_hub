@@ -2413,21 +2413,30 @@ class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
                   "w", encoding="utf-8") as handle:
             json.dump(record, handle)
 
-    def source(self):
+    def source(self, source_type="replay_observation"):
+        basis = {"replay_observation": "REPLAY_RUN",
+                 "paper_trade": "LIVE_CLOSE"}[source_type]
         self.write("sources", "src", {
-            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "replay_observation",
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
             "title": "capture", "storageLocationType": "repository",
             "provenanceStatus": "verified", "schemaVersion": 1,
-            "metadata": {"captureBasis": "REPLAY_RUN",
+            "metadata": {"captureBasis": basis,
                          "engineStrategyId": "alex_g_sr_v1"}})
 
-    def observation(self, oid, content_hash, sequence_id=None):
+    def forward_source(self):
+        # The preservation anchor is scoped to corpora holding FORWARD evidence, so a
+        # replay-only fixture cannot exercise it -- which is exactly why two
+        # availability mutations survived the first version of these tests.
+        self.source(source_type="paper_trade")
+
+    def observation(self, oid, content_hash, sequence_id=None,
+                    basis="REPLAY_RUN", minted="replay_observation"):
         self.write("observations", oid.replace("|", "_"), {
             "observationId": oid, "sourceId": "EVSRC|MOGO|20260819|001",
             "schemaVersion": 1, "strategyId": "alex_g_sr_v1",
             "sourceContentHash": content_hash,
             "sequenceId": sequence_id or ("SEQ|" + content_hash),
-            "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
+            "notes": "captureBasis=%s sourceType=%s" % (basis, minted)})
 
     def state(self, total, fingerprint):
         with open(os.path.join(self.ti, "research-state", "current-state.json"),
@@ -2440,6 +2449,15 @@ class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
         self.assertTrue(os.listdir(os.path.join(self.evidence, "observations")),
                         "vacuous run: no observations were loaded")
         return [f["findingType"] for f in report["findings"]]
+
+    def anchor_messages(self):
+        # The finding TYPE is shared by every anchor, so asserting the type alone
+        # passes whenever ANY anchor is missing -- and these fixtures have no
+        # research-state either. Two mutations survived on exactly that adjacent
+        # effect, so the preservation cases assert which anchor was named.
+        report = ve.run_integrity_checks(self.evidence, is_production=False)
+        return " ".join(f["message"] for f in report["findings"]
+                        if f["findingType"] == "CORPUS_ANCHOR_UNAVAILABLE")
 
     def preservation(self, identities):
         d = os.path.join(self.evidence, "ledger-preservation")
@@ -2454,24 +2472,29 @@ class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
         # so nothing asserted PRESERVED_IDENTITY_MISSING emerges from the runner.
         # This is the class round 11 built for exactly that, which the round-13 gate
         # was never added to.
-        self.source()
-        self.observation("TOBS|MOGO|20260819|001", "a" * 64, sequence_id="SEQ|present")
+        self.forward_source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64, sequence_id="SEQ|present",
+                         basis="LIVE_CLOSE", minted="paper_trade")
         self.preservation([{"tradeId": "AGT|AGS|GONE|1", "pnl": -97.5}])
         self.assertIn("PRESERVED_IDENTITY_MISSING", self.finding_types())
 
     def test_the_runner_REPORTS_an_absent_preservation_manifest(self):
-        self.source()
-        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.forward_source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64,
+                         basis="LIVE_CLOSE", minted="paper_trade")
         # no preservation directory at all
         self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.finding_types())
+        self.assertIn("evidence/ledger-preservation/", self.anchor_messages())
 
     def test_the_runner_REPORTS_a_manifest_with_no_requirable_identities(self):
         # Re-prefixing every tradeId AGT|TEST| leaves a non-empty manifest that
         # requires nothing -- an anchor that requires nothing is not there.
-        self.source()
-        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.forward_source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64,
+                         basis="LIVE_CLOSE", minted="paper_trade")
         self.preservation([{"tradeId": "AGT|TEST|1", "pnl": -1}])
         self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.finding_types())
+        self.assertIn("ledger-preservation:identities", self.anchor_messages())
 
     def test_the_runner_REPORTS_a_duplicated_package(self):
         # Gate 1 wired: DELETE-AND-PAD collides on sourceContentHash.

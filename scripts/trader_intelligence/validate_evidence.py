@@ -432,6 +432,14 @@ def check_corpus_anchors_are_available(observations, findings, now,
             report("current-state.json:corpusFingerprint",
                    "absent or not a string (%r)" % (fingerprint,))
 
+    # Checked BEFORE the ledger branches below, which `return` early. Placed after
+    # them, a missing ledger silently disabled this anchor too -- one gate's absence
+    # disabling another, which is the same shape a third time. Order is part of the
+    # invariant, not an implementation detail.
+    if any(to.observation_population(obs, sources_by_id) == "FORWARD"
+           for obs in observations):
+        _check_preservation_anchor(preservation_dir, report)
+
     if not ledger_dir or not os.path.isdir(ledger_dir):
         report("research-state/ledger/", "absent")
         return
@@ -468,14 +476,6 @@ def check_corpus_anchors_are_available(observations, findings, now,
     # replay-only or synthetic corpus -- the same over-reach that would train people
     # to ignore this. Same scoping principle as the "corpus that HOLDS evidence"
     # guard above, applied to the population the anchor is actually about.
-    # A LOCAL guard, not an early return. Returning here also skipped the
-    # cross-anchor comparison below, which has nothing to do with forward evidence --
-    # a scoping fix that silently disabled an unrelated check is the same
-    # availability bug in miniature.
-    if any(to.observation_population(obs, sources_by_id) == "FORWARD"
-           for obs in observations):
-        _check_preservation_anchor(preservation_dir, report)
-
     if high_water is not None and recorded_total < high_water:
         _finding(findings, "STATE_CONTRADICTS_LEDGER", "ERROR", "TRADE_OBSERVATION",
                   "corpus",
