@@ -780,3 +780,43 @@ agree, rather than a list someone has to remember.
   no report line — a silent partial import, contradicting the importer's own contract *and* the
   witness, which treats a list that is not exactly one entry as unreadable. It is now skipped with
   a reason: choosing between two positions is a guess about which trade the package describes.
+
+### 7.18 A repair is not evidence until breaking it fails something (B-32.24)
+
+§7.17 repaired the reconcile step's discarded exit code. That repair was then pinned by
+**nothing**: two mutations neutering it — `[ 0 -eq 0 ]`, and `RECONCILE_RC=0` — survived the
+entire suite, and `grep -rn forward_capture tests/` returned exactly one hit, inside a docstring.
+The shell that runs on live forward evidence had no coverage at all. By this repository's own
+standing rule that is not a repair, it is an intention.
+
+Rather than a test for that one guard, the invariant the shape deserves — it has now been
+repaired three times (`run_all.sh`, the reconcile step, and whatever is added next) with nothing
+pinning any of it:
+
+- **Structural.** Every pipeline in `forward_capture.sh` whose first command can fail
+  (`python3`, `node`, `bash`, `osascript`) must either be guarded inline with `if !` — which is
+  only safe because `pipefail` is set, so that is asserted too — or capture `PIPESTATUS` into a
+  variable that is then tested. The scan follows the **variable**, not a fixed line window.
+- **Behavioural.** The reconcile block's real bytes are extracted from the shipped file and
+  executed against a stubbed command: passing continues, failing stops the run, and collecting
+  nothing stops the run. Rewriting the guard into the test would verify a copy — defect shape (a)
+  from this milestone, where a test passes while the shipped path is broken. The premise that
+  `python3 -m unittest` returns non-zero on `NO TESTS RAN` is measured, not assumed.
+
+**Two things fell out of building it.** The invariant immediately caught a pre-existing instance:
+`IMPORT_RC` defaulted to **0**, so if its assignment were ever removed or reordered the import
+step would silently pass — a defensive default that defaults to "fine" is decoration. Every rc
+default now fails closed, and that is asserted rather than remembered.
+
+And the first version of the structural test used a three-line window, which the explanatory
+comment I had just written pushed the check past — so it failed on a step that was correctly
+guarded. A small live demonstration of the rule: proximity is not the property; the variable is.
+
+**Also, the governance perimeter had gone stale.** The auto-mode drift check began failing:
+`soft_deny: 73 installed vs 74 generated; missing: Unverifiable Deletion Scope`. This is exactly
+the decay CLAUDE.md warns about — each section REPLACES the shipped defaults rather than merging,
+so every rule a newer Claude Code ships is silently absent until the generator is re-run, and
+nothing else would ever say so. The regeneration was purely additive (one shipped deny rule, zero
+removals, MOGO's own 7 rules unchanged), so the perimeter was strengthened rather than weakened,
+and the generator took a timestamped backup first. The check earning its place is the point: it
+is the only thing in the system that notices governance decaying by standing still.

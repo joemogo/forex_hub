@@ -215,7 +215,10 @@ say "wrote $NEW_COUNT new package(s) to $PKG_FILE"
 say "import: converting packages to TradeObservations (WRITE)"
 python3 scripts/trader_intelligence/import_mogo_observations.py --write 2>&1 | tail -20 | sed 's/^/    /'
 IMPORT_RC=${PIPESTATUS[0]}
-[ "${IMPORT_RC:-0}" -eq 0 ] || { echo "FAIL: import step failed" >&2; exit 1; }
+# Defaults to 1, not 0. The default only matters if the assignment above is ever
+# removed or reordered -- which is precisely when it must fail CLOSED. A defensive
+# default that defaults to "fine" is decoration.
+[ "${IMPORT_RC:-1}" -eq 0 ] || { echo "FAIL: import step failed" >&2; exit 1; }
 
 if [ $WRITE -eq 1 ]; then
   say "reconcile: forward population and balance relation"
