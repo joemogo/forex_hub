@@ -23,6 +23,7 @@ import graph_common as gc            # noqa: E402
 import evidence_common as evc        # noqa: E402
 import evidence_confidence as conf   # noqa: E402
 import trade_observation as to       # noqa: E402
+import research_assimilation as _assimilation  # noqa: E402
 from import_mogo_observations import CAPTURE_BASIS_SOURCE_TYPE  # noqa: E402
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -222,7 +223,125 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
                       % (basis, expected, actual), now)
 
 
-def check_corpus_is_append_only(observations, findings, now, ledger_dir=None):
+def check_observation_sequence_ids_unique(observations, findings, now):
+    """No two observations may share a `sequenceId`.
+
+    Closes DELETE-AND-PAD, which the count anchor cannot see by construction:
+    delete the 21 losing FORWARD observations, then copy a winning one 21 times
+    changing only `observationId`. The count returns to exactly 259, forward `n`
+    stays at 29 -- the one number a reader would sanity-check -- and the headline
+    forward mean R moves from -0.18 to +2.00. Nothing is authored: no timestamps
+    invented, no hashes computed, no stamps written. It is `cp` plus one id, which
+    makes it materially cheaper than the "fabricated whole record" case in
+    SPEC-provenance 7.4.
+
+    `sequenceId` is the engine's own identifier for the decision that produced the
+    trade, and it is unique across all 259 preserved records with none missing, so
+    this costs nothing today. A duplicate means one decision was recorded twice.
+    """
+    seen = {}
+    for obs in observations:
+        sequence_id = obs.get("sequenceId")
+        if not isinstance(sequence_id, str) or not sequence_id:
+            continue      # absence is a different defect; not invented here
+        seen.setdefault(sequence_id, []).append(obs.get("observationId"))
+    for sequence_id, owners in sorted(seen.items()):
+        if len(owners) > 1:
+            _finding(findings, "DUPLICATE_SEQUENCE_ID", "ERROR", "TRADE_OBSERVATION",
+                      sorted(o for o in owners if o)[0] if any(owners) else "corpus",
+                      "%d observations share sequenceId %r (%s). One engine decision "
+                      "cannot have produced several preserved trades; duplicating a "
+                      "record re-weights every statistic it appears in."
+                      % (len(owners), sequence_id,
+                         ", ".join(sorted(str(o) for o in owners)[:4])), now)
+
+
+def check_corpus_matches_recorded_state(observations, sources, findings, now,
+                                        state_path=None):
+    """Does the corpus still match the state assimilation last recorded?
+
+    The round-9 repair anchored on the ledger's observation COUNT, and round 10
+    showed what that bought: the attack surface moved to the ledger. Deleting the
+    ledger directory, corrupting every entry, renaming the files, or removing the
+    one field each defeated `EVIDENCE_REMOVED` outright -- six one-touch bypasses of
+    a six-file directory no validator inspected. A repair that anchors on an artifact
+    inherits the security of that artifact.
+
+    This anchors on a DIFFERENT committed file, `research-state/current-state.json`,
+    and on content rather than on a count. `corpusFingerprint` hashes every record in
+    full together with the source its population derives from, so it moves for any
+    edit, deletion or duplication -- and SPEC-provenance 7.4 already names it as the
+    backstop for the limits it documents, while nothing anywhere read it.
+
+    The comparison is deliberately conditional on the count, which is what makes it
+    free of false positives. A corpus that GREW since assimilation has a different
+    fingerprint legitimately, and reporting that would train everyone to ignore this.
+    But a corpus with the SAME number of records and a DIFFERENT fingerprint has not
+    grown -- its contents changed underneath a stable count, which is precisely the
+    delete-and-pad signature and every same-count tamper.
+    """
+    path = state_path
+    if path is None or not os.path.exists(path):
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except (ValueError, OSError):
+        _finding(findings, "UNREADABLE_RESEARCH_STATE", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "research-state/current-state.json cannot be read, so the corpus "
+                  "cannot be compared with the state assimilation last recorded.", now)
+        return
+    recorded_total = state.get("observationTotal")
+    recorded_fingerprint = state.get("corpusFingerprint")
+    if not isinstance(recorded_total, int) or not isinstance(recorded_fingerprint, str):
+        return
+    current = len(observations)
+    if current < recorded_total:
+        _finding(findings, "EVIDENCE_REMOVED", "ERROR", "TRADE_OBSERVATION", "corpus",
+                  "The corpus holds %d observations but research state records %d. "
+                  "Evidence is append-only; %d record(s) are gone."
+                  % (current, recorded_total, recorded_total - current), now)
+        return
+    if current != recorded_total:
+        return          # grew since assimilation; a different fingerprint is expected
+    # Both arguments are dicts keyed by id -- corpus_fingerprint iterates
+    # `sorted(observations)` and looks sources up by `sourceId`.
+    by_source_id = {src["sourceId"]: src for src in sources
+                    if isinstance(src.get("sourceId"), str)}
+    by_observation_id = {obs["observationId"]: obs for obs in observations
+                         if isinstance(obs.get("observationId"), str)}
+    actual = _assimilation.corpus_fingerprint(by_observation_id, by_source_id)
+    if actual != recorded_fingerprint:
+        _finding(findings, "CORPUS_CONTENT_DIVERGED", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "The corpus holds the recorded number of observations (%d) but its "
+                  "content fingerprint is %s, not the recorded %s. Same count, "
+                  "different content -- records were changed or swapped rather than "
+                  "added." % (current, actual[:12], recorded_fingerprint[:12]), now)
+
+
+def _state_verifies_corpus(observations, sources, state_path):
+    """Does research state independently confirm this exact corpus, content included?"""
+    if not state_path or not os.path.exists(state_path):
+        return False
+    try:
+        with open(state_path, "r", encoding="utf-8") as handle:
+            state = json.load(handle)
+    except (ValueError, OSError):
+        return False
+    if state.get("observationTotal") != len(observations):
+        return False
+    by_source_id = {src["sourceId"]: src for src in sources
+                    if isinstance(src.get("sourceId"), str)}
+    by_observation_id = {obs["observationId"]: obs for obs in observations
+                         if isinstance(obs.get("observationId"), str)}
+    return (state.get("corpusFingerprint")
+            == _assimilation.corpus_fingerprint(by_observation_id, by_source_id))
+
+
+def check_corpus_is_append_only(observations, findings, now, ledger_dir=None,
+                                sources=None, state_path=None):
     """Has evidence been REMOVED?
 
     Nine rounds of adversarial verification attacked rewriting. None attacked
@@ -251,6 +370,7 @@ def check_corpus_is_append_only(observations, findings, now, ledger_dir=None):
     # synthetic corpus inherit the real corpus's high-water mark, so a 0-observation
     # fixture "lost" 259 records. A gate that reports on a corpus other than the one
     # it was handed is worse than no gate.
+    sources = sources or []
     pattern = os.path.join(ledger_dir, "*.json") if ledger_dir else None
     if pattern is None:
         return
@@ -268,6 +388,20 @@ def check_corpus_is_append_only(observations, findings, now, ledger_dir=None):
         return
     current = len(observations)
     if current < high_water:
+        # If research state independently VERIFIES this corpus -- same count and a
+        # matching content fingerprint -- then a ledger claiming more records is
+        # evidence the LEDGER is wrong, not that evidence is missing. Saying
+        # "21 records are gone" when nothing is gone sends the reader hunting for
+        # files that were never deleted; a misleading diagnostic costs more than a
+        # silent one. Still an ERROR either way, so it fails closed.
+        if _state_verifies_corpus(observations, sources, state_path):
+            _finding(findings, "LEDGER_DISAGREES_WITH_STATE", "ERROR",
+                      "TRADE_OBSERVATION", "corpus",
+                      "The assimilation ledger records as many as %d observations (%s) "
+                      "but research state verifies the present %d exactly, fingerprint "
+                      "included. The ledger is inconsistent with the corpus it "
+                      "describes." % (high_water, source_entry, current), now)
+            return
         _finding(findings, "EVIDENCE_REMOVED", "ERROR", "TRADE_OBSERVATION",
                   "corpus",
                   "The corpus holds %d observations but the assimilation ledger has "
@@ -1233,10 +1367,17 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
     # Ledger lives beside the evidence root: <ti_root>/research-state/ledger.
+    check_observation_sequence_ids_unique(observations, findings, now)
+    check_corpus_matches_recorded_state(
+        observations, sources, findings, now,
+        state_path=os.path.join(os.path.dirname(os.path.abspath(evidence_root)),
+                                "research-state", "current-state.json"))
+    _state_root = os.path.dirname(os.path.abspath(evidence_root))
     check_corpus_is_append_only(
         observations, findings, now,
-        ledger_dir=os.path.join(os.path.dirname(os.path.abspath(evidence_root)),
-                                "research-state", "ledger"))
+        ledger_dir=os.path.join(_state_root, "research-state", "ledger"),
+        sources=sources,
+        state_path=os.path.join(_state_root, "research-state", "current-state.json"))
     check_observation_population_rebinding(observations, sources, findings, now)
     check_source_capture_basis_agrees_with_type(sources, findings, now)
     check_duplicate_ids(sources, items, claims, links, contradictions, findings, now, extra=[

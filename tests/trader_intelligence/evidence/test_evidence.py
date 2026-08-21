@@ -2198,3 +2198,138 @@ class TestEvidenceRemovalIsDetected(unittest.TestCase):
             ledger_dir=self.ledger)
         self.assertIn("21 record(s) are gone", findings[0]["message"])
         self.assertEqual(findings[0]["severity"], "ERROR")
+
+
+class TestDeleteAndPadIsDetected(unittest.TestCase):
+    """DELETE-AND-PAD: the attack the count anchor cannot see by construction.
+
+    Delete the 21 losing FORWARD observations, then copy a winning one 21 times
+    changing only `observationId`. The count returns to exactly 259, forward n stays
+    at 29 -- the one number a reader sanity-checks -- and the headline forward mean R
+    moves from -0.18 to +2.00. Nothing is authored: `cp` plus one id, materially
+    cheaper than the "fabricated whole record" case in SPEC-provenance 7.4.
+    """
+
+    def obs(self, oid, sequence_id="REPLAY|abc|GBP_USD|H1"):
+        return {"observationId": oid, "sequenceId": sequence_id}
+
+    def types(self, observations):
+        findings = []
+        ve.check_observation_sequence_ids_unique(observations, findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_two_observations_sharing_a_sequenceId_are_an_ERROR(self):
+        self.assertEqual(
+            self.types([self.obs("TOBS|MOGO|20260819|001"),
+                        self.obs("TOBS|MOGO|20260819|002")]),
+            ["DUPLICATE_SEQUENCE_ID"])
+
+    def test_the_finding_says_how_many_share_it(self):
+        findings = []
+        ve.check_observation_sequence_ids_unique(
+            [self.obs("TOBS|MOGO|20260819|%03d" % i) for i in range(22)],
+            findings, FIXED_NOW)
+        self.assertIn("22 observations share", findings[0]["message"])
+        self.assertEqual(findings[0]["severity"], "ERROR")
+
+    def test_POSITIVE_CONTROL_distinct_sequence_ids_are_silent(self):
+        self.assertEqual(
+            self.types([self.obs("TOBS|MOGO|20260819|001", "SEQ|A"),
+                        self.obs("TOBS|MOGO|20260819|002", "SEQ|B")]), [])
+
+    def test_a_missing_sequenceId_is_not_treated_as_a_duplicate(self):
+        # Absence is a different defect and is not invented into one here; two
+        # records with no sequenceId must not collide with each other.
+        self.assertEqual(
+            self.types([{"observationId": "TOBS|MOGO|20260819|001"},
+                        {"observationId": "TOBS|MOGO|20260819|002"}]), [])
+
+    def test_the_LIVE_corpus_has_no_duplicate_sequence_ids(self):
+        # Relationship, not a snapshot: every preserved record's sequenceId is its
+        # own. This is what makes the check free of false positives.
+        import glob as _glob
+        paths = _glob.glob(os.path.join(REPO_ROOT, "docs", "trader-intelligence",
+                                        "evidence", "observations", "*.json"))
+        self.assertGreater(len(paths), 50, "corpus glob matched almost nothing")
+        records = []
+        for path in paths:
+            with open(path, encoding="utf-8") as handle:
+                records.append(json.load(handle))
+        self.assertEqual(self.types(records), [])
+
+
+class TestCorpusContentIsAnchoredToRecordedState(unittest.TestCase):
+    """Round 9 anchored on the ledger's COUNT; round 10 showed the attack surface
+    simply moved to the ledger -- six one-touch bypasses of a six-file directory no
+    validator inspected. This anchors on a DIFFERENT committed file and on CONTENT.
+
+    SPEC-provenance 7.4 already named `corpus_fingerprint` as the backstop for the
+    limits it documents. Nothing read it.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_state_")
+        self.state = os.path.join(self.root, "current-state.json")
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def corpus(self, n, marker="a"):
+        sources = [{"sourceId": "EVSRC|MOGO|20260819|001",
+                    "sourceType": "replay_observation"}]
+        observations = [{"observationId": "TOBS|MOGO|20260819|%03d" % i,
+                         "sourceId": "EVSRC|MOGO|20260819|001",
+                         "payload": marker} for i in range(n)]
+        return observations, sources
+
+    def write_state(self, observations, sources, total=None, fingerprint=None):
+        import research_assimilation as ra
+        by_o = {o["observationId"]: o for o in observations}
+        by_s = {s["sourceId"]: s for s in sources}
+        with open(self.state, "w", encoding="utf-8") as handle:
+            json.dump({"observationTotal": total if total is not None else len(observations),
+                       "corpusFingerprint": fingerprint or ra.corpus_fingerprint(by_o, by_s)},
+                      handle)
+
+    def types(self, observations, sources):
+        findings = []
+        ve.check_corpus_matches_recorded_state(observations, sources, findings,
+                                               FIXED_NOW, state_path=self.state)
+        return [f["findingType"] for f in findings]
+
+    def test_same_count_different_content_is_an_ERROR(self):
+        # THE delete-and-pad signature: contents changed underneath a stable count.
+        observations, sources = self.corpus(10, marker="original")
+        self.write_state(observations, sources)
+        swapped, _ = self.corpus(10, marker="swapped")
+        self.assertEqual(self.types(swapped, sources), ["CORPUS_CONTENT_DIVERGED"])
+
+    def test_POSITIVE_CONTROL_an_unchanged_corpus_is_silent(self):
+        observations, sources = self.corpus(10)
+        self.write_state(observations, sources)
+        self.assertEqual(self.types(observations, sources), [])
+
+    def test_a_GROWN_corpus_is_silent_even_though_the_fingerprint_differs(self):
+        # Growth before assimilation is the normal case. Reporting it would train
+        # everyone to ignore this check, which is how a real finding gets missed.
+        observations, sources = self.corpus(10)
+        self.write_state(observations, sources)
+        grown, _ = self.corpus(14)
+        self.assertEqual(self.types(grown, sources), [])
+
+    def test_a_SHRUNK_corpus_is_EVIDENCE_REMOVED(self):
+        observations, sources = self.corpus(10)
+        self.write_state(observations, sources)
+        shrunk, _ = self.corpus(4)
+        self.assertEqual(self.types(shrunk, sources), ["EVIDENCE_REMOVED"])
+
+    def test_an_unreadable_state_file_is_reported_not_silent(self):
+        with open(self.state, "w", encoding="utf-8") as handle:
+            handle.write("{not json")
+        observations, sources = self.corpus(10)
+        self.assertEqual(self.types(observations, sources), ["UNREADABLE_RESEARCH_STATE"])
+
+    def test_an_absent_state_file_is_silent(self):
+        # No recorded state means no anchor; inventing one would be fabrication.
+        observations, sources = self.corpus(10)
+        self.assertEqual(self.types(observations, sources), [])
