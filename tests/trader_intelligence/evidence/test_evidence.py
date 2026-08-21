@@ -2679,3 +2679,110 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         self.write_state({"observationTotal": 9, "corpusFingerprint": "f" * 64})
         self.write_ledger(3)
         self.assertEqual(self.types(), [])
+
+
+class TestPreservedIdentitiesMustStillExist(unittest.TestCase):
+    """THE FIFTH CATEGORY: append-only enforced in aggregate, never per identity.
+
+    Every anchor before this reduced the corpus to a cardinality plus a whole-corpus
+    hash pinned in a file the same actor can rewrite. None asked WHICH observations
+    have existed, so every cardinality-preserving substitution was invisible --
+    including the one the system performs on itself: `research_assimilation --write`
+    re-stamps the fingerprint from whatever is on disk, so a padded corpus is
+    re-blessed by one documented maintenance command with an intact ledger chain.
+
+    A per-identity manifest cannot be recomputed from the tampered corpus, because
+    it records what was there BEFORE. That is the whole difference.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_identity_")
+        self.preservation = os.path.join(self.root, "ledger-preservation")
+        os.makedirs(self.preservation)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def manifest(self, identities, name="PAPER_LEDGER.json"):
+        with open(os.path.join(self.preservation, name), "w", encoding="utf-8") as h:
+            json.dump({"schemaVersion": "mogo.paper-ledger-preservation.v1",
+                       "identities": identities}, h)
+
+    def observations(self, *sequence_ids):
+        return [{"observationId": "TOBS|MOGO|20260819|%03d" % i, "sequenceId": s}
+                for i, s in enumerate(sequence_ids)]
+
+    def types(self, observations):
+        findings = []
+        ve.check_preserved_identities_still_present(
+            observations, findings, FIXED_NOW, preservation_dir=self.preservation)
+        return [f["findingType"] for f in findings]
+
+    def test_a_preserved_trade_that_vanished_is_an_ERROR(self):
+        self.manifest([{"tradeId": "AGT|AGS|GBP_USD|1", "pnl": -97.56}])
+        self.assertEqual(self.types(self.observations()), ["PRESERVED_IDENTITY_MISSING"])
+
+    def test_POSITIVE_CONTROL_a_present_identity_is_silent(self):
+        self.manifest([{"tradeId": "AGT|AGS|GBP_USD|1", "pnl": -97.56}])
+        self.assertEqual(self.types(self.observations("AGT|AGS|GBP_USD|1")), [])
+
+    def test_DELETE_AND_PAD_is_caught_even_though_the_COUNT_is_unchanged(self):
+        # The signature this exists for: one identity out, a different one in, count
+        # identical. Every count-based and fingerprint-based anchor nets out.
+        self.manifest([{"tradeId": "AGT|AGS|LOSER|1", "pnl": -100.0}])
+        self.assertEqual(self.types(self.observations("AGT|AGS|WINNER|1")),
+                         ["PRESERVED_IDENTITY_MISSING"])
+
+    def test_developer_test_trades_are_NOT_required(self):
+        # The manifest records 4 AGT|TEST| identities the importer refuses by policy;
+        # requiring them would fire on the live corpus forever.
+        self.manifest([{"tradeId": "AGT|TEST|1783897893481-429023", "pnl": -100}])
+        self.assertEqual(self.types(self.observations()), [])
+
+    def test_the_developer_predicate_is_the_IMPORTERS_not_a_copy(self):
+        import import_mogo_observations as importer
+        self.assertIs(ve.is_developer_test_package,
+                      importer.is_developer_test_package)
+
+    def test_the_finding_names_the_trade_and_its_pnl(self):
+        # "an identity is missing" is not actionable without knowing which trade and
+        # what it was worth -- that is what makes selective deletion legible.
+        self.manifest([{"tradeId": "AGT|AGS|GBP_USD|1", "pnl": -97.56}])
+        findings = []
+        ve.check_preserved_identities_still_present(
+            self.observations(), findings, FIXED_NOW,
+            preservation_dir=self.preservation)
+        self.assertIn("AGT|AGS|GBP_USD|1", findings[0]["message"])
+        self.assertIn("-97.56", findings[0]["message"])
+        self.assertEqual(findings[0]["severity"], "ERROR")
+
+    def test_an_unreadable_manifest_is_reported_not_skipped(self):
+        with open(os.path.join(self.preservation, "broken.json"), "w",
+                  encoding="utf-8") as handle:
+            handle.write("{not json")
+        self.assertEqual(self.types(self.observations()),
+                         ["UNREADABLE_PRESERVED_IDENTITIES"])
+
+    def test_an_absent_preservation_directory_is_silent(self):
+        # A corpus that never preserved a ledger has no identities to require, and
+        # inventing some would be the fabrication this layer exists to prevent.
+        shutil.rmtree(self.preservation)
+        self.assertEqual(self.types(self.observations()), [])
+
+    def test_the_LIVE_manifest_is_fully_satisfied_by_the_LIVE_corpus(self):
+        # Relationship, not a snapshot: every non-developer identity ever preserved is
+        # still present. This is what makes the gate free of false positives, and it
+        # will fail the moment a real forward record goes missing.
+        import glob as _glob
+        ti = os.path.join(REPO_ROOT, "docs", "trader-intelligence")
+        paths = _glob.glob(os.path.join(ti, "evidence", "observations", "*.json"))
+        self.assertGreater(len(paths), 50, "corpus glob matched almost nothing")
+        records = []
+        for path in paths:
+            with open(path, encoding="utf-8") as handle:
+                records.append(json.load(handle))
+        findings = []
+        ve.check_preserved_identities_still_present(
+            records, findings, FIXED_NOW,
+            preservation_dir=os.path.join(ti, "evidence", "ledger-preservation"))
+        self.assertEqual([f["findingType"] for f in findings], [])

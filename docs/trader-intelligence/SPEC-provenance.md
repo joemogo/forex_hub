@@ -270,6 +270,17 @@ plainly rather than leaving for someone to discover as a surprise:
   in the corpus maps packages to sources, and the capture artifacts that would are gitignored
   by design. It is recorded as a known limit rather than papered over.
 
+  > **Partially falsified, and worth reading before trusting the paragraph above.** That
+  > sentence was true of *packages* and wrong as a general claim about identity. The corpus
+  > does carry a committed, per-trade manifest: `evidence/ledger-preservation/` records the
+  > PAPER account's closed trades by `tradeId`, and a preserved trade's id is the
+  > observation's `sequenceId`. It is tracked in git, not gitignored — 35 of its 39 identities
+  > are present in the corpus, and the 4 that are not are `AGT|TEST|` developer trades the
+  > importer refuses by policy. Nothing read it for eleven rounds. It now backs
+  > `PRESERVED_IDENTITY_MISSING`, and it is the only anchor that survives
+  > `research_assimilation --write`, because that command cannot recompute a record of what
+  > was there before.
+
 Detection of both belongs to a different mechanism: `research_assimilation.corpus_fingerprint`
 hashes each record in full together with its source record, so either change moves the
 fingerprint, and the learning ledger records the transition. Git history shows exactly which
@@ -309,3 +320,29 @@ but **what the ledger actually is**: a forensic record of what changed, not evid
 whether the change was legitimate. That question is answered by git history and review, which
 is what §7.4 means when it says detection "belongs to a different mechanism". The distinction
 matters — a false gate is worse than a documented limit, because it trains people to ignore it.
+
+### 7.6 Append-only in aggregate is not append-only
+
+Eleven rounds hardened the corpus against rewriting, deletion and duplication, and every gate
+they produced reduced the corpus to the same two things: a **cardinality**, and a
+**whole-corpus hash pinned in a file the same actor can rewrite**. None of them ever asked
+*which* observations have existed.
+
+That is why a substitution which preserves the count was invisible to all of them at once —
+delete the twenty-one losing forward trades, pad with twenty-one copies of a winner, and the
+count is unchanged, the forward `n` is unchanged, and the headline mean R moves from −0.18 to
++2.00. Worse, the system re-blesses it on request: `research_assimilation --write` re-stamps
+`corpusFingerprint` from whatever is on disk, so the tamper is laundered by one documented
+maintenance command, leaving a ledger that shows a normal append with an intact chain.
+
+**An aggregate anchor can always be recomputed from the tampered corpus. A per-identity record
+cannot, because it records what was there before.** That is the whole distinction, and it is
+the one the first eleven rounds missed — not because any individual gate was wrong, but
+because they were all the same shape.
+
+The general lesson, which outlives this milestone: *a defence assembled by repairing the last
+attack converges on the last attack.* Deletion, anchor relocation and laundering were each
+found only after the previous repair made them the cheapest remaining move. The question worth
+asking of any new gate is not "does this close the attack I just saw" but **"what does this
+gate reduce the corpus to, and what is invisible to anything expressed in those terms?"**
+

@@ -24,7 +24,8 @@ import evidence_common as evc        # noqa: E402
 import evidence_confidence as conf   # noqa: E402
 import trade_observation as to       # noqa: E402
 import research_assimilation as _assimilation  # noqa: E402
-from import_mogo_observations import CAPTURE_BASIS_SOURCE_TYPE  # noqa: E402
+from import_mogo_observations import (CAPTURE_BASIS_SOURCE_TYPE,  # noqa: E402
+                                      is_developer_test_package)
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 TI_ROOT = os.path.join(REPO_ROOT, "docs", "trader-intelligence")
@@ -234,6 +235,75 @@ CORPUS_ANCHORS = (
 )
 
 
+def check_preserved_identities_still_present(observations, findings, now,
+                                             preservation_dir=None):
+    """Every trade identity ever preserved must still BE in the corpus.
+
+    THE FIFTH CATEGORY, and the one every previous anchor is blind to by
+    construction. Append-only has been enforced in AGGREGATE -- a cardinality, plus
+    a whole-corpus hash pinned in a file the same actor can rewrite -- and never per
+    IDENTITY. No gate asked which observations have existed. So any
+    cardinality-preserving substitution was invisible:
+
+      * delete the 21 losing forward trades, pad with 21 copies of a winner, and
+        recompute `corpusFingerprint` -- count stays 259, ledger untouched, exit 0;
+      * or skip the forgery entirely and run `research_assimilation.py --write`,
+        which re-stamps the fingerprint from whatever is on disk. One documented
+        maintenance command, no file hand-edited, and the ledger diff shows a normal
+        append with an intact chain because the official tool wrote it.
+
+    Forward mean R moved from -0.18 to +2.00 in both, with every gate green.
+
+    The anchor was already on disk, committed, and read by nothing but its own
+    writer: `evidence/ledger-preservation/` records the PAPER account's closed
+    trades by `tradeId`, and a preserved trade's id is the observation's
+    `sequenceId`. Measured on the live corpus: 39 identities, 35 present, and the 4
+    absent are all `AGT|TEST|` developer trades the importer refuses by policy --
+    which the manifest itself counts as `closedDeveloperTest: 4`. So requiring every
+    NON-developer identity costs zero false positives today.
+
+    Crucially it survives the laundering path, because `research_assimilation` never
+    touches this file. An aggregate anchor can be recomputed from the tampered
+    corpus; a per-identity manifest cannot, because it records what was there
+    BEFORE.
+
+    Developer trades are excluded using the importer's own predicate, so the two
+    cannot drift about what a developer trade is (B-31).
+    """
+    if not preservation_dir or not os.path.isdir(preservation_dir):
+        return
+    present = {obs.get("sequenceId") for obs in observations
+               if isinstance(obs.get("sequenceId"), str)}
+    for path in sorted(globmod.glob(os.path.join(preservation_dir, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                manifest = json.load(handle)
+        except (ValueError, OSError):
+            _finding(findings, "UNREADABLE_PRESERVED_IDENTITIES", "ERROR",
+                      "TRADE_OBSERVATION", os.path.basename(path),
+                      "A preserved-identity manifest cannot be read, so the trades it "
+                      "records cannot be confirmed still present.", now)
+            continue
+        if not isinstance(manifest, dict):
+            continue
+        for row in manifest.get("identities") or []:
+            if not isinstance(row, dict):
+                continue
+            trade_id = row.get("tradeId")
+            if not isinstance(trade_id, str) or not trade_id:
+                continue
+            if is_developer_test_package({"sourceTradeId": trade_id}):
+                continue      # never minted as evidence; refused at import by policy
+            if trade_id not in present:
+                _finding(findings, "PRESERVED_IDENTITY_MISSING", "ERROR",
+                          "TRADE_OBSERVATION", trade_id,
+                          "Trade %s was preserved in %s (pnl %s) but no observation "
+                          "carries it as a sequenceId. A preserved trade cannot stop "
+                          "existing -- and a substitution that keeps the corpus the "
+                          "same size is invisible to every count-based check."
+                          % (trade_id, os.path.basename(path), row.get("pnl")), now)
+
+
 def check_corpus_anchors_are_available(observations, findings, now,
                                        state_path=None, ledger_dir=None):
     """Every anchor the corpus-integrity gates depend on must BE THERE.
@@ -266,7 +336,11 @@ def check_corpus_anchors_are_available(observations, findings, now,
                   "indistinguishable from a clean corpus."
                   % (len(observations), anchor, detail), now)
 
-    state = None
+    # A sentinel, because `json.load` of the document `null` returns None -- which is
+    # indistinguishable from "never loaded" and so slipped past the type report below.
+    # One type away from the case the table test covers, again.
+    _NOT_LOADED = object()
+    state = _NOT_LOADED
     if not state_path or not os.path.exists(state_path):
         report("research-state/current-state.json", "absent")
     else:
@@ -275,6 +349,18 @@ def check_corpus_anchors_are_available(observations, findings, now,
                 state = json.load(handle)
         except (ValueError, OSError):
             report("research-state/current-state.json", "unreadable")
+    if state is not _NOT_LOADED and not isinstance(state, dict):
+        # A state document that is not an object -- `null`, a string, a list, a number.
+        # The field checks below are guarded by `isinstance(state, dict)`, so every one
+        # of these reported NOTHING: one type away from the `{}` case the table test
+        # covers. The only thing that stopped it being an exit-0 deletion bypass was a
+        # crash in the next function, and a crash is not a report -- it loses every
+        # other finding and leaves the last integrity-report.json on disk still green.
+        #
+        # This ordering is deliberate: failing closed here must land BEFORE the crash
+        # is fixed, or fixing the crash converts a loud failure into a silent pass.
+        report("research-state/current-state.json",
+               "not a JSON object (%s)" % type(state).__name__)
     if isinstance(state, dict):
         total = state.get("observationTotal")
         # `bool` is an `int` in Python, and True would sail through a bare isinstance.
@@ -466,6 +552,11 @@ def check_corpus_matches_recorded_state(observations, sources, findings, now,
                   "research-state/current-state.json cannot be read, so the corpus "
                   "cannot be compared with the state assimilation last recorded.", now)
         return
+    if not isinstance(state, dict):
+        # Same hazard as the non-dict `metadata` fixed 300 lines above, unfixed here:
+        # `state.get(...)` on a null document raised AttributeError and aborted the
+        # whole run. Reported by the anchor invariant; skipped rather than fatal here.
+        return
     recorded_total = state.get("observationTotal")
     recorded_fingerprint = state.get("corpusFingerprint")
     if not isinstance(recorded_total, int) or not isinstance(recorded_fingerprint, str):
@@ -503,6 +594,12 @@ def _state_verifies_corpus(observations, sources, state_path):
         with open(state_path, "r", encoding="utf-8") as handle:
             state = json.load(handle)
     except (ValueError, OSError):
+        return False
+    if not isinstance(state, dict):
+        # Third site of the same hazard. A non-dict state document cannot verify
+        # anything, so this answers "no" rather than raising -- the crash it used to
+        # raise aborted the whole run and left the previous integrity-report.json on
+        # disk still reading clean while records were missing.
         return False
     if state.get("observationTotal") != len(observations):
         return False
@@ -1542,6 +1639,10 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     check_orphans(sources, items, claims, links, findings, now)
     # Ledger lives beside the evidence root: <ti_root>/research-state/ledger.
     _state_root = os.path.dirname(os.path.abspath(evidence_root))
+    check_preserved_identities_still_present(
+        observations, findings, now,
+        preservation_dir=os.path.join(os.path.abspath(evidence_root),
+                                      "ledger-preservation"))
     check_corpus_anchors_are_available(
         observations, findings, now,
         state_path=os.path.join(_state_root, "research-state", "current-state.json"),
