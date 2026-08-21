@@ -68,8 +68,16 @@ def risk_pct_of_balance(records):
     for record in records:
         risk = record.get("riskAmount")
         balance = record.get("accountBalanceBefore")
-        if risk and balance:
-            out.append(risk / balance * 100.0)
+        # PRESENCE, not truthiness -- which is what the docstring above always
+        # promised. `if risk and balance` also dropped a risk of exactly zero, so a
+        # trade genuinely risking nothing vanished from the distribution instead of
+        # appearing in it as 0.0%. A zero balance stays excluded because dividing by
+        # it is undefined, not because it is falsy.
+        if risk is None or not isinstance(risk, (int, float)):
+            continue
+        if not isinstance(balance, (int, float)) or balance == 0:
+            continue
+        out.append(risk / balance * 100.0)
     return out
 
 

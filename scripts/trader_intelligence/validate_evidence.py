@@ -625,6 +625,11 @@ RECORD_DERIVATIONS = (
 
 _LONG_DIRECTIONS = ("buy", "long")
 
+#: Returned when a derivation's inputs are perfectly usable but yield no verdict --
+#: a breakeven trade is neither a win nor a loss. Distinct from None, which means
+#: "cannot be evaluated" and IS reported.
+_NO_VERDICT = "no-verdict"
+
 
 def _derive(name, record):
     """The derived value, or None when this record cannot support the derivation."""
@@ -651,13 +656,23 @@ def _derive(name, record):
         return pnl / risk
     if name == "outcome from R":
         value = record.get("rMultiple")
-        if not isinstance(value, (int, float)) or isinstance(value, bool) or value == 0:
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
             return None
+        if value == 0:
+            # A breakeven trade is neither a win nor a loss, so this derivation has
+            # NO VERDICT -- which is different from being unable to evaluate. It
+            # returned None for both, so a genuine 0R trade would have been reported
+            # as DERIVATION_UNCHECKABLE: a false positive waiting for the first
+            # breakeven close, in a gate whose whole value is that it does not cry
+            # wolf. The number itself is still checked by "R from price".
+            return _NO_VERDICT
         return "Win" if value > 0 else "Loss"
     if name == "outcome from money":
         pnl = record.get("pnl")
-        if not isinstance(pnl, (int, float)) or isinstance(pnl, bool) or pnl == 0:
+        if not isinstance(pnl, (int, float)) or isinstance(pnl, bool):
             return None
+        if pnl == 0:
+            return _NO_VERDICT
         return "Win" if pnl > 0 else "Loss"
     return None
 
@@ -1021,6 +1036,8 @@ def check_record_is_internally_consistent(observations, findings, now):
                                        if f not in record)), now)
                 continue
             derived = _derive(derivation.name, record)
+            if derived is _NO_VERDICT:
+                continue
             if derived is None:
                 _finding(findings, "DERIVATION_UNCHECKABLE", "ERROR",
                           "TRADE_OBSERVATION", record.get("observationId"),

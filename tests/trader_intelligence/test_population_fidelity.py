@@ -212,6 +212,48 @@ class TestAgainstTheRealCorpus(unittest.TestCase):
                       {f["code"] for f in self.report["findings"]})
 
 
+
+class TestRiskPctUsesPresenceNotTruthiness(unittest.TestCase):
+    """A trade risking exactly nothing is a fact, not a missing field.
+
+    The docstring promised presence semantics ("a missing balance is not a zero
+    balance") and the code tested truthiness, so a genuine `riskAmount` of 0
+    vanished from the distribution instead of appearing in it as 0.0%. That is a
+    silent narrowing of a scientific figure -- the sizing distribution would simply
+    not show that a trade risked nothing.
+    """
+
+    def test_a_zero_risk_is_INCLUDED_as_zero_percent(self):
+        self.assertEqual(
+            pf.risk_pct_of_balance(
+                [{"riskAmount": 0, "accountBalanceBefore": 10000}]),
+            [0.0])
+
+    def test_a_missing_risk_is_still_skipped(self):
+        self.assertEqual(
+            pf.risk_pct_of_balance([{"accountBalanceBefore": 10000}]), [])
+
+    def test_a_zero_balance_is_skipped_because_dividing_by_it_is_undefined(self):
+        self.assertEqual(
+            pf.risk_pct_of_balance(
+                [{"riskAmount": 100, "accountBalanceBefore": 0}]), [])
+
+    def test_non_numeric_values_are_skipped_rather_than_raising(self):
+        for risk, balance in (("100", 10000), (100, "10000"), (None, 10000),
+                              (100, None), (True, 10000), ([1], 10000)):
+            with self.subTest(risk=risk, balance=balance):
+                self.assertEqual(
+                    pf.risk_pct_of_balance(
+                        [{"riskAmount": risk, "accountBalanceBefore": balance}]),
+                    [] if not isinstance(risk, (int, float))
+                    or not isinstance(balance, (int, float)) else [risk / balance * 100.0])
+
+    def test_POSITIVE_CONTROL_an_ordinary_record_is_measured(self):
+        self.assertEqual(
+            pf.risk_pct_of_balance(
+                [{"riskAmount": 100, "accountBalanceBefore": 10000}]),
+            [1.0])
+
 if __name__ == "__main__":
     unittest.main()
 

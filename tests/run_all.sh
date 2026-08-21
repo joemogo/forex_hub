@@ -164,6 +164,18 @@ if [ "$PY_COUNT" -eq 0 ]; then
 else
   echo "$PY_COUNT module(s)"
   find . -name __pycache__ -type d -not -path "./node_modules/*" -exec rm -rf {} + 2>/dev/null
+  # A Python suite that runs SHORT is a failure, exactly as a JS suite is.
+  #
+  # This lane's only gate was the exit code of the single unittest call below, and
+  # PY_COUNT counts FILES rather than tests -- so renaming test_ to xtest_ across a
+  # whole module de-collected every test in it and the run still exited 0, because
+  # the sibling modules kept the total non-zero. Every mutation killed across
+  # twenty-one adversarial rounds is stored in these suites; this lane was the one
+  # with no guard against that record quietly shrinking, while the lane holding UI
+  # fixtures had one.
+  if ! python3 tests/count_python_tests.py --check; then
+    OVERALL_EXIT=1
+  fi
   if ! python3 -m unittest $PY_MODULES; then
     OVERALL_EXIT=1
   fi

@@ -323,6 +323,36 @@ class TestAgainstTheRealCorpus(unittest.TestCase):
                          "a single forward close moved a hypothesis verdict")
 
 
+
+class TestTheDiagnosticSurvivesADamagedCorpus(unittest.TestCase):
+    """A diagnostic that crashes leaves the PREVIOUS run's clean report on disk.
+
+    The statistics group by `outcome`, so a record with none produces a `None` group
+    key, and `sorted(keys)` raised `TypeError: '<' not supported between instances of
+    'str' and 'NoneType'` -- out of `run_integrity_checks`, before the report was
+    written. Other tooling then reads an `ERROR: 0` describing a corpus that no
+    longer exists. Same shape as the NaN crash (B-32.18), different trigger.
+
+    The corpus that produces this is itself invalid -- `RECORD_FIELD_MISSING` now
+    reports it -- but the diagnostic must survive long enough to SAY so.
+    """
+
+    def test_a_None_group_key_does_not_raise(self):
+        changes = ra._diff_numbers({"byOutcome": {None: 1, "Win": 2}},
+                                   {"byOutcome": {None: 3, "Win": 2}})
+        self.assertEqual(changes, {"byOutcome.None": {"before": 1, "after": 3}})
+
+    def test_mixed_key_types_do_not_raise(self):
+        for keys in ({None: 1, "a": 2}, {1: 1, "a": 2}, {True: 1, "a": 2},
+                     {None: 1, 2: 2, "c": 3}):
+            with self.subTest(keys=sorted(map(str, keys))):
+                after = {k: (v + 1) for k, v in keys.items()}
+                self.assertTrue(ra._diff_numbers({"g": keys}, {"g": after}))
+
+    def test_POSITIVE_CONTROL_ordinary_keys_still_diff(self):
+        self.assertEqual(
+            ra._diff_numbers({"n": 1}, {"n": 2}), {"n": {"before": 1, "after": 2}})
+
 if __name__ == "__main__":
     unittest.main()
 

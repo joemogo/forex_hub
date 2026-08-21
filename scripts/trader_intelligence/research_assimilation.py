@@ -193,7 +193,13 @@ def _diff_numbers(before, after, path=""):
     """Every leaf that changed, as path -> (before, after). Order-independent."""
     changes = {}
     keys = set(before or {}) | set(after or {})
-    for key in sorted(keys):
+    # Sorted by a TOTAL order. Plain `sorted` raises TypeError the moment a group
+    # key is None -- which happens whenever the corpus holds a record with no
+    # `outcome`, because the statistics group by it. That crash escaped
+    # `run_integrity_checks` before the report was written, leaving the previous
+    # run's clean report on disk for other tooling to read: the same
+    # crash-leaves-a-stale-all-clear shape as the NaN case (B-32.18).
+    for key in sorted(keys, key=lambda k: (k is None, str(k))):
         here = "%s.%s" % (path, key) if path else str(key)
         b, a = (before or {}).get(key), (after or {}).get(key)
         if isinstance(b, dict) or isinstance(a, dict):

@@ -1,0 +1,34 @@
+# Expected COLLECTED test count per Python suite. Format: <module><TAB><count>
+#
+# The Python analogue of expected_fixture_counts.tsv. run_all.sh gated the Python lane on the
+# exit code of one unittest call over every module, and counted FILES rather than tests -- so
+# de-collecting an entire module (test_ -> xtest_) still exited 0, because the sibling modules
+# kept the total non-zero. Twenty-one rounds of adversarial hardening are stored as these tests.
+#
+# Regenerate deliberately:  python3 tests/count_python_tests.py > tests/expected_python_test_counts.tsv
+tests.trader_intelligence.acquisition.test_acquisition	73
+tests.trader_intelligence.acquisition.test_acquisition_triage	11
+tests.trader_intelligence.acquisition.test_reconstructability	16
+tests.trader_intelligence.evidence.test_evidence	286
+tests.trader_intelligence.evidence.test_phase1b	103
+tests.trader_intelligence.evidence.test_phase7a	45
+tests.trader_intelligence.test_answer_intake	59
+tests.trader_intelligence.test_answer_intake_preview	60
+tests.trader_intelligence.test_answer_intake_reevaluation	40
+tests.trader_intelligence.test_candidate_search	58
+tests.trader_intelligence.test_decision_difference	34
+tests.trader_intelligence.test_exception_triage	32
+tests.trader_intelligence.test_forward_coverage	12
+tests.trader_intelligence.test_forward_novelty	19
+tests.trader_intelligence.test_graph	66
+tests.trader_intelligence.test_hypothesis_testability	19
+tests.trader_intelligence.test_identity_manifest	36
+tests.trader_intelligence.test_import_mogo_observations	102
+tests.trader_intelligence.test_observation_difference	26
+tests.trader_intelligence.test_observation_graph_reconcile	12
+tests.trader_intelligence.test_population_fidelity	44
+tests.trader_intelligence.test_python_test_counts	12
+tests.trader_intelligence.test_research_assimilation	49
+tests.trader_intelligence.test_research_understanding	96
+tests.trader_intelligence.test_rule_conformance	37
+tests.trader_intelligence.test_trade_observation	48

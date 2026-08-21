@@ -678,3 +678,57 @@ fields, so requiring them costs nothing. Now 322 `RECORD_FIELD_MISSING`.
 That makes three sites where this one shape has now been found: package resolution, witness
 value, and the derived field itself. It is not a lesson that generalises by being written down —
 each new check has to be read for it specifically.
+
+### 7.15 The lane that stores the evidence of hardening (B-32.22)
+
+Twenty-one adversarial rounds are not stored as prose. They are stored as **Python tests** — they
+are what kills every mutation, and the reason a repaired bypass stays repaired.
+
+`tests/run_all.sh` guards the JS lane against silent shrinkage with a per-runner count manifest,
+added deliberately after a suite once ran 36 fixtures instead of 39 and nothing objected. The
+Python lane had no equivalent. Its only gate was the exit code of **one** `unittest` invocation
+over every module, and its module count counted *files*. So renaming `test_` to `xtest_` across a
+whole module de-collected every test in it and the run still exited 0 — the sibling modules kept
+the total non-zero, so even Python's own `NO TESTS RAN` sentinel never fired.
+
+The lane holding the entire accumulated kill record was the one lane with no guard against that
+record quietly shrinking, while the lane holding UI fixtures had one. The ruling that silent
+shrinkage is a failure already existed; it had only been applied to the other lane first.
+
+`tests/count_python_tests.py` collects (without running) the test count per module and checks it
+against `tests/expected_python_test_counts.tsv` in **both** directions — short means tests
+stopped asking, long means the count has stopped meaning anything. A module that fails to import
+is reported rather than counted as the one synthetic `_FailedTest` unittest substitutes, because
+a suite that cannot load reporting a plausible `1` is precisely what this exists to stop.
+
+A test count is not live data, so pinning it is **not** the corpus-snapshot anti-pattern: it
+changes only when someone edits a test file, and then deliberately, via
+`tests/update_expected_counts.sh` — which now regenerates both lanes, so the two cannot drift
+apart in *whether they are protected at all*.
+
+**And the gate has its own suite**, because a mutation making `--check` always pass survived
+everything until it existed. That is the sixth time in this milestone that a check was found
+unwired, unasserted, or unable to fail.
+
+### 7.16 Two false positives waiting for legitimate data
+
+Both found by measurement rather than by attack, and both matter because a gate that cries wolf
+is a gate that gets switched off:
+
+- `population_fidelity.risk_pct_of_balance` tested truthiness where its own docstring promised
+  presence ("a missing balance is not a zero balance"). A trade risking exactly **zero** silently
+  vanished from the sizing distribution instead of appearing in it as 0.0% — a scientific figure
+  narrowing itself without saying so. A zero *balance* stays excluded, because dividing by it is
+  undefined rather than because it is falsy.
+- `outcome`-from-R returned "cannot evaluate" for a genuine breakeven, so the first real 0R close
+  would have been reported as `DERIVATION_UNCHECKABLE`. A breakeven trade is neither a win nor a
+  loss: that is **no verdict**, which is different from being unable to look. The two are now
+  distinct sentinels, and the number itself is still checked by R-from-price — so `rMultiple: 0`
+  is not an escape.
+
+Also, `research_assimilation._diff_numbers` sorted group keys with a plain `sorted()`, which
+raises the moment a key is `None` — which happens for any record with no `outcome`. That raised
+out of `run_integrity_checks` **before the report was written**, leaving the previous run's
+`ERROR: 0` on disk for other tooling to read. Same shape as the NaN crash (§7.13's sibling),
+different trigger: a diagnostic that dies leaves behind an all-clear describing a corpus that no
+longer exists.

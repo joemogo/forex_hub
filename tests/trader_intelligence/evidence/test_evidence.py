@@ -3166,6 +3166,25 @@ class TestARecordIsCheckedAgainstItself(unittest.TestCase):
                       self.types(self.record(exitPrice=1.1950, rMultiple=-1.0,
                                              pnl=-100.0, outcome="Win")))
 
+    def test_outcome_is_checked_from_R_when_there_is_NO_money_to_check_it_from(self):
+        # 221 of 259 preserved observations are replays carrying no `pnl` at all, so
+        # outcome-from-MONEY cannot see them -- outcome-from-R is the only derivation
+        # that reaches that cohort. Every fixture above carries `pnl`, so disabling
+        # outcome-from-R entirely was invisible: outcome-from-money caught the forgery
+        # instead and the test suite could not tell the difference.
+        record = self.record(exitPrice=1.1950, rMultiple=-1.0, outcome="Win")
+        del record["pnl"]
+        del record["riskAmount"]
+        self.assertEqual(self.types(record), ["RECORD_CONTRADICTS_ITSELF"])
+
+    def test_a_replay_style_record_with_no_money_fields_is_otherwise_silent(self):
+        # The positive control: without it the assertion above would also pass if
+        # every pnl-less record were reported.
+        record = self.record()
+        del record["pnl"]
+        del record["riskAmount"]
+        self.assertEqual(self.types(record), [])
+
     def test_forging_pnl_alone_contradicts_the_risk(self):
         self.assertIn("RECORD_CONTRADICTS_ITSELF",
                       self.types(self.record(pnl=-100.0)))
@@ -3256,6 +3275,33 @@ class TestARecordIsCheckedAgainstItself(unittest.TestCase):
                                     derivation.derived_field))
         self.assertGreater(seen, 100, "would pass vacuously")
         self.assertEqual(missing, [])
+
+    def test_a_genuine_BREAKEVEN_is_not_reported_as_uncheckable(self):
+        # A 0R trade is neither a win nor a loss, so outcome-from-R has NO VERDICT --
+        # which is not the same as being unable to evaluate. Both returned None, so
+        # the first real breakeven close would have been reported as
+        # DERIVATION_UNCHECKABLE: a false positive waiting to happen in a gate whose
+        # entire value is that it does not cry wolf.
+        record = self.record(entry=1.2000, stop=1.1950, exitPrice=1.2000,
+                             rMultiple=0.0, outcome="Breakeven", pnl=0.0)
+        self.assertEqual(self.types(record), [])
+
+    def test_NO_VERDICT_never_swallows_an_UNUSABLE_input(self):
+        # "no verdict" and "cannot evaluate" must stay distinct, or the sentinel
+        # added to remove a false positive becomes a way to hide a real one. A
+        # numeric STRING passes the price derivation (float() accepts it) while
+        # outcome-from-R cannot use it -- so this is the one shape where only the
+        # DERIVATION_UNCHECKABLE report is left to notice.
+        for value in ("2.0", "0", None, [2.0], {"r": 2.0}):
+            with self.subTest(rMultiple=value):
+                self.assertIn("DERIVATION_UNCHECKABLE",
+                              self.types(self.record(rMultiple=value)))
+
+    def test_but_rMultiple_ZERO_is_still_checked_against_the_prices(self):
+        # So "no verdict" cannot be used as an escape: claiming 0R while the prices
+        # say otherwise is still a contradiction.
+        self.assertIn("RECORD_CONTRADICTS_ITSELF",
+                      self.types(self.record(rMultiple=0.0, outcome="Breakeven")))
 
     def test_the_tolerances_are_TIGHT_enough_to_catch_a_real_tamper(self):
         # N4: widening the price tolerance from 1e-5 to 1e5 survived, because every
