@@ -138,6 +138,28 @@ if ! node scripts/mogo_evidence_leveldb_extract.js --store "$STORE" --packages "
   echo "FAIL: package recovery failed or a hash did not re-derive" >&2; rm -f "$SCRATCH"; exit 1
 fi
 
+# ── 3b. IDENTITY MANIFEST ──────────────────────────────────────────
+# MOGO's own append-only record of which trades have existed, maintained from MOGO's
+# own IndexedDB origin and nothing else (B-32.14, operator option A).
+#
+# Placed HERE, before the novelty check consumes $SCRATCH and before the "nothing new"
+# early exit, and driven by the FULL recovered set rather than the fresh one. The
+# manifest is about which trades EXIST in the store, not which are new to the corpus,
+# so a quiet run is an idempotent no-op rather than a gap. Every previous version of
+# this anchor decayed because it was written once and never again; this one grows on
+# every capture.
+#
+# Append-only and atomic: identities are never removed or rewritten, and the write is
+# a temp-file rename, so an interrupted run leaves either the old manifest or the new
+# one and never half of either.
+if [ $WRITE -eq 1 ]; then
+  say "identity: updating MOGO's append-only trade-identity manifest"
+  if ! python3 scripts/trader_intelligence/identity_manifest.py --packages "$SCRATCH" 2>&1 | sed 's/^/    /'; then
+    echo "FAIL: identity manifest update failed or reported a contentHash conflict" >&2
+    rm -f "$SCRATCH"; exit 1
+  fi
+fi
+
 # ── 4. IS ANY OF IT ACTUALLY NEW? ──────────────────────────────────
 # Keyed on contentHash, never packageId: the ordinal in a packageId only counts within one
 # capture run, so packageId is not a global identity and de-duplicating on it silently drops
