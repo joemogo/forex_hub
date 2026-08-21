@@ -600,3 +600,40 @@ own `sourceId`, and repointing it is `POPULATION_REBINDING`.
 **What it still does not answer.** A package that never existed — an attacker who writes both the
 observation and a matching artifact — is the §7.9 write-everything boundary, unchanged. What
 this closes is every forgery that edits the corpus and leaves the captured evidence alone.
+
+### 7.13 Absence is not silence — one layer deeper (B-32.20)
+
+§7.12 said the witness count was the tripwire: *"an unresolvable observation is reported at
+WARNING and counted rather than skipped — otherwise deleting `evidence/` would switch this gate
+off… a jump in it means the witness was removed."* Deleting `evidence/` is caught, and loudly:
+259 of 259 unavailable plus 46 `UNRESOLVABLE_ARTIFACT`.
+
+**Deleting one key from inside the files was not.** `_witness_value` returned a bare `None` both
+when the engine recorded nothing and when the structure could not be read at all, and the caller
+skipped it. The record still counted as *witnessed*, so the counter did not move. A forged
+`positionSize` — a field with no intra-record derivation, so the package is its only check —
+plus `objects` stripped from all 263 packages, then laundered through
+`research_assimilation.py --write`, reported **byte-identically to a pristine corpus**.
+
+That is the round-15 lesson applied at the package level and not carried one layer down, into a
+package that resolves. The repair distinguishes the two cases that `None` conflated:
+
+| Package state | Result | Measured on the live corpus |
+|---|---|---|
+| `objects` absent, non-dict, or the object list not exactly one entry | `PACKAGE_WITNESS_INCOMPLETE` (ERROR) | 0 of 262 — every package has it |
+| the witnessed key absent from the object | `PACKAGE_WITNESS_INCOMPLETE` (ERROR) | 0 of 262 |
+| key present, value `null`, field declared non-nullable | `PACKAGE_WITNESS_INCOMPLETE` (ERROR) | 0 of 262 |
+| key present, value `null`, field declared nullable | `PACKAGE_WITNESS_DEGRADED` (WARNING, counted) | 2, both on one LIVE_CLOSE package |
+| the RECORD drops a field the package supplies | `PACKAGE_WITNESS_INCOMPLETE` (ERROR) | 0 — the only two records missing a witnessed field are missing it where the package has nothing either |
+
+`nullable` is measured, not chosen, and a test asserts it against the live packages, so the flag
+cannot outlive the fact. Stripping `objects` now reports **1804 errors** where it reported
+nothing.
+
+**And the collision, resolved by sort order.** `_packages_by_content_hash` used `setdefault`, so
+two packages claiming one `contentHash` were silently resolved first-wins, and the docstring
+leaned on *"measured: zero collisions across 263 packages"* — a corpus snapshot standing in for
+an invariant, which is the oracle class CLAUDE.md names. Measurement corrected it twice over:
+**25 of 262 packages do appear in more than one artifact**, because a capture run re-exports what
+an earlier run wrote. Identical copies agree by definition, so only a *disagreement* is
+ambiguous; reporting the duplication itself would have been 25 false positives on a clean corpus.

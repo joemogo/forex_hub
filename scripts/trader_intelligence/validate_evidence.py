@@ -664,17 +664,23 @@ def _derive(name, record):
 
 #: What the CAPTURED PACKAGE says about a trade, and the observation field minted
 #: from it. Every entry measured across the live corpus before being wired.
+#: `nullable` is MEASURED. Every witness field's key is present on all 262 captured
+#: packages; only `balanceBefore`/`balanceAfter` are ever null, and only on one
+#: LIVE_CLOSE package. So a null anywhere else is not a gap in the engine's record,
+#: it is an edit to it.
 PackageWitness = collections.namedtuple(
-    "PackageWitness", "record_field object_kind package_field agreement")
+    "PackageWitness", "record_field object_kind package_field nullable agreement")
 
 PACKAGE_WITNESSES = (
-    PackageWitness("entry", "positions", "entryPrice", "258/258"),
-    PackageWitness("stop", "positions", "originalStop", "258/258"),
-    PackageWitness("direction", "positions", "direction", "258/258"),
-    PackageWitness("positionSize", "positions", "positionSize", "258/258"),
-    PackageWitness("accountBalanceBefore", "positions", "balanceBefore", "257/257"),
-    PackageWitness("exitPrice", "outcomes", "exitPrice", "258/258"),
-    PackageWitness("accountBalanceAfter", "outcomes", "balanceAfter", "257/257"),
+    PackageWitness("entry", "positions", "entryPrice", False, "258/258"),
+    PackageWitness("stop", "positions", "originalStop", False, "258/258"),
+    PackageWitness("direction", "positions", "direction", False, "258/258"),
+    PackageWitness("positionSize", "positions", "positionSize", False, "258/258"),
+    PackageWitness("accountBalanceBefore", "positions", "balanceBefore", True,
+                   "257/258; null on 1 LIVE_CLOSE package"),
+    PackageWitness("exitPrice", "outcomes", "exitPrice", False, "258/258"),
+    PackageWitness("accountBalanceAfter", "outcomes", "balanceAfter", True,
+                   "257/258; null on 1 LIVE_CLOSE package"),
 )
 
 
@@ -688,6 +694,7 @@ def _packages_by_content_hash(sources, wanted_source_ids):
     """
     packages = {}
     unreadable = []
+    collisions = set()
     for source in sources:
         # Only the sources OBSERVATIONS cite. The other 42 are transcripts and
         # PDFs, and JSON-parsing a `.raw.txt` reported 12 artifacts as unreadable
@@ -710,22 +717,59 @@ def _packages_by_content_hash(sources, wanted_source_ids):
         entries = document.get("packages") if isinstance(document, dict) else document
         for package in entries or []:
             if isinstance(package, dict) and isinstance(package.get("contentHash"), str):
-                packages.setdefault(package["contentHash"], package)
-    return packages, unreadable
+                # `setdefault` made a collision resolve by ITERATION ORDER, silently,
+                # and the docstring leaned on "measured: zero collisions" -- a corpus
+                # snapshot standing in for an invariant, which is the oracle class
+                # CLAUDE.md names. Two packages claiming one hash with DIFFERENT
+                # contents means the witness cannot say which certifies the record,
+                # and guessing is how it starts certifying the wrong trade.
+                #
+                # The same package appearing in two artifacts is not that: measured,
+                # 25 of 262 do, because a capture run re-exports packages an earlier
+                # run already wrote. Identical copies agree by definition, so only a
+                # DISAGREEMENT is ambiguous -- reporting the duplication itself would
+                # have been 25 false positives on a clean corpus.
+                existing = packages.get(package["contentHash"])
+                if existing is not None and existing != package:
+                    collisions.add(package["contentHash"])
+                elif existing is None:
+                    packages[package["contentHash"]] = package
+    return packages, unreadable, collisions
+
+
+#: Returned instead of a value when the package cannot supply one, so the caller can
+#: tell "the engine recorded nothing here" from "this cannot be read at all".
+_WITNESS_ABSENT = "absent"
+_WITNESS_NULL = "null"
 
 
 def _witness_value(package, witness):
+    """The captured value, or (_WITNESS_ABSENT | _WITNESS_NULL) saying why not.
+
+    THIS RETURNED A BARE `None` FOR BOTH, and the caller skipped it silently -- so
+    deleting one key from every package disabled the whole gate while the record
+    still counted as witnessed and `PACKAGE_WITNESS_UNAVAILABLE` did not move. The
+    docstring promised that count was the tripwire for exactly this. It was not:
+    a forged `positionSize` plus `objects` stripped from all 263 packages reported
+    byte-identically to a pristine corpus.
+
+    That is the round-15 lesson -- absence is not silence -- applied at the package
+    level and not carried one layer down, into a package that resolves.
+    """
     objects = package.get("objects")
     if not isinstance(objects, dict):
-        return None
+        return _WITNESS_ABSENT
     entries = objects.get(witness.object_kind)
     if not isinstance(entries, list) or len(entries) != 1:
         # More than one position in a package would make "the" entry price
         # ambiguous, and guessing which one is meant is how a witness starts
-        # certifying the wrong trade.
-        return None
+        # certifying the wrong trade. Reported, not skipped.
+        return _WITNESS_ABSENT
     entry = entries[0]
-    return entry.get(witness.package_field) if isinstance(entry, dict) else None
+    if not isinstance(entry, dict) or witness.package_field not in entry:
+        return _WITNESS_ABSENT
+    value = entry[witness.package_field]
+    return _WITNESS_NULL if value is None else value
 
 
 def check_observation_matches_its_package(observations, sources, findings, now):
@@ -765,7 +809,14 @@ def check_observation_matches_its_package(observations, sources, findings, now):
     if not observations:
         return
     cited = {record.get("sourceId") for record in observations}
-    packages, unreadable = _packages_by_content_hash(sources, cited)
+    packages, unreadable, collisions = _packages_by_content_hash(sources, cited)
+    for content_hash in sorted(collisions):
+        _finding(findings, "AMBIGUOUS_PACKAGE_WITNESS", "ERROR", "EVIDENCE_SOURCE",
+                  content_hash,
+                  "Two captured packages claim contentHash %s, so an observation "
+                  "naming it cannot be tied to one of them. Which would certify the "
+                  "record was decided by the order the artifacts happened to be "
+                  "read." % content_hash, now)
     for path, reason in unreadable:
         _finding(findings, "UNREADABLE_PACKAGE_WITNESS", "ERROR",
                   "EVIDENCE_SOURCE", path,
@@ -773,6 +824,7 @@ def check_observation_matches_its_package(observations, sources, findings, now):
                   "the observations minted from it cannot be checked against it: %s"
                   % reason, now)
     unwitnessed = 0
+    degraded = 0
     for record in observations:
         content_hash = record.get("sourceContentHash")
         package = packages.get(content_hash) if isinstance(content_hash, str) else None
@@ -780,11 +832,47 @@ def check_observation_matches_its_package(observations, sources, findings, now):
             unwitnessed += 1
             continue
         for witness in PACKAGE_WITNESSES:
+            captured = _witness_value(package, witness)
             if witness.record_field not in record:
+                # THE SAME ESCAPE FROM THE OTHER SIDE. Skipping here let a record
+                # drop a field to avoid being compared -- and `positionSize` has no
+                # intra-record derivation, so the package is its only check.
+                # Measured: the only two records missing a witnessed field are
+                # missing it where the package has nothing either, so requiring the
+                # rest costs no false positive.
+                if captured is not _WITNESS_ABSENT and captured is not _WITNESS_NULL:
+                    _finding(findings, "PACKAGE_WITNESS_INCOMPLETE", "ERROR",
+                              "TRADE_OBSERVATION", record.get("observationId"),
+                              "The captured package records %s=%r and the observation "
+                              "no longer carries %r, so the value the engine wrote is "
+                              "compared against nothing."
+                              % (witness.package_field, captured,
+                                 witness.record_field), now)
                 continue
             stated = record[witness.record_field]
-            captured = _witness_value(package, witness)
-            if captured is None:
+            if captured is _WITNESS_ABSENT:
+                _finding(findings, "PACKAGE_WITNESS_INCOMPLETE", "ERROR",
+                          "TRADE_OBSERVATION", record.get("observationId"),
+                          "The captured package for this observation carries no %s "
+                          "under %s, so %s rests on the corpus alone. Every one of "
+                          "the 262 packages records it; deleting it must not be a "
+                          "cheaper way to silence this gate than forging the value."
+                          % (witness.package_field, witness.object_kind,
+                             witness.record_field), now)
+                continue
+            if captured is _WITNESS_NULL:
+                if witness.nullable:
+                    # Measured: the engine really does leave these null on one
+                    # LIVE_CLOSE package. Counted so that a jump is visible, not
+                    # treated as agreement.
+                    degraded += 1
+                    continue
+                _finding(findings, "PACKAGE_WITNESS_INCOMPLETE", "ERROR",
+                          "TRADE_OBSERVATION", record.get("observationId"),
+                          "The captured package records %s as null, and the engine "
+                          "never does for this field. A nulled witness certifies "
+                          "nothing while still looking present."
+                          % (witness.package_field,), now)
                 continue
             if isinstance(captured, bool) or not isinstance(captured, (int, float)):
                 agrees = str(stated).strip().lower() == str(captured).strip().lower()
@@ -803,6 +891,13 @@ def check_observation_matches_its_package(observations, sources, findings, now):
                       "corpus, so the corpus is what changed."
                       % (witness.record_field, stated, witness.package_field,
                          captured), now)
+    if degraded:
+        _finding(findings, "PACKAGE_WITNESS_DEGRADED", "WARNING",
+                  "TRADE_OBSERVATION", "corpus",
+                  "%d witnessed field comparisons could not be made because the "
+                  "captured package records the value as null. Expected to be small "
+                  "and non-zero; it is the number that says how many fields are "
+                  "standing on the corpus's own word." % degraded, now)
     if unwitnessed:
         _finding(findings, "PACKAGE_WITNESS_UNAVAILABLE", "WARNING",
                   "TRADE_OBSERVATION", "corpus",

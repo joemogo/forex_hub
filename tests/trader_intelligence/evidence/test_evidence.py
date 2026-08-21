@@ -2601,13 +2601,14 @@ class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
         "NON_FINITE_VALUE", "UNSERIALISABLE_CORPUS",
         # B-32.19: the record against the package it was minted from.
         "PACKAGE_WITNESS_CONTRADICTED", "UNREADABLE_PACKAGE_WITNESS",
+        "PACKAGE_WITNESS_INCOMPLETE", "AMBIGUOUS_PACKAGE_WITNESS",
     )
 
     #: Raised ONLY below ERROR, deliberately. Each is advisory: it describes work
     #: outstanding, not evidence that is wrong.
     SOFT_BY_DESIGN = (
         "APPROVED_INTAKE_WITH_UNRESOLVED_FINDINGS", "DUPLICATE_IMMUTABLE_CONTENT",
-        "PACKAGE_WITNESS_UNAVAILABLE",
+        "PACKAGE_WITNESS_UNAVAILABLE", "PACKAGE_WITNESS_DEGRADED",
         "MISSING_DIRECTNESS_OR_CERTAINTY", "MISSING_TRANSCRIPT_LOCATOR",
         "OVERLAPPING_SEGMENT_TIMESTAMPS", "UNRESOLVABLE_ARTIFACT",
     )
@@ -3368,13 +3369,154 @@ class TestTheRecordIsCheckedAgainstThePackageItWasMintedFrom(unittest.TestCase):
         reported = self.types(self.observation())
         self.assertIn("UNREADABLE_PACKAGE_WITNESS", reported)
 
-    def test_an_AMBIGUOUS_package_is_not_used_as_a_witness(self):
-        # Two positions in one package makes "the" entry price a guess, and a
-        # witness that guesses certifies the wrong trade.
+    def test_an_AMBIGUOUS_package_is_REPORTED_not_silently_unused(self):
+        # This test previously asserted the silence was correct. Not using an
+        # ambiguous package as a witness is right; saying nothing about it is not,
+        # because appending a second position to every package then disables the
+        # gate for the whole corpus with the unavailable counter unmoved.
         body = self.package()
         body["objects"]["positions"].append(dict(body["objects"]["positions"][0]))
         self.write(body)
-        self.assertEqual(self.types(self.observation(entry=9.9999)), [])
+        reported = self.types(self.observation(entry=9.9999))
+        self.assertIn("PACKAGE_WITNESS_INCOMPLETE", reported)
+
+    def test_STRIPPING_the_package_does_not_silence_the_gate(self):
+        # The round-19 P1 in miniature: a forged field plus `objects` deleted from
+        # the package reported byte-identically to a clean corpus, because
+        # `_witness_value` returned a bare None for "cannot read" and the caller
+        # skipped it. The record still counted as witnessed.
+        for label, mangle in (
+                ("objects deleted", lambda b: b.pop("objects")),
+                ("objects non-dict", lambda b: b.update(objects=[])),
+                ("positions deleted", lambda b: b["objects"].pop("positions")),
+                ("positions empty", lambda b: b["objects"].update(positions=[])),
+                ("positions not a list", lambda b: b["objects"].update(positions={})),
+                ("position not a dict", lambda b: b["objects"].update(
+                    positions=["nope"])),
+                ("entryPrice key deleted", lambda b: b["objects"]["positions"][0]
+                    .pop("entryPrice")),
+        ):
+            with self.subTest(mangled=label):
+                body = self.package()
+                mangle(body)
+                self.write(body)
+                self.assertIn("PACKAGE_WITNESS_INCOMPLETE",
+                              self.types(self.observation(entry=9.9999)),
+                              "%s silences the comparison; deleting must not be "
+                              "cheaper than forging" % label)
+
+    def test_a_NULLED_witness_is_reported_where_the_engine_never_nulls_it(self):
+        body = self.package()
+        body["objects"]["positions"][0]["entryPrice"] = None
+        self.write(body)
+        self.assertIn("PACKAGE_WITNESS_INCOMPLETE",
+                      self.types(self.observation(entry=9.9999)))
+
+    def test_a_NULLED_witness_the_engine_DOES_leave_null_is_counted_not_ERRORED(self):
+        # Measured: `balanceBefore`/`balanceAfter` really are null on one LIVE_CLOSE
+        # package. Reporting that as tampering would be a false positive; saying
+        # nothing would make nulling every package a free switch. Counted.
+        body = self.package()
+        body["objects"]["positions"][0]["balanceBefore"] = None
+        self.write(body)
+        self.assertEqual(self.types(self.observation()),
+                         ["PACKAGE_WITNESS_DEGRADED"])
+
+    def test_NULLABLE_excuses_a_null_VALUE_never_a_missing_STRUCTURE(self):
+        # S2/S3: returning "null" instead of "absent" for structural damage
+        # survived, because for the five non-nullable fields both paths ERROR. The
+        # difference shows only on a nullable one -- where it would turn "this
+        # package cannot be read" into "the engine legitimately recorded nothing",
+        # which is the conflation the whole repair exists to undo.
+        #
+        # `nullable` says the ENGINE sometimes writes no value. It says nothing
+        # about the object being missing.
+        for label, mangle in (
+                ("objects deleted", lambda b: b.pop("objects")),
+                ("objects non-dict", lambda b: b.update(objects=[])),
+                ("positions deleted", lambda b: b["objects"].pop("positions")),
+                ("balanceBefore key deleted",
+                 lambda b: b["objects"]["positions"][0].pop("balanceBefore")),
+                ("positions empty", lambda b: b["objects"].update(positions=[])),
+                ("two positions", lambda b: b["objects"]["positions"].append(
+                    dict(b["objects"]["positions"][0]))),
+                ("positions not a list", lambda b: b["objects"].update(positions={})),
+        ):
+            with self.subTest(mangled=label):
+                body = self.package()
+                mangle(body)
+                self.write(body)
+                record = self.observation()
+                # Only the nullable field is left on the record, so nothing else can
+                # produce the ERROR and let this pass for the wrong reason.
+                for field in ("entry", "stop", "direction", "positionSize",
+                              "exitPrice", "accountBalanceAfter"):
+                    record.pop(field, None)
+                reported = self.types(record)
+                self.assertIn("PACKAGE_WITNESS_INCOMPLETE", reported,
+                              "%s was excused as a legitimate null" % label)
+                self.assertNotIn("PACKAGE_WITNESS_DEGRADED", reported)
+
+    def test_the_RECORD_cannot_escape_by_dropping_the_field(self):
+        # The same escape from the other side. `positionSize` has no intra-record
+        # derivation, so the package is its only check.
+        self.write(self.package())
+        record = self.observation()
+        del record["positionSize"]
+        self.assertIn("PACKAGE_WITNESS_INCOMPLETE", self.types(record))
+
+    def test_a_record_may_omit_a_field_the_package_also_lacks(self):
+        body = self.package()
+        body["objects"]["positions"][0]["balanceBefore"] = None
+        self.write(body)
+        record = self.observation()
+        del record["accountBalanceBefore"]
+        self.assertEqual(self.types(record), [])
+
+    def test_two_packages_claiming_one_hash_with_DIFFERENT_contents_is_reported(self):
+        # `setdefault` resolved a collision by iteration order, silently, and the
+        # docstring leaned on "measured: zero collisions" -- a snapshot standing in
+        # for an invariant.
+        other = self.package(position={"entryPrice": 9.9999})
+        self.write(self.package(), other)
+        self.assertIn("AMBIGUOUS_PACKAGE_WITNESS", self.types(self.observation()))
+
+    def test_POSITIVE_CONTROL_two_IDENTICAL_copies_are_not_ambiguous(self):
+        # Measured: 25 of 262 packages appear in more than one artifact, because a
+        # capture run re-exports what an earlier run already wrote. Reporting the
+        # duplication itself would be 25 false positives on a clean corpus.
+        self.write(self.package(), self.package())
+        self.assertEqual(self.types(self.observation()), [])
+
+    def test_the_nullable_flags_match_what_the_LIVE_packages_do(self):
+        # `nullable` is only safe because it was measured. If the engine starts
+        # leaving another field null, the flag is wrong and this says so.
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence")
+        if not os.path.isdir(os.path.join(root, "observations")):
+            self.skipTest("live corpus not present")
+        sources = []
+        for path in globmod.glob(os.path.join(root, "sources", "**", "*.json"),
+                                 recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                sources.append(json.load(handle))
+        cited = set()
+        for path in globmod.glob(os.path.join(root, "observations", "**", "*.json"),
+                                 recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                cited.add(json.load(handle).get("sourceId"))
+        packages, _unreadable, _collisions = ve._packages_by_content_hash(sources,
+                                                                          cited)
+        self.assertGreater(len(packages), 100, "would pass vacuously")
+        for witness in ve.PACKAGE_WITNESSES:
+            if witness.nullable:
+                continue
+            with self.subTest(field=witness.package_field):
+                nulled = [p for p in packages.values()
+                          if ve._witness_value(p, witness) is ve._WITNESS_NULL]
+                self.assertEqual(nulled, [],
+                                 "%s is declared non-nullable but %d captured "
+                                 "packages record it as null"
+                                 % (witness.package_field, len(nulled)))
 
     def test_only_sources_the_observations_CITE_are_parsed(self):
         # JSON-parsing every source's artifact reported 12 transcripts as unreadable
