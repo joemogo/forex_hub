@@ -1590,6 +1590,11 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
         self.evidence = os.path.join(self.root, "evidence")
         for name in ("sources", "observations"):
             os.makedirs(os.path.join(self.evidence, name))
+        # Research state beside the evidence root, as a real corpus has. Without it
+        # the fixture models a corpus whose assimilation history was deleted, which
+        # is now correctly an ERROR and would fail the positive control for an
+        # unrelated reason.
+        os.makedirs(os.path.join(self.root, "research-state"), exist_ok=True)
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
@@ -1612,9 +1617,30 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
         self.write("observations", "obs", {
             "observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
             "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
+            "sourceContentHash": "a" * 64, "sequenceId": "SEQ|1",
             "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
 
+    def write_state(self):
+        import research_assimilation as ra
+        observations, sources = {}, {}
+        for name in os.listdir(os.path.join(self.evidence, "observations")):
+            with open(os.path.join(self.evidence, "observations", name),
+                      encoding="utf-8") as handle:
+                rec = json.load(handle)
+            observations[rec["observationId"]] = rec
+        for name in os.listdir(os.path.join(self.evidence, "sources")):
+            with open(os.path.join(self.evidence, "sources", name),
+                      encoding="utf-8") as handle:
+                rec = json.load(handle)
+            sources[rec["sourceId"]] = rec
+        with open(os.path.join(self.root, "research-state", "current-state.json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump({"observationTotal": len(observations),
+                       "corpusFingerprint": ra.corpus_fingerprint(observations, sources)},
+                      handle)
+
     def run_cli(self):
+        self.write_state()
         script = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
                               "validate_evidence.py")
         return subprocess.run(
@@ -2329,7 +2355,128 @@ class TestCorpusContentIsAnchoredToRecordedState(unittest.TestCase):
         observations, sources = self.corpus(10)
         self.assertEqual(self.types(observations, sources), ["UNREADABLE_RESEARCH_STATE"])
 
-    def test_an_absent_state_file_is_silent(self):
-        # No recorded state means no anchor; inventing one would be fabrication.
+    def test_an_absent_state_file_is_REPORTED_when_observations_exist(self):
+        # DECISION REVERSED, and this test was named by adversarial verification as
+        # pinning the bypass AS INTENDED BEHAVIOUR. "No recorded state means no
+        # anchor" sounded principled and meant that `rm -rf research-state/` defeated
+        # both this gate and the append-only gate at once, restoring the original
+        # deletion defect in full. A corpus holding observations has been imported,
+        # and importing assimilates, so state exists for any corpus with evidence in
+        # it.
         observations, sources = self.corpus(10)
-        self.assertEqual(self.types(observations, sources), [])
+        self.assertEqual(self.types(observations, sources), ["RESEARCH_STATE_MISSING"])
+
+    def test_an_absent_state_file_is_silent_when_there_is_NO_evidence(self):
+        # Positive control for the reversal: an empty corpus has no history to have
+        # lost, and inventing an anchor for it would be the fabrication this layer
+        # exists to prevent.
+        self.assertEqual(self.types([], []), [])
+
+
+class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
+    """Five of round 11's eight surviving mutations were the same defect: all three
+    corpus-integrity gates could be unwired, or pointed at a path that does not
+    exist, with the whole suite green.
+
+    "Silent when absent" and "silent when misconfigured" are the same bug seen from
+    two sides -- the twelve one-touch bypasses of `current-state.json` are what it
+    looks like to an attacker; `state_path=".../current-state-NOPE.json"` is what it
+    looks like to a maintainer. The repository already had the right pattern
+    (`TestBothSourceAnchorsAreWIRED`); it had not been applied here.
+
+    Runs through `run_integrity_checks` on a corpus this test writes, so a gate that
+    is present but not called, or called against the wrong path, fails.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_gates_")
+        self.ti = os.path.join(self.root, "docs", "trader-intelligence")
+        self.evidence = os.path.join(self.ti, "evidence")
+        for name in ("sources", "observations"):
+            os.makedirs(os.path.join(self.evidence, name))
+        os.makedirs(os.path.join(self.ti, "research-state"))
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, collection, name, record):
+        with open(os.path.join(self.evidence, collection, name + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def source(self):
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "replay_observation",
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1,
+            "metadata": {"captureBasis": "REPLAY_RUN",
+                         "engineStrategyId": "alex_g_sr_v1"}})
+
+    def observation(self, oid, content_hash, sequence_id=None):
+        self.write("observations", oid.replace("|", "_"), {
+            "observationId": oid, "sourceId": "EVSRC|MOGO|20260819|001",
+            "schemaVersion": 1, "strategyId": "alex_g_sr_v1",
+            "sourceContentHash": content_hash,
+            "sequenceId": sequence_id or ("SEQ|" + content_hash),
+            "notes": "captureBasis=REPLAY_RUN sourceType=replay_observation"})
+
+    def state(self, total, fingerprint):
+        with open(os.path.join(self.ti, "research-state", "current-state.json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump({"observationTotal": total, "corpusFingerprint": fingerprint},
+                      handle)
+
+    def finding_types(self):
+        report = ve.run_integrity_checks(self.evidence, is_production=False)
+        self.assertTrue(os.listdir(os.path.join(self.evidence, "observations")),
+                        "vacuous run: no observations were loaded")
+        return [f["findingType"] for f in report["findings"]]
+
+    def test_the_runner_REPORTS_a_duplicated_package(self):
+        # Gate 1 wired: DELETE-AND-PAD collides on sourceContentHash.
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.observation("TOBS|MOGO|20260819|002", "a" * 64, sequence_id="SEQ|different")
+        self.assertIn("DUPLICATE_SOURCE_CONTENT_HASH", self.finding_types())
+
+    def test_the_runner_REPORTS_missing_research_state(self):
+        # Gate 2 wired AND aimed: this is `rm -rf research-state/`, which silently
+        # restored the original deletion defect in full.
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.assertIn("RESEARCH_STATE_MISSING", self.finding_types())
+
+    def test_the_runner_REPORTS_a_diverged_corpus(self):
+        # Gate 3 wired AND aimed at the real state file: same count, wrong content.
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.state(1, "deadbeef" * 8)
+        self.assertIn("CORPUS_CONTENT_DIVERGED", self.finding_types())
+
+    def test_the_runner_REPORTS_a_shrunken_corpus(self):
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        self.state(9, "deadbeef" * 8)
+        self.assertIn("EVIDENCE_REMOVED", self.finding_types())
+
+    def test_POSITIVE_CONTROL_a_consistent_corpus_reports_none_of_them(self):
+        # Without this, gates that fired unconditionally would satisfy all four above.
+        import research_assimilation as ra
+        self.source()
+        self.observation("TOBS|MOGO|20260819|001", "a" * 64)
+        observations, sources = {}, {}
+        for path in os.listdir(os.path.join(self.evidence, "observations")):
+            with open(os.path.join(self.evidence, "observations", path),
+                      encoding="utf-8") as handle:
+                rec = json.load(handle)
+            observations[rec["observationId"]] = rec
+        for path in os.listdir(os.path.join(self.evidence, "sources")):
+            with open(os.path.join(self.evidence, "sources", path),
+                      encoding="utf-8") as handle:
+                rec = json.load(handle)
+            sources[rec["sourceId"]] = rec
+        self.state(len(observations), ra.corpus_fingerprint(observations, sources))
+        found = set(self.finding_types())
+        self.assertEqual(found & {"DUPLICATE_SOURCE_CONTENT_HASH", "RESEARCH_STATE_MISSING",
+                                  "CORPUS_CONTENT_DIVERGED", "EVIDENCE_REMOVED",
+                                  "MISSING_SOURCE_CONTENT_HASH"}, set())

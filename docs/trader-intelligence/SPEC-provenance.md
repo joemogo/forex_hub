@@ -281,3 +281,31 @@ capture chain — a package hash that re-derives from preserved bytes, an import
 what it cannot verify, and a ledger that records every corpus transition — not on cross-field
 agreement. Cross-field agreement is what catches the accident and the casual edit, which is
 the overwhelming majority of what actually goes wrong.
+
+### 7.5 A gate that was proposed, measured, and rejected
+
+Adversarial verification proposed reading the assimilation ledger's fingerprint pair as a
+tamper gate: an entry where `observationTotalBefore == observationTotalAfter` while
+`corpusFingerprintBefore != corpusFingerprintAfter` is the same-count content-substitution
+signature, already written to disk and never read. It was described as "structurally free of
+false positives."
+
+**Measured against the six real ledger entries, three carry that signature and all three are
+legitimate** — the B-28 supersession fields and the B-22 mapped-field corrections both edited
+records without changing the count:
+
+```
+LEARN_20260818_f151601c6333   249 -> 249   fp 836e1471 -> f151601c   SIGNATURE
+LEARN_20260819_5f600e56a9f5   258 -> 258   fp 071c65e0 -> 5f600e56   SIGNATURE
+LEARN_20260819_c7a53309a3d6   259 -> 259   fp 6b61f6f8 -> c7a53309   SIGNATURE
+```
+
+A legitimate edit and a laundered substitution are **structurally identical**: both change
+record content without changing the count. No property of the ledger distinguishes them, so a
+gate built on it would fire on half the real history and be switched off within a week.
+
+It is recorded here rather than built, because the useful conclusion is not "the check is hard"
+but **what the ledger actually is**: a forensic record of what changed, not evidence about
+whether the change was legitimate. That question is answered by git history and review, which
+is what §7.4 means when it says detection "belongs to a different mechanism". The distinction
+matters — a false gate is worse than a documented limit, because it trains people to ignore it.

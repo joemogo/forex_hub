@@ -223,6 +223,48 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
                       % (basis, expected, actual), now)
 
 
+def check_observation_source_content_unique(observations, findings, now):
+    """No two observations may derive from the same preserved package.
+
+    `sequenceId` closed DELETE-AND-PAD only while the attacker left it alone: the
+    gate skips any record whose sequenceId is not a non-empty string, so padding
+    needed no fresh ids at all -- just DELETE the field. Five variants (absent, "",
+    12345, null, trailing whitespace) all walked straight through. That is the
+    fail-open shape again, on a field the attacker fully controls.
+
+    `sourceContentHash` is the better anchor and was already on every record: present
+    and distinct on all 259, and unlike a free-text label it is the hash of the
+    preserved package the observation was minted from. Freshening it means computing
+    a hash of bytes that must also exist -- which is precisely the authoring cost
+    delete-and-pad exists to avoid. Copying a winning observation therefore collides
+    here no matter what else is rewritten.
+
+    Absence is reported, not skipped, for the same reason the stamps are: silence has
+    to mean "checked and fine", never "could not tell".
+    """
+    seen = {}
+    for obs in observations:
+        content_hash = obs.get("sourceContentHash")
+        if not isinstance(content_hash, str) or not content_hash.strip():
+            _finding(findings, "MISSING_SOURCE_CONTENT_HASH", "ERROR",
+                      "TRADE_OBSERVATION", obs.get("observationId"),
+                      "sourceContentHash is %r, so this observation cannot be tied to "
+                      "the preserved package it was minted from."
+                      % (content_hash,), now)
+            continue
+        seen.setdefault(content_hash.strip(), []).append(obs.get("observationId"))
+    for content_hash, owners in sorted(seen.items()):
+        if len(owners) > 1:
+            _finding(findings, "DUPLICATE_SOURCE_CONTENT_HASH", "ERROR",
+                      "TRADE_OBSERVATION",
+                      sorted(str(o) for o in owners)[0],
+                      "%d observations derive from the same package %s (%s). One "
+                      "preserved package produced one trade; duplicating a record "
+                      "re-weights every statistic it appears in."
+                      % (len(owners), content_hash[:12],
+                         ", ".join(sorted(str(o) for o in owners)[:4])), now)
+
+
 def check_observation_sequence_ids_unique(observations, findings, now):
     """No two observations may share a `sequenceId`.
 
@@ -281,7 +323,25 @@ def check_corpus_matches_recorded_state(observations, sources, findings, now,
     delete-and-pad signature and every same-count tamper.
     """
     path = state_path
-    if path is None or not os.path.exists(path):
+    if path is None:
+        return
+    if not os.path.exists(path):
+        # REPORTED, not skipped. Both anchors added by the last two rounds live under
+        # research-state/ and both returned silently when absent, so a single
+        # `rm -rf research-state/` restored the original deletion defect in full --
+        # 21 records gone, headline mean R -0.18 to +2.01, exit 0. "Silent when
+        # absent" also means "silent when misconfigured": pointing either anchor at a
+        # path that does not exist disabled it with the suite green.
+        #
+        # A corpus holding observations has been imported, and importing assimilates,
+        # so recorded state exists for any corpus that has any evidence in it. No
+        # observations means no history to have lost, and that stays silent.
+        if observations:
+            _finding(findings, "RESEARCH_STATE_MISSING", "ERROR", "TRADE_OBSERVATION",
+                      "corpus",
+                      "%d observations are preserved but %s does not exist, so the "
+                      "corpus cannot be compared with any recorded state."
+                      % (len(observations), os.path.basename(path)), now)
         return
     try:
         with open(path, "r", encoding="utf-8") as handle:
@@ -1367,6 +1427,7 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
     # Ledger lives beside the evidence root: <ti_root>/research-state/ledger.
+    check_observation_source_content_unique(observations, findings, now)
     check_observation_sequence_ids_unique(observations, findings, now)
     check_corpus_matches_recorded_state(
         observations, sources, findings, now,
