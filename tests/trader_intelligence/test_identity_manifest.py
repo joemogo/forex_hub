@@ -9,6 +9,7 @@ Everything here builds packages the test authors itself. Reading the live store
 would make these assertions depend on whatever the running instance happened to
 hold that hour -- the failure mode this repository has found repeatedly.
 """
+import datetime
 import json
 import os
 import shutil
@@ -21,6 +22,9 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file_
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "trader_intelligence"))
 
 import identity_manifest as im      # noqa: E402
+
+#: A fixed timestamp, so findings are deterministic.
+FIXED_NOW = datetime.datetime(2026, 8, 21, tzinfo=datetime.timezone.utc)
 import validate_evidence as ve      # noqa: E402
 
 
@@ -411,6 +415,107 @@ class TestFabricationByAppendIsDetected(unittest.TestCase):
                 self.assertIn("UNANCHORED_OBSERVATION", self.types(),
                               "sequenceId=%r walked past the allow-list" % (bad,))
 
+
+
+class TestDeveloperRefusalIsRECORDEDNotRederived(ManifestCase):
+    """The importer refuses a developer trade on THREE markers. A manifest row
+    carries no position object, so a validator re-deriving that from the id alone
+    sees one of three -- and a developer trade without the `AGT|TEST|` prefix would
+    be required forever and never satisfiable, because the importer refuses it and
+    the manifest is append-only.
+
+    Four mutations survived on this: no fixture had a developer trade lacking the
+    prefix, so re-deriving and recording were indistinguishable.
+    """
+
+    def dev_package(self, trade_id, marker):
+        pkg = {"sourceTradeId": trade_id, "contentHash": "d" * 64,
+               "captureBasis": "LIVE_CLOSE"}
+        if marker == "flag":
+            pkg["objects"] = {"positions": [{"isDeveloperTrade": True}]}
+        elif marker == "source":
+            pkg["objects"] = {"positions": [{"tradeSource": "TEST"}]}
+        return pkg
+
+    def rows(self):
+        return {row["tradeId"]: row for row in im.load(self.path)["identities"]}
+
+    def test_a_developer_trade_WITHOUT_the_prefix_is_recorded_as_refused(self):
+        # The two markers a validator cannot see from an id.
+        for marker in ("flag", "source"):
+            with self.subTest(marker=marker):
+                path = os.path.join(self.root, marker + ".json")
+                im.update_from_packages([self.dev_package("NO|PREFIX|1", marker)], path)
+                row = im.load(path)["identities"][0]
+                self.assertTrue(row["refusedByImportPolicy"],
+                                "marker %s was not recorded, so this trade would be "
+                                "required forever and never satisfiable" % marker)
+
+    def test_the_prefix_marker_is_also_recorded(self):
+        im.update_from_packages([self.dev_package("AGT|TEST|1", "prefix")], self.path)
+        self.assertTrue(self.rows()["AGT|TEST|1"]["refusedByImportPolicy"])
+
+    def test_POSITIVE_CONTROL_a_real_trade_is_recorded_as_NOT_refused(self):
+        # Without this, recording True for everything would satisfy the tests above
+        # and silently exempt the entire corpus from the require-list.
+        im.update_from_packages([package("REAL|1")], self.path)
+        self.assertFalse(self.rows()["REAL|1"]["refusedByImportPolicy"])
+
+    def test_the_validator_requires_a_trade_recorded_as_NOT_refused(self):
+        findings = []
+        ve.check_preserved_identities_still_present(
+            [], findings, FIXED_NOW,
+            preservation_dir=self._manifest_dir([
+                {"tradeId": "NO|PREFIX|1", "refusedByImportPolicy": False}]))
+        self.assertEqual([f["findingType"] for f in findings],
+                         ["PRESERVED_IDENTITY_MISSING"])
+
+    def test_the_validator_EXEMPTS_a_trade_recorded_as_refused(self):
+        # The drift case end to end: no prefix, so a re-derived predicate would
+        # demand it forever; the recorded flag exempts it correctly.
+        findings = []
+        ve.check_preserved_identities_still_present(
+            [], findings, FIXED_NOW,
+            preservation_dir=self._manifest_dir([
+                {"tradeId": "NO|PREFIX|1", "refusedByImportPolicy": True}]))
+        self.assertEqual(findings, [])
+
+    def _manifest_dir(self, identities):
+        d = os.path.join(self.root, "preservation")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "M.json"), "w", encoding="utf-8") as handle:
+            json.dump({"identities": identities}, handle)
+        return d
+
+
+class TestAConflictDoesNotAdvanceTheManifest(ManifestCase):
+    """An anchor that moves on its own failure path has a state that depends on
+    whether anyone read the exit code."""
+
+    def test_the_file_is_unchanged_when_a_conflict_is_reported(self):
+        im.update_from_packages([package("T1", content_hash="a" * 64)], self.path)
+        before = open(self.path, encoding="utf-8").read()
+        result = im.update_from_packages(
+            [package("T1", content_hash="b" * 64), package("T2", content_hash="c" * 64)],
+            self.path)
+        self.assertTrue(result["conflicts"])
+        self.assertEqual(open(self.path, encoding="utf-8").read(), before,
+                         "the manifest advanced on the failure path")
+
+    def test_the_unconflicted_rest_of_the_batch_is_NOT_committed_either(self):
+        # Partial commit on a failing batch is how a manifest ends up in a state
+        # nobody chose. T2 is clean, but the batch failed.
+        im.update_from_packages([package("T1", content_hash="a" * 64)], self.path)
+        im.update_from_packages(
+            [package("T1", content_hash="b" * 64), package("T2", content_hash="c" * 64)],
+            self.path)
+        self.assertEqual([r["tradeId"] for r in im.load(self.path)["identities"]], ["T1"])
+
+    def test_POSITIVE_CONTROL_a_clean_batch_does_commit(self):
+        im.update_from_packages([package("T1", content_hash="a" * 64)], self.path)
+        im.update_from_packages([package("T2", content_hash="c" * 64)], self.path)
+        self.assertEqual([r["tradeId"] for r in im.load(self.path)["identities"]],
+                         ["T1", "T2"])
 
 if __name__ == "__main__":
     unittest.main()

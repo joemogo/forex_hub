@@ -2717,10 +2717,14 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
                     [{"observationId": "TOBS|MOGO|20260819|001"}], findings, FIXED_NOW,
                     state_path=self.state_path, ledger_dir=self.ledger,
                     preservation_dir=self.preservation)
+                # Extracted from the message INDEPENDENTLY of the table. Scanning
+                # only declared names made `reported` a subset of `declared` by
+                # construction, so the undeclared direction could never fail -- which
+                # is why removing a row from the table still passed.
+                import re as _re
                 for finding in findings:
-                    for name in declared:
-                        if "'%s'" % name in finding["message"]:
-                            reported.add(name)
+                    reported.update(_re.findall(r"integrity anchor '([^']+)'",
+                                                finding["message"]))
         undeclared = sorted(reported - declared)
         unreachable = sorted(declared - reported)
         self.assertEqual(undeclared, [],
