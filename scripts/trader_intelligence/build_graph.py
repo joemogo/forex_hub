@@ -81,7 +81,10 @@ def build(repo_root, ti_root, graph_root, now=None):
     manifest_path = os.path.join(graph_root, "build", "manifest.json")
     report_path = os.path.join(graph_root, "reports", "integrity-report.json")
 
-    blocked = report["summary"]["FATAL"] > 0 or report["summary"]["ERROR"] > 0
+    # Uses the canonical gate rather than a fourth hand-rolled copy. It agreed with
+    # gc.exit_code_for by luck; three other modules hand-rolled the same expression
+    # and TWO of them were wrong, so agreement today is not the point.
+    blocked = bool(gc.exit_code_for(report["summary"]))
 
     manifest = {
         "generated": True,

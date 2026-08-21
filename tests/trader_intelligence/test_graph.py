@@ -1184,3 +1184,110 @@ class TestObservationNodesCarryNoAttributionAttributes(TradeObservationCase):
         self.assertEqual(source_node["traderId"], "ALEX_G",
                          "only TRADE_OBSERVATION is stripped; a source may belong to "
                          "a trader and the graph must still say so")
+
+
+class TestContaminationCheckCoverageIsNotAccidental(TradeObservationCase):
+    """The contamination check was correct and its COVERAGE was not.
+
+    Four mutations survived its original test class: removing STRATEGY_FAMILY from
+    the forbidden set, capping the walk at 2 hops, capping it at 3, and dropping the
+    reverse adjacency so the walk is directed. Every fixture reached a trader in
+    exactly 2 forward hops, so depth and direction were never exercised, and the
+    strategy-family test passed for the wrong reason -- with STRATEGY_FAMILY removed
+    the walk simply continued THROUGH the family to a TRADER the same fixture wrote.
+    """
+
+    def isolation_findings(self):
+        nodes, edges, _f = self.build()
+        findings = []
+        validate_graph.check_observation_trader_isolation(nodes, edges, findings)
+        return findings
+
+    def source_field(self, field, value):
+        path = os.path.join(self._evdir("sources"), "EVSRC_MOGO_20260819_001.json")
+        with open(path, encoding="utf-8") as handle:
+            rec = json.load(handle)
+        rec[field] = value
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(rec, handle)
+
+    def test_a_STRATEGY_FAMILY_alone_is_contamination_with_no_trader_in_reach(self):
+        # No TRADER node is written at all, so the finding can only come from the
+        # family itself being forbidden. The previous version wrote a trader too, so
+        # dropping STRATEGY_FAMILY from the forbidden set still "passed".
+        self.source()
+        self.observation()
+        self.source_field("strategyFamilyId", "SF|ORPHAN|FAMILY")
+        d = os.path.join(self.repo.ti_root, "traders", "orphan", "strategy-families")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "fam.json"), "w", encoding="utf-8") as handle:
+            json.dump({"strategyFamilyId": "SF|ORPHAN|FAMILY", "name": "fam"}, handle)
+        findings = self.isolation_findings()
+        self.assertEqual(len(findings), 1)
+        self.assertIn("STRATEGY_FAMILY", findings[0]["message"])
+
+    def test_a_THREE_hop_path_is_caught(self):
+        # observation -> source -> strategy family -> trader. Every earlier fixture
+        # reached a trader in two hops, so a walk capped at depth 2 was invisible.
+        self.source()
+        self.observation()
+        self.source_field("strategyFamilyId", "SF|ALEX_G|SUPPORT_RESISTANCE_V1")
+        self.write_strategy_family("SF|ALEX_G|SUPPORT_RESISTANCE_V1", "ALEX_G")
+        self.write_trader("ALEX_G")
+        findings = self.isolation_findings()
+        self.assertTrue(findings, "a three-hop path to a trader went unreported")
+        hops = [f for f in findings if "3 hop" in f["message"] or "2 hop" in f["message"]]
+        self.assertTrue(hops, findings[0]["message"])
+
+    def test_a_path_that_exists_only_UNDIRECTED_is_caught(self):
+        # observation -> source <- evidence item -> trader. Walking only outward from
+        # the observation stops at the source; the trader is reachable solely by
+        # traversing the item's DERIVED_FROM edge backwards. The docstring claims
+        # direction is irrelevant, and nothing tested it -- every real path is
+        # forward, so dropping the reverse adjacency changed no result.
+        self.source()
+        self.observation()
+        self.write_trader("ALEX_G")
+        items = self._evdir("items")
+        with open(os.path.join(items, "item.json"), "w", encoding="utf-8") as handle:
+            json.dump({"evidenceId": "EV|ALEX_G|20260819|001",
+                       "sourceId": "EVSRC|MOGO|20260819|001",
+                       "traderId": "ALEX_G",
+                       "normalizedObservation": "x", "evidenceStatus": "active",
+                       "createdAt": "2026-08-19T00:00:00Z"}, handle)
+        findings = self.isolation_findings()
+        self.assertTrue(findings,
+                        "a trader reachable only by traversing an edge backwards was "
+                        "not reported; the walk is directed, not undirected")
+
+    def test_a_SIX_hop_chain_is_caught(self):
+        # Deliberately deeper than any plausible cap. A fixture of depth N can only
+        # kill caps below N, so chasing depth one hop at a time is a regress: a 3-hop
+        # fixture left "stop after 3 hops" invisible. EVIDENCE_ITEM -> EVIDENCE_ITEM
+        # is an allowed DERIVED_FROM direction, so a chain of items gives arbitrary
+        # length without inventing an edge type.
+        self.source()
+        self.observation()
+        self.write_trader("ALEX_G")
+        items = self._evdir("items")
+        previous = "EVSRC|MOGO|20260819|001"
+        for i in range(1, 6):
+            eid = "EV|CHAIN|%d" % i
+            rec = {"evidenceId": eid, "sourceId": previous,
+                   "normalizedObservation": "link %d" % i,
+                   "evidenceStatus": "active", "createdAt": "2026-08-19T00:00:00Z"}
+            if i == 5:
+                rec["traderId"] = "ALEX_G"      # only the far end touches the trader
+            with open(os.path.join(items, "chain%d.json" % i), "w", encoding="utf-8") as h:
+                json.dump(rec, h)
+            previous = eid
+        findings = self.isolation_findings()
+        self.assertTrue(findings,
+                        "a trader six hops from an observation was not reported; the "
+                        "walk is depth-bounded, and the check claims ANY hop count")
+
+    def test_POSITIVE_CONTROL_none_of_these_fire_on_a_clean_corpus(self):
+        self.source()
+        self.observation()
+        self.write_trader("ALEX_G")
+        self.assertEqual(self.isolation_findings(), [])

@@ -165,6 +165,18 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
         # A non-dict `metadata` raised AttributeError and aborted the whole run.
         basis = metadata.get("captureBasis") if isinstance(metadata, dict) else None
         if not isinstance(basis, str) or not basis.strip():
+            # Skipping ANY unstamped source was justified in this docstring as "12
+            # predate it". That was wrong: the 12 are all `transcript` sources, which
+            # the importer never stamps and which no observation cites. The types the
+            # importer DOES produce always carry it, so requiring it there costs zero
+            # false positives -- and leaving it optional let a source shed this anchor
+            # by deleting one field, exactly as the engineStrategyId branch did.
+            if source.get("sourceType") in set(CAPTURE_BASIS_SOURCE_TYPE.values()):
+                _finding(findings, "MISSING_SOURCE_CAPTURE_BASIS", "ERROR",
+                          "EVIDENCE_SOURCE", source.get("sourceId"),
+                          "A %r source records no metadata.captureBasis, so its type "
+                          "cannot be cross-checked against how it was captured."
+                          % (source.get("sourceType"),), now)
             continue
         expected = CAPTURE_BASIS_SOURCE_TYPE.get(basis.strip().upper())
         actual = source.get("sourceType")
@@ -432,6 +444,23 @@ def check_observation_population_rebinding(observations, sources, findings, now)
                       "notes records %d different captureBasis stamps (%s); which one "
                       "the observation was captured under is not decidable."
                       % (len(bases), ", ".join(sorted(set(bases)))), now)
+        elif not bases:
+            # SYMMETRY. The `sourceType=` stamp's absence is MISSING_MINT_PROVENANCE
+            # (ERROR); the `captureBasis=` stamp's absence was not reported at all,
+            # so the second anchor was defeated by DELETING it rather than rewriting
+            # it -- 24 replay observations into FORWARD, every gate exit 0, forward
+            # mean R sign-flipped. The "absence is anomalous, so report it" argument
+            # that made the other stamp an ERROR was simply never applied here.
+            #
+            # All 259 preserved records carry both stamps, so this costs nothing.
+            # Blanking the value happened to be caught already, but by a regex bleed
+            # (the pattern ate the space and captured the next key name), which is an
+            # accident rather than a designed path.
+            _finding(findings, "MISSING_CAPTURE_BASIS", "ERROR", "TRADE_OBSERVATION",
+                      obs_id,
+                      "notes carries no readable captureBasis stamp, so this "
+                      "observation's population cannot be cross-checked against how it "
+                      "was captured.", now)
         elif bases and actual:
             expected = CAPTURE_BASIS_SOURCE_TYPE.get(bases[0].upper())
             if expected is None:

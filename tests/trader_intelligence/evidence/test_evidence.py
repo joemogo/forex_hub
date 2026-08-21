@@ -1596,7 +1596,8 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
             "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": source_type,
             "title": "capture", "storageLocationType": "repository",
             "provenanceStatus": "verified", "schemaVersion": 1,
-            "metadata": {"engineStrategyId": "alex_g_sr_v1"}})
+            "metadata": {"engineStrategyId": "alex_g_sr_v1",
+                         "captureBasis": "REPLAY_RUN"}})
         self.write("observations", "obs", {
             "observationId": "TOBS|MOGO|20260819|001", "strategyId": "alex_g_sr_v1",
             "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
@@ -1766,6 +1767,27 @@ class TestAnchorsFailClosedNotOpen(unittest.TestCase):
         self.assertEqual(self.types([self.obs(strategyId="")], [self.src()]),
                          ["MISSING_STRATEGY_ATTRIBUTION"])
 
+    def test_a_missing_strategyId_reports_even_when_the_SOURCE_has_no_engine_either(self):
+        # The ungating this class exists to protect was invisible: EVERY fixture in
+        # the suite gave the source a truthy engineStrategyId, so `if not strategy`
+        # and `if engine and not strategy` were indistinguishable and re-gating it
+        # survived every test. Grep found 16 occurrences of engineStrategyId in
+        # tests/ and not one where it was absent.
+        obs = self.obs()
+        del obs["strategyId"]
+        src = self.src()
+        del src["metadata"]["engineStrategyId"]
+        self.assertEqual(self.types([obs], [src]), ["MISSING_STRATEGY_ATTRIBUTION"],
+                         "with neither side carrying an engine id, an observation that "
+                         "cannot be attributed at all goes unreported")
+
+    def test_a_missing_strategyId_reports_when_the_source_metadata_is_absent(self):
+        obs = self.obs()
+        del obs["strategyId"]
+        src = self.src()
+        del src["metadata"]
+        self.assertEqual(self.types([obs], [src]), ["MISSING_STRATEGY_ATTRIBUTION"])
+
     def test_POSITIVE_CONTROL_a_matching_strategy_is_silent(self):
         self.assertEqual(self.types([self.obs()], [self.src(engine="alex_g_sr_v1")]), [])
 
@@ -1817,11 +1839,22 @@ class TestSourceSideAnchorFailsClosed(unittest.TestCase):
     def test_POSITIVE_CONTROL_an_agreeing_basis_is_silent(self):
         self.assertEqual(self.types([self.src("LIVE_CLOSE")]), [])
 
-    def test_a_source_with_no_basis_at_all_is_not_guessed_at(self):
-        # 12 of 59 predate the field; inventing one would be fabrication.
+    def test_an_OBSERVATION_BEARING_source_with_no_basis_at_all_is_reported(self):
+        # DECISION REVERSED. This asserted silence, justified as "12 of 59 predate
+        # the field" -- which was wrong: all 12 are `transcript` sources the importer
+        # never stamps and no observation cites. Leaving it optional let a source
+        # shed this anchor by deleting one field, the same fail-open already closed
+        # for engineStrategyId.
         self.assertEqual(
             self.types([{"sourceId": "EVSRC|MOGO|20260819|001",
-                         "sourceType": "paper_trade", "metadata": {}}]), [])
+                         "sourceType": "paper_trade", "metadata": {}}]),
+            ["MISSING_SOURCE_CAPTURE_BASIS"])
+
+    def test_a_TRANSCRIPT_source_with_no_basis_is_still_not_guessed_at(self):
+        # The genuine legacy case, and the positive control for the reversal above.
+        self.assertEqual(
+            self.types([{"sourceId": "EVSRC|ALEX_G|20260727|001",
+                         "sourceType": "transcript", "metadata": {}}]), [])
 
 
 class TestBothSourceAnchorsAreWIRED(unittest.TestCase):
@@ -1948,6 +1981,13 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
     VALIDATOR_MODULES = ("validate_evidence.py", "validate_graph.py",
                          "validate_acquisition.py")
 
+    #: Modules that decide a pass/fail status from a findings summary. Broader than
+    #: VALIDATOR_MODULES because `build_graph.py` has no `check_*` functions and no
+    #: `run_integrity_checks`, yet still gates promotion on ERROR counts -- it held a
+    #: FOURTH hand-rolled copy of the canonical expression, outside the reach of an
+    #: invariant that only looked at modules with checks.
+    STATUS_DECIDING_MODULES = VALIDATOR_MODULES + ("build_graph.py",)
+
     def _module(self, filename="validate_evidence.py"):
         path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence", filename)
         with open(path, "r", encoding="utf-8") as handle:
@@ -1985,7 +2025,7 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
         # `return 0 if FATAL == 0 else 1` -- so validate_graph exited 0 while
         # reporting 24 contamination ERRORs, which is the very guarantee the previous
         # commit added. Extending one of three tests fixed one third of the hole.
-        for filename in self.VALIDATOR_MODULES:
+        for filename in self.STATUS_DECIDING_MODULES:
             with self.subTest(module=filename):
                 tree = self._module(filename)
                 main = next(f for f in self._functions(tree) if f.name == "main")
@@ -1993,9 +2033,16 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
                          if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
                 attrs = {n.func.attr for n in ast.walk(main)
                          if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
-                self.assertIn("exit_code_for", names | attrs,
-                              "%s: main() computes its own exit status, so a report "
-                              "full of ERRORs can still exit 0" % filename)
+                # build_graph decides `blocked` in a helper rather than in main(),
+                # so the whole module is searched for the delegation.
+                whole = {n.func.attr for n in ast.walk(tree)
+                         if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
+                whole |= {n.func.id for n in ast.walk(tree)
+                          if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+                self.assertIn("exit_code_for", names | attrs | whole,
+                              "%s: decides its own pass/fail status instead of "
+                              "delegating to exit_code_for, so a report full of ERRORs "
+                              "can still pass" % filename)
 
     def test_the_runner_passes_findings_to_every_check_it_calls(self):
         # A check wired in but handed a throwaway list would report into the void --
