@@ -233,6 +233,16 @@ fails **closed**, reporting when it cannot evaluate rather than skipping.
 > this" is the sentence most likely to be wrong, and stating it discouraged exactly the test
 > that would have caught it.
 
+> **A second correction, and a bigger one.** Nine rounds of this exercise attacked *rewriting*
+> records. None attacked *removing* them, and every gate was blind: deleting the 21 losing
+> forward observations moved the headline forward mean R from −0.18 to **+2.01** with all three
+> validators exiting 0 and the warning count unchanged. Deleting the whole corpus raised only
+> orphan warnings, which deliberately do not fail. The strongest available attack was never a
+> clever edit — it was `rm`. That is now an ERROR (`EVIDENCE_REMOVED`), anchored on the
+> assimilation ledger's high-water mark, because evidence here is append-only by design. The
+> lesson generalises past this instance: a threat model assembled by defending against the last
+> attack will keep missing the category nobody has tried yet.
+
 Three things remain outside the reach of any consistency check, and all are worth naming
 plainly rather than leaving for someone to discover as a surprise:
 
@@ -241,7 +251,12 @@ plainly rather than leaving for someone to discover as a surprise:
   nothing to contradict, because nothing was contradicted. No validator can distinguish a
   fabricated import from a legitimate one by inspection.
 - **A coordinated rewrite of every anchor at once.** If all four stamps and both records are
-  edited to agree, the corpus is again self-consistent.
+  edited to agree, the corpus is again self-consistent. **Cheaper than first stated:** it takes
+  three field edits across two records — `source.sourceType`, `source.metadata.captureBasis`
+  and the observation's `notes` — not "all four stamps". The fourth anchor
+  (`engineStrategyId`) needs no edit at all when a `replay_observation` source is retyped *in
+  place*, because all 33 replay sources already record `alex_g_sr_v1`, matching the
+  observations' `strategyId`.
 - **An observation rewritten to be wholly consistent with a DIFFERENT legitimate source.**
   This is narrower than the previous item and cheaper than it sounds, so it is listed
   separately: it needs no source edit at all. Repoint `sourceId`, rewrite both `notes` stamps,

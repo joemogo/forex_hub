@@ -1879,6 +1879,24 @@ class TestSourceSideAnchorFailsClosed(unittest.TestCase):
                          "sourceType": "paper_trade", "metadata": {}}]),
             ["MISSING_SOURCE_CAPTURE_BASIS"])
 
+    def test_EVERY_population_bearing_type_must_carry_the_stamp(self):
+        # The requirement was written as "types the importer produces" when the
+        # property that matters is "types that BEAR A POPULATION". Those sets differ:
+        # generated_analysis (HISTORICAL) and live_trade_review (FORWARD) bear a
+        # population and are not importer outputs, so one retype plus one deletion
+        # shed this anchor entirely -- the exact evasion the branch was added to close.
+        import trade_observation as to_mod
+        bearing = (set(to_mod.HISTORICAL_SOURCE_TYPES) | set(to_mod.FORWARD_SOURCE_TYPES)
+                   | set(to_mod.RECONSTRUCTED_SOURCE_TYPES))
+        self.assertGreater(len(bearing), 3, "population tuples look empty")
+        for source_type in sorted(bearing):
+            with self.subTest(sourceType=source_type):
+                self.assertEqual(
+                    self.types([{"sourceId": "EVSRC|MOGO|20260819|001",
+                                 "sourceType": source_type, "metadata": {}}]),
+                    ["MISSING_SOURCE_CAPTURE_BASIS"],
+                    "%s bears a population but may shed this anchor" % source_type)
+
     def test_a_TRANSCRIPT_source_with_no_basis_is_still_not_guessed_at(self):
         # The genuine legacy case, and the positive control for the reversal above.
         self.assertEqual(
