@@ -2624,6 +2624,25 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         self.write_state("{not json")
         self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
 
+    def test_a_NON_OBJECT_state_document_does_not_satisfy_the_anchor(self):
+        # One type away from the `{}` case below, and it was silent: every field check
+        # sits behind `isinstance(state, dict)`, so `null`, a string, a list or a
+        # number reported nothing. The only thing stopping it being an exit-0 deletion
+        # bypass was a crash in the next function -- and a crash is not a report: it
+        # loses every other finding and leaves the last integrity-report.json on disk
+        # still reading clean while records are missing.
+        for document in ("null", '"a string"', "[]", "123"):
+            with self.subTest(document=document):
+                self.write_state(document)
+                self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"],
+                                 "%s was accepted as a state document" % document)
+
+    def test_a_JSON_null_document_is_distinguished_from_never_loaded(self):
+        # `json.load` of `null` returns None, which was indistinguishable from the
+        # not-loaded sentinel and so slipped past the type report.
+        self.write_state("null")
+        self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+
     def test_a_STUB_state_file_does_not_satisfy_the_anchor(self):
         # `{}` dodged the file-existence check entirely before this invariant.
         self.write_state({})
