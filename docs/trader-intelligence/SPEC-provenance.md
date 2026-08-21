@@ -422,3 +422,17 @@ to damage. Retry after a crash converges, and reordered input produces a byte-id
 whether something *appeared* that was never observed — §7.4(a). That needs an allow-list, which
 needed this coverage first; see backlog B-32.15.
 
+
+**Measured 2026-08-21 — the manifest is not a mirror of a still-readable source.** A capture
+run against the live instance recovered 41 hash-verified packages, carrying 41 distinct trade
+ids, all 41 already in the manifest. The manifest holds 263. So **222 of 263 identities (84%)
+now exist only here**: their packages have aged out of the uncompacted WAL and are no longer
+recoverable from the running instance at all. Had the identity record still been the one-off
+snapshot of §7.7, those 222 would have decayed out of coverage exactly as the aggregate ledger
+did. This is the property the architecture was chosen for, observed rather than argued.
+
+(The first reading of this measurement appeared to show one live id missing from the manifest.
+It was pointed at the extractor's `--out` summary index, in which `sourceTradeId` is populated
+for only 6 of 42 rows, instead of the `--packages` recovery the pipeline actually consumes.
+Recorded because it is the §7.6 shape again: a count read off the wrong artifact looks exactly
+like a finding.)
