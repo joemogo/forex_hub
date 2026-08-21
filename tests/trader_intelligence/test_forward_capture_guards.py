@@ -51,7 +51,31 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
     #: Everything is failure-capable unless it is one of these, which cannot fail in
     #: a way worth guarding.
     CANNOT_FAIL = ("echo", "printf", "true", ":", "sed", "awk", "tail", "head",
-                   "grep", "tr", "cut", "sort", "wc")
+                   "grep", "tr", "cut", "sort", "wc", "basename", "dirname", "date")
+
+    def logical_lines(self):
+        """Physical lines joined into the statements the shell actually runs.
+
+        `splitlines()` saw a continued pipeline as two lines -- the first with no
+        `|` at all, the second beginning with `| sed`, whose only segment is a
+        filter -- so neither looked failure-capable and the step was invisible.
+        A scan that reads physical lines is scanning a different program than the
+        one bash runs.
+        """
+        joined, buffer, start = [], "", None
+        for number, line in enumerate(source().splitlines(), start=1):
+            stripped = line.rstrip()
+            if start is None:
+                start = number
+            continues = stripped.endswith("\\") or stripped.rstrip().endswith("|")
+            buffer += (stripped[:-1] if stripped.endswith("\\") else stripped) + " "
+            if continues:
+                continue
+            joined.append((start, buffer.strip()))
+            buffer, start = "", None
+        if buffer.strip():
+            joined.append((start, buffer.strip()))
+        return joined
 
     def pipelines(self):
         """Bare pipelines whose exit status is otherwise discarded.
@@ -66,15 +90,41 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
         was missing one.
         """
         found = []
-        for number, line in enumerate(source().splitlines(), start=1):
+        for number, line in self.logical_lines():
             stripped = line.strip()
-            if "|" not in stripped or stripped.startswith("#"):
+            if stripped.startswith("#"):
                 continue
             if stripped.startswith(("[", "if ", "elif ", "while ", "until ")):
                 continue
             if "||" in stripped or "&&" in stripped:
                 continue
-            if re.match(r'^(local\s+)?[A-Za-z_][A-Za-z0-9_]*="?\$\(', stripped):
+            # Command substitution is checked BEFORE the pipe requirement:
+            # `VAR="$(python3 ...)"` has no pipe at all, so requiring one skipped
+            # every unexamined capture that was not also a pipeline.
+            substitution = re.match(
+                r'^(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)="?\$\(', stripped)
+            if substitution:
+                # Skipped ONLY if the captured value is actually examined. The
+                # assignment carries the status, but a value nothing looks at is a
+                # command whose failure nobody notices -- `VAR=$(python3 ...)` with
+                # no test is as unguarded as a bare pipeline.
+                name = substitution.group(1)
+                inner = stripped[stripped.index("$(") + 2:]
+                heads = [seg.strip().split(" ", 1)[0].lstrip("!$(").strip()
+                         for seg in inner.split("|") if seg.strip()]
+                if all(head in self.CANNOT_FAIL for head in heads):
+                    # `X="$(echo "$OUT" | awk ...)"` captures a filter chain that
+                    # cannot fail; demanding a test for it would be noise, and noise
+                    # is how a real scan ends up deleted.
+                    continue
+                # Guarded if the VALUE is examined, or if the STATUS is captured
+                # on the following line and tested -- `X="$(...)"` then `X_RC=$?`
+                # then `if [ $X_RC -ne 0 ]` is the form this script actually uses.
+                if self.is_examined(name) or self.status_is_checked(number):
+                    continue
+                found.append((number, stripped))
+                continue
+            if "|" not in stripped:
                 continue
             segments = [seg.strip().split(" ", 1)[0].lstrip("!").strip()
                         for seg in stripped.split("|") if seg.strip()]
@@ -82,6 +132,26 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
                 continue
             found.append((number, stripped))
         return found
+
+    def is_examined(self, name):
+        """Is this captured value ever tested, rather than merely assigned?"""
+        body = source()
+        return bool(re.search(
+            r'(\[\s*-[nz]\s+"?\$\{?%s\}?"?|\$\{?%s\}?"?\s*-eq |'
+            r'\[\s*"?\$\{%s[:\-}][^\]]*\]|\$\{%s:\?)'
+            % (re.escape(name), re.escape(name), re.escape(name),
+               re.escape(name)), body))
+
+    def status_is_checked(self, number):
+        """Does a `$?` captured just after this line get tested?"""
+        lines = source().splitlines()
+        window = "\n".join(lines[number:number + 4])
+        captured = re.search(r'([A-Za-z_][A-Za-z0-9_]*)="?\$\?"?', window)
+        if not captured:
+            return False
+        after = "\n".join(lines[number:number + 14])
+        return bool(re.search(r'\$\{?%s\}?"?\s*-(?:eq|ne) ' % re.escape(
+            captured.group(1)), after))
 
     def test_the_scan_finds_the_pipelines_it_is_supposed_to(self):
         found = self.pipelines()
@@ -105,6 +175,10 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
             'scripts/mogo_evidence_checkpoint.sh --selftest 2>&1 | sed \'s/^/  /\'',
             'env python3 scripts/thing.py 2>&1 | sed \'s/^/  /\'',
             'cat input.json | python3 scripts/thing.py | sed \'s/^/  /\'',
+            # Round 25's three: a continued pipeline, an unexamined capture, and a
+            # quoted status assignment with a fail-open default.
+            'python3 scripts/thing.py 2>&1 \\\n    | sed \'s/^/    /\'',
+            'UNCHECKED="$(python3 scripts/thing.py)"',
         ]
         must_ignore = [
             'echo "$DETECT" | sed \'s/^/    /\'',
@@ -186,10 +260,14 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
         # is a count, and zero is its correct default. A STATUS variable is one
         # assigned from `$?` or `PIPESTATUS` -- that is what makes zero mean "fine".
         body = source()
+        # Quoted forms too. `EXTRA_RC="$?"` is the same variable with the same
+        # meaning, and matching only the bare form let a fail-open default sit
+        # beside it unseen.
         status_vars = set(re.findall(
-            r"(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)=\$\{PIPESTATUS\[\d+\]\}", body))
+            r'(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)="?\$\{PIPESTATUS\[\d+\]\}"?',
+            body))
         status_vars |= set(re.findall(
-            r"(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)=\$\?", body))
+            r'(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)="?\$\?"?', body))
         self.assertTrue(status_vars,
                         "no exit-status variables found -- passes vacuously")
         defaults = [(name, value) for name, value

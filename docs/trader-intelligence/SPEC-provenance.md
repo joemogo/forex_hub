@@ -863,3 +863,52 @@ is 1, which is what that default is for. The ordering is asserted anyway.
 landing one commit short of the shape they named. That is the honest end state — not that the
 system is unbreakable, but that the remaining findings are instances of shapes already named,
 caught by the invariants built for them, and shrinking.
+
+### 7.20 Where the campaign stopped, and why (B-32.26)
+
+Round 25 was convened to adjudicate rather than hunt, and returned **the stop condition met**. It
+also handed over three fail-open dimensions of §7.19's own scan — none with a live instance in
+the shipped file, all closed here, because leaving them would contradict §7.19 two commits after
+writing it:
+
+- **Logical lines.** `splitlines()` scanned a different program than bash runs. A continued
+  pipeline is two physical lines — the first with no `|`, the second beginning `| sed`, whose only
+  segment is a filter — so neither looked failure-capable.
+- **Quoted status forms.** `EXTRA_RC="$?"` is the same variable with the same meaning; matching
+  only the bare form let a fail-open default sit beside it unseen.
+- **Captures nobody examines.** `VAR=$(python3 …)` with no test is as unguarded as a bare
+  pipeline — but only when the captured command can actually fail, and only when neither the value
+  nor a following `$?` is checked. Both refinements came from the scan *over-firing on legitimate
+  code*, which is the failure mode that gets a real scan deleted.
+
+**The trajectory is the evidence.** Round 21 found a full-corpus forgery reaching exit 0. Round 24
+found a defensive default that would fail open if its assignment were removed. Round 25 found
+that if someone later writes a step across two lines, the scan would not see it. Rounds 22, 23,
+24 and 25 each found **no materially new defect category**. That decay — from live bypass, to
+latent-on-next-edit, to hypothetical-on-future-authorship — is what convergence looks like, and
+continuing past it would be manufacturing work rather than finding defects.
+
+**What is NOT claimed.** Not that the corpus is unforgeable: §7.9 and §7.12 record the standing
+boundary — an attacker who writes both the observation and a matching capture artifact, or
+rewrites every anchor consistently, is caught by no in-corpus gate, and no rollup closes that,
+because whoever can write the rows can recompute the rollup. Not that the gates are complete:
+every scan has an edge, and §7.19 exists because one of mine was narrower than the sentence I
+wrote about it. What is claimed is narrower and checkable — **every attack demonstrated across
+twenty-five rounds is now caught, each by a named finding, and breaking the mechanism that
+catches it fails a test.**
+
+**Eight defect categories, in the order the system was forced to learn them.** Each was invisible
+to every gate that preceded it:
+
+| | Category | Found by |
+|---|---|---|
+| 1 | fail-open on an attacker-controlled field | rounds 9–12 |
+| 2 | anchor availability — delete what the gate reads | rounds 9–12 |
+| 3 | scope-condition laundering — delete what makes the gate apply | round 15 |
+| 4 | aggregate-vs-identity — append-only enforced on a count | round 13 |
+| 5 | existence-vs-value — the anchor pinned which trades existed, not what they were | round 16 |
+| 6 | intra-record derivability — no witness needed, so no cohort out of reach | round 17 |
+| 7 | corpus-vs-external-witness — the captured package, the only thing MOGO does not write | round 18 |
+| 8 | absence-vs-silence, at every layer — package, witness value, derived field | rounds 19–21 |
+
+Three of those had their contradicting evidence already committed and read by nothing.
