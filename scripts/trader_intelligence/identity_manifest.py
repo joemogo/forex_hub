@@ -48,6 +48,7 @@ REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 
 import graph_common as gc          # noqa: E402
+from import_mogo_observations import is_developer_test_package as _is_developer  # noqa: E402
 
 SCHEMA_VERSION = "mogo.identity-manifest.v1"
 
@@ -86,6 +87,15 @@ def identities_from_packages(packages):
             "tradeId": trade_id,
             "contentHash": package.get("contentHash"),
             "captureBasis": package.get("captureBasis"),
+            # Recorded HERE, where the whole package is visible, because the
+            # importer's refusal test reads three markers -- `isDeveloperTrade`,
+            # `tradeSource == "TEST"` and the id prefix -- and a manifest row carries
+            # no position object. A validator re-deriving this from the id alone can
+            # only ever see one of the three, so a developer trade without the prefix
+            # would be required forever and could never be satisfied: the importer
+            # refuses it, and the manifest is append-only. The capture step is the
+            # only place that can answer this correctly.
+            "refusedByImportPolicy": bool(_is_developer(package)),
         })
     return rows
 
@@ -137,10 +147,18 @@ def write(document, path=None):
 
 
 def update_from_packages(packages, path=None):
-    """The whole operation: load, merge append-only, write atomically."""
+    """The whole operation: load, merge append-only, write atomically.
+
+    A conflict does NOT advance the manifest. The first version wrote first and
+    reported after, so a run that exited nonzero on a conflict had already committed
+    the rest of the batch -- an anchor that moves on the failure path is an anchor
+    whose state depends on whether anyone read the exit code.
+    """
     document = load(path)
     before = len(document["identities"])
     document, added, conflicts = merge(document, identities_from_packages(packages))
+    if conflicts:
+        return {"before": before, "after": before, "added": [], "conflicts": conflicts}
     write(document, path)
     return {"before": before, "after": len(document["identities"]),
             "added": added, "conflicts": conflicts}

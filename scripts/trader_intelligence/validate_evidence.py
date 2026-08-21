@@ -297,8 +297,19 @@ def check_preserved_identities_still_present(observations, findings, now,
             trade_id = row.get("tradeId")
             if not isinstance(trade_id, str) or not trade_id:
                 continue
-            if is_developer_test_package({"sourceTradeId": trade_id}):
-                continue      # never minted as evidence; refused at import by policy
+            # Prefers the flag RECORDED AT CAPTURE TIME. The importer reads three
+            # markers and a manifest row carries no position object, so re-deriving
+            # this from the id alone sees one of three -- a developer trade without
+            # the `AGT|TEST|` prefix would be required forever and never satisfiable,
+            # because the importer refuses it and the manifest is append-only. The
+            # docstring claimed the two "cannot drift"; two of three markers were
+            # structurally unreachable. Rows written before the flag existed fall back
+            # to the prefix, which is all they carry.
+            refused = row.get("refusedByImportPolicy")
+            if refused is True:
+                continue
+            if refused is None and is_developer_test_package({"sourceTradeId": trade_id}):
+                continue
             recorded.add(trade_id)
             if trade_id not in present:
                 _finding(findings, "PRESERVED_IDENTITY_MISSING", "ERROR",
@@ -328,7 +339,23 @@ def check_preserved_identities_still_present(observations, findings, now,
         for obs in observations:
             sequence_id = obs.get("sequenceId")
             if not isinstance(sequence_id, str) or not sequence_id:
-                continue      # absence is reported by the sequence-id checks
+                # FAILS CLOSED. This skipped, on the stated grounds that "absence is
+                # reported by the sequence-id checks" -- and no such check exists:
+                # `sequenceId` is read in exactly two places and BOTH skip a
+                # non-string. So deleting one key per fabricated record walked 200
+                # invented winners straight past the allow-list, forward mean R
+                # -0.18 to +2.60 -- and a test of mine asserted that was correct.
+                #
+                # The shape is documented verbatim earlier in this same file, for
+                # this same field, in the docstring explaining why `sequenceId` was
+                # abandoned as an anchor. The gate written after that comment
+                # reproduced it.
+                _finding(findings, "UNANCHORED_OBSERVATION", "ERROR",
+                          "TRADE_OBSERVATION", obs.get("observationId"),
+                          "Observation carries sequenceId %r, so it can be tied to no "
+                          "captured trade. An observation anchored by nothing was not "
+                          "minted from a captured package." % (sequence_id,), now)
+                continue
             if sequence_id in recorded:
                 continue
             _finding(findings, "UNANCHORED_OBSERVATION", "ERROR", "TRADE_OBSERVATION",
@@ -466,13 +493,25 @@ def check_corpus_anchors_are_available(observations, findings, now,
             report("current-state.json:corpusFingerprint",
                    "absent or not a string (%r)" % (fingerprint,))
 
-    # Checked BEFORE the ledger branches below, which `return` early. Placed after
-    # them, a missing ledger silently disabled this anchor too -- one gate's absence
-    # disabling another, which is the same shape a third time. Order is part of the
-    # invariant, not an implementation detail.
-    if any(to.observation_population(obs, sources_by_id) == "FORWARD"
-           for obs in observations):
-        _check_preservation_anchor(preservation_dir, report)
+    # SCOPE-CONDITION LAUNDERING, and the condition was the attacker's to set.
+    #
+    # This ran only when the corpus held FORWARD observations -- a scoping convenience
+    # to keep replay-only fixtures quiet. It meant the require-list, the allow-list
+    # and this availability check all switched off together the moment the corpus
+    # contained no forward record, which is a state anyone can create by DELETING the
+    # very evidence the anchor protects. Destroying all 29 forward observations and
+    # appending 200 invented historical winners moved historical mean R from 0.167 to
+    # 1.038 in total silence, exit 0.
+    #
+    # A category of its own: rounds 9-12 closed "delete what the gate READS", and
+    # every one of those repairs still required the anchor to exist. This was "delete
+    # what makes the gate APPLY". A condition an attacker controls is not a scope, it
+    # is a switch.
+    #
+    # The manifest is not forward-only anyway -- it records every captureBasis the
+    # importer produces, 221 REPLAY_RUN identities included -- so requiring it of any
+    # corpus holding evidence is both safe and correct.
+    _check_preservation_anchor(preservation_dir, report)
 
     if not ledger_dir or not os.path.isdir(ledger_dir):
         report("research-state/ledger/", "absent")

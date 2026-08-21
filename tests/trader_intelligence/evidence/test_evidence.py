@@ -1647,6 +1647,17 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
                   encoding="utf-8") as handle:
             json.dump({"observationTotalAfter": len(observations),
                        "schemaVersion": 1}, handle)
+        # The preservation anchor is required of ANY corpus holding evidence now --
+        # the forward-only scoping was the switch an attacker could flip by deleting
+        # the forward population. A real corpus has this manifest.
+        preservation = os.path.join(self.evidence, "ledger-preservation")
+        os.makedirs(preservation, exist_ok=True)
+        with open(os.path.join(preservation, "MOGO_IDENTITY_MANIFEST.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"identities": [
+                {"tradeId": record.get("sequenceId"),
+                 "refusedByImportPolicy": False}
+                for record in observations.values()]}, handle)
 
     def run_cli(self):
         self.write_state()
@@ -2637,10 +2648,15 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         self.root = tempfile.mkdtemp(prefix="mogo_anchor_")
         self.state_dir = os.path.join(self.root, "research-state")
         self.ledger = os.path.join(self.state_dir, "ledger")
+        self.preservation = os.path.join(self.root, "ledger-preservation")
         os.makedirs(self.ledger)
+        os.makedirs(self.preservation)
         self.state_path = os.path.join(self.state_dir, "current-state.json")
         self.write_state({"observationTotal": 3, "corpusFingerprint": "f" * 64})
         self.write_ledger(3)
+        with open(os.path.join(self.preservation, "M.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"identities": [{"tradeId": "T1"}]}, handle)
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
@@ -2663,8 +2679,55 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
             observations if observations is not None
             else [{"observationId": "TOBS|MOGO|20260819|%03d" % i} for i in range(3)],
             findings, FIXED_NOW,
-            state_path=self.state_path, ledger_dir=self.ledger)
+            state_path=self.state_path, ledger_dir=self.ledger,
+            preservation_dir=self.preservation)
         return [f["findingType"] for f in findings]
+
+    def test_the_DECLARED_table_matches_the_anchors_actually_reported(self):
+        # M13: deleting a row from CORPUS_ANCHORS changed nothing and no test
+        # noticed -- the table that is supposed to BE the systemic invariant was
+        # decorative, while the behaviour was covered only by per-anchor tests. That
+        # is precisely the instance-patching the table exists to replace.
+        #
+        # Every declared anchor must be one this function can actually report, and
+        # every anchor it reports must be declared. Breaking either direction fails.
+        declared = {name for name, _kind in ve.CORPUS_ANCHORS}
+        self.assertGreater(len(declared), 3, "the anchor table looks truncated")
+
+        reported = set()
+        for scenario in ("no_state", "bad_fields", "no_ledger", "no_preservation",
+                         "hollow_preservation"):
+            with self.subTest(scenario=scenario):
+                self.setUp()
+                if scenario == "bad_fields":
+                    self.write_state({"observationTotal": "x", "corpusFingerprint": 1})
+                elif scenario == "no_state":
+                    os.remove(self.state_path)
+                elif scenario == "no_ledger":
+                    shutil.rmtree(self.ledger)
+                elif scenario == "no_preservation":
+                    shutil.rmtree(self.preservation)
+                elif scenario == "hollow_preservation":
+                    # A manifest that requires nothing: non-empty, all rows excluded.
+                    with open(os.path.join(self.preservation, "M.json"), "w",
+                              encoding="utf-8") as handle:
+                        json.dump({"identities": [{"tradeId": "AGT|TEST|1"}]}, handle)
+                findings = []
+                ve.check_corpus_anchors_are_available(
+                    [{"observationId": "TOBS|MOGO|20260819|001"}], findings, FIXED_NOW,
+                    state_path=self.state_path, ledger_dir=self.ledger,
+                    preservation_dir=self.preservation)
+                for finding in findings:
+                    for name in declared:
+                        if "'%s'" % name in finding["message"]:
+                            reported.add(name)
+        undeclared = sorted(reported - declared)
+        unreachable = sorted(declared - reported)
+        self.assertEqual(undeclared, [],
+                         "these anchors are reported but not declared: %s" % undeclared)
+        self.assertEqual(unreachable, [],
+                         "these anchors are declared but nothing can report them, so "
+                         "the table is decorative: %s" % unreachable)
 
     def test_POSITIVE_CONTROL_all_anchors_present_is_silent(self):
         self.assertEqual(self.types(), [])

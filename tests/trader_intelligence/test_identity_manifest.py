@@ -285,14 +285,16 @@ class TestLiveCoverage(unittest.TestCase):
             for row in document.get("identities") or []:
                 if isinstance(row, dict) and isinstance(row.get("tradeId"), str):
                     recorded.add(row["tradeId"])
-        uncovered = sorted(s for s in sequence_ids if s and s not in recorded)
+        # No `if s` guard. Filtering out falsy ids made this pass unchanged even if
+        # observations LOST their sequenceId -- the same fail-open, inside the test
+        # that certifies the coverage claim.
+        self.assertNotIn(None, sequence_ids,
+                         "an observation has no sequenceId, so it is anchored by "
+                         "nothing and this coverage assertion would skip it")
+        uncovered = sorted(s for s in sequence_ids if s not in recorded)
         self.assertEqual(uncovered, [],
                          "these live observations have no identity anchor, so "
                          "deleting them would be invisible: %s" % uncovered[:5])
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class TestFabricationByAppendIsDetected(unittest.TestCase):
@@ -379,8 +381,12 @@ class TestFabricationByAppendIsDetected(unittest.TestCase):
         self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
         self.assertNotIn("UNANCHORED_OBSERVATION", self.types())
 
-    def test_an_observation_with_no_sequenceId_is_left_to_the_other_checks(self):
-        # Reporting it here too would double-count one defect under two names.
+    def test_an_observation_with_no_sequenceId_is_UNANCHORED(self):
+        # DECISION REVERSED, and this test was the bypass. It asserted silence on the
+        # grounds that reporting here "would double-count one defect under two names"
+        # -- but there was no other name: `sequenceId` is read in exactly two places
+        # and both skipped a non-string. Deleting one key per fabricated record walked
+        # 200 invented winners past the allow-list, forward mean R -0.18 to +2.60.
         self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
         self.write("observations", "no_seq", {
             "observationId": "TOBS|MOGO|20260819|002",
@@ -388,4 +394,23 @@ class TestFabricationByAppendIsDetected(unittest.TestCase):
             "strategyId": "alex_g_sr_v1", "sourceContentHash": "z" * 64,
             "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"})
         self.manifest(["TRADE|real"])
-        self.assertNotIn("UNANCHORED_OBSERVATION", self.types())
+        self.assertIn("UNANCHORED_OBSERVATION", self.types())
+
+    def test_every_non_string_sequenceId_is_UNANCHORED(self):
+        # One key deleted was the cheapest variant; these are the rest of the family.
+        self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
+        self.manifest(["TRADE|real"])
+        for bad in ("", 12345, None, [], 3.5, True):
+            with self.subTest(sequenceId=bad):
+                self.write("observations", "bad", {
+                    "observationId": "TOBS|MOGO|20260819|003",
+                    "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
+                    "strategyId": "alex_g_sr_v1", "sourceContentHash": "y" * 64,
+                    "sequenceId": bad,
+                    "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"})
+                self.assertIn("UNANCHORED_OBSERVATION", self.types(),
+                              "sequenceId=%r walked past the allow-list" % (bad,))
+
+
+if __name__ == "__main__":
+    unittest.main()
