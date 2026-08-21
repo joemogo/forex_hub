@@ -2102,3 +2102,81 @@ class TestEveryCheckIsWiredIntoTheRunner(unittest.TestCase):
                                    "%s: found almost no check calls to inspect" % filename)
                 total += checked
         self.assertGreater(total, 40, "all modules together should expose many checks")
+
+
+class TestEvidenceRemovalIsDetected(unittest.TestCase):
+    """Nine rounds attacked rewriting; none attacked removal, and every gate was blind.
+
+    Deleting the 21 losing FORWARD observations moved the headline forward mean R
+    from -0.18 to +2.01 with all three validators exiting 0 and the WARNING count
+    unchanged. Deleting the entire corpus raised only orphan WARNINGs, which
+    deliberately do not fail. The strongest attack on this corpus was never a clever
+    edit -- it was `rm`.
+    """
+
+    def setUp(self):
+        self.ledger = tempfile.mkdtemp(prefix="mogo_ledger_")
+
+    def tearDown(self):
+        shutil.rmtree(self.ledger, ignore_errors=True)
+
+    def entry(self, name, total):
+        with open(os.path.join(self.ledger, name + ".json"), "w", encoding="utf-8") as h:
+            json.dump({"observationTotalAfter": total, "schemaVersion": 1}, h)
+
+    def types(self, count):
+        findings = []
+        ve.check_corpus_is_append_only(
+            [{"observationId": "TOBS|MOGO|20260819|%03d" % i} for i in range(count)],
+            findings, FIXED_NOW, ledger_dir=self.ledger)
+        return [f["findingType"] for f in findings]
+
+    def test_a_corpus_smaller_than_the_ledger_high_water_mark_is_an_ERROR(self):
+        self.entry("LEARN_a", 259)
+        self.assertEqual(self.types(238), ["EVIDENCE_REMOVED"])
+
+    def test_deleting_a_single_record_is_enough(self):
+        self.entry("LEARN_a", 259)
+        self.assertEqual(self.types(258), ["EVIDENCE_REMOVED"])
+
+    def test_POSITIVE_CONTROL_an_unchanged_corpus_is_silent(self):
+        self.entry("LEARN_a", 259)
+        self.assertEqual(self.types(259), [])
+
+    def test_POSITIVE_CONTROL_a_GROWING_corpus_is_silent(self):
+        # New imports are the normal case and must never be reported.
+        self.entry("LEARN_a", 259)
+        self.assertEqual(self.types(300), [])
+
+    def test_the_HIGHEST_total_ever_recorded_is_the_floor_not_the_latest(self):
+        # A later entry recording a smaller total must not lower the bar -- otherwise
+        # deleting records and assimilating once would launder the deletion.
+        self.entry("LEARN_a", 259)
+        self.entry("LEARN_b", 238)
+        self.assertEqual(self.types(238), ["EVIDENCE_REMOVED"])
+
+    def test_no_ledger_at_all_is_silent(self):
+        # A corpus with no assimilation history has no high-water mark, and inventing
+        # one would be the fabrication this layer exists to prevent.
+        self.assertEqual(self.types(0), [])
+
+    def test_a_malformed_ledger_entry_is_skipped_not_fatal(self):
+        with open(os.path.join(self.ledger, "broken.json"), "w", encoding="utf-8") as h:
+            h.write("{not json")
+        self.entry("LEARN_a", 259)
+        self.assertEqual(self.types(238), ["EVIDENCE_REMOVED"])
+
+    def test_a_non_integer_total_is_ignored(self):
+        self.entry("LEARN_a", 259)
+        with open(os.path.join(self.ledger, "odd.json"), "w", encoding="utf-8") as h:
+            json.dump({"observationTotalAfter": "many"}, h)
+        self.assertEqual(self.types(238), ["EVIDENCE_REMOVED"])
+
+    def test_the_finding_says_HOW_MANY_are_gone(self):
+        self.entry("LEARN_a", 259)
+        findings = []
+        ve.check_corpus_is_append_only(
+            [{"observationId": "x"} for _ in range(238)], findings, FIXED_NOW,
+            ledger_dir=self.ledger)
+        self.assertIn("21 record(s) are gone", findings[0]["message"])
+        self.assertEqual(findings[0]["severity"], "ERROR")

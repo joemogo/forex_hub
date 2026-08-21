@@ -126,6 +126,17 @@ def _finding(findings, finding_type, severity, entity_type, entity_id, message, 
 #: was created, which is what makes the rebinding check possible. Deliberately
 #: tolerant of spacing and case: a stamp written "sourceType = X" must be READ, not
 #: missed -- a stamp the reader skips is a stamp an attacker can hide behind.
+#: Assimilation ledger -- the committed record of every corpus transition.
+#: Every sourceType that derives a population. Deliberately built from
+#: trade_observation's own tuples so a new population type cannot be added
+#: there and forgotten here.
+_POPULATION_BEARING_SOURCE_TYPES = (set(to.HISTORICAL_SOURCE_TYPES)
+                                   | set(to.FORWARD_SOURCE_TYPES)
+                                   | set(to.RECONSTRUCTED_SOURCE_TYPES))
+
+_LEDGER_DIR = os.path.join(REPO_ROOT, "docs", "trader-intelligence",
+                           "research-state", "ledger")
+
 _MINTED_SOURCE_TYPE_RE = re.compile(r"sourceType\s*=\s*([A-Za-z_-]*)", re.IGNORECASE)
 
 #: The SECOND stamp in the same notes string, and it was being discarded.
@@ -156,9 +167,15 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
     replay_observation, 13 LIVE_CLOSE -> paper_trade, 1 HISTORICAL_BACKFILL ->
     journal_entry -- with zero disagreements, so this costs no false positives.
 
-    Sources without the stamp are NOT reported: 12 predate it, and inventing a
-    capture basis for a record that never recorded one is the fabrication this
-    whole layer exists to prevent.
+    Sources that BEAR A POPULATION must carry the stamp; the rest are not reported.
+    An earlier version of this paragraph said "sources without the stamp are NOT
+    reported: 12 predate it" -- false twice over. The 12 are all `transcript`
+    sources, which the importer never stamps and no observation cites; they do not
+    "predate" anything. And leaving the stamp optional let any source shed this
+    anchor by deleting one field. What remains true, and is why an exemption exists
+    at all, is that inventing a capture basis for a record that never recorded one
+    would be the fabrication this layer exists to prevent -- so unstamped
+    non-population-bearing sources stay silent.
     """
     for source in sources:
         metadata = source.get("metadata")
@@ -171,7 +188,12 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
             # importer DOES produce always carry it, so requiring it there costs zero
             # false positives -- and leaving it optional let a source shed this anchor
             # by deleting one field, exactly as the engineStrategyId branch did.
-            if source.get("sourceType") in set(CAPTURE_BASIS_SOURCE_TYPE.values()):
+            # POPULATION-BEARING types, not "types the importer produces". Those are
+            # different sets: `generated_analysis` (HISTORICAL) and
+            # `live_trade_review` (FORWARD) bear a population and are not importer
+            # outputs, so retyping a source to one of them and deleting the stamp shed
+            # this anchor entirely -- the very evasion this branch was added to close.
+            if source.get("sourceType") in _POPULATION_BEARING_SOURCE_TYPES:
                 _finding(findings, "MISSING_SOURCE_CAPTURE_BASIS", "ERROR",
                           "EVIDENCE_SOURCE", source.get("sourceId"),
                           "A %r source records no metadata.captureBasis, so its type "
@@ -198,6 +220,61 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
                       "from sourceType, so retyping a source in place moves every "
                       "observation citing it between populations."
                       % (basis, expected, actual), now)
+
+
+def check_corpus_is_append_only(observations, findings, now, ledger_dir=None):
+    """Has evidence been REMOVED?
+
+    Nine rounds of adversarial verification attacked rewriting. None attacked
+    removal, and every gate was blind to it: deleting the 21 losing FORWARD
+    observations moved the headline forward mean R from -0.18 to +2.01 with all
+    three validators exiting 0 and the WARNING count unchanged at 31. Deleting the
+    ENTIRE corpus raised only orphan WARNINGs, which deliberately do not fail. So
+    the strongest available attack on this corpus was never a clever edit -- it was
+    `rm`.
+
+    The anchor already existed and nothing read it. Every assimilation writes a
+    ledger entry recording `observationTotalAfter`, and those entries are committed.
+    Evidence in MOGO is append-only by design -- CLAUDE.md forbids destroying it --
+    so a corpus smaller than the highest total ever recorded means records are gone.
+
+    Counts, not identities, because counts are what the ledger carries. That catches
+    deletion; it nets out under an equal delete-and-add, which is a coordinated
+    change to two places and shows plainly in the ledger diff. Raising the floor
+    from "rm is invisible" to "rm is an ERROR" is the point.
+
+    Silent when no ledger exists: a corpus with no assimilation history has no
+    high-water mark, and inventing one would be the fabrication this layer prevents.
+    """
+    # The ledger is resolved RELATIVE to the corpus being validated, never from a
+    # module-level constant. Pointing it at the live repo made every scratch and
+    # synthetic corpus inherit the real corpus's high-water mark, so a 0-observation
+    # fixture "lost" 259 records. A gate that reports on a corpus other than the one
+    # it was handed is worse than no gate.
+    pattern = os.path.join(ledger_dir, "*.json") if ledger_dir else None
+    if pattern is None:
+        return
+    high_water, source_entry = None, None
+    for path in sorted(globmod.glob(pattern)):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                entry = json.load(handle)
+        except (ValueError, OSError):
+            continue
+        total = entry.get("observationTotalAfter")
+        if isinstance(total, int) and (high_water is None or total > high_water):
+            high_water, source_entry = total, os.path.basename(path)
+    if high_water is None:
+        return
+    current = len(observations)
+    if current < high_water:
+        _finding(findings, "EVIDENCE_REMOVED", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "The corpus holds %d observations but the assimilation ledger has "
+                  "recorded as many as %d (%s). Evidence is append-only; %d record(s) "
+                  "are gone, and deleting records moves every population statistic "
+                  "they belonged to."
+                  % (current, high_water, source_entry, high_water - current), now)
 
 
 def check_observation_population_rebinding(observations, sources, findings, now):
@@ -1155,6 +1232,11 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
 
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
+    # Ledger lives beside the evidence root: <ti_root>/research-state/ledger.
+    check_corpus_is_append_only(
+        observations, findings, now,
+        ledger_dir=os.path.join(os.path.dirname(os.path.abspath(evidence_root)),
+                                "research-state", "ledger"))
     check_observation_population_rebinding(observations, sources, findings, now)
     check_source_capture_basis_agrees_with_type(sources, findings, now)
     check_duplicate_ids(sources, items, claims, links, contradictions, findings, now, extra=[

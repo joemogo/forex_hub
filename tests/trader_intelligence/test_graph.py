@@ -1226,18 +1226,31 @@ class TestContaminationCheckCoverageIsNotAccidental(TradeObservationCase):
         self.assertEqual(len(findings), 1)
         self.assertIn("STRATEGY_FAMILY", findings[0]["message"])
 
-    def test_a_THREE_hop_path_is_caught(self):
-        # observation -> source -> strategy family -> trader. Every earlier fixture
-        # reached a trader in two hops, so a walk capped at depth 2 was invisible.
+    def test_a_THREE_hop_path_through_a_NON_forbidden_node_is_caught(self):
+        # Renamed and rebuilt. The previous fixture ran observation -> source ->
+        # STRATEGY_FAMILY -> trader, but STRATEGY_FAMILY is itself forbidden, so the
+        # walk reported and stopped at HOP 2 and never exercised three. Its own
+        # assertion admitted it, accepting "3 hop" OR "2 hop". A cap at 2 passed it.
+        #
+        # The bridge is now an EVIDENCE_ITEM, which is NOT forbidden, so the walk must
+        # genuinely traverse three hops to reach the trader.
         self.source()
         self.observation()
-        self.source_field("strategyFamilyId", "SF|ALEX_G|SUPPORT_RESISTANCE_V1")
-        self.write_strategy_family("SF|ALEX_G|SUPPORT_RESISTANCE_V1", "ALEX_G")
         self.write_trader("ALEX_G")
+        items = self._evdir("items")
+        with open(os.path.join(items, "mid.json"), "w", encoding="utf-8") as handle:
+            json.dump({"evidenceId": "EV|MID|1", "sourceId": "EVSRC|MOGO|20260819|001",
+                       "normalizedObservation": "mid", "evidenceStatus": "active",
+                       "createdAt": "2026-08-19T00:00:00Z"}, handle)
+        with open(os.path.join(items, "far.json"), "w", encoding="utf-8") as handle:
+            json.dump({"evidenceId": "EV|FAR|1", "sourceId": "EV|MID|1",
+                       "traderId": "ALEX_G",
+                       "normalizedObservation": "far", "evidenceStatus": "active",
+                       "createdAt": "2026-08-19T00:00:00Z"}, handle)
         findings = self.isolation_findings()
         self.assertTrue(findings, "a three-hop path to a trader went unreported")
-        hops = [f for f in findings if "3 hop" in f["message"] or "2 hop" in f["message"]]
-        self.assertTrue(hops, findings[0]["message"])
+        self.assertNotIn("2 hop", findings[0]["message"],
+                         "reported at two hops, so this fixture does not exercise three")
 
     def test_a_path_that_exists_only_UNDIRECTED_is_caught(self):
         # observation -> source <- evidence item -> trader. Walking only outward from
