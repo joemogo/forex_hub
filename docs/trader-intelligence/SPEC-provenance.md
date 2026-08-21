@@ -436,3 +436,56 @@ It was pointed at the extractor's `--out` summary index, in which `sourceTradeId
 for only 6 of 42 rows, instead of the `--packages` recovery the pipeline actually consumes.
 Recorded because it is the §7.6 shape again: a count read off the wrong artifact looks exactly
 like a finding.)
+
+### 7.9 Anchors pin value, not only existence (B-32.17)
+
+Rounds 9–16 built anchors that answer *which trades existed*: the require-list (a preserved
+identity cannot stop existing), the allow-list (an observation anchored by nothing was never
+captured), and the availability table (a gate cannot be switched off by deleting what it reads).
+Every one of them is about presence.
+
+None asked whether the surviving record still says what the anchor says it said. So an attack
+that touches no id, no hash, no count and no anchor — rewriting `pnl`, `rMultiple` and `outcome`
+in place on the preserved forward losers — moved forward mean R from −0.18 to +2.00 with every
+gate green and exit 0. It did not even need a hand-edited state file: `research_assimilation.py
+--write`, a documented maintenance command, re-stamped the fingerprint from the tampered corpus
+and appended a normal-looking ledger entry.
+
+The evidence to contradict it was already on disk, already committed, and read by nothing.
+Measured on the live corpus:
+
+| Anchor field | Corpus field | Agreement |
+|---|---|---|
+| `PAPER_LEDGER_PRE_BACKFILL.pnl` | `observation.pnl` | 35 / 35 |
+| `PAPER_LEDGER_PRE_BACKFILL.pair` | `instrument` (`/`→`_`) | 35 / 35 |
+| `PAPER_LEDGER_PRE_BACKFILL.closedAt` | `closedAt` | 35 / 35 |
+| `MOGO_IDENTITY_MANIFEST.contentHash` | `sourceContentHash` | 259 / 259 |
+
+Exact, on every joined row, at zero false-positive cost.
+
+**Why this is a table and not four comparisons.** The recurring shape is not "this particular
+comparison is missing" — it is *an anchor recorded a value and nothing compared it*, and that
+shape was already present twice before anyone looked. `ANCHOR_VALUE_BINDINGS` declares what must
+agree; `ANCHOR_FIELDS_UNBOUND` declares what deliberately does not, **with the measurement that
+justifies it**; and a field in neither is reported (`UNADJUDICATED_ANCHOR_FIELD`). A field added
+to an anchor writer therefore forces the decision instead of defaulting to silence. Two fields
+are excused today and both were measured, not assumed: `hash` disagrees with `sourceContentHash`
+on 35 of 35 preserved trades because it hashes the ledger row rather than the evidence package,
+so binding it would report 35 false contradictions on a clean corpus; `captureBasis` is a
+property of the `EvidenceSource`, and no observation carries it.
+
+Three escapes are closed with it. Deleting the bound field from the record is
+`ANCHOR_VALUE_UNCHECKABLE` — removing a value must not be cheaper than forging it. Renaming a
+bound field at the *writer* is `UNADJUDICATED_ANCHOR_FIELD`. Removing the bound fields
+altogether is `ANCHOR_VALUES_UNCOMPARED`, counted over rows that actually **joined** an
+observation, because a manifest holding only the 4 refused developer trades legitimately
+compares nothing.
+
+**A limit, stated rather than papered over.** `MOGO_IDENTITY_MANIFEST` carries no rollup hash,
+so under the threat model these rounds use — an attacker who can write any file in the corpus —
+200 hand-appended identity rows admit 200 fabricated observations, and the value bindings do not
+help because the attacker writes both sides. A rollup would not close it either: whoever can
+append the rows can recompute the rollup. Closing it needs a witness *outside* the corpus, and
+the only ones available (git history, the operator's checkpoint directory) are themselves
+writable by the same actor. **Recorded as a threat-model boundary, not built as a gate that
+would look like protection without being any** — the same disposition as §7.5.

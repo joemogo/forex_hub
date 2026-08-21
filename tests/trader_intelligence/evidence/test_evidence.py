@@ -1654,8 +1654,13 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
         os.makedirs(preservation, exist_ok=True)
         with open(os.path.join(preservation, "MOGO_IDENTITY_MANIFEST.json"), "w",
                   encoding="utf-8") as handle:
+            # `contentHash` is not decoration: every real manifest row carries it,
+            # and it is one of the values ANCHOR_VALUE_BINDINGS compares against the
+            # corpus. A row with no bound field joins an observation and compares
+            # nothing, which is the vacuity this fixture would otherwise model.
             json.dump({"identities": [
                 {"tradeId": record.get("sequenceId"),
+                 "contentHash": record.get("sourceContentHash"),
                  "refusedByImportPolicy": False}
                 for record in observations.values()]}, handle)
 
@@ -2733,6 +2738,72 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
                          "these anchors are declared but nothing can report them, so "
                          "the table is decorative: %s" % unreachable)
 
+    def test_every_way_of_HOLLOWING_the_preservation_anchor_is_reported(self):
+        # M10 and M11 survived mutation: making the empty directory silent, and
+        # making a non-list `identities` silent, each broke no test. Both are
+        # one-touch bypasses -- `rm ledger-preservation/*.json` is as good as
+        # `rm -rf ledger-preservation/`, and the require-list and allow-list both
+        # switch off when no rows are read.
+        #
+        # The directory-absent case is covered by the table test above; these are
+        # the ways it can be PRESENT and still anchor nothing.
+        for label, prepare in (
+                ("no manifest files", lambda: [os.remove(f) for f in globmod.glob(
+                    os.path.join(self.preservation, "*.json"))]),
+                ("identities not a list", lambda: self.write_manifest(
+                    {"identities": {"T1": True}})),
+                ("identities absent", lambda: self.write_manifest({"schemaVersion": 1})),
+                ("identities null", lambda: self.write_manifest({"identities": None})),
+                ("document is a list", lambda: self.write_manifest([{"tradeId": "T1"}])),
+                ("document is null", lambda: self.write_manifest(None)),
+                ("every row a developer trade", lambda: self.write_manifest(
+                    {"identities": [{"tradeId": "AGT|TEST|1"}]})),
+                ("every row malformed", lambda: self.write_manifest(
+                    {"identities": [{"tradeId": 7}, {"noTradeId": "x"}, "not-a-dict"]})),
+        ):
+            with self.subTest(hollowed=label):
+                self.setUp()
+                prepare()
+                # Asserted as a property, not a count: several of these are
+                # reported twice (unreadable AND requiring nothing), and pinning the
+                # count would be pinning a snapshot.
+                reported = self.types()
+                self.assertTrue(reported,
+                                "%s leaves the require-list and the allow-list with "
+                                "nothing to require or allow, which is the anchor "
+                                "not being there" % label)
+                self.assertEqual(set(reported), {"CORPUS_ANCHOR_UNAVAILABLE"})
+
+    def test_ONE_corrupted_manifest_is_reported_even_when_ANOTHER_is_healthy(self):
+        # M11 survived every check above by ADJACENT EFFECT: making a non-list
+        # `identities` silent still tripped "no requirable identities", because the
+        # fixture had only one manifest and emptying it emptied the total.
+        #
+        # With a healthy manifest beside it the total never reaches zero, so the
+        # adjacent report goes quiet and only the specific one is left. That is also
+        # the real attack: corrupt the manifest holding the trades you want to
+        # unanchor and leave the other intact.
+        self.write_manifest({"identities": [{"tradeId": "T_HEALTHY"}]}, name="A.json")
+        self.write_manifest({"identities": {"T1": True}}, name="B.json")
+        os.remove(os.path.join(self.preservation, "M.json"))
+        reported = self.types()
+        self.assertEqual(set(reported), {"CORPUS_ANCHOR_UNAVAILABLE"},
+                         "a manifest whose identities are not a list contributes no "
+                         "rows, so every trade it recorded silently stops being "
+                         "required")
+
+    def test_POSITIVE_CONTROL_two_healthy_manifests_are_silent(self):
+        # Without this the assertion above would also pass if a second manifest were
+        # reported no matter what it contained.
+        self.write_manifest({"identities": [{"tradeId": "T_HEALTHY"}]}, name="A.json")
+        self.write_manifest({"identities": [{"tradeId": "T2"}]}, name="B.json")
+        self.assertEqual(self.types(), [])
+
+    def write_manifest(self, document, name="M.json"):
+        with open(os.path.join(self.preservation, name), "w",
+                  encoding="utf-8") as handle:
+            json.dump(document, handle)
+
     def test_POSITIVE_CONTROL_all_anchors_present_is_silent(self):
         self.assertEqual(self.types(), [])
 
@@ -2824,6 +2895,202 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         self.write_state({"observationTotal": 9, "corpusFingerprint": "f" * 64})
         self.write_ledger(3)
         self.assertEqual(self.types(), [])
+
+
+class TestTheAllowListFailsClosedOnAnUnusableSequenceId(unittest.TestCase):
+    """M4: the round-15 P1-B repair had ZERO test coverage.
+
+    The repair inverted a `continue` into a `_finding` so an observation whose
+    `sequenceId` is not a usable string is REPORTED rather than skipped. Deleting
+    that repair -- restoring the exact bypass that walked 200 invented winners past
+    the allow-list and moved forward mean R from -0.18 to +2.60 -- broke no test.
+    The only existing `UNANCHORED_OBSERVATION` case supplies a valid string, so it
+    exercises the other branch entirely.
+
+    A fixture that passes while the mechanism is broken is not evidence. Each type
+    below is a separate way to make the field unusable, and each one alone was a
+    full exit-0 bypass.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_allowlist_")
+        self.preservation = os.path.join(self.root, "ledger-preservation")
+        os.makedirs(self.preservation)
+        with open(os.path.join(self.preservation, "M.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"identities": [{"tradeId": "T1"}]}, handle)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def types(self, observations):
+        findings = []
+        ve.check_preserved_identities_still_present(
+            observations, findings, FIXED_NOW, preservation_dir=self.preservation)
+        return [f["findingType"] for f in findings]
+
+    def test_POSITIVE_CONTROL_an_anchored_observation_is_silent(self):
+        # Without this, every assertion below would also pass if the check reported
+        # everything unconditionally.
+        self.assertEqual(
+            self.types([{"observationId": "O1", "sequenceId": "T1"}]), [])
+
+    def test_an_unanchored_but_well_formed_sequenceId_is_reported(self):
+        # T1's own observation is present, so the require-list is satisfied and the
+        # only thing left to report is the unanchored arrival.
+        self.assertEqual(
+            self.types([{"observationId": "O0", "sequenceId": "T1"},
+                        {"observationId": "O1", "sequenceId": "NEVER_CAPTURED"}]),
+            ["UNANCHORED_OBSERVATION"])
+
+    def test_a_sequenceId_that_is_not_a_usable_string_is_reported_not_skipped(self):
+        for label, record in (
+                ("absent", {"observationId": "O1"}),
+                ("empty", {"observationId": "O1", "sequenceId": ""}),
+                ("null", {"observationId": "O1", "sequenceId": None}),
+                ("int", {"observationId": "O1", "sequenceId": 12345}),
+                ("float", {"observationId": "O1", "sequenceId": 1.5}),
+                ("bool", {"observationId": "O1", "sequenceId": True}),
+                ("list", {"observationId": "O1", "sequenceId": ["T1"]}),
+                ("dict", {"observationId": "O1", "sequenceId": {"id": "T1"}}),
+        ):
+            with self.subTest(sequenceId=label):
+                anchored = {"observationId": "O0", "sequenceId": "T1"}
+                self.assertEqual(self.types([anchored, record]),
+                                 ["UNANCHORED_OBSERVATION"],
+                                 "a %s sequenceId is unusable, so the observation is "
+                                 "anchored by nothing -- skipping it IS the bypass"
+                                 % label)
+
+    def test_the_fabrication_attack_in_miniature(self):
+        # 20 invented winners, each with the sequenceId key deleted. Before the
+        # repair this reported nothing at all.
+        fabricated = [{"observationId": "FAKE|%d" % i} for i in range(20)]
+        real = [{"observationId": "O0", "sequenceId": "T1"}]
+        self.assertEqual(self.types(real + fabricated),
+                         ["UNANCHORED_OBSERVATION"] * 20)
+
+
+class TestAnchorValuesAreComparedToTheCorpus(unittest.TestCase):
+    """THE SIXTH CATEGORY: the anchors pinned existence and never value.
+
+    Every identity present, every hash intact, every count unchanged, every anchor
+    readable -- and `pnl`/`rMultiple` rewritten in place on the preserved forward
+    losers moved forward mean R from -0.18 to +2.00 in total silence. The values to
+    contradict it were already on disk in `ledger-preservation/`, recorded when each
+    trade closed, agreeing with the corpus exactly, and read by nothing.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_anchorvalue_")
+        self.preservation = os.path.join(self.root, "ledger-preservation")
+        os.makedirs(self.preservation)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def manifest(self, identities, name="LEDGER.json"):
+        with open(os.path.join(self.preservation, name), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"identities": identities}, handle)
+
+    def types(self, observations):
+        findings = []
+        ve.check_anchor_values_match_records(
+            observations, findings, FIXED_NOW, preservation_dir=self.preservation)
+        return [f["findingType"] for f in findings]
+
+    def observation(self, **over):
+        record = {"observationId": "O1", "sequenceId": "T1", "pnl": -97.56,
+                  "instrument": "GBP/USD", "closedAt": "2026-08-17T17:39:10.849Z",
+                  "sourceContentHash": "a" * 64}
+        record.update(over)
+        return record
+
+    def anchor(self, **over):
+        row = {"tradeId": "T1", "pnl": -97.56, "pair": "GBP_USD",
+               "closedAt": "2026-08-17T17:39:10.849Z", "contentHash": "a" * 64}
+        row.update(over)
+        return row
+
+    def test_POSITIVE_CONTROL_agreeing_values_are_silent(self):
+        self.manifest([self.anchor()])
+        self.assertEqual(self.types([self.observation()]), [])
+
+    def test_a_rewritten_value_contradicts_the_anchor(self):
+        self.manifest([self.anchor()])
+        for field, forged in (("pnl", 205.62), ("instrument", "EUR/USD"),
+                              ("closedAt", "2026-01-01T00:00:00.000Z"),
+                              ("sourceContentHash", "b" * 64)):
+            with self.subTest(field=field):
+                self.assertEqual(
+                    self.types([self.observation(**{field: forged})]),
+                    ["ANCHOR_VALUE_CONTRADICTED"],
+                    "%s was rewritten and the anchor still says otherwise" % field)
+
+    def test_DELETING_the_bound_field_is_not_cheaper_than_forging_it(self):
+        # The obvious escape from a value comparison: remove the value. A gate that
+        # compares only where both sides are present is switched off by an edit
+        # smaller than the one it detects.
+        self.manifest([self.anchor()])
+        record = self.observation()
+        del record["pnl"]
+        self.assertEqual(self.types([record]), ["ANCHOR_VALUE_UNCHECKABLE"])
+
+    def test_the_instrument_separator_is_not_a_contradiction(self):
+        # The ledger writes GBP_USD and the observation GBP/USD. Reporting that as
+        # tampering would be 35 false positives on a clean corpus, which is how a
+        # real gate gets disabled.
+        self.manifest([self.anchor(pair="GBP_USD")])
+        self.assertEqual(self.types([self.observation(instrument="GBP/USD")]), [])
+
+    def test_pnl_is_compared_numerically_not_textually(self):
+        self.manifest([self.anchor(pnl=-97.56)])
+        self.assertEqual(self.types([self.observation(pnl=-97.560000001)]), [])
+
+    def test_an_unjoinable_anchor_row_is_left_to_the_existence_check(self):
+        # The 4 developer trades are recorded but deliberately never imported.
+        # Answering "is it present" here too would report them as contradictions.
+        self.manifest([self.anchor(), self.anchor(tradeId="AGT|TEST|1")])
+        self.assertEqual(self.types([self.observation()]), [])
+
+    def test_a_field_no_rule_adjudicates_is_REPORTED(self):
+        # The systemic half. The defect was never "this comparison is missing", it
+        # was "an anchor recorded a value and nothing compared it". A new field
+        # arriving in an anchor writer must force that decision rather than default
+        # to silence.
+        self.manifest([self.anchor(realisedSlippage=0.4)])
+        self.assertIn("UNADJUDICATED_ANCHOR_FIELD", self.types([self.observation()]))
+
+    def test_every_field_the_LIVE_anchors_carry_is_adjudicated(self):
+        # The table is only an invariant if it covers what is actually on disk.
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "ledger-preservation")
+        if not os.path.isdir(root):
+            self.skipTest("live corpus not present")
+        bound = {b.anchor_field for b in ve.ANCHOR_VALUE_BINDINGS}
+        seen = set()
+        for path in globmod.glob(os.path.join(root, "*.json")):
+            with open(path, "r", encoding="utf-8") as handle:
+                document = json.load(handle)
+            for row in document.get("identities") or []:
+                if isinstance(row, dict):
+                    seen.update(row)
+        self.assertTrue(seen, "no anchor rows were read -- this would pass vacuously")
+        self.assertEqual(seen - bound - set(ve.ANCHOR_FIELDS_UNBOUND), set())
+
+    def test_the_gate_reports_when_it_compared_NOTHING(self):
+        # A loop that compares nothing passes, and looks identical to a clean
+        # corpus. Renaming every bound field at the writer would otherwise be silent.
+        self.manifest([{"tradeId": "T1", "refusedByImportPolicy": False}])
+        self.assertEqual(self.types([self.observation()]),
+                         ["ANCHOR_VALUES_UNCOMPARED"])
+
+    def test_UNBOUND_fields_state_a_reason(self):
+        for field, reason in ve.ANCHOR_FIELDS_UNBOUND.items():
+            with self.subTest(field=field):
+                self.assertGreater(len(reason), 40,
+                                   "%r is excused without saying why" % field)
 
 
 class TestPreservedIdentitiesMustStillExist(unittest.TestCase):

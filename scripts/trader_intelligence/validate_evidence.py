@@ -11,6 +11,7 @@ findings array) per evidence-integrity-report.schema.json, rather than
 introducing a redundant standalone IntegrityFinding entity type.
 """
 import argparse
+import collections
 import glob as globmod
 import json
 import os
@@ -365,6 +366,173 @@ def check_preserved_identities_still_present(observations, findings, now,
                       "recorded before it is imported, so an observation anchored by "
                       "nothing was not minted from a captured package."
                       % (sequence_id,), now)
+
+
+#: Every VALUE an anchor records about a trade, and the corpus field it must agree
+#: with. A table for the same reason CORPUS_ANCHORS is one: the recurring shape is
+#: not "this particular comparison is missing", it is "an anchor records something
+#: and nothing reads it". See check_anchor_values_match_records.
+#:
+#: (anchor field, observation field, comparison). Every entry was MEASURED against
+#: the live corpus before being wired, and each agrees exactly today -- so none of
+#: them costs a false positive.
+AnchorValueBinding = collections.namedtuple(
+    "AnchorValueBinding", "anchor_field record_field compare agreement")
+
+ANCHOR_VALUE_BINDINGS = (
+    AnchorValueBinding("pnl", "pnl", "number", "35/35"),
+    AnchorValueBinding("pair", "instrument", "instrument", "35/35"),
+    AnchorValueBinding("closedAt", "closedAt", "exact", "35/35"),
+    AnchorValueBinding("contentHash", "sourceContentHash", "exact", "259/259"),
+)
+
+#: Fields an anchor row carries that are deliberately NOT bound to a corpus value,
+#: each with the reason it is not. A field that is neither bound above nor excused
+#: here is REPORTED rather than ignored -- that is the invariant. Adding a field to
+#: an anchor writer is a decision about whether it is checkable, and it has to be
+#: made rather than defaulted to silence.
+ANCHOR_FIELDS_UNBOUND = {
+    "tradeId": "the join key itself, required by check_preserved_identities_still_present",
+    "refusedByImportPolicy": "a fact about the IMPORT, not about the trade; read by "
+                             "the require-list",
+    "hash": "MEASURED: disagrees with sourceContentHash on 35 of 35 preserved trades. "
+            "It hashes the ledger row, not the evidence package, so binding it would "
+            "report 35 false contradictions on a clean corpus.",
+    "captureBasis": "no observation carries captureBasis -- it is a property of the "
+                    "EvidenceSource, checked by check_source_capture_basis_agrees_with_type",
+}
+
+
+def _values_agree(binding, anchor_value, record_value):
+    if binding.compare == "number":
+        try:
+            return abs(float(anchor_value) - float(record_value)) < 1e-6
+        except (TypeError, ValueError):
+            return False
+    if binding.compare == "instrument":
+        # The ledger writes GBP_USD, the observation GBP/USD. Same instrument.
+        return (isinstance(record_value, str)
+                and anchor_value == record_value.replace("/", "_"))
+    return anchor_value == record_value
+
+
+def check_anchor_values_match_records(observations, findings, now,
+                                      preservation_dir=None):
+    """An anchor pins WHICH trades existed. This pins WHAT THEY WERE.
+
+    THE SIXTH CATEGORY. Every gate before this one asks about existence: is the
+    identity still present, did an unanchored one appear, is the anchor readable.
+    None asked whether the surviving record still says what the anchor says it said.
+    So an attack that touches no id, no hash, no count and no anchor -- editing
+    `pnl` and `rMultiple` in place on the 21 preserved forward losers -- moved
+    forward mean R from -0.18 to +2.00 in total silence, exit 0. It did not even
+    need a hand-edited state file: `research_assimilation.py --write`, a documented
+    maintenance command, re-stamped the fingerprint from the tampered corpus and
+    wrote a normal-looking ledger entry.
+
+    The evidence to catch it was already on disk and already committed.
+    `ledger-preservation/PAPER_LEDGER_PRE_BACKFILL.json` records `pnl`, `pair` and
+    `closedAt` per trade; `MOGO_IDENTITY_MANIFEST.json` records the package
+    `contentHash`. Measured on the live corpus they agree with the observations
+    35/35, 35/35, 35/35 and 259/259 -- exact, and read by nothing.
+
+    That is the shape twice over, which is why this is a TABLE and not two
+    comparisons: the defect is not a missing check, it is that an anchor could
+    record a value no one compared. `ANCHOR_FIELDS_UNBOUND` makes the other
+    direction explicit, so a field added to an anchor writer cannot quietly join the
+    unread set.
+
+    Values are compared only where both sides are present AND the identity joins.
+    An anchored trade whose observation has LOST the bound field is reported, not
+    skipped -- deleting `pnl` from the record must not be cheaper than forging it.
+    """
+    if not preservation_dir or not os.path.isdir(preservation_dir):
+        return
+    by_sequence = {}
+    for obs in observations:
+        sequence_id = obs.get("sequenceId")
+        if isinstance(sequence_id, str) and sequence_id:
+            by_sequence.setdefault(sequence_id, obs)
+
+    comparisons = 0
+    joined_rows = 0
+    for path in sorted(globmod.glob(os.path.join(preservation_dir, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                manifest = json.load(handle)
+        except (ValueError, OSError):
+            # Reported by check_preserved_identities_still_present; not repeated here.
+            continue
+        if not isinstance(manifest, dict):
+            continue
+        for row in manifest.get("identities") or []:
+            if not isinstance(row, dict):
+                continue
+            trade_id = row.get("tradeId")
+            if not isinstance(trade_id, str) or not trade_id:
+                continue
+            for field in sorted(row):
+                if field in ANCHOR_FIELDS_UNBOUND:
+                    continue
+                if any(b.anchor_field == field for b in ANCHOR_VALUE_BINDINGS):
+                    continue
+                _finding(findings, "UNADJUDICATED_ANCHOR_FIELD", "ERROR",
+                          "TRADE_OBSERVATION", trade_id,
+                          "Anchor %s records field %r about this trade, and no rule "
+                          "says whether it must agree with the corpus. An anchor that "
+                          "records a value nothing compares is the value-tamper hole "
+                          "again: bind it in ANCHOR_VALUE_BINDINGS or excuse it in "
+                          "ANCHOR_FIELDS_UNBOUND with the measurement."
+                          % (os.path.basename(path), field), now)
+            obs = by_sequence.get(trade_id)
+            if obs is None:
+                # Absence is check_preserved_identities_still_present's question, and
+                # it excludes developer trades by policy. Answering it again here
+                # would report the 4 refused rows as contradictions.
+                continue
+            joined_rows += 1
+            for binding in ANCHOR_VALUE_BINDINGS:
+                if binding.anchor_field not in row:
+                    continue
+                anchor_value = row[binding.anchor_field]
+                if binding.record_field not in obs:
+                    _finding(findings, "ANCHOR_VALUE_UNCHECKABLE", "ERROR",
+                              "TRADE_OBSERVATION", obs.get("observationId"),
+                              "Anchor %s records %s=%r for trade %s, but the "
+                              "observation no longer carries %r, so the anchor cannot "
+                              "be checked against it. Deleting the field must not be "
+                              "cheaper than forging it."
+                              % (os.path.basename(path), binding.anchor_field,
+                                 anchor_value, trade_id, binding.record_field), now)
+                    continue
+                comparisons += 1
+                if _values_agree(binding, anchor_value, obs[binding.record_field]):
+                    continue
+                _finding(findings, "ANCHOR_VALUE_CONTRADICTED", "ERROR",
+                          "TRADE_OBSERVATION", obs.get("observationId"),
+                          "Anchor %s records %s=%r for trade %s, but the preserved "
+                          "observation says %s=%r. The anchor was written when the "
+                          "trade closed and is not derived from the corpus, so the "
+                          "corpus is what changed."
+                          % (os.path.basename(path), binding.anchor_field,
+                             anchor_value, trade_id, binding.record_field,
+                             obs[binding.record_field]), now)
+
+    # NOT VACUOUS. A loop that compares nothing passes, and every way of emptying it
+    # -- no rows, no joins, every bound field renamed at the writer -- looks exactly
+    # like a clean corpus from the outside.
+    # Counted over rows that JOINED an observation, not over rows seen. A manifest
+    # holding only developer trades legitimately compares nothing -- whether those
+    # trades should be present at all is check_preserved_identities_still_present's
+    # question, and answering it twice would report the 4 refused rows here too.
+    if joined_rows and not comparisons:
+        _finding(findings, "ANCHOR_VALUES_UNCOMPARED", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "%d anchor rows joined a preserved observation, but not one "
+                  "anchored value was compared. Every binding in "
+                  "ANCHOR_VALUE_BINDINGS is inapplicable -- so removing the bound "
+                  "fields from the anchor WRITER would switch this gate off in "
+                  "silence." % (joined_rows,), now)
 
 
 def _check_preservation_anchor(preservation_dir, report):
@@ -1787,6 +1955,10 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     # Ledger lives beside the evidence root: <ti_root>/research-state/ledger.
     _state_root = os.path.dirname(os.path.abspath(evidence_root))
     check_preserved_identities_still_present(
+        observations, findings, now,
+        preservation_dir=os.path.join(os.path.abspath(evidence_root),
+                                      "ledger-preservation"))
+    check_anchor_values_match_records(
         observations, findings, now,
         preservation_dir=os.path.join(os.path.abspath(evidence_root),
                                       "ledger-preservation"))
