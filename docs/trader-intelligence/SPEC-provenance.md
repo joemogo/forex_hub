@@ -346,3 +346,32 @@ found only after the previous repair made them the cheapest remaining move. The 
 asking of any new gate is not "does this close the attack I just saw" but **"what does this
 gate reduce the corpus to, and what is invisible to anything expressed in those terms?"**
 
+### 7.7 What the identity anchor actually covers, stated so nobody over-trusts it
+
+`PRESERVED_IDENTITY_MISSING` is real and it closes the count-preserving substitution that
+defeated every aggregate anchor. Its **coverage is not the corpus**, and the difference matters
+more than the mechanism:
+
+- `evidence/ledger-preservation/` holds **one** manifest, written once, frozen at
+  **2026-08-17T17:39:10Z**.
+- It covers **35 of 259** observations (13.5%), and **26 of 29** in the FORWARD population.
+- `preserve_paper_ledger.js` is invoked by nothing — not `forward_capture.sh`, not any test —
+  so **coverage does not grow as the system runs; it decays**. Every forward close after the
+  snapshot is unanchored, and two of the three already uncovered are losses.
+
+So the guarantee is: *no trade preserved before 2026-08-17 can vanish*. It is not: *no trade
+can vanish*. A gate whose coverage shrinks while the system runs is not an invariant, and it
+should not be described as one.
+
+Making it continuous is blocked on a scope decision rather than on engineering: the ledger
+lives in Chrome's **Local Storage**, which — unlike IndexedDB's per-origin directories — is a
+single shared store holding 136 origins of the operator's browsing. The existing checkpoint is
+safe precisely because IndexedDB can be origin-scoped, and Local Storage cannot be. See
+backlog **B-32.14** for the options.
+
+And the anchor answers only one direction. It asks whether something *disappeared*; nothing
+asks whether something *appeared that was never observed* — §7.4(a) — and the system will
+re-bless fabricated growth on request via `research_assimilation --write`. A require-list
+cannot express that. An allow-list could, and an allow-list needs the coverage above. **They
+are one decision, not two.**
+
