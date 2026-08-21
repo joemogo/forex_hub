@@ -293,3 +293,99 @@ class TestLiveCoverage(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFabricationByAppendIsDetected(unittest.TestCase):
+    """The OTHER direction, askable only once coverage became continuous (B-32.15).
+
+    Fourteen rounds asked "did something disappear". Nothing asked "did something
+    APPEAR that was never observed" -- so appending a source and 200 invented winning
+    observations moved forward mean R from -0.18 to +1.72 with every gate green and
+    every preserved identity still present. Growth is what append-only expects, and a
+    require-list cannot tell invented growth from real growth.
+
+    Only an allow-list can, and an allow-list needs a manifest covering the whole
+    corpus -- which is why this could not have been enabled before the coverage work
+    and can be now.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_append_")
+        self.evidence = os.path.join(self.root, "evidence")
+        for name in ("sources", "observations", "ledger-preservation"):
+            os.makedirs(os.path.join(self.evidence, name))
+        os.makedirs(os.path.join(self.root, "research-state", "ledger"))
+        self.write("sources", "src", {
+            "sourceId": "EVSRC|MOGO|20260819|001", "sourceType": "paper_trade",
+            "title": "capture", "storageLocationType": "repository",
+            "provenanceStatus": "verified", "schemaVersion": 1,
+            "metadata": {"captureBasis": "LIVE_CLOSE",
+                         "engineStrategyId": "alex_g_sr_v1"}})
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, collection, name, record):
+        with open(os.path.join(self.evidence, collection, name + ".json"),
+                  "w", encoding="utf-8") as handle:
+            json.dump(record, handle)
+
+    def observation(self, oid, sequence_id):
+        self.write("observations", oid.replace("|", "_"), {
+            "observationId": oid, "sourceId": "EVSRC|MOGO|20260819|001",
+            "schemaVersion": 1, "strategyId": "alex_g_sr_v1",
+            "sourceContentHash": sequence_id + "-hash", "sequenceId": sequence_id,
+            "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"})
+
+    def manifest(self, trade_ids):
+        im.update_from_packages(
+            [package(t, content_hash=t + "-hash") for t in trade_ids],
+            os.path.join(self.evidence, "ledger-preservation",
+                         "MOGO_IDENTITY_MANIFEST.json"))
+
+    def types(self):
+        report = ve.run_integrity_checks(self.evidence, is_production=False)
+        self.assertTrue(os.listdir(os.path.join(self.evidence, "observations")),
+                        "vacuous run: no observations were loaded")
+        return [f["findingType"] for f in report["findings"]]
+
+    def test_an_observation_anchored_by_no_manifest_is_an_ERROR(self):
+        self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
+        self.observation("TOBS|MOGO|29990101|001", "INVENTED|1")
+        self.manifest(["TRADE|real"])
+        self.assertIn("UNANCHORED_OBSERVATION", self.types())
+
+    def test_POSITIVE_CONTROL_a_fully_anchored_corpus_is_silent(self):
+        # Without this, a check that flagged every observation would satisfy the test
+        # above and make the whole corpus permanently red.
+        self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
+        self.manifest(["TRADE|real"])
+        self.assertNotIn("UNANCHORED_OBSERVATION", self.types())
+
+    def test_bulk_fabrication_reports_every_invented_record(self):
+        # Reporting only the first would understate the scale, and the count is what
+        # tells a reader this was a bulk append rather than one stray record.
+        self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
+        for i in range(20):
+            self.observation("TOBS|MOGO|29990101|%03d" % i, "INVENTED|%03d" % i)
+        self.manifest(["TRADE|real"])
+        self.assertEqual(sum(1 for t in self.types() if t == "UNANCHORED_OBSERVATION"),
+                         20)
+
+    def test_it_is_silent_when_NO_manifest_exists_at_all(self):
+        # An allow-list with nothing to allow would condemn the entire corpus. The
+        # manifest's ABSENCE is reported by the availability invariant, not by
+        # declaring every observation fabricated.
+        self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
+        self.assertNotIn("UNANCHORED_OBSERVATION", self.types())
+
+    def test_an_observation_with_no_sequenceId_is_left_to_the_other_checks(self):
+        # Reporting it here too would double-count one defect under two names.
+        self.observation("TOBS|MOGO|20260819|001", "TRADE|real")
+        self.write("observations", "no_seq", {
+            "observationId": "TOBS|MOGO|20260819|002",
+            "sourceId": "EVSRC|MOGO|20260819|001", "schemaVersion": 1,
+            "strategyId": "alex_g_sr_v1", "sourceContentHash": "z" * 64,
+            "notes": "captureBasis=LIVE_CLOSE sourceType=paper_trade"})
+        self.manifest(["TRADE|real"])
+        self.assertNotIn("UNANCHORED_OBSERVATION", self.types())

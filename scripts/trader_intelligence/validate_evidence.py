@@ -276,6 +276,8 @@ def check_preserved_identities_still_present(observations, findings, now,
         return
     present = {obs.get("sequenceId") for obs in observations
                if isinstance(obs.get("sequenceId"), str)}
+    recorded = set()
+    saw_manifest = False
     for path in sorted(globmod.glob(os.path.join(preservation_dir, "*.json"))):
         try:
             with open(path, "r", encoding="utf-8") as handle:
@@ -288,6 +290,7 @@ def check_preserved_identities_still_present(observations, findings, now,
             continue
         if not isinstance(manifest, dict):
             continue
+        saw_manifest = True
         for row in manifest.get("identities") or []:
             if not isinstance(row, dict):
                 continue
@@ -296,6 +299,7 @@ def check_preserved_identities_still_present(observations, findings, now,
                 continue
             if is_developer_test_package({"sourceTradeId": trade_id}):
                 continue      # never minted as evidence; refused at import by policy
+            recorded.add(trade_id)
             if trade_id not in present:
                 _finding(findings, "PRESERVED_IDENTITY_MISSING", "ERROR",
                           "TRADE_OBSERVATION", trade_id,
@@ -304,6 +308,36 @@ def check_preserved_identities_still_present(observations, findings, now,
                           "existing -- and a substitution that keeps the corpus the "
                           "same size is invisible to every count-based check."
                           % (trade_id, os.path.basename(path), row.get("pnl")), now)
+
+    # THE OTHER DIRECTION, and it only became askable once coverage was continuous.
+    #
+    # Everything above asks "did something disappear". Nothing asked "did something
+    # APPEAR that was never observed" -- so appending a source and 200 invented
+    # winning observations with fresh ids moved forward mean R from -0.18 to +1.72
+    # with every gate green and every preserved identity still present. Growth is
+    # what append-only expects, and a require-list cannot tell invented growth from
+    # real growth. Only an allow-list can, and an allow-list needs a manifest that
+    # covers the whole corpus -- which is why this is enabled now and could not have
+    # been before (B-32.15).
+    #
+    # The pipeline updates the manifest BEFORE it imports, so any observation minted
+    # from a captured package is already anchored by the time it exists. An
+    # observation whose identity appears in no manifest was therefore not minted from
+    # a captured package.
+    if saw_manifest and recorded:
+        for obs in observations:
+            sequence_id = obs.get("sequenceId")
+            if not isinstance(sequence_id, str) or not sequence_id:
+                continue      # absence is reported by the sequence-id checks
+            if sequence_id in recorded:
+                continue
+            _finding(findings, "UNANCHORED_OBSERVATION", "ERROR", "TRADE_OBSERVATION",
+                      obs.get("observationId"),
+                      "Observation carries sequenceId %s, which appears in no "
+                      "preserved-identity manifest. Every trade MOGO captured is "
+                      "recorded before it is imported, so an observation anchored by "
+                      "nothing was not minted from a captured package."
+                      % (sequence_id,), now)
 
 
 def _check_preservation_anchor(preservation_dir, report):
