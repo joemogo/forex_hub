@@ -346,7 +346,14 @@ found only after the previous repair made them the cheapest remaining move. The 
 asking of any new gate is not "does this close the attack I just saw" but **"what does this
 gate reduce the corpus to, and what is invisible to anything expressed in those terms?"**
 
-### 7.7 What the identity anchor actually covers, stated so nobody over-trusts it
+### 7.7 What the identity anchor covers — SUPERSEDED, see 7.8
+
+*The section below described a frozen 13.5% snapshot. The operator approved option (A) and the
+anchor is now continuous at 100%. It is kept because the reasoning about coverage-versus-
+mechanism is what made the fix findable, and because a superseded claim should be visible as
+superseded rather than quietly rewritten.*
+
+### 7.7.1 (historical) What the identity anchor actually covered
 
 `PRESERVED_IDENTITY_MISSING` is real and it closes the count-preserving substitution that
 defeated every aggregate anchor. Its **coverage is not the corpus**, and the difference matters
@@ -374,4 +381,44 @@ asks whether something *appeared that was never observed* — §7.4(a) — and t
 re-bless fabricated growth on request via `research_assimilation --write`. A require-list
 cannot express that. An allow-list could, and an allow-list needs the coverage above. **They
 are one decision, not two.**
+
+### 7.8 Continuous identity coverage (B-32.14, operator option A)
+
+MOGO maintains its own append-only record of which trades have existed, inside its own
+IndexedDB origin and nothing else. Chrome's shared Local Storage is never inspected, copied,
+enumerated or depended upon — option (B) was declined, and with it the only route that would
+have read 136 unrelated origins out of the operator's profile.
+
+**Where the identities come from.** They were already in MOGO's origin: every evidence package
+carries `sourceTradeId`, and the capture pipeline already extracts hash-verified packages from
+the origin-scoped IndexedDB checkpoint. `identity_manifest.py` turns that existing stream into
+a committed manifest; `forward_capture.sh` updates it on every write-mode run.
+
+**Why it is continuous rather than decaying.** The update runs before the novelty check and
+before the "nothing new" early exit, and is driven by the *full* recovered set rather than the
+fresh one — the manifest records which trades EXIST in the store, not which are new to the
+corpus. A quiet capture is an idempotent no-op, not a gap. Its predecessor decayed precisely
+because it was written once and never again.
+
+**Measured coverage: 259 of 259 (100%)**, backfilled deterministically from 263 preserved
+capture packages carrying 263 distinct trade ids. Nothing was invented: a package with no
+`sourceTradeId` is skipped rather than given a synthetic one.
+
+**Why it is not a new single point of trust.** Each identity is stored with the `contentHash`
+of the package it came from, so it can be checked against the packages instead of believed. A
+trade id arriving with a *different* hash is a conflict: the first recorded value is kept and
+the run exits nonzero, because absorbing the newer hash would let a rewritten package launder
+itself into the manifest meant to anchor it. Its availability is enforced by the same
+`CORPUS_ANCHORS` invariant as every other anchor, so removing, emptying, renaming or hollowing
+it is an ERROR rather than a silent pass.
+
+**Failure behaviour.** The write is atomic (temp-and-rename), so an interrupted run leaves the
+old manifest or the new one and never half of either — a truncated manifest would read as
+identities that never existed. A damaged manifest is *refused*, not silently reset: starting
+fresh would erase every identity ever recorded, which is the anchor deleting itself in response
+to damage. Retry after a crash converges, and reordered input produces a byte-identical file.
+
+**What it still does not answer.** It asks whether something disappeared. It does not ask
+whether something *appeared* that was never observed — §7.4(a). That needs an allow-list, which
+needed this coverage first; see backlog B-32.15.
 
