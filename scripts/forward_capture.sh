@@ -69,7 +69,11 @@ assimilate_then() {
   say "assimilate: updating research state and recording what changed"
   python3 scripts/trader_intelligence/research_assimilation.py --write 2>&1 | sed 's/^/    /'
   local rc=${PIPESTATUS[0]}
-  [ "${rc:-0}" -eq 0 ] || { echo "FAIL: assimilation failed" >&2; exit 1; }
+  # Defaults to 1. This read `:-0` -- the same fail-open default corrected for
+  # IMPORT_RC one commit earlier, still standing in the function called before
+  # EVERY exit of the chain, and invisible to the invariant written to prevent it
+  # because that regex only matched UPPERCASE names ending in RC.
+  [ "${rc:-1}" -eq 0 ] || { echo "FAIL: assimilation failed" >&2; exit 1; }
   say "done."
   exit "${1:-0}"
 }

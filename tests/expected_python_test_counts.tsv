@@ -18,7 +18,7 @@ tests.trader_intelligence.test_answer_intake_reevaluation	40
 tests.trader_intelligence.test_candidate_search	58
 tests.trader_intelligence.test_decision_difference	34
 tests.trader_intelligence.test_exception_triage	32
-tests.trader_intelligence.test_forward_capture_guards	9
+tests.trader_intelligence.test_forward_capture_guards	10
 tests.trader_intelligence.test_forward_coverage	12
 tests.trader_intelligence.test_forward_novelty	19
 tests.trader_intelligence.test_graph	66

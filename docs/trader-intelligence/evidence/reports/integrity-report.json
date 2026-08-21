@@ -1,7 +1,7 @@
 {
   "findings": [
     {
-      "detectedAt": "2026-08-21T20:25:16Z",
+      "detectedAt": "2026-08-21T20:58:19Z",
       "entityId": "corpus",
       "entityType": "TRADE_OBSERVATION",
       "findingId": "EVF0001",
@@ -13,7 +13,7 @@
       "severity": "WARNING"
     },
     {
-      "detectedAt": "2026-08-21T20:25:16Z",
+      "detectedAt": "2026-08-21T20:58:19Z",
       "entityId": "corpus",
       "entityType": "TRADE_OBSERVATION",
       "findingId": "EVF0002",
@@ -26,7 +26,7 @@
     }
   ],
   "generated": true,
-  "generatedAt": "2026-08-21T20:25:16Z",
+  "generatedAt": "2026-08-21T20:58:19Z",
   "integrityReportId": "EVIDENCE_INTEGRITY|20260821|001",
   "summary": {
     "ERROR": 0,

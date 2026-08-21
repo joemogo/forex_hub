@@ -808,6 +808,11 @@ pinning any of it:
 step would silently pass — a defensive default that defaults to "fine" is decoration. Every rc
 default now fails closed, and that is asserted rather than remembered.
 
+> **That last sentence was FALSE when written, and §7.19 corrects it.** The scan matched
+> `[A-Z_]*RC` — the two names I happened to be looking at — and a lowercase `rc` four lines from
+> the top of the same file, inside the function called before *every* exit of the chain, still
+> read `${rc:-0}`. The invariant claiming to cover the shape was itself an instance patch.
+
 And the first version of the structural test used a three-line window, which the explanatory
 comment I had just written pushed the check past — so it failed on a step that was correctly
 guarded. A small live demonstration of the rule: proximity is not the property; the variable is.
@@ -820,3 +825,41 @@ nothing else would ever say so. The regeneration was purely additive (one shippe
 removals, MOGO's own 7 rules unchanged), so the perimeter was strengthened rather than weakened,
 and the generator took a timestamped backup first. The check earning its place is the point: it
 is the only thing in the system that notices governance decaying by standing still.
+
+
+### 7.19 An invariant scoped to the names you were looking at (B-32.25)
+
+§7.18 built a scan to eliminate the fail-open-default shape and asserted that *"every rc default
+now fails closed."* It did not. The scan matched `${([A-Z_]*RC):-N}` — a character class written
+while looking at `IMPORT_RC` and `RECONCILE_RC` — and `assimilate_then()`, the function called
+before **every** exit of the capture chain, contained `local rc=${PIPESTATUS[0]}` guarded by
+`[ "${rc:-0}" -eq 0 ]`. Lowercase, four lines from the top, in the file the scan reads.
+
+An invariant scoped to the names you happened to be looking at is an instance patch wearing a
+table. Two corrections, both by widening the *definition* rather than adding a name:
+
+- **Defaults are found by USAGE.** A status variable is one assigned from `$?` or `PIPESTATUS` —
+  that is what makes `0` mean "fine". Matching every variable instead was wrong the other way:
+  `${REFUSED_COUNT:-0}` is a count, and zero is its correct default.
+- **The command list is INVERTED.** It listed commands that *can* fail (`python3`, `node`,
+  `bash`, `osascript`), so a piped call to `scripts/mogo_evidence_checkpoint.sh` — which this
+  script already invokes twice — or `env python3 …`, or `cat f | python3 …`, was simply not seen.
+  A scan that must be told about each new command fails open on the next one. Everything is now
+  failure-capable unless it is a filter that cannot meaningfully fail, and the predicate skips
+  only constructs whose status **the shell itself consumes**: `if`, `||`, `[ … ]`, and
+  `VAR="$(…)"`.
+
+The non-vacuity proof is no longer a count. The scan is fed lines it must catch and lines it must
+not, and checked that it separates them — including the four forms that previously slipped past.
+A count cannot distinguish "found the right three" from "found three".
+
+**And the guard must be tested AFTER its capture.** Moving the test above the assignment reads as
+guarded to any window-based scan while the variable is unset at the moment of the test. It now
+fails closed loudly rather than silently — measured, `exit=1` — precisely *because* the default
+is 1, which is what that default is for. The ordering is asserted anyway.
+
+**Where this leaves the campaign.** Rounds 22, 23 and 24 each found no materially new defect
+*category*. What round 24 found was this: a repair, and the invariant generalising it, both
+landing one commit short of the shape they named. That is the honest end state — not that the
+system is unbreakable, but that the remaining findings are instances of shapes already named,
+caught by the invariants built for them, and shrinking.

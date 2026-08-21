@@ -42,30 +42,97 @@ def source():
 
 class TestEveryFailableStepIsChecked(unittest.TestCase):
 
-    #: A pipeline starting with one of these can fail meaningfully. `echo "$VAR" |
-    #: sed` cannot, and demanding a guard for it would be noise that gets ignored.
-    FAILABLE = ("python3", "node", "bash", "osascript")
+    #: INVERTED, and deliberately. This was a list of commands that CAN fail --
+    #: `python3`, `node`, `bash`, `osascript` -- so a piped call to
+    #: `scripts/mogo_evidence_checkpoint.sh` (which this script already invokes
+    #: twice), or `env python3 ...`, or `cat x | python3 ...`, was simply not seen.
+    #: A scan that must be told about each new command fails open on the next one.
+    #:
+    #: Everything is failure-capable unless it is one of these, which cannot fail in
+    #: a way worth guarding.
+    CANNOT_FAIL = ("echo", "printf", "true", ":", "sed", "awk", "tail", "head",
+                   "grep", "tr", "cut", "sort", "wc")
 
     def pipelines(self):
+        """Bare pipelines whose exit status is otherwise discarded.
+
+        Skipped, because their status is already consumed by the shell: `if <pipe>`
+        and `while <pipe>`; anything containing `||`, which guards inline; a `[ ... ]`
+        test, which is not a command; and `VAR="$(...)"`, where the assignment
+        carries the status and the script tests the captured value instead.
+
+        What is left is a statement whose status the shell throws away -- the only
+        place a guard has to be written by hand, and the place the reconcile step
+        was missing one.
+        """
         found = []
         for number, line in enumerate(source().splitlines(), start=1):
             stripped = line.strip()
             if "|" not in stripped or stripped.startswith("#"):
                 continue
-            head = stripped
-            for prefix in ("if ! ", "if ", "! "):
-                if head.startswith(prefix):
-                    head = head[len(prefix):]
-                    break
-            if head.split(" ", 1)[0] in self.FAILABLE:
-                found.append((number, stripped))
+            if stripped.startswith(("[", "if ", "elif ", "while ", "until ")):
+                continue
+            if "||" in stripped or "&&" in stripped:
+                continue
+            if re.match(r'^(local\s+)?[A-Za-z_][A-Za-z0-9_]*="?\$\(', stripped):
+                continue
+            segments = [seg.strip().split(" ", 1)[0].lstrip("!").strip()
+                        for seg in stripped.split("|") if seg.strip()]
+            if all(seg in self.CANNOT_FAIL for seg in segments):
+                continue
+            found.append((number, stripped))
         return found
 
     def test_the_scan_finds_the_pipelines_it_is_supposed_to(self):
         found = self.pipelines()
-        self.assertGreaterEqual(len(found), 4,
+        self.assertGreaterEqual(len(found), 3,
                                 "the scan found almost nothing, so every assertion "
                                 "below would pass vacuously: %r" % (found,))
+        # By content, not only by count: the reconcile step is the one that was
+        # unguarded, so a scan that stops seeing it has stopped doing its job even
+        # if the total happens to hold.
+        self.assertTrue(any("test_import_mogo_observations" in text
+                            for _line, text in found),
+                        "the reconcile pipeline is no longer scanned")
+
+    def test_the_scan_DETECTS_an_unguarded_step_added_to_the_script(self):
+        # The anti-vacuity proof, and the thing a count cannot give: feed the scan a
+        # script containing steps it must catch and steps it must not, and check it
+        # separates them. Written against the real predicate, not a copy of it.
+        must_catch = [
+            'python3 scripts/thing.py 2>&1 | sed \'s/^/    /\'',
+            'node scripts/thing.js --flag 2>&1 | tail -3',
+            'scripts/mogo_evidence_checkpoint.sh --selftest 2>&1 | sed \'s/^/  /\'',
+            'env python3 scripts/thing.py 2>&1 | sed \'s/^/  /\'',
+            'cat input.json | python3 scripts/thing.py | sed \'s/^/  /\'',
+        ]
+        must_ignore = [
+            'echo "$DETECT" | sed \'s/^/    /\'',
+            'if ! python3 scripts/thing.py 2>&1 | sed \'s/^/ /\'; then',
+            'python3 scripts/thing.py | sed \'s/^/ /\' || exit 1',
+            'CKPT="$(echo "$OUT" | awk \'{print $3}\')"',
+            '[ -n "$STORE" ] | true',
+        ]
+        original = globals()["source"]
+        for line in must_catch:
+            with self.subTest(catch=line[:44]):
+                globals()["source"] = lambda body=line: body
+                try:
+                    self.assertEqual(len(self.pipelines()), 1,
+                                     "an unguarded failure-capable step was not "
+                                     "seen, so adding one would be silent")
+                finally:
+                    globals()["source"] = original
+        for line in must_ignore:
+            with self.subTest(ignore=line[:44]):
+                globals()["source"] = lambda body=line: body
+                try:
+                    self.assertEqual(self.pipelines(), [],
+                                     "a step whose status the shell already "
+                                     "consumes was reported; false positives are "
+                                     "how a real scan gets deleted")
+                finally:
+                    globals()["source"] = original
 
     def test_pipefail_is_set_or_the_if_not_form_proves_nothing(self):
         # `if ! cmd | sed` only catches a failing `cmd` BECAUSE pipefail is set.
@@ -76,17 +143,21 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
         lines = source().splitlines()
         for number, text in self.pipelines():
             with self.subTest(line=number, code=text[:70]):
-                guarded_inline = text.lstrip().startswith(("if ! ", "! "))
                 # Follows the VARIABLE, not a fixed number of lines. A window of N
                 # lines is broken by adding a comment -- which is how this test
                 # first failed, on a step that was correctly guarded.
                 window = "\n".join(lines[number:number + 12])
                 captured = re.search(r"([A-Za-z_][A-Za-z0-9_]*)=\$\{PIPESTATUS\[0\]\}",
                                      window)
+                # AFTER the capture, not merely somewhere near it. Testing the
+                # variable on the line above its assignment reads as guarded to any
+                # window-based scan while the variable is unset at the moment of the
+                # test. It fails closed today only because the default is 1 -- which
+                # is the whole reason that default is 1.
                 tested = bool(captured and re.search(
                     r"\$\{%s[:\-}][^\n]*-eq 0 \]" % re.escape(captured.group(1)),
-                    window))
-                self.assertTrue(guarded_inline or (captured and tested),
+                    window[captured.end():]))
+                self.assertTrue(captured and tested,
                                 "line %d runs a command that can fail and neither "
                                 "guards it with `if !` nor captures PIPESTATUS and "
                                 "tests it. A step that cannot fail the run is not a "
@@ -104,8 +175,29 @@ class TestEveryFailableStepIsChecked(unittest.TestCase):
         # The default exists for the case where that assignment is removed, skipped
         # or added out of order, and that is exactly the case where it must fail
         # CLOSED. A defensive default that defaults to "fine" is decoration.
-        defaults = re.findall(r"\$\{([A-Z_]*RC):-(\d+)\}", source())
+        # Scoped by USAGE, not by name. The first version matched `[A-Z_]*RC`,
+        # written while looking at IMPORT_RC and RECONCILE_RC -- and a lowercase
+        # `rc` sibling four lines from the top of the same file, inside the function
+        # called before every exit of the chain, was invisible to it. An invariant
+        # scoped to the names you happened to be looking at is an instance patch
+        # wearing a table.
+        #
+        # Widening it to every variable was wrong the other way: `${REFUSED_COUNT:-0}`
+        # is a count, and zero is its correct default. A STATUS variable is one
+        # assigned from `$?` or `PIPESTATUS` -- that is what makes zero mean "fine".
+        body = source()
+        status_vars = set(re.findall(
+            r"(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)=\$\{PIPESTATUS\[\d+\]\}", body))
+        status_vars |= set(re.findall(
+            r"(?:local\s+)?([A-Za-z_][A-Za-z0-9_]*)=\$\?", body))
+        self.assertTrue(status_vars,
+                        "no exit-status variables found -- passes vacuously")
+        defaults = [(name, value) for name, value
+                    in re.findall(r"\$\{([A-Za-z_][A-Za-z0-9_]*):-(\d+)\}", body)
+                    if name in status_vars]
         self.assertTrue(defaults, "no rc defaults found -- passes vacuously")
+        self.assertTrue(defaults,
+                        "no exit-status defaults found -- passes vacuously")
         for name, value in defaults:
             with self.subTest(variable=name):
                 self.assertNotEqual(
