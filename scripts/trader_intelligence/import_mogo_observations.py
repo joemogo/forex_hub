@@ -372,6 +372,16 @@ def observation_from_package(package, now, counters=None, source=None):
     objects = package.get("objects") or {}
     positions = objects.get("positions") or []
     outcomes = objects.get("outcomes") or []
+    # EXACTLY ONE, or skip. A package carrying two positions minted one record from
+    # `positions[0]` with no skip entry and no report line -- a silent partial
+    # import, contradicting this module's own contract that a package missing its
+    # position or outcome is SKIPPED with a reason. It also disagrees with the
+    # witness, which treats a list that is not exactly one entry as unreadable
+    # (`_witness_value`), so the record it minted could never be checked anyway.
+    if len(positions) > 1 or len(outcomes) > 1:
+        return None, ("package carries %d positions and %d outcomes; exactly one of "
+                      "each is required, and choosing between them would be a guess"
+                      % (len(positions), len(outcomes)))
     if not positions:
         return None, "NO_POSITION_OBJECT"
     if not outcomes:

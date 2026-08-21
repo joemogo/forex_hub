@@ -517,5 +517,73 @@ class TestAConflictDoesNotAdvanceTheManifest(ManifestCase):
         self.assertEqual([r["tradeId"] for r in im.load(self.path)["identities"]],
                          ["T1", "T2"])
 
+
+class TestMergeNeverShrinksAndNeverLocksInANull(unittest.TestCase):
+    """Two ways the append-only record quietly stopped being one.
+
+    `merge` rebuilt `document["identities"]` from a dict comprehension that filtered
+    out non-dict rows and non-string tradeIds -- so merging DROPPED those rows and
+    wrote the shrunk manifest, in the module whose own docstring says a shrinking
+    manifest is the defect it exists to catch. It computed before > after, printed
+    it, and returned success.
+
+    And a row recorded from a package carrying no `contentHash` anchored nothing:
+    the conflict predicate requires BOTH hashes truthy, so first-hash-wins locked
+    the null in forever and the real hash was never reported. The stated defence --
+    "stored WITH the contentHash, so the manifest can be checked against the
+    packages rather than believed" -- was silently void for that row.
+    """
+
+    def test_a_malformed_row_is_CARRIED_not_dropped(self):
+        document = {"identities": [{"tradeId": "A", "contentHash": "aa"},
+                                   {"tradeId": 7}, "not-a-dict", {"noTradeId": 1}]}
+        before = len(document["identities"])
+        document, added, conflicts = im.merge(document, [
+            {"tradeId": "B", "contentHash": "bb", "captureBasis": "X",
+             "refusedByImportPolicy": False}])
+        self.assertEqual(added, ["B"])
+        self.assertEqual(conflicts, [])
+        self.assertEqual(len(document["identities"]), before + 1,
+                         "an append-only record does not get to decide which of "
+                         "its rows were worth keeping")
+
+    def test_repeated_merges_never_reduce_the_row_count(self):
+        document = {"identities": [{"tradeId": 7}, "not-a-dict"]}
+        for _ in range(3):
+            document, _added, _conflicts = im.merge(document, [])
+            self.assertEqual(len(document["identities"]), 2)
+
+    def test_an_ABSENT_contentHash_is_filled_by_a_later_package(self):
+        document = {"identities": [{"tradeId": "C", "contentHash": None}]}
+        document, added, conflicts = im.merge(document, [
+            {"tradeId": "C", "contentHash": "real", "captureBasis": "X",
+             "refusedByImportPolicy": False}])
+        row = [r for r in document["identities"] if r["tradeId"] == "C"][0]
+        self.assertEqual(row["contentHash"], "real",
+                         "a null hash anchors nothing and must not be permanent")
+        self.assertEqual(conflicts, [])
+        self.assertTrue(added, "filling an absent hash is a change worth reporting")
+
+    def test_but_a_RECORDED_hash_is_never_overwritten(self):
+        # The distinction that matters: filling an absent value is not the same as
+        # taking a newer one, which is how a rewritten package would launder itself
+        # into the manifest meant to anchor it.
+        document = {"identities": [{"tradeId": "D", "contentHash": "one"}]}
+        document, _added, conflicts = im.merge(document, [
+            {"tradeId": "D", "contentHash": "two", "captureBasis": "X",
+             "refusedByImportPolicy": False}])
+        row = [r for r in document["identities"] if r["tradeId"] == "D"][0]
+        self.assertEqual(row["contentHash"], "one")
+        self.assertEqual([c["tradeId"] for c in conflicts], ["D"])
+
+    def test_POSITIVE_CONTROL_an_ordinary_append_still_works(self):
+        document = {"identities": [{"tradeId": "A", "contentHash": "aa"}]}
+        document, added, conflicts = im.merge(document, [
+            {"tradeId": "B", "contentHash": "bb", "captureBasis": "X",
+             "refusedByImportPolicy": False}])
+        self.assertEqual(added, ["B"])
+        self.assertEqual(conflicts, [])
+        self.assertEqual(len(document["identities"]), 2)
+
 if __name__ == "__main__":
     unittest.main()

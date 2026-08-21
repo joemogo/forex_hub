@@ -732,3 +732,51 @@ out of `run_integrity_checks` **before the report was written**, leaving the pre
 `ERROR: 0` on disk for other tooling to read. Same shape as the NaN crash (§7.13's sibling),
 different trigger: a diagnostic that dies leaves behind an all-clear describing a corpus that no
 longer exists.
+
+### 7.17 The write path — the code that mints what every gate later checks (B-32.23)
+
+Twenty-two rounds hardened the gates that examine records *after* they exist. Almost nothing had
+adversarially examined the code that **mints** them. That turned out to be the least-examined
+surface in the system, and it held two real defects.
+
+**The reconcile step's exit code was discarded.** Every step in `forward_capture.sh` checks its
+return code through `PIPESTATUS` — except the last one, the gate named "forward population and
+balance relation", which piped into `sed` and moved on. So `--write` completed, assimilated and
+exited 0 whether the reconciliation passed, failed, or never collected a single test. It is the
+same *"the lane exits 0 while its check did not pass"* shape repaired one commit earlier in
+`run_all.sh`, left standing in the chain that actually runs on live forward evidence. Not a
+forgery bypass — a live-operations blind spot, which is worse in a different way: it fails
+exactly when something has already gone wrong.
+
+**The importer's field mapping was pinned by nothing.** Five mutations of `POSITION_MAP` /
+`OUTCOME_MAP` survived the entire suite: `entry ← originalStop` (which mints a record whose entry
+equals its stop), `exitPrice ← balanceAfter`, `accountBalanceBefore ← balanceAfter`,
+`positions[-1]` instead of `positions[0]`, and `sequenceId = None` on every record. The §7.12
+witness catches the *resulting records* and `UNANCHORED_OBSERVATION` catches the last — so this
+is not a bypass. But that catch is downstream and conditional on the gitignored artifact
+surviving, and `forward_capture.sh` never runs the evidence validator: a mis-mapping importer
+would write corrupted forward evidence and the capture chain would exit 0.
+
+The repair is an invariant, not five assertions: **the importer's mapping for a field the witness
+compares must be the pairing the witness compares it by.** `POSITION_MAP`/`OUTCOME_MAP` and
+`PACKAGE_WITNESSES` are now checked against each other, in both directions, so neither can be
+edited alone — plus an end-to-end test that a minted record passes its own witness. That is the
+same shape as `ANCHOR_VALUE_BINDINGS` (§7.9) and `CORPUS_ANCHORS` (§7.13): two tables that must
+agree, rather than a list someone has to remember.
+
+**Three smaller ones, all in the append-only record itself:**
+
+- `merge` rebuilt `identities` from a comprehension that filtered out non-dict rows and
+  non-string `tradeId`s — so merging **dropped** them and wrote the shrunk manifest, in the module
+  whose docstring says a shrinking manifest is the defect it exists to catch. It computed
+  `before > after`, printed it, and returned success. Those rows anchor nothing either way, but an
+  append-only record does not get to decide which of its rows were worth keeping.
+- A row recorded from a package with no `contentHash` locked `null` in permanently: the conflict
+  predicate requires *both* hashes truthy, so the real hash arriving later was never recorded and
+  never reported. That row's stated defence — "stored WITH the contentHash, so the manifest can be
+  checked against the packages rather than believed" — was silently void. Filling an absent hash
+  is not overwriting a recorded one, and a recorded one is still never overwritten.
+- A package carrying two positions minted one record from `positions[0]` with no skip entry and
+  no report line — a silent partial import, contradicting the importer's own contract *and* the
+  witness, which treats a list that is not exactly one entry as unreadable. It is now skipped with
+  a reason: choosing between two positions is a guess about which trade the package describes.

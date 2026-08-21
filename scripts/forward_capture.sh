@@ -219,7 +219,20 @@ IMPORT_RC=${PIPESTATUS[0]}
 
 if [ $WRITE -eq 1 ]; then
   say "reconcile: forward population and balance relation"
+  # ITS EXIT CODE WAS DISCARDED. Every other step in this script checks rc through
+  # PIPESTATUS; this one -- the last gate in the chain that runs on live evidence --
+  # piped into `sed` and moved on, so `--write` completed, assimilated and exited 0
+  # whether the reconciliation passed, failed, or never collected a single test.
+  # That is the same "the lane exits 0 while its check did not pass" shape repaired
+  # in run_all.sh, left standing in the chain that actually touches forward evidence.
   python3 -m unittest tests.trader_intelligence.test_import_mogo_observations 2>&1 | tail -3 | sed 's/^/    /'
+  RECONCILE_RC=${PIPESTATUS[0]}
+  [ "${RECONCILE_RC:-1}" -eq 0 ] || {
+    echo "FAIL: reconciliation failed -- forward population or the balance relation" >&2
+    echo "      no longer holds. The evidence is imported; do not trust the figures" >&2
+    echo "      until this passes." >&2
+    exit 1
+  }
 fi
 
 assimilate_then 0

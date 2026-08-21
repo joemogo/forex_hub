@@ -119,6 +119,17 @@ def merge(document, rows):
             existing[trade_id] = row
             added.append(trade_id)
             continue
+        if previous.get("contentHash") is None and row.get("contentHash"):
+            # A row recorded from a package that carried no `contentHash` anchors
+            # nothing -- the stated defence is that an identity is "stored WITH the
+            # contentHash, so the manifest can be checked against the packages
+            # rather than believed", and a null makes that silently void. First-hash-
+            # wins locked the null in forever and never reported the real hash as a
+            # conflict, because the predicate below requires BOTH to be truthy.
+            # Filling an absent hash is not overwriting a recorded one.
+            previous["contentHash"] = row["contentHash"]
+            added.append(trade_id + " (hash recorded)")
+            continue
         if (previous.get("contentHash") and row.get("contentHash")
                 and previous["contentHash"] != row["contentHash"]):
             conflicts.append({
@@ -126,7 +137,19 @@ def merge(document, rows):
                 "recordedContentHash": previous["contentHash"],
                 "observedContentHash": row["contentHash"],
             })
-    document["identities"] = [existing[k] for k in sorted(existing)]
+    # A MALFORMED ROW IS STILL A ROW. `existing` is built by filtering out non-dict
+    # rows and non-string tradeIds, and the document was then REBUILT from it -- so
+    # merging dropped those rows and wrote the shrunk manifest, in the module whose
+    # own docstring says a shrinking manifest is the defect it exists to catch. It
+    # computed before > after, printed it, and returned success.
+    #
+    # They are carried through untouched instead. They anchor nothing either way --
+    # the require-list skips them -- but an append-only record does not get to
+    # decide which of its rows were worth keeping.
+    unusable = [row for row in document["identities"]
+                if not (isinstance(row, dict) and isinstance(row.get("tradeId"), str)
+                        and row.get("tradeId"))]
+    document["identities"] = ([existing[k] for k in sorted(existing)] + unusable)
     document["schemaVersion"] = SCHEMA_VERSION
     document["generated"] = True
     return document, added, conflicts

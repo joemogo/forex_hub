@@ -28,6 +28,11 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "trader_intelligence"))
 
 import import_mogo_observations as imp    # noqa: E402
+import inspect                            # noqa: E402
+import validate_evidence as ve            # noqa: E402
+
+imo = imp
+FIXED_NOW = datetime.datetime(2026, 8, 21, tzinfo=datetime.timezone.utc)
 import trade_observation as to            # noqa: E402
 
 NOW = datetime.datetime(2026, 8, 17, 12, 0, 0)
@@ -779,6 +784,138 @@ class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
         self.assertGreater(overlap, 1,
                            "no concurrent positions found; revisit the model")
 
+
+
+class TestTheImporterMintsWhatTheWitnessWillCheck(unittest.TestCase):
+    """The mapping that decides what a record SAYS was pinned by nothing.
+
+    Five mutations of `POSITION_MAP`/`OUTCOME_MAP` survived the whole suite --
+    `entry <- originalStop`, `exitPrice <- balanceAfter`,
+    `accountBalanceBefore <- balanceAfter`, reading `positions[-1]` instead of
+    `positions[0]`, and minting every record with `sequenceId = None`. The first
+    mints a record whose entry equals its stop.
+
+    None of them is a forgery bypass: the round-21 package witness catches the
+    resulting records, and `UNANCHORED_OBSERVATION` catches the last. But that catch
+    is downstream and conditional on the gitignored artifact surviving, and
+    `forward_capture.sh` does not run the evidence validator -- so a mis-mapping
+    importer would write corrupted forward evidence and the capture chain would exit
+    0.
+
+    The invariant, rather than five assertions: the importer's mapping for a field
+    the witness compares MUST BE the pairing the witness compares it by. Two tables
+    that must agree, checked against each other, so neither can be edited alone.
+    """
+
+    def maps(self):
+        pairs = {}
+        for record_field, package_field in imo.POSITION_MAP:
+            pairs[("positions", record_field)] = package_field
+        for record_field, package_field in imo.OUTCOME_MAP:
+            pairs[("outcomes", record_field)] = package_field
+        return pairs
+
+    def test_the_two_tables_are_not_empty(self):
+        self.assertGreater(len(imo.POSITION_MAP), 5)
+        self.assertGreater(len(imo.OUTCOME_MAP), 3)
+        self.assertGreater(len(ve.PACKAGE_WITNESSES), 5)
+
+    def test_every_WITNESSED_field_is_minted_from_the_field_it_is_checked_against(self):
+        pairs = self.maps()
+        for witness in ve.PACKAGE_WITNESSES:
+            with self.subTest(field=witness.record_field):
+                key = (witness.object_kind, witness.record_field)
+                self.assertIn(key, pairs,
+                              "%s is compared against the package by the witness but "
+                              "the importer never mints it from there"
+                              % witness.record_field)
+                self.assertEqual(
+                    pairs[key], witness.package_field,
+                    "the importer mints %s from %r while the witness checks it "
+                    "against %r -- one of the two tables was edited alone, and a "
+                    "record minted from the wrong field is wrong at birth"
+                    % (witness.record_field, pairs[key], witness.package_field))
+
+    def test_the_importer_reads_the_FIRST_position_and_outcome(self):
+        # `positions[-1]` is identical on every well-formed package and differs only
+        # where the package is ambiguous -- which is exactly where a guess is worst.
+        source = inspect.getsource(imo)
+        self.assertIn("positions[0], outcomes[0]", source)
+        self.assertNotIn("positions[-1]", source)
+
+    def test_a_package_with_TWO_positions_is_skipped_not_partially_imported(self):
+        package = self.package()
+        package["objects"]["positions"].append(
+            dict(package["objects"]["positions"][0]))
+        record, reason = imo.observation_from_package(package, FIXED_NOW, source=self.source())
+        self.assertIsNone(record, "a partial import is a guess about which trade "
+                                  "this package describes")
+        self.assertIn("positions", reason)
+
+    def test_POSITIVE_CONTROL_a_well_formed_package_still_converts(self):
+        record, reason = imo.observation_from_package(self.package(), FIXED_NOW, source=self.source())
+        self.assertIsNotNone(record, "reason=%r" % (reason,))
+
+    def test_the_minted_record_carries_the_package_trade_id_as_its_sequenceId(self):
+        # Minting `sequenceId = None` on every record survived the suite. It is
+        # caught downstream by UNANCHORED_OBSERVATION, but the anchor should not be
+        # the first thing to notice that the importer stopped recording identity.
+        record, _reason = imo.observation_from_package(self.package(), FIXED_NOW, source=self.source())
+        self.assertEqual(record.get("sequenceId"),
+                         self.package().get("sourceTradeId"))
+
+    def test_the_minted_record_agrees_with_its_own_package_under_the_WITNESS(self):
+        # End to end: mint a record, then run the production witness against the
+        # package it came from. This is the property all of the above serve.
+        package = self.package()
+        record, _reason = imo.observation_from_package(package, FIXED_NOW, source=self.source())
+        findings = []
+        ve.check_observation_matches_its_package(
+            [dict(record, sourceContentHash=package["contentHash"],
+                  sourceId="S1")],
+            [{"sourceId": "S1", "repositoryPath": self.artifact(package)}],
+            findings, FIXED_NOW)
+        self.assertEqual([f["findingType"] for f in findings], [],
+                         "the importer minted a record its own witness rejects")
+
+    def artifact(self, package):
+        path = os.path.join(self.tmp, "PACKAGES.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump({"packages": [package]}, handle)
+        return path
+
+    def source(self):
+        return {"sourceId": "EVSRC|MOGO|20260801|001",
+                "sourceType": "live_trade_review",
+                "repositoryPath": os.path.join(self.tmp, "PACKAGES.json"),
+                "metadata": {"engineStrategyId": "alex_g_sr_v1",
+                             "captureBasis": "LIVE_CLOSE"}}
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="mogo_mintmap_")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def package(self):
+        return {
+            "packageId": "PKG|1", "sourceTradeId": "AGT|AGS|GBP_USD|1",
+            "contentHash": "c" * 64, "captureBasis": "LIVE_CLOSE",
+            "strategyId": "alex_g_sr_v1", "createdAt": "2026-08-01T00:00:00.000Z",
+            "objects": {
+                "positions": [{
+                    "instrument": "GBP/USD", "timeframe": "H1", "direction": "buy",
+                    "entryPrice": 1.2000, "originalStop": 1.1950, "target": 1.2100,
+                    "positionSize": 10000, "riskAmount": 100.0,
+                    "entryTimestamp": "2026-08-01T00:00:00.000Z",
+                    "balanceBefore": 10000.0}],
+                "outcomes": [{
+                    "exitPrice": 1.2100, "exitTimestamp": "2026-08-01T05:00:00.000Z",
+                    "exitCandleEnd": 1785000000000,
+                    "exitDetectionSource": "historical_candle",
+                    "balanceAfter": 10200.0, "pnl": 200.0, "realizedR": 2.0}],
+            },
+        }
 
 if __name__ == "__main__":
     unittest.main()
