@@ -2559,3 +2559,109 @@ class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
                                  "%s is raised at %s somewhere; it would report "
                                  "without failing the run"
                                  % (finding_type, downgraded))
+
+
+class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
+    """One case per anchor, table-driven to match the invariant.
+
+    Wiring tests proved the invariant is CALLED; they did not prove each anchor is
+    checked. Three mutations survived on that gap: dropping the ledger-directory
+    requirement, accepting a mistyped `observationTotal`, and removing the
+    cross-anchor comparison. Each is one branch, and a table-driven invariant
+    deserves a table-driven test or the table is decorative.
+
+    Every case here is an attack that was measured as SILENT before this invariant
+    existed.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_anchor_")
+        self.state_dir = os.path.join(self.root, "research-state")
+        self.ledger = os.path.join(self.state_dir, "ledger")
+        os.makedirs(self.ledger)
+        self.state_path = os.path.join(self.state_dir, "current-state.json")
+        self.write_state({"observationTotal": 3, "corpusFingerprint": "f" * 64})
+        self.write_ledger(3)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write_state(self, payload):
+        with open(self.state_path, "w", encoding="utf-8") as handle:
+            if isinstance(payload, str):
+                handle.write(payload)
+            else:
+                json.dump(payload, handle)
+
+    def write_ledger(self, total):
+        with open(os.path.join(self.ledger, "LEARN_a.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"observationTotalAfter": total}, handle)
+
+    def types(self, observations=None):
+        findings = []
+        ve.check_corpus_anchors_are_available(
+            observations if observations is not None
+            else [{"observationId": "TOBS|MOGO|20260819|%03d" % i} for i in range(3)],
+            findings, FIXED_NOW,
+            state_path=self.state_path, ledger_dir=self.ledger)
+        return [f["findingType"] for f in findings]
+
+    def test_POSITIVE_CONTROL_all_anchors_present_is_silent(self):
+        self.assertEqual(self.types(), [])
+
+    def test_an_empty_corpus_requires_no_anchors(self):
+        # No evidence means no history to have lost; demanding anchors would invent
+        # a past the corpus never had.
+        shutil.rmtree(self.state_dir)
+        self.assertEqual(self.types(observations=[]), [])
+
+    def test_the_state_file_is_required(self):
+        os.remove(self.state_path)
+        self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+
+    def test_an_unreadable_state_file_is_reported(self):
+        self.write_state("{not json")
+        self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+
+    def test_a_STUB_state_file_does_not_satisfy_the_anchor(self):
+        # `{}` dodged the file-existence check entirely before this invariant.
+        self.write_state({})
+        self.assertEqual(len(self.types()), 2, "both fields must be reported missing")
+
+    def test_observationTotal_must_be_a_real_integer(self):
+        for bad in ("3", None, 3.0, True, [3]):
+            with self.subTest(observationTotal=bad):
+                self.write_state({"observationTotal": bad,
+                                  "corpusFingerprint": "f" * 64})
+                self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"],
+                                 "%r was accepted as a total" % (bad,))
+
+    def test_corpusFingerprint_must_be_a_non_empty_string(self):
+        for bad in (None, 12345, "", "   ", ["x"]):
+            with self.subTest(corpusFingerprint=bad):
+                self.write_state({"observationTotal": 3, "corpusFingerprint": bad})
+                self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"],
+                                 "%r was accepted as a fingerprint" % (bad,))
+
+    def test_the_ledger_directory_is_required(self):
+        shutil.rmtree(self.ledger)
+        self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+
+    def test_an_EMPTY_ledger_directory_is_reported(self):
+        os.remove(os.path.join(self.ledger, "LEARN_a.json"))
+        self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+
+    def test_state_below_the_ledger_high_water_mark_is_reported(self):
+        # The anchor is present and correctly typed and still lying: decrementing the
+        # total makes the content comparison read the corpus as "grown" and skip.
+        self.write_state({"observationTotal": 2, "corpusFingerprint": "f" * 64})
+        self.write_ledger(3)
+        self.assertEqual(self.types(), ["STATE_CONTRADICTS_LEDGER"])
+
+    def test_state_ABOVE_the_ledger_is_NOT_reported(self):
+        # Positive control: growth between assimilation runs is normal, and reporting
+        # it would train everyone to ignore this.
+        self.write_state({"observationTotal": 9, "corpusFingerprint": "f" * 64})
+        self.write_ledger(3)
+        self.assertEqual(self.types(), [])
