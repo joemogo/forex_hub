@@ -2573,6 +2573,9 @@ class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
         "MISSING_STRATEGY_ATTRIBUTION", "MISSING_SOURCE_ATTRIBUTION",
         "ENGINE_STRATEGY_MISMATCH", "SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS",
         "MISSING_SOURCE_CAPTURE_BASIS",
+        # B-32.14 / B-32.15: the identity anchor and its allow-list direction.
+        "PRESERVED_IDENTITY_MISSING", "UNREADABLE_PRESERVED_IDENTITIES",
+        "UNANCHORED_OBSERVATION",
     )
 
     def test_every_corpus_integrity_finding_is_declared_at_ERROR_in_the_source(self):
@@ -2805,8 +2808,11 @@ class TestPreservedIdentitiesMustStillExist(unittest.TestCase):
         # The signature this exists for: one identity out, a different one in, count
         # identical. Every count-based and fingerprint-based anchor nets out.
         self.manifest([{"tradeId": "AGT|AGS|LOSER|1", "pnl": -100.0}])
-        self.assertEqual(self.types(self.observations("AGT|AGS|WINNER|1")),
-                         ["PRESERVED_IDENTITY_MISSING"])
+        # BOTH directions now fire, and that is stronger than either alone: the
+        # deleted loser is a missing identity, and the substituted winner is anchored
+        # by nothing. Before the allow-list existed only the first was reported.
+        self.assertEqual(sorted(self.types(self.observations("AGT|AGS|WINNER|1"))),
+                         ["PRESERVED_IDENTITY_MISSING", "UNANCHORED_OBSERVATION"])
 
     def test_developer_test_trades_are_NOT_required(self):
         # The manifest records 4 AGT|TEST| identities the importer refuses by policy;
