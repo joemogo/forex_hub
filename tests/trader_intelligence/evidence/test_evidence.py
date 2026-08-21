@@ -2644,13 +2644,27 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
                 self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"],
                                  "%r was accepted as a fingerprint" % (bad,))
 
+    def messages(self):
+        findings = []
+        ve.check_corpus_anchors_are_available(
+            [{"observationId": "TOBS|MOGO|20260819|%03d" % i} for i in range(3)],
+            findings, FIXED_NOW,
+            state_path=self.state_path, ledger_dir=self.ledger)
+        return " ".join(f["message"] for f in findings)
+
     def test_the_ledger_directory_is_required(self):
+        # The message is pinned, not just the finding type. Deleting the absent-branch
+        # is an EQUIVALENT MUTANT on type alone -- the empty-glob check below fires for
+        # a missing directory too -- but it reports it as "empty", which sends the
+        # reader looking inside a directory that is not there.
         shutil.rmtree(self.ledger)
         self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+        self.assertIn("is absent", self.messages())
 
-    def test_an_EMPTY_ledger_directory_is_reported(self):
+    def test_an_EMPTY_ledger_directory_is_reported_AS_EMPTY(self):
         os.remove(os.path.join(self.ledger, "LEARN_a.json"))
         self.assertEqual(self.types(), ["CORPUS_ANCHOR_UNAVAILABLE"])
+        self.assertIn("is empty", self.messages())
 
     def test_state_below_the_ledger_high_water_mark_is_reported(self):
         # The anchor is present and correctly typed and still lying: decrementing the
