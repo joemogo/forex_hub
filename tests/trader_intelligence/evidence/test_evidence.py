@@ -1208,7 +1208,10 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
         obs = self.obs("replay_observation")
         del obs["notes"]
         findings = self.findings_for([obs], [self.src("paper_trade")])
-        self.assertEqual([f["findingType"] for f in findings], ["MISSING_MINT_PROVENANCE"])
+        # BOTH absences are reported now: a record with no notes at all is missing
+        # both stamps, and reporting only the first understated how damaged it is.
+        self.assertEqual(sorted(f["findingType"] for f in findings),
+                         ["MISSING_CAPTURE_BASIS", "MISSING_MINT_PROVENANCE"])
 
     def test_a_missing_stamp_is_an_ERROR_so_it_cannot_hide_behind_the_exit_code(self):
         # The remaining hole after the first repair: blinding every stamp produced
@@ -1285,8 +1288,10 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
                 obs = self.obs("replay_observation")
                 obs["notes"] = bad
                 findings = self.findings_for([obs], [self.src("replay_observation")])
-                self.assertEqual([f["findingType"] for f in findings],
-                                 ["MISSING_MINT_PROVENANCE"])
+                # Both stamps are unreadable in a non-string notes, so both are
+                # reported -- and crucially the run does not raise.
+                self.assertEqual(sorted(f["findingType"] for f in findings),
+                                 ["MISSING_CAPTURE_BASIS", "MISSING_MINT_PROVENANCE"])
 
     def test_spacing_and_case_variants_of_the_stamp_are_READ_not_missed(self):
         # A stamp the reader skips is a stamp an attacker can hide behind, so the
@@ -1297,10 +1302,16 @@ class TestPopulationRebindingIsDetected(unittest.TestCase):
             with self.subTest(notes=notes):
                 obs = self.obs("replay_observation")
                 obs["notes"] = notes
-                findings = self.findings_for([obs], [self.src("paper_trade")])
-                self.assertEqual([f["findingType"] for f in findings],
-                                 ["POPULATION_REBINDING"],
-                                 "%r was not read as a stamp" % notes)
+                types = [f["findingType"] for f in
+                         self.findings_for([obs], [self.src("paper_trade")])]
+                # The point is that the stamp was READ: a rebinding is reported and
+                # the stamp is NOT called missing. These fixtures carry no
+                # captureBasis, so that absence is reported too and is not the
+                # property under test.
+                self.assertIn("POPULATION_REBINDING", types,
+                              "%r was not read as a stamp" % notes)
+                self.assertNotIn("MISSING_MINT_PROVENANCE", types,
+                                 "%r was skipped rather than read" % notes)
 
     def test_a_sourceId_naming_no_registered_source_is_an_ERROR(self):
         # DECISION REVERSED. This deferred to "the reference checks", which live in
@@ -1726,6 +1737,24 @@ class TestCaptureBasisStampIsSymmetricWithTheOther(unittest.TestCase):
         # indistinguishable from here -- but no population is inferred from it.
         found = self.types("captureBasis=SOME_NEW_BASIS sourceType=paper_trade")
         self.assertEqual(found, ["UNRECOGNISED_CAPTURE_BASIS"])
+
+    def test_a_DELETED_captureBasis_stamp_is_reported(self):
+        # The P1 this class exists for, and it shipped without a test -- mutation
+        # testing caught that within minutes. An absent `sourceType=` stamp was an
+        # ERROR while an absent `captureBasis=` stamp was silent, so the second
+        # anchor was defeated by DELETING it rather than rewriting it: 24 replay
+        # observations into FORWARD, every gate exit 0.
+        self.assertEqual(self.types("sourceType=paper_trade"),
+                         ["MISSING_CAPTURE_BASIS"])
+
+    def test_notes_with_no_stamps_at_all_reports_BOTH_absences(self):
+        # Neither stamp present: both anchors are unevaluable and both must say so.
+        self.assertEqual(sorted(self.types("captured somehow")),
+                         ["MISSING_CAPTURE_BASIS", "MISSING_MINT_PROVENANCE"])
+
+    def test_an_empty_notes_string_reports_both(self):
+        self.assertEqual(sorted(self.types("")),
+                         ["MISSING_CAPTURE_BASIS", "MISSING_MINT_PROVENANCE"])
 
     def test_POSITIVE_CONTROL_a_single_valid_agreeing_basis_is_silent(self):
         self.assertEqual(self.types("captureBasis=LIVE_CLOSE sourceType=paper_trade"), [])

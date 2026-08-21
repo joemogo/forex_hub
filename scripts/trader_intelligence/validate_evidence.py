@@ -290,6 +290,30 @@ def check_observation_population_rebinding(observations, sources, findings, now)
         notes = obs.get("notes")
         matches = _MINTED_SOURCE_TYPE_RE.findall(notes) if isinstance(notes, str) else []
         matches = [m for m in matches if m]
+        bases = [b for b in (_CAPTURE_BASIS_RE.findall(notes)
+                             if isinstance(notes, str) else []) if b]
+
+        # Both stamp ABSENCES are reported here, before the sourceType branch below
+        # can `continue` past them. A record missing both used to report only the
+        # first -- the same incomplete-reporting shape as an early check aborting the
+        # rest of the run, and it understates how damaged such a record is.
+        if not bases:
+            # SYMMETRY. The `sourceType=` stamp's absence is MISSING_MINT_PROVENANCE
+            # (ERROR); the `captureBasis=` stamp's absence was not reported at all,
+            # so the second anchor was defeated by DELETING it rather than rewriting
+            # it -- 24 replay observations into FORWARD, every gate exit 0, forward
+            # mean R sign-flipped. The "absence is anomalous, so report it" argument
+            # that made the other stamp an ERROR had never been applied here.
+            #
+            # All 259 preserved records carry both stamps, so this costs nothing.
+            # Blanking the value happened to be caught already, but by a regex bleed
+            # (the pattern ate the space and captured the next key name), which is an
+            # accident rather than a designed path.
+            _finding(findings, "MISSING_CAPTURE_BASIS", "ERROR", "TRADE_OBSERVATION",
+                      obs_id,
+                      "notes carries no readable captureBasis stamp, so this "
+                      "observation's population cannot be cross-checked against how it "
+                      "was captured.", now)
 
         if len(matches) > 1:
             _finding(findings, "AMBIGUOUS_MINT_PROVENANCE", "ERROR", "TRADE_OBSERVATION",
@@ -432,8 +456,6 @@ def check_observation_population_rebinding(observations, sources, findings, now)
                       "capture it cites."
                       % (obs.get("strategyId"), obs.get("sourceId"), engine), now)
 
-        bases = [b for b in (_CAPTURE_BASIS_RE.findall(notes)
-                             if isinstance(notes, str) else []) if b]
         if len(bases) > 1:
             # The decoy attack, which the sourceType stamp already caught and this one
             # did not: `.search` took the first match, so prepending 24 characters
@@ -444,23 +466,6 @@ def check_observation_population_rebinding(observations, sources, findings, now)
                       "notes records %d different captureBasis stamps (%s); which one "
                       "the observation was captured under is not decidable."
                       % (len(bases), ", ".join(sorted(set(bases)))), now)
-        elif not bases:
-            # SYMMETRY. The `sourceType=` stamp's absence is MISSING_MINT_PROVENANCE
-            # (ERROR); the `captureBasis=` stamp's absence was not reported at all,
-            # so the second anchor was defeated by DELETING it rather than rewriting
-            # it -- 24 replay observations into FORWARD, every gate exit 0, forward
-            # mean R sign-flipped. The "absence is anomalous, so report it" argument
-            # that made the other stamp an ERROR was simply never applied here.
-            #
-            # All 259 preserved records carry both stamps, so this costs nothing.
-            # Blanking the value happened to be caught already, but by a regex bleed
-            # (the pattern ate the space and captured the next key name), which is an
-            # accident rather than a designed path.
-            _finding(findings, "MISSING_CAPTURE_BASIS", "ERROR", "TRADE_OBSERVATION",
-                      obs_id,
-                      "notes carries no readable captureBasis stamp, so this "
-                      "observation's population cannot be cross-checked against how it "
-                      "was captured.", now)
         elif bases and actual:
             expected = CAPTURE_BASIS_SOURCE_TYPE.get(bases[0].upper())
             if expected is None:
