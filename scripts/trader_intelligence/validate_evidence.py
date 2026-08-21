@@ -223,6 +223,109 @@ def check_source_capture_basis_agrees_with_type(sources, findings, now):
                       % (basis, expected, actual), now)
 
 
+#: Every artifact and field the corpus-integrity gates read. Declared as a TABLE so
+#: availability is one invariant instead of a `return` inside each check -- see
+#: check_corpus_anchors_are_available for why that distinction is the whole point.
+CORPUS_ANCHORS = (
+    ("research-state/current-state.json", "file"),
+    ("current-state.json:observationTotal", "int"),
+    ("current-state.json:corpusFingerprint", "str"),
+    ("research-state/ledger/", "non-empty directory"),
+)
+
+
+def check_corpus_anchors_are_available(observations, findings, now,
+                                       state_path=None, ledger_dir=None):
+    """Every anchor the corpus-integrity gates depend on must BE THERE.
+
+    Rounds 9, 10, 11 and 12 each repaired one instance of a single shape: a gate
+    that returns silently when the thing it reads is missing. Each repair closed the
+    instance in front of it -- the ledger was unread, then the ledger was deletable,
+    then the state FILE was deletable -- and each time the next round found the next
+    door. Round 12's were: keep the state file but delete the `observationTotal`
+    KEY, and delete the ledger DIRECTORY. Two edits, pure `rm` of the 21 losing
+    forward observations, mean R -0.18 to +2.01, exit 0.
+
+    Patching the fifth door would have been the fifth instance. This is the
+    invariant: availability is checked ONCE, from a declared table, so a gate cannot
+    be disabled by removing what it reads -- whether removed by an attacker, or by a
+    maintainer pointing it at a path that does not exist. Those are the same bug seen
+    from two sides, and both are now reported.
+
+    Scoped to a corpus that HOLDS evidence. An empty corpus has no history to have
+    lost, and demanding anchors for it would be inventing a past it never had.
+    """
+    if not observations:
+        return
+
+    def report(anchor, detail):
+        _finding(findings, "CORPUS_ANCHOR_UNAVAILABLE", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "%d observations are preserved but the integrity anchor %r is %s. "
+                  "A gate that cannot read its anchor reports nothing, which is "
+                  "indistinguishable from a clean corpus."
+                  % (len(observations), anchor, detail), now)
+
+    state = None
+    if not state_path or not os.path.exists(state_path):
+        report("research-state/current-state.json", "absent")
+    else:
+        try:
+            with open(state_path, "r", encoding="utf-8") as handle:
+                state = json.load(handle)
+        except (ValueError, OSError):
+            report("research-state/current-state.json", "unreadable")
+    if isinstance(state, dict):
+        total = state.get("observationTotal")
+        # `bool` is an `int` in Python, and True would sail through a bare isinstance.
+        if not isinstance(total, int) or isinstance(total, bool):
+            report("current-state.json:observationTotal",
+                   "absent or not an integer (%r)" % (total,))
+        fingerprint = state.get("corpusFingerprint")
+        if not isinstance(fingerprint, str) or not fingerprint.strip():
+            report("current-state.json:corpusFingerprint",
+                   "absent or not a string (%r)" % (fingerprint,))
+
+    if not ledger_dir or not os.path.isdir(ledger_dir):
+        report("research-state/ledger/", "absent")
+        return
+    if not globmod.glob(os.path.join(ledger_dir, "*.json")):
+        report("research-state/ledger/", "empty")
+        return
+
+    # THE TWO ANCHORS MUST AGREE WITH EACH OTHER.
+    #
+    # An anchor can be present, correctly typed, and still lie. Decrementing
+    # `observationTotal` by one makes the content comparison read the corpus as
+    # "grown" and skip entirely -- an availability check cannot see that, because
+    # nothing is unavailable. But assimilation writes state and ledger together, so
+    # a recorded total BELOW the ledger's high-water mark means state was rewritten
+    # backwards. Two anchors are only worth more than one if they are compared.
+    if not isinstance(state, dict):
+        return
+    recorded_total = state.get("observationTotal")
+    if not isinstance(recorded_total, int) or isinstance(recorded_total, bool):
+        return          # already reported above
+    high_water = None
+    for path in sorted(globmod.glob(os.path.join(ledger_dir, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                entry = json.load(handle)
+        except (ValueError, OSError):
+            continue
+        total = entry.get("observationTotalAfter")
+        if isinstance(total, int) and not isinstance(total, bool):
+            high_water = total if high_water is None else max(high_water, total)
+    if high_water is not None and recorded_total < high_water:
+        _finding(findings, "STATE_CONTRADICTS_LEDGER", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "Research state records %d observations but the ledger has recorded "
+                  "as many as %d. Assimilation writes both together, so a state total "
+                  "below the ledger's high-water mark means state was rewritten "
+                  "backwards -- which silently disables the content comparison."
+                  % (recorded_total, high_water), now)
+
+
 def check_observation_source_content_unique(observations, findings, now):
     """No two observations may derive from the same preserved package.
 
@@ -232,12 +335,23 @@ def check_observation_source_content_unique(observations, findings, now):
     12345, null, trailing whitespace) all walked straight through. That is the
     fail-open shape again, on a field the attacker fully controls.
 
-    `sourceContentHash` is the better anchor and was already on every record: present
-    and distinct on all 259, and unlike a free-text label it is the hash of the
-    preserved package the observation was minted from. Freshening it means computing
-    a hash of bytes that must also exist -- which is precisely the authoring cost
-    delete-and-pad exists to avoid. Copying a winning observation therefore collides
-    here no matter what else is rewritten.
+    `sourceContentHash` is used instead: present and distinct on all 259 records.
+
+    A CORRECTION, because the first version of this docstring overstated it. It said
+    freshening the value "means computing a hash of bytes that must also exist --
+    which is precisely the authoring cost delete-and-pad exists to avoid". That is
+    FALSE. Nothing in this validator compares `sourceContentHash` to anything: it
+    names a package inside a capture artifact, and those artifacts are gitignored by
+    design, so the corpus cannot re-derive it (SPEC-provenance 7.4 says exactly
+    this). Measured: 0 of 259 observations have a `sourceContentHash` equal to their
+    source's `contentHash` -- they are different granularities. Forging it costs one
+    character.
+
+    So this is a DUPLICATE DETECTOR, not an authoring-cost barrier. It catches the
+    naive copy, which is the realistic accident and the cheap attack; it does not
+    stop a deliberate forgery, and the claim that it "blocks laundering upstream" was
+    wrong. What actually catches a forged pad is CORPUS_CONTENT_DIVERGED, and that
+    reads an anchor -- which is why anchor availability is now its own invariant.
 
     Absence is reported, not skipped, for the same reason the stamps are: silence has
     to mean "checked and fine", never "could not tell".
@@ -1427,13 +1541,17 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
     findings = []
     check_orphans(sources, items, claims, links, findings, now)
     # Ledger lives beside the evidence root: <ti_root>/research-state/ledger.
+    _state_root = os.path.dirname(os.path.abspath(evidence_root))
+    check_corpus_anchors_are_available(
+        observations, findings, now,
+        state_path=os.path.join(_state_root, "research-state", "current-state.json"),
+        ledger_dir=os.path.join(_state_root, "research-state", "ledger"))
     check_observation_source_content_unique(observations, findings, now)
     check_observation_sequence_ids_unique(observations, findings, now)
     check_corpus_matches_recorded_state(
         observations, sources, findings, now,
         state_path=os.path.join(os.path.dirname(os.path.abspath(evidence_root)),
                                 "research-state", "current-state.json"))
-    _state_root = os.path.dirname(os.path.abspath(evidence_root))
     check_corpus_is_append_only(
         observations, findings, now,
         ledger_dir=os.path.join(_state_root, "research-state", "ledger"),

@@ -1638,6 +1638,15 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
             json.dump({"observationTotal": len(observations),
                        "corpusFingerprint": ra.corpus_fingerprint(observations, sources)},
                       handle)
+        # A real corpus has both anchors; the availability invariant requires a
+        # non-empty ledger, so a fixture with state but no ledger models a corpus
+        # whose history was half-deleted and would fail the control for that reason.
+        ledger = os.path.join(self.root, "research-state", "ledger")
+        os.makedirs(ledger, exist_ok=True)
+        with open(os.path.join(ledger, "LEARN_fixture.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"observationTotalAfter": len(observations),
+                       "schemaVersion": 1}, handle)
 
     def run_cli(self):
         self.write_state()
@@ -2480,3 +2489,73 @@ class TestCorpusIntegrityGatesAreWiredAndAIMED(unittest.TestCase):
         self.assertEqual(found & {"DUPLICATE_SOURCE_CONTENT_HASH", "RESEARCH_STATE_MISSING",
                                   "CORPUS_CONTENT_DIVERGED", "EVIDENCE_REMOVED",
                                   "MISSING_SOURCE_CONTENT_HASH"}, set())
+
+
+class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
+    """Severity and exit code, asserted TOGETHER.
+
+    Round 12: downgrading `DUPLICATE_SOURCE_CONTENT_HASH` to WARNING, or
+    `RESEARCH_STATE_MISSING` to INFO, survived every test. Each gate had a test
+    asserting its `findingType` and none asserting its severity, and `exit_code_for`
+    fails only on ERROR or FATAL -- so a gate could keep reporting, keep being wired,
+    and stop blocking. "Reports" and "fails the build" are different properties and
+    were never checked together.
+
+    Table-driven so a new corpus-integrity finding cannot be added without deciding,
+    explicitly, whether it blocks.
+    """
+
+    BLOCKING = (
+        "DUPLICATE_SOURCE_CONTENT_HASH", "MISSING_SOURCE_CONTENT_HASH",
+        "DUPLICATE_SEQUENCE_ID", "RESEARCH_STATE_MISSING",
+        "CORPUS_ANCHOR_UNAVAILABLE", "STATE_CONTRADICTS_LEDGER",
+        "CORPUS_CONTENT_DIVERGED", "EVIDENCE_REMOVED",
+        "LEDGER_DISAGREES_WITH_STATE", "UNREADABLE_RESEARCH_STATE",
+        "POPULATION_REBINDING", "UNRESOLVED_POPULATION",
+        "MISSING_MINT_PROVENANCE", "MISSING_CAPTURE_BASIS",
+        "AMBIGUOUS_MINT_PROVENANCE", "UNRECOGNISED_CAPTURE_BASIS",
+        "MISSING_STRATEGY_ATTRIBUTION", "MISSING_SOURCE_ATTRIBUTION",
+        "ENGINE_STRATEGY_MISMATCH", "SOURCE_TYPE_CONTRADICTS_CAPTURE_BASIS",
+        "MISSING_SOURCE_CAPTURE_BASIS",
+    )
+
+    def test_every_corpus_integrity_finding_is_declared_at_ERROR_in_the_source(self):
+        path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
+                            "validate_evidence.py")
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+        self.assertGreater(len(self.BLOCKING), 15, "table looks truncated")
+        for finding_type in self.BLOCKING:
+            with self.subTest(finding=finding_type):
+                self.assertIn('"%s", "ERROR"' % finding_type, source,
+                              "%s is not raised at ERROR, so it reports without "
+                              "blocking: exit_code_for fails only on ERROR/FATAL"
+                              % finding_type)
+
+    def test_ERROR_blocks_and_WARNING_does_not(self):
+        # The property the table above depends on. If this ever changes, every
+        # severity assertion in this class silently stops meaning anything.
+        self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": 1,
+                                           "WARNING": 0, "INFO": 0}), 1)
+        self.assertEqual(ve.exit_code_for({"FATAL": 0, "ERROR": 0,
+                                           "WARNING": 9, "INFO": 9}), 0)
+
+    def test_no_listed_finding_is_ever_raised_below_ERROR(self):
+        # The mutation this kills: downgrading a gate to WARNING or INFO leaves it
+        # wired, still reporting, and no longer blocking -- and every findingType
+        # assertion in the suite still passes. Scoped to the corpus-integrity table
+        # rather than every ERROR in the module, because the other 30 belong to the
+        # evidence layer and are not what these rounds hardened.
+        import re as _re
+        path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
+                            "validate_evidence.py")
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+        for finding_type in self.BLOCKING:
+            with self.subTest(finding=finding_type):
+                downgraded = _re.findall(
+                    r'"%s",\s*"(WARNING|INFO)"' % finding_type, source)
+                self.assertEqual(downgraded, [],
+                                 "%s is raised at %s somewhere; it would report "
+                                 "without failing the run"
+                                 % (finding_type, downgraded))
