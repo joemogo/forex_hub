@@ -270,6 +270,13 @@ plainly rather than leaving for someone to discover as a surprise:
   in the corpus maps packages to sources, and the capture artifacts that would are gitignored
   by design. It is recorded as a known limit rather than papered over.
 
+  > **WRONG, corrected in §7.12 (B-32.19).** The second clause is true and the first does not
+  > follow from it. `EvidenceSource.repositoryPath` **is** that mapping, it is committed, and
+  > `validate_evidence.py` was already opening it — to call `os.path.exists` and stop. The
+  > ARTIFACTS are gitignored; the MAPPING is not, and conflating the two is what left the
+  > witness unread through five rounds. The same error is in `check_no_two_observations_share_a_package`
+  > and in backlog B-32.4 / B-32.10.
+
   > **Partially falsified, and worth reading before trusting the paragraph above.** That
   > sentence was true of *packages* and wrong as a general claim about identity. The corpus
   > does carry a committed, per-trade manifest: `evidence/ledger-preservation/` records the
@@ -543,3 +550,53 @@ in particular cannot be re-derived because balances do not chain trade-by-trade.
 **Honest limit, unchanged from §7.9.** A rewriter who can write any file recomputes `closedTotal`
 and `ledgerRollup` as easily as they delete the rows. What this closes is the *partial* edit —
 which is every attack actually demonstrated across rounds 9–17.
+
+
+### 7.12 The record against the package it was minted from (B-32.19)
+
+§7.10 said a record checked against itself needs no witness. True — and it is also the limit.
+Every gate through §7.11 compares the corpus to something **the corpus also writes**: an anchor
+MOGO produced, a document MOGO stamped, or the record's own arithmetic. A forgery that is
+internally consistent and leaves the anchors alone therefore passes all of them.
+
+Demonstrated: rewriting all 259 observations so each one's derived R *genuinely is* +2.0 (moving
+`exitPrice` to match, so every derivation in §7.10 agrees), emptying the ledger rows, and running
+`research_assimilation.py --write` reached `{'INFO': 0, 'WARNING': 0, 'ERROR': 0, 'FATAL': 0}` —
+forward **and** historical mean R at 2.0, win share 1.0. The replay-only variant touched nothing
+outside `observations/` and was equally silent.
+
+**The witness was committed and read by nothing — the fifth recurrence of the shape §7.9 names in
+its own words.** Each observation's `sourceContentHash` is the `contentHash` of exactly one
+captured package (259 distinct hashes, zero collisions across 263 packages), and each source's
+`repositoryPath` names the artifact holding it. Seven fields agree exactly:
+
+| Observation field | Package field | Agreement |
+|---|---|---|
+| `entry` | `positions[0].entryPrice` | 258/258 |
+| `stop` | `positions[0].originalStop` | 258/258 |
+| `direction` | `positions[0].direction` | 258/258 |
+| `positionSize` | `positions[0].positionSize` | 258/258 |
+| `accountBalanceBefore` | `positions[0].balanceBefore` | 257/257 |
+| `exitPrice` | `outcomes[0].exitPrice` | 258/258 |
+| `accountBalanceAfter` | `outcomes[0].balanceAfter` | 257/257 |
+
+This is the only witness in the system **not derived from the corpus**: the engine wrote it when
+the trade closed. The full-corpus forgery above now reports 163 contradictions, and the
+replay-only variant 136 — and `research_assimilation --write` cannot clear either, because it
+never touches the artifacts.
+
+**Absence is counted, not skipped.** The artifacts are perishable and gitignored by design, so
+some observations legitimately have no surviving witness — 1 of 259 today. Reporting nothing
+would mean deleting `evidence/` switches the gate off, which is §7.16's lesson exactly, so an
+unresolvable observation raises `PACKAGE_WITNESS_UNAVAILABLE` (WARNING) carrying the count: it
+says how much of the corpus is standing on its own word, and a jump in it means the witness was
+removed. A contradiction is an ERROR; an artifact that exists but cannot be parsed is an ERROR.
+
+**Scope, and why it is not a switch.** Only sources the observations actually cite are parsed —
+JSON-parsing all 59 reported 12 transcripts as unreadable package files, and a false positive is
+how a real gate ends up disabled. That scope is not attacker-controlled: an observation names its
+own `sourceId`, and repointing it is `POPULATION_REBINDING`.
+
+**What it still does not answer.** A package that never existed — an attacker who writes both the
+observation and a matching artifact — is the §7.9 write-everything boundary, unchanged. What
+this closes is every forgery that edits the corpus and leaves the captured evidence alone.

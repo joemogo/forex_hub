@@ -1655,11 +1655,12 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
             # and it is one of the values ANCHOR_VALUE_BINDINGS compares against the
             # corpus. A row with no bound field joins an observation and compares
             # nothing, which is the vacuity this fixture would otherwise model.
-            json.dump({"identities": [
-                {"tradeId": record.get("sequenceId"),
-                 "contentHash": record.get("sourceContentHash"),
-                 "refusedByImportPolicy": False}
-                for record in observations.values()]}, handle)
+            json.dump({"schemaVersion": "mogo.identity-manifest.v1",
+                       "identities": [
+                           {"tradeId": record.get("sequenceId"),
+                            "contentHash": record.get("sourceContentHash"),
+                            "refusedByImportPolicy": False}
+                           for record in observations.values()]}, handle)
 
     def run_cli(self):
         self.write_state()
@@ -2594,15 +2595,19 @@ class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
         "UNADJUDICATED_ANCHOR_FIELD", "ANCHOR_VALUES_UNCOMPARED",
         # B-32.18: a record checked against itself, and the document against its rows.
         "RECORD_CONTRADICTS_ITSELF", "DERIVATION_UNCHECKABLE",
-        "ANCHOR_DOCUMENT_CONTRADICTED",
+        "ANCHOR_DOCUMENT_CONTRADICTED", "ANCHOR_DOCUMENT_FIELD_MISSING",
+        "ANCHOR_DOCUMENT_UNCHECKABLE", "UNADJUDICATED_ANCHOR_SCHEMA",
         # B-32.18: a crash must not leave a stale all-clear report behind.
         "NON_FINITE_VALUE", "UNSERIALISABLE_CORPUS",
+        # B-32.19: the record against the package it was minted from.
+        "PACKAGE_WITNESS_CONTRADICTED", "UNREADABLE_PACKAGE_WITNESS",
     )
 
     #: Raised ONLY below ERROR, deliberately. Each is advisory: it describes work
     #: outstanding, not evidence that is wrong.
     SOFT_BY_DESIGN = (
         "APPROVED_INTAKE_WITH_UNRESOLVED_FINDINGS", "DUPLICATE_IMMUTABLE_CONTENT",
+        "PACKAGE_WITNESS_UNAVAILABLE",
         "MISSING_DIRECTNESS_OR_CERTAINTY", "MISSING_TRANSCRIPT_LOCATOR",
         "OVERLAPPING_SEGMENT_TIMESTAMPS", "UNRESOLVABLE_ARTIFACT",
     )
@@ -2726,7 +2731,8 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         self.write_ledger(3)
         with open(os.path.join(self.preservation, "M.json"), "w",
                   encoding="utf-8") as handle:
-            json.dump({"identities": [{"tradeId": "T1"}]}, handle)
+            json.dump({"schemaVersion": "mogo.identity-manifest.v1",
+                       "identities": [{"tradeId": "T1"}]}, handle)
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
@@ -2781,7 +2787,9 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
                     # A manifest that requires nothing: non-empty, all rows excluded.
                     with open(os.path.join(self.preservation, "M.json"), "w",
                               encoding="utf-8") as handle:
-                        json.dump({"identities": [{"tradeId": "AGT|TEST|1"}]}, handle)
+                        json.dump({"schemaVersion": "mogo.identity-manifest.v1",
+                                   "identities": [{"tradeId": "AGT|TEST|1"}]},
+                                  handle)
                 findings = []
                 ve.check_corpus_anchors_are_available(
                     [{"observationId": "TOBS|MOGO|20260819|001"}], findings, FIXED_NOW,
@@ -2816,15 +2824,19 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
                 ("no manifest files", lambda: [os.remove(f) for f in globmod.glob(
                     os.path.join(self.preservation, "*.json"))]),
                 ("identities not a list", lambda: self.write_manifest(
-                    {"identities": {"T1": True}})),
+                    {"schemaVersion": "mogo.identity-manifest.v1", "identities": {"T1": True}})),
                 ("identities absent", lambda: self.write_manifest({"schemaVersion": 1})),
-                ("identities null", lambda: self.write_manifest({"identities": None})),
+                ("identities null", lambda: self.write_manifest(
+                    {"schemaVersion": "mogo.identity-manifest.v1", "identities": None})),
                 ("document is a list", lambda: self.write_manifest([{"tradeId": "T1"}])),
                 ("document is null", lambda: self.write_manifest(None)),
                 ("every row a developer trade", lambda: self.write_manifest(
-                    {"identities": [{"tradeId": "AGT|TEST|1"}]})),
+                    {"schemaVersion": "mogo.identity-manifest.v1",
+                     "identities": [{"tradeId": "AGT|TEST|1"}]})),
                 ("every row malformed", lambda: self.write_manifest(
-                    {"identities": [{"tradeId": 7}, {"noTradeId": "x"}, "not-a-dict"]})),
+                    {"schemaVersion": "mogo.identity-manifest.v1",
+                     "identities": [{"tradeId": 7}, {"noTradeId": "x"},
+                                    "not-a-dict"]})),
         ):
             with self.subTest(hollowed=label):
                 self.setUp()
@@ -2848,8 +2860,10 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         # adjacent report goes quiet and only the specific one is left. That is also
         # the real attack: corrupt the manifest holding the trades you want to
         # unanchor and leave the other intact.
-        self.write_manifest({"identities": [{"tradeId": "T_HEALTHY"}]}, name="A.json")
-        self.write_manifest({"identities": {"T1": True}}, name="B.json")
+        self.write_manifest({"schemaVersion": "mogo.identity-manifest.v1",
+                             "identities": [{"tradeId": "T_HEALTHY"}]}, name="A.json")
+        self.write_manifest({"schemaVersion": "mogo.identity-manifest.v1",
+                             "identities": {"T1": True}}, name="B.json")
         os.remove(os.path.join(self.preservation, "M.json"))
         reported = self.types()
         self.assertEqual(set(reported), {"CORPUS_ANCHOR_UNAVAILABLE"},
@@ -2860,8 +2874,10 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
     def test_POSITIVE_CONTROL_two_healthy_manifests_are_silent(self):
         # Without this the assertion above would also pass if a second manifest were
         # reported no matter what it contained.
-        self.write_manifest({"identities": [{"tradeId": "T_HEALTHY"}]}, name="A.json")
-        self.write_manifest({"identities": [{"tradeId": "T2"}]}, name="B.json")
+        self.write_manifest({"schemaVersion": "mogo.identity-manifest.v1",
+                             "identities": [{"tradeId": "T_HEALTHY"}]}, name="A.json")
+        self.write_manifest({"schemaVersion": "mogo.identity-manifest.v1",
+                             "identities": [{"tradeId": "T2"}]}, name="B.json")
         self.assertEqual(self.types(), [])
 
     def write_manifest(self, document, name="M.json"):
@@ -2983,7 +2999,8 @@ class TestTheAllowListFailsClosedOnAnUnusableSequenceId(unittest.TestCase):
         os.makedirs(self.preservation)
         with open(os.path.join(self.preservation, "M.json"), "w",
                   encoding="utf-8") as handle:
-            json.dump({"identities": [{"tradeId": "T1"}]}, handle)
+            json.dump({"schemaVersion": "mogo.identity-manifest.v1",
+                       "identities": [{"tradeId": "T1"}]}, handle)
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
@@ -3073,8 +3090,62 @@ class TestARecordIsCheckedAgainstItself(unittest.TestCase):
             exitPrice=1.1950, rMultiple=-1.0, outcome="Loss", pnl=-100.0)), [])
 
     def test_a_sell_is_measured_in_the_other_direction(self):
+        # A REAL short: stop ABOVE entry. The earlier version of this fixture
+        # overrode only `direction` and `exitPrice` and inherited stop=1.1950 from
+        # the base record -- stop BELOW entry, which is a long's geometry. With
+        # `entry - stop` already positive, `abs()` was a no-op and dropping it was
+        # invisible here. All 127 shorts in the live corpus have the stop above
+        # entry; the suite's only short had it below.
         self.assertEqual(self.types(self.record(
-            direction="sell", exitPrice=1.1900, rMultiple=2.0, outcome="Win")), [])
+            direction="sell", entry=1.2000, stop=1.2050, exitPrice=1.1900,
+            rMultiple=2.0, outcome="Win", pnl=200.0)), [])
+
+    def test_a_losing_SHORT_is_also_measured_correctly(self):
+        self.assertEqual(self.types(self.record(
+            direction="sell", entry=1.2000, stop=1.2050, exitPrice=1.2050,
+            rMultiple=-1.0, outcome="Loss", pnl=-100.0)), [])
+
+    def test_RISK_IS_A_MAGNITUDE_so_dropping_abs_flips_every_short(self):
+        # M22: `risk = abs(entry - stop)` -> `entry - stop` survived all 252 tests
+        # and would fire 127 errors against the live corpus -- 49% of it. The gate
+        # the commit was built around, untested for half the records it governs.
+        #
+        # Asserted as a property of the derivation itself, so no fixture geometry
+        # can hide it: a short with the stop above entry must yield a POSITIVE R
+        # when it wins.
+        derived = ve._derive("R from price", {
+            "entry": 1.2000, "stop": 1.2050, "exitPrice": 1.1900,
+            "direction": "sell"})
+        self.assertAlmostEqual(derived, 2.0, places=6,
+                               msg="a winning short derived %r; risk is a distance "
+                                   "and cannot be negative" % derived)
+        self.assertGreater(derived, 0)
+
+    def test_the_LIVE_corpus_geometry_is_what_the_fixtures_claim(self):
+        # The fixture above is only meaningful if real shorts really do carry the
+        # stop above entry. If that stops being true, the fixture stops testing M22
+        # and this says so rather than passing quietly.
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "observations")
+        if not os.path.isdir(root):
+            self.skipTest("live corpus not present")
+        above = below = 0
+        for path in globmod.glob(os.path.join(root, "**", "*.json"), recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                record = json.load(handle)
+            if str(record.get("direction", "")).lower() not in ("sell", "short"):
+                continue
+            if not all(isinstance(record.get(f), (int, float))
+                       for f in ("entry", "stop")):
+                continue
+            above += record["stop"] > record["entry"]
+            below += record["stop"] < record["entry"]
+        self.assertGreater(above, 0, "no short in the corpus has its stop above "
+                                     "entry, so the abs() fixture tests nothing")
+        self.assertEqual(below, 0,
+                         "%d shorts carry the stop BELOW entry, which is a long's "
+                         "geometry -- either the data is wrong or the derivation's "
+                         "sign convention is" % below)
 
     def test_THE_ATTACK_forging_rMultiple_alone_contradicts_the_prices(self):
         # pnl untouched, so every anchor binding still agrees.
@@ -3196,6 +3267,160 @@ class TestARecordIsCheckedAgainstItself(unittest.TestCase):
         self.assertEqual(findings, [])
 
 
+class TestTheRecordIsCheckedAgainstThePackageItWasMintedFrom(unittest.TestCase):
+    """THE EIGHTH CATEGORY: the only witness not derived from the corpus.
+
+    Every gate before this compares the corpus to something the corpus also writes.
+    So a forgery that is internally consistent and leaves the anchors alone passed
+    all of them: rewriting all 259 observations so each one's derived R genuinely is
+    +2.0, emptying the ledger rows, and running the documented
+    `research_assimilation.py --write` reached exit 0 with forward AND historical
+    mean R at 2.0 and win share 1.0. The replay-only variant touched nothing outside
+    `observations/` and was equally silent.
+
+    The witness was committed and read by nothing: `sourceContentHash` resolves to
+    exactly one captured package, `repositoryPath` names the file, and this
+    validator already opened that path -- to call `os.path.exists` on it and stop.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_witness_")
+        self.artifact = os.path.join(self.root, "PACKAGES.json")
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def package(self, **over):
+        position = {"entryPrice": 1.2000, "originalStop": 1.1950,
+                    "direction": "buy", "positionSize": 10000,
+                    "balanceBefore": 10000.0}
+        outcome = {"exitPrice": 1.2100, "balanceAfter": 10200.0}
+        position.update(over.pop("position", {}))
+        outcome.update(over.pop("outcome", {}))
+        body = {"contentHash": "a" * 64,
+                "objects": {"positions": [position], "outcomes": [outcome]}}
+        body.update(over)
+        return body
+
+    def write(self, *packages):
+        with open(self.artifact, "w", encoding="utf-8") as handle:
+            json.dump({"packages": list(packages)}, handle)
+
+    def observation(self, **over):
+        record = {"observationId": "O1", "sourceId": "S1",
+                  "sourceContentHash": "a" * 64, "entry": 1.2000, "stop": 1.1950,
+                  "direction": "buy", "positionSize": 10000,
+                  "accountBalanceBefore": 10000.0, "exitPrice": 1.2100,
+                  "accountBalanceAfter": 10200.0}
+        record.update(over)
+        return record
+
+    def types(self, *observations, sources=None):
+        findings = []
+        ve.check_observation_matches_its_package(
+            list(observations),
+            sources if sources is not None
+            else [{"sourceId": "S1", "repositoryPath": self.artifact}],
+            findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_POSITIVE_CONTROL_a_record_matching_its_package_is_silent(self):
+        self.write(self.package())
+        self.assertEqual(self.types(self.observation()), [])
+
+    def test_THE_ATTACK_a_self_consistent_forgery_contradicts_the_package(self):
+        # entry, stop and direction preserved; exitPrice moved so the derived R
+        # really is +2. Every intra-record derivation agrees. The package does not.
+        self.write(self.package())
+        self.assertEqual(self.types(self.observation(exitPrice=1.2100 + 0.0050)),
+                         ["PACKAGE_WITNESS_CONTRADICTED"])
+
+    def test_each_witnessed_field_is_independently_load_bearing(self):
+        self.write(self.package())
+        for field, forged in (("entry", 1.3000), ("stop", 1.1000),
+                              ("direction", "sell"), ("positionSize", 99),
+                              ("accountBalanceBefore", 1.0),
+                              ("exitPrice", 1.5000),
+                              ("accountBalanceAfter", 2.0)):
+            with self.subTest(field=field):
+                self.assertEqual(self.types(self.observation(**{field: forged})),
+                                 ["PACKAGE_WITNESS_CONTRADICTED"],
+                                 "%s is declared witnessed but forging it is silent"
+                                 % field)
+
+    def test_an_unresolvable_observation_is_COUNTED_not_skipped(self):
+        # The packages are perishable, so absence is expected -- but silence would
+        # mean deleting `evidence/` switches the gate off, which is the round-15
+        # lesson exactly.
+        self.write(self.package())
+        self.assertEqual(self.types(self.observation(sourceContentHash="b" * 64)),
+                         ["PACKAGE_WITNESS_UNAVAILABLE"])
+
+    def test_DELETING_THE_ARTIFACT_is_reported_rather_than_disabling_the_gate(self):
+        self.write(self.package())
+        os.remove(self.artifact)
+        self.assertEqual(self.types(self.observation()),
+                         ["PACKAGE_WITNESS_UNAVAILABLE"])
+
+    def test_an_unreadable_artifact_is_an_ERROR_not_a_skip(self):
+        with open(self.artifact, "w", encoding="utf-8") as handle:
+            handle.write("{ this is not json")
+        reported = self.types(self.observation())
+        self.assertIn("UNREADABLE_PACKAGE_WITNESS", reported)
+
+    def test_an_AMBIGUOUS_package_is_not_used_as_a_witness(self):
+        # Two positions in one package makes "the" entry price a guess, and a
+        # witness that guesses certifies the wrong trade.
+        body = self.package()
+        body["objects"]["positions"].append(dict(body["objects"]["positions"][0]))
+        self.write(body)
+        self.assertEqual(self.types(self.observation(entry=9.9999)), [])
+
+    def test_only_sources_the_observations_CITE_are_parsed(self):
+        # JSON-parsing every source's artifact reported 12 transcripts as unreadable
+        # package files. A false positive is how a real gate gets switched off.
+        transcript = os.path.join(self.root, "transcript.raw.txt")
+        with open(transcript, "w", encoding="utf-8") as handle:
+            handle.write("this is a transcript, not a package file")
+        self.write(self.package())
+        self.assertEqual(
+            self.types(self.observation(),
+                       sources=[{"sourceId": "S1", "repositoryPath": self.artifact},
+                                {"sourceId": "S2", "repositoryPath": transcript}]),
+            [])
+
+    def test_the_LIVE_corpus_agrees_with_its_packages(self):
+        # The measurement the gate rests on, asserted rather than remembered.
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence")
+        if not os.path.isdir(os.path.join(root, "observations")):
+            self.skipTest("live corpus not present")
+        records, sources = [], []
+        for path in globmod.glob(os.path.join(root, "observations", "**", "*.json"),
+                                 recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                records.append(json.load(handle))
+        for path in globmod.glob(os.path.join(root, "sources", "**", "*.json"),
+                                 recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                sources.append(json.load(handle))
+        self.assertGreater(len(records), 100, "would pass vacuously")
+        findings = []
+        ve.check_observation_matches_its_package(records, sources, findings,
+                                                 FIXED_NOW)
+        contradictions = [f for f in findings
+                          if f["findingType"] == "PACKAGE_WITNESS_CONTRADICTED"]
+        self.assertEqual(contradictions, [],
+                         "the live corpus disagrees with its own captured packages")
+        # And the witness must actually be REACHING the corpus, or the assertion
+        # above is satisfied by resolving nothing at all.
+        resolved = [r for r in records
+                    if not any(f["entityId"] == r.get("observationId")
+                               for f in findings)]
+        self.assertGreater(len(resolved), 200,
+                           "almost nothing resolved to a package, so this test "
+                           "proves nothing")
+
+
 class TestTheAnchorDOCUMENTIsCheckedAgainstItsRows(unittest.TestCase):
     """The same unread-value shape, one scope up.
 
@@ -3227,7 +3452,7 @@ class TestTheAnchorDOCUMENTIsCheckedAgainstItsRows(unittest.TestCase):
                 "closedDeveloperTest": 0,
                 "closedReal": len(rows),
                 "ledgerRollup": hashlib.sha256(
-                    "\n".join(r["hash"] for r in rows).encode()).hexdigest()}
+                    "\n".join(r.get("hash", "") for r in rows).encode()).hexdigest()}
         body.update(over)
         with open(os.path.join(self.preservation, "LEDGER.json"), "w",
                   encoding="utf-8") as handle:
@@ -3270,6 +3495,70 @@ class TestTheAnchorDOCUMENTIsCheckedAgainstItsRows(unittest.TestCase):
                 self.assertIn("ANCHOR_DOCUMENT_CONTRADICTED", self.types(),
                               "%s is declared bound but forging it is silent"
                               % field)
+
+    def test_DELETING_a_bound_document_field_is_not_cheaper_than_forging_it(self):
+        # Four silent bypasses: delete `ledgerRollup`; delete all four bound fields;
+        # empty `identities` with the counts zeroed and the rollup left stale. The
+        # loop visited only fields that were PRESENT.
+        for field in ("closedTotal", "closedReal", "closedDeveloperTest",
+                      "ledgerRollup"):
+            with self.subTest(deleted=field):
+                self.document(self.rows())
+                path = os.path.join(self.preservation, "LEDGER.json")
+                with open(path, encoding="utf-8") as handle:
+                    body = json.load(handle)
+                del body[field]
+                with open(path, "w", encoding="utf-8") as handle:
+                    json.dump(body, handle)
+                self.assertIn("ANCHOR_DOCUMENT_FIELD_MISSING", self.types(),
+                              "deleting %s leaves the document tied to its rows by "
+                              "one fewer thread, in silence" % field)
+
+    def test_a_row_missing_the_ROLLUP_INPUT_is_reported_not_skipped(self):
+        # `_document_derivations` computed the rollup only when every row carried a
+        # `hash`, so deleting ONE row's hash meant the rollup was never derived and
+        # never compared -- while the stated rollup stayed on disk looking checked.
+        rows = self.rows()
+        del rows[1]["hash"]
+        self.document(rows)
+        self.assertIn("ANCHOR_DOCUMENT_UNCHECKABLE", self.types())
+
+    def test_EMPTYING_the_rows_with_the_counts_zeroed_is_still_reported(self):
+        # The inversion: deleting one row was caught, deleting all of them was not.
+        self.document([], closedTotal=0, closedReal=0, closedDeveloperTest=0,
+                      ledgerRollup="f" * 64)
+        reported = self.types()
+        self.assertTrue(set(reported) & {"ANCHOR_DOCUMENT_UNCHECKABLE",
+                                         "ANCHOR_DOCUMENT_CONTRADICTED"},
+                        "an anchor holding no rows still states a rollup over them")
+
+    def test_an_UNRECOGNISED_anchor_schema_is_reported(self):
+        # R11: making the unknown-schema branch silent survived, because every
+        # fixture declared a schema the table knows. A preservation writer arriving
+        # with a new document shape must force the decision about which of its
+        # fields tie it to its rows -- not default to "none of them".
+        for label, schema in (("new", "mogo.some-future-anchor.v1"),
+                              ("absent", None), ("wrong type", 7)):
+            with self.subTest(schema=label):
+                body = {"identities": self.rows(),
+                        "closedTotal": 3, "closedReal": 3,
+                        "closedDeveloperTest": 0}
+                if schema is not None:
+                    body["schemaVersion"] = schema
+                path = os.path.join(self.preservation, "LEDGER.json")
+                with open(path, "w", encoding="utf-8") as handle:
+                    json.dump(body, handle)
+                self.assertIn("UNADJUDICATED_ANCHOR_SCHEMA", self.types(),
+                              "a %s schemaVersion leaves the document adjudicated "
+                              "by nothing" % label)
+
+    def test_POSITIVE_CONTROL_both_KNOWN_schemas_are_accepted(self):
+        # Without this the assertion above would also pass if every schema were
+        # rejected, which would make the gate useless rather than strict.
+        for schema in ve.ANCHOR_DOCUMENT_BINDINGS_BY_SCHEMA:
+            with self.subTest(schema=schema):
+                self.assertIsNotNone(
+                    ve.anchor_document_bindings({"schemaVersion": schema}))
 
     def test_a_document_field_no_rule_adjudicates_is_REPORTED(self):
         self.document(self.rows(), netProfitToDate=4200.0)
@@ -3314,9 +3603,13 @@ class TestAnchorValuesAreComparedToTheCorpus(unittest.TestCase):
         shutil.rmtree(self.root, ignore_errors=True)
 
     def manifest(self, identities, name="LEDGER.json"):
+        # The identity manifest's schema: this class tests ROW bindings, which apply
+        # to every anchor, and that is the anchor which states no document counts --
+        # so the fixtures do not have to satisfy a second gate to exercise the first.
         with open(os.path.join(self.preservation, name), "w",
                   encoding="utf-8") as handle:
-            json.dump({"identities": identities}, handle)
+            json.dump({"schemaVersion": "mogo.identity-manifest.v1",
+                       "identities": identities}, handle)
 
     def types(self, observations):
         findings = []

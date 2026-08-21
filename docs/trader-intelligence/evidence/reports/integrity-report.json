@@ -1,13 +1,26 @@
 {
-  "findings": [],
+  "findings": [
+    {
+      "detectedAt": "2026-08-21T15:45:59Z",
+      "entityId": "corpus",
+      "entityType": "TRADE_OBSERVATION",
+      "findingId": "EVF0001",
+      "findingType": "PACKAGE_WITNESS_UNAVAILABLE",
+      "message": "1 of 259 observations cannot be resolved to a captured package, so their values rest on the corpus alone. The artifacts are perishable and gitignored by design, so this is expected to be non-zero -- but it is the count that says how much of the corpus is standing on its own word, and a jump in it means the witness was removed.",
+      "metadata": {},
+      "resolutionNotes": null,
+      "resolutionStatus": "open",
+      "severity": "WARNING"
+    }
+  ],
   "generated": true,
-  "generatedAt": "2026-08-21T14:24:09Z",
+  "generatedAt": "2026-08-21T15:45:59Z",
   "integrityReportId": "EVIDENCE_INTEGRITY|20260821|001",
   "summary": {
     "ERROR": 0,
     "FATAL": 0,
     "INFO": 0,
-    "WARNING": 0
+    "WARNING": 1
   },
   "validatorVersion": "1.0.0"
 }

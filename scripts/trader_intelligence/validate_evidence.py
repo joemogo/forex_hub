@@ -475,10 +475,41 @@ def check_anchor_values_match_records(observations, findings, now,
         # different from deleting all of them. The first was silent; only the second
         # was caught.
         derived = _document_derivations(manifest, rows)
-        for field in sorted(manifest):
+        bindings = anchor_document_bindings(manifest)
+        if bindings is None:
+            _finding(findings, "UNADJUDICATED_ANCHOR_SCHEMA", "ERROR",
+                      "TRADE_OBSERVATION", os.path.basename(path),
+                      "Anchor %s declares schemaVersion %r, which no rule "
+                      "adjudicates, so nothing says which of its fields must agree "
+                      "with the rows it holds."
+                      % (os.path.basename(path), manifest.get("schemaVersion")), now)
+            bindings = ()
+        # The UNION, not the document's keys. Iterating `sorted(manifest)` visits only
+        # fields that are PRESENT, so deleting a bound field was silent -- and
+        # `_document_derivations` skips the rollup when a row has no `hash`, so
+        # deleting one row's hash was silent too. Both are "unmeasurable is skipped",
+        # 200 lines from the check whose docstring says deleting an input must not be
+        # cheaper than forging the output. Same commit.
+        for field in sorted(set(manifest) | {b.field for b in bindings}):
             if field in ANCHOR_DOCUMENT_FIELDS_UNBOUND:
                 continue
-            if not any(b.field == field for b in ANCHOR_DOCUMENT_BINDINGS):
+            if field not in manifest:
+                _finding(findings, "ANCHOR_DOCUMENT_FIELD_MISSING", "ERROR",
+                          "TRADE_OBSERVATION", os.path.basename(path),
+                          "Anchor %s no longer records %r, which is one of the "
+                          "values that ties the document to the rows it holds. "
+                          "Removing it must not be cheaper than forging it."
+                          % (os.path.basename(path), field), now)
+                continue
+            if any(b.field == field for b in bindings) and field not in derived:
+                _finding(findings, "ANCHOR_DOCUMENT_UNCHECKABLE", "ERROR",
+                          "TRADE_OBSERVATION", os.path.basename(path),
+                          "Anchor %s records %s=%r, and it cannot be re-derived from "
+                          "the rows -- some row is missing the input it needs. The "
+                          "stated value therefore rests on nothing."
+                          % (os.path.basename(path), field, manifest[field]), now)
+                continue
+            if not any(b.field == field for b in bindings):
                 _finding(findings, "UNADJUDICATED_ANCHOR_FIELD", "ERROR",
                           "TRADE_OBSERVATION", os.path.basename(path),
                           "Anchor %s records document field %r, and no rule says "
@@ -494,7 +525,7 @@ def check_anchor_values_match_records(observations, findings, now,
                       "Anchor %s states %s=%r, but %s is %r. The document was "
                       "written with its rows and disagrees with them now."
                       % (os.path.basename(path), field, manifest[field],
-                         next(b.describe for b in ANCHOR_DOCUMENT_BINDINGS
+                         next(b.describe for b in bindings
                               if b.field == field), derived[field]), now)
         for row in rows:
             if not isinstance(row, dict):
@@ -631,6 +662,158 @@ def _derive(name, record):
     return None
 
 
+#: What the CAPTURED PACKAGE says about a trade, and the observation field minted
+#: from it. Every entry measured across the live corpus before being wired.
+PackageWitness = collections.namedtuple(
+    "PackageWitness", "record_field object_kind package_field agreement")
+
+PACKAGE_WITNESSES = (
+    PackageWitness("entry", "positions", "entryPrice", "258/258"),
+    PackageWitness("stop", "positions", "originalStop", "258/258"),
+    PackageWitness("direction", "positions", "direction", "258/258"),
+    PackageWitness("positionSize", "positions", "positionSize", "258/258"),
+    PackageWitness("accountBalanceBefore", "positions", "balanceBefore", "257/257"),
+    PackageWitness("exitPrice", "outcomes", "exitPrice", "258/258"),
+    PackageWitness("accountBalanceAfter", "outcomes", "balanceAfter", "257/257"),
+)
+
+
+def _packages_by_content_hash(sources, wanted_source_ids):
+    """Every captured package the corpus's own source records point at.
+
+    `repositoryPath` is on the source record, committed, and was being read only by
+    an `os.path.exists` call. The FILES it names live in the gitignored `evidence/`
+    tree and are perishable by design -- which is a reason the witness can be
+    absent, never a reason not to use it when it is there.
+    """
+    packages = {}
+    unreadable = []
+    for source in sources:
+        # Only the sources OBSERVATIONS cite. The other 42 are transcripts and
+        # PDFs, and JSON-parsing a `.raw.txt` reported 12 artifacts as unreadable
+        # that were never package files -- a false positive is how a real gate gets
+        # switched off. This is not a scope an attacker controls: an observation
+        # names its own sourceId, and repointing it is POPULATION_REBINDING.
+        if source.get("sourceId") not in wanted_source_ids:
+            continue
+        path = source.get("repositoryPath")
+        if not isinstance(path, str) or not path:
+            continue
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                document = json.load(handle)
+        except (ValueError, OSError) as exc:
+            unreadable.append((path, str(exc)))
+            continue
+        entries = document.get("packages") if isinstance(document, dict) else document
+        for package in entries or []:
+            if isinstance(package, dict) and isinstance(package.get("contentHash"), str):
+                packages.setdefault(package["contentHash"], package)
+    return packages, unreadable
+
+
+def _witness_value(package, witness):
+    objects = package.get("objects")
+    if not isinstance(objects, dict):
+        return None
+    entries = objects.get(witness.object_kind)
+    if not isinstance(entries, list) or len(entries) != 1:
+        # More than one position in a package would make "the" entry price
+        # ambiguous, and guessing which one is meant is how a witness starts
+        # certifying the wrong trade.
+        return None
+    entry = entries[0]
+    return entry.get(witness.package_field) if isinstance(entry, dict) else None
+
+
+def check_observation_matches_its_package(observations, sources, findings, now):
+    """The record, against the package it was minted from.
+
+    THE EIGHTH CATEGORY -- and the last witness, because it is the only one that is
+    not derived from the corpus at all. Every gate before it compares the corpus to
+    something the corpus also writes: an anchor MOGO produced, a document MOGO
+    stamped, or the record's own arithmetic. So a forgery that is internally
+    consistent and leaves the anchors alone passes all of them: rewriting all 259
+    observations so each one's derived R genuinely is +2.0, emptying the ledger
+    rows, and running `research_assimilation.py --write` reached
+    `{'INFO': 0, 'WARNING': 0, 'ERROR': 0, 'FATAL': 0}` -- forward AND historical
+    mean R at 2.0, win share 1.0.
+
+    The witness was already committed and read by nothing. Each observation carries
+    `sourceContentHash`, which is the `contentHash` of exactly one captured package
+    (measured: 259 distinct hashes, zero collisions across 263 packages), and each
+    source carries `repositoryPath`, which this validator already opened -- to call
+    `os.path.exists` on it and stop. Seven fields agree, 258/258 resolvable records,
+    zero disagreements:
+
+        entry/stop/direction/positionSize/balanceBefore  <- positions[0]
+        exitPrice/balanceAfter                            <- outcomes[0]
+
+    Three documents of mine said this was impossible -- SPEC §7.4, the
+    `check_no_two_observations_share_a_package` docstring, and backlog B-32.4/B-32.10
+    all assert the corpus carries no package anchor. The mapping is committed; it is
+    the ARTIFACTS that are gitignored, and those are two different claims. §7.12
+    carries the correction.
+
+    ABSENCE IS NOT SILENCE. The packages are perishable, so an unresolvable
+    observation is reported at WARNING and counted rather than skipped -- otherwise
+    deleting `evidence/` would switch this gate off, which is the round-15 lesson
+    exactly. A CONTRADICTION is an ERROR.
+    """
+    if not observations:
+        return
+    cited = {record.get("sourceId") for record in observations}
+    packages, unreadable = _packages_by_content_hash(sources, cited)
+    for path, reason in unreadable:
+        _finding(findings, "UNREADABLE_PACKAGE_WITNESS", "ERROR",
+                  "EVIDENCE_SOURCE", path,
+                  "A capture artifact named by a source record cannot be read, so "
+                  "the observations minted from it cannot be checked against it: %s"
+                  % reason, now)
+    unwitnessed = 0
+    for record in observations:
+        content_hash = record.get("sourceContentHash")
+        package = packages.get(content_hash) if isinstance(content_hash, str) else None
+        if package is None:
+            unwitnessed += 1
+            continue
+        for witness in PACKAGE_WITNESSES:
+            if witness.record_field not in record:
+                continue
+            stated = record[witness.record_field]
+            captured = _witness_value(package, witness)
+            if captured is None:
+                continue
+            if isinstance(captured, bool) or not isinstance(captured, (int, float)):
+                agrees = str(stated).strip().lower() == str(captured).strip().lower()
+            else:
+                try:
+                    agrees = abs(float(stated) - float(captured)) < 1e-9
+                except (TypeError, ValueError):
+                    agrees = False
+            if agrees:
+                continue
+            _finding(findings, "PACKAGE_WITNESS_CONTRADICTED", "ERROR",
+                      "TRADE_OBSERVATION", record.get("observationId"),
+                      "Observation states %s=%r, but the captured package it was "
+                      "minted from records %s=%r. The package was written by the "
+                      "engine when the trade closed and is not derived from the "
+                      "corpus, so the corpus is what changed."
+                      % (witness.record_field, stated, witness.package_field,
+                         captured), now)
+    if unwitnessed:
+        _finding(findings, "PACKAGE_WITNESS_UNAVAILABLE", "WARNING",
+                  "TRADE_OBSERVATION", "corpus",
+                  "%d of %d observations cannot be resolved to a captured package, "
+                  "so their values rest on the corpus alone. The artifacts are "
+                  "perishable and gitignored by design, so this is expected to be "
+                  "non-zero -- but it is the count that says how much of the corpus "
+                  "is standing on its own word, and a jump in it means the witness "
+                  "was removed." % (unwitnessed, len(observations)), now)
+
+
 def check_values_are_finite(observations, findings, now):
     """NaN and Infinity are not measurements, and they used to abort the run.
 
@@ -748,14 +931,39 @@ def check_record_is_internally_consistent(observations, findings, now):
 AnchorDocumentBinding = collections.namedtuple(
     "AnchorDocumentBinding", "field describe")
 
-ANCHOR_DOCUMENT_BINDINGS = (
-    AnchorDocumentBinding("closedTotal", "the number of identities recorded"),
-    AnchorDocumentBinding("closedDeveloperTest",
-                          "the number of those refused by import policy"),
-    AnchorDocumentBinding("closedReal", "the number that are not developer trades"),
-    AnchorDocumentBinding("ledgerRollup",
-                          "sha256 of the row hashes joined by newline"),
-)
+#: Keyed by the document's OWN schemaVersion, because the two anchors are not the
+#: same shape: the paper-ledger preservation file states counts and a rollup over
+#: its rows, and the identity manifest states neither and never has. Requiring the
+#: ledger's fields of the manifest reported four contradictions against a clean
+#: corpus -- a gate with a false positive is a gate someone eventually switches off.
+ANCHOR_DOCUMENT_BINDINGS_BY_SCHEMA = {
+    "mogo.paper-ledger-preservation.v1": (
+        AnchorDocumentBinding("closedTotal", "the number of identities recorded"),
+        AnchorDocumentBinding("closedDeveloperTest",
+                              "the number of those refused by import policy"),
+        AnchorDocumentBinding("closedReal",
+                              "the number that are not developer trades"),
+        AnchorDocumentBinding("ledgerRollup",
+                              "sha256 of the row hashes joined by newline"),
+    ),
+    "mogo.identity-manifest.v1": (),
+}
+
+
+def anchor_document_bindings(manifest):
+    """The bindings for THIS document, or None if its schema is unknown.
+
+    None is not "no bindings": an unrecognised anchor schema is reported, so a new
+    preservation writer cannot arrive with a document nothing adjudicates.
+    """
+    return ANCHOR_DOCUMENT_BINDINGS_BY_SCHEMA.get(manifest.get("schemaVersion"))
+
+
+#: Retained for the tests and callers that ask what CAN be bound at all.
+ANCHOR_DOCUMENT_BINDINGS = tuple(
+    binding
+    for bindings in ANCHOR_DOCUMENT_BINDINGS_BY_SCHEMA.values()
+    for binding in bindings)
 
 ANCHOR_DOCUMENT_FIELDS_UNBOUND = {
     "generated": "a marker that the file was produced by the preservation tool",
@@ -1000,12 +1208,20 @@ def check_observation_source_content_unique(observations, findings, now):
     A CORRECTION, because the first version of this docstring overstated it. It said
     freshening the value "means computing a hash of bytes that must also exist --
     which is precisely the authoring cost delete-and-pad exists to avoid". That is
-    FALSE. Nothing in this validator compares `sourceContentHash` to anything: it
-    names a package inside a capture artifact, and those artifacts are gitignored by
-    design, so the corpus cannot re-derive it (SPEC-provenance 7.4 says exactly
-    this). Measured: 0 of 259 observations have a `sourceContentHash` equal to their
+    FALSE. Measured: 0 of 259 observations have a `sourceContentHash` equal to their
     source's `contentHash` -- they are different granularities. Forging it costs one
     character.
+
+    A SECOND CORRECTION (B-32.19), because the first one was also wrong about WHY.
+    It said the corpus "cannot re-derive it" because the capture artifacts are
+    gitignored, citing SPEC 7.4. The artifacts being gitignored is true; "the corpus
+    cannot re-derive it" does not follow, and the two were conflated here, in the
+    SPEC, and in backlog B-32.4/B-32.10. The MAPPING is committed:
+    `EvidenceSource.repositoryPath` names the artifact, and this validator was
+    already opening it -- to call `os.path.exists` and stop. Each observation's
+    `sourceContentHash` resolves to exactly one package (259 distinct hashes, zero
+    collisions across 263 packages), and seven of the package's fields agree with
+    the observation 258/258. `check_observation_matches_its_package` now reads it.
 
     So this is a DUPLICATE DETECTOR, not an authoring-cost barrier. It catches the
     naive copy, which is the realistic accident and the cheap attack; it does not
@@ -2228,6 +2444,7 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
         preservation_dir=os.path.join(os.path.abspath(evidence_root),
                                       "ledger-preservation"))
     check_values_are_finite(observations, findings, now)
+    check_observation_matches_its_package(observations, sources, findings, now)
     check_record_is_internally_consistent(observations, findings, now)
     check_anchor_values_match_records(
         observations, findings, now,
