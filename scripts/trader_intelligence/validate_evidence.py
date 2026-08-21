@@ -12,6 +12,8 @@ introducing a redundant standalone IntegrityFinding entity type.
 """
 import argparse
 import collections
+import hashlib
+import math
 import glob as globmod
 import json
 import os
@@ -465,7 +467,36 @@ def check_anchor_values_match_records(observations, findings, now,
             continue
         if not isinstance(manifest, dict):
             continue
-        for row in manifest.get("identities") or []:
+        rows = manifest.get("identities")
+        rows = rows if isinstance(rows, list) else []
+        # THE SAME SHAPE ONE SCOPE UP. `UNADJUDICATED_ANCHOR_FIELD` was row-scoped,
+        # so the document's own fields stayed in the unread set -- and `closedTotal`
+        # and `ledgerRollup` are exactly what makes deleting the rows you tampered
+        # different from deleting all of them. The first was silent; only the second
+        # was caught.
+        derived = _document_derivations(manifest, rows)
+        for field in sorted(manifest):
+            if field in ANCHOR_DOCUMENT_FIELDS_UNBOUND:
+                continue
+            if not any(b.field == field for b in ANCHOR_DOCUMENT_BINDINGS):
+                _finding(findings, "UNADJUDICATED_ANCHOR_FIELD", "ERROR",
+                          "TRADE_OBSERVATION", os.path.basename(path),
+                          "Anchor %s records document field %r, and no rule says "
+                          "whether it must agree with the rows it holds."
+                          % (os.path.basename(path), field), now)
+                continue
+            if field not in derived:
+                continue
+            if manifest[field] == derived[field]:
+                continue
+            _finding(findings, "ANCHOR_DOCUMENT_CONTRADICTED", "ERROR",
+                      "TRADE_OBSERVATION", os.path.basename(path),
+                      "Anchor %s states %s=%r, but %s is %r. The document was "
+                      "written with its rows and disagrees with them now."
+                      % (os.path.basename(path), field, manifest[field],
+                         next(b.describe for b in ANCHOR_DOCUMENT_BINDINGS
+                              if b.field == field), derived[field]), now)
+        for row in rows:
             if not isinstance(row, dict):
                 continue
             trade_id = row.get("tradeId")
@@ -533,6 +564,234 @@ def check_anchor_values_match_records(observations, findings, now,
                   "ANCHOR_VALUE_BINDINGS is inapplicable -- so removing the bound "
                   "fields from the anchor WRITER would switch this gate off in "
                   "silence." % (joined_rows,), now)
+
+
+#: What a record must say about ITSELF, independent of any anchor. Each entry was
+#: measured across all 259 preserved observations before being wired.
+#:
+#: This is the invariant anchors cannot provide: it needs no external witness, so it
+#: covers the 224 replay observations no manifest records and applies to every
+#: future close automatically. See check_record_is_internally_consistent.
+#: `required` is MEASURED, not chosen: a derivation is required when every preserved
+#: observation can already support it, so requiring it costs no false positive. This
+#: field is the difference between a gate and a suggestion -- see the note in
+#: check_record_is_internally_consistent about deleting `entry`.
+RecordDerivation = collections.namedtuple(
+    "RecordDerivation", "name derived_field inputs tolerance required agreement")
+
+RECORD_DERIVATIONS = (
+    RecordDerivation("R from price", "rMultiple",
+                     ("entry", "stop", "exitPrice", "direction"),
+                     1e-5, True, "259/259 measurable, max deviation 4.1e-07"),
+    RecordDerivation("R from money", "rMultiple", ("pnl", "riskAmount"),
+                     0.02, False,
+                     "38/38 where pnl exists; 221 replay records carry none"),
+    RecordDerivation("outcome from R", "outcome", ("rMultiple",),
+                     0, True, "259/259 measurable"),
+    RecordDerivation("outcome from money", "outcome", ("pnl",), 0, False,
+                     "38/38 where pnl exists"),
+)
+
+_LONG_DIRECTIONS = ("buy", "long")
+
+
+def _derive(name, record):
+    """The derived value, or None when this record cannot support the derivation."""
+    if name == "R from price":
+        entry, stop = record.get("entry"), record.get("stop")
+        exit_price, direction = record.get("exitPrice"), record.get("direction")
+        if not all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                   for v in (entry, stop, exit_price)):
+            return None
+        if not isinstance(direction, str):
+            return None
+        risk = abs(entry - stop)
+        if risk == 0:
+            return None
+        move = (exit_price - entry
+                if direction.strip().lower() in _LONG_DIRECTIONS
+                else entry - exit_price)
+        return move / risk
+    if name == "R from money":
+        pnl, risk = record.get("pnl"), record.get("riskAmount")
+        if not all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                   for v in (pnl, risk)) or risk == 0:
+            return None
+        return pnl / risk
+    if name == "outcome from R":
+        value = record.get("rMultiple")
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or value == 0:
+            return None
+        return "Win" if value > 0 else "Loss"
+    if name == "outcome from money":
+        pnl = record.get("pnl")
+        if not isinstance(pnl, (int, float)) or isinstance(pnl, bool) or pnl == 0:
+            return None
+        return "Win" if pnl > 0 else "Loss"
+    return None
+
+
+def check_values_are_finite(observations, findings, now):
+    """NaN and Infinity are not measurements, and they used to abort the run.
+
+    `corpus_fingerprint` canonicalises with `allow_nan=False`, so one non-finite
+    float anywhere in the corpus raised straight out of `run_integrity_checks`. The
+    CLI exited nonzero, which is right -- but it never got as far as WRITING the
+    report, so `integrity-report.json`, which other tooling reads, still said
+    `ERROR: 0` from the previous clean run. A crash that leaves a stale all-clear
+    behind is worse than a finding.
+
+    Reported here, before anything tries to serialise the corpus.
+    """
+    for record in observations:
+        for field in sorted(record):
+            value = record[field]
+            if isinstance(value, float) and not math.isfinite(value):
+                _finding(findings, "NON_FINITE_VALUE", "ERROR", "TRADE_OBSERVATION",
+                          record.get("observationId"),
+                          "Observation carries %s=%r. NaN and Infinity are not "
+                          "measurements: they compare false against everything, so "
+                          "a record holding one passes any range or equality check "
+                          "put to it." % (field, value), now)
+
+
+def check_record_is_internally_consistent(observations, findings, now):
+    """A record is checked against ITSELF. No anchor can do this.
+
+    THE SEVENTH CATEGORY, and the one that reaches where anchors structurally
+    cannot. Every gate before it -- existence, then value -- compares the corpus to
+    an external witness, so its reach stops exactly where the witness stops. Two
+    consequences were live:
+
+      * `rMultiple` and `outcome` are bound by no anchor, and `rMultiple` IS the
+        forward-performance headline. Rewriting those two alone, leaving `pnl`
+        untouched so the anchor bindings all agree, moved forward mean R from -0.06
+        to +2.00 and the win rate from 31.4% to 100% -- and one run of the
+        documented `research_assimilation.py --write` cleared the only finding it
+        raised. Exit 0.
+      * The 224 replay observations are recorded in no ledger at all, so no anchor
+        can ever cover them. The same tamper on that cohort was silent outright.
+
+    A trade record is heavily over-determined, and MOGO's records agree with
+    themselves exactly:
+
+        rMultiple == (exit - entry)/|entry - stop|   259/259, max deviation 4.1e-07
+        rMultiple == pnl / riskAmount                 38/38,  max deviation 0.0054
+        outcome   == sign(rMultiple)                 259/259
+        outcome   == sign(pnl)                        38/38
+
+    So forging one field is not enough: a forger has to move the price fields, the
+    money fields and the labels together and keep them consistent, and the price
+    fields are what the anchors and the source package already constrain. The
+    tolerances are measured, not chosen -- 1e-5 sits 25x above the worst real
+    deviation and far below the ~1R a tamper moves.
+
+    UNMEASURABLE IS REPORTED, not skipped. All 259 records support the price
+    derivation today, so requiring it costs nothing -- and without that, deleting
+    `entry` is cheaper than forging it.
+    """
+    for record in observations:
+        for derivation in RECORD_DERIVATIONS:
+            stated = record.get(derivation.derived_field)
+            if stated is None:
+                continue
+            if not all(field in record for field in derivation.inputs):
+                if not derivation.required:
+                    # Genuinely optional: 221 replay records carry no `pnl` at all
+                    # and never have, so demanding it would invent a field.
+                    continue
+                # REQUIRED, so an absent input is REPORTED. This skipped, and
+                # deleting `entry` from 35 records was silent -- shape (c) written
+                # into the very check whose docstring names it. `required` is
+                # measured: all 259 records support this derivation today.
+                _finding(findings, "DERIVATION_UNCHECKABLE", "ERROR",
+                          "TRADE_OBSERVATION", record.get("observationId"),
+                          "Observation states %s=%r, and %s needs %s, which this "
+                          "record no longer carries. Deleting an input must not be "
+                          "cheaper than forging the output."
+                          % (derivation.derived_field, stated, derivation.name,
+                             ", ".join(f for f in derivation.inputs
+                                       if f not in record)), now)
+                continue
+            derived = _derive(derivation.name, record)
+            if derived is None:
+                _finding(findings, "DERIVATION_UNCHECKABLE", "ERROR",
+                          "TRADE_OBSERVATION", record.get("observationId"),
+                          "Observation states %s=%r, and %s cannot be evaluated from "
+                          "%s on this record, so the stated value rests on nothing. "
+                          "Removing an input must not be cheaper than forging the "
+                          "output."
+                          % (derivation.derived_field, stated, derivation.name,
+                             ", ".join(derivation.inputs)), now)
+                continue
+            if isinstance(derived, str):
+                agrees = (stated == derived)
+            else:
+                try:
+                    agrees = abs(float(stated) - derived) <= derivation.tolerance
+                except (TypeError, ValueError):
+                    agrees = False
+            if agrees:
+                continue
+            _finding(findings, "RECORD_CONTRADICTS_ITSELF", "ERROR",
+                      "TRADE_OBSERVATION", record.get("observationId"),
+                      "Observation states %s=%r but %s gives %r from its own %s. A "
+                      "record that disagrees with itself was edited after it was "
+                      "written; the arithmetic was not."
+                      % (derivation.derived_field, stated, derivation.name, derived,
+                         ", ".join(derivation.inputs)), now)
+
+
+#: The same adjudication, one scope up. An anchor DOCUMENT carries fields about the
+#: rows it holds, and those were read by nothing -- which is why deleting the rows
+#: you tampered was silent while deleting all of them was caught.
+AnchorDocumentBinding = collections.namedtuple(
+    "AnchorDocumentBinding", "field describe")
+
+ANCHOR_DOCUMENT_BINDINGS = (
+    AnchorDocumentBinding("closedTotal", "the number of identities recorded"),
+    AnchorDocumentBinding("closedDeveloperTest",
+                          "the number of those refused by import policy"),
+    AnchorDocumentBinding("closedReal", "the number that are not developer trades"),
+    AnchorDocumentBinding("ledgerRollup",
+                          "sha256 of the row hashes joined by newline"),
+)
+
+ANCHOR_DOCUMENT_FIELDS_UNBOUND = {
+    "generated": "a marker that the file was produced by the preservation tool",
+    "schemaVersion": "the document's own schema, checked by its reader",
+    "identities": "the rows themselves, adjudicated by ANCHOR_VALUE_BINDINGS",
+    "windowSize": "how far back the preservation tool looked in the account -- a "
+                  "fact about the CAPTURE, not derivable from the corpus",
+    "balance": "the PAPER account balance at capture time. Balances do not chain "
+               "trade-by-trade (up to 5 positions run concurrently), so this cannot "
+               "be re-derived from the observations and must not be guessed at",
+    "openPositions": "positions still open at capture time, which by definition "
+                     "minted no observation",
+    "withinAutomaticReMintWindow": "a fact about the capture window, not the corpus",
+    "outsideAutomaticReMintWindow": "a fact about the capture window, not the corpus",
+    "outsideWindowReal": "a fact about the capture window, not the corpus",
+}
+
+
+def _document_derivations(document, rows):
+    hashes = [r.get("hash") for r in rows
+              if isinstance(r, dict) and isinstance(r.get("hash"), str)]
+    developer = sum(1 for r in rows if isinstance(r, dict)
+                    and (r.get("refusedByImportPolicy") is True
+                         or (r.get("refusedByImportPolicy") is None
+                             and isinstance(r.get("tradeId"), str)
+                             and is_developer_test_package(
+                                 {"sourceTradeId": r["tradeId"]}))))
+    derived = {
+        "closedTotal": len(rows),
+        "closedDeveloperTest": developer,
+        "closedReal": len(rows) - developer,
+    }
+    if len(hashes) == len(rows) and rows:
+        derived["ledgerRollup"] = hashlib.sha256(
+            "\n".join(hashes).encode("utf-8")).hexdigest()
+    return derived
 
 
 def _check_preservation_anchor(preservation_dir, report):
@@ -891,7 +1150,17 @@ def check_corpus_matches_recorded_state(observations, sources, findings, now,
                     if isinstance(src.get("sourceId"), str)}
     by_observation_id = {obs["observationId"]: obs for obs in observations
                          if isinstance(obs.get("observationId"), str)}
-    actual = _assimilation.corpus_fingerprint(by_observation_id, by_source_id)
+    try:
+        actual = _assimilation.corpus_fingerprint(by_observation_id, by_source_id)
+    except ValueError as exc:
+        # Defence in depth behind check_values_are_finite: whatever makes the corpus
+        # unserialisable, the report must still be WRITTEN saying so. Raising here
+        # left the previous run's clean report in place.
+        _finding(findings, "UNSERIALISABLE_CORPUS", "ERROR", "TRADE_OBSERVATION",
+                  "corpus",
+                  "The corpus cannot be canonicalised, so its fingerprint cannot be "
+                  "compared with the recorded one: %s" % exc, now)
+        return
     if actual != recorded_fingerprint:
         _finding(findings, "CORPUS_CONTENT_DIVERGED", "ERROR", "TRADE_OBSERVATION",
                   "corpus",
@@ -1958,6 +2227,8 @@ def run_integrity_checks(evidence_root, repo_root=None, ti_root=None, is_product
         observations, findings, now,
         preservation_dir=os.path.join(os.path.abspath(evidence_root),
                                       "ledger-preservation"))
+    check_values_are_finite(observations, findings, now)
+    check_record_is_internally_consistent(observations, findings, now)
     check_anchor_values_match_records(
         observations, findings, now,
         preservation_dir=os.path.join(os.path.abspath(evidence_root),

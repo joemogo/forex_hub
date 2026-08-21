@@ -489,3 +489,57 @@ append the rows can recompute the rollup. Closing it needs a witness *outside* t
 the only ones available (git history, the operator's checkpoint directory) are themselves
 writable by the same actor. **Recorded as a threat-model boundary, not built as a gate that
 would look like protection without being any** — the same disposition as §7.5.
+
+### 7.10 A record checked against itself (B-32.18)
+
+§7.9 bound anchor values to corpus values. Every gate up to that point — existence, then
+value — compares the corpus to an **external witness**, so its reach stops exactly where the
+witness stops. Two consequences were live:
+
+- `rMultiple` and `outcome` are bound by no anchor, and `rMultiple` *is* the forward-performance
+  headline. Rewriting those two while leaving `pnl` untouched — so every §7.9 binding still
+  agreed — moved forward mean R from −0.06 to +2.00 and the win rate from 31.4% to 100%. One run
+  of `research_assimilation.py --write` cleared the single finding it raised. Exit 0.
+- The **224 replay observations are recorded in no ledger at all**, so no anchor can ever cover
+  them. The same tamper on that cohort was silent outright.
+
+A trade record is heavily over-determined, and MOGO's records agree with themselves exactly:
+
+| Derivation | Agreement |
+|---|---|
+| `rMultiple` == (exit − entry) / \|entry − stop\|, signed by direction | 259/259, max deviation **4.1e-07** |
+| `rMultiple` == `pnl` / `riskAmount` | 38/38, max deviation 0.0054 (pnl is rounded to cents) |
+| `outcome` == sign(`rMultiple`) | 259/259 |
+| `outcome` == sign(`pnl`) | 38/38 |
+
+This needs no anchor, so it covers **every** observation and applies to every future close
+automatically. Forging one field is no longer enough: the price fields, the money fields and the
+labels must move together and stay consistent, and the price fields are what the anchors and the
+source package already constrain. Tolerances are measured, not chosen — 1e-5 sits 25× above the
+worst real deviation and far below the ~1R a tamper moves.
+
+**`required` is measured, not chosen.** A derivation is required only where every preserved
+record already supports it, so requiring it costs no false positive — and a test asserts that
+against the live corpus, so the flag cannot outlive the fact. This mattered: the first version
+skipped a derivation whose inputs were absent, and deleting `entry` from 259 records was
+completely silent. That is shape (c) — *skip when you cannot evaluate* — written into the check
+whose own docstring names it. Deleting an input is now `DERIVATION_UNCHECKABLE`.
+
+### 7.11 The anchor document, and its rows (B-32.18)
+
+`UNADJUDICATED_ANCHOR_FIELD` was row-scoped, so an anchor **document's own** fields stayed in the
+unread set — the §7.9 shape, one scope up, in the change written to fix it. That is what made
+*deleting the rows you tampered* different from *deleting all of them*: the vacuity guard fires
+only when nothing compares, so removing exactly the 24 rows you intended to forge was silent.
+
+Three of the ledger's document fields are re-derivable from the rows it holds, and were read by
+nothing: `closedTotal` == number of identities, `closedDeveloperTest` == rows refused by import
+policy, `closedReal` == the remainder, and `ledgerRollup` == sha256 of the row hashes joined by
+newline — confirmed both by re-derivation and by the writer, `scripts/preserve_paper_ledger.js`.
+Nine further fields (`balance`, `openPositions`, `windowSize`, the re-mint window counts) are
+excused with reasons: they are facts about the **capture**, not about the corpus, and `balance`
+in particular cannot be re-derived because balances do not chain trade-by-trade.
+
+**Honest limit, unchanged from §7.9.** A rewriter who can write any file recomputes `closedTotal`
+and `ledgerRollup` as easily as they delete the rows. What this closes is the *partial* edit —
+which is every attack actually demonstrated across rounds 9–17.

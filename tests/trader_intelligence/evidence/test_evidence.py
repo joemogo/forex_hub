@@ -20,6 +20,7 @@ Organized into the 9 categories the milestone specifies:
   I. Regression (existing suites + graph build stability)
 """
 import glob as globmod
+import re
 import hashlib
 import ast
 import json
@@ -980,10 +981,6 @@ class TestSyntheticFixtureDemo(unittest.TestCase):
     def test_fixture_would_be_flagged_if_ever_mistaken_for_production_data(self):
         report = ve.run_integrity_checks(SYNTHETIC_DEMO_ROOT, is_production=True)
         self.assertTrue(any(f["findingType"] == "MISLABELED_SYNTHETIC_FIXTURE" for f in report["findings"]))
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class TestUnresolvableArtifactIsReported(unittest.TestCase):
@@ -2592,7 +2589,75 @@ class TestCorpusIntegrityFindingsAreBlocking(unittest.TestCase):
         # B-32.14 / B-32.15: the identity anchor and its allow-list direction.
         "PRESERVED_IDENTITY_MISSING", "UNREADABLE_PRESERVED_IDENTITIES",
         "UNANCHORED_OBSERVATION",
+        # B-32.17: anchors pin value, not only existence.
+        "ANCHOR_VALUE_CONTRADICTED", "ANCHOR_VALUE_UNCHECKABLE",
+        "UNADJUDICATED_ANCHOR_FIELD", "ANCHOR_VALUES_UNCOMPARED",
+        # B-32.18: a record checked against itself, and the document against its rows.
+        "RECORD_CONTRADICTS_ITSELF", "DERIVATION_UNCHECKABLE",
+        "ANCHOR_DOCUMENT_CONTRADICTED",
+        # B-32.18: a crash must not leave a stale all-clear report behind.
+        "NON_FINITE_VALUE", "UNSERIALISABLE_CORPUS",
     )
+
+    #: Raised ONLY below ERROR, deliberately. Each is advisory: it describes work
+    #: outstanding, not evidence that is wrong.
+    SOFT_BY_DESIGN = (
+        "APPROVED_INTAKE_WITH_UNRESOLVED_FINDINGS", "DUPLICATE_IMMUTABLE_CONTENT",
+        "MISSING_DIRECTNESS_OR_CERTAINTY", "MISSING_TRANSCRIPT_LOCATOR",
+        "OVERLAPPING_SEGMENT_TIMESTAMPS", "UNRESOLVABLE_ARTIFACT",
+    )
+
+    #: Raised at ERROR on some paths and below it on others, because the same
+    #: condition means different things in different places.
+    CONTEXT_DEPENDENT = (
+        "CONFIDENCE_COUNT_MISMATCH", "INVALID_LIFECYCLE_SEQUENCE",
+        "MALFORMED_PROVENANCE", "MISSING_GRAPH_RELATIONSHIP",
+    )
+
+    def test_EVERY_finding_type_is_adjudicated_and_none_has_been_DOWNGRADED(self):
+        # M14: downgrading ANCHOR_VALUE_CONTRADICTED to INFO survived the whole
+        # suite, because BLOCKING is hand-maintained and the new types were simply
+        # not in it. A table that must be remembered is not an invariant -- the same
+        # lesson as CORPUS_ANCHORS, inside the test written to enforce it.
+        #
+        # This partitions every finding type the module can emit, straight from the
+        # source: blocking-only, context-dependent, or soft-by-design. Downgrading a
+        # blocking type moves it into soft-only, which no longer matches the declared
+        # set, so the mutation fails here rather than passing everywhere.
+        path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
+                            "validate_evidence.py")
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+        pairs = re.findall(r'_finding\(\s*findings,\s*"([A-Z_]+)",\s*"([A-Z]+)"',
+                           source)
+        raised = set(re.findall(r'_finding\(\s*findings,\s*"([A-Z_]+)"', source))
+        self.assertGreater(len(raised), 50,
+                           "extraction found almost nothing -- it would pass "
+                           "vacuously")
+        severities = {}
+        for finding_type, severity in pairs:
+            severities.setdefault(finding_type, set()).add(severity)
+        self.assertEqual(sorted(raised - set(severities)), [],
+                         "these types are raised with a severity this test could not "
+                         "read, so they are silently unadjudicated")
+
+        hard = {"ERROR", "FATAL"}
+        soft_only = sorted(t for t, s in severities.items() if not (s & hard))
+        mixed = sorted(t for t, s in severities.items() if (s & hard) and (s - hard))
+        self.assertEqual(soft_only, sorted(self.SOFT_BY_DESIGN),
+                         "a finding type is raised only below ERROR. Either it was "
+                         "downgraded -- it reports, stays wired, and stops blocking "
+                         "the build -- or it is new and advisory and belongs in "
+                         "SOFT_BY_DESIGN.")
+        self.assertEqual(mixed, sorted(self.CONTEXT_DEPENDENT))
+        blocking_only = {t for t, s in severities.items() if s <= hard}
+        self.assertEqual(sorted(set(self.BLOCKING) - blocking_only), [],
+                         "these are declared blocking but are not raised at ERROR "
+                         "everywhere they are raised")
+        stale = sorted(set(self.BLOCKING) - raised)
+        self.assertEqual(stale, [],
+                         "declared but no longer raised, so the table describes a "
+                         "validator that no longer exists: %s" % stale)
 
     def test_every_corpus_integrity_finding_is_declared_at_ERROR_in_the_source(self):
         path = os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
@@ -2971,6 +3036,265 @@ class TestTheAllowListFailsClosedOnAnUnusableSequenceId(unittest.TestCase):
                          ["UNANCHORED_OBSERVATION"] * 20)
 
 
+class TestARecordIsCheckedAgainstItself(unittest.TestCase):
+    """THE SEVENTH CATEGORY: no anchor needed, so no cohort is out of reach.
+
+    `rMultiple` and `outcome` are bound by no anchor, and `rMultiple` IS the
+    forward-performance headline. Rewriting those two while leaving `pnl` intact --
+    so every anchor binding still agrees -- moved forward mean R from -0.06 to +2.00
+    and the win rate from 31.4% to 100%, and one run of the documented
+    `research_assimilation.py --write` cleared the single finding it raised. The same
+    tamper on the 224 replay observations, which no ledger records and no anchor can
+    ever cover, was silent outright.
+
+    A trade record is over-determined, and MOGO's records agree with themselves
+    exactly: 259/259 on the price derivation (max deviation 4.1e-07) and 259/259 on
+    outcome-from-R.
+    """
+
+    def record(self, **over):
+        # buy 1.2000 -> 1.2100, stop 1.1950: risk 0.0050, move +0.0100, R = +2.
+        base = {"observationId": "O1", "entry": 1.2000, "stop": 1.1950,
+                "exitPrice": 1.2100, "direction": "buy", "rMultiple": 2.0,
+                "outcome": "Win", "pnl": 200.0, "riskAmount": 100.0}
+        base.update(over)
+        return base
+
+    def types(self, *records):
+        findings = []
+        ve.check_record_is_internally_consistent(list(records), findings, FIXED_NOW)
+        return [f["findingType"] for f in findings]
+
+    def test_POSITIVE_CONTROL_a_self_consistent_record_is_silent(self):
+        self.assertEqual(self.types(self.record()), [])
+
+    def test_a_losing_record_is_also_silent(self):
+        self.assertEqual(self.types(self.record(
+            exitPrice=1.1950, rMultiple=-1.0, outcome="Loss", pnl=-100.0)), [])
+
+    def test_a_sell_is_measured_in_the_other_direction(self):
+        self.assertEqual(self.types(self.record(
+            direction="sell", exitPrice=1.1900, rMultiple=2.0, outcome="Win")), [])
+
+    def test_THE_ATTACK_forging_rMultiple_alone_contradicts_the_prices(self):
+        # pnl untouched, so every anchor binding still agrees.
+        self.assertIn("RECORD_CONTRADICTS_ITSELF",
+                      self.types(self.record(exitPrice=1.1950, outcome="Loss",
+                                             pnl=-100.0, rMultiple=2.0)))
+
+    def test_forging_outcome_alone_contradicts_the_sign(self):
+        self.assertIn("RECORD_CONTRADICTS_ITSELF",
+                      self.types(self.record(exitPrice=1.1950, rMultiple=-1.0,
+                                             pnl=-100.0, outcome="Win")))
+
+    def test_forging_pnl_alone_contradicts_the_risk(self):
+        self.assertIn("RECORD_CONTRADICTS_ITSELF",
+                      self.types(self.record(pnl=-100.0)))
+
+    def test_DELETING_a_required_input_is_not_cheaper_than_forging_the_output(self):
+        # The escape from any derived check: remove an input. All 259 preserved
+        # records support the price derivation, so requiring it costs nothing --
+        # and without this, deleting `entry` from 259 records was silent.
+        for field in ("entry", "stop", "exitPrice", "direction"):
+            with self.subTest(deleted=field):
+                record = self.record()
+                del record[field]
+                self.assertIn("DERIVATION_UNCHECKABLE", self.types(record))
+
+    def test_an_unusable_required_input_is_reported_not_skipped(self):
+        for field, value in (("entry", None), ("entry", "1.20"), ("stop", True),
+                             ("direction", 1), ("exitPrice", [1.21])):
+            with self.subTest(field=field, value=value):
+                self.assertIn("DERIVATION_UNCHECKABLE",
+                              self.types(self.record(**{field: value})))
+
+    def test_a_zero_risk_record_is_reported_not_divided_by(self):
+        self.assertIn("DERIVATION_UNCHECKABLE",
+                      self.types(self.record(stop=1.2000)))
+
+    def test_an_OPTIONAL_derivation_is_skipped_when_its_input_is_absent(self):
+        # 221 replay records carry no `pnl` and never have. Demanding it would
+        # invent a field -- which is why `required` is measured rather than chosen.
+        record = self.record()
+        del record["pnl"]
+        del record["riskAmount"]
+        self.assertEqual(self.types(record), [])
+
+    def test_deleting_rMultiple_while_STATING_an_outcome_is_reported(self):
+        # N6: marking outcome-from-R optional survived every other test, because
+        # "optional" only changes behaviour when the input is ABSENT -- and no test
+        # deleted `rMultiple` while leaving `outcome` behind. That combination is a
+        # record asserting a result with nothing to support it.
+        record = self.record()
+        del record["rMultiple"]
+        del record["pnl"]
+        del record["riskAmount"]
+        self.assertIn("DERIVATION_UNCHECKABLE", self.types(record))
+
+    def test_the_tolerances_are_TIGHT_enough_to_catch_a_real_tamper(self):
+        # N4: widening the price tolerance from 1e-5 to 1e5 survived, because every
+        # fixture asserted "a forged value is caught" and none asserted the tolerance
+        # was small enough for that to mean anything. A tolerance is a number, and a
+        # number that is never bounded is not a check.
+        #
+        # Bounded from both sides by MEASUREMENT: at least 10x the worst real
+        # deviation so honest rounding never trips it, and far below the ~1R a
+        # tamper must move to be worth doing.
+        for derivation in ve.RECORD_DERIVATIONS:
+            if derivation.derived_field != "rMultiple":
+                continue
+            with self.subTest(derivation=derivation.name):
+                self.assertLess(derivation.tolerance, 0.05,
+                                "%s tolerates %g, which is a meaningful fraction of "
+                                "1R -- a forged R would fit inside it"
+                                % (derivation.name, derivation.tolerance))
+                self.assertGreater(derivation.tolerance, 0,
+                                   "a zero tolerance makes float comparison a "
+                                   "coin toss on honest data")
+        by_name = {d.name: d for d in ve.RECORD_DERIVATIONS}
+        self.assertGreaterEqual(by_name["R from price"].tolerance, 4.1e-06,
+                                "the measured worst deviation on the live corpus is "
+                                "4.1e-07; a tolerance below 10x that will report "
+                                "honest rounding as tampering")
+
+    def test_the_required_flags_match_what_the_LIVE_corpus_can_support(self):
+        # `required` is only safe because every preserved record supports it. If
+        # that stops being true the flag is wrong, not the corpus.
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "observations")
+        if not os.path.isdir(root):
+            self.skipTest("live corpus not present")
+        records = []
+        for path in globmod.glob(os.path.join(root, "**", "*.json"), recursive=True):
+            with open(path, "r", encoding="utf-8") as handle:
+                records.append(json.load(handle))
+        self.assertGreater(len(records), 100, "would pass vacuously")
+        for derivation in ve.RECORD_DERIVATIONS:
+            if not derivation.required:
+                continue
+            with self.subTest(derivation=derivation.name):
+                unsupported = [r for r in records
+                               if r.get(derivation.derived_field) is not None
+                               and ve._derive(derivation.name, r) is None]
+                self.assertEqual(unsupported, [],
+                                 "%s is marked required but %d preserved records "
+                                 "cannot support it"
+                                 % (derivation.name, len(unsupported)))
+
+    def test_NaN_is_reported_rather_than_aborting_the_run(self):
+        findings = []
+        ve.check_values_are_finite(
+            [self.record(pnl=float("nan")), self.record(observationId="O2",
+                                                        rMultiple=float("inf"))],
+            findings, FIXED_NOW)
+        self.assertEqual([f["findingType"] for f in findings],
+                         ["NON_FINITE_VALUE", "NON_FINITE_VALUE"])
+
+    def test_POSITIVE_CONTROL_finite_values_are_silent(self):
+        findings = []
+        ve.check_values_are_finite([self.record()], findings, FIXED_NOW)
+        self.assertEqual(findings, [])
+
+
+class TestTheAnchorDOCUMENTIsCheckedAgainstItsRows(unittest.TestCase):
+    """The same unread-value shape, one scope up.
+
+    `UNADJUDICATED_ANCHOR_FIELD` was row-scoped, so the document's own fields stayed
+    in the unread set -- and `closedTotal` and `ledgerRollup` are precisely what
+    makes deleting the rows you tampered different from deleting all of them. The
+    first was silent; only the second was caught.
+    """
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_anchordoc_")
+        self.preservation = os.path.join(self.root, "ledger-preservation")
+        os.makedirs(self.preservation)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def rows(self, n=3):
+        # `pnl` is not decoration: a real ledger row carries it, and without a bound
+        # field the rows join an observation and compare nothing, which is the
+        # vacuity ANCHOR_VALUES_UNCOMPARED exists to report.
+        return [{"tradeId": "T%d" % i, "hash": "%064d" % i, "pnl": -10.0 * i}
+                for i in range(n)]
+
+    def document(self, rows, **over):
+        body = {"schemaVersion": "mogo.paper-ledger-preservation.v1",
+                "identities": rows,
+                "closedTotal": len(rows),
+                "closedDeveloperTest": 0,
+                "closedReal": len(rows),
+                "ledgerRollup": hashlib.sha256(
+                    "\n".join(r["hash"] for r in rows).encode()).hexdigest()}
+        body.update(over)
+        with open(os.path.join(self.preservation, "LEDGER.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(body, handle)
+
+    def types(self):
+        findings = []
+        ve.check_anchor_values_match_records(
+            [{"observationId": "O%d" % i, "sequenceId": "T%d" % i,
+              "pnl": -10.0 * i} for i in range(3)], findings, FIXED_NOW,
+            preservation_dir=self.preservation)
+        return [f["findingType"] for f in findings]
+
+    def test_POSITIVE_CONTROL_a_document_agreeing_with_its_rows_is_silent(self):
+        self.document(self.rows())
+        self.assertEqual(self.types(), [])
+
+    def test_DELETING_THE_ROWS_YOU_TAMPERED_contradicts_the_document(self):
+        # The whole point: "remove all of them" was caught by the vacuity guard,
+        # "remove exactly the ones you edited" was not.
+        rows = self.rows()
+        document_rows = rows[:1]
+        self.document(rows)
+        with open(os.path.join(self.preservation, "LEDGER.json"),
+                  encoding="utf-8") as handle:
+            body = json.load(handle)
+        body["identities"] = document_rows
+        with open(os.path.join(self.preservation, "LEDGER.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(body, handle)
+        reported = self.types()
+        self.assertIn("ANCHOR_DOCUMENT_CONTRADICTED", reported)
+
+    def test_each_document_binding_is_independently_load_bearing(self):
+        for field, forged in (("closedTotal", 99), ("closedReal", 99),
+                              ("closedDeveloperTest", 99),
+                              ("ledgerRollup", "f" * 64)):
+            with self.subTest(field=field):
+                self.document(self.rows(), **{field: forged})
+                self.assertIn("ANCHOR_DOCUMENT_CONTRADICTED", self.types(),
+                              "%s is declared bound but forging it is silent"
+                              % field)
+
+    def test_a_document_field_no_rule_adjudicates_is_REPORTED(self):
+        self.document(self.rows(), netProfitToDate=4200.0)
+        self.assertIn("UNADJUDICATED_ANCHOR_FIELD", self.types())
+
+    def test_every_field_the_LIVE_anchor_documents_carry_is_adjudicated(self):
+        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "ledger-preservation")
+        if not os.path.isdir(root):
+            self.skipTest("live corpus not present")
+        bound = {b.field for b in ve.ANCHOR_DOCUMENT_BINDINGS}
+        seen = set()
+        for path in globmod.glob(os.path.join(root, "*.json")):
+            with open(path, "r", encoding="utf-8") as handle:
+                seen.update(json.load(handle))
+        self.assertTrue(seen, "no anchor documents were read -- passes vacuously")
+        self.assertEqual(seen - bound - set(ve.ANCHOR_DOCUMENT_FIELDS_UNBOUND), set())
+
+    def test_UNBOUND_document_fields_state_a_reason(self):
+        for field, reason in ve.ANCHOR_DOCUMENT_FIELDS_UNBOUND.items():
+            with self.subTest(field=field):
+                self.assertGreater(len(reason), 30,
+                                   "%r is excused without saying why" % field)
+
+
 class TestAnchorValuesAreComparedToTheCorpus(unittest.TestCase):
     """THE SIXTH CATEGORY: the anchors pinned existence and never value.
 
@@ -3217,3 +3541,12 @@ class TestPreservedIdentitiesMustStillExist(unittest.TestCase):
             records, findings, FIXED_NOW,
             preservation_dir=os.path.join(ti, "evidence", "ledger-preservation"))
         self.assertEqual([f["findingType"] for f in findings], [])
+
+
+# AT THE END, and not one line earlier. This sat at line 987 of 3286, so every class
+# defined after it -- 153 tests, including every B-32.17 and B-32.18 case -- was
+# invisible to `python3 tests/.../test_evidence.py`, which ran 77 and printed OK.
+# tests/run_all.sh uses `python3 -m unittest` and was always honest, but a mutation
+# run invoking the file directly reports false survivors, and one did.
+if __name__ == "__main__":
+    unittest.main()
