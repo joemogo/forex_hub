@@ -1986,9 +1986,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.39.3';
-const APP_VERSION_DATE='16 Aug 2026';
+const APP_VERSION='12.40.0';
+const APP_VERSION_DATE='21 Aug 2026';
 const APP_VERSION_LOG=[
+  '12.40.0 — A DEAD PROVIDER WAS RENDERED IN THE VOCABULARY OF A QUIET MARKET (MOGO-023, INC-006). Market-data diagnostics and operator display only; no strategy rule, threshold, evaluator, classification, trade construction, sizing or execution change; zero protected-function/protected-constant drift (63 functions and 4 constants byte-identical). THE INCIDENT: the operator saw "35 pairs not evaluated — incomplete candle history", every pair reporting requested 220 / received 0. Measured root cause, reproduced 9/9 across seven minutes: api-fxpractice.oanda.com was returning HTTP 520 (Cloudflare origin error) on EVERY endpoint -- candles, accounts and pricing alike -- while api-fxtrade.oanda.com answered a correct 401 to the identical unauthenticated request. A DATA PROVIDER outage, external to MOGO. Auth was eliminated (a dead token yields 401, not 520), as were symbol mapping (ALL_PAIRS already carries OANDA-native underscore identifiers), timeframe (reproduced on H1 and D), request construction (reproduced at count=220 and count=5) and local network (live host and unrelated hosts reachable). THE DEFECT THIS EXPOSED IS MOGO\'S, AND IT IS NOT THE SUPPRESSION: ADR-011 worked exactly as designed and correctly withheld every evaluation. The defect is that MOGO COULD NOT SAY WHY. fetchCandles() collapsed three materially different failures into one bare null -- a non-OK status, a 200 carrying no candles field, and a thrown network/CORS error -- discarding the reason one line after learning it. So the suppression banner rendered "· — · HTTP —" for all 35 instruments, and its own prose then reassured the operator that "session, weekend, holiday and liquidity gaps are all legitimate" -- arguing for precisely the wrong conclusion during a total outage. This is B-32\'s eighth defect category, ABSENCE IS NOT SILENCE, on a surface B-32 never audited: it was repaired three times in the evidence layer and never in the market-data path. THE REPAIR: a new fetchCandlesDiagnosed() returns {candles, diagnostics} carrying transportOutcome in {OK, HTTP_ERROR, NO_CANDLES_FIELD, NETWORK_ERROR} plus the real httpStatus; scanPair() records those into pairData EVEN WHEN candles is null (previously both went to null in exactly the case an operator needs them); and the banner names the transport failure, separates it from a legitimate short-history gap, and states plainly that this is a data-availability failure and NOT a market verdict -- MOGO is not reporting that no setups exist, it is reporting that it cannot see the market. FETCHCANDLES\' RETURN CONTRACT IS DELIBERATELY UNCHANGED -- the array on success, bare null on every failure -- so all 21 existing call sites and their null guards behave byte-for-byte as before. Returning [] instead would have been the obvious shape and is exactly wrong: [] is truthy, so every `if(!candles)` guard in the application would have silently stopped firing. Fixture BEHAVIOUR-1 pins this and still passes; INC006-1 pins it a second time, deliberately. completenessState REMAINS THE SOLE EVALUATION CONTRACT (ADR-011): transportOutcome and httpStatus are diagnostics and display only, and no consumer branches on them to decide evaluation -- branching on httpStatus===429 would re-create the original ADR-011 defect, whose actual case was httpStatus===200. CREDENTIAL SAFETY: only the error\'s own message is recorded, never the request, which carries the bearer token in a header; a fixture asserts no Authorization/Bearer text can reach a diagnostic string. EXPLICITLY NOT DONE: no relaxation of the 220-candle lookback, no fabricated or interpolated candles, no stale-data reuse, no retry storm against a failing origin, and NO automatic failover to the live host -- failing a PAPER platform over onto a live-money endpoint is a governance boundary, not a repair. TESTING: v130 grows 25 -> 31 fixtures (INC006-1..6), all passing. Mutation-verified, three mutations each killed: fetchCandles returning [] instead of null kills BEHAVIOUR-1 and INC006-1; discarding httpStatus when candles is null kills INC006-6; dropping the headline distinction kills INC006-6. Gate: 34 suites, 2,386 fixtures. See docs/INCIDENTS.md INC-006.',
   '12.36.0 — THE ONE LINE HOLDING THE ACCOUNT BALANCE UP HAD NO FIXTURE (MOGO-021 section 18.30). Two independent adversarial agents; 24 and 7 mutations scored gate-wide. THE CRITICAL FINDING: `if(!exitPrice)return;` in closePaperPosition was the SINGLE line preventing total, permanent destruction of the paper account, and NOTHING watched it. Deleting it survived all 2,215 fixtures with drift 0, while the control at the same line killed 85 -- the line runs constantly; its FAILURE path was unwitnessed. Driven end to end through the real engine, the deletion books the close at exitPrice=undefined, so pnl and then balance become NaN -- and JSON.stringify(NaN) is `null`, so {"balance":null} is written to storage and SURVIVES RELOAD. commitPaperLedger validated the storage write and never the numbers, so there was no second line of defence; the ALEX open path already checks isFinite and the JVM ledger commit did not. Reachable, and the two failures are CORRELATED not independent: checkPaperPositions decides the exit from a synchronous price read, closePaperPosition then yields at `await fetchBidAsk`, and during that await the sweep rewrites the shared pairData slot -- a failed fetchPrice writes price:null, and fetchBidAsk and fetchPrice hit the same host with the same credentials, so ONE outage produces both. The same missing coverage hid a second mutation: rewriting the auto branch as `live!=null?live:pos.entry` books a genuine +$300 take-profit winner at the entry -- pnl 0, result Win, closeReason TAKE_PROFIT -- destroying the gain and corrupting expectancy with a phantom 0R win. PTE2E-NOFILL.1-4 close both, and commitPaperLedger now REFUSES a non-finite ledger through the existing blocking-banner contract (PTE2E-FINITE.0-3). Because that refusal makes the guard deletion survivable, NOFILL.3b pins the upstream guard on the property that actually distinguishes them: a healthy refusal is SILENT, raising no banner and no engine error, because the close never reached the commit. UNREALIZED P&L HAD ZERO COVERAGE. Three mutations of the open-position P&L, INCLUDING REPLACING THE PIP VALUE WITH THE CONSTANT 987654, all survived the full gate -- so every floating P&L and R-multiple the operator reads while deciding whether to cut a live trade could be arbitrarily wrong while the gate stayed green. This is the unwatched SECOND COPY of the pip arithmetic; the realized path is pinned by JVMEXIT-11. PTE2E-UNREAL.1-6 assert hand-computed literals for a long and a short, and .5/.6 make a re-derived pip value differ from the entry-fixed one so the equivalent mutant in the first scenario becomes a real kill. THE EVIDENCE-PLATFORM EXCLUSION WAS DEFEATED FOR THE SEVENTH TIME, BY THE COMMIT THAT FIXED THE SIXTH. Version six matched the artifact MESSAGE exactly, as promised -- but discarded the WHOLE ENTRY, and evidenceRecordWriteFailure stores caller-controlled `context` and `detail:extra` while recordAlexGEngineError merges arbitrary meta. So ONE call to a real production function, with no forged strings at all, sends the exact allowlisted message and rides its payload in a field the filter never examined, poisoning both filtered structures at once. Found independently by me and by the verifier. An entry is now excluded only if its ENTIRE content, minus the timestamp, is a known artifact shape; all four channels -- message prefix, detail, engine meta and context -- now die, and a byte-identical zero-payload artifact still passes by design. TWO CREDENTIAL FIXTURES VACUOUS BY TIMING, NOT EMPTINESS: setCfg is a bare assignment and localStorage was read on the very next line, so ZERO production persistence ran while the sentinel was live and no persistence behaviour could make them fail. Leaks to an fxhub_ key and to a non-fxhub key both left them green. The real save/commit/persist surface now runs with the secret live, with a positive control that plants a sentinel and requires the same scan to find it. FOURTEEN MORE UNKILLABLE FIXTURES RETIRED and the harness that hid them fixed: t(name,fn) recorded a PASS whenever fn() did not throw SYNCHRONOUSLY, so a returned promise was stored as a detail string and discarded -- any async fixture would have passed unconditionally, proven by writing one that asserts false and passes. The same helper is copy-pasted in three suites; all three now fail closed. pnlUnavailable, computed and fixture-tested since v12.16.0 and RENDERED NOWHERE, is the third value this milestone recorded faithfully and never shown -- it is the number that EXPLAINS an UNEXPLAINED_DELTA, and without it the operator cannot tell missing data from wrong books. Gate: 34 suites, 2,235/2,235; protected drift 0.',
   '12.35.0 — THE ALEX BLOCKED-COMMIT BANNER DID NOT EXIST, AND THE EXCLUSION FILTER LIED ABOUT ITS OWN OPERATOR (MOGO-021 section 18.29). A fifth independent adversarial round. PD-2, A REAL PRODUCTION DEFECT AND THE EXACT SHAPE OF PD-1 ONE RELEASE LATER: alexGLedgerBlockingError is set on every rejected ALEX commit and its own comment says it mirrors paperLedgerBlockingError -- but the JVM twin renders an always-visible red card and the ALEX one had NO RENDER SITE ANYWHERE IN THE APPLICATION. A two-tab version conflict rolled an ALEX open back in total silence: the operator believes a trade was placed and nothing on any screen says otherwise. renderAlexGLedgerBlockingBanner now mirrors its twin, is called first in renderAlexGLivePanel, and is deliberately NOT Developer-Mode gated -- Developer Mode is session-only and defaults OFF, so gating it would reproduce the PD-1 invisibility. RSTDG-ALEXBLOCK.1/.2 drive it with the flag OFF, with a negative control proving a cleared error clears the banner rather than leaving a stale one. THE EVIDENCE-PLATFORM EXCLUSION WAS DEFEATED FOR THE SIXTH TIME, BY A 44-CHARACTER PREFIX. The section 18.28 filter\'s own comment asserted that only EXACT artifact strings are excluded and that any payload changes the message -- and the code was indexOf(...)===-1, SUBSTRING CONTAINMENT. Independently proven: a leak whose message began with the artifact phrase and then appended the JVM balance and open-position count survived both PTE2E-ISO.2 and ISO.6, and the same single edit also defeated the brand-new evidenceWriteFailures comparison. That made version six STRICTLY WEAKER than the version it replaced -- it cost a leak nothing but choosing its opening words, which is the original section 18.20 message-prefix defect restored. The artifact message is built at exactly one site from a FINITE set of call-site contexts, so the complete set of artifact messages is now enumerated and tested with Set.has -- true equality. Re-scored: the identical payload attack survives the old filter and dies against the new one, while a byte-identical zero-payload artifact still passes by design. FAIL-CLOSED under drift: an unlisted context is COMPARED rather than excluded, so a missing entry costs a false failure, never a false pass. FOURTEEN FIXTURES THAT COULD NOT FAIL, ACROSS FOUR SUITES. Twelve assert sites in the v12.1.2 suite passed the LITERAL `true` -- code-inspection claims and restatements of other fixtures\' results -- each printing a PASS line and counted in the gate total. Two were real safety gates and are now DRIVEN: Fixture 38 exercises mrModalUpdateApproveEnabled in both directions (proven by removing the acknowledgment gate entirely; the redundant-clause mutation was scored as the no-op it is), and Fixture 44 closes the modal on a genuinely approvable candidate with a positive control that approves the identical setup (proven by making Cancel commit). The remaining ten are disclosed on a NOTE channel that is not counted as a fixture. 2A.19 asserted `true` inside an if, so the record\'s CONTENT was never checked; 2A.28 asserted `true` as a PRECONDITION, so an empty account would have satisfied \'a real position was opened\'. Both now inspect what they name. Phase2C.34 is a claim about a past release\'s DIFF -- provenance, not a runtime property -- and moves to the source-note channel. TWO MORE MUST-NOT-CONTAIN CREDENTIAL CHECKS SATISFIED BY EMPTINESS, the RollbackFailure.15 defect generalised at last to its siblings. HealthCheck.15 is proven to pass when the report builder returns \'\'; HealthCheck.15a requires the report to carry its real structure first. v12.3.1 Fixture 20 was worse: it ran with NO credentials configured at all, so there was nothing to leak and a leaking renderer passed. It now installs sentinel secrets in live config and requires the tab to have genuinely rendered -- proven both ways, by an empty renderer and by a real accountId leak wired into the taken return path. Gate: 34 suites, 2,215/2,215; protected drift 0.',
   '12.34.0 — THREE OF FOUR EXIT BOUNDARIES WERE UNCOVERED, INCLUDING BOTH STOP-LOSS SIDES (MOGO-021 section 18.27). Test-only; drift 0. A fourth independent adversarial round. JVMEXIT-10 pinned ONE of the four exit comparisons -- the buy target -- and the other three each survived the whole gate. Two are the STOP side: a price that touches its stop to the pip does not stop out and the position runs on past it with NO BOUND, strictly worse than the target case the fixture was written for. JVMEXIT-13/14/15 pin the buy stop, the sell target and the sell stop; all four quadrants now die. TWO OF THE FIFTEEN ISOLATION CHANNELS WERE COMPARED VACUOUSLY. alexGIdentityDriftReported and alexGCursorSanityReported are Sets, and JSON.stringify of a Set is the empty object for EVERY possible content -- so the two channels the previous commit named as silencing ALEX own integrity reporting were compared against a constant. The claim that all 15 died was false; 13 did. Serialised as sorted arrays now. A SIXTEENTH CHANNEL, AND IT MOVES MONEY: structuralAOIInflight. getStructuralAOI returns it BEFORE any fetch and BEFORE the ADR-011 completeness gate, so a seeded promise puts a FABRICATED stop and target on a real JVM trade. Its cache was added a commit earlier; the in-flight lock for that cache was missed -- the exact sibling of paperPositionsClosing. An earlier draft put it in the ALEX snapshot, the wrong side entirely, and it stayed invisible until moved beside its cache in the JVM one. SIX MORE UNCOMPARED CHANNELS: cfg.accountId (in the URL of every pricing fetch that fills a close) and cfg.key; storageLoadFailures VALUES, where keys alone were compared so rewriting every INC-001 message survived -- the same size-preserving rewrite section 18.20 named and fixed elsewhere; alexGReplayState; hideTestTradesAlex; and alexGPipelineObservationBuffer. AND THE SAME LESSON A THIRD TIME: alexGReplayState and hideTestTradesAlex were added to the snapshot and NOT to the reset, so they were already polluted and their leaks stayed invisible. Adding a field to a snapshot and adding it to the reset are ONE change, not two. cfg.key is now seeded non-empty so clearing it is observable. MY OWN SECTION 18.26 RELABEL CREATED THE FOURTEENTH UNKILLABLE FIXTURE: merging CAF-TF.2 id and description turned a 4-arg assert into a 3-arg one, so the real check landed in the description slot and cond received a string its own precondition guarantees is non-empty. Proven dead both ways. Restored. A HARNESS DEFECT: seedIsolationScratch replaced the production MAP alexGDecidedSetups with a Set, so set() threw inside the bookkeeping try/catch that must never break a trading decision -- ALEX duplicate-decision bookkeeping was silently inert for the rest of the suite. Latent rather than a live false green, but a helper that substitutes the TYPE disables the guard the suite exists to observe. Gate: 34 suites, 2,222/2,222; protected drift 0.',
@@ -6857,23 +6858,44 @@ function renderMarketDataCompletenessDiagnostics(){
       return{pair:p,state:d.completenessState||'UNAVAILABLE',
         requested:d.requestedCount==null?'—':d.requestedCount,
         received:d.receivedCount==null?'—':d.receivedCount,
-        reason:d.paginationTerminationReason||'—',status:d.httpStatus==null?'—':d.httpStatus};
+        reason:d.paginationTerminationReason||'—',status:d.httpStatus==null?'—':d.httpStatus,
+        transport:d.transportOutcome||null,transportErrorText:d.transportErrorText||null};
     });
   if(!rows.length){ el.innerHTML=''; return; }
+  // v12.40.0 (INC-006): a pair that returned a SHORT history and a pair whose provider never
+  // answered are two different facts, and this card used to narrate both as "incomplete candle
+  // history" -- then reassured the operator that session/weekend/liquidity gaps are legitimate.
+  // During a total provider outage that reassurance argues for exactly the wrong conclusion.
+  // The two are now separated, and the transport reason is named.
+  const failed=rows.filter(function(r){ return r.transport&&r.transport!==MARKET_DATA_TRANSPORT.OK; });
+  const providerDown=failed.length>0;
   el.innerHTML='<div class="card" style="background:rgba(220,160,40,0.16);border:2px solid var(--amber,#d8a028);margin-bottom:12px">'+
     '<div style="font-weight:700;font-size:12px;color:var(--amber,#d8a028)">⚠ '+rows.length+
-      ' pair'+(rows.length===1?'':'s')+' not evaluated — incomplete candle history</div>'+
-    '<div style="font-size:11px;color:var(--text2);margin-top:4px">'+
-      'These pairs returned fewer candles than the requested lookback, so signals and confluence were '+
-      'deliberately not computed for them. A score built on a truncated history is indistinguishable '+
-      'from one built on a full lookback, so MOGO withholds it rather than present it as equivalent. '+
-      '<strong>This is not a claim that market data is missing</strong> — session, weekend, holiday and '+
-      'liquidity gaps are all legitimate reasons a request may not be fully satisfied.</div>'+
+      ' pair'+(rows.length===1?'':'s')+' not evaluated — '+
+      (providerDown?'market data could not be retrieved':'incomplete candle history')+'</div>'+
+    (providerDown
+      ? '<div style="font-size:11px;color:var(--text2);margin-top:4px">'+
+        '<strong>'+escapeHtml(String(failed.length))+' of '+escapeHtml(String(rows.length))+
+        ' failed at the network/provider boundary</strong> — the request was not answered with usable '+
+        'market data, so nothing was evaluated. The transport reason is named per pair below. '+
+        '<strong>This is a data-availability failure, not a market verdict:</strong> MOGO is not '+
+        'reporting that no setups exist, it is reporting that it cannot see the market. Silence from '+
+        'the scanner while this persists carries no information about opportunity, and this period '+
+        'must not be read as observed. MOGO does not retry aggressively against a failing provider, '+
+        'substitute stale candles, or relax the requested lookback to appear functional.</div>'
+      : '<div style="font-size:11px;color:var(--text2);margin-top:4px">'+
+        'These pairs returned fewer candles than the requested lookback, so signals and confluence were '+
+        'deliberately not computed for them. A score built on a truncated history is indistinguishable '+
+        'from one built on a full lookback, so MOGO withholds it rather than present it as equivalent. '+
+        '<strong>This is not a claim that market data is missing</strong> — session, weekend, holiday and '+
+        'liquidity gaps are all legitimate reasons a request may not be fully satisfied.</div>')+
     '<div style="margin-top:8px;font-size:11px;color:var(--text2)">'+
       rows.map(function(r){
         return '<div style="font-family:monospace">'+escapeHtml(r.pair)+' — '+escapeHtml(String(r.state))+
           ' · requested '+escapeHtml(String(r.requested))+' · received '+escapeHtml(String(r.received))+
-          ' · '+escapeHtml(String(r.reason))+' · HTTP '+escapeHtml(String(r.status))+'</div>';
+          ' · '+escapeHtml(String(r.reason))+' · HTTP '+escapeHtml(String(r.status))+
+          ' · transport '+escapeHtml(String(r.transport||'—'))+
+          (r.transportErrorText?' ('+escapeHtml(String(r.transportErrorText))+')':'')+'</div>';
       }).join('')+
     '</div></div>';
 }
@@ -6893,26 +6915,76 @@ function marketDataClassify(requestedCount,rawCount,usableCount){
   if(rawCount>=requestedCount) return MARKET_DATA_COMPLETENESS.COMPLETE;
   return MARKET_DATA_COMPLETENESS.PARTIAL;
 }
-async function fetchCandles(pair,tf,count=220){
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// v12.40.0 (MOGO-023, INC-006): ABSENCE IS NOT SILENCE -- IN THE MARKET-DATA PATH.
+//
+// fetchCandles() collapsed three materially different failures into one bare `null`: a non-OK
+// HTTP status, a 200 carrying no `candles` field, and a thrown network/CORS error. The reason was
+// known at the moment of failure and discarded one line later, so every caller saw "no data" and
+// none could say WHY.
+//
+// That reached the operator. During a total upstream outage -- api-fxpractice.oanda.com returning
+// HTTP 520 on EVERY endpoint, reproduced 9/9 over seven minutes on 2026-08-21 -- the suppression
+// banner rendered `requested 220 · received 0 · — · HTTP —` for all 35 instruments. The status
+// that would have named the outage (520) had already been thrown away by `if(!r.ok) return null`.
+// An operator reading that banner cannot distinguish a dead provider from a quiet market, and the
+// banner's own prose ("session, weekend, holiday and liquidity gaps are all legitimate") argues for
+// the wrong one. A failure to evaluate because data is unavailable is NOT a no-trade signal, and
+// MOGO must never present it as one.
+//
+// This is B-32's eighth defect category -- absence-vs-silence -- on a surface B-32 never audited.
+// It was repaired three times in the evidence layer and never here.
+//
+// THE RETURN CONTRACT OF fetchCandles() IS DELIBERATELY UNCHANGED: the array on success, bare
+// `null` on every failure. All 21 existing call sites and their null guards behave byte-for-byte
+// as before, and fixture BEHAVIOUR-1 ("a 429 must yield null, not a partial array") still pins it.
+// Callers that want the reason opt IN via fetchCandlesDiagnosed(). Returning [] instead of null
+// would have been the obvious shape and is precisely wrong -- [] is truthy, so every `if(!candles)`
+// guard in the application would have silently stopped firing.
+//
+// completenessState REMAINS THE SOLE EVALUATION CONTRACT (ADR-011). transportOutcome and
+// httpStatus are DIAGNOSTICS AND DISPLAY ONLY. No consumer may branch on them to make an
+// evaluation decision: a consumer branching on httpStatus===429 would re-create the original
+// ADR-011 defect, because the case that actually reached scoring was httpStatus===200.
+const MARKET_DATA_TRANSPORT=Object.freeze({
+  OK:'OK',                             // the request was answered and carried a candles field
+  HTTP_ERROR:'HTTP_ERROR',             // answered with a non-OK status -- httpStatus names it
+  NO_CANDLES_FIELD:'NO_CANDLES_FIELD', // 200, parsed, but no `candles` -- a shape MOGO cannot read
+  NETWORK_ERROR:'NETWORK_ERROR'        // never answered: DNS, TLS, CORS, offline, abort
+});
+async function fetchCandlesDiagnosed(pair,tf,count=220){
   const startedAt=Date.now();
   try{
     const r=await fetch(`${apiBase()}/v3/instruments/${pair}/candles?count=${count}&granularity=${tf}&price=M`,
       {headers:{'Authorization':`Bearer ${cfg.key}`,'Accept-Datetime-Format':'RFC3339'}});
-    if(!r.ok) return null;
+    if(!r.ok) return{candles:null,diagnostics:{transportOutcome:MARKET_DATA_TRANSPORT.HTTP_ERROR,
+      httpStatus:r.status,requestedCount:count,receivedCount:0,
+      fetchDurationMs:Date.now()-startedAt,errorText:null}};
     const d=await r.json();
-    if(!d.candles) return null;
+    if(!d.candles) return{candles:null,diagnostics:{transportOutcome:MARKET_DATA_TRANSPORT.NO_CANDLES_FIELD,
+      httpStatus:r.status,requestedCount:count,receivedCount:0,
+      fetchDurationMs:Date.now()-startedAt,errorText:null}};
     const rawCount=d.candles.length; // BEFORE completeness filtering -- see marketDataClassify()
     const out=d.candles.filter(c=>c.complete).map(c=>({
       t:new Date(c.time),o:parseFloat(c.mid.o),h:parseFloat(c.mid.h),
       l:parseFloat(c.mid.l),c:parseFloat(c.mid.c)
     }));
-    return marketDataAttachCompleteness(out,{
+    return{candles:marketDataAttachCompleteness(out,{
       completenessState:marketDataClassify(count,rawCount,out.length),
       requestedCount:count,receivedCount:out.length,rawResponseCount:rawCount,
       pagesRequested:1,pagesReceived:1,paginationTerminationReason:rawCount>=count?'REACHED_COUNT':'RAW_COUNT_SHORT',
       httpStatus:r.status,fetchDurationMs:Date.now()-startedAt,retryCount:0
-    });
-  }catch{return null;}
+    }),diagnostics:{transportOutcome:MARKET_DATA_TRANSPORT.OK,httpStatus:r.status,
+      requestedCount:count,receivedCount:out.length,fetchDurationMs:Date.now()-startedAt,errorText:null}};
+  }catch(e){
+    // The error's own text only -- never the request, which carries the bearer token in a header.
+    return{candles:null,diagnostics:{transportOutcome:MARKET_DATA_TRANSPORT.NETWORK_ERROR,
+      httpStatus:null,requestedCount:count,receivedCount:0,
+      fetchDurationMs:Date.now()-startedAt,errorText:(e&&e.message)?String(e.message):'unknown'}};
+  }
+}
+async function fetchCandles(pair,tf,count=220){
+  return (await fetchCandlesDiagnosed(pair,tf,count)).candles;
 }
 async function fetchPrice(pair){
   try{
@@ -9792,7 +9864,12 @@ async function scanPair(pair,sweepToken,sweepResults){
   // sweep is routinely in flight when the operator clicks a timeframe. Captured ONCE, exactly as
   // loadChart now does. Display attribution only; no rule, gate or trading decision reads it.
   const sweepTf=activeTf;
-  const [candles,price]=await Promise.all([fetchCandles(pair,sweepTf,220),fetchPrice(pair)]);
+  // v12.40.0 (INC-006): take the DIAGNOSED form so a failed fetch can still say why it failed.
+  // `candles` below is the identical value fetchCandles() would have returned -- array or null --
+  // so every line after this point behaves exactly as before; only the reason is additionally kept.
+  const [__candleFetch,price]=await Promise.all([fetchCandlesDiagnosed(pair,sweepTf,220),fetchPrice(pair)]);
+  const candles=__candleFetch.candles;
+  const __transport=__candleFetch.diagnostics;
   // v12.8.3 ADR-011: gate evaluation on the ONE completeness abstraction. Anything short of
   // COMPLETE is evaluated as no data at all, by passing null into the evaluators -- which is
   // exactly what their own existing guards already handle. detectSignals() and bestConfluence()
@@ -9815,12 +9892,16 @@ async function scanPair(pair,sweepToken,sweepResults){
     // decision reads this field, and completenessState remains the sole evaluation contract.
     timeframe:sweepTf,
     candles,price,signals,conf,completenessState,
-    requestedCount:candles?candles.requestedCount:220,
+    requestedCount:candles?candles.requestedCount:(__transport?__transport.requestedCount:220),
     receivedCount:candles?candles.receivedCount:0,
     pagesRequested:candles?candles.pagesRequested:null,
     pagesReceived:candles?candles.pagesReceived:null,
     paginationTerminationReason:candles?candles.paginationTerminationReason:null,
-    httpStatus:candles?candles.httpStatus:null,
+    // v12.40.0 (INC-006): the transport facts survive a FAILED fetch too. Previously both went to
+    // null the moment candles was null -- which is exactly the case an operator needs them for.
+    httpStatus:candles?candles.httpStatus:(__transport?__transport.httpStatus:null),
+    transportOutcome:__transport?__transport.transportOutcome:null,
+    transportErrorText:__transport?__transport.errorText:null,
     evaluationSuppressed:completenessState!==MARKET_DATA_COMPLETENESS.COMPLETE};
   // MOGO-021: coverage attribution is recorded HERE, into the CALLER'S OWN sweep-local object, and
   // is never read back out of pairData afterwards. pairData[pair] is a single shared slot: whichever

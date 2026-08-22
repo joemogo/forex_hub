@@ -69,6 +69,67 @@ is obsolete now that it is green.
 
 ---
 
+## A 4-millisecond forward observation carries an exactly-2R win (MOGO-023)
+
+**Status:** Measured 2026-08-21, **not repaired**. Diagnosis only — preserved evidence must not be
+bulk-rewritten. Severity **P2** (forward-statistic validity).
+
+`TOBS|MOGO|20260806|025` records `openedAt 2026-08-06T13:11:15.571Z` and
+`closedAt 2026-08-06T13:11:15.575Z` — a **4-millisecond holding period** — with `outcome Win` and
+`rMultiple` exactly `2`. The next-shortest hold in the FORWARD population is 945 seconds, roughly
+**236,000× longer**.
+
+That combination is the signature described in **INC-005**: a hand-seeded record with a
+zero-duration hold and a clean +2.00R win. INC-005's record was confined to a non-production origin
+and never entered the corpus. **This one is in the corpus, is anchored in the identity manifest, and
+is classified FORWARD** — the population forward performance is computed from.
+
+Measured impact on the 29-observation FORWARD population:
+
+| | with the record | excluding it |
+|---|---|---|
+| n | 29 | 28 |
+| Σ R | **−5.180** | −7.180 |
+| mean R | **−0.1786** | −0.2564 |
+| win rate | **27.6 %** | 25.0 % |
+
+A single record of doubtful provenance is **flattering forward performance by 2.0R** — 39 % of the
+population's total loss, and 44 % of its mean.
+
+It is also one of the two observations carrying `strategyId: current_strategy` rather than
+`alex_g_sr_v1`. `current_strategy` is a **placeholder literal** appearing at 8 sites in `index.html`
+(`emitDecisionEvent` calls in `scanAll()` among them); it reached a persisted `sourcePackageId`
+(`PKG|current_strategy|20260806|1`) and from there the observation. A placeholder string is acting
+as a strategy identity — a contract weakness, not a naming nit.
+
+**Honest on every other axis:** both records declare `timeframe` in `unknowns`, so the importer
+invented nothing. The missing-timeframe item and the `current_strategy` item are the **same two
+records**, not four separate defects.
+
+**Do not** rewrite, delete or reclassify these records to tidy the counts. The open question is
+provenance: what minted a 4 ms trade. Until answered, every forward figure carries this caveat
+alongside B-22.
+
+---
+
+## Stop/target detection is suspended while market data is unavailable (INC-006)
+
+**Status:** Disclosed 2026-08-21. Correct fail-closed behaviour; recorded as a fidelity limit.
+Severity **P3**.
+
+`checkPaperPositions()` evaluates stops and targets only from a live price, and returns early per
+position when there is none (`if(!live)return;`). Through a provider outage that guard holds — which
+is right, since inventing a fill price would be far worse.
+
+The consequence is that a stop or target which *would* have been hit **during** an outage is instead
+detected at the first price **after** it. Realized R for any position open across an outage window is
+therefore measured against a later price than the simulation implies, in an unpredictable direction.
+
+No position, balance or record is corrupted. But an outage window is **not** an observed window, and
+forward statistics spanning one should say so.
+
+---
+
 ## `regression-baseline.json` is stale — four suites behind `FIXTURE_COUNTS`
 
 **Status:** Disclosed, deliberately not fixed. Found during the MOGO-004 isolation audit, 2026-08-04.

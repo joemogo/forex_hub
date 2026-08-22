@@ -99,6 +99,12 @@ g.setFetchScript=function(steps){ fetchScript=steps; fetchIdx=0; fetchUrls=[]; }
 g.fetchCallCount=function(){ return fetchUrls.length; };
 g.fetchUrls=function(){ return fetchUrls.slice(); };
 g.RESP_429=function(){ return Promise.resolve(makeResponse(false,429,{errorMessage:'Rate limit exceeded'})); };
+// INC-006 shapes: the three distinct ways a candle fetch fails, which production used to
+// collapse into one indistinguishable `null`. RESP_520 is the real observed outage response
+// (Cloudflare origin error from api-fxpractice.oanda.com, body "error code: 520").
+g.RESP_520=function(){ return Promise.resolve(makeResponse(false,520,{errorMessage:'error code: 520'})); };
+g.RESP_NO_CANDLES=function(){ return Promise.resolve(makeResponse(true,200,{})); };
+g.RESP_NETWORK_ERROR=function(){ return Promise.reject(new TypeError('Failed to fetch')); };
 g.okCandles=function(n){ return function(){ return Promise.resolve(makeResponse(true,200,{candles:candleArray(n)})); }; };
 g.okCandlesRaw=function(raw,complete){ return function(){ return Promise.resolve(makeResponse(true,200,{candles:candleArray(raw,complete)})); }; };
 g.okPrice=function(){ return function(){ return Promise.resolve(makeResponse(true,200,{prices:[{bids:[{price:'1.10000'}],asks:[{price:'1.10020'}]}]})); }; };
@@ -126,6 +132,8 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // ── the real, unmodified market-data and scanner chain under test ──
   'g.fetchCandles=fetchCandles;' +
+  'g.fetchCandlesDiagnosed=fetchCandlesDiagnosed;' +
+  'g.MARKET_DATA_TRANSPORT=MARKET_DATA_TRANSPORT;' +
   'g.fetchCandlesRange=fetchCandlesRange;' +
   'g.scanPair=scanPair;' +
   // ── REAL, PROTECTED functions (called, never re-implemented, never modified) ──

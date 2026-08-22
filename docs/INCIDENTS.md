@@ -11,6 +11,169 @@ could produce incorrect data or behavior for a real user, even if caught before 
 
 ---
 
+## INC-006 — 35 pairs unevaluated: an upstream provider outage that MOGO could not name
+
+**Status:** Root cause established 2026-08-21 (MOGO-023). External provider outage, ongoing at time
+of writing. **No data was corrupted, no trade was fabricated, no evidence was lost.** MOGO's
+fail-closed contract worked exactly as designed. The defect this incident exposes is not the
+suppression — it is that MOGO **could not tell the operator why**.
+
+### Symptom (operator-observed)
+
+The MOGO interface reported:
+
+> ⚠ 35 pairs not evaluated — incomplete candle history
+
+Approximately 35 FX pairs each requested 220 candles and received 0, while other chart/market
+information still appeared on screen.
+
+### What the banner could and could not say
+
+`renderMarketDataCompletenessDiagnostics()` renders one row per suppressed pair:
+
+```
+<pair> — UNAVAILABLE · requested 220 · received 0 · — · HTTP —
+```
+
+The `reason` and `HTTP` columns rendered as `—` for every pair. They were empty **not because the
+information did not exist**, but because `fetchCandles()` had already discarded it:
+
+```js
+if(!r.ok) return null;          // r.status thrown away
+const d=await r.json();
+if(!d.candles) return null;     // condition thrown away
+...
+}catch{return null;}            // the error itself thrown away
+```
+
+Three materially different failures — a non-OK HTTP status, a response with no `candles` field, and
+a thrown network/CORS error — all collapsed into one bare `null`. `scanPair()` then recorded
+`receivedCount: 0, httpStatus: null`, which is what the operator saw.
+
+The banner's own explanatory prose then actively pointed away from the truth:
+
+> **This is not a claim that market data is missing** — session, weekend, holiday and liquidity gaps
+> are all legitimate reasons a request may not be fully satisfied.
+
+That text is correct for `PARTIAL`. For this incident — state `UNAVAILABLE`, zero candles, every
+pair, total provider failure — it reads as reassurance. **A total upstream outage was rendered in the
+vocabulary of a quiet market.** Distinguishing those two is the single thing this platform must never
+get wrong.
+
+### Root cause — DATA PROVIDER (measured)
+
+`api-fxpractice.oanda.com` was returning **HTTP 520** (Cloudflare: origin returned an invalid
+response) on **every endpoint**, not merely the candles endpoint:
+
+| Endpoint (unauthenticated probe) | Practice host | Live host |
+|---|---|---|
+| `/v3/instruments/EUR_USD/candles?count=220&granularity=H1&price=M` | **520** | 401 |
+| `/v3/instruments/GBP_USD/candles?count=220&granularity=H1&price=M` | **520** | — |
+| `/v3/instruments/EUR_USD/candles?count=5&granularity=D&price=M` | **520** | — |
+| `/v3/accounts` | **520** | — |
+| `/v3/accounts/<id>/pricing?instruments=EUR_USD` | **520** | — |
+
+Reproduced **9/9 consecutive probes** across a 7-minute window (2026-08-21 23:45:16Z → 23:52:19Z).
+`server: cloudflare`, `content-length: 16`, body `error code: 520`.
+
+The live host `api-fxtrade.oanda.com` answered **401** to the identical unauthenticated request —
+the correct response for a healthy host — proving this is **not** local DNS, network, TLS or
+machine configuration. DNS resolved normally (104.18.34.254 / 172.64.153.2).
+
+**Eliminated by evidence:**
+
+- **AUTH/SESSION** — a dead token yields 401, which the live host demonstrably returns. 520 is an
+  origin failure raised independently of credentials.
+- **SYMBOL MAPPING** — `ALL_PAIRS` holds OANDA-native underscore identifiers (`EUR_USD`); the URL
+  built by `fetchCandles()` is well-formed.
+- **TIMEFRAME** — 520 reproduced across `H1` and `D` granularities alike.
+- **REQUEST CONSTRUCTION** — reproduced at `count=220` and `count=5`.
+- **NETWORK / ENVIRONMENT** — live host and unrelated hosts reachable from the same shell.
+- **MOGO CODE** — no code path can turn a healthy 200 into a 520.
+
+**Classification: DATA PROVIDER.** Not a MOGO defect. External, upstream, and outside MOGO's control.
+
+This is **not unprecedented**: `tests/v126_phase2c_wave1_tests.js:601` already records a prior
+verification step "BLOCKED BY EXTERNAL OANDA HTTP 503 MAINTENANCE". Practice-environment outages are
+a recurring operating condition, not a one-off — which is precisely why MOGO must be able to name one.
+
+**UNVERIFIED:** that the operator's instance is configured to the practice environment
+(`cfg.env !== 'live'`). It is strongly inferred — the practice host is failing, the live host is
+healthy, the symptom is present, and PAPER-only operation implies practice. It cannot be confirmed
+from the repository because `cfg` lives in browser storage. The repair below makes the live UI state
+self-evidencing, so this stops being an inference.
+
+**UNVERIFIED:** the outage start time. MOGO records it — `scanAll()`'s `finally` block writes
+`instrumentsSkipped[].reason = 'MARKET_DATA_UNAVAILABLE'` into the forward-observation ledger on
+every tick — but that ledger lives in the origin's `localStorage`, which is inside Chrome's *shared*
+Local Storage store holding 136 unrelated origins. Reading it would cross the privacy boundary
+declined as option (B) in MOGO-022, so it was **not** read. The IndexedDB checkpoints are
+snappy-compressed and carry evidence packages, not this ledger.
+
+### Blast radius (derived from the production call graph)
+
+| Surface | Effect | Integrity |
+|---|---|---|
+| Historical candle acquisition | **Halted** — `fetchCandles()` returns `null` for all 35 pairs | intact |
+| UI scanner | All 35 pairs suppressed; banner shown | intact |
+| Strategy evaluation | **Suppressed by contract** — `detectSignals(null)` / `bestConfluence(null)` | intact |
+| Decision generation | No signals ⇒ no alerts (`conf.total` never reaches `ALERT_THRESHOLD`) | intact |
+| PAPER entry | `checkAutoTrades()` opens nothing | **no fabricated trades** |
+| PAPER position management | `checkPaperPositions()` returns early per position on `if(!live)return;` | **no NaN, no corruption** |
+| Evidence capture / provenance | Untouched; no packages minted | intact |
+| Forward-observation ledger | Still written each tick, recording the skip and its reason | **outage IS recorded** |
+| Research / corpus | Untouched | intact |
+
+**Forward PAPER is halted, not damaged.** No trade, position, balance, package or observation was
+created, altered or lost. The 259-observation corpus is unchanged and still validates.
+
+**One real scientific caveat.** `checkPaperPositions()` evaluates stops and targets only from a live
+price. Through an outage that guard returns early, so a stop or target that would have been hit
+*during* the outage is instead detected at the first price after it. Realized R for any position open
+across an outage window is therefore measured against a later price than the simulation implies. This
+is correct fail-closed behaviour — inventing a fill price would be worse — but it is a genuine
+limitation on forward-statistic fidelity and is now recorded as such.
+
+### The MOGO defect this exposed — and the repair
+
+The provider outage is not MOGO's fault. **Being unable to name it is.**
+
+This is the eighth recurring defect category from B-32 — *absence is not silence* — reaching a
+surface B-32 never covered. B-32 repaired it three times in the evidence layer (package resolution,
+witness value, derived field). The market-data acquisition path was never audited for it, and it had
+the same hole: a check that could not evaluate did not report why.
+
+**Repair (v12.40.0):** capture the transport reason where it is known and carry it out of band.
+
+- New `fetchCandlesDiagnosed()` returns `{candles, diagnostics}`, where `diagnostics.transportOutcome`
+  is one of `OK` / `HTTP_ERROR` / `NO_CANDLES_FIELD` / `NETWORK_ERROR`, alongside the real
+  `httpStatus`.
+- **`fetchCandles()`'s return contract is unchanged** — still the array on success, still bare `null`
+  on every failure — so all 21 existing call sites and their `null` guards behave byte-for-byte as
+  before. Fixture `BEHAVIOUR-1` (a 429 must yield `null`, not a partial array) pins this and still
+  passes.
+- `scanPair()` records the transport facts into `pairData` even when `candles` is `null`.
+- The suppression banner renders them, and separates a provider failure from a legitimate gap
+  instead of narrating both as "incomplete candle history".
+
+**`completenessState` remains the sole evaluation contract (ADR-011).** `transportOutcome` and
+`httpStatus` are diagnostics and display only. No consumer branches on them to make an evaluation
+decision — a consumer branching on `httpStatus===429` would re-create the original ADR-011 defect,
+because the case that actually reached scoring was `httpStatus===200`.
+
+**Deliberately NOT done:** no relaxation of the 220-candle lookback, no fabricated or interpolated
+candles, no stale-data reuse, no retry storm against a failing origin, and no automatic failover to
+the live host — failing over a PAPER platform onto a live-money endpoint is a governance boundary,
+not a repair.
+
+### Correct operator reading
+
+A suppressed pair is **not** a no-trade signal. During INC-006 MOGO is not saying "no setups exist";
+it is saying "I cannot see the market." Silence from the scanner in this window carries no
+information about market opportunity, and no forward statistic should treat this period as observed.
+
+---
+
 ## INC-005 — A hand-seeded record counted as a real ALEX paper trade
 
 **Status:** Root cause established 2026-08-03. Detection shipped in v12.15.0 (Trade Integrity &

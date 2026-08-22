@@ -450,6 +450,72 @@ function runCandleCompletenessFixtures(g){
       return 'chart and trade path consume one computation';
     });
 
+    // ── INC-006: a check that cannot evaluate must report WHY ────────────────────────────────
+    // Production collapsed three materially different failures into one bare `null`, so during a
+    // total provider outage (api-fxpractice.oanda.com HTTP 520 on every endpoint) the operator's
+    // suppression banner rendered "HTTP —" and read exactly like a quiet market. These fixtures
+    // pin the reason surviving, AND pin the return contract that must NOT have changed to get it.
+    await t('INC006-1 fetchCandles() STILL returns bare null on a transport failure',async function(){
+      // The load-bearing regression guard. Returning [] would be the obvious shape and is exactly
+      // wrong: [] is truthy, so every `if(!candles)` guard in the application stops firing.
+      g.setFetchScript([g.RESP_520]);
+      const c=await g.fetchCandles('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(c,null,'the 21 existing call sites depend on null, not on an empty array');
+      return 'return contract unchanged';
+    });
+    await t('INC006-2 a non-OK status is reported as HTTP_ERROR and keeps the real status code',async function(){
+      g.setFetchScript([g.RESP_520]);
+      const r=await g.fetchCandlesDiagnosed('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(r.candles,null,'no candles arrived');
+      eq(r.diagnostics.transportOutcome,g.MARKET_DATA_TRANSPORT.HTTP_ERROR,'the failure must be named');
+      eq(r.diagnostics.httpStatus,520,'the status that names the outage must survive');
+      return 'HTTP 520 preserved';
+    });
+    await t('INC006-3 a 200 carrying no candles field is NOT reported as a network error',async function(){
+      g.setFetchScript([g.RESP_NO_CANDLES]);
+      const r=await g.fetchCandlesDiagnosed('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(r.candles,null,'an unreadable shape yields no candles');
+      eq(r.diagnostics.transportOutcome,g.MARKET_DATA_TRANSPORT.NO_CANDLES_FIELD,'a reachable provider returning a shape MOGO cannot read is its own fact');
+      eq(r.diagnostics.httpStatus,200,'and it answered 200, which must not be reported as a failure status');
+      return 'shape failure distinguished from transport failure';
+    });
+    await t('INC006-4 a thrown fetch is reported as NETWORK_ERROR and never leaks the request',async function(){
+      g.setFetchScript([g.RESP_NETWORK_ERROR]);
+      const r=await g.fetchCandlesDiagnosed('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(r.candles,null,'a rejected fetch yields no candles');
+      eq(r.diagnostics.transportOutcome,g.MARKET_DATA_TRANSPORT.NETWORK_ERROR,'never-answered is not the same as answered-badly');
+      eq(r.diagnostics.httpStatus,null,'there is no status when nothing answered -- it must not be invented');
+      ok(!/Bearer|Authorization/i.test(String(r.diagnostics.errorText||'')),'the bearer token must never reach a diagnostic string');
+      return 'network failure named, credential-safe';
+    });
+    await t('INC006-5 a healthy fetch is reported OK and completeness is untouched',async function(){
+      g.setFetchScript([g.okCandles(SCANNER_LOOKBACK)]);
+      const r=await g.fetchCandlesDiagnosed('EUR_USD','H1',SCANNER_LOOKBACK);
+      ok(Array.isArray(r.candles),'a healthy fetch still returns the array');
+      eq(r.diagnostics.transportOutcome,g.MARKET_DATA_TRANSPORT.OK,'a healthy transport must say so');
+      eq(g.completenessStateOf(r.candles),'COMPLETE','and ADR-011 classification must be unaffected by this change');
+      return 'healthy path unchanged';
+    });
+    await t('INC006-6 the operator banner NAMES a provider failure instead of implying a quiet market',async function(){
+      g.resetPairData();
+      g.setActiveTf('H1');
+      g.setFetchScript([g.RESP_520]);          // candle fetch fails; price fetch reuses the last step
+      await g.scanPair('EUR_USD');
+      const d=g.pairData()['EUR_USD'];
+      eq(d.evaluationSuppressed,true,'the pair must be suppressed');
+      eq(d.httpStatus,520,'the status must reach pairData even though candles was null');
+      eq(d.transportOutcome,g.MARKET_DATA_TRANSPORT.HTTP_ERROR,'and so must the transport outcome');
+      g.renderMarketDataCompletenessDiagnostics();
+      const html=g.diagnosticsHtml();
+      ok(/market data could not be retrieved/.test(html),'the headline must not call a dead provider "incomplete candle history"');
+      ok(/HTTP 520/.test(html),'the operator must be able to read the actual status');
+      ok(/HTTP_ERROR/.test(html),'and the named transport outcome');
+      ok(/not a market verdict|cannot see the market/.test(html),'it must say this is not a no-trade signal');
+      ok(!/session, weekend, holiday and\s*liquidity gaps are all legitimate/.test(html),
+        'the legitimate-gap reassurance must NOT be shown for a total transport failure');
+      return 'provider outage is named, not narrated as a quiet market';
+    });
+
     return out;
   })();
 }

@@ -255,6 +255,22 @@ echo "  Execution errors: $TOTAL_EXEC_ERRORS"
 echo "  Fixtures run:     $TOTAL_FIXTURES"
 echo "  Passed:           $TOTAL_PASS"
 echo "  Failed:           $TOTAL_FAIL"
+# MOGO-023: THE SUMMARY USED TO RENDER GREEN WHILE THE GATE EXITED RED.
+# Every counter above is a FIXTURE counter, but several gates fail the run without touching one:
+# a fixture-count mismatch, an unregistered suite, protected-function drift, a validator ERROR,
+# auto-mode drift. A v12.40.0 run exited 1 on a fixture-count mismatch while printing
+# "Failed: 0" -- an all-green block above an authoritative red exit code. Anyone reading the
+# summary rather than `echo $?` would have concluded the gate passed.
+# The verdict is therefore derived from OVERALL_EXIT itself, so the block cannot disagree with
+# the exit code by construction. UNKNOWN must never render as GREEN, and neither must FAILED.
+if [ "$OVERALL_EXIT" -eq 0 ]; then
+  echo "  VERDICT:          PASS (exit 0)"
+else
+  echo "  VERDICT:          FAIL (exit $OVERALL_EXIT) -- scroll up for the failing gate."
+  echo "                    A red gate is NOT always a failed fixture: count mismatch,"
+  echo "                    unregistered suite, protected drift, validator ERROR or"
+  echo "                    auto-mode drift all fail the run with 'Failed: 0' above."
+fi
 echo ""
 echo "NOTE: this run covers repository-owned permanent suites only. Historical"
 echo "suites that exist solely in an ephemeral scratchpad outside this repository"
