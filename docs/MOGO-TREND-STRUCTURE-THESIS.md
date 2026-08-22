@@ -210,11 +210,54 @@ even where they coincide on a chart.
 - `UNKNOWN` — realistic spread/slippage for the exotic pairs in `ALL_PAIRS` (`USD_TRY`, `USD_ZAR`,
   `USD_MXN`, `USD_DKK`). Costs there may dominate the edge. **Baseline universe therefore restricts
   to majors and liquid crosses**; exotics are a separate question.
-- **BLOCKED** — `STR-B` (volume value area). MOGO's OANDA candle feed carries OHLC mid prices only;
-  there is no volume. Not deferred — *not currently possible*, and it must not be silently replaced
-  with a tick-count proxy pretending to be volume.
-- **BLOCKED** — carry/rate differential data. MOGO has no rates feed and no authorized provider for
-  one. §3.8 cannot be tested until that is resolved through an approved source.
+- **BLOCKED** — `STR-B` (volume value area). **Corrected 2026-08-22: an earlier revision of this line
+  said the feed "carries OHLC mid prices only; there is no volume." That was wrong about the feed.**
+
+  OANDA's candles **do** carry a `volume` field. OANDA defines it as *"the number of prices created
+  during the time-range represented by the candlestick"* — a count of OANDA's own price updates.
+  MOGO discards it: all four candle mappers (`index.html` lines 6969, 7041, 7179, 10839) keep only
+  `t, o, h, l, c` from `c.mid`, and **zero code paths read `c.volume`** (verified by grep).
+
+  **This makes the hazard worse, not better, and that is why the correction matters.** The risk was
+  never that MOGO lacks a proxy it might be tempted to fake. It is that **the proxy is already in
+  every response, for free, and wiring it into a "value area" is a one-line change.** OANDA's
+  `volume` is a tick count from one broker's price stream. It is not traded volume, it is not
+  market-wide, and using it to build a value area while calling it volume would be fabrication under
+  §5 of this document and under `CLAUDE.md`'s evidence rules.
+
+  FX is decentralised and has **no consolidated volume**. The only genuine executed spot-FX volume
+  identified (CLS) is institutional sales-only with unpublished pricing; the best self-serve
+  substitute is CME FX **futures** volume, which is a different instrument. If futures volume is ever
+  adopted, the result is `STR-B'` (CME futures volume proxy) — **never** `STR-B`.
+
+  **`STR-B` therefore remains not-currently-possible**, for a sharper reason than first recorded.
+- **BLOCKED, and §3.8 must be SPLIT before it can be shopped for.** "Does carry improve expectancy?"
+  is unanswerable as posed, because it does not say whether carry is a **signal** or a **cost**.
+  Four distinct objects are routinely conflated, and only one of them is free:
+
+  | Object | What it is | Use |
+  |---|---|---|
+  | Central-bank policy rate | administered step function, ~8 changes/yr | coarse regime label only; near-zero variation over an H1→2R hold |
+  | Overnight risk-free / OIS | market-determined funding (SOFR, €STR, SONIA…) | the right object for a carry **signal**; fixings free, curves not |
+  | FX forward / swap points | actual tradeable carry via covered interest parity; embeds cross-currency basis | ground truth, and the only one correct in stressed periods; **no public pricing from any provider checked** |
+  | Broker financing rate | what an OANDA position actually pays, including OANDA's markup | the right object for a **cost model**, the wrong one for a market signal |
+
+  Free, keyless, deeply historical, redistributable data exists for the first two (BIS CBPOL — daily,
+  40+ economies, unrestricted with attribution; ECB/BoE/NY Fed primary fixings). The third has no
+  public price anywhere. Adopting any of them is a **snapshot-and-commit** pattern under `scripts/`,
+  never a live browser call: MOGO's CSP allows three hosts and `docs/SECURITY.md` forbids the browser
+  holding a paid credential.
+
+- **NEWLY IDENTIFIED — MOGO's paper engine models NO financing at all.** `swapRate`,
+  `financingCharge`, `rolloverCost`, `interestRate` and `financing` appear **zero times** in
+  `index.html` (verified by grep). Every paper P&L is computed as pure price movement, so **carry is
+  currently missing from the cost side as well as the signal side**, and realized R on any multi-day
+  hold is wrong by the unmodelled financing. This is not a Trend-Structure blocker — it affects
+  **ALEX and JVM figures that already exist**. Recorded in `docs/KNOWN_ISSUES.md`.
+
+  OANDA exposes `financing.longRate/shortRate` per instrument on the **already-authorized host with
+  the existing credential** — no new provider, no CSP change. It is a current snapshot with no
+  history, which is precisely why the cost of not recording it compounds daily.
 - `UNKNOWN` — whether MOGO's available candle history is deep enough for a credible
   development/holdout split at H4/D across a full regime cycle. **This must be measured before the
   specification is frozen**, because a holdout too short to contain a regime change cannot falsify a

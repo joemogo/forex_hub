@@ -5,9 +5,13 @@
 # de-collecting an entire module (test_ -> xtest_) still exited 0, because the sibling modules
 # kept the total non-zero. Twenty-one rounds of adversarial hardening are stored as these tests.
 #
-# Regenerate deliberately:  python3 tests/count_python_tests.py > tests/expected_python_test_counts.tsv
-# NOTE: the generator does NOT emit this header -- re-add it after regenerating, or the reason
-# this file exists is deleted by the act of updating it (MOGO-023).
+# Regenerate deliberately:  bash tests/update_expected_counts.sh
+#
+# MOGO-023: this header used to name 'python3 tests/count_python_tests.py > <this file>'
+# instead -- and that command emits NO header, so following the file's own instruction
+# deleted the reason the file exists. It is regenerated from the template in
+# update_expected_counts.sh, so hand-edits to these comment lines are also discarded;
+# change the template, not the output.
 tests.trader_intelligence.acquisition.test_acquisition	73
 tests.trader_intelligence.acquisition.test_acquisition_triage	11
 tests.trader_intelligence.acquisition.test_reconstructability	16

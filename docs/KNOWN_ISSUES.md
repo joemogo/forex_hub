@@ -69,6 +69,44 @@ is obsolete now that it is green.
 
 ---
 
+## Paper P&L models no financing/carry cost at all (MOGO-023)
+
+**Status:** Measured 2026-08-22, **not repaired**. Severity **P3** rising to **P2** for any
+multi-day holding period. Affects ALEX and JVM figures that already exist.
+
+`swapRate`, `financingCharge`, `rolloverCost`, `interestRate` and `financing` appear **zero times**
+in `index.html` (verified by grep). Every paper P&L is computed as pure price movement:
+`movePips × pipVal × lots`. No overnight financing, swap or rollover is applied.
+
+**Consequence.** Realized R on any position held across a rollover is wrong by the unmodelled
+financing, in a direction that depends on the pair and the side — systematically favourable for a
+positive-carry long, systematically unfavourable for its short. Forward figures inherit this. The
+error is small for an intraday hold and compounds with duration; ALEX's forward population contains
+holds of many hours to days, so it is not negligible there.
+
+**This is separate from the spread**, which v12.x *does* model — `closePaperPosition()` books the
+exit from `fetchBidAsk()`, buys filling at the ask and exits at the bid, so spread cost is
+represented. Financing is not.
+
+**Available at zero marginal cost, and not yet taken.** OANDA exposes
+`financing.longRate/shortRate` per instrument via `GET /v3/accounts/{id}/instruments` on the
+**already-authorized host, with the existing credential, inside the existing CSP allow-list**. No new
+provider, no new dependency, no security-boundary change.
+
+Two caveats that make this a decision rather than a task:
+
+1. It is a **current snapshot with no history**, so it cannot retroactively correct any existing
+   figure. It can only make future observations correct — which is why the cost of not starting
+   compounds daily.
+2. It is the **broker's retail financing rate including OANDA's markup**. That makes it the correct
+   object for MOGO's own cost model and the *wrong* object for a market-carry signal. Do not reuse it
+   for the `MOGO Trend-Structure` §3.8 carry hypothesis; those are different questions.
+
+**Do not** back-fill or estimate financing onto preserved observations. An invented cost is an
+invented number, and the records are the evidence.
+
+---
+
 ## A 4-millisecond forward observation carries an exactly-2R win (MOGO-023)
 
 **Status:** Measured 2026-08-21, **not repaired**. Diagnosis only — preserved evidence must not be

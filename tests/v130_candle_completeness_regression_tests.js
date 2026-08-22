@@ -516,6 +516,31 @@ function runCandleCompletenessFixtures(g){
       return 'provider outage is named, not narrated as a quiet market';
     });
 
+    // ── MOGO-023: the tick count that must never become "volume" ─────────────────────────────
+    await t('INC006-7 (STRUCTURAL) no code path reads OANDA candle volume',async function(){
+      // OANDA's candles DO carry a `volume` field -- "the number of prices created during the
+      // time-range represented by the candlestick", i.e. a count of OANDA's OWN price updates from
+      // ONE broker. It is not traded volume and FX has no consolidated volume at all.
+      //
+      // MOGO discards it: all four candle mappers keep only t/o/h/l/c from c.mid. That is correct,
+      // and it is one line away from not being correct. Wiring c.volume into a "value area" or a
+      // volume-weighted level would be fabrication under MOGO's evidence rules -- and it would look
+      // like a trivial enhancement to anyone who noticed the field sitting unused in the response.
+      //
+      // So the prohibition is ENFORCED here rather than only written in the research thesis.
+      //
+      // DELIBERATE USE IS STILL POSSIBLE, and must be deliberate: if a future release wants an
+      // activity diagnostic, name it for what it is (oanda_tick_count, never "volume"), keep it out
+      // of every structure/value/AOI computation, and update this fixture in the same commit. The
+      // point is that deleting a guard is a visible act and quietly reading a field is not.
+      const html=g.rawHtml();
+      const hits=(html.match(/\.volume\b/g)||[]).length;
+      eq(hits,0,'index.html now reads a `.volume` property somewhere. If this is OANDA\'s candle '+
+        'tick count being used as volume, it is fabrication. If it is a deliberately-named activity '+
+        'diagnostic, rename it and update this fixture in the same commit');
+      return 'the tick count in every candle response is still discarded, in all 4 mappers';
+    });
+
     return out;
   })();
 }

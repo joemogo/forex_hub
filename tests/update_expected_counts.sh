@@ -27,7 +27,13 @@ echo "Regenerating tests/expected_python_test_counts.tsv ..."
   echo "# de-collecting an entire module (test_ -> xtest_) still exited 0, because the sibling modules"
   echo "# kept the total non-zero. Twenty-one rounds of adversarial hardening are stored as these tests."
   echo "#"
-  echo "# Regenerate deliberately:  python3 tests/count_python_tests.py > tests/expected_python_test_counts.tsv"
+  echo "# Regenerate deliberately:  bash tests/update_expected_counts.sh"
+  echo "#"
+  echo "# MOGO-023: this header used to name 'python3 tests/count_python_tests.py > <this file>'"
+  echo "# instead -- and that command emits NO header, so following the file's own instruction"
+  echo "# deleted the reason the file exists. It is regenerated from the template in"
+  echo "# update_expected_counts.sh, so hand-edits to these comment lines are also discarded;"
+  echo "# change the template, not the output."
   python3 tests/count_python_tests.py
 } > tests/expected_python_test_counts.tsv
 python3 tests/count_python_tests.py --check
