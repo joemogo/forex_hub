@@ -104,6 +104,13 @@ g.RESP_429=function(){ return Promise.resolve(makeResponse(false,429,{errorMessa
 // (Cloudflare origin error from api-fxpractice.oanda.com, body "error code: 520").
 g.RESP_520=function(){ return Promise.resolve(makeResponse(false,520,{errorMessage:'error code: 520'})); };
 g.RESP_NO_CANDLES=function(){ return Promise.resolve(makeResponse(true,200,{})); };
+// MOGO-023 integrity shapes. Each is a FULL-LENGTH response -- the point is that ADR-011's
+// count-based classifier calls every one of them COMPLETE.
+g.candleArrayRef=candleArray;
+g.okBody=function(n,extra){ const b={candles:candleArray(n)}; Object.assign(b,extra||{});
+  return function(){ return Promise.resolve(makeResponse(true,200,b)); }; };
+g.okCandlesMutated=function(n,mutate){ return function(){ const cs=candleArray(n); mutate(cs);
+  return Promise.resolve(makeResponse(true,200,{candles:cs})); }; };
 g.RESP_NETWORK_ERROR=function(){ return Promise.reject(new TypeError('Failed to fetch')); };
 g.okCandles=function(n){ return function(){ return Promise.resolve(makeResponse(true,200,{candles:candleArray(n)})); }; };
 g.okCandlesRaw=function(raw,complete){ return function(){ return Promise.resolve(makeResponse(true,200,{candles:candleArray(raw,complete)})); }; };
@@ -131,6 +138,20 @@ g.rawHtml=function(){ return html; };
 const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // ── the real, unmodified market-data and scanner chain under test ──
+  'g.pairEvaluationDisplayState=pairEvaluationDisplayState;' +
+  'g.marketDataCandleIntegrity=marketDataCandleIntegrity;' +
+  'g.marketDataNormalizeIdentity=marketDataNormalizeIdentity;' +
+  'var candleArrayRef=g.candleArrayRef;' +
+  'g.marketDataIdentityOutcome=marketDataIdentityOutcome;' +
+  'g.MARKET_DATA_INTEGRITY=MARKET_DATA_INTEGRITY;' +
+  'g.getChartCandleCount=getChartCandleCount;' +
+  'g.chartCandlesForHorizon=chartCandlesForHorizon;' +
+  'g.chartHorizonDaysForCandles=chartHorizonDaysForCandles;' +
+  'g.chartHistoryHorizonHtml=chartHistoryHorizonHtml;' +
+  'g.CHART_AUDIT_HORIZON_DAYS=CHART_AUDIT_HORIZON_DAYS;' +
+  'g.CHART_DISPLAY_CANDLE_COUNTS=CHART_DISPLAY_CANDLE_COUNTS;' +
+  'g.CHART_DISPLAY_CANDLE_COUNTS_LEGACY=CHART_DISPLAY_CANDLE_COUNTS_LEGACY;' +
+  'g.CHART_MAX_SINGLE_REQUEST_CANDLES=CHART_MAX_SINGLE_REQUEST_CANDLES;' +
   'g.fetchCandles=fetchCandles;' +
   'g.fetchCandlesDiagnosed=fetchCandlesDiagnosed;' +
   'g.MARKET_DATA_TRANSPORT=MARKET_DATA_TRANSPORT;' +

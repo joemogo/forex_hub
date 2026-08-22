@@ -794,7 +794,13 @@ function runMarketDataContinuityFixtures(g){
       mid:{o:String(o),h:String(h),l:String(l),c:String(c)}});
     for(let i=0;i<n;i++){
       const b=base+i*step;
-      if(i===8||i===16||i===24) push(b,b+0.0040,shelf,b+0.0010);   // three touches of one shelf
+      // MOGO-023: the shelf is only a valid LOW when it is at or below the bar's own body. With a
+      // NEGATIVE step the series falls past a fixed shelf, so from i=16 this emitted o=1.1808 with
+      // l=1.1900 -- a low ABOVE the open, which no candle can have. The generator was written for
+      // a rising trend and silently produced impossible bars when reused falling. Clamping keeps
+      // the shelf touch wherever the shelf is genuinely below the body, and stays OHLC-valid
+      // everywhere else. Caught by the new acquisition-boundary integrity check.
+      if(i===8||i===16||i===24) push(b,b+0.0040,Math.min(shelf,b-0.0020),b+0.0010);   // three touches of one shelf
       else push(b,b+0.0040,b-0.0020,b+0.0010);
     }
     return out;

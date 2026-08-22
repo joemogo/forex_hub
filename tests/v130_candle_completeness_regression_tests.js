@@ -541,6 +541,284 @@ function runCandleCompletenessFixtures(g){
       return 'the tick count in every candle response is still discarded, in all 4 mappers';
     });
 
+
+    // ── Chart audit horizon: the 29 July review that could not happen ────────────────────────
+    // The operator could not navigate back to a late-July setup. Root cause: the chart loads ONE
+    // fixed window and has no back-history pagination, and at 500 M15 candles that window spans
+    // ~7.3 calendar days. M15 is the ENTRY timeframe, so the timeframe an entry must be reviewed
+    // on had the shallowest history of all.
+    const HORIZON_TOLERANCE=0.98;   // ceil() rounding only; not slack for a short window
+
+    await t('HIST-1 every intraday timeframe reaches the declared audit horizon',async function(){
+      const target=g.CHART_AUDIT_HORIZON_DAYS;
+      ['M15','H1','H4'].forEach(function(tf){
+        const days=g.chartHorizonDaysForCandles(tf,g.getChartCandleCount(tf));
+        ok(days>=target*HORIZON_TOLERANCE,
+          tf+' spans only '+days.toFixed(1)+' days, short of the '+target+'-day horizon');
+      });
+      return ['M15','H1','H4'].map(function(tf){
+        return tf+' '+g.chartHorizonDaysForCandles(tf,g.getChartCandleCount(tf)).toFixed(1)+'d';
+      }).join(', ');
+    });
+
+    await t('HIST-2 the change is STRICTLY NON-REDUCING -- no timeframe lost history',async function(){
+      // The floor that makes this repair safe to ship without re-verifying every timeframe.
+      Object.keys(g.CHART_DISPLAY_CANDLE_COUNTS_LEGACY).forEach(function(tf){
+        ok(g.getChartCandleCount(tf)>=g.CHART_DISPLAY_CANDLE_COUNTS_LEGACY[tf],
+          tf+' now requests FEWER candles than before: '+g.getChartCandleCount(tf)+
+          ' < '+g.CHART_DISPLAY_CANDLE_COUNTS_LEGACY[tf]);
+      });
+      return 'all timeframes >= their pre-repair counts';
+    });
+
+    await t('HIST-3 REGRESSION: 29 July is reachable from 22 August on the entry timeframe',async function(){
+      // The incident itself, as a dated fixture. 23 calendar days back on M15.
+      const daysBack=(Date.UTC(2026,7,22)-Date.UTC(2026,6,29))/86400000;
+      const m15=g.chartHorizonDaysForCandles('M15',g.getChartCandleCount('M15'));
+      ok(m15>=daysBack,'M15 reaches only '+m15.toFixed(1)+' days, but 29 July was '+
+        daysBack+' days back -- the review would fail again');
+      return 'M15 spans '+m15.toFixed(1)+'d vs the '+daysBack+'d needed';
+    });
+
+    await t('HIST-4 no request exceeds OANDA’s single-request ceiling',async function(){
+      // Beyond this OANDA truncates silently and the horizon would be a claim, not a fact.
+      Object.keys(g.CHART_DISPLAY_CANDLE_COUNTS_LEGACY).forEach(function(tf){
+        ok(g.getChartCandleCount(tf)<=g.CHART_MAX_SINGLE_REQUEST_CANDLES,
+          tf+' requests '+g.getChartCandleCount(tf)+', above the '+
+          g.CHART_MAX_SINGLE_REQUEST_CANDLES+' cap -- it would be silently truncated');
+      });
+      return 'all counts within the single-request cap';
+    });
+
+    await t('HIST-5 the horizon helpers are exact inverses',async function(){
+      const n=g.chartCandlesForHorizon('M15',45);
+      const d=g.chartHorizonDaysForCandles('M15',n);
+      ok(Math.abs(d-45)<0.01,'round-trip drifted: 45d -> '+n+' candles -> '+d+'d');
+      eq(g.chartCandlesForHorizon('D',45),null,'D is not intraday and must not be derived');
+      eq(g.chartHorizonDaysForCandles('M15',0),null,'zero candles has no horizon, not a zero one');
+      return 'derivation is invertible and refuses non-intraday timeframes';
+    });
+
+    await t('HIST-6 the chart REPORTS the horizon it actually achieved, and flags a short one',async function(){
+      // Measured from the candles that arrived, never from the count requested -- a window that
+      // came back short is exactly what made the July failure look like an empty market.
+      const full=g.chartHistoryHorizonHtml({timeframe:'M15',historyCandleCount:g.getChartCandleCount('M15')});
+      ok(/History shown/.test(full),'the achieved horizon must be stated');
+      ok(/NOT evidence there was none/.test(full),'it must say an absent setup beyond it proves nothing');
+      ok(!/SHORT of/.test(full),'a full window must not be flagged short');
+      const short=g.chartHistoryHorizonHtml({timeframe:'M15',historyCandleCount:200});
+      ok(/SHORT of/.test(short),'a 200-candle window is ~2.9 days and MUST be flagged');
+      eq(g.chartHistoryHorizonHtml({timeframe:'D',historyCandleCount:365}),'',
+        'non-intraday timeframes are not qualified');
+      return 'achieved horizon reported; short window flagged';
+    });
+
+    await t('HIST-7 widening the CHART granted no strategy any extra authority',async function(){
+      // The load-bearing isolation check. Every evaluation fetch is independent of the chart's
+      // window; if this ever fails, a display change has reached a trading decision.
+      const src=g.rawHtml();
+      ok(/fetchCandlesDiagnosed\(pair,sweepTf,220\)/.test(src),
+        'scanPair no longer requests exactly 220 -- ADR-011’s evaluation window moved');
+      ok(/getStructuralAOI/.test(src),'the structural AOI fetch must still exist independently');
+      return 'scanPair still requests its own 220; chart window is display-only';
+    });
+
+
+    // ── Integrity: what the count-based contract never inspected ─────────────────────────────
+    // Every fixture here sends a FULL-LENGTH response. ADR-011 classifies all of them COMPLETE
+    // on count alone, which is exactly why counting is not inspecting.
+    const N=SCANNER_LOOKBACK;
+
+    await t('INTEG-1 an impossible bar (high < low) is UNAVAILABLE, not COMPLETE',async function(){
+      g.setFetchScript([g.okCandlesMutated(N,function(cs){
+        cs[10].mid.h='1.00000'; cs[10].mid.l='1.90000';           // inverted bar
+      })]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','a full-length response with an impossible bar was scored');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.INVALID_OHLC,'the reason must be named');
+      return 'inverted bar -> UNAVAILABLE';
+    });
+
+    await t('INTEG-2 a non-finite price is UNAVAILABLE (NaN would reach stop/target arithmetic)',async function(){
+      g.setFetchScript([g.okCandlesMutated(N,function(cs){ cs[5].mid.c=null; })]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','parseFloat(null) is NaN and it was scored');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.INVALID_OHLC);
+      return 'null close -> UNAVAILABLE';
+    });
+
+    await t('INTEG-3 a REVERSED series is UNAVAILABLE -- the oldest bar must not score as "now"',async function(){
+      g.setFetchScript([g.okCandlesMutated(N,function(cs){ cs.reverse(); })]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','a reversed page was scored at full confidence');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.NON_MONOTONIC_TIME);
+      return 'reversed series -> UNAVAILABLE';
+    });
+
+    await t('INTEG-4 DUPLICATES cannot manufacture a COMPLETE verdict on a short window',async function(){
+      // The mechanism: repeats inflate rawCount, and rawCount is the exact quantity
+      // marketDataClassify compares against requestedCount.
+      g.setFetchScript([g.okCandlesMutated(N,function(cs){
+        for(let i=0;i<40;i++) cs[i]=JSON.parse(JSON.stringify(cs[0]));   // 40 copies of one bar
+      })]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','duplicates padded a short window into COMPLETE');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.NON_MONOTONIC_TIME,
+        'equal timestamps are not strictly ascending');
+      return 'padded duplicates -> UNAVAILABLE';
+    });
+
+    await t('INTEG-5 a response for the WRONG INSTRUMENT is refused',async function(){
+      g.setFetchScript([g.okBody(N,{instrument:'GBP_JPY',granularity:'H1'})]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE',
+        'a full series for another pair was scored under the requested pair’s name');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH);
+      return 'GBP_JPY body for EUR_USD request -> UNAVAILABLE';
+    });
+
+    await t('INTEG-6 a response for the WRONG GRANULARITY is refused',async function(){
+      g.setFetchScript([g.okBody(N,{instrument:'EUR_USD',granularity:'M15'})]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','M15 data was scored as H1');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH);
+      return 'M15 body for H1 request -> UNAVAILABLE';
+    });
+
+    await t('INTEG-7 a MATCHING identity passes and is recorded as verified',async function(){
+      g.setFetchScript([g.okBody(N,{instrument:'EUR_USD',granularity:'H1'})]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'COMPLETE','a correct, healthy response must still evaluate');
+      eq(c.identityVerified,true,'a verified identity must be recorded as verified');
+      return 'matching identity -> COMPLETE, identityVerified true';
+    });
+
+    await t('INTEG-8 ABSENT identity is NOT treated as agreement, and does NOT suppress',async function(){
+      // Fail-closed on mismatch; honest on absence. Suppressing on a missing field would take
+      // the platform down if the provider stopped sending it -- and claiming verification would
+      // be the "no exception thrown means healthy" error this milestone exists to end.
+      g.setFetchScript([g.okCandles(N)]);                     // body carries no identity fields
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'COMPLETE','absence of a field must not suppress a good response');
+      eq(c.identityVerified,false,'"not checked" must never be recorded as "checked and matched"');
+      return 'absent identity -> COMPLETE with identityVerified false';
+    });
+
+    await t('INTEG-9 a healthy series is untouched -- the guards are not a blanket refusal',async function(){
+      // Positive control. Without it every assertion above passes on a check that refuses
+      // everything, which is the classic way an integrity gate becomes an outage.
+      g.setFetchScript([g.okCandles(N)]);
+      const c=await g.fetchCandles('EUR_USD','H1',N);
+      eq(g.completenessStateOf(c),'COMPLETE');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.OK);
+      eq(g.marketDataCandleIntegrity(c),g.MARKET_DATA_INTEGRITY.OK,'the pure checker agrees');
+      return 'healthy series still COMPLETE';
+    });
+
+    await t('INTEG-10 a suppressed-by-integrity response reaches the evaluators as NO DATA',async function(){
+      // End to end through the real scanPair: the whole point is that the gate already handles it.
+      g.resetPairData(); g.setActiveTf('H1');
+      g.setFetchScript([g.okCandlesMutated(N,function(cs){ cs[3].mid.h='0.00001'; }),g.okPrice()]);
+      await g.scanPair('EUR_USD');
+      const pd=g.pairData()['EUR_USD'];
+      eq(pd.completenessState,'UNAVAILABLE');
+      eq(pd.evaluationSuppressed,true,'an impossible bar must suppress evaluation');
+      eq(pd.conf.total,0,'and must not produce a confluence score');
+      return 'impossible bar -> suppressed end to end';
+    });
+
+
+    // ── The pair LIST, which is what the operator actually reads ─────────────────────────────
+    // During INC-006 all 35 rows showed "— / —", byte-identical to a quiet market, because
+    // renderPairList read only price and confluence. The banner told the truth; the list did not.
+    await t('ROW-1 a suppressed pair is NOT EVALUATED in the row, not a blank score',async function(){
+      const st=g.pairEvaluationDisplayState('EUR_USD',
+        {completenessState:'UNAVAILABLE',evaluationSuppressed:true,
+         transportOutcome:'HTTP_ERROR',httpStatus:520,requestedCount:220,receivedCount:0});
+      eq(st.notEvaluated,true,'a suppressed pair must not read as evaluated');
+      eq(st.code,'NOT_EVALUATED');
+      ok(/HTTP_ERROR/.test(st.title)&&/520/.test(st.title),'the row must carry the real reason');
+      ok(/NOT a statement that there is no setup/.test(st.title),
+        'it must say this is a data failure, not a market verdict');
+      return 'suppressed -> NOT_EVALUATED with transport reason';
+    });
+
+    await t('ROW-2 an evaluated pair with zero confluence is NOT flagged',async function(){
+      // The control that stops this becoming a permanent amber badge. A quiet market is a
+      // legitimate result and must still read as one.
+      const st=g.pairEvaluationDisplayState('EUR_USD',
+        {completenessState:'COMPLETE',evaluationSuppressed:false,conf:{total:0,direction:'—'}});
+      eq(st.notEvaluated,false,'a genuine no-setup must not be flagged as unevaluated');
+      eq(st.code,'EVALUATED');
+      return 'evaluated, zero confluence -> EVALUATED';
+    });
+
+    await t('ROW-3 a pair never reached this session is distinguishable from both',async function(){
+      const st=g.pairEvaluationDisplayState('USD_TRY',{});
+      eq(st.notEvaluated,true,'an unscanned pair must not read as evaluated');
+      eq(st.code,'NOT_SCANNED','and must be told apart from a suppressed one');
+      ok(/not a market verdict/i.test(st.title));
+      return 'never scanned -> NOT_SCANNED';
+    });
+
+    await t('ROW-4 a suppressed pair showing a LIVE PRICE is still flagged',async function(){
+      // The specific trap: fetchPrice() is an independent call that succeeds while the candle
+      // fetch fails, so a suppressed pair shows a live price beside a blank score -- which reads
+      // as "evaluated, quiet" more strongly than an empty row would.
+      const st=g.pairEvaluationDisplayState('EUR_USD',
+        {completenessState:'UNAVAILABLE',evaluationSuppressed:true,price:1.0855,
+         requestedCount:220,receivedCount:0});
+      eq(st.notEvaluated,true,'a live price must not launder a suppressed evaluation');
+      ok(/incomplete candle history/.test(st.title),'and the reason must still be named');
+      return 'live price + suppressed -> still NOT_EVALUATED';
+    });
+
+
+    await t('INTEG-11 provider NORMALIZATION of the identity echo is not an outage',async function(){
+      // Adversarial review found this: OANDA does not guarantee the echo is byte-identical to the
+      // request -- published examples show `DE30_EUR` answered with "instrument":"DE30/EUR". A
+      // strict !== here would flip every instrument to UNAVAILABLE in one sweep, which is the
+      // INC-006 signature this whole repair exists to prevent.
+      const forms=[{instrument:'eur_usd',granularity:'h1'},
+                   {instrument:'EUR/USD',granularity:'H1'},
+                   {instrument:' EUR_USD ',granularity:'H1'}];
+      for(const f of forms){
+        g.setFetchScript([g.okBody(SCANNER_LOOKBACK,f)]);
+        const c=await g.fetchCandles('EUR_USD','H1',SCANNER_LOOKBACK);
+        eq(g.completenessStateOf(c),'COMPLETE',
+          'normalized echo '+JSON.stringify(f)+' was treated as a mismatch -- that is an outage');
+      }
+      return 'case, separator and whitespace variants all accepted';
+    });
+
+    await t('INTEG-12 tolerance did NOT weaken genuine mismatch detection',async function(){
+      // The control for INTEG-11. Normalisation must not make a different pair look equal.
+      g.setFetchScript([g.okBody(SCANNER_LOOKBACK,{instrument:'GBP/JPY',granularity:'H1'})]);
+      const c=await g.fetchCandles('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','a genuinely different pair must still be refused');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH);
+      eq(g.marketDataIdentityOutcome({instrument:'EUR_GBP'},'EUR_USD','H1'),'MISMATCH');
+      return 'GBP/JPY still refused for an EUR_USD request';
+    });
+
+
+    await t('INTEG-13 duplicates on INCOMPLETE bars cannot inflate rawCount either',async function(){
+      // Adversarial review's finding: the checker saw only the completeness-filtered array while
+      // marketDataClassify compares the RAW count. 208 duplicate incomplete bars + 12 real ones
+      // scored COMPLETE against a 220 lookback -- a 12-candle window presented as a full one.
+      g.setFetchScript([function(){
+        const real=candleArrayRef(12);
+        const dupe=[];
+        for(let i=0;i<208;i++) dupe.push(JSON.parse(JSON.stringify({...real[0],complete:false})));
+        return Promise.resolve({ok:true,status:200,
+          json:function(){return Promise.resolve({candles:real.concat(dupe)});}});
+      }]);
+      const c=await g.fetchCandles('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(g.completenessStateOf(c),'UNAVAILABLE',
+        'duplicate incomplete bars padded a 12-candle window into COMPLETE');
+      return 'incomplete-bar duplicates -> UNAVAILABLE';
+    });
+
     return out;
   })();
 }

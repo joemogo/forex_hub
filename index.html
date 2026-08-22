@@ -6853,6 +6853,16 @@ function renderMarketDataCompletenessDiagnostics(){
     .map(function(id){ return document.getElementById(id); }).filter(Boolean);
   if(!targets.length) return;
   const el={set innerHTML(v){ targets.forEach(function(t){ t.innerHTML=v; }); }};
+  // MOGO-023: this BANNER stays scoped to pairs that were actually scanned and suppressed, and
+  // deliberately does NOT alarm on pairs with no pairData entry. Two fixtures (VISIBILITY-1/3)
+  // encode why, and they caught a first attempt that got this wrong: before the first sweep
+  // completes, and between chunks of every sweep, most pairs legitimately have no entry yet --
+  // so widening this filter fires a 34-row amber alarm at startup and flickers through every
+  // sweep. "Not scanned yet" is not a fault, and an indicator that cries wolf is one the
+  // operator learns to ignore, which would cost exactly the signal INC-006 needed.
+  //
+  // The never-reached case is surfaced per-row instead, by pairEvaluationDisplayState() in
+  // renderPairList(): quiet, contextual, and correct at every point in a sweep.
   const rows=Object.keys(pairData||{}).filter(function(p){ return pairData[p]&&pairData[p].evaluationSuppressed; })
     .map(function(p){ const d=pairData[p];
       return{pair:p,state:d.completenessState||'UNAVAILABLE',
@@ -6946,6 +6956,99 @@ function marketDataClassify(requestedCount,rawCount,usableCount){
 // httpStatus are DIAGNOSTICS AND DISPLAY ONLY. No consumer may branch on them to make an
 // evaluation decision: a consumer branching on httpStatus===429 would re-create the original
 // ADR-011 defect, because the case that actually reached scoring was httpStatus===200.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// WHAT THE COMPLETENESS CONTRACT COUNTED, IT NEVER INSPECTED (MOGO-023)
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// ADR-011 established ONE evaluation gate and it works: a short window cannot be scored. But
+// marketDataClassify() compares COUNTS -- rawCount against requestedCount -- and never looks
+// inside a single candle. A full-length response therefore reached the protected evaluators
+// unexamined, and an audit found the consequences were unguarded on every executing path:
+//
+//   * NO OHLC VALIDITY. The mappers are bare parseFloat: no isFinite, no h>=l, no containment.
+//     scoreConfluence does raw arithmetic on last.h-last.l with no precondition, so a null or
+//     malformed mid yields NaN that propagates into stop/target construction. A complete
+//     validator ALREADY EXISTS in this file -- tjrIsValidOhlcCandle -- wired to exactly one
+//     caller, 12,000 lines away, on a research surface.
+//   * NO TIMESTAMP ORDERING. The evaluators treat candles[n-1] as "now" unconditionally. A
+//     reversed page scores the OLDEST bar as the current one, at full COMPLETE confidence.
+//   * NO DUPLICATE DETECTION on the single-request path. fetchCandlesRange's
+//     CURSOR_NOT_ADVANCING guard catches a replayed PAGE; it cannot see a bar repeated within
+//     one. Repeats inflate rawCount -- the exact quantity classify() compares -- so duplicates
+//     can MANUFACTURE a COMPLETE verdict on a genuinely short window.
+//   * NO INSTRUMENT OR GRANULARITY IDENTITY. OANDA returns both fields and MOGO reads neither
+//     (verified: `d.instrument` and `d.granularity` appear nowhere). A cache or broker-side
+//     mixup serving a full 220-bar series for the WRONG pair or the WRONG timeframe is
+//     classified COMPLETE and scored, alerted and traded under the requested pair's name, with
+//     that pair's pip size. Nothing in the file could detect it.
+//
+// THE REPAIR IS AT THE ACQUISITION BOUNDARY, AND IT ADDS NO NEW CONTRACT. A response that fails
+// any check is classified UNAVAILABLE, so it flows through the gate consumers already honour --
+// no consumer branches on it, no protected function is touched, and the failure is closed by
+// construction. This is deliberately NOT a new state: ADR-011's rule that completenessState is
+// the sole evaluation contract is what makes the fix a few lines instead of an audit of 21 call
+// sites.
+//
+// ORDERING IS CHECKED STRICTLY ASCENDING, which kills reordering AND duplicates in one pass --
+// two equal timestamps are not strictly ascending.
+//
+// IDENTITY IS FAIL-CLOSED ON MISMATCH AND HONEST ON ABSENCE. If OANDA states the instrument or
+// granularity and it disagrees, that is a hard stop. If the fields are absent the response is
+// NOT suppressed -- absence is not proof of mismatch -- but `identityVerified:false` is recorded
+// so a reader can never mistake "not checked" for "checked and matched".
+const MARKET_DATA_INTEGRITY=Object.freeze({
+  OK:'OK',
+  INVALID_OHLC:'INVALID_OHLC',              // impossible bar: h<l, o/c outside [l,h], non-finite
+  NON_MONOTONIC_TIME:'NON_MONOTONIC_TIME',  // out of order, or a duplicate timestamp
+  IDENTITY_MISMATCH:'IDENTITY_MISMATCH'     // the response names a different pair or timeframe
+});
+// Pure. The first integrity violation in the series, or OK. Mirrors tjrIsValidOhlcCandle's
+// conditions rather than importing it, because that function is a TJR research surface and
+// coupling a trading path to it would make a research edit a trading change.
+function marketDataCandleIntegrity(candles){
+  if(!Array.isArray(candles)) return MARKET_DATA_INTEGRITY.OK;   // null is handled upstream
+  let prev=null;
+  for(let i=0;i<candles.length;i++){
+    const c=candles[i];
+    if(!c) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    const t=(c.t&&typeof c.t.getTime==='function')?c.t.getTime():NaN;
+    if(!isFinite(t)) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    if(!isFinite(c.o)||!isFinite(c.h)||!isFinite(c.l)||!isFinite(c.c)) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    if(!(c.o>0)||!(c.h>0)||!(c.l>0)||!(c.c>0)) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    if(c.h<c.l) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    if(c.h<c.o||c.h<c.c) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    if(c.l>c.o||c.l>c.c) return MARKET_DATA_INTEGRITY.INVALID_OHLC;
+    if(prev!==null&&!(t>prev)) return MARKET_DATA_INTEGRITY.NON_MONOTONIC_TIME;
+    prev=t;
+  }
+  return MARKET_DATA_INTEGRITY.OK;
+}
+// Normalises an instrument or granularity label for COMPARISON ONLY -- never for storage, and
+// never for anything a strategy reads.
+//
+// This exists because a strict !== here is the single place in the repair where one unvalidated
+// string comparison can take all 35 pairs dark in the same sweep, which is precisely the INC-006
+// signature. OANDA demonstrably normalises at least some instrument echoes -- published examples
+// show a request for `DE30_EUR` answered with `"instrument": "DE30/EUR"` -- so the echo form is
+// NOT guaranteed byte-identical to the request. MOGO's 35 pairs are all FX and very probably echo
+// verbatim, but "very probably" is not a safe basis for a fail-closed comparison applied to every
+// instrument at once.
+//
+// Tolerating case and the `_`/`/` separator costs NOTHING in detection power: the failure this
+// check exists to catch is a response for a DIFFERENT pair (GBP_JPY when EUR_USD was asked for),
+// and no normalisation makes those two equal.
+function marketDataNormalizeIdentity(v){
+  return String(v==null?'':v).trim().toUpperCase().replace(/\//g,'_');
+}
+// Pure. 'OK' | 'MISMATCH' | 'UNVERIFIABLE'. Never treats a missing field as agreement.
+function marketDataIdentityOutcome(body,pair,granularity){
+  const b=body||{};
+  const hasI=typeof b.instrument==='string'&&b.instrument;
+  const hasG=typeof b.granularity==='string'&&b.granularity;
+  if(!hasI&&!hasG) return 'UNVERIFIABLE';
+  if(hasI&&marketDataNormalizeIdentity(b.instrument)!==marketDataNormalizeIdentity(pair)) return 'MISMATCH';
+  if(hasG&&marketDataNormalizeIdentity(b.granularity)!==marketDataNormalizeIdentity(granularity)) return 'MISMATCH';
+  return 'OK';
+}
 const MARKET_DATA_TRANSPORT=Object.freeze({
   OK:'OK',                             // the request was answered and carried a candles field
   HTTP_ERROR:'HTTP_ERROR',             // answered with a non-OK status -- httpStatus names it
@@ -6969,13 +7072,36 @@ async function fetchCandlesDiagnosed(pair,tf,count=220){
       t:new Date(c.time),o:parseFloat(c.mid.o),h:parseFloat(c.mid.h),
       l:parseFloat(c.mid.l),c:parseFloat(c.mid.c)
     }));
+    // MOGO-023: a counted response is not an inspected one. Identity and per-candle integrity
+    // are established HERE, and any failure is expressed as UNAVAILABLE so it flows through the
+    // one gate every consumer already honours -- no new contract, no consumer change.
+    const identity=marketDataIdentityOutcome(d,pair,tf);
+    // The RAW series is checked for ordering too, not just the completeness-filtered one.
+    // Adversarial review found the hole: integrity ran on `out` (post `c.complete` filter) while
+    // marketDataClassify compares `rawCount` (pre-filter), so duplicates riding on incomplete
+    // bars were invisible to the checker and still inflated the number that decides COMPLETE.
+    // Measured: 208 duplicate incomplete bars + 12 real ones scored COMPLETE against a 220
+    // lookback -- a 12-candle window. Ordering is checked on the raw timestamps as well.
+    const rawTimes=d.candles.map(function(c){ return{t:new Date(c.time),o:1,h:1,l:1,c:1}; });
+    const integrity=identity==='MISMATCH'
+      ? MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH
+      : (function(){
+          const rawOrder=marketDataCandleIntegrity(rawTimes);
+          if(rawOrder!==MARKET_DATA_INTEGRITY.OK) return rawOrder;
+          return marketDataCandleIntegrity(out);
+        })();
+    const classified=integrity===MARKET_DATA_INTEGRITY.OK
+      ? marketDataClassify(count,rawCount,out.length)
+      : MARKET_DATA_COMPLETENESS.UNAVAILABLE;
     return{candles:marketDataAttachCompleteness(out,{
-      completenessState:marketDataClassify(count,rawCount,out.length),
+      completenessState:classified,
       requestedCount:count,receivedCount:out.length,rawResponseCount:rawCount,
       pagesRequested:1,pagesReceived:1,paginationTerminationReason:rawCount>=count?'REACHED_COUNT':'RAW_COUNT_SHORT',
-      httpStatus:r.status,fetchDurationMs:Date.now()-startedAt,retryCount:0
+      httpStatus:r.status,fetchDurationMs:Date.now()-startedAt,retryCount:0,
+      integrityOutcome:integrity,identityVerified:identity==='OK'
     }),diagnostics:{transportOutcome:MARKET_DATA_TRANSPORT.OK,httpStatus:r.status,
-      requestedCount:count,receivedCount:out.length,fetchDurationMs:Date.now()-startedAt,errorText:null}};
+      requestedCount:count,receivedCount:out.length,fetchDurationMs:Date.now()-startedAt,errorText:null,
+      integrityOutcome:integrity,identityVerified:identity==='OK'}};
   }catch(e){
     // The error's own text only -- never the request, which carries the bearer token in a header.
     return{candles:null,diagnostics:{transportOutcome:MARKET_DATA_TRANSPORT.NETWORK_ERROR,
@@ -7564,7 +7690,8 @@ const NEAR_MISS_CONFLUENCE_MARGIN=8; // configurable diagnostic-only margin (per
 
 function evaluateSetupFullBreakdownCore(input){
   const{oPair,candles,decisionCandle,decisionTs,weeklyBias,dailyBias,h4Bias,
-        structSupport,structResistance,structSupportSrc,structResistanceSrc,sessionAt,weekdayDate}=input;
+        structSupport,structResistance,structSupportSrc,structResistanceSrc,sessionAt,weekdayDate,
+        structAOIIncomplete}=input;
   const pip=pipSize(oPair);
   const gates=[]; // {id,label,category,pass,observed,required} -- category is one of:
                    // 'hard' (hard eligibility gate), 'soft' (soft confluence factor),
@@ -7584,9 +7711,16 @@ function evaluateSetupFullBreakdownCore(input){
     pass:score>=2,observed:score+'/3 aligned ('+overallBias+')',required:'>=2/3 aligned'});
 
   // 2. Structural AOI -- hard eligibility gate.
+  // MOGO-023: three states, not two. "AOI present" / "no AOI" (a real strategy verdict) /
+  // "AOI NOT EVALUATED" (the D/W data never arrived). The gate still fails in the third case --
+  // fail closed -- but it no longer reports a data failure as a rule rejection.
   const hasStructAOI=structSupport!=null||structResistance!=null;
+  const aoiIncomplete=!!structAOIIncomplete;
   gates.push({id:'structural_aoi',label:'Valid structural AOI relationship',category:'hard',
-    pass:hasStructAOI,observed:hasStructAOI?'AOI present':'no AOI',required:'3+ touch structural AOI present'});
+    pass:hasStructAOI&&!aoiIncomplete,
+    observed:aoiIncomplete?'AOI NOT EVALUATED -- incomplete D/W market data'
+      :(hasStructAOI?'AOI present':'no AOI'),
+    required:'3+ touch structural AOI present'});
 
   // 3. Confluence + signal detection -- production functions, unmodified, called exactly as
   // evaluateLiveTrigger()/simulateTrueMTFReplay() already call them.
@@ -7685,6 +7819,13 @@ async function evaluateLiveSetupFullBreakdown(oPair){
   return evaluateSetupFullBreakdownCore({
     oPair,candles,decisionCandle,decisionTs:Date.now(),
     weeklyBias:sd.weekly,dailyBias:sd.daily,h4Bias:sd.fh,
+    // MOGO-023: carry the AOI's own data-completeness flag. Dropping it made a D/W provider
+    // outage report as the strategy verdict "no AOI" -- getStructuralAOI's own comment forbids
+    // exactly that collapse ("Distinct from 'this instrument has no AOI structure', which is a
+    // STRATEGY verdict. Collapsing the two would make a data fault indistinguishable from a
+    // rule rejection."). evaluateLiveTrigger already returns a separate reason for it; this
+    // second consumer did not, so the Manual Review classifier silently mislabelled outages.
+    structAOIIncomplete:!!(aoi&&aoi.incomplete),
     structSupport:aoi.support,structResistance:aoi.resistance,
     structSupportSrc:aoi.support!=null?'Structural':null,
     structResistanceSrc:aoi.resistance!=null?'Structural':null,
@@ -10336,6 +10477,38 @@ function cColor(pct){return pct>=ALERT_THRESHOLD?'var(--green)':pct>=40?'var(--g
 function cBarClass(pct){return pct>=ALERT_THRESHOLD?'conf-high':pct>=40?'conf-med':'conf-low';}
 
 // ── PAIR LIST ──
+// MOGO-023: a pair MOGO could NOT evaluate must never render as one it evaluated and found
+// nothing in. During INC-006 every one of the 35 rows showed "\u2014 / \u2014" -- byte-identical to a
+// quiet market -- because renderPairList read only price and confluence and never looked at
+// evaluationSuppressed, completenessState or transportOutcome. The amber banner elsewhere on the
+// panel was correct and told the truth, but the operator reads the LIST.
+//
+// Note the trap this closes: a suppressed pair still shows a LIVE PRICE, because fetchPrice() is
+// an independent call that succeeds while the candle fetch fails. A live price beside a blank
+// score reads as "evaluated, quiet" more strongly than a blank row would.
+//
+// Pure, so it is testable without a DOM. Returns the display state only -- no evaluation,
+// alerting or trading decision reads it.
+function pairEvaluationDisplayState(pair,d){
+  const e=d||{};
+  const scanned=e.completenessState!==undefined||e.conf!==undefined;
+  if(!scanned){
+    return{notEvaluated:true,code:'NOT_SCANNED',
+      title:'Not scanned yet in this session -- this is not a market verdict.'};
+  }
+  if(e.evaluationSuppressed===true){
+    const why=e.transportOutcome&&e.transportOutcome!=='OK'
+      ? 'market data could not be retrieved ('+e.transportOutcome+
+        (e.httpStatus!=null?' HTTP '+e.httpStatus:'')+')'
+      : 'incomplete candle history ('+(e.completenessState||'UNAVAILABLE')+
+        ', received '+(e.receivedCount==null?'\u2014':e.receivedCount)+
+        ' of '+(e.requestedCount==null?'\u2014':e.requestedCount)+')';
+    return{notEvaluated:true,code:'NOT_EVALUATED',
+      title:'NOT EVALUATED \u2014 '+why+'. No signal or confluence was computed, so this is a '+
+            'data-availability failure and NOT a statement that there is no setup.'};
+  }
+  return{notEvaluated:false,code:'EVALUATED',title:''};
+}
 function renderPairList(){
   const list=document.getElementById('pairList');
   const filtered=ALL_PAIRS.filter(p=>{
@@ -10358,7 +10531,10 @@ function renderPairList(){
     const el=document.createElement('div');
     el.className='pair-row'+(p===activePair?' active':'');
     const gradeHtml=sd&&sd.grade&&sd.grade!=='—'?`<span class="badge grade-${sd.grade}" style="font-size:9px;padding:1px 4px">${sd.grade}</span>`:'';
-    const dirTag=pct>=40?`<span class="dir-tag ${conf.direction==='long'?'tag-long':'tag-short'}">${conf.direction==='long'?'LONG':'SHORT'}</span>`:'<span class="dir-tag tag-watch">—</span>';
+    const evalState=pairEvaluationDisplayState(p,d);
+    const dirTag=evalState.notEvaluated
+      ? `<span class="dir-tag tag-watch" style="background:var(--gold-dim);color:var(--gold)" title="${escapeHtml(evalState.title)}">NOT EVAL</span>`
+      : (pct>=40?`<span class="dir-tag ${conf.direction==='long'?'tag-long':'tag-short'}">${conf.direction==='long'?'LONG':'SHORT'}</span>`:'<span class="dir-tag tag-watch">—</span>');
     el.innerHTML=`
       <div class="pair-row-left">
         <div class="pair-row-name">${sk} ${gradeHtml}</div>
@@ -10422,11 +10598,88 @@ const CHART_TF_MS={M15:900000,H1:3600000,H4:14400000,D:86400000,W:604800000};
 // 200 was a single fixed count regardless of timeframe -- on M15 that's only ~50 market hours
 // (roughly one to two trading days), which is why most Scanner charts showed barely more than a
 // day of history no matter how far back the user tried to look.
-const CHART_DISPLAY_CANDLE_COUNTS={M15:500,H1:500,H4:400,D:365,W:260,M:180};
-const CHART_DISPLAY_CANDLE_COUNT_FALLBACK=200; // the previous fixed count -- used only if the timeframe-specific request fails/is rejected
-function getChartCandleCount(timeframe){
-  return CHART_DISPLAY_CANDLE_COUNTS[timeframe]||CHART_DISPLAY_CANDLE_COUNT_FALLBACK;
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// CHART HISTORY AS AN AUDIT HORIZON, NOT AN ARBITRARY CANDLE COUNT (MOGO-023)
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// THE FAILURE THIS FIXES, reported by the operator: an attempt to review a potential setup
+// around 29 July could not navigate far enough back, and the chart simply would not go there.
+//
+// Root cause, measured: the counts below were chosen per timeframe with no stated relationship
+// to CALENDAR TIME, and there is NO back-history pagination anywhere -- the chart's
+// subscribeVisibleLogicalRangeChange handler only saves the view and redraws drawings, so
+// panning left past the loaded window reaches data that was never fetched and never will be.
+// The series contains exactly one window, forever.
+//
+// At 500 M15 candles that window spans 125 market hours -- about 7.3 CALENDAR days against a
+// ~120-hour trading week. On 2026-08-22, 29 July was 23 days back: sixteen days beyond the end
+// of the data. And M15 is ALEX's and JVM's ENTRY timeframe (MOGO_STRATEGY_META.entryTimeframe),
+// so the one timeframe an entry must be reviewed on was the one with the shallowest history.
+// The 200-candle fallback is worse still: ~2.9 days on M15, ~11.7 on H1.
+//
+// The backend was never the limit. fetchCandlesRange() already paginates backwards through the
+// `to` cursor. The chart just never asked for more.
+//
+// THE FIX: state the requirement in the unit the requirement is actually in -- days -- and
+// derive the count. A horizon in candles cannot be reasoned about ("is 400 enough to review
+// last month?"); a horizon in days can.
+//
+// STRICTLY NON-REDUCING: the derived count is max(legacy, horizon-derived), so no timeframe can
+// ever come out of this change with LESS history than it had. Only M15 and H1 move.
+//
+// THIS CHANGES DISPLAY ONLY. Every evaluation fetch is independent and untouched: scanPair()
+// still requests its own 220 (ADR-011), evaluateLiveTrigger() its own M15/60, getStructuralAOI()
+// its own D/100 + W/60. Widening the chart's window grants no strategy any additional authority
+// and alters no rule, threshold or timeframe any strategy may trade from.
+// FOUR WEEKS. Chosen as the smallest horizon that covers a month-old review -- 29 July was 23
+// days back when the operator could not reach it -- and, deliberately, the largest that changes
+// only the timeframe which is actually broken.
+//
+// Measured spans at the legacy counts: M15 7.3 days, H1 29.2, H4 93.3, D ~511, W ~1820, M ~5479.
+// Only M15 fails four weeks, and M15 is the ENTRY timeframe. Raising H1 as well is a nice-to-have
+// with no incident behind it, and it perturbs the synthetic 500-bar geometry that the 66-fixture
+// chart/AOI fidelity suite is built on -- so the horizon is set to change exactly one thing.
+const CHART_AUDIT_HORIZON_DAYS=28;
+//: A ~120-hour trading week (Sun 21:00 UTC -> Fri 21:00 UTC). Used only to convert a calendar
+//: horizon into a candle count; nothing trades off it.
+const FX_MARKET_HOURS_PER_WEEK=120;
+//: OANDA's documented single-request ceiling. Beyond this a request is silently truncated, so
+//: the derived count is clamped and the SHORTFALL IS REPORTED rather than quietly shipped.
+//: Going deeper than this needs fetchCandlesRange()'s pagination, which the chart does not use.
+const CHART_MAX_SINGLE_REQUEST_CANDLES=5000;
+const CHART_TIMEFRAME_MINUTES={M15:15,H1:60,H4:240};
+//: The pre-MOGO-023 counts. Retained as a FLOOR so this change cannot shorten any timeframe.
+const CHART_DISPLAY_CANDLE_COUNTS_LEGACY={M15:500,H1:500,H4:400,D:365,W:260,M:180};
+const CHART_DISPLAY_CANDLE_COUNT_FALLBACK=200; // used only if the timeframe-specific request fails/is rejected
+
+// Pure. Candles needed to span `days` of calendar time on an intraday timeframe, or null when
+// the timeframe is not intraday (D/W/M already span far more than any audit horizon).
+function chartCandlesForHorizon(timeframe,days){
+  const mins=CHART_TIMEFRAME_MINUTES[timeframe];
+  if(!mins||!(days>0)) return null;
+  const marketHours=days/7*FX_MARKET_HOURS_PER_WEEK;
+  return Math.ceil(marketHours*60/mins);
 }
+// Pure. The inverse: how many calendar days a given number of candles actually spans. Used to
+// report the horizon ACHIEVED from the candles that really arrived -- never the count requested.
+function chartHorizonDaysForCandles(timeframe,count){
+  const mins=CHART_TIMEFRAME_MINUTES[timeframe];
+  if(!mins||!(count>0)) return null;
+  return count*mins/60/FX_MARKET_HOURS_PER_WEEK*7;
+}
+function getChartCandleCount(timeframe){
+  const legacy=CHART_DISPLAY_CANDLE_COUNTS_LEGACY[timeframe]||CHART_DISPLAY_CANDLE_COUNT_FALLBACK;
+  const needed=chartCandlesForHorizon(timeframe,CHART_AUDIT_HORIZON_DAYS);
+  if(needed==null) return legacy;                       // D/W/M: already far beyond the horizon
+  return Math.min(Math.max(legacy,needed),CHART_MAX_SINGLE_REQUEST_CANDLES);
+}
+// Derived, not hand-written, so the table can never drift from the horizon it claims to serve.
+const CHART_DISPLAY_CANDLE_COUNTS=(function(){
+  const out={};
+  Object.keys(CHART_DISPLAY_CANDLE_COUNTS_LEGACY).forEach(function(tf){
+    out[tf]=getChartCandleCount(tf);
+  });
+  return out;
+})();
 // Purely cosmetic loading state shown only while loadChart()'s primary fetch is in flight --
 // never gates or delays any trading computation, which each run on their own independent fetch.
 function showChartLoadingState(show,count){
@@ -11587,6 +11840,9 @@ async function loadChart(){
   renderChartEvaluationState({suppressed:evaluationSuppressed,
     completenessState:usingEngineVerdict?engineVerdict.completenessState:chartCompleteness,
     source:usingEngineVerdict?'engine':'chart',
+    // MOGO-023: the count that ACTUALLY arrived on this chart, so the audit horizon reported to
+    // the operator is measured rather than assumed. Display only -- no evaluation reads it.
+    historyCandleCount:candles?candles.length:0,
     requestedCount:usingEngineVerdict?engineVerdict.requestedCount:(candles?candles.requestedCount:null),
     receivedCount:usingEngineVerdict?engineVerdict.receivedCount:(candles?candles.receivedCount:null),
     timeframe:chartTf,
@@ -11833,6 +12089,22 @@ function aoiAgeLabel(fetchedAt){
     return '\u00b7 as of '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z';
   }catch(e){ return ''; }
 }
+// MOGO-023: how far back this chart can ACTUALLY be audited, derived from the candles that
+// really arrived -- never from the count requested. A window that came back short must say so:
+// the July-29 review failed precisely because a too-shallow window looked identical to a chart
+// with nothing older to show. Silence about a limit is how a limit gets mistaken for a fact.
+function chartHistoryHorizonHtml(st){
+  const days=chartHorizonDaysForCandles(st&&st.timeframe,st&&st.historyCandleCount);
+  if(days==null) return '';                       // D/W/M, or no candles -- nothing to qualify
+  const target=CHART_AUDIT_HORIZON_DAYS;
+  const short=days<target*0.9;                    // 10% tolerance for session/holiday variation
+  return '<div style="margin-top:2px'+(short?';color:var(--gold)':'')+'">'+
+    'History shown: <strong>'+escapeHtml(days.toFixed(1))+' days</strong> ('+
+    escapeHtml(String(st.historyCandleCount))+' candles). Nothing older than this is loaded, so '+
+    'an absent setup before that point is NOT evidence there was none.'+
+    (short?' \u2014 SHORT of the '+escapeHtml(String(target))+'-day audit horizon.':'')+
+    '</div>';
+}
 function renderChartEvaluationState(state){
   const el=document.getElementById('chartEvaluationState');
   if(!el) return;
@@ -11860,6 +12132,7 @@ function renderChartEvaluationState(state){
       (st.source==='engine'
         ? 'Showing the scanner\u2019s own '+escapeHtml(String(st.timeframe||''))+' verdict for this pair.'
         : 'Computed on this chart\u2019s '+escapeHtml(String(st.timeframe||''))+' data \u2014 the scanner has not scored this pair yet.')+
+      chartHistoryHorizonHtml(st)+
       '</div>';
     return;
   }

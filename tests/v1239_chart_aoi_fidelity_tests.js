@@ -66,7 +66,11 @@ async function runChartAoiFidelityFixtures(g){
     filler(4);
     spec.forEach(s=>{ if(s[0]==='L') swingLow(s[1]); else swingHigh(s[1]); filler(4); });
     while(out.length<99) filler(1);
-    push(1.20400,1.20800,1.20200,1.20000); // final close == current price 1.20000
+    // MOGO-023: the low was 1.20200 while the close was 1.20000 -- a close BELOW the low, which
+    // no real candle can be. The intent (final close == current price 1.20000) is preserved by
+    // moving the low to the close, i.e. a bar that closes on its low. Caught by the new
+    // acquisition-boundary OHLC check on its first contact with this suite.
+    push(1.20400,1.20800,1.20000,1.20000); // final close == current price 1.20000, bar closes at its low
     return out;
   }
   // The reference Daily window described in the header comment.
