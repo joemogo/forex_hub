@@ -139,6 +139,16 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // ── the real, unmodified market-data and scanner chain under test ──
   'g.pairEvaluationDisplayState=pairEvaluationDisplayState;' +
+  'g.pipValuePerLot=pipValuePerLot;' +
+  'g.pipSize=pipSize;' +
+  'g.ALL_PAIRS=ALL_PAIRS;' +
+  'g.setPairPrice=function(p,v){ if(!pairData[p]) pairData[p]={}; pairData[p].price=v; };' +
+  'g.disconnectSrc=String(disconnect);' +
+  'g.historySufficiency=historySufficiency;' +
+  'g.historySufficiencyReport=historySufficiencyReport;' +
+  'g.HISTORY_SUFFICIENCY=HISTORY_SUFFICIENCY;' +
+  'g.AOI_MIN_USABLE_CANDLES=AOI_MIN_USABLE_CANDLES;' +
+  'g.findAOIs=findAOIs;' +
   'g.marketDataCandleIntegrity=marketDataCandleIntegrity;' +
   'g.marketDataNormalizeIdentity=marketDataNormalizeIdentity;' +
   'var candleArrayRef=g.candleArrayRef;' +

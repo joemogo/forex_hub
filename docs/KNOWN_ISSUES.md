@@ -69,6 +69,164 @@ is obsolete now that it is green.
 
 ---
 
+## PROTECTED-FUNCTION DEFECTS found in R1 — operator decision required
+
+**Status:** Found and verified 2026-08-22 (R1 §29). **Pinned as documented behaviour, NOT repaired.**
+Both live in **protected** functions, so a fix is a governed protected-function change with drift
+re-baselining — the same class as the owner-authorized v12.22.0 trade-id change. Severity **P1
+(sizing correctness)** and **P2**.
+
+### D1 — `pipValuePerLot` substitutes the wrong conversion rate. **P1.**
+
+```js
+const rate=(pairData[convPair]&&pairData[convPair].price)||(pairData[pair]&&pairData[pair].price);
+if(rate) return (pip*lotUnits)/rate;
+// Returning null forces every caller to block instead of risk-sizing on a fabricated number.
+return null;
+```
+
+The second operand is **the rate of the pair being sized**, not `USD/quote`. It is correct only when
+`base === 'USD'` — where `convPair === pair` and the branch is redundant. **The `||` fires before the
+`return null` guard written to prevent exactly this fabrication**, so that guard is unreachable
+whenever the pair itself has a price.
+
+**Measured:** sizing `GBP_CHF` with `USD_CHF` absent yields **9.0090** instead of **11.3636** — a
+**21 % error** in pip value, hence in lot size and in every realized P&L derived from it.
+`openPaperPosition` freezes it as `pipValueAtEntry` and `closePaperPosition` reuses it, so one
+momentary pricing failure **on an unrelated instrument** permanently mis-sizes a position and
+mis-books its P&L into the journal and every statistic downstream.
+
+Two triggers, one transient and one permanent:
+
+- **Transient** — a single failed `fetchPrice` for `USD_CHF` on one sweep is enough. `SCAN_PAIRS`
+  contains nine non-USD-base pairs, so this reaches the auto-traded universe.
+- **Structural** — `ALL_PAIRS` contains no `USD_GBP`, `USD_AUD` or `USD_NZD`. **Measured: 6 pairs
+  can never resolve a real conversion rate** — `EUR_GBP, EUR_AUD, EUR_NZD, GBP_AUD, GBP_NZD,
+  AUD_NZD`. For these the fallback is the *only* branch that ever executes.
+
+The Diagnostics self-test misses it: its three cases are `EUR_USD` (early return), `USD_JPY`
+(`convPair === pair`) and `GBP_CAD` (`USD_CAD` seeded). None reaches the fallback.
+
+### D2 — a price-magnitude heuristic stands in for `pipSize`. **P2.**
+
+`const pipD = last.c < 10 ? 0.0001 : 0.01` appears at three sites (two of them inside protected
+functions). The canonical function is one line long: `pipSize(pair){return pair.includes('JPY')?0.01:0.0001;}`.
+
+The heuristic is a proxy for "is this JPY" and **fails for every non-JPY instrument trading above
+10**. Measured: `USD_MXN, USD_ZAR, USD_TRY, USD_SEK, USD_NOK` are all configured and all get a
+**100× pip size**, so `aoiTol = max(band, pipD*12)` is dominated by `0.12` instead of `0.0012`,
+`nearSup`/`nearRes` is true essentially always, and the AOI confluence points are awarded
+unconditionally — feeding the score, the grade, the setup count and the alert threshold.
+
+### Why neither was repaired here
+
+`pipValuePerLot`, `pipSize`, `scoreConfluence`, `detectSignals` and `openPaperPosition` are all
+**protected**. Changing sizing changes lot sizes, which changes outcomes and every statistic derived
+from them. That is a frozen-semantics change requiring operator authorization and a re-baselined
+drift check.
+
+**Pinned instead** as `DEFECT-1/2/3` in `tests/v130_...js`, asserting what production does **today**
+with the measured magnitudes, so a future fix **flips** them and cannot land unnoticed.
+
+---
+
+## ALEX exit monitor kept running after disconnect — REPAIRED (R1)
+
+**Status:** Found and **repaired** 2026-08-22.
+
+`disconnect()` cleared `scanInterval`, `countdownInterval` and `autoScanTimer` but **not
+`alexGLiveInterval`** — the timer that monitors and closes open ALEX paper positions.
+`stopAlexGLivePollingIfDone()` could not retire it either: its predicate is
+`alexGAutoTrading.enabled || openPositions.length > 0`, and `disconnect` changes neither.
+
+So with auto-trading on, or any ALEX position open, the timer survived and kept firing every 60 s
+against the credentials cleared on the very next line. Every fetch then 401s — and
+`alexGLivePollTick`'s two failure paths (`alexGFetchExecutableCandles` → `null`, `fetchBidAsk` →
+`null`) `continue` **silently**, with no engine error and no decision event, while the poll ledger
+kept recording `outcome:'OK'`.
+
+**Net effect: an exit monitor that was running, reporting healthy, and monitoring nothing** — with
+open positions running past their stops for the whole disconnected window.
+
+Repaired symmetrically with `autoScanTimer`. Safe because `initAll()` restarts it on reconnect.
+Regression: `LEAK-1`.
+
+**Related, NOT repaired:** those two silent `null` returns still have no consecutive-failure counter
+and no escalation. A pricing outage disables the ALEX exit monitor indefinitely while the ledger
+reports OK. Recorded for the next cycle.
+
+---
+
+## AOI runs on a shorter window than it declares, and says nothing (R1)
+
+**Status:** Measured 2026-08-22 (R1 §5). **Reported, deliberately NOT repaired** — the repair would
+change frozen strategy behaviour. Severity **P2 (observability)**, escalated to the operator.
+
+### What was measured
+
+The binding constraint on history is **not** any `candles.length < N` guard — it is the **window
+size each computation declares**. `findAOIs(candles)` is `computeAOI(candles, 100, 3)`: a 100-bar
+window. Every guard in the file sits *below* the window its own function then addresses, which is
+exactly why a short window is silent — `slice(-100)` on 59 bars returns 59 and does not fail.
+
+Declared 100 vs actually supplied, on live paths:
+
+| Path | Declares | Fetches | Usable after `c.complete` |
+|---|---|---|---|
+| `evaluateLiveTrigger` (M15, **the entry timeframe**) | 100 | **60** | ~59 |
+| `getStructuralAOI` weekly leg | 100 | **60** | ~59 |
+| `runAutoTopDownScan` weekly leg | 100 | **60** | ~59 |
+| `getStructuralAOI` daily leg | 100 | 100 | ~99 |
+| `scanPair` (active TF) | 100 | 220 | ~219 — genuine surplus |
+
+Also measured, and worth encoding anywhere a contract is written: **`COMPLETE` does not mean "N
+candles available".** `marketDataClassify` compares `rawCount >= requestedCount` *before* the
+`c.complete` filter, so a healthy fetch of N yields about **N−1 usable**.
+
+### This is NOT an undetected bug — and that correction matters
+
+An initial audit reported it as a "live defect". **It is not.** `computeAOI`'s own comment documents
+the tolerance as deliberate:
+
+> *"if fewer candles are actually available … the algorithm should still try with whatever it has
+> rather than bailing out entirely. Previously required half of the full window … a razor-thin
+> margin that **silently broke weekly AOI detection**."*
+
+The floor is 20, and a shorter supply is intended to still produce a determination. Calling that a
+defect would invert a decision made for good reasons.
+
+### What IS wrong
+
+**Nothing reports it.** No surface states that an AOI determination was computed on 59 bars against
+a 100-bar declaration. That matters because a reduced window biases toward *finding no AOI* — fewer
+swing points reach the `touches>=3` filter — so the failure mode is a **quietly absent AOI**, which
+is indistinguishable from a genuine "no qualifying structure here".
+
+R1 §5 forbids exactly this: insufficient history must never silently present as NO AOI / NO SETUP.
+
+### What was done
+
+`historySufficiency()` / `historySufficiencyReport()` classify supply against the declared window as
+**SUFFICIENT / REDUCED_WINDOW / INSUFFICIENT / UNKNOWN**, state the shortfall, and carry the
+qualifying sentence with the result — *"an absent AOI is weaker evidence than a full window would
+give"*, and for INSUFFICIENT, *"this is NOT evidence that no AOI exists."* Pure measurement; no
+behaviour changed. Fixtures `HIST-8..13`, including `HIST-12` which pins the floor against
+`computeAOI` itself rather than restating the constant.
+
+### What was NOT done, and why it is an operator decision
+
+Raising the M15 and weekly fetches from 60 to 100 would supply the declared window — and **would
+change what the engine sees, producing more AOIs and therefore more trades.** That is a frozen
+strategy semantic change on a **protected function** (`evaluateLiveTrigger`), and R1 forbids
+loosening rules to produce more trades. It also may be the *right* change: the engine currently
+asks for less than it declares.
+
+**Operator decision required.** The options are (a) leave supply as-is and rely on the new reporting,
+(b) raise the weekly/M15 fetches to 100 as a governed protected-function change with drift
+re-baselining, or (c) lower the declared window to match supply. Each changes different things.
+
+---
+
 ## Replay/backtest candle path has no integrity validation (MOGO-023)
 
 **Status:** Found 2026-08-22 by adversarial review, **not repaired**. Severity **P2** for research

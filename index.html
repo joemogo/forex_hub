@@ -6807,6 +6807,22 @@ function disconnect(){
   // scanData[pair].bucket, which is checkAutoTrades' eligibility gate, so the leak is trading-adjacent.
   // Removes only leaked DUPLICATES, never the intended timer.
   if(autoScanTimer){ clearInterval(autoScanTimer); autoScanTimer=null; }
+  // R1: THE SIBLING LEAK THE COMMENT ABOVE DID NOT COVER, and this one is worse than
+  // trading-adjacent -- it is the timer that MONITORS AND CLOSES OPEN ALEX PAPER POSITIONS.
+  //
+  // stopAlexGLivePollingIfDone() cannot retire it here: its predicate is
+  // `alexGAutoTrading.enabled || alexGAccount.openPositions.length > 0`, and disconnect changes
+  // neither. So with auto-trading on, or any ALEX position open, the timer survived the
+  // disconnect and kept firing every 60s against the credentials cleared on the very next line.
+  //
+  // Every fetch then 401s, and alexGLivePollTick's two failure paths return null and `continue`
+  // SILENTLY -- no engine error, no decision event -- while the poll ledger keeps recording
+  // outcome:'OK'. The result is an exit monitor that is running, reporting healthy, and
+  // monitoring nothing, for the whole disconnected window.
+  //
+  // Symmetric with autoScanTimer above, and safe: initAll() restarts it on reconnect via
+  // `if(alexGAutoTrading.enabled||alexGAccount.openPositions.length) startAlexGLivePollingIfNeeded()`.
+  if(alexGLiveInterval){ clearInterval(alexGLiveInterval); alexGLiveInterval=null; }
   cfg={key:'',accountId:'',env:'practice'};
   document.getElementById('mainApp').style.display='none';
   document.getElementById('setupScreen').style.display='flex';
@@ -7146,6 +7162,7 @@ async function fetchCandlesRange(pair,tf,totalCount){
   // reason is now recorded and the result classified.
   const startedAt=Date.now();
   let pagesRequested=0,pagesReceived=0,lastHttpStatus=null,termination='REACHED_COUNT',shortPages=0;
+  let integrityFailure=null,identityVerifiedPages=0;
   let all=[],to=null,guard=0;
   while(all.length<totalCount&&guard<20){
     guard++;
@@ -7162,11 +7179,30 @@ async function fetchCandlesRange(pair,tf,totalCount){
     const d=await r.json();
     if(!d.candles||!d.candles.length){termination='EMPTY_PAGE';break;}
     pagesReceived++;
+    // R1: THE PAGINATED PATH NOW MEETS THE SAME BAR AS THE FORWARD PATH.
+    // Forward acquisition validates identity, OHLC and ordering; this function -- which feeds
+    // ALEX-G replay, the backtester and the optimizer -- validated none of it. Its only
+    // integrity-adjacent guard, CURSOR_NOT_ADVANCING, catches a replayed PAGE and by its own
+    // comment cannot see a bar repeated within one. Replay and forward were therefore held to
+    // DIFFERENT standards, which is fatal for a system whose comparison method assumes they match.
+    //
+    // Identity is checked PER PAGE because a mixup can begin at page N: earlier pages are correct
+    // and the accumulator looks healthy right until the wrong instrument is spliced in.
+    const pageIdentity=marketDataIdentityOutcome(d,pair,tf);
+    if(pageIdentity==='MISMATCH'){ termination='IDENTITY_MISMATCH'; integrityFailure=MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH; break; }
+    if(pageIdentity==='OK') identityVerifiedPages++;
     const rawCount=d.candles.length; // raw response size, BEFORE completeness filtering
+    // Ordering on the RAW page too, so duplicates riding on incomplete bars cannot inflate
+    // rawCount -- the quantity the short-page arithmetic below reasons about.
+    const rawOrder=marketDataCandleIntegrity(d.candles.map(function(c){
+      return{t:new Date(c.time),o:1,h:1,l:1,c:1}; }));
+    if(rawOrder!==MARKET_DATA_INTEGRITY.OK){ termination='PAGE_INTEGRITY'; integrityFailure=rawOrder; break; }
     const chunk=d.candles.filter(c=>c.complete).map(c=>({
       t:new Date(c.time),o:parseFloat(c.mid.o),h:parseFloat(c.mid.h),
       l:parseFloat(c.mid.l),c:parseFloat(c.mid.c)
     }));
+    const pageIntegrity=marketDataCandleIntegrity(chunk);
+    if(pageIntegrity!==MARKET_DATA_INTEGRITY.OK){ termination='PAGE_INTEGRITY'; integrityFailure=pageIntegrity; break; }
     if(chunk.length){
       // MOGO-021 DECISION 1: the cursor MUST move backwards each page. While this loop stopped at the
       // first short page that was implicit; now that it walks past one, a broker that ignored `to` and
@@ -7222,11 +7258,23 @@ async function fetchCandlesRange(pair,tf,totalCount){
   // Everything else -- HTTP_ERROR, NETWORK_ERROR, GUARD_LIMIT -- left the request unsatisfied and is
   // PARTIAL, exactly as before. `shortPages` is recorded as a diagnostic only; per ADR-011's central
   // rule no consumer may branch on it, and none does.
+  // THE COMBINED ACCUMULATOR IS CHECKED SEPARATELY, and this is what per-page validation cannot
+  // do. Every page can be internally perfect while the SEAMS between them are corrupt: a
+  // duplicated boundary candle, two overlapping windows, or pages spliced out of order. Those are
+  // only visible once the pages are one series.
+  if(!integrityFailure){
+    const combined=marketDataCandleIntegrity(all);
+    if(combined!==MARKET_DATA_INTEGRITY.OK){ integrityFailure=combined; termination='COMBINED_INTEGRITY'; }
+  }
   const satisfied=all.length>=totalCount||termination==='EMPTY_PAGE';
   return marketDataAttachCompleteness(all,{
-    completenessState:(!all.length||all.length<MARKET_DATA_MIN_USABLE_CANDLES)
+    completenessState:integrityFailure
       ?MARKET_DATA_COMPLETENESS.UNAVAILABLE
-      :(satisfied?MARKET_DATA_COMPLETENESS.COMPLETE:MARKET_DATA_COMPLETENESS.PARTIAL),
+      :((!all.length||all.length<MARKET_DATA_MIN_USABLE_CANDLES)
+        ?MARKET_DATA_COMPLETENESS.UNAVAILABLE
+        :(satisfied?MARKET_DATA_COMPLETENESS.COMPLETE:MARKET_DATA_COMPLETENESS.PARTIAL)),
+    integrityOutcome:integrityFailure||MARKET_DATA_INTEGRITY.OK,
+    identityVerifiedPages:identityVerifiedPages,
     requestedCount:totalCount,receivedCount:all.length,
     pagesRequested:pagesRequested,pagesReceived:pagesReceived,
     paginationTerminationReason:termination,httpStatus:lastHttpStatus,
@@ -7476,6 +7524,65 @@ function clusterLevels(prices,tolerance){
 // with 3+ touches per the stated rule, and returns the nearest valid zone to current price
 // on each side -- the resistance just above and the support just below -- since that's what
 // actually matters for trading, not necessarily the most extreme point in the window.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// REQUIRED vs AVAILABLE HISTORY -- R1 §5. Measurement only; changes no behaviour.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// An audit of every lookback in this file established that the binding constraint on history is
+// NOT any `candles.length < N` guard -- it is the WINDOW SIZE each computation declares. findAOIs
+// declares 100 bars (computeAOI(candles,100,3)); findAOIsWide declares 300.
+//
+// Those windows are DELIBERATELY tolerant of a shorter supply. computeAOI's own comment says so:
+// it floors at 20 and "should still try with whatever it has rather than bailing out entirely",
+// because a previous 50-of-100 requirement "silently broke weekly AOI detection". slice(-100) on
+// 59 bars returning 59 is intended behaviour, not a defect, and this function does NOT change it.
+//
+// WHAT WAS MISSING IS THE REPORT. Nothing anywhere states that an AOI determination ran on 59 bars
+// against a 100-bar declaration. R1 requires insufficient history to be explicit and to NEVER
+// silently present as "no AOI" -- and a reduced window biases toward exactly that, because fewer
+// swing points reach the 3-touch filter. The result is valid; the operator simply could not see
+// what it was computed on.
+//
+// TWO MEASUREMENT SUBTLETIES, both read from the code rather than assumed:
+//   1. Requirement is max(declared window, floor) -- not the guard, which sits BELOW the window
+//      its own function then addresses. That gap is precisely why a short window is silent.
+//   2. COMPLETE does not mean "N candles available". marketDataClassify compares rawCount against
+//      requestedCount, while evaluators receive the post-`c.complete` array -- so a healthy fetch
+//      of N yields about N-1 USABLE. This classifier is written against usable length.
+const HISTORY_SUFFICIENCY=Object.freeze({
+  SUFFICIENT:'SUFFICIENT',            // usable >= the declared window
+  REDUCED_WINDOW:'REDUCED_WINDOW',    // ran on a shorter window than declared -- valid, worth stating
+  INSUFFICIENT:'INSUFFICIENT',        // below the floor: no determination is possible at all
+  UNKNOWN:'UNKNOWN'                   // no usable count available; never assume sufficiency
+});
+//: The floor computeAOI itself enforces. Below this it returns a null AOI and no determination
+//: was made -- which must never be reported as "no AOI exists".
+const AOI_MIN_USABLE_CANDLES=20;
+// Pure. Classifies supply against a declared window. Never infers a count it was not given.
+function historySufficiency(usableCount,declaredWindow,floor){
+  const f=(floor==null?AOI_MIN_USABLE_CANDLES:floor);
+  if(!(usableCount>=0)||usableCount==null) return HISTORY_SUFFICIENCY.UNKNOWN;
+  if(usableCount<f) return HISTORY_SUFFICIENCY.INSUFFICIENT;
+  if(declaredWindow!=null&&usableCount<declaredWindow) return HISTORY_SUFFICIENCY.REDUCED_WINDOW;
+  return HISTORY_SUFFICIENCY.SUFFICIENT;
+}
+// Pure. The operator-facing account of what an AOI determination was actually computed on.
+function historySufficiencyReport(usableCount,declaredWindow,floor){
+  const state=historySufficiency(usableCount,declaredWindow,floor);
+  return{state:state,usableCandles:usableCount==null?null:usableCount,
+    declaredWindow:declaredWindow==null?null:declaredWindow,
+    floor:(floor==null?AOI_MIN_USABLE_CANDLES:floor),
+    shortfall:(state===HISTORY_SUFFICIENCY.REDUCED_WINDOW&&declaredWindow!=null)
+      ?declaredWindow-usableCount:0,
+    // The sentence that matters: a reduced window makes a NEGATIVE result weaker evidence, and
+    // that must travel with the result rather than being inferred by whoever reads it.
+    qualifies:state===HISTORY_SUFFICIENCY.INSUFFICIENT
+      ?'No AOI determination was possible -- this is NOT evidence that no AOI exists.'
+      :(state===HISTORY_SUFFICIENCY.REDUCED_WINDOW
+        ?'Computed on a shorter window than declared; an absent AOI is weaker evidence than a full window would give.'
+        :(state===HISTORY_SUFFICIENCY.UNKNOWN
+          ?'Supply is unknown, so sufficiency cannot be established.'
+          :''))};
+}
 function computeAOI(candles,windowSize,swingLookback){
   // Needs enough candles to find genuine swing points at all, but this should NOT scale
   // with the full requested window size -- if fewer candles are actually available (a real

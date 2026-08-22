@@ -819,6 +819,257 @@ function runCandleCompletenessFixtures(g){
       return 'incomplete-bar duplicates -> UNAVAILABLE';
     });
 
+
+    // ══ R1 FAULT INJECTION: the PAGINATED path ══════════════════════════════════════════════
+    // fetchCandlesRange feeds ALEX-G replay, the backtester and the optimizer. Until R1 it
+    // validated none of what the forward path validates, so replay could accept data that
+    // forward evaluation would refuse -- fatal for a system whose comparison method assumes the
+    // two are held to one standard. Every fixture below is a FULL-LENGTH accumulation: the point
+    // is that the count-based classifier called each of them COMPLETE.
+    const RANGE_N=60;   // > MARKET_DATA_MIN_USABLE_CANDLES, small enough to page in one request
+
+    function pageOf(n,startMin,extra){
+      const cs=[];
+      for(let i=0;i<n;i++){
+        const b=1.1000+i*0.0004;
+        cs.push({time:new Date(Date.UTC(2026,0,1,0,startMin+i)).toISOString(),complete:true,
+          mid:{o:b.toFixed(5),h:(b+0.0012).toFixed(5),l:(b-0.0003).toFixed(5),c:(b+0.0009).toFixed(5)}});
+      }
+      const body={candles:cs}; Object.assign(body,extra||{});
+      return function(){ return Promise.resolve(makeResponse(true,200,body)); };
+    }
+
+    await t('RANGE-1 healthy pagination still COMPLETE (positive control)',async function(){
+      // Without this, every fixture below passes on a check that refuses everything.
+      g.setFetchScript([pageOf(RANGE_N,0)]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',RANGE_N);
+      eq(g.completenessStateOf(c),'COMPLETE','a healthy paginated accumulation must still evaluate');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.OK);
+      return 'healthy '+c.length+' candles -> COMPLETE';
+    });
+
+    await t('RANGE-2 WRONG INSTRUMENT on a page is refused',async function(){
+      g.setFetchScript([pageOf(RANGE_N,0,{instrument:'GBP_JPY',granularity:'H1'})]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',RANGE_N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','another pair’s page was accepted into a replay dataset');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH);
+      eq(c.paginationTerminationReason,'IDENTITY_MISMATCH');
+      return 'wrong instrument -> UNAVAILABLE';
+    });
+
+    await t('RANGE-3 WRONG GRANULARITY on a page is refused',async function(){
+      g.setFetchScript([pageOf(RANGE_N,0,{instrument:'EUR_USD',granularity:'M15'})]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',RANGE_N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','M15 data was accepted as H1');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH);
+      return 'wrong granularity -> UNAVAILABLE';
+    });
+
+    await t('RANGE-4 identity mismatch arriving on page N (not page 1) is still caught',async function(){
+      // The realistic shape: the accumulator looks healthy until the wrong instrument is spliced
+      // in. A page-1-only check would pass this.
+      g.setFetchScript([pageOf(40,60,{instrument:'EUR_USD',granularity:'H1'}),
+                        pageOf(40,0,{instrument:'GBP_JPY',granularity:'H1'})]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',80);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','a mid-accumulation instrument switch was accepted');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.IDENTITY_MISMATCH);
+      return 'page-2 instrument switch -> UNAVAILABLE';
+    });
+
+    await t('RANGE-5 a REVERSED page is refused',async function(){
+      g.setFetchScript([function(){
+        const cs=[]; for(let i=0;i<RANGE_N;i++){ const b=1.1+i*0.0004;
+          cs.push({time:new Date(Date.UTC(2026,0,1,0,i)).toISOString(),complete:true,
+            mid:{o:b.toFixed(5),h:(b+0.0012).toFixed(5),l:(b-0.0003).toFixed(5),c:(b+0.0009).toFixed(5)}}); }
+        cs.reverse();
+        return Promise.resolve(makeResponse(true,200,{candles:cs}));
+      }]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',RANGE_N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','a reversed page would score the oldest bar as "now"');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.NON_MONOTONIC_TIME);
+      return 'reversed page -> UNAVAILABLE';
+    });
+
+    await t('RANGE-6 a MALFORMED candle in a page is refused',async function(){
+      g.setFetchScript([function(){
+        const cs=[]; for(let i=0;i<RANGE_N;i++){ const b=1.1+i*0.0004;
+          cs.push({time:new Date(Date.UTC(2026,0,1,0,i)).toISOString(),complete:true,
+            mid:{o:b.toFixed(5),h:(b+0.0012).toFixed(5),l:(b-0.0003).toFixed(5),c:(b+0.0009).toFixed(5)}}); }
+        cs[7].mid.h='1.00000'; cs[7].mid.l='1.90000';        // inverted bar
+        return Promise.resolve(makeResponse(true,200,{candles:cs}));
+      }]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',RANGE_N);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','an impossible bar entered a replay dataset');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.INVALID_OHLC);
+      return 'inverted bar -> UNAVAILABLE';
+    });
+
+    await t('RANGE-7 a DUPLICATE BOUNDARY candle across pages is caught by the COMBINED check',async function(){
+      // The seam defect. Each page is internally perfect and every per-page check passes; only
+      // the joined series shows the repeat. This is precisely what per-page validation cannot do.
+      g.setFetchScript([pageOf(40,60),pageOf(41,20)]);   // page 2 ends where page 1 begins
+      const c=await g.fetchCandlesRange('EUR_USD','H1',81);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','a duplicated boundary candle survived into the series');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.NON_MONOTONIC_TIME);
+      eq(c.paginationTerminationReason,'COMBINED_INTEGRITY','the seam, not a page, must be named');
+      return 'duplicate page boundary -> UNAVAILABLE via combined check';
+    });
+
+    await t('RANGE-8 OVERLAPPING pages are caught by the COMBINED check',async function(){
+      g.setFetchScript([pageOf(40,60),pageOf(40,40)]);   // page 2 overlaps page 1 by 20 bars
+      const c=await g.fetchCandlesRange('EUR_USD','H1',80);
+      eq(g.completenessStateOf(c),'UNAVAILABLE','overlapping windows were joined into one series');
+      return 'overlapping pages -> UNAVAILABLE';
+    });
+
+    await t('RANGE-9 a TRUNCATED accumulation is PARTIAL, not COMPLETE',async function(){
+      // Not an integrity failure -- a short-but-valid window. It must stay distinguishable from
+      // corruption, or the new checks would have collapsed two different facts into one.
+      g.setFetchScript([pageOf(30,0),g.RESP_429]);
+      const c=await g.fetchCandlesRange('EUR_USD','H1',200);
+      eq(g.completenessStateOf(c),'PARTIAL','a short but VALID accumulation must not read as corrupt');
+      eq(c.integrityOutcome,g.MARKET_DATA_INTEGRITY.OK,'integrity is fine; only the count is short');
+      return 'truncated -> PARTIAL with integrity OK';
+    });
+
+    await t('RANGE-10 replay and forward now REFUSE the same body',async function(){
+      // The equivalence R1 exists to establish: one standard, both paths.
+      const bad={instrument:'GBP_JPY',granularity:'H1'};
+      g.setFetchScript([pageOf(RANGE_N,0,bad)]);
+      const viaRange=await g.fetchCandlesRange('EUR_USD','H1',RANGE_N);
+      g.setFetchScript([g.okBody(SCANNER_LOOKBACK,bad)]);
+      const viaForward=await g.fetchCandles('EUR_USD','H1',SCANNER_LOOKBACK);
+      eq(g.completenessStateOf(viaRange),'UNAVAILABLE');
+      eq(g.completenessStateOf(viaForward),'UNAVAILABLE');
+      return 'forward and paginated refuse the same wrong-instrument body';
+    });
+
+
+    // ══ R1 §5: required vs available history ════════════════════════════════════════════════
+    // The binding constraint is the DECLARED WINDOW, not any candles.length guard -- every guard
+    // in the file sits BELOW the window its own function then addresses, which is exactly why a
+    // short window is silent. computeAOI tolerates a shorter supply deliberately (its own comment
+    // says so); what was missing is the REPORT.
+    await t('HIST-8 a full window is SUFFICIENT',async function(){
+      eq(g.historySufficiency(100,100),g.HISTORY_SUFFICIENCY.SUFFICIENT);
+      eq(g.historySufficiency(220,100),g.HISTORY_SUFFICIENCY.SUFFICIENT,'surplus is still sufficient');
+      return 'full and surplus windows both SUFFICIENT';
+    });
+
+    await t('HIST-9 a SHORT window is REDUCED_WINDOW, not silently sufficient',async function(){
+      // The live shape: evaluateLiveTrigger fetches M15/60, ~59 usable after the complete filter,
+      // against findAOIs' declared 100.
+      const r=g.historySufficiencyReport(59,100);
+      eq(r.state,g.HISTORY_SUFFICIENCY.REDUCED_WINDOW);
+      eq(r.shortfall,41,'the shortfall must be stated, not left to be inferred');
+      ok(/weaker evidence/.test(r.qualifies),
+        'a reduced window must say an absent AOI is weaker evidence');
+      return '59 of 100 -> REDUCED_WINDOW, shortfall 41';
+    });
+
+    await t('HIST-10 below the floor is INSUFFICIENT and explicitly NOT "no AOI"',async function(){
+      // The R1 rule: insufficient history must never present as a market verdict.
+      const r=g.historySufficiencyReport(12,100);
+      eq(r.state,g.HISTORY_SUFFICIENCY.INSUFFICIENT);
+      ok(/NOT evidence that no AOI exists/.test(r.qualifies),
+        'insufficient history must never read as "no AOI exists"');
+      return '12 of 100 -> INSUFFICIENT with the disclaimer';
+    });
+
+    await t('HIST-11 an unknown supply is UNKNOWN, never assumed sufficient',async function(){
+      eq(g.historySufficiency(null,100),g.HISTORY_SUFFICIENCY.UNKNOWN);
+      eq(g.historySufficiency(undefined,100),g.HISTORY_SUFFICIENCY.UNKNOWN);
+      return 'null/undefined supply -> UNKNOWN';
+    });
+
+    await t('HIST-12 the floor matches what computeAOI actually enforces',async function(){
+      // If computeAOI's floor ever moves, this classifier would misreport the boundary. Pinned
+      // against the real function rather than restating the constant.
+      eq(g.AOI_MIN_USABLE_CANDLES,20);
+      const mk=function(n){ const a=[]; for(let i=0;i<n;i++){ const b=1.1+i*0.0004;
+        a.push({t:new Date(Date.UTC(2026,0,1,0,i)),o:b,h:b+0.0012,l:b-0.0003,c:b+0.0009}); } return a; };
+      const below=g.findAOIs(mk(19)), at=g.findAOIs(mk(20));
+      eq(below.support,null,'below the floor computeAOI must return a null AOI');
+      eq(below.band,0);
+      ok(at!==null&&typeof at==='object','at the floor it must attempt a determination');
+      return 'floor 20 confirmed against computeAOI itself';
+    });
+
+    await t('HIST-13 REDUCED_WINDOW is distinguishable from INSUFFICIENT',async function(){
+      // The distinction R1 exists to protect: one produced a real determination on less data,
+      // the other produced no determination at all. Collapsing them loses the difference between
+      // weak evidence and no evidence.
+      ok(g.historySufficiency(59,100)!==g.historySufficiency(12,100),
+        'a reduced window and no determination must not share a state');
+      return 'the two states are distinct';
+    });
+
+
+    // ══ R1 §29: silent-failure findings ═════════════════════════════════════════════════════
+
+    await t('LEAK-1 disconnect() clears the ALEX exit-monitor timer',async function(){
+      // It is the timer that monitors and CLOSES open ALEX paper positions.
+      // stopAlexGLivePollingIfDone() cannot retire it: its predicate is
+      // `alexGAutoTrading.enabled || openPositions.length > 0`, and disconnect changes neither --
+      // so it survived, firing every 60s against credentials cleared on the next line, while the
+      // poll ledger kept recording outcome:'OK'.
+      const src=g.disconnectSrc;
+      ok(/clearInterval\(alexGLiveInterval\)/.test(src),
+        'disconnect must clear alexGLiveInterval, or the exit monitor runs credential-less');
+      ok(/alexGLiveInterval=null/.test(src),'and null the handle so initAll can restart it');
+      ok(/clearInterval\(autoScanTimer\)/.test(src),'the sibling timer must still be cleared too');
+      return 'exit-monitor timer retired on disconnect';
+    });
+
+    // ── DOCUMENTED DEFECTS, pinned as CURRENT behaviour (BEHAVIOUR-* convention) ─────────────
+    // Both live in PROTECTED functions, so repairing them is a governed protected-function change
+    // and an operator decision -- not something to do silently. These fixtures pin what production
+    // does TODAY so that a future fix FLIPS them, making the change impossible to land unnoticed.
+
+    await t('DEFECT-1 (DOCUMENTED) pipValuePerLot substitutes the WRONG conversion rate',async function(){
+      // `(pairData['USD_'+quote].price) || (pairData[pair].price)` -- the second operand is the
+      // rate of the pair being SIZED, not USD/quote. Correct only when base==='USD', where the
+      // branch is redundant. The `||` fires BEFORE the `return null` guard written to stop exactly
+      // this fabrication, so the guard is unreachable whenever the pair itself has a price.
+      g.setPairPrice('GBP_CHF',1.11);            // USD_CHF deliberately absent
+      const withFallback=g.pipValuePerLot('GBP_CHF');
+      g.setPairPrice('USD_CHF',0.88);
+      const correct=g.pipValuePerLot('GBP_CHF');
+      ok(withFallback!==null,'DOCUMENTED: the fallback fires instead of returning null');
+      ok(Math.abs(withFallback-correct)/correct>0.2,
+        'DOCUMENTED: the substituted rate differs from the correct one by >20% -- lot size and '+
+        'realized P&L are both wrong by that factor. If this assertion ever FAILS, the defect was '+
+        'fixed and this fixture must be replaced by the correct-behaviour assertion.');
+      return 'substituted '+withFallback.toFixed(4)+' vs correct '+correct.toFixed(4);
+    });
+
+    await t('DEFECT-2 (DOCUMENTED) six pairs have NO USD conversion pair at all',async function(){
+      // Structural, not transient: ALL_PAIRS contains no USD_GBP / USD_AUD / USD_NZD, so for
+      // these the fallback is the ONLY branch that ever executes.
+      const missing=['USD_GBP','USD_AUD','USD_NZD'].filter(function(p){ return g.ALL_PAIRS.indexOf(p)===-1; });
+      eq(missing.length,3,'DOCUMENTED: none of the three inverse-USD pairs is configured');
+      const affected=g.ALL_PAIRS.filter(function(p){
+        const q=p.split('_')[1];
+        return q!=='USD'&&g.ALL_PAIRS.indexOf('USD_'+q)===-1;
+      });
+      ok(affected.length>=6,'DOCUMENTED: '+affected.length+' pairs can never resolve a real '+
+        'conversion rate: '+affected.join(','));
+      return affected.length+' pairs permanently on the fallback: '+affected.join(',');
+    });
+
+    await t('DEFECT-3 (DOCUMENTED) the pipD magnitude heuristic misreads five instruments',async function(){
+      // `pipD = last.c < 10 ? 0.0001 : 0.01` stands in for pipSize(pair) in three places. It is a
+      // proxy for "is this JPY" and fails for every non-JPY instrument trading above 10.
+      const highPriced=['USD_MXN','USD_ZAR','USD_TRY','USD_SEK','USD_NOK']
+        .filter(function(p){ return g.ALL_PAIRS.indexOf(p)!==-1; });
+      ok(highPriced.length>=5,'DOCUMENTED: '+highPriced.length+' configured non-JPY pairs trade above 10');
+      highPriced.forEach(function(p){
+        eq(g.pipSize(p),0.0001,'canonical pipSize is correct for '+p+
+          ' -- the heuristic would return 0.01, a 100x error');
+      });
+      return highPriced.join(',')+' would each get a 100x pip size from the heuristic';
+    });
+
     return out;
   })();
 }
