@@ -69,6 +69,67 @@ is obsolete now that it is green.
 
 ---
 
+## Replay/backtest candle path has no integrity validation (MOGO-023)
+
+**Status:** Found 2026-08-22 by adversarial review, **not repaired**. Severity **P2** for research
+fidelity; **not** a live-trading exposure.
+
+The MOGO-023 acquisition-boundary checks (OHLC validity, strict timestamp ordering, instrument and
+granularity identity) were added to `fetchCandlesDiagnosed()`, which covers the FORWARD path:
+`scanPair` → evaluation, plus `evaluateLiveTrigger` and TJR via `fetchCandles`.
+
+**`fetchCandlesRange()` received none of them.** Its only integrity-adjacent guard is
+`CURSOR_NOT_ADVANCING`, which by its own comment catches a replayed *page* and cannot see a bar
+repeated within one — and says nothing about OHLC validity or instrument identity.
+
+Unguarded consumers: `fetchAlexGReplayDatasets` (W/D/H4/H1), `runBacktest` / `fetchAllPairCandles`
+(full sweep + optimizer), `fetchReplayDatasets` (W/D/H4/M15). So a reversed page, an inverted bar or
+a wrong-instrument body reaches ALEX-G replay and the backtester classified `COMPLETE`.
+
+**Why it matters even though no live trade is at risk:** MOGO tracks replay-vs-forward fidelity
+explicitly, and this change makes the two paths diverge in exactly the dimension that tracking
+measures. A replay result and a forward result are no longer validated to the same standard.
+
+`fetchCandlesAroundWindow()` is also unguarded and returns a bare array with no completeness at all
+— display-only, lower concern.
+
+**Not repaired in this run** because the forward path was the live exposure and extending the guard
+to a paginated accumulator needs its own fixtures (page boundaries, partial accumulation, the
+existing cursor guard's interaction). Recorded rather than half-done.
+
+---
+
+## The pair list now names unevaluated pairs; three surfaces still do not (MOGO-023)
+
+**Status:** Partially repaired 2026-08-22. Severity **P3** (was P2 before the row fix).
+
+Repaired: `renderPairList()` now renders an explicit `NOT EVAL` state naming the transport reason,
+so a suppressed pair is no longer byte-identical to a quiet market. `ROW-2` is the control proving a
+genuine no-setup is still not flagged.
+
+**Still collapsing a data fault into a market verdict:**
+
+1. **Chart AOI overlay** — `getStructuralAOI(...).then(({support,resistance,band,fetchedAt})=>…)`
+   drops `incomplete`, so on a D/W outage no purple lines are drawn and nothing says why. Visually
+   identical to a pair with no 3-touch structure. (The Manual Review classifier's version of this
+   *was* repaired — it now reports `AOI NOT EVALUATED`.)
+2. **`instrumentsSkipped` is write-only.** `scanAll()`'s `finally` records
+   `NOT_REACHED_THIS_SCAN` / `DISPATCHED_NO_RESULT` / `MARKET_DATA_UNAVAILABLE` /
+   `EVALUATION_SUPPRESSED_INCOMPLETE_DATA` into the durable forward-observation ledger, and
+   `evidenceSummarizeObservations()` reads only `instrumentsEvaluated`. The two codes that name a
+   never-reached pair are reachable only by opening DevTools and reading IndexedDB by hand.
+3. **No per-pair evaluation timestamp.** `pairData[pair]` carries no time field, so staleness of the
+   last successful per-pair evaluation is not detectable from any screen. `sweepToken` exists but is
+   explicitly demoted to diagnostic-only.
+
+**Related, and disclosed rather than fixed:** 23 of the 35 pairs in `ALL_PAIRS` can never trade —
+`checkAutoTrades()` iterates `SCAN_PAIRS` (12) and narrows to `Active watch`. Those 23 are also
+scored with `score=0, bias='—'` because `scanData` has no entry for them, permanently depressing
+their confluence. The sidebar renders all 35 under the heading **"All Pairs"** with nothing marking
+tradeability.
+
+---
+
 ## Paper P&L models no financing/carry cost at all (MOGO-023)
 
 **Status:** Measured 2026-08-22, **not repaired**. Severity **P3** rising to **P2** for any
