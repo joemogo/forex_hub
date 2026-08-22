@@ -108,3 +108,108 @@ class TestAgainstTheRealCorpus(unittest.TestCase):
         r = fc.report(configured=["H1", "H4", "D", "W"], key="timeframe")
         self.assertEqual({row["cohort"] for row in r["rows"]} & {"H1", "H4", "D", "W"},
                          {"H1", "H4", "D", "W"})
+
+
+def obs_s(oid, source_id, timeframe, strategy_id):
+    """An observation that names its strategy. `strategy_id=None` means unattributed."""
+    record = obs(oid, source_id, timeframe)
+    if strategy_id is not None:
+        record["strategyId"] = strategy_id
+    return record
+
+
+class TestStrategyPopulationIsolation(unittest.TestCase):
+    """MOGO-023: no strategy may silently contribute to another's population.
+
+    The real defect: the forward population is 27 `alex_g_sr_v1` + 2 `current_strategy`
+    (JVM) while the historical base rate is 221 `alex_g_sr_v1` and nothing else. The
+    report divided by one population and counted another, and scoping to ALEX flips
+    AUD/USD from PRESENT to ABSENT_CONSISTENT_WITH_RARITY -- a different conclusion, not
+    a cosmetic label.
+    """
+
+    def mixed(self):
+        records = {}
+        # forward: 2 ALEX on H1, 1 JVM on H4 -- the JVM row is the contaminant
+        records["f0"] = obs_s("f0", "EVSRC|F|1", "H1", "alex_g_sr_v1")
+        records["f1"] = obs_s("f1", "EVSRC|F|1", "H1", "alex_g_sr_v1")
+        records["f2"] = obs_s("f2", "EVSRC|F|1", "H4", "current_strategy")
+        # historical: ALEX only, which is what makes the base rate ALEX's
+        for i in range(10):
+            records["h%d" % i] = obs_s("h%d" % i, "EVSRC|H|1", "H1", "alex_g_sr_v1")
+        return records
+
+    def test_an_unscoped_report_DECLARES_that_it_mixes_strategies(self):
+        r = fc.report(self.mixed(), SOURCES, configured=["H1", "H4"])
+        self.assertFalse(r["strategyScoped"])
+        self.assertTrue(r["strategyMixing"],
+                        "two strategies contributed and the report did not say so")
+        self.assertEqual(r["forwardStrategyComposition"],
+                         {"alex_g_sr_v1": 2, "current_strategy": 1})
+
+    def test_scoping_EXCLUDES_the_other_strategy_from_the_counts(self):
+        r = fc.report(self.mixed(), SOURCES, configured=["H1", "H4"],
+                      strategy_id="alex_g_sr_v1")
+        self.assertTrue(r["strategyScoped"])
+        self.assertFalse(r["strategyMixing"], "a scoped report cannot be mixed")
+        self.assertEqual(r["forwardTotal"], 2, "JVM's row was counted as ALEX's")
+        h4 = [x for x in r["rows"] if x["cohort"] == "H4"][0]
+        self.assertEqual(h4["forwardCount"], 0,
+                         "the JVM H4 trade still appears in ALEX's coverage")
+
+    def test_the_excluded_rows_are_COUNTED_not_silently_dropped(self):
+        r = fc.report(self.mixed(), SOURCES, configured=["H1", "H4"],
+                      strategy_id="alex_g_sr_v1")
+        self.assertEqual(r["excluded"]["forwardOtherStrategy"], 1,
+                         "an excluded record must be reported, never merely absent")
+
+    def test_a_record_missing_the_cohort_key_is_REPORTED_not_vanished(self):
+        # JVM hardcodes timeframe:null, which is exactly how forwardTotal read 27
+        # while the forward population held 29 and nothing said two were dropped.
+        records = self.mixed()
+        records["f3"] = obs_s("f3", "EVSRC|F|1", None, "alex_g_sr_v1")
+        r = fc.report(records, SOURCES, configured=["H1"], strategy_id="alex_g_sr_v1")
+        self.assertEqual(r["excluded"]["forwardMissingCohortKey"], 1)
+        self.assertEqual(r["forwardTotal"], 2,
+                         "a record with no cohort value must not inflate the total")
+
+    def test_attribution_is_never_GUESSED_for_an_unattributed_record(self):
+        records = self.mixed()
+        records["f9"] = obs_s("f9", "EVSRC|F|1", "H1", None)   # no strategyId at all
+        r = fc.report(records, SOURCES, configured=["H1"])
+        self.assertEqual(r["forwardStrategyComposition"].get(fc.UNATTRIBUTED), 1,
+                         "a record with no strategyId must be UNATTRIBUTED, not folded "
+                         "into whichever strategy happens to be nearby")
+        scoped = fc.report(records, SOURCES, configured=["H1"],
+                           strategy_id="alex_g_sr_v1")
+        self.assertEqual(scoped["forwardTotal"], 2,
+                         "an unattributed record was counted as ALEX's")
+
+    def test_an_unscoped_mixed_report_states_it_describes_no_single_strategy(self):
+        r = fc.report(self.mixed(), SOURCES, configured=["H1", "H4"])
+        self.assertTrue(any("NOT scoped to one strategy" in s
+                            for s in r["doesNotSupport"]),
+                        "a mixed report must disclaim strategy-specific readings")
+
+    def test_configured_cohorts_belong_to_their_own_dimension(self):
+        # The timeframe universe must not be injected into an instrument report.
+        self.assertEqual(fc.CONFIGURED_BY_KEY.get("instrument"), None)
+        self.assertEqual(fc.CONFIGURED_BY_KEY["timeframe"], ["H1", "H4", "D", "W"])
+
+
+class TestTheRealCorpusIsStrategySegmentable(unittest.TestCase):
+
+    def test_the_live_forward_population_is_measurably_mixed(self):
+        r = fc.report(key="instrument")
+        self.assertTrue(r["strategyMixing"],
+                        "the real forward population is ALEX + JVM; if this ever goes "
+                        "false, verify segregation rather than assuming it improved")
+        self.assertIn("current_strategy", r["forwardStrategyComposition"])
+
+    def test_scoping_to_ALEX_changes_a_verdict_on_the_real_corpus(self):
+        mixed = fc.report(key="instrument")
+        alex = fc.report(key="instrument", strategy_id="alex_g_sr_v1")
+        self.assertLess(alex["forwardTotal"], mixed["forwardTotal"],
+                        "scoping removed nothing, so the arms were never mixed")
+        self.assertEqual(alex["excluded"]["forwardOtherStrategy"],
+                         mixed["forwardTotal"] - alex["forwardTotal"])

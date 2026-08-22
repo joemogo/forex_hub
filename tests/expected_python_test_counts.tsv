@@ -6,6 +6,8 @@
 # kept the total non-zero. Twenty-one rounds of adversarial hardening are stored as these tests.
 #
 # Regenerate deliberately:  python3 tests/count_python_tests.py > tests/expected_python_test_counts.tsv
+# NOTE: the generator does NOT emit this header -- re-add it after regenerating, or the reason
+# this file exists is deleted by the act of updating it (MOGO-023).
 tests.trader_intelligence.acquisition.test_acquisition	73
 tests.trader_intelligence.acquisition.test_acquisition_triage	11
 tests.trader_intelligence.acquisition.test_reconstructability	16
@@ -19,7 +21,7 @@ tests.trader_intelligence.test_candidate_search	58
 tests.trader_intelligence.test_decision_difference	34
 tests.trader_intelligence.test_exception_triage	32
 tests.trader_intelligence.test_forward_capture_guards	10
-tests.trader_intelligence.test_forward_coverage	12
+tests.trader_intelligence.test_forward_coverage	21
 tests.trader_intelligence.test_forward_novelty	19
 tests.trader_intelligence.test_graph	66
 tests.trader_intelligence.test_hypothesis_testability	19

@@ -44,6 +44,11 @@ SCHEMA_VERSION = "mogo.forward-coverage.v1"
 # manufacture an alarm.
 EXPECTED_COUNT_ALARM_THRESHOLD = 3.0
 
+#: Configured cohorts are a property of the DIMENSION, not a global list. Only the
+#: timeframe universe is fixed and knowable ahead of the evidence; instrument and
+#: direction universes are read from the corpus itself, so they get no injected set.
+CONFIGURED_BY_KEY = {"timeframe": ["H1", "H4", "D", "W"]}
+
 PRESENT = "PRESENT"
 ABSENT_CONSISTENT_WITH_RARITY = "ABSENT_CONSISTENT_WITH_RARITY"
 ABSENT_UNEXPLAINED = "ABSENT_UNEXPLAINED"
@@ -65,16 +70,53 @@ VERDICT_MEANING = {
 }
 
 
-def cohort_counts(observations, sources, population, key):
-    out = {}
+#: A record whose `strategyId` is absent or not a string. It is NEVER guessed and never
+#: folded into a named strategy -- MOGO-023 established that `current_strategy` is JVM's
+#: real registry id, so an unrecognised value is a fact about attribution, not a typo.
+UNATTRIBUTED = "UNATTRIBUTED"
+
+
+def strategy_of(record):
+    """The record's strategy identity, or UNATTRIBUTED. Pure. Never infers."""
+    value = (record or {}).get("strategyId")
+    return value if isinstance(value, str) and value else UNATTRIBUTED
+
+
+def cohort_counts(observations, sources, population, key, strategy_id=None):
+    """Cohort counts for ONE population, and a full account of what was NOT counted.
+
+    MOGO-023: this used to return only the counts, and dropped two different things in
+    silence -- records belonging to another strategy, and records missing the cohort key.
+    Both mattered here. The forward population is 27 `alex_g_sr_v1` + 2 `current_strategy`
+    (JVM), while the historical population is 221 `alex_g_sr_v1` and nothing else, so the
+    base rate this report divides by was ALEX's while the numerator was not. And because
+    JVM's journal builder hardcodes `timeframe: null`, the two JVM records vanished from a
+    `--key timeframe` run entirely: `forwardTotal` read 27 and nothing said two were
+    dropped. The number was right by coincidence, not by segmentation.
+
+    Returns `(counts, accounting)`. `accounting` is not decoration -- it is what makes the
+    exclusions reportable instead of silent.
+    """
+    counts = {}
+    composition = {}
+    missing_cohort_key = 0
+    excluded_other_strategy = 0
     for record in (observations or {}).values():
         if to.observation_population(record, sources) != population:
             continue
+        found = strategy_of(record)
+        composition[found] = composition.get(found, 0) + 1
+        if strategy_id is not None and found != strategy_id:
+            excluded_other_strategy += 1
+            continue
         value = record.get(key)
         if value is None:
+            missing_cohort_key += 1
             continue
-        out[value] = out.get(value, 0) + 1
-    return out
+        counts[value] = counts.get(value, 0) + 1
+    return counts, {"strategyComposition": composition,
+                    "missingCohortKey": missing_cohort_key,
+                    "excludedOtherStrategy": excluded_other_strategy}
 
 
 def assess_cohort(forward_count, historical_share, forward_total):
@@ -94,14 +136,32 @@ def assess_cohort(forward_count, historical_share, forward_total):
     return ABSENT_CONSISTENT_WITH_RARITY, round(expected, 3)
 
 
-def report(observations=None, sources=None, configured=None, key="timeframe"):
+def report(observations=None, sources=None, configured=None, key="timeframe",
+           strategy_id=None):
+    """Cohort coverage. `strategy_id` scopes BOTH arms to one strategy.
+
+    Left unscoped the report is explicitly NOT a strategy-specific claim, and says so:
+    `strategyScoped` is false and `strategyMixing` is true whenever more than one
+    strategy contributed. A mixed report is a coverage diagnostic, never an authoritative
+    statement about any one strategy's behaviour.
+    """
     sources = to.load_sources() if sources is None else sources
     observations = to.load_observations() if observations is None else observations
 
-    forward = cohort_counts(observations, sources, to.FORWARD, key)
-    historical = cohort_counts(observations, sources, to.HISTORICAL, key)
+    forward, fwd_acct = cohort_counts(observations, sources, to.FORWARD, key, strategy_id)
+    historical, hist_acct = cohort_counts(observations, sources, to.HISTORICAL, key,
+                                          strategy_id)
     forward_total = sum(forward.values())
     historical_total = sum(historical.values())
+
+    # Mixing is judged on what CONTRIBUTED to the arms, so a scoped report is never
+    # reported as mixed merely because other strategies exist in the corpus.
+    contributing = set()
+    for acct in (fwd_acct, hist_acct):
+        contributing |= set(acct["strategyComposition"])
+    if strategy_id is not None:
+        contributing = {strategy_id} & contributing
+    mixing = len(contributing) > 1
 
     universe = sorted(set(configured or []) | set(forward) | set(historical))
     rows = []
@@ -123,6 +183,19 @@ def report(observations=None, sources=None, configured=None, key="timeframe"):
         "adjudicates": False,
         "cohortKey": key,
         "configured": sorted(configured or []),
+        # MOGO-023 strategy-population invariant. A cohort report must name the population
+        # it describes, draw both arms from it, and account for every record it excluded.
+        "strategyId": strategy_id,
+        "strategyScoped": strategy_id is not None,
+        "strategyMixing": mixing,
+        "forwardStrategyComposition": fwd_acct["strategyComposition"],
+        "historicalStrategyComposition": hist_acct["strategyComposition"],
+        "excluded": {
+            "forwardOtherStrategy": fwd_acct["excludedOtherStrategy"],
+            "historicalOtherStrategy": hist_acct["excludedOtherStrategy"],
+            "forwardMissingCohortKey": fwd_acct["missingCohortKey"],
+            "historicalMissingCohortKey": hist_acct["missingCohortKey"],
+        },
         "forwardTotal": forward_total,
         "historicalTotal": historical_total,
         "rows": rows,
@@ -135,14 +208,45 @@ def report(observations=None, sources=None, configured=None, key="timeframe"):
             "An absence consistent with rarity is not proof that evaluation ran. It "
             "means the evidence does not distinguish rarity from failure at this "
             "sample size -- engine-side coverage answers that, not this report.",
-        ],
+        ] + ([
+            "This report is NOT scoped to one strategy and more than one contributed to "
+            "it, so no row here describes any single strategy's behaviour. Re-run with "
+            "--strategy to obtain a strategy-specific reading.",
+        ] if mixing else []),
     }
 
 
+def _composition(mapping):
+    return ", ".join("%s %d" % (k, mapping[k]) for k in sorted(mapping)) or "none"
+
+
 def render(r):
+    scope = r["strategyId"] if r.get("strategyScoped") else "ALL STRATEGIES (unscoped)"
     lines = ["FORWARD COHORT COVERAGE -- derived, read-only (%s)" % r["cohortKey"],
+             "  strategy scope: %s" % scope,
              "  forward observations: %d | historical: %d"
              % (r["forwardTotal"], r["historicalTotal"])]
+    if r.get("strategyMixing"):
+        lines += [
+            "  ** STRATEGY MIXING -- these rows describe NO SINGLE STRATEGY **",
+            "     forward:    %s" % _composition(r["forwardStrategyComposition"]),
+            "     historical: %s" % _composition(r["historicalStrategyComposition"]),
+            "     The base rate divides by one population and counts another. Re-run",
+            "     with --strategy for a reading that is about one strategy.",
+        ]
+    exc = r.get("excluded") or {}
+    # Exclusions are printed whenever they are non-zero, because a dropped record that
+    # nothing mentions is how forwardTotal read 27 while the population held 29.
+    if any(exc.get(k) for k in exc):
+        lines.append("  excluded from the counts above:")
+        for label, k in (("other strategy (forward)", "forwardOtherStrategy"),
+                         ("other strategy (historical)", "historicalOtherStrategy"),
+                         ("missing '%s' (forward)" % r["cohortKey"],
+                          "forwardMissingCohortKey"),
+                         ("missing '%s' (historical)" % r["cohortKey"],
+                          "historicalMissingCohortKey")):
+            if exc.get(k):
+                lines.append("     %-32s %d" % (label, exc[k]))
     for row in r["rows"]:
         expected = ("expected %.2f" % row["expectedForwardCount"]
                     if row["expectedForwardCount"] is not None else "")
@@ -157,13 +261,25 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--key", default="timeframe",
                         help="cohort dimension: timeframe, instrument, direction")
-    parser.add_argument("--configured", default="H1,H4,D,W",
-                        help="comma-separated configured cohorts")
+    # MOGO-023: this defaulted to "H1,H4,D,W" for EVERY key, so `--key instrument` and
+    # `--key direction` unioned four TIMEFRAME labels into their universe and reported
+    # them as absent instruments and absent directions. Harmless-looking
+    # (ABSENT_NO_BASE_RATE) but it is fabricated rows in a report whose entire job is to
+    # say whether an absence is real. Configured cohorts belong to a dimension.
+    parser.add_argument("--configured", default=None,
+                        help="comma-separated configured cohorts (default: the known "
+                             "set for --key timeframe, none for other dimensions)")
+    parser.add_argument("--strategy", default=None,
+                        help="scope BOTH arms to one strategyId (e.g. alex_g_sr_v1). "
+                             "Unscoped reports disclose strategy mixing instead.")
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
-    configured = [c for c in args.configured.split(",") if c] if args.configured else []
-    r = report(configured=configured, key=args.key)
+    if args.configured is None:
+        configured = CONFIGURED_BY_KEY.get(args.key, [])
+    else:
+        configured = [c for c in args.configured.split(",") if c]
+    r = report(configured=configured, key=args.key, strategy_id=args.strategy)
     print(json.dumps(r, indent=2, sort_keys=True) if args.json else render(r))
     if args.write:
         os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)
