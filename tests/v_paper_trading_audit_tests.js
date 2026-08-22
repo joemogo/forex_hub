@@ -2842,5 +2842,121 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
       g.getAlexGAccount().balance===10000&&g.getAlexGJournalEntries().length===0,'');
   }
 
+
+  // ═══ D3 EXECUTION BOUNDARY (owner-authorized protected change) ═══════════════════════════
+  // openPaperPosition is the last boundary before a JVM or manual position exists, and all
+  // four entry paths converge on it: checkAutoTrades, placePaperTrade, approveManualReviewTrade
+  // and the developer test generator. These fixtures drive the REAL protected function.
+  {
+    seedClean();
+    g.setPairPriceD3('EUR_USD',1.10000);          // USD-quoted: pipValuePerLot early-returns 10
+    const openCount=function(){ return g.getPaperAccount().openPositions.length; };
+
+    // -- LONG geometry --------------------------------------------------------------------
+    const l1=g.openPaperPosition('EUR_USD','buy',1.10000,1.09500,1.11000,'test');
+    assert('D3.1 LONG stop BELOW entry is accepted (positive control -- without this the guard '+
+      'could be refusing everything, which would be a worse defect than the one it fixes)',
+      !l1.error&&openCount()===1,'err='+String(l1.error)+' open='+openCount());
+
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const l2=g.openPaperPosition('EUR_USD','buy',1.10000,1.10000,1.11000,'test');
+    assert('D3.2 LONG stop EQUAL to entry is rejected and creates NO position',
+      !!l2.error&&openCount()===0,'err='+String(l2.error)+' open='+openCount());
+
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const l3=g.openPaperPosition('EUR_USD','buy',1.10000,1.10500,1.11000,'test');
+    assert('D3.3 LONG stop ABOVE entry is rejected -- the wrong-side case Math.abs() hid, and '+
+      'the one a stale D/W AOI against a live price actually produces',
+      !!l3.error&&l3.geometryState===g.TRADE_GEOMETRY.STOP_WRONG_SIDE&&openCount()===0,
+      'err='+String(l3.error)+' state='+String(l3.geometryState)+' open='+openCount());
+
+    // -- SHORT geometry -------------------------------------------------------------------
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const s1=g.openPaperPosition('EUR_USD','sell',1.10000,1.10500,1.09000,'test');
+    assert('D3.4 SHORT stop ABOVE entry is accepted (positive control)',
+      !s1.error&&openCount()===1,'err='+String(s1.error)+' open='+openCount());
+
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const s2=g.openPaperPosition('EUR_USD','sell',1.10000,1.10000,1.09000,'test');
+    assert('D3.5 SHORT stop EQUAL to entry is rejected and creates NO position',
+      !!s2.error&&openCount()===0,'err='+String(s2.error)+' open='+openCount());
+
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const s3=g.openPaperPosition('EUR_USD','sell',1.10000,1.09500,1.09000,'test');
+    assert('D3.6 SHORT stop BELOW entry is rejected',
+      !!s3.error&&s3.geometryState===g.TRADE_GEOMETRY.STOP_WRONG_SIDE&&openCount()===0,
+      'state='+String(s3.geometryState)+' open='+openCount());
+
+    // -- the unbounded-size case ----------------------------------------------------------
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const n1=g.openPaperPosition('EUR_USD','buy',1.100000,1.099995,1.11000,'test');
+    assert('D3.7 near-zero risk (0.05 pips) is rejected BEFORE sizing -- unguarded this is 200 '+
+      'lots, 20,000,000 units, 2,000x leverage on a $10,000 account, where a five-pip adverse '+
+      'move loses the entire account',
+      !!n1.error&&n1.geometryState===g.TRADE_GEOMETRY.RISK_TOO_SMALL&&openCount()===0,
+      'state='+String(n1.geometryState)+' open='+openCount());
+
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const n2=g.openPaperPosition('EUR_USD','buy',1.10000,1.099950,1.11000,'test');
+    assert('D3.8 sub-floor risk (0.5 pips) is rejected -- 20 lots / 200x leverage unguarded',
+      !!n2.error&&n2.geometryState===g.TRADE_GEOMETRY.RISK_TOO_SMALL&&openCount()===0,
+      'state='+String(n2.geometryState)+' open='+openCount());
+
+    // -- malformed input ------------------------------------------------------------------
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    let malformedRejected=0;
+    [[NaN,1.09500,1.11000],[1.10000,NaN,1.11000],[1.10000,1.09500,NaN],
+     [Infinity,1.09500,1.11000],[1.10000,-Infinity,1.11000],
+     [undefined,1.09500,1.11000],[1.10000,undefined,1.11000]].forEach(function(a){
+      const r=g.openPaperPosition('EUR_USD','buy',a[0],a[1],a[2],'test');
+      if(r.error) malformedRejected++;
+    });
+    assert('D3.9 every malformed or missing price is rejected and none creates a position -- '+
+      'NaN/Infinity can no longer reach lot sizing at all',
+      malformedRejected===7&&openCount()===0,'rejected='+malformedRejected+'/7 open='+openCount());
+
+    // -- wrong-side target ----------------------------------------------------------------
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const t1=g.openPaperPosition('EUR_USD','buy',1.10000,1.09500,1.09000,'test');
+    assert('D3.10 a LONG whose target sits below entry is rejected -- it would be hit instantly',
+      !!t1.error&&t1.geometryState===g.TRADE_GEOMETRY.TARGET_WRONG_SIDE&&openCount()===0,
+      'state='+String(t1.geometryState));
+
+    // -- historical compatibility ---------------------------------------------------------
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    const h1=g.openPaperPosition('EUR_USD','buy',1.10000,1.099497,1.11000,'test');
+    assert('D3.11 the TIGHTEST geometry in the 259-record corpus (5.03 pips) is still accepted '+
+      '-- the floor rejects nothing MOGO has ever actually done',
+      !h1.error&&openCount()===1,'err='+String(h1.error));
+
+    assert('D3.12 the safety floor is 1 pip and is a FLOOR, not a strategy parameter -- it sits '+
+      'far below the 5.03-pip tightest historical distance, so it can never decide which setups '+
+      'qualify',
+      g.MIN_RISK_PIPS===1.0&&g.MIN_RISK_PIPS<5.03,'floor='+g.MIN_RISK_PIPS);
+
+    // -- normal trades across pairs -------------------------------------------------------
+    seedClean();
+    g.setPairPriceD3('USD_JPY',155.00); g.setPairPriceD3('EUR_USD',1.10000);
+    const j1=g.openPaperPosition('USD_JPY','sell',155.000,155.500,154.000,'test');
+    assert('D3.13 a normal JPY-pair short still opens -- the guard is pip-size aware and does '+
+      'not disturb non-USD-quoted instruments',
+      !j1.error&&openCount()===1,'err='+String(j1.error));
+
+    // -- null/absent target (found by adversarial review of this guard) -------------------
+    seedClean(); g.setPairPriceD3('EUR_USD',1.10000);
+    let nullTargetRejected=0;
+    [null,undefined,NaN].forEach(function(tg){
+      const r=g.openPaperPosition('EUR_USD','buy',1.10000,1.09500,tg,'test');
+      if(r.error) nullTargetRejected++;
+    });
+    assert('D3.14 a null/absent/NaN target is rejected -- checkPaperPositions evaluates '+
+      'live>=pos.target, and live>=null coerces null to 0 and is ALWAYS TRUE, so such a position '+
+      'would be closed as a phantom Win on the very next tick',
+      nullTargetRejected===3&&openCount()===0,
+      'rejected='+nullTargetRejected+'/3 open='+openCount());
+
+    seedClean();
+  }
+
   return results;
 }

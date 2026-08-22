@@ -72,6 +72,9 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // -- paper-ledger engine functions under test (real, unmodified, protected) --
   'g.openPaperPosition=openPaperPosition;' +
+  'g.TRADE_GEOMETRY=TRADE_GEOMETRY;' +
+  'g.MIN_RISK_PIPS=MIN_RISK_PIPS;' +
+  'g.setPairPriceD3=function(p,v){ if(!pairData[p]) pairData[p]={}; pairData[p].price=v; };' +
   'g.closePaperPosition=closePaperPosition;' +
   'g.showPanel=showPanel;' +
   'g.commitPaperLedger=commitPaperLedger;' +
