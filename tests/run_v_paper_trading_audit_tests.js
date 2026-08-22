@@ -167,6 +167,57 @@ const wrapped = new Function('g',
   'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +
   'g.setLocalStorageItem=function(k,v){localStorage.setItem(k,v);};' +
   'g.clearLocalStorage=function(){localStorage.__clear();};' +
+  // -- D3C: the universal geometry invariant across ALEX and ALEX V2 --
+  'g.validateTradeGeometry=validateTradeGeometry;' +
+  'g.openPositionGeometryQuarantined=openPositionGeometryQuarantined;' +
+  'g.alexGCheckLivePositions=alexGCheckLivePositions;' +
+  'g.alexGAuditRehydratedPositions=alexGAuditRehydratedPositions;' +
+  'g.auditOpenPositionsGeometry=auditOpenPositionsGeometry;' +
+  'g.setAlexGEngineErrors=function(v){alexGEngineErrors=v;};' +
+  'g.stubAlexExecutableCandles=function(fn){ if(!g.__realAlexFetch){ g.__realAlexFetch=alexGFetchExecutableCandles; } alexGFetchExecutableCandles=fn; };' +
+  'g.restoreAlexExecutableCandles=function(){ if(g.__realAlexFetch){ alexGFetchExecutableCandles=g.__realAlexFetch; g.__realAlexFetch=null; } };' +
+  'g.alexV2OpenPaperResearchTrade=alexV2OpenPaperResearchTrade;' +
+  'g.getAlexV2Account=function(){return alexV2Account;};' +
+  'g.resetAlexV2Account=function(){ alexV2Account={balance:10000,openPositions:[],closedPositions:[]};'+
+     ' alexV2JournalEntries=[]; alexV2AutoTrading={enabled:false,tradedToday:{},log:[],activatedAt:null,tradedSignals:{}}; };' +
+  'g.buildRealAlexPosition=function(){' +
+     ' alexGAccount={balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]};' +
+     ' alexGJournalEntries=[]; alexGAutoTrading={enabled:false,tradedToday:{},log:[],activatedAt:null,tradedSignals:{}};' +
+     ' var candles=[]; for(var i=0;i<60;i++){ var b=1.10000+(i%3)*0.00010;' +
+     '   candles.push({t:1750000000+i*3600,o:b,h:b+0.00040,l:b-0.00040,c:b,v:100}); }' +
+     ' var setup={strategy:"alex_g_sr_v1",ruleVersion:"alex_g_sr_v1",pair:"EUR_USD",timeframe:"H1",' +
+     '   setupId:"AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|D3C|A_repeatedReaction|AGR|D3C",setupType:"A_repeatedReaction",setupLabel:"Repeated Zone Reaction",' +
+     '   zoneRoleAtQualification:"support",qualificationBarIndex:59,qualificationClose:1.10000,' +
+     '   qualificationTimestamp:1750216000000,zoneId:"AGZ|D3C|1",reactionId:"AGR|D3C|1",zoneTouchNumber:3,' +
+     '   zoneStrength:3,zoneQualityAtQualification:"good",zoneLow:1.09900,zoneHigh:1.10000,zoneCenter:1.09950,' +
+     '   configurationSnapshot:null};' +
+     ' var datasets={H1:candles}; var ba={bid:1.09999,ask:1.10001};' +
+     ' var r=alexGConstructLivePosition(setup,datasets,ba,RULES_ALEXG.config,alexGAccount.balance,{});' +
+     ' if(r.status!=="TRADE OPENED"||!r.position) return{ok:false,status:r.status,reason:r.reason,geometryState:null,riskPips:null};' +
+     ' var p=r.position;' +
+     ' var geom=validateTradeGeometry(p.direction,p.entry,p.stop,p.target,pipSize(p.pair),MIN_RISK_PIPS);' +
+     ' return{ok:true,status:r.status,position:p,geometryState:geom.state,riskPips:geom.riskPips};' +
+   '};' +
+  'g.buildRealAlexTightPosition=function(){' +
+     ' alexGAccount={balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]};' +
+     ' alexGJournalEntries=[]; alexGAutoTrading={enabled:false,tradedToday:{},log:[],activatedAt:null,tradedSignals:{}};' +
+     ' var candles=[]; for(var i=0;i<60;i++){ var b=1.10000;' +
+     '   candles.push({t:1750000000+i*3600,o:b,h:b+0.00001,l:b-0.00001,c:b,v:100}); }' +
+     ' var setup={strategy:"alex_g_sr_v1",ruleVersion:"alex_g_sr_v1",pair:"EUR_USD",timeframe:"H1",' +
+     '   setupId:"AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|TIGHT|A_repeatedReaction|AGR|TIGHT",' +
+     '   setupType:"A_repeatedReaction",setupLabel:"Repeated Zone Reaction",' +
+     '   zoneRoleAtQualification:"support",qualificationBarIndex:59,qualificationClose:1.10000,' +
+     '   qualificationTimestamp:1750216000000,zoneId:"AGZ|TIGHT",reactionId:"AGR|TIGHT",zoneTouchNumber:3,' +
+     '   zoneStrength:3,zoneQualityAtQualification:"good",zoneLow:1.09995,zoneHigh:1.10000,zoneCenter:1.099975,' +
+     '   configurationSnapshot:null};' +
+     ' var datasets={H1:candles}; var ba={bid:1.09999,ask:1.10001};' +
+     ' var r=alexGConstructLivePosition(setup,datasets,ba,RULES_ALEXG.config,alexGAccount.balance,{});' +
+     ' if(r.status!=="TRADE OPENED"||!r.position) return{ok:false,status:r.status,reason:r.reason};' +
+     ' var p=r.position;' +
+     ' var geom=validateTradeGeometry(p.direction,p.entry,p.stop,p.target,pipSize(p.pair),MIN_RISK_PIPS);' +
+     ' return{ok:true,status:r.status,position:p,geometryState:geom.state,riskPips:geom.riskPips,' +
+     '   positionSize:p.positionSize,notionalUnits:Math.round(p.positionSize*100000)};' +
+   '};' +
   'return runPaperTradingAuditFixtures(g);'
 );
 const results = wrapped(g);

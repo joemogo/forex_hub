@@ -3086,5 +3086,376 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     seedClean();
   }
 
+  // ═══ D3C — THE UNIVERSAL GEOMETRY INVARIANT ═══════════════════════════════════════════════
+  // D3 closed JVM creation; D3B closed JVM rehydration. Both used validateTradeGeometry(). ALEX
+  // reached ACTIVE state without ever consulting that contract. D3C makes the invariant universal:
+  // no production paper position enters ACTIVE state anywhere in MOGO without satisfying it.
+  //
+  // Zero protected functions changed -- the gates live in alexGAttemptOpenLivePosition and
+  // alexGCheckLivePositions, neither of which is protected, and the drift check confirms 63/63
+  // functions and 4/4 constants byte-identical.
+  {
+    // Engine-format ids: alexGTradeId() mints 'AGT|'+alexGSetupId(), which always begins
+    // 'AGS|alex_g_sr_v1|'. Using a hand-written id here would trip the profile's separate
+    // trade-id provenance rule and quietly confound every geometry assertion below -- which is
+    // exactly what the first draft of this suite did.
+    const AGID=function(n){ return 'AGT|AGS|alex_g_sr_v1|EUR/USD|H1|Z'+n+'|A_repeatedReaction|R'+n; };
+    const mkAlex=function(o){
+      return Object.assign({tradeId:AGID('1'),signalId:'AGL|D3C|1',setupId:'AGS|alex_g_sr_v1|EUR/USD|H1|Z1|A_repeatedReaction|R1',
+        strategy:'alex_g_sr_v1',ruleVersion:'alex_g_sr_v1',pair:'EUR/USD',timeframe:'H1',
+        setupType:'B_breakRetest',setupLabel:'Break & Retest',
+        direction:'buy',entry:1.10000,stop:1.09500,target:1.11000,plannedRR:2,
+        riskPercent:1,riskAmount:100,pipValue:10,positionSize:0.2,
+        balanceAtEntry:10000,openedAt:'2026-08-01T00:00:00.000Z',
+        status:'open',exitPrice:null,closedAt:null,result:null,resultR:null,pnl:null,
+        maePips:0,mfePips:0,maeR:0,mfeR:0,lastExitCheckTimestamp:1},o||{});
+    };
+    const seedAlex=function(positions){
+      g.setAlexGAccount({balance:10000,startingBalance:10000,openPositions:positions,closedPositions:[]});
+    };
+    const Q=function(pos){ return g.tradeIntegrityIsQuarantined(pos,'alex_g_sr_v1'); };
+
+    // ── 1. The canonical contract reads ALEX's OWN field names ───────────────────────────────
+    // ALEX positions carry `direction` (not `dir`) and a slashed `pair` (not `oPair`). If the
+    // rule silently failed to read them it would return null -- never quarantining anything --
+    // and every fixture below would pass vacuously while the guard did nothing.
+    assert('D3C.1 the canonical rule actually READS an ALEX-shaped record: a wrong-side LONG stop '+
+      'is quarantined even though the record uses `direction` and a slashed `pair`',
+      Q(mkAlex({stop:1.10500})),'');
+
+    assert('D3C.2 POSITIVE CONTROL: a well-formed ALEX LONG is NOT quarantined -- proving D3C.1 '+
+      'is the geometry failing and not the rule mis-reading every ALEX record',
+      !Q(mkAlex()),'');
+
+    assert('D3C.3 a wrong-side SHORT stop (below entry) is quarantined',
+      Q(mkAlex({direction:'sell',entry:1.10000,stop:1.09500,target:1.09000})),'');
+
+    assert('D3C.4 POSITIVE CONTROL: a well-formed ALEX SHORT is NOT quarantined',
+      !Q(mkAlex({direction:'sell',entry:1.10000,stop:1.10500,target:1.09000})),'');
+
+    assert('D3C.5 stop EQUAL to entry is quarantined (zero risk, unbounded size)',
+      Q(mkAlex({stop:1.10000})),'');
+
+    // THE GAP D3C ACTUALLY CLOSES. alexGConstructLivePosition already enforces the SIGNED stop
+    // check D3 had to add to JVM, so ALEX was never exposed to a wrong-side stop. What it has no
+    // notion of is a minimum risk DISTANCE: riskDistance need only make positionSize finite and
+    // positive, so a correct-side stop a fraction of a pip away sizes without bound.
+    assert('D3C.6 THE REAL ALEX GAP: risk of 0.05 pips -- stop on the CORRECT side, so ALEX’s own '+
+      'construction check passes it -- is refused by the canonical floor. This is the unbounded-size '+
+      'defect D3 found, reached by the one route ALEX left open',
+      Q(mkAlex({stop:1.099995})),'');
+
+    assert('D3C.7 risk of 0.5 pips is refused for the same reason',
+      Q(mkAlex({stop:1.09995})),'');
+
+    let alexMalformed=0;
+    [{entry:null},{stop:null},{entry:NaN},{stop:Infinity},{stop:-Infinity},{direction:null},
+     {target:null},{target:NaN}].forEach(function(o){ if(Q(mkAlex(o))) alexMalformed++; });
+    assert('D3C.8 null / NaN / +-Infinity / missing direction / absent target are all quarantined '+
+      'on an ALEX record',
+      alexMalformed===8,'quarantined='+alexMalformed+'/8');
+
+    assert('D3C.9 a wrong-side TARGET is quarantined -- it reads as instantly hit',
+      Q(mkAlex({target:1.09000})),'');
+
+    assert('D3C.10 a CLOSED ALEX trade is NOT re-litigated by the open-position rule: its geometry '+
+      'is history and re-judging it would retroactively move statistics already reported',
+      !g.openPositionGeometryQuarantined(mkAlex({stop:1.10500,result:'Loss',pnl:-100,maePips:60,
+        exitPrice:1.10500,closedAt:'2026-08-01T02:00:00.000Z'}),'alex_g_sr_v1'),'');
+
+    // ── 2. THE SERVICING BOUNDARY — the load-bearing, universal half ─────────────────────────
+    // alexGCheckLivePositions is async, but the quarantine check is its loop's FIRST statement and
+    // runs synchronously before the first await. A serviced position calls alexGFetchExecutableCandles
+    // (also before any await completes), so that call is the exact, honest proof of whether the
+    // monitor acted -- the same REACH argument D3B.8/D3B.9 use with paperPositionsClosing.
+    const fetchCalls=[];
+    g.stubAlexExecutableCandles(function(pair){ fetchCalls.push(pair); return new Promise(function(){}); });
+
+    seedAlex([mkAlex({tradeId:AGID('B1'),stop:1.10500})]);   // wrong-side LONG
+    fetchCalls.length=0;
+    g.alexGCheckLivePositions('scan-d3c-1');
+    assert('D3C.11 THE LOAD-BEARING ONE: a quarantined ALEX position is never acted on by '+
+      'alexGCheckLivePositions. Its stop sits above its entry, so unguarded the very next exit '+
+      'evaluation books a fabricated Loss sized from geometry that could not be created today. '+
+      'Proven by the monitor never even fetching prices for it',
+      fetchCalls.length===0&&g.getAlexGAccount().openPositions.length===1&&
+      g.getAlexGAccount().closedPositions.length===0,
+      'fetches='+JSON.stringify(fetchCalls)+' open='+g.getAlexGAccount().openPositions.length);
+
+    seedAlex([mkAlex({tradeId:AGID('G1')})]);               // valid geometry
+    fetchCalls.length=0;
+    g.alexGCheckLivePositions('scan-d3c-2');
+    assert('D3C.12 POSITIVE CONTROL: a VALID ALEX position IS still monitored -- the fetch is '+
+      'reached for it. Without this the guard could be silently disabling ALL ALEX exit '+
+      'processing, which would be a far worse defect than the one D3C fixes',
+      fetchCalls.length===1,'fetches='+JSON.stringify(fetchCalls));
+
+    // A mixed account: the quarantined record must not shield the ones behind it in the array.
+    // The two positions must use DIFFERENT pairs. With the same pair this fixture was vacuous:
+    // without the guard the monitor reaches the FIRST (bad) position and suspends there, giving
+    // fetches.length===1 either way. Mutation testing caught exactly that. Now the fetch RECORD
+    // names which position was reached, so skipping the bad one is distinguishable from
+    // stopping at it.
+    seedAlex([mkAlex({tradeId:AGID('B2'),pair:'GBP/USD',stop:1.10500}),
+              mkAlex({tradeId:AGID('G2'),pair:'AUD/USD'})]);
+    fetchCalls.length=0;
+    g.alexGCheckLivePositions('scan-d3c-3');
+    assert('D3C.13 in a MIXED account the quarantined record is SKIPPED and the VALID one behind '+
+      'it is reached -- proven by WHICH pair the monitor fetched, not merely how many times',
+      fetchCalls.length===1&&fetchCalls[0]==='AUD/USD',
+      'fetches='+JSON.stringify(fetchCalls));
+
+    // EVIDENCE PRESERVED: skipping is not deleting.
+    const beforeBytes=JSON.stringify(mkAlex({tradeId:AGID('B3'),stop:1.10500}));
+    seedAlex([JSON.parse(beforeBytes)]);
+    fetchCalls.length=0;
+    g.alexGCheckLivePositions('scan-d3c-4');
+    assert('D3C.14 EVIDENCE PRESERVED: the quarantined ALEX record is byte-identical after the '+
+      'monitor has run over it -- nothing deleted, nothing mutated, no field added -- AND the '+
+      'monitor never reached it. Byte-identity alone was vacuous: an unguarded monitor also '+
+      'leaves the record untouched, because it suspends on the fetch before mutating anything',
+      JSON.stringify(g.getAlexGAccount().openPositions[0])===beforeBytes&&fetchCalls.length===0,
+      'fetches='+JSON.stringify(fetchCalls)+' after='+JSON.stringify(g.getAlexGAccount().openPositions[0]).slice(0,90));
+
+    g.restoreAlexExecutableCandles();
+
+    // ── 3. THE REHYDRATION AUDIT ─────────────────────────────────────────────────────────────
+    seedAlex([mkAlex({tradeId:AGID('A')}),mkAlex({tradeId:AGID('B'),stop:1.10500}),
+              mkAlex({tradeId:AGID('C'),direction:'sell',entry:1.10000,stop:1.10500,target:1.09000})]);
+    const aAudit=g.alexGAuditRehydratedPositions();
+    assert('D3C.15 the ALEX rehydration audit classifies a mixed account: 3 restored, 2 valid, '+
+      '1 quarantined',
+      aAudit.total===3&&aAudit.valid===2&&aAudit.invalid===1,
+      'total='+aAudit.total+' valid='+aAudit.valid+' invalid='+aAudit.invalid);
+
+    assert('D3C.16 the audit names the offending ALEX position by its tradeId and its reason, so '+
+      'the quarantine is investigable rather than merely counted',
+      aAudit.invalidPositions.length===1&&aAudit.invalidPositions[0].id===AGID('B')&&
+      aAudit.invalidPositions[0].reason==='STOP_WRONG_SIDE',
+      JSON.stringify(aAudit.invalidPositions));
+
+    // The announcement must actually reach ALEX's own fault channel, tagged by provenance.
+    g.setAlexGEngineErrors([]);
+    seedAlex([mkAlex({tradeId:AGID('D'),stop:1.10500})]);
+    g.alexGAuditRehydratedPositions();
+    const alexErrs=g.getAlexGEngineErrors();
+    assert('D3C.17 an ALEX quarantine is ANNOUNCED through recordAlexGEngineError, tagged by '+
+      'PROVENANCE rather than by a message prefix a leak could choose for itself -- a quarantine '+
+      'nobody is told about is a position that silently stopped moving',
+      alexErrs.length===1&&String(alexErrs[0].message).indexOf('INVALID_REHYDRATED_POSITION')===0&&
+      String(alexErrs[0].message).indexOf(AGID('D'))!==-1&&
+      alexErrs[0].source==='alexGAuditRehydratedPositions',
+      JSON.stringify(alexErrs).slice(0,200));
+
+    g.setAlexGEngineErrors([]);
+    seedAlex([mkAlex({tradeId:AGID('E')})]);
+    const cleanAudit=g.alexGAuditRehydratedPositions();
+    assert('D3C.18 NEGATIVE CONTROL: a clean ALEX account produces no quarantine and no noise in '+
+      'the error channel -- the audit is not simply always shouting',
+      cleanAudit.invalid===0&&cleanAudit.valid===1&&g.getAlexGEngineErrors().length===0,
+      'invalid='+cleanAudit.invalid+' errs='+g.getAlexGEngineErrors().length);
+
+    seedAlex([]);
+    assert('D3C.19 an empty ALEX account audits cleanly rather than throwing',
+      (function(){ const a=g.alexGAuditRehydratedPositions(); return a.total===0&&a.invalid===0; })(),'');
+
+    // The shared core must not have changed JVM's audit contract.
+    assert('D3C.20 the shared audit core preserves the D3B paper return shape exactly -- ALEX was '+
+      'added by parameterising the loop, not by forking it, so there is still ONE place the '+
+      'contract is applied',
+      (function(){
+        seedClean();
+        const a=g.getPaperAccount();
+        a.openPositions=[{id:7,pair:'EUR/USD',oPair:'EUR_USD',dir:'buy',entry:1.10000,stop:1.10500,
+          target:1.11000,openedAt:'2026-08-01T00:00:00.000Z',source:'auto'}];
+        g.setPaperAccount(a);
+        const r=g.paperAuditRehydratedPositions();
+        return r.total===1&&r.invalid===1&&r.invalidPositions[0].id===7&&
+               r.invalidPositions[0].reason==='STOP_WRONG_SIDE'&&
+               Array.isArray(r.invalidPositions[0].violations);
+      })(),'');
+
+    // ── 4. ALEX'S REAL PROTECTED CONSTRUCTOR AGREES WITH THE CONTRACT ────────────────────────
+    // The creation gate itself sits after an `await fetchBidAsk` inside async
+    // alexGAttemptOpenLivePosition, which this offline JXA runner cannot resolve -- the same
+    // documented limitation that applies to closePaperPosition/alexGCloseLivePosition, disclosed
+    // rather than worked around. What IS drivable here is the REAL, PROTECTED, unmodified
+    // alexGConstructLivePosition, and the question that actually matters is whether the contract
+    // the gate applies agrees with what that constructor really produces.
+    const realCtor=g.buildRealAlexPosition();
+    assert('D3C.21 the REAL protected alexGConstructLivePosition produces a position, and the '+
+      'canonical contract classifies it VALID -- the gate does not reject ALEX’s own legitimate '+
+      'output',
+      realCtor.ok&&realCtor.geometryState==='VALID',
+      'ctor='+realCtor.status+' geom='+realCtor.geometryState+' riskPips='+realCtor.riskPips);
+
+    assert('D3C.22 and that real constructed position is not quarantined by the servicing rule '+
+      'either -- creation and servicing agree on ALEX’s own output',
+      realCtor.ok&&!Q(realCtor.position),'');
+
+    // THE DEFECT DEMONSTRATED ON REAL PROTECTED CODE. The gate's WIRING inside async
+    // alexGAttemptOpenLivePosition sits after `await fetchBidAsk` and is not reachable by this
+    // offline runner -- disclosed, not worked around. What IS provable here, and matters more, is
+    // that the gap is real: the REAL, PROTECTED, unmodified alexGConstructLivePosition genuinely
+    // returns TRADE OPENED on sub-floor geometry, because its own stop check tests only the SIDE.
+    const tight=g.buildRealAlexTightPosition();
+    assert('D3C.37 THE GAP IS REAL, NOT THEORETICAL: the REAL protected alexGConstructLivePosition '+
+      'returns TRADE OPENED for a stop a fraction of a pip from the fill -- its own check tests '+
+      'only that the stop is on the correct SIDE, never how far away it is',
+      tight.ok&&tight.status==='TRADE OPENED'&&tight.riskPips<1.0&&tight.riskPips>0,
+      'status='+tight.status+' riskPips='+tight.riskPips+' reason='+tight.reason);
+
+    assert('D3C.38 ...and the canonical contract REFUSES that real output as RISK_TOO_SMALL. This '+
+      'is the geometry the D3C creation gate exists to stop, produced by shipped protected code '+
+      'from a plausible zone/ATR combination -- and sized at '+
+      (tight.ok?tight.notionalUnits:'?')+' units off a $10,000 account',
+      tight.ok&&tight.geometryState==='RISK_TOO_SMALL',
+      'geom='+tight.geometryState+' riskPips='+tight.riskPips+' size='+tight.positionSize);
+
+    assert('D3C.39 and the servicing boundary independently refuses it too, so even if such a '+
+      'position were created it could never be acted on',
+      tight.ok&&g.openPositionGeometryQuarantined(tight.position,'alex_g_sr_v1'),'');
+
+    // ── 5. ALEX V2 — the latent path, closed before it is ever wired ─────────────────────────
+    // alexV2OpenPaperResearchTrade has NO caller anywhere in the repository, so this is not today
+    // a production insertion path. It is also the worst geometry handling left: risk via
+    // Math.abs() (the sign discarded exactly as JVM's was before D3), no floor, and no target-side
+    // check at all. It is synchronous, so unlike the ALEX creation gate it IS fully drivable here.
+    const v2 = function(o){
+      return g.alexV2OpenPaperResearchTrade(Object.assign({
+        eligible:true,signalId:'V2|D3C|'+(Math.floor(Math.random()*1e9)),pair:'EUR/USD',oPair:'EUR_USD',
+        direction:'buy',proposedEntry:1.10000,proposedStop:1.09500,proposedTarget:1.11000,
+        riskReward:2,score:80,grade:'A'},o||{}));
+    };
+    g.resetAlexV2Account();
+    const v2ok=v2();
+    assert('D3C.23 POSITIVE CONTROL: a well-formed ALEX V2 setup still opens -- the gate is not '+
+      'refusing everything',
+      v2ok&&v2ok.committed===true&&g.getAlexV2Account().openPositions.length===1,
+      JSON.stringify(v2ok).slice(0,160));
+
+    g.resetAlexV2Account();
+    const v2bad=v2({proposedStop:1.10500});
+    assert('D3C.24 a wrong-side LONG stop is refused by ALEX V2 and NO position is created -- '+
+      'Math.abs() would have made this risk positive again and sized it normally',
+      !!v2bad.error&&v2bad.geometryState==='STOP_WRONG_SIDE'&&
+      g.getAlexV2Account().openPositions.length===0,
+      JSON.stringify(v2bad));
+
+    g.resetAlexV2Account();
+    const v2tiny=v2({proposedStop:1.099995});
+    assert('D3C.25 near-zero risk (0.05 pips) is refused by ALEX V2 and no position is created',
+      !!v2tiny.error&&v2tiny.geometryState==='RISK_TOO_SMALL'&&
+      g.getAlexV2Account().openPositions.length===0,
+      JSON.stringify(v2tiny));
+
+    g.resetAlexV2Account();
+    const v2tgt=v2({proposedTarget:1.09000});
+    assert('D3C.26 a wrong-side TARGET is refused by ALEX V2 -- previously never checked at all',
+      !!v2tgt.error&&v2tgt.geometryState==='TARGET_WRONG_SIDE'&&
+      g.getAlexV2Account().openPositions.length===0,
+      JSON.stringify(v2tgt));
+
+    g.resetAlexV2Account();
+    let v2malformed=0;
+    [{proposedEntry:NaN},{proposedStop:Infinity},{direction:null},{proposedTarget:NaN}].forEach(function(o){
+      g.resetAlexV2Account();
+      const r=v2(o);
+      if(r&&r.error&&g.getAlexV2Account().openPositions.length===0) v2malformed++;
+    });
+    assert('D3C.27 malformed ALEX V2 geometry (NaN entry, Infinity stop, absent direction, NaN '+
+      'target) is refused in every shape, with no position created',
+      v2malformed===4,'refused='+v2malformed+'/4');
+    g.resetAlexV2Account();
+
+    // ── 6. THE FLOOR IS A SAFETY FLOOR, NOT A STRATEGY RULE ──────────────────────────────────
+    // Measured against the whole preserved corpus, split by population so replay and forward stay
+    // distinguishable (docs/trader-intelligence/evidence/observations, 259 records):
+    //   ALEX forward 36/36 VALID, tightest real risk 7.262 pips
+    //   ALEX replay 221/221 VALID, tightest real risk 5.027 pips
+    // The floor sits five to seven times below anything ALEX has ever actually traded, so it
+    // cannot decide which setups qualify -- which is the whole difference between a safety floor
+    // and a strategy parameter.
+    assert('D3C.28 MIN_RISK_PIPS sits far below the tightest risk distance ALEX has ever traded '+
+      '(5.027 pips in replay, 7.262 forward), so it cannot act as a strategy filter',
+      g.MIN_RISK_PIPS===1.0&&g.MIN_RISK_PIPS<5.027,'floor='+g.MIN_RISK_PIPS);
+
+    assert('D3C.29 the historical tightest ALEX risk distance (5.027 pips) is still ACCEPTED by '+
+      'the canonical contract -- the gate rejects nothing ALEX has ever done',
+      !Q(mkAlex({entry:1.10000,stop:1.0994973,target:1.11000})),'');
+
+    // ── 6b. THE AUDIT IS ACTUALLY WIRED INTO THE LOADER ──────────────────────────────────────
+    // Mutation testing found that deleting the alexGAuditRehydratedPositions() call from
+    // loadAlexGSaved() killed nothing: the audit function was covered, its INVOCATION was not.
+    // loadAlexGSaved is synchronous and directly drivable, so this is closed rather than disclosed.
+    {
+      const badStored={balance:10000,startingBalance:10000,closedPositions:[],
+        openPositions:[mkAlex({tradeId:AGID('L1'),stop:1.10500})]};   // wrong-side, from storage
+      g.setLocalStorageItem('fxhub_alexg_account',JSON.stringify(badStored));
+      g.setAlexGEngineErrors([]);
+      g.loadAlexGSaved();
+      const wired=g.getAlexGEngineErrors();
+      assert('D3C.35 THE WIRING: loading an ALEX account whose stored open position has wrong-side '+
+        'geometry ANNOUNCES the quarantine through the real loader. Without this fixture the audit '+
+        'call could be deleted from loadAlexGSaved() and nothing would object',
+        wired.length===1&&String(wired[0].message).indexOf('INVALID_REHYDRATED_POSITION')===0&&
+        wired[0].source==='alexGAuditRehydratedPositions',
+        JSON.stringify(wired).slice(0,160));
+
+      const goodStored={balance:10000,startingBalance:10000,closedPositions:[],
+        openPositions:[mkAlex({tradeId:AGID('L2')})]};
+      g.setLocalStorageItem('fxhub_alexg_account',JSON.stringify(goodStored));
+      g.setAlexGEngineErrors([]);
+      g.loadAlexGSaved();
+      assert('D3C.36 POSITIVE CONTROL for the wiring: loading a CLEAN ALEX account announces '+
+        'nothing -- the loader is not simply always reporting a quarantine',
+        g.getAlexGEngineErrors().length===0,
+        JSON.stringify(g.getAlexGEngineErrors()).slice(0,120));
+      g.setLocalStorageItem('fxhub_alexg_account',JSON.stringify(
+        {balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]}));
+    }
+
+    // ── 7. THE GUARD IS GEOMETRY-SCOPED, NOT "QUARANTINED FOR ANY REASON" ────────────────────
+    // ALEX (unlike 'current_strategy') has a TRADE_INTEGRITY profile, so the general quarantine
+    // question additionally asks whether the trade id looks engine-minted. That is a PROVENANCE
+    // question, not a geometry one, and suppressing exit monitoring on those grounds would freeze
+    // a legitimate open position rather than protect anything. The servicing boundary therefore
+    // asks the geometry question directly -- which also makes ALEX behave identically to JVM,
+    // where the general predicate already reduces to geometry for an open position.
+    const oddId=mkAlex({tradeId:'AGT|HANDWRITTEN|1'});   // sound geometry, non-engine-minted id
+    assert('D3C.30 a position with SOUND geometry but a non-engine-minted trade id IS still '+
+      'quarantined by the general predicate -- the provenance rule keeps its existing effect',
+      g.tradeIntegrityIsQuarantined(oddId,'alex_g_sr_v1'),'');
+
+    assert('D3C.31 ...but it is NOT geometry-quarantined, so the servicing boundary still monitors '+
+      'it. Reusing the general predicate here would have silently frozen a legitimate open '+
+      'position on provenance grounds -- a materially worse failure than the one D3C fixes',
+      !g.openPositionGeometryQuarantined(oddId,'alex_g_sr_v1'),'');
+
+    const fetchCalls2=[];
+    g.stubAlexExecutableCandles(function(pair){ fetchCalls2.push(pair); return new Promise(function(){}); });
+    seedAlex([oddId]);
+    g.alexGCheckLivePositions('scan-d3c-5');
+    assert('D3C.32 proven behaviourally: the monitor DOES reach a geometry-sound position whose '+
+      'id merely looks unusual',
+      fetchCalls2.length===1,'fetches='+JSON.stringify(fetchCalls2));
+
+    seedAlex([mkAlex({tradeId:'AGT|HANDWRITTEN|2',stop:1.10500})]);
+    fetchCalls2.length=0;
+    g.alexGCheckLivePositions('scan-d3c-6');
+    assert('D3C.33 POSITIVE CONTROL for D3C.32: the same unusual id with WRONG-SIDE geometry is '+
+      'still refused -- the narrowing did not weaken the geometry invariant itself',
+      fetchCalls2.length===0,'fetches='+JSON.stringify(fetchCalls2));
+    g.restoreAlexExecutableCandles();
+
+    assert('D3C.34 the ALEX audit reports the GEOMETRY quarantine only, so what it announces and '+
+      'what the monitor actually excludes cannot disagree',
+      (function(){ seedAlex([oddId]); const a=g.alexGAuditRehydratedPositions();
+        return a.total===1&&a.invalid===0&&a.valid===1; })(),'');
+
+    seedClean();
+    g.setAlexGAccount({balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]});
+  }
+
   return results;
 }

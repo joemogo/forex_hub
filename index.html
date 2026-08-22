@@ -3399,6 +3399,11 @@ function commitAlexGLedger(){
 // v12.8.1 INC-001: per-key isolation, identical rationale to loadSaved() above.
 function loadAlexGSaved(){
   loadStoredKey('fxhub_alexg_account',v=>{alexGAccount=JSON.parse(v);});
+  // D3C: classify every REHYDRATED ALEX open position against the canonical geometry contract and
+  // say so. Mirrors loadSaved()'s D3B call exactly; adds no enforcement and mutates nothing (the
+  // refusal to act lives in alexGCheckLivePositions). Absence of a report is not evidence of
+  // health -- this makes the presence of one impossible to miss.
+  try{ alexGAuditRehydratedPositions(); }catch(e){ /* an audit must never block a load */ }
   loadStoredKey('fxhub_alexg_account_version',v=>{alexGAccountKnownVersion=parseInt(v,10)||0;}); // v12.3.2: sync this session's known version at load time, mirrors loadSaved()
   loadStoredKey('fxhub_alexg_journal',v=>{alexGJournalEntries=JSON.parse(v);});
   loadStoredKey('fxhub_alexg_auto',v=>{alexGAutoTrading=JSON.parse(v);});
@@ -4894,6 +4899,48 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
     tradeId:result.position?result.position.tradeId:null,source:'alexGAttemptOpenLivePosition',
     stage:'CONSTRUCTION',decision:'APPROVED',context:{signalId},evidenceCompleteness:'COMPLETE'});
   const position=result.position;
+  // ── D3C: THE CANONICAL GEOMETRY CONTRACT, APPLIED TO ALEX'S EXECUTION BOUNDARY ────────────
+  // D3 closed JVM's creation boundary and D3B closed JVM's rehydration boundary, both against
+  // validateTradeGeometry(). ALEX reached ACTIVE state without ever consulting that contract.
+  //
+  // WHAT ALEX ALREADY DID, AND WHAT IT DID NOT. alexGConstructLivePosition (PROTECTED, and NOT
+  // edited here) already enforces the SIGNED stop check that D3 had to add to JVM -- a buy needs
+  // `stop<liveFillPrice`, a sell `stop>liveFillPrice`, strictly -- so ALEX was never exposed to
+  // the wrong-side stop D3 found. What it has no notion of is a MINIMUM RISK DISTANCE: riskDistance
+  // is only ever required to make positionSize finite and positive, so a stop legitimately on the
+  // correct side but a fraction of a pip away passes construction and sizes without bound, which
+  // is defect (3) of D3 reached by a different route.
+  //
+  // NOT A PROTECTED CHANGE. The gate is here, in the non-protected caller, on the object the
+  // protected constructor already returned -- the same seam MOGO-002.5's provenance stamp uses.
+  // Nothing is read, overwritten or reordered on the position, and no entry/stop/target/size
+  // arithmetic is touched: the same market data still produces the same trade, or no trade.
+  //
+  // NOT A STRATEGY RULE. MIN_RISK_PIPS=1.0 rejects geometry no broker would fill meaningfully.
+  // Measured against the whole preserved corpus, split by population so replay and forward stay
+  // distinguishable: 36/36 ALEX forward observations VALID (tightest real risk 7.262 pips) and
+  // 221/221 ALEX replay observations VALID (tightest 5.027 pips) -- five to seven times the floor,
+  // zero wrong-side and zero non-finite records. This gate rejects NOTHING ALEX has ever done.
+  const __d3cPip=pipSize(position.pair); // frozen current-strategy function, unmodified
+  const __d3cGeom=validateTradeGeometry(position.direction,position.entry,position.stop,position.target,__d3cPip,MIN_RISK_PIPS);
+  if(__d3cGeom.state!==TRADE_GEOMETRY.VALID){
+    // Mirrors the construction-failure branch above exactly -- same event type, same pipeline
+    // stage, same setup-status record, same duplicate-prevention mark -- because an inconsistent
+    // duplicate-prevention path would itself be a defect. The recorded status is the REAL outcome
+    // (blocked on geometry), never the constructor's now-superseded 'TRADE OPENED'.
+    emitDecisionEvent({eventType:'TRADE_OPEN_FAILED',strategyId:RULES_ALEXG.ruleVersion,scanId,correlationId:scanId,
+      candidateId:setup.setupId,tradeId:position.tradeId,pair:setup.pair,timeframe:setup.timeframe,
+      direction:position.direction,source:'alexGAttemptOpenLivePosition',stage:'CONSTRUCTION',decision:'REJECTED',
+      reasonCode:'RISK_GEOMETRY_CONTRACT_VIOLATION',reasonText:__d3cGeom.state,
+      context:{signalId,geometryState:__d3cGeom.state,riskPips:__d3cGeom.riskPips,minRiskPips:MIN_RISK_PIPS},
+      evidenceCompleteness:'COMPLETE'});
+    alexGRecordPipelineStage('REQUEST_FAILED',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
+      setupId:setup.setupId,signalId:signalId,tradeId:position.tradeId,
+      status:'BLOCKED — INVALID GEOMETRY',reason:__d3cGeom.state});
+    alexGRecordLiveSetupStatus(Object.assign({},base,{status:'BLOCKED — INVALID GEOMETRY',reason:__d3cGeom.state}));
+    alexGMarkSetupDecided(setup,signalId);
+    return;
+  }
   // MOGO-002.5 Phase 5: strategy provenance stamp. ADDITIVE AND OUTSIDE PROTECTED CODE --
   // alexGConstructLivePosition() is a PROTECTED function (regression-baseline.json) and is
   // deliberately NOT edited; the stamp is applied here, in its non-protected caller, on the
@@ -5458,6 +5505,25 @@ async function alexGCheckLivePositions(scanId){
   // tick and left to the duplicate index to absorb.
   const __pipeOpenBefore=alexGAccount.openPositions.map(function(p){return p&&p.tradeId;});
   for(const pos of [...alexGAccount.openPositions]){
+    // ── D3C: THE SERVICING BOUNDARY. This is the universal half of the invariant. ────────────
+    // The gate in alexGAttemptOpenLivePosition stops bad geometry being CREATED; this stops it
+    // being ACTED ON, whatever route it arrived by. loadStoredKey('fxhub_alexg_account') JSON
+    // .parses openPositions wholesale from localStorage with no validation of any kind, exactly
+    // as the JVM loader did before D3B, so a position persisted before this release -- or written
+    // to storage by any other route -- otherwise rehydrates and is serviced here as legitimate.
+    //
+    // It also covers every OTHER insertion path into this array, present and future, including
+    // generateTestAlexTrade: nothing in ALEX becomes ACTIVE (monitored, exited, closed, booked to
+    // P&L) without passing this line, so a new writer cannot reopen the hole by forgetting a check.
+    //
+    // Same canonical contract as the creation boundary, reached through the SAME
+    // TI_OPEN_POSITION_GEOMETRY rule JVM uses, so the enforcement points cannot drift into
+    // disagreeing about what a valid position is. One definition, now four enforcement points.
+    //
+    // Nothing is deleted or mutated: the record stays byte-identical in openPositions and on disk
+    // and is still listed and fully inspectable -- it is barred only from exit processing, which
+    // is the one thing here that could act on it.
+    if(openPositionGeometryQuarantined(pos,'alex_g_sr_v1')) continue;
     try{
       const nowMs=Date.now();
       const sinceMs=pos.lastExitCheckTimestamp||Date.parse(pos.openedAt);
@@ -13454,6 +13520,12 @@ const REASON_CODE_REGISTRY=Object.freeze({
   CONFIG_BEFORE_ACTIVATION:Object.freeze({code:'CONFIG_BEFORE_ACTIVATION',category:'CONFIG',label:'Setup qualified before live trading was activated'}),
   CONFIG_ENTRY_DAY_NOT_ELIGIBLE:Object.freeze({code:'CONFIG_ENTRY_DAY_NOT_ELIGIBLE',category:'CONFIG',label:'Entry day is outside the configured eligible days'}),
   SETUP_SUSPENDED_FOR_RESEARCH:Object.freeze({code:'SETUP_SUSPENDED_FOR_RESEARCH',category:'CONFIG',label:'Setup type suspended for research; candidate recorded, no position opened'}),
+  // D3C: registered BEFORE first use. Distinct from RISK_INVALID_STOP, which is ALEX's own
+  // construction-time stop check against the live fill price. This one means the CANONICAL,
+  // strategy-neutral contract (validateTradeGeometry) refused the geometry at the execution
+  // boundary -- the same contract JVM's openPaperPosition enforces -- so the two engines cannot
+  // disagree about what a valid position is.
+  RISK_GEOMETRY_CONTRACT_VIOLATION:Object.freeze({code:'RISK_GEOMETRY_CONTRACT_VIOLATION',category:'RISK',label:'Position geometry refused by the canonical strategy-neutral trade-geometry contract'}),
   SYSTEM_UNEXPECTED_ERROR:Object.freeze({code:'SYSTEM_UNEXPECTED_ERROR',category:'SYSTEM',label:'Unexpected engine error'}),
   // v12.8.0 MOGO-003 Phase 1 -- registered BEFORE use, so an evidence-persistence failure event
   // actually validates and is retained rather than being silently dropped by validateDecisionEvent.
@@ -14229,22 +14301,43 @@ function evaluateTradeIntegrity(trade,strategyId){
 // D3B: classify restored open positions and record what came back. Read-only over the account:
 // no write, no reorder, no field added, no record removed. Returns the classification so a test
 // or a diagnostic can assert on it without re-deriving the rules.
-function paperAuditRehydratedPositions(){
+//
+// D3C: the classification loop is shared with ALEX rather than transcribed for it. The two audits
+// differ only in which account they read, which strategy profile they judge under, which field
+// carries the position's identity, and which engine-error channel they announce through -- so
+// those four things are parameters and the RULE APPLICATION is one piece of code. A second copy
+// would be a second thing to keep in step with the contract, which is the drift D3B's "one
+// definition" design exists to prevent. The paper return shape is unchanged, field for field.
+function auditOpenPositionsGeometry(list,strategyId,idOf){
   const out={total:0,valid:0,invalid:0,invalidPositions:[]};
-  const list=(paperAccount&&Array.isArray(paperAccount.openPositions))?paperAccount.openPositions:[];
+  list=Array.isArray(list)?list:[];
   out.total=list.length;
   for(let i=0;i<list.length;i++){
     const pos=list[i];
     let report=null;
-    try{ report=evaluateTradeIntegrity(pos,'current_strategy'); }catch(e){ report=null; }
-    if(report&&report.status==='QUARANTINED'){
+    try{ report=evaluateTradeIntegrity(pos,strategyId); }catch(e){ report=null; }
+    // D3C: the audit asks the GEOMETRY question, which is exactly the question the servicing
+    // boundary acts on -- so what is announced and what is actually excluded from monitoring can
+    // never disagree. A record quarantined for some other reason (ALEX's trade-id provenance rule)
+    // keeps its existing treatment: excluded from statistics and badged on the surfaces, untouched
+    // by this audit and still monitored, because its GEOMETRY is sound. On the JVM side this is a
+    // distinction without a difference -- 'current_strategy' has no profile and every other rule
+    // short-circuits on an open record -- so the D3B behaviour and return shape are unchanged.
+    const geom=report?(report.violations||[]).filter(function(v){
+      return v.ruleId==='TI_OPEN_POSITION_GEOMETRY'&&v.severity==='INVALID'; })[0]:null;
+    if(geom){
       out.invalid++;
-      const geom=(report.violations||[]).filter(function(v){return v.ruleId==='TI_OPEN_POSITION_GEOMETRY';})[0];
-      out.invalidPositions.push({id:pos&&pos.id,pair:pos&&(pos.oPair||pos.pair),
-        reason:geom?(geom.observed&&geom.observed.geometryState):'QUARANTINED',
+      out.invalidPositions.push({id:idOf(pos),pair:pos&&(pos.oPair||pos.pair),
+        reason:(geom.observed&&geom.observed.geometryState)||'QUARANTINED',
         violations:(report.violations||[]).map(function(v){return v.ruleId;})});
     } else { out.valid++; }
   }
+  return out;
+}
+function paperAuditRehydratedPositions(){
+  const out=auditOpenPositionsGeometry(
+    (paperAccount&&Array.isArray(paperAccount.openPositions))?paperAccount.openPositions:[],
+    'current_strategy',function(pos){ return pos&&pos.id; });
   if(out.invalid){
     // Durable and operator-visible through the channel the paper engine already uses for faults.
     try{ recordPaperEngineError('INVALID_REHYDRATED_POSITION: '+out.invalid+' of '+out.total+
@@ -14256,8 +14349,56 @@ function paperAuditRehydratedPositions(){
   }
   return out;
 }
+// D3C: ALEX's half of the same audit. loadAlexGSaved() restores openPositions from localStorage
+// with no validation, exactly as the JVM loader did before D3B, so a position that could not be
+// created today can come back and be serviced. alexGCheckLivePositions is what actually refuses to
+// act on it; this exists so the quarantine is ANNOUNCED at the moment it happens rather than
+// discovered later by someone wondering why an ALEX position stopped moving. No enforcement here,
+// no mutation, no field added, no record moved -- read-only over the account.
+function alexGAuditRehydratedPositions(){
+  const out=auditOpenPositionsGeometry(
+    (typeof alexGAccount!=='undefined'&&alexGAccount&&Array.isArray(alexGAccount.openPositions))?alexGAccount.openPositions:[],
+    'alex_g_sr_v1',function(pos){ return pos&&pos.tradeId; });
+  if(out.invalid){
+    // Announced through ALEX's own fault channel, tagged by PROVENANCE (v12.30.0) rather than by
+    // a message prefix a leak could choose for itself.
+    try{ recordAlexGEngineError('INVALID_REHYDRATED_POSITION: '+out.invalid+' of '+out.total+
+      ' restored open ALEX position(s) do not satisfy the canonical geometry contract and have been '+
+      'quarantined — excluded from exit processing, P&L and statistics, still listed and still '+
+      'byte-identical in storage. '+out.invalidPositions.map(function(p){
+        return String(p.pair)+'#'+String(p.id)+' ('+String(p.reason)+')'; }).join(', ')+
+      '. Nothing was deleted or modified; investigate before acting.',
+      {source:'alexGAuditRehydratedPositions'}); }catch(e){}
+  }
+  return out;
+}
 function tradeIntegrityIsQuarantined(trade,strategyId){
   return evaluateTradeIntegrity(trade,strategyId).status==='QUARANTINED';
+}
+// D3C: the GEOMETRY quarantine specifically, which is a narrower question than "is this record
+// quarantined for any reason at all".
+//
+// WHY THE DISTINCTION EXISTS, AND WHY IT IS NOT DRIFT FROM D3B. On the JVM side D3B asks the
+// general question, and for an OPEN position that is already equivalent: every other rule in
+// TRADE_INTEGRITY_RULES short-circuits on a missing `result`/`closedAt`, and the only
+// profile-scoped rule (TI_TRADE_ID_ENGINE_MINTED) is skipped entirely for 'current_strategy',
+// which has no profile. ALEX DOES have a profile, so there the general question additionally
+// asks whether the trade id looks engine-minted -- a provenance question, not a geometry one.
+//
+// Suppressing exit monitoring on provenance grounds would be a different and materially riskier
+// decision than the one D3C is making: a legitimate open position with an unexpected id would
+// stop being monitored and simply sit there. That is a real operational freeze, and it is not
+// what this release is establishing. Asking the geometry question directly makes the two engines
+// behave IDENTICALLY, where reusing the general predicate would have made them diverge.
+//
+// The provenance rule keeps its existing, unchanged effect: such a record is still quarantined,
+// still excluded from statistics, and still badged on the surfaces.
+function openPositionGeometryQuarantined(trade,strategyId){
+  let report=null;
+  try{ report=evaluateTradeIntegrity(trade,strategyId); }catch(e){ return false; } // a throw never quarantines
+  return !!(report&&(report.violations||[]).some(function(v){
+    return v.ruleId==='TI_OPEN_POSITION_GEOMETRY'&&v.severity==='INVALID';
+  }));
 }
 // The statistics boundary. Every aggregate calls this; nothing is removed from the account.
 function tradeIntegrityFilterForStatistics(records,strategyId){
@@ -22392,6 +22533,22 @@ function alexV2OpenPaperResearchTrade(v2Result){
   const pipValue=pipValuePerLot(v2Result.oPair); // frozen, unmodified
   if(pipValue==null) return{error:"Can't size this position — no live conversion rate available."};
   const pip=pipSize(v2Result.oPair);
+  // ── D3C: the canonical contract, before anything is sized or built. ───────────────────────
+  // This path is currently UNREACHABLE -- alexV2OpenPaperResearchTrade has no caller anywhere in
+  // the repository, no UI binding and no registry entry -- so it is not today a production
+  // insertion path and this gate changes no live behaviour. It is here because it is the worst
+  // geometry handling left in the codebase and the cheapest possible moment to fix it: risk is
+  // computed with Math.abs(), which discards the SIGN exactly as JVM's did before D3, there is no
+  // minimum risk distance, and the target is never checked for side at all. Wiring the Inspector's
+  // execute button later must not silently reopen the hole D3, D3B and D3C just closed, so the
+  // invariant is made universal now rather than left as "universal except the function nobody
+  // calls yet".
+  const __d3cV2Geom=validateTradeGeometry(v2Result.direction,v2Result.proposedEntry,v2Result.proposedStop,
+    v2Result.proposedTarget,pip,MIN_RISK_PIPS);
+  if(__d3cV2Geom.state!==TRADE_GEOMETRY.VALID){
+    return{error:'Trade geometry rejected ('+__d3cV2Geom.state+'): this setup cannot be sized safely.',
+      geometryState:__d3cV2Geom.state};
+  }
   const riskAmount=alexV2Account.balance*(ALEX_V2_META.riskPolicy.riskPercent/100);
   const riskDistPips=Math.abs(v2Result.proposedEntry-v2Result.proposedStop)/pip;
   const positionSize=riskDistPips>0?riskAmount/(riskDistPips*pipValue):null;
