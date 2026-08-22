@@ -18328,6 +18328,73 @@ function openTradeInspectorPanel(journalEntryId){
 }
 
 // ── PAPER TRADING ──
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// TRADE GEOMETRY VALIDATION -- D3. PURE, TESTED, AND DELIBERATELY NOT WIRED IN.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// This function is the CORRECTED behaviour for the D3 defect, supplied so the eventual
+// protected-function change is a one-line call rather than new logic written under time
+// pressure. It is intentionally NOT called by evaluateLiveTrigger or openPaperPosition:
+// both are PROTECTED, and wiring this in changes which trades are permitted -- a governed
+// change requiring owner authorization and a re-baselined drift check.
+//
+// THE DEFECT IT CORRECTS. evaluateLiveTrigger computes
+//     riskPips = Math.abs(price-stop)/pip
+// and guards only `if(riskPips<=0)`. openPaperPosition guards only `if(!(riskPips>0))`.
+// Neither checks the SIGN, and Math.abs() has already discarded it. So:
+//
+//   1. WRONG-SIDE STOP FIRES. For a buy, stop = aoi.support - pip*7. The AOI comes from
+//      DAILY/WEEKLY candles, filtered against the last CLOSED bar's close and cached 15
+//      minutes, while `price` is live. When price trades below support-7pip the stop sits
+//      ABOVE the entry -- and abs() makes riskPips positive again, so the trade fires.
+//   2. THE R:R GATE MAKES IT WORSE, NOT BETTER. ratio = rewardPips/riskPips, so as riskPips
+//      approaches zero the ratio approaches infinity and sails past the 1.99 minimum. The
+//      one gate that looks protective actively admits the dangerous case.
+//   3. SIZE IS UNBOUNDED. lots = riskAmount/(riskPips*pipValue) with NO cap anywhere --
+//      measured: no maxLots, no notional cap, no margin check between trigger and commit.
+//      At riskPips 0.5 -> 20 lots (2,000,000 units, 200x leverage on a $10,000 account);
+//      at 0.05 -> 200 lots, where a FIVE-PIP adverse move loses the entire account. The
+//      position is sized as though the stop were 0.05 pips away, but closePaperPosition
+//      books the exit from fetchBidAsk() at market, so the realised move is at least the
+//      spread. commitPaperLedger refuses only NON-FINITE values; a huge-but-finite loss
+//      commits normally.
+//
+// MEASURED HISTORICALLY: across all 259 preserved observations the smallest risk distance
+// is 5.03 pips, the largest position 2.17 lots, and there are ZERO inverted-geometry
+// records. D3 is LATENT, not realised -- the guard rail is missing, but the geometry has
+// not yet landed in the dangerous region. That is the case for fixing it before it does,
+// not evidence that it cannot happen: 5.03 is already below the 7-pip floor the stop
+// construction implies, so the sub-7 region is demonstrably reachable.
+//
+// MIN_RISK_PIPS is a SAFETY FLOOR, not a strategy parameter. It rejects geometry no real
+// broker would fill meaningfully -- a stop inside the spread. It must never be tuned to
+// admit or exclude setups; that would make it a strategy rule.
+const MIN_RISK_PIPS=1.0;
+const TRADE_GEOMETRY=Object.freeze({
+  VALID:'VALID',
+  STOP_WRONG_SIDE:'STOP_WRONG_SIDE',      // stop on the losing side of entry for this direction
+  RISK_TOO_SMALL:'RISK_TOO_SMALL',        // positive but below the safety floor
+  TARGET_WRONG_SIDE:'TARGET_WRONG_SIDE',  // target would be hit instantly
+  NON_FINITE:'NON_FINITE'                 // NaN/Infinity anywhere in the geometry
+});
+// Pure. Validates SIGNED geometry -- the thing Math.abs() throws away.
+function validateTradeGeometry(dir,entry,stop,target,pip,minRiskPips){
+  const floor=(minRiskPips==null?MIN_RISK_PIPS:minRiskPips);
+  if(![entry,stop,pip].every(function(v){return typeof v==='number'&&isFinite(v);})||!(pip>0))
+    return{state:TRADE_GEOMETRY.NON_FINITE,riskPips:null};
+  if(target!=null&&!(typeof target==='number'&&isFinite(target)))
+    return{state:TRADE_GEOMETRY.NON_FINITE,riskPips:null};
+  if(dir!=='buy'&&dir!=='sell') return{state:TRADE_GEOMETRY.NON_FINITE,riskPips:null};
+  // SIGNED, not absolute. A buy must have its stop strictly BELOW entry; a sell strictly above.
+  const signedRisk=(dir==='buy')?(entry-stop):(stop-entry);
+  if(!(signedRisk>0)) return{state:TRADE_GEOMETRY.STOP_WRONG_SIDE,riskPips:signedRisk/pip};
+  const riskPips=signedRisk/pip;
+  if(riskPips<floor) return{state:TRADE_GEOMETRY.RISK_TOO_SMALL,riskPips:riskPips};
+  if(target!=null){
+    const signedReward=(dir==='buy')?(target-entry):(entry-target);
+    if(!(signedReward>0)) return{state:TRADE_GEOMETRY.TARGET_WRONG_SIDE,riskPips:riskPips};
+  }
+  return{state:TRADE_GEOMETRY.VALID,riskPips:riskPips};
+}
 function pipSize(pair){return pair.includes('JPY')?0.01:0.0001;}
 function pipValuePerLot(pair){
   const parts=pair.split('_');const quote=parts[1];

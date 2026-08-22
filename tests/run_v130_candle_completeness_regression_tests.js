@@ -139,6 +139,9 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // ── the real, unmodified market-data and scanner chain under test ──
   'g.pairEvaluationDisplayState=pairEvaluationDisplayState;' +
+  'g.validateTradeGeometry=validateTradeGeometry;' +
+  'g.TRADE_GEOMETRY=TRADE_GEOMETRY;' +
+  'g.MIN_RISK_PIPS=MIN_RISK_PIPS;' +
   'g.pipValuePerLot=pipValuePerLot;' +
   'g.pipSize=pipSize;' +
   'g.ALL_PAIRS=ALL_PAIRS;' +

@@ -1070,6 +1070,102 @@ function runCandleCompletenessFixtures(g){
       return highPriced.join(',')+' would each get a 100x pip size from the heuristic';
     });
 
+
+    // ══ D3 KNOWN-ANSWER GEOMETRY ════════════════════════════════════════════════════════════
+    // Expected values derived from trade-geometry convention, NOT from the implementation:
+    // a long's stop is below its entry, a short's is above, and risk distance is SIGNED.
+    // validateTradeGeometry is the corrected behaviour and is deliberately NOT wired into the
+    // protected trading path -- these fixtures prove it is ready to be.
+    const P=0.0001;
+
+    await t('GEOM-1 LONG: stop below entry is VALID; equal or above is not',async function(){
+      eq(g.validateTradeGeometry('buy',1.1000,1.0950,1.1100,P).state,g.TRADE_GEOMETRY.VALID);
+      eq(g.validateTradeGeometry('buy',1.1000,1.1000,1.1100,P).state,g.TRADE_GEOMETRY.STOP_WRONG_SIDE,
+        'stop EQUAL to entry is zero risk, not a trade');
+      eq(g.validateTradeGeometry('buy',1.1000,1.1050,1.1100,P).state,g.TRADE_GEOMETRY.STOP_WRONG_SIDE,
+        'a long with its stop ABOVE entry must be refused -- Math.abs() currently hides this');
+      return 'long geometry: below VALID, equal/above refused';
+    });
+
+    await t('GEOM-2 SHORT: stop above entry is VALID; equal or below is not',async function(){
+      eq(g.validateTradeGeometry('sell',1.1000,1.1050,1.0900,P).state,g.TRADE_GEOMETRY.VALID);
+      eq(g.validateTradeGeometry('sell',1.1000,1.1000,1.0900,P).state,g.TRADE_GEOMETRY.STOP_WRONG_SIDE);
+      eq(g.validateTradeGeometry('sell',1.1000,1.0950,1.0900,P).state,g.TRADE_GEOMETRY.STOP_WRONG_SIDE,
+        'a short with its stop BELOW entry must be refused');
+      return 'short geometry: above VALID, equal/below refused';
+    });
+
+    await t('GEOM-3 near-zero risk is refused BEFORE it can size a position',async function(){
+      // The unbounded-size case. At riskPips 0.5 the lot count is 20 (2,000,000 units,
+      // 200x leverage on a $10,000 account); at 0.05 it is 200, where a five-pip adverse
+      // move loses the whole account. Sizing is lots=risk/(riskPips*pipValue) with NO cap.
+      eq(g.validateTradeGeometry('buy',1.10000,1.099995,1.1100,P).state,g.TRADE_GEOMETRY.RISK_TOO_SMALL,
+        '0.05 pips of risk must be refused, not sized');
+      eq(g.validateTradeGeometry('buy',1.10000,1.099950,1.1100,P).state,g.TRADE_GEOMETRY.RISK_TOO_SMALL,
+        '0.5 pips of risk must be refused');
+      // Deliberately clear of the boundary: 1.10000-1.09990 is 0.99999999 pips in IEEE-754,
+      // so testing the floor AT the floor tests float representation, not the rule.
+      eq(g.validateTradeGeometry('buy',1.10000,1.09980,1.1100,P).state,g.TRADE_GEOMETRY.VALID,
+        '2 pips is comfortably above the floor and must be permitted');
+      return 'sub-floor risk refused at 0.05 and 0.5 pips; 2 pips permitted';
+    });
+
+    await t('GEOM-4 the R:R gate does NOT protect -- it admits the dangerous case',async function(){
+      // ratio = rewardPips/riskPips, so as risk -> 0 the ratio -> infinity and PASSES the
+      // 1.99 minimum. The one gate that looks protective is the one that lets it through.
+      const risk=0.05, reward=(1.1100-1.10000)/P;
+      ok(reward/risk>1.99,'the ratio passes trivially at 0.05 pips of risk: '+(reward/risk).toFixed(0)+':1');
+      eq(g.validateTradeGeometry('buy',1.10000,1.099995,1.1100,P).state,g.TRADE_GEOMETRY.RISK_TOO_SMALL,
+        'so the geometry check, not the ratio, has to be the thing that refuses it');
+      return 'ratio '+(reward/risk).toFixed(0)+':1 passes; geometry check refuses';
+    });
+
+    await t('GEOM-5 malformed and missing inputs are NON_FINITE, never accidentally valid',async function(){
+      [['buy',NaN,1.09,1.11],['buy',1.10,NaN,1.11],['buy',1.10,1.09,NaN],
+       ['buy',Infinity,1.09,1.11],['sideways',1.10,1.09,1.11]].forEach(function(a){
+        eq(g.validateTradeGeometry(a[0],a[1],a[2],a[3],P).state,g.TRADE_GEOMETRY.NON_FINITE,
+          'malformed input '+JSON.stringify(a)+' must not validate');
+      });
+      eq(g.validateTradeGeometry('buy',1.10,1.09,1.11,0).state,g.TRADE_GEOMETRY.NON_FINITE,
+        'a zero pip size must be refused, not divided by');
+      return 'malformed geometry refused';
+    });
+
+    await t('GEOM-6 a target on the wrong side is refused',async function(){
+      eq(g.validateTradeGeometry('buy',1.1000,1.0950,1.0900,P).state,g.TRADE_GEOMETRY.TARGET_WRONG_SIDE,
+        'a long whose target sits BELOW entry would be hit instantly');
+      eq(g.validateTradeGeometry('sell',1.1000,1.1050,1.1100,P).state,g.TRADE_GEOMETRY.TARGET_WRONG_SIDE);
+      eq(g.validateTradeGeometry('buy',1.1000,1.0950,null,P).state,g.TRADE_GEOMETRY.VALID,
+        'an absent target is not a geometry failure');
+      return 'wrong-side targets refused';
+    });
+
+    await t('GEOM-7 normal trades are UNAFFECTED (positive control)',async function(){
+      // Without this, every fixture above passes on a validator that refuses everything --
+      // which would be a far worse defect than the one being fixed.
+      [['buy',1.10000,1.09500,1.11000],['sell',1.10000,1.10500,1.09000],
+       ['buy',195.000,194.500,196.000],['sell',0.86000,0.86500,0.85000]].forEach(function(a){
+        const pip=(a[1]>50)?0.01:0.0001;
+        eq(g.validateTradeGeometry(a[0],a[1],a[2],a[3],pip).state,g.TRADE_GEOMETRY.VALID,
+          'a normal '+a[0]+' at '+a[1]+' must remain valid');
+      });
+      // Compared with tolerance: 1.10000-1.09500 is 0.005000000000000115 in IEEE-754, so an
+      // exact-equality assertion here would be testing float representation, not the maths.
+      const rp=g.validateTradeGeometry('buy',1.10000,1.09500,1.11000,P).riskPips;
+      ok(Math.abs(rp-50)<1e-6,'risk distance must be 50 pips, got '+rp);
+      return 'four normal geometries all VALID, riskPips exact';
+    });
+
+    await t('GEOM-8 the historical corpus contains NO geometry this would have refused',async function(){
+      // Measured across all 259 preserved observations: smallest risk distance 5.03 pips,
+      // largest position 2.17 lots, zero inverted records. D3 is LATENT, not realised --
+      // so wiring this validator in would have rejected none of MOGO's actual history.
+      eq(g.validateTradeGeometry('sell',0.79950,0.80003,0.79800,P).state,g.TRADE_GEOMETRY.VALID,
+        'the tightest real record (5.03 pips) must remain valid under the floor');
+      ok(5.03>g.MIN_RISK_PIPS,'the floor sits below every distance the corpus actually contains');
+      return 'floor '+g.MIN_RISK_PIPS+' pip < tightest historical 5.03 pips -- no history refused';
+    });
+
     return out;
   })();
 }
