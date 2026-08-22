@@ -96,15 +96,42 @@ Measured impact on the 29-observation FORWARD population:
 A single record of doubtful provenance is **flattering forward performance by 2.0R** — 39 % of the
 population's total loss, and 44 % of its mean.
 
-It is also one of the two observations carrying `strategyId: current_strategy` rather than
-`alex_g_sr_v1`. `current_strategy` is a **placeholder literal** appearing at 8 sites in `index.html`
-(`emitDecisionEvent` calls in `scanAll()` among them); it reached a persisted `sourcePackageId`
-(`PKG|current_strategy|20260806|1`) and from there the observation. A placeholder string is acting
-as a strategy identity — a contract weakness, not a naming nit.
+**CORRECTED 2026-08-22 — `current_strategy` is not a placeholder.** An earlier revision of this
+entry called it a stray placeholder literal. **That was wrong**, and measurement falsified it:
 
-**Honest on every other axis:** both records declare `timeframe` in `unknowns`, so the importer
-invented nothing. The missing-timeframe item and the `current_strategy` item are the **same two
-records**, not four separate defects.
+```js
+const JVM_MANIFEST={ id:'current_strategy', family:'jvm', label:'JVM', ...
+  capabilities:{ scanning:true, paperTrading:true, automation:true, journal:true } };
+```
+
+`current_strategy` is **JVM's canonical registered strategy identifier** — a legacy literal, but a
+real registry id. The Journal filter renders it as `<option value="current_strategy">JVM</option>`,
+and `buildJVMJournalOpenRecord()` writes `strategy/strategyId: 'current_strategy'`,
+`strategyLabel: 'JVM'`, **and `timeframe: null`** on every JVM record.
+
+**One fact explains both "data-quality items" completely.** These are **JVM paper trades**. The
+missing `timeframe` is not corruption — JVM's journal builder hardcodes `null`, and the importer
+honestly recorded it in `unknowns` rather than inventing one. The `current_strategy` item and the
+missing-timeframe item are the **same two records**, and neither is a defect in the importer.
+
+### The consequential correction: JVM's recorded governance status is wrong
+
+`docs/MOGO-022-TO-023-HANDOFF.md` §7 states JVM is *"RESEARCH / STRUCTURAL ONLY… **Evidence
+produced: zero observations. Not paper trading.**"* and separately dismisses `current_strategy` as
+*"anomaly, not a strategy."*
+
+**Measured: JVM has produced 2 observations, both in the FORWARD population**, minted from
+`LIVE_CLOSE` paper trades (`PKG|current_strategy|20260806|1`, `PKG|current_strategy|20260818|1`),
+and its own manifest declares `paperTrading: true, automation: true`. Forward statistics that are
+described as ALEX's therefore contain **2 JVM trades** — 2 of 29, including the 2R outlier above.
+
+**Severity P2, governance/accuracy.** This is not a code defect: it is a strategy-attribution and
+population-purity question. Nothing was rewritten. The open items are (a) whether JVM should be
+producing forward evidence at all under current governance, and (b) whether forward statistics must
+be segmented by `strategyId` before any figure is quoted. **Both are operator decisions.**
+
+**Still unexplained, and still the reason this entry exists:** JVM being the strategy does **not**
+account for a 4-millisecond holding period with an exactly-2R win. That remains open.
 
 **Do not** rewrite, delete or reclassify these records to tidy the counts. The open question is
 provenance: what minted a 4 ms trade. Until answered, every forward figure carries this caveat

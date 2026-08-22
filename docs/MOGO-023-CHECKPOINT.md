@@ -279,18 +279,38 @@ classified FORWARD**.
 **One record of doubtful provenance is flattering forward performance by 2.0R — 39 % of the
 population's total loss and 44 % of its mean.**
 
-It is also one of the two `strategyId: current_strategy` records. `current_strategy` is a
-**placeholder literal** at 8 sites in `index.html` (including `emitDecisionEvent` in `scanAll()`); it
-reached a persisted `sourcePackageId` (`PKG|current_strategy|20260806|1`) and from there the
-observation. **A placeholder string is acting as a strategy identity** — a contract weakness, not a
-naming nit.
+### `current_strategy` resolved — and it falsifies a handoff claim
 
-**Honest on every other axis:** both records declare `timeframe` in `unknowns`, so the importer
-invented nothing. The "2 missing timeframe" and "2 `current_strategy`" items are the **same two
-records**, not four defects.
+An earlier revision of this checkpoint called `current_strategy` a stray placeholder. **Measurement
+falsified that, and the correction matters more than the original claim:**
 
-**Status: OPEN adjudication item.** Not rewritten, not deleted, not reclassified. The open question
-is provenance — what minted a 4 ms trade. Recorded in `docs/KNOWN_ISSUES.md`.
+```js
+const JVM_MANIFEST={ id:'current_strategy', family:'jvm', label:'JVM', ...
+  capabilities:{ scanning:true, paperTrading:true, automation:true, journal:true } };
+```
+
+`current_strategy` is **JVM's canonical registered strategy id.** The Journal filter renders it as
+`<option value="current_strategy">JVM</option>`, and `buildJVMJournalOpenRecord()` writes
+`strategyId:'current_strategy'`, `strategyLabel:'JVM'` **and `timeframe: null`** on every JVM record.
+
+**One fact explains both "data-quality items."** These are **JVM paper trades**. The missing
+`timeframe` is not corruption — JVM hardcodes `null` and the importer honestly recorded it in
+`unknowns`. The two items are the same two records, and the importer did nothing wrong.
+
+**The consequential finding.** Handoff §7 states JVM is *"RESEARCH / STRUCTURAL ONLY… Evidence
+produced: **zero observations. Not paper trading.**"* and dismisses `current_strategy` as *"anomaly,
+not a strategy."* **Measured: JVM has produced 2 observations, both FORWARD**, minted from
+`LIVE_CLOSE` paper trades, and its manifest declares `paperTrading: true, automation: true`.
+
+So the 29-trade FORWARD population is **not** purely ALEX: **27 ALEX + 2 JVM**, and the 2R outlier
+above is one of the JVM pair. Any forward figure quoted as ALEX's is currently mixing two strategies.
+
+**Status: OPEN, operator decision.** Nothing rewritten, nothing reclassified. Two questions: whether
+JVM should be producing forward evidence under current governance, and whether forward statistics
+must be segmented by `strategyId` before any figure is quoted. **Neither is a MOGO decision.**
+
+JVM being the strategy still does **not** explain a 4 ms hold with an exactly-2R win. That remains
+the open provenance question. Recorded in `docs/KNOWN_ISSUES.md`.
 
 ---
 
@@ -355,7 +375,8 @@ evidence rewrite — **nothing to unwind beyond the commit itself.**
 | Sev | Item |
 |---|---|
 | **P2** | 4 ms / +2R FORWARD record — provenance adjudication (§8) |
-| **P2** | `current_strategy` placeholder reaching persisted trade identity (§8) |
+| **P2** | JVM (`current_strategy`) has produced 2 FORWARD observations, contradicting the handoff's *"zero observations, not paper trading"* (§8) — **operator decision** |
+| **P2** | FORWARD population is 27 ALEX + 2 JVM; forward figures must be segmented by `strategyId` before being quoted (§8) |
 | **P2** | Runtime layer has no `CORPUS_ANCHORS` equivalent (§6) — recommended next work |
 | **P2** | B-22: forward statistics describe the preserved subset, not the account |
 | **P2** | Forward PAPER depends on a browser tab; no supervision or alerting |
