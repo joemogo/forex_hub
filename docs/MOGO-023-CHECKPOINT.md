@@ -55,7 +55,14 @@ authoritative work on remote `mogo-main`; both are true simultaneously and neith
 | Forward capture | 41 verified, 0 mismatched, 4 refused | **41 / 41 / 0 mismatched, 4 refused** | ✅ |
 | 11 MOGO governance rules | present | **11 / 11 present**, 3 backups exist | ✅ |
 
-**The handoff is accurate.** Nothing in it was falsified by measurement.
+**Every claim in the table above is accurate.** Nothing in it was falsified by measurement.
+
+**But the handoff is not wholly accurate.** One claim outside this table *was* falsified: §7's
+*"JVM — Evidence produced: zero observations. Not paper trading."* Measurement shows JVM
+(`current_strategy`) has produced **2 FORWARD observations** from `LIVE_CLOSE` paper trades. See §8.
+The handoff's numeric and gate claims held under every check; its **strategy-governance narrative did
+not**, because it treated `current_strategy` as an anomaly rather than resolving it to JVM's
+registered id.
 
 ### Known generated dirty state — adjudicated, not committed blindly
 
