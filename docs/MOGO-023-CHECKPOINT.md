@@ -488,6 +488,57 @@ and evidence package.**
 
 **UNVERIFIED is reported as UNVERIFIED, not as GREEN.**
 
+### 10b. The canonical health authority now exists — and it refuses to say GREEN
+
+Health was spread across `forward_capture.sh`, `mogo_observation_coverage.js`, three validators,
+`observation_graph_reconcile.py`, `forward_coverage.py` and `observation_integrity.py`. Each answers
+one question well; **nothing answered the whole question.** Establishing "is MOGO operating
+correctly?" meant running seven tools and holding the result in a human's head — which is precisely
+the state INC-006 exposed, where a total provider outage looked like a quiet market for as long as
+nobody looked.
+
+`scripts/trader_intelligence/platform_health.py` is one auditable answer. Its live verdict:
+
+```
+MOGO PLATFORM HEALTH -- derived, read-only, adjudicates nothing
+  OVERALL: UNKNOWN   (GREEN 4, YELLOW 1, UNKNOWN 1)
+  [GREEN  ] observation_population   259 observations, all classified
+  [GREEN  ] strategy_attribution     all observations attributed across 2 strategies
+  [YELLOW ] observation_integrity    1 forward observation(s) excluded from the authoritative population
+  [GREEN  ] live_store               origin store written 0.00 hours ago
+  [GREEN  ] provider_transport       provider answered 401 to an unauthenticated probe -- origin healthy
+  [UNKNOWN] engine_evaluation        not observable from the host
+```
+
+**The verdict is UNKNOWN, and that is the correct answer.** MOGO is a browser application, CDP is not
+exposed, and INC-004 forbids driving the operator's profile — so whether the engine is evaluating
+this minute cannot be established from here. The check is present *deliberately*: omitting it would
+make the report look complete while the single most operationally important question went unasked,
+and an unasked question rendering as health is the exact defect this file exists to prevent.
+
+Design properties, each fixture-pinned:
+
+- **UNKNOWN never aggregates to GREEN.** `_RANK` places UNKNOWN above YELLOW, so an unrunnable check
+  cannot be smoothed away by healthy neighbours. An empty check list is UNKNOWN, not GREEN.
+- **Network probes are OFF by default** and yield UNKNOWN until `--network` — an offline run can never
+  silently claim the provider is fine.
+- **A 401 is transport reachability only.** The check states in its own remedy text that it does *not*
+  establish authenticated candle acquisition. That distinction is what INC-006 cost to learn.
+- **A missing live store is UNKNOWN, not RED** — absence on a different machine is not an engine
+  fault. A stale store is YELLOW and says it cannot distinguish operator downtime (valid) from a
+  closed tab.
+- **An integrity violation is YELLOW, not RED** — the record is isolated and excluded; RED would
+  create pressure to repair preserved evidence.
+- **Filesystem metadata only.** Existence and mtime; the store is never opened, so the privacy
+  boundary declined in MOGO-022 is not approached.
+- **RED alone fails the process.** UNKNOWN does not, because turning "not established" into a build
+  failure pushes toward deleting the check rather than establishing the fact.
+
+**The monitor is itself tested.** `--selftest` injects a representative failure per check — 15
+conditions, every check driven to its failure state — and is wired into `tests/run_all.sh` beside the
+three existing selftests. 21 fixtures; 4 mutations killed, including **`engine_evaluation` unwired
+from `report()`**, the "gate written but never called" shape B-32 hit six times.
+
 ---
 
 ## 11. Subagents and research lanes

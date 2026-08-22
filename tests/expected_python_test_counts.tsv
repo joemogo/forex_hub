@@ -30,6 +30,7 @@ tests.trader_intelligence.test_import_mogo_observations	109
 tests.trader_intelligence.test_observation_difference	26
 tests.trader_intelligence.test_observation_graph_reconcile	12
 tests.trader_intelligence.test_observation_integrity	20
+tests.trader_intelligence.test_platform_health	21
 tests.trader_intelligence.test_population_fidelity	44
 tests.trader_intelligence.test_python_test_counts	12
 tests.trader_intelligence.test_research_assimilation	49

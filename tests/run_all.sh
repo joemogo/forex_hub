@@ -200,6 +200,16 @@ if ! bash scripts/mogo_evidence_checkpoint.sh --selftest; then
 fi
 echo ""
 
+# MOGO-023. The health authority is itself a critical component: a green indicator nobody
+# has ever seen go red is a decoration, not a check. This selftest injects a representative
+# failure per check and asserts the aggregation property the whole module exists for --
+# UNKNOWN never becomes GREEN. It is bounded, in-process, and touches nothing on disk.
+echo "--- Platform health selftest (failure injection) ---"
+if ! python3 scripts/trader_intelligence/platform_health.py --selftest; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 # The auto-mode governance block lives in the USER settings file and its sections REPLACE the
 # shipped defaults rather than merging, so every rule a newer Claude Code ships is silently
 # absent until the generator is re-run. Nothing else would ever say so.
