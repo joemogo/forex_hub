@@ -6695,6 +6695,14 @@ function loadSaved(){
   loadStoredKey('fxhub_alerts',v=>{alertLog=JSON.parse(v);});
   loadStoredKey('fxhub_env',v=>{cfg.env=v;setEnv(v);});
   loadStoredKey('fxhub_paper',v=>{paperAccount=JSON.parse(v);});
+  // D3B: classify every REHYDRATED open position against the canonical geometry contract, and
+  // say so. The quarantine itself is computed on read wherever it matters (checkPaperPositions
+  // skips it, statistics exclude it, the table still lists it with its badge) -- this call adds
+  // no enforcement and mutates nothing. It exists so a quarantined position is ANNOUNCED at the
+  // moment it comes back rather than being discovered later by someone wondering why a position
+  // stopped moving. Absence of a report is not evidence of health; this makes the presence of
+  // one impossible to miss.
+  try{ paperAuditRehydratedPositions(); }catch(e){ /* an audit must never block a load */ }
   loadStoredKey('fxhub_paper_version',v=>{paperAccountKnownVersion=parseInt(v,10)||0;}); // v11.0: sync this session's known version at load time
   loadStoredKey('fxhub_auto',v=>{autoTrading=JSON.parse(v);});
   loadStoredKey('fxhub_autoscan',v=>{autoScan=JSON.parse(v);});
@@ -14060,6 +14068,59 @@ function tradeIntegrityProfileFor(strategyId){
   return TRADE_INTEGRITY_STRATEGY_PROFILES[strategyId]||null;
 }
 const TRADE_INTEGRITY_RULES=Object.freeze([
+  // ── D3B: an OPEN position whose geometry could never have been created ──────────────────
+  // D3 closed the creation boundary: openPaperPosition now refuses wrong-side stops, sub-floor
+  // risk and malformed prices. It cannot protect a position that never passed through it --
+  // loadStoredKey('fxhub_paper', v => paperAccount = JSON.parse(v)) restores openPositions
+  // wholesale from localStorage with no validation at all, so a position persisted BEFORE D3
+  // (or written to storage by any other means) rehydrates into active state unchecked and is
+  // then serviced normally by checkPaperPositions.
+  //
+  // This rule reuses the CANONICAL geometry contract -- the same validateTradeGeometry() the
+  // creation boundary calls -- so the two can never drift into disagreeing about what a valid
+  // position is. One definition, two enforcement points.
+  //
+  // OPEN POSITIONS ONLY. A closed trade is judged by the excursion/result rules below; its
+  // geometry is history and re-litigating it here would retroactively move statistics that
+  // have already been reported. `result` is the discriminator, exactly as those rules use it.
+  //
+  // Follows the v12.15.0 contract exactly: computed on READ from the record's own fields, no
+  // ledger write, no new storage key, no migration -- the record stays byte-identical on disk
+  // and fully inspectable. A rule that throws never quarantines.
+  {
+    ruleId:'TI_OPEN_POSITION_GEOMETRY',appliesTo:'*',severity:'INVALID',
+    requirement:'an open position must satisfy the same signed-geometry contract enforced at creation: '+
+      'a long stops below its entry, a short above, risk at or beyond the safety floor, and every price finite',
+    evaluate:function(t){
+      if(t.result) return null;                    // closed trades are judged by the rules below
+      const dir=t.dir||t.direction;
+      const pair=t.oPair||t.pair||'';
+      const pip=(typeof pipSize==='function'&&pair)?pipSize(String(pair).replace('/','_')):null;
+      if(!pip) return null;                        // cannot judge without a pip size -- never guess
+      // A TARGET IS REQUIRED HERE TOO. validateTradeGeometry tolerates a null target (it is a
+      // general-purpose validator), but the creation boundary rejects one and so must this --
+      // otherwise the two enforcement points disagree about what a valid position is, which is
+      // the drift this rule exists to prevent. It is fatal for the same reason: checkPaperPositions
+      // evaluates `live>=pos.target`, and `live>=null` coerces null to 0 and is ALWAYS TRUE, so a
+      // null-target position books a phantom Win on the first tick. Caught by fixture D3B.7.
+      if(typeof t.target!=='number'||!isFinite(t.target)){
+        return{observed:{direction:dir,entry:t.entry,stop:t.stop,target:t.target,
+          geometryState:'TARGET_REQUIRED'},
+          expectation:'a finite target, as required at the creation boundary',
+          detail:'INVALID_REHYDRATED_POSITION (TARGET_REQUIRED): an absent or non-finite target '+
+            'reads as instantly hit by checkPaperPositions. Excluded from active monitoring; the '+
+            'stored record is preserved unchanged.'};
+      }
+      const g=validateTradeGeometry(dir,t.entry,t.stop,t.target,pip,MIN_RISK_PIPS);
+      if(g.state===TRADE_GEOMETRY.VALID) return null;
+      return{observed:{direction:dir,entry:t.entry,stop:t.stop,target:t.target,
+        geometryState:g.state,riskPips:g.riskPips},
+        expectation:'VALID signed geometry under the canonical contract',
+        detail:'INVALID_REHYDRATED_POSITION ('+g.state+'): this position could not be created by '+
+          'openPaperPosition today. It is excluded from active monitoring, P&L and statistics, and '+
+          'the stored record is preserved unchanged for investigation.'};
+    }
+  },
   {
     ruleId:'TI_WIN_REQUIRES_FAVOURABLE_EXCURSION',appliesTo:'*',severity:'INVALID',
     requirement:'a winning trade must record a favourable excursion at least as large as its planned reward',
@@ -14163,6 +14224,36 @@ function evaluateTradeIntegrity(trade,strategyId){
   }
   if(out.violations.some(function(v){return v.severity==='INVALID';})) out.status='QUARANTINED';
   else if(out.violations.length) out.status='SUSPECT';
+  return out;
+}
+// D3B: classify restored open positions and record what came back. Read-only over the account:
+// no write, no reorder, no field added, no record removed. Returns the classification so a test
+// or a diagnostic can assert on it without re-deriving the rules.
+function paperAuditRehydratedPositions(){
+  const out={total:0,valid:0,invalid:0,invalidPositions:[]};
+  const list=(paperAccount&&Array.isArray(paperAccount.openPositions))?paperAccount.openPositions:[];
+  out.total=list.length;
+  for(let i=0;i<list.length;i++){
+    const pos=list[i];
+    let report=null;
+    try{ report=evaluateTradeIntegrity(pos,'current_strategy'); }catch(e){ report=null; }
+    if(report&&report.status==='QUARANTINED'){
+      out.invalid++;
+      const geom=(report.violations||[]).filter(function(v){return v.ruleId==='TI_OPEN_POSITION_GEOMETRY';})[0];
+      out.invalidPositions.push({id:pos&&pos.id,pair:pos&&(pos.oPair||pos.pair),
+        reason:geom?(geom.observed&&geom.observed.geometryState):'QUARANTINED',
+        violations:(report.violations||[]).map(function(v){return v.ruleId;})});
+    } else { out.valid++; }
+  }
+  if(out.invalid){
+    // Durable and operator-visible through the channel the paper engine already uses for faults.
+    try{ recordPaperEngineError('INVALID_REHYDRATED_POSITION: '+out.invalid+' of '+out.total+
+      ' restored open position(s) do not satisfy the canonical geometry contract and have been '+
+      'quarantined — excluded from TP/SL processing, P&L and statistics, still listed and still '+
+      'byte-identical in storage. '+out.invalidPositions.map(function(p){
+        return String(p.pair)+'#'+String(p.id)+' ('+String(p.reason)+')'; }).join(', ')+
+      '. Nothing was deleted or modified; investigate before acting.'); }catch(e){}
+  }
   return out;
 }
 function tradeIntegrityIsQuarantined(trade,strategyId){
@@ -18651,6 +18742,20 @@ async function closePaperPosition(id,manual,autoResult){
 function checkPaperPositions(){
   if(!paperAccount.openPositions.length)return;
   [...paperAccount.openPositions].forEach(pos=>{
+    // D3B (OWNER-AUTHORIZED PROTECTED CHANGE, D3-scoped). D3 closed the CREATION boundary, but a
+    // position restored from localStorage never passes through it: loadStoredKey('fxhub_paper')
+    // JSON.parses openPositions wholesale with no validation. Without this line a position with
+    // a wrong-side stop or sub-floor risk -- persisted before D3, or written to storage by any
+    // other route -- rehydrates and is serviced here as though it were legitimate: a buy whose
+    // stop sits ABOVE its entry satisfies `live<=pos.stop` on the very first tick and books an
+    // immediate fabricated Loss, sized from geometry openPaperPosition would refuse today.
+    //
+    // Uses the SAME canonical contract as the creation boundary via the TI_OPEN_POSITION_GEOMETRY
+    // integrity rule, so the two enforcement points cannot drift. Nothing is deleted or mutated:
+    // the record stays byte-identical in openPositions and on disk, is still LISTED with a
+    // QUARANTINED badge naming the violated rule, and remains fully inspectable -- it is only
+    // barred from TP/SL processing, which is the one thing that could act on it.
+    if(tradeIntegrityIsQuarantined(pos,'current_strategy'))return;
     const live=pairData[pos.oPair]&&pairData[pos.oPair].price;
     if(!live)return;
     const hitTarget=pos.dir==='buy'?live>=pos.target:live<=pos.target;

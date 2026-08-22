@@ -1288,11 +1288,19 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __exBothSeed.stop>__exBothSeed.target,\n' +
   '    "live "+__exBothLive+" >= target "+__exBothSeed.target+" AND live "+__exBothLive+" <= stop "+__exBothSeed.stop+\n' +
   '    " -- both hitTarget and hitStop are true, which for a buy requires the degenerate stop-above-target bracket seeded here");\n' +
-  '  g.record("JVMEXIT-6","with BOTH levels crossed the shipped TARGET-FIRST ordering records a Win -- the only fixture that can see the branches reordered",\n' +
-  '    __exBoth.length===1&&__exBoth[0].autoResult==="Win"&&__exBothRec.result==="Win"&&\n' +
-  '    __exBothRec.closeReason==="TAKE_PROFIT"&&__exBothRec.pnl===150&&paperAccount.balance===10150,\n' +
-  '    "calls="+JSON.stringify(__exBoth)+" record="+__exBothRec.result+"/"+__exBothRec.closeReason+\n' +
-  '    " pnl="+__exBothRec.pnl+" (checking the stop first records Loss / STOP_LOSS from the identical inputs)");\n' +
+  // D3B REWRITE. This fixture previously asserted that the degenerate bracket produces a WIN of
+  // +$150 and a balance of 10150 -- i.e. it encoded a FABRICATED WINNER from geometry that cannot
+  // exist, as expected behaviour. Both hitTarget and hitStop can only be true together when
+  // stop >= target, and for a valid buy stop < entry < target, so the branch-ordering question is
+  // reachable ONLY through a wrong-side-stop position. D3B quarantines exactly that, so the
+  // ordering is now unreachable by construction and the correct assertion is the stronger one:
+  // NO close of ANY label is produced, and the balance does not move. Not a weakened test --
+  // previously one fabricated outcome was permitted, now none is.
+  '  g.record("JVMEXIT-6","D3B: the degenerate stop-above-target bracket is QUARANTINED, so neither exit branch fires and no fabricated Win is booked (was: TARGET-FIRST ordering records a Win of +150)",\n' +
+  '    __exBoth.length===0&&paperAccount.closedPositions.length===0&&!__exBothRec.result&&\n' +
+  '    paperAccount.balance===10000&&jvmStillOpen("JVMEXIT-BOTH"),\n' +
+  '    "calls="+JSON.stringify(__exBoth)+" closed="+paperAccount.closedPositions.length+" balance="+paperAccount.balance+\n' +
+  '    " -- the position remains open, byte-identical and inspectable; it is barred from processing, not deleted");\n' +
   // SIBLING CONTROL for the ambiguity fixture: the SAME degenerate position, one variable moved
   // (the live price), so the stop branch is the only one that can fire. Without this, JVMEXIT-6
   // could be passing simply because this bracket always yields Win.
@@ -1302,11 +1310,16 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.setBidAsk("1.10100","1.10130");\n' +
   '  const __exOne=await jvmExitSweep();\n' +
   '  const __exOneRec=jvmClosedRec("JVMEXIT-BOTH2");\n' +
-  '  g.record("JVMEXIT-7","SIBLING CONTROL, one variable away: the SAME degenerate bracket below its target records a Loss, so the Win above is the ORDERING and not the bracket",\n' +
-  '    __exOne.length===1&&__exOne[0].autoResult==="Loss"&&__exOneRec.result==="Loss"&&\n' +
-  '    __exOneRec.closeReason==="STOP_LOSS"&&__exOneRec.pnl===50&&paperAccount.balance===10050,\n' +
-  '    "only the live price changed (1.10300 -> 1.10100): calls="+JSON.stringify(__exOne)+" record="+\n' +
-  '    __exOneRec.result+" while pnl="+__exOneRec.pnl+" is POSITIVE -- the label follows the level crossed, not the money");\n' +
+  // D3B REWRITE. Previously asserted the same degenerate bracket records a LOSS whose pnl is
+  // +50 -- POSITIVE -- its own text conceding "the label follows the level crossed, not the
+  // money". That is a fabricated loser with a positive P&L, from a position that cannot exist.
+  // The quarantine removes it at ANY live price, which is what this control now proves: the
+  // outcome does not depend on where the price sits, because the position is never processed.
+  '  g.record("JVMEXIT-7","D3B SIBLING CONTROL: the SAME degenerate bracket is quarantined at a DIFFERENT live price too, so the refusal is a property of the geometry and not of where price happens to sit (was: records a Loss with a POSITIVE pnl of +50)",\n' +
+  '    __exOne.length===0&&paperAccount.closedPositions.length===0&&!__exOneRec.result&&\n' +
+  '    paperAccount.balance===10000&&jvmStillOpen("JVMEXIT-BOTH2"),\n' +
+  '    "only the live price changed (1.10300 -> 1.10100): calls="+JSON.stringify(__exOne)+\n' +
+  '    " closed="+paperAccount.closedPositions.length+" balance="+paperAccount.balance);\n' +
   // ══ 🔴 MOGO-021 §18.26: three MONEY-PATH mutations inside PROTECTED functions had no
   //    behavioural coverage at all -- the drift baseline was their only control, and a drift hash
   //    says the bytes did not change, never that the arithmetic is right. Each survived the full

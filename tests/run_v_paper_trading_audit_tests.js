@@ -73,8 +73,14 @@ const wrapped = new Function('g',
   // -- paper-ledger engine functions under test (real, unmodified, protected) --
   'g.openPaperPosition=openPaperPosition;' +
   'g.TRADE_GEOMETRY=TRADE_GEOMETRY;' +
-  'g.MIN_RISK_PIPS=MIN_RISK_PIPS;' +
+  'g.paperAuditRehydratedPositions=paperAuditRehydratedPositions;' +
+  'g.tradeIntegrityIsQuarantined=tradeIntegrityIsQuarantined;' +
+  'g.evaluateTradeIntegrity=evaluateTradeIntegrity;' +
+  'g.checkPaperPositions=checkPaperPositions;' +
+  'g.closingIds=function(){return Array.from(paperPositionsClosing);};' +
+  'g.clearClosing=function(){paperPositionsClosing.clear();};' +
   'g.setPairPriceD3=function(p,v){ if(!pairData[p]) pairData[p]={}; pairData[p].price=v; };' +
+  'g.MIN_RISK_PIPS=MIN_RISK_PIPS;' +
   'g.closePaperPosition=closePaperPosition;' +
   'g.showPanel=showPanel;' +
   'g.commitPaperLedger=commitPaperLedger;' +

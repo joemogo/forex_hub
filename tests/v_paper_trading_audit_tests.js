@@ -2958,5 +2958,133 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     seedClean();
   }
 
+  // ═══ D3B REHYDRATION INTEGRITY ══════════════════════════════════════════════════════════
+  // D3 closed the CREATION boundary. A position restored from localStorage never passes
+  // through it -- loadStoredKey('fxhub_paper') JSON.parses openPositions wholesale. These
+  // fixtures build accounts the way a rehydration does (direct assignment, bypassing
+  // openPaperPosition entirely) and assert the position cannot become active.
+  {
+    const mkPos=function(o){
+      return Object.assign({id:1,pair:'EUR/USD',oPair:'EUR_USD',dir:'buy',
+        entry:1.10000,stop:1.09500,target:1.11000,riskPips:50,lots:0.2,units:20000,
+        riskAmount:100,pipValueAtEntry:10,openedAt:'2026-08-01T00:00:00.000Z',source:'auto'},o||{});
+    };
+    const rehydrate=function(positions){
+      seedClean();
+      const a=g.getPaperAccount(); a.openPositions=positions; g.setPaperAccount(a);
+      g.setPairPriceD3('EUR_USD',1.10000);
+    };
+
+    rehydrate([mkPos()]);
+    assert('D3B.1 a VALID rehydrated LONG is not quarantined and restores normally',
+      !g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy'),'');
+
+    rehydrate([mkPos({dir:'sell',entry:1.10000,stop:1.10500,target:1.09000})]);
+    assert('D3B.2 a VALID rehydrated SHORT is not quarantined',
+      !g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy'),'');
+
+    rehydrate([mkPos({stop:1.10000})]);
+    assert('D3B.3 stop EQUAL to entry is quarantined on rehydration',
+      g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy'),'');
+
+    rehydrate([mkPos({stop:1.10500})]);
+    assert('D3B.4 a wrong-side LONG stop (above entry) is quarantined -- the exact shape a stale '+
+      'D/W AOI against a live price produces, and the one that books an instant fabricated Loss',
+      g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy'),'');
+
+    rehydrate([mkPos({dir:'sell',entry:1.10000,stop:1.09500,target:1.09000})]);
+    assert('D3B.5 a wrong-side SHORT stop (below entry) is quarantined',
+      g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy'),'');
+
+    rehydrate([mkPos({stop:1.099995})]);
+    assert('D3B.6 near-zero risk (0.05 pips) is quarantined on rehydration -- unguarded this is '+
+      'the 200-lot geometry D3 refuses at creation',
+      g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy'),'');
+
+    let malformedQuarantined=0;
+    [{entry:null},{stop:null},{entry:NaN},{stop:Infinity},{dir:null},{target:null}].forEach(function(o){
+      rehydrate([mkPos(o)]);
+      if(g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy')) malformedQuarantined++;
+    });
+    assert('D3B.7 null / NaN / Infinity / missing direction / null target are all quarantined',
+      malformedQuarantined===6,'quarantined='+malformedQuarantined+'/6');
+
+    // -- the property that actually matters: it cannot be ACTED ON --------------------------
+    // closePaperPosition is async and this offline harness cannot resolve a real await (a
+    // documented, long-standing limitation of the JXA runner). So completion is not observable
+    // here -- but REACH is: closePaperPosition adds the id to paperPositionsClosing
+    // SYNCHRONOUSLY, before its first await. That set is therefore the exact, honest proof of
+    // whether the monitor acted on a position, and it is what these two fixtures assert.
+    rehydrate([mkPos({id:99,stop:1.10500})]);          // wrong-side LONG: live<=stop is TRUE now
+    g.clearClosing();
+    g.checkPaperPositions();
+    assert('D3B.8 THE LOAD-BEARING ONE: a quarantined rehydrated position is never acted on by '+
+      'checkPaperPositions. Its stop sits above entry, so live<=pos.stop is true on the very '+
+      'first tick -- unguarded this books an immediate fabricated Loss sized from geometry that '+
+      'could not be created today. Proven by the close never being reached',
+      g.closingIds().indexOf(99)===-1&&g.getPaperAccount().openPositions.length===1&&
+      g.getPaperAccount().closedPositions.length===0,
+      'closing='+JSON.stringify(g.closingIds())+' open='+g.getPaperAccount().openPositions.length);
+
+    // -- a valid position is still processed (positive control) -----------------------------
+    // target must be strictly ABOVE entry for a long (an equal target is TARGET_WRONG_SIDE and
+    // would be quarantined -- which is what the first draft of this fixture got wrong), so the
+    // control uses a genuinely valid geometry with the live price already through it.
+    rehydrate([mkPos({id:98,target:1.10500})]);
+    g.setPairPriceD3('EUR_USD',1.10600);               // live price beyond the target
+    g.clearClosing();
+    g.checkPaperPositions();
+    assert('D3B.9 POSITIVE CONTROL: a VALID rehydrated position IS still acted on -- the close is '+
+      'reached for it. Without this the guard could be silently disabling ALL monitoring, which '+
+      'would be a far worse defect than the one D3B fixes',
+      g.closingIds().indexOf(98)!==-1,
+      'closing='+JSON.stringify(g.closingIds()));
+    g.clearClosing();
+
+    // -- mixed account: one bad record must not block the good ones -------------------------
+    rehydrate([mkPos({id:1}),mkPos({id:2,stop:1.10500}),mkPos({id:3,dir:'sell',entry:1.10000,stop:1.10500,target:1.09000})]);
+    const audit=g.paperAuditRehydratedPositions();
+    assert('D3B.10 in a MIXED account the invalid record does not prevent the valid ones from '+
+      'restoring: 3 restored, 2 valid, 1 quarantined',
+      audit.total===3&&audit.valid===2&&audit.invalid===1,
+      'total='+audit.total+' valid='+audit.valid+' invalid='+audit.invalid);
+
+    assert('D3B.11 the audit names the offending position and its reason',
+      audit.invalidPositions.length===1&&audit.invalidPositions[0].id===2&&
+      /STOP_WRONG_SIDE/.test(String(audit.invalidPositions[0].reason)),
+      JSON.stringify(audit.invalidPositions));
+
+    // -- evidence preservation --------------------------------------------------------------
+    rehydrate([mkPos({id:7,stop:1.10500,lots:0.2})]);
+    const snapshot=JSON.stringify(g.getPaperAccount().openPositions[0]);
+    g.paperAuditRehydratedPositions();
+    g.checkPaperPositions();
+    g.tradeIntegrityIsQuarantined(g.getPaperAccount().openPositions[0],'current_strategy');
+    assert('D3B.12 EVIDENCE PRESERVED: the quarantined record is byte-identical after the audit, '+
+      'a monitoring tick and a quarantine evaluation -- nothing deleted, nothing mutated, no '+
+      'field added. Quarantine is computed on READ, per the v12.15.0 contract',
+      JSON.stringify(g.getPaperAccount().openPositions[0])===snapshot&&
+      g.getPaperAccount().openPositions.length===1,'');
+
+    assert('D3B.13 a clean account produces no invalid classifications and no noise',
+      (function(){ rehydrate([mkPos({id:1}),mkPos({id:2,dir:'sell',entry:1.10000,stop:1.10500,target:1.09000})]);
+        const a=g.paperAuditRehydratedPositions();
+        return a.total===2&&a.valid===2&&a.invalid===0&&a.invalidPositions.length===0; })(),'');
+
+    assert('D3B.14 an empty account audits cleanly rather than throwing',
+      (function(){ seedClean(); const a=g.paperAuditRehydratedPositions();
+        return a.total===0&&a.invalid===0; })(),'');
+
+    // -- closed trades are NOT re-litigated --------------------------------------------------
+    assert('D3B.15 a CLOSED trade is not judged by the open-position geometry rule -- its '+
+      'geometry is history, and re-litigating it would retroactively move statistics that have '+
+      'already been reported',
+      !g.tradeIntegrityIsQuarantined({id:5,oPair:'EUR_USD',dir:'buy',entry:1.10000,stop:1.10500,
+        target:1.11000,result:'Loss',pnl:-100,mfePips:0,maePips:50,
+        openedAt:'2026-08-01T00:00:00.000Z',closedAt:'2026-08-01T02:00:00.000Z'},'current_strategy'),'');
+
+    seedClean();
+  }
+
   return results;
 }

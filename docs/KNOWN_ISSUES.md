@@ -69,6 +69,66 @@ is obsolete now that it is green.
 
 ---
 
+## Pip/tick quantisation is not centralised — IEEE-754 at the one-pip boundary (R1/D3)
+
+**Status:** Found 2026-08-22 during D3. **Contained locally, deliberately NOT generalised.**
+Severity **P3**, but flagged as a candidate for a centralised risk/math correction.
+
+A nominal one-pip stop is **not** 1.0 in IEEE-754. Measured:
+
+| entry | stop | computed riskPips |
+|---|---|---|
+| 1.10000 | 1.09990 | **0.9999999999998899** |
+| 195.000 | 194.990 | **0.9999999999990905** |
+| 0.86000 | 0.85990 | 0.9999999999998899 |
+
+A bare `riskPips < floor` therefore rejects a **legitimate** one-pip stop by representation error
+rather than by the rule. Caught by the pre-existing `PTE2E-BOUND.2` fixture — which exists
+precisely as a positive control so its sibling could not pass for the wrong reason — and fixed
+with a single `1e-9` epsilon inside `validateTradeGeometry`, four orders of magnitude above the
+~1e-13 error.
+
+**Deliberately NOT done: scattering epsilons through the codebase.** The same class of comparison
+appears wherever prices are differenced and divided by a pip size, and patching each site
+independently is how a codebase acquires a dozen slightly different tolerances.
+
+**The real question, deferred:** should MOGO quantise prices and pip distances to the instrument's
+tick grid at a single canonical point, rather than comparing raw IEEE-754 differences at each
+site? That is a centralised risk/math correction touching protected arithmetic, and it needs its
+own evidence and authorization. **Do not address it piecemeal.**
+
+---
+
+## A finite but excessive position is still permitted — no exposure model exists (D3)
+
+**Status:** Recorded 2026-08-22. **Explicitly out of scope for D3/D3B.** Severity: unresolved
+**portfolio/risk-governance** requirement, not an implementation defect.
+
+D3 removed the *unbounded* case: near-zero risk distance can no longer size a position at all.
+It did **not** introduce a maximum-lot policy, and none exists anywhere in the codebase — measured:
+`maxLots`, `maxUnits`, `notional`, `marginRequired` and any `Math.min` on lot size all return zero
+hits in trading code.
+
+At the guard's own floor — EUR/USD, `riskPips = 1.0`, `pipValue 10`, a $10,000 balance —
+`lots = 100/(1×10) = 10 lots = 1,000,000 units`, roughly **100× leverage**. That is now the
+guard-permitted maximum on a default account.
+
+MOGO **discloses the absence itself** (`index.html:7952-7953`): *"No maximum-open-trades or
+correlated-pair exposure limit exists in code today"* and *"No daily-loss or account-risk circuit
+breaker exists in code today."*
+
+**Why no cap was invented here.** A maximum lot size is a *risk-governance parameter*, not a safety
+floor. Unlike `MIN_RISK_PIPS` — which rejects geometry no broker would fill and sits five times
+below the tightest distance in the corpus, so it cannot decide which setups qualify — a lot cap
+**would** decide which setups qualify, and picking a number without an account-risk model behind it
+would be inventing a strategy rule under the banner of a safety fix.
+
+**What it actually requires:** an evidence-based account-risk/exposure model covering maximum
+per-position notional, aggregate open exposure, correlated-pair exposure, and a daily-loss circuit
+breaker. That is a governed piece of work with its own authorization, not an increment to D3.
+
+---
+
 ## PROTECTED-FUNCTION DEFECTS found in R1 — operator decision required
 
 **Status:** Found and verified 2026-08-22 (R1 §29). **Pinned as documented behaviour, NOT repaired.**
