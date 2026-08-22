@@ -130,8 +130,64 @@ population-purity question. Nothing was rewritten. The open items are (a) whethe
 producing forward evidence at all under current governance, and (b) whether forward statistics must
 be segmented by `strategyId` before any figure is quoted. **Both are operator decisions.**
 
-**Still unexplained, and still the reason this entry exists:** JVM being the strategy does **not**
-account for a 4-millisecond holding period with an exactly-2R win. That remains open.
+### Provenance traced 2026-08-22 — classified UNVERIFIED FOR AUTHORITATIVE PERFORMANCE
+
+JVM being the strategy does **not** account for a 4 ms hold with an exactly-2R win. The record was
+traced as far as the evidence technically allows. **It has not been altered, and must not be.**
+
+Full recovered field set, beside the *other* JVM record for contrast:
+
+| | `TOBS\|MOGO\|20260806\|025` (suspect) | `TOBS\|MOGO\|20260818\|001` (ordinary) |
+|---|---|---|
+| entry / stop / target | **1.085 / 1.083 / 1.089** | 0.71071 / 0.7096633333333334 / 0.712803333333333 |
+| exitPrice | **1.089 — exactly the target** | 0.70954 — *not* the target |
+| rMultiple | **exactly 2** | −1.117834 |
+| pnl / riskAmount / size | **200 / 100 / 0.5** | −112.32 / 100 / 0.96 |
+| holding period | **0.004 s** | 20,627.9 s |
+| `exitDetectionSource` | UNKNOWN | UNKNOWN |
+| `marketExitAt` | UNKNOWN | UNKNOWN |
+
+The ordinary record carries the residue of real arithmetic — `0.7096633333333334`, `−1.117834`,
+`−112.32`. The suspect carries none: every value is a hand-typeable round number.
+
+**The decisive finding is `exitPrice === target`.** `closePaperPosition()` books the exit from
+`fetchBidAsk()` — `bid` for a buy, `ask` for a sell — falling back to the live mid, or to `pos.entry`
+for a manual close with no price available. **No code path in MOGO sets `exitPrice` to `pos.target`.**
+The engine books the market, never the objective. For this record the two are bit-identical.
+
+Supporting facts, each independently weak and jointly conclusive:
+
+1. A buy at 1.0850 reaching 1.0890 is **40 pips in 4 milliseconds** — not a market movement.
+2. `pnl` is computed as `movePips × pipVal × lots`, a float product; landing on exactly `200` while
+   the sibling lands on `−112.32` is not what that expression does.
+3. Risk 0.0020 and reward 0.0040 give exactly 2.000R — a designed ratio, not a measured one.
+4. `exitDetectionSource` and `marketExitAt` are UNKNOWN, so **no exit provenance exists at all**.
+5. It matches **INC-005**'s documented hand-seeded signature almost exactly — that record was
+   `entry 1.10000, stop 1.09500, target 1.11000, exit 1.11000, +2.00R, +$200`, duration 0m. Same
+   shape: round prices, exit pinned to target, exactly 2R, exactly +$200, ~zero hold.
+
+**Classification: `UNVERIFIED FOR AUTHORITATIVE PERFORMANCE` (INFERRED, not MEASURED).** The evidence
+strongly indicates the record was not produced by MOGO's close path. It does **not** establish who or
+what wrote it, and this entry does not claim to. INC-005's forensics were possible because the
+storage still held the origin; here the record arrived through import on 2026-08-17, 11 days after
+the stated trade, and the pre-import origin is no longer recoverable.
+
+**Consequence for reporting.** Forward figures must distinguish the **RAW PRESERVED POPULATION**
+(n=29, ΣR −5.180, mean R −0.1786, win rate 27.6 %) from the **AUTHORITATIVE VERIFIED POPULATION**
+(n=28, ΣR −7.180, mean R −0.2564, win rate 25.0 %). The excluded record accounts for **2.0R — 39 % of
+the raw population's total loss.** Neither number is quoted without the other, and the record stays
+in the corpus.
+
+### The systemic gap this exposes
+
+`index.html` carries `TRADE_INTEGRITY_RULES` (v12.15.0), a rule-based quarantine layer added *because
+of INC-005*: a Win must show favourable excursion above zero, a trade must close strictly after it
+opened, and so on. **The preserved observation corpus has no equivalent.** The observation schema
+carries no MAE/MFE, so the app-side rules cannot even be evaluated against it, and a record whose own
+fields are internally impossible enters the authoritative population unchallenged.
+
+**The invariant that is missing:** *a preserved observation whose own fields are mutually impossible
+must not enter an authoritative performance population.* Severity **P2**.
 
 **Do not** rewrite, delete or reclassify these records to tidy the counts. The open question is
 provenance: what minted a 4 ms trade. Until answered, every forward figure carries this caveat

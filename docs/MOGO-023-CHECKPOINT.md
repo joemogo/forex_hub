@@ -339,6 +339,141 @@ before freezing the spec is how a thesis becomes an overfit.
 
 ---
 
+## 9b. Round 2 — strategy-population isolation and observation integrity
+
+### The invariant: no strategy may silently contribute to another's population
+
+`forward_coverage.py` judged whether an absent cohort was starvation or rarity by comparing forward
+evidence against a historical base rate. **The two arms were different populations:** forward was
+`{alex_g_sr_v1: 27, current_strategy: 2}`, historical was `{alex_g_sr_v1: 221}`. It divided by ALEX's
+base rate and counted ALEX + JVM.
+
+Not cosmetic. **Scoped to ALEX, `AUD/USD` flips `PRESENT` → `ABSENT_CONSISTENT_WITH_RARITY`
+(expected 2.44)** — the single "forward AUD/USD trade" was JVM's, so a cohort reading as covered is
+actually absent for ALEX. That is the exact question the report exists to answer, answered wrongly.
+
+Three defects, one invariant — *a cohort report must name the population it describes, draw both arms
+from it, and account for every record it excluded*:
+
+| # | Defect | Repair |
+|---|---|---|
+| 1 | Strategy mixing | `--strategy` scopes both arms; unscoped reports declare `strategyMixing` and print each arm's composition |
+| 2 | **Silent exclusion** — JVM hardcodes `timeframe:null`, so `--key timeframe` dropped both JVM records and printed `forwardTotal 27`: the right number by coincidence, not by segmentation | exclusions counted and rendered, per arm |
+| 3 | Cross-dimension leakage — `--configured` defaulted to `H1,H4,D,W` for *every* key, so timeframes appeared as absent instruments and absent directions | configured cohorts are a property of the dimension |
+
+Attribution is **never guessed**: no usable `strategyId` ⇒ `UNATTRIBUTED`, excluded from every scoped
+reading. 9 fixtures; 4 mutations each killed by the fixture written for it.
+
+### Observation integrity — the corpus had no analogue of the app's own guard
+
+`index.html` has carried `TRADE_INTEGRITY_RULES` since v12.15.0, added *because of INC-005*. **The
+preserved corpus had no equivalent**, and those rules key on MAE/MFE, which the observation schema
+does not carry — so they cannot even be evaluated against preserved evidence. A record whose own
+fields are mutually impossible entered the authoritative population unchallenged, and one did.
+
+New `scripts/trader_intelligence/observation_integrity.py` partitions and prices the gap:
+
+```
+RAW PRESERVED POPULATION    n=29  sumR=-5.180  meanR=-0.1786  winRate=27.6%
+AUTHORITATIVE VERIFIED      n=28  sumR=-7.180  meanR=-0.2564  winRate=25.0%
+EXCLUDED (unverified)       n=1   sumR=+2.000
+```
+
+Rules fire on **structural impossibility, never on "looks odd"** — a round number is not a defect and
+a 2R win is the system working. The load-bearing rule is therefore a **conjunction**: an exit pinned
+bit-identically to the target *and* a hold too short for any price update. Either half alone has a
+real false-positive rate; mutation M1 (dropping the hold half) immediately flagged replay evidence,
+proving the conjunction is load-bearing rather than decorative.
+
+**False-positive check: zero violations across the other 230 records** (221 HISTORICAL + 9
+RECONSTRUCTED). It fires on exactly 1 of 259.
+
+20 fixtures; 3 mutations killed, plus a **benign-edit control that killed nothing**, proving the
+harness discriminates rather than failing on any change. It writes nothing to the corpus, exits 0 by
+design — failing the gate on an unverified record would create pressure to "fix" preserved evidence,
+which is the one thing that must not happen.
+
+### JVM governance — resolved by measurement, not by opinion
+
+**What JVM is.** Not a research candidate awaiting promotion. `JVM_MANIFEST` describes MOGO's own
+original strategy — `MOGO Strategy` v1.0, `status: Active`, *"Original 'Idiot Strategy' specification
+… Frozen at inception and never revised"* — with `capabilities: {scanning, paperTrading, automation,
+journal}` all true, gated at runtime by `autoTrading.enabled` (default `false`, operator-controlled).
+The research→PAPER promotion ladder in `CLAUDE.md` governs **externally researched** strategies
+(ALEX from Alex G, TJR). Applying "promote JVM" to MOGO's own built-in strategy is a category error.
+
+**What is absent.** No `AUTH-jvm-*.json` in `docs/trader-intelligence/authorizations/` (only ALEX ×2
+and TJR). No preregistration. `externalResearchStatus: not_started`. No baseline spec, no
+out-of-sample validation, no dossier.
+
+**The question is moot at current sample size, and that is the finding.** Per-strategy, integrity-
+partitioned:
+
+| Population | n | ΣR | mean R | win rate |
+|---|---|---|---|---|
+| ALEX `alex_g_sr_v1` — verified | **27** | −6.063 | −0.2245 | 25.9 % |
+| JVM `current_strategy` — verified | **1** | −1.118 | −1.1178 | 0 % |
+| JVM — raw, including the unverified record | 2 | **+0.882** | +0.4411 | 50 % |
+
+Reconciles exactly: 27 + 1 = 28 verified at −7.181; plus the excluded +2.000 gives the raw 29 at
+−5.180.
+
+**JVM's authoritative forward population is n = 1.** No expectancy, win rate, profit factor or
+comparison claim is possible from one trade, and the entire *appearance* of JVM performance — +0.882R
+at a 50 % win rate — is produced by the single record classified UNVERIFIED. Removing it inverts the
+sign. **So no owner decision about JVM's PAPER performance is actionable yet**, not because
+governance is unresolved but because the evidence does not exist.
+
+**The owner's conditional grant is therefore not triggered.** It authorises promotion where every
+scientific gate is met and approval is the sole remaining requirement. Here the gates are not met —
+n=1 — and the grant explicitly does not authorise lowering them. Nothing is promoted, nothing is
+demoted, nothing is rewritten.
+
+**What is actionable now, and is done:** ALEX's forward figure is stated for ALEX alone —
+**n=27, ΣR −6.063, mean R −0.2245, win rate 25.9 %, zero integrity violations.** The previously
+circulated "29 forward trades / −5.180R" figure described neither strategy.
+
+### PAPER exactly-once under retry and restart — traced through the code
+
+Traced `closePaperPosition()` → `commitPaperLedger()` → `savePaperAccountGuarded()`. **DERIVED from
+code, not asserted.** The durable dedup key for a close is *"the position is no longer in
+`openPositions`"*, persisted atomically with balance and journal; for an evidence package it is the
+IndexedDB `bySourceTradeId` index, which survives restart.
+
+| Failure mode | Behaviour | Duplicate possible? |
+|---|---|---|
+| Concurrent double-close, same session | `paperPositionsClosing` Set blocks the second call | No |
+| Close called after the position already closed | `findIndex` → −1 → early return | No |
+| Crash **before** commit | Nothing persisted; position still open; close retried on reload | No — occurs once |
+| Crash **after** commit | Position absent from `openPositions`; reload finds −1 | No |
+| Exception during commit | Compensating rollback of already-written keys; in-memory restored from snapshot | No |
+| Second session advanced state | `STALE_VERSION` compare-and-swap **refuses** the write | No |
+| Non-finite balance/pnl | Refused **before** writing (a `NaN` serialises to `null` and would survive reload) | No |
+| Evidence package re-capture | `evidenceHasPackageForTrade()` on a durable index | No |
+
+**Rollback failure is surfaced as UNKNOWN, not retried.** When a compensating write itself fails the
+result carries `integrityCompromised: true` with `ROLLBACK_FAILED` and a FATAL engine error naming the
+failed step and keys. That is the required `DID NOT OCCUR / OCCURRED ONCE / UNKNOWN` distinction
+actually implemented: the code does not blindly replay.
+
+**Residual risk, real and bounded — [P3].** The three `localStorage.setItem` calls
+(`fxhub_paper` → `fxhub_paper_version` → `fxhub_journal`) are individually atomic but **not atomic as
+a group**. `try/catch` covers a *thrown* failure (quota); it cannot cover a **process kill between
+calls** — browser crash, tab kill, OS kill — where no catch and no rollback run. The reachable torn
+states desynchronise the journal from the ledger, and because the version key is written second, can
+leave a new account beside a stale version counter.
+
+**This cannot duplicate a PAPER action.** The position is still closed exactly once; what tears is the
+journal's view of it. Detection exists (`Diagnostics > Paper Trading Health Check`, SOURCE_STATED from
+the engine's own error text). Recorded rather than repaired: making three `localStorage` keys
+transactional means a journaling layer or a move to IndexedDB, which is a larger change than the
+exposure justifies, and the failure is detectable and non-duplicating.
+
+**Verdict: the exactly-once invariant HOLDS for PAPER order intent, position creation, close, outcome
+and evidence package.**
+
+---
+
 ## 10. Platform health (canonical model)
 
 | Surface | State |
@@ -357,9 +492,40 @@ before freezing the spec is how a thesis becomes an overfit.
 
 ## 11. Subagents and research lanes
 
-**No subagents were launched.** The work was diagnostic and convergent on one production surface,
-where the mandate assigns integration to the main agent; parallel agents would have produced
-overlapping reassurance rather than parallel value. Recorded so the absence is a decision, not a gap.
+**Round 1: no subagents.** The work was diagnostic and convergent on one production surface, where
+integration belongs to the main agent; parallel agents would have produced overlapping reassurance
+rather than parallel value. Recorded so the absence is a decision, not a gap.
+
+**Round 2: two isolated read-only lanes**, once INC-006 was closed and the work became genuinely
+independent. Main agent remained sole integration authority; neither lane wrote anything.
+
+### Lane 1 — is TJR's recorded status stale, as JVM's was? **NO.** (verdict independently re-measured)
+
+Having found the handoff wrong about JVM, the same class of error had to be checked elsewhere rather
+than assumed absent. It is absent:
+
+- **`tjr_slr` is unambiguous.** `TJR_STRATEGY_ID='tjr_slr'`; `TJR_MANIFEST.id` is that constant. This
+  is the *opposite* of JVM, whose manifest id is the bare literal `'current_strategy'` — the very
+  thing that made JVM's evidence invisible to a reader searching for "jvm".
+- **Zero TJR observations.** Re-measured directly rather than accepted: all 259 observation files
+  compose exactly `{alex_g_sr_v1: 257, current_strategy: 2}`, and no record carries any TJR
+  identifier. The lane additionally reports zero occurrences of `tjr_slr` across the whole
+  8,025-file evidence tree, closing the alternate-literal trap that hid JVM's evidence.
+- **No execution path.** `capabilities.paperTrading:false`, `TJR_SERVICES.getAccount → null`,
+  `getJournal → []`, and the dashboard filters on `capabilities.paperTrading`. TJR cannot open a
+  paper position.
+- **Authorization exists but is narrow** — `AUTH-tjr-metadata.json`, `permittedOperations:["metadata"]`,
+  explicitly *not* an assertion that TJR is validated or ready for paper trading. No preregistration,
+  no promotion record.
+
+**A useful negative result: the stale-status defect is bounded to JVM.** The handoff's TJR paragraph
+is accurate as written.
+
+**One item recorded, not repaired [P3]:** `TJR_MANIFEST.capabilities.replay:true` (`index.html:19317`)
+is a forward-declared intent contradicted by `profile.json`'s `replayStatus:"not_started"`. It is
+disclosed in the adjacent comment, which claims every capability is "stated honestly for Phase 1" —
+and for this one field that claim is not true. Cosmetic, non-executional, and disclosed; noted so the
+next reader does not rediscover it as a finding.
 
 **Research acquisition:** unchanged this session. `research_assimilation` reports
 `J_NO_SCIENTIFIC_CHANGE`, `corpus changed: False`, 259 → 259 — correct, since no new evidence
