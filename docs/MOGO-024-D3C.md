@@ -3,7 +3,8 @@
 **Success condition.** No production paper position can enter ACTIVE state anywhere in MOGO
 without satisfying the canonical strategy-neutral trade-geometry contract.
 
-**Status: MET for every production insertion path, with one disclosed coverage limit (§7).**
+**Status: MET for every production insertion path. Both boundaries are executably verified at
+engine level (§7); browser-runtime verification has NOT been performed and is not claimed.**
 
 D3 closed JVM creation. D3B closed JVM rehydration. Both required an owner-authorized protected
 change. **D3C required none: every gate is in non-protected code, and the drift check reports
@@ -125,12 +126,12 @@ Fixtures D3C.30–D3C.34 pin this both ways, and mutation M5 (revert to the gene
   `typeof` guards and has no throwing path.
 - **Rollback paths** restore snapshots taken *before* the push, so they remove rather than introduce.
 
-## 6. Mutation analysis — 11 mutations, 10 killed
+## 6. Mutation analysis — 11 mutations, 11 killed
 
 | Mutation | Verdict |
 |---|---|
 | M1 delete ALEX servicing guard | killed (4 fixtures) |
-| M2 delete ALEX creation gate | **SURVIVED — see §7** |
+| M2 delete ALEX creation gate | **KILLED at engine level — see §7** |
 | M3 delete ALEX V2 gate | killed (4) |
 | M4 delete audit call in `loadAlexGSaved` | killed (1) — *after* adding D3C.35 |
 | M5 revert geometry scoping to general predicate | killed (1) |
@@ -153,27 +154,64 @@ Fixtures D3C.30–D3C.34 pin this both ways, and mutation M5 (revert to the gene
 3. **An untested wiring.** Deleting the audit call from `loadAlexGSaved` killed nothing: the audit
    *function* was covered, its *invocation* was not. D3C.35/.36 close it against the real loader.
 
-## 7. Disclosed limitation — read this before trusting §6
+## 7. Verification levels — what is proven, and by what
 
-**M2 genuinely survives.** The E2 creation gate sits after `await fetchBidAsk(setup.pair)` inside
-async `alexGAttemptOpenLivePosition`. The offline JXA runner cannot resolve a real `await` — the
-same long-standing, documented limitation that applies to `closePaperPosition` and
-`alexGCloseLivePosition`. Deleting that gate therefore breaks no fixture.
+These are four different claims and this section keeps them apart deliberately.
 
-It is **not** closeable by adding a Node-based suite: `run_all.sh` executes only
-`tests/run_*_tests.js` under `osascript`, and modifying the canonical gate is separately governed
-(ADR-012 D-12).
+| Level | ALEX creation boundary | ALEX servicing boundary |
+|---|---|---|
+| **IMPLEMENTED** | yes (E2) | yes (E3) |
+| **STATICALLY VERIFIED** — drift check, source inventory, corpus replay | yes | yes |
+| **ENGINE-LEVEL EXECUTABLY VERIFIED** — real code run, mutation killed | **yes** (harness below) | **yes** (fixtures D3C.11–.14, .30–.34) |
+| **BROWSER-RUNTIME VERIFIED** | **no — not performed, not claimed** | **no — not performed, not claimed** |
 
-What *is* proven about E2, on real code: the protected constructor genuinely produces the offending
-geometry (D3C.37), the canonical contract genuinely refuses it (D3C.38), and it agrees with the
-constructor's legitimate output (D3C.21/.22). **The unproven link is one line of wiring.**
+### The creation boundary: M2 was killed, and how
 
-This matters less than it would have, because **E3 is the universal boundary and is fully covered**:
-even if E2 were deleted entirely, a sub-floor ALEX position could be created but could never be
-monitored, exited, closed or booked to P&L (D3C.39 asserts exactly this).
+M2 originally survived the whole 2,513-fixture gate. The cause was never browser-specific: the E2
+gate sits after `await fetchBidAsk(setup.pair)` inside async `alexGAttemptOpenLivePosition`, and the
+JXA fixture runner cannot resolve a real `await` — the same documented limitation that applies to
+`closePaperPosition` and `alexGCloseLivePosition`. **The missing capability was await resolution,
+not a browser.** Node resolves awaits natively and was already in this repository's toolchain
+(`run_all.sh` invokes it for two selftests).
 
-**Recommended next step for the operator:** live browser verification of E2 under INC-004 isolation
-(disposable profile, confirmed test origin), which is the only environment that can execute it.
+`scripts/verify_alex_creation_boundary.js` drives the **real, unmodified async
+`alexGAttemptOpenLivePosition`** and the **real, protected, unmodified
+`alexGConstructLivePosition`**. Recorded results:
+
+- **POSITIVE CONTROL — PASS.** Historically representative geometry (~12.6 pips; the corpus'
+  tightest real ALEX risk distances are 5.027 replay / 7.262 forward) reaches ACTIVE state:
+  `openPositions=1`, `status=open`, engine-minted tradeId.
+- **PRECONDITION — PASS.** The real protected constructor still returns `TRADE OPENED` at 0.65 pips,
+  so the negative control tests a reachable geometry rather than a contrived one.
+- **NEGATIVE CONTROL — PASS.** The 0.65-pip case is refused before entering ACTIVE state
+  (`openPositions=0`) and the refusal is recorded as one `TRADE_OPEN_FAILED` /
+  `RISK_GEOMETRY_CONTRACT_VIOLATION` / `RISK_TOO_SMALL` event — refused *and* recorded.
+- **M2 MUTATION — KILLED.** With the gate neutralised, a position **enters ACTIVE state**: entry
+  1.10001, stop 1.099945, **15.38 lots = 1,538,462 units** on a $10,000 account. The negative
+  control fails while the **positive control still holds**, so the kill is specific rather than the
+  harness simply breaking.
+- **Restoration — byte-identical.** SHA256 `46d2bba7…` before and after; protected drift 0.
+
+The harness mutates an **in-memory copy** of the extracted script body; `index.html` is read
+read-only and never written, so an interrupted run cannot leave a mutated working tree behind. It
+also **fails closed**: if the gate string is not found exactly once it refuses to report a pass,
+rather than silently verifying nothing after a future edit. Run `--selftest` to reproduce the kill.
+
+### Isolation (INC-004)
+
+No browser, no Chrome profile, no origin, no server, no network, no real storage; `localStorage` is
+an in-memory object and `fetch()` rejects. INC-004's domain is **not entered** rather than carefully
+navigated. `scripts/browser_test_profile.sh` was inspected and correctly fails closed on an
+operator-confirmed origin — it was not needed and was not used.
+
+### What browser-runtime verification would still add
+
+Engine-level verification executes the same JavaScript but not in a browser. What remains
+unexercised is browser-only context: real network latency through `fetchBidAsk`, real `localStorage`
+quota and persistence, and real timer/tick interleaving. **None of these affect the gate's decision**,
+which is pure synchronous logic over the constructor's output. The residual risk is low and is
+confined to conditions the gate does not depend on — but it is not zero, and D3C is therefore **not**
+described as browser-runtime verified anywhere in this document.
 
 ## 8. Not done, deliberately
 
