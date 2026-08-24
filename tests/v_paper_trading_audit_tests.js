@@ -3682,5 +3682,74 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setPairDataObj(snapPD); g.setScanData(snapSD); seedClean();
   }
 
+  // ════════════════════════════════════════════════════════════════════════════════════════
+  // D4-b -- THE SUNDAY-SCAN TABLE AND THE ACTIVE-WATCH LIST
+  //
+  // Both read pairData and neither read suppression, so a pair MOGO could not observe rendered
+  // exactly like one it observed and found unremarkable. renderPairList's own source comment says
+  // it was written to close that trap; the identical trap was open one panel over, on the two
+  // surfaces the operator actually acts from.
+  //
+  // The repair REUSES pairEvaluationDisplayState -- the pure helper renderPairList already uses --
+  // rather than re-deriving suppression in two more places.
+  // ════════════════════════════════════════════════════════════════════════════════════════
+  {
+    const snapPD=g.getPairData(), snapSD=g.getScanData();
+    const PAIR='EUR/USD', OP='EUR_USD';
+    // Scoped to THIS pair's row. The other 11 configured pairs have no pairData at all in this
+    // fixture, so they are correctly marked NOT_SCANNED -- asserting over the whole tbody would
+    // conflate that legitimate marking with the one under test. (D4.8 caught exactly this.)
+    const scanRow=function(){
+      const all=String(g.elHtml('scan-tbody')||'');
+      const rows=all.split('<tr>');
+      for(let i=0;i<rows.length;i++) if(rows[i].indexOf('>'+PAIR+'<')!==-1) return rows[i];
+      return '';
+    };
+    const wlCards=function(){ return String(g.elHtml('watchlist-cards')||''); };
+
+    // ── SUPPRESSED: complete-looking row, but the evaluation never happened.
+    // renderScan maps over ALL of SCAN_PAIRS and dereferences scanData[p] unconditionally, so
+    // every configured pair must be present -- a pre-existing assumption of the renderer.
+    const sd={};
+    g.SCAN_PAIRS.forEach(function(sp){ sd[sp]={weekly:'\u2014',daily:'\u2014',fh:'\u2014',bucket:'\u2014',grade:'\u2014',notes:''}; });
+    sd[PAIR]={weekly:'Bullish',daily:'Bullish',fh:'Bullish',bucket:'Active watch',grade:'A',notes:''};
+    g.setScanData(sd);
+    g.setPairDataObj({EUR_USD:{price:1.0800,conf:{total:0,items:[]},completenessState:'PARTIAL',
+      requestedCount:220,receivedCount:137,evaluationSuppressed:true}});
+    g.renderScan(); g.renderWatchlist();
+    const scanSuppressed=scanRow(), wlSuppressed=wlCards();
+
+    assert('D4.5 the Sunday-scan row marks a SUPPRESSED pair explicitly instead of rendering a live '+
+      'price beside a blank confluence, which is what an evaluated-but-low pair looks like',
+      scanSuppressed.length>0&&scanSuppressed.indexOf('NOT EVAL')!==-1,
+      'row='+scanSuppressed.slice(0,200));
+
+    assert('D4.6 the ACTIVE WATCH card marks it too -- this is the surface the operator acts from, '+
+      'and `lc.total>=40` is false for a suppressed pair, so it previously rendered nothing at all',
+      wlSuppressed.indexOf('NOT EVALUATED')!==-1,'card='+wlSuppressed.slice(0,200));
+
+    assert('D4.7 ...and the marker carries the REASON, so the operator is told it is a '+
+      'data-availability failure and not a statement that there is no setup',
+      wlSuppressed.indexOf('NOT a statement')!==-1||scanSuppressed.indexOf('NOT a statement')!==-1,'');
+
+    // ── POSITIVE CONTROL: genuinely evaluated, genuinely scored. Must NOT be marked.
+    g.setPairDataObj({EUR_USD:{price:1.0800,conf:{total:83,items:[],direction:'long'},
+      completenessState:'COMPLETE',requestedCount:220,receivedCount:220,evaluationSuppressed:false}});
+    g.renderScan(); g.renderWatchlist();
+    const scanEval=scanRow(), wlEval=wlCards();
+
+    assert('D4.8 POSITIVE CONTROL: a genuinely EVALUATED pair is NOT marked and still shows its '+
+      'real figure -- D4.5/D4.6 must not be satisfied by marking every pair unconditionally',
+      scanEval.indexOf('NOT EVAL')===-1&&wlEval.indexOf('NOT EVALUATED')===-1&&
+      scanEval.indexOf('83%')!==-1&&wlEval.indexOf('83%')!==-1,
+      'scan='+scanEval.slice(0,160)+' || wl='+wlEval.slice(0,160));
+
+    assert('D4.9 THE DISCRIMINATOR: the suppressed and evaluated renderings of the SAME pair differ '+
+      'on BOTH surfaces. Collapsing either one in either direction fails here',
+      scanEval!==scanSuppressed&&wlEval!==wlSuppressed,'');
+
+    g.setPairDataObj(snapPD); g.setScanData(snapSD); seedClean();
+  }
+
   return results;
 }

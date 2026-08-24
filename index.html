@@ -12615,7 +12615,16 @@ function renderScan(){
     const gOpts=GRADE_OPTS.map(o=>`<option${o===d.grade?' selected':''}>${o}</option>`).join('');
     const ld=pairData[p.replace('/','_')];
     const lp=ld&&ld.price?ld.price.toFixed(p.includes('JPY')?3:5):'—';
-    const lc=ld&&ld.conf&&ld.conf.total>=ALERT_THRESHOLD?`<span style="color:${cColor(ld.conf.total)};font-weight:600"> ${ld.conf.total}%</span>`:'';
+    // D4: REUSES pairEvaluationDisplayState -- the same pure, already-tested helper renderPairList
+    // uses -- rather than re-deriving suppression here. A suppressed pair carries
+    // conf={total:0,items:[]}, which is below ALERT_THRESHOLD, so this cell used to render a live
+    // price with a BLANK confluence: byte-identical to an evaluated pair that simply scored low.
+    // renderPairList's own comment says it was written to close exactly that trap; the same trap
+    // was open one panel over. Display only -- nothing here reads into a decision.
+    const lev=pairEvaluationDisplayState(p.replace('/','_'),ld);
+    const lc=lev.notEvaluated
+      ? `<span class="badge" style="color:var(--gold);font-weight:600" title="${escapeHtml(lev.title)}"> NOT EVAL</span>`
+      : (ld&&ld.conf&&ld.conf.total>=ALERT_THRESHOLD?`<span style="color:${cColor(ld.conf.total)};font-weight:600"> ${ld.conf.total}%</span>`:'');
     return`<tr>
       <td><span class="pair-link" onclick="jumpToScanner('${p}')">${p}</span></td>
       <td>${tfSel(p,'weekly',d.weekly)}</td><td>${tfSel(p,'daily',d.daily)}</td><td>${tfSel(p,'fh',d.fh)}</td>
@@ -12651,11 +12660,17 @@ function renderWatchlist(){
     const d=scanData[p],score=getScore(d),bias=getBias(d);
     const ld=pairData[p.replace('/','_')];
     const lc=ld&&ld.conf;
+    // D4: same reuse, same reason. `lc.total>=40` is false for a suppressed pair (total 0), so an
+    // instrument MOGO could not observe rendered exactly like one observed and found unremarkable
+    // -- on the ACTIVE WATCH list, which is the surface the operator acts from.
+    const wlev=pairEvaluationDisplayState(p.replace('/','_'),ld);
     return`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <span style="font-weight:600;min-width:72px;cursor:pointer;color:var(--green)" onclick="jumpToScanner('${p}')">${p}</span>
       ${scoreBadge(score)}${biasHtml(bias)}
       ${d.grade&&d.grade!=='—'?`<span class="badge grade-${d.grade}">${d.grade}-grade</span>`:''}
-      ${lc&&lc.total>=40?`<span class="wl-conf ${lc.total>=ALERT_THRESHOLD?'wl-high':'wl-med'}">${lc.direction==='long'?'▲':'▼'} ${lc.total}%</span>`:''}
+      ${wlev.notEvaluated
+        ?`<span class="wl-conf" style="color:var(--gold)" title="${escapeHtml(wlev.title)}">NOT EVALUATED</span>`
+        :(lc&&lc.total>=40?`<span class="wl-conf ${lc.total>=ALERT_THRESHOLD?'wl-high':'wl-med'}">${lc.direction==='long'?'▲':'▼'} ${lc.total}%</span>`:'')}
       ${d.notes?`<span style="font-size:11px;color:var(--text2);flex:1">${escapeHtml(d.notes)}</span>`:''}
     </div>`;
   }).join('');

@@ -48,4 +48,4 @@ run_v128_evidence_platform_tests.js	331
 run_v129_browser_isolation_guard_tests.js	27
 run_v130_candle_completeness_regression_tests.js	85
 run_v131_evidence_verifier_tests.js	73
-run_v_paper_trading_audit_tests.js	386
+run_v_paper_trading_audit_tests.js	391

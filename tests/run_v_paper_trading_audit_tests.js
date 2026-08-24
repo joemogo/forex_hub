@@ -177,6 +177,8 @@ const wrapped = new Function('g',
   //    before this, which is why a suppressed pair reaching the model as a measured "0%" market
   //    fact survived every gate. It is driven REAL here.
   'g.buildAiContext=buildAiContext;' +
+  'g.renderScan=renderScan;g.renderWatchlist=renderWatchlist;' +
+  'g.pairEvaluationDisplayState=pairEvaluationDisplayState;' +
   'g.setScanData=function(v){scanData=v;};g.getScanData=function(){return scanData;};' +
   'g.SCAN_PAIRS=SCAN_PAIRS;' +
   'g.setPairDataObj=function(v){pairData=v;};g.getPairData=function(){return pairData;};' +

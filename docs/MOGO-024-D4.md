@@ -108,7 +108,7 @@ and were **vacuous**. Only the reverse-collapse mutation exposed it.
 | 2 | `historySufficiency` / `historySufficiencyReport` | dead code; the "NOT evidence that no AOI exists" sentence reaches nothing. Wiring it usefully requires #1 | **P1** |
 | 3 | chart D/W AOI overlay (`loadChart` ~12187) | `getStructuralAOI` returns `incomplete`, and the overlay never destructures it — no band and no message in either case | **P2** |
 | 4 | `completenessSuppressed` (`scanData`, written 9867/9883) | **write-only** — no reader anywhere in `index.html`. `bucket='—'` is also what a genuinely-assessed low score gets | **P2** |
-| 5 | `renderScan` / `renderWatchlist` (~12585/12621) | never read `evaluationSuppressed`; a suppressed pair shows a live price with blank confluence | **P2** |
+| ~~5~~ | ~~`renderScan` / `renderWatchlist`~~ | **REPAIRED — see D4-d below** | — |
 | 6 | `setupCount` (10318) / `dashOpportunities` | a total provider outage renders "0 setups", identical to an observed quiet market | **P2** |
 | 7 | replay diagnostics (8843–8858) | records the *strategy verdict* "No valid structural AOI" with `observedValue:'none'` when `dSlice` is 1–19 bars — a fabricated rule rejection | **P2** |
 | 8 | `evaluateSetupFullBreakdownCore` (7903) | computes `'AOI NOT EVALUATED -- incomplete D/W market data'`; both consumers filter to `MANUAL REVIEW ELIGIBLE`, which requires the AOI gate to have *passed*, so the string has no render path | **P3** |
@@ -118,6 +118,25 @@ structural fetch inside `getStructuralAOI` has its own completeness that is neve
 `pairData` — so a pair can render as fully evaluated with its Daily and Weekly history entirely
 unavailable, and no surface says so. That is the same defect class as #3 and is the reason #1
 cannot be fixed at the display layer alone.
+
+### D4-d — `renderScan` and `renderWatchlist` (added after the first D4 commit)
+
+Both read `pairData` and neither read suppression. A suppressed pair carries
+`conf={total:0,items:[]}`, which is below `ALERT_THRESHOLD` and below the watchlist's own `>=40`,
+so the Sunday-scan row rendered **a live price beside a blank confluence** and the Active-Watch
+card rendered **nothing at all** — in both cases byte-identical to an instrument MOGO observed and
+found unremarkable. The Active-Watch list is the surface the operator acts from.
+
+Both now reuse `pairEvaluationDisplayState` — the same pure helper `renderPairList` already uses,
+carrying the reason string — rather than re-deriving suppression in two more places.
+
+Fixtures `D4.5–D4.9`, with `D4.8` a positive control and `D4.9` a discriminator across both
+surfaces. Mutations killed: reverting the scan marker (D4.5), reverting the watchlist marker
+(D4.6), and marking *everything* not-evaluated (D4.8 **and** D4.9).
+
+`D4.8` failed on first write and was correct to: it asserted over the whole `scan-tbody`, where
+the other 11 configured pairs legitimately render `NOT EVAL` because they have no `pairData` at
+all. The assertion is now scoped to the row under test.
 
 ## 5. Trading safety — unchanged by all of the above
 
