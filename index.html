@@ -10459,6 +10459,18 @@ async function scanAll(){
     // v12.8.3 ADR-011: refresh the suppressed-pair indicator every tick, so an operator sees the
     // suppression on the scan that caused it rather than only when they open Diagnostics.
     try{ renderMarketDataCompletenessDiagnostics(); }catch(e){/* an indicator must never break the scan */}
+    // MOGO-024: Today's Opportunities reads pairData, which is MEMORY-ONLY and starts empty on
+    // every reload, while High-Confidence Setups reads the PERSISTED scanData and is therefore
+    // populated immediately at load. renderDashboard() had exactly one call site -- showPanel() --
+    // so opening the Dashboard inside the first sweep window captured "No scored pairs yet" and
+    // that snapshot never refreshed. The two panels keep their DIFFERENT sources and inclusion
+    // criteria; only the repaint is added.
+    //
+    // Gated on visibility so an off-screen Dashboard costs nothing, and wrapped for the same
+    // reason as the line above: an indicator must never break the scan. renderDashboard() reads
+    // state and writes DOM only -- it never calls scanAll -- so there is no recursion, and it runs
+    // at most once per sweep.
+    try{ if(dashboardIsVisible()) renderDashboard(); }catch(e){/* an indicator must never break the scan */}
     checkPaperPositions();
     await checkAutoTrades();
     await runManualReviewScan();
@@ -12610,7 +12622,14 @@ function showToast(entry,sess){
   dEl.className=entry.direction==='long'?'toast-dir-buy':'toast-dir-sell';
   dEl.textContent=entry.direction==='long'?'▲ LONG':'▼ SHORT';
   document.getElementById('toastSession').textContent=entry.session+(sess.priority?' ★':'');
-  document.getElementById('toastSigs').textContent=entry.sigs.join(' · ')+(entry.inSession?'':' · ⚠ Wait for session open');
+  // MOGO-024: the alert-log row already shows the source timeframe; the pop-up did not, so the
+  // most immediate surface was the least attributed. Rendered ONLY when genuinely known -- a
+  // legacy alert carrying no `tf` shows exactly what it showed before, and nothing is ever
+  // defaulted to 'M15', because labelling an unknown alert with the trading timeframe is the
+  // precise falsehood this field exists to prevent.
+  document.getElementById('toastSigs').textContent=
+    ((typeof entry.tf==='string'&&entry.tf)?entry.tf+' · ':'')+
+    entry.sigs.join(' · ')+(entry.inSession?'':' · ⚠ Wait for session open');
   const t=document.getElementById('toast');
   t.classList.add('show');
   if(toastTimer) clearTimeout(toastTimer);
@@ -22206,6 +22225,16 @@ function comingSoonOpen(title,desc){
 // from the two trading engines, the unified journal, aiChat). Never mutates any of
 // that state, never opens a trade, never fabricates a value: sections with nothing
 // real to show yet (news/calendar) render an honest empty state instead.
+// MOGO-024: is the Dashboard actually on screen? showPanel() clears `.active` from every panel
+// and sets it on the one being shown, so this is the app's own existing visibility signal rather
+// than a new piece of state. Pure and defensive: if the element is missing it reports NOT visible,
+// so a repaint is skipped rather than throwing inside the scan loop.
+function dashboardIsVisible(){
+  try{
+    const el=document.getElementById('panel-dashboard');
+    return !!(el&&el.classList&&el.classList.contains('active'));
+  }catch(e){ return false; }
+}
 function renderDashboard(){
   const sessEl=document.getElementById('dashSession');
   if(sessEl){

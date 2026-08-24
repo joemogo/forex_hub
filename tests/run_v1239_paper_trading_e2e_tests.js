@@ -475,6 +475,13 @@ try{
     'g.checkAutoTrades=checkAutoTrades;' +
     // §18.23: the alerting path had ZERO behavioural coverage anywhere in the repository.
     'g.scanPair=scanPair;' +
+    // MOGO-024 dashboard/toast presentation fixtures.
+    'g.scanAll=scanAll;g.renderDashboard=renderDashboard;g.dashboardIsVisible=dashboardIsVisible;' +
+    'g.showToastDirect=showToast;' +
+    'g.setDashboardVisible=function(v){ var el=document.getElementById("panel-dashboard");' +
+    '  if(v) el.classList.add("active"); else el.classList.remove("active"); };' +
+    'g.elText=function(id){ var e=document.getElementById(id); return e?String(e.textContent||""):""; };' +
+    'g.setElHtml=function(id,v){ var e=document.getElementById(id); if(e) e.innerHTML=v; };' +
     'g.setActiveTfE2E=function(tf){activeTf=tf;};' +
     'g.addAlertDirect=addAlert;g.renderAlertLogDirect=renderAlertLog;' +
     'g.getAlertLog=function(){return alertLog;};g.setAlertLog=function(v){alertLog=v;};' +

@@ -1632,8 +1632,120 @@ async function runV1239PaperTradingE2EFixtures(g){
     g.setActiveTfE2E('M15'); g.setAlertLog([]); g.resetFiredAlerts();
   }
 
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // MOGO-024 -- DASHBOARD REPAINT AND TOAST TIMEFRAME (presentation only)
+  //
+  // Today's Opportunities reads pairData, which is MEMORY-ONLY and empty on every reload; High-
+  // Confidence Setups reads the PERSISTED scanData. renderDashboard() had one call site --
+  // showPanel() -- so opening the Dashboard inside the first sweep window froze "No scored pairs
+  // yet" permanently. The two panels keep their different sources; only the repaint is added.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  {
+    jvmClean(); alexClean(); seedConversions(); activeWatchAll();
+    g.setMode('firing'); g.setPricing('serve','1.09990','1.10000');
+    g.setActiveTfE2E('M15');
+
+    // Reload conditions: scanData restored from storage, pairData empty.
+    g.setPairDataObj({});
+    g.setDashboardVisible(true);
+    g.renderDashboard();
+    const before=String(g.elHtml('dashOpportunities')||'');
+    const hcBefore=String(g.elHtml('dashHighConfidence')||'');
+    assert('PTE2E-DASH.0 (PRECONDITION): with pairData empty the Opportunities panel genuinely shows its empty state, so the assertions below are not vacuous',
+      before.indexOf('No scored pairs yet')!==-1,'panel='+before.slice(0,120));
+
+    // A real sweep populates pairData while the Dashboard is on screen.
+    await g.scanAll();
+    const after=String(g.elHtml('dashOpportunities')||'');
+    assert('PTE2E-DASH.1: after a scan populates pairData the Dashboard REPAINTS -- the empty state is gone',
+      after.indexOf('No scored pairs yet')===-1,'panel='+after.slice(0,160));
+    assert('PTE2E-DASH.2: ...and the panel now lists real scored pairs with their percentages',
+      /\d+%/.test(after)&&after.indexOf('dash-row')!==-1,'panel='+after.slice(0,160));
+
+    // INCLUSION CRITERIA UNCHANGED -- Opportunities is still pairData.conf.total>0, nothing else.
+    const scoredPairs=Object.keys(g.pairDataAll()).filter(function(k){
+      const d=g.pairDataAll()[k]; return d&&d.conf&&d.conf.total>0; });
+    // The renderer caps the list at slice(0,6), so "every scored pair is listed" is false by
+    // construction. The inclusion criterion is asserted in the direction that is actually true:
+    // everything the panel LISTS is a pairData entry whose confluence is above zero.
+    assert('PTE2E-DASH.3: every pair the Opportunities panel lists is a pairData entry scoring above zero, and the list respects its existing top-6 cap -- the repaint did not widen or narrow the criteria',
+      (function(){
+        const listed=(after.match(/<span>([A-Z]{3}\/[A-Z]{3})<\/span>/g)||[])
+          .map(function(x){ return x.replace(/<\/?span>/g,''); });
+        if(!listed.length||scoredPairs.length===0) return false;
+        if(listed.length>6) return false;
+        const pd=g.pairDataAll();
+        return listed.every(function(sk){
+          const d=pd[sk.replace('/','_')]; return d&&d.conf&&d.conf.total>0; });
+      })(),
+      'scoredInPairData='+scoredPairs.length);
+    assert('PTE2E-DASH.4: a pair scoring ZERO is still EXCLUDED, so the panel did not simply start listing everything',
+      (function(){ const pd=g.pairDataAll();
+        const zero=Object.keys(pd).filter(function(k){ return pd[k]&&pd[k].conf&&pd[k].conf.total===0; });
+        if(!zero.length) return true;   // nothing scored zero this sweep; nothing to prove
+        return zero.every(function(k){ return after.indexOf('>'+k.replace('_','/')+'<')===-1; }); })(),'');
+
+    // THE TWO PANELS REMAIN DIFFERENT POPULATIONS.
+    assert('PTE2E-DASH.5: High-Confidence Setups still derives from scanData GRADES, not from confluence -- the two panels remain intentionally different sources',
+      (function(){
+        const sd=g.getScanData(); const keys=Object.keys(sd);
+        keys.forEach(function(k){ sd[k].grade='—'; });
+        g.setScanData(sd); g.renderDashboard();
+        const hcNone=String(g.elHtml('dashHighConfidence')||'');
+        const oppStill=String(g.elHtml('dashOpportunities')||'');
+        // grades cleared -> High-Confidence empties, while Opportunities (confluence) is unaffected
+        return hcNone.indexOf('No A-grade setups right now')!==-1&&
+               oppStill.indexOf('No scored pairs yet')===-1; })(),
+      'hcBefore='+hcBefore.slice(0,80));
+
+    // VISIBILITY GATE: an off-screen Dashboard is not repainted by the sweep.
+    g.setDashboardVisible(false);
+    assert('PTE2E-DASH.6: the visibility predicate reports the Dashboard as hidden once its panel loses the active class',
+      g.dashboardIsVisible()===false,'');
+    g.setElHtml('dashOpportunities','__SENTINEL__');
+    await g.scanAll();
+    assert('PTE2E-DASH.7: a sweep with the Dashboard HIDDEN does not repaint it -- the sentinel survives, so the repaint costs nothing off-screen',
+      String(g.elHtml('dashOpportunities')||'')==='__SENTINEL__',
+      'panel='+String(g.elHtml('dashOpportunities')||'').slice(0,80));
+    g.setDashboardVisible(true);
+    assert('PTE2E-DASH.8 POSITIVE CONTROL for DASH.7: the visibility predicate flips back to true, establishing the precondition for the repaint asserted below -- without this, DASH.7 could be satisfied by a renderer that never runs at all',
+      g.dashboardIsVisible()===true,'');
+    await g.scanAll();
+    assert('PTE2E-DASH.9: ...and that repaint really happened -- the sentinel is gone',
+      String(g.elHtml('dashOpportunities')||'').indexOf('__SENTINEL__')===-1,
+      'panel='+String(g.elHtml('dashOpportunities')||'').slice(0,80));
+
+    // ── TOAST TIMEFRAME ──
+    g.showToastDirect({pair:'GBP/CAD',pct:58,direction:'long',sigs:['Bias 3/3 aligned','AOI zone touch'],
+      session:'New York',inSession:true,tf:'M15'},{name:'New York',active:true,priority:true});
+    const withTf=String(g.elText('toastSigs')||'');
+    assert('PTE2E-TOAST.1: an alert pop-up shows the source timeframe recorded on the alert',
+      withTf.indexOf('M15 ·')===0,'toastSigs='+JSON.stringify(withTf));
+    assert('PTE2E-TOAST.2: ...and still shows the signals it always showed',
+      withTf.indexOf('Bias 3/3 aligned')!==-1&&withTf.indexOf('AOI zone touch')!==-1,'toastSigs='+JSON.stringify(withTf));
+
+    g.showToastDirect({pair:'GBP/CAD',pct:58,direction:'long',sigs:['Bias 3/3 aligned'],
+      session:'New York',inSession:true,tf:'H1'},{name:'New York',active:true,priority:true});
+    const withH1=String(g.elText('toastSigs')||'');
+    assert('PTE2E-TOAST.3 THE DISCRIMINATOR: a different recorded timeframe renders differently, so the value is read rather than hardcoded',
+      withH1.indexOf('H1 ·')===0&&withH1!==withTf,'toastSigs='+JSON.stringify(withH1));
+
+    g.showToastDirect({pair:'GBP/CAD',pct:58,direction:'long',sigs:['Bias 3/3 aligned'],
+      session:'New York',inSession:true},{name:'New York',active:true,priority:true});
+    const legacy=String(g.elText('toastSigs')||'');
+    assert('PTE2E-TOAST.4 BACKWARD COMPATIBLE: a LEGACY alert carrying no timeframe renders exactly its signals, and is NEVER defaulted to M15',
+      legacy==='Bias 3/3 aligned'&&legacy.indexOf('M15')===-1,'toastSigs='+JSON.stringify(legacy));
+    assert('PTE2E-TOAST.5: an off-session legacy alert keeps its existing warning suffix unchanged',
+      (function(){ g.showToastDirect({pair:'GBP/CAD',pct:58,direction:'long',sigs:['Bias 3/3 aligned'],
+          session:'New York',inSession:false},{name:'New York',active:false,priority:false});
+        const off=String(g.elText('toastSigs')||'');
+        return off.indexOf('Wait for session open')!==-1&&off.indexOf('M15')===-1; })(),'');
+
+    g.setDashboardVisible(false); g.setAlertLog([]); g.resetFiredAlerts();
+  }
+
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===149, 'recorded='+results.length+' expected=149 (this fixture is the 150th)');
+    results.length===164, 'recorded='+results.length+' expected=164 (this fixture is the 165th)');
 
   return results;
 }
