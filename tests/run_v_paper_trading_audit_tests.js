@@ -173,6 +173,11 @@ const wrapped = new Function('g',
   //    above can only add or delete one key at a time, which cannot express "USD_JPY absent
   //    while GBP_JPY present" without depending on whatever a previous fixture left behind).
   'g.pipValuePerLot=pipValuePerLot;g.pipSize=pipSize;' +
+  // -- D4: the AI context string. buildAiContext had ZERO coverage anywhere in the repository
+  //    before this, which is why a suppressed pair reaching the model as a measured "0%" market
+  //    fact survived every gate. It is driven REAL here.
+  'g.buildAiContext=buildAiContext;' +
+  'g.setScanData=function(v){scanData=v;};g.getScanData=function(){return scanData;};' +
   'g.SCAN_PAIRS=SCAN_PAIRS;' +
   'g.setPairDataObj=function(v){pairData=v;};g.getPairData=function(){return pairData;};' +
   // -- D3C: the universal geometry invariant across ALEX and ALEX V2 --

@@ -373,10 +373,68 @@ async function runChartAoiFidelityFixtures(g){
     assert('CAF-TF.9','and the confluence panel shows NO percentage and NO direction -- the chart does not fill the gap with a figure it computed itself',
       conf8.indexOf('%')===-1 && conf8.indexOf('LONG')===-1 && conf8.indexOf('SHORT')===-1,
       'confDir='+(conf8===''?'(empty -- cleared before the run and never rewritten)':conf8.slice(0,160)));
-    assert('CAF-TF.10','and NO recommendation is offered -- the label reads AWAITING DATA rather than a SETUP FORMING or STRATEGY RECOMMENDS verdict, because the banner carries no qualifier of its own and an invented one there is the most misleading surface of all',
-      banner8==='AWAITING DATA' &&
-      banner8.indexOf('SETUP FORMING')===-1 && banner8.indexOf('STRATEGY RECOMMENDS')===-1,
+    // §D4: STRENGTHENED. This previously required the label to read exactly 'AWAITING DATA' -- the
+    // string the banner ALSO produced for a fully-evaluated pair that simply scored zero, which is
+    // the collapse this fixture's own rationale ("an invented one there is the most misleading
+    // surface of all") argues against. The banner now carries a qualifier of its own, so the
+    // assertion demands it: an explicit not-evaluated label, AND a detail line that does not claim
+    // a market finding. The forbidden-verdict checks are kept unchanged.
+    assert('CAF-TF.10','and NO recommendation is offered -- the label states NOT EVALUATED rather than a SETUP FORMING or STRATEGY RECOMMENDS verdict, and the detail line does not claim that no pattern was detected, because MOGO never looked',
+      banner8==='NOT EVALUATED' &&
+      banner8.indexOf('SETUP FORMING')===-1 && banner8.indexOf('STRATEGY RECOMMENDS')===-1 &&
+      bannerDetail8.indexOf('No pattern detected')===-1 &&
+      bannerDetail8.indexOf('NOT a finding')!==-1,
       'recLabel='+JSON.stringify(banner8)+' recDetail='+JSON.stringify(bannerDetail8.slice(0,80)));
+  }
+  {
+    // ── D4: THE DISCRIMINATING FIXTURE. "I could not see the market" vs "I looked and found
+    //    nothing" must not render the same. CAF-TF.10 alone cannot catch a regression that makes
+    //    BOTH causes say NOT EVALUATED -- it only inspects the suppressed run. This drives the
+    //    OTHER cause through the same real loadChart and requires the two outputs to DIFFER.
+    // Self-contained: BOTH causes are driven here, through the same real loadChart, so the
+    // comparison does not depend on a variable scoped to the block above.
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    seedEngineVerdict({timeframe:'M15',completenessState:'PARTIAL',
+      requestedCount:220,receivedCount:137,evaluationSuppressed:true});
+    g.setChartEvaluationStateHtml('');
+    g.setElHtml('confDir',''); g.setElHtml('recBanner',''); g.setElHtml('signalsRow','');
+    g.setElHtml('confItems','');
+    await g.loadChart();
+    const suppressedLabel=String(g.elText('recLabel')||'');
+    const suppressedItems=String(g.elHtml('confItems')||'');
+
+    baseReset();
+    installChartRouter(AOI_SPEC_REFERENCE);
+    // Complete data, engine authority on the displayed timeframe, and a genuinely zero score.
+    seedEngineVerdict({timeframe:'H1',completenessState:'COMPLETE',
+      requestedCount:220,receivedCount:220,evaluationSuppressed:false,
+      conf:{total:0,items:[],direction:'long'},signals:[]});
+    g.setChartEvaluationStateHtml('');
+    g.setElHtml('confDir',''); g.setElHtml('recBanner',''); g.setElHtml('signalsRow','');
+    g.setElHtml('confItems','');
+    await g.loadChart();
+    const quietLabel=String(g.elText('recLabel')||'');
+    const quietDetail=String(g.elText('recDetail')||'');
+    const quietItems=String(g.elHtml('confItems')||'');
+
+    assert('CAF-TF.14','a pair evaluated on COMPLETE data that simply scored zero reports a STRATEGY '+
+      'conclusion, not a data fault -- it must not say the market data was incomplete',
+      quietLabel==='NO SETUP' &&
+      quietDetail.indexOf('incomplete')===-1 && quietDetail.indexOf('NOT a finding')===-1,
+      'recLabel='+JSON.stringify(quietLabel)+' recDetail='+JSON.stringify(quietDetail.slice(0,90)));
+
+    assert('CAF-TF.15','THE DISCRIMINATOR: the two zero-score causes render DIFFERENT labels. '+
+      'Collapsing them -- in either direction -- fails here even though each cause on its own '+
+      'still looks reasonable, which is exactly what CAF-TF.10 alone cannot detect',
+      quietLabel!==suppressedLabel && quietLabel.length>0 && suppressedLabel.length>0,
+      'suppressed='+JSON.stringify(suppressedLabel)+' evaluated-zero='+JSON.stringify(quietLabel));
+
+    assert('CAF-TF.16','and the confluence panel likewise distinguishes them: the evaluated-zero '+
+      'panel states it was evaluated, and does NOT claim data was missing',
+      quietItems.indexOf('Evaluated')!==-1 && quietItems.indexOf('Not evaluated')===-1 &&
+      suppressedItems.indexOf('Not evaluated')!==-1,
+      'evaluated-zero='+quietItems.slice(0,110)+' || suppressed='+suppressedItems.slice(0,110));
   }
   {
     // ── 🔴 CAF-LEGEND: the THIRD raw-setupType path, AND the wiring gap (§18.21) ────────────────

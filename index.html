@@ -10085,16 +10085,34 @@ function startCountdown(){
 }
 
 // ── RECOMMENDATION BANNER ──
-function renderRecBanner(conf,sess){
+// `suppressed` is the caller's ALREADY-COMPUTED completeness fact (loadChart derives it at its
+// own call site and has always passed it to renderChartEvaluationState). It is threaded here
+// because without it this banner cannot tell its two zero-score causes apart, and it was getting
+// BOTH of them wrong:
+//   * data missing -> conf={total:0,items:[]} -> "No pattern detected on this timeframe", which
+//     states a market finding MOGO never made. This is the exact prohibited collapse: "I could
+//     not see the market" rendered as "the strategy found nothing."
+//   * data complete, nothing qualified -> also total===0 -> "AWAITING DATA", which blames a data
+//     fault for what is a legitimate, fully-evaluated quiet-market conclusion.
+// No rule, threshold, gate or trading decision reads this argument -- it selects display text
+// only, and the score/direction arithmetic below is untouched.
+function renderRecBanner(conf,sess,suppressed){
   const banner=document.getElementById('recBanner');
   const label=document.getElementById('recLabel');
   const detail=document.getElementById('recDetail');
   const score=document.getElementById('recScore');
+  if(suppressed){
+    banner.className='rec-banner rec-wait';
+    label.className='rec-label rec-label-wait';
+    label.textContent='NOT EVALUATED';
+    detail.textContent='Market data incomplete — this timeframe was not evaluated. This is NOT a finding that no setup exists.';
+    score.textContent='—';score.style.color='var(--text2)';return;
+  }
   if(!conf||conf.total===0){
     banner.className='rec-banner rec-wait';
     label.className='rec-label rec-label-wait';
-    label.textContent='AWAITING DATA';
-    detail.textContent='No pattern detected on this timeframe';
+    label.textContent='NO SETUP';
+    detail.textContent='Evaluated on complete data — no qualifying pattern on this timeframe';
     score.textContent='—';score.style.color='var(--text2)';return;
   }
   score.textContent=conf.total+'%';
@@ -12017,8 +12035,12 @@ async function loadChart(){
   const conf=usingEngineVerdict?engineVerdict.conf:bestConfluence(evaluationSuppressed?null:candles,chartPair);
   const sess=getSession();
   renderSignalBadges(signals);
-  renderConfluencePanel(conf);
-  renderRecBanner(conf,sess);
+  // The completeness fact computed six lines above is now threaded into BOTH of these, not just
+  // into renderChartEvaluationState below. Previously the chart's own state line said "NOT
+  // EVALUATED" while the recommendation banner beside it said "No pattern detected on this
+  // timeframe" -- two panels on one screen disagreeing about whether MOGO had looked at all.
+  renderConfluencePanel(conf,evaluationSuppressed);
+  renderRecBanner(conf,sess,evaluationSuppressed);
   renderChartEvaluationState({suppressed:evaluationSuppressed,
     completenessState:usingEngineVerdict?engineVerdict.completenessState:chartCompleteness,
     source:usingEngineVerdict?'engine':'chart',
@@ -12351,11 +12373,20 @@ function renderSignalBadges(signals){
   });
 }
 
-function renderConfluencePanel(conf){
+// `suppressed` -- same threaded completeness fact as renderRecBanner, same reason. "No data" was
+// rendered for a fully-evaluated pair that simply scored zero, and equally for a pair whose
+// candles never arrived. Deliberately renders no percentage, no LONG and no SHORT in either
+// branch: the panel must not fill a gap with a figure it computed itself.
+function renderConfluencePanel(conf,suppressed){
   const dirEl=document.getElementById('confDir');
   const itemsEl=document.getElementById('confItems');
+  if(suppressed){
+    dirEl.textContent='—';
+    itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">Not evaluated — market data incomplete. No confluence was computed for this timeframe.</div>';
+    return;
+  }
   if(!conf||!conf.total){
-    dirEl.textContent='—';itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">No data</div>';return;
+    dirEl.textContent='—';itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">Evaluated — no confluence scored on this timeframe</div>';return;
   }
   const col=conf.direction==='long'?'var(--green)':'var(--red)';
   dirEl.innerHTML=`<span style="color:${col};font-weight:600">${conf.direction==='long'?'▲ LONG':'▼ SHORT'} — ${conf.total}%</span>`;
@@ -19361,7 +19392,15 @@ function buildAiContext(){
   const activeWatch=SCAN_PAIRS.filter(p=>scanData[p]&&scanData[p].bucket==='Active watch');
   const watchList=activeWatch.map(p=>{
     const d=scanData[p];const ld=pairData[p.replace('/','_')];
-    return `${p} (grade ${d.grade||'—'}${ld&&ld.conf?`, live confluence ${ld.conf.total}% ${ld.conf.direction}`:''})`;
+    // A suppressed pair still carries conf={total:0,items:[]} -- bestConfluence returns that for
+    // null candles -- which is TRUTHY, so this line used to report "live confluence 0% undefined"
+    // to the model as a measured market fact for an instrument MOGO never actually observed.
+    // An LLM cannot recover the distinction from that string, and this is the one surface whose
+    // output is prose the operator may act on. State the data fault instead of a fake figure.
+    const confText=(ld&&ld.evaluationSuppressed)
+      ? ', live confluence NOT EVALUATED (incomplete market data — no confluence was computed)'
+      : ((ld&&ld.conf&&ld.conf.direction)?`, live confluence ${ld.conf.total}% ${ld.conf.direction}`:'');
+    return `${p} (grade ${d.grade||'—'}${confText})`;
   }).join('; ')||'none';
   const recentJournal=journalEntries.slice(0,10).map(e=>`${e.pair} ${e.dir} ${e.result}${e.rr?' '+e.rr:''}`).join('; ')||'none';
   const wins=journalEntries.filter(e=>e.result==='Win').length;

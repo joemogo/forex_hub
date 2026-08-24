@@ -3637,5 +3637,50 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setPairDataObj(snapPD);
   }
 
+  // ════════════════════════════════════════════════════════════════════════════════════════
+  // D4 -- THE AI CONTEXT STRING MUST NOT REPORT AN UNOBSERVED INSTRUMENT AS A MEASURED 0%
+  //
+  // bestConfluence(null,...) returns {total:0,items:[]} -- TRUTHY, and carrying no `direction`.
+  // buildAiContext tested `ld&&ld.conf`, so a pair whose candles never arrived was described to
+  // the model as "live confluence 0% undefined": a market measurement MOGO never made, on the one
+  // surface whose output is prose the operator may act on.
+  //
+  // buildAiContext had no fixture anywhere in the repository before this.
+  // ════════════════════════════════════════════════════════════════════════════════════════
+  {
+    const snapPD=g.getPairData(), snapSD=g.getScanData();
+    seedClean();
+    // One pair, on the Active-watch list buildAiContext filters to, whose M15 scan was suppressed.
+    g.setScanData({'EUR/USD':{bucket:'Active watch',grade:'A'}});
+    g.setPairDataObj({EUR_USD:{price:1.0800,conf:{total:0,items:[]},evaluationSuppressed:true}});
+    const suppressedCtx=String(g.buildAiContext());
+
+    assert('D4.1 a pair whose evaluation was SUPPRESSED is not reported to the model as a measured '+
+      '"0%" confluence -- the string the old code produced was "live confluence 0% undefined"',
+      suppressedCtx.indexOf('live confluence 0%')===-1&&suppressedCtx.indexOf('undefined')===-1,
+      'ctx='+(function(){var i=suppressedCtx.indexOf('EUR/USD');return i<0?suppressedCtx.slice(0,140):suppressedCtx.slice(i,i+140);})());
+
+    assert('D4.2 ...and the data fault is stated positively rather than merely omitted, so the '+
+      'model is told MOGO could not see the market rather than being left to infer silence',
+      suppressedCtx.indexOf('NOT EVALUATED')!==-1,
+      'ctx contains NOT EVALUATED = '+(suppressedCtx.indexOf('NOT EVALUATED')!==-1));
+
+    // POSITIVE CONTROL: a genuinely evaluated pair must STILL report its real figure.
+    g.setPairDataObj({EUR_USD:{price:1.0800,conf:{total:83,items:[],direction:'long'},evaluationSuppressed:false}});
+    const evaluatedCtx=String(g.buildAiContext());
+    assert('D4.3 POSITIVE CONTROL: a genuinely EVALUATED pair still reports its real confluence to '+
+      'the model -- D4.1 must not be satisfied by a context string that simply stopped reporting '+
+      'confluence for everything',
+      evaluatedCtx.indexOf('live confluence 83% long')!==-1&&
+      evaluatedCtx.indexOf('NOT EVALUATED')===-1,
+      'ctx='+(function(){var i=evaluatedCtx.indexOf('EUR/USD');return i<0?evaluatedCtx.slice(0,140):evaluatedCtx.slice(i,i+140);})());
+
+    assert('D4.4 THE DISCRIMINATOR: the suppressed and evaluated descriptions of the SAME pair '+
+      'differ. Collapsing them in either direction fails here',
+      suppressedCtx!==evaluatedCtx,'');
+
+    g.setPairDataObj(snapPD); g.setScanData(snapSD); seedClean();
+  }
+
   return results;
 }
