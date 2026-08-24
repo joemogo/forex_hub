@@ -18641,7 +18641,27 @@ function pipValuePerLot(pair){
   const pip=pipSize(pair),lotUnits=100000;
   if(quote==='USD') return pip*lotUnits;
   const convPair='USD_'+quote;
-  const rate=(pairData[convPair]&&pairData[convPair].price)||(pairData[pair]&&pairData[pair].price);
+  // D1 (OWNER-AUTHORIZED PROTECTED CHANGE). This lookup previously carried a second term,
+  // `||(pairData[pair]&&pairData[pair].price)`, which substituted the instrument's OWN
+  // BASE/QUOTE price for the USD/QUOTE rate the conversion actually requires. Measured:
+  //   * For the 3 USD-BASE instruments (USD_JPY, USD_CAD, USD_CHF) that term was exactly
+  //     REDUNDANT -- convPair === pair, so it re-read the slot already read one term earlier.
+  //     Removing it cannot change their result, and the D1 fixtures prove it does not.
+  //   * For the 5 non-USD-base crosses (GBP_JPY, EUR_JPY, AUD_JPY, GBP_CHF, GBP_CAD) it was
+  //     always FABRICATION: GBP/JPY is not USD/JPY. Measured against realistic quotes the
+  //     invented pip value was wrong by -21.3% to +51.5%. Because lots = riskAmount /
+  //     (riskPips * pipVal), an understated pip value OVERSIZES the position -- GBP_JPY's
+  //     -21.3% is +27.1% more risk than the account budgeted, silently.
+  //   * REACHABLE, not theoretical: scanPair() writes pairData[pair] unconditionally with
+  //     whatever fetchPrice() returned, and fetchPrice() yields null on any failure. A
+  //     per-instrument pricing failure on USD_JPY while GBP_JPY's own fetch succeeds lands
+  //     exactly on this path, as does the first sweep's Promise.all population race.
+  //   * LATENT, never realised: all 115 preserved cross-pair observations back-solve to an
+  //     implied pip value consistent with the correct USD/QUOTE conversion and none with the
+  //     fabrication. The three JPY crosses converge on one shared 6.10-6.32 band, which is
+  //     only possible if all three divided by the same real USD/JPY rate.
+  // No historical record is rewritten by this change; it constrains future sizing only.
+  const rate=(pairData[convPair]&&pairData[convPair].price);
   if(rate) return (pip*lotUnits)/rate;
   // No conversion data available -- previously silently assumed $10/pip, which is flatly
   // wrong for JPY/CAD/CHF-quoted pairs and would size every position on a bad guess.

@@ -3457,5 +3457,185 @@ function runPaperTradingAuditFixturesPart2(g,results,assert,PAIR,seedClean){
     g.setAlexGAccount({balance:10000,startingBalance:10000,openPositions:[],closedPositions:[]});
   }
 
+  // ════════════════════════════════════════════════════════════════════════════════════════
+  // D1 -- THE PIP-VALUE CONVERSION BOUNDARY (owner-authorized protected change)
+  //
+  // pipValuePerLot(pair) must convert one pip of `pair` into USD. For a non-USD-quoted
+  // instrument that requires the USD/QUOTE rate. The defect: the lookup carried a second term,
+  // `||(pairData[pair]&&pairData[pair].price)`, which substituted the instrument's OWN
+  // BASE/QUOTE price when the required USD/QUOTE rate was unavailable. GBP/JPY is not USD/JPY.
+  //
+  // These fixtures drive the REAL, UNMODIFIED protected function. They are written so that
+  // RESTORING the deleted term fails them -- D1.6/D1.7 are the ones that die, because they are
+  // the only ones that construct a pairData in which the instrument's own price is present and
+  // the required conversion rate is not. That is the exact and only state the removed term
+  // could ever have read.
+  // ════════════════════════════════════════════════════════════════════════════════════════
+  {
+    const snapPD=g.getPairData();
+    // Realistic reference quotes. USDQ holds the rates the conversion legitimately needs;
+    // OWN holds each instrument's own BASE/QUOTE price.
+    const USDQ={USD_JPY:157.00,USD_CAD:1.3600,USD_CHF:0.8900};
+    const OWN={GBP_USD:1.2700,EUR_USD:1.0800,AUD_USD:0.6600,NZD_USD:0.6100,
+               USD_JPY:157.00,USD_CAD:1.3600,USD_CHF:0.8900,
+               GBP_JPY:199.39,EUR_JPY:169.56,AUD_JPY:103.62,
+               GBP_CHF:1.1303,GBP_CAD:1.7272};
+    const oPairs=g.SCAN_PAIRS.map(function(p){return p.replace('/','_');});
+    const clsOf=function(p){
+      const b=p.split('_')[0],q=p.split('_')[1];
+      return q==='USD'?'USD_QUOTE':(b==='USD'?'USD_BASE':'CROSS');
+    };
+    // Independent oracle, derived from first principles rather than from app code.
+    const oracle=function(p){
+      const q=p.split('_')[1];
+      const pip=(p.indexOf('JPY')>=0?0.01:0.0001),units=100000;
+      return q==='USD'?pip*units:(pip*units)/USDQ['USD_'+q];
+    };
+    const fullData=function(){
+      const d={};
+      Object.keys(OWN).forEach(function(k){d[k]={price:OWN[k]};});
+      Object.keys(USDQ).forEach(function(k){d[k]={price:USDQ[k]};});
+      return d;
+    };
+    const crosses=oPairs.filter(function(p){return clsOf(p)==='CROSS';});
+    const usdBase=oPairs.filter(function(p){return clsOf(p)==='USD_BASE';});
+    const usdQuote=oPairs.filter(function(p){return clsOf(p)==='USD_QUOTE';});
+
+    // ── The universe partition itself is asserted, so this suite cannot pass vacuously if
+    //    SCAN_PAIRS changes underneath it. An empty `crosses` would make D1.6 trivially true.
+    assert('D1.1 the configured universe still partitions into the three conversion classes '+
+      'this boundary distinguishes -- an empty cross set would make the fail-closed fixtures '+
+      'pass vacuously',
+      oPairs.length===12&&crosses.length===5&&usdBase.length===3&&usdQuote.length===4,
+      'n='+oPairs.length+' cross='+JSON.stringify(crosses)+' usdBase='+JSON.stringify(usdBase));
+
+    // ── NORMAL PATH: every required rate present. Must be correct for all 12. ──
+    g.setPairDataObj(fullData());
+    const wrongNormal=oPairs.filter(function(p){
+      const v=g.pipValuePerLot(p);
+      return v==null||Math.abs(v-oracle(p))>1e-9;
+    });
+    assert('D1.2 NORMAL PATH: with every required USD/QUOTE rate available, all 12 configured '+
+      'instruments convert exactly to an independent first-principles oracle',
+      wrongNormal.length===0,'mismatches='+JSON.stringify(wrongNormal));
+
+    assert('D1.3 NORMAL PATH is not trivially $10/pip -- the fixture would be worthless if the '+
+      'oracle and the function agreed only because both returned a constant',
+      (function(){
+        // Null-tolerant on purpose: a mutation that makes the function always fail closed must
+        // register as a clean FAILURE here, not as a TypeError that aborts the whole suite and
+        // hides which assertion actually died.
+        const vals=oPairs.map(function(p){return g.pipValuePerLot(p);});
+        if(vals.some(function(v){return v==null||!isFinite(v);})) return false;
+        const distinct={};vals.forEach(function(v){distinct[v.toFixed(6)]=1;});
+        return Object.keys(distinct).length>=4;
+      })(),'');
+
+    // ── USD-QUOTED: no conversion is needed at all, so an empty pairData must still work. ──
+    g.setPairDataObj({});
+    const badQuote=usdQuote.filter(function(p){return g.pipValuePerLot(p)!==10;});
+    assert('D1.4 a USD-QUOTED instrument needs no conversion and returns exactly $10/pip even '+
+      'with a completely empty pairData -- the repair must not fail these closed',
+      badQuote.length===0,'bad='+JSON.stringify(badQuote));
+
+    // ── USD-BASE: convPair === pair, so the removed term was EXACTLY REDUNDANT. ──
+    assert('D1.5 for every USD-BASE instrument the required conversion pair IS the instrument '+
+      'itself, which is why deleting the own-price term cannot change their result',
+      usdBase.every(function(p){return 'USD_'+p.split('_')[1]===p;}),
+      JSON.stringify(usdBase));
+
+    usdBase.forEach(function(p){
+      const only={};only[p]={price:OWN[p]};
+      g.setPairDataObj(only);
+      const v=g.pipValuePerLot(p);
+      assert('D1.5.'+p+' USD-BASE '+p+' still converts correctly when its own slot is the only '+
+        'data present -- proving the repair fails closed on fabrication, not on legitimate data',
+        v!=null&&Math.abs(v-oracle(p))<1e-9,'got='+v+' expected='+oracle(p));
+    });
+
+    // ── THE DEFECT ITSELF. Own price present, required USD/QUOTE rate absent. ──
+    // This is the ONLY state the deleted term could read. Restoring it fails D1.6.
+    const fabricated=[];
+    crosses.forEach(function(p){
+      const only={};only[p]={price:OWN[p]};   // own price present, USD/QUOTE absent
+      g.setPairDataObj(only);
+      const v=g.pipValuePerLot(p);
+      if(v!==null) fabricated.push(p+'->'+v);
+    });
+    assert('D1.6 FAIL-CLOSED: for all 5 non-USD-base crosses, when the required USD/QUOTE rate '+
+      'is unavailable but the instrument\'s own price IS present, the function returns null '+
+      'rather than inventing a pip value from BASE/QUOTE. Restoring the removed own-price '+
+      'fallback term fails exactly this fixture',
+      fabricated.length===0,'fabricated='+JSON.stringify(fabricated));
+
+    assert('D1.7 POSITIVE CONTROL for D1.6: those same 5 crosses DO convert, and convert '+
+      'correctly, the moment their required USD/QUOTE rate is supplied -- so D1.6 proves a '+
+      'fail-closed boundary and not a permanently broken function',
+      (function(){
+        const bad=[];
+        crosses.forEach(function(p){
+          const d={};d[p]={price:OWN[p]};
+          const cp='USD_'+p.split('_')[1];d[cp]={price:USDQ[cp]};
+          g.setPairDataObj(d);
+          const v=g.pipValuePerLot(p);
+          if(v==null||Math.abs(v-oracle(p))>1e-9) bad.push(p+'->'+v);
+        });
+        return bad.length===0;
+      })(),'');
+
+    // ── The magnitude of what was being fabricated, recorded as evidence. ──
+    assert('D1.8 the fabricated value was materially wrong, not a rounding difference -- every '+
+      'cross\'s own-price substitution differs from the correct conversion by >5%, and because '+
+      'lots = riskAmount/(riskPips*pipVal) an understated pip value OVERSIZES the position',
+      crosses.every(function(p){
+        const pip=(p.indexOf('JPY')>=0?0.01:0.0001);
+        const fab=(pip*100000)/OWN[p];
+        return Math.abs(fab-oracle(p))/oracle(p)>0.05;
+      }),
+      crosses.map(function(p){
+        const pip=(p.indexOf('JPY')>=0?0.01:0.0001);
+        const fab=(pip*100000)/OWN[p];
+        return p+' '+(((fab-oracle(p))/oracle(p))*100).toFixed(1)+'%';
+      }).join(' '));
+
+    // ── REACHABILITY, driven rather than asserted from source. A null pip value must BLOCK
+    //    the execution boundary, not propagate into a NaN-sized position. ──
+    {
+      seedClean();
+      const only={GBP_JPY:{price:OWN.GBP_JPY}};   // USD_JPY deliberately absent
+      g.setPairDataObj(only);
+      const before=g.getPaperAccount().openPositions.length;
+      const r=g.openPaperPosition('GBP_JPY','buy',199.39,198.39,201.39,'d1-test');
+      const after=g.getPaperAccount().openPositions.length;
+      assert('D1.9 the execution boundary BLOCKS: with USD/JPY unavailable, openPaperPosition '+
+        'refuses GBP/JPY with an explicit error and creates no position, rather than sizing on '+
+        'a fabricated pip value',
+        !!(r&&r.error)&&after===before,
+        'result='+JSON.stringify(r&&r.error?r.error.slice(0,80):r)+' opened='+(after-before));
+
+      assert('D1.10 POSITIVE CONTROL for D1.9: the identical trade IS accepted once USD/JPY is '+
+        'available, so the refusal is caused by the missing conversion rate and by nothing else',
+        (function(){
+          seedClean();
+          g.setPairDataObj({GBP_JPY:{price:OWN.GBP_JPY},USD_JPY:{price:USDQ.USD_JPY}});
+          const n0=g.getPaperAccount().openPositions.length;
+          const r2=g.openPaperPosition('GBP_JPY','buy',199.39,198.39,201.39,'d1-test');
+          const n1=g.getPaperAccount().openPositions.length;
+          return !(r2&&r2.error)&&n1===n0+1;
+        })(),'');
+
+      assert('D1.11 and the position it DID open was sized on the real conversion: pipValueAtEntry '+
+        'equals the oracle for GBP/JPY, so the accepted path is not merely "accepted" but correct',
+        (function(){
+          const ps=g.getPaperAccount().openPositions;
+          const p=ps[ps.length-1];
+          return !!p&&p.pipValueAtEntry!=null&&Math.abs(p.pipValueAtEntry-oracle('GBP_JPY'))<1e-9;
+        })(),'');
+      seedClean();
+    }
+
+    g.setPairDataObj(snapPD);
+  }
+
   return results;
 }

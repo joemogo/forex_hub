@@ -167,6 +167,14 @@ const wrapped = new Function('g',
   'g.getLocalStorageItem=function(k){return localStorage.getItem(k);};' +
   'g.setLocalStorageItem=function(k,v){localStorage.setItem(k,v);};' +
   'g.clearLocalStorage=function(){localStorage.__clear();};' +
+  // -- D1: the pip-value conversion boundary. pipValuePerLot is PROTECTED and is driven REAL
+  //    and UNMODIFIED here; setPairDataObj replaces the whole pairData map so a fixture can
+  //    construct the exact rate-availability regime it means to test (the per-pair setPairData
+  //    above can only add or delete one key at a time, which cannot express "USD_JPY absent
+  //    while GBP_JPY present" without depending on whatever a previous fixture left behind).
+  'g.pipValuePerLot=pipValuePerLot;g.pipSize=pipSize;' +
+  'g.SCAN_PAIRS=SCAN_PAIRS;' +
+  'g.setPairDataObj=function(v){pairData=v;};g.getPairData=function(){return pairData;};' +
   // -- D3C: the universal geometry invariant across ALEX and ALEX V2 --
   'g.validateTradeGeometry=validateTradeGeometry;' +
   'g.openPositionGeometryQuarantined=openPositionGeometryQuarantined;' +

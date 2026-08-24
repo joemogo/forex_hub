@@ -145,6 +145,7 @@ const wrapped = new Function('g',
   'g.pipValuePerLot=pipValuePerLot;' +
   'g.pipSize=pipSize;' +
   'g.ALL_PAIRS=ALL_PAIRS;' +
+  'g.SCAN_PAIRS_OPAIR=SCAN_PAIRS.map(function(p){return p.replace("/","_");});' +
   'g.setPairPrice=function(p,v){ if(!pairData[p]) pairData[p]={}; pairData[p].price=v; };' +
   'g.disconnectSrc=String(disconnect);' +
   'g.historySufficiency=historySufficiency;' +

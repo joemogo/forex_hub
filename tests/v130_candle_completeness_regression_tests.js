@@ -1026,21 +1026,30 @@ function runCandleCompletenessFixtures(g){
     // and an operator decision -- not something to do silently. These fixtures pin what production
     // does TODAY so that a future fix FLIPS them, making the change impossible to land unnoticed.
 
-    await t('DEFECT-1 (DOCUMENTED) pipValuePerLot substitutes the WRONG conversion rate',async function(){
-      // `(pairData['USD_'+quote].price) || (pairData[pair].price)` -- the second operand is the
-      // rate of the pair being SIZED, not USD/quote. Correct only when base==='USD', where the
-      // branch is redundant. The `||` fires BEFORE the `return null` guard written to stop exactly
-      // this fabrication, so the guard is unreachable whenever the pair itself has a price.
+    await t('D1 (REPAIRED, was DEFECT-1) pipValuePerLot no longer substitutes the wrong conversion rate',async function(){
+      // This fixture previously DOCUMENTED the defect and instructed its own replacement:
+      // "If this assertion ever FAILS, the defect was fixed and this fixture must be replaced by
+      // the correct-behaviour assertion." D1 removed the `||(pairData[pair]&&pairData[pair].price)`
+      // term, so that replacement is what follows. The assertions are INVERTED, not deleted --
+      // restoring the fallback fails this fixture exactly as it previously failed without it.
       g.setPairPrice('GBP_CHF',1.11);            // USD_CHF deliberately absent
-      const withFallback=g.pipValuePerLot('GBP_CHF');
+      const withoutRate=g.pipValuePerLot('GBP_CHF');
+      ok(withoutRate===null,'the required USD/CHF rate is absent, so the function fails closed '+
+        'and returns null rather than sizing GBP/CHF off its own GBP/CHF price');
       g.setPairPrice('USD_CHF',0.88);
       const correct=g.pipValuePerLot('GBP_CHF');
-      ok(withFallback!==null,'DOCUMENTED: the fallback fires instead of returning null');
-      ok(Math.abs(withFallback-correct)/correct>0.2,
-        'DOCUMENTED: the substituted rate differs from the correct one by >20% -- lot size and '+
-        'realized P&L are both wrong by that factor. If this assertion ever FAILS, the defect was '+
-        'fixed and this fixture must be replaced by the correct-behaviour assertion.');
-      return 'substituted '+withFallback.toFixed(4)+' vs correct '+correct.toFixed(4);
+      // POSITIVE CONTROL: the null above must be caused by the missing rate and nothing else.
+      ok(correct!==null&&Math.abs(correct-(0.0001*100000)/0.88)<1e-9,
+        'POSITIVE CONTROL: supplying USD/CHF makes the identical call convert correctly to '+
+        ((0.0001*100000)/0.88).toFixed(4)+' -- so the null is a fail-closed boundary, not a '+
+        'permanently broken function');
+      // And the value the OLD fallback would have produced is provably different, so this is a
+      // real behavioural change rather than two paths that happened to agree.
+      const wouldHaveBeen=(0.0001*100000)/1.11;
+      ok(Math.abs(wouldHaveBeen-correct)/correct>0.2,
+        'the removed fallback would have produced '+wouldHaveBeen.toFixed(4)+' against a correct '+
+        correct.toFixed(4)+' -- >20% wrong, which is lot size and realized P&L wrong by that factor');
+      return 'fails closed without USD/CHF; converts to '+correct.toFixed(4)+' with it';
     });
 
     await t('DEFECT-2 (DOCUMENTED) six pairs have NO USD conversion pair at all',async function(){
@@ -1055,6 +1064,42 @@ function runCandleCompletenessFixtures(g){
       ok(affected.length>=6,'DOCUMENTED: '+affected.length+' pairs can never resolve a real '+
         'conversion rate: '+affected.join(','));
       return affected.length+' pairs permanently on the fallback: '+affected.join(',');
+    });
+
+    await t('D1-CONSEQUENCE (DISCLOSED) the six inverse-USD pairs now fail closed permanently',async function(){
+      // The honest cost of the D1 repair, pinned so it cannot become a silent surprise.
+      // Before D1 these six were sized on a FABRICATED pip value. After D1 they return null and
+      // are refused. That is the correct direction -- a blocked trade is safe, an invented lot
+      // size is not -- but it IS a behavioural change and it is recorded here rather than buried.
+      //
+      // The correct remedy is an INVERSE rate (USD/GBP = 1 / GBP/USD), and the inverse leg is
+      // configured for all six. Building it is a new conversion capability, deliberately OUT OF
+      // SCOPE for the D1 authorization, and is tracked as D2.
+      const affected=g.ALL_PAIRS.filter(function(p){
+        const q=p.split('_')[1];
+        return q!=='USD'&&g.ALL_PAIRS.indexOf('USD_'+q)===-1;
+      });
+      eq(affected.length,6,'exactly six configured pairs have no USD_<quote> leg: '+affected.join(','));
+      // Every one of them fails closed even with its OWN price present -- that own price is
+      // precisely what the removed fallback used to consume.
+      affected.forEach(function(pr){
+        g.setPairPrice(pr,1.23);
+        eq(g.pipValuePerLot(pr),null,pr+' fails closed even though its own price is available');
+      });
+      // POSITIVE CONTROL: the inverse leg each one WOULD need really is configured, so this is a
+      // missing-conversion problem with a known remedy, not an unfixable instrument.
+      const inverseAvailable=affected.every(function(pr){
+        return g.ALL_PAIRS.indexOf(pr.split('_')[1]+'_USD')!==-1;
+      });
+      ok(inverseAvailable,'POSITIVE CONTROL: the inverse leg (<quote>_USD) is configured for all '+
+        'six, so D2 has a real remedy available and these are not permanently unsizeable');
+      // And the 12 actually-traded instruments are untouched by this consequence.
+      const tradedAffected=affected.filter(function(pr){
+        return g.SCAN_PAIRS_OPAIR.indexOf(pr)!==-1;
+      });
+      eq(tradedAffected.length,0,'none of the six is in the traded SCAN_PAIRS universe, so no '+
+        'automated trading path loses an instrument');
+      return affected.join(',')+' fail closed; inverse leg available for all; 0 are traded';
     });
 
     await t('DEFECT-3 (DOCUMENTED) the pipD magnitude heuristic misreads five instruments',async function(){
