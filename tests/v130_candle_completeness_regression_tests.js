@@ -1052,6 +1052,55 @@ function runCandleCompletenessFixtures(g){
       return 'fails closed without USD/CHF; converts to '+correct.toFixed(4)+' with it';
     });
 
+    await t('BACKTEST-PROXY-1 (CONFIRMED) the legacy backtest fabricates a 3/3 alignment score from one timeframe',async function(){
+      // Item C / Phase 6. Read from the REAL source text rather than asserted in prose, so this
+      // cannot drift out of date while still reporting green. runBacktest derives its bias from
+      // `slice` -- the very candle series being backtested -- and then hardcodes the alignment
+      // score to 3 whenever that bias is directional, awarding full WEIGHTS.bias3 credit the
+      // frozen strategy would not have granted.
+      const src=g.appSource();
+      ok(src.indexOf("const rollingBias=calcBiasFromCandles(slice.slice(-200));")!==-1,
+        'the legacy backtest still derives bias from the backtested series itself');
+      ok(src.indexOf("const rollingScore=(rollingBias==='Bullish'||rollingBias==='Bearish')?3:0;")!==-1,
+        'CONFIRMED: the alignment score is a fabricated fixed 3, not a real Weekly/Daily/4H count');
+      return 'fabricated 3/3 confirmed in runBacktest';
+    });
+
+    await t('BACKTEST-PROXY-2 (CONTAINMENT) the fabricated score has no path to authoritative evidence',async function(){
+      // The honest containment claim, checked rather than assumed: evidence packages are built
+      // only by evidencePersistTradePackageResolved, whose callers are the ALEX replay seam and
+      // the live-paper path. runBacktest reaches neither. It writes only to replayState and the
+      // DOM. This is why NO machine-enforced quarantine is claimed for it -- there is nothing to
+      // quarantine it from.
+      const src=g.appSource();
+      const btStart=src.indexOf('async function runBacktest(');
+      const btEnd=src.indexOf('async function runBacktestUI(');
+      ok(btStart>0&&btEnd>btStart,'runBacktest located in source');
+      const body=src.slice(btStart,btEnd);
+      ['evidencePersistTradePackage','evidenceBuildPackageFromTrade','evidenceAllocateSequence',
+       'openPaperPosition','alexGAccount','journalEntries'].forEach(function(sym){
+        eq(body.indexOf(sym),-1,'runBacktest does not reach '+sym);
+      });
+      return 'no evidence, ledger or account path from runBacktest';
+    });
+
+    await t('BACKTEST-PROXY-3 (LABEL) both display surfaces name the specific defect',async function(){
+      // A label is not enforcement, and this fixture deliberately asserts only what is true: that
+      // the two surfaces which display these numbers state the classification explicitly.
+      const src=g.appSource();
+      const html=g.appHtml();
+      ok(html.indexOf('SINGLE-TIMEFRAME PROXY')!==-1,'the backtest panel carries the classification');
+      ok(html.indexOf('NOT VALIDATED STRATEGY EVIDENCE')!==-1,'...and states it is not validated evidence');
+      ok(html.indexOf('NOT THE FROZEN MTF SPECIFICATION')!==-1,'...and that it is not the frozen specification');
+      // The comparison view is the higher-risk surface: legacy numbers sit beside genuine ones.
+      const cmp=html.indexOf('id="mtfComparisonCard"');
+      ok(cmp>0&&html.slice(cmp,cmp+1800).indexOf('SINGLE-TIMEFRAME PROXY')!==-1,
+        'the Legacy-vs-TRUE-MTF comparison card carries the classification too');
+      ok(html.indexOf('must not be quoted as a result, an edge, or a reason to promote')!==-1,
+        'and says plainly that it must not be used for promotion or edge claims');
+      return 'both surfaces labelled';
+    });
+
     await t('DEFECT-2 (DOCUMENTED) six pairs have NO USD conversion pair at all',async function(){
       // Structural, not transient: ALL_PAIRS contains no USD_GBP / USD_AUD / USD_NZD, so for
       // these the fallback is the ONLY branch that ever executes.

@@ -1422,6 +1422,17 @@ button.danger:hover{background:var(--red-dim)}
           <div style="font-size:12px;color:var(--gold);font-weight:600;line-height:1.6;margin-bottom:6px">
             Legacy Approximation does not reproduce historical Weekly/Daily AOI state and must not be used as proof of strategy profitability.
           </div>
+          <!-- Item C / Phase 6: the specific, measured defect, named. The pre-existing warning above
+               described the AOI gap only; the alignment score was never mentioned anywhere. This is a
+               LABEL, not a quarantine: there is deliberately no claim of machine enforcement here,
+               because these results have no path to an Evidence Package, the observation corpus, the
+               AI context or any promotion decision -- verified, not assumed. -->
+          <div style="font-size:12px;color:var(--gold);font-weight:600;line-height:1.6;margin-bottom:6px">
+            SINGLE-TIMEFRAME PROXY &middot; NOT THE FROZEN MTF SPECIFICATION &middot; NOT VALIDATED STRATEGY EVIDENCE
+          </div>
+          <div style="font-size:11px;color:var(--gold);line-height:1.6;margin-bottom:6px">
+            Specifically: this engine derives its higher-timeframe bias from the <strong>same single candle series it is backtesting</strong>, and then records the alignment score as a fixed <strong>3</strong> whenever that bias is directional. It never reads a real Weekly, Daily or 4H series. Every trigger below therefore received full 3/3 bias credit that the frozen strategy would not have granted, which inflates the trigger count and every figure derived from it &mdash; win rate and expectancy included. These numbers describe this proxy, not the frozen strategy.
+          </div>
           <div style="font-size:11px;color:var(--text2)">
             Everything below is preserved exactly as it always worked — nothing here has been changed or removed. For real strategy validation, use the <strong>TRUE MTF Replay</strong> tab instead: it fetches genuine Weekly/Daily/H4/M15 history and reconstructs, at every single historical decision point, only the higher-timeframe structure that had actually closed by then — no lookahead. This tab remains useful for the parameter-exploration tools below it (Optimizer, Factor Exploration) that intentionally test variations beyond the frozen strategy.
           </div>
@@ -1651,6 +1662,9 @@ button.danger:hover{background:var(--red-dim)}
         <div class="card" id="mtfComparisonCard" style="display:none">
           <div class="section-label">Legacy Approximation vs. TRUE MTF Replay</div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Same pair, same lookback, same ambiguous-candle setting — run both ways so you can see exactly how much the legacy rolling-bias approximation differed from genuine as-of-timestamp Weekly/Daily/H4 structure.</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:600;line-height:1.6;margin-bottom:10px">
+            The Legacy column is a SINGLE-TIMEFRAME PROXY and is NOT VALIDATED STRATEGY EVIDENCE: its higher-timeframe alignment is a fixed 3 derived from the backtested series itself, never from real Weekly/Daily/4H data. It is shown for contrast only and must not be quoted as a result, an edge, or a reason to promote or reject a strategy.
+          </div>
           <div style="overflow-x:auto"><table class="scan-table" id="mtfComparisonTable"></table></div>
         </div>
 
@@ -7903,8 +7917,26 @@ function evaluateSetupFullBreakdownCore(input){
   const scanLike={weekly:weeklyBias,daily:dailyBias,fh:h4Bias};
   const score=getScore(scanLike);
   const overallBias=getBias(scanLike);
+  // ITEM D: this gate now REUSES the same htfAlignmentPasses predicate the live executable path
+  // uses, rather than re-testing score>=2 independently.
+  //
+  // WHY THIS MATTERED, and why it is not merely cosmetic: this is a HARD gate, and MANUAL REVIEW
+  // ELIGIBLE requires that every hard gate passed (only the weekday preference may fail). So a
+  // candidate reaching approveManualReviewTrade -> openPaperPosition is a REAL EXECUTABLE ORDER.
+  // getScore returns 2 for Bullish/Bullish/'—' exactly as it does for Bullish/Bullish/Ranging, so
+  // `score>=2` admitted a candidate whose third required timeframe was never evaluated -- the
+  // identical leak Item C closed on the automatic path, still open on the manual one. Gating the
+  // automatic path alone would simply have moved the leak.
+  //
+  // The reuse is sound because the input contract is IDENTICAL: scanLike is the same
+  // {weekly,daily,fh} shape the live gate reads, so the two paths cannot diverge on what counts
+  // as evaluated. The observed string now carries the predicate's own reason, so a refusal states
+  // WHICH problem occurred rather than only a bare ratio.
+  const htfGate=htfAlignmentPasses(scanLike);
   gates.push({id:'htf_alignment',label:'Higher-timeframe alignment',category:'hard',
-    pass:score>=2,observed:score+'/3 aligned ('+overallBias+')',required:'>=2/3 aligned'});
+    pass:htfGate.pass,
+    observed:score+'/3 aligned ('+overallBias+')'+(htfGate.pass?'':' — '+htfGate.reasonText),
+    required:'>=2/3 aligned, all three timeframes evaluated'});
 
   // 2. Structural AOI -- hard eligibility gate.
   // MOGO-023: three states, not two. "AOI present" / "no AOI" (a real strategy verdict) /

@@ -580,5 +580,73 @@ function runV1212Fixtures(g){
   // release's regression step (not re-implemented as a fixture here).
   note('Fixture 52: full regression suite passes with zero unintended strategy-result drift (proven by tests/run_all.sh, not re-implemented here)', '');
 
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // ITEM D -- THE MANUAL-REVIEW BYPASS OF THE ITEM C GATE
+  //
+  // htf_alignment is a HARD gate, and MANUAL REVIEW ELIGIBLE requires every hard gate to pass
+  // (only the weekday preference may fail). A candidate reaching approveManualReviewTrade goes
+  // on to openPaperPosition -- a REAL EXECUTABLE ORDER. The gate previously tested `score>=2`,
+  // and getScore returns 2 for Bullish/Bullish/'—' exactly as for Bullish/Bullish/Ranging, so a
+  // candidate whose third required timeframe was never evaluated was approvable. Gating only the
+  // automatic path would have moved the leak rather than closed it.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  {
+    // MON/THU are real Date objects (see above); evaluateSetupFullBreakdownCore calls
+    // .getUTCDay() on weekdayDate, so a string here would throw rather than fail cleanly.
+    const mk=(w,d,f,when)=>{ const t=when||MON; return g.evaluateSetupFullBreakdownCore(baseBreakdownInput({
+      weeklyBias:w,dailyBias:d,h4Bias:f,
+      decisionTs:t.getTime(),sessionAt:t,weekdayDate:t})); };
+    const htfGateOf=b=>b.gates.filter(x=>x.id==='htf_alignment')[0];
+
+    // POSITIVE CONTROLS first: the gate must still admit what the policy permits.
+    const okRang=mk('Bullish','Bullish','Ranging');
+    assert('ItemD.1 POSITIVE CONTROL: Bullish/Bullish/Ranging still PASSES the breakdown htf gate -- Ranging is evaluated information that casts no vote',
+      htfGateOf(okRang).pass===true, 'observed='+htfGateOf(okRang).observed);
+    assert('ItemD.2 POSITIVE CONTROL: and that setup still classifies AUTO ENTRY ELIGIBLE on a Monday, so the narrowing did not break ordinary qualification',
+      g.classifySetupEligibility('EUR_USD',okRang).state==='AUTO ENTRY ELIGIBLE',
+      'state='+g.classifySetupEligibility('EUR_USD',okRang).state);
+
+    // THE LEAK, on the manual path.
+    const missing=mk('Bullish','Bullish','—');
+    assert('ItemD.3 THE BYPASS, CLOSED: Bullish/Bullish/missing FAILS the breakdown htf gate. getScore returns 2 here, identical to the Ranging case above, so the old score>=2 test admitted it',
+      htfGateOf(missing).pass===false, 'observed='+htfGateOf(missing).observed);
+    assert('ItemD.4 ...and the refusal states WHICH timeframe was not evaluated rather than only a bare ratio',
+      String(htfGateOf(missing).observed).indexOf('not evaluated')!==-1,
+      'observed='+htfGateOf(missing).observed);
+    assert('ItemD.5 ...so it is NOT auto-entry eligible',
+      g.classifySetupEligibility('EUR_USD',missing).state!=='AUTO ENTRY ELIGIBLE',
+      'state='+g.classifySetupEligibility('EUR_USD',missing).state);
+
+    // The executable consequence: on a Thursday, only the weekday gate may fail for a candidate
+    // to become MANUAL REVIEW ELIGIBLE and therefore approvable into a real position.
+    const thuOk=mk('Bullish','Bullish','Ranging',THU);
+    const thuMissing=mk('Bullish','Bullish','—',THU);
+    const cOk=g.classifySetupEligibility('EUR_USD',thuOk);
+    const cMissing=g.classifySetupEligibility('EUR_USD',thuMissing);
+    assert('ItemD.6 POSITIVE CONTROL: a Thursday setup with a fully evaluated 2-of-3 alignment IS MANUAL REVIEW ELIGIBLE -- the path this fixture guards is genuinely reachable',
+      cOk.state==='MANUAL REVIEW ELIGIBLE', 'state='+cOk.state);
+    assert('ItemD.7 THE EXECUTABLE CONSEQUENCE: the same Thursday setup with an UNEVALUATED third timeframe is NOT manual-review eligible, so it can never reach approveManualReviewTrade and therefore never becomes a real paper position',
+      cMissing.state!=='MANUAL REVIEW ELIGIBLE', 'state='+cMissing.state+' failed='+JSON.stringify(thuMissing.failedGates.map(x=>x.id)));
+    assert('ItemD.8 and htf_alignment is the gate that stopped it -- not some unrelated gate that happened to fail too, which would make ItemD.7 accidental',
+      thuMissing.failedGates.some(x=>x.id==='htf_alignment')&&
+      !thuOk.failedGates.some(x=>x.id==='htf_alignment'),
+      'missingFailed='+JSON.stringify(thuMissing.failedGates.map(x=>x.id))+' okFailed='+JSON.stringify(thuOk.failedGates.map(x=>x.id)));
+
+    // BOTH PATHS NOW AGREE, which is the actual point of reusing one predicate.
+    const cases=[['Bullish','Bullish','Ranging'],['Bullish','Bullish','—'],['Bullish','Ranging','Ranging'],
+                 ['Bearish','Bearish','Ranging'],['Ranging','Ranging','Ranging'],['Bullish','Bearish','Ranging'],
+                 ['Bullish','Bullish',null],['Bearish','Bearish','Error']];
+    const disagreements=cases.filter(c=>{
+      const viaBreakdown=htfGateOf(mk(c[0],c[1],c[2])).pass;
+      const viaPredicate=g.htfAlignmentPasses({weekly:c[0],daily:c[1],fh:c[2]}).pass;
+      return viaBreakdown!==viaPredicate;
+    });
+    assert('ItemD.9 the manual-review breakdown and the live executable gate now answer IDENTICALLY on every case -- one predicate, so the two paths cannot drift apart',
+      disagreements.length===0, 'disagreements='+JSON.stringify(disagreements));
+    assert('ItemD.10 ...and that agreement is not vacuous: the case set contains both permitted and blocked verdicts',
+      cases.some(c=>g.htfAlignmentPasses({weekly:c[0],daily:c[1],fh:c[2]}).pass)&&
+      cases.some(c=>!g.htfAlignmentPasses({weekly:c[0],daily:c[1],fh:c[2]}).pass),'');
+  }
+
   return results;
 }

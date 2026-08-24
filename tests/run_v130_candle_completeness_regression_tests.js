@@ -135,6 +135,7 @@ g.scannerCardHtml=function(){ return (elMap['marketDataCompletenessCardScanner']
 // display:none panel; these can.
 g.rawHtml=function(){ return html; };
 
+globalThis.__APP_SOURCE__=appCode; globalThis.__APP_HTML__=html;
 const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // ── the real, unmodified market-data and scanner chain under test ──
@@ -145,6 +146,9 @@ const wrapped = new Function('g',
   'g.pipValuePerLot=pipValuePerLot;' +
   'g.pipSize=pipSize;' +
   'g.ALL_PAIRS=ALL_PAIRS;' +
+  // Item C / Phase 6: the real source text and the real HTML, so the backtest-proxy fixtures
+  // read what actually ships rather than restating it.
+  'g.appSource=function(){return __APP_SOURCE__;};g.appHtml=function(){return __APP_HTML__;};' +
   'g.SCAN_PAIRS_OPAIR=SCAN_PAIRS.map(function(p){return p.replace("/","_");});' +
   'g.setPairPrice=function(p,v){ if(!pairData[p]) pairData[p]={}; pairData[p].price=v; };' +
   'g.disconnectSrc=String(disconnect);' +

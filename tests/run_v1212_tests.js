@@ -69,6 +69,7 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // -- shared evaluator / classifier (fully synchronous) --
   'g.evaluateSetupFullBreakdownCore=evaluateSetupFullBreakdownCore;' +
+  'g.htfAlignmentPasses=htfAlignmentPasses;' +
   'g.classifySetupEligibility=classifySetupEligibility;' +
   'g.SETUP_EVALUATOR_VERSION=SETUP_EVALUATOR_VERSION;' +
   'g.ALERT_THRESHOLD=ALERT_THRESHOLD;' +
