@@ -7803,17 +7803,31 @@ function isPreferredTradingDay(date){
 // is displayed on the Scanner chart. AOI zones come from getStructuralAOI (weekly/daily).
 async function evaluateLiveTrigger(oPair){
   if(!isPreferredTradingDay()) return{fires:false,reason:'Outside Mon-Wed preferred entry window'};
+  // ── ITEM C (OWNER-AUTHORIZED PROTECTED CHANGE): the explicit HTF alignment gate. ───────────
+  // Captured HERE, ONCE, before the first await, and used for every downstream bias/score
+  // decision in this call. That ordering is the point: this function contains four awaits, and
+  // scanAll()/runAutoTopDownScan() can rewrite scanData during any of them. Reading the states
+  // at the gate but letting the evaluators re-read scanData later would mean the trade that
+  // executes was not the trade the gate approved.
+  const htfSnapshot=htfSnapshotOf(oPair);
+  const htf=htfAlignmentPasses(htfSnapshot);
+  if(!htf.pass) return{fires:false,reason:'HTF alignment not satisfied — '+htf.reasonText,htf};
   const candles=await fetchCandles(oPair,'M15',60);
-  if(!candles||candles.length<25) return{fires:false,reason:'No data'};
-  if(marketDataCompletenessOf(candles)!==MARKET_DATA_COMPLETENESS.COMPLETE) return{fires:false,reason:'Incomplete market data (M15)'};
-  const signals=detectSignals(candles,oPair);
-  const conf=bestConfluence(candles,oPair);
-  if(conf.total<ALERT_THRESHOLD) return{fires:false,reason:'Confluence below threshold',conf};
+  if(!candles||candles.length<25) return{fires:false,reason:'No data',htf};
+  if(marketDataCompletenessOf(candles)!==MARKET_DATA_COMPLETENESS.COMPLETE) return{fires:false,reason:'Incomplete market data (M15)',htf};
+  // Both evaluators are handed the gate's OWN snapshot-derived values through their existing,
+  // already-shipped override parameters -- detectSignals' third argument and scoreConfluence's
+  // `overrides` -- so neither re-reads mutable scanData and neither can silently disagree with
+  // the gate. detectSignals, bestConfluence and scoreConfluence are PROTECTED and are NOT
+  // modified, re-implemented or wrapped by this change; only their existing inputs are supplied.
+  const signals=detectSignals(candles,oPair,htf.bias);
+  const conf=bestConfluence(candles,oPair,{score:htf.score,bias:htf.bias});
+  if(conf.total<ALERT_THRESHOLD) return{fires:false,reason:'Confluence below threshold',conf,htf};
   const dir=conf.direction==='long'?'buy':'sell';
   const entrySig=signals.find(s=>s.type==='engulf'&&s.dir===dir&&s.biasMatch);
-  if(!entrySig) return{fires:false,reason:'No engulfing trigger yet',conf};
+  if(!entrySig) return{fires:false,reason:'No engulfing trigger yet',conf,htf};
   const aoi=await getStructuralAOI(oPair);
-  if(aoi&&aoi.incomplete) return{fires:false,reason:'Incomplete market data (D/W)',conf};
+  if(aoi&&aoi.incomplete) return{fires:false,reason:'Incomplete market data (D/W)',conf,htf};
   const pip=pipSize(oPair);
   // Fill at the real ask for buys / bid for sells, matching how you'd actually get filled --
   // falls back to the candle close only if live bid/ask couldn't be fetched.
@@ -7822,19 +7836,19 @@ async function evaluateLiveTrigger(oPair){
   const price=ba?(dir==='buy'?ba.ask:ba.bid):candleClose;
   let stop,target;
   if(dir==='buy'){
-    if(!aoi.support) return{fires:false,reason:'No valid support AOI',conf};
+    if(!aoi.support) return{fires:false,reason:'No valid support AOI',conf,htf};
     stop=aoi.support-pip*7;
     target=aoi.resistance||(price+(price-stop)*2);
   } else {
-    if(!aoi.resistance) return{fires:false,reason:'No valid resistance AOI',conf};
+    if(!aoi.resistance) return{fires:false,reason:'No valid resistance AOI',conf,htf};
     stop=aoi.resistance+pip*7;
     target=aoi.support||(price-(stop-price)*2);
   }
   const riskPips=Math.abs(price-stop)/pip,rewardPips=Math.abs(target-price)/pip;
-  if(riskPips<=0) return{fires:false,reason:'Invalid stop distance',conf};
+  if(riskPips<=0) return{fires:false,reason:'Invalid stop distance',conf,htf};
   const ratio=rewardPips/riskPips;
-  if(ratio<1.99) return{fires:false,reason:`R:R only ${ratio.toFixed(2)}:1`,conf};
-  return{fires:true,dir,entry:price,stop,target,ratio,confluence:conf.total};
+  if(ratio<1.99) return{fires:false,reason:`R:R only ${ratio.toFixed(2)}:1`,conf,htf};
+  return{fires:true,dir,entry:price,stop,target,ratio,confluence:conf.total,htf};
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════
@@ -10157,6 +10171,9 @@ let __jvmCurrentScanId=null;   // set by scanAll purely so a rejection can be co
 function jvmLiveTriggerReasonCode(reason){
   const r=String(reason==null?'':reason);
   if(r==='Outside Mon-Wed preferred entry window') return 'SESSION_OUTSIDE_PREFERRED_DAY';
+  // ITEM C: higher-timeframe alignment is a STRUCTURE decision, distinct from a data-availability
+  // failure and from a confluence miss -- it must not share a code with either.
+  if(r.indexOf('HTF alignment not satisfied')===0) return 'STRUCTURE_HTF_ALIGNMENT_NOT_SATISFIED';
   if(r==='No data') return 'DATA_CANDLES_UNAVAILABLE';
   // Transport ("nothing arrived") vs contract ("it arrived and did not satisfy completeness") are
   // different facts and must not share a code -- that distinction is the whole point of the gate.
@@ -10167,6 +10184,38 @@ function jvmLiveTriggerReasonCode(reason){
   if(r==='Invalid stop distance') return 'RISK_ZERO_STOP_DISTANCE';
   if(r.indexOf('R:R only ')===0) return 'ENTRY_RATIO_BELOW_MINIMUM';
   return 'UNKNOWN_NOT_RECORDED'; // never fabricate a code for a reason this map does not know
+}
+// ITEM C / PHASE 5. The APPROVED counterpart to jvmRecordCandidateRejected, and total by
+// construction for exactly the same reason: wholly wrapped, returns undefined, result never read,
+// so it cannot alter, delay or prevent a trading decision even though it is called from inside a
+// protected function.
+//
+// WHY THIS EXISTS AT ALL. The v12.6.0 architecture review recorded that JVM's decision detail is
+// "trapped inside a protected-calls-protected chain (checkAutoTrades -> evaluateLiveTrigger ->
+// openPaperPosition) with no safe external hook" -- so there is no existing additive path on the
+// ACCEPTED side. This follows the precedent v12.20.0 already established for the REJECTED side.
+//
+// evidenceCompleteness is COMPLETE here, unlike the rejected recorder's PARTIAL, and that
+// difference is real rather than cosmetic: a rejection short-circuits, so its later gates were
+// never evaluated, whereas an APPROVED candidate passed every gate and each verdict is genuinely
+// known. The HTF states carried here are the gate's own snapshot object, not a re-read.
+function jvmRecordCandidateApproved(oPair,result,pos){
+  try{
+    const htf=result&&result.htf;
+    emitDecisionEvent({eventType:'CANDIDATE_APPROVED',strategyId:'current_strategy',
+      scanId:__jvmCurrentScanId,correlationId:__jvmCurrentScanId,
+      pair:oPair,source:'checkAutoTrades',stage:'LIVE_TRIGGER',decision:'APPROVED',
+      direction:(result&&result.dir)||null,
+      tradeId:(pos&&pos.id!=null)?String(pos.id):null,
+      reasonCode:'HTF_ALIGNED',
+      reasonText:(htf&&htf.reasonText!=null)?String(htf.reasonText):null,
+      context:{confluence:(result&&result.confluence!=null)?result.confluence:null,
+        htfStates:(htf&&htf.states)?htf.states:null,
+        htfBias:(htf&&htf.bias!=null)?htf.bias:null,
+        htfScore:(htf&&htf.score!=null)?htf.score:null,
+        htfGate:(htf&&htf.code!=null)?htf.code:null},
+      evidenceCompleteness:'COMPLETE'});
+  }catch(e){ /* observability must never reach a trading decision */ }
 }
 // TOTAL BY CONSTRUCTION. Wholly wrapped, returns undefined, and its result is never read -- so it
 // cannot alter, delay or prevent a trading decision even if the bus rejects the event or throws.
@@ -12599,6 +12648,75 @@ function getBias(d){
   const b=dirs.filter(x=>x==='Bullish').length,br=dirs.filter(x=>x==='Bearish').length;
   return b>br?'Bullish':br>b?'Bearish':'Split';
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// ITEM C -- THE EXPLICIT HIGHER-TIMEFRAME ALIGNMENT GATE (owner-authorized)
+//
+// THE LEAK. evaluateLiveTrigger never read the Weekly/Daily/4H states at all. Higher-timeframe
+// alignment entered the executable path only IMPLICITLY, through detectSignals' `biasMatch`
+// flag, and biasMatch is computed from getBias() -- which returns a full directional 'Bullish'
+// from ONE Bullish timeframe and two unset ones, because it FILTERS to directional values and
+// then compares counts (1 > 0). scoreConfluence awards bias points only at score>=2, so a
+// 1-of-3 earns no bias points, but confluence can still clear ALERT_THRESHOLD from its other
+// components. Net effect: Bullish/unset/unset could reach openPaperPosition.
+//
+// WHY getBias AND getScore CANNOT EXPRESS THIS POLICY. Both filter to {Bullish,Bearish} and
+// discard everything else, so '—' (never evaluated) and 'Ranging' (evaluated, non-directional)
+// are INDISTINGUISHABLE to them. The authorized policy requires Bullish/Bullish/Ranging to be
+// PERMITTED and Bullish/Bullish/missing to be BLOCKED -- two cases those functions collapse
+// onto one value. The gate must therefore read the RAW timeframe states, which is exactly what
+// this predicate does and why it could not be expressed as a getBias/getScore threshold.
+//
+// WHAT THE DATA MODEL CAN AND CANNOT ESTABLISH. TF_OPTS is ['—','Bullish','Bearish','Ranging']:
+// four directional STRINGS. scanData carries no per-timeframe timestamp, no provenance, no
+// freshness marker and no error state, so this gate CANNOT and does not claim staleness or
+// provenance checking. It enforces exactly what the contract supports -- that each required
+// timeframe holds a RECOGNIZED EVALUATED state -- and treats everything else, including '—',
+// null, undefined, non-strings and unrecognized strings, as unevaluable and therefore blocking.
+// Fail-closed: an unknown value is never assumed evaluated.
+const HTF_REQUIRED_TIMEFRAMES=Object.freeze(['weekly','daily','fh']);
+const HTF_EVALUATED_STATES=Object.freeze(['Bullish','Bearish','Ranging']);
+// Pure. Takes the SNAPSHOT, never re-reads scanData, so a caller that captured state at decision
+// time cannot be given a different answer than the one its decision was based on.
+function htfAlignmentPasses(scanLike){
+  const d=scanLike;
+  if(!d||typeof d!=='object'||Array.isArray(d))
+    return{pass:false,code:'HTF_SNAPSHOT_MISSING',bias:'—',score:0,states:null,
+      reasonText:'no higher-timeframe snapshot was available for this decision'};
+  const states={},unevaluable=[];
+  for(let i=0;i<HTF_REQUIRED_TIMEFRAMES.length;i++){
+    const tf=HTF_REQUIRED_TIMEFRAMES[i],v=d[tf];
+    states[tf]=(typeof v==='string')?v:(v===undefined?'—':String(v));
+    if(HTF_EVALUATED_STATES.indexOf(v)===-1) unevaluable.push(tf);
+  }
+  if(unevaluable.length)
+    return{pass:false,code:'HTF_TIMEFRAME_NOT_EVALUATED',bias:'—',score:0,states:states,
+      reasonText:'required timeframe(s) not evaluated: '+unevaluable.join(', ')};
+  // Every required timeframe is evaluated. Ranging is evaluated information but casts no vote.
+  const bull=HTF_REQUIRED_TIMEFRAMES.filter(function(tf){return states[tf]==='Bullish';}).length;
+  const bear=HTF_REQUIRED_TIMEFRAMES.filter(function(tf){return states[tf]==='Bearish';}).length;
+  // Derived from the SAME snapshot as the states above, so the gate's bias/score and the values
+  // handed to the evaluators below cannot disagree.
+  const bias=getBias(states),score=getScore(states);
+  if(bias!=='Bullish'&&bias!=='Bearish')
+    return{pass:false,code:'HTF_NO_DIRECTIONAL_BIAS',bias:bias,score:score,states:states,
+      reasonText:'no recognized directional bias (all timeframes evaluated, bias '+bias+')'};
+  const agreeing=Math.max(bull,bear);
+  if(agreeing<2)
+    return{pass:false,code:'HTF_INSUFFICIENT_AGREEMENT',bias:bias,score:score,states:states,
+      reasonText:'only '+agreeing+' of 3 timeframes agree directionally (2 required)'};
+  return{pass:true,code:'HTF_ALIGNED',bias:bias,score:score,states:states,
+    reasonText:agreeing+' of 3 agree '+bias.toLowerCase()};
+}
+// The decision-time capture. Read ONCE per decision; everything downstream uses its result, so
+// a concurrent scan rewriting scanData mid-evaluation cannot change the answer underneath the
+// decision that is already in flight.
+function htfSnapshotOf(oPair){
+  const sk=String(oPair||'').replace('_','/');
+  const d=scanData?scanData[sk]:null;
+  if(!d||typeof d!=='object') return null;
+  return{weekly:d.weekly,daily:d.daily,fh:d.fh};
+}
 function scoreBadge(s){const cls=s>=3?'score-3':s>=2?'score-2':s>=1?'score-1':'score-0';return`<span class="badge ${cls}">${s>0?s+'/3':'—'}</span>`;}
 function biasHtml(b){
   if(b==='Bullish') return`<span class="bias-bull"><span class="dot-bull"></span>Bullish</span>`;
@@ -13253,7 +13371,7 @@ function copyPaperTradingHealthReport(){
 // match, or this registry will silently under-cover the real protected set
 // (a known, disclosed limitation -- see notes field on each baseline entry).
 const BASELINE_REGISTRY_VERSION='1.0.0';
-const BASELINE_JVM_FUNCTIONS=['openPaperPosition','closePaperPosition','checkPaperPositions','checkAutoTrades','evaluateLiveTrigger','scoreConfluence','bestConfluence','computeAOI','computeAOIWithTouches','findSwingPoints','detectSignals','getBias','getSession','pipSize','pipValuePerLot'];
+const BASELINE_JVM_FUNCTIONS=['openPaperPosition','closePaperPosition','checkPaperPositions','checkAutoTrades','evaluateLiveTrigger','scoreConfluence','bestConfluence','computeAOI','computeAOIWithTouches','findSwingPoints','detectSignals','getBias','getSession','pipSize','pipValuePerLot','htfAlignmentPasses'];
 const BASELINE_ALEX_FUNCTIONS=['alexGAcceptReaction','alexGAssignCluster','alexGBreakCycleId','alexGCheckSwingAt','alexGClassifyTouch','alexGCloseLivePosition','alexGClusterId','alexGComputeATRAtEntry','alexGComputeMAEMFE','alexGComputePsychLevels','alexGComputeReplayStats','alexGComputeSessionMetadata','alexGComputeTrendContext','alexGConstructLivePosition','alexGConstructTrade','alexGCorrectedQuality','alexGCreateSetupRecord','alexGDetermineFromSide','alexGDetermineTradeDirection','alexGEnrichPenetrationEvents','alexGEnsureZoneState','alexGEvaluateBreakRetest','alexGEvaluateRepeatedReaction','alexGFindSwingPoints','alexGInferPriorZoneRole','alexGIsSameInteraction','alexGIsSetupEligibleForLiveTrading','alexGIsSetupSignalStale','alexGLivePollingShouldRun','alexGLiveSignalId','alexGPenetrationId','alexGProcessTimeframeCandle','alexGProcessTimeframeCandleWithSetups','alexGReactionId','alexGReconstructExitFromCandles','alexGRecordLiveSetupStatus','alexGResolvePenetrationForTouch','alexGRunSetupEngine','alexGRunSetupReplay','alexGRunZoneEngine','alexGSetupId','alexGSetupSortComparator','alexGTradeId','alexGUpdatePositionExcursionAndCheckExit','alexGValidateTradeNoLookahead','alexGWalkOutcome','alexGZoneId','alexGZoneRole'];
 // pipSize/pipValuePerLot are the two genuinely shared, cross-strategy utility
 // functions both JVM's and ALEX's position-sizing/risk math depend on
@@ -13292,6 +13410,7 @@ function baselineGetAllFunctionRefs(){
     evaluateLiveTrigger,scoreConfluence,bestConfluence,computeAOI,
     computeAOIWithTouches,findSwingPoints,detectSignals,getBias,getSession,
     pipSize,pipValuePerLot,
+    htfAlignmentPasses,
     alexGAcceptReaction,alexGAssignCluster,alexGBreakCycleId,alexGCheckSwingAt,
     alexGClassifyTouch,alexGCloseLivePosition,alexGClusterId,alexGComputeATRAtEntry,
     alexGComputeMAEMFE,alexGComputePsychLevels,alexGComputeReplayStats,
@@ -13536,6 +13655,14 @@ const REASON_CODE_REGISTRY=Object.freeze({
   SESSION_OUTSIDE_PREFERRED_DAY:Object.freeze({code:'SESSION_OUTSIDE_PREFERRED_DAY',category:'SESSION',label:'Outside preferred trading day window'}),
   STRUCTURE_AOI_NOT_VALIDATED:Object.freeze({code:'STRUCTURE_AOI_NOT_VALIDATED',category:'STRUCTURE',label:'Area of interest not validated'}),
   STRUCTURE_ZONE_ALREADY_BROKEN:Object.freeze({code:'STRUCTURE_ZONE_ALREADY_BROKEN',category:'STRUCTURE',label:'Structural zone already broken'}),
+  // ITEM C: registered BEFORE use. An unregistered code is refused by validateDecisionEvent, so a
+  // gate that blocks trades correctly but emits an unregistered code produces NO evidence at all
+  // -- the exact defect v12.7.1 found with CONFIG_ENTRY_DAY_NOT_ELIGIBLE. Neither of these
+  // stretches an existing code: HTF alignment is a STRUCTURE question about required
+  // higher-timeframe inputs, distinct from AOI validation and from the BIAS_* codes, which
+  // describe a bias that WAS computed rather than timeframes that were never evaluated.
+  STRUCTURE_HTF_ALIGNMENT_NOT_SATISFIED:Object.freeze({code:'STRUCTURE_HTF_ALIGNMENT_NOT_SATISFIED',category:'STRUCTURE',label:'Higher-timeframe alignment not satisfied'}),
+  HTF_ALIGNED:Object.freeze({code:'HTF_ALIGNED',category:'STRUCTURE',label:'Higher-timeframe alignment satisfied'}),
   BIAS_CONFLICT:Object.freeze({code:'BIAS_CONFLICT',category:'BIAS',label:'Directional bias conflict'}),
   BIAS_SPLIT:Object.freeze({code:'BIAS_SPLIT',category:'BIAS',label:'Bias split across timeframes'}),
   AOI_TOO_FAR:Object.freeze({code:'AOI_TOO_FAR',category:'AOI',label:'Price too far from area of interest'}),
@@ -19230,7 +19357,12 @@ async function checkAutoTrades(){
       const pos=openPaperPosition(oPair,result.dir,result.entry,result.stop,result.target,'auto');
       if(pos.error){return;} // no conversion data available -- skip silently, try again next cycle
       autoTrading.tradedToday[oPair]=today;
-      autoTrading.log.unshift({...pos,confluence:result.confluence,firedAt:new Date().toISOString()});
+      // ITEM C / PHASE 5 (owner-authorized protected change, two statements). The decision-time
+      // HTF snapshot is recorded onto the DURABLE, persisted auto-trade log entry. It is
+      // result.htf -- the exact object the gate decided on, captured before this call's first
+      // await -- and never a re-read of mutable scanData.
+      autoTrading.log.unshift({...pos,confluence:result.confluence,htf:result.htf,firedAt:new Date().toISOString()});
+      jvmRecordCandidateApproved(oPair,result,pos);
       autoTrading.log=autoTrading.log.slice(0,100);
       autoTrading.unseenCount=(autoTrading.unseenCount||0)+1;
       save();renderAutoLog();

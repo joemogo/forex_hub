@@ -17,6 +17,9 @@ function extractScriptBody(html){
   if(!m) throw new Error('Could not find <script>...</script> body in index.html -- run this from the project root.');
   return m[1];
 }
+const __toolsPy=readFile('./regression-baseline-tools.py');
+const __tpBlock=(__toolsPy.match(/PROTECTED_FUNCTIONS\s*=\s*\[([\s\S]*?)\]/)||[])[1]||'';
+const TOOLS_PROTECTED=(__tpBlock.match(/"[A-Za-z0-9_]+"/g)||[]).map(function(x){return x.replace(/"/g,'');});
 const html=readFile('./index.html');
 const appCode=extractScriptBody(html);
 const testCode=readFile('./tests/v124_baseline_registry_tests.js');
@@ -83,6 +86,10 @@ const wrapped = new Function('g',
   'g.baselineFnv1aHash=baselineFnv1aHash;' +
   'g.baselineHashValue=baselineHashValue;' +
   'g.getBaselineJvmFunctions=function(){return BASELINE_JVM_FUNCTIONS;};' +
+  // ITEM C: the Python build tool's PROTECTED_FUNCTIONS list, read from disk, so the two
+  // registries that v12.4.0 disclosed must be "kept in manual sync going forward" are actually
+  // CHECKED rather than trusted. Parsed from the real file, never re-typed here.
+  ('g.getToolsProtectedFunctions=function(){return '+JSON.stringify(TOOLS_PROTECTED)+';};') +
   'g.getBaselineAlexFunctions=function(){return BASELINE_ALEX_FUNCTIONS;};' +
   'g.getBaselineSharedRiskFunctions=function(){return BASELINE_SHARED_RISK_FUNCTIONS;};' +
   'g.getBaselineRegistryVersion=function(){return BASELINE_REGISTRY_VERSION;};' +

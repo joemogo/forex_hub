@@ -1,7 +1,7 @@
 {
   "generatedFromAppVersion": "12.41.0",
   "knownGoodHtmlSha1": "31baa279ddc64fdfa90f052da195239bff9a0569",
-  "protectedFunctionCount": 63,
+  "protectedFunctionCount": 64,
   "protectedFunctions": {
     "openPaperPosition": {
       "sha1": "b8356ed6654da712a543d155f7cea470ced21eb5",
@@ -16,12 +16,12 @@
       "length": 1688
     },
     "checkAutoTrades": {
-      "sha1": "01a78e299015bdbf247c3215df5b428e0c42898f",
-      "length": 1916
+      "sha1": "7c634cd376a35ade85cdecd99d187e7c1fd52917",
+      "length": 2324
     },
     "evaluateLiveTrigger": {
-      "sha1": "0df708f125e3cf6e3eedeec1b2070ab5ab92914c",
-      "length": 1993
+      "sha1": "f48ebc8571b8298156a8f146a3aaacbba7ebd20c",
+      "length": 3257
     },
     "scoreConfluence": {
       "sha1": "fa92acdc3cc703fd538c4f3e50bb010a7c0db1bf",
@@ -62,6 +62,10 @@
     "pipValuePerLot": {
       "sha1": "0e3666205efb9a874cedb330b7ebda6ca0aae315",
       "length": 2361
+    },
+    "htfAlignmentPasses": {
+      "sha1": "3ddbeb104f5014dc9cacac059f1c879183e9281d",
+      "length": 1834
     },
     "alexGAcceptReaction": {
       "sha1": "9974c09ea7e226f3bb894ee9421aabce68337f6f",

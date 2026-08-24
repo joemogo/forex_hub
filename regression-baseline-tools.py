@@ -42,6 +42,13 @@ PROTECTED_FUNCTIONS = [
     "evaluateLiveTrigger", "scoreConfluence", "bestConfluence", "computeAOI",
     "computeAOIWithTouches", "findSwingPoints", "detectSignals", "getBias", "getSession",
     "pipSize", "pipValuePerLot",
+    # ITEM C: the explicit higher-timeframe alignment gate. Added because it is a
+    # strategy-critical PREDICATE that decides whether an automated paper trade may execute --
+    # the same reason evaluateLiveTrigger, getBias and computeAOI are on this list. getScore is
+    # deliberately NOT added: fixture ITEMC-26 proves corrupting it in either direction cannot
+    # change a gate verdict, so protecting it transitively would expand the registry without
+    # closing a governance gap. Kept byte-identical with BASELINE_JVM_FUNCTIONS in index.html.
+    "htfAlignmentPasses",
     # ALEX G S&R (alex_g_sr_v1)
     "alexGAcceptReaction", "alexGAssignCluster", "alexGBreakCycleId", "alexGCheckSwingAt",
     "alexGClassifyTouch", "alexGCloseLivePosition", "alexGClusterId", "alexGComputeATRAtEntry",

@@ -25,7 +25,7 @@ run_v121_tests.js	30
 run_v122_tests.js	30
 run_v1231_tests.js	32
 run_v1232_forward_coverage_observability_tests.js	76
-run_v1233_jvm_autotrade_reliability_tests.js	127
+run_v1233_jvm_autotrade_reliability_tests.js	155
 run_v1234_candle_alignment_tests.js	30
 run_v1235_reconciliation_tests.js	24
 run_v1236_alex_live_path_e2e_tests.js	119
@@ -40,7 +40,7 @@ run_v1239_market_data_continuity_tests.js	41
 run_v1239_paper_trading_e2e_tests.js	144
 run_v1239_restart_diagnostics_tests.js	40
 run_v123_tests.js	52
-run_v124_baseline_registry_tests.js	31
+run_v124_baseline_registry_tests.js	34
 run_v125_decision_event_tests.js	40
 run_v126_phase2c_wave1_tests.js	60
 run_v127_alex_v11_release_tests.js	88

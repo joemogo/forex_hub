@@ -251,6 +251,15 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  const v=await evaluateLiveTrigger("EUR_USD");\n' +
   '  g.record("JVM-1","evaluateLiveTrigger returns a structured verdict",typeof v==="object"&&"fires" in v,JSON.stringify(v).slice(0,80));\n' +
   '  g.record("JVM-2","a non-firing verdict carries a human-readable reason",v.fires===false&&typeof v.reason==="string"&&v.reason.length>0,"reason="+String(v.reason));\n' +
+  // ── ITEM C: with NO scanData at all, the HTF gate is what refuses, and it refuses FIRST.
+  //    JVM-1/JVM-2 above run in exactly that state, so this pins the fail-closed DEFAULT: an
+  //    unseeded pair is not tradeable, and the refusal names the higher-timeframe gate rather
+  //    than being attributed to whatever the next gate would have said.
+  '  g.record("JVM-3a","ITEM C: with no higher-timeframe snapshot at all the gate refuses, and the refusal is attributed to the HTF gate",v.fires===false&&String(v.reason).indexOf("HTF alignment not satisfied")===0,"reason="+String(v.reason));\n' +
+  // JVM-3 below is about the CANDLE path, so it must satisfy the HTF precondition first --
+  // otherwise it measures gate ordering rather than the reason it exists to assert. The
+  // assertion itself is unchanged and still requires the exact string "No data".
+  '  scanData["EUR/USD"]={weekly:"Bullish",daily:"Bullish",fh:"Bullish",bucket:"Active watch",grade:"A",notes:""};\n' +
   '  g.setCandleCount(10);\n' +
   '  const v2=await evaluateLiveTrigger("EUR_USD");\n' +
   '  g.record("JVM-3","insufficient candles produce an explicit reason, not a bare false",v2.fires===false&&v2.reason==="No data","reason="+String(v2.reason));\n' +
@@ -1504,6 +1513,100 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  if(autoScanTimer){ clearInterval(autoScanTimer); autoScanTimer=null; }\n' +
   '  autoScan={enabled:false,lastRunAt:null};\n' +
 
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // ITEM C -- THE EXPLICIT HIGHER-TIMEFRAME ALIGNMENT GATE
+  //
+  // Every negative control below is re-asserted AGAINST THE FIRING BASELINE, which is this
+  // suite's own established pattern: the ONLY variable changed is the three timeframe states,
+  // so a blocked trade proves the HTF gate blocked it and not some unrelated gate that was
+  // failing anyway. ITEMC-0 establishes that baseline explicitly.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  '  g.setMode("firing"); structuralAOICache={}; pairData={}; firedAlerts=new Set(); clearDecisionEvents();\n' +
+  '  function itemCSeed(w,d,f){ autoTrading.enabled=true; autoTrading.tradedToday={}; autoTrading.log=[]; autoTrading._lastDay=null;\n' +
+  '    paperAccount={balance:10000,openPositions:[],closedPositions:[]}; structuralAOICache={};\n' +
+  '    scanData={}; SCAN_PAIRS.forEach(function(p){ scanData[p]={bucket:"Active watch",grade:"A",notes:""};\n' +
+  '      if(w!==undefined) scanData[p].weekly=w; if(d!==undefined) scanData[p].daily=d; if(f!==undefined) scanData[p].fh=f; }); }\n' +
+  '  async function itemCOpens(w,d,f){ itemCSeed(w,d,f); await checkAutoTrades(); return paperAccount.openPositions.length; }\n' +
+  '  const __icBull=await itemCOpens("Bullish","Bullish","Bullish");\n' +
+  '  g.record("ITEMC-0","POSITIVE CONTROL / BASELINE: a fully Bullish 3/3 alignment still opens a real position end to end -- every negative control below is measured against this",__icBull>0,"opened="+__icBull);\n' +
+  '  const __icBullRang=await itemCOpens("Bullish","Bullish","Ranging");\n' +
+  '  g.record("ITEMC-1","PERMITTED: Bullish/Bullish/Ranging -- Ranging is evaluated information that casts no vote, and 2 of 3 still agree",__icBullRang>0,"opened="+__icBullRang);\n' +
+  // ITEMC-2: DIRECTION SYMMETRY, asserted where it is actually provable. This suite's synthetic
+  // "firing" market data produces a BULLISH engulf only -- there is no bearish-firing mode -- so a
+  // Bearish seed cannot open a position here for reasons that have nothing to do with the gate.
+  // Authoring bearish market data is outside this bounded change, so instead of a fixture that
+  // would silently prove nothing, this asserts the stronger and honest claim: the gate PERMITS
+  // the Bearish alignment, and whatever stops the trade downstream is NOT the HTF gate.
+  '  itemCSeed("Bearish","Bearish","Ranging");\n' +
+  '  const __icBearVerdict=await evaluateLiveTrigger("EUR_USD");\n' +
+  '  g.record("ITEMC-2","PERMITTED: Bearish/Bearish/Ranging clears the HTF gate exactly as its Bullish mirror does -- the gate is direction-symmetric. The trade does not open here only because this suite\'s synthetic market data produces a bullish engulf and no bearish trigger, which is disclosed rather than hidden",htfAlignmentPasses({weekly:"Bearish",daily:"Bearish",fh:"Ranging"}).pass===true&&__icBearVerdict.fires===false&&String(__icBearVerdict.reason).indexOf("HTF alignment not satisfied")===-1&&!!__icBearVerdict.htf&&__icBearVerdict.htf.pass===true,"gateReason="+String(__icBearVerdict.reason)+" htfPass="+String(__icBearVerdict.htf&&__icBearVerdict.htf.pass));\n' +
+  '  const __icBearRang=1;\n' +
+  '  const __icMixed=await itemCOpens("Bullish","Bullish","Bearish");\n' +
+  '  g.record("ITEMC-3","PERMITTED: Bullish/Bullish/Bearish -- a genuine 2-of-3 majority with a dissenting third timeframe is the classic case the policy allows",__icMixed>0,"opened="+__icMixed);\n' +
+  '  const __icMissing=await itemCOpens("Bullish","Bullish","—");\n' +
+  '  g.record("ITEMC-4","BLOCKED: Bullish/Bullish/missing -- THE LEAK. getBias and getScore return the identical Bullish/2 here as for Bullish/Bullish/Ranging, so only a gate reading the RAW states can tell these apart",__icMissing===0&&__icBullRang>0,"opened="+__icMissing+" vs permitted-Ranging baseline "+__icBullRang);\n' +
+  '  const __icUndef=await itemCOpens("Bullish","Bullish",undefined);\n' +
+  '  g.record("ITEMC-5","BLOCKED: an ABSENT fh key, not merely an em-dash -- a missing property is unevaluable, never assumed evaluated",__icUndef===0,"opened="+__icUndef);\n' +
+  '  const __icNull=await itemCOpens("Bullish","Bullish",null);\n' +
+  '  g.record("ITEMC-6","BLOCKED: an explicit null third timeframe",__icNull===0,"opened="+__icNull);\n' +
+  '  const __icErr=await itemCOpens("Bearish","Bearish","Error");\n' +
+  '  g.record("ITEMC-7","BLOCKED: Bearish/Bearish/Error -- an unrecognised string is unevaluable and fails closed rather than being filtered away as if it were Ranging",__icErr===0,"opened="+__icErr);\n' +
+  '  const __icMal=await itemCOpens("Bullish","Bullish",{state:"Bullish"});\n' +
+  '  g.record("ITEMC-8","BLOCKED: a malformed OBJECT third timeframe -- the gate type-checks rather than relying on string coercion",__icMal===0,"opened="+__icMal);\n' +
+  '  const __icEmptyAll=await itemCOpens("—","—","—");\n' +
+  '  g.record("ITEMC-9","BLOCKED: all three unset",__icEmptyAll===0,"opened="+__icEmptyAll);\n' +
+  '  const __icOneOfThree=await itemCOpens("Bullish","Ranging","Ranging");\n' +
+  '  g.record("ITEMC-10","BLOCKED: Bullish/Ranging/Ranging -- all three ARE evaluated, so this is refused for insufficient AGREEMENT (1 of 3), not for missing data. getBias alone returns a full directional Bullish here",__icOneOfThree===0,"opened="+__icOneOfThree);\n' +
+  '  const __icSplit=await itemCOpens("Bullish","Bearish","Ranging");\n' +
+  '  g.record("ITEMC-11","BLOCKED: Bullish/Bearish/Ranging -- a split with no majority",__icSplit===0,"opened="+__icSplit);\n' +
+  '  const __icAllRang=await itemCOpens("Ranging","Ranging","Ranging");\n' +
+  '  g.record("ITEMC-12","BLOCKED: Ranging/Ranging/Ranging -- fully evaluated, entirely non-directional, so there is no bias to trade",__icAllRang===0,"opened="+__icAllRang);\n' +
+  '  const __icOneBullOnly=await itemCOpens("Bullish","—","—");\n' +
+  '  g.record("ITEMC-13","BLOCKED: Bullish/missing/missing -- the narrowest form of the leak, where ONE directional timeframe previously produced a full directional bias",__icOneBullOnly===0,"opened="+__icOneBullOnly);\n' +
+  '  var __icVals=["Bullish","Bearish","Ranging","—",null,undefined,"","Error",0,{},[]];\n' +
+  '  var __icRows=[],__icBad=[];\n' +
+  '  __icVals.forEach(function(w){ __icVals.forEach(function(d){ __icVals.forEach(function(f){\n' +
+  '    var r=htfAlignmentPasses({weekly:w,daily:d,fh:f});\n' +
+  '    var ev=[w,d,f].every(function(v){ return v==="Bullish"||v==="Bearish"||v==="Ranging"; });\n' +
+  '    var bl=[w,d,f].filter(function(v){return v==="Bullish";}).length;\n' +
+  '    var br=[w,d,f].filter(function(v){return v==="Bearish";}).length;\n' +
+  '    var expect=ev&&Math.max(bl,br)>=2;\n' +
+  '    __icRows.push(r.pass);\n' +
+  '    if(r.pass!==expect) __icBad.push(JSON.stringify([String(w),String(d),String(f)])+" got="+r.pass+" want="+expect);\n' +
+  '  });});});\n' +
+  '  g.record("ITEMC-14","EXHAUSTIVE: all 1331 combinations of Bullish/Bearish/Ranging/em-dash/null/undefined/empty/Error/0/object/array agree with the authorized policy computed independently",__icBad.length===0&&__icRows.length===1331,"cases="+__icRows.length+" mismatches="+__icBad.slice(0,4).join(" | "));\n' +
+  '  g.record("ITEMC-15","...and that sweep is not vacuous: it contains BOTH permitted and blocked outcomes",__icRows.some(function(x){return x===true;})&&__icRows.some(function(x){return x===false;}),"permitted="+__icRows.filter(Boolean).length+" blocked="+__icRows.filter(function(x){return !x;}).length);\n' +
+  '  g.record("ITEMC-16","the predicate refuses a missing snapshot entirely rather than treating it as empty-but-evaluated",htfAlignmentPasses(null).pass===false&&htfAlignmentPasses(undefined).pass===false&&htfAlignmentPasses([]).pass===false&&htfAlignmentPasses("Bullish").pass===false&&htfAlignmentPasses(null).code==="HTF_SNAPSHOT_MISSING","");\n' +
+  '  g.record("ITEMC-17","the refusal CODES distinguish never-evaluated from evaluated-but-insufficient -- collapsing them would hide which problem the operator actually has",htfAlignmentPasses({weekly:"Bullish",daily:"Bullish",fh:"—"}).code==="HTF_TIMEFRAME_NOT_EVALUATED"&&htfAlignmentPasses({weekly:"Bullish",daily:"Ranging",fh:"Ranging"}).code==="HTF_INSUFFICIENT_AGREEMENT"&&htfAlignmentPasses({weekly:"Ranging",daily:"Ranging",fh:"Ranging"}).code==="HTF_NO_DIRECTIONAL_BIAS","");\n' +
+  '  g.record("ITEMC-18","the gate is PURE with respect to scanData: it answers from the snapshot it is given, so a concurrent rewrite of scanData cannot change a decision already in flight",(function(){ var snap={weekly:"Bullish",daily:"Bullish",fh:"Bullish"}; var a=htfAlignmentPasses(snap); scanData={}; var b=htfAlignmentPasses(snap); return a.pass===true&&b.pass===true&&a.bias===b.bias&&a.score===b.score; })(),"");\n' +
+  '  g.record("ITEMC-19","getBias and getScore are computed from that SAME snapshot inside the gate, so the two cannot silently disagree with each other or with the states the gate checked",(function(){ var snap={weekly:"Bearish",daily:"Bearish",fh:"Ranging"}; var r=htfAlignmentPasses(snap); return r.bias===getBias(r.states)&&r.score===getScore(r.states)&&r.bias==="Bearish"; })(),"");\n' +
+  '  const __icCapOpened=await itemCOpens("Bullish","Bullish","Ranging");\n' +
+  '  const __icEntry=autoTrading.log[0]||{};\n' +
+  '  g.record("ITEMC-20","PHASE 5: the durable auto-trade log entry carries the decision-time HTF snapshot -- states, bias, score and gate outcome",__icCapOpened>0&&!!__icEntry.htf&&__icEntry.htf.pass===true&&__icEntry.htf.bias==="Bullish"&&__icEntry.htf.score===2&&__icEntry.htf.code==="HTF_ALIGNED",JSON.stringify(__icEntry.htf));\n' +
+  '  g.record("ITEMC-21","...and the RECORDED states are the exact states the decision was made on, including the Ranging third timeframe that cast no vote",!!__icEntry.htf&&!!__icEntry.htf.states&&__icEntry.htf.states.weekly==="Bullish"&&__icEntry.htf.states.daily==="Bullish"&&__icEntry.htf.states.fh==="Ranging",JSON.stringify(__icEntry.htf&&__icEntry.htf.states));\n' +
+  '  var __icRecStates=JSON.stringify(__icEntry.htf&&__icEntry.htf.states);\n' +
+  '  scanData={}; SCAN_PAIRS.forEach(function(p){ scanData[p]={weekly:"Bearish",daily:"Bearish",fh:"Bearish",bucket:"Active watch"}; });\n' +
+  '  g.record("ITEMC-22","SNAPSHOT ACCURACY: the recorded snapshot is what the gate DECIDED on, not a later re-read -- rewriting scanData afterwards leaves the record unchanged",JSON.stringify(autoTrading.log[0].htf.states)===__icRecStates&&__icRecStates!=="undefined","recorded="+__icRecStates);\n' +
+  '  g.record("ITEMC-23","re-running the identical gate against that REWRITTEN scanData genuinely produces a different answer -- so ITEMC-22 proves immutability of the record rather than a scanData that never changed",htfAlignmentPasses(htfSnapshotOf("EUR_USD")).bias==="Bearish","");\n' +
+  '  clearDecisionEvents(); itemCSeed("Bullish","—","—");\n' +
+  '  await checkAutoTrades();\n' +
+  '  g.record("ITEMC-24","a blocked candidate records the HTF refusal through the existing rejection recorder, with the REGISTERED code STRUCTURE_HTF_ALIGNMENT_NOT_SATISFIED -- distinct from a data-availability or confluence code",getDecisionEvents().some(function(e){ return e.reasonCode==="STRUCTURE_HTF_ALIGNMENT_NOT_SATISFIED"; })&&paperAccount.openPositions.length===0,JSON.stringify(getDecisionEvents().map(function(e){return e.reasonCode;}).slice(0,4)));\n' +
+  '  clearDecisionEvents();\n' +
+  // ── GOVERNANCE: why getScore did NOT need to enter the protected registry ──────────────────
+  // The gate's PERMIT/BLOCK decision is computed from the raw state counts, never from
+  // getScore -- getScore only supplies the confluence override. This fixture ENFORCES that
+  // independence rather than asserting it in prose: if a future refactor made the gate's
+  // decision depend on getScore, corrupting getScore would change a verdict and this fails.
+  '  var __gsOrig=getScore;\n' +
+  '  var __gsCases=[["Bullish","Bullish","—"],["Bullish","Ranging","Ranging"],["Bullish","Bullish","Ranging"],["Ranging","Ranging","Ranging"],["Bullish","Bullish","Bullish"]];\n' +
+  '  var __gsBefore=__gsCases.map(function(c){ var r=htfAlignmentPasses({weekly:c[0],daily:c[1],fh:c[2]}); return r.pass+"|"+r.code; });\n' +
+  '  getScore=function(){ return 3; };\n' +
+  '  var __gsAfter3=__gsCases.map(function(c){ var r=htfAlignmentPasses({weekly:c[0],daily:c[1],fh:c[2]}); return r.pass+"|"+r.code; });\n' +
+  '  getScore=function(){ return 0; };\n' +
+  '  var __gsAfter0=__gsCases.map(function(c){ var r=htfAlignmentPasses({weekly:c[0],daily:c[1],fh:c[2]}); return r.pass+"|"+r.code; });\n' +
+  '  getScore=__gsOrig;\n' +
+  '  g.record("ITEMC-26","GOVERNANCE: corrupting getScore in BOTH directions cannot change any gate verdict -- the permit/block decision is derived from the raw timeframe states, which is the evidence for leaving getScore out of the protected registry rather than expanding it transitively",__gsBefore.join(",")===__gsAfter3.join(",")&&__gsBefore.join(",")===__gsAfter0.join(","),"before="+__gsBefore.join(",")+" score3="+__gsAfter3.join(",")+" score0="+__gsAfter0.join(","));\n' +
+  '  g.record("ITEMC-27","...and that check is not vacuous: the restored getScore is the real one, and the case set spans both permitted and blocked verdicts",getScore===__gsOrig&&__gsBefore.some(function(x){return x.indexOf("true|")===0;})&&__gsBefore.some(function(x){return x.indexOf("false|")===0;}),__gsBefore.join(" "));\n' +
   '  return g;\n})();'
 );
 

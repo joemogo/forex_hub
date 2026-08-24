@@ -215,5 +215,27 @@ function runBaselineRegistryFixtures(g){
       typeof g.getBaselineRegistryVersion()==='string'&&g.getBaselineRegistryVersion().length>0,'');
   }
 
+  // ── ITEM C: CROSS-FILE REGISTRY PARITY ─────────────────────────────────────────────────
+  // v12.4.0 disclosed that BASELINE_*_FUNCTIONS in index.html and PROTECTED_FUNCTIONS in
+  // regression-baseline-tools.py "must be kept in manual sync going forward" because they share
+  // no source. Manual sync with no check is a governance gap, and it bit during Item C: the new
+  // predicate was added to both name lists but not to baselineGetAllFunctionRefs, which
+  // BaselineRegistry.22 caught. Nothing caught the .py side at all. This closes that.
+  {
+    const inApp=g.getBaselineJvmFunctions().concat(g.getBaselineAlexFunctions());
+    const inTools=g.getToolsProtectedFunctions();
+    assert('BaselineRegistry.28: the Python build tool\'s PROTECTED_FUNCTIONS list was actually '+
+      'parsed from disk -- a parse failure would make the parity check below vacuously true',
+      Array.isArray(inTools)&&inTools.length>=60,'parsed='+(inTools&&inTools.length));
+    const onlyApp=inApp.filter(function(n){return inTools.indexOf(n)===-1;});
+    const onlyTools=inTools.filter(function(n){return inApp.indexOf(n)===-1;});
+    assert('BaselineRegistry.29: the two independently-maintained protected registries are in '+
+      'PARITY -- index.html and regression-baseline-tools.py protect exactly the same set',
+      onlyApp.length===0&&onlyTools.length===0,
+      'onlyInApp='+JSON.stringify(onlyApp)+' onlyInTools='+JSON.stringify(onlyTools));
+    assert('BaselineRegistry.30: and the new Item C gate predicate is present in BOTH',
+      inApp.indexOf('htfAlignmentPasses')!==-1&&inTools.indexOf('htfAlignmentPasses')!==-1,'');
+  }
+
   return results;
 }
