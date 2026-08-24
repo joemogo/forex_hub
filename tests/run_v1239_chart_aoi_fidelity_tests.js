@@ -241,6 +241,8 @@ const wrapped = new Function('g',
   'g.setCfg=function(){ cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice"; };' +
   'g.setActivePair=function(p){ activePair=p; };' +
   'g.setActiveTf=function(tf){ activeTf=tf; };' +
+  'g.pairEvaluationDisplayState=pairEvaluationDisplayState;' +
+  'g.getPairDataEntry=function(p){return pairData[p];};' +
   'g.getActiveTf=function(){ return activeTf; };' +
   'g.pairDataEntry=function(p){ return pairData[p]; };' +
   'g.setChartEvaluationStateHtml=function(h){ var e=document.getElementById("chartEvaluationState"); if(e) e.innerHTML=h; };' +

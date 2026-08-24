@@ -5492,12 +5492,33 @@ async function alexGFetchExecutableCandles(pair,fromMs,toMs){
       all=all.concat(complete.map(c=>({t:new Date(c.time).getTime(),
         bid:{o:parseFloat(c.bid.o),h:parseFloat(c.bid.h),l:parseFloat(c.bid.l),c:parseFloat(c.bid.c)},
         ask:{o:parseFloat(c.ask.o),h:parseFloat(c.ask.h),l:parseFloat(c.ask.l),c:parseFloat(c.ask.c)}})));
+      // MOGO-024 TRACK A: IDENTITY. Reuses the same helper the three sibling fetchers already
+      // use. Only a genuine MISMATCH is refused: a response that simply omits the echo is
+      // UNVERIFIABLE, and refusing that would invent a guarantee the API does not make.
+      // DISCLOSED RESIDUAL: when OANDA omits instrument/granularity, identity is unproven here.
+      if(marketDataIdentityOutcome(d,pair,'M1')==='MISMATCH') return null;
       if(!d.candles.length) break;
       const lastTime=new Date(d.candles[d.candles.length-1].time).getTime();
       if(lastTime<=cursor) break; // no forward progress -- avoid an infinite loop
       cursor=lastTime+60000;
       if(d.candles.length<5000) break; // fewer than requested -- caught up to 'now'
     }
+    // MOGO-024 TRACK A: COMPLETENESS. The walk is bounded by guard<20. Exhausting that bound while
+    // the cursor is still short of toMs means the window was NOT covered -- and a partial
+    // accumulation is indistinguishable from a whole one to the caller, which then advances
+    // lastExitCheckTimestamp over minutes that were never examined. The other three exits from the
+    // loop (empty page, short page, stalled cursor) all mean "caught up" and stay unaffected.
+    if(guard>=20&&cursor<toMs) return null;
+    // MOGO-024 TRACK A: OHLC INTEGRITY, on the ACCUMULATED series so cross-page duplicates and
+    // disorder are caught as well as within-page ones. BOTH executable sides are checked: the bid
+    // decides a BUY exit and the ask decides a SELL exit, so checking one would leave half of
+    // alexGReconstructExitFromCandles unguarded. Gaps are deliberately NOT an error -- FX closes,
+    // and M1 bars legitimately do not exist over a weekend or holiday; only ordering and per-bar
+    // validity are enforced.
+    const __side=function(k){ return all.map(function(c){
+      const v=c[k]; return{t:new Date(c.t),o:v.o,h:v.h,l:v.l,c:v.c}; }); };
+    if(marketDataCandleIntegrity(__side('bid'))!==MARKET_DATA_INTEGRITY.OK) return null;
+    if(marketDataCandleIntegrity(__side('ask'))!==MARKET_DATA_INTEGRITY.OK) return null;
   }catch{return null;}
   return all;
 }
@@ -10142,11 +10163,23 @@ function startCountdown(){
 //     fault for what is a legitimate, fully-evaluated quiet-market conclusion.
 // No rule, threshold, gate or trading decision reads this argument -- it selects display text
 // only, and the score/direction arithmetic below is untouched.
-function renderRecBanner(conf,sess,suppressed){
+function renderRecBanner(conf,sess,suppressed,notScannedYet){
   const banner=document.getElementById('recBanner');
   const label=document.getElementById('recLabel');
   const detail=document.getElementById('recDetail');
   const score=document.getElementById('recScore');
+  // MOGO-024 TRACK B: the SELECTED timeframe has not been scanned yet. loadChart folds this into
+  // evaluationSuppressed, so before this branch existed the banner announced "Market data
+  // incomplete" for a pair whose data is entirely COMPLETE -- while renderChartEvaluationState,
+  // inches away, correctly said the opposite. Two panels on one screen naming different causes for
+  // the same state. Checked FIRST, matching renderChartEvaluationState's own precedence.
+  if(notScannedYet){
+    banner.className='rec-banner rec-wait';
+    label.className='rec-label rec-label-wait';
+    label.textContent='NOT EVALUATED';
+    detail.textContent='This timeframe has not been scanned yet — the scanner’s most recent verdict for this pair was computed on another timeframe. This is NOT a finding that no setup exists, and it is NOT a market-data problem.';
+    score.textContent='—';score.style.color='var(--text2)';return;
+  }
   if(suppressed){
     banner.className='rec-banner rec-wait';
     label.className='rec-label rec-label-wait';
@@ -10340,7 +10373,7 @@ async function scanPair(pair,sweepToken,sweepResults){
   const alertKey=`${pair}_${sweepTf}_${Math.floor(Date.now()/300000)}`;   // §18.24: same capture, same reason
   if(conf.total>=ALERT_THRESHOLD&&!firedAlerts.has(alertKey)){
     firedAlerts.add(alertKey);
-    addAlert(pair,conf,price,getSession());
+    addAlert(pair,conf,price,getSession(),sweepTf);   // TRACK D: the timeframe this score was actually computed on
   }
 }
 // v12.5.0 PROGRAM-001 Phase 2A: wrapped in SCAN_STARTED/SCAN_COMPLETED/ENGINE_ERROR Decision
@@ -10770,7 +10803,7 @@ function cBarClass(pct){return pct>=ALERT_THRESHOLD?'conf-high':pct>=40?'conf-me
 //
 // Pure, so it is testable without a DOM. Returns the display state only -- no evaluation,
 // alerting or trading decision reads it.
-function pairEvaluationDisplayState(pair,d){
+function pairEvaluationDisplayState(pair,d,selectedTf){
   const e=d||{};
   const scanned=e.completenessState!==undefined||e.conf!==undefined;
   if(!scanned){
@@ -10788,7 +10821,27 @@ function pairEvaluationDisplayState(pair,d){
       title:'NOT EVALUATED \u2014 '+why+'. No signal or confluence was computed, so this is a '+
             'data-availability failure and NOT a statement that there is no setup.'};
   }
-  return{notEvaluated:false,code:'EVALUATED',title:''};
+  // MOGO-024 TRACK C: TIMEFRAME ATTRIBUTION. scanPair evaluates exactly ONE timeframe per sweep --
+  // `const sweepTf=activeTf` -- and stamps it onto the record. This function previously had no
+  // notion of timeframe at all, so the sidebar rendered an H4 score beside an H1 chart while the
+  // chart itself correctly said that timeframe had not been scanned. Two surfaces, one pair, one
+  // instant, contradicting each other.
+  //
+  // BACKWARD COMPATIBLE BY CONSTRUCTION: `selectedTf` is optional. Callers that do not pass it
+  // (renderScan, renderWatchlist) get byte-identical behaviour, and a record with no `timeframe`
+  // stamp -- anything persisted before v12.28.0 -- is never reclassified on a comparison it
+  // cannot support.
+  //
+  // The score is NOT erased. Erasing it would destroy a real, correctly-computed evaluation; the
+  // requirement is that it must not be presented as belonging to a timeframe it does not.
+  if(selectedTf!=null&&e.timeframe!=null&&e.timeframe!==selectedTf){
+    return{notEvaluated:false,code:'EVALUATED_ON_OTHER_TIMEFRAME',
+      evaluatedTimeframe:e.timeframe,selectedTimeframe:selectedTf,
+      title:'This score was computed on '+e.timeframe+', not on the '+selectedTf+
+            ' chart currently selected. '+selectedTf+' has not been scanned yet — the next sweep '+
+            'scores whichever timeframe is selected. This is not a market-data problem.'};
+  }
+  return{notEvaluated:false,code:'EVALUATED',evaluatedTimeframe:e.timeframe!=null?e.timeframe:null,title:''};
 }
 function renderPairList(){
   const list=document.getElementById('pairList');
@@ -10812,17 +10865,20 @@ function renderPairList(){
     const el=document.createElement('div');
     el.className='pair-row'+(p===activePair?' active':'');
     const gradeHtml=sd&&sd.grade&&sd.grade!=='—'?`<span class="badge grade-${sd.grade}" style="font-size:9px;padding:1px 4px">${sd.grade}</span>`:'';
-    const evalState=pairEvaluationDisplayState(p,d);
+    // MOGO-024 TRACK C: activeTf is passed so a score computed on another timeframe is LABELLED
+    // rather than silently attributed to the selected one.
+    const evalState=pairEvaluationDisplayState(p,d,activeTf);
+    const otherTf=evalState.code==='EVALUATED_ON_OTHER_TIMEFRAME';
     const dirTag=evalState.notEvaluated
       ? `<span class="dir-tag tag-watch" style="background:var(--gold-dim);color:var(--gold)" title="${escapeHtml(evalState.title)}">NOT EVAL</span>`
-      : (pct>=40?`<span class="dir-tag ${conf.direction==='long'?'tag-long':'tag-short'}">${conf.direction==='long'?'LONG':'SHORT'}</span>`:'<span class="dir-tag tag-watch">—</span>');
+      : (pct>=40?`<span class="dir-tag ${conf.direction==='long'?'tag-long':'tag-short'}" title="${escapeHtml(evalState.title)}">${conf.direction==='long'?'LONG':'SHORT'}</span>`:'<span class="dir-tag tag-watch">—</span>');
     el.innerHTML=`
       <div class="pair-row-left">
         <div class="pair-row-name">${sk} ${gradeHtml}</div>
         <div class="pair-row-sub">${dirTag}<span style="color:var(--text2)">${price}</span></div>
       </div>
       <div class="pair-row-right">
-        <span class="conf-pct" style="color:${cColor(pct)}">${pct?pct+'%':'—'}</span>
+        <span class="conf-pct" style="color:${cColor(pct)}" title="${escapeHtml(evalState.title)}">${pct?pct+'%':'—'}${otherTf?`<span style="color:var(--gold);font-size:9px;font-weight:600"> ${escapeHtml(String(evalState.evaluatedTimeframe))}</span>`:''}</span>
         <div class="conf-bar-wrap"><div class="conf-bar" style="width:${pct}%;background:${cColor(pct)}"></div></div>
       </div>`;
     el.onclick=()=>{activePair=p;renderPairList();loadChart();};
@@ -12120,8 +12176,8 @@ async function loadChart(){
   // into renderChartEvaluationState below. Previously the chart's own state line said "NOT
   // EVALUATED" while the recommendation banner beside it said "No pattern detected on this
   // timeframe" -- two panels on one screen disagreeing about whether MOGO had looked at all.
-  renderConfluencePanel(conf,evaluationSuppressed);
-  renderRecBanner(conf,sess,evaluationSuppressed);
+  renderConfluencePanel(conf,evaluationSuppressed,awaitingScanForTimeframe);
+  renderRecBanner(conf,sess,evaluationSuppressed,awaitingScanForTimeframe);
   renderChartEvaluationState({suppressed:evaluationSuppressed,
     completenessState:usingEngineVerdict?engineVerdict.completenessState:chartCompleteness,
     source:usingEngineVerdict?'engine':'chart',
@@ -12458,9 +12514,16 @@ function renderSignalBadges(signals){
 // rendered for a fully-evaluated pair that simply scored zero, and equally for a pair whose
 // candles never arrived. Deliberately renders no percentage, no LONG and no SHORT in either
 // branch: the panel must not fill a gap with a figure it computed itself.
-function renderConfluencePanel(conf,suppressed){
+function renderConfluencePanel(conf,suppressed,notScannedYet){
   const dirEl=document.getElementById('confDir');
   const itemsEl=document.getElementById('confItems');
+  // MOGO-024 TRACK B: same third state, same reason. Still renders no percentage, no LONG and no
+  // SHORT in any branch -- CAF-TF.9 is preserved.
+  if(notScannedYet){
+    dirEl.textContent='—';
+    itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">Not evaluated — this timeframe has not been scanned yet. No confluence was computed for it.</div>';
+    return;
+  }
   if(suppressed){
     dirEl.textContent='—';
     itemsEl.innerHTML='<div style="color:var(--text2);font-size:11px">Not evaluated — market data incomplete. No confluence was computed for this timeframe.</div>';
@@ -12495,12 +12558,20 @@ function setFilter(mode,btn){
 }
 
 // ── ALERTS ──
-function addAlert(pair,conf,price,sess){
+// MOGO-024 TRACK D: `sourceTimeframe` is the timeframe the confluence was actually computed on.
+// scanPair evaluates whichever timeframe the chart is showing (`const sweepTf=activeTf`), so an
+// alert could be raised from a Daily sweep and read exactly like an M15 one -- while auto-trading
+// only ever acts on M15. ADDITIVE and OPTIONAL: legacy alerts already in fxhub_alerts carry no
+// `tf` and are left untouched and readable. It is recorded as null when genuinely unknown and is
+// NEVER defaulted to 'M15', because labelling an unknown alert with the trading timeframe is the
+// precise falsehood this field exists to prevent.
+function addAlert(pair,conf,price,sess,sourceTimeframe){
   const dec=pair.includes('JPY')?3:5;
   const entry={time:new Date().toLocaleTimeString(),pair:pair.replace('_','/'),
     pct:conf.total,direction:conf.direction,
     sigs:(conf.items||[]).filter(i=>i.state==='hit').map(i=>i.label),
-    price:price?price.toFixed(dec):'—',session:sess.name,inSession:sess.active};
+    price:price?price.toFixed(dec):'—',session:sess.name,inSession:sess.active,
+    tf:(typeof sourceTimeframe==='string'&&sourceTimeframe)?sourceTimeframe:null};
   alertLog.unshift(entry);
   if(alertLog.length>50) alertLog.pop();
   renderAlertLog();showToast(entry,sess);playAlert();save();
@@ -12527,7 +12598,7 @@ function renderAlertLog(){
         <span style="color:${cColor(a.pct)};font-size:12px;font-weight:600">${escapeHtml(a.pct)}%</span>
         <span class="alert-time">${escapeHtml(a.time)}</span>
       </div>
-              <div class="alert-sigs">${(a.sigs||[]).slice(0,3).map(escapeHtml).join(' · ')}${!a.inSession?' ⚠ off-hours':''}</div>
+              <div class="alert-sigs">${a.tf?`<span style="color:var(--gold);font-weight:600">${escapeHtml(String(a.tf))}</span> · `:''}${(a.sigs||[]).slice(0,3).map(escapeHtml).join(' · ')}${!a.inSession?' ⚠ off-hours':''}</div>
     </div>`;
   }).join('');
 }

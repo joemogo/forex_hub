@@ -133,6 +133,12 @@ g.bars=function(endMs,durMs,n,formingLast){
   return out;
 };
 g.okPage=function(candles){ return response(true,200,{candles:candles}); };
+// MOGO-024 Track A: a page carrying OANDA's real identity echo, so identity verification can be
+// exercised at all. The plain okPage above deliberately omits it -- that asymmetry is itself the
+// UNVERIFIABLE case the fixtures pin.
+g.okPageWithIdentity=function(candles,instrument,granularity){
+  return response(true,200,{instrument:instrument,granularity:granularity,candles:candles});
+};
 g.errPage=function(status){ return response(false,status,{errorMessage:'scripted '+status}); };
 g.emptyPage=function(){ return response(true,200,{candles:[]}); };
 g.okPrice=function(){ return response(true,200,{prices:[{bids:[{price:'1.10000'}],asks:[{price:'1.10020'}]}]}); };

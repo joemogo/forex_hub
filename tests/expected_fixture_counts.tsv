@@ -34,10 +34,10 @@ run_v1238_execution_reporting_display_tests.js	39
 run_v1238_execution_reporting_journal_tests.js	72
 run_v1238_execution_reporting_provenance_tests.js	41
 run_v1238_execution_reporting_stats_tests.js	24
-run_v1239_chart_aoi_fidelity_tests.js	69
+run_v1239_chart_aoi_fidelity_tests.js	83
 run_v1239_lifecycle_reconciliation_tests.js	51
-run_v1239_market_data_continuity_tests.js	41
-run_v1239_paper_trading_e2e_tests.js	144
+run_v1239_market_data_continuity_tests.js	51
+run_v1239_paper_trading_e2e_tests.js	150
 run_v1239_restart_diagnostics_tests.js	40
 run_v123_tests.js	52
 run_v124_baseline_registry_tests.js	34

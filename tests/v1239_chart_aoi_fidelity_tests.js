@@ -1184,5 +1184,86 @@ async function runChartAoiFidelityFixtures(g){
   }
 
   g.setFetchRouter(null);
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // MOGO-024 TRACK B -- THREE DISTINCT CAUSES, NEVER COLLAPSED
+  //   1. selected timeframe not yet scanned   2. data genuinely incomplete   3. evaluated, nothing found
+  // Reproduces the operator's screenshot exactly: COMPLETE H4 data, chart on H1.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  {
+    const load=async function(over,tf){
+      baseReset(); installChartRouter(AOI_SPEC_REFERENCE); g.setActiveTf(tf||'H1');
+      seedEngineVerdict(over);
+      g.setChartEvaluationStateHtml('');
+      g.setElHtml('confDir',''); g.setElHtml('recBanner',''); g.setElHtml('signalsRow','');
+      g.setElHtml('confItems','');
+      await g.loadChart();
+      return{state:String(g.elHtml('chartEvaluationState')||''),
+             label:String(g.elText('recLabel')||''),
+             detail:String(g.elText('recDetail')||''),
+             items:String(g.elHtml('confItems')||'')};
+    };
+
+    // CAUSE 1: complete H4 data, H1 chart.
+    const notScanned=await load({timeframe:'H4',completenessState:'COMPLETE',requestedCount:220,
+      receivedCount:220,evaluationSuppressed:false,conf:{total:53,items:[],direction:'long'},signals:[]},'H1');
+    assert('TRKB.1','a SELECTED-TIMEFRAME-NOT-SCANNED state no longer blames market data -- the data is COMPLETE and the banner must not say otherwise',
+      notScanned.detail.indexOf('incomplete')===-1&&notScanned.label==='NOT EVALUATED',
+      'label='+JSON.stringify(notScanned.label)+' detail='+JSON.stringify(notScanned.detail.slice(0,120)));
+    assert('TRKB.2','...it states the real cause, and says explicitly that this is not a market-data problem',
+      notScanned.detail.indexOf('has not been scanned yet')!==-1&&
+      notScanned.detail.indexOf('NOT a market-data problem')!==-1,
+      notScanned.detail.slice(0,160));
+    assert('TRKB.3','...the confluence panel agrees with the banner rather than contradicting it',
+      notScanned.items.indexOf('has not been scanned yet')!==-1&&notScanned.items.indexOf('incomplete')===-1,
+      notScanned.items.replace(/<[^>]*>/g,' ').slice(0,140));
+    assert('TRKB.4','...and the pre-existing chart state line is UNCHANGED and still names both timeframes',
+      notScanned.state.indexOf('has not been scanned yet')!==-1&&notScanned.state.indexOf('H4')!==-1&&
+      notScanned.state.indexOf('H1')!==-1,
+      notScanned.state.replace(/<[^>]*>/g,' ').slice(0,180));
+    assert('TRKB.5','NO CONTRADICTION: banner, panel and chart state line no longer name different causes for one state',
+      !(notScanned.detail.indexOf('incomplete')!==-1&&notScanned.state.indexOf('has not been scanned')!==-1),'');
+
+    // CAUSE 2: genuinely incomplete data, on the SELECTED timeframe. Must be unchanged.
+    const incomplete=await load({timeframe:'H1',completenessState:'PARTIAL',requestedCount:220,
+      receivedCount:137,evaluationSuppressed:true,conf:{total:0,items:[]},signals:[]},'H1');
+    assert('TRKB.6','PRESERVED: genuinely incomplete data on the selected timeframe still reports a market-data fault',
+      incomplete.label==='NOT EVALUATED'&&incomplete.detail.indexOf('incomplete')!==-1&&
+      incomplete.detail.indexOf('has not been scanned yet')===-1,
+      'label='+JSON.stringify(incomplete.label)+' detail='+JSON.stringify(incomplete.detail.slice(0,120)));
+
+    // CAUSE 3: evaluated on the selected timeframe, nothing qualified. Must be unchanged.
+    const quiet=await load({timeframe:'H1',completenessState:'COMPLETE',requestedCount:220,
+      receivedCount:220,evaluationSuppressed:false,conf:{total:0,items:[],direction:'long'},signals:[]},'H1');
+    assert('TRKB.7','PRESERVED: a fully evaluated quiet market still reports a STRATEGY conclusion, not a data fault',
+      quiet.label==='NO SETUP'&&quiet.detail.indexOf('incomplete')===-1&&
+      quiet.detail.indexOf('has not been scanned')===-1,
+      'label='+JSON.stringify(quiet.label)+' detail='+JSON.stringify(quiet.detail.slice(0,120)));
+
+    assert('TRKB.8','THE DISCRIMINATOR: all THREE causes render three DIFFERENT messages -- collapsing any two fails here',
+      notScanned.detail!==incomplete.detail&&incomplete.detail!==quiet.detail&&notScanned.detail!==quiet.detail,
+      [notScanned.label,incomplete.label,quiet.label].join(' | '));
+
+    // ── TRACK C: sidebar timeframe attribution ──
+    const ent=g.getPairDataEntry('EUR_USD');
+    assert('TRKC.1','a score computed on ANOTHER timeframe is flagged EVALUATED_ON_OTHER_TIMEFRAME and names the timeframe it came from',
+      (function(){ const r=g.pairEvaluationDisplayState('EUR_USD',{timeframe:'H4',conf:{total:53},completenessState:'COMPLETE',evaluationSuppressed:false},'H1');
+        return r.code==='EVALUATED_ON_OTHER_TIMEFRAME'&&r.evaluatedTimeframe==='H4'&&r.title.indexOf('H4')!==-1&&r.title.indexOf('H1')!==-1; })(),'');
+    assert('TRKC.2','...and the score is NOT erased -- a real evaluation is labelled, not destroyed',
+      (function(){ const r=g.pairEvaluationDisplayState('EUR_USD',{timeframe:'H4',conf:{total:53},completenessState:'COMPLETE',evaluationSuppressed:false},'H1');
+        return r.notEvaluated===false; })(),'');
+    assert('TRKC.3','POSITIVE CONTROL: when the evaluated timeframe MATCHES the selected one it is plain EVALUATED, with no warning',
+      (function(){ const r=g.pairEvaluationDisplayState('EUR_USD',{timeframe:'H1',conf:{total:53},completenessState:'COMPLETE',evaluationSuppressed:false},'H1');
+        return r.code==='EVALUATED'&&r.title===''; })(),'');
+    assert('TRKC.4','BACKWARD COMPATIBLE: omitting the selected timeframe reproduces the previous behaviour exactly, so renderScan and renderWatchlist are unaffected',
+      (function(){ const r=g.pairEvaluationDisplayState('EUR_USD',{timeframe:'H4',conf:{total:53},completenessState:'COMPLETE',evaluationSuppressed:false});
+        return r.code==='EVALUATED'&&r.notEvaluated===false; })(),'');
+    assert('TRKC.5','BACKWARD COMPATIBLE: a record with NO timeframe stamp is never reclassified on a comparison it cannot support',
+      (function(){ const r=g.pairEvaluationDisplayState('EUR_USD',{conf:{total:53},completenessState:'COMPLETE',evaluationSuppressed:false},'H1');
+        return r.code==='EVALUATED'; })(),'');
+    assert('TRKC.6','a genuinely suppressed pair is still NOT EVALUATED -- the timeframe rule did not displace the completeness rule',
+      (function(){ const r=g.pairEvaluationDisplayState('EUR_USD',{timeframe:'H4',conf:{total:0},completenessState:'PARTIAL',evaluationSuppressed:true},'H1');
+        return r.notEvaluated===true&&r.code==='NOT_EVALUATED'; })(),'');
+  }
+
   return results;
 }

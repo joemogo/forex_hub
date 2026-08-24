@@ -475,6 +475,8 @@ try{
     'g.checkAutoTrades=checkAutoTrades;' +
     // §18.23: the alerting path had ZERO behavioural coverage anywhere in the repository.
     'g.scanPair=scanPair;' +
+    'g.setActiveTfE2E=function(tf){activeTf=tf;};' +
+    'g.addAlertDirect=addAlert;g.renderAlertLogDirect=renderAlertLog;' +
     'g.getAlertLog=function(){return alertLog;};g.setAlertLog=function(v){alertLog=v;};' +
     'g.ALERT_THRESHOLD=ALERT_THRESHOLD;' +
     'g.resetFiredAlerts=function(){firedAlerts=new Set();};' +

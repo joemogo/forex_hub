@@ -973,9 +973,26 @@ function runMarketDataContinuityFixtures(g){
     const before=g.candleReqs().length;
     const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+10*24*3600000);
     const used=g.candleReqs().length-before;
-    ok(Array.isArray(r),'the walk still returns an array rather than hanging');
     ok(used<=3,'a stalled cursor must stop almost immediately, not run to the iteration cap (requests='+used+')');
-    return 'terminated after '+used+' requests';
+    // MOGO-024 TRACK A, STRENGTHENED. This previously asserted only that an ARRAY came back. That
+    // was incidental to the fixture's real subject (termination, asserted above) and it was
+    // concealing a genuine defect: the stalled page is CONCATENATED before the stall is detected,
+    // so the returned series contained every minute TWICE -- exactly the corruption ALEXEXEC.5
+    // exists to prevent ("a duplicated minute is scanned twice for stop/target touches"). The
+    // integrity check now refuses it. Termination is unchanged; only the corrupt result is.
+    eq(r,null,'a stalled cursor duplicates the page it already consumed, and a duplicated series must not decide an exit');
+    // POSITIVE CONTROL, one variable away: a stall that does NOT duplicate still returns its bars,
+    // so the refusal above is caused by the duplication and not by stalling as such.
+    let n=0;
+    g.route(function(){
+      n++;
+      // Second page repeats the same LAST timestamp (so the cursor cannot advance) but carries
+      // entirely fresh, later minutes -- a stall with no duplicate bar in it.
+      return g.okPage(n===1?m1Page(XFROM,10):m1Page(XFROM+10*XM1,1));
+    });
+    const r2=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+10*24*3600000);
+    ok(Array.isArray(r2),'POSITIVE CONTROL: a non-duplicating walk still returns its bars (got '+(r2?r2.length:String(r2))+')');
+    return 'terminated after '+used+' requests; duplicated accumulation refused';
   });
 
   await t('ALEXEXEC.4 (SHORT PAGE): fewer bars than requested ends the walk',async function(){
@@ -1009,6 +1026,134 @@ function runMarketDataContinuityFixtures(g){
     for(let i=1;i<times.length;i++){ if(times[i]<=times[i-1]) strictly=false; }
     ok(strictly,'and the series must be strictly increasing in time');
     return r.length+' bars, all unique and ordered';
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // MOGO-024 TRACK A -- IDENTITY, OHLC INTEGRITY AND COMPLETENESS ON THE EXIT PATH
+  //
+  // Everything above proves the TRANSPORT contract. None of it inspects a single price. The three
+  // sibling fetchers (fetchCandlesDiagnosed, fetchCandlesRange, and ALEX replay through
+  // fetchCandlesRange) all run marketDataIdentityOutcome + marketDataCandleIntegrity; this one ran
+  // neither, and it is the path that decides whether a REAL position hit its stop or its target.
+  //
+  // Two measured consequences, both reproduced below:
+  //   * NaN: every comparison in alexGReconstructExitFromCandles is false, so no exit is detected
+  //     -- but lastProcessedTime still advances, so that interval is NEVER re-examined and a stop
+  //     genuinely touched inside it is missed PERMANENTLY.
+  //   * WRONG INSTRUMENT: prices on another instrument's scale make `side.h>=pos.target` fire, so
+  //     a FABRICATED winning exit is booked, closed, and preserved as evidence.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  function xBadPage(mutate){
+    const bars=m1Page(XFROM,10);
+    mutate(bars);
+    return bars;
+  }
+
+  await t('ALEXEXEC.8 (IDENTITY): a response echoing a DIFFERENT instrument is refused',async function(){
+    g.route(function(){ return g.okPageWithIdentity(m1Page(XFROM,10),'GBP_JPY','M1'); });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    eq(r,null,'EUR_USD was requested and GBP_JPY answered -- those prices are on another scale entirely, '+
+      'and against a EUR/USD target of ~1.08 a GBP/JPY high of ~199 fires hitTarget and books a fabricated Win');
+    return 'wrong instrument refused';
+  });
+
+  await t('ALEXEXEC.9 (IDENTITY): a response echoing a DIFFERENT granularity is refused',async function(){
+    g.route(function(){ return g.okPageWithIdentity(m1Page(XFROM,10),XPAIR,'H1'); });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    eq(r,null,'M1 was requested; an H1 series walked as if it were minutes misplaces every exit timestamp');
+    return 'wrong granularity refused';
+  });
+
+  await t('ALEXEXEC.10 (IDENTITY, POSITIVE CONTROLS): a matching echo is accepted, and an ABSENT echo stays usable',async function(){
+    g.route(function(){ return g.okPageWithIdentity(m1Page(XFROM,10),XPAIR,'M1'); });
+    const good=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    ok(Array.isArray(good)&&good.length===10,'a correctly-identified response is accepted unchanged (got '+(good?good.length:String(good))+')');
+    // DISCLOSED RESIDUAL: identity can only be verified when the response actually carries it.
+    // Refusing a response that simply omits the field would invent a guarantee the API does not make.
+    g.route(function(){ return g.okPage(m1Page(XFROM,10)); });
+    const noId=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    ok(Array.isArray(noId)&&noId.length===10,'a response with NO identity echo is UNVERIFIABLE, not a mismatch, and stays usable');
+    return 'match accepted; absent echo tolerated and disclosed';
+  });
+
+  await t('ALEXEXEC.11 (OHLC): NaN prices are refused instead of silently disabling every exit test',async function(){
+    g.route(function(){ return g.okPage(xBadPage(function(b){ b[4].bid.h='not-a-number'; })); });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    eq(r,null,'a NaN high makes hitStop and hitTarget both false while lastProcessedTime still advances -- '+
+      'the interval is skipped permanently and a real stop touch inside it is lost');
+    return 'NaN refused';
+  });
+
+  await t('ALEXEXEC.12 (OHLC): Infinity, zero and negative prices are refused',async function(){
+    const cases=[['Infinity',function(b){ b[2].ask.h='Infinity'; }],
+                 ['zero',function(b){ b[3].bid.l='0'; }],
+                 ['negative',function(b){ b[6].ask.l='-1.10000'; }]];
+    for(const c of cases){
+      g.route(function(){ return g.okPage(xBadPage(c[1])); });
+      const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+      eq(r,null,c[0]+' price must be refused');
+    }
+    return 'Infinity, zero and negative all refused';
+  });
+
+  await t('ALEXEXEC.13 (OHLC): impossible high/low/open/close relationships are refused, on BOTH sides',async function(){
+    const cases=[['bid h<l',function(b){ b[5].bid.h='1.09000'; b[5].bid.l='1.11000'; }],
+                 ['bid h<c',function(b){ b[5].bid.h='1.10000'; b[5].bid.c='1.20000'; }],
+                 ['ask l>o',function(b){ b[7].ask.l='1.99000'; }]];
+    for(const c of cases){
+      g.route(function(){ return g.okPage(xBadPage(c[1])); });
+      const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+      eq(r,null,c[0]+' must be refused -- the ask side decides a SELL exit, so checking only the bid would leave half the path unguarded');
+    }
+    return 'impossible OHLC refused on bid and ask';
+  });
+
+  await t('ALEXEXEC.14 (ORDERING): duplicate and out-of-order timestamps WITHIN a page are refused',async function(){
+    g.route(function(){ return g.okPage(xBadPage(function(b){ b[6].time=b[5].time; })); });
+    const dup=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    eq(dup,null,'a duplicated minute is scanned twice for stop/target touches');
+    g.route(function(){ return g.okPage(xBadPage(function(b){ const x=b[3]; b[3]=b[4]; b[4]=x; })); });
+    const ooo=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    eq(ooo,null,'an out-of-order series makes the FIRST touch ambiguous, which is the whole basis of the stop-before-target rule');
+    return 'duplicates and disorder refused';
+  });
+
+  await t('ALEXEXEC.15 (COMPLETENESS): a TRUNCATED reconstruction window is refused, not returned as if whole',async function(){
+    // The walk is bounded by guard<20. A window needing more pages than that ends EARLY with the
+    // cursor still short of toMs. Returning the partial accumulation is indistinguishable from a
+    // complete one, so lastExitCheckTimestamp advances over minutes that were never examined.
+    g.route(function(req){
+      const from=req.from?Date.parse(req.from):XFROM;
+      const firstBar=Math.ceil(from/XM1)*XM1;
+      return g.okPage(m1Page(firstBar,5000));            // always a FULL page -- the walk never catches up
+    });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+500000*XM1);
+    eq(r,null,'the guard stopped the walk before the requested window was covered, so the result is not authoritative');
+    return 'truncated window refused';
+  });
+
+  await t('ALEXEXEC.16 (MARKET CLOSURE, POSITIVE CONTROL): a legitimate weekend gap is NOT treated as missing data',async function(){
+    // The single most important negative result here. FX closes; M1 bars simply do not exist over a
+    // weekend. Treating an absent interval as corruption would refuse every Monday reconstruction
+    // and permanently freeze exit monitoring. Gaps are legal; only ORDER and VALIDITY are enforced.
+    g.route(function(){
+      const fri=m1Page(XFROM,5);
+      const mon=m1Page(XFROM+3*24*3600000,5);            // ~3 days later, a real weekend
+      return g.okPage(fri.concat(mon));
+    });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XFROM+4*24*3600000);
+    ok(Array.isArray(r)&&r.length===10,'both sides of the weekend are reconstructed (got '+(r?r.length:String(r))+')');
+    const gap=r[5].t-r[4].t;
+    ok(gap>2*24*3600000,'POSITIVE CONTROL: the series really does span a multi-day gap ('+Math.round(gap/3600000)+'h), so this is not vacuous');
+    return 'weekend gap preserved, not refused';
+  });
+
+  await t('ALEXEXEC.17 (POSITIVE CONTROL): a wholly valid walk is still accepted after all of the above',async function(){
+    g.route(function(){ return g.okPageWithIdentity(m1Page(XFROM,10),XPAIR,'M1'); });
+    const r=await g.alexGFetchExecutableCandles(XPAIR,XFROM,XTO);
+    ok(Array.isArray(r)&&r.length===10,'valid data must still reconstruct -- a guard that refuses everything is worse than the defect');
+    ok(r[0].bid.h<r[0].ask.h&&r[0].bid.o>0&&r[9].t>r[0].t,'and the parsed values are intact and ordered');
+    return 'valid walk unaffected';
   });
 
 

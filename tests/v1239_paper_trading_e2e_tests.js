@@ -1586,8 +1586,54 @@ async function runV1239PaperTradingE2EFixtures(g){
   // otherwise report a shorter, quieter, still-green result -- into a visible FAILURE. Every
   // other fixture in this file has been individually shown to fail against at least one
   // behaviour-changing mutation of the code it claims to cover.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // MOGO-024 TRACK D -- ALERT TIMEFRAME ATTRIBUTION
+  //
+  // scanPair evaluates whichever timeframe the CHART is showing (`const sweepTf=activeTf`), so an
+  // alert raised from a Daily sweep previously read exactly like an M15 one -- while auto-trading
+  // only ever acts on M15. The stored entry carried no timeframe at all.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  {
+    jvmClean(); alexClean(); seedConversions(); activeWatchAll();
+    g.setMode('firing'); g.setPricing('serve','1.09990','1.10000');
+
+    g.setActiveTfE2E('M15');
+    g.resetFiredAlerts(); g.setAlertLog([]);
+    await g.scanPair('EUR_USD');
+    const m15=g.getAlertLog();
+    assert('PTE2E-ALERTTF.0 (PRECONDITION): the sweep genuinely raised an alert, so the assertions below are not vacuous',
+      m15.length===1,'alerts='+m15.length);
+    assert('PTE2E-ALERTTF.1: a newly raised alert records the timeframe its confluence was ACTUALLY computed on',
+      m15[0].tf==='M15','tf='+String(m15[0]&&m15[0].tf));
+
+    // The same pair, the same engine, the same series -- a DIFFERENT selected timeframe. H1 is
+    // used because this suite's router serves the firing series for it, so the alert genuinely
+    // fires and the only variable that changed is the timeframe being swept.
+    g.setActiveTfE2E('H1');
+    g.resetFiredAlerts(); g.setAlertLog([]);
+    await g.scanPair('EUR_USD');
+    const daily=g.getAlertLog();
+    assert('PTE2E-ALERTTF.2: an alert raised from an H1 sweep is recorded as H1, never as M15 -- auto-trading only ever acts on M15, so mislabelling this is the falsehood the field exists to prevent',
+      daily.length===1&&daily[0].tf==='H1','tf='+String(daily[0]&&daily[0].tf));
+    assert('PTE2E-ALERTTF.3 THE DISCRIMINATOR: the two alerts differ in their recorded timeframe, so a hardcoded value fails here',
+      daily.length===1&&m15[0].tf!==daily[0].tf,'m15='+String(m15[0].tf)+' h1='+String(daily[0]&&daily[0].tf));
+
+    // Legacy and unknown-provenance alerts.
+    assert('PTE2E-ALERTTF.4 BACKWARD COMPATIBLE: an alert raised with no source timeframe records null and is NEVER defaulted to M15',
+      (function(){ g.setAlertLog([]);
+        g.addAlertDirect('EUR_USD',{total:70,direction:'long',items:[]},1.1,{name:'London',active:true});
+        const a=g.getAlertLog()[0]; return a.tf===null; })(),'');
+    assert('PTE2E-ALERTTF.5 BACKWARD COMPATIBLE: a LEGACY alert object with no tf field at all still renders without error',
+      (function(){ g.setAlertLog([{time:'10:00:00',pair:'EUR/USD',pct:70,direction:'long',sigs:['x'],
+          price:'1.10000',session:'London',inSession:true}]);
+        g.renderAlertLogDirect();
+        const html=String(g.elHtml('alertLog')||'');
+        return html.indexOf('EUR/USD')!==-1&&html.indexOf('M15')===-1; })(),'');
+    g.setActiveTfE2E('M15'); g.setAlertLog([]); g.resetFiredAlerts();
+  }
+
   assert('PTE2E-HARNESS.1 (HARNESS self-check, NOT production coverage): the suite ran to its own end and recorded every fixture above it -- an async suite that is not genuinely awaited is a known false-green in this repository, and this line cannot be reached without the awaits above having resolved',
-    results.length===143, 'recorded='+results.length+' expected=143 (this fixture is the 144th)');
+    results.length===149, 'recorded='+results.length+' expected=149 (this fixture is the 150th)');
 
   return results;
 }
