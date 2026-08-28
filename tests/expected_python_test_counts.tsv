@@ -21,6 +21,7 @@ tests.trader_intelligence.evidence.test_phase7a	45
 tests.trader_intelligence.test_answer_intake	59
 tests.trader_intelligence.test_answer_intake_preview	60
 tests.trader_intelligence.test_answer_intake_reevaluation	40
+tests.trader_intelligence.test_backup_source_artifacts	38
 tests.trader_intelligence.test_candidate_search	58
 tests.trader_intelligence.test_decision_difference	34
 tests.trader_intelligence.test_exception_triage	32

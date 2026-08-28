@@ -147,3 +147,109 @@ strictly safer than the alternative.
 | **ADR-002** (isolated strategy/feature storage) | **Extended, not overridden.** Its one-owner-per-key principle now applies across two media: each object store has exactly one owning writer, and no store is ever rebuilt from another's data. |
 | **ADR-003** (paper ledger transaction model) | **Reinforced.** The evidence layer is a strict reader of the ledger; the guarded commit path is untouched. |
 | **ADR-004** (read-only analytics principle) | **Consistent.** Evidence packages record captured facts; `realizedR` and other derived values stay computed at read time, never cached into the record. |
+
+---
+
+## Amendment A4 — encrypted operator-local backup, and why the packages stay out of Git
+
+**Status: Accepted (operator ruling, 2026-08-28).** Supersedes the withdrawn amendment A3
+proposal. Mechanism implemented and tested; **no backup has been created**.
+
+### The rejection above stands, and now has a measured reason
+
+The original "Rejected" list declined to commit evidence packages because they "may contain
+broker market data with its own licensing terms". That is no longer a *may*:
+
+| Measure | Value |
+|---|---|
+| Packages carrying a `marketContexts` entry | 221 of 268 |
+| OANDA-derived OHLC bars embedded | **18,397** |
+| Instruments | 11 |
+
+**Operator ruling:** OANDA's current API licence limits use to **Internal Use** and prohibits
+transmitting, publishing, disseminating or otherwise providing OANDA Trading System Rates to
+third parties. Pushing these artifacts to GitHub would be exactly that. They are therefore
+excluded from Git permanently, not pending a better mechanism.
+
+A3 — force-adding the artifacts with `git add -f` — was implemented, tested, staged, and then
+**withdrawn and fully unwound** under this ruling. Nothing OANDA-derived was ever committed.
+
+### What Git keeps instead
+
+`docs/trader-intelligence/evidence/ledger-preservation/ARTIFACT_INDEX.json`: per artifact, the
+repository-relative path, whole-file SHA-256, byte size, package count and the list of package
+`contentHash` values. Plus the hash algorithms and the canonicalization identifier.
+
+**A SHA-256 is not rates.** It cannot reconstruct a candle, a price, or an instrument. So the
+verification chain is public while the data is entirely operator-local — that split is the
+whole design, and it is what makes the constraint survivable rather than merely obeyed.
+
+The index is enforced clean by test, not by care: no floats at any depth (a price would be
+one), no forbidden field names, no drive name, no path, no backup status, no per-artifact
+timestamps. Mutating a byte size to a float, adding an `instrument` key, or leaking the volume
+name each fail the suite.
+
+### The backup mechanism
+
+`scripts/backup_source_artifacts.sh`, three explicit modes — `--backup`, `--verify`,
+`--restore` — each requiring an exact `--dest`, an explicit `--confirm`, a terminal on stdin,
+and a typed `YES` at the prompt. It is interactive by construction: **the terminal requirement
+is what prevents it running from a hook or a timer**, rather than a comment asking nobody to.
+
+- **No plaintext archive is ever written.** The obvious design — tar, then encrypt — writes a
+  complete unencrypted copy of every candle to disk first. This creates an *empty* AES-256
+  encrypted image with `hdiutil`, attaches it, and copies the literal paths in. Plaintext
+  exists only inside the attached encrypted volume, which is unavoidable for any encryption.
+- **The passphrase reaches `hdiutil` on stdin via `-stdinpass` and goes nowhere else.** Never
+  argv (`ps` would show it to every process on the machine — `--password` is refused with that
+  explanation), never an environment variable, never a file, never a receipt, never shell
+  history, and **never the Keychain**. Losing it loses the archive; that is the trade.
+- Built-in macOS tooling only. `age` and `gpg` are not installed and nothing was installed.
+- Fails closed on any hash, space, destination, canonicalization, mount or receipt failure.
+- Refuses Time Machine's managed directories, the volume root, symlinks, globs, `..`,
+  relative paths, read-only volumes and unmounted volumes.
+- Removes a **partial** image left by a failure; never deletes a **completed** backup.
+- Makes no network call and never invokes git.
+
+### MOGOTH improves resilience. It is not an independent offline copy.
+
+The connected volume is a **Seagate BUP Slim BK, 2 TB, USB, APFS, FileVault-encrypted**,
+mounted at `/Volumes/MOGOTH` — and it is **also the configured Time Machine destination**.
+
+That means the encrypted archive would share **one physical device** with the system backup.
+One drive failure loses both. It is also a portable hard disk rather than an SSD, and it lives
+attached to the machine, so it protects against accidental deletion and repository loss but not
+against theft, fire, or a controller failure. The script prints this warning on every run
+against a Time Machine volume rather than leaving it in a document nobody re-reads.
+
+**Recommended next step, not yet authorised:** a *second* encrypted device, written by the same
+tool with the same verification, then **physically disconnected and stored separately**. Only
+at that point is the source evidence genuinely durable. Until then, the honest description is
+"a second copy on the same desk", and it should be described that way.
+
+### Known provenance debt — recorded, not repaired
+
+Two items are deliberately left alone.
+
+1. **The 2026-08-18 dangling declaration.** `EVSRC|MOGO|20260818|015` declares
+   `repositoryPath: "evidence/FWD-20260818T153216Z-PACKAGES.json"`, and that file does not
+   exist. Its exact bytes survive as `evidence/FWD-20260818T153243Z-PACKAGES.json`, a
+   **verified byte-identical duplicate** (both 5,619 B, both SHA-256 `f31505ff876a4c40…`, the
+   value the record already declares). A restoration was made under A3 and **removed again**
+   during the unwind, because restoring it duplicates a package across two capture files and
+   breaks the corpus invariant that a package appears in exactly one — enforced by
+   `test_content_hash_is_unique_across_every_package`, which failed with it present and passes
+   with it absent. The invariant was **not** weakened to accommodate the restoration. The
+   artifact is consequently absent from `ARTIFACT_INDEX.json`, which lists 17, not 18.
+   `TOBS|MOGO|20260818|001` therefore rests on a witness reachable only by contentHash search,
+   and `EVF0002` continues to report it. That is the honest state.
+
+2. **The 48 `storageLocationType: "repository"` declarations are now known to be wrong.** Under
+   this ruling the artifacts will never be in version control, so `external` is the truthful
+   value. **They are not edited.** `SPEC-provenance.md` **P11** governs — *"Records are
+   immutable; corrections supersede rather than edit"* — and `evidence-source.schema.json` has
+   `additionalProperties: false` with no `supersedes*` property, so the correction cannot
+   currently be expressed. Three routes remain open, in increasing cost: record the debt and
+   report it as an advisory validator finding; add a `supersededBySourceId` property and mint
+   replacement records; or append a `corrected` lifecycle event per source, which the lifecycle
+   schema already supports. None is taken here.

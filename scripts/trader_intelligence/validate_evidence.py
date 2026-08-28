@@ -1120,6 +1120,30 @@ ANCHOR_DOCUMENT_FIELDS_UNBOUND = {
     "withinAutomaticReMintWindow": "a fact about the capture window, not the corpus",
     "outsideAutomaticReMintWindow": "a fact about the capture window, not the corpus",
     "outsideWindowReal": "a fact about the capture window, not the corpus",
+    # ARTIFACT_INDEX.json (ADR-010 amendment A4). It lives in this directory because it
+    # is a preservation record, but it describes ARTIFACTS rather than trades, so none
+    # of its fields is derivable from the observation corpus -- which is precisely why
+    # it exists: the artifacts are OANDA-derived and excluded from Git, so the corpus
+    # cannot re-derive what they contain. Each field is declared here rather than left
+    # to a blanket exemption for the file.
+    "artifacts": "the artifact rows themselves -- path, whole-file sha256, byte size, "
+                 "package count and package contentHashes. Facts about FILES that are "
+                 "deliberately not in version control, so nothing in the corpus can "
+                 "derive them; they are checked against the files on disk instead, by "
+                 "tests/trader_intelligence/test_backup_source_artifacts.py",
+    "generatedAt": "when the index was written. A fact about the indexing run, not "
+                   "about the corpus, and deliberately the only timestamp in the file "
+                   "-- per-artifact timestamps would make an immutable document churn",
+    "fileHashAlgorithm": "names the algorithm the whole-file hashes use (sha256). A "
+                         "declaration about how to read the document, not a value",
+    "packageHashAlgorithm": "names the algorithm the package hashes use (sha256). Same",
+    "packageHashCanonicalization": "names the canonicalization the package hashes were "
+                                   "taken under (mogo.evidence-canon.v1), so a reader "
+                                   "cannot compare them against a differently "
+                                   "canonicalized digest and conclude they disagree",
+    "notice": "prose stating that the indexed artifacts hold OANDA-derived market data "
+              "restricted to Internal Use and are excluded from this repository. It is "
+              "the reason the document exists; there is nothing to derive it from",
 }
 
 
