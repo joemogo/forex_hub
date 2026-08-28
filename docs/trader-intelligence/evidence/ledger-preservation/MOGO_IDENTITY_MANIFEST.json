@@ -68,6 +68,12 @@
       "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|high|1781830800000|v1783065600000|A_repeatedReaction|AGR|EUR_USD|H1|high|1784034000000"
     },
     {
+      "captureBasis": "LIVE_CLOSE",
+      "contentHash": "1e34c21e5174d07c96d0c23fc52cb29a53a232e8bc571fb9ab653babeb07213d",
+      "refusedByImportPolicy": false,
+      "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1776967200000|v1787194800000|B_breakRetest|AGR|EUR_USD|H1|high|1787619600000"
+    },
+    {
       "captureBasis": "HISTORICAL_BACKFILL",
       "contentHash": "ffeb72d9e6c4c2edb2b47ca25547a0caf7109e02bd5a85eab6248dab4545c03e",
       "refusedByImportPolicy": false,
@@ -80,6 +86,12 @@
       "tradeId": "AGT|AGS|alex_g_sr_v1|EUR_USD|H1|AGZ|AGC|EUR_USD|H1|low|1784818800000|v1784923200000|A_repeatedReaction|AGR|EUR_USD|H1|low|1785186000000"
     },
     {
+      "captureBasis": "LIVE_CLOSE",
+      "contentHash": "6527e96852717af125c24758208c853b3b62630f207652ee15b57c3d6d9bc299",
+      "refusedByImportPolicy": false,
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CAD|H1|AGZ|AGC|GBP_CAD|H1|high|1785830400000|v1787598000000|B_breakRetest|AGR|GBP_CAD|H1|low|1787727600000"
+    },
+    {
       "captureBasis": "HISTORICAL_BACKFILL",
       "contentHash": "65ecfb0f64f888a1be0d7f82a780f8987a3355e0086ae801b0cc30163fbeb038",
       "refusedByImportPolicy": false,
@@ -90,6 +102,12 @@
       "contentHash": "0334075a85431bb212c88c364aad76ee7a20421fd04f406f1dd438850859efb0",
       "refusedByImportPolicy": false,
       "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CAD|H1|AGZ|AGC|GBP_CAD|H1|low|1782784800000|v1782918000000|A_repeatedReaction|AGR|GBP_CAD|H1|low|1784113200000"
+    },
+    {
+      "captureBasis": "LIVE_CLOSE",
+      "contentHash": "fe39f47a84961e14968472b68f13b3ba55ac730bb11ac067c878990a0bd1c648",
+      "refusedByImportPolicy": false,
+      "tradeId": "AGT|AGS|alex_g_sr_v1|GBP_CAD|H4|AGZ|AGC|GBP_CAD|H4|high|1782810000000|v1786554000000|B_breakRetest|AGR|GBP_CAD|H4|low|1787677200000"
     },
     {
       "captureBasis": "LIVE_CLOSE",
@@ -198,6 +216,12 @@
       "contentHash": "327d0689bd7aa366598920a50ba4c01ceedc2c25422dcf481053b36d65a44b31",
       "refusedByImportPolicy": false,
       "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CHF|D|AGZ|AGC|USD_CHF|D|high|1768514400000|v1775595600000|B_breakRetest|AGR|USD_CHF|D|low|1783890000000"
+    },
+    {
+      "captureBasis": "LIVE_CLOSE",
+      "contentHash": "aeb2c318046d154aa660ae5fdd4d5b237f6b5b695bc9b5055167b277742789fa",
+      "refusedByImportPolicy": false,
+      "tradeId": "AGT|AGS|alex_g_sr_v1|USD_CHF|H1|AGZ|AGC|USD_CHF|H1|high|1781726400000|v1787526000000|B_breakRetest|AGR|USD_CHF|H1|low|1787608800000"
     },
     {
       "captureBasis": "HISTORICAL_BACKFILL",

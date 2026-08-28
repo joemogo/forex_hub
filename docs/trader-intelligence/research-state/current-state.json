@@ -4,21 +4,21 @@
     "FORWARD": {
       "bestR": 2.055506,
       "byOutcome": {
-        "Loss": 21,
+        "Loss": 25,
         "Win": 8
       },
-      "meanR": -0.178636,
-      "n": 29,
-      "rMultipleCount": 29,
+      "meanR": -0.278437,
+      "n": 33,
+      "rMultipleCount": 33,
       "unknownFieldCounts": {
         "accountBalanceAfter": 2,
         "accountBalanceBefore": 2,
         "exitDetectionSource": 2,
-        "marketExitAt": 8,
+        "marketExitAt": 9,
         "timeframe": 2
       },
       "winCount": 8,
-      "winShareOfPreserved": 0.275862,
+      "winShareOfPreserved": 0.242424,
       "worstR": -1.117834
     },
     "HISTORICAL": {
@@ -57,12 +57,12 @@
     }
   },
   "byStrategyAndPopulation": {
-    "alex_g_sr_v1|FORWARD": 27,
+    "alex_g_sr_v1|FORWARD": 31,
     "alex_g_sr_v1|HISTORICAL": 221,
     "alex_g_sr_v1|RECONSTRUCTED": 9,
     "current_strategy|FORWARD": 2
   },
-  "corpusFingerprint": "c7a53309a3d697f1065cd1456b2830e31da17eb05cf2aad48ad768f13cabb433",
+  "corpusFingerprint": "dd689859376dcc19772d9ab949ea647e8f416959d52ab7dddfe74007067ff4ad",
   "fidelity": {
     "alex_g_sr_v1": {
       "agreements": [
@@ -110,6 +110,6 @@
     "total": 641
   },
   "lane": "RESEARCH",
-  "observationTotal": 259,
+  "observationTotal": 263,
   "schemaVersion": "mogo.research-assimilation.v1"
 }

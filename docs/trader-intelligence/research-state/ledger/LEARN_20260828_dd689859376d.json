@@ -1,0 +1,59 @@
+{
+  "adjudicates": false,
+  "assimilatedAt": "2026-08-28T11:37:50Z",
+  "changedState": {
+    "byPopulation.FORWARD.byOutcome.Loss": {
+      "after": 25,
+      "before": 21
+    },
+    "byPopulation.FORWARD.meanR": {
+      "after": -0.278437,
+      "before": -0.178636
+    },
+    "byPopulation.FORWARD.n": {
+      "after": 33,
+      "before": 29
+    },
+    "byPopulation.FORWARD.rMultipleCount": {
+      "after": 33,
+      "before": 29
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.marketExitAt": {
+      "after": 9,
+      "before": 8
+    },
+    "byPopulation.FORWARD.winShareOfPreserved": {
+      "after": 0.242424,
+      "before": 0.275862
+    },
+    "byStrategyAndPopulation.alex_g_sr_v1|FORWARD": {
+      "after": 31,
+      "before": 27
+    },
+    "observationTotal": {
+      "after": 263,
+      "before": 259
+    }
+  },
+  "corpusChanged": true,
+  "corpusFingerprintAfter": "dd689859376dcc19772d9ab949ea647e8f416959d52ab7dddfe74007067ff4ad",
+  "corpusFingerprintBefore": "c7a53309a3d697f1065cd1456b2830e31da17eb05cf2aad48ad768f13cabb433",
+  "generated": true,
+  "lane": "RESEARCH",
+  "learningKinds": [
+    "A_UPDATES_DESCRIPTIVE_STATISTICS",
+    "B_CHANGES_COMPARISON_COHORT",
+    "I_WINNER_LOSER_EVIDENCE",
+    "H_REVEALS_EVIDENCE_DEFICIENCY",
+    "F_LEAVES_HYPOTHESES_UNCHANGED"
+  ],
+  "legitimateConclusion": "Forward observations: 33. Descriptive statistics over the PRESERVED forward subset moved. No hypothesis changed verdict: the corpus still holds no trade evidence for any human trader, which is what blocks them.",
+  "nonConclusion": [
+    "Forward statistics describe the PRESERVED subset, not the account: the oldest closes minted no evidence package (backlog B-22).",
+    "Nothing here is evidence about any human trader. `alex_g_sr_v1` is MOGO's implementation of a published method, not the person who published it.",
+    "A change in descriptive statistics is not a finding about strategy performance; no strategy rule is altered by any observation."
+  ],
+  "observationTotalAfter": 263,
+  "observationTotalBefore": 259,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}
