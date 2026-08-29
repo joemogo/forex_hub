@@ -5757,8 +5757,22 @@ function alexGCloseLivePosition(tradeId,result,exitPrice,ba,exitMeta){
     pnl:parseFloat(pnl.toFixed(2)),balanceAfter:alexGAccount.balance,
     exitBid:ba?ba.bid:null,exitAsk:ba?ba.ask:null,exitSpreadPips:ba?Math.abs(ba.ask-ba.bid)/pip:null,
     exitTriggerLevel:m.exitTriggerLevel!=null?m.exitTriggerLevel:exitPrice,
-    exitDetectionSource:m.exitDetectionSource||'live_snapshot',
-    exitDetectedAt:m.exitDetectedAt||Date.now(),
+    // G-4 (MOGO-024, owner-authorized protected change). These two fields previously
+    // fabricated: `||'live_snapshot'` asserted HOW an exit was detected and `||Date.now()`
+    // invented WHEN, whenever a caller supplied neither. Both are inside the evidence
+    // package's contentHash, so an invented value re-derived cleanly and read as observed
+    // fact. The three sibling fields around them already fail closed to null; these two now
+    // match. UNKNOWN is null -- the representation pick() and the package schema already use.
+    //
+    // VALIDATED, not merely null-checked. Every legitimate caller supplies a NUMBER of epoch
+    // milliseconds (exit.candleEnd = c.t+candleDurationMs, or Date.now()) and one of exactly
+    // three source strings ('historical_candle','live_snapshot','developer_test'). No caller
+    // supplies a numeric string, so none is coerced here. NaN, +/-Infinity, 0, negatives,
+    // booleans, objects and arrays are UNKNOWN rather than accepted as a timestamp; empty and
+    // whitespace-only strings are UNKNOWN rather than accepted as a provenance claim.
+    // A close is never REJECTED for unknown optional provenance -- it is recorded as unknown.
+    exitDetectionSource:(typeof m.exitDetectionSource==='string'&&m.exitDetectionSource.trim()!=='')?m.exitDetectionSource:null,
+    exitDetectedAt:(typeof m.exitDetectedAt==='number'&&isFinite(m.exitDetectedAt)&&m.exitDetectedAt>0)?m.exitDetectedAt:null,
     exitCandleStart:m.exitCandleStart!=null?m.exitCandleStart:null,
     exitCandleEnd:m.exitCandleEnd!=null?m.exitCandleEnd:null,
     ambiguous:!!m.ambiguous,ambiguousMode:m.ambiguousMode||null};

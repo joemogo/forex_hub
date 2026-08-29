@@ -257,7 +257,13 @@ async function runV1238ExecutionReportingJournalFixtures(g){
     // MAE/MFE accrue on the live position during the trade, exactly as the live poller updates them.
     pos.maePips=12.5; pos.mfePips=33.25; pos.maeR=-0.125; pos.mfeR=0.3325;
     g.freezeClock(CLOSE_MS);
-    g.alexGCloseLivePosition('ALX-C1','Win',1.3200,null,{});
+    // G-4 (MOGO-024): this call passed {} and the two assertions below asserted the INVENTED
+    // default -- alexGCloseLivePosition used to fabricate exitDetectionSource:'live_snapshot'
+    // when a caller supplied none. That fallback is removed; an unsupplied source is now
+    // UNKNOWN (null). These fixtures are about JOURNALLING a source verbatim, not about
+    // defaulting one, so the source is supplied explicitly here and both assertions keep
+    // their original exact-literal strength. The UNKNOWN contract is pinned by v1241.
+    g.alexGCloseLivePosition('ALX-C1','Win',1.3200,null,{exitDetectionSource:'live_snapshot'});
     g.restoreClock();
     const rec=(g.getAlexGJournalEntries()||[]).find(e=>e.tradeId==='ALX-C1')||null;
     const closed=(g.getAlexGAccount().closedPositions||[])[0]||null;
@@ -276,7 +282,7 @@ async function runV1238ExecutionReportingJournalFixtures(g){
       rec?(rec.maePips+'/'+rec.mfePips+'/'+rec.maeR+'/'+rec.mfeR):'no rec');
     assert('ALEX-CLOSE-RESULT.1 (kills B2): the ALEX close journals result exactly "Win"',
       !!rec && rec.result==='Win', rec?String(rec.result):'no rec');
-    assert('ALEX-CLOSE-SOURCE.1: the exit detection source defaults to and is journalled as "live_snapshot"',
+    assert('ALEX-CLOSE-SOURCE.1: a caller-supplied exit detection source is journalled verbatim as "live_snapshot" (G-4: it is no longer DEFAULTED when absent)',
       !!rec && rec.exitDetectionSource==='live_snapshot', rec?String(rec.exitDetectionSource):'no rec');
     assert('ALEX-CLOSE-WHY.1 (kills B9): the ALEX close narrative is journalled verbatim -- "Closed as a Win when price reached the target (1.32), detected via the current live bid/ask snapshot." -- replacing the open row\'s "Still open."',
       !!rec && rec.whyClosed==='Closed as a Win when price reached the target (1.32), detected via the current live bid/ask snapshot.',

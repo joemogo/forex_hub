@@ -50,3 +50,4 @@ run_v130_candle_completeness_regression_tests.js	88
 run_v131_evidence_verifier_tests.js	73
 run_v_paper_trading_audit_tests.js	391
 run_v1240_scan_freshness_tests.js	42
+run_v1241_exit_provenance_tests.js	83
