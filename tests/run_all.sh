@@ -143,6 +143,20 @@ for runner in "${RUNNERS[@]}"; do
   echo ""
 done
 
+echo "--- G-2 mutation gate (scan-eligibility freshness) ---"
+# A DEDICATED GATE, not an ordinary fixture suite. Its assertions are ABOUT the v1240 suite --
+# whether that suite can still detect a broken G-2 -- so folding them into the registered
+# fixture count would double-count G-2 coverage and conflate "the code is correct" with "the
+# tests can notice incorrectness". It therefore adds nothing to expected_fixture_counts.tsv.
+#
+# It runs the v1240 suite 11 further times (one unmutated control plus ten mutations) against
+# temporary copies of index.html. That duplicated runtime is disclosed rather than hidden; it
+# costs roughly two seconds. The ordinary v1240 suite above is unaffected and still runs once.
+if ! node tests/mutate_v1240_scan_freshness.js; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Protected-function / protected-constant drift check ---"
 if ! python3 regression-baseline-tools.py; then
   OVERALL_EXIT=1
