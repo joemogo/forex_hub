@@ -4,9 +4,12 @@
 against is not a wrong verdict, it is a CONFIDENT one: a report that renders GREEN because
 a probe silently did nothing.
 """
+import contextlib
 import datetime
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -126,6 +129,135 @@ class TestTheChecksAreActuallyWIRED(unittest.TestCase):
         r = ph.report({"a": obs()}, SRC, network=False, store_path=REPO_ROOT)
         self.assertEqual(sum(r["counts"].values()), len(r["checks"]),
                          "a check fell out of the tally")
+
+
+@contextlib.contextmanager
+def controlled_store():
+    """A store directory OUTSIDE the repository, with its own mtime as the time anchor.
+
+    Every freshness assertion below is expressed as an offset from THIS directory's mtime and
+    handed to check_live_store as an injected clock, so nothing depends on the current date,
+    the repository's age, the local timezone, or how long the suite takes to run. The
+    repository root is never created, touched or re-stamped.
+    """
+    tmp = tempfile.mkdtemp(prefix="mogo-health-test-")
+    try:
+        path = os.path.join(tmp, "store")
+        os.makedirs(path)
+        mtime = datetime.datetime.fromtimestamp(os.path.getmtime(path),
+                                                datetime.timezone.utc)
+        yield path, mtime
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+class TestLiveStoreFreshnessIsDeterministic(unittest.TestCase):
+    """The live-store freshness check, with BOTH sides of the age calculation controlled.
+
+    The defect these replace: the selftest's GREEN case passed REPO_ROOT with no injected
+    clock, so it reported GREEN only while the repository directory happened to have been
+    written within STORE_STALE_AFTER_HOURS. It passed for a week, then failed on elapsed time
+    alone. check_live_store was correct throughout -- the fixture was not.
+    """
+
+    def _state(self, path, mtime, hours):
+        return ph.check_live_store(
+            store_path=path, clock=mtime + datetime.timedelta(hours=hours))["state"]
+
+    def test_a_controlled_fresh_store_is_green(self):
+        with controlled_store() as (path, mtime):
+            self.assertEqual(self._state(path, mtime, 0.0), ph.GREEN)
+
+    def test_a_controlled_stale_store_is_yellow(self):
+        with controlled_store() as (path, mtime):
+            self.assertEqual(self._state(path, mtime, ph.STORE_STALE_AFTER_HOURS + 24.0),
+                             ph.YELLOW)
+
+    def test_a_missing_store_is_unknown_not_green_and_not_red(self):
+        r = ph.check_live_store(store_path="/nonexistent/mogo/store")
+        self.assertEqual(r["state"], ph.UNKNOWN)
+        self.assertNotEqual(r["state"], ph.GREEN)
+
+    def test_exactly_at_the_threshold_is_green_because_the_operator_is_strict(self):
+        # Production compares `age_h > stale_hours`. Equality must therefore be GREEN, and
+        # this is the assertion that a `>` -> `>=` mutation has to break.
+        with controlled_store() as (path, mtime):
+            self.assertEqual(self._state(path, mtime, ph.STORE_STALE_AFTER_HOURS), ph.GREEN)
+
+    def test_one_second_past_the_threshold_is_yellow(self):
+        # One second, not a sub-microsecond epsilon: the result must not turn on filesystem
+        # timestamp granularity, which differs across macOS and CI filesystems.
+        with controlled_store() as (path, mtime):
+            self.assertEqual(
+                self._state(path, mtime, ph.STORE_STALE_AFTER_HOURS + 1.0 / 3600.0),
+                ph.YELLOW)
+
+    def test_the_injected_clock_is_honoured(self):
+        # The same path yields different states purely from the clock, which proves the
+        # injection is read rather than ignored in favour of the wall clock.
+        with controlled_store() as (path, mtime):
+            self.assertEqual(self._state(path, mtime, 0.0), ph.GREEN)
+            self.assertEqual(self._state(path, mtime, ph.STORE_STALE_AFTER_HOURS + 1.0),
+                             ph.YELLOW)
+
+    def test_the_result_follows_the_supplied_path_not_ambient_repository_state(self):
+        # Repository-age independence, demonstrated by CONSTRUCTION rather than by asserting
+        # anything about today's REPO_ROOT -- asserting REPO_ROOT is stale would simply create
+        # a second time-dependent test. Two stores, one clock, opposite verdicts.
+        with controlled_store() as (fresh, mtime):
+            with controlled_store() as (stale, _unused):
+                old = (mtime - datetime.timedelta(hours=ph.STORE_STALE_AFTER_HOURS + 48.0))
+                os.utime(stale, (old.timestamp(), old.timestamp()))   # temp path only
+                clock = mtime + datetime.timedelta(seconds=1)
+                self.assertEqual(
+                    ph.check_live_store(store_path=fresh, clock=clock)["state"], ph.GREEN)
+                self.assertEqual(
+                    ph.check_live_store(store_path=stale, clock=clock)["state"], ph.YELLOW)
+
+    def test_the_repository_root_is_never_the_default_store(self):
+        # The production default must remain the real LevelDB path. If REPO_ROOT ever became
+        # the default, every assertion above would silently start measuring the repository.
+        self.assertNotEqual(os.path.abspath(ph.LIVE_STORE), os.path.abspath(REPO_ROOT))
+        self.assertIn("indexeddb.leveldb", ph.LIVE_STORE)
+
+    def test_the_selftest_live_store_fixtures_are_controlled_not_the_repository(self):
+        # Structural, and deliberately so. Every behavioural assertion above would still pass
+        # if the SELFTEST went back to using REPO_ROOT -- and re-running that mutation would
+        # only fail while the repository happens to be stale, which is a time-dependent kill
+        # and therefore no guarantee at all. This asserts the fixture construction itself, so
+        # reintroducing REPO_ROOT fails immediately and on any machine at any time.
+        import re
+        src = open(os.path.join(REPO_ROOT, "scripts", "trader_intelligence",
+                                "platform_health.py"), encoding="utf-8").read()
+        block = src[src.index("def selftest("):]
+        block = block[:block.index("live store boundary: one second")]
+        live = block[block.index("live store UNKNOWN when absent"):]
+        self.assertNotIn("REPO_ROOT", live,
+                         "the selftest's live-store fixtures must not use the repository root; "
+                         "its mtime is outside the test's control and decays into a failure")
+        self.assertIn("tempfile.mkdtemp", block,
+                      "the selftest must build a controlled temporary store")
+        self.assertIn("clock=_mt", block,
+                      "the selftest must anchor its clock to the fixture's own mtime")
+
+    def test_report_resolves_the_production_default_when_no_path_is_given(self):
+        # report(store_path=None) must reach check_live_store with the production default.
+        seen = {}
+        real = ph.check_live_store
+
+        def spy(store_path=None, clock=None, stale_hours=None):
+            seen["store_path"] = store_path
+            return real(store_path=store_path, clock=clock, stale_hours=stale_hours)
+
+        ph.check_live_store = spy
+        try:
+            ph.report({"a": obs()}, SRC, network=False)
+        finally:
+            ph.check_live_store = real
+        self.assertIn("store_path", seen, "report() never called check_live_store")
+        self.assertIsNone(seen["store_path"],
+                          "report() must pass the default through, letting check_live_store "
+                          "resolve LIVE_STORE itself")
 
 
 class TestTheSelftestItself(unittest.TestCase):

@@ -45,8 +45,10 @@ import argparse
 import datetime
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import trade_observation as to          # noqa: E402
@@ -365,13 +367,44 @@ def selftest():
           {"a": obs("a", closedAt="2026-08-06T10:00:00.004Z", exitPrice=1.12,
                     rMultiple=2.0)}, src)["state"] == YELLOW)
 
+    # ── live store: CONTROLLED fixtures, not the repository ─────────────────────────────────
+    # These three cases used REPO_ROOT as a stand-in store. The YELLOW case injected a clock and
+    # was therefore deterministic; the GREEN case injected nothing, so it read the real wall
+    # clock against the repository directory's mtime and DECAYED into a failure once the repo
+    # had not been written for STORE_STALE_AFTER_HOURS. It passed for a week and then failed
+    # with no code change -- a test that reports on the calendar rather than on the code.
+    #
+    # Both sides of the age calculation are now controlled: a temporary store outside the
+    # repository, and an injected clock anchored to that store's own mtime. Nothing here reads
+    # the current date, the repository's age, the local timezone, or elapsed execution time,
+    # and no repository path is created, touched or re-stamped.
+    #
+    # check_live_store itself is UNCHANGED -- only the inputs it is handed.
     t("live store UNKNOWN when absent (absence is not a fault)",
       check_live_store(store_path="/nonexistent/mogo/store")["state"] == UNKNOWN)
-    t("live store YELLOW when stale",
-      check_live_store(store_path=REPO_ROOT,
-                       clock=_now() + datetime.timedelta(days=400))["state"] == YELLOW)
-    t("live store GREEN when freshly written",
-      check_live_store(store_path=REPO_ROOT)["state"] == GREEN)
+    _store_tmp = tempfile.mkdtemp(prefix="mogo-health-selftest-")
+    try:
+        _store = os.path.join(_store_tmp, "store")
+        os.makedirs(_store)
+        # Anchor every assertion to the fixture's OWN mtime, so the arithmetic is exact
+        # regardless of filesystem timestamp granularity.
+        _mt = datetime.datetime.fromtimestamp(os.path.getmtime(_store),
+                                              datetime.timezone.utc)
+        _at = lambda hours: check_live_store(
+            store_path=_store, clock=_mt + datetime.timedelta(hours=hours))["state"]
+        t("live store GREEN when freshly written",
+          _at(0.0) == GREEN)
+        t("live store YELLOW when stale",
+          _at(STORE_STALE_AFTER_HOURS + 400 * 24) == YELLOW)
+        # The boundary the production operator actually defines: `age_h > stale_hours`, so
+        # EXACTLY at the threshold is still GREEN. A one-second epsilon is used rather than a
+        # sub-microsecond one so the result cannot turn on filesystem timestamp precision.
+        t("live store boundary: exactly at the threshold is GREEN (the operator is >)",
+          _at(STORE_STALE_AFTER_HOURS) == GREEN)
+        t("live store boundary: one second past the threshold is YELLOW",
+          _at(STORE_STALE_AFTER_HOURS + 1.0 / 3600.0) == YELLOW)
+    finally:
+        shutil.rmtree(_store_tmp, ignore_errors=True)
 
     t("provider UNKNOWN when not probed",
       check_provider(enabled=False)["state"] == UNKNOWN)
