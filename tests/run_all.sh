@@ -224,6 +224,23 @@ if ! python3 scripts/trader_intelligence/platform_health.py --selftest; then
 fi
 echo ""
 
+echo "--- Platform-health mutation gate (live-store freshness) ---"
+# A DEDICATED GATE, not an ordinary suite. Its assertions are ABOUT whether
+# TestLiveStoreFreshnessIsDeterministic can still detect a broken live-store check, so
+# counting them would conflate "the code is correct" with "the tests can notice
+# incorrectness". The filename does not start with test_, which is the prefix both the
+# enumeration below and count_python_tests.py match on, so the registered totals stay at
+# 1515 tests / 30 modules and the ordinary module above still runs exactly once.
+#
+# It runs the FOCUSED 10-test class 8 further times -- one unmutated control plus seven
+# mutations -- each against its own temporary mirrored tree. That duplicated runtime is
+# disclosed rather than hidden; it costs roughly three seconds. The observation corpus is
+# never copied or opened, so no corpus behaviour can influence a mutation verdict.
+if ! python3 tests/trader_intelligence/mutate_platform_health.py; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 # The auto-mode governance block lives in the USER settings file and its sections REPLACE the
 # shipped defaults rather than merging, so every rule a newer Claude Code ships is silently
 # absent until the generator is re-run. Nothing else would ever say so.
