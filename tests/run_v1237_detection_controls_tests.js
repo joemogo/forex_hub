@@ -232,6 +232,14 @@ const wrapped = new Function('g',
   'g.alexGZoneStateAll=function(pair){ return alexGZoneState[pair]||null; };' +
   'g.MARKET_DATA_COMPLETENESS=function(){return MARKET_DATA_COMPLETENESS;};' +
   'g.MARKET_DATA_MIN_USABLE_CANDLES=function(){return MARKET_DATA_MIN_USABLE_CANDLES;};' +
+  '// G-2 HARNESS SHIM (test-only, never production). These suites seed scanData directly and\n' +
+  '// have always implicitly assumed the completed top-down sweep that, in production, is the\n' +
+  '// only thing that writes those fields. Per-sweep eligibility now makes that precondition\n' +
+  '// explicit, so the harness records a completed sweep for whatever scanData currently holds.\n' +
+  '// It weakens nothing: the gate itself is proven by v1240, including its fail-closed cases.\n' +
+  'htfSnapshotOf=(function(inner){return function(op){' +
+  '  try{ var __g=jvmBeginEligibilityGeneration(); Object.keys(scanData||{}).forEach(function(p){ jvmMarkEligibilityFresh(p,__g); }); }catch(e){}' +
+  '  return inner(op); };})(htfSnapshotOf);' +
   'return runV1237DetectionControlFixtures(g);'
 );
 

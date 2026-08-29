@@ -2288,6 +2288,58 @@ let paperLedgerBlockingError=null; // v11.0.1: current commitPaperLedger() rejec
 let paperLedgerIntegrityWarning=null;
 let autoScan={enabled:false,lastRunAt:null};
 let autoScanTimer=null;
+
+// ══ G-2: PER-SWEEP TRADE-ELIGIBILITY VALIDITY (MOGO-024) ═══════════════════════════════════
+// THE DEFECT. runAutoTopDownScan() is the ONLY writer of scanData[pair].weekly/daily/fh/bucket
+// -- the trade-eligibility state -- and it runs solely on autoScanTimer, which toggleAutoScan()
+// CLEARS when Auto Scan is switched off. checkAutoTrades() lives in a different loop (scanAll)
+// on a different cadence. So with Auto Trading ON and Auto Scan OFF, nothing ever refreshes the
+// bucket or the higher-timeframe states, while checkAutoTrades keeps reading them every sweep:
+// an arbitrarily old 'Active watch' plus an arbitrarily old W/D/H4 snapshot went on authorising
+// real paper entries indefinitely. The same hole opens for one pair when its top-down refresh
+// throws mid-sweep (recorded at the catch below since v12.36.2, deliberately not repaired there
+// because clearing the bucket would change which trades the strategy takes).
+//
+// WHAT THIS ADDS, AND WHAT IT DELIBERATELY DOES NOT. No TTL, no bar count, no threshold, no
+// strategy rule -- none of those exist in any JVM contract and inventing one would be a frozen-
+// semantics decision. The only question asked is: "did a COMPLETE top-down refresh for this pair
+// finish in the current generation?" An unknown-age snapshot becomes an ABSENT one, and
+// htfAlignmentPasses (protected) already fails closed on absence with HTF_SNAPSHOT_MISSING.
+//
+// EPHEMERAL BY DESIGN. This map is memory-only and is NEVER persisted. It is not strategy
+// evidence and must not be confused with it. Two consequences, both wanted: a page reload starts
+// it empty, so a rehydrated fxhub_scan cannot authorise anything until one complete sweep runs;
+// and stopping the refresh source invalidates every pair at once, because a snapshot that can no
+// longer be refreshed cannot be known current.
+const JVM_ELIGIBILITY_STATUS=Object.freeze({IN_PROGRESS:'IN_PROGRESS',FRESH:'FRESH',FAILED:'FAILED'});
+let __jvmEligibilityGeneration=0;
+let __jvmEligibility={};
+
+// Bumping the generation invalidates every pair at once WITHOUT erasing per-pair status, so the
+// diagnostics below can still say whether the last attempt failed or merely belongs to an older
+// generation. Called at the start of every sweep and whenever the refresh source stops.
+function jvmBeginEligibilityGeneration(){ __jvmEligibilityGeneration++; return __jvmEligibilityGeneration; }
+function jvmInvalidateAllEligibility(){ jvmBeginEligibilityGeneration(); }
+function jvmMarkEligibilityInProgress(pair,gen){ __jvmEligibility[pair]={gen:gen,status:JVM_ELIGIBILITY_STATUS.IN_PROGRESS}; }
+function jvmMarkEligibilityFailed(pair,gen){ __jvmEligibility[pair]={gen:gen,status:JVM_ELIGIBILITY_STATUS.FAILED}; }
+// ATOMIC: called only after every required field has been written for this pair in this sweep.
+function jvmMarkEligibilityFresh(pair,gen){ __jvmEligibility[pair]={gen:gen,status:JVM_ELIGIBILITY_STATUS.FRESH}; }
+
+// The single predicate. Fail-closed on every path, including an entry this code never wrote.
+function jvmEligibilityIsCurrent(pair){
+  const e=__jvmEligibility?__jvmEligibility[pair]:null;
+  if(!e||typeof e!=='object') return false;                       // missing / never scanned / post-reload
+  if(e.status!==JVM_ELIGIBILITY_STATUS.FRESH) return false;        // IN_PROGRESS or FAILED
+  if(e.gen!==__jvmEligibilityGeneration) return false;             // produced by a prior generation
+  return true;
+}
+function jvmEligibilityStatusOf(pair){
+  const e=__jvmEligibility?__jvmEligibility[pair]:null;
+  if(!e||typeof e!=='object') return 'UNKNOWN';
+  if(e.gen!==__jvmEligibilityGeneration) return 'PRIOR_GENERATION';
+  return e.status;
+}
+
 let aiChat={key:'',model:'claude-sonnet-5',messages:[]};
 let scanInterval=null,countdownInterval=null,filterMode='all',toastTimer=null;
 let firedAlerts=new Set();
@@ -9910,6 +9962,11 @@ async function runAutoTopDownScan(){
   const status=document.getElementById('autoScanStatus');
   if(btn){btn.disabled=true;btn.textContent='Scanning...';}
   if(status) status.textContent='Running top-down scan across all pairs...';
+  // G-2: one generation per sweep. Every pair is invalidated the moment the sweep starts and
+  // becomes valid again only on its own atomic completion below, so a sweep that dies partway
+  // cannot leave a pair authorised on last cycle's numbers.
+  const __eligGen=jvmBeginEligibilityGeneration();
+  SCAN_PAIRS.forEach(function(p){ jvmMarkEligibilityInProgress(p,__eligGen); });
   await Promise.all(SCAN_PAIRS.map(async pair=>{
     const oPair=pair.replace('/','_');
     try{
@@ -9934,6 +9991,9 @@ async function runAutoTopDownScan(){
         scanData[pair].completenessSuppressed=true;
         scanData[pair].completenessByTimeframe={W:__wS,D:__dS,H4:__hS};
         scanData[pair].notes='Not assessed — incomplete market data (W/D/H4)';
+        // G-2: not assessed is not eligible. Recorded as FAILED for this generation so the
+        // refusal reason is attributable rather than inferred from the '—' bucket.
+        jvmMarkEligibilityFailed(pair,__eligGen);
         return;
       }
       const weekly=calcBiasFromCandles(wCandles);
@@ -9962,6 +10022,10 @@ async function runAutoTopDownScan(){
       if(scanData[pair].bucket!=='Triggered / missed') scanData[pair].bucket=bucket;
       scanData[pair].grade=grade;
       scanData[pair].notes='Auto-scanned '+new Date().toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      // G-2 ATOMIC MARK. Last statement of the success path, after weekly/daily/fh/bucket/grade
+      // are all written. Marking earlier -- after any single timeframe or partial write -- would
+      // let a mixed old/new snapshot authorise a trade, which fixture G2.4 exists to prevent.
+      jvmMarkEligibilityFresh(pair,__eligGen);
     }catch(e){
       // v12.36.2 (MOGO-021 §18.31): this was a bare `catch(e){}` -- the exact silent-catch shape
       // scanAll fixed in v11.0. It matters more here than there, because scanData[pair].bucket is
@@ -9975,6 +10039,10 @@ async function runAutoTopDownScan(){
       // raised separately. This makes the failure VISIBLE without altering any trading outcome.
       try{ recordPaperEngineError('Auto top-down scan failed for '+pair+' — its watch bucket was NOT refreshed and may be stale: '+((e&&e.message)?e.message:String(e))); }catch(e2){}
       try{ if(scanData[pair]) scanData[pair].notes='Auto-scan FAILED — bucket not refreshed this cycle'; }catch(e3){}
+      // G-2: the bucket is still deliberately NOT cleared -- that would change which trades the
+      // strategy takes. Instead the pair is marked FAILED for this generation, so htfSnapshotOf
+      // withholds the snapshot and the protected HTF gate refuses. Display data is untouched.
+      try{ jvmMarkEligibilityFailed(pair,__eligGen); }catch(e4){}
     }
   }));
   autoScan.lastRunAt=new Date().toISOString();
@@ -9990,8 +10058,12 @@ function toggleAutoScan(){
     autoScanTimer=setInterval(runAutoTopDownScan,60*60*1000); // hourly
     const stale=!autoScan.lastRunAt||(Date.now()-new Date(autoScan.lastRunAt).getTime())>60*60*1000;
     if(stale) runAutoTopDownScan();
-  } else if(autoScanTimer){
-    clearInterval(autoScanTimer);autoScanTimer=null;
+  } else {
+    if(autoScanTimer){ clearInterval(autoScanTimer);autoScanTimer=null; }
+    // G-2: switching Auto Scan off removes the ONLY writer of the trade-eligibility state, so
+    // every pair becomes un-refreshable and therefore not-current from this moment. This is the
+    // exact toggle combination G-2 reported: Auto Trading ON with Auto Scan OFF.
+    jvmInvalidateAllEligibility();
   }
   updateAutoScanStatus();
 }
@@ -12837,6 +12909,18 @@ function htfSnapshotOf(oPair){
   const sk=String(oPair||'').replace('_','/');
   const d=scanData?scanData[sk]:null;
   if(!d||typeof d!=='object') return null;
+  // G-2 (MOGO-024). These states are persisted and survive reloads, but NOTHING in them records
+  // when they were produced -- `notes` is a localized display string, not a timestamp. The age
+  // question is therefore unanswerable from scanData and is not asked here. What is asked is
+  // whether a COMPLETE top-down refresh for this pair finished in the current generation.
+  // Anything else -- missing, IN_PROGRESS, FAILED, a prior generation, or a rehydrated snapshot
+  // no sweep has confirmed since load -- yields null, and htfAlignmentPasses (protected) already
+  // refuses null with HTF_SNAPSHOT_MISSING. No TTL and no threshold is introduced.
+  if(!jvmEligibilityIsCurrent(sk)) return null;
+  // A field the sweep did not produce must not be inherited from an earlier one. htfAlignmentPasses
+  // rejects non-evaluated states itself; this is the narrower structural check that all three are
+  // present at all, so a partially-written snapshot cannot reach it looking whole.
+  if(typeof d.weekly!=='string'||typeof d.daily!=='string'||typeof d.fh!=='string') return null;
   return{weekly:d.weekly,daily:d.daily,fh:d.fh};
 }
 function scoreBadge(s){const cls=s>=3?'score-3':s>=2?'score-2':s>=1?'score-1':'score-0';return`<span class="badge ${cls}">${s>0?s+'/3':'—'}</span>`;}

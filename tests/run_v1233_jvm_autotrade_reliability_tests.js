@@ -246,6 +246,12 @@ g.now=()=>__simNow;
 g.utc=(y,mo,d,h)=>__RealDate.UTC(y,mo,d,h,0,0);
 
 const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
+  // G-2 HARNESS SHIM (test-only, never production). This suite seeds scanData directly and has
+  // always implicitly assumed the completed top-down sweep that, in production, is the only
+  // writer of those fields. Per-sweep eligibility makes that precondition explicit, so the
+  // harness records a completed sweep for whatever scanData currently holds at each call.
+  // It weakens nothing: the gate is proven independently by v1240, fail-closed cases included.
+  '  htfSnapshotOf=(function(inner){return function(op){ try{ var __g2=jvmBeginEligibilityGeneration(); Object.keys(scanData||{}).forEach(function(pp){ jvmMarkEligibilityFresh(pp,__g2); }); }catch(e){} return inner(op); };})(htfSnapshotOf);\n' +
   // ══ the protected decision path is reachable and returns structured verdicts ══
   '  cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice";\n' +
   '  const v=await evaluateLiveTrigger("EUR_USD");\n' +
