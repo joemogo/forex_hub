@@ -1088,7 +1088,30 @@ ANCHOR_DOCUMENT_BINDINGS_BY_SCHEMA = {
                               "sha256 of the row hashes joined by newline"),
     ),
     "mogo.identity-manifest.v1": (),
+    # ARTIFACT_INDEX.json (ADR-010 amendment A4). `afe5bc3` added the document AND its
+    # field-level exemptions in ANCHOR_DOCUMENT_FIELDS_UNBOUND, but not this entry, so
+    # the file it introduced reported UNADJUDICATED_ANCHOR_SCHEMA against a healthy
+    # corpus from the moment it landed. Empty for the same reason
+    # `mogo.identity-manifest.v1` is: the document carries no value that the observation
+    # corpus can re-derive -- every one of its fields is a fact about FILES that are
+    # deliberately outside version control, already declared unbound and checked against
+    # disk by tests/trader_intelligence/test_backup_source_artifacts.py.
+    "mogo.artifact-index.v1": (),
 }
+
+#: Anchor documents that legitimately hold no identity rows.
+#:
+#: ARTIFACT_INDEX.json lives in the preservation directory because it IS a preservation
+#: record, but it indexes ARTIFACTS rather than trades, so requiring `identities` of it
+#: reports a healthy corpus as broken -- which is the same class of defect as a gate that
+#: reports nothing, seen from the other side: an ERROR nobody can clear teaches the reader
+#: to ignore the report.
+#:
+#: Declared as a TABLE, and keyed on the SCHEMA rather than the filename, for the reason
+#: the module's other tables are: an unrecognised schema is NOT in this set, so it is still
+#: required to carry its rows. Renaming a file, or arriving with a new document shape,
+#: cannot silence the identities check -- it can only reach UNADJUDICATED_ANCHOR_SCHEMA.
+ANCHOR_SCHEMAS_WITHOUT_IDENTITIES = frozenset({"mogo.artifact-index.v1"})
 
 
 def anchor_document_bindings(manifest):
@@ -1200,6 +1223,14 @@ def _check_preservation_anchor(preservation_dir, report):
                     report("evidence/ledger-preservation/",
                            "not a JSON object in %s (%s)"
                            % (os.path.basename(path), type(manifest).__name__))
+                    continue
+                # A document whose DECLARED schema holds no identity rows is not a
+                # hollowed-out manifest -- it is a different kind of preservation record
+                # that happens to share the directory. Checked before the shape test, and
+                # only for schemas named in the table: an unrecognised schema falls
+                # through to the report below AND to UNADJUDICATED_ANCHOR_SCHEMA, so this
+                # cannot be used to smuggle a manifest past the check.
+                if manifest.get("schemaVersion") in ANCHOR_SCHEMAS_WITHOUT_IDENTITIES:
                     continue
                 rows = manifest.get("identities")
                 if not isinstance(rows, list):

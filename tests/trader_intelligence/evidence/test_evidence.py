@@ -2986,6 +2986,158 @@ class TestEveryCorpusAnchorIsRequired(unittest.TestCase):
         self.assertEqual(self.types(), [])
 
 
+class TestANonIdentityAnchorDocumentIsAdjudicatedNotRejected(unittest.TestCase):
+    """ARTIFACT_INDEX.json is a preservation record that holds no trades.
+
+    `afe5bc3` added the document and its field-level exemptions but not its schema
+    entry, so from the moment it landed the real corpus reported TWO ERRORs against a
+    corpus that was healthy: UNADJUDICATED_ANCHOR_SCHEMA, because no rule adjudicated
+    `mogo.artifact-index.v1`; and CORPUS_ANCHOR_UNAVAILABLE, because both loops read
+    every `*.json` in the preservation directory as an identity manifest and this one
+    has no `identities`. Nothing caught it: the integrity report is generated, not
+    asserted, and no fixture had ever put a non-identity document in that directory.
+
+    The risk in repairing it is obvious and is what the rejection cases below exist for
+    -- "stop reporting this file" must not become "stop reporting files". The
+    discrimination is on the DECLARED schema, so an unknown one still fails closed.
+    """
+
+    ARTIFACT_INDEX = {"schemaVersion": "mogo.artifact-index.v1",
+                      "artifacts": [], "generatedAt": "2026-08-29T00:00:00Z"}
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_nonidentity_")
+        self.state_dir = os.path.join(self.root, "research-state")
+        self.ledger = os.path.join(self.state_dir, "ledger")
+        self.preservation = os.path.join(self.root, "ledger-preservation")
+        os.makedirs(self.ledger)
+        os.makedirs(self.preservation)
+        self.state_path = os.path.join(self.state_dir, "current-state.json")
+        with open(self.state_path, "w", encoding="utf-8") as handle:
+            json.dump({"observationTotal": 3, "corpusFingerprint": "f" * 64}, handle)
+        with open(os.path.join(self.ledger, "LEARN_a.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump({"observationTotalAfter": 3}, handle)
+        self.write("M.json", {"schemaVersion": "mogo.identity-manifest.v1",
+                              "identities": [{"tradeId": "T1"}]})
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def write(self, name, document):
+        with open(os.path.join(self.preservation, name), "w",
+                  encoding="utf-8") as handle:
+            json.dump(document, handle)
+
+    def observations(self):
+        return [{"observationId": "TOBS|MOGO|20260819|%03d" % i} for i in range(3)]
+
+    def types(self):
+        """Both loops that read the preservation directory, as production runs them."""
+        findings = []
+        ve.check_corpus_anchors_are_available(
+            self.observations(), findings, FIXED_NOW,
+            state_path=self.state_path, ledger_dir=self.ledger,
+            preservation_dir=self.preservation)
+        ve.check_anchor_values_match_records(
+            self.observations(), findings, FIXED_NOW,
+            preservation_dir=self.preservation)
+        self._messages = " ".join(f["message"] for f in findings)
+        return sorted({f["findingType"] for f in findings})
+
+    def messages(self):
+        self.types()
+        return self._messages
+
+    # ── acceptance ──────────────────────────────────────────────────────────────────
+    def test_POSITIVE_CONTROL_the_healthy_fixture_alone_is_silent(self):
+        # Without this, every acceptance assertion below would also pass if the
+        # fixture reported nothing for reasons unrelated to the artifact index.
+        self.assertEqual(self.types(), [])
+
+    def test_an_artifact_index_beside_a_healthy_manifest_is_SILENT(self):
+        self.write("ARTIFACT_INDEX.json", self.ARTIFACT_INDEX)
+        self.assertEqual(self.types(), [],
+                         "a preservation record that indexes ARTIFACTS rather than "
+                         "trades must not be read as a hollowed-out identity manifest")
+
+    def test_the_artifact_index_schema_IS_adjudicated(self):
+        self.assertIsNotNone(
+            ve.anchor_document_bindings({"schemaVersion": "mogo.artifact-index.v1"}),
+            "the schema must be in the table, not merely tolerated by the loop")
+
+    def test_the_REAL_committed_artifact_index_is_accepted(self):
+        # The fixture above is synthetic; this asserts the shape actually in the
+        # repository, so a future field added to the real document cannot drift away
+        # from what this test claims is adjudicated. Reads the committed JSON only --
+        # no raw OANDA-derived artifact is opened.
+        real = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence",
+                            "ledger-preservation", "ARTIFACT_INDEX.json")
+        with open(real, encoding="utf-8") as handle:
+            document = json.load(handle)
+        self.assertEqual(document.get("schemaVersion"), "mogo.artifact-index.v1")
+        self.assertIsNotNone(ve.anchor_document_bindings(document))
+        unadjudicated = [k for k in document
+                         if k not in ve.ANCHOR_DOCUMENT_FIELDS_UNBOUND]
+        self.assertEqual(unadjudicated, [],
+                         "every field of the real artifact index must be declared")
+        self.write("ARTIFACT_INDEX.json", document)
+        self.assertEqual(self.types(), [])
+
+    # ── rejection: the exemption must not become a hole ──────────────────────────────
+    def test_an_UNKNOWN_schema_without_identities_is_STILL_reported(self):
+        # The discrimination is on the DECLARED schema. A new document shape gets no
+        # exemption, so renaming a file cannot silence the identities check.
+        self.write("NEW.json", {"schemaVersion": "mogo.some-future-anchor.v1",
+                                "artifacts": []})
+        self.assertEqual(self.types(),
+                         ["CORPUS_ANCHOR_UNAVAILABLE", "UNADJUDICATED_ANCHOR_SCHEMA"])
+
+    def test_a_HOLLOWED_identity_manifest_beside_the_index_is_STILL_reported(self):
+        # The real attack the identities check exists for: corrupt the manifest holding
+        # the trades you want to unanchor, leave the others intact. Exempting the
+        # artifact index must not exempt this.
+        # The MESSAGE is pinned, not just the finding type. Widening the exemption to
+        # skip every document is an EQUIVALENT MUTANT on type alone: skipping them all
+        # drives the requirable-identity total to zero, so the AGGREGATE "no requirable
+        # trade identities" report fires and CORPUS_ANCHOR_UNAVAILABLE is still present
+        # while the specific per-file report has gone silent. That adjacent effect is
+        # exactly what test_ONE_corrupted_manifest... above was written for, and it hid
+        # this mutation until the message was pinned.
+        self.write("ARTIFACT_INDEX.json", self.ARTIFACT_INDEX)
+        self.write("B.json", {"schemaVersion": "mogo.identity-manifest.v1",
+                              "identities": {"T1": True}})
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.types())
+        self.assertIn("absent or not a list in B.json", self.messages())
+
+    def test_an_identity_manifest_that_LOSES_identities_is_STILL_reported(self):
+        self.write("M.json", {"schemaVersion": "mogo.identity-manifest.v1"})
+        self.write("A.json", {"schemaVersion": "mogo.identity-manifest.v1",
+                              "identities": [{"tradeId": "T_HEALTHY"}]})
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.types())
+        self.assertIn("absent or not a list in M.json", self.messages())
+
+    def test_a_preservation_directory_holding_ONLY_the_index_is_REPORTED(self):
+        # The exemption is per-document, not per-directory. An index alone anchors no
+        # trade, so the corpus is unanchored and must say so.
+        os.remove(os.path.join(self.preservation, "M.json"))
+        self.write("ARTIFACT_INDEX.json", self.ARTIFACT_INDEX)
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.types())
+
+    def test_the_exemption_table_is_keyed_on_schema_not_filename(self):
+        # A file NAMED like the index but declaring an identity schema gets no
+        # exemption; the schema is the identity, the filename is not.
+        self.write("ARTIFACT_INDEX.json",
+                   {"schemaVersion": "mogo.identity-manifest.v1"})
+        self.assertIn("CORPUS_ANCHOR_UNAVAILABLE", self.types())
+
+    def test_the_exemption_set_is_NOT_empty_and_names_only_the_index(self):
+        # Asserts the filter is real rather than vacuous -- an empty set would make
+        # every acceptance case above pass for the wrong reason.
+        self.assertEqual(set(ve.ANCHOR_SCHEMAS_WITHOUT_IDENTITIES),
+                         {"mogo.artifact-index.v1"})
+
+
 class TestTheAllowListFailsClosedOnAnUnusableSequenceId(unittest.TestCase):
     """M4: the round-15 P1-B repair had ZERO test coverage.
 
