@@ -1737,3 +1737,188 @@ class TestObservationIdentityIsIndependentOfFileOrdering(unittest.TestCase):
         self.assertNotIn(content_hash, again, "an already-recorded package was re-minted")
         self.assertNotIn(observation_id, set(again.values()),
                          "a recorded identity was reissued to different content")
+
+
+class TestRefusedDeveloperPackagesProduceZeroObservationsAtCorpusLevel(unittest.TestCase):
+    """The refusal, asserted over a whole synthetic CORPUS rather than one package.
+
+    TestDeveloperTradesAreNotEvidence proves `observation_from_package` returns None for
+    each developer marker. That is a per-package claim, and it is not the claim the corpus
+    actually depends on: what matters is that after a full `convert_all` run over a package
+    set containing developer trades, NOTHING derived from them is in the records -- not an
+    observation, not a sequence number, not a source citation. A per-package refusal that
+    the corpus loop then routed around would satisfy every existing fixture.
+
+    This is the shape of the real event. The B-22 backfill minted 13 packages, 4 of them
+    `AGT|TEST|` developer trades, and the importer had no filter at the time. The live
+    corpus today reports exactly 4 identities flagged `refusedByImportPolicy` and 0
+    observations derived from them -- but that is a MEASUREMENT of production data, not a
+    test, and it cannot fail in CI. These fixtures are synthetic and deterministic, and no
+    OANDA-derived artifact is opened, copied or read.
+
+    The vacuity traps are explicit. A corpus-level refusal test passes trivially if the
+    package set never loaded, if every package was skipped for an unrelated reason, or if
+    `convert_all` returned early -- so the fixture count, the real-package count and the
+    refusal count are all asserted, and a positive control proves non-developer packages
+    from the SAME run are still converted.
+    """
+
+    NOW = datetime.datetime(2026, 8, 19, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+    #: The four developer markers, one per refused package. Kept as a table so a marker
+    #: that stops being refused fails HERE rather than silently shrinking the refused set.
+    DEVELOPER_MARKERS = (
+        ("isDeveloperTrade flag", {"isDeveloperTrade": True}, "AGT|GBP_USD|d1"),
+        ("tradeSource TEST", {"tradeSource": "TEST"}, "AGT|GBP_USD|d2"),
+        ("AGT|TEST| trade id", {}, "AGT|TEST|1783897893481-42902"),
+        ("AGT|TEST| trade id, second", {}, "AGT|TEST|1783897893482-42903"),
+    )
+    REAL_TRADE_IDS = ("AGT|GBP_USD|r1", "AGT|EUR_USD|r2", "AGT|USD_JPY|r3")
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="mogo_devrefusal_")
+        self.pkg_dir = os.path.join(self.root, "packages")
+        self.obs_dir = os.path.join(self.root, "observations")
+        self.src_dir = os.path.join(self.root, "sources")
+        for directory in (self.pkg_dir, self.obs_dir, self.src_dir):
+            os.makedirs(directory)
+        self.packages = self.build_corpus()
+        with open(os.path.join(self.pkg_dir, "SYNTHETIC-PACKAGES.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(self.packages, handle)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def make_package(self, trade_id, index, **position_extra):
+        position = {"instrument": "GBP_USD", "timeframe": "H1", "direction": "buy",
+                    "entryPrice": 1.30, "originalStop": 1.29, "target": 1.32,
+                    "positionSize": 0.1, "riskAmount": 100.0, "balanceBefore": 10000.0,
+                    "entryTimestamp": "2026-07-13T00:00:00.000Z"}
+        position.update(position_extra)
+        return {"packageId": "PKG|alex_g_sr_v1|20260713|%d" % index,
+                "captureBasis": "HISTORICAL_BACKFILL",
+                "createdAt": "2026-07-13T00:00:00.000Z",
+                "sourceTradeId": trade_id,
+                "contentHash": "hash-%d" % index,
+                "identity": {"strategyId": "alex_g_sr_v1"},
+                "objects": {"positions": [position],
+                            "outcomes": [{"exitPrice": 1.29, "pnl": -100.0,
+                                          "exitReasonCode": "Loss",
+                                          "exitTimestamp": "2026-07-13T04:00:00.000Z",
+                                          "balanceAfter": 9900.0, "realizedR": -1.0}]}}
+
+    def build_corpus(self):
+        packages, index = [], 0
+        for _label, extra, trade_id in self.DEVELOPER_MARKERS:
+            index += 1
+            packages.append(self.make_package(trade_id, index, **extra))
+        for trade_id in self.REAL_TRADE_IDS:
+            index += 1
+            packages.append(self.make_package(trade_id, index))
+        return packages
+
+    def convert(self):
+        return imp.convert_all(
+            package_glob=os.path.join(self.pkg_dir, "*.json"), now=self.NOW,
+            skip_imported=False, observations_dir=self.obs_dir,
+            sources_dir=self.src_dir)
+
+    # ── the fixture itself must be real ─────────────────────────────────────────────────
+    def test_the_synthetic_corpus_actually_loaded(self):
+        # The trap this whole class exists inside: zero developer observations is also what
+        # an EMPTY run produces. Assert the corpus is real before asserting anything about
+        # what it refused.
+        self.assertEqual(len(self.packages), 7)
+        records, skipped, _sources = self.convert()
+        self.assertEqual(len(records) + len(skipped), 7,
+                         "every synthetic package must be accounted for as converted or "
+                         "skipped; a package that vanished makes the refusal count a lie")
+
+    def test_POSITIVE_CONTROL_the_real_packages_in_the_SAME_run_are_converted(self):
+        # Without this, a convert_all that refused EVERYTHING would satisfy every refusal
+        # assertion below while destroying the corpus.
+        records, _skipped, _sources = self.convert()
+        self.assertEqual(len(records), len(self.REAL_TRADE_IDS))
+        self.assertTrue(records, "the positive control collected nothing")
+
+    # ── the refusal, at corpus level ────────────────────────────────────────────────────
+    def test_all_four_developer_packages_are_refused(self):
+        _records, skipped, _sources = self.convert()
+        refused = [s for s in skipped if s["reason"] == "DEVELOPER_TEST_TRADE"]
+        self.assertEqual(len(refused), 4,
+                         "expected exactly the four developer packages to be refused, got "
+                         + repr([s["packageId"] for s in refused]))
+
+    def test_each_developer_MARKER_is_refused_individually(self):
+        # Table-driven, so a marker that stops being refused fails here rather than being
+        # absorbed by the other three still failing closed.
+        _records, skipped, _sources = self.convert()
+        refused_ids = {s["packageId"] for s in skipped
+                       if s["reason"] == "DEVELOPER_TEST_TRADE"}
+        for index, (label, _extra, _trade_id) in enumerate(self.DEVELOPER_MARKERS, start=1):
+            with self.subTest(marker=label):
+                self.assertIn("PKG|alex_g_sr_v1|20260713|%d" % index, refused_ids)
+
+    def test_the_refused_packages_produce_ZERO_observations(self):
+        records, _skipped, _sources = self.convert()
+        developer_ids = {trade_id for _l, _e, trade_id in self.DEVELOPER_MARKERS}
+        # `sequenceId` is where a record carries its originating trade id. Asserted to be
+        # PRESENT first: the first draft of this filtered on `sourceTradeId`, which records
+        # do not have, so `r.get(...)` was None for every record and the assertion passed
+        # over an empty list -- the exact vacuous pass this class is written against.
+        self.assertTrue(records, "no records to check")
+        for record in records:
+            self.assertIn("sequenceId", record,
+                          "the field this refusal is asserted on must exist")
+        self.assertEqual(
+            [r for r in records if r["sequenceId"] in developer_ids], [],
+            "a developer trade reached the records")
+
+    def test_no_AGT_TEST_identity_appears_ANYWHERE_in_the_records(self):
+        # Indirect entry: not the sourceTradeId field alone, but the serialized record. A
+        # refused trade must not survive as a citation, a provenance note or an id fragment.
+        records, _skipped, _sources = self.convert()
+        blob = json.dumps(records)
+        self.assertNotIn("AGT|TEST|", blob)
+        for _label, _extra, trade_id in self.DEVELOPER_MARKERS:
+            self.assertNotIn(trade_id, blob, "%s survived into the records" % trade_id)
+
+    def test_the_refused_packages_consume_no_observation_SEQUENCE_number(self):
+        # A refused package that still incremented the counter would leave a permanent gap
+        # in the corpus numbering -- evidence of a trade that must not be evidenced.
+        records, _skipped, _sources = self.convert()
+        sequences = sorted(int(r["observationId"].split("|")[3]) for r in records)
+        self.assertEqual(sequences, list(range(1, len(self.REAL_TRADE_IDS) + 1)),
+                         "sequence numbers must be contiguous from 1; a gap means a "
+                         "refused package was numbered before being discarded")
+
+    def test_every_surviving_record_is_one_of_the_REAL_trades(self):
+        records, _skipped, _sources = self.convert()
+        self.assertEqual(sorted(r["sequenceId"] for r in records),
+                         sorted(self.REAL_TRADE_IDS))
+
+    def test_a_corpus_of_ONLY_developer_packages_yields_no_records_and_no_error(self):
+        # The degenerate case, and the one whose "0 observations" is honest rather than
+        # vacuous: every package present, every one refused, nothing raised.
+        only_developer = [p for p in self.packages
+                          if p["sourceTradeId"] not in self.REAL_TRADE_IDS]
+        self.assertEqual(len(only_developer), 4)
+        with open(os.path.join(self.pkg_dir, "SYNTHETIC-PACKAGES.json"), "w",
+                  encoding="utf-8") as handle:
+            json.dump(only_developer, handle)
+        records, skipped, _sources = self.convert()
+        self.assertEqual(records, [])
+        self.assertEqual(len(skipped), 4)
+        self.assertEqual({s["reason"] for s in skipped}, {"DEVELOPER_TEST_TRADE"})
+
+    def test_the_refusal_predicate_agrees_with_the_corpus_outcome(self):
+        # Ties the unit-level predicate to the corpus-level result, so the two cannot drift
+        # into disagreeing about which packages are developer trades.
+        _records, skipped, _sources = self.convert()
+        refused_ids = {s["packageId"] for s in skipped
+                       if s["reason"] == "DEVELOPER_TEST_TRADE"}
+        predicate_ids = {p["packageId"] for p in self.packages
+                         if imp.is_developer_test_package(p)}
+        self.assertEqual(refused_ids, predicate_ids)
+        self.assertEqual(len(predicate_ids), 4)

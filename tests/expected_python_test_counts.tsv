@@ -31,7 +31,7 @@ tests.trader_intelligence.test_forward_novelty	19
 tests.trader_intelligence.test_graph	66
 tests.trader_intelligence.test_hypothesis_testability	19
 tests.trader_intelligence.test_identity_manifest	41
-tests.trader_intelligence.test_import_mogo_observations	109
+tests.trader_intelligence.test_import_mogo_observations	119
 tests.trader_intelligence.test_observation_difference	26
 tests.trader_intelligence.test_observation_graph_reconcile	12
 tests.trader_intelligence.test_observation_integrity	20
