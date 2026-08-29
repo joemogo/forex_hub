@@ -157,6 +157,21 @@ if ! node tests/mutate_v1240_scan_freshness.js; then
 fi
 echo ""
 
+echo "--- G-4 mutation gate (exit provenance) ---"
+# A DEDICATED GATE, on the same terms as the G-2 stage above: its assertions are about whether
+# the v1241 suite can still detect a broken exit-provenance repair, so counting them would
+# conflate "the code is correct" with "the tests can notice incorrectness". The filename does
+# not match tests/run_*_tests.js, which the loop above enumerates, so expected_fixture_counts.tsv
+# stays at 2754 and v1241 stays registered once at 83.
+#
+# It runs the v1241 suite 12 further times (one unmutated control plus eleven mutations) against
+# temporary copies of index.html. That duplicated runtime is disclosed rather than hidden; it
+# costs roughly twenty seconds. The ordinary v1241 suite above is unaffected and still runs once.
+if ! node tests/mutate_v1241_exit_provenance.js; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Protected-function / protected-constant drift check ---"
 if ! python3 regression-baseline-tools.py; then
   OVERALL_EXIT=1
