@@ -2177,6 +2177,119 @@ function runV1237DetectionControlFixtures(g){
     return 'dnW/range === 0.35 exactly -> no partial credit (exclusive boundary proven, not assumed)';
   });
 
+
+  // ── S12  BIASTHRESH-*  calcBiasFromCandles INTERNAL THRESHOLDS (B-18) ────────────────────
+  // B-18: the function's OUTPUT was asserted (a label swap and a bias suppression both kill)
+  // and its production consumer is pinned by AUTOADMIT.1-3 -- but three internal rules were
+  // undiscriminated. All three survived the MOGO-021 audit: lowering the 55-bar history floor
+  // to 25, and dropping EITHER EMA leg from the trend test.
+  //
+  // THE CANDLES ARE CONSTRUCTED. THE VERDICT IS NOT. Every series below is an ordinary price
+  // path; each fixture reports whatever the frozen function decides. No threshold is altered,
+  // stubbed or wrapped, and calcBiasFromCandles is called, never re-implemented.
+  //
+  // Each negative sits ONE VARIABLE from a proven positive: 54 bars against 55, and a bounce
+  // whose only failing leg is EMA20-vs-EMA50 against a clean trend where that leg holds.
+  function biasBars(closes){
+    return closes.map(function(c){ return bar(c,c+0.004,c-0.004,c); });
+  }
+  function steady(from,step,n){
+    const out=[]; for(let i=0;i<n;i++) out.push(+(from+step*i).toFixed(5)); return out;
+  }
+  // A long decline followed by a sharp rally: price closes back ABOVE EMA20 and both the
+  // recent high and recent low exceed the prior window, but EMA20 is still BELOW EMA50. Only
+  // that one leg stands between this series and 'Bullish'.
+  function bounceCloses(){
+    const out=steady(1.40,-0.004,45);
+    for(let i=0;i<15;i++) out.push(+(out[44]+(i+1)*0.006).toFixed(5));
+    return out;
+  }
+  function pullbackCloses(){
+    const out=steady(1.20,0.004,45);
+    for(let i=0;i<15;i++) out.push(+(out[44]-(i+1)*0.006).toFixed(5));
+    return out;
+  }
+  function emaLegs(closes){
+    const e20=g.calcEMA(closes,20), e50=g.calcEMA(closes,50);
+    return {e20:e20[e20.length-1], e50:e50[e50.length-1], close:closes[closes.length-1]};
+  }
+
+  await t('BIASTHRESH-1 fewer than 55 candles yields no bias at all',async function(){
+    const c54=biasBars(steady(1.30,0.004,54));
+    eq(g.calcBiasFromCandles(c54),'—','54 candles is below the history floor');
+    return '54 rising candles -> "—" (history floor holds)';
+  });
+
+  await t('BIASTHRESH-2 POSITIVE CONTROL exactly 55 candles DOES yield a bias',async function(){
+    // The paired positive. Without it BIASTHRESH-1 would also pass if the function returned
+    // "—" for everything, which would make the floor assertion prove nothing.
+    const c55=biasBars(steady(1.30,0.004,55));
+    eq(g.calcBiasFromCandles(c55),'Bullish','55 candles is exactly AT the floor and must read');
+    return '55 identical-slope candles -> Bullish (the floor is <55, not <=55)';
+  });
+
+  await t('BIASTHRESH-3 a 40-candle series is refused, not read as a trend',async function(){
+    // Directly discriminates the floor being LOWERED to 25. This series is unambiguously
+    // rising, so a 25-bar floor would return Bullish; the assertion is that it does not.
+    const c40=biasBars(steady(1.30,0.004,40));
+    eq(g.calcBiasFromCandles(c40),'—',
+       '40 candles must be refused -- a lower floor would read this as Bullish');
+    return '40 rising candles -> "—" (a 25-bar floor would say Bullish)';
+  });
+
+  await t('BIASTHRESH-4 close above EMA20 is NOT enough when EMA20 is below EMA50',async function(){
+    // The identity is re-proved from the frozen EMA before anything is asserted, so the
+    // fixture cannot silently degrade into a series where the leg was never contested.
+    const closes=bounceCloses();
+    const L=emaLegs(closes);
+    ok(L.close>L.e20,'precondition: the last close IS above EMA20');
+    ok(!(L.e20>L.e50),'precondition: EMA20 is NOT above EMA50 -- the leg under test');
+    const cs=biasBars(closes), n=cs.length;
+    const rH=Math.max.apply(null,cs.slice(n-10).map(function(c){return c.h;}));
+    const pH=Math.max.apply(null,cs.slice(n-25,n-10).map(function(c){return c.h;}));
+    ok(rH>pH,'precondition: a higher high IS present, so only the EMA leg can withhold Bullish');
+    eq(g.calcBiasFromCandles(cs),'Ranging',
+       'dropping the EMA20>EMA50 leg would turn this into Bullish');
+    return 'close>EMA20, EMA20<EMA50, higher high -> Ranging (the second leg is load-bearing)';
+  });
+
+  await t('BIASTHRESH-5 POSITIVE CONTROL the same shape IS Bullish once EMA20 clears EMA50',async function(){
+    // One variable away from BIASTHRESH-4: a clean uptrend where the contested leg holds.
+    const closes=steady(1.30,0.004,60);
+    const L=emaLegs(closes);
+    ok(L.close>L.e20&&L.e20>L.e50,'precondition: both legs hold here');
+    eq(g.calcBiasFromCandles(biasBars(closes)),'Bullish','');
+    return 'both legs hold -> Bullish, so BIASTHRESH-4 is withholding for the stated reason';
+  });
+
+  await t('BIASTHRESH-6 close below EMA20 is NOT enough when EMA20 is above EMA50',async function(){
+    const closes=pullbackCloses();
+    const L=emaLegs(closes);
+    ok(L.close<L.e20,'precondition: the last close IS below EMA20');
+    ok(!(L.e20<L.e50),'precondition: EMA20 is NOT below EMA50 -- the leg under test');
+    const cs=biasBars(closes), n=cs.length;
+    const rL=Math.min.apply(null,cs.slice(n-10).map(function(c){return c.l;}));
+    const pL=Math.min.apply(null,cs.slice(n-25,n-10).map(function(c){return c.l;}));
+    ok(rL<pL,'precondition: a lower low IS present, so only the EMA leg can withhold Bearish');
+    eq(g.calcBiasFromCandles(cs),'Ranging',
+       'dropping the EMA20<EMA50 leg would turn this into Bearish');
+    return 'close<EMA20, EMA20>EMA50, lower low -> Ranging (the second leg is load-bearing)';
+  });
+
+  await t('BIASTHRESH-7 POSITIVE CONTROL the same shape IS Bearish once EMA20 falls under EMA50',async function(){
+    const closes=steady(1.40,-0.004,60);
+    const L=emaLegs(closes);
+    ok(L.close<L.e20&&L.e20<L.e50,'precondition: both legs hold here');
+    eq(g.calcBiasFromCandles(biasBars(closes)),'Bearish','');
+    return 'both legs hold -> Bearish, so BIASTHRESH-6 is withholding for the stated reason';
+  });
+
+  await t('BIASTHRESH-8 a null or empty series is refused rather than crashing',async function(){
+    eq(g.calcBiasFromCandles(null),'—','null must be refused');
+    eq(g.calcBiasFromCandles([]),'—','an empty series must be refused');
+    return 'null and [] -> "—"';
+  });
+
   return out;
   })();
 }

@@ -181,6 +181,11 @@ const wrapped = new Function('g',
   'g.findSwingPoints=findSwingPoints;' +
   'g.findAOIs=findAOIs;' +
   'g.getSession=getSession;' +
+  // B-18 (S12). Both are FROZEN and are called, never modified: calcBiasFromCandles is
+  // the function under discrimination, and calcEMA is exposed so each fixture can re-prove
+  // from the engine's OWN EMA which trend leg it is contesting, rather than assuming it.
+  'g.calcBiasFromCandles=calcBiasFromCandles;' +
+  'g.calcEMA=calcEMA;' +
   'g.getBias=getBias;' +
   'g.getScore=getScore;' +
   'g.evaluateLiveTrigger=evaluateLiveTrigger;' +
