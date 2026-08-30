@@ -430,6 +430,76 @@ class TestTheReaderToOnDataInterface(unittest.TestCase):
         self.assertIn("case_state_isolated", src)
 
 
+class TestThePreservedEngineRunEvidence(unittest.TestCase):
+    """The preserved cloud log must stay intact and keep agreeing with the committed algorithm.
+
+    This is evidence ABOUT a run, not a re-run: nothing here executes LEAN. It guards the log
+    from silent edit and pins the claim the run record makes, so a later change to the
+    algorithm's expectations cannot drift away from the evidence that was actually observed.
+    """
+
+    EVIDENCE = os.path.join(PKG, "evidence")
+    LOG = os.path.join(EVIDENCE, "CALM_YELLOW_PIG_2026-08-30.log")
+    LOG_SHA = "83e377e54c5dc93b83416fe023598425d2e431a4c1767a63b329d149c71b1ecd"
+    ALGORITHM_ID = "3fca3b003a7f8db84f343512ea9835fa"
+
+    def log(self):
+        with open(self.LOG, encoding="utf-8") as handle:
+            return handle.read()
+
+    def test_the_log_is_preserved_byte_for_byte(self):
+        with open(self.LOG, "rb") as handle:
+            self.assertEqual(hashlib.sha256(handle.read()).hexdigest(), self.LOG_SHA)
+
+    def test_the_log_carries_both_platform_records_for_ONE_algorithm(self):
+        text = self.log()
+        self.assertEqual(len(re.findall(r"Launching analysis", text)), 1)
+        self.assertEqual(len(re.findall(r"completed in", text)), 1)
+        self.assertEqual(set(re.findall(r"[0-9a-f]{32}", text)), {self.ALGORITHM_ID})
+        self.assertIn("v2.5.0.0.18041", text)
+
+    def test_the_log_is_22_checks_all_PASS_with_no_duplicates(self):
+        checks = re.findall(r"SMOKE-CHECK (\S+)\s+(\S+)\s+(PASS|FAIL)", self.log())
+        self.assertEqual(len(checks), 22)
+        self.assertTrue(all(c[2] == "PASS" for c in checks))
+        self.assertNotIn("FAIL", self.log())
+        for case in ("SYNQUAL", "SYNREJ"):
+            names = [c[1] for c in checks if c[0] == case]
+            self.assertEqual(len(names), 10)
+            self.assertEqual(len(names), len(set(names)), "%s has a duplicate check" % case)
+
+    def test_every_logged_check_name_is_DECLARED_in_the_committed_algorithm(self):
+        src = _read("main.py")
+        logged = set(re.findall(r"SMOKE-CHECK \S+\s+(\S+)\s+PASS", self.log()))
+        declared = set(re.findall(r"\('(\w+)', ", src)) | {"case_state_isolated",
+                                                           "no_unexpected_symbols"}
+        self.assertTrue(logged <= declared, "log reports checks the algorithm does not declare")
+
+    def test_the_logged_outcomes_still_match_the_committed_expectations(self):
+        # If someone changes EXPECT, this fails -- the preserved evidence and the code it
+        # describes cannot silently diverge.
+        text, src = self.log(), _read("main.py")
+        self.assertIn("SMOKE-CASE SYNQUAL PASS bars=120 state=LOCKED decision=True "
+                      "locked_at=55 failed=none", text)
+        self.assertIn("SMOKE-CASE SYNREJ PASS bars=120 state=BROKEN decision=False "
+                      "locked_at=None failed=none", text)
+        self.assertIn("'locked_at': 55", src)
+        self.assertIn("SMOKE-VERDICT PASS engine=LEAN failed=none", text)
+
+    def test_the_run_record_does_NOT_claim_the_cloud_source_was_hash_verified(self):
+        record = open(os.path.join(self.EVIDENCE, "RUN_RECORD.md"), encoding="utf-8").read()
+        self.assertIn("INFERRED, not verified", record)
+        self.assertIn("NOT downloaded", record)
+        self.assertIn("b1d46d3f89429464e6a647b465fd47075e765ebe", record)
+
+    def test_the_run_record_states_what_was_NOT_established(self):
+        record = open(os.path.join(self.EVIDENCE, "RUN_RECORD.md"), encoding="utf-8").read()
+        for claim in ("Historical Mode B parity", "break-cycle divergences",
+                      "profitability", "no orders"):
+            with self.subTest(claim=claim):
+                self.assertIn(claim, record)
+
+
 class TestThePackageIsCompleteAndHonestlyLabelled(unittest.TestCase):
 
     def test_the_manifest_covers_every_file_and_matches(self):
@@ -439,9 +509,13 @@ class TestThePackageIsCompleteAndHonestlyLabelled(unittest.TestCase):
                 continue
             digest, name = line.split("  ", 1)
             manifest[name] = digest
+        # FILES only, and only the reproduction inputs. `evidence/` holds run records whose
+        # hashes are recorded in RUN_RECORD.md itself, not here -- a preserved log is evidence
+        # ABOUT a run, not an input needed to reproduce one.
         on_disk = {f for f in os.listdir(PKG)
-                   if not f.startswith(".") and f not in ("__pycache__", "MANIFEST.sha256",
-                                                          "RUN_PROCEDURE.md")}
+                   if not f.startswith(".")
+                   and os.path.isfile(os.path.join(PKG, f))
+                   and f not in ("MANIFEST.sha256", "RUN_PROCEDURE.md")}
         self.assertEqual(set(manifest), on_disk, "manifest and directory disagree")
         for name, digest in manifest.items():
             with self.subTest(file=name):
