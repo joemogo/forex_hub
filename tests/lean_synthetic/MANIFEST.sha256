@@ -1,0 +1,11 @@
+# SHA-256 manifest -- MOGO synthetic LEAN engine smoke test
+#
+# Every file needed to reproduce the engine run. No historical corpus, no OANDA-derived
+# artifact, and no expected-answer table from the parity work is present or referenced.
+
+29e29578c1b841b7e03a13ba58ca1692815094922adbe00b7fba387b98aaa54a  br_machine.py
+8518fb9aa702c5a0951a6c4861a42dcced32e2a005336997bc8409e35a359303  main.py
+61e7244d421b0bcfba046913a4ed85e1563c1fbca19c71c00f2f6c4614c373d1  mogo_synthetic_qualify.csv
+d40b2fdbcec496dc124ea97da975c3df8321519911341ef9381a7da8261cff26  mogo_synthetic_reject.csv
+aa138cad8ee8428ad00dacbd50c836c7ce55a75e03ec25799951d4e502d1ea3d  synthetic_bars.py
+da8dfcb38895e7567b75a086936bcb069958994a82c35eac1c05534afac2670c  test_synthetic_local.py
