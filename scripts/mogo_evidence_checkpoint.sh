@@ -51,7 +51,20 @@ VERIFY_ONLY=0
 if [ "${1:-}" = "--selftest" ]; then
   SELF="${BASH_SOURCE[0]}"
   T="$(mktemp -d "${TMPDIR:-/tmp}/mogo-ckpt-selftest-XXXXXX")"
-  DROOT="$HOME/.mogo-ckpt-selftest-$$"
+  # THE SELFTEST NEEDS A *DURABLE* ROOT, and that requirement is the D-15 guard's whole point:
+  # checkpointing into /tmp, /private/tmp or /var/folders is refused below and must stay refused.
+  # $HOME is what production uses and is the natural fixture home -- but under the Bash sandbox
+  # $HOME is not writable, so the selftest could not create its own fixture and reported
+  # "FAIL -- a clean checkpoint VERIFIES" for a reason with nothing to do with checkpointing.
+  # Fall back to a repo-local durable path, which satisfies D-15 (it is not a temp path) and is
+  # writable inside the sandbox. FIXTURE PLUMBING ONLY: production ROOT still defaults to
+  # $HOME/MOGO-EVIDENCE-PRESERVED, no non-selftest path reads this, and no expected outcome,
+  # threshold or refusal changes. The existing cleanup below removes every root it creates.
+  if mkdir -p "$HOME/.mogo-ckpt-selftest-$$" 2>/dev/null; then
+    DROOT="$HOME/.mogo-ckpt-selftest-$$"
+  else
+    DROOT="$PWD/.mogo-ckpt-selftest-$$"
+  fi
   fails=0
   ck() { if [ "$1" = "1" ]; then echo "PASS -- $2"; else echo "FAIL -- $2"; fails=$((fails+1)); fi; }
   mkdir -p "$T/profile/Default/IndexedDB/http_localhost_1.indexeddb.leveldb"

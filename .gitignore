@@ -40,3 +40,7 @@ __pycache__/
 .claude/settings.local.json
 *.scratchpad/
 scratchpad/
+
+# Evidence-checkpoint selftest scratch roots (removed by the selftest; ignored so a crashed
+# run cannot leave the working tree dirty). Never contains real evidence -- synthetic fixtures only.
+.mogo-ckpt-selftest-*

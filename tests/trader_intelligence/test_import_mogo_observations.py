@@ -70,6 +70,200 @@ def package(**overrides):
     return pkg
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# THE SYNTHETIC CORPUS
+#
+# `evidence/*-PACKAGES.json` is OANDA-derived licensed capture data. It is not
+# readable from a test process, and it never was a CONTRACT -- it was a
+# convenient fixture that happened to contain every shape the importer maps.
+# Reaching for it also made this module non-hermetic in the worst way: with the
+# corpus unreadable `imp.convert_all()` returns an EMPTY list, so every loop-based
+# assertion below passed vacuously and every "the corpus is fine" claim was a
+# claim about nothing.
+#
+# The corpus is therefore built here: deterministic, hermetic, and shaped like the
+# real one in exactly the ways the importer's contract depends on --
+#
+#   * three capture bases, so the population mapping is exercised end to end;
+#   * REPLAY_RUN and LIVE_CLOSE packages IN ONE FILE, which is what makes a
+#     file-level sourceType wrong and forces one source per (file, basis);
+#   * packageIds deliberately COLLIDING across capture bases, which is the B-?? /
+#     dedup regression this module exists to hold down;
+#   * realized P&L present on LIVE_CLOSE and absent from REPLAY_RUN;
+#   * developer TEST packages, which must be refused.
+#
+# The counts are derived from the builder, never pinned by hand: a package added
+# below changes them without editing an assertion.
+SYNTH_ROOT = None
+SYNTH_GLOB = None
+SYNTH_EMPTY = None
+#: Every package written, converted or refused. Asserted, so a builder that
+#: silently stopped writing files cannot make a refusal count look right.
+SYNTH_PACKAGE_COUNT = 0
+#: Packages the importer must refuse as developer TEST trades.
+SYNTH_DEVELOPER_COUNT = 0
+#: Packages the importer must convert. SYNTH_PACKAGE_COUNT - SYNTH_DEVELOPER_COUNT.
+SYNTH_CONVERTIBLE = 0
+
+
+def _synth_package(basis, date, ordinal, seq, *, instrument="GBP_USD",
+                   pnl=None, balance_after=None, realized_r=-1.0,
+                   trade_id=None, position_extra=None):
+    """One deterministic package. `seq` is corpus-unique and fixes the contentHash."""
+    position = {"instrument": instrument, "timeframe": "H1", "direction": "sell",
+                "entryPrice": 1.35054, "originalStop": 1.35494, "target": 1.34174,
+                "positionSize": 0.227, "riskAmount": 100.0,
+                "entryTimestamp": "2026-04-21T18:00:00.000Z",
+                "balanceBefore": 10000.0}
+    position.update(position_extra or {})
+    day = "%s-%s-%s" % (date[:4], date[4:6], date[6:])
+    outcome = {"exitPrice": 1.35494,
+               "exitTimestamp": "%sT09:00:00.000Z" % day,
+               "exitCandleEnd": 1785704940000 + seq * 60000,
+               "exitDetectionSource": "historical_candle",
+               "exitReasonCode": "Loss",
+               # realizedR is present on every package: `rMultiple` is mapped from
+               # the OBSERVED exit on all of them, and a corpus where it were
+               # sometimes absent would let the plan-vs-result test pass by
+               # accident.
+               "realizedR": realized_r}
+    if pnl is not None:
+        outcome["pnl"] = pnl
+    if balance_after is not None:
+        outcome["balanceAfter"] = balance_after
+    return {"packageId": "PKG|alex_g_sr_v1|%s|%d" % (date, ordinal),
+            "captureBasis": basis,
+            "createdAt": "%sT%02d:00:00.000Z" % (day, seq % 24),
+            "sourceTradeId": trade_id or "SYNTH|%s|%d" % (basis, seq),
+            # Corpus-wide unique, which is what the dedup key relies on.
+            "contentHash": "%064d" % seq,
+            "identity": {"strategyId": "alex_g_sr_v1"},
+            "objects": {"positions": [position], "outcomes": [outcome]}}
+
+
+def _build_synthetic_corpus(root):
+    """Write the corpus. Returns (total packages, developer packages)."""
+    seq = 0
+    developer = 0
+
+    mixed = []
+    for ordinal in range(1, 13):
+        seq += 1
+        mixed.append(_synth_package("REPLAY_RUN", "20260427", ordinal, seq))
+    # The forward closes. Their packageIds 1..3 COLLIDE with the replay packages
+    # above -- exactly the shape that made a packageId-keyed dedup drop 21 forward
+    # records -- and they carry the realized performance a replay cannot have.
+    for ordinal, realized in ((1, -1.0), (2, 1.7), (3, 0.5)):
+        seq += 1
+        mixed.append(_synth_package(
+            "LIVE_CLOSE", "20260427", ordinal, seq, pnl=-100.0 * ordinal,
+            balance_after=10000.0 - 100.0 * ordinal, realized_r=realized,
+            trade_id="AGT|GBP_USD|%d" % ordinal))
+
+    replay = []
+    for ordinal in range(1, 11):
+        seq += 1
+        replay.append(_synth_package("REPLAY_RUN", "20260428", ordinal, seq,
+                                     instrument="EUR_USD"))
+
+    backfilled = []
+    for ordinal in range(1, 4):
+        seq += 1
+        backfilled.append(_synth_package(
+            "HISTORICAL_BACKFILL", "20260713", ordinal, seq, instrument="USD_JPY",
+            pnl=-50.0, balance_after=9950.0))
+    # Developer Mode test trades. One per marker, so a marker that stops being
+    # refused fails here rather than silently shrinking the refused set.
+    for ordinal, trade_id, extra in ((90, "AGT|TEST|1783897893481-42902", None),
+                                     (91, None, {"isDeveloperTrade": True}),
+                                     (92, None, {"tradeSource": "TEST"})):
+        seq += 1
+        developer += 1
+        backfilled.append(_synth_package(
+            "HISTORICAL_BACKFILL", "20260713", ordinal, seq,
+            trade_id=trade_id, position_extra=extra))
+
+    for name, body in (("C1-01-GBP_USD-PACKAGES.json", mixed),
+                       ("C2-02-EUR_USD-PACKAGES.json", replay),
+                       ("C3-03-BACKFILL-PACKAGES.json", backfilled)):
+        with open(os.path.join(root, name), "w", encoding="utf-8") as handle:
+            json.dump(body, handle)
+    return seq, developer
+
+
+def setUpModule():
+    global SYNTH_ROOT, SYNTH_GLOB, SYNTH_EMPTY
+    global SYNTH_PACKAGE_COUNT, SYNTH_DEVELOPER_COUNT, SYNTH_CONVERTIBLE
+    SYNTH_ROOT = tempfile.mkdtemp(prefix="mogo_synth_corpus_")
+    # Deliberately empty, and passed EXPLICITLY everywhere: with these defaulting
+    # to None the importer would read the live docs/ corpus, and a test would be
+    # asserting over whatever happens to be recorded today.
+    SYNTH_EMPTY = os.path.join(SYNTH_ROOT, "empty")
+    os.makedirs(SYNTH_EMPTY)
+    SYNTH_PACKAGE_COUNT, SYNTH_DEVELOPER_COUNT = _build_synthetic_corpus(SYNTH_ROOT)
+    SYNTH_CONVERTIBLE = SYNTH_PACKAGE_COUNT - SYNTH_DEVELOPER_COUNT
+    SYNTH_GLOB = os.path.join(SYNTH_ROOT, "*-PACKAGES.json")
+
+
+def tearDownModule():
+    if SYNTH_ROOT:
+        shutil.rmtree(SYNTH_ROOT, ignore_errors=True)
+
+
+def convert_synthetic(now=NOW, skip_imported=False, observations_dir=None,
+                      sources_dir=None):
+    """`imp.convert_all` over the synthetic corpus. Same production function.
+
+    Every directory argument is explicit, so nothing resolves against the live
+    corpus and no run can be made to pass by what is already on disk.
+    """
+    return imp.convert_all(package_glob=SYNTH_GLOB, now=now,
+                           skip_imported=skip_imported,
+                           observations_dir=observations_dir or SYNTH_EMPTY,
+                           sources_dir=sources_dir or SYNTH_EMPTY)
+
+
+class TestTheSyntheticCorpusIsReal(unittest.TestCase):
+    """The vacuity trap this whole module fell into once, closed explicitly.
+
+    Every assertion below is over a corpus this file authors. If the builder wrote
+    nothing, or `convert_all` returned early, the loops would pass in silence --
+    which is precisely how the unreadable `evidence/` corpus turned this module
+    green while proving nothing. Assert the fixture before trusting anything
+    derived from it.
+    """
+
+    def test_the_corpus_files_were_written_and_hold_every_package(self):
+        files = sorted(glob.glob(SYNTH_GLOB))
+        self.assertEqual(len(files), 3, "the corpus builder wrote %r" % files)
+        loaded = []
+        for path in files:
+            with open(path, "r", encoding="utf-8") as handle:
+                loaded += json.load(handle)
+        self.assertEqual(len(loaded), SYNTH_PACKAGE_COUNT)
+        self.assertGreater(SYNTH_CONVERTIBLE, 10,
+                           "too few convertible packages for the partial-import "
+                           "and first-N tests below to mean anything")
+
+    def test_every_package_is_accounted_for_as_converted_or_refused(self):
+        records, skipped, _sources = convert_synthetic()
+        self.assertEqual(len(records) + len(skipped), SYNTH_PACKAGE_COUNT,
+                         "a package vanished; every count derived from this run "
+                         "would then be a lie")
+        self.assertEqual(len(records), SYNTH_CONVERTIBLE)
+        self.assertEqual(sorted(x["reason"] for x in skipped),
+                         ["DEVELOPER_TEST_TRADE"] * SYNTH_DEVELOPER_COUNT,
+                         "a package was dropped for a reason that is not a "
+                         "deliberate refusal")
+
+    def test_the_corpus_carries_all_three_capture_bases(self):
+        _r, _s, sources = convert_synthetic()
+        bases = {s["metadata"]["captureBasis"] for s in sources.values()}
+        self.assertEqual(bases, set(imp.CAPTURE_BASIS_SOURCE_TYPE),
+                         "a capture basis is unexercised, so its mapping is "
+                         "asserted by nothing")
+
+
 class TestItInventsNothing(unittest.TestCase):
 
     def test_a_null_field_becomes_an_explicit_unknown(self):
@@ -97,7 +291,8 @@ class TestItInventsNothing(unittest.TestCase):
 
     def test_nothing_is_ever_classified_inferred(self):
         """These are MOGO's own recorded values -- observed or unknown, no middle."""
-        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, _, _sources = convert_synthetic()
+        self.assertEqual(len(records), SYNTH_CONVERTIBLE, "nothing to check; vacuous")
         for record in records:
             self.assertNotIn("INFERRED", set(record["fieldClassification"].values()),
                              "%s carries an INFERRED classification"
@@ -146,31 +341,28 @@ class TestAPartialDecisionIsSkipped(unittest.TestCase):
         self.assertEqual(reason, "NO_INSTRUMENT")
 
 
-class TestIdentifiersAreUniqueAcrossTheRealCorpus(unittest.TestCase):
+class TestIdentifiersAreUniqueAcrossTheCorpus(unittest.TestCase):
     """Regression: ids derived from the package's own trailing number collided
-    across pairs and produced 7 usable records out of 222."""
+    across pairs and produced 7 usable records out of 222.
+
+    `test_the_real_corpus_converts_without_loss` used to live here. Its subject was
+    the preserved OANDA-derived capture set, not the mapping, so it moved to
+    tests/integration_real_evidence/. What the mapping owes -- every package
+    accounted for, no unexplained loss -- is asserted over the synthetic corpus by
+    TestTheSyntheticCorpusIsReal.
+    """
 
     def test_every_converted_record_has_a_distinct_id(self):
-        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, skipped, sources = convert_synthetic()
         ids = [r["observationId"] for r in records]
+        self.assertEqual(len(ids), SYNTH_CONVERTIBLE, "nothing converted; vacuous")
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual([s for s in skipped if "DUPLICATE" in s["reason"]], [])
 
-    def test_the_real_corpus_converts_without_loss(self):
-        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
-        self.assertGreater(len(records), 200,
-                           "the package corpus should convert in full")
-        # A skip is acceptable ONLY when it is a deliberate refusal. Asserting an
-        # empty list stopped being right once developer TEST trades began being
-        # refused -- but relaxing it to "any skip is fine" would hide a genuine
-        # conversion loss, which is what this test exists to catch.
-        unexpected = [x for x in skipped if x.get("reason") != "DEVELOPER_TEST_TRADE"]
-        self.assertEqual(unexpected, [], "a package was dropped for a reason that is "
-                                          "not a deliberate refusal")
-
     def test_conversion_is_deterministic_across_runs(self):
-        first, _, _s1 = imp.convert_all(now=NOW, skip_imported=False)
-        second, _, _s2 = imp.convert_all(now=NOW, skip_imported=False)
+        first, _, _s1 = convert_synthetic()
+        second, _, _s2 = convert_synthetic()
+        self.assertTrue(first, "nothing converted; the comparison is vacuous")
         self.assertEqual([r["observationId"] for r in first],
                          [r["observationId"] for r in second])
 
@@ -178,12 +370,14 @@ class TestIdentifiersAreUniqueAcrossTheRealCorpus(unittest.TestCase):
 class TestEveryProducedRecordIsValid(unittest.TestCase):
 
     def test_the_whole_corpus_passes_trade_observation_validation(self):
-        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, _, _sources = convert_synthetic()
+        self.assertEqual(len(records), SYNTH_CONVERTIBLE, "nothing validated; vacuous")
         for record in records:
             to.validate_observation(record)     # raises on any violation
 
     def test_every_record_is_the_mogo_side_and_stays_in_the_research_lane(self):
-        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, _, _sources = convert_synthetic()
+        self.assertEqual(len(records), SYNTH_CONVERTIBLE, "nothing to check; vacuous")
         for record in records:
             self.assertEqual(record["actor"], "MOGO")
             self.assertEqual(record["lane"], "RESEARCH")
@@ -202,17 +396,19 @@ class TestItWritesNothing(unittest.TestCase):
             return out
 
         before = digest()
-        imp.convert_all(now=NOW, skip_imported=False)
+        convert_synthetic()
         self.assertEqual(digest(), before)
 
     def test_the_dry_run_report_says_it_wrote_nothing(self):
-        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, skipped, sources = convert_synthetic()
+        self.assertTrue(records, "nothing converted; the report is empty and vacuous")
         summary = imp.report(records, skipped, sources)
         self.assertFalse(summary["wrote"])
         self.assertNotIn("written", summary)
 
     def test_the_report_states_unknowns_rather_than_hiding_them(self):
-        records, skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, skipped, sources = convert_synthetic()
+        self.assertTrue(records, "nothing converted; the report is empty and vacuous")
         summary = imp.report(records, skipped, sources)
         self.assertIn("unknownFieldCounts", summary)
         # Reported by evidence POPULATION, derived from source provenance -- not by
@@ -237,14 +433,14 @@ class TestWritingIsExplicitAndSafe(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
     def test_records_can_be_written_and_reloaded(self):
-        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, _, _sources = convert_synthetic()
         for record in records[:5]:
             to.write_observation(record, observations_dir=self.tmp)
         loaded = to.load_observations(self.tmp)
         self.assertEqual(len(loaded), 5)
 
     def test_a_second_write_of_the_same_record_is_refused(self):
-        records, _, _sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, _, _sources = convert_synthetic()
         to.write_observation(records[0], observations_dir=self.tmp)
         with self.assertRaises(to.ObservationRefused):
             to.write_observation(records[0], observations_dir=self.tmp)
@@ -256,8 +452,14 @@ class TestTheScientificBoundarySurvivesImport(unittest.TestCase):
     repository two red tests; the MAPPING is what must never drift."""
 
     def setUp(self):
-        self.records, _, sources = imp.convert_all(now=NOW, skip_imported=False)
+        self.records, _, sources = convert_synthetic()
         self.sources = imp.source_map(sources)
+        # Every test in this class is a loop over `self.records`. An empty run
+        # would make all of them pass in silence -- which is exactly what an
+        # unreadable corpus used to do here.
+        self.assertEqual(len(self.records), SYNTH_CONVERTIBLE,
+                         "no records converted; every assertion below is vacuous")
+        self.assertTrue(self.sources, "no sources; population lookup is vacuous")
 
     def population(self, record):
         return to.observation_population(record, self.sources)
@@ -337,10 +539,10 @@ class TestImportIsIncrementalAndAdditive(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
     def test_a_second_run_against_an_imported_corpus_converts_nothing(self):
-        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        records, _, _s = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         for record in records:
             to.write_observation(record, observations_dir=self.tmp)
-        again, skipped, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        again, skipped, _s2 = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         self.assertEqual(again, [], "a re-run must be a no-op, not a re-mint")
         unexpected = [x for x in skipped if x.get("reason") != "DEVELOPER_TEST_TRADE"]
         self.assertEqual(unexpected, [])
@@ -348,38 +550,46 @@ class TestImportIsIncrementalAndAdditive(unittest.TestCase):
     def test_positive_control_the_first_run_is_not_empty(self):
         """Otherwise the idempotence test above would pass against a function that
         always returns nothing."""
-        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
-        self.assertGreater(len(records), 200)
+        records, _, _s = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
+        self.assertEqual(len(records), SYNTH_CONVERTIBLE)
+        self.assertGreater(len(records), 0)
 
     def test_an_already_imported_package_is_recognised_by_its_content_hash(self):
         # Keyed on contentHash, NOT packageId. See TestTheDeduplicationKeyIsGlobal
         # for why a package id cannot serve as the key.
-        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        records, _, _s = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         to.write_observation(records[0], observations_dir=self.tmp)
         mapping = imp.already_imported(self.tmp)
         self.assertEqual(mapping[records[0]["sourceContentHash"]],
                          records[0]["observationId"])
 
     def test_a_partial_corpus_imports_only_what_is_missing(self):
-        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        records, _, _s = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         for record in records[:10]:
             to.write_observation(record, observations_dir=self.tmp)
-        remaining, _, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        remaining, _, _s2 = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         self.assertEqual(len(remaining), len(records) - 10)
-        already = {r["sourcePackageId"] for r in records[:10]}
-        self.assertEqual(already & {r["sourcePackageId"] for r in remaining}, set())
+        # Keyed on the CONTENT HASH, which is what `already_imported` keys on.
+        # This asserted disjoint sourcePackageIds, which is a different and false
+        # claim: a packageId's ordinal only counts within one capture run, so a
+        # written record and a still-pending one legitimately share one. Against
+        # the real corpus the two sets happened not to overlap for the first ten
+        # records, so the wrong key passed by luck.
+        already = {r["sourceContentHash"] for r in records[:10]}
+        self.assertEqual(len(already), 10, "the written set collapsed; vacuous")
+        self.assertEqual(already & {r["sourceContentHash"] for r in remaining}, set())
 
     def test_new_ids_continue_the_sequence_and_never_collide(self):
-        records, _, _s = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        records, _, _s = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         for record in records[:10]:
             to.write_observation(record, observations_dir=self.tmp)
-        remaining, _, _s2 = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        remaining, _, _s2 = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         written = {r["observationId"] for r in records[:10]}
         self.assertEqual(written & {r["observationId"] for r in remaining}, set(),
                          "a re-run must not reissue an id already on disk")
 
     def test_an_existing_source_is_reused_not_overwritten(self):
-        _r, _s, sources = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        _r, _s, sources = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         first = imp.write_sources(sources, sources_dir=self.tmp)
         self.assertTrue(first["written"])
         self.assertEqual(first["reused"], [])
@@ -388,7 +598,7 @@ class TestImportIsIncrementalAndAdditive(unittest.TestCase):
         self.assertEqual(sorted(second["reused"]), sorted(first["written"]))
 
     def test_a_reused_source_file_is_byte_identical_afterwards(self):
-        _r, _s, sources = imp.convert_all(now=NOW, observations_dir=self.tmp)
+        _r, _s, sources = convert_synthetic(skip_imported=True, observations_dir=self.tmp)
         imp.write_sources(sources, sources_dir=self.tmp)
         before = {p: hashlib.sha256(open(p, "rb").read()).hexdigest()
                   for p in glob.glob(os.path.join(self.tmp, "*.json"))}
@@ -406,33 +616,38 @@ class TestTheDeduplicationKeyIsGlobal(unittest.TestCase):
     and silently dropped exactly the forward evidence it exists to preserve."""
 
     def test_package_ids_really_do_collide_across_capture_runs(self):
-        """The precondition. If this ever stops holding, the regression below is
-        no longer testing anything and should be re-examined, not deleted."""
+        """The precondition, over the corpus this module actually runs against.
+
+        The same question asked of the PRESERVED capture set -- do real capture runs
+        genuinely collide, and is every real contentHash unique -- is a property of
+        that licensed data, not of the importer, and lives in
+        tests/integration_real_evidence/.
+        """
         by_basis = {}
-        for path in glob.glob(os.path.join(imp.REPO_ROOT, "evidence",
-                                           "*-PACKAGES.json")):
+        for path in glob.glob(SYNTH_GLOB):
             with open(path, "r", encoding="utf-8") as handle:
                 for package in json.load(handle):
                     by_basis.setdefault(package["captureBasis"], set()).add(
                         package["packageId"])
         replay = by_basis.get("REPLAY_RUN", set())
         live = by_basis.get("LIVE_CLOSE", set())
+        self.assertTrue(replay, "no REPLAY_RUN packages; the check is vacuous")
+        self.assertTrue(live, "no LIVE_CLOSE packages; the check is vacuous")
         self.assertTrue(replay & live,
                         "expected packageId collisions across capture bases")
 
     def test_content_hash_is_unique_across_every_package(self):
         hashes = []
-        for path in glob.glob(os.path.join(imp.REPO_ROOT, "evidence",
-                                           "*-PACKAGES.json")):
+        for path in glob.glob(SYNTH_GLOB):
             with open(path, "r", encoding="utf-8") as handle:
                 hashes += [p["contentHash"] for p in json.load(handle)]
+        self.assertEqual(len(hashes), SYNTH_PACKAGE_COUNT, "no packages read; vacuous")
         self.assertEqual(len(hashes), len(set(hashes)))
 
     def test_already_imported_is_keyed_on_content_hash(self):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
-        records, _, _s = imp.convert_all(now=NOW, skip_imported=False,
-                                         observations_dir=tmp)
+        records, _, _s = convert_synthetic(observations_dir=tmp)
         to.write_observation(records[0], observations_dir=tmp)
         mapping = imp.already_imported(tmp)
         self.assertIn(records[0]["sourceContentHash"], mapping)
@@ -443,8 +658,7 @@ class TestTheDeduplicationKeyIsGlobal(unittest.TestCase):
         carrying different content must both convert."""
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
-        records, _, _s = imp.convert_all(now=NOW, skip_imported=False,
-                                         observations_dir=tmp)
+        records, _, _s = convert_synthetic(observations_dir=tmp)
         by_pkg = {}
         for record in records:
             by_pkg.setdefault(record["sourcePackageId"], []).append(record)
@@ -456,7 +670,8 @@ class TestTheDeduplicationKeyIsGlobal(unittest.TestCase):
                              "records sharing a packageId must differ by hash")
 
     def test_every_imported_record_carries_a_content_hash(self):
-        records, _, _s = imp.convert_all(now=NOW, skip_imported=False)
+        records, _, _s = convert_synthetic()
+        self.assertEqual(len(records), SYNTH_CONVERTIBLE, "nothing to check; vacuous")
         for record in records:
             self.assertTrue(record.get("sourceContentHash"),
                             "%s has no sourceContentHash" % record["observationId"])
@@ -584,8 +799,7 @@ class TestASourceIsNeverRepointed(unittest.TestCase):
         them, and a blind reuse would repoint a source that observations cite."""
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
-        _r, _s, sources = imp.convert_all(now=NOW, skip_imported=False,
-                                          observations_dir=tmp)
+        _r, _s, sources = convert_synthetic(observations_dir=tmp)
         imp.write_sources(sources, sources_dir=tmp)
         shifted = {}
         for key, source in sources.items():
@@ -596,8 +810,7 @@ class TestASourceIsNeverRepointed(unittest.TestCase):
     def test_positive_control_an_identical_source_reuses_cleanly(self):
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
-        _r, _s, sources = imp.convert_all(now=NOW, skip_imported=False,
-                                          observations_dir=tmp)
+        _r, _s, sources = convert_synthetic(observations_dir=tmp)
         imp.write_sources(sources, sources_dir=tmp)
         result = imp.write_sources(sources, sources_dir=tmp)
         self.assertEqual(result["written"], [])
@@ -613,7 +826,7 @@ class TestRealizedPerformanceIsObservedNotDerived(unittest.TestCase):
         # Drive the MAPPING, not the corpus already on disk. Reading the written
         # records would assert stored state: every mutation of the importer below
         # survived that way, because the files do not change when the code does.
-        records, _skipped, sources = imp.convert_all(now=NOW, skip_imported=False)
+        records, _skipped, sources = convert_synthetic()
         self.records = records
         self.sources = imp.source_map(sources)
 
@@ -1157,13 +1370,14 @@ class TestTheBackfillPathAppliesTheSameTransformation(unittest.TestCase):
         self.src_dir = os.path.join(self.root, "sources")
         os.makedirs(self.obs_dir)
         os.makedirs(self.src_dir)
-        self.capture = os.path.join(REPO_ROOT, "evidence",
-                                    "TEST-BACKFILL-%d-PACKAGES.json" % os.getpid())
+        # NOT under `evidence/`. That directory holds OANDA-derived licensed
+        # capture data and a test has no business writing into it; the backfill
+        # resolves `repositoryPath` through os.path.join(REPO_ROOT, rel), which
+        # returns an absolute path unchanged, so a temp artifact works identically.
+        self.capture = os.path.join(self.root, "TEST-BACKFILL-PACKAGES.json")
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
-        if os.path.exists(self.capture):
-            os.remove(self.capture)
 
     def test_a_backfilled_market_exit_is_ISO_not_raw_milliseconds(self):
         package = {"packageId": "PKG|s|20260817|9", "contentHash": "hbf1",
@@ -1173,7 +1387,7 @@ class TestTheBackfillPathAppliesTheSameTransformation(unittest.TestCase):
                                                "exitDetectionSource": "historical_candle"}]}}
         with open(self.capture, "w", encoding="utf-8") as handle:
             json.dump([package], handle)
-        rel = os.path.relpath(self.capture, REPO_ROOT)
+        rel = self.capture
 
         with open(os.path.join(self.src_dir, "EVSRC_MOGO_20260817_001.json"), "w",
                   encoding="utf-8") as handle:
@@ -1226,13 +1440,12 @@ class TestAnExplicitUnknownIsNeverOverwritten(unittest.TestCase):
         self.src_dir = os.path.join(self.root, "sources")
         os.makedirs(self.obs_dir)
         os.makedirs(self.src_dir)
-        self.capture = os.path.join(REPO_ROOT, "evidence",
-                                    "TEST-UNKNOWN-%d-PACKAGES.json" % os.getpid())
+        # See TestTheBackfillPathAppliesTheSameTransformation: the artifact lives
+        # in the temp root, never in the restricted `evidence/` tree.
+        self.capture = os.path.join(self.root, "TEST-UNKNOWN-PACKAGES.json")
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
-        if os.path.exists(self.capture):
-            os.remove(self.capture)
 
     def test_a_declared_unknown_survives_a_backfill_that_could_fill_it(self):
         package = {"packageId": "PKG|s|20260817|8", "contentHash": "hbf2",
@@ -1244,7 +1457,7 @@ class TestAnExplicitUnknownIsNeverOverwritten(unittest.TestCase):
         with open(os.path.join(self.src_dir, "EVSRC_MOGO_20260817_002.json"), "w",
                   encoding="utf-8") as handle:
             json.dump({"sourceId": "EVSRC|MOGO|20260817|002", "sourceType": "paper_trade",
-                       "repositoryPath": os.path.relpath(self.capture, REPO_ROOT),
+                       "repositoryPath": self.capture,
                        "contentHash": "irrelevant"}, handle)
         record = {"observationId": "TOBS|MOGO|20260817|901",
                   "sourceId": "EVSRC|MOGO|20260817|002", "actor": "MOGO",
@@ -1392,18 +1605,11 @@ class TestSourceIdentityFollowsTheArtifactNotThePosition(unittest.TestCase):
         ids = [v["sourceId"] for v in self.build().values()]
         self.assertEqual(len(ids), len(set(ids)))
 
-    def test_the_real_corpus_mints_nothing_new(self):
-        """Against the live corpus: every artifact already has a recorded id, so
-        the migration changes no identity that any observation cites."""
-        built = imp.build_sources(self.NOW)
-        recorded = set()
-        for path in glob.glob(os.path.join(
-                REPO_ROOT, "docs", "trader-intelligence", "evidence", "sources", "*.json")):
-            with open(path, encoding="utf-8") as handle:
-                recorded.add(json.load(handle)["sourceId"])
-        minted = {v["sourceId"] for v in built.values()} - recorded
-        self.assertEqual(minted, set(),
-                         "the migration would mint new ids for existing artifacts")
+    # `test_the_real_corpus_mints_nothing_new` moved to
+    # tests/integration_real_evidence/: it asks whether the B-27 migration would
+    # renumber the PRESERVED artifacts, which can only be answered against the
+    # licensed capture set. Run against an unreadable `evidence/` it built zero
+    # sources and minted zero ids, so it passed while checking nothing.
 
 
 class TestTheTieBreakWhenOneArtifactHasSeveralRecords(unittest.TestCase):

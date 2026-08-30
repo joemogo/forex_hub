@@ -189,16 +189,15 @@ class TestIndexIsSafeToCommit(unittest.TestCase):
 class TestIndexMatchesReality(unittest.TestCase):
     """2-3: the index describes the artifacts that actually exist."""
 
-    def test_2_every_indexed_artifact_exists_and_matches_its_whole_file_hash(self):
-        artifacts = _index()["artifacts"]
-        self.assertTrue(artifacts, "no artifacts; vacuous")
-        for artifact in artifacts:
-            path = os.path.join(REPO_ROOT, artifact["path"])
-            self.assertTrue(os.path.isfile(path), "missing artifact %s" % artifact["path"])
-            self.assertFalse(os.path.islink(path), "artifact is a symlink: %s" % artifact["path"])
-            self.assertEqual(_sha256(path), artifact["sha256"],
-                             "whole-file hash disagrees with the index for %s" % artifact["path"])
-            self.assertEqual(os.path.getsize(path), artifact["bytes"])
+    # test_2 (every indexed artifact exists and matches its whole-file hash) and
+    # test_3 (package hashes verify through the production canonicalizer) moved to
+    # tests/integration_real_evidence/test_real_corpus_integration.py. Both open the
+    # OANDA-derived artifacts under `evidence/` and hash them, which is their entire
+    # point: neither can be answered by a fixture, and both are unrunnable where the
+    # licensed data is not readable. What stays here is everything the index can be
+    # checked for on its own -- test_2b still holds the index against the
+    # EvidenceSource records, which is the check that stops it becoming a second,
+    # divergent source of truth.
 
     def test_2b_index_agrees_with_the_evidence_source_records(self):
         """The index must not become a second, divergent source of truth."""
@@ -218,40 +217,6 @@ class TestIndexMatchesReality(unittest.TestCase):
                           "%s is indexed but no EvidenceSource declares it" % artifact["path"])
             self.assertIn(artifact["sha256"], declared[artifact["path"]],
                           "index hash disagrees with the EvidenceSource for %s" % artifact["path"])
-
-    def test_3_package_hashes_verify_through_the_production_canonicalizer(self):
-        """Identity I2, via the canonicalizer extracted from the committed index.html."""
-        artifacts = _index()["artifacts"]
-        self.assertTrue(artifacts, "no artifacts; vacuous")
-        files = [os.path.join(REPO_ROOT, a["path"]) for a in artifacts]
-        script = r"""
-          const fs=require('fs'),crypto=require('crypto');
-          const src=fs.readFileSync(process.argv[1],'utf8');
-          const grab=(re,l)=>{const m=src.match(re); if(!m) throw new Error('cannot extract '+l); return m[0];};
-          const parts=[
-            grab(/const EVIDENCE_HASH_EXCLUDED_FIELDS=Object\.freeze\(\[[^\]]*\]\);/,'excluded'),
-            grab(/function evidenceCanonValue\(v,seen\)\{[\s\S]*?\n\}/,'canonValue'),
-            grab(/function evidenceCanonicalize\(pkg\)\{[\s\S]*?\n\}/,'canonicalize')];
-          const g={}; new Function('g',parts.join('\n')+'\ng.canonicalize=evidenceCanonicalize;')(g);
-          let ok=0,bad=0;
-          for(const f of JSON.parse(process.argv[3])){
-            for(const p of JSON.parse(fs.readFileSync(f,'utf8'))){
-              const h=crypto.createHash('sha256').update(g.canonicalize(p),'utf8').digest('hex');
-              if(h===p.contentHash) ok++; else bad++;
-            }
-          }
-          process.stdout.write(JSON.stringify({ok,bad}));
-        """
-        result = subprocess.run(
-            ["node", "-e", script, os.path.join(REPO_ROOT, "index.html"), "--", json.dumps(files)],
-            capture_output=True, text=True, cwd=REPO_ROOT)
-        self.assertEqual(result.returncode, 0, result.stderr[:400])
-        counts = json.loads(result.stdout)
-        self.assertGreater(counts["ok"], 0, "verified no packages; vacuous")
-        self.assertEqual(counts["bad"], 0, "packages whose contentHash does not re-derive")
-        indexed = sum(len(a["packageContentHashes"]) for a in artifacts)
-        self.assertEqual(counts["ok"], indexed,
-                         "the index declares a different number of packages than exist")
 
 
 class TestPassphraseNeverEscapes(unittest.TestCase):

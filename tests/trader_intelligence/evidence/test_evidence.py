@@ -4004,41 +4004,13 @@ class TestTheRecordIsCheckedAgainstThePackageItWasMintedFrom(unittest.TestCase):
         self.write(self.package(), self.package())
         self.assertEqual(self.types(self.observation()), [])
 
-    def test_no_LIVE_record_states_a_value_its_package_leaves_null(self):
-        # What the `nullable` flag was standing in for, asserted directly. If a
-        # record ever states a value the engine did not record, that is the thing to
-        # know -- not which field it happened to be.
-        root = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "evidence")
-        if not os.path.isdir(os.path.join(root, "observations")):
-            self.skipTest("live corpus not present")
-        sources, records = [], []
-        for path in globmod.glob(os.path.join(root, "sources", "**", "*.json"),
-                                 recursive=True):
-            with open(path, "r", encoding="utf-8") as handle:
-                sources.append(json.load(handle))
-        for path in globmod.glob(os.path.join(root, "observations", "**", "*.json"),
-                                 recursive=True):
-            with open(path, "r", encoding="utf-8") as handle:
-                records.append(json.load(handle))
-        self.assertGreater(len(records), 100, "would pass vacuously")
-        packages, _u, _c = ve._packages_by_content_hash(
-            sources, {r.get("sourceId") for r in records})
-        self.assertGreater(len(packages), 100, "no packages read; passes vacuously")
-        offenders = []
-        for record in records:
-            package = packages.get(record.get("sourceContentHash"))
-            if package is None:
-                continue
-            for witness in ve.PACKAGE_WITNESSES:
-                if witness.record_field not in record:
-                    continue
-                if ve._witness_value(package, witness) is ve._WITNESS_NULL:
-                    offenders.append((record.get("observationId"),
-                                      witness.record_field))
-        self.assertEqual(offenders, [],
-                         "these records state a value their captured package "
-                         "records as null: %s" % offenders[:5])
-
+    # `test_no_LIVE_record_states_a_value_its_package_leaves_null` moved to
+    # tests/integration_real_evidence/test_real_corpus_integration.py. It asserted
+    # the `nullable` property over the PRESERVED corpus, resolving every record's
+    # sourceContentHash back to its captured package under `evidence/` -- licensed
+    # OANDA-derived data. With that unreadable it read zero packages and reported
+    # zero offenders, which is the same result as a clean corpus. The behavioural
+    # half of the same property is pinned above, per witness, on fixtures.
 
 
 class TestTheAnchorDOCUMENTIsCheckedAgainstItsRows(unittest.TestCase):
