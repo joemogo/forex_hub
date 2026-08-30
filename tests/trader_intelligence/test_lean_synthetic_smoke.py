@@ -512,10 +512,14 @@ class TestThePackageIsCompleteAndHonestlyLabelled(unittest.TestCase):
         # FILES only, and only the reproduction inputs. `evidence/` holds run records whose
         # hashes are recorded in RUN_RECORD.md itself, not here -- a preserved log is evidence
         # ABOUT a run, not an input needed to reproduce one.
+        # The exclusion set is IMPORTED from preflight.py, not restated here. Two hand-kept
+        # lists drift, and the drift shows up as a confusing manifest failure rather than an
+        # obvious one -- which is exactly what happened when the tooling files were added.
+        import preflight
         on_disk = {f for f in os.listdir(PKG)
                    if not f.startswith(".")
                    and os.path.isfile(os.path.join(PKG, f))
-                   and f not in ("MANIFEST.sha256", "RUN_PROCEDURE.md")}
+                   and f not in preflight.MANIFEST_EXEMPT}
         self.assertEqual(set(manifest), on_disk, "manifest and directory disagree")
         for name, digest in manifest.items():
             with self.subTest(file=name):
