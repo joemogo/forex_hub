@@ -273,8 +273,18 @@ echo ""
 # The evidence corpus's own integrity report. Its CLI now exits nonzero on an ERROR
 # (it gated on FATAL only, so population rebindings exited 0), which is what makes it
 # usable as a gate at all.
+#
+# --check, DELIBERATELY. A no-arg run REWRITES docs/trader-intelligence/evidence/reports/
+# integrity-report.json, so this gate could not verify the corpus without mutating a tracked
+# artifact -- the lane had to modify the repository in order to report on it, and a full run
+# was therefore unavailable to anyone who needed the working tree left alone. --check runs the
+# SAME checks and returns the SAME exit code; only the write is skipped. Nothing is filtered,
+# downgraded, or read from a cached report.
+#
+#   verify (this gate):  python3 scripts/trader_intelligence/validate_evidence.py --check
+#   regenerate:          python3 scripts/trader_intelligence/validate_evidence.py
 echo "--- Evidence corpus integrity ---"
-if ! python3 scripts/trader_intelligence/validate_evidence.py; then
+if ! python3 scripts/trader_intelligence/validate_evidence.py --check; then
   OVERALL_EXIT=1
 fi
 echo ""
@@ -283,8 +293,11 @@ echo ""
 # contamination guarantee -- the strongest integrity rule in the repository -- had no
 # CI gate at all. It also exited 0 on ERRORs until the shared exit_code_for landed, so
 # wiring it here before that fix would have gated on nothing.
+#
+#   verify (this gate):  python3 scripts/trader_intelligence/validate_graph.py --check
+#   regenerate:          python3 scripts/trader_intelligence/validate_graph.py
 echo "--- Knowledge graph integrity ---"
-if ! python3 scripts/trader_intelligence/validate_graph.py; then
+if ! python3 scripts/trader_intelligence/validate_graph.py --check; then
   OVERALL_EXIT=1
 fi
 echo ""

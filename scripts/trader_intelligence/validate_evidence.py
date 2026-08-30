@@ -2762,6 +2762,19 @@ def main():
     parser.add_argument("--evidence-root", default=None)
     parser.add_argument("--no-graph-check", action="store_true", help="Skip cross-checking against the built Knowledge Graph.")
     parser.add_argument("--allow-synthetic", action="store_true", help="Do not flag synthetic-fixture markers (use only against a test fixture tree).")
+    # Run the SAME validation and return the SAME exit code, without writing the report.
+    #
+    # Every no-arg run rewrote docs/trader-intelligence/evidence/reports/integrity-report.json,
+    # so tests/run_all.sh could not verify the corpus without mutating a tracked artifact --
+    # the gate had to modify the repository to report on it. That made a full-lane run
+    # unavailable to anyone who needed the working tree left alone, which is why this file's
+    # own stage sat unrunnable while two stale ERROR findings went unnoticed for a week.
+    #
+    # This is NOT "read the last report": the findings below are recomputed from the current
+    # inputs on every run. Only the write is skipped, and nothing is filtered or downgraded.
+    parser.add_argument("--check", action="store_true",
+                        help="run the full validation and report findings WITHOUT writing "
+                             "the integrity report (same checks, same exit code)")
     args = parser.parse_args()
 
     repo_root = os.path.abspath(args.repo_root)
@@ -2776,8 +2789,13 @@ def main():
     )
 
     out_path = os.path.join(evidence_root, "reports", "integrity-report.json")
-    gc.atomic_write_text(out_path, gc.pretty_json(report))
-    print("Wrote %s" % out_path)
+    if args.check:
+        # No write and no makedirs -- atomic_write_text creates the reports/ directory, so
+        # calling it at all would leave a directory behind on a tree that had none.
+        print("CHECK ONLY -- %s not written" % out_path)
+    else:
+        gc.atomic_write_text(out_path, gc.pretty_json(report))
+        print("Wrote %s" % out_path)
     print("Summary: %r" % (report["summary"],))
     return exit_code_for(report["summary"])
 

@@ -15,7 +15,7 @@
 tests.trader_intelligence.acquisition.test_acquisition	73
 tests.trader_intelligence.acquisition.test_acquisition_triage	11
 tests.trader_intelligence.acquisition.test_reconstructability	16
-tests.trader_intelligence.evidence.test_evidence	296
+tests.trader_intelligence.evidence.test_evidence	311
 tests.trader_intelligence.evidence.test_phase1b	103
 tests.trader_intelligence.evidence.test_phase7a	45
 tests.trader_intelligence.test_answer_intake	59

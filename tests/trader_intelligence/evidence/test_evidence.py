@@ -1690,6 +1690,254 @@ class TestTheCliActuallyUsesTheExitCode(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout[-400:])
 
 
+class TestCheckModeValidatesWithoutWriting(TestTheCliActuallyUsesTheExitCode):
+    """`--check` must be the SAME validation, minus the write.
+
+    Every no-arg run of validate_evidence.py rewrote the tracked integrity report, so
+    tests/run_all.sh could not verify the corpus without mutating a tracked artifact -- the
+    gate had to modify the repository in order to report on it. A full-lane run was therefore
+    unavailable to anyone who needed the working tree untouched, and two stale ERROR findings
+    sat unnoticed for a week behind exactly that unavailability.
+
+    The risk in the repair is the obvious one, and it is what the equivalence and
+    failure-propagation cases below exist for: "stop writing the report" must not become
+    "stop checking", "read the last report instead", or "downgrade what it finds". This class
+    inherits the synthetic-corpus fixture from the CLI exit-code tests, so the corpus it
+    validates is the same proven one and no OANDA-derived artifact is involved.
+    """
+
+    SCRIPT = os.path.join(REPO_ROOT, "scripts", "trader_intelligence", "validate_evidence.py")
+
+    def run_cli(self, *extra):
+        self.write_state()
+        return subprocess.run([sys.executable, self.SCRIPT,
+                               "--evidence-root", self.evidence] + list(extra),
+                              capture_output=True, text=True)
+
+    def run_cli_raw(self, *extra):
+        """Invoke the CLI WITHOUT re-creating the state anchor, so a deleted input stays
+        deleted. run_cli() calls write_state(), which would restore what the missing-input
+        case is trying to remove."""
+        return subprocess.run([sys.executable, self.SCRIPT,
+                               "--evidence-root", self.evidence] + list(extra),
+                              capture_output=True, text=True)
+
+    def report_path(self):
+        return os.path.join(self.evidence, "reports", "integrity-report.json")
+
+    @staticmethod
+    def summary_of(stdout):
+        for line in stdout.splitlines():
+            if line.startswith("Summary: "):
+                return ast.literal_eval(line[len("Summary: "):])
+        return None
+
+    def test_check_mode_passes_a_CLEAN_corpus(self):
+        self.corpus(source_type="replay_observation")
+        r = self.run_cli("--check")
+        self.assertEqual(r.returncode, 0, r.stdout[-400:])
+        self.assertIn("CHECK ONLY", r.stdout)
+
+    def test_check_mode_FAILS_an_invalid_corpus_for_the_expected_reason(self):
+        # Same contamination the no-arg CLI already gates on. --check must not soften it.
+        self.corpus(source_type="paper_trade")
+        r = self.run_cli("--check")
+        self.assertNotEqual(r.returncode, 0,
+                            "--check exited 0 on a contaminated corpus. stdout=%s"
+                            % r.stdout[-400:])
+        self.assertIn("ERROR", r.stdout)
+
+    def test_check_mode_fails_HONESTLY_when_a_required_input_is_missing(self):
+        # The research-state anchor removed: the corpus can no longer prove its own history.
+        # A check mode that silently tolerated a missing input would be worse than one that
+        # writes, because it would look green.
+        self.corpus(source_type="replay_observation")
+        self.write_state()
+        self.assertEqual(self.run_cli_raw("--check").returncode, 0,
+                         "precondition: the corpus is clean BEFORE the anchor is removed")
+        shutil.rmtree(os.path.join(self.root, "research-state"), ignore_errors=True)
+        r = self.run_cli_raw("--check")
+        self.assertNotEqual(r.returncode, 0,
+                            "--check exited 0 with the state anchor deleted. stdout=%s"
+                            % r.stdout[-400:])
+
+    def test_check_mode_does_NOT_create_the_reports_directory(self):
+        # atomic_write_text() calls makedirs, so calling it at all would leave a directory
+        # behind on a tree that had none. The branch must skip the writer entirely.
+        self.corpus(source_type="replay_observation")
+        self.assertFalse(os.path.exists(os.path.join(self.evidence, "reports")))
+        self.run_cli("--check")
+        self.assertFalse(os.path.exists(os.path.join(self.evidence, "reports")),
+                         "--check created the reports/ directory")
+
+    def test_check_mode_leaves_an_EXISTING_report_byte_identical(self):
+        self.corpus(source_type="replay_observation")
+        os.makedirs(os.path.join(self.evidence, "reports"), exist_ok=True)
+        sentinel = '{"sentinel": "untouched"}\n'
+        with open(self.report_path(), "w", encoding="utf-8") as handle:
+            handle.write(sentinel)
+        before = hashlib.sha256(open(self.report_path(), "rb").read()).hexdigest()
+        self.run_cli("--check")
+        after = hashlib.sha256(open(self.report_path(), "rb").read()).hexdigest()
+        self.assertEqual(before, after, "--check rewrote an existing report")
+        self.assertEqual(open(self.report_path(), encoding="utf-8").read(), sentinel)
+
+    def test_check_mode_RECOMPUTES_and_ignores_a_stale_report_on_disk(self):
+        # The failure mode "--check" invites: satisfy the gate by reading the last report
+        # instead of validating. A byte-identical assertion cannot see it -- a cached read
+        # leaves the file untouched too -- so this plants a WELL-FORMED report that disagrees
+        # with the corpus and asserts the CLI reports the corpus, not the file.
+        self.corpus(source_type="paper_trade")          # genuinely contaminated
+        os.makedirs(os.path.join(self.evidence, "reports"), exist_ok=True)
+        stale = {"schemaVersion": "mogo.evidence-integrity.v1", "generated": True,
+                 "generatedAt": "2020-01-01T00:00:00Z",
+                 "integrityReportId": "EVIDENCE_INTEGRITY|20200101|001",
+                 "findings": [],
+                 "summary": {"INFO": 0, "WARNING": 0, "ERROR": 0, "FATAL": 0}}
+        with open(self.report_path(), "w", encoding="utf-8") as handle:
+            json.dump(stale, handle)
+        r = self.run_cli("--check")
+        self.assertNotEqual(r.returncode, 0,
+                            "--check exited 0 on a contaminated corpus while a clean report "
+                            "sat on disk -- it read the cache instead of validating. "
+                            "stdout=%s" % r.stdout[-400:])
+        summary = self.summary_of(r.stdout)
+        self.assertIsNotNone(summary)
+        self.assertGreater(summary["ERROR"], 0,
+                           "--check reported the stale clean summary, not the real corpus")
+
+    def test_POSITIVE_CONTROL_the_no_arg_run_DOES_write_the_report(self):
+        # Without this, every "did not write" assertion above would also pass if the CLI had
+        # stopped writing altogether -- which would break regeneration rather than fix a gate.
+        self.corpus(source_type="replay_observation")
+        self.assertFalse(os.path.exists(self.report_path()))
+        r = self.run_cli()
+        self.assertEqual(r.returncode, 0, r.stdout[-400:])
+        self.assertTrue(os.path.exists(self.report_path()),
+                        "the no-arg run must still regenerate the report")
+        self.assertIn("Wrote ", r.stdout)
+
+    def test_check_and_write_modes_agree_on_the_FINDINGS(self):
+        # The claim that matters: --check is the same validation. Equivalence is asserted on
+        # the findings themselves, with only the generated metadata (which is a fact about the
+        # RUN, not the corpus) excluded.
+        self.corpus(source_type="paper_trade")
+        checked = self.run_cli("--check")
+        written = self.run_cli()
+        self.assertEqual(checked.returncode, written.returncode,
+                         "the two modes returned different exit codes")
+        checked_summary = self.summary_of(checked.stdout)
+        written_summary = self.summary_of(written.stdout)
+        self.assertIsNotNone(checked_summary, "no summary line in --check output")
+        self.assertEqual(checked_summary, written_summary,
+                         "--check and the writing run disagree on the findings")
+        # Not vacuous: this corpus is contaminated on purpose, so the agreed summary must
+        # actually carry ERRORs. Two modes agreeing on "nothing found" would prove nothing.
+        self.assertGreater(checked_summary["ERROR"], 0,
+                           "the fixture must produce ERRORs for equivalence to mean anything")
+        # And the report the writing run produced must itself agree with both.
+        report = json.load(open(self.report_path(), encoding="utf-8"))
+        self.assertEqual(report["summary"], checked_summary,
+                         "the written report disagrees with what --check reported")
+        self.assertEqual(len(report["findings"]),
+                         sum(report["summary"].values()),
+                         "the summary must tally the findings it claims")
+
+
+class TestRunAllUsesCheckModeAndPropagatesFailure(unittest.TestCase):
+    """The gate must call the non-writing mode, and a failing validator must fail the run.
+
+    Two separate claims, and the second is the one that decays quietly: a stage wrapped in
+    `if ! ...; then` propagates, a stage called bare does not, and both look identical in a
+    green run. The propagation half is proved by EXECUTING an extracted fragment against a
+    deliberately failing stand-in rather than by reading the file, so a refactor that drops
+    the guard fails here.
+    """
+
+    RUN_ALL = os.path.join(REPO_ROOT, "tests", "run_all.sh")
+
+    def source(self):
+        with open(self.RUN_ALL, encoding="utf-8") as handle:
+            return handle.read()
+
+    def executable_lines(self):
+        """Non-comment lines only. The documented `regenerate:` commands are comments and
+        contain these same strings verbatim, so a whole-file substring search is satisfied by
+        the documentation -- measured: dropping --check from the real stage left the first
+        draft of this test green."""
+        return [line.strip() for line in self.source().splitlines()
+                if line.strip() and not line.strip().startswith("#")]
+
+    def test_both_validator_stages_invoke_check_mode(self):
+        lines = self.executable_lines()
+        for script in ("validate_evidence.py", "validate_graph.py"):
+            with self.subTest(script=script):
+                calls = [ln for ln in lines
+                         if script in ln and "python3" in ln]
+                self.assertTrue(calls,
+                                "%s is not invoked by the gate at all" % script)
+                for call in calls:
+                    self.assertIn("--check", call,
+                                  "%s must be gated in --check mode; a bare invocation "
+                                  "rewrites a tracked integrity report on every run: %s"
+                                  % (script, call))
+
+    def test_neither_validator_is_ALSO_invoked_bare_in_the_gate(self):
+        # The exemption must not be additive: leaving a bare call beside the --check call
+        # would restore the write while the assertion above still passed.
+        for line in self.source().splitlines():
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue                      # the documented regenerate: command is a comment
+            for script in ("validate_evidence.py", "validate_graph.py"):
+                if script in stripped and "python3" in stripped:
+                    self.assertIn("--check", stripped,
+                                  "a non-comment invocation of %s without --check: %s"
+                                  % (script, stripped))
+
+    def test_the_regeneration_command_is_DOCUMENTED_beside_the_gate(self):
+        # --check is only safe to adopt if the writing path stays discoverable.
+        src = self.source()
+        for script in ("validate_evidence.py", "validate_graph.py"):
+            with self.subTest(script=script):
+                self.assertIn("regenerate:          python3 "
+                              "scripts/trader_intelligence/%s" % script, src)
+
+    def test_a_failing_validator_stage_FAILS_the_run(self):
+        # Executes the real guard shape with a stand-in that exits nonzero.
+        fragment = ('OVERALL_EXIT=0\n'
+                    'if ! "$CMD_PY" -c "import sys; sys.exit($RC)"; then\n'
+                    '  OVERALL_EXIT=1\n'
+                    'fi\n'
+                    'exit $OVERALL_EXIT\n')
+        root = tempfile.mkdtemp(prefix="mogo_runall_")
+        try:
+            path = os.path.join(root, "fragment.sh")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(fragment)
+            env = dict(os.environ, CMD_PY=sys.executable, RC="3")
+            failing = subprocess.run(["bash", path], capture_output=True, text=True, env=env)
+            self.assertEqual(failing.returncode, 1,
+                             "a nonzero validator did not set OVERALL_EXIT")
+            env["RC"] = "0"
+            passing = subprocess.run(["bash", path], capture_output=True, text=True, env=env)
+            self.assertEqual(passing.returncode, 0,
+                             "positive control: a passing validator must not fail the run")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_the_guard_wraps_both_validator_stages(self):
+        src = self.source()
+        for script in ("validate_evidence.py", "validate_graph.py"):
+            with self.subTest(script=script):
+                marker = "if ! python3 scripts/trader_intelligence/%s --check; then" % script
+                self.assertIn(marker, src)
+                tail = src[src.index(marker):]
+                self.assertIn("OVERALL_EXIT=1", tail[:200],
+                              "the stage does not set OVERALL_EXIT, so a failure would be "
+                              "reported and then ignored")
+
+
 class TestTheThirdAndFourthAnchors(unittest.TestCase):
     """Both stamps the rebinding check reads live in ONE field of ONE record, so a
     rewrite thorough enough to change both defeats them together -- and retyping a

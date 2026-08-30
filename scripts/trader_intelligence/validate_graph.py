@@ -409,6 +409,11 @@ def main():
     parser.add_argument("--repo-root", default=REPO_ROOT)
     parser.add_argument("--ti-root", default=None)
     parser.add_argument("--graph-root", default=None)
+    # See validate_evidence.py --check. Same contract: the SAME checks and the SAME exit code,
+    # recomputed from the current build on every run, with only the report write skipped.
+    parser.add_argument("--check", action="store_true",
+                        help="run the full validation and report findings WITHOUT writing "
+                             "the integrity report (same checks, same exit code)")
     args = parser.parse_args()
 
     repo_root = os.path.abspath(args.repo_root)
@@ -427,8 +432,11 @@ def main():
     report = run_integrity_checks(nodes, edges, raw_by_entity_id, construction_findings, build_id)
 
     out_path = os.path.join(graph_root, "reports", "integrity-report.json")
-    gc.atomic_write_text(out_path, gc.pretty_json(report))
-    print("Wrote %s" % out_path)
+    if args.check:
+        print("CHECK ONLY -- %s not written" % out_path)
+    else:
+        gc.atomic_write_text(out_path, gc.pretty_json(report))
+        print("Wrote %s" % out_path)
     print("Summary: %r" % (report["summary"],))
     return gc.exit_code_for(report["summary"])
 
