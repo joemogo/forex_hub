@@ -281,6 +281,155 @@ class TestTheAdapterSurvivesTheInternalUniverseSymbol(unittest.TestCase):
                       "an unexpected delivery must be a named FAILING check, not a silent skip")
 
 
+class TestTheReaderToOnDataInterface(unittest.TestCase):
+    """The complete Reader -> OnData -> state-machine boundary, audited field by field.
+
+    WHY THIS CLASS EXISTS. Two cloud runs died at this boundary -- first on symbol routing,
+    then on field TYPE (`Muscular Red Orange Fly`, algorithm c89520ff9658ee55535bb8c960133ae0:
+    `No method matches given arguments for set_item: (<class 'str'>, <class 'int'>)`). Each
+    time only one line was wrong, and each time the mock was more permissive than the engine,
+    so nothing local objected. These tests pin every assignment on the path, not just the one
+    that failed last.
+
+    WHAT THE MOCK CANNOT ESTABLISH -- stated plainly, because a green run here has now twice
+    preceded a red run in the cloud:
+
+      * It does not exercise pythonnet. The shim REFUSES int the way LEAN was observed to,
+        but that is a model of the engine's behaviour written from LEAN's source, not the
+        Python/.NET bridge itself. A type the real bridge rejects for a different reason
+        would still pass here.
+      * It does not run LEAN's subscription pipeline: no RemoteFile fetch, no universe
+        selection, no Slice construction, no timezone or fill-forward handling.
+      * `row.Time`/`row.EndTime`/`row.Value`/`row.Symbol` are plain Python attributes here.
+        Under LEAN they are typed BaseData members with .NET conversions this mock omits.
+      * It cannot establish that any bar is DELIVERED to OnData, which is the entire question
+        the cloud run answers.
+
+    Everything below is therefore a NECESSARY condition, never a sufficient one.
+    """
+
+    def setUp(self):
+        import importlib
+        sys.path.insert(0, PKG)
+        self.main = importlib.import_module("main")
+        importlib.reload(self.main)
+        self.cfg = TestTheAdapterSurvivesTheInternalUniverseSymbol._Config('SYNQUAL')
+        self.line = '7,1578441600000,99.28000,99.33000,99.23000,99.28000'
+        self.row = self.main.SyntheticBarQualify().Reader(self.cfg, self.line, None, False)
+
+    # ---- concrete construction and symbol -------------------------------------------------
+    def test_the_reader_returns_the_CONCRETE_subclass_not_the_base(self):
+        self.assertIsInstance(self.row, self.main.SyntheticBarQualify)
+        reject = self.main.SyntheticBarReject().Reader(
+            TestTheAdapterSurvivesTheInternalUniverseSymbol._Config('SYNREJ'),
+            self.line, None, False)
+        self.assertIsInstance(reject, self.main.SyntheticBarReject)
+
+    def test_the_symbol_is_carried_from_the_CONFIG_not_invented(self):
+        self.assertIs(self.row.Symbol, self.cfg.Symbol)
+
+    # ---- time --------------------------------------------------------------------------
+    def test_Time_is_derived_from_the_epoch_and_EndTime_is_one_bar_later(self):
+        from datetime import datetime, timedelta
+        self.assertEqual(self.row.Time, datetime(1970, 1, 1) + timedelta(milliseconds=1578441600000))
+        self.assertEqual(self.row.EndTime - self.row.Time, timedelta(days=1))
+        self.assertGreater(self.row.EndTime, self.row.Time)
+
+    def test_the_epoch_is_NOT_re_derived_from_the_naive_datetime_anywhere(self):
+        # row.Time is naive, so .timestamp() would reinterpret it in the host's LOCAL zone.
+        self.assertNotIn("Time.timestamp()", _read("main.py"))
+
+    # ---- field TYPES: the failure that killed the second run ------------------------------
+    def test_EVERY_custom_field_is_stored_as_a_float(self):
+        # The regression. LEAN's PythonData indexer converts double -> decimal and has no
+        # binding for a Python int, so an int assignment raises on the FIRST row.
+        for key in ('BarIndex', 'EpochMs', 'Open', 'High', 'Low', 'Close'):
+            with self.subTest(field=key):
+                value = self.row[key]
+                self.assertIsInstance(value, float)
+                self.assertNotIsInstance(value, bool)
+
+    def test_the_shim_REFUSES_an_int_exactly_as_the_engine_did(self):
+        # Without this the mock would be more permissive than LEAN and would have stayed
+        # green through the observed failure -- which is precisely what happened.
+        row = self.main.SyntheticBarQualify()
+        with self.assertRaises(TypeError):
+            row['BarIndex'] = 7
+        with self.assertRaises(TypeError):
+            row['Flag'] = True            # bool is an int subclass and must not slip through
+        row['BarIndex'] = 7.0             # positive control: float is accepted
+        self.assertEqual(row['BarIndex'], 7.0)
+
+    # ---- exactness -----------------------------------------------------------------------
+    def test_the_index_and_epoch_round_trip_EXACTLY_through_float(self):
+        self.assertEqual(int(self.row['BarIndex']), 7)
+        self.assertEqual(int(self.row['EpochMs']), 1578441600000)
+
+    def test_every_bar_of_both_fixtures_round_trips_exactly(self):
+        # Asserted over the whole corpus, not one row: float64 is exact to 2**53 and a ms
+        # epoch is ~1.58e12, but that is a claim worth checking rather than reciting.
+        for case in sb.CASES:
+            with self.subTest(case=case):
+                for index, ms, o, h, l, c in sb.series(case):
+                    self.assertEqual(int(float(index)), index)
+                    self.assertEqual(int(float(ms)), ms)
+
+    def test_a_value_that_would_NOT_round_trip_is_REFUSED_not_stored_lossy(self):
+        lossy = '%d,1578441600000,1,1,1,1' % (2 ** 53 + 1)
+        with self.assertRaises(ValueError):
+            self.main.SyntheticBarQualify().Reader(self.cfg, lossy, None, False)
+
+    # ---- OHLC and Value ------------------------------------------------------------------
+    def test_the_OHLC_fields_carry_the_parsed_prices(self):
+        self.assertEqual((self.row['Open'], self.row['High'],
+                          self.row['Low'], self.row['Close']),
+                         (99.28, 99.33, 99.23, 99.28))
+
+    def test_Value_is_the_close_as_a_float(self):
+        self.assertIsInstance(self.row.Value, float)
+        self.assertEqual(self.row.Value, 99.28)
+
+    # ---- conversion into the UNCHANGED state machine --------------------------------------
+    def test_the_row_converts_into_a_Bar_the_machine_accepts(self):
+        bar = Bar(int(self.row['BarIndex']), int(self.row['EpochMs']),
+                  float(self.row['Open']), float(self.row['High']),
+                  float(self.row['Low']), float(self.row['Close']))
+        self.assertEqual(bar.index, 7)
+        machine = BreakRetestMachine(CONFIG, sb.ZONE_LOW, sb.ZONE_HIGH, sb.ZONE_ROLE,
+                                     sb.ZONE_FROM_INDEX)
+        machine.on_bar(bar)
+        self.assertEqual(machine.bars_seen, 1)
+
+    def test_a_full_fixture_replayed_THROUGH_the_reader_reproduces_the_expected_verdict(self):
+        # End to end across the adapter: CSV text -> Reader -> Bar -> machine, for both cases.
+        # This is the strongest local statement available, and it still does not involve LEAN.
+        for case, want_state, want_decision in (('qualify', S_LOCKED, True),
+                                                ('reject', S_BROKEN, False)):
+            with self.subTest(case=case):
+                ticker = 'SYNQUAL' if case == 'qualify' else 'SYNREJ'
+                cls = self.main.CASE_TYPES[ticker]
+                cfg = TestTheAdapterSurvivesTheInternalUniverseSymbol._Config(ticker)
+                machine = BreakRetestMachine(CONFIG, sb.ZONE_LOW, sb.ZONE_HIGH, sb.ZONE_ROLE,
+                                             sb.ZONE_FROM_INDEX)
+                delivered = 0
+                for line in sb.csv_text(case).strip().split('\n'):
+                    row = cls().Reader(cfg, line, None, False)
+                    if row is None:
+                        continue
+                    delivered += 1
+                    machine.on_bar(Bar(int(row['BarIndex']), int(row['EpochMs']),
+                                       float(row['Open']), float(row['High']),
+                                       float(row['Low']), float(row['Close'])))
+                self.assertEqual(delivered, 120, 'the header must be the only refused line')
+                self.assertEqual(machine.state, want_state)
+                self.assertEqual(bool(machine.decision), want_decision)
+
+    def test_the_algorithm_still_declares_both_global_checks(self):
+        src = _read("main.py")
+        self.assertIn("no_unexpected_symbols", src)
+        self.assertIn("case_state_isolated", src)
+
+
 class TestThePackageIsCompleteAndHonestlyLabelled(unittest.TestCase):
 
     def test_the_manifest_covers_every_file_and_matches(self):

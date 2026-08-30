@@ -56,12 +56,24 @@ except ImportError:                                # pragma: no cover - local in
     from datetime import datetime, timedelta
 
     class PythonData(object):
-        """Minimal stand-in for LEAN's PythonData: the dict-style field access Reader uses."""
+        """Stand-in for LEAN's PythonData indexer, modelling its TYPE STRICTNESS.
+
+        A permissive dict would have accepted `row['BarIndex'] = int(...)` and the mock would
+        have stayed green through the exact failure that killed two cloud runs. LEAN's setter
+        is `value is double ? ... : value` over a .NET `object` parameter, and pythonnet finds
+        no binding for a Python int -- so this shim refuses int the same way, deliberately.
+        bool is refused too: it is an int subclass and would otherwise slip through.
+        """
 
         def __init__(self):
             self._fields = {}
 
         def __setitem__(self, key, value):
+            if not isinstance(key, str):
+                raise TypeError('set_item index must be str, got %s' % type(value).__name__)
+            if isinstance(value, bool) or isinstance(value, int):
+                raise TypeError('No method matches given arguments for set_item: '
+                                '(%r, %r)' % (str, type(value)))
             self._fields[key] = value
 
         def __getitem__(self, key):
@@ -126,11 +138,35 @@ class _SyntheticBarBase(PythonData):
         row.Time = datetime(1970, 1, 1) + timedelta(milliseconds=epoch_ms)
         row.EndTime = row.Time + timedelta(days=1)
         row.Value = float(parts[5])
-        row['BarIndex'] = int(parts[0])
-        # The epoch is carried VERBATIM. Deriving it later with datetime.timestamp() would
-        # reinterpret this naive UTC datetime in the host's LOCAL timezone -- an adjacent
-        # assumption this failure prompted a review of, wrong by whole hours off-UTC.
-        row['EpochMs'] = epoch_ms
+        # EVERY custom field is stored as a Python float, and integers are recovered with
+        # int() in OnData. This is not cosmetic and it is not "convert everything to float":
+        #
+        #   Muscular Red Orange Fly (algorithm c89520ff9658ee55535bb8c960133ae0,
+        #   LEAN 2.5.0.0.18041) failed on EVERY row with
+        #     No method matches given arguments for set_item: (<class 'str'>, <class 'int'>)
+        #
+        #   LEAN's PythonData string indexer (Common/Python/PythonData.cs) is
+        #     set { SetProperty(index, value is double ? value.ConvertInvariant<decimal>()
+        #                                             : value); }
+        #   -- the setter's anticipated numeric type is DOUBLE, which it converts to decimal.
+        #   A Python int has no binding, so the FIRST set_item call in this Reader
+        #   (row['BarIndex'] = int(...)) raised before any of the float fields were reached.
+        #   The OHLC assignments below were already floats, which is why they never surfaced.
+        #
+        # EXACTNESS IS PRESERVED, NOT TRADED AWAY. A float64 represents every integer up to
+        # 2**53 exactly, and decimal carries 28-29 significant digits, so the bar index and a
+        # millisecond epoch (~1.58e12, exact until the year 287396) both round-trip byte for
+        # byte. That is ASSERTED below rather than assumed: a value that does not round-trip
+        # is refused, never silently stored lossy.
+        index_i = int(parts[0])
+        if float(index_i) != index_i or float(epoch_ms) != epoch_ms:
+            raise ValueError('synthetic row %r is not exactly representable as a float; '
+                             'refusing rather than storing a lossy index or epoch' % parts[0])
+        row['BarIndex'] = float(index_i)
+        # The epoch is carried VERBATIM as a value, never re-derived from row.Time:
+        # row.Time is a NAIVE datetime, so .timestamp() would reinterpret it in the HOST's
+        # local timezone -- wrong by whole hours anywhere off UTC.
+        row['EpochMs'] = float(epoch_ms)
         row['Open'], row['High'] = float(parts[2]), float(parts[3])
         row['Low'], row['Close'] = float(parts[4]), float(parts[5])
         return row
@@ -181,6 +217,9 @@ class MogoSyntheticSmoke(QCAlgorithm if IN_LEAN else object):
                 continue
             row = data[sym]
             st = self.cases[ticker]
+            # Stored as float, recovered as int. LEAN hands these back as decimal; int()
+            # is exact for both, and the Reader already refused anything that would not
+            # round-trip.
             idx = int(row['BarIndex'])
             if idx in st.seen:
                 st.duplicates += 1
