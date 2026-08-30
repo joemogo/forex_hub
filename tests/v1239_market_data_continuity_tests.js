@@ -555,20 +555,108 @@ function runMarketDataContinuityFixtures(g){
     return '7 calendar days, 6 trading days';
   });
 
-  await t('MDHIST-2 (BOUNDARY) a SHORT page ends the walk immediately',async function(){
-    // Paired with MDHIST-1 this pins BOTH sides of the termination test, so neither `<` nor `<=`
-    // can be substituted without a fixture dying.
+  await t('MDHIST-2 (G-3) a SHORT page CONTINUES the walk and reaches the later data',async function(){
+    // REWRITTEN, not deleted. This fixture previously asserted the opposite -- "a short page means
+    // the history is exhausted" -- and in doing so blessed the G-3 contradiction: fetchCandlesRange
+    // was repaired in v12.20.0 so that a transient broker shortfall is REPAIRED by continuing,
+    // while this diagnostic still stopped. The diagnostic's stated purpose is to demonstrate
+    // fetchCandlesRange, so a truncating walk under-reported the very fix it exists to prove.
+    //
+    // The boundary MDHIST-2 originally pinned is not lost: MDHIST-2b below still pins that an
+    // EMPTY page terminates, so `while(true)` is not substitutable either.
     let page=0;
     g.route(function(req){
       if(req.kind!=='candles') return g.okPrice();
       page++;
       if(page===1) return g.okPage(g.bars(HIST_P1_END,HIST_H,4));   // 4 raw for a request of 10
-      return g.okPage(g.bars(HIST_P1_END-20*HIST_H,HIST_H,4));
+      if(page===2) return g.okPage(g.bars(HIST_P1_END-20*HIST_H,HIST_H,4));
+      return g.emptyPage();
     });
     const short=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
-    eq(g.candleReqs().length,1,'one request only -- a short page means the history is exhausted');
-    eq(short.totalUnique,4,'and the diagnostic reports the 4 bars it genuinely has rather than walking on');
-    return 'short page terminates the walk';
+    ok(g.candleReqs().length>1,'the walk must CONTINUE past a short page, not stop at one request');
+    eq(short.totalUnique,8,'both short pages are collected -- 4 + 4');
+    eq(short.shortPages,2,'each short page is RECORDED as a diagnostic rather than acted on');
+    eq(short.termination,'EMPTY_PAGE','the walk ends on the empty page, not on the short one');
+    return 'short page continues; 8 bars over 2 pages; termination EMPTY_PAGE';
+  });
+
+  await t('MDHIST-2b (POSITIVE CONTROL) an EMPTY page DOES terminate the walk',async function(){
+    // Without this, MDHIST-2's "continue" assertion would also be satisfied by a walk that never
+    // terminates at all until the guard -- which is the defect the short-page break was
+    // over-correcting for.
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page===1) return g.okPage(g.bars(HIST_P1_END,HIST_H,4));
+      return g.emptyPage();
+    });
+    const r=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
+    eq(g.candleReqs().length,2,'exactly two requests -- the second is empty and ends it');
+    eq(r.totalUnique,4,'only the real bars are reported');
+    eq(r.termination,'EMPTY_PAGE','');
+    return 'empty page terminates after 2 requests';
+  });
+
+  await t('MDHIST-2c (G-3) a NON-ADVANCING cursor terminates instead of looping',async function(){
+    // Removing the short-page break is exactly what makes this guard load-bearing:
+    // fetchCandlesRange records the same lesson. A broker that ignores `to` and replays the same
+    // window would otherwise be paginated against until the guard limit, accumulating duplicates.
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      return g.okPage(g.bars(HIST_P1_END,HIST_H,4));   // the SAME page, every time
+    });
+    const r=await g.runHistoricalDataDiagnostic('EUR_USD','H1',10,null);
+    eq(r.termination,'CURSOR_NOT_ADVANCING','a replayed window must be detected, not re-requested');
+    eq(g.candleReqs().length,2,'exactly two requests -- the repeat is detected on the second');
+    ok(g.candleReqs().length<20,'and nowhere near the 20-request guard');
+    // The repeated page IS reported, not hidden: this diagnostic's job is to say what the broker
+    // actually returned, and MDHIST-3 exists to prove the duplicate detector fires at all.
+    // Suppressing the repeat would under-report exactly what an operator runs this tool to see.
+    eq(r.duplicates,4,'the one repeated page is COUNTED as duplicates rather than concealed');
+    eq(r.totalUnique,4,'and the unique bar count is still the 4 real bars');
+    return 'replayed window -> CURSOR_NOT_ADVANCING after 2 requests, 4 duplicates reported';
+  });
+
+  await t('MDHIST-2d (G-3) pagination makes FORWARD progress across pages',async function(){
+    // Each request must ask for an OLDER window than the last. Without this a "continue" could be
+    // satisfied by re-requesting the same boundary forever.
+    let page=0;
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      page++;
+      if(page<=3) return g.okPage(g.bars(HIST_P1_END-(page-1)*10*HIST_H,HIST_H,3));
+      return g.emptyPage();
+    });
+    const r=await g.runHistoricalDataDiagnostic('EUR_USD','H1',30,null);
+    // The harness parses `to` onto the captured request object; the first request correctly
+    // carries none. Regexing the OBJECT (rather than its .url) silently yields an empty list and
+    // makes the loop below vacuous -- which is how the first draft of this fixture passed nothing.
+    const tos=g.candleReqs().map(function(rq){ return rq.to?Date.parse(rq.to):null; })
+                            .filter(function(v){return v!==null;});
+    ok(tos.length>=2,'at least two cursored requests were made');
+    for(let i=1;i<tos.length;i++){
+      ok(tos[i]<tos[i-1],'each `to` cursor must move strictly BACKWARD (request '+(i+1)+')');
+    }
+    eq(r.termination,'EMPTY_PAGE','');
+    return tos.length+' cursored requests, each strictly older than the last';
+  });
+
+  await t('MDHIST-2e (G-3) the requested COUNT bounds the walk even when pages keep arriving',async function(){
+    // Continuing past a short page must not turn into fetching more than was asked for. The
+    // request ceiling and the accumulated total are both asserted.
+    g.route(function(req){
+      if(req.kind!=='candles') return g.okPrice();
+      const asked=req.count;
+      ok(typeof asked==='number','the harness must have parsed a count for this request');
+      ok(asked<=6,'each page must request no more than the REMAINING count (asked '+asked+')');
+      return g.okPage(g.bars(HIST_P1_END-g.candleReqs().length*10*HIST_H,HIST_H,2));
+    });
+    const r=await g.runHistoricalDataDiagnostic('EUR_USD','H1',6,null);
+    ok(r.totalUnique>=6,'the walk continues until the requested count is satisfied');
+    ok(r.totalUnique<=8,'and does not overshoot materially ('+r.totalUnique+' for a request of 6)');
+    ok(g.candleReqs().length<20,'the guard is never reached');
+    return r.totalUnique+' bars for a request of 6 over '+g.candleReqs().length+' pages';
   });
 
   await t('MDHIST-3 (POSITIVE CONTROL) a bar repeated across the page boundary IS counted',async function(){

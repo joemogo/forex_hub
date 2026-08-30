@@ -7504,7 +7504,7 @@ function getCandleCloseTime(candles,i,granularity){
 // pagination behavior can be verified directly against a live account, rather than assumed.
 async function runHistoricalDataDiagnostic(pair,granularity,totalCount,onProgress){
   const pages=[];
-  let all=[],to=null,guard=0;
+  let all=[],to=null,guard=0,shortPages=0,termination='REACHED_COUNT';
   const requestedEnd=new Date();
   while(all.length<totalCount&&guard<20){
     guard++;
@@ -7515,11 +7515,12 @@ async function runHistoricalDataDiagnostic(pair,granularity,totalCount,onProgres
     if(to) url+=`&to=${encodeURIComponent(to)}`;
     let r;
     try{r=await fetch(url,{headers:{'Authorization':`Bearer ${cfg.key}`,'Accept-Datetime-Format':'RFC3339'}});}
-    catch(e){pages.push({page:guard,requestedTo:to,error:e.message});break;}
-    if(!r.ok){pages.push({page:guard,requestedTo:to,error:`HTTP ${r.status}`});break;}
+    catch(e){pages.push({page:guard,requestedTo:to,error:e.message});termination='NETWORK_ERROR';break;}
+    if(!r.ok){pages.push({page:guard,requestedTo:to,error:`HTTP ${r.status}`});termination='HTTP_ERROR';break;}
     const d=await r.json();
     if(!d.candles||!d.candles.length){
       pages.push({page:guard,requestedTo:to,rawCount:0,note:'Empty response -- end of available history at this boundary.'});
+      termination='EMPTY_PAGE';
       break;
     }
     const rawCount=d.candles.length;
@@ -7534,10 +7535,27 @@ async function runHistoricalDataDiagnostic(pair,granularity,totalCount,onProgres
       firstTs:d.candles[0].time,lastTs:d.candles[d.candles.length-1].time,
       completeCount,incompleteCount
     });
+    const prevTo=to;
     if(chunk.length){all=chunk.concat(all);to=new Date(chunk[0].t.getTime()-1000).toISOString();}
     else{to=new Date(new Date(d.candles[0].time).getTime()-1000).toISOString();}
-    if(rawCount<count) break;
+    // G-3. A SHORT PAGE IS NOT PROOF OF EXHAUSTION. fetchCandlesRange was repaired in v12.20.0
+    // for exactly this reason -- a transient broker shortfall is repaired by continuing the walk,
+    // not detected by stopping it -- and THIS DIAGNOSTIC EXISTS TO DEMONSTRATE THAT FUNCTION
+    // ("the concrete proof behind the fetchCandlesRange() pagination fix"). Stopping here made the
+    // tool contradict its own subject and under-report available history, which is the same
+    // symptom v2.9 and v12.20.0 each removed. Only an EMPTY page, a transport failure, a stalled
+    // cursor or the guard now ends the walk.
+    if(rawCount<count) shortPages++;
+    // Removing the short-page break is what MAKES this guard necessary, and fetchCandlesRange
+    // records the same lesson: a broker ignoring the `to` cursor could otherwise be paginated
+    // against until the guard limit, accumulating duplicates. Compared as instants, not strings.
+    if(prevTo!==null&&new Date(to).getTime()>=new Date(prevTo).getTime()){
+      pages.push({page:guard,requestedTo:prevTo,note:'Cursor did not advance -- terminating rather than re-requesting the same window.'});
+      termination='CURSOR_NOT_ADVANCING';
+      break;
+    }
   }
+  if(guard>=20&&termination==='REACHED_COUNT'&&all.length<totalCount) termination='GUARD_LIMIT';
   // Duplicate check by exact timestamp -- confirms the pagination boundary logic isn't
   // double-counting candles across page boundaries.
   const seen=new Set();let duplicates=0;const unique=[];
@@ -7553,7 +7571,7 @@ async function runHistoricalDataDiagnostic(pair,granularity,totalCount,onProgres
   }
   return{
     pair,granularity,totalRequested:totalCount,requestedEnd:requestedEnd.toISOString(),
-    pages,requestCount:pages.length,
+    pages,requestCount:pages.length,shortPages,termination,
     // v12.33.0 (§18.26): totalRaw DOUBLE-COUNTED every duplicate. `all` is the merged array and
     // already contains them; `unique` is derived from it by filtering. So all.length+duplicates
     // reported one MORE bar than the pages actually returned for each repeat -- a diagnostic
