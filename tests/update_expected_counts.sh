@@ -8,7 +8,16 @@ cd "$REPO_ROOT" || exit 1
 TMP="$(mktemp)"
 sed -n '1,/^# Regenerate with/p' tests/expected_fixture_counts.tsv > "$TMP"
 for r in tests/run_*_tests.js; do
-  n=$(osascript -l JavaScript "$r" 2>&1 | grep -c '^PASS -- \|^FAIL -- ')
+  # Honour the same `// RUN_ALL_EXEC:` declaration tests/run_all.sh uses. Without this, a suite
+  # that declares its own launcher (v131 runs under Node, not osascript) would be re-counted here
+  # through the osascript path it cannot use -- recording 1 instead of its real total and
+  # silently writing that corruption into the manifest the gate then enforces.
+  EXEC_LINE="$(grep -m1 '^// RUN_ALL_EXEC: ' "$r" 2>/dev/null | sed 's|^// RUN_ALL_EXEC: ||')"
+  if [ -n "$EXEC_LINE" ]; then
+    n=$(eval "$EXEC_LINE" 2>&1 | grep -c '^PASS -- \|^FAIL -- ')
+  else
+    n=$(osascript -l JavaScript "$r" 2>&1 | grep -c '^PASS -- \|^FAIL -- ')
+  fi
   printf '%s\t%s\n' "$(basename "$r")" "$n" >> "$TMP"
 done
 mv "$TMP" tests/expected_fixture_counts.tsv

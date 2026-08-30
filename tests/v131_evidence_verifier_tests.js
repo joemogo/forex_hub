@@ -120,33 +120,106 @@ console.log('--- MOGO-011 Step 4A evidence verifier fixtures ---');
   });
 })();
 
-// ══ GROUP 3 — canonical hash recomputation matches the BROWSER-generated hash ═════════════════
-// The strongest available proof that node:crypto over mogo.evidence-canon.v1 reproduces Web Crypto:
-// real packages, hashed inside a browser, recompute identically here. Uses the operator corpus when
-// it is present, and never fails the suite merely because a personal directory is absent.
+// ══ GROUP 3 — the verifier reproduces RECORDED hashes across a whole corpus ═══════════════════
+//
+// WHY THIS GROUP CHANGED. It used to scan `~/Desktop/MOGO-Evidence` and `~/Downloads` for the
+// operator's REAL evidence packages and hash them -- 172 of them on this machine. That made the
+// ROUTINE gate read raw OANDA-derived evidence from two directories nobody had declared, outside
+// every protected path, and it did so silently. It also reported `PASS -- V10 (skipped: ...)`
+// when the corpus was absent: success announced for a check that never ran, which is the exact
+// failure mode this repository forbids.
+//
+// The browser-equivalence claim -- "a hash written by Web Crypto inside the browser recomputes
+// identically under node:crypto" -- genuinely REQUIRES operator packages. A synthetic fixture
+// cannot make that claim, and pretending otherwise would manufacture the result. So that claim
+// MOVED, intact, to the opt-in operator lane at the bottom of this group.
+//
+// What remains in the routine gate is the same production verifier over a DETERMINISTIC synthetic
+// corpus, with a corpus-scale negative control. Every recordedHash below is produced by the
+// PRODUCTION canonicalizer via makePackage(), never restated by this test.
 (function () {
+  withTmp(dir => {
+    const N = 12;
+    for (let i = 0; i < N; i++) {
+      write(dir, 'syn-' + i + '.json', makePackage({
+        packageId: 'PKG|alex_g_sr_v1|20260501|' + i,
+        sourceTradeId: 'AGT|EUR_USD|' + i,
+      }));
+    }
+    const r = V.buildReport({ scanDirs: [dir], appPath: APP, manifestPath: null,
+                              expectedTotal: null, outFile: null });
+    eq(r.counts.hashMismatches, 0,
+       'V10 CANONICAL RECOMPUTATION MATCHES EVERY RECORDED HASH across ' + N + ' synthetic packages');
+    eq(r.counts.hashVerified, N,
+       'V10b all ' + N + ' were actually hashed -- V10 cannot pass over an empty corpus');
+    const hashed = r.files.filter(f => f.status === 'VERIFIED' || f.status === 'HASH_MISMATCH');
+    ok(hashed.length === N && hashed.every(f => f.computedHash === f.recordedHash),
+       'V11 every recorded contentHash was reproduced byte-for-byte offline');
+  });
+})();
+
+// NEGATIVE CONTROL at corpus scale. Without it, V10 would also pass if the verifier had stopped
+// comparing hashes at all -- the same vacuity the old skip-to-PASS branch hid.
+(function () {
+  withTmp(dir => {
+    for (let i = 0; i < 11; i++) {
+      write(dir, 'syn-' + i + '.json', makePackage({
+        packageId: 'PKG|alex_g_sr_v1|20260501|' + i,
+        sourceTradeId: 'AGT|EUR_USD|' + i,
+      }));
+    }
+    const bad = makePackage({ packageId: 'PKG|alex_g_sr_v1|20260501|99',
+                              sourceTradeId: 'AGT|EUR_USD|99' });
+    bad.objects.outcomes[0].exitPrice = 1.99;    // one field, recorded hash left untouched
+    write(dir, 'syn-tampered.json', bad);
+    const r = V.buildReport({ scanDirs: [dir], appPath: APP, manifestPath: null,
+                              expectedTotal: null, outFile: null });
+    eq(r.counts.hashMismatches, 1,
+       'V11b ONE tampered package in a corpus of twelve is detected, not averaged away');
+    const t = r.files.find(f => f.name === 'syn-tampered.json');
+    ok(t && t.status === 'HASH_MISMATCH' && t.computedHash !== t.recordedHash,
+       'V11c and the mismatch is attributed to the package that was actually tampered');
+  });
+})();
+
+// ── OPERATOR CORPUS: browser-hash equivalence. NOT RUN in the routine gate. ───────────────────
+// This is the only check here that needs the operator's real packages, and it reads them from
+// directories the sandbox does not protect. It runs ONLY when deliberately enabled, and when
+// enabled it FAILS LOUDLY on absent or unreadable data -- it never reports success it did not
+// observe, and it never swallows a permission error.
+//
+//   MOGO_RUN_REAL_EVIDENCE=1 node tests/v131_evidence_verifier_tests.js
+(function () {
+  if (process.env.MOGO_RUN_REAL_EVIDENCE !== '1') {
+    console.log('NOT RUN -- V10-OPERATOR browser-hash equivalence over the real corpus was NOT ' +
+                'executed and is OUTSIDE this run\'s verdict (set MOGO_RUN_REAL_EVIDENCE=1).');
+    return;                                   // deliberately NOT counted as a pass
+  }
   const corpora = [
     path.join(os.homedir(), 'Desktop', 'MOGO-Evidence'),
     path.join(os.homedir(), 'Downloads'),
   ].filter(d => fs.existsSync(d));
-
   if (!corpora.length) {
-    console.log('PASS -- V10 (skipped: no operator evidence corpus on this machine)');
-    pass++;
+    ok(false, 'V10-OPERATOR the operator corpus is ABSENT -- enabled but nothing to verify');
     return;
   }
-  const r = V.buildReport({ scanDirs: corpora, appPath: APP, manifestPath: null,
-                            expectedTotal: null, outFile: null });
+  let r;
+  try {
+    r = V.buildReport({ scanDirs: corpora, appPath: APP, manifestPath: null,
+                        expectedTotal: null, outFile: null });
+  } catch (e) {
+    ok(false, 'V10-OPERATOR the operator corpus is UNREADABLE: ' +
+              (e && e.message ? e.message : String(e)));
+    return;
+  }
   const browserHashed = r.files.filter(f => f.status === 'VERIFIED' || f.status === 'HASH_MISMATCH');
-  if (!browserHashed.length) {
-    console.log('PASS -- V10 (skipped: corpus present but holds no hashed packages)');
-    pass++;
-    return;
-  }
+  ok(browserHashed.length > 0,
+     'V10-OPERATOR the corpus holds at least one browser-hashed package');
   eq(r.counts.hashMismatches, 0,
-     'V10 CANONICAL RECOMPUTATION MATCHES THE BROWSER-GENERATED HASH on ' + browserHashed.length + ' real packages');
+     'V10-OPERATOR CANONICAL RECOMPUTATION MATCHES THE BROWSER-GENERATED HASH on ' +
+     browserHashed.length + ' real packages');
   ok(browserHashed.every(f => f.computedHash === f.recordedHash),
-     'V11 every browser-written contentHash was reproduced byte-for-byte offline');
+     'V11-OPERATOR every browser-written contentHash was reproduced byte-for-byte offline');
 })();
 
 // ══ GROUP 4 — duplicate physical copies do not become new evidence identities ════════════════

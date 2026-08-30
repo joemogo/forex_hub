@@ -17,6 +17,25 @@
 //
 //   cd "Forex Hub" && osascript -l JavaScript tests/run_v131_evidence_verifier_tests.js
 //   tests/run_all.sh   (discovers and runs this automatically)
+//
+// SANDBOX: THIS SHIM CANNOT RUN UNDER THE BASH SANDBOX, AND THE DIRECTIVE BELOW IS WHY.
+//
+// The shim reaches Node through AppleScript's `doShellScript`, which needs the Mach bootstrap
+// port. Inside the sandbox that registration is denied --
+//     CFMessagePort: bootstrap_register(): failed 'Permission denied'
+//     doShellScript FAILED: Message not understood.
+// -- and `doShellScript` is used for BOTH steps here: locating Node AND executing the suite. So
+// repairing only the lookup would fix nothing; the whole shim is unusable under the sandbox.
+//
+// The FIXTURES themselves are unaffected: `node tests/v131_evidence_verifier_tests.js` runs all
+// 73 assertions cleanly inside the sandbox. Only this launcher was broken.
+//
+// The line below tells tests/run_all.sh to execute the Node suite DIRECTLY, moving the
+// process-launch out of AppleScript and into the shell harness that already has a working one.
+// The assertions are untouched, the count stays 73, and this shim remains the fallback for a
+// non-sandboxed environment where `doShellScript` still works.
+//
+// RUN_ALL_EXEC: node tests/v131_evidence_verifier_tests.js
 
 ObjC.import('Foundation');
 
