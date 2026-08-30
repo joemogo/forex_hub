@@ -166,6 +166,121 @@ class TestTheReviewedMachineAndTheExpectedCases(unittest.TestCase):
         self.assertNotEqual(poisoned.decision, full.decision)
 
 
+class TestTheAdapterSurvivesTheInternalUniverseSymbol(unittest.TestCase):
+    """The exact initialization failure observed in the cloud, and its repair.
+
+    OBSERVED, not hypothetical. Project 35863117, run `Hyper Active Red Orange Termite`,
+    LEAN 2.5.0.0.18041, died in Initialize with:
+
+        KeyError: 'QC-UNIVERSE-USERDEFINED-USA-BASE'   at GetSource
+
+    `AddData` registers the security AND a user-defined universe, and LEAN copy-constructs the
+    universe config from the security's subscription with the universe symbol substituted and
+    isInternalFeed:true -- so the universe config carries the SAME custom data type with a
+    different Symbol, and GetSource is called with it.
+
+    THESE ARE MOCKED, LOCAL CHECKS. They drive GetSource and Reader directly through the
+    module's offline shim. They prove the adapter cannot raise and cannot misroute; they prove
+    NOTHING about whether LEAN delivers bars, which only a cloud run can establish.
+    """
+
+    UNIVERSE = 'QC-UNIVERSE-USERDEFINED-USA-BASE'
+
+    def setUp(self):
+        import importlib
+        sys.path.insert(0, PKG)
+        self.main = importlib.import_module("main")
+        importlib.reload(self.main)
+
+    class _Sym(object):
+        def __init__(self, value):
+            self.Value = value
+
+    class _Config(object):
+        def __init__(self, value):
+            self.Symbol = TestTheAdapterSurvivesTheInternalUniverseSymbol._Sym(value)
+
+    def test_GetSource_does_not_raise_on_the_INTERNAL_UNIVERSE_symbol(self):
+        # The regression. Before the repair this raised KeyError and killed Initialize.
+        for ticker, cls in self.main.CASE_TYPES.items():
+            with self.subTest(case=ticker):
+                src = cls().GetSource(self._Config(self.UNIVERSE), None, False)
+                self.assertIsNotNone(src)
+                self.assertIn("gist.githubusercontent.com", src.Source)
+
+    def test_SYNQUAL_serves_the_QUALIFY_fixture(self):
+        src = self.main.SyntheticBarQualify().GetSource(self._Config('SYNQUAL'), None, False)
+        self.assertTrue(src.Source.endswith("mogo_synthetic_qualify.csv"))
+
+    def test_SYNREJ_serves_the_REJECT_fixture(self):
+        src = self.main.SyntheticBarReject().GetSource(self._Config('SYNREJ'), None, False)
+        self.assertTrue(src.Source.endswith("mogo_synthetic_reject.csv"))
+
+    def test_each_type_can_only_ever_serve_its_OWN_fixture(self):
+        # The property that makes an unknown symbol harmless: there is no lookup to get wrong.
+        # Asserted for the universe symbol AND a garbage symbol, per type.
+        for ticker, cls in self.main.CASE_TYPES.items():
+            expected = cls.URL
+            for value in (ticker, self.UNIVERSE, 'NOT-A-CASE', ''):
+                with self.subTest(case=ticker, symbol=value):
+                    got = cls().GetSource(self._Config(value), None, False).Source
+                    self.assertEqual(got, expected,
+                                     "%s served a different fixture for %r" % (ticker, value))
+
+    def test_the_two_types_serve_DIFFERENT_fixtures(self):
+        # Without this, "each type serves its own" would also hold if both served the same one.
+        self.assertNotEqual(self.main.SyntheticBarQualify.URL,
+                            self.main.SyntheticBarReject.URL)
+
+    def test_Reader_REFUSES_a_line_whose_symbol_is_not_a_declared_case(self):
+        line = '0,1577836800000,99.00000,99.05000,98.95000,99.00000'
+        for value in (self.UNIVERSE, 'NOT-A-CASE', ''):
+            with self.subTest(symbol=value):
+                row = self.main.SyntheticBarQualify().Reader(
+                    self._Config(value), line, None, False)
+                self.assertIsNone(row, "%r was parsed into a bar" % value)
+
+    def test_POSITIVE_CONTROL_Reader_ACCEPTS_a_declared_case_line(self):
+        # Without this the refusal above would also pass if Reader returned None for everything.
+        row = self.main.SyntheticBarQualify().Reader(
+            self._Config('SYNQUAL'),
+            '7,1578441600000,99.28000,99.33000,99.23000,99.28000', None, False)
+        self.assertIsNotNone(row)
+        self.assertEqual(row['BarIndex'], 7)
+        self.assertEqual(row['EpochMs'], 1578441600000)
+
+    def test_the_epoch_is_carried_VERBATIM_not_re_derived_from_a_naive_datetime(self):
+        # Adjacent assumption this failure prompted a review of: the previous adapter passed
+        # int(row.Time.timestamp() * 1000), and Time is a NAIVE datetime, so timestamp()
+        # reinterprets it in the host's LOCAL timezone -- wrong by whole hours off UTC.
+        row = self.main.SyntheticBarQualify().Reader(
+            self._Config('SYNQUAL'),
+            '0,1577836800000,99.00000,99.05000,98.95000,99.00000', None, False)
+        self.assertEqual(row['EpochMs'], 1577836800000)
+        self.assertNotIn("Time.timestamp()", _read("main.py"))
+
+    def test_header_and_malformed_lines_are_refused_for_a_VALID_symbol(self):
+        for line in ('index,timestamp,open,high,low,close', '', '1,2,3'):
+            with self.subTest(line=line):
+                self.assertIsNone(self.main.SyntheticBarQualify().Reader(
+                    self._Config('SYNQUAL'), line, None, False))
+
+    def test_case_state_is_INDEPENDENT_per_case(self):
+        a, b = self.main.CaseState(), self.main.CaseState()
+        self.assertIsNot(a.machine, b.machine)
+        self.assertIsNot(a.delivered, b.delivered)
+        self.assertIsNot(a.seen, b.seen)
+        a.machine.on_bar(Bar(0, 0, 1.0, 1.1, 0.9, 1.0))
+        self.assertEqual(a.machine.bars_seen, 1)
+        self.assertEqual(b.machine.bars_seen, 0, "one case advanced the other's machine")
+
+    def test_the_algorithm_counts_unexpected_delivered_symbols_and_fails_on_them(self):
+        src = _read("main.py")
+        self.assertIn("self.unexpected_symbols += 1", src)
+        self.assertIn("no_unexpected_symbols", src,
+                      "an unexpected delivery must be a named FAILING check, not a silent skip")
+
+
 class TestThePackageIsCompleteAndHonestlyLabelled(unittest.TestCase):
 
     def test_the_manifest_covers_every_file_and_matches(self):

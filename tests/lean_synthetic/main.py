@@ -24,7 +24,8 @@ byte-identical to the reviewed state machine (sha256 29e29578...) and knows noth
 QUALIFY_URL = 'https://gist.githubusercontent.com/joemogo/849a3ef9d9d13d7e7d74045428fbbdb7/raw/9e73b2341a80526530b11d4c29f6ca1cac8f312e/mogo_synthetic_qualify.csv'
 REJECT_URL  = 'https://gist.githubusercontent.com/joemogo/849a3ef9d9d13d7e7d74045428fbbdb7/raw/9e73b2341a80526530b11d4c29f6ca1cac8f312e/mogo_synthetic_reject.csv'
 
-URLS = {'SYNQUAL': QUALIFY_URL, 'SYNREJ': REJECT_URL}
+#: Declared cases. A symbol not in here is NEVER served a fixture and NEVER parsed.
+CASE_TICKERS = ('SYNQUAL', 'SYNREJ')
 
 #: The case contract, asserted by the algorithm and justified by the documented rules:
 #: a support zone is BROKEN by a confirmed close above zone_high, and the RETEST is a strict
@@ -50,33 +51,100 @@ try:
     IN_LEAN = True
 except ImportError:                                # pragma: no cover - local inspection only
     IN_LEAN = False
+    # Offline shim, so GetSource/Reader routing can be regression-tested without the engine.
+    # Never used under LEAN, where the real classes are imported above.
+    from datetime import datetime, timedelta
+
+    class PythonData(object):
+        """Minimal stand-in for LEAN's PythonData: the dict-style field access Reader uses."""
+
+        def __init__(self):
+            self._fields = {}
+
+        def __setitem__(self, key, value):
+            self._fields[key] = value
+
+        def __getitem__(self, key):
+            return self._fields[key]
+
+    class SubscriptionTransportMedium(object):
+        RemoteFile = 'RemoteFile'
+
+    class SubscriptionDataSource(object):
+        def __init__(self, source, transport):
+            self.Source, self.TransportMedium = source, transport
 
 from br_machine import BreakRetestMachine, Bar, S_LOCKED
 
 
-class SyntheticBar(PythonData if IN_LEAN else object):
-    """One synthetic bar, parsed by LEAN's own subscription reader. The URL is chosen by the
-    SYMBOL, so both cases share one reviewed reader and cannot diverge in parsing."""
+class _SyntheticBarBase(PythonData):
+    """One synthetic bar. ONE class per case, each serving ONE hard-coded URL.
+
+    WHY NOT A DICTIONARY LOOKUP ON config.Symbol.Value. The first cloud run
+    (project 35863117, `Hyper Active Red Orange Termite`, LEAN 2.5.0.0.18041) died in
+    Initialize with:
+
+        KeyError: 'QC-UNIVERSE-USERDEFINED-USA-BASE'   at GetSource
+
+    `AddData` registers the security AND a user-defined universe, and LEAN builds the
+    universe's config by COPY-CONSTRUCTING the security's subscription with the universe
+    symbol substituted and isInternalFeed:true --
+
+        new SubscriptionDataConfig(subscription, symbol: universeSymbol,
+                                   isInternalFeed: true, fillForward: false, ...)
+
+    -- so the universe config carries THIS SAME DATA TYPE with a different Symbol, and
+    GetSource is called with it. A dict lookup therefore raises before any bar is fetched.
+
+    A `.get()` guard alone would not be the right repair: it would still have to decide what
+    to serve an unrecognised symbol, and serving it a case fixture is exactly the misrouting
+    that must not happen. Splitting the type per case removes the decision entirely -- each
+    class has exactly one URL and can only ever serve its own -- and `Reader` refuses any line
+    whose config symbol is not a declared case, so the internal universe subscription parses
+    nothing rather than being quietly fed a case's bars.
+    """
+
+    URL = None                                  # set by the per-case subclasses below
 
     def GetSource(self, config, date, isLive):
-        return SubscriptionDataSource(URLS[config.Symbol.Value],
-                                      SubscriptionTransportMedium.RemoteFile)
+        # No lookup, no branch, no KeyError -- for the security symbol or the universe symbol.
+        return SubscriptionDataSource(self.URL, SubscriptionTransportMedium.RemoteFile)
 
     def Reader(self, config, line, date, isLive):
+        # The explicit refusal. Not a swallowed error: an unexpected symbol yields NO data,
+        # and the algorithm separately counts anything that still reaches OnData.
+        if config.Symbol.Value not in CASE_TICKERS:
+            return None
         if not line or line[0].isalpha():
             return None
         parts = line.split(',')
         if len(parts) != 6:
             return None
-        row = SyntheticBar()
+        row = type(self)()
         row.Symbol = config.Symbol
-        row.Time = datetime(1970, 1, 1) + timedelta(milliseconds=int(parts[1]))
+        epoch_ms = int(parts[1])
+        row.Time = datetime(1970, 1, 1) + timedelta(milliseconds=epoch_ms)
         row.EndTime = row.Time + timedelta(days=1)
         row.Value = float(parts[5])
         row['BarIndex'] = int(parts[0])
+        # The epoch is carried VERBATIM. Deriving it later with datetime.timestamp() would
+        # reinterpret this naive UTC datetime in the host's LOCAL timezone -- an adjacent
+        # assumption this failure prompted a review of, wrong by whole hours off-UTC.
+        row['EpochMs'] = epoch_ms
         row['Open'], row['High'] = float(parts[2]), float(parts[3])
         row['Low'], row['Close'] = float(parts[4]), float(parts[5])
         return row
+
+
+class SyntheticBarQualify(_SyntheticBarBase):
+    URL = QUALIFY_URL
+
+
+class SyntheticBarReject(_SyntheticBarBase):
+    URL = REJECT_URL
+
+
+CASE_TYPES = {'SYNQUAL': SyntheticBarQualify, 'SYNREJ': SyntheticBarReject}
 
 
 class CaseState(object):
@@ -98,12 +166,16 @@ class MogoSyntheticSmoke(QCAlgorithm if IN_LEAN else object):
         self.SetCash(100000)
         self.cases = {}
         self.by_symbol = {}
-        for ticker in ('SYNQUAL', 'SYNREJ'):
-            sym = self.AddData(SyntheticBar, ticker, Resolution.Daily).Symbol
+        self.unexpected_symbols = 0        # anything delivered that is not a declared case
+        for ticker in CASE_TICKERS:
+            sym = self.AddData(CASE_TYPES[ticker], ticker, Resolution.Daily).Symbol
             self.cases[ticker] = CaseState()
             self.by_symbol[sym] = ticker
 
     def OnData(self, data):
+        for delivered_sym in list(data.Keys):
+            if delivered_sym not in self.by_symbol:
+                self.unexpected_symbols += 1
         for sym, ticker in self.by_symbol.items():
             if sym not in data:
                 continue
@@ -119,7 +191,7 @@ class MogoSyntheticSmoke(QCAlgorithm if IN_LEAN else object):
                 st.lookahead += 1
             st.seen.add(idx)
             st.delivered.append(idx)
-            st.machine.on_bar(Bar(idx, int(row.Time.timestamp() * 1000),
+            st.machine.on_bar(Bar(idx, int(row['EpochMs']),
                                   float(row['Open']), float(row['High']),
                                   float(row['Low']), float(row['Close'])))
             if st.machine.state == S_LOCKED and st.locked_at is None:
@@ -163,6 +235,12 @@ class MogoSyntheticSmoke(QCAlgorithm if IN_LEAN else object):
                  % ('PASS' if iso else 'FAIL', iso))
         if not iso:
             overall.append('case_state_isolated')
+        # The internal universe subscription must never deliver into OnData.
+        clean = self.unexpected_symbols == 0
+        self.Log('SMOKE-CHECK GLOBAL   no_unexpected_symbols     %s %d'
+                 % ('PASS' if clean else 'FAIL', self.unexpected_symbols))
+        if not clean:
+            overall.append('no_unexpected_symbols')
         self.Log('SMOKE-VERDICT %s engine=%s failed=%s'
                  % ('PASS' if not overall else 'FAIL',
                     'LEAN' if IN_LEAN else 'plain-python', ','.join(overall) or 'none'))
