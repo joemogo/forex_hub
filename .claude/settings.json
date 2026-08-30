@@ -1,4 +1,16 @@
 {
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": [
+        "~/Documents/mogo-lean-handoff-*",
+        "~/Documents/mogo-lean-modeb-*",
+        "./evidence"
+      ]
+    }
+  },
   "permissions": {
     "allow": [
       "Bash(bash tests/run_all.sh)",
@@ -12,6 +24,11 @@
       "mcp__Claude_Preview__preview_console_logs",
       "mcp__Claude_Preview__preview_screenshot",
       "mcp__claude-in-chrome__tabs_context_mcp"
+    ],
+    "deny": [
+      "Read(//Users/joemogollon/Documents/mogo-lean-handoff-*/**)",
+      "Read(//Users/joemogollon/Documents/mogo-lean-modeb-*/**)",
+      "Read(/evidence/**)"
     ]
   }
 }
