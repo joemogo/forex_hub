@@ -15,7 +15,18 @@ WHY THIS LANE EXISTS
     collide on packageId". No synthetic fixture can answer those, and pretending
     one could would be manufacturing a result and labelling it verification.
 
-    So they are moved here verbatim rather than weakened or deleted, and gated.
+    So they are preserved here rather than weakened or deleted, and gated. Precisely, of the
+    nine tests in this file: FIVE were moved verbatim and removed from their original modules
+    (test_the_real_corpus_converts_without_loss, test_the_real_corpus_mints_nothing_new,
+    test_2_every_indexed_artifact_exists_and_matches_its_whole_file_hash,
+    test_3_package_hashes_verify_through_the_production_canonicalizer, and
+    test_no_LIVE_record_states_a_value_its_package_leaves_null -- the last STRENGTHENED, not
+    verbatim: its `skipTest("live corpus not present")` became a hard assertion, because in this
+    lane an absent corpus is the failure). TWO were COPIED, not moved -- their originals remain
+    in tests/trader_intelligence/test_import_mogo_observations.py retargeted at a synthetic glob
+    (test_package_ids_really_do_collide_across_capture_runs,
+    test_content_hash_is_unique_across_every_package), so the behaviour is covered in the routine
+    lane and the real-corpus claim is covered here. The remaining TWO are new preconditions.
 
 WHY IT IS OUTSIDE tests/trader_intelligence/
 
