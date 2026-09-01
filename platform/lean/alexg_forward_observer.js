@@ -47,5 +47,8 @@ function alexGObserveAndBuildLeanExport(input,deps){
   const emitterInput=alexGBuildObservedLeanEmitterInput({...input,enabled:true,observedSetup});
   return deps.emitLeanZoneRequestV2(emitterInput,deps.emitterDeps);
 }
-module.exports={alexGObserveNewLeanBreakRetest,alexGBuildObservedLeanEmitterInput,
-  alexGObserveAndBuildLeanExport,MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED};
+const MOGO_LEAN_FORWARD_OBSERVER_API=Object.freeze({alexGObserveNewLeanBreakRetest,
+  alexGBuildObservedLeanEmitterInput,alexGObserveAndBuildLeanExport,
+  MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED});
+if(typeof module!=='undefined'&&module.exports) module.exports=MOGO_LEAN_FORWARD_OBSERVER_API;
+if(typeof globalThis!=='undefined') globalThis.MogoLeanForwardObserver=MOGO_LEAN_FORWARD_OBSERVER_API;
