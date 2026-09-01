@@ -46,4 +46,33 @@ function delayed(){let first=true;return api.alexGCreateDelayedLeanExportSession
  refusal('REFUSE_OBSERVER_SESSION_SNAPSHOT_LIMIT',()=>s.run(input([setup('A'),setup('B')])));
  assert.strictEqual(s.run(input([setup('C')])),null);assert.strictEqual(e.calls(),0);
  console.log('PASS -- oversized snapshots refuse before mutating state');}
+{let calls=0,received;const engine=(pair,frames)=>{calls++;received={pair,frames};return {setups:[],zones:{H1:{validatedZones:[]}}};};
+ const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:engine,emitLeanZoneRequestV2:()=>{throw new Error('must not emit');}});
+ assert.strictEqual(s.run({enabled:false,pair:'EUR_USD',timeframe:'H1',candles:[{},{}]}),null);assert.strictEqual(calls,0);
+ const candles=[{},{}];assert.strictEqual(s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles,identity:{untrusted:'kept'},versions:{},dataset:{},config:{}}),null);
+ assert.strictEqual(calls,1);assert.strictEqual(received.frames.H1,candles);assert.deepStrictEqual(received.frames.H4,[]);assert.deepStrictEqual(received.frames.D,[]);assert.deepStrictEqual(received.frames.W,[]);
+ for(const key of ['afterSetups','beforeSetups','zone','retestTouch','bars','setupCandles','resolveObserved'])
+  refusal('REFUSE_OBSERVER_CAPTURE_CALLER_STATE',()=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles,[key]:{}}));
+ refusal('REFUSE_OBSERVER_CAPTURE_IDENTITY',()=>s.run({enabled:true,pair:'GBP_USD',timeframe:'H1',candles}));
+ assert.strictEqual(calls,1,'caller substitutions and identity switches must not call engine');
+ refusal('REFUSE_OBSERVER_CAPTURE_INPUT',()=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H4',candles}));
+ refusal('REFUSE_OBSERVER_CAPTURE_INPUT',()=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles:[]}));
+ refusal('REFUSE_OBSERVER_CAPTURE_INPUT',()=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles:new Array(10001)}));
+ assert.strictEqual(calls,1,'unsupported timeframe and invalid sizes must not call engine');
+ console.log('PASS -- synchronous capture is disabled by default, pins identity, and accepts no caller snapshots');}
+{const common={enabled:true,pair:'EUR_USD',timeframe:'H1',candles:[{},{}]};
+ for(const result of [Promise.resolve({}),{}, {setups:[],zones:{}}]){
+  const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:()=>result,emitLeanZoneRequestV2:()=>{}});
+  refusal('REFUSE_OBSERVER_CAPTURE_ENGINE_RESULT',()=>s.run(common));
+ }
+ console.log('PASS -- synchronous capture refuses async and malformed engine results');}
+{const candidate=setup('A',{pair:'EUR_USD',timeframe:'H1'}),base={enabled:true,pair:'EUR_USD',timeframe:'H1',candles:[{},{}]};
+ function engine(zones){let step=0;return ()=>step++?{setups:[candidate],zones:{H1:{validatedZones:zones}}}:{setups:[],zones:{H1:{validatedZones:[]}}};}
+ for(const zones of [[],[{id:'z-A',touches:[]}],[{id:'z-A',touches:[{reactionId:'r-A'},{reactionId:'r-A'}]}],[{id:'z-A',touches:[{reactionId:'r-A'}]},{id:'z-A',touches:[{reactionId:'r-A'}]}]]){
+  const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:engine(zones),emitLeanZoneRequestV2:()=>({})});
+  s.run(base);refusal(zones.length===0?'REFUSE_OBSERVER_CAPTURE_ZONE':zones.length===2?'REFUSE_OBSERVER_CAPTURE_ZONE':'REFUSE_OBSERVER_CAPTURE_RETEST',()=>s.run(base));
+ }
+ const foreign=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:()=>({setups:[setup('X',{pair:'GBP_USD',timeframe:'H1'})],zones:{H1:{validatedZones:[]}}}),emitLeanZoneRequestV2:()=>({})});
+ refusal('REFUSE_OBSERVER_CAPTURE_ENGINE_IDENTITY',()=>foreign.run(base));
+ console.log('PASS -- capture refuses foreign engine snapshots and missing or ambiguous derived zone/touch facts');}
 console.log('---');console.log('ALL DELAYED LEAN OBSERVER SESSION FIXTURES PASSED');

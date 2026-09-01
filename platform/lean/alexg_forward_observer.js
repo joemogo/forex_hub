@@ -97,7 +97,12 @@ function alexGCreateDelayedLeanExportSession(deps,options){
       if(observed.setupId!==pending.setupId) refuse('REFUSE_OBSERVER_PENDING_SUBSTITUTION');
     }
     try{
-      const output=observed===null?null:alexGObserveAndBuildLeanExport({...input,enabled:true,beforeSetups:baseline},deps);
+      // The optional resolver is for the engine-capture adapter below.  It is
+      // invoked only after the selector chose the exact engine-owned setup.
+      // Existing callers retain the original explicit handoff fields.
+      const resolved=observed!==null&&typeof input.resolveObserved==='function'
+        ?input.resolveObserved(observed):input;
+      const output=observed===null?null:alexGObserveAndBuildLeanExport({...resolved,enabled:true,beforeSetups:baseline},deps);
       baseline=current; pending=null;
       return output;
     }catch(error){
@@ -110,9 +115,66 @@ function alexGCreateDelayedLeanExportSession(deps,options){
   };
   return Object.freeze({run});
 }
+// Disabled, standalone synchronous adapter.  It calls a deliberately supplied
+// engine with one internally selected timeframe array and derives every setup,
+// zone and touch handoff fact from that returned result.  It retains no candles.
+// The supplied engine is H1-master-clock driven.  Higher timeframes cannot be
+// captured here because this adapter intentionally supplies no H1 surrogate.
+// Provenance is relative to the explicitly trusted synchronous engine dependency;
+// this does not certify feed freshness, engine-state isolation or global novelty.
+// Deliberate invocation may change that engine's own state; this adapter adds no trading calls.
+const MOGO_LEAN_FORWARD_OBSERVER_ENGINE_CAPTURE_TIMEFRAMES=Object.freeze(['H1']);
+function alexGCreateSynchronousLeanEngineExportSession(deps,options){
+  const refuse=code=>{const e=new Error(code);e.code=code;throw e;};
+  if(!deps||typeof deps.runLeanSetupEngine!=='function'||typeof deps.emitLeanZoneRequestV2!=='function')
+    refuse('REFUSE_OBSERVER_CAPTURE_DEPENDENCY');
+  const delayed=alexGCreateDelayedLeanExportSession({emitLeanZoneRequestV2:deps.emitLeanZoneRequestV2,
+    emitterDeps:deps.emitterDeps},options);
+  let pinned=null;
+  const forbidden=['afterSetups','beforeSetups','zone','retestTouch','bars','setupCandles','resolveObserved'];
+  const run=input=>{
+    // Disabled calls do not invoke the engine or establish capture identity.
+    if(!input||input.enabled!==true) return null;
+    forbidden.forEach(key=>{if(Object.prototype.hasOwnProperty.call(input,key)) refuse('REFUSE_OBSERVER_CAPTURE_CALLER_STATE');});
+    const pair=input.pair,timeframe=input.timeframe,candles=input.candles;
+    if(typeof pair!=='string'||!pair||MOGO_LEAN_FORWARD_OBSERVER_ENGINE_CAPTURE_TIMEFRAMES.indexOf(timeframe)<0||!Array.isArray(candles)||candles.length<2||candles.length>10000)
+      refuse('REFUSE_OBSERVER_CAPTURE_INPUT');
+    if(pinned&& (pinned.pair!==pair||pinned.timeframe!==timeframe)) refuse('REFUSE_OBSERVER_CAPTURE_IDENTITY');
+    const frames={H1:[],H4:[],D:[],W:[]}; frames[timeframe]=candles;
+    const result=deps.runLeanSetupEngine(pair,frames);
+    if(!result||typeof result!=='object'||typeof result.then==='function'||!Array.isArray(result.setups)||!result.zones||typeof result.zones!=='object')
+      refuse('REFUSE_OBSERVER_CAPTURE_ENGINE_RESULT');
+    // Refuse rather than silently mixing a foreign engine snapshot into the
+    // delayed baseline.  The adapter owns one pinned pair/timeframe only.
+    result.setups.forEach(setup=>{
+      if(!setup||setup.pair!==pair||setup.timeframe!==timeframe)
+        refuse('REFUSE_OBSERVER_CAPTURE_ENGINE_IDENTITY');
+    });
+    const timeframeZones=result.zones[timeframe];
+    if(!timeframeZones||!Array.isArray(timeframeZones.validatedZones)) refuse('REFUSE_OBSERVER_CAPTURE_ENGINE_RESULT');
+    const identity=input.identity&&typeof input.identity==='object'?{...input.identity,pair,timeframe}:{pair,timeframe};
+    const handoff={enabled:true,afterSetups:result.setups,identity,versions:input.versions,dataset:input.dataset,config:input.config,
+      resolveObserved:setup=>{
+        const zones=timeframeZones.validatedZones.filter(item=>item&&item.id===setup.zoneId);
+        if(zones.length!==1) refuse('REFUSE_OBSERVER_CAPTURE_ZONE');
+        const zone=zones[0];
+        const touches=Array.isArray(zone.touches)?zone.touches.filter(item=>item&&item.reactionId===setup.reactionId):[];
+        if(touches.length!==1) refuse('REFUSE_OBSERVER_CAPTURE_RETEST');
+        const retestTouch=touches[0];
+        return {afterSetups:result.setups,zone,bars:candles,retestTouch,identity,versions:input.versions,
+          dataset:input.dataset,config:input.config};
+      }};
+    const output=delayed.run(handoff);
+    if(!pinned) pinned=Object.freeze({pair,timeframe});
+    return output;
+  };
+  return Object.freeze({run});
+}
 const MOGO_LEAN_FORWARD_OBSERVER_API=Object.freeze({alexGObserveNewLeanBreakRetest,
   alexGBuildObservedLeanEmitterInput,alexGObserveAndBuildLeanExport,
   alexGCreateDelayedLeanExportSession,MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED,
-  MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS});
+  MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS,
+  MOGO_LEAN_FORWARD_OBSERVER_ENGINE_CAPTURE_TIMEFRAMES,
+  alexGCreateSynchronousLeanEngineExportSession});
 if(typeof module!=='undefined'&&module.exports) module.exports=MOGO_LEAN_FORWARD_OBSERVER_API;
 if(typeof globalThis!=='undefined') globalThis.MogoLeanForwardObserver=MOGO_LEAN_FORWARD_OBSERVER_API;

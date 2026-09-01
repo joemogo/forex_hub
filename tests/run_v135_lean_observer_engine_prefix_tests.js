@@ -142,4 +142,33 @@ assert.strictEqual(sessionExport.caseId,freshSetup.setupId);
 assert.deepStrictEqual(sessionExport.bars,laterRows);
 assert.strictEqual(session.run(sessionInput(freshLater)),null,'same snapshot must not export twice');
 console.log('PASS -- delayed session primes, retains actual engine candidate, exports on successor, and suppresses repeat');
+
+// The synchronous capture wrapper receives only candles and metadata.  Its explicit
+// engine dependency owns the setup snapshots, zone and touch; 53 -> 54 -> 55 is
+// rebuilt as ordinary engine input on each poll, with no caller-provided handoff facts.
+let engineCalls=0; const captureSetupCounts=[];
+const captureSession=observer.alexGCreateSynchronousLeanEngineExportSession({
+  runLeanSetupEngine(pair,frames){
+    engineCalls++; assert.strictEqual(pair,'EUR_USD'); assert.strictEqual(frames.H1,captureBars);
+    assert.deepStrictEqual(frames.H4,[]);assert.deepStrictEqual(frames.D,[]);assert.deepStrictEqual(frames.W,[]);
+    reset(); const result=run(frames.H1); captureSetupCounts.push(br(result.setups).length); return result;
+  },emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}
+});
+let captureBars;
+function captured(prefix){
+  captureBars=all.slice(0,prefix);
+  const captureRows=captureBars.map((b,index)=>({index,startTimeUtcMs:b.t.getTime(),open:b.o,high:b.h,low:b.l,close:b.c}));
+  return {enabled:true,pair:'EUR_USD',timeframe:'H1',candles:captureBars,
+    identity:{pair:'caller-cannot-select-this'},versions:engineMetadata.versions,config:engineMetadata.config,
+    dataset:{id:'synthetic-capture-prefix',hash:{algorithm:'SHA-256',value:sha(emitter.canonical(captureRows))}}};
+}
+assert.strictEqual(captureSession.run(captured(53)),null);
+assert.strictEqual(captureSession.run(captured(54)),null);
+const capturedExport=captureSession.run(captured(55));
+assert.deepStrictEqual(captureSetupCounts,[0,1,1]);
+assert.strictEqual(capturedExport.caseId,freshSetup.setupId);
+assert.deepStrictEqual(capturedExport.bars,laterRows);
+assert.strictEqual(captureSession.run(captured(55)),null,'duplicate engine snapshot must not export twice');
+assert.strictEqual(engineCalls,4);
+console.log('PASS -- synchronous capture derives 53 -> 54 -> 55 observer handoff from the actual engine result and suppresses duplicates');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
