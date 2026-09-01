@@ -1,5 +1,5 @@
 // RUN_ALL_EXEC: node tests/run_v133_lean_forward_observer_seam_tests.js
-const fs=require('fs');
+const fs=require('fs'),vm=require('vm');
 const html=fs.readFileSync('index.html','utf8');
 const standalone=fs.readFileSync('platform/lean/alexg_forward_observer.js','utf8');
 const emitter=html.match(/\/\/ MOGO_LEAN_PRODUCTION_EMITTER_SEAM_START([\s\S]*?)\/\/ MOGO_LEAN_PRODUCTION_EMITTER_SEAM_END/);
@@ -48,12 +48,21 @@ test('composition is disabled, dependency-injected, and emits nothing when no ne
   refusal('REFUSE_OBSERVER_EXPORT_DEPENDENCY',()=>api.compose({...base,enabled:true},{}));
   let calls=0;equal(api.compose({...base,enabled:true},{emitLeanZoneRequestV2:()=>{calls++;}}),null);equal(calls,0);
 });
+test('standalone module exposes the same frozen API in a browser-like context',()=>{
+  const context={};vm.createContext(context);vm.runInContext(standalone,context);
+  const browserApi=context.MogoLeanForwardObserver;
+  equal(typeof browserApi,'object');equal(Object.isFrozen(browserApi),true);
+  equal(typeof browserApi.alexGObserveAndBuildLeanExport,'function');
+  equal(browserApi.MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED,false);
+  equal(browserApi.alexGObserveNewLeanBreakRetest({enabled:true,beforeSetups:[],afterSetups:[]}),null);
+});
 test('has no call site, IO, timers, persistence, export, or trading references',()=>{
   equal((html.match(/alexGObserveNewLeanBreakRetest\s*\(/g)||[]).length,0,'application must have no observer call site');
   const executable=standalone.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'');
   ['fetch\\s*\\(','localStorage','setInterval','setTimeout','download','upload','createObjectURL','openPaperPosition','order','POST\\b'].forEach(pattern=>{if(new RegExp(pattern,'i').test(executable)) throw new Error('forbidden observer reference: '+pattern);});
   equal((executable.match(/alexGBuildLeanZoneRequestV2\s*\(/g)||[]).length,0,'handoff must not invoke emitter');
   equal((html.match(/alexGObserveAndBuildLeanExport\s*\(/g)||[]).length,0,'application must have no composition call site');
+  equal(html.includes('platform/lean/alexg_forward_observer.js'),false,'application must not load observer module');
 });
 results.forEach(r=>console.log((r.pass?'PASS':'FAIL')+' -- '+r.name+(r.detail?' ('+r.detail+')':'')));
 const failed=results.filter(r=>!r.pass).length;
