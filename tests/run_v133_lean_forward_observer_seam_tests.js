@@ -7,6 +7,7 @@ if(!emitter) throw new Error('emitter seam marker missing');
 const exported=require('../platform/lean/alexg_forward_observer.js');
 const api={observe:exported.alexGObserveNewLeanBreakRetest,defaultEnabled:exported.MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED};
 api.handoff=exported.alexGBuildObservedLeanEmitterInput;
+api.compose=exported.alexGObserveAndBuildLeanExport;
 const results=[];
 function test(name,fn){try{fn();results.push({name,pass:true});}catch(e){results.push({name,pass:false,detail:e&&e.stack||String(e)});}}
 function equal(a,b,m){if(a!==b) throw new Error(m||`${a} !== ${b}`);}
@@ -34,11 +35,25 @@ test('handoff requires capability, snapshot provenance, and matching anchors',()
   refusal('REFUSE_OBSERVER_HANDOFF_ZONE',()=>api.handoff({...base,enabled:true,zone:{id:'other'}}));
   refusal('REFUSE_OBSERVER_HANDOFF_RETEST',()=>api.handoff({...base,enabled:true,retestTouch:{reactionId:'other'}}));
 });
+test('composition returns one in-memory export through an explicit emitter dependency',()=>{
+  const setup={...b,zoneId:'zone-1',reactionId:'reaction-1'},bars=[{},{}];let calls=0,received=null;
+  const input={enabled:true,beforeSetups:[],afterSetups:[setup],zone:{id:'zone-1'},bars,
+    retestTouch:{reactionId:'reaction-1'},identity:{},versions:{},dataset:{},config:{}};
+  const out=api.compose(input,{emitLeanZoneRequestV2:(handoff,deps)=>{calls++;received={handoff,deps};return {caseId:handoff.setup.setupId};},emitterDeps:{hash:true}});
+  equal(calls,1);equal(out.caseId,'B');equal(received.handoff.setup,setup);equal(received.handoff.bars,bars);equal(received.deps.hash,true);
+});
+test('composition is disabled, dependency-injected, and emits nothing when no new B&R exists',()=>{
+  const base={beforeSetups:[a],afterSetups:[a]};
+  refusal('REFUSE_OBSERVER_EXPORT_DISABLED',()=>api.compose({...base,enabled:false},{}));
+  refusal('REFUSE_OBSERVER_EXPORT_DEPENDENCY',()=>api.compose({...base,enabled:true},{}));
+  let calls=0;equal(api.compose({...base,enabled:true},{emitLeanZoneRequestV2:()=>{calls++;}}),null);equal(calls,0);
+});
 test('has no call site, IO, timers, persistence, export, or trading references',()=>{
   equal((html.match(/alexGObserveNewLeanBreakRetest\s*\(/g)||[]).length,0,'application must have no observer call site');
   const executable=standalone.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'');
   ['fetch\\s*\\(','localStorage','setInterval','setTimeout','download','upload','createObjectURL','openPaperPosition','order','POST\\b'].forEach(pattern=>{if(new RegExp(pattern,'i').test(executable)) throw new Error('forbidden observer reference: '+pattern);});
   equal((executable.match(/alexGBuildLeanZoneRequestV2\s*\(/g)||[]).length,0,'handoff must not invoke emitter');
+  equal((html.match(/alexGObserveAndBuildLeanExport\s*\(/g)||[]).length,0,'application must have no composition call site');
 });
 results.forEach(r=>console.log((r.pass?'PASS':'FAIL')+' -- '+r.name+(r.detail?' ('+r.detail+')':'')));
 const failed=results.filter(r=>!r.pass).length;
