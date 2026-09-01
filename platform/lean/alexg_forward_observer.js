@@ -33,4 +33,19 @@ function alexGBuildObservedLeanEmitterInput(input){
     retestTouch:input.retestTouch,identity:input.identity,versions:input.versions,
     dataset:input.dataset,config:input.config};
 }
-module.exports={alexGObserveNewLeanBreakRetest,alexGBuildObservedLeanEmitterInput,MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED};
+
+// Complete in-memory composition seam. The reviewed emitter must be supplied as
+// a dependency; this module neither imports nor discovers application state.
+function alexGObserveAndBuildLeanExport(input,deps){
+  const refuse=code=>{const e=new Error(code);e.code=code;throw e;};
+  if(!input||input.enabled!==true) refuse('REFUSE_OBSERVER_EXPORT_DISABLED');
+  if(!deps||typeof deps.emitLeanZoneRequestV2!=='function')
+    refuse('REFUSE_OBSERVER_EXPORT_DEPENDENCY');
+  const observedSetup=alexGObserveNewLeanBreakRetest({enabled:true,
+    beforeSetups:input.beforeSetups,afterSetups:input.afterSetups});
+  if(observedSetup===null) return null;
+  const emitterInput=alexGBuildObservedLeanEmitterInput({...input,enabled:true,observedSetup});
+  return deps.emitLeanZoneRequestV2(emitterInput,deps.emitterDeps);
+}
+module.exports={alexGObserveNewLeanBreakRetest,alexGBuildObservedLeanEmitterInput,
+  alexGObserveAndBuildLeanExport,MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED};
