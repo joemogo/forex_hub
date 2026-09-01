@@ -182,4 +182,19 @@ assert.deepStrictEqual(capturedExport.bars,laterRows);
 assert.strictEqual(captureSession.run(captured(55)),null,'duplicate engine snapshot must not export twice');
 assert.strictEqual(engineCalls,4);
 console.log('PASS -- synchronous capture derives 53 -> 54 -> 55 handoff, rejects stale prefix while pending, recovers and suppresses duplicates');
+let clockNow=all[52].t.getTime(),freshCalls=0;
+const freshCapture=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>clockNow,
+  runLeanSetupEngine(pair,frames){freshCalls++;reset();return run(frames.H1);},
+  emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}},{maxEndpointAgeMs:3600000});
+assert.strictEqual(freshCapture.run(captured(53)),null);
+clockNow=all[53].t.getTime();assert.strictEqual(freshCapture.run(captured(54)),null);
+clockNow+=3600001;
+assert.throws(()=>freshCapture.run(captured(54)),error=>error.code==='REFUSE_OBSERVER_STALE_DATA');
+assert.strictEqual(freshCalls,2,'stale pending data must not invoke engine');
+const freshExport=freshCapture.run(captured(55));
+assert.strictEqual(freshExport.caseId,freshSetup.setupId);
+assert.deepStrictEqual(freshExport.bars,laterRows);
+assert.strictEqual(freshCapture.run(captured(55)),null);
+assert.strictEqual(freshCalls,4);
+console.log('PASS -- clock-gated actual-engine pending export survives stale data refusal and exports fresh successor exactly once');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');

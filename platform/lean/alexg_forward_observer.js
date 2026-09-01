@@ -219,11 +219,41 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
   };
   return Object.freeze({run});
 }
+// Explicit freshness gate around synthetic-capable capture. The clock is a
+// trusted dependency, not a timestamp supplied with a snapshot. No implicit
+// clock or market-hours assumption: the caller must choose a maximum endpoint
+// age (at most one H1 interval). Passing this gate does not authenticate a feed.
+function alexGCreateFreshLeanEngineExportSession(deps,options){
+  const refuse=code=>{const e=new Error(code);e.code=code;throw e;};
+  if(!deps||typeof deps.nowUtcMs!=='function') refuse('REFUSE_OBSERVER_FRESHNESS_CLOCK');
+  const nowUtcMs=deps.nowUtcMs,maxAge=options&&options.maxEndpointAgeMs;
+  if(!Number.isSafeInteger(maxAge)||maxAge<=0||maxAge>3600000)
+    refuse('REFUSE_OBSERVER_FRESHNESS_POLICY');
+  const capture=alexGCreateSynchronousLeanEngineExportSession({...deps},options);
+  let acceptedNow=null;
+  const run=input=>{
+    if(!input||input.enabled!==true) return null;
+    const now=nowUtcMs();
+    if(!Number.isSafeInteger(now)||now<0) refuse('REFUSE_OBSERVER_FRESHNESS_CLOCK');
+    if(acceptedNow!==null&&now<acceptedNow) refuse('REFUSE_OBSERVER_CLOCK_ROLLBACK');
+    const bars=input.candles;
+    if(!Array.isArray(bars)||bars.length<2||bars.length>10000) refuse('REFUSE_OBSERVER_CAPTURE_INPUT');
+    const last=bars[bars.length-1],t=last&&last.t;
+    const endpoint=t instanceof Date?t.getTime():t;
+    if(!Number.isSafeInteger(endpoint)||endpoint<0) refuse('REFUSE_OBSERVER_CAPTURE_CANDLE_TIMESTAMPS');
+    if(endpoint>now) refuse('REFUSE_OBSERVER_FUTURE_CANDLE');
+    if(now-endpoint>maxAge) refuse('REFUSE_OBSERVER_STALE_DATA');
+    const output=capture.run(input);
+    acceptedNow=now;
+    return output;
+  };
+  return Object.freeze({run});
+}
 const MOGO_LEAN_FORWARD_OBSERVER_API=Object.freeze({alexGObserveNewLeanBreakRetest,
   alexGBuildObservedLeanEmitterInput,alexGObserveAndBuildLeanExport,
   alexGCreateDelayedLeanExportSession,MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED,
   MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS,
   MOGO_LEAN_FORWARD_OBSERVER_ENGINE_CAPTURE_TIMEFRAMES,
-  alexGCreateSynchronousLeanEngineExportSession});
+  alexGCreateSynchronousLeanEngineExportSession,alexGCreateFreshLeanEngineExportSession});
 if(typeof module!=='undefined'&&module.exports) module.exports=MOGO_LEAN_FORWARD_OBSERVER_API;
 if(typeof globalThis!=='undefined') globalThis.MogoLeanForwardObserver=MOGO_LEAN_FORWARD_OBSERVER_API;

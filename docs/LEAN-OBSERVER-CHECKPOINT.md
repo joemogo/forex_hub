@@ -1,5 +1,36 @@
 # Disabled LEAN observer checkpoint
 
+## September 1, 2026 — explicit clock-based freshness gate
+
+Based on published `747cd0b`. New standalone
+`alexGCreateFreshLeanEngineExportSession` wraps the existing synchronous capture.
+It requires a trusted `nowUtcMs` function and a positive integer
+`maxEndpointAgeMs` no greater than 3,600,000. These are pinned at construction;
+snapshot fields cannot override them. Disabled invocation does not read the clock.
+
+Before engine invocation, the wrapper rejects invalid clocks, clock rollback
+relative to the last accepted capture, future endpoint timestamps, and endpoint
+age above the explicit policy. Age equality is accepted. Failed captures do not
+advance its clock watermark. Timestamp ordering/cadence/overlap and OHLC guards
+remain enforced by the wrapped capture. Tests use controlled clocks only.
+
+Focused results: v132 19/19, v133 12/12, v134 4/4, v135 8/8, v136 24/24
+(67 groups). Independent QA passed. Same-realm mutation controls detected removal
+of future/stale/rollback checks and premature clock-watermark assignment; the
+unmodified positive control passed. A real-engine synthetic pending setup survives stale-data refusal,
+then exports once when a fresh successor is provided. `index.html` and protected
+strategy code are unchanged. No application wiring, real data, trading, merge,
+deployment, storage or network behavior added. Full Mac gate and Python contract
+suite were not rerun. Paper-trading readiness: not assessed.
+
+Limitations: raw synchronous capture remains synthetic-capable and has no clock
+gate; a future integration must explicitly choose the fresh wrapper. The clock
+and feed are trusted dependencies, not authenticated by this check. Endpoint age
+does not prove the source was recently fetched. Calendar gaps still refuse.
+Next bounded task: verify the wrapper's browser exposure and isolation as a
+single operator-facing, disabled entry point; document prerequisites and remaining
+production-integration boundary without loading it into the running application.
+
 ## September 1, 2026 — snapshot continuity guard
 
 Based on published `dad2d78` (draft PR #1). A subsequent capture must retain an

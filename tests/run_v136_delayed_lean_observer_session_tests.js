@@ -151,4 +151,33 @@ function delayed(){let first=true;return api.alexGCreateDelayedLeanExportSession
  assert.strictEqual(run([...candles(),candles(1700007200000)[1]]),null,'gap refusal must preserve baseline');
  assert.strictEqual(calls,2);
  console.log('PASS -- initial and appended cadence gaps refuse without priming or changing accepted history');}
+{const create=api.alexGCreateFreshLeanEngineExportSession;
+ refusal('REFUSE_OBSERVER_FRESHNESS_CLOCK',()=>create({}));
+ for(const age of [undefined,0,-1,1.5,NaN,Infinity,3600001,'100'])
+   refusal('REFUSE_OBSERVER_FRESHNESS_POLICY',()=>create({nowUtcMs:()=>0},{maxEndpointAgeMs:age}));
+ console.log('PASS -- freshness requires an explicit clock and bounded integer age policy');}
+{let now=1700003600000,calls=0,clockCalls=0;
+ const deps={nowUtcMs:()=>{clockCalls++;return now;},runLeanSetupEngine:()=>{calls++;return {setups:[],zones:{H1:{validatedZones:[]}}};},emitLeanZoneRequestV2:()=>{}};
+ const policy={maxEndpointAgeMs:1000},s=api.alexGCreateFreshLeanEngineExportSession(deps,policy);
+ const capture={enabled:true,pair:'EUR_USD',timeframe:'H1',candles:candles()};
+ assert.strictEqual(s.run({...capture,enabled:false}),null);assert.strictEqual(clockCalls,0);
+ deps.nowUtcMs=()=>0;policy.maxEndpointAgeMs=Infinity;
+ now=1700003599999;refusal('REFUSE_OBSERVER_FUTURE_CANDLE',()=>s.run(capture));
+ now=1700003601001;refusal('REFUSE_OBSERVER_STALE_DATA',()=>s.run({...capture,nowUtcMs:1700003600000,maxEndpointAgeMs:Infinity}));
+ assert.strictEqual(calls,0);
+ now=1700003600000;assert.strictEqual(s.run(capture),null,'failed freshness must not prime');
+ now+=1000;assert.strictEqual(s.run(capture),null,'age boundary is inclusive');
+ now--;refusal('REFUSE_OBSERVER_CLOCK_ROLLBACK',()=>s.run(capture));
+ now+=2;refusal('REFUSE_OBSERVER_STALE_DATA',()=>s.run(capture));
+ assert.strictEqual(calls,2);assert(Object.isFrozen(s));
+ console.log('PASS -- future, stale and backward clock refuse before engine; clock/policy are pinned and boundaries tested');}
+{let now=NaN,calls=0,fail=true;
+ const s=api.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>now,runLeanSetupEngine:()=>{calls++;if(fail)throw new Error('engine failed');return {setups:[],zones:{H1:{validatedZones:[]}}};},emitLeanZoneRequestV2:()=>{}},{maxEndpointAgeMs:3600000});
+ const capture={enabled:true,pair:'EUR_USD',timeframe:'H1',candles:candles()};
+ for(const bad of [NaN,Infinity,-1,1.5,'1700003600000',Promise.resolve(1)]){now=bad;refusal('REFUSE_OBSERVER_FRESHNESS_CLOCK',()=>s.run(capture));}
+ assert.strictEqual(calls,0);
+ now=1700003602000;assert.throws(()=>s.run(capture),/engine failed/);
+ fail=false;now=1700003601000;assert.strictEqual(s.run(capture),null,'failed engine must not advance clock watermark');
+ assert.strictEqual(calls,2);
+ console.log('PASS -- invalid clocks refuse and failed engine capture does not commit clock watermark');}
 console.log('---');console.log('ALL DELAYED LEAN OBSERVER SESSION FIXTURES PASSED');
