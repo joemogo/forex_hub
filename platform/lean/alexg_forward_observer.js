@@ -117,7 +117,8 @@ function alexGCreateDelayedLeanExportSession(deps,options){
 }
 // Disabled, standalone synchronous adapter.  It calls a deliberately supplied
 // engine with one internally selected timeframe array and derives every setup,
-// zone and touch handoff fact from that returned result.  It retains no candles.
+// zone and touch handoff fact from that returned result. It retains bounded
+// copied OHLC facts for the preceding accepted window, never caller objects.
 // The supplied engine is H1-master-clock driven.  Higher timeframes cannot be
 // captured here because this adapter intentionally supplies no H1 surrogate.
 // Provenance is relative to the explicitly trusted synchronous engine dependency;
@@ -130,7 +131,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     refuse('REFUSE_OBSERVER_CAPTURE_DEPENDENCY');
   const delayed=alexGCreateDelayedLeanExportSession({emitLeanZoneRequestV2:deps.emitLeanZoneRequestV2,
     emitterDeps:deps.emitterDeps},options);
-  let pinned=null,acceptedEndpointUtcMs=null;
+  let pinned=null,acceptedEndpointUtcMs=null,acceptedClosedBars=new Map();
   const forbidden=['afterSetups','beforeSetups','zone','retestTouch','bars','setupCandles','resolveObserved'];
   const run=input=>{
     // Disabled calls do not invoke the engine or establish capture identity.
@@ -153,6 +154,21 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     if(acceptedEndpointUtcMs!==null&&endpointUtcMs<acceptedEndpointUtcMs)
       refuse('REFUSE_OBSERVER_CAPTURE_STALE_SNAPSHOT');
     if(pinned&& (pinned.pair!==pair||pinned.timeframe!==timeframe)) refuse('REFUSE_OBSERVER_CAPTURE_IDENTITY');
+    // The final candle is the engine's unclosed sentinel: allow it to update
+    // until a successor arrives. Compare all overlapping previously closed
+    // candles by timestamp, not array offset (warmup eviction shifts indices).
+    // This bounded window check is not a complete feed continuity certificate.
+    const closedBars=new Map();
+    for(let index=0;index<candles.length;index++){
+      const candle=candles[index],utcMs=candle.t instanceof Date?candle.t.getTime():candle.t;
+      const facts=['o','h','l','c'].map(key=>candle[key]);
+      if(!facts.every(value=>typeof value==='number'&&Number.isFinite(value)))
+        refuse('REFUSE_OBSERVER_CAPTURE_CANDLE_VALUES');
+      const prior=acceptedClosedBars.get(utcMs);
+      if(prior&&facts.some((value,i)=>value!==prior[i]))
+        refuse('REFUSE_OBSERVER_CAPTURE_REVISED_HISTORY');
+      if(index<candles.length-1) closedBars.set(utcMs,facts);
+    }
     const frames={H1:[],H4:[],D:[],W:[]}; frames[timeframe]=candles;
     const result=deps.runLeanSetupEngine(pair,frames);
     if(!result||typeof result!=='object'||typeof result.then==='function'||!Array.isArray(result.setups)||!result.zones||typeof result.zones!=='object')
@@ -180,6 +196,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     const output=delayed.run(handoff);
     if(!pinned) pinned=Object.freeze({pair,timeframe});
     acceptedEndpointUtcMs=endpointUtcMs;
+    acceptedClosedBars=closedBars;
     return output;
   };
   return Object.freeze({run});

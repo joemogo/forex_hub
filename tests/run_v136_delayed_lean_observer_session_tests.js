@@ -5,7 +5,7 @@ function setup(id,extra){return {setupId:id,setupType:'B_breakRetest',zoneId:'z-
 function input(after,enabled=true){const s=after[0];return {enabled,afterSetups:after,zone:{id:s&&s.zoneId},bars:[{},{}],retestTouch:{reactionId:s&&s.reactionId},identity:{},versions:{},dataset:{},config:{}};}
 function refusal(code,fn){assert.throws(fn,error=>error&&error.code===code);}
 function emitter(){let calls=0;return {deps:{emitLeanZoneRequestV2:handoff=>({caseId:handoff.setup.setupId,call:++calls})},calls:()=>calls};}
-function candles(endpoint=1700003600000){return [{t:new Date(endpoint-3600000)},{t:new Date(endpoint)}];}
+function candles(endpoint=1700003600000){return [endpoint-3600000,endpoint].map(t=>({t:new Date(t),o:1,h:2,l:0.5,c:1.5}));}
 
 {const e=emitter(),session=api.alexGCreateDelayedLeanExportSession(e.deps),a=setup('A');
  assert.strictEqual(session.run(input([a])),null); assert.strictEqual(e.calls(),0);
@@ -97,7 +97,34 @@ function delayed(){let first=true;return api.alexGCreateDelayedLeanExportSession
  assert.throws(()=>s.run(capture(1700007200000)),/synthetic engine failure/);fail=false;
  assert.strictEqual(s.run(capture(1700003600000)),null,'disabled and failed calls must not establish watermark');
  assert.strictEqual(calls,2);
- assert.strictEqual(s.run({...capture(1700007200000),candles:[{t:1700003600000},{t:1700007200000}]}),null,'numeric UTC-ms timestamps are accepted');
+ assert.strictEqual(s.run({...capture(1700007200000),candles:candles(1700007200000).map(c=>({...c,t:c.t.getTime()}))}),null,'numeric UTC-ms timestamps are accepted');
  refusal('REFUSE_OBSERVER_CAPTURE_STALE_SNAPSHOT',()=>s.run(capture(1700003600000)));
  assert.strictEqual(calls,3);console.log('PASS -- disabled or failed capture does not advance the accepted watermark');}
+{let calls=0;const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:()=>{calls++;return {setups:[],zones:{H1:{validatedZones:[]}}};},emitLeanZoneRequestV2:()=>{}});
+ const run=bars=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles:bars});
+ const original=candles();run(original);
+ for(const key of ['o','h','l','c']){
+   const changed=candles();changed[0][key]+=0.01;
+   refusal('REFUSE_OBSERVER_CAPTURE_REVISED_HISTORY',()=>run(changed));
+ }
+ original[0].c=1.6;
+ refusal('REFUSE_OBSERVER_CAPTURE_REVISED_HISTORY',()=>run(original));
+ assert.strictEqual(calls,1,'history refusals must precede engine invocation');
+ assert.strictEqual(run(candles()),null,'refusals must preserve accepted history');
+ const updating=candles();updating[1].c=1.7;assert.strictEqual(run(updating),null,'unclosed sentinel may change');
+ const extended=[...updating,{...candles(1700007200000)[1]}];run(extended);
+ const revised=extended.map(c=>({...c}));revised[1].c=1.8;
+ refusal('REFUSE_OBSERVER_CAPTURE_REVISED_HISTORY',()=>run(revised));
+ assert.strictEqual(run(extended.slice(1)),null,'unchanged rolling-window overlap is allowed');
+ assert.strictEqual(calls,5);
+ console.log('PASS -- copied closed OHLC refuses revisions; sentinel updates and warmup eviction remain valid');}
+{let calls=0,fail=false;const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:()=>{calls++;if(fail)throw new Error('engine failed');return {setups:[],zones:{H1:{validatedZones:[]}}};},emitLeanZoneRequestV2:()=>{}});
+ const run=bars=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles:bars});run(candles());
+ fail=true;const next=candles(1700007200000);next[0].c=1.7;
+ assert.throws(()=>run(next),/engine failed/);fail=false;
+ assert.strictEqual(run(candles(1700007200000)),null,'failed engine must not pin newly closed OHLC');
+ for(const value of [undefined,NaN,Infinity,'1']){const bad=candles(1700007200000);bad[0].o=value;
+   refusal('REFUSE_OBSERVER_CAPTURE_CANDLE_VALUES',()=>run(bad));}
+ assert.strictEqual(calls,3);
+ console.log('PASS -- failed captures do not pin history; invalid OHLC refuses before engine');}
 console.log('---');console.log('ALL DELAYED LEAN OBSERVER SESSION FIXTURES PASSED');
