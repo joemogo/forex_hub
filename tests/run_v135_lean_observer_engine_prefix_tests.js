@@ -91,4 +91,37 @@ const exported=observer.alexGObserveAndBuildLeanExport(exportInput,{emitLeanZone
 assert.strictEqual(exported.caseId,setup.setupId); assert.strictEqual(exported.setup.type,'break-retest');
 assert.deepStrictEqual(exported.bars,laterRows,'emitter must receive the exact later engine prefix');
 console.log('PASS -- standalone observer and actual emitter export the real engine setup on successor prefix');
+// Rebuild like a polling caller: reset engine-owned state for each complete input
+// window, while retaining the observer's separately captured prior setup list.
+function rebuild(start,end){
+  reset();
+  const bars=all.slice(start,end);
+  return {bars,result:run(bars)};
+}
+const freshBefore=rebuild(0,53),freshFirst=rebuild(0,54),freshLater=rebuild(0,55);
+assert.strictEqual(br(freshBefore.result.setups).length,0);
+assert.strictEqual(br(freshFirst.result.setups).length,1);
+assert.strictEqual(br(freshLater.result.setups).length,1);
+const freshSetup=observer.alexGObserveNewLeanBreakRetest({enabled:true,
+  beforeSetups:freshBefore.result.setups,afterSetups:freshFirst.result.setups});
+assert.strictEqual(freshSetup,br(freshFirst.result.setups)[0]);
+assert.notStrictEqual(freshSetup,setup,'fresh rebuild must produce a new engine record object');
+assert.notStrictEqual(freshSetup,br(freshLater.result.setups)[0],'each rebuild must own its records');
+assert.strictEqual(freshSetup.setupId,setup.setupId);
+assert.strictEqual(freshSetup.qualificationTimestamp,setup.qualificationTimestamp);
+assert.strictEqual(observer.alexGObserveNewLeanBreakRetest({enabled:true,
+  beforeSetups:freshFirst.result.setups,afterSetups:freshLater.result.setups}),null);
+console.log('PASS -- fresh engine rebuilds preserve first appearance and suppress duplicate observation');
+
+// One rolling-window shift removes only a pre-event warmup candle. The bar index
+// changes, but this particular event retains its identity and must not become new.
+// This does not establish behavior when a zone anchor is evicted or re-created.
+const shifted=rebuild(1,55),shiftedSetup=br(shifted.result.setups)[0];
+assert.strictEqual(br(shifted.result.setups).length,1);
+assert.strictEqual(shiftedSetup.qualificationBarIndex,freshSetup.qualificationBarIndex-1);
+assert.strictEqual(shiftedSetup.qualificationTimestamp,freshSetup.qualificationTimestamp);
+assert.strictEqual(shiftedSetup.setupId,freshSetup.setupId);
+assert.strictEqual(observer.alexGObserveNewLeanBreakRetest({enabled:true,
+  beforeSetups:freshLater.result.setups,afterSetups:shifted.result.setups}),null);
+console.log('PASS -- one pre-event warmup-bar eviction changes index without re-observing the same event');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
