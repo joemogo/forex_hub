@@ -131,7 +131,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     refuse('REFUSE_OBSERVER_CAPTURE_DEPENDENCY');
   const delayed=alexGCreateDelayedLeanExportSession({emitLeanZoneRequestV2:deps.emitLeanZoneRequestV2,
     emitterDeps:deps.emitterDeps},options);
-  let pinned=null,acceptedEndpointUtcMs=null,acceptedClosedBars=new Map();
+  let pinned=null,acceptedEndpointUtcMs=null,acceptedClosedBars=new Map(),acceptedTimestamps=null;
   const forbidden=['afterSetups','beforeSetups','zone','retestTouch','bars','setupCandles','resolveObserved'];
   const run=input=>{
     // Disabled calls do not invoke the engine or establish capture identity.
@@ -143,6 +143,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     // This is ordering/provenance validation only, not a wall-clock freshness
     // claim.  Equal endpoints remain allowed so a pending export can retry.
     let endpointUtcMs;
+    const timestamps=[];
     for(let index=0;index<candles.length;index++){
       const candle=candles[index];
       const timestamp=candle&&candle.t;
@@ -150,10 +151,26 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
       if(!Number.isSafeInteger(utcMs)||(index>0&&utcMs<=endpointUtcMs))
         refuse('REFUSE_OBSERVER_CAPTURE_CANDLE_TIMESTAMPS');
       endpointUtcMs=utcMs;
+      timestamps.push(utcMs);
     }
     if(acceptedEndpointUtcMs!==null&&endpointUtcMs<acceptedEndpointUtcMs)
       refuse('REFUSE_OBSERVER_CAPTURE_STALE_SNAPSHOT');
     if(pinned&& (pinned.pair!==pair||pinned.timeframe!==timeframe)) refuse('REFUSE_OBSERVER_CAPTURE_IDENTITY');
+    // A new window must retain an exact suffix of the accepted window through
+    // its endpoint. Permit leading warmup eviction, never insertion/deletion
+    // within overlap or silent priming after a disconnected snapshot.
+    if(acceptedTimestamps!==null){
+      const start=acceptedTimestamps.indexOf(timestamps[0]);
+      if(start<0) refuse('REFUSE_OBSERVER_CAPTURE_DISCONTINUITY');
+      const overlap=acceptedTimestamps.length-start;
+      if(timestamps.length<overlap||acceptedTimestamps.slice(start).some((t,i)=>t!==timestamps[i]))
+        refuse('REFUSE_OBSERVER_CAPTURE_DISCONTINUITY');
+    }
+    // Deliberately conservative H1-only policy: without a verified market
+    // calendar, any gap (including a possible market closure) is unsupported.
+    // Do not synthesize candles, skip the gap, or reset the session automatically.
+    if(timestamps.some((t,i)=>i>0&&t-timestamps[i-1]!==3600000))
+      refuse('REFUSE_OBSERVER_CAPTURE_UNSUPPORTED_GAP');
     // The final candle is the engine's unclosed sentinel: allow it to update
     // until a successor arrives. Compare all overlapping previously closed
     // candles by timestamp, not array offset (warmup eviction shifts indices).
@@ -197,6 +214,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     if(!pinned) pinned=Object.freeze({pair,timeframe});
     acceptedEndpointUtcMs=endpointUtcMs;
     acceptedClosedBars=closedBars;
+    acceptedTimestamps=timestamps;
     return output;
   };
   return Object.freeze({run});

@@ -127,4 +127,28 @@ function delayed(){let first=true;return api.alexGCreateDelayedLeanExportSession
    refusal('REFUSE_OBSERVER_CAPTURE_CANDLE_VALUES',()=>run(bad));}
  assert.strictEqual(calls,3);
  console.log('PASS -- failed captures do not pin history; invalid OHLC refuses before engine');}
+{let calls=0;const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:()=>{calls++;return {setups:[],zones:{H1:{validatedZones:[]}}};},emitLeanZoneRequestV2:()=>{}});
+ const bars=[...candles(),candles(1700007200000)[1],candles(1700010800000)[1]];
+ const run=cs=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles:cs});run(bars);
+ refusal('REFUSE_OBSERVER_CAPTURE_DISCONTINUITY',()=>run([bars[0],bars[2],bars[3]]));
+ refusal('REFUSE_OBSERVER_CAPTURE_DISCONTINUITY',()=>run([bars[0],{...bars[0],t:new Date(1700001800000)},...bars.slice(1)]));
+ refusal('REFUSE_OBSERVER_CAPTURE_DISCONTINUITY',()=>run(candles(1700018000000)));
+ refusal('REFUSE_OBSERVER_CAPTURE_DISCONTINUITY',()=>run([{...bars[0],t:new Date(1699996400000)},...bars]));
+ assert.strictEqual(calls,1,'disconnected or edited overlap must not invoke engine');
+ assert.strictEqual(run(bars.slice(1)),null,'leading eviction retains an exact suffix');
+ assert.strictEqual(run([bars[3],candles(1700014400000)[1]]),null,'one-candle overlap may advance');
+ assert.strictEqual(calls,3);
+ console.log('PASS -- missing, inserted, prepended and nonoverlapping timestamps refuse; suffix eviction and extension recover');}
+{let calls=0;const s=api.alexGCreateSynchronousLeanEngineExportSession({runLeanSetupEngine:()=>{calls++;return {setups:[],zones:{H1:{validatedZones:[]}}};},emitLeanZoneRequestV2:()=>{}});
+ const run=cs=>s.run({enabled:true,pair:'EUR_USD',timeframe:'H1',candles:cs});
+ for(const delta of [1800000,7200000,49*3600000]){
+   const bad=candles();bad[1].t=new Date(bad[0].t.getTime()+delta);
+   refusal('REFUSE_OBSERVER_CAPTURE_UNSUPPORTED_GAP',()=>run(bad));
+ }
+ assert.strictEqual(calls,0,'initial gaps and short cadence refuse before priming');run(candles());
+ refusal('REFUSE_OBSERVER_CAPTURE_UNSUPPORTED_GAP',()=>run([...candles(),candles(1700010800000)[1]]));
+ assert.strictEqual(calls,1,'newly appended gap must refuse before engine');
+ assert.strictEqual(run([...candles(),candles(1700007200000)[1]]),null,'gap refusal must preserve baseline');
+ assert.strictEqual(calls,2);
+ console.log('PASS -- initial and appended cadence gaps refuse without priming or changing accepted history');}
 console.log('---');console.log('ALL DELAYED LEAN OBSERVER SESSION FIXTURES PASSED');
