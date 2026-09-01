@@ -1,5 +1,25 @@
 # Disabled LEAN observer checkpoint
 
+## September 1, 2026 — browser-like boundary and integration handoff
+
+Based on published `669492f`. Added a VM browser-like test for the fresh wrapper
+using native Date candles, throwing browser-IO access traps, and no CommonJS
+module. It verifies inert disabled invocation, successful explicit baseline
+capture, stale refusal before further engine calls, and a frozen session.
+Application construction of the freshness wrapper is now explicitly forbidden by
+the isolation fixture. No runtime source changed.
+
+Focused checks: v132 19/19, v133 13/13, v134 4/4, v135 8/8, v136 24/24
+(68 groups). Real Chrome/Mac checks and the Python contract suite were not run.
+Independent QA passed; removing browser API exposure or stale-data enforcement
+was detected by in-memory mutation checks.
+See `LEAN-OBSERVER-INTEGRATION-PREREQUISITES.md` for the intended API, dependencies,
+refusals, and boundaries. This document does not authorize integration or trading.
+
+Next: review isolated engine-state ownership and failure recovery before any
+production connection. Real browser validation, calendar-aware continuity and
+real capture remain unfinished. Paper-trading readiness remains not assessed.
+
 ## September 1, 2026 — explicit clock-based freshness gate
 
 Based on published `747cd0b`. New standalone

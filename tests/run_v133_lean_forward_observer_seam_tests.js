@@ -56,6 +56,30 @@ test('standalone module exposes the same frozen API in a browser-like context',(
   equal(browserApi.MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED,false);
   equal(browserApi.alexGObserveNewLeanBreakRetest({enabled:true,beforeSetups:[],afterSetups:[]}),null);
 });
+test('browser-like fresh wrapper gates native Date snapshots without IO or automatic execution',()=>{
+  const context={};
+  for(const name of ['fetch','localStorage','sessionStorage','document','setTimeout','setInterval','WebSocket'])
+    Object.defineProperty(context,name,{get(){throw new Error('unexpected browser access: '+name);}});
+  vm.createContext(context);vm.runInContext(standalone,context);
+  const result=vm.runInContext(`(()=>{
+    let now=1700003600000,clockCalls=0,engineCalls=0;
+    const api=globalThis.MogoLeanForwardObserver;
+    const session=api.alexGCreateFreshLeanEngineExportSession({
+      nowUtcMs:()=>{clockCalls++;return now;},
+      runLeanSetupEngine:()=>{engineCalls++;return {setups:[],zones:{H1:{validatedZones:[]}}};},
+      emitLeanZoneRequestV2:()=>{throw new Error('unexpected export');}
+    },{maxEndpointAgeMs:1000});
+    const input={pair:'EUR_USD',timeframe:'H1',candles:[1700000000000,1700003600000].map(t=>({t:new Date(t),o:1,h:2,l:0.5,c:1.5}))};
+    session.run(input);
+    if(clockCalls!==0||engineCalls!==0)throw new Error('disabled invocation performed work');
+    session.run({...input,enabled:true});
+    now+=1001;
+    let stale=false;try{session.run({...input,enabled:true});}catch(e){stale=e.code==='REFUSE_OBSERVER_STALE_DATA';}
+    if(!stale||engineCalls!==1)throw new Error('browser freshness guard failed');
+    return {clockCalls,engineCalls,frozen:Object.isFrozen(session)};
+  })()`,context);
+  equal(result.engineCalls,1);equal(result.clockCalls,2);equal(result.frozen,true);
+});
 test('has no call site, IO, timers, persistence, export, or trading references',()=>{
   equal((html.match(/alexGObserveNewLeanBreakRetest\s*\(/g)||[]).length,0,'application must have no observer call site');
   const executable=standalone.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'');
@@ -63,6 +87,7 @@ test('has no call site, IO, timers, persistence, export, or trading references',
   equal((executable.match(/alexGBuildLeanZoneRequestV2\s*\(/g)||[]).length,0,'handoff must not invoke emitter');
   equal((html.match(/alexGObserveAndBuildLeanExport\s*\(/g)||[]).length,0,'application must have no composition call site');
   equal(html.includes('platform/lean/alexg_forward_observer.js'),false,'application must not load observer module');
+  equal(/alexGCreateFreshLeanEngineExportSession\s*\(/.test(html),false,'application must not construct freshness wrapper');
 });
 results.forEach(r=>console.log((r.pass?'PASS':'FAIL')+' -- '+r.name+(r.detail?' ('+r.detail+')':'')));
 const failed=results.filter(r=>!r.pass).length;

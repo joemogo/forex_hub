@@ -1,0 +1,51 @@
+# Disabled observer: integration prerequisites
+
+This is a developer handoff, not an instruction to enable observation or trading.
+The application does not load the observer module or call its APIs.
+
+## Entry point
+
+Future forward integration must use
+`MogoLeanForwardObserver.alexGCreateFreshLeanEngineExportSession`, not the raw
+synthetic-capable capture API. The returned session is frozen and inert until
+explicit `enabled: true` invocation. Loading the module defines APIs only.
+
+Required trusted dependencies: an isolated synchronous setup engine, the reviewed
+v2 emitter and hash dependency, and a UTC-millisecond clock. Supply an explicit
+positive integer `maxEndpointAgeMs` at most 3,600,000. This is a technical ceiling,
+not a recommendation or an approved production latency policy.
+
+Inputs are one pinned pair, H1 candles with an unclosed final sentinel, and the
+identity/version/configuration/dataset metadata required by the emitter. The
+capture derives setup, zone and retest facts from the supplied engine, not caller
+snapshots. The first accepted snapshot primes the baseline and exports nothing.
+
+## Before production use
+
+- Review and approve an isolated engine-state boundary. Invoking the supplied
+  engine may mutate its own state; do not point this API at the running scanner
+  merely because the adapter has no trading calls.
+- Validate the trusted clock and select a justified age limit. Recent candle
+  timestamps do not prove a recent fetch or authenticate the provider.
+- Resolve feed/session handling. H1 intervals must be exactly one hour and each
+  update must retain the previous endpoint and an exact timestamp suffix.
+  Weekend/holiday gaps currently refuse. Do not fabricate bars or automatically
+  restart the session to hide discontinuity; restart would discard its baseline.
+- Confirm source identities, versions, exact originating candles, permissions,
+  and dataset hash for a separately authorized real capture.
+- Verify in an isolated real browser and on the Mac. Node VM browser-like tests
+  do not establish Chrome integration, CSP behavior, or access to the running app.
+- Keep observation/export and paper-trading activation as separate decisions.
+  No observer test establishes broker isolation, risk sizing, P&L accounting,
+  position persistence, or trade-execution readiness.
+
+## Refusals and recovery
+
+Stale/future timestamps, clock rollback, invalid cadence, changed closed OHLC,
+and discontinuous windows refuse before engine execution. Rejected inputs do not
+advance adapter state. A pending export may succeed when an intact fresh successor
+arrives; repeated accepted snapshots do not re-export that setup. Engine failures
+can still mutate engine-owned state and require an isolation/recovery design.
+
+No UI wiring, recurring polling, storage, network transfer, deployment, merge,
+paper positions, or live orders are authorized by this document.
