@@ -36,6 +36,7 @@ tests.trader_intelligence.test_lean_import	47
 tests.trader_intelligence.test_lean_preflight	22
 tests.trader_intelligence.test_lean_synthetic_smoke	49
 tests.trader_intelligence.test_lean_zone_contract	20
+tests.trader_intelligence.test_lean_zone_contract_v2	11
 tests.trader_intelligence.test_observation_difference	26
 tests.trader_intelligence.test_observation_graph_reconcile	12
 tests.trader_intelligence.test_observation_integrity	20
