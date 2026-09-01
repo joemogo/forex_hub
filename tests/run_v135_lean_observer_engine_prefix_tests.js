@@ -1,0 +1,94 @@
+// RUN_ALL_EXEC: node tests/run_v135_lean_observer_engine_prefix_tests.js
+//
+// Test-only integration proof: constructed H1 candles enter the real, unmodified
+// alexGRunSetupEngine on successive prefixes.  No setup record is constructed by
+// this test; the observer sees the engine's before/after snapshots directly.
+const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),assert=require('assert');
+const html=fs.readFileSync('index.html','utf8');
+const script=(html.match(/<script>([\s\S]*)<\/script>/)||[])[1];
+if(!script) throw new Error('index.html script missing');
+const observer=require('../platform/lean/alexg_forward_observer.js');
+const seam=html.match(/\/\/ MOGO_LEAN_PRODUCTION_EMITTER_SEAM_START([\s\S]*?)\/\/ MOGO_LEAN_PRODUCTION_EMITTER_SEAM_END/);
+if(!seam) throw new Error('production emitter seam missing');
+const emitter=new Function(seam[1]+';return {build:alexGBuildLeanZoneRequestV2,canonical:alexGLeanCanonicalJson};')();
+const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
+
+function element(){ return {style:{},classList:{add(){},remove(){},toggle(){},contains(){return false;}},options:[{value:'All'}],
+  getContext(){return {clearRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillRect(){},save(){},restore(){},setLineDash(){},arc(){},fill(){},closePath(){},fillText(){},measureText(){return {width:0};}};},
+  appendChild(){},addEventListener(){},getBoundingClientRect(){return {top:0,left:0,width:0,height:0};}}; }
+const elements={}; let timer=0;
+const context={console,Date,Math,JSON,Promise,Set,Map,Array,Object,String,Number,Boolean,RegExp,Error,TypeError,
+  document:{getElementById:id=>(elements[id]||(elements[id]=element())),querySelector(){return null;},querySelectorAll(){return [];},createElement:element,addEventListener(){},body:{appendChild(){},removeChild(){}},activeElement:null,visibilityState:'visible'},
+  window:{devicePixelRatio:1},localStorage:{getItem(){return null;},setItem(){},removeItem(){}},alert(){},confirm(){return true;},
+  Blob:function(){},URL:{createObjectURL(){return 'blob:test';},revokeObjectURL(){}},setTimeout(){return ++timer;},clearTimeout(){},setInterval(){return ++timer;},clearInterval(){},
+  ResizeObserver:function(){return {observe(){},disconnect(){}};},LightweightCharts:{LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}},Notification:undefined,fetch(){return Promise.reject(new Error('network disabled by test'));}};
+context.globalThis=context;
+vm.createContext(context); vm.runInContext(script,context,{filename:'index.html'});
+
+// This is S12's downward-break/retest fixture, copied as ordinary candle input only.
+// The real engine decides whether it becomes B_breakRetest and at which prefix.
+const T=0.0009765625, t0=Date.UTC(2026,0,5);
+const loBar=(low,close)=>({o:close,h:low+T,l:low,c:close});
+function candles(){
+  const bars=[];
+  for(let i=0;i<55;i++) bars.push(loBar(1.09840,1.09880));
+  bars[20]=loBar(1.09800,1.09880); bars[28]=loBar(1.09810,1.09880); bars[36]=loBar(1.09790,1.09880);
+  bars[39]=loBar(1.09795,1.09800); bars[40]=loBar(1.09795,1.09800); bars[41]=loBar(1.09795,1.09800);
+  for(let i=42;i<55;i++) bars[i]=loBar(1.09700,1.09750);
+  bars[50]={o:1.09750,h:1.09805,l:1.09805-T,c:1.09750};
+  return bars.map((b,i)=>({...b,t:new Date(t0+i*3600000)}));
+}
+function reset(){ vm.runInContext('alexGZoneState={}; alexGSetupState=[]; alexGLastEvaluatedCloseTime={};',context); }
+function run(prefix){ return context.alexGRunSetupEngine('EUR_USD',{H1:prefix,H4:[],D:[],W:[]}); }
+function br(setups){ return setups.filter(s=>s.setupType==='B_breakRetest'); }
+
+const all=candles(); reset();
+let first=null, before=null, after=null;
+for(let n=1;n<=all.length;n++){
+  const prefix=all.slice(0,n);
+  const result=run(prefix);
+  const current=result.setups.slice();
+  if(br(current).length){ first={n,result,current,prefix}; break; }
+  before=current;
+}
+assert(first,'real engine did not organically create B_breakRetest on any synthetic prefix');
+assert.strictEqual(br(before).length,0,'immediately preceding prefix must contain no B_breakRetest');
+after=first.current;
+const setup=observer.alexGObserveNewLeanBreakRetest({enabled:true,beforeSetups:before,afterSetups:after});
+assert(setup,'observer did not report the real engine first appearance');
+assert.strictEqual(setup,br(after)[0],'observer must return the exact engine-owned setup record');
+assert.strictEqual(setup.brokenDirection,'downThroughSupport');
+assert.strictEqual(setup.qualificationBarIndex,first.n-1,'first appearance must qualify on the just-added candle');
+const zone=first.result.zones.H1.validatedZones.find(z=>z.id===setup.zoneId);
+assert(zone,'engine-owned setup zone missing');
+const retestTouch=zone.touches.find(t=>t.reactionId===setup.reactionId);
+assert(retestTouch,'engine-owned setup retest touch missing');
+console.log(`PASS -- real engine first emits B_breakRetest at prefix ${first.n}, qualification bar ${setup.qualificationBarIndex}`);
+
+// At first appearance the exact input array ends at the qualification bar; the reviewed
+// emitter correctly refuses because close time is represented by the successor start time.
+const engineMetadata=vm.runInContext('({config:RULES_ALEXG.config,versions:{strategyVersion:STRATEGY_ALEXG,ruleVersion:RULES_ALEXG.ruleVersion,appVersion:APP_VERSION}})',context);
+const shared={enabled:true,beforeSetups:before,afterSetups:after,zone,bars:first.prefix,retestTouch,
+  identity:{pair:'EUR_USD',timeframe:'H1'},versions:engineMetadata.versions,config:engineMetadata.config};
+const rows=shared.bars.map((b,index)=>({index,startTimeUtcMs:b.t.getTime(),open:b.o,high:b.h,low:b.l,close:b.c}));
+shared.dataset={id:'synthetic-engine-prefix',hash:{algorithm:'SHA-256',value:sha(emitter.canonical(rows))}};
+assert.throws(()=>observer.alexGObserveAndBuildLeanExport(shared,{emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}}),e=>e.code==='REFUSE_QUALIFICATION_INDEX');
+console.log('PASS -- first-appearance exact prefix is honestly refused without a successor close-time anchor');
+
+// A later evaluated prefix supplies that real successor candle. Re-running the engine preserves
+// the already-created record; no hand-built record or unevaluated candle is used for export.
+const laterBars=all.slice(0,first.n+1);
+const later=run(laterBars);
+const laterAfter=later.setups.slice();
+const laterSetup=br(laterAfter).find(s=>s.setupId===setup.setupId);
+assert(laterSetup,'real engine lost first setup on successor prefix');
+const laterZone=later.zones.H1.validatedZones.find(z=>z.id===laterSetup.zoneId);
+const laterTouch=laterZone.touches.find(t=>t.reactionId===laterSetup.reactionId);
+const laterRows=laterBars.map((b,index)=>({index,startTimeUtcMs:b.t.getTime(),open:b.o,high:b.h,low:b.l,close:b.c}));
+const exportInput={...shared,beforeSetups:before,afterSetups:laterAfter,setupCandles:undefined,zone:laterZone,bars:laterBars,retestTouch:laterTouch,
+  dataset:{id:'synthetic-engine-prefix-successor',hash:{algorithm:'SHA-256',value:sha(emitter.canonical(laterRows))}}};
+const exported=observer.alexGObserveAndBuildLeanExport(exportInput,{emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}});
+assert.strictEqual(exported.caseId,setup.setupId); assert.strictEqual(exported.setup.type,'break-retest');
+assert.deepStrictEqual(exported.bars,laterRows,'emitter must receive the exact later engine prefix');
+console.log('PASS -- standalone observer and actual emitter export the real engine setup on successor prefix');
+console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
