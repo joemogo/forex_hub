@@ -124,4 +124,22 @@ assert.strictEqual(shiftedSetup.setupId,freshSetup.setupId);
 assert.strictEqual(observer.alexGObserveNewLeanBreakRetest({enabled:true,
   beforeSetups:freshLater.result.setups,afterSetups:shifted.result.setups}),null);
 console.log('PASS -- one pre-event warmup-bar eviction changes index without re-observing the same event');
+// Exercise the production-independent session helper with actual engine snapshots:
+// prime -> wait for successor -> export exactly once across repeated polls.
+const session=observer.alexGCreateDelayedLeanExportSession({emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}});
+function sessionInput(capture){
+  const candidate=br(capture.result.setups)[0];
+  const zone=candidate&&capture.result.zones.H1.validatedZones.find(z=>z.id===candidate.zoneId);
+  const rows=capture.bars.map((b,index)=>({index,startTimeUtcMs:b.t.getTime(),open:b.o,high:b.h,low:b.l,close:b.c}));
+  return {...shared,afterSetups:capture.result.setups,bars:capture.bars,zone,
+    retestTouch:zone&&zone.touches.find(t=>t.reactionId===candidate.reactionId),
+    dataset:{id:'synthetic-session-prefix',hash:{algorithm:'SHA-256',value:sha(emitter.canonical(rows))}}};
+}
+assert.strictEqual(session.run(sessionInput(freshBefore)),null,'priming must not emit historical setups');
+assert.strictEqual(session.run(sessionInput(freshFirst)),null,'first appearance waits for successor');
+const sessionExport=session.run(sessionInput(freshLater));
+assert.strictEqual(sessionExport.caseId,freshSetup.setupId);
+assert.deepStrictEqual(sessionExport.bars,laterRows);
+assert.strictEqual(session.run(sessionInput(freshLater)),null,'same snapshot must not export twice');
+console.log('PASS -- delayed session primes, retains actual engine candidate, exports on successor, and suppresses repeat');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');

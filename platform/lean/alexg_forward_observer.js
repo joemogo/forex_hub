@@ -47,8 +47,72 @@ function alexGObserveAndBuildLeanExport(input,deps){
   const emitterInput=alexGBuildObservedLeanEmitterInput({...input,enabled:true,observedSetup});
   return deps.emitLeanZoneRequestV2(emitterInput,deps.emitterDeps);
 }
+// Disabled, bounded caller-owned polling state.  This is intentionally only a
+// convenience around the explicit observer/emitter seam above: it neither
+// proves that a setup came from the engine nor that supplied snapshots are live.
+const MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS=1024;
+function alexGCreateDelayedLeanExportSession(deps,options){
+  const refuse=code=>{const e=new Error(code);e.code=code;throw e;};
+  const requested=options&&options.maxSnapshotSetups;
+  if(requested!==undefined&&(!Number.isInteger(requested)||requested<1||requested>MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS))
+    refuse('REFUSE_OBSERVER_SESSION_LIMIT');
+  const limit=requested===undefined?MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS:requested;
+  let baseline=null,pending=null;
+  const pendingFields=['pair','timeframe','reactionId','breakCycleId','brokenDirection','qualificationTimestamp'];
+  const snapshot=items=>{
+    if(!Array.isArray(items)||items.length>limit) refuse('REFUSE_OBSERVER_SESSION_SNAPSHOT_LIMIT');
+    const ids=new Set();
+    return items.map(setup=>{
+      if(!setup||typeof setup.setupId!=='string'||!setup.setupId) refuse('REFUSE_OBSERVER_SETUP_IDENTITY');
+      if(ids.has(setup.setupId)) refuse('REFUSE_OBSERVER_DUPLICATE_IDENTITY');
+      ids.add(setup.setupId);
+      // Copy only selector/pending identity facts; never retain caller records.
+      const copy={setupId:setup.setupId,setupType:setup.setupType};
+      pendingFields.forEach(key=>{if(Object.prototype.hasOwnProperty.call(setup,key)) copy[key]=setup[key];});
+      return copy;
+    });
+  };
+  const samePending=(setup,fingerprint)=>pendingFields.every(key=>{
+    const had=Object.prototype.hasOwnProperty.call(fingerprint,key);
+    return had===Object.prototype.hasOwnProperty.call(setup,key)&&(!had||setup[key]===fingerprint[key]);
+  });
+  const run=input=>{
+    // Disabled calls deliberately do not validate, emit, or change the baseline.
+    if(!input||input.enabled!==true) return null;
+    const current=snapshot(input.afterSetups);
+    if(baseline===null){ baseline=current; return null; }
+    let observed;
+    if(pending){
+      const currentPending=input.afterSetups.find(setup=>setup&&setup.setupId===pending.setupId);
+      if(!currentPending){
+        const replacement=input.afterSetups.find(setup=>setup&&setup.setupType==='B_breakRetest');
+        refuse(replacement?'REFUSE_OBSERVER_PENDING_SUBSTITUTION':'REFUSE_OBSERVER_PENDING_MISSING');
+      }
+      if(currentPending.setupType!=='B_breakRetest'||!samePending(currentPending,pending))
+        refuse('REFUSE_OBSERVER_PENDING_IDENTITY');
+    }
+    observed=alexGObserveNewLeanBreakRetest({enabled:true,beforeSetups:baseline,afterSetups:input.afterSetups});
+    if(pending){
+      if(observed===null) refuse('REFUSE_OBSERVER_PENDING_MISSING');
+      if(observed.setupId!==pending.setupId) refuse('REFUSE_OBSERVER_PENDING_SUBSTITUTION');
+    }
+    try{
+      const output=observed===null?null:alexGObserveAndBuildLeanExport({...input,enabled:true,beforeSetups:baseline},deps);
+      baseline=current; pending=null;
+      return output;
+    }catch(error){
+      if(error&&error.code==='REFUSE_QUALIFICATION_INDEX'&&observed){
+        pending=snapshot([observed])[0];
+        return null;
+      }
+      throw error;
+    }
+  };
+  return Object.freeze({run});
+}
 const MOGO_LEAN_FORWARD_OBSERVER_API=Object.freeze({alexGObserveNewLeanBreakRetest,
   alexGBuildObservedLeanEmitterInput,alexGObserveAndBuildLeanExport,
-  MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED});
+  alexGCreateDelayedLeanExportSession,MOGO_LEAN_FORWARD_OBSERVER_DEFAULT_ENABLED,
+  MOGO_LEAN_FORWARD_OBSERVER_SESSION_MAX_SNAPSHOT_SETUPS});
 if(typeof module!=='undefined'&&module.exports) module.exports=MOGO_LEAN_FORWARD_OBSERVER_API;
 if(typeof globalThis!=='undefined') globalThis.MogoLeanForwardObserver=MOGO_LEAN_FORWARD_OBSERVER_API;
