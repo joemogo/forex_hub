@@ -130,7 +130,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     refuse('REFUSE_OBSERVER_CAPTURE_DEPENDENCY');
   const delayed=alexGCreateDelayedLeanExportSession({emitLeanZoneRequestV2:deps.emitLeanZoneRequestV2,
     emitterDeps:deps.emitterDeps},options);
-  let pinned=null;
+  let pinned=null,acceptedEndpointUtcMs=null;
   const forbidden=['afterSetups','beforeSetups','zone','retestTouch','bars','setupCandles','resolveObserved'];
   const run=input=>{
     // Disabled calls do not invoke the engine or establish capture identity.
@@ -139,6 +139,19 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
     const pair=input.pair,timeframe=input.timeframe,candles=input.candles;
     if(typeof pair!=='string'||!pair||MOGO_LEAN_FORWARD_OBSERVER_ENGINE_CAPTURE_TIMEFRAMES.indexOf(timeframe)<0||!Array.isArray(candles)||candles.length<2||candles.length>10000)
       refuse('REFUSE_OBSERVER_CAPTURE_INPUT');
+    // This is ordering/provenance validation only, not a wall-clock freshness
+    // claim.  Equal endpoints remain allowed so a pending export can retry.
+    let endpointUtcMs;
+    for(let index=0;index<candles.length;index++){
+      const candle=candles[index];
+      const timestamp=candle&&candle.t;
+      const utcMs=timestamp instanceof Date?timestamp.getTime():timestamp;
+      if(!Number.isSafeInteger(utcMs)||(index>0&&utcMs<=endpointUtcMs))
+        refuse('REFUSE_OBSERVER_CAPTURE_CANDLE_TIMESTAMPS');
+      endpointUtcMs=utcMs;
+    }
+    if(acceptedEndpointUtcMs!==null&&endpointUtcMs<acceptedEndpointUtcMs)
+      refuse('REFUSE_OBSERVER_CAPTURE_STALE_SNAPSHOT');
     if(pinned&& (pinned.pair!==pair||pinned.timeframe!==timeframe)) refuse('REFUSE_OBSERVER_CAPTURE_IDENTITY');
     const frames={H1:[],H4:[],D:[],W:[]}; frames[timeframe]=candles;
     const result=deps.runLeanSetupEngine(pair,frames);
@@ -166,6 +179,7 @@ function alexGCreateSynchronousLeanEngineExportSession(deps,options){
       }};
     const output=delayed.run(handoff);
     if(!pinned) pinned=Object.freeze({pair,timeframe});
+    acceptedEndpointUtcMs=endpointUtcMs;
     return output;
   };
   return Object.freeze({run});

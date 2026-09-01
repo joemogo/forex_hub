@@ -164,11 +164,13 @@ function captured(prefix){
 }
 assert.strictEqual(captureSession.run(captured(53)),null);
 assert.strictEqual(captureSession.run(captured(54)),null);
+assert.throws(()=>captureSession.run(captured(53)),error=>error.code==='REFUSE_OBSERVER_CAPTURE_STALE_SNAPSHOT');
+assert.strictEqual(engineCalls,2,'stale prefix must not invoke engine or disturb pending export');
 const capturedExport=captureSession.run(captured(55));
 assert.deepStrictEqual(captureSetupCounts,[0,1,1]);
 assert.strictEqual(capturedExport.caseId,freshSetup.setupId);
 assert.deepStrictEqual(capturedExport.bars,laterRows);
 assert.strictEqual(captureSession.run(captured(55)),null,'duplicate engine snapshot must not export twice');
 assert.strictEqual(engineCalls,4);
-console.log('PASS -- synchronous capture derives 53 -> 54 -> 55 observer handoff from the actual engine result and suppresses duplicates');
+console.log('PASS -- synchronous capture derives 53 -> 54 -> 55 handoff, rejects stale prefix while pending, recovers and suppresses duplicates');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
