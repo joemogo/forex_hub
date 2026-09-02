@@ -52,10 +52,13 @@ with no reasons, so the refusal is attributable to age alone. **Staleness is the
 C1 condition**: attestation version, pinned manifest hash, `VERIFIED` verdict, artifact counts and
 the three contradiction lists all pass.
 
-**Consequence.** From the artifacts as published, ALEX cannot be turned ON at all, on any origin
-serving this repository state, until the C1 attestation is regenerated
-(`scripts/mogo_evidence_verify.js`, operator-authorized) and served. This blocker re-arms 24 hours
-after each regeneration. That is the gate working as written — MOGO-011 Phase A deliberately made
+**Consequence, stated with its two assumptions.** *If* the operator's serving origin returns this
+checkout's attestation file, *and* the browser clock is roughly correct, then the OFF→ON toggle
+refuses — blockers are additive, so `CAMPAIGN_C1` alone makes `pass` false regardless of how the
+store-derived facts turn out. Neither assumption is verifiable from here; question (1) below
+settles both at once, since the alert prints every blocker code. Under those assumptions the
+refusal persists until the C1 attestation is regenerated (`scripts/mogo_evidence_verify.js`,
+operator-authorized) and served, and it re-arms 24 hours after each regeneration. That is the gate working as written — MOGO-011 Phase A deliberately made
 C1 integrity a hard, non-exceptable term — but its practical effect is that activation is
 available only within a 24-hour window after an attestation build.
 
