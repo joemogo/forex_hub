@@ -50,6 +50,12 @@ evaluation, not cloud LEAN execution. Both mirrored fixtures match break index
 42. The boundary now refuses a declared/evaluated break-index mismatch, in
 addition to geometry validation; moving the declaration to 43 is refused in both
 fixtures. Multi-confirmation timing and broader event parity remain unproven.
+With confirmation counts 2 or 3, neither mirrored fixture generates a production
+B&R; hypothetical Python requests refuse as unqualified. This is a recorded
+limitation, not evidence of confirmed-break timing parity. The live/default
+one-close configuration has not changed. Any protected strategy-rule repair
+requires separate review/authorization; do not infer wider configuration support
+from accepting an integer at the envelope boundary.
 v135 requires python3 explicitly.
 
 ### Source-only H1 dependency boundary (synthetic proof)

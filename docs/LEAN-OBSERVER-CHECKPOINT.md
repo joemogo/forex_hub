@@ -1,5 +1,31 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — multi-close configuration limitation
+
+Based on published `26e41ab`. Tested confirmation counts 2 and 3 in fresh
+source-only engine realms for both mirrored candle arrays. None produces a
+production B&R. Hypothetical requests copied from the one-close fixtures with
+adjusted configuration/event references also refuse as REFUSE_UNQUALIFIED_SETUP
+in Python. These are explicitly NOT production-emitted multi-close requests.
+The initial expectation of qualification failed; it was not a passing parity
+result. The added characterization records the limitation instead of weakening
+rules to obtain an export. One-close positive controls remain passing.
+
+v135: 15/15 fixture groups, including four multi-close characterization cases.
+No strategy/default changes; isolated configuration overrides only. Caller
+candles and the reference engine's one-close default remain unchanged. Python
+unit suites, other observer suites, Mac/browser and cloud gates were not rerun.
+
+Next bounded task: consolidate the disabled observer readiness report and
+specific integration/strategy-review permissions still needed. Do not claim
+multi-close timing parity or proceed with protected-rule changes. Browser
+integration, calendar handling and real capture remain open; paper readiness
+not assessed.
+Independent QA reproduced all cases; changing the expected production B&R count
+from zero to one failed. Source inspection shows production updates lastKnownRole
+after each close, so a first through-close flips the role used for the next
+confirmation. Altering that behavior is a protected strategy-semantics decision.
+
 ## September 2, 2026 — break provenance mismatch refusal
 
 Based on published `a493249`. Both actual-engine mirrored fixtures declare break

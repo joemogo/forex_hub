@@ -375,4 +375,24 @@ for(const [request,direction] of [[recovered,'sell'],[mirroredBare,'buy']]){
   assert.strictEqual(JSON.parse(refused.stdout).refusal.code,'REFUSE_ROLE_DIRECTION');
 }
 console.log('PASS -- actual-engine mirrored exports accepted by Python v2 boundary');
+// Characterization of an unsupported configuration, NOT a passing parity claim.
+for(const closes of [2,3]) for(const [inputBars,base] of [[all,recovered],[mirror,mirroredBare]]){
+  const realm=bareEngineContext();
+  vm.runInContext('RULES_ALEXG.config.breakConfirmationCloses='+closes,realm);
+  const actual=realm.alexGRunSetupEngine('EUR_USD',{H1:inputBars.map(b=>({...b,t:new Date(b.t.getTime())})),H4:[],D:[],W:[]});
+  assert.strictEqual(br(actual.setups).length,0,'multi-close fixture: production engine emits no B&R');
+  // Hypothetical adapter request, explicitly not a production-emitted setup.
+  const request=JSON.parse(JSON.stringify(base));
+  request.config.breakConfirmationCloses=closes;
+  const index=41+closes;
+  request.breakEvent.at={index,barStartTimeUtcMs:request.bars[index].startTimeUtcMs,closeTimeUtcMs:request.bars[index+1].startTimeUtcMs};
+  const result=spawnSync('python3',['tests/lean_synthetic/zone_contract_v2/boundary.py'],{
+    input:JSON.stringify(request),encoding:'utf8',timeout:10000});
+  assert.ifError(result.error);assert.strictEqual(result.status,2,result.stdout+'\n'+result.stderr);
+  assert.strictEqual(JSON.parse(result.stdout).refusal.code,'REFUSE_UNQUALIFIED_SETUP');
+}
+assert.strictEqual(vm.runInContext('RULES_ALEXG.config.breakConfirmationCloses',context),1);
+assert.strictEqual(JSON.stringify(all),callerBefore);
+assert.strictEqual(JSON.stringify(mirror),mirrorBefore);
+console.log('PASS -- multi-close limitation characterized: no production B&R and hypothetical Python requests refuse');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
