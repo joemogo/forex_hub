@@ -41,6 +41,13 @@ snapshots. The first accepted snapshot primes the baseline and exports nothing.
 
 ## Refusals and recovery
 
+The synthetic actual-engine fixture now demonstrates one candidate ownership
+model: a fresh VM realm and copied candles for each attempt. An injected failure
+after engine mutation leaves a separate test engine and caller input unchanged;
+discard/rebuild allows the pending export to recover once. This is test-only
+state isolation, not a security sandbox or a production browser implementation.
+The existing scanner must not be reset, swapped, or reused to emulate this proof.
+
 Stale/future timestamps, clock rollback, invalid cadence, changed closed OHLC,
 and discontinuous windows refuse before engine execution. Rejected inputs do not
 advance adapter state. A pending export may succeed when an intact fresh successor

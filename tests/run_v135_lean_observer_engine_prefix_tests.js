@@ -16,6 +16,7 @@ const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 function element(){ return {style:{},classList:{add(){},remove(){},toggle(){},contains(){return false;}},options:[{value:'All'}],
   getContext(){return {clearRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillRect(){},save(){},restore(){},setLineDash(){},arc(){},fill(){},closePath(){},fillText(){},measureText(){return {width:0};}};},
   appendChild(){},addEventListener(){},getBoundingClientRect(){return {top:0,left:0,width:0,height:0};}}; }
+function createEngineContext(){
 const elements={}; let timer=0;
 const context={console,Date,Math,JSON,Promise,Set,Map,Array,Object,String,Number,Boolean,RegExp,Error,TypeError,
   document:{getElementById:id=>(elements[id]||(elements[id]=element())),querySelector(){return null;},querySelectorAll(){return [];},createElement:element,addEventListener(){},body:{appendChild(){},removeChild(){}},activeElement:null,visibilityState:'visible'},
@@ -24,6 +25,9 @@ const context={console,Date,Math,JSON,Promise,Set,Map,Array,Object,String,Number
   ResizeObserver:function(){return {observe(){},disconnect(){}};},LightweightCharts:{LineStyle:{Solid:0,Dashed:1,Dotted:2},CrosshairMode:{Normal:0}},Notification:undefined,fetch(){return Promise.reject(new Error('network disabled by test'));}};
 context.globalThis=context;
 vm.createContext(context); vm.runInContext(script,context,{filename:'index.html'});
+return context;
+}
+const context=createEngineContext();
 
 // This is S12's downward-break/retest fixture, copied as ordinary candle input only.
 // The real engine decides whether it becomes B_breakRetest and at which prefix.
@@ -197,4 +201,40 @@ assert.deepStrictEqual(freshExport.bars,laterRows);
 assert.strictEqual(freshCapture.run(captured(55)),null);
 assert.strictEqual(freshCalls,4);
 console.log('PASS -- clock-gated actual-engine pending export survives stale data refusal and exports fresh successor exactly once');
+// Test-only ownership proof: each attempt gets a new realm and copied candles.
+// A deliberately failed engine attempt is discarded, not rolled back in place.
+const sharedBefore=vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context);
+const callerBefore=JSON.stringify(all);
+let isolatedNow=all[52].t.getTime(),failAttempt=false,attempts=0;
+const ownedSession=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>isolatedNow,
+  runLeanSetupEngine(pair,frames){
+    attempts++;
+    const isolated=createEngineContext();
+    const copied=frames.H1.map(b=>({...b,t:new Date(b.t.getTime())}));
+    const result=isolated.alexGRunSetupEngine(pair,{H1:copied,H4:[],D:[],W:[]});
+    assert.notStrictEqual(isolated,context,'attempt must own its engine realm');
+    if(failAttempt){
+      // Positive failure control: mutate owned engine state AND owned input.
+      vm.runInContext('alexGSetupState.push({setupId:"injected-failure"});',isolated);
+      copied[0].c=-123;
+      throw new Error('synthetic failure after engine mutation');
+    }
+    return result;
+  },emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}
+},{maxEndpointAgeMs:3600000});
+assert.strictEqual(ownedSession.run(captured(53)),null);
+isolatedNow=all[53].t.getTime();assert.strictEqual(ownedSession.run(captured(54)),null);
+isolatedNow=all[54].t.getTime();failAttempt=true;
+assert.throws(()=>ownedSession.run(captured(55)),/synthetic failure after engine mutation/);
+assert.strictEqual(JSON.stringify(all),callerBefore,'failed attempt must not mutate caller candles');
+assert.strictEqual(vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context),sharedBefore,'failed attempt must not mutate separate engine state');
+failAttempt=false;
+const recovered=ownedSession.run(captured(55));
+assert.strictEqual(recovered.caseId,freshSetup.setupId);
+assert.deepStrictEqual(recovered.bars,laterRows);
+assert.strictEqual(ownedSession.run(captured(55)),null,'retry success must export only once');
+assert.strictEqual(attempts,5);
+assert.strictEqual(JSON.stringify(all),callerBefore);
+assert.strictEqual(vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context),sharedBefore);
+console.log('PASS -- fresh-realm engine attempt discards post-mutation failure, preserves caller/separate state and recovers pending export once');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');

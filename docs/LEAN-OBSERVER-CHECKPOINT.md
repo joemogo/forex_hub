@@ -1,5 +1,30 @@
 # Disabled LEAN observer checkpoint
 
+## September 1, 2026 — test-only engine ownership and recovery proof
+
+Based on published `8ae54ff`. Refactored the existing actual-engine test harness
+into a realm factory. A new test-only dependency creates a fresh VM realm and
+copies candles per invocation. After a real engine evaluation, a fault deliberately
+changes the owned setup state and candle copy, then throws. The separate engine's
+three tracked state structures and caller candles remain unchanged. Discarding
+the failed realm and retrying the same pending successor produces the expected
+export once; its repeated snapshot is suppressed.
+Independent QA passed. Mutations reusing the separate engine realm or removing
+the candle copy failed. This proves same-session retry/duplicate behavior only,
+not global or process-restart delivery idempotence. The observer API does not
+create an isolated engine itself; the test supplies that dependency explicitly.
+
+Focused checks: v132 19/19, v133 13/13, v134 4/4, v135 9/9, v136 24/24
+(69 fixture groups, not assertion count). No runtime source changed. This is
+synthetic test evidence for a state-ownership design, not a browser deployment,
+security sandbox, or proof that the existing running scanner is isolated.
+Full Mac/Chrome and Python contract tests were not run. Paper readiness: not assessed.
+
+Next bounded task: quantify the fresh-rebuild cost and verify repeated independent
+engine attempts produce the same envelope before selecting an implementation
+boundary. Production integration still needs separate authorization and a real
+browser isolation plan; do not transplant the test harness into production.
+
 ## September 1, 2026 — browser-like boundary and integration handoff
 
 Based on published `669492f`. Added a VM browser-like test for the fresh wrapper
