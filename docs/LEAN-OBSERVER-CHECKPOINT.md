@@ -1,5 +1,32 @@
 # Disabled LEAN observer checkpoint
 
+## September 1, 2026 — independent rebuild repeatability and cost
+
+Based on published `b075fb7`. Five fresh observer sessions each rebuild the real
+engine at prefixes 53, 54 and 55. Every complete exported JSON envelope matches
+the earlier recovery control byte-for-byte; caller candles and the separate
+engine's tracked state remain unchanged. This adds one fixture group, not five.
+
+Measured 15 rebuilds on Node v24.19.0, Linux x64: minimum 2.256 ms, median
+2.633 ms, maximum 6.384 ms in the first run. Timing includes realm creation,
+candle copying and engine evaluation; excludes observer/emitter work. These are
+descriptive small-fixture measurements, not latency thresholds, browser results,
+representative 10,000-bar costs or a production performance guarantee.
+
+Focused checks: v132 19/19, v133 13/13, v134 4/4, v135 10/10, v136 24/24
+(70 fixture groups, not assertion count). Runtime source remains unchanged.
+Independent QA passed; an in-memory mutation changing the repeated envelope's
+case ID failed the JSON equality assertion. Equality refers to JSON.stringify
+output, not a separate wire-serialization implementation.
+Full Mac/Chrome and Python contract tests were not run. Paper readiness: not assessed.
+
+Decision: retain per-attempt owned engine state as the candidate design; this
+small fixture supplies no reason to introduce shared-state reuse. No production
+implementation boundary has been approved. Next bounded task: audit the actual
+engine's source dependencies for an isolated browser execution boundary and
+document the smallest feasible extraction without changing protected functions
+or wiring production. Calendar handling and real-browser validation remain open.
+
 ## September 1, 2026 — test-only engine ownership and recovery proof
 
 Based on published `8ae54ff`. Refactored the existing actual-engine test harness

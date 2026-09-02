@@ -48,6 +48,15 @@ discard/rebuild allows the pending export to recover once. This is test-only
 state isolation, not a security sandbox or a production browser implementation.
 The existing scanner must not be reset, swapped, or reused to emulate this proof.
 
+Five independent test sessions now reproduce the complete exported JSON exactly.
+The 15 fresh rebuilds of 53–55 synthetic candles measured a 2.633 ms median in one
+Node v24.19.0 Linux x64 run (2.256–6.384 ms range). This includes realm creation,
+input copying and engine evaluation, not observer/emitter latency. It is not a
+browser benchmark or evidence for maximum supported history sizes. Keep owned
+state as the candidate design; inspect actual engine dependencies before choosing
+a browser boundary. No shared-state optimization or production wiring is justified
+by this small-fixture measurement.
+
 Stale/future timestamps, clock rollback, invalid cadence, changed closed OHLC,
 and discontinuous windows refuse before engine execution. Rejected inputs do not
 advance adapter state. A pending export may succeed when an intact fresh successor

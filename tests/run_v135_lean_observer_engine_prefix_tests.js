@@ -237,4 +237,33 @@ assert.strictEqual(attempts,5);
 assert.strictEqual(JSON.stringify(all),callerBefore);
 assert.strictEqual(vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context),sharedBefore);
 console.log('PASS -- fresh-realm engine attempt discards post-mutation failure, preserves caller/separate state and recovers pending export once');
+// Diagnostic timings are descriptive, never environment-dependent pass thresholds.
+// Five independent sessions must reproduce the entire envelope, not only its ID.
+const rebuildMs=[];
+for(let repetition=0;repetition<5;repetition++){
+  let repeatNow=all[52].t.getTime();
+  const repeatSession=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>repeatNow,
+    runLeanSetupEngine(pair,frames){
+      const started=process.hrtime.bigint();
+      const realm=createEngineContext();
+      const copied=frames.H1.map(b=>({...b,t:new Date(b.t.getTime())}));
+      const result=realm.alexGRunSetupEngine(pair,{H1:copied,H4:[],D:[],W:[]});
+      rebuildMs.push(Number(process.hrtime.bigint()-started)/1e6);
+      return result;
+    },emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}
+  },{maxEndpointAgeMs:3600000});
+  assert.strictEqual(repeatSession.run(captured(53)),null);
+  repeatNow=all[53].t.getTime();assert.strictEqual(repeatSession.run(captured(54)),null);
+  repeatNow=all[54].t.getTime();
+  const repeated=repeatSession.run(captured(55));
+  assert.strictEqual(JSON.stringify(repeated),JSON.stringify(recovered),'independent sessions must produce byte-identical JSON envelopes');
+}
+assert.strictEqual(rebuildMs.length,15);
+assert.strictEqual(JSON.stringify(all),callerBefore);
+assert.strictEqual(vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context),sharedBefore);
+const sortedMs=[...rebuildMs].sort((a,b)=>a-b);
+console.log('PASS -- five independent fresh-engine sessions reproduce the entire export without shared-state or input changes');
+console.log('DIAGNOSTIC '+JSON.stringify({node:process.version,platform:process.platform,arch:process.arch,
+  samples:rebuildMs.length,bars:[53,54,55],scope:'realm creation + candle copy + engine; excludes observer/emitter',
+  minMs:sortedMs[0],medianMs:sortedMs[7],maxMs:sortedMs[14]}));
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
