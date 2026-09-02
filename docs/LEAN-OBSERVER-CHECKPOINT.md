@@ -1,5 +1,28 @@
 # Disabled LEAN observer checkpoint
 
+## September 1, 2026 — mirrored source-only H1 engine export
+
+Based on published `d226b66`. Reflected synthetic OHLC prices (swapping high/low)
+without injecting setup answers. Both the full-application and source-only
+real-engine realms detect an upward B&R at prefix 54, retain it pending the
+successor candle, export at 55 and suppress the duplicate. Their entire JSON
+envelopes match. Explicit checks pin upward/resistance and downward/support
+semantics; caller candles and separate engine state remain unchanged.
+
+Focused checks: v132 19/19, v133 13/13, v134 4/4, v135 12/12, v136 24/24
+(72 fixture groups, not assertions). Independent QA passed; forcing the mirrored
+output direction downward in memory failed the explicit upward assertion.
+No runtime source changed. Python contract
+and Mac/real-browser gates were not run. This proves two mirrored synthetic H1
+paths, not all strategy branches or actual LEAN execution.
+
+Next bounded task: turn the proven dependency inventory into a test-only,
+source-derived owned-engine factory that does not initialize the full app even
+to retrieve declarations; verify it against these mirrored fixtures. No runtime
+module, production wiring or protected-function changes are authorized by this
+checkpoint. Browser validation and calendar handling remain open.
+Paper-trading readiness: not assessed.
+
 ## September 1, 2026 — source-only H1 engine boundary
 
 Based on published `9657686`. Audited the actual engine dependencies and added

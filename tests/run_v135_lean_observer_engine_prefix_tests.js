@@ -292,4 +292,46 @@ assert.strictEqual(JSON.stringify(bareSession.run(captured(55))),JSON.stringify(
 assert.strictEqual(JSON.stringify(all),callerBefore);
 console.log('PASS -- H1 source-only realm without application initialization reproduces complete export');
 console.log('DEPENDENCIES '+JSON.stringify({phaseFunctions:phaseNames,helpers:helperNames,constants:['RULES_ALEXG','APP_VERSION','STRATEGY_ALEXG'],state:['alexGZoneState','alexGSetupState','alexGLastEvaluatedCloseTime']}));
+// Mirror OHLC geometry, not engine answers: low/high swap under reflection.
+const mirror=all.map(b=>({t:new Date(b.t.getTime()),o:2.2-b.o,h:2.2-b.l,l:2.2-b.h,c:2.2-b.c}));
+const mirrorBefore=JSON.stringify(mirror);
+function mirroredExport(factory){
+  let now=mirror[52].t.getTime();
+  const counts=[];
+  const session=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>now,
+    runLeanSetupEngine(pair,frames){
+      const realm=factory();
+      const result=realm.alexGRunSetupEngine(pair,{H1:frames.H1.map(b=>({...b,t:new Date(b.t.getTime())})),H4:[],D:[],W:[]});
+      counts.push(br(result.setups).length);
+      return result;
+    },emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}
+  },{maxEndpointAgeMs:3600000});
+  function input(n){
+    const candles=mirror.slice(0,n);
+    const rows=candles.map((b,index)=>({index,startTimeUtcMs:b.t.getTime(),open:b.o,high:b.h,low:b.l,close:b.c}));
+    return {enabled:true,pair:'EUR_USD',timeframe:'H1',candles,
+      versions:engineMetadata.versions,config:engineMetadata.config,
+      dataset:{id:'synthetic-mirrored-capture',hash:{algorithm:'SHA-256',value:sha(emitter.canonical(rows))}}};
+  }
+  assert.strictEqual(session.run(input(53)),null);
+  now=mirror[53].t.getTime();assert.strictEqual(session.run(input(54)),null);
+  now=mirror[54].t.getTime();const output=session.run(input(55));
+  assert(output,'mirrored actual engine must produce an export');
+  assert.strictEqual(output.breakEvent.brokenDirection,'upThroughResistance');
+  assert.strictEqual(output.zone.preBreakRole,'resistance');
+  assert.strictEqual(output.setup.qualificationAt.index,53);
+  assert.strictEqual(output.bars.length,55);
+  assert.strictEqual(session.run(input(55)),null,'mirrored duplicate must not re-export');
+  assert.deepStrictEqual(counts,[0,1,1,1]);
+  return output;
+}
+const mirroredFull=mirroredExport(createEngineContext);
+const mirroredBare=mirroredExport(bareEngineContext);
+assert.strictEqual(JSON.stringify(mirroredBare),JSON.stringify(mirroredFull));
+assert.strictEqual(recovered.breakEvent.brokenDirection,'downThroughSupport');
+assert.strictEqual(recovered.zone.preBreakRole,'support');
+assert.strictEqual(JSON.stringify(mirror),mirrorBefore);
+assert.strictEqual(JSON.stringify(all),callerBefore);
+assert.strictEqual(vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context),sharedBefore);
+console.log('PASS -- mirrored upward-break engine emergence, delayed export and duplicate suppression match full and source-only realms');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');

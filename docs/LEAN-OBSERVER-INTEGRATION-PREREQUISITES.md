@@ -49,6 +49,11 @@ only the 29 Phase 2/3 function declarations (`alexGFindSwingPoints` through
 state objects. The complete JSON export matches the full-application harness.
 This is a sufficient inventory for the exercised H1 path, not a minimal or
 exhaustive dependency proof for every branch or market pattern.
+The reflected upward-break fixture now matches between full and source-only
+realms too, including pending-successor behavior and duplicate suppression.
+Explicit expected direction/role checks supplement the parity comparison so
+agreement alone cannot hide a shared direction reversal. This remains synthetic
+H1 coverage, not a production or LEAN-engine parity claim.
 
 - Helpers: `getCandleCloseTime`, `precomputeCloseTimes`, `calcATR`, `pipSize`,
   `getSession`, `isPreferredTradingDay`, `snapshotAlexGConfig`.
