@@ -3,6 +3,12 @@
 This is a developer handoff, not an instruction to enable observation or trading.
 The application does not load the observer module or call its APIs.
 
+Browser design and isolated synthetic testing are now authorized. See
+`LEAN-OBSERVER-BROWSER-DESIGN.md` for the selected whole-session worker candidate;
+production wiring, actual browser control, installation and activation remain
+outside scope. The earlier design-authority gate is resolved, not the feasibility
+and validation requirements below.
+
 ## Entry point
 
 Future forward integration must use

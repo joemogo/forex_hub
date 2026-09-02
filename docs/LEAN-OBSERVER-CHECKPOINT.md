@@ -1,5 +1,24 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — browser boundary selected for synthetic prototyping
+
+Based on published `e97a1d0`. New authority permits browser-integration design
+and isolated synthetic tests, not production wiring. See
+`LEAN-OBSERVER-BROWSER-DESIGN.md`: keep observer, emitter and synchronous engine
+together inside a proposed dedicated worker; asynchronous messages stay outside
+the existing synchronous session. Fresh engine state per attempt, persistent
+observer state per session, fail-stop on worker loss; no automatic replay/reset.
+Next bounded task: test-only source-derived attempt factory with mirrored parity
+and mutation/failure ownership controls. Browser feasibility, hashing packaging,
+calendar handling and real-browser validation remain open. No runtime change.
+Verification this cycle: v135 15/15 engine fixture groups passed, including its
+cross-language Python CLI checks. Python unit suites, other observer suites and
+real browser/Mac checks were not rerun. No new runtime safeguard was implemented,
+so no new guard-removal mutation was claimed.
+Design QA caught the engine's Date-object requirement; the design now explicitly
+converts validated wire milliseconds into fresh per-attempt Date objects and
+requires conversion failure/mutation controls in the next prototype.
+
 ## September 2, 2026 — consolidated readiness gate
 
 Based on published `839a267`. Reran all five focused JavaScript suites, both

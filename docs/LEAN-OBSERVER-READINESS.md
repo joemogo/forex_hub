@@ -2,6 +2,11 @@
 
 ## Decision
 
+September 2 update: browser-integration design and isolated synthetic testing are
+now authorized. `LEAN-OBSERVER-BROWSER-DESIGN.md` selects a candidate boundary and
+prototype gates. This resolves design authority only, not production authority
+or any of the real-browser validation gaps below.
+
 The local synthetic H1 observer/export path is **ready for a separately reviewed
 browser-integration design**, but is **not ready to install, enable, or use with
 real forward data**. Paper trading readiness is not assessed.
