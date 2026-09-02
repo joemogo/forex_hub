@@ -88,13 +88,19 @@ function runOne(runnerPath) {
   return lines;
 }
 
+// The suites do not share one summary-line format, so the verdict is taken from the per-fixture
+// lines themselves -- which every suite does emit identically -- and the suite's own closing line
+// is kept only as human-readable context. Deriving the verdict from a summary regex silently
+// mislabels a passing suite whose wording differs, which is exactly the "diagnostic that restates
+// a dashboard" failure this repository warns about.
 function verdictOf(lines) {
-  const fails = lines.filter(function (l) { return /^FAIL /.test(l); }).length;
+  const fails = lines.filter(function (l) { return /^FAIL\b/.test(l); }).length;
+  const passes = lines.filter(function (l) { return /^PASS\b/.test(l); }).length;
   const runnerErr = lines.filter(function (l) { return /^RUNNER ERROR/.test(l); });
   const summary = lines.filter(function (l) {
-    return /ALL .*PASSED|FAILURES:/.test(l);
+    return /ALL .*PASSED|FAILURES:|\d+ fixtures?, \d+ PASS/.test(l);
   }).pop() || null;
-  return { fails, runnerError: runnerErr.length ? runnerErr[0] : null, summary };
+  return { fails, passes, runnerError: runnerErr.length ? runnerErr[0] : null, summary };
 }
 
 const args = process.argv.slice(2);
@@ -137,17 +143,20 @@ if (targets.length === 1) {
     }
     const v = verdictOf(out.split('\n'));
     rows.push({ runner: t, ms: Date.now() - started, thrown: thrown, fails: v.fails,
-      runnerError: v.runnerError, summary: v.summary });
-    if (thrown || v.runnerError || v.fails || !v.summary) bad++;
+      passes: v.passes, runnerError: v.runnerError, summary: v.summary });
+    if (thrown || v.runnerError || v.fails || !v.passes) bad++;
   });
   console.log('=== summary: ' + rows.length + ' JXA suites executed under Node ===');
   rows.forEach(function (r) {
     const state = r.thrown ? 'THREW' : (r.runnerError ? 'RUNNER_ERROR'
-      : (r.fails ? 'FAIL' : (r.summary ? 'ok' : 'NO_SUMMARY')));
-    console.log([state.padEnd(12), (r.ms + 'ms').padStart(8), r.runner,
+      : (r.fails ? 'FAIL' : (r.passes ? 'ok' : 'NO_FIXTURES')));
+    console.log([state.padEnd(12), (r.ms + 'ms').padStart(8),
+      (r.passes + 'P/' + r.fails + 'F').padStart(10), r.runner,
       r.summary || r.thrown || r.runnerError || '(no summary line)'].join('  '));
   });
-  const okCount = rows.filter(function (r) { return !r.thrown && !r.runnerError && !r.fails && r.summary; }).length;
+  const okCount = rows.filter(function (r) { return !r.thrown && !r.runnerError && !r.fails && r.passes; }).length;
+  console.log('--- ' + rows.reduce(function(a,r){return a+r.passes;},0) + ' fixtures passed, '
+    + rows.reduce(function(a,r){return a+r.fails;},0) + ' failed ---');
   console.log('--- ' + okCount + '/' + rows.length + ' suites ran clean under Node ---');
   process.exitCode = bad ? 1 : 0;
 }
