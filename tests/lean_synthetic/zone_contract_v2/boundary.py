@@ -168,10 +168,10 @@ def _validate(request):
         elif value < 0: _no("REFUSE_CONFIG", key + " must not be negative")
         else: clean_cfg[key] = value
     if clean_cfg["minRR"] <= 0: _no("REFUSE_CONFIG", "minRR must be positive")
-    return request, clean_cfg, clean, direction, (low, high), retest_index, qualification_index
+    return request, clean_cfg, clean, direction, (low, high), break_index, retest_index, qualification_index
 
 def evaluate(request):
-    request, cfg, bars, direction, zone, declared_retest, declared_qualification = _validate(request)
+    request, cfg, bars, direction, zone, declared_break, declared_retest, declared_qualification = _validate(request)
     # Adapter deliberately maps explicit direction to legacy synthetic machine role; v1 stays unchanged.
     legacy_role = "support" if direction == "upThroughResistance" else "resistance"
     machine = BreakRetestMachine(cfg, zone[0], zone[1], legacy_role, request["zone"]["formedAt"]["index"])
@@ -179,6 +179,7 @@ def evaluate(request):
     decision = machine.decision
     if decision is None: _no("REFUSE_UNQUALIFIED_SETUP", "declared setup did not qualify")
     if decision["brokenDirection"] != direction: _no("REFUSE_DIRECTION_MISMATCH", "adapter decision differs from explicit break direction")
+    if decision["breakBarIndex"] != declared_break: _no("REFUSE_BREAK_MISMATCH", "break provenance differs from evaluation")
     if decision["anchorBarIndex"] != declared_retest: _no("REFUSE_RETEST_MISMATCH", "retest provenance differs from evaluation")
     if decision["lockedAtBarIndex"] != declared_qualification: _no("REFUSE_QUALIFICATION_MISMATCH", "qualification provenance differs from evaluation")
     result = {"schemaVersion": RESPONSE_SCHEMA, "caseId": request["caseId"], "pair": request["identity"]["pair"],

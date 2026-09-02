@@ -354,6 +354,16 @@ for(const [request,direction] of [[recovered,'sell'],[mirroredBare,'buy']]){
   assert.strictEqual(response.response.caseId,request.caseId);
   assert.strictEqual(response.response.barsConsumed,request.bars.length);
   assert.strictEqual(response.response.decision.brokenDirection,request.breakEvent.brokenDirection);
+  assert.strictEqual(response.response.decision.breakBarIndex,request.breakEvent.at.index);
+  const shiftedBreak=JSON.parse(JSON.stringify(request));
+  const shiftedIndex=request.breakEvent.at.index+1;
+  shiftedBreak.breakEvent.at={index:shiftedIndex,barStartTimeUtcMs:request.bars[shiftedIndex].startTimeUtcMs,
+    closeTimeUtcMs:request.bars[shiftedIndex+1].startTimeUtcMs};
+  const shifted=spawnSync('python3',['tests/lean_synthetic/zone_contract_v2/boundary.py'],{
+    input:JSON.stringify(shiftedBreak),encoding:'utf8',timeout:10000});
+  assert.ifError(shifted.error);
+  assert.strictEqual(shifted.status,2,shifted.stdout+'\n'+shifted.stderr);
+  assert.strictEqual(JSON.parse(shifted.stdout).refusal.code,'REFUSE_BREAK_MISMATCH');
   assert.strictEqual(response.response.decision.anchorBarIndex,request.setup.retestAt.index);
   assert.strictEqual(response.response.decision.lockedAtBarIndex,request.setup.qualificationAt.index);
   const contradictory=JSON.parse(JSON.stringify(request));

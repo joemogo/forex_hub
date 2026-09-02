@@ -1,5 +1,26 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — break provenance mismatch refusal
+
+Based on published `a493249`. Both actual-engine mirrored fixtures declare break
+index 42, matching Python evaluation. A negative control moved the declaration
+to 43 with consistent start/close timestamps and still-valid break geometry;
+the old boundary accepted it. The local synthetic v2 boundary now compares the
+declared break index with the evaluated decision and returns REFUSE_BREAK_MISMATCH.
+No production strategy function or state-machine rule changed.
+
+Executed: v135 14/14 fixture groups, including valid mirrored exports and both
+shifted-break refusals; Python v1/v2 31/31 unit tests. The initial new regression
+failed as expected before repair. Other observer suites and Mac/browser/cloud
+checks were not run. This closes a provenance-validation defect, not general
+historical parity or paper readiness.
+Independent QA passed; removing only the new guard in memory caused both
+incorrect shifted declarations to be accepted again, confirming guard necessity.
+
+Next bounded task: check the same break provenance rule with more than one
+confirmation close, to distinguish first crossing from confirmed break timing.
+Browser integration/calendar handling remain open. Paper readiness: not assessed.
+
 ## September 2, 2026 — actual-engine exports through Python v2
 
 Based on published `ca2ad89`. The v135 fixture now passes both actual-engine
