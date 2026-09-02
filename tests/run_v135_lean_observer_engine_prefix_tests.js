@@ -266,4 +266,30 @@ console.log('PASS -- five independent fresh-engine sessions reproduce the entire
 console.log('DIAGNOSTIC '+JSON.stringify({node:process.version,platform:process.platform,arch:process.arch,
   samples:rebuildMs.length,bars:[53,54,55],scope:'realm creation + candle copy + engine; excludes observer/emitter',
   minMs:sortedMs[0],medianMs:sortedMs[7],maxMs:sortedMs[14]}));
+// Test-only dependency inventory: no application initialization in this realm.
+// H1 only: the D/W nyAlignedClose branch is deliberately outside this proof.
+const phaseSource=script.slice(script.indexOf('function alexGFindSwingPoints('),script.indexOf('// MOGO_LEAN_PRODUCTION_EMITTER_SEAM_START'));
+const phaseNames=[...phaseSource.matchAll(/^function (\w+)\(/gm)].map(m=>m[1]);
+const helperNames=['getCandleCloseTime','precomputeCloseTimes','calcATR','pipSize','getSession','isPreferredTradingDay','snapshotAlexGConfig'];
+const extractedSource=[...phaseNames,...helperNames].map(name=>context[name].toString()).join('\n');
+const ownedConstants=vm.runInContext('JSON.stringify({rules:RULES_ALEXG,version:APP_VERSION,strategy:STRATEGY_ALEXG})',context);
+function bareEngineContext(){
+  const bare=vm.createContext({Date});
+  vm.runInContext('const constants='+ownedConstants+';const RULES_ALEXG=constants.rules;const APP_VERSION=constants.version;const STRATEGY_ALEXG=constants.strategy;let alexGZoneState={};let alexGSetupState=[];let alexGLastEvaluatedCloseTime={};\n'+extractedSource,bare);
+  return bare;
+}
+let bareNow=all[52].t.getTime();
+const bareSession=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>bareNow,
+  runLeanSetupEngine(pair,frames){
+    const bare=bareEngineContext();
+    return bare.alexGRunSetupEngine(pair,{H1:frames.H1.map(b=>({...b,t:new Date(b.t.getTime())})),H4:[],D:[],W:[]});
+  },emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}
+},{maxEndpointAgeMs:3600000});
+assert.strictEqual(bareSession.run(captured(53)),null);
+bareNow=all[53].t.getTime();assert.strictEqual(bareSession.run(captured(54)),null);
+bareNow=all[54].t.getTime();
+assert.strictEqual(JSON.stringify(bareSession.run(captured(55))),JSON.stringify(recovered));
+assert.strictEqual(JSON.stringify(all),callerBefore);
+console.log('PASS -- H1 source-only realm without application initialization reproduces complete export');
+console.log('DEPENDENCIES '+JSON.stringify({phaseFunctions:phaseNames,helpers:helperNames,constants:['RULES_ALEXG','APP_VERSION','STRATEGY_ALEXG'],state:['alexGZoneState','alexGSetupState','alexGLastEvaluatedCloseTime']}));
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');

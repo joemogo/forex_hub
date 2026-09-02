@@ -1,5 +1,27 @@
 # Disabled LEAN observer checkpoint
 
+## September 1, 2026 — source-only H1 engine boundary
+
+Based on published `9657686`. Audited the actual engine dependencies and added
+a test-only second realm with 29 unchanged Phase 2/3 function declarations,
+seven helpers, three copied constants and three fresh state objects. Without
+application initialization or browser IO in that realm, prefixes 53/54/55 produce
+the same complete JSON envelope as the full harness. The initial check caught
+an omitted `STRATEGY_ALEXG` dependency; supplying its copied value fixed the test.
+
+v135: 11/11 fixture groups pass. Independent QA passed; omitting the strategy
+constant or suppressing the bare engine's results each failed the test in memory.
+No runtime source changed. Other four observer
+suites (previously 60 groups), Python and real-browser/Mac gates were not rerun
+for this test/documentation-only increment. See the prerequisites document for
+the exact inventory and limitations, including the unexercised D/W timezone
+dependency and synchronous-engine versus asynchronous-worker mismatch.
+
+Next bounded task: extend the source-only proof with a mirrored upward-break
+synthetic fixture to check both directions before any extraction implementation.
+Production integration still requires separate authorization. No real data,
+trading, installation or enabling. Paper-trading readiness: not assessed.
+
 ## September 1, 2026 — independent rebuild repeatability and cost
 
 Based on published `b075fb7`. Five fresh observer sessions each rebuild the real

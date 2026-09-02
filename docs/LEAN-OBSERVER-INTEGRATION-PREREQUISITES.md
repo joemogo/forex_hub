@@ -41,6 +41,37 @@ snapshots. The first accepted snapshot primes the baseline and exports nothing.
 
 ## Refusals and recovery
 
+### Source-only H1 dependency boundary (synthetic proof)
+
+The v135 fixture now runs the same prefix sequence in a second realm containing
+only the 29 Phase 2/3 function declarations (`alexGFindSwingPoints` through
+`alexGRunSetupEngine`), seven helpers, three copied constants, and three fresh
+state objects. The complete JSON export matches the full-application harness.
+This is a sufficient inventory for the exercised H1 path, not a minimal or
+exhaustive dependency proof for every branch or market pattern.
+
+- Helpers: `getCandleCloseTime`, `precomputeCloseTimes`, `calcATR`, `pipSize`,
+  `getSession`, `isPreferredTradingDay`, `snapshotAlexGConfig`.
+- Copied constants: `RULES_ALEXG`, `APP_VERSION`, `STRATEGY_ALEXG`.
+- Owned mutable state: `alexGZoneState`, `alexGSetupState`,
+  `alexGLastEvaluatedCloseTime`.
+- Native Date is supplied; ordinary JavaScript built-ins belong to the realm.
+  No DOM, storage, timers, fetch, scanner or application initialization is
+  supplied to this second realm. The upstream test harness still initializes
+  the stubbed full application to obtain function source and constant values.
+- H4/D/W inputs remain empty. `getCandleCloseTime` has a D/W dependency on
+  `nyAlignedClose` that is deliberately absent: this is not a multi-timeframe
+  extraction. No timezone/calendar behavior is proven by this H1 fixture.
+
+Candidate: a build-time source-derived module with per-attempt owned state,
+verified against protected source, instead of loading the application in an
+iframe or resetting the live scanner. This remains a design direction only.
+A worker would introduce asynchronous messaging while today's observer requires
+a synchronous engine; it cannot be plugged in without a separately reviewed
+contract change. Do not implement runtime eval/function-source extraction in the
+application based on this test. Browser CSP, module loading, maximum-history
+cost and complete strategy-path coverage remain unverified.
+
 The synthetic actual-engine fixture now demonstrates one candidate ownership
 model: a fresh VM realm and copied candles for each attempt. An injected failure
 after engine mutation leaves a separate test engine and caller input unchanged;
