@@ -41,6 +41,16 @@ snapshots. The first accepted snapshot primes the baseline and exports nothing.
 
 ## Refusals and recovery
 
+### Cross-language synthetic coverage
+
+The actual-engine downward and reflected upward exports pass the Python v2 CLI
+with matching direction, case identity, bar count, retest and qualification
+indices. Contradictory pre-break roles refuse. This is local Python adapter
+evaluation, not cloud LEAN execution. Break-index parity is not established:
+the boundary checks declared break geometry but currently does not compare its
+break index with the machine-derived decision. Resolve that distinction before
+claiming complete event reconciliation. v135 now requires python3 explicitly.
+
 ### Source-only H1 dependency boundary (synthetic proof)
 
 The v135 fixture now runs the same prefix sequence in a second realm containing

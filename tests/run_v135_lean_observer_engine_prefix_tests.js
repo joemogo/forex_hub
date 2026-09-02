@@ -342,4 +342,27 @@ assert.strictEqual(JSON.stringify(mirror),mirrorBefore);
 assert.strictEqual(JSON.stringify(all),callerBefore);
 assert.strictEqual(vm.runInContext('JSON.stringify([alexGZoneState,alexGSetupState,alexGLastEvaluatedCloseTime])',context),sharedBefore);
 console.log('PASS -- mirrored upward-break engine emergence, delayed export and duplicate suppression match full and source-only realms');
+const {spawnSync}=require('child_process');
+for(const [request,direction] of [[recovered,'sell'],[mirroredBare,'buy']]){
+  const result=spawnSync('python3',['tests/lean_synthetic/zone_contract_v2/boundary.py'],{
+    input:JSON.stringify(request),encoding:'utf8',timeout:10000});
+  assert.ifError(result.error);
+  assert.strictEqual(result.status,0,result.stdout+'\n'+result.stderr);
+  const response=JSON.parse(result.stdout);
+  assert.strictEqual(response.ok,true);
+  assert.strictEqual(response.response.decision.direction,direction);
+  assert.strictEqual(response.response.caseId,request.caseId);
+  assert.strictEqual(response.response.barsConsumed,request.bars.length);
+  assert.strictEqual(response.response.decision.brokenDirection,request.breakEvent.brokenDirection);
+  assert.strictEqual(response.response.decision.anchorBarIndex,request.setup.retestAt.index);
+  assert.strictEqual(response.response.decision.lockedAtBarIndex,request.setup.qualificationAt.index);
+  const contradictory=JSON.parse(JSON.stringify(request));
+  contradictory.zone.preBreakRole=direction==='buy'?'support':'resistance';
+  const refused=spawnSync('python3',['tests/lean_synthetic/zone_contract_v2/boundary.py'],{
+    input:JSON.stringify(contradictory),encoding:'utf8',timeout:10000});
+  assert.ifError(refused.error);
+  assert.strictEqual(refused.status,2,refused.stdout+'\n'+refused.stderr);
+  assert.strictEqual(JSON.parse(refused.stdout).refusal.code,'REFUSE_ROLE_DIRECTION');
+}
+console.log('PASS -- actual-engine mirrored exports accepted by Python v2 boundary');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');

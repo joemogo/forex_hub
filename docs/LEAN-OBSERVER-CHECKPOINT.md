@@ -1,5 +1,27 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — actual-engine exports through Python v2
+
+Based on published `ca2ad89`. The v135 fixture now passes both actual-engine
+synthetic exports over stdin to the Python v2 CLI. Both qualify with the expected
+sell/buy direction, exact case identity, bar count, retest and qualification
+indices. Contradictory pre-break roles fail with REFUSE_ROLE_DIRECTION for both.
+The test requires python3 and fails on missing interpreter, timeout or bad exit;
+it does not silently skip. All request/response transfer stays in memory.
+
+Executed: v135 14/14 fixture groups and Python v1/v2 31/31 unit tests.
+Independent QA passed, including in-memory contradictory break-direction
+mutations refused for both exports.
+Other four observer suites and Mac/browser gates were not rerun. No runtime source changed.
+This proves local Python adapter evaluation, not cloud LEAN execution or full
+strategy parity. In particular, this test does not assert break-index equality.
+
+Next bounded task: compare the declared production-engine break index with the
+Python machine's derived index and document any semantic mismatch before claiming
+event parity. The current Python boundary validates break geometry but does not
+compare that declared index to its evaluated decision. Browser integration and
+calendar handling remain unfinished. Paper readiness: not assessed.
+
 ## September 2, 2026 — direct-source test engine factory
 
 Based on published `a61ec6d`. Added `tests/lean_h1_source_factory.js` to construct
