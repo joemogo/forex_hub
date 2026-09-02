@@ -271,12 +271,20 @@ console.log('DIAGNOSTIC '+JSON.stringify({node:process.version,platform:process.
 const phaseSource=script.slice(script.indexOf('function alexGFindSwingPoints('),script.indexOf('// MOGO_LEAN_PRODUCTION_EMITTER_SEAM_START'));
 const phaseNames=[...phaseSource.matchAll(/^function (\w+)\(/gm)].map(m=>m[1]);
 const helperNames=['getCandleCloseTime','precomputeCloseTimes','calcATR','pipSize','getSession','isPreferredTradingDay','snapshotAlexGConfig'];
-const extractedSource=[...phaseNames,...helperNames].map(name=>context[name].toString()).join('\n');
-const ownedConstants=vm.runInContext('JSON.stringify({rules:RULES_ALEXG,version:APP_VERSION,strategy:STRATEGY_ALEXG})',context);
+const sourceFactory=require('./lean_h1_source_factory.js');
+// Poison outside selected declarations proves this factory never starts the app.
+const poisonedScript='throw new Error("application initialization forbidden");\n'+script;
+assert.throws(()=>vm.runInNewContext(poisonedScript),/application initialization forbidden/);
+const sourceOnly=sourceFactory(poisonedScript);
+assert.deepStrictEqual(sourceOnly.names,[...phaseNames,...helperNames]);
+const declarationCheck=sourceOnly.create();
+for(const name of sourceOnly.names) assert.strictEqual(declarationCheck[name].toString(),context[name].toString());
+assert.strictEqual(vm.runInContext('JSON.stringify([RULES_ALEXG,APP_VERSION,STRATEGY_ALEXG])',declarationCheck),
+  vm.runInContext('JSON.stringify([RULES_ALEXG,APP_VERSION,STRATEGY_ALEXG])',context));
+assert.throws(()=>sourceFactory(script.replace("const STRATEGY_ALEXG=",'const OMITTED_STRATEGY=')),/missing or ambiguous/);
+console.log('PASS -- direct source factory skips app initialization, preserves declarations and refuses missing constants');
 function bareEngineContext(){
-  const bare=vm.createContext({Date});
-  vm.runInContext('const constants='+ownedConstants+';const RULES_ALEXG=constants.rules;const APP_VERSION=constants.version;const STRATEGY_ALEXG=constants.strategy;let alexGZoneState={};let alexGSetupState=[];let alexGLastEvaluatedCloseTime={};\n'+extractedSource,bare);
-  return bare;
+  return sourceOnly.create();
 }
 let bareNow=all[52].t.getTime();
 const bareSession=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>bareNow,

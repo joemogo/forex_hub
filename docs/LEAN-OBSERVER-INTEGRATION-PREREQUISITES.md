@@ -62,8 +62,14 @@ H1 coverage, not a production or LEAN-engine parity claim.
   `alexGLastEvaluatedCloseTime`.
 - Native Date is supplied; ordinary JavaScript built-ins belong to the realm.
   No DOM, storage, timers, fetch, scanner or application initialization is
-  supplied to this second realm. The upstream test harness still initializes
-  the stubbed full application to obtain function source and constant values.
+  supplied to this second realm. `tests/lean_h1_source_factory.js` now extracts
+  declarations directly from source without initializing the app. The full-app
+  harness remains only an independent comparison control. A top-level throwing
+  poison statement outside the selected declarations is never executed.
+  Function text and constant values are compared with the reference harness.
+  Extraction deliberately relies on reviewed declaration formatting and rejects
+  missing/ambiguous declarations; it is not a general JavaScript parser or a
+  security boundary for untrusted source. This helper is test-only, not shipped.
 - H4/D/W inputs remain empty. `getCandleCloseTime` has a D/W dependency on
   `nyAlignedClose` that is deliberately absent: this is not a multi-timeframe
   extraction. No timezone/calendar behavior is proven by this H1 fixture.

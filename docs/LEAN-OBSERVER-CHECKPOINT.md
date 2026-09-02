@@ -1,5 +1,26 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — direct-source test engine factory
+
+Based on published `a61ec6d`. Added `tests/lean_h1_source_factory.js` to construct
+owned H1 engine realms directly from reviewed declarations and constants,
+without starting the app even for source retrieval. Both mirrored exports still
+match the full-application reference. Tests verify exact function text/constant
+values, missing-constant refusal, and that top-level poison outside selected
+declarations is not executed. The factory is deliberately layout-specific,
+test-only and not a general parser or untrusted-code sandbox.
+
+v135: 13/13 fixture groups passed. Runtime code/protected source unchanged.
+Independent QA verified declarations/constant values and the poison control.
+Added its suggested automated positive control: full-script execution throws
+on the poison while the direct-source factory succeeds.
+Other four observer suites, Python contracts and real-browser/Mac checks were
+not rerun in this test-helper-only increment. No install, enabling or trading.
+
+Next bounded task: feed the actual-engine mirrored synthetic exports into the
+Python v2 boundary to check cross-language compatibility for this exact path.
+Browser integration and calendar handling remain open. Paper readiness: not assessed.
+
 ## September 1, 2026 — mirrored source-only H1 engine export
 
 Based on published `d226b66`. Reflected synthetic OHLC prices (swapping high/low)
