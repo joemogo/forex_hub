@@ -1,5 +1,18 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — consolidated readiness gate
+
+Based on published `839a267`. Reran all five focused JavaScript suites, both
+Python contract suites and the protected baseline. Results: 75/75 JavaScript
+fixture groups, 31/31 Python tests, and all 64 protected functions plus four
+constants byte-identical. No new runtime behavior was added.
+
+See `LEAN-OBSERVER-READINESS.md`. The isolated synthetic H1 path is ready for a
+separately reviewed browser-integration design, not installation or enablement.
+Next work requires production integration-design authority; real Chrome/Mac,
+calendar handling, real capture, cloud LEAN and paper readiness remain open.
+Paper-trading readiness: not assessed.
+
 ## September 2, 2026 — multi-close configuration limitation
 
 Based on published `26e41ab`. Tested confirmation counts 2 and 3 in fresh
