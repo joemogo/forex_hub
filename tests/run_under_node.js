@@ -9,7 +9,7 @@
 // operator's Mac, which in turn means any agent working off-Mac cannot verify its own repair.
 //
 // WHAT THIS DOES. It supplies just enough of the JXA host object model -- `ObjC.import`,
-// `ObjC.unwrap`, and `$.NSString.stringWithContentsOfFileEncodingError` -- for an unmodified
+// `ObjC.unwrap`, `$.NSString` file reads and two read-only `$.NSFileManager` calls -- for an unmodified
 // runner file to execute under Node, then evaluates that runner in a context carrying Node's
 // own globals. The runner files are NOT edited: they stay byte-identical and keep working under
 // osascript exactly as before. This is a second way to execute the same suite, never a
@@ -28,7 +28,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { execFileSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 
 function jxaHost() {
   const NSUTF8StringEncoding = 4;
@@ -46,6 +46,15 @@ function jxaHost() {
           return box;
         } catch (e) { return null; }
       }
+    },
+    // The other two Foundation calls any runner here makes: where am I, and does this path
+    // exist. Both are read-only and map exactly onto Node equivalents; nothing else on
+    // NSFileManager is modelled, so an unmodelled call is a TypeError rather than a guess.
+    NSFileManager: {
+      defaultManager: {
+        currentDirectoryPath: { __jxaString: process.cwd() },
+        fileExistsAtPath: function (p) { return fs.existsSync(p); }
+      }
     }
   };
   const ObjC = {
@@ -57,7 +66,28 @@ function jxaHost() {
         + 'only models string file reads. Port the runner or extend the shim deliberately.');
     }
   };
-  return { $, ObjC };
+  // `Application.currentApplication().doShellScript(...)` is how one runner (v131) bridges OUT of
+  // JXA and into Node to execute a Node-native suite. Under Node that bridge is a plain child
+  // process. Only doShellScript is modelled -- any other AppleScript application call throws.
+  const Application = function () {
+    throw new Error('run_under_node: Application(name) scripting is not modelled by this shim.');
+  };
+  Application.currentApplication = function () {
+    return {
+      includeStandardAdditions: true,
+      doShellScript: function (cmd) {
+        try {
+          return execSync(cmd, { encoding: 'utf8', shell: '/bin/bash', maxBuffer: 64 * 1024 * 1024 });
+        } catch (e) {
+          // doShellScript throws on a nonzero exit; runners append `; exit 0` when they do not
+          // want that, so preserving the throw keeps their own error handling meaningful.
+          const err = new Error((e.stdout || '') + (e.stderr || ''));
+          throw err;
+        }
+      }
+    };
+  };
+  return { $, ObjC, Application };
 }
 
 function runOne(runnerPath) {
@@ -67,6 +97,7 @@ function runOne(runnerPath) {
   const sandbox = {
     ObjC: host.ObjC,
     $: host.$,
+    Application: host.Application,
     console: {
       log: function () {
         const s = Array.prototype.map.call(arguments, String).join(' ');
@@ -75,12 +106,15 @@ function runOne(runnerPath) {
       },
       error: function () { console.error.apply(console, arguments); }
     },
-    Promise, Date, Math, JSON, Object, Array, String, Number, Boolean, RegExp, Error,
-    TypeError, RangeError, Set, Map, WeakMap, WeakSet, Symbol, isNaN, isFinite,
-    parseInt, parseFloat, encodeURIComponent, decodeURIComponent, encodeURI, decodeURI,
+    // ONLY host APIs a vm context does not already provide. The standard built-ins are
+    // deliberately NOT injected from this realm: vm.createContext gives the context its own
+    // intrinsics, and injecting the outer realm's RegExp/Object/Array alongside them puts TWO
+    // sets of built-ins in scope. App code then builds a regex from the context's intrinsic
+    // while fixture code compares it against the injected outer one, and `instanceof RegExp`
+    // is false across realms by specification -- a failure that says nothing about the app.
+    // Under JXA there is one realm for runner, app and fixtures; one realm here matches it.
     setTimeout, clearTimeout, setInterval, clearInterval, queueMicrotask,
-    TextEncoder, TextDecoder, URL, URLSearchParams, structuredClone, ArrayBuffer,
-    Uint8Array, Int32Array, Float64Array, DataView, Proxy, Reflect, BigInt, Intl
+    TextEncoder, TextDecoder, URL, URLSearchParams, structuredClone
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
