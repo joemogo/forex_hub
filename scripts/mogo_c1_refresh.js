@@ -215,7 +215,31 @@ if (require.main === module) {
   }
 
   console.log('\nREADY. Everything below must finish before the window closes above.');
-  console.log('  git add docs/campaigns/C1/C1_INTEGRITY_ATTESTATION.json');
+
+  // WHAT BRANCH THIS WOULD LAND ON. `git push origin HEAD:mogo-main` publishes the WHOLE of HEAD,
+  // not just the attestation commit. Run this from a branch carrying unrelated work and a
+  // one-file refresh silently deploys everything else with it, to the branch GitHub Pages serves.
+  // Reported rather than assumed, and never auto-corrected: the safe branch is an operator choice.
+  const git = function (args) {
+    const r = spawnSync('git', args, { cwd: REPO_ROOT, encoding: 'utf8' });
+    return (r.status === 0 && typeof r.stdout === 'string') ? r.stdout.trim() : null;
+  };
+  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
+  const ahead = git(['rev-list', '--count', 'origin/mogo-main..HEAD']);
+  const aheadN = ahead === null ? null : Number(ahead);
+
+  if (aheadN === null) {
+    console.log('  ! origin/mogo-main is not known locally. Run `git fetch origin` first, so the');
+    console.log('    size of the push can be established before you make it.');
+  } else if (aheadN > 0) {
+    console.log('  ! HEAD (' + branch + ') is ' + aheadN + ' commit(s) ahead of origin/mogo-main.');
+    console.log('    Pushing HEAD:mogo-main would publish all ' + aheadN + ' of them plus this refresh,');
+    console.log('    to the branch GitHub Pages serves. For a refresh alone, commit it on a branch');
+    console.log('    started from origin/mogo-main instead:');
+    console.log('      git stash && git checkout -b c1-refresh origin/mogo-main && git stash pop');
+  }
+
+  console.log('\n  git add docs/campaigns/C1/C1_INTEGRITY_ATTESTATION.json');
   console.log('  git commit -m "C1: regenerate the campaign integrity attestation (operator-authorized)"');
   console.log('  git push origin HEAD:mogo-main      # the branch GitHub Pages serves');
   console.log('  # wait for the Pages deploy, hard-refresh MOGO, then toggle ALEX ON');
