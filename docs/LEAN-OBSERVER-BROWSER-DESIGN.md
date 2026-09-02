@@ -73,6 +73,12 @@ across that boundary. No persistence/recovery protocol is authorized here.
 
 ## Bounded prototype acceptance plan
 
+Prototype checkpoint: same-realm lexical attempt generation and mirrored complete
+export parity now pass in v135, including wire Date conversion and injected
+post-engine mutation/failure recovery. Source text/constant parity is asserted.
+This is an in-memory generated program evaluated by Node VM for testing; static
+browser packaging and actual worker/message validation are still unimplemented.
+
 1. Build a test-only source-derived attempt factory; compare declaration text,
    constants and both complete mirrored exports with the existing VM oracle.
    Prove two attempts and caller candles remain independent after mutation/fault.

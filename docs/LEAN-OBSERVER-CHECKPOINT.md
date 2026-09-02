@@ -1,5 +1,27 @@
 # Disabled LEAN observer checkpoint
 
+## September 2, 2026 — same-realm lexical attempt prototype
+
+Based on published `85b13b5`. The test-only source factory now generates fresh
+lexical functions/constants/state per attempt within one Node VM realm. Selected
+declaration text and constant values match the existing source-only oracle.
+Validated wire milliseconds become fresh Dates in copied OHLC candles. Complete
+downward/upward observer-emitter envelopes match the existing fixtures; an engine
+attempt that runs, mutates copied candles and throws is discarded, then the
+pending export recovers once. Caller input and separate attempt state are checked.
+
+Verification: v135 16/16 fixture groups passed, including existing Python CLI
+checks. Independent coordinator review corrected weak initial assertions; actual
+factory-source mutations removing Date conversion and reusing attempt state both
+failed the suite as expected. Python unit suites, other observer suites, protected
+baseline runner and actual browser/Mac checks were not rerun. No protected source
+was edited. This is Node VM prototype evidence, not a static browser artifact,
+Worker test, production integration, or security sandbox.
+
+Next bounded task: isolated message-boundary simulator around the whole session,
+with response correlation and worker-loss fail-stop controls. Browser static
+packaging/hashing and calendar handling remain open. Paper readiness not assessed.
+
 ## September 2, 2026 — browser boundary selected for synthetic prototyping
 
 Based on published `e97a1d0`. New authority permits browser-integration design

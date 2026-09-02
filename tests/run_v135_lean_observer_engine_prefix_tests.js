@@ -395,4 +395,78 @@ assert.strictEqual(vm.runInContext('RULES_ALEXG.config.breakConfirmationCloses',
 assert.strictEqual(JSON.stringify(all),callerBefore);
 assert.strictEqual(JSON.stringify(mirror),mirrorBefore);
 console.log('PASS -- multi-close limitation characterized: no production B&R and hypothetical Python requests refuse');
+// Candidate-worker prototype: generated source runs repeatedly in one VM realm,
+// but every call gets a new lexical IIFE (functions, constants and engine state).
+const lexicalFactory=sourceFactory.buildLexicalAttemptFactory(poisonedScript);
+const candidateWorker=vm.createContext({Date});
+const wire=bars=>({H1:bars.map(({t,...bar})=>({...bar,t:t.getTime()})),H4:[],D:[],W:[]});
+const lexicalA=lexicalFactory.create(candidateWorker),lexicalB=lexicalFactory.create(candidateWorker);
+for(const name of lexicalFactory.names) assert.strictEqual(lexicalA[name].toString(),declarationCheck[name].toString());
+assert.strictEqual(JSON.stringify([lexicalA.RULES_ALEXG,lexicalA.APP_VERSION,lexicalA.STRATEGY_ALEXG]),
+  vm.runInContext('JSON.stringify([RULES_ALEXG,APP_VERSION,STRATEGY_ALEXG])',declarationCheck));
+assert.notStrictEqual(lexicalA.alexGRunSetupEngine,lexicalB.alexGRunSetupEngine,'same worker realm must still get fresh lexical functions');
+assert.notStrictEqual(lexicalA.RULES_ALEXG,lexicalB.RULES_ALEXG,'constants must be fresh per lexical attempt');
+lexicalA.RULES_ALEXG.config.breakConfirmationCloses=99;
+assert.strictEqual(lexicalB.RULES_ALEXG.config.breakConfirmationCloses,1,'attempt constant mutation must not cross attempts');
+lexicalA.state.alexGSetupState.push({setupId:'discarded-attempt-mutation'});
+assert.strictEqual(lexicalB.state.alexGSetupState.length,0,'attempt state mutation must not cross attempts');
+function ownershipControl(create){
+  const a=create(),b=create();
+  a.state.alexGSetupState.push({setupId:'ownership-probe'});
+  assert.strictEqual(b.state.alexGSetupState.length,0,'shared attempt state');
+}
+ownershipControl(()=>lexicalFactory.create(candidateWorker));
+const deliberatelyShared=lexicalFactory.create(candidateWorker);
+assert.throws(()=>ownershipControl(()=>deliberatelyShared),/shared attempt state/);
+const callerWire=wire(all.slice(0,55)),wireBefore=JSON.stringify(callerWire);
+const fullAttempt=bareEngineContext().alexGRunSetupEngine('EUR_USD',{H1:all.slice(0,55).map(b=>({...b,t:new Date(b.t.getTime())})),H4:[],D:[],W:[]});
+const lexicalAttempt=lexicalFactory.run(candidateWorker,'EUR_USD',callerWire);
+assert.strictEqual(JSON.stringify(lexicalAttempt),JSON.stringify(fullAttempt),'lexical attempt must mirror full source-only exports');
+const fullMirror=bareEngineContext().alexGRunSetupEngine('EUR_USD',{H1:mirror.map(b=>({...b,t:new Date(b.t.getTime())})),H4:[],D:[],W:[]});
+const lexicalMirror=lexicalFactory.run(candidateWorker,'EUR_USD',wire(mirror));
+assert.strictEqual(JSON.stringify(lexicalMirror),JSON.stringify(fullMirror),'lexical attempt must mirror full source-only exports for reflected geometry');
+assert.strictEqual(JSON.stringify(callerWire),wireBefore,'engine must not mutate the supplied wire candles');
+const converted=lexicalFactory.copyFrames(callerWire);
+assert(converted.H1.every((b,i)=>b.t instanceof Date&&b.t.getTime()===all[i].t.getTime()&&b.t!==all[i].t),'each wire timestamp must become a fresh Date');
+assert.throws(()=>lexicalFactory.run(candidateWorker,'EUR_USD',{H1:[{o:1,h:1,l:1,c:1,t:1.5}],H4:[],D:[],W:[]}),/invalid wire timestamp/);
+assert.throws(()=>lexicalFactory.run(candidateWorker,'EUR_USD',{H1:[{o:1,h:1,l:1,c:1,t:8640000000000001}],H4:[],D:[],W:[]}),/invalid wire timestamp/);
+assert.throws(()=>lexicalFactory.run(candidateWorker,'EUR_USD',{H1:[{o:1,h:1,l:1,c:1,t:NaN}],H4:[],D:[],W:[]}),/invalid wire timestamp/);
+// Mutation control: removing numeric-to-Date conversion makes the reviewed engine fail.
+assert.throws(()=>lexicalFactory.create(candidateWorker).alexGRunSetupEngine('EUR_USD',callerWire),/getTime/);
+function lexicalEnvelope(inputBars,expected){
+  let now=inputBars[52].t.getTime(),calls=0,failedWire;
+  const session=observer.alexGCreateFreshLeanEngineExportSession({nowUtcMs:()=>now,
+    runLeanSetupEngine(pair,frames){
+      calls++; const supplied=wire(frames.H1),before=JSON.stringify(supplied);
+      if(calls===3){
+        const failed=lexicalFactory.create(candidateWorker);
+        const copied=lexicalFactory.copyFrames(supplied);
+        failed.alexGRunSetupEngine(pair,copied);
+        copied.H1[0].c=-123;
+        copied.H1[0].t.setTime(0);
+        failed.state.alexGSetupState.push({setupId:'fault'});
+        failedWire=supplied;
+        assert.strictEqual(JSON.stringify(supplied),before,'failed attempt cannot mutate supplied wire');
+        throw new Error('discard lexical attempt');
+      }
+      const result=lexicalFactory.run(candidateWorker,pair,supplied);
+      assert.strictEqual(JSON.stringify(supplied),before,'attempt cannot mutate supplied wire');
+      return result;
+    },emitLeanZoneRequestV2:emitter.build,emitterDeps:{sha256Hex:sha}
+  },{maxEndpointAgeMs:3600000});
+  function input(n){
+    const candles=inputBars.slice(0,n),rows=candles.map((b,index)=>({index,startTimeUtcMs:b.t.getTime(),open:b.o,high:b.h,low:b.l,close:b.c}));
+    return {enabled:true,pair:'EUR_USD',timeframe:'H1',candles,versions:engineMetadata.versions,config:engineMetadata.config,
+      dataset:{id:expected.dataset.id,hash:{algorithm:'SHA-256',value:sha(emitter.canonical(rows))}}};
+  }
+  assert.strictEqual(session.run(input(53)),null);now=inputBars[53].t.getTime();assert.strictEqual(session.run(input(54)),null);
+  now=inputBars[54].t.getTime();assert.throws(()=>session.run(input(55)),/discard lexical attempt/);
+  assert.strictEqual(JSON.stringify(failedWire),JSON.stringify(wire(inputBars.slice(0,55))),'fault leaves supplied wire intact');
+  const output=session.run(input(55));
+  assert.strictEqual(JSON.stringify(output),JSON.stringify(expected),'complete observer/emitter envelope must mirror existing factory');
+  assert.strictEqual(session.run(input(55)),null);return output;
+}
+assert.strictEqual(JSON.stringify(lexicalEnvelope(all,recovered)),JSON.stringify(recovered));
+assert.strictEqual(JSON.stringify(lexicalEnvelope(mirror,mirroredBare)),JSON.stringify(mirroredBare));
+console.log('PASS -- same-realm lexical attempts isolate faults, validate wire time and reproduce complete source-only exports');
 console.log('---'); console.log('ALL LEAN OBSERVER ENGINE PREFIX FIXTURES PASSED');
