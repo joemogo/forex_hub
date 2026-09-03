@@ -407,6 +407,174 @@ await ta('PRE-7', 'the tick\'s own exception still PROPAGATES -- the guard must 
   return { pass: threw === 'tick failed', detail: 'threw=' + threw };
 });
 
+// ══ OPERATOR RISK POLICY ══════════════════════════════════════════════════════════════════════
+//
+// The two limits are OFF by default and off must mean the behaviour is byte-for-byte what it was,
+// so POL-1 is the first fixture here: with no thresholds set, a scenario that violates BOTH
+// limits still opens. Everything after it is only meaningful because that holds.
+
+function makePolicyRealm(opts) {
+  const o = opts || {};
+  const ctx = {
+    console: console, Date: Date, Math: Math, JSON: JSON, isFinite: isFinite,
+    Number: Number, Object: Object, Array: Array, String: String, Promise: Promise,
+    RULES_ALEXG: { ruleVersion: 'alex_g_sr_v1', config: {} },
+    MIN_RISK_PIPS: 1.0,
+    TRADE_GEOMETRY: { VALID: 'VALID' },
+    ALEXG_CONSTRUCTION_REASON_CODE_MAP: {},
+    // Shaped as the real alexGAutoTrading is: the success path writes into tradedSignals and
+    // tradedToday, and a missing container would make every fixture that OPENS a trade throw --
+    // which is exactly the half of this suite that proves the limits stay out of the way.
+    alexGAutoTrading: { enabled: true, log: [], tradedSignals: {}, tradedSignalOrder: [], tradedToday: {} },
+    alexGJournalEntries: [],
+    alexGSignalInFlight: new Set(),
+    alexGAccount: { openPositions: (o.openPositions || []), closedPositions: [], balance: 10000 },
+    pipSize: function (pair) { return /JPY/.test(pair) ? 0.01 : 0.0001; },
+    validateTradeGeometry: function () { return { state: 'VALID', riskPips: 50 }; },
+    alexGLiveSignalId: function () { return 'SIG1'; },
+    alexGStampTradeProvenance: function () {},
+    journalNoteOpenAlex: function () {},
+    renderAlexGLivePanel: function () {},
+    saveAlexG: function () {},
+    // Notification and sound side effects on the success tail. Stubbed rather than removed: a
+    // fixture that could not reach the end of the success path would prove nothing about the
+    // limits staying out of the way, which is half of what this section asserts.
+    playAlexGAlert: function () {},
+    showAlexGLiveToast: function () {},
+    notifyAlexGLiveTrade: function () {},
+    fetchBidAsk: async function () { return { bid: 1.1, ask: 1.10002 }; },
+    __events: [], __stages: [], __statuses: [], __decided: [], __committed: 0,
+    emitDecisionEvent: function (e) { ctx.__events.push(e); return { event: { eventId: 'E' + ctx.__events.length } }; },
+    alexGRecordPipelineStage: function (k, m) { ctx.__stages.push({ kind: k, meta: m }); },
+    alexGRecordLiveSetupStatus: function (r) { ctx.__statuses.push(r); },
+    alexGMarkSetupDecided: function () { ctx.__decided.push(1); },
+    commitAlexGLedger: function () { ctx.__committed++; return { ok: true }; }
+  };
+  ctx.alexGConstructLivePosition = function () {
+    return { status: 'TRADE OPENED', direction: o.direction || 'buy', reason: null,
+      position: { tradeId: 'T-NEW', pair: o.pair || 'EUR_USD', timeframe: o.timeframe || 'H1',
+        direction: o.direction || 'buy', entry: 1.10000, stop: 1.09500, target: 1.11000,
+        entrySpreadPips: o.entrySpreadPips } };
+  };
+  vm.createContext(ctx);
+  // The policy object is taken VERBATIM from index.html, so a default that ships as anything but
+  // null -- which would silently change live trading -- fails POL-1 rather than passing quietly.
+  const declStart = SRC.indexOf('const ALEXG_LIVE_RISK_POLICY={');
+  if (declStart < 0) throw new Error('ALEXG_LIVE_RISK_POLICY not found in index.html');
+  const declEnd = SRC.indexOf('\n};', declStart);
+  vm.runInContext(SRC.slice(declStart, declEnd + 3), ctx);
+  vm.runInContext(extractFunction('alexGAttemptOpenLivePosition'), ctx);
+  if (o.policy) Object.keys(o.policy).forEach(function (k) {
+    vm.runInContext('ALEXG_LIVE_RISK_POLICY[' + JSON.stringify(k) + ']=' + JSON.stringify(o.policy[k]) + ';', ctx);
+  });
+  return ctx;
+}
+const setupFixture = { setupId: 'S1', pair: 'EUR_USD', timeframe: 'H1', setupType: 'B_breakRetest',
+  qualificationTimestamp: 1, zoneId: 'Z1', zoneTouchNumber: 4 };
+const opened = function (ctx) { return ctx.alexGAccount.openPositions.some(function (p) { return p.tradeId === 'T-NEW'; }); };
+
+await ta('POL-1', 'DEFAULTS ARE OFF, AND OFF MEANS UNCHANGED: with no thresholds set, an entry '
+  + 'paying 40% of its risk distance in spread, on a pair that already has a position open, still '
+  + 'opens exactly as before. Every fixture below is only meaningful because this holds', async function () {
+  const ctx = makePolicyRealm({ entrySpreadPips: 20,
+    openPositions: [{ tradeId: 'T-OLD', pair: 'EUR_USD', timeframe: 'H4', direction: 'buy' }] });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  return { pass: opened(ctx) && ctx.__committed === 1, detail: 'opened=' + opened(ctx) + ' commits=' + ctx.__committed };
+});
+
+await ta('POL-2', 'the SHIPPED defaults are null, read from index.html rather than seeded here -- '
+  + 'a default that shipped as a number would silently change which trades are taken', async function () {
+  const ctx = makePolicyRealm({});
+  const pol = vm.runInContext('JSON.stringify(ALEXG_LIVE_RISK_POLICY)', ctx);
+  const p = JSON.parse(pol);
+  return { pass: p.maxSpreadOverRisk === null && p.maxOpenPerInstrument === null
+      && p.perInstrumentSameDirectionOnly === false, detail: pol };
+});
+
+await ta('POL-3', 'SPREAD CAP: 20 pips of spread on a 50-pip stop is 40% of risk, over a 20% '
+  + 'limit, so the entry is refused', async function () {
+  const ctx = makePolicyRealm({ entrySpreadPips: 20, policy: { maxSpreadOverRisk: 0.20 } });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  const e = ctx.__events.filter(function (x) { return x.reasonCode === 'SPREAD_EXPANDED'; })[0];
+  return { pass: !opened(ctx) && ctx.__committed === 0 && !!e && e.stage === 'OPERATOR_RISK_POLICY',
+    detail: 'opened=' + opened(ctx) + ' code=' + (e && e.reasonCode) };
+});
+
+await ta('POL-4', 'BOUNDARY: exactly at the limit is permitted -- 10 pips on a 50-pip stop is 20% '
+  + 'of risk against a 20% limit, and a cap that refuses its own boundary refuses more than it says', async function () {
+  const ctx = makePolicyRealm({ entrySpreadPips: 10, policy: { maxSpreadOverRisk: 0.20 } });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  return { pass: opened(ctx), detail: 'opened=' + opened(ctx) };
+});
+
+await ta('POL-5', 'AN UNRECORDED SPREAD IS UNKNOWN, NOT ZERO AND NOT OVER. The cap neither refuses '
+  + 'nor silently passes on a measurement it does not have -- inventing either answer is how a '
+  + 'risk limit ends up describing trades it never actually measured', async function () {
+  const ctx = makePolicyRealm({ entrySpreadPips: undefined, policy: { maxSpreadOverRisk: 0.20 } });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  const refusals = ctx.__events.filter(function (x) { return x.stage === 'OPERATOR_RISK_POLICY'; });
+  return { pass: opened(ctx) && refusals.length === 0,
+    detail: 'opened=' + opened(ctx) + ' policy refusals=' + refusals.length };
+});
+
+await ta('POL-6', 'PER-INSTRUMENT EXPOSURE: with a limit of 1, a second EUR_USD position is '
+  + 'refused even though it is on a DIFFERENT timeframe -- which is exactly the case the '
+  + 'construction guard permits by design, and the reason this limit exists', async function () {
+  const ctx = makePolicyRealm({ policy: { maxOpenPerInstrument: 1 },
+    openPositions: [{ tradeId: 'T-OLD', pair: 'EUR_USD', timeframe: 'H4', direction: 'buy' }] });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  const e = ctx.__events.filter(function (x) { return x.reasonCode === 'RISK_INSTRUMENT_EXPOSURE_LIMIT'; })[0];
+  return { pass: !opened(ctx) && !!e && e.context.openTimeframes.join(',') === 'H4',
+    detail: 'opened=' + opened(ctx) + ' code=' + (e && e.reasonCode)
+      + ' timeframes=' + (e && e.context.openTimeframes) };
+});
+
+await ta('POL-7', 'NEGATIVE CONTROL: the same scenario on a DIFFERENT instrument opens, so POL-6 '
+  + 'is matching on the pair rather than refusing whenever anything is open', async function () {
+  const ctx = makePolicyRealm({ policy: { maxOpenPerInstrument: 1 },
+    openPositions: [{ tradeId: 'T-OLD', pair: 'GBP_USD', timeframe: 'H4', direction: 'buy' }] });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  return { pass: opened(ctx), detail: 'opened=' + opened(ctx) };
+});
+
+await ta('POL-8', 'SAME-DIRECTION-ONLY permits a hedge and refuses a doubled directional bet. Four '
+  + 'of the five observed same-instrument overlaps were in the SAME direction, which is the half '
+  + 'that doubles risk rather than offsetting it', async function () {
+  const hedge = makePolicyRealm({ direction: 'buy',
+    policy: { maxOpenPerInstrument: 1, perInstrumentSameDirectionOnly: true },
+    openPositions: [{ tradeId: 'T-OLD', pair: 'EUR_USD', timeframe: 'H4', direction: 'sell' }] });
+  await hedge.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  const doubled = makePolicyRealm({ direction: 'buy',
+    policy: { maxOpenPerInstrument: 1, perInstrumentSameDirectionOnly: true },
+    openPositions: [{ tradeId: 'T-OLD', pair: 'EUR_USD', timeframe: 'H4', direction: 'buy' }] });
+  await doubled.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  return { pass: opened(hedge) && !opened(doubled),
+    detail: 'hedge opened=' + opened(hedge) + ' doubled opened=' + opened(doubled) };
+});
+
+await ta('POL-9', 'A REFUSED CANDIDATE IS RECORDED, NOT DROPPED. It gets the same permanent status '
+  + 'row, pipeline stage and decided-mark every other refusal gets -- a limit that silently '
+  + 'discarded candidates would make the trades it prevented indistinguishable from trades that '
+  + 'never qualified', async function () {
+  const ctx = makePolicyRealm({ entrySpreadPips: 20, policy: { maxSpreadOverRisk: 0.20 } });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  const st = ctx.__statuses[ctx.__statuses.length - 1];
+  const stage = ctx.__stages[ctx.__stages.length - 1];
+  return { pass: !!st && st.status === 'BLOCKED — SPREAD OVER RISK LIMIT' && /40\.0%/.test(st.reason)
+      && !!stage && stage.kind === 'REQUEST_FAILED' && ctx.__decided.length === 1,
+    detail: 'status=' + (st && st.status) + ' stage=' + (stage && stage.kind) + ' decided=' + ctx.__decided.length };
+});
+
+await ta('POL-10', 'and the refusal reason NAMES THE NUMBERS -- an unfalsifiable "blocked on risk '
+  + 'policy" cannot be checked against the market data later', async function () {
+  const ctx = makePolicyRealm({ entrySpreadPips: 20, policy: { maxSpreadOverRisk: 0.20 } });
+  await ctx.alexGAttemptOpenLivePosition(setupFixture, {}, {}, 'SC1');
+  const e = ctx.__events.filter(function (x) { return x.stage === 'OPERATOR_RISK_POLICY'; })[0];
+  return { pass: !!e && near(e.context.spreadOverRisk, 0.4, 1e-9) && near(e.context.riskPips, 50, 1e-6)
+      && e.context.maxSpreadOverRisk === 0.20,
+    detail: e ? JSON.stringify(e.context) : 'no event' };
+});
+
 results.forEach(function (r) {
   console.log((r.pass ? 'PASS' : 'FAIL') + ' -- ' + r.name + ': ' + r.desc + (r.detail ? '  [' + r.detail + ']' : ''));
 });
